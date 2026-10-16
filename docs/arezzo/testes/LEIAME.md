@@ -47,6 +47,7 @@ Copiados da pasta de trabalho da sessão de 2026-10-08, pra existirem no repo. N
 - `test_calendario.js` — calendário do Radar (okr-dev): legenda clicável por tipo, sem resquício de torre/agenda global no modo só Hering, PO cria evento, 3 torres, deep link.
 - `test_modal_edicao.js` — modal de edição do OKR (duplo clique, item apagado, alteração falsa, Esc…). Vale nos dois modos.
 - `test_ferias_card_contrato.js` — **teste de contrato Oceano ⇄ Maré** (Assistente Férias): o Oceano cria o card de bug na coluna 🐛 Bugs da squad Dados (`feriasSincronizarCardSquadDados`) e o Maré (kanban-dev) o abre — confere prioridade (`critical|high|medium|low`), `created` = quem criou (não data), checklist, histórico `{who,what,at}`, impedimento, `flow`, idempotência e o que a pessoa VÊ no card e no modal. **Rode antes de qualquer PR que toque o card do Assistente.** Não roda na CI (precisa de Chromium + Playwright).
+- `test_ferias_pacote_anonimo.js` — **Assistente Férias não vaza dado pessoal**: preenche e envia o formulário do Oceano e confere que o pacote do `/monitorarbugs` é anônimo (sem nome/e-mail/link/print), que o registro não guarda mais o prompt com o autor, que não há botão/chamada ao GitHub e que o card recebe o pacote anônimo. **Rode antes de qualquer PR que toque `feriasEnviarBug` / `feriasMontarPacoteAnonimo`.** Não roda na CI (Chromium + Playwright).
 
 Rodar (precisa do servidor estático e do Chromium do ambiente):
 ```bash

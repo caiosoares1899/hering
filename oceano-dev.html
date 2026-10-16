@@ -747,7 +747,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.43 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.44 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1785,7 +1785,7 @@ const FERIAS_KB = [
     r:'<p>Mesmo de férias, deixei uma ponte direta com o agente <b>Antigravity</b>! Na aba <b>🐛 Reportar Bug</b> aqui deste modal você:</p>'
       + '<ul>'
       + '<li>Anexa <b>print da tela (<code>Ctrl+V</code>)</b>, <b>link/ID do card</b> e os <b>erros vermelhos do Console (<code>F12</code>)</b>.</li>'
-      + '<li>Registra o problema na fila oficial do Firebase (<code>kanban/feedback</code>) e gera o comando <code>/monitorarbugs</code>.</li>'
+      + '<li>Registra o problema na fila oficial do Firebase (<code>kanban/feedback</code>) e cria o card na coluna <code>🐛 Bugs</code> da Squad Dados e gera um <b>pacote anônimo</b> (só o bug — <b>sem seu nome, e-mail, links ou print</b>) para o agente de código. Nada sai do Firebase: não precisa abrir Issue no GitHub.</li>'
       + '<li>É avisado no <b>Sininho 🔔</b> e no banner quando o bug mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b></li>'
       + '</ul>',
     ac:[{label:'🐛 Abrir aba Reportar Bug (/monitorarbugs)',ftab:'bugs'},{label:'📖 Como pegar erros do F12',ftab:'guia'}]
@@ -2098,15 +2098,11 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
   if(bugObj.evidenciaImg){
     linhasDesc.push('', '📸 PRINT ANEXADO:', 'Disponível na fila do Assistente Férias no Oceano (kanban/feedback/' + (bugObj.id || '') + '/evidenciaImg)');
   }
-  if(bugObj.githubIssueUrl){
-    linhasDesc.push('', '🐙 ISSUE NO GITHUB:', String(bugObj.githubIssueUrl));
-  }
   if(bugObj.respostaStatus){
     linhasDesc.push('', '💬 DIAGNÓSTICO / RESOLUÇÃO (' + (bugObj.atualizadoPor || 'Agente / ADM') + '):', String(bugObj.respostaStatus));
   }
-  if(bugObj.promptAntigravity){
-    linhasDesc.push('', '🤖 COMANDO ANTIGRAVITY:', String(bugObj.promptAntigravity));
-  }
+  // pacote ANÔNIMO (sem autor/e-mail/uid): é o que o agente de código recebe — recalculado dos campos, nunca o texto salvo (registros antigos podem ter o nome do autor)
+  linhasDesc.push('', '🤖 PACOTE ANÔNIMO PARA O /monitorarbugs:', feriasMontarPacoteAnonimo(bugObj));
 
   const linksArr = Array.isArray(ex && ex.links) ? ex.links.filter(Boolean).slice() : [];
   const addLinkUnico = (t, u)=>{
@@ -2116,9 +2112,6 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
   };
   if(bugObj.evidenciaLink && /^https:\/\//i.test(String(bugObj.evidenciaLink).trim())){
     addLinkUnico('Evidência / Tela do Bug', String(bugObj.evidenciaLink).trim());
-  }
-  if(bugObj.githubIssueUrl && /^https:\/\//i.test(String(bugObj.githubIssueUrl).trim())){
-    addLinkUnico('Issue #' + (bugObj.githubIssueNum || 'GitHub'), String(bugObj.githubIssueUrl).trim());
   }
 
   const item1Txt = 'Relato registrado pelo usuário no Assistente Férias (' + autor + ')';
@@ -2335,11 +2328,10 @@ async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
         + '• **Autor:** ' + (bugObj.autor || 'Time Hering') + '\n'
         + '• **Relato:** ' + String(bugObj.texto || bugObj.msg || '')
         + (bugObj.erroConsole ? '\n• **Console (F12):** `' + String(bugObj.erroConsole).slice(0, 220) + '`' : '');
-    } else if(eventoStatus === 'em_analise' || eventoStatus === 'resolvido' || eventoStatus === 'sync_github'){
+    } else if(eventoStatus === 'em_analise' || eventoStatus === 'resolvido'){
       const ic = st === 'resolvido' ? '🟢 **Bug Resolvido**' : '🔵 **Bug Sendo Tratado (Em análise)**';
       textoCm = ic + ' — atualizado por **' + quem + '**\n'
-        + (bugObj.respostaStatus ? '💬 ' + String(bugObj.respostaStatus) : '')
-        + (bugObj.githubIssueUrl ? '\n🐙 Issue: ' + String(bugObj.githubIssueUrl) : '');
+        + (bugObj.respostaStatus ? '💬 ' + String(bugObj.respostaStatus) : '');
     }
     if(textoCm && window._set){
       const cmPayload = {
@@ -2399,7 +2391,6 @@ function feriasHtmlMeusChamados(){
           +   '<span class="chip" style="padding:1px 8px;font-size:10.5px;">'+esc(b.app||'Oceano')+'</span>'
           +   '<span style="color:var(--txt3);">'+esc(b.impacto||'')+'</span>'
           +   '<a href="'+esc(cardUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--teal);border-color:rgba(29,233,182,.35);" title="Abrir card deste bug na coluna Bugs da Squad Dados">📋 Card Squad Dados (Bugs)</a>'
-          +   (b.githubIssueUrl ? '<a href="'+esc(b.githubIssueUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--sky);">🐙 Issue #'+(b.githubIssueNum||'GitHub')+'</a>' : '')
           +   (quando ? '<span style="margin-left:auto;color:var(--txt3);">Atualizado '+esc(quando)+'</span>' : '')
           + '</div>'
           + '<div style="color:var(--txt);font-size:12.5px;">'+esc(b.texto || b.msg || '')+'</div>'
@@ -2411,7 +2402,7 @@ function feriasHtmlMeusChamados(){
 }
 
 function feriasHtmlBugs(){
-  return '<p class="ferias-lead">Encontrou algum bug enquanto o Caio está de férias? Registre abaixo com <b>print</b> e os <b>erros vermelhos do F12</b>: o relato entra na fila oficial do Firebase (<code>kanban/feedback</code>), <b>cria automaticamente um Card na coluna <code>🐛 Bugs</code> da Squad Dados</b>, gera o <b><code>/monitorarbugs</code></b> pro <b>Antigravity</b> e <b>avisa você no sininho 🔔</b> quando mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b></p>'
+  return '<p class="ferias-lead">Encontrou algum bug enquanto o Caio está de férias? Registre abaixo com <b>print</b> e os <b>erros vermelhos do F12</b>: o relato entra na fila oficial do Firebase (<code>kanban/feedback</code>), <b>cria automaticamente um Card na coluna <code>🐛 Bugs</code> da Squad Dados</b>, gera o <b>pacote anônimo</b> do <b><code>/monitorarbugs</code></b> (sem os seus dados) e <b>avisa você no sininho 🔔</b> quando mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b></p>'
     + '<div id="fbug-meus-box">'+feriasHtmlMeusChamados()+'</div>'
     + feriasBlocoGuiaDevtoolsHtml(false)
     + '<div class="ferias-card" style="gap:10px;">'
@@ -2556,7 +2547,7 @@ function feriasRenderBugsLista(){
   el.innerHTML = feriasBugsLista.slice(0,15).map(b=>{
     const quando = b.ts ? tempoRel(b.ts) : '';
     const st = feriasStatusMeta(b.status);
-    const cmd = b.promptAntigravity || ('/monitorarbugs em '+(b.arquivoAlvo||'kanban-dev.html')+' — '+(b.texto||b.msg||''));
+    const cmd = feriasMontarPacoteAnonimo(b);   // 🔒 sempre recalculado dos campos: sem autor/e-mail/uid
     const admAberto = souAdmOuPo || !!feriasAdmOpenMap[b.id];
     const respId = 'fbug-resp-' + b.id;
     const valResp = Object.prototype.hasOwnProperty.call(rascunhosResp, respId) ? rascunhosResp[respId] : (b.respostaStatus||'');
@@ -2568,7 +2559,6 @@ function feriasRenderBugsLista(){
       +   '<span>'+esc(b.impacto||'🟡 Dá pra contornar')+'</span>'
       +   (b.autor ? '<span>por <b>'+esc(b.autor)+'</b></span>' : '')
       +   '<a href="'+esc(cardUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--teal);border-color:rgba(29,233,182,.35);" title="Abrir card deste bug na coluna Bugs da Squad Dados">📋 Card Squad Dados (Bugs)</a>'
-      +   (b.githubIssueUrl ? '<a href="'+esc(b.githubIssueUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--sky);">🐙 Issue #'+(b.githubIssueNum||'GitHub')+'</a>' : '')
       +   (quando ? '<span style="margin-left:auto;">'+esc(quando)+'</span>' : '')
       + '</div>'
       + '<div style="color:var(--txt);line-height:1.45;">'+esc(b.texto || b.msg || '')+'</div>'
@@ -2686,140 +2676,9 @@ async function feriasAtualizarStatusBug(bugId, novoStatus){
   }
 }
 
-let _feriasGhSyncTs = 0;
-let _feriasGhSyncRunning = false;
-async function feriasSincronizarGithubIssues(forcar){
-  if(_feriasGhSyncRunning) return;
-  const agora = Date.now();
-  if(!forcar && (agora - _feriasGhSyncTs < 45000)) return;
-  if(!feriasBugsLista.length) return;
-  _feriasGhSyncTs = agora;
-  _feriasGhSyncRunning = true;
-  try{
-    const resp = await fetch('https://api.github.com/repos/caiosoares1899/hering/issues?state=all&per_page=25', {
-      headers: { 'Accept': 'application/vnd.github+json' }
-    });
-    if(!resp.ok){ _feriasGhSyncRunning = false; return; }
-    const issues = await resp.json();
-    if(!Array.isArray(issues)){ _feriasGhSyncRunning = false; return; }
+// 🔒 (16/10/2026) Removido o polling da API pública do GitHub (feriasSincronizarGithubIssues): aceitava status vindo de comentário de QUALQUER pessoa e estourava o limite de 60/h por IP.
+// O andamento do chamado vem do Firebase (card + kanban/feedback/{id}/status), escrito por quem tem permissão — ver docs/PLANTAO_BUGS.md.
 
-    let houveMudanca = false;
-    for(const iss of issues){
-      if(!iss || iss.pull_request) continue;
-      const bodyStr = String(iss.body || '');
-      const titleStr = String(iss.title || '');
-      const mId = bodyStr.match(/kanban\/feedback\/(bug_ferias_[0-9A-Za-z_]+)/);
-      let bugId = mId ? mId[1] : '';
-      let bugObj = bugId ? feriasBugsLista.find(x=>x.id===bugId) : null;
-      if(!bugObj && titleStr.startsWith('[Bug Férias')){
-        bugObj = feriasBugsLista.find(x=>x.githubIssueNum===iss.number || (x.texto && titleStr.includes(String(x.texto).slice(0,28))));
-        if(bugObj) bugId = bugObj.id;
-      }
-      if(!bugObj || !bugId) continue;
-
-      let detectadoSt = '';
-      let detectadoMsg = '';
-
-      // 1) Checa se no próprio body da issue há marcador FERIAS_STATUS:
-      const mBodySt = bodyStr.match(/FERIAS_STATUS:\s*(em_analise|resolvido)/i);
-      if(mBodySt){
-        detectadoSt = mBodySt[1].toLowerCase();
-      }
-
-      // 2) Se tiver comentários, busca o último com FERIAS_STATUS: (ou último comentário de fechamento)
-      if(Number(iss.comments) > 0 && iss.comments_url){
-        try{
-          const cResp = await fetch(iss.comments_url, { headers: { 'Accept': 'application/vnd.github+json' } });
-          if(cResp.ok){
-            const comments = await cResp.json();
-            if(Array.isArray(comments) && comments.length){
-              for(let i = comments.length - 1; i >= 0; i--){
-                const cb = String((comments[i] && comments[i].body) || '');
-                const mSt = cb.match(/FERIAS_STATUS:\s*(em_analise|resolvido)/i);
-                if(mSt){
-                  detectadoSt = mSt[1].toLowerCase();
-                  detectadoMsg = cb.replace(/<!--\s*FERIAS_STATUS:[^>]*-->/gi, '').replace(/FERIAS_STATUS:\s*(em_analise|resolvido)/gi, '').trim();
-                  break;
-                }
-              }
-              if(!detectadoMsg && iss.state === 'closed'){
-                const ult = String((comments[comments.length - 1] && comments[comments.length - 1].body) || '').trim();
-                if(ult) detectadoMsg = ult;
-              }
-            }
-          }
-        }catch(e){}
-      }
-
-      if(iss.state === 'closed') detectadoSt = 'resolvido';
-
-      const issueTag = ' (Issue #' + iss.number + ')';
-      let respostaFinal = bugObj.respostaStatus || '';
-      if(detectadoMsg){
-        const limpo = detectadoMsg.replace(/\s+/g, ' ').slice(0, 260);
-        respostaFinal = limpo.includes('#' + iss.number) ? limpo : (limpo + issueTag);
-      } else if(detectadoSt === 'resolvido' && !respostaFinal){
-        respostaFinal = '🟢 Resolvido pelo Antigravity na Issue #' + iss.number + '! Atualize a página com Ctrl+F5.';
-      } else if(detectadoSt === 'em_analise' && !respostaFinal){
-        respostaFinal = '🔵 O Antigravity iniciou a análise com /monitorarbugs na Issue #' + iss.number + '.';
-      }
-
-      const novoStatus = (detectadoSt === 'resolvido' || detectadoSt === 'em_analise') ? detectadoSt : (bugObj.status || 'pendente_monitorarbugs');
-      const mudouStatus = (detectadoSt === 'resolvido' || detectadoSt === 'em_analise') && bugObj.status !== novoStatus;
-      const mudouResposta = Boolean(respostaFinal && bugObj.respostaStatus !== respostaFinal);
-      const mudouIssueLink = bugObj.githubIssueUrl !== iss.html_url || bugObj.githubIssueNum !== iss.number;
-
-      if(mudouStatus || mudouResposta || mudouIssueLink){
-        const ts = Date.now();
-        bugObj.status = novoStatus;
-        if(respostaFinal) bugObj.respostaStatus = respostaFinal;
-        bugObj.githubIssueUrl = iss.html_url;
-        bugObj.githubIssueNum = iss.number;
-        bugObj.kanbanCardId = feriasCardIdBug(bugObj.kanbanCardId || bugId);
-        bugObj.kanbanSquad = 'dados';
-        if(mudouStatus || mudouResposta){
-          bugObj.atualizadoEm = ts;
-          bugObj.atualizadoPor = '🤖 Antigravity (Auto)';
-        }
-        houveMudanca = true;
-
-        if(window._set && window._ref && window._db){
-          const updatedBug = Object.assign({}, bugObj);
-          delete updatedBug.id;
-          try{
-            await window._set(window._ref(window._db, 'kanban/feedback/' + bugId), updatedBug);
-          }catch(e){}
-          if(mudouStatus){
-            const nfIdDeterministico = 'nf_bug_' + bugId + '_' + novoStatus;
-            await feriasDispararNotifStatusBug(bugObj, bugId, novoStatus, bugObj.respostaStatus, '🤖 Antigravity (Auto)', ts, nfIdDeterministico);
-          }
-          await feriasSincronizarCardSquadDados(bugObj, mudouStatus ? novoStatus : 'sync_github');
-        }
-      }
-    }
-    if(houveMudanca){
-      feriasRenderBugsLista();
-      feriasRenderBanner();
-      if(typeof sinoRender === 'function') sinoRender();
-    }
-  }catch(e){}
-  _feriasGhSyncRunning = false;
-}
-window.feriasSincronizarGithubIssues = feriasSincronizarGithubIssues;
-let _feriasFocusSyncTs = 0;
-function _feriasAoFocarJanela(){
-  const agora = Date.now();
-  if(agora - _feriasFocusSyncTs < 10000) return;
-  const ov = document.getElementById('ferias-ov');
-  const modalAberto = Boolean(ov && ov.classList.contains('on'));
-  const temBugAberto = Array.isArray(feriasBugsLista) && feriasBugsLista.some(b=>b && b.status!=='resolvido');
-  if(modalAberto || temBugAberto){
-    _feriasFocusSyncTs = agora;
-    feriasSincronizarGithubIssues(true);
-  }
-}
-window.addEventListener('focus', _feriasAoFocarJanela);
-document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') _feriasAoFocarJanela(); });
 
 const _feriasRetroSyncIds = new Set();
 function feriasProcessarSnapshotBugs(val){
@@ -2847,7 +2706,6 @@ function feriasIniciarBugsListener(){
   try{
     feriasBugsUn = onValFn(window._ref(window._db, 'kanban/feedback'), sn=>{
       feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
-      feriasSincronizarGithubIssues(false);
     }, ()=>{});
   }catch(e){}
 }
@@ -2859,12 +2717,37 @@ async function feriasCarregarBugs(){
   try{
     const sn = await window._get(window._ref(window._db, 'kanban/feedback'));
     feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
-    feriasSincronizarGithubIssues(false);
   }catch(e){
     const el = $('#fbug-lista');
     if(el) el.innerHTML = '<div style="font-size:12px;color:var(--txt3);">Não foi possível ler a fila agora.</div>';
   }
 }
+
+// 🔒 Pacote ANÔNIMO (16/10/2026): é o único texto que sai daqui para o agente de código (Antigravity / /monitorarbugs).
+// Só o BUG: app, arquivo, impacto, descrição e trecho do console — sem autor, e-mail, uid, link de card nem print.
+// Sempre recalculado dos campos estruturados (nunca lido de texto salvo: registros antigos guardaram o nome de quem reportou).
+function feriasSanitizarTexto(t, max){
+  let x = String(t == null ? '' : t);
+  x = x.replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, '[e-mail]')                    // e-mails
+       .replace(/https?:\/\/\S+/gi, '[link]')                                  // links (cards, drives, tokens na query)
+       .replace(/\b(?:\+?55\s?)?\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}\b/g, '[telefone]')
+       .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, '[cpf]')
+       .replace(/\b[A-Za-z0-9_-]{28,}\b/g, '[token]')                          // uids / ids longos / chaves
+       .replace(/\s+/g, ' ').trim();
+  return max ? x.slice(0, max) : x;
+}
+function feriasMontarPacoteAnonimo(b){
+  b = b || {};
+  const alvo = String(b.arquivoAlvo || 'kanban-dev.html').replace(/[^\w.\-]/g, '');
+  const app = feriasSanitizarTexto(b.app || '', 40);
+  const imp = feriasSanitizarTexto(b.impacto || '', 40);
+  const desc = feriasSanitizarTexto(b.texto || b.msg || '', 900);
+  const cons = feriasSanitizarTexto(b.erroConsole || '', 400);
+  return '/monitorarbugs em ' + alvo + ' — Bug reportado no Oceano' + (app || imp ? ' (' + [app, imp].filter(Boolean).join(' · ') + ')' : '') + ': ' + desc
+    + (cons ? ' [Console(F12), trecho sem dados pessoais: ' + cons + ']' : '');
+}
+window.feriasSanitizarTexto = feriasSanitizarTexto;
+window.feriasMontarPacoteAnonimo = feriasMontarPacoteAnonimo;
 
 let _enviandoBugFerias = false;
 async function feriasEnviarBug(){
@@ -2886,13 +2769,7 @@ async function feriasEnviarBug(){
   const nomeUsuario = (perfilFb && perfilFb.nome) || (U && U.displayName) || (U && U.email) || 'Time Hering';
   const emailUsuario = (U && U.email) || '';
   const uidUsuario = (U && U.uid) || '';
-  const partesExtras = [];
-  if(evidenciaLink) partesExtras.push('Evidência/Card: ' + evidenciaLink);
-  if(erroConsole) partesExtras.push('Console(F12): ' + erroConsole.replace(/\s+/g,' ').slice(0,260));
-  if(feriasEvidImgData) partesExtras.push('Print anexado em kanban/feedback/' + id + '/evidenciaImg');
-  const extraStr = partesExtras.length ? ' [' + partesExtras.join(' | ') + ']' : '';
-  const instrucaoStatus = ' (Ao iniciar análise, comente na Issue "<!-- FERIAS_STATUS: em_analise -->" e ao corrigir comente "<!-- FERIAS_STATUS: resolvido -->" ou atualize kanban/feedback/' + id + '/status para avisar o autor no sino)';
-  const promptAntigravity = '/monitorarbugs em ' + arquivoAlvo + ' — Bug reportado via Assistente Férias (' + nomeUsuario + ' · ' + impacto + '): ' + descricao + extraStr + instrucaoStatus;
+  const promptAntigravity = feriasMontarPacoteAnonimo({ arquivoAlvo, app, impacto, texto: descricao, erroConsole });   // anônimo: sem autor/e-mail/uid/link/print
   const payload = {
     tipo: 'bug',
     origem: 'assistente_ferias',
@@ -2912,8 +2789,7 @@ async function feriasEnviarBug(){
     criadoEm: ts,
     status: 'pendente_monitorarbugs',
     respostaStatus: '',
-    kanbanSquad: 'dados',
-    promptAntigravity: promptAntigravity
+    kanbanSquad: 'dados'
   };
 
   _enviandoBugFerias = true;
@@ -2947,26 +2823,12 @@ async function feriasEnviarBug(){
 
   const dicaArq = FERIAS_BUG_DICAS[arquivoAlvo] || 'Verificar console e fluxo principal do módulo.';
   const cardDadosUrl = feriasUrlCardSquadDados(bugComId);
-  const ghTitle = '[Bug Férias · ' + app + '] ' + descricao.slice(0, 70);
-  const ghBody = '### Relato via Assistente Férias do Caio\n'
-    + '- **App / Arquivo:** `' + app + '` (`' + arquivoAlvo + '`)\n'
-    + '- **Impacto:** ' + impacto + '\n'
-    + '- **Reportado por:** ' + nomeUsuario + (emailUsuario ? ' (' + emailUsuario + ')' : '') + '\n'
-    + '- **ID no Firebase:** `kanban/feedback/' + id + '`\n'
-    + '- **Card na Squad Dados (Bugs):** `' + cardIdDados + '`\n'
-    + (evidenciaLink ? '- **Link / Card:** ' + evidenciaLink + '\n' : '')
-    + '\n#### Descrição\n' + descricao + '\n\n'
-    + (erroConsole ? '#### Erros do Console (F12)\n```\n' + erroConsole + '\n```\n\n' : '')
-    + '#### Comando Antigravity\n```\n' + promptAntigravity + '\n```';
-  const ghUrl = 'https://github.com/caiosoares1899/hering/issues/new?title=' + encodeURIComponent(ghTitle) + '&body=' + encodeURIComponent(ghBody);
-
   const resEl = $('#fbug-res');
   if(resEl){
     resEl.innerHTML = '<div class="ferias-bug-res">'
       + '<div style="padding:10px 12px;border-radius:10px;background:rgba(46,213,115,.12);border:1px solid rgba(46,213,115,.42);margin-bottom:10px;display:flex;flex-direction:column;gap:7px;">'
-      +   '<div style="font-size:12.5px;color:#b8f7d0;line-height:1.45;">🚀 <b>Card criado na coluna <code>🐛 Bugs</code> da Squad Dados!</b> Clique também abaixo em <b>"Submit new issue"</b> no GitHub para o robô Antigravity no PC do Caio detectar e rodar o <code>/monitorarbugs</code> sozinho:</div>'
+      +   '<div style="font-size:12.5px;color:#b8f7d0;line-height:1.45;">🚀 <b>Pronto, seu relato foi registrado.</b> O card fica na coluna <code>🐛 Bugs</code> da Squad Dados (com os seus dados) e o bug entra na fila de análise — <b>nada vai para fora do Firebase</b>, não precisa abrir Issue nem enviar mais nada.</div>'
       +   '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      +     '<a class="btn pri" href="'+esc(ghUrl)+'" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:800;">🐙 Enviar para a Fila Automática do Antigravity (Abrir Issue no GitHub)</a>'
       +     '<a class="btn" href="'+esc(cardDadosUrl)+'" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-color:rgba(29,233,182,.45);color:var(--teal);">📋 Abrir Card na Squad Dados (Coluna Bugs)</a>'
       +   '</div>'
       + '</div>'
@@ -2978,13 +2840,13 @@ async function feriasEnviarBug(){
       + '</div>'
       + '<div style="font-size:12px;color:var(--sky);margin-bottom:6px;">🔔 <b>Fique tranquilo(a):</b> o Card na Squad Dados e o seu sininho do Oceano/Maré são atualizados automaticamente quando o chamado mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido</b>!</div>'
       + '<div style="font-size:12.5px;color:var(--txt2);margin-bottom:6px;"><b>🧭 Foco automático do diagnóstico:</b> '+esc(dicaArq)+'</div>'
-      + '<div class="ferias-cmd">'+esc(promptAntigravity)+'</div>'
+      + '<div style="font-size:11.5px;color:var(--txt3);margin-bottom:4px;">📦 Pacote anônimo que o agente de código recebe (sem seu nome, e-mail, links ou print):</div><div class="ferias-cmd">'+esc(promptAntigravity)+'</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
-      +   '<button type="button" class="btn sm" data-fbug-copy="'+esc(promptAntigravity)+'">📋 Copiar comando /monitorarbugs</button>'
+      +   '<button type="button" class="btn sm" data-fbug-copy="'+esc(promptAntigravity)+'">📋 Copiar pacote anônimo</button>'
       + '</div>'
       + '</div>';
   }
-  toast(criouCardDados ? '✅ Bug registrado e Card criado na coluna Bugs da Squad Dados!' : (gravouFb ? '✅ Bug registrado! Clique no botão da Issue do GitHub para acionar o Antigravity.' : '✅ Comando /monitorarbugs gerado!'));
+  toast(criouCardDados ? '✅ Bug registrado e Card criado na coluna Bugs da Squad Dados!' : (gravouFb ? '✅ Bug registrado na fila.' : '✅ Pacote do /monitorarbugs gerado!'));
 }
 
 function feriasRenderModal(){

@@ -61,6 +61,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · Plantão de Férias: contenção — Issue pública vazava nome/e-mail, workflow acionável por qualquer pessoa e daemon contornando o controle corporativo
+
+- **O que estava errado:** (1) o Assistente Férias abria uma Issue pública com nome e e-mail de quem reportou (issue #1445); (2) o workflow do plantão (ferias-bug-bot, já removido) disparava em `issues`/`issue_comment` com permissão de escrita e promovia a prod com a palavra "aprovado" — qualquer pessoa na internet podia acioná-lo; (3) um daemon em scripts/ (ferias-daemon, já removido) apertava sozinho o botão de aprovação do Antigravity, contornando o controle corporativo; (4) `oceano-dev.html` lia comentários públicos da Issue e aceitava `FERIAS_STATUS` de qualquer autor; (5) o prompt do `/monitorarbugs` levava o nome do autor.
+- **Correção (oceano-dev v1.44):** removidos workflow, daemon e o atalho .bat do daemon; removidos o polling do GitHub e o botão de Issue; o agente de código passa a receber um **pacote anônimo** (`feriasMontarPacoteAnonimo`, texto sanitizado); o registro em `kanban/feedback` deixa de guardar `promptAntigravity`. `scripts/checar.js` agora reprova workflow com gatilho `issues`/`issue_comment`/`pull_request_target` e página que abra issue pública; `AGENTS.md` ganhou as "Linhas vermelhas".
+- **Teste:** `docs/arezzo/testes/test_ferias_pacote_anonimo.js` (novo) e `docs/arezzo/testes/test_ferias_card_contrato.js` (segue verde). Plano completo e passos manuais do Caio em `docs/PLANTAO_BUGS.md`.
+
 ### 2026-10-16 · oceano-dev.html v1.43 (2026-10-16) — Correção das 2 regressões de contrato Oceano ⇄ Maré no card de bug (`priority` e `created`)
 
 - **`priority` em inglês (`critical|high|medium|low`) conforme `<select id="m-priority">` de `kanban-dev.html` (`feriasNormalizarPrioridadeKanban`):** Na v1.42, `feriasNormalizarPrioridadeKanban` havia convertido `priority` para `'alta'|'media'|'baixa'`, deixando o `<select id="m-priority">` vazio ao abrir o card no `kanban-dev.html`. Restaurado o mapeamento oficial (`🔴 Bloqueia a operação` → `'critical'`, `🟠 Atrapalha` → `'high'`, `🟡 Dá pra contornar` → `'medium'`) e adicionada migração automática de cards gravados com valores em português.
