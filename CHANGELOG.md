@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 2026-10-16 — Plantão: comentário no card com o resumo da correção ao validar
+
+Quando o ADM clica em "Rodei o script e validei" (Painel › Monitor › Plantão), o card do bug na squad Dados ganha um comentário com o resumo da correção: PR (número e título), o que mudou (seção "## Resumo" da PR), quem validou, a nota do ADM e o resultado do teste. O servidor (`plantaoGithubWebhook`) passa a guardar `prTitulo` e `prResumo` na ficha ao receber a PR; sem eles o comentário sai só com PR, validador e nota. Dev: mare-plantao-dev.js ?v=2, painel-dev v5.79, oceano-dev v1.52. **Exige** `firebase deploy --only database` (campos novos da ficha) e `--only functions:plantaoGithubWebhook`.
+
 ### SÓ DEV — 2026-10-16 — Ecossistema de gestão (ecossistema.html): documentação técnica do Oceano para a TI
 
 Nova página `ecossistema.html` (sem versão própria; entra no ar no merge), escrita para a reunião com a TI de 30/10: arquitetura, uso do Google Cloud e da conta corporativa, segurança e inventário de dados, ambientes dev × prod, Agente Ágil e consumo de tokens (mecanismos com a evidência no código), Claude × Antigravity, skills e subagentes, política de PR/CI/auditoria no GitHub, personalização por squad, dependências, riscos e caminho de internalização. Números medidos no repositório (comandos na seção 14). `maredigital.html` passa a ser a referência detalhada do Maré Digital e aponta para ela; o botão "Ecossistema de gestão" no Oceano (oceano-dev v1.51, só dev até a próxima promoção) abre a página.

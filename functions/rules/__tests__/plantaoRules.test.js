@@ -42,6 +42,12 @@ test('PR: só link de pull request do nosso repositório', () => {
   for (const u of ['https://github.com/outra/pessoa/pull/1', 'http://github.com/caiosoares1899/hering/pull/1', 'https://github.com/caiosoares1899/hering/issues/1', 'javascript:alert(1)', PR + '/files']) assert.equal(pode('adm', 'kanban/plantao/b1/prUrl', u), false, u);
 });
 
+test('resumo da PR: título ≤ 200 e resumo ≤ 500 caracteres, só texto', () => {
+  assert.equal(pode('adm', 'kanban/plantao/b1/prTitulo', 'x'.repeat(200)), true); assert.equal(pode('adm', 'kanban/plantao/b1/prTitulo', 'x'.repeat(201)), false);
+  assert.equal(pode('adm', 'kanban/plantao/b1/prResumo', 'x'.repeat(500)), true); assert.equal(pode('adm', 'kanban/plantao/b1/prResumo', 'x'.repeat(501)), false);
+  assert.equal(pode('adm', 'kanban/plantao/b1/prResumo', 5), false);
+});
+
 test('validação: resultado ok|falhou, tentativas 0–3, script ≤ 20 mil, validadoPorUid = quem está gravando', () => {
   assert.equal(pode('adm', 'kanban/plantao/b1/resultadoTeste', 'ok'), true);
   assert.equal(pode('adm', 'kanban/plantao/b1/resultadoTeste', 'talvez'), false);
