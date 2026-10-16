@@ -2,6 +2,7 @@
 
 > **Regras do projeto = `CLAUDE.md` (fonte única — leia inteiro antes de começar).**
 > **Divisão de trabalho com o Claude, branches, trailer de commit e quadro compartilhado = `docs/COORDENACAO_AGENTES.md` — leia antes de cada tarefa.**
+> **Revisão do Claude nas suas PRs:** o Claude revisa automaticamente toda PR `antigravity/*` (seg–sex, de 2 em 2 h, 8h–20h) e comenta na própria PR (`🔍 Revisão do Claude`). Leia o comentário e corrija no mesmo branch; "ESCALAR AO CLAUDE" é parada, não sugestão. Detalhes: `docs/COORDENACAO_AGENTES.md` §4.1.
 > **Regra permanente — Sempre se manter atualizado (`/seatualizar`):** antes de começar qualquer novo pedido (ou após um resync/merge), execute o protocolo `.claude/skills/seatualizar/SKILL.md` (`docs/COORDENACAO_AGENTES.md`, `version.json`, topo do `CHANGELOG.md` e `BUGS_E_CORRECOES.md`, `docs/GUIA_DE_CODIGO.md`) para ver tudo o que o Claude mudou e nunca mexer num arquivo reservado por ele.
 > Este arquivo só guarda o que é específico do Antigravity; **não copie regras do `CLAUDE.md` para cá** (já divergiram uma vez).
 > Resumo do seu papel: monitoramento diário, pequenas features e correções localizadas (1 página), docs (`/atualizardocumentacoes`) e promoções rotineiras. Funções (`functions/`), regras do banco, módulos compartilhados e features grandes são do Claude — **escale pelo quadro**.

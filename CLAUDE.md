@@ -70,6 +70,7 @@ letting them hit the error first.
   **Read it before starting any task.** This `CLAUDE.md` is the single
   source of truth for project rules; `AGENTS.md` and `.agents/rules/` only
   add what is specific to Antigravity and must not restate these rules.
+- **Revisão automática das PRs do Antigravity (2026-10-16)** — tarefa agendada acorda a sessão fixa "Revisor das PRs do Antigravity" (seg–sex, de 2 em 2 h, 8h–20h Brasília) para revisar toda PR `antigravity/*` e comentar nela (`<!-- revisao-claude:SHA7 -->`); nunca faz merge/aprovação/push. Procedimento, limites e como pausar em `docs/COORDENACAO_AGENTES.md` §4.1. Quando você (Claude) for chamado numa conversa com o Caio e houver PR aberta do Antigravity sem comentário de revisão, revise na hora.
 - `CODE_MAP_FAST.md` — compact, auto-generated line index of functions and
   anchors for the main pages (`node scripts/mare-cli.js map`); `CODE_MAP.md`
   (below) is the detailed, hand-curated index by feature area.

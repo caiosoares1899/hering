@@ -602,6 +602,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wc"><div class="wch"><div class="wci">🧑‍✈️</div><div class="wct">O humano no circuito</div></div><div class="wcb">O dono decide prioridade, valida em dev, <b>faz o merge de todo PR</b> e roda todo deploy de backend. Pela regra, os agentes nunca fazem merge, nunca dão <code class="hl">push --force</code> em branch alheia e têm seis "linhas vermelhas" (<code class="hl">AGENTS.md</code>): não contornar controle corporativo, não criar automação que reage a texto de terceiros, não mover dado de pessoa para fora do Firebase, não entregar bug sem script de teste, não ir a produção sem validação do ADM, não expor segredo.</div></div>
   </div>
 
+  <div class="note"><b>Revisão automática (desde 16/10).</b> Toda PR de branch <code class="hl">antigravity/*</code> é revisada pelo Claude por uma tarefa agendada (segunda a sexta, de 2 em 2 h, 8h–20h) numa sessão fixa com o repositório anexado. O Claude comenta <b>na própria PR</b> — escopo, versões, registro em <code class="hl">BUGS_E_CORRECOES.md</code>, armadilhas, linhas vermelhas, script de teste, <code class="hl">checar.js</code> — e nunca faz merge, aprovação nem push. Não substitui a validação do ADM. Procedimento: <code class="hl">docs/COORDENACAO_AGENTES.md</code> §4.1.</div>
+
   <div class="cl">Uma auditoria cruzada de verdade (16/10)</div>
   <p class="wcb" style="margin-bottom:.6rem">O Claude revisou ~46 commits (20+ PRs) do Antigravity em 36 horas. Achados e o que virou controle permanente:</p>
   <div class="tbl-wrap"><table class="tbl prose">

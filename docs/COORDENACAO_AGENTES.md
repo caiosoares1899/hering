@@ -74,6 +74,17 @@ Rodar na `main` atualizada e registrar o resultado em uma linha no Quadro:
 Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BUGS_E_CORRECOES.md`;
 **grande** → coluna *Escalado* do Quadro.
 
+## 4.1 Revisão automática das PRs do Antigravity (desde 16/10/2026)
+
+Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM validar ou o Caio mergear — não depende de alguém lembrar.
+
+- **Como roda:** tarefa agendada (id `trig_017bZw6eQFCHxkAMRb1piCtf`, "Revisão das PRs do Antigravity (seg–sex)") que acorda uma **sessão fixa do Claude já com o repositório anexado** ("Revisor das PRs do Antigravity", `session_01VRKYGhVsGURwSzBsh5LBwC`). **Segunda a sexta, de 2 em 2 h, 8h–20h (Brasília)**; sábado e domingo não rodam (economia de créditos — o Antigravity, na conta Hering, segue todos os dias). A 1ª tentativa com sessão nova a cada disparo falhou (nascia sem GitHub); por isso a sessão é permanente.
+- **O que confere (e comenta na própria PR):** escopo (só `-dev`, 1 página; `functions/`, regras do banco ou módulos compartilhados → "ESCALAR AO CLAUDE"), bump de versão coerente, entrada em `BUGS_E_CORRECOES.md`/`CHANGELOG.md` com nomes reais, trailer `Agent:`, as Armadilhas e as linhas vermelhas, e — nos bugs do plantão — o **script de teste** (todo nome usado existe no `-dev`, só leitura) e o título + `## Resumo` da PR. Roda `node scripts/checar.js` (e `npm test` se a PR tocar `functions/`).
+- **Formato:** **um** comentário curto por commit, começando com `<!-- revisao-claude:SHA7 -->` e "🔍 Revisão do Claude (commit SHA7)": `✅ Sem achados` ou lista numerada com arquivo:linha. Sem PR nova, não comenta nada.
+- **Limites:** nunca faz merge, aprovação formal, push na branch dele nem abre PR; só aponta, não corrige. **Não substitui** a validação do ADM com o script no console (linha vermelha nº 4/5 do `AGENTS.md`).
+- **Antigravity:** leia o comentário do Claude na sua PR (via `/seatualizar` ou na página da PR) e corrija **no mesmo branch** com novo commit; item marcado "ESCALAR AO CLAUDE" para a execução e vai para a coluna *Escalado* do Quadro.
+- **Operar:** pausar ou mudar a frequência = pedir ao Claude (ou desabilitar a tarefa agendada no claude.ai). Custo: checagem vazia é curta; só PR nova gasta mais.
+
 ## 5. Release, deploy e avisos
 
 - **Dev primeiro; validação explícita do Caio antes de prod** (já é regra do `CLAUDE.md`).
