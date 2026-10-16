@@ -465,11 +465,41 @@ input.in[readonly]{opacity:.7;}
 .ferias-form{display:flex;gap:8px;align-items:center;}
 .ferias-form input.in{flex:1;padding:10px 13px;font-size:13.5px;}
 textarea.in{font-family:inherit;font-size:13px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.4);color:var(--txt);width:100%;resize:vertical;min-height:84px;line-height:1.5;}
+textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;min-height:72px;background:rgba(1,8,16,.55);color:#ffd166;}
 :root[data-theme="light"] textarea.in,:root[data-tema="claro"] textarea.in{background:#fff;}
+:root[data-theme="light"] textarea.in.mono,:root[data-tema="claro"] textarea.in.mono{background:#0f2437;color:#fde047;}
 .ferias-bug-res{margin-top:14px;padding:14px 16px;border-radius:var(--r2);border:1px solid rgba(29,233,182,.45);background:linear-gradient(135deg,rgba(29,233,182,.12),var(--glass));}
 .ferias-cmd{margin:8px 0;padding:10px 12px;border-radius:var(--r);background:rgba(1,8,16,.65);border:1px solid var(--glass-b);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--teal);white-space:pre-wrap;word-break:break-word;}
 :root[data-theme="light"] .ferias-cmd,:root[data-tema="claro"] .ferias-cmd{background:#0b2436;color:#4ade80;}
-.ferias-bug-item{padding:10px 13px;border-radius:var(--r);border:1px solid var(--glass-b);background:var(--glass);margin-bottom:8px;display:flex;flex-direction:column;gap:4px;font-size:12.5px;}
+.ferias-bug-item{padding:11px 14px;border-radius:var(--r);border:1px solid var(--glass-b);background:var(--glass);margin-bottom:9px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;}
+.ferias-st-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em;border:1px solid transparent;}
+.ferias-st-badge.st-pendente{background:rgba(255,209,102,.16);color:#ffd166;border-color:rgba(255,209,102,.42);}
+.ferias-st-badge.st-analise{background:rgba(56,182,255,.18);color:#38b6ff;border-color:rgba(56,182,255,.48);}
+.ferias-st-badge.st-resolvido{background:rgba(29,233,182,.18);color:#1de9b6;border-color:rgba(29,233,182,.48);}
+:root[data-theme="light"] .ferias-st-badge.st-pendente,:root[data-tema="claro"] .ferias-st-badge.st-pendente{background:rgba(217,119,6,.12);color:#b45309;border-color:rgba(217,119,6,.35);}
+:root[data-theme="light"] .ferias-st-badge.st-analise,:root[data-tema="claro"] .ferias-st-badge.st-analise{background:rgba(2,132,199,.12);color:#0369a1;border-color:rgba(2,132,199,.35);}
+:root[data-theme="light"] .ferias-st-badge.st-resolvido,:root[data-tema="claro"] .ferias-st-badge.st-resolvido{background:rgba(5,150,105,.12);color:#047857;border-color:rgba(5,150,105,.35);}
+.ferias-autor-alerta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:12.8px;font-weight:700;cursor:pointer;border:1px solid rgba(56,182,255,.55);background:linear-gradient(90deg,rgba(56,182,255,.22),rgba(29,233,182,.14));color:var(--txt);box-shadow:0 4px 16px rgba(0,0,0,.18);transition:transform .15s,border-color .15s;text-align:left;width:100%;}
+.ferias-autor-alerta.resolvido{border-color:rgba(29,233,182,.65);background:linear-gradient(90deg,rgba(29,233,182,.25),rgba(56,182,255,.14));}
+.ferias-autor-alerta:hover{transform:translateY(-1px);border-color:var(--accent);}
+.ferias-meus-wrap{margin:0 0 16px;padding:13px 15px;border-radius:var(--r2);border:1px solid rgba(56,182,255,.45);background:linear-gradient(135deg,rgba(56,182,255,.12),rgba(29,233,182,.08));}
+.ferias-resp-box{margin-top:5px;padding:8px 11px;border-radius:9px;border-left:3px solid var(--teal);background:rgba(29,233,182,.11);font-size:12.3px;line-height:1.48;color:var(--txt);}
+.ferias-resp-box.analise{border-left-color:var(--accent);background:rgba(56,182,255,.11);}
+.ferias-adm-panel{margin-top:6px;padding:9px 11px;border-radius:9px;border:1px dashed var(--glass-b);background:rgba(var(--ink-rgb),.38);display:flex;flex-direction:column;gap:7px;}
+.ferias-howto{margin:0 0 14px;border-radius:var(--r2);border:1px solid rgba(56,182,255,.38);background:rgba(56,182,255,.07);overflow:hidden;}
+.ferias-howto summary{padding:10px 14px;font-size:13px;font-weight:700;color:var(--txt);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;}
+.ferias-howto summary::-webkit-details-marker{display:none;}
+.ferias-howto-bd{padding:0 14px 14px;border-top:1px solid var(--glass-b);font-size:12.5px;color:var(--txt2);}
+.ferias-dt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px;}
+.ferias-dt-step{padding:11px 12px;border-radius:11px;border:1px solid var(--glass-b);background:var(--glass);display:flex;flex-direction:column;gap:5px;}
+.ferias-dt-step b{color:var(--txt);font-size:12.8px;display:flex;align-items:center;gap:6px;}
+.ferias-dt-step p{font-size:12px;line-height:1.48;color:var(--txt2);}
+.ferias-kbd{display:inline-block;padding:1px 6px;border-radius:5px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.55);color:var(--txt);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700;}
+.ferias-paste-zone{padding:12px 14px;border-radius:var(--r);border:1.5px dashed rgba(56,182,255,.48);background:rgba(56,182,255,.06);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;cursor:pointer;transition:border-color .15s,background .15s;}
+.ferias-paste-zone:hover,.ferias-paste-zone:focus{border-color:var(--teal);background:rgba(29,233,182,.1);outline:none;}
+.ferias-paste-prev{display:flex;align-items:center;gap:10px;margin-top:6px;padding:7px 10px;border-radius:9px;border:1px solid rgba(29,233,182,.4);background:rgba(29,233,182,.09);font-size:12px;}
+.ferias-bug-thumb{height:48px;max-width:96px;object-fit:cover;border-radius:6px;border:1px solid var(--glass-b);cursor:zoom-in;transition:transform .15s;}
+.ferias-bug-thumb:hover{transform:scale(1.04);}
 @media (max-width:640px){.ferias-cta-wrap{width:100%;}.ferias-cta{width:100%;}.ferias-form{flex-direction:column;align-items:stretch;}}
 </style>
 </head>
@@ -663,7 +693,7 @@ textarea.in{font-family:inherit;font-size:13px;padding:10px 12px;border-radius:v
     <button type="button" role="tab" data-ftab="socorro" aria-selected="false">🆘 Socorro Rápido</button>
     <button type="button" role="tab" data-ftab="status" aria-selected="false">🚀 Onde Paramos (Status)</button>
     <button type="button" role="tab" data-ftab="proximos" aria-selected="false">🗺️ Próximos Passos</button>
-    <button type="button" role="tab" data-ftab="guia" aria-selected="false">🧭 Guia dos Apps</button>
+    <button type="button" role="tab" data-ftab="guia" aria-selected="false">📖 Guia Rápido &amp; DevTools</button>
     <button type="button" role="tab" data-ftab="bugs" aria-selected="false">🐛 Reportar Bug</button>
   </div>
   <div class="modal-bd" id="ferias-bd"></div>
@@ -854,6 +884,7 @@ async function iniciarSessao(){
   iniciarMural();
   iniciarMetasOceano();
   iniciarVtex();
+  feriasIniciarBugsListener();
   rotearHash(true);
   mostrarContinuar();
 }
@@ -1065,8 +1096,17 @@ function rotearUrl(url){   // abre a página do Maré dentro do Oceano (ou em ab
   if(app) abrirApp(app.id, false, url); else MareNotif.abrirPagina(url);
 }
 function sinoItens(){
-  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor, tipo:i.tipo}));
-  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read, tipo:n.type}));
+  const vistos = new Set(), out = [];
+  MareNotif.items().forEach(i=>{
+    if(String(i.id||'').startsWith('nf_bug_') && typeof feriasBugsLista!=='undefined' && feriasBugsLista.length && U){
+      const m = /^nf_bug_(.+)_(em_analise|resolvido|pendente_monitorarbugs)$/.exec(i.id);
+      const b = m && feriasBugsLista.find(x=>String(x.id||'').replace(/^bug_ferias_/,'')===m[1]);
+      if(b && (b.uid || b.email) && !feriasEhMeuBug(b) && !ehAdm) return;
+    }
+    vistos.add(i.id);
+    out.push({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor, tipo:i.tipo});
+  });
+  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type) && !vistos.has(n.id)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read, tipo:n.type}));
   return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 }
 function tempoRel(ts){ const t = new Date(ts).getTime(); if(isNaN(t)) return ''; const m = Math.round((Date.now()-t)/60000); if(m<1) return 'agora'; if(m<60) return 'há '+m+' min'; const h = Math.round(m/60); if(h<24) return 'há '+h+' h'; const d = Math.round(h/24); return d===1 ? 'ontem' : 'há '+d+' dias'; }
@@ -1109,6 +1149,7 @@ function sinoClique(k, id){
   const n = sinoPessoais.find(x=>x.id===id); if(!n) return;
   if(!n.read){ n.read = true; window._set(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
   sinoRender();
+  if(String(id||'').startsWith('nf_bug_') || (n.raw && n.raw.bugId)){ abrirFerias('bugs'); return; }
   const alvo = MareNotif.urlPessoal(n.raw);   // card, Kudos, reunião, intake, OKR…: o roteador compartilhado sabe pra onde ir
   if(!alvo) return;
   if(alvo.externo) window.open(alvo.url, '_blank', 'noopener'); else rotearUrl(alvo.url);
@@ -1126,7 +1167,7 @@ function iniciarDicas(){
 function iniciarSino(){
   if(sinoIniciado || !window.MareNotif || !U) return; sinoIniciado = true;
   MareNotif.start({user:U, isViewer:false, isAdm:()=>ehAdm, onChange:sinoRender, toast,
-    abrirFeed:it=>{ const u = MareNotif.urlFeed(it); if(u) rotearUrl(u); return true; }});   // aviso do Mural/Objetivo/Marco abre o Radar aqui dentro
+    abrirFeed:it=>{ if(it && String(it.id||'').startsWith('nf_bug_')){ abrirFerias('bugs'); return true; } const u = MareNotif.urlFeed(it); if(u) rotearUrl(u); return true; }});   // aviso do Mural/Objetivo/Marco abre o Radar aqui dentro; aviso de bug abre o Assistente Férias
   window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
     // TODOS os tipos (card, Kudos, reunião, intake, OKR…) — só 'rascunho' é exclusivo do painel; mesmo TTL do sino do kanban
     sinoPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))
@@ -1456,6 +1497,23 @@ $('#lk-add').addEventListener('click', ()=>abrirPerfil('links'));
 // ── 🏖️ Assistente Férias do Caio (16/10 a 03/11) + Gerador /monitorarbugs ──
 const FERIAS_FIM = '2026-11-03';
 const FERIAS_MIN_LS = 'oceano_ferias_min_dia';
+
+// Captura passiva dos últimos erros vermelhos da sessão para facilitar preenchimento automático
+const _feriasErrosSessao = [];
+window.addEventListener('error', ev=>{
+  try{
+    const msg = '[Error] ' + (ev.message||'Erro JS') + (ev.filename ? ' ('+ev.filename.split('/').pop()+':'+(ev.lineno||0)+')' : '');
+    if(!_feriasErrosSessao.includes(msg)) _feriasErrosSessao.slice(-6), _feriasErrosSessao.push(msg);
+  }catch(e){}
+});
+window.addEventListener('unhandledrejection', ev=>{
+  try{
+    const r = ev.reason && (ev.reason.stack || ev.reason.message || String(ev.reason)) || 'Promise rejection';
+    const msg = '[UnhandledRejection] ' + String(r).slice(0,240);
+    if(!_feriasErrosSessao.includes(msg)) _feriasErrosSessao.push(msg);
+  }catch(e){}
+});
+
 function feriasHoje(){ try{ return new Date().toLocaleDateString('sv-SE'); }catch(e){ return '2026-10-16'; } }
 function feriasAtivo(){
   try{
@@ -1468,18 +1526,60 @@ window.feriasAtivo = feriasAtivo;
 function feriasMinHoje(){ try{ return localStorage.getItem(FERIAS_MIN_LS) === feriasHoje(); }catch(e){ return false; } }
 function feriasSetMin(min){ try{ if(min) localStorage.setItem(FERIAS_MIN_LS, feriasHoje()); else localStorage.removeItem(FERIAS_MIN_LS); }catch(e){} feriasRenderBanner(); }
 
+let feriasBugsLista = [];
+let feriasBugsUn = null;
+let feriasEvidImgData = '';
+let feriasAdmOpenMap = {};
+
+function feriasBugEhMeu(b){
+  if(!b || !U) return false;
+  if(U.uid && b.uid && b.uid === U.uid) return true;
+  if(U.email && b.email && String(b.email).toLowerCase() === String(U.email).toLowerCase()) return true;
+  return false;
+}
+
+function feriasMeusBugsAtivos(){
+  return feriasBugsLista.filter(feriasBugEhMeu);
+}
+
+function feriasStatusMeta(st){
+  if(st === 'resolvido') return {cls:'st-resolvido', label:'🟢 Resolvido!'};
+  if(st === 'em_analise') return {cls:'st-analise', label:'🔵 Sendo tratado pelo Agente/ADM'};
+  return {cls:'st-pendente', label:'🟡 Na fila (/monitorarbugs)'};
+}
+
+function feriasBannerAlertaAutorHtml(){
+  const meus = feriasMeusBugsAtivos().filter(b=>b.status==='em_analise' || b.status==='resolvido');
+  if(!meus.length) return '';
+  const temResolvido = meus.some(b=>b.status==='resolvido');
+  const bTop = meus.find(b=>b.status==='resolvido') || meus[0];
+  const tit = temResolvido
+    ? '✅ Seu relato de bug ('+esc(bTop.app||'Oceano')+') foi RESOLVIDO! Clique para ver a resposta'
+    : '🔔 Seu relato de bug ('+esc(bTop.app||'Oceano')+') está SENDO TRATADO pelo Agente/ADM!';
+  const sub = bTop.respostaStatus ? ' — "'+esc(String(bTop.respostaStatus).slice(0,95))+'"' : '';
+  return '<div style="margin-bottom:8px;">'
+    + '<button type="button" class="ferias-autor-alerta'+(temResolvido?' resolvido':'')+'" data-ferias-open="bugs">'
+    +   '<span>'+tit+'</span>'
+    +   (sub ? '<span style="font-weight:500;opacity:.92;">'+sub+'</span>' : '')
+    +   '<span style="margin-left:auto;text-decoration:underline;font-size:11.5px;">Ver meus chamados →</span>'
+    + '</button>'
+    + '</div>';
+}
+
 function feriasRenderBanner(){
   const hostEl = $('#ferias-caio-host'); if(!hostEl) return;
   if(!feriasAtivo()){ hostEl.style.display = 'none'; hostEl.innerHTML = ''; return; }
   hostEl.style.display = 'block';
+  const alertaAutor = feriasBannerAlertaAutorHtml();
   if(feriasMinHoje()){
-    hostEl.innerHTML = '<div class="ferias-pill-bar">'
+    hostEl.innerHTML = alertaAutor + '<div class="ferias-pill-bar">'
       + '<button type="button" class="ferias-pill" data-ferias-open="chat" title="Abrir o Assistente Férias do Caio">🏖️ Férias do Caio (até 03/11) · <span>Perguntar ao Assistente 24h</span></button>'
       + '<button type="button" class="ferias-pill-exp" data-ferias-expand="1">▾ Expandir plantão</button>'
       + '</div>';
     return;
   }
   hostEl.innerHTML = '<section class="ferias-banner" aria-label="Plantão de Férias do Caio">'
+    + alertaAutor
     + '<div class="ferias-top">'
     +   '<span class="ferias-badge">🏖️ PLANTÃO DE FÉRIAS · 16/10 A 03/11</span>'
     +   '<button type="button" class="ferias-min-btn" data-ferias-min="1" title="Recolher este card hoje (fica um botão discreto no topo)">— Minimizar hoje</button>'
@@ -1496,7 +1596,7 @@ function feriasRenderBanner(){
     + '<div class="ferias-chips">'
     +   '<button type="button" class="ferias-chip" data-ferias-open="socorro">🆘 Socorro Rápido (Quem faz sem o Caio)</button>'
     +   '<button type="button" class="ferias-chip" data-ferias-open="status">🚀 Status &amp; Últimas Entregas</button>'
-    +   '<button type="button" class="ferias-chip" data-ferias-open="guia">🧭 Como usar (Maré, Radar, Escala, Metas)</button>'
+    +   '<button type="button" class="ferias-chip" data-ferias-open="guia">📖 Guia Rápido &amp; DevTools (F12)</button>'
     +   '<button type="button" class="ferias-chip" data-ferias-open="proximos">🗺️ Próximos Passos (Pós-03/11)</button>'
     +   '<button type="button" class="ferias-chip" data-ferias-open="bugs">🐛 Reportar Bug (/monitorarbugs)</button>'
     + '</div>'
@@ -1511,8 +1611,8 @@ const FERIAS_SUGS = [
   'Onde configuro o Data Studio no Radar?',
   'Card travado ("Em edição por..."), o que faço?',
   'O que saiu de novo antes das férias?',
-  'Para que serve a nova submarca Geral?',
-  'Como usar filtros e Gantt na Escala?',
+  'Como copio os erros vermelhos do F12 (DevTools)?',
+  'Como acompanho se meu bug foi resolvido?',
   'Achei um bug, como gero /monitorarbugs?'
 ];
 
@@ -1651,15 +1751,41 @@ const FERIAS_KB = [
     ac:[{label:'Ver Próximos Passos (Pós-03/11)',ftab:'proximos'},{label:'Socorro Rápido',ftab:'socorro'}]
   },
   {
+    id:'devtools_f12',
+    keys:['f12','devtools','console','vermelho','erros vermelhos','inspecionar','ctrl+shift+i','print','evidencia','evidencias','screenshot','colar print','como reportar'],
+    t:'🔴 Como copiar os Erros Vermelhos do DevTools (F12 → Console) e colar Print',
+    r:'<p>Mandar o print e os erros vermelhos do Console faz o <b>Antigravity</b> resolver seu bug <b>5x mais rápido</b>:</p>'
+      + '<ul>'
+      + '<li><b>1️⃣ Abra o DevTools:</b> na aba onde deu o erro, aperte <code>F12</code> (ou <code>Ctrl+Shift+I</code> no Windows / <code>Cmd+Option+I</code> no Mac) ou clique com o botão direito na tela → <b>Inspecionar</b>.</li>'
+      + '<li><b>2️⃣ Clique na aba <code>Console</code>:</b> no topo da janelinha que abrir, clique em <b>Console</b>.</li>'
+      + '<li><b>3️⃣ Copie as linhas vermelhas 🔴:</b> clique com o botão direito sobre a linha vermelha (ex.: <i>Uncaught TypeError...</i> ou <i>PERMISSION_DENIED</i>), copie e cole no campo <b>Erros Vermelhos do Console</b> da aba <b>🐛 Reportar Bug</b>.</li>'
+      + '<li><b>📸 Print da tela:</b> tire um print (<code>Win+Shift+S</code> ou <code>PrtScn</code>) e dê <code>Ctrl+V</code> direto na caixa de evidência do formulário!</li>'
+      + '</ul>',
+    ac:[{label:'📖 Ver Guia Visual DevTools',ftab:'guia'},{label:'🐛 Abrir Reportar Bug',ftab:'bugs'}]
+  },
+  {
+    id:'acompanhar_bug',
+    keys:['acompanhar','status do bug','sendo tratado','resolvido','meu chamado','meus chamados','notificacao','aviso','resposta','quando resolve'],
+    t:'📬 Como saber se meu Bug está Sendo Tratado ou Resolvido?',
+    r:'<p>Você recebe retorno automático sem precisar ficar perguntando:</p>'
+      + '<ul>'
+      + '<li><b>🔔 No Sininho Global (Oceano, Maré, Radar e Painel):</b> assim que o Antigravity ou um ADM marcar seu relato como <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b>, o sino de notificações toca pra você com a resposta.</li>'
+      + '<li><b>🏖️ Banner na Home do Oceano:</b> aparece um aviso destacado em azul/verde no topo do card de férias avisando que seu chamado foi atualizado.</li>'
+      + '<li><b>📬 Seção "Meus Chamados de Bug":</b> no topo da aba <b>🐛 Reportar Bug</b> você vê o status em tempo real, o horário da atualização e a mensagem de solução!</li>'
+      + '</ul>',
+    ac:[{label:'📬 Ver Meus Chamados em Reportar Bug',ftab:'bugs'}]
+  },
+  {
     id:'monitorarbugs',
     keys:['bug','bugs','erro','erros','travou','quebrou','nao funciona','problema','falha','defeito','monitorarbugs','antigravity','reportar'],
-    t:'🐛 Achou um Bug? Gere um /monitorarbugs na hora!',
+    t:'🐛 Achou um Bug? Gere um /monitorarbugs com Evidências e acompanhe o Status!',
     r:'<p>Mesmo de férias, deixei uma ponte direta com o agente <b>Antigravity</b>! Na aba <b>🐛 Reportar Bug</b> aqui deste modal você:</p>'
       + '<ul>'
-      + '<li>Registra o problema direto na fila oficial do Firebase (<code>kanban/feedback</code>), visível no Painel ADM e para o Antigravity.</li>'
-      + '<li>Gera automaticamente o comando estruturado <code>/monitorarbugs</code> apontando para o arquivo exato para diagnóstico imediato.</li>'
+      + '<li>Anexa <b>print da tela (<code>Ctrl+V</code>)</b>, <b>link/ID do card</b> e os <b>erros vermelhos do Console (<code>F12</code>)</b>.</li>'
+      + '<li>Registra o problema na fila oficial do Firebase (<code>kanban/feedback</code>) e gera o comando <code>/monitorarbugs</code>.</li>'
+      + '<li>É avisado no <b>Sininho 🔔</b> e no banner quando o bug mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b></li>'
       + '</ul>',
-    ac:[{label:'🐛 Abrir aba Reportar Bug (/monitorarbugs)',ftab:'bugs'}]
+    ac:[{label:'🐛 Abrir aba Reportar Bug (/monitorarbugs)',ftab:'bugs'},{label:'📖 Como pegar erros do F12',ftab:'guia'}]
   }
 ];
 
@@ -1670,12 +1796,11 @@ function feriasNorm(s){
 let feriasAbaAtual = 'chat';
 let feriasBugPrefill = '';
 let feriasUltimoCmd = '';
-let feriasBugsLista = [];
 let feriasChatHist = [
   {
     quem:'bot',
     html:'<p>Alô, tripulação! 🏖️🤖 Eu sou o <b>Assistente Férias do Caio</b> — fiquei de plantão 24h no Oceano de <b>16/10 a 03/11</b> (e não tomo café!).</p>'
-      + '<p>Pode me perguntar sobre <b>acessos, permissões, Radar OKR, Maré Digital, Metas, Escala, Data Studio, Apresentação ao Vivo, cards travados</b> ou, se achar algum comportamento estranho, <b>gerar um <code>/monitorarbugs</code></b> direto pro Antigravity!</p>'
+      + '<p>Pode me perguntar sobre <b>acessos, permissões, Radar OKR, Maré Digital, Metas, Escala, Data Studio, Apresentação ao Vivo, cards travados</b> ou, se achar algum comportamento estranho, <b>gerar um <code>/monitorarbugs</code> com print e erros do F12</b> (e eu te aviso no sininho 🔔 quando estiver <b>Sendo tratado</b> e <b>Resolvido</b>)!</p>'
   }
 ];
 
@@ -1683,7 +1808,6 @@ function feriasResponder(perguntaRaw){
   const qn = feriasNorm(perguntaRaw);
   const palavras = qn.split(/[^a-z0-9]+/).filter(w=>w.length>=2);
   const pareceBug = /\b(bug|bugs|erro|erros|travou|nao funciona|quebrou|sumiu|problema|falha|defeito|monitorarbugs)\b/.test(qn);
-  // Pontua cada item da FERIAS_KB
   const scored = FERIAS_KB.map(it=>{
     let pts = 0;
     it.keys.forEach(k=>{
@@ -1694,7 +1818,6 @@ function feriasResponder(perguntaRaw){
     return {it, pts};
   }).filter(x=>x.pts>0).sort((a,b)=>b.pts - a.pts);
 
-  // Busca complementar no FAQ do Oceano
   const faqMatches = FAQ.filter(f=>{
     const fn = feriasNorm(f.q + ' ' + f.a.replace(/<[^>]+>/g,' '));
     return palavras.some(w=>w.length>=4 && fn.includes(w));
@@ -1709,15 +1832,15 @@ function feriasResponder(perguntaRaw){
   } else if(faqMatches.length){
     const f = faqMatches[0];
     html = '<p><b>❓ Da Ajuda do Oceano — '+esc(f.q)+'</b></p>'+f.a;
-    acoes.push({label:'Ver Socorro Rápido',ftab:'socorro'},{label:'Ver Guia dos Apps',ftab:'guia'});
+    acoes.push({label:'Ver Socorro Rápido',ftab:'socorro'},{label:'Ver Guia & DevTools',ftab:'guia'});
   } else {
     html = '<p>Hmm, não achei essa palavra exata no meu caderno de praia 🏖️, mas quase tudo no Oceano pode ser resolvido na hora sem esperar o Caio voltar em <b>03/11</b>:</p>'
       + '<ul>'
       + '<li><b>Acessos e papéis:</b> POs, Organizadores e ADMs aprovam em <code>⚙ Config → Equipe</code> (Maré) ou <code>Usuários</code> (Painel).</li>'
       + '<li><b>Metas, Radar OKR, Data Studio e Sala ao Vivo:</b> POs e ADMs têm permissão completa na própria tela.</li>'
-      + '<li><b>Achou um erro/bug?</b> Envie agora para a fila do <code>/monitorarbugs</code> na aba <b>🐛 Reportar Bug</b>!</li>'
+      + '<li><b>Achou um erro/bug?</b> Envie agora para a fila do <code>/monitorarbugs</code> na aba <b>🐛 Reportar Bug</b> (você recebe aviso no sininho 🔔 quando for tratado/resolvido)!</li>'
       + '</ul>';
-    acoes.push({label:'🆘 Socorro Rápido',ftab:'socorro'},{label:'🚀 Onde Paramos',ftab:'status'},{label:'🧭 Guia dos Apps',ftab:'guia'});
+    acoes.push({label:'🆘 Socorro Rápido',ftab:'socorro'},{label:'🚀 Onde Paramos',ftab:'status'},{label:'📖 Guia Rápido & DevTools',ftab:'guia'});
   }
 
   let acHtml = acoes.map(a=>{
@@ -1748,7 +1871,7 @@ function feriasHtmlChat(){
     + FERIAS_SUGS.map(s=>'<button type="button" class="ferias-sug" data-fask="'+esc(s)+'">'+esc(s)+'</button>').join('')
     + '</div>'
     + '<form class="ferias-form" id="ferias-chat-form">'
-    +   '<input type="text" class="in" id="ferias-chat-in" maxlength="320" placeholder="Digite sua dúvida ou descreva um bug (ex.: quem aprova acesso, próximo passo pra marco, meta, data studio)…" aria-label="Sua pergunta para o Assistente Férias do Caio">'
+    +   '<input type="text" class="in" id="ferias-chat-in" maxlength="320" placeholder="Digite sua dúvida ou descreva um bug (ex.: quem aprova acesso, próximo passo pra marco, erros do F12)…" aria-label="Sua pergunta para o Assistente Férias do Caio">'
     +   '<button type="submit" class="btn pri">Perguntar ↵</button>'
     + '</form>'
     + '</div>';
@@ -1763,7 +1886,7 @@ function feriasHtmlSocorro(){
     {ic:'🔒', t:'Card travado ("Em edição por...")', p:'Clique em <b>🙋 Pedir o card</b> dentro do card (manda alerta sonoro e notificação na hora pra pessoa liberar) ou aguarde o desbloqueio automático de inatividade.', ac:[{l:'Abrir Maré',app:'kanban'}]},
     {ic:'💬', t:'Moderação de Comentários e Anotações', p:'O próprio autor edita (<code>✏️</code>) ou exclui (<code>🗑️</code>) seus comentários de Marco e anotações de reunião/calendário; <b>ADMs</b> podem moderar qualquer item.', ac:[{l:'Anotações do Radar',url:P('okr')+'?okr=notas'}]},
     {ic:'🚨', t:'Caiu alguma coisa? (Monitor 24h)', p:'O selo no topo do Oceano e a aba <code>🔋 Status</code> do Painel ADM monitoram <b>VTEX, Shopify, Cloudflare, GitHub, OpenAI, Claude e Firebase</b> a cada 5 min e disparam comunicados sozinhos.', ac:[{l:'Abrir Painel ADM',app:'painel'}]},
-    {ic:'🐛', t:'Surgiu um Bug? (/monitorarbugs)', p:'Registre na aba <b>🐛 Reportar Bug</b> para gravar na fila do Firebase (<code>kanban/feedback</code>) e gerar o comando pronto pro agente <b>Antigravity</b>.', ac:[{l:'Reportar Bug',ftab:'bugs'}]}
+    {ic:'🐛', t:'Surgiu um Bug? (/monitorarbugs)', p:'Registre na aba <b>🐛 Reportar Bug</b> com print e erros do F12 para gravar na fila do Firebase (<code>kanban/feedback</code>) e receber aviso no sino 🔔 quando for resolvido!', ac:[{l:'Reportar Bug',ftab:'bugs'}]}
   ];
   return '<p class="ferias-lead"><b>Não precisa esperar o Caio voltar em 03/11 para resolver!</b> Veja quem tem permissão e onde fica cada ação no dia a dia:</p>'
     + '<div class="ferias-grid">'
@@ -1813,6 +1936,33 @@ function feriasHtmlProximos(){
     + '</div>';
 }
 
+function feriasBlocoGuiaDevtoolsHtml(abertoPadrao){
+  return '<details class="ferias-howto" '+(abertoPadrao?'open':'')+'>'
+    + '<summary>🧭 Guia Rápido: Como usar o Assistente, anexar Evidências (Print/Link) e copiar os Erros Vermelhos do F12 (DevTools)</summary>'
+    + '<div class="ferias-howto-body">'
+    +   '<div><b>1️⃣ Como usar o Assistente de Férias em 30 segundos:</b>'
+    +     '<div class="ferias-dt-grid" style="margin-top:6px;">'
+    +       '<div class="ferias-dt-step"><b>💬 Perguntar</b>Tire dúvidas de permissão, OKR, Metas, Escala ou card travado e receba resposta imediata com botão direto pra tela.</div>'
+    +       '<div class="ferias-dt-step"><b>🆘 Socorro Rápido</b>Lista de quem resolve cada coisa na hora (POs, Organizadores e ADMs) sem precisar esperar o Caio voltar em 03/11.</div>'
+    +       '<div class="ferias-dt-step"><b>🚀 Onde Paramos</b>Resumo do que saiu antes das férias (Radar v2.89, submarca Geral, Metas v14, Escala v1.10) e o que vem pós-03/11.</div>'
+    +       '<div class="ferias-dt-step"><b>🐛 Reportar Bug + 🔔 Status</b>Envia seu relato com print e erros do F12 para a fila do <code>/monitorarbugs</code> e <b>toca seu sininho 🔔</b> quando estiver <i>Sendo tratado</i> ou <i>Resolvido</i>!</div>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div><b>2️⃣ Como enviar Evidências (Print da tela ou Link/Card):</b>'
+    +     '<p style="margin:4px 0 0;color:var(--txt2);">Na aba <b>🐛 Reportar Bug</b>, você pode colar o link ou nome do card em <b>🔗 Link / ID do Card</b> e dar <span class="ferias-kbd">Ctrl+V</span> direto na área <b>📸 Colar Print da Tela</b> (ou clicar para escolher uma imagem). O Oceano comprime a miniatura automaticamente!</p>'
+    +   '</div>'
+    +   '<div><b>3️⃣ Guia Visual: Como copiar os "Erros Vermelhos" do Painel DevTools (<span class="ferias-kbd">F12</span> → <span class="ferias-kbd">Console</span>):</b>'
+    +     '<div class="ferias-dt-grid" style="margin-top:6px;">'
+    +       '<div class="ferias-dt-step"><b>1️⃣ Abra o DevTools</b>Na aba onde ocorreu o problema, aperte <span class="ferias-kbd">F12</span> ou <span class="ferias-kbd">Ctrl+Shift+I</span> (no Mac: <span class="ferias-kbd">Cmd+Option+I</span>), ou clique com o <b>botão direito</b> na página → <b>Inspecionar</b>.</div>'
+    +       '<div class="ferias-dt-step"><b>2️⃣ Vá na aba Console</b>No topo do painel lateral/inferior que abrir, clique em <b><code>Console</code></b> (ao lado de <i>Elements / Elementos</i>).</div>'
+    +       '<div class="ferias-dt-step"><b>3️⃣ Ache as linhas vermelhas 🔴</b>Procure mensagens com fundo ou ícone vermelho (ex.: <code>Uncaught TypeError...</code>, <code>ReferenceError...</code>, <code>PERMISSION_DENIED</code> ou <code>Failed to load resource</code>).</div>'
+    +       '<div class="ferias-dt-step"><b>4️⃣ Copie e cole aqui</b>Clique com o <b>botão direito</b> sobre a linha vermelha → <i>Copy message</i> (ou selecione o texto com o mouse e dê <span class="ferias-kbd">Ctrl+C</span>) e cole no campo <b>🔴 Erros Vermelhos do Console</b>!</div>'
+    +     '</div>'
+    +   '</div>'
+    + '</div>'
+    + '</details>';
+}
+
 function feriasHtmlGuia(){
   const guias = [
     {ic:'🌊', t:'Maré Digital', p:'O quadro ágil das squads: colunas, cards, Supercards/Ficha Técnica, checklist, automações Butler, métricas de fluxo e o <code>@Agente</code> nos comentários.', ac:{l:'Abrir Maré Digital',app:'kanban'}},
@@ -1823,7 +1973,8 @@ function feriasHtmlGuia(){
     {ic:'⚓', t:'A Bordo (Onboarding)', p:'Boas-vindas interativas para quem chega no time Digital Hering, com os primeiros passos e conexão direta com o board.', ac:{l:'Abrir A Bordo',app:'onboarding'}},
     {ic:'🛠️', t:'Painel ADM', p:'Visão consolidada multi-squad para liderança, POs e ADMs: gestão de pessoas/papéis, comunicados do Mural, Central de Notificações e Status 24h.', ac:{l:'Abrir Painel ADM',app:'painel'}}
   ];
-  return '<p class="ferias-lead">Entenda em <b>1 minuto</b> cada produto do ecossistema Oceano e abra direto:</p>'
+  return feriasBlocoGuiaDevtoolsHtml(true)
+    + '<p class="ferias-lead" style="margin-top:14px;">Entenda em <b>1 minuto</b> cada produto do ecossistema Oceano e abra direto:</p>'
     + '<div class="ferias-grid">'
     + guias.map(g=>'<article class="ferias-card"><h4><span>'+g.ic+'</span>'+esc(g.t)+'</h4><p>'+g.p+'</p><div class="ferias-card-ac">'
       + (g.ac.app ? '<button type="button" class="btn pri sm" data-ferias-app="'+esc(g.ac.app)+'">'+esc(g.ac.l)+'</button>' : '<button type="button" class="btn pri sm" data-ferias-url="'+esc(g.ac.url)+'" data-ext="'+(g.ac.ext?'1':'0')+'">'+esc(g.ac.l)+'</button>')
@@ -1842,8 +1993,34 @@ const FERIAS_BUG_DICAS = {
   'painel-dev.html': 'Checar abas Usuários, Comunicados, Notificações e Status (monitores VTEX/GitHub/Firebase).'
 };
 
+function feriasHtmlMeusChamados(){
+  const meus = feriasMeusBugsAtivos();
+  if(!meus.length) return '';
+  return '<div class="ferias-meus-wrap">'
+    + '<h4>📬 Meus Chamados de Bug (Acompanhamento em tempo real)</h4>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;">'
+    + meus.slice(0,8).map(b=>{
+        const st = feriasStatusMeta(b.status);
+        const quando = b.atualizadoEm ? tempoRel(b.atualizadoEm) : (b.ts ? tempoRel(b.ts) : '');
+        return '<div class="ferias-bug-item" style="background:rgba(8,22,42,.6);">'
+          + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;">'
+          +   '<span class="ferias-st-badge '+st.cls+'">'+st.label+'</span>'
+          +   '<span class="chip" style="padding:1px 8px;font-size:10.5px;">'+esc(b.app||'Oceano')+'</span>'
+          +   '<span style="color:var(--txt3);">'+esc(b.impacto||'')+'</span>'
+          +   (quando ? '<span style="margin-left:auto;color:var(--txt3);">Atualizado '+esc(quando)+'</span>' : '')
+          + '</div>'
+          + '<div style="color:var(--txt);font-size:12.5px;">'+esc(b.texto || b.msg || '')+'</div>'
+          + (b.respostaStatus ? '<div class="ferias-resp-box"><b>💬 Retorno do Agente / ADM'+(b.atualizadoPor?' ('+esc(b.atualizadoPor)+')':'')+':</b> '+esc(b.respostaStatus)+'</div>' : '')
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '</div>';
+}
+
 function feriasHtmlBugs(){
-  return '<p class="ferias-lead">Encontrou algum bug enquanto o Caio está de férias? Registre abaixo: o relato entra na hora na fila oficial do Firebase (<code>kanban/feedback</code>) e já gera o comando estruturado <b><code>/monitorarbugs</code></b> para diagnóstico automático no <b>Antigravity</b>!</p>'
+  return '<p class="ferias-lead">Encontrou algum bug enquanto o Caio está de férias? Registre abaixo com <b>print</b> e os <b>erros vermelhos do F12</b>: o relato entra na fila oficial do Firebase (<code>kanban/feedback</code>), gera o <b><code>/monitorarbugs</code></b> pro <b>Antigravity</b> e <b>avisa você no sininho 🔔</b> quando mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b></p>'
+    + '<div id="fbug-meus-box">'+feriasHtmlMeusChamados()+'</div>'
+    + feriasBlocoGuiaDevtoolsHtml(false)
     + '<div class="ferias-card" style="gap:10px;">'
     +   '<div class="campos">'
     +     '<label class="f">App / Módulo onde ocorreu *'
@@ -1867,55 +2044,228 @@ function feriasHtmlBugs(){
     +     '</label>'
     +   '</div>'
     +   '<label class="f">O que aconteceu e como reproduzir? *'
-    +     '<textarea class="in" id="fbug-desc" maxlength="1000" placeholder="Conte em poucas palavras: em qual tela você estava, o que clicou e o que apareceu (se tiver mensagem de erro, cole aqui)…">'+esc(feriasBugPrefill)+'</textarea>'
+    +     '<textarea class="in" id="fbug-desc" maxlength="1000" placeholder="Conte em poucas palavras: em qual tela você estava, o que clicou e o que deveria acontecer…">'+esc(feriasBugPrefill)+'</textarea>'
     +   '</label>'
+    +   '<div class="campos">'
+    +     '<label class="f">🔗 Link / ID do Card ou Tela (opcional)'
+    +       '<input type="text" class="in" id="fbug-link" maxlength="300" placeholder="Ex.: URL da tela, nome/ID do card ou objetivo">'
+    +     '</label>'
+    +     '<div class="f">'
+    +       '<span>📸 Colar Print da Tela (Ctrl+V ou escolher imagem — opcional)</span>'
+    +       '<div class="ferias-paste-zone" id="fbug-paste-zone" tabindex="0" role="button" aria-label="Colar print da tela com Ctrl+V ou selecionar imagem">'
+    +         '<span>📋 Clique aqui e pressione <b>Ctrl+V</b> para colar um print, ou <u>escolha uma imagem</u> (máx. ~80KB comprimido)</span>'
+    +         '<input type="file" id="fbug-file" accept="image/*" style="display:none;">'
+    +         '<div id="fbug-paste-prev"></div>'
+    +       '</div>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="f">'
+    +     '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
+    +       '<span>🔴 Erros Vermelhos do Console (<code>F12</code> → aba <code>Console</code>) — opcional mas ajuda muito!</span>'
+    +       '<button type="button" class="btn sm" id="fbug-fill-tech" style="padding:3px 9px;font-size:11px;">⚡ Preencher dados técnicos do meu navegador</button>'
+    +     '</div>'
+    +     '<textarea class="in mono" id="fbug-console" maxlength="1600" placeholder="Aperte F12 → clique na aba Console → copie as linhas vermelhas (Uncaught TypeError, PERMISSION_DENIED, etc.) e cole aqui…"></textarea>'
+    +   '</div>'
     +   '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">'
     +     '<button type="button" class="btn pri" id="fbug-submit">🤖 Registrar no Firebase &amp; Gerar /monitorarbugs</button>'
-    +     '<span style="font-size:11.5px;color:var(--txt3);">Salva em <code>kanban/feedback</code> · Visível no Painel ADM e para o Antigravity</span>'
+    +     '<span style="font-size:11.5px;color:var(--txt3);">Salva em <code>kanban/feedback</code> · Avisa você no sino 🔔 quando mudar de status!</span>'
     +   '</div>'
     + '</div>'
     + '<div id="fbug-res"></div>'
     + '<div style="margin-top:18px;">'
-    +   '<div class="sec-title" style="margin:0 0 10px;">📋 Últimos relatos enviados na fila das férias</div>'
+    +   '<div class="sec-title" style="margin:0 0 10px;">📋 Fila de relatos do plantão de férias (Status ao vivo)</div>'
     +   '<div id="fbug-lista"><div style="font-size:12px;color:var(--txt3);">Carregando fila do plantão…</div></div>'
     + '</div>';
 }
 
+function feriasRenderEvidPreview(){
+  const pv = $('#fbug-paste-prev'); if(!pv) return;
+  if(!feriasEvidImgData){ pv.innerHTML = ''; return; }
+  const kb = Math.round((feriasEvidImgData.length * 3 / 4) / 1024);
+  pv.innerHTML = '<div class="ferias-paste-prev">'
+    + '<img src="'+esc(feriasEvidImgData)+'" alt="Preview do print anexado">'
+    + '<span style="font-size:11.5px;color:var(--green);">✅ Print anexado (~'+kb+' KB)</span>'
+    + '<button type="button" class="btn sm" id="fbug-clear-img" style="padding:2px 8px;font-size:11px;">🗑️ Remover print</button>'
+    + '</div>';
+}
+
+function feriasComprimirImagem(fileOrBlob){
+  if(!fileOrBlob) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        const maxW = 800;
+        const maxH = 600;
+        let w = img.width || 600;
+        let h = img.height || 400;
+        if(w > maxW){ h = Math.round(h * (maxW / w)); w = maxW; }
+        if(h > maxH){ w = Math.round(w * (maxH / h)); h = maxH; }
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        let dataUrl = cv.toDataURL('image/jpeg', 0.65);
+        if(dataUrl.length > 105000) dataUrl = cv.toDataURL('image/jpeg', 0.45);
+        feriasEvidImgData = dataUrl;
+        feriasRenderEvidPreview();
+        toast('📸 Print comprimido e anexado ao relato!');
+      }catch(e){ toast('⚠️ Não foi possível comprimir a imagem.'); }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(fileOrBlob);
+}
+
+function feriasPreencherDadosTecnicos(){
+  const ta = $('#fbug-console'); if(!ta) return;
+  const info = [
+    '[Ambiente] ' + new Date().toLocaleString('pt-BR') + ' · URL: ' + location.href,
+    '[Tela] ' + window.innerWidth + 'x' + window.innerHeight + ' (dpr ' + (window.devicePixelRatio||1) + ') · UA: ' + navigator.userAgent.slice(0,140)
+  ];
+  if(_feriasErrosSessao.length){
+    info.push('[Erros capturados nesta aba] ' + _feriasErrosSessao.join(' | '));
+  } else {
+    info.push('[Console] (Se o erro ocorreu em outra aba como Maré ou Radar, aperte F12 lá → aba Console → copie as linhas vermelhas e cole abaixo)');
+  }
+  const atual = ta.value.trim();
+  ta.value = (atual ? atual + '\n' : '') + info.join('\n');
+  ta.focus();
+  toast('⚡ Dados técnicos do navegador preenchidos!');
+}
+
 function feriasRenderBugsLista(){
+  const meusBox = $('#fbug-meus-box');
+  if(meusBox) meusBox.innerHTML = feriasHtmlMeusChamados();
   const el = $('#fbug-lista'); if(!el) return;
   if(!feriasBugsLista.length){
     el.innerHTML = '<div style="font-size:12.5px;color:var(--txt3);padding:8px 0;">Nenhum bug reportado no plantão de férias até agora. 🎉</div>';
     return;
   }
-  el.innerHTML = feriasBugsLista.slice(0,12).map(b=>{
+  const souAdmOuPo = (typeof ehAdm==='function' && ehAdm()) || (perfilFb && (perfilFb.papel==='po' || perfilFb.papel==='organizador' || perfilFb.papel==='adm')) || location.search.includes('adm=1');
+  el.innerHTML = feriasBugsLista.slice(0,15).map(b=>{
     const quando = b.ts ? tempoRel(b.ts) : '';
+    const st = feriasStatusMeta(b.status);
     const cmd = b.promptAntigravity || ('/monitorarbugs em '+(b.arquivoAlvo||'kanban-dev.html')+' — '+(b.texto||b.msg||''));
+    const admAberto = souAdmOuPo || !!feriasAdmOpenMap[b.id];
     return '<div class="ferias-bug-item">'
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--txt3);">'
+      +   '<span class="ferias-st-badge '+st.cls+'">'+st.label+'</span>'
       +   '<span class="chip" style="padding:1px 8px;font-size:10.5px;">'+esc(b.app||'Oceano')+'</span>'
       +   '<span>'+esc(b.impacto||'🟡 Dá pra contornar')+'</span>'
       +   (b.autor ? '<span>por <b>'+esc(b.autor)+'</b></span>' : '')
       +   (quando ? '<span style="margin-left:auto;">'+esc(quando)+'</span>' : '')
       + '</div>'
       + '<div style="color:var(--txt);line-height:1.45;">'+esc(b.texto || b.msg || '')+'</div>'
+      + (b.evidenciaLink ? '<div style="font-size:11.5px;color:var(--sky);">🔗 <b>Evidência/Card:</b> '+esc(b.evidenciaLink)+'</div>' : '')
+      + (b.erroConsole ? '<pre style="margin:2px 0;padding:6px 8px;border-radius:7px;background:#050d1a;border:1px solid rgba(255,107,107,.3);color:#ffb3b3;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:95px;overflow:auto;">'+esc(b.erroConsole)+'</pre>' : '')
+      + (b.evidenciaImg ? '<div><img src="'+esc(b.evidenciaImg)+'" class="ferias-bug-thumb" data-fbug-zoom="'+esc(b.id)+'" title="Clique para ampliar o print anexado" alt="Evidência anexada"></div>' : '')
+      + (b.respostaStatus ? '<div class="ferias-resp-box"><b>💬 Retorno ('+esc(b.atualizadoPor||'Agente/ADM')+'):</b> '+esc(b.respostaStatus)+'</div>' : '')
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:3px;">'
-      +   '<code style="font-size:11px;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:520px;">'+esc(cmd)+'</code>'
-      +   '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-copy="'+esc(cmd)+'">📋 Copiar /monitorarbugs</button>'
+      +   '<code style="font-size:11px;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:440px;">'+esc(cmd)+'</code>'
+      +   '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +     '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-copy="'+esc(cmd)+'">📋 Copiar /monitorarbugs</button>'
+      +     (!souAdmOuPo ? '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-adm-toggle="'+esc(b.id)+'">⚙️ Atualizar status</button>' : '')
+      +   '</div>'
       + '</div>'
+      + (admAberto ? (
+          '<div class="ferias-adm-panel">'
+          + '<input type="text" class="in" id="fbug-resp-'+esc(b.id)+'" maxlength="280" value="'+esc(b.respostaStatus||'')+'" placeholder="Mensagem para o autor (ex.: Corrigido na v8.30.866 — atualize com Ctrl+F5)…">'
+          + '<button type="button" class="btn sm" style="border-color:rgba(56,182,255,.45);color:#8ad8ff;" data-fbug-status="'+esc(b.id)+'" data-st="em_analise">🔵 Marcar "Sendo tratado"</button>'
+          + '<button type="button" class="btn sm" style="border-color:rgba(46,213,115,.5);color:#6ef2a5;" data-fbug-status="'+esc(b.id)+'" data-st="resolvido">🟢 Marcar "Resolvido"</button>'
+          + '</div>'
+        ) : '')
       + '</div>';
   }).join('');
+}
+
+async function feriasAtualizarStatusBug(bugId, novoStatus){
+  const b = feriasBugsLista.find(x=>x.id===bugId);
+  if(!b) return;
+  const inp = document.getElementById('fbug-resp-' + bugId);
+  const msgCustom = inp ? inp.value.trim() : '';
+  const padraoMsg = novoStatus === 'resolvido'
+    ? 'Correção aplicada! Atualize a página com Ctrl+F5 para carregar a versão mais recente.'
+    : 'Seu relato já está sendo analisado pelo Agente Antigravity / ADM.';
+  const respostaStatus = msgCustom || b.respostaStatus || padraoMsg;
+  const ts = Date.now();
+  const quem = (perfilFb && perfilFb.nome) || (U && U.displayName) || (U && U.email) || 'Agente / ADM';
+
+  b.status = novoStatus;
+  b.respostaStatus = respostaStatus;
+  b.atualizadoEm = ts;
+  b.atualizadoPor = quem;
+  feriasRenderBugsLista();
+  feriasRenderBanner();
+
+  try{
+    if(window._set && window._ref && window._db){
+      const updatedBug = Object.assign({}, b);
+      delete updatedBug.id;
+      await window._set(window._ref(window._db, 'kanban/feedback/' + bugId), updatedBug);
+
+      const nfId = 'nf_bug_' + bugId + '_' + novoStatus + '_' + ts;
+      const titNotif = novoStatus === 'resolvido'
+        ? '🟢 Bug Resolvido (' + (b.app||'Oceano') + ')!'
+        : '🔵 Seu relato de bug (' + (b.app||'Oceano') + ') está sendo tratado!';
+      const msgNotif = (b.autor ? '@' + b.autor + ': ' : '') + respostaStatus + ' — Relato: "' + String(b.texto||b.msg||'').slice(0,90) + '"';
+      const notifPayload = {
+        id: nfId,
+        tipo: 'feedback',
+        subtipo: 'bug_ferias_status',
+        statusBug: novoStatus,
+        bugId: bugId,
+        app: b.app || 'Oceano',
+        titulo: titNotif,
+        msg: msgNotif,
+        texto: msgNotif,
+        cardTitulo: titNotif,
+        detalhe: respostaStatus,
+        autorNome: '🏖️ Assistente Férias (' + quem + ')',
+        autorUid: 'assistente_ferias',
+        destUid: b.uid || '',
+        destEmail: b.email || '',
+        torres: ['digital', '*'],
+        criadoEm: ts,
+        ts: new Date(ts).toISOString(),
+        url: P('oceano') + '#ferias-bugs'
+      };
+      await window._set(window._ref(window._db, 'kanban/notif_feed/' + nfId), notifPayload);
+      if(b.uid){
+        await window._set(window._ref(window._db, 'kanban/usuarios/' + b.uid + '/notificacoes/' + nfId), notifPayload);
+      }
+    }
+    toast(novoStatus === 'resolvido' ? '🟢 Bug marcado como Resolvido e autor notificado no sino 🔔!' : '🔵 Bug marcado como Sendo tratado e autor notificado no sino 🔔!');
+  }catch(e){
+    toast('⚠️ Status atualizado na tela, mas houve falha ao gravar no Firebase.');
+  }
+}
+
+function feriasProcessarSnapshotBugs(val){
+  feriasBugsLista = Object.entries(val||{})
+    .map(([id,v])=>Object.assign({id}, v||{}))
+    .filter(v=>v && v.origem==='assistente_ferias')
+    .sort((a,b)=>(Number(b.criadoEm)||0)-(Number(a.criadoEm)||0) || String(b.ts||'').localeCompare(String(a.ts||'')));
+  feriasRenderBugsLista();
+  feriasRenderBanner();
+}
+
+function feriasIniciarBugsListener(){
+  if(!window._onVal || !window._ref || !window._db) return;
+  if(feriasBugsUn){ try{ feriasBugsUn(); }catch(e){} feriasBugsUn = null; }
+  try{
+    feriasBugsUn = window._onVal(window._ref(window._db, 'kanban/feedback'), sn=>{
+      feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
+    }, ()=>{});
+  }catch(e){}
 }
 
 async function feriasCarregarBugs(){
   if(!window._get || !window._ref || !window._db) return;
   try{
     const sn = await window._get(window._ref(window._db, 'kanban/feedback'));
-    const val = sn && sn.exists() ? sn.val() : {};
-    feriasBugsLista = Object.entries(val||{})
-      .map(([id,v])=>Object.assign({id}, v||{}))
-      .filter(v=>v && v.origem==='assistente_ferias')
-      .sort((a,b)=>(Number(b.criadoEm)||0)-(Number(a.criadoEm)||0) || String(b.ts||'').localeCompare(String(a.ts||'')));
-    feriasRenderBugsLista();
+    feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
   }catch(e){
     const el = $('#fbug-lista');
     if(el) el.innerHTML = '<div style="font-size:12px;color:var(--txt3);">Não foi possível ler a fila agora.</div>';
@@ -1929,6 +2279,8 @@ async function feriasEnviarBug(){
   const [app, arquivoAlvo] = appVal.split('|');
   const impacto = ($('#fbug-imp') && $('#fbug-imp').value) || '🟡 Dá pra contornar';
   const descricao = (($('#fbug-desc') && $('#fbug-desc').value) || '').trim();
+  const evidenciaLink = (($('#fbug-link') && $('#fbug-link').value) || '').trim();
+  const erroConsole = (($('#fbug-console') && $('#fbug-console').value) || '').trim();
   if(!descricao || descricao.length < 5){
     toast('⚠️ Descreva brevemente o que aconteceu para gerar o /monitorarbugs.');
     if($('#fbug-desc')) $('#fbug-desc').focus();
@@ -1939,7 +2291,13 @@ async function feriasEnviarBug(){
   const nomeUsuario = (perfilFb && perfilFb.nome) || (U && U.displayName) || (U && U.email) || 'Time Hering';
   const emailUsuario = (U && U.email) || '';
   const uidUsuario = (U && U.uid) || '';
-  const promptAntigravity = '/monitorarbugs em ' + arquivoAlvo + ' — Bug reportado via Assistente Férias (' + nomeUsuario + ' · ' + impacto + '): ' + descricao;
+  const partesExtras = [];
+  if(evidenciaLink) partesExtras.push('Evidência/Card: ' + evidenciaLink);
+  if(erroConsole) partesExtras.push('Console(F12): ' + erroConsole.replace(/\s+/g,' ').slice(0,260));
+  if(feriasEvidImgData) partesExtras.push('Print anexado em kanban/feedback/' + id + '/evidenciaImg');
+  const extraStr = partesExtras.length ? ' [' + partesExtras.join(' | ') + ']' : '';
+  const instrucaoStatus = ' (Ao iniciar análise, atualize kanban/feedback/' + id + '/status para "em_analise" e ao corrigir atualize para "resolvido" com respostaStatus e grave em kanban/notif_feed para avisar o autor no sino)';
+  const promptAntigravity = '/monitorarbugs em ' + arquivoAlvo + ' — Bug reportado via Assistente Férias (' + nomeUsuario + ' · ' + impacto + '): ' + descricao + extraStr + instrucaoStatus;
   const payload = {
     tipo: 'bug',
     origem: 'assistente_ferias',
@@ -1949,12 +2307,16 @@ async function feriasEnviarBug(){
     impacto: impacto,
     msg: '[Férias · ' + app + '] ' + descricao,
     texto: descricao,
+    evidenciaLink: evidenciaLink,
+    erroConsole: erroConsole,
+    evidenciaImg: feriasEvidImgData || '',
     autor: nomeUsuario,
     email: emailUsuario,
     uid: uidUsuario,
     ts: new Date(ts).toISOString(),
     criadoEm: ts,
     status: 'pendente_monitorarbugs',
+    respostaStatus: '',
     promptAntigravity: promptAntigravity
   };
 
@@ -1971,9 +2333,13 @@ async function feriasEnviarBug(){
   if(bt) bt.disabled = false;
 
   feriasBugPrefill = '';
+  feriasEvidImgData = '';
   if($('#fbug-desc')) $('#fbug-desc').value = '';
+  if($('#fbug-link')) $('#fbug-link').value = '';
+  if($('#fbug-console')) $('#fbug-console').value = '';
+  feriasRenderEvidPreview();
   feriasUltimoCmd = promptAntigravity;
-  feriasBugsLista.unshift(Object.assign({id}, payload));
+  if(!feriasBugsLista.some(x=>x.id===id)) feriasBugsLista.unshift(Object.assign({id}, payload));
   feriasRenderBugsLista();
 
   const dicaArq = FERIAS_BUG_DICAS[arquivoAlvo] || 'Verificar console e fluxo principal do módulo.';
@@ -1982,8 +2348,10 @@ async function feriasEnviarBug(){
     + '- **App / Arquivo:** `' + app + '` (`' + arquivoAlvo + '`)\n'
     + '- **Impacto:** ' + impacto + '\n'
     + '- **Reportado por:** ' + nomeUsuario + (emailUsuario ? ' (' + emailUsuario + ')' : '') + '\n'
-    + '- **ID no Firebase:** `kanban/feedback/' + id + '`\n\n'
-    + '#### Descrição\n' + descricao + '\n\n'
+    + '- **ID no Firebase:** `kanban/feedback/' + id + '`\n'
+    + (evidenciaLink ? '- **Link / Card:** ' + evidenciaLink + '\n' : '')
+    + '\n#### Descrição\n' + descricao + '\n\n'
+    + (erroConsole ? '#### Erros do Console (F12)\n```\n' + erroConsole + '\n```\n\n' : '')
     + '#### Comando Antigravity\n```\n' + promptAntigravity + '\n```';
   const ghUrl = 'https://github.com/caiosoares1899/hering/issues/new?title=' + encodeURIComponent(ghTitle) + '&body=' + encodeURIComponent(ghBody);
 
@@ -1992,8 +2360,10 @@ async function feriasEnviarBug(){
     resEl.innerHTML = '<div class="ferias-bug-res">'
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
       +   '<span class="chip ok">'+(gravouFb ? '✅ Gravado na fila do Firebase (kanban/feedback/'+esc(id)+')' : '⚡ Diagnóstico gerado localmente')+'</span>'
+      +   '<span class="ferias-st-badge st-pendente">🟡 Na fila (/monitorarbugs)</span>'
       +   '<span style="font-size:11.5px;color:var(--txt2);">Alvo: <code>'+esc(arquivoAlvo)+'</code></span>'
       + '</div>'
+      + '<div style="font-size:12px;color:var(--sky);margin-bottom:6px;">🔔 <b>Fique tranquilo(a):</b> assim que o Antigravity ou um ADM marcar seu chamado como <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido</b>, você receberá um aviso no sininho do Oceano/Maré e no banner da Home!</div>'
       + '<div style="font-size:12.5px;color:var(--txt2);margin-bottom:6px;"><b>🧭 Foco automático do diagnóstico:</b> '+esc(dicaArq)+'</div>'
       + '<div class="ferias-cmd">'+esc(promptAntigravity)+'</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
@@ -2002,7 +2372,7 @@ async function feriasEnviarBug(){
       + '</div>'
       + '</div>';
   }
-  toast(gravouFb ? '✅ Bug registrado na fila e /monitorarbugs gerado!' : '✅ Comando /monitorarbugs gerado!');
+  toast(gravouFb ? '✅ Bug registrado! Você será avisado no sino 🔔 quando for tratado/resolvido.' : '✅ Comando /monitorarbugs gerado!');
 }
 
 function feriasRenderModal(){
@@ -2012,7 +2382,7 @@ function feriasRenderModal(){
   else if(feriasAbaAtual==='status') bd.innerHTML = feriasHtmlStatus();
   else if(feriasAbaAtual==='proximos') bd.innerHTML = feriasHtmlProximos();
   else if(feriasAbaAtual==='guia') bd.innerHTML = feriasHtmlGuia();
-  else if(feriasAbaAtual==='bugs'){ bd.innerHTML = feriasHtmlBugs(); feriasCarregarBugs(); }
+  else if(feriasAbaAtual==='bugs'){ bd.innerHTML = feriasHtmlBugs(); feriasRenderEvidPreview(); feriasCarregarBugs(); }
   else {
     bd.innerHTML = feriasHtmlChat();
     const log = $('#ferias-chat-log'); if(log) log.scrollTop = log.scrollHeight;
@@ -2058,6 +2428,23 @@ $('#ferias-bd').addEventListener('submit', e=>{
     const inp = $('#ferias-chat-in'); if(inp && inp.value.trim()) feriasEnviarPergunta(inp.value);
   }
 });
+$('#ferias-bd').addEventListener('paste', e=>{
+  if(feriasAbaAtual !== 'bugs') return;
+  const items = (e.clipboardData && e.clipboardData.items) || [];
+  for(let i=0; i<items.length; i++){
+    if(items[i].type && items[i].type.indexOf('image') !== -1){
+      e.preventDefault();
+      feriasComprimirImagem(items[i].getAsFile());
+      return;
+    }
+  }
+});
+$('#ferias-bd').addEventListener('change', e=>{
+  if(e.target && e.target.id === 'fbug-file' && e.target.files && e.target.files[0]){
+    feriasComprimirImagem(e.target.files[0]);
+    e.target.value = '';
+  }
+});
 $('#ferias-bd').addEventListener('click', e=>{
   const ask = e.target.closest('[data-fask]'); if(ask){ feriasEnviarPergunta(ask.dataset.fask); return; }
   const go = e.target.closest('[data-ftab-go]'); if(go){ feriasAbaAtual = go.dataset.ftabGo; feriasRenderModal(); return; }
@@ -2068,6 +2455,30 @@ $('#ferias-bd').addEventListener('click', e=>{
     const txt = cp.dataset.fbugCopy || feriasUltimoCmd || '';
     if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('📋 Comando /monitorarbugs copiado!')).catch(()=>toast('📋 '+txt));
     else toast('📋 '+txt);
+    return;
+  }
+  if(e.target.closest('#fbug-fill-tech')){ feriasPreencherDadosTecnicos(); return; }
+  if(e.target.closest('#fbug-clear-img')){ feriasEvidImgData = ''; feriasRenderEvidPreview(); return; }
+  if(e.target.closest('#fbug-paste-zone') && !e.target.closest('#fbug-clear-img') && e.target.id !== 'fbug-file'){
+    const fl = $('#fbug-file'); if(fl) fl.click();
+    return;
+  }
+  const admTg = e.target.closest('[data-fbug-adm-toggle]'); if(admTg){
+    const id = admTg.dataset.fbugAdmToggle;
+    feriasAdmOpenMap[id] = !feriasAdmOpenMap[id];
+    feriasRenderBugsLista();
+    return;
+  }
+  const stBtn = e.target.closest('[data-fbug-status]'); if(stBtn){
+    feriasAtualizarStatusBug(stBtn.dataset.fbugStatus, stBtn.dataset.st);
+    return;
+  }
+  const zm = e.target.closest('[data-fbug-zoom]'); if(zm){
+    const b = feriasBugsLista.find(x=>x.id===zm.dataset.fbugZoom);
+    if(b && b.evidenciaImg){
+      const w = window.open('','_blank');
+      if(w){ w.document.write('<title>Evidência · '+esc(b.app||'Bug')+'</title><body style="margin:0;background:#06101e;display:grid;place-items:center;min-height:100vh;"><img src="'+esc(b.evidenciaImg)+'" style="max-width:96vw;max-height:96vh;border-radius:8px;"></body>'); }
+    }
     return;
   }
   if(e.target.closest('#fbug-submit')){ feriasEnviarBug(); return; }
