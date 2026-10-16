@@ -62,6 +62,26 @@ letting them hit the error first.
 
 ## Key files and their roles
 
+- `docs/COORDENACAO_AGENTES.md` — **how the two agents share this repo**
+  (Claude = big features/fixes, `functions/`, DB rules, shared modules;
+  Antigravity/Gemini = daily monitoring, small features/fixes, docs,
+  routine promotions), branch/commit conventions, the shared "board"
+  (in progress / escalated / pending deploy) and the daily checklist.
+  **Read it before starting any task.** This `CLAUDE.md` is the single
+  source of truth for project rules; `AGENTS.md` and `.agents/rules/` only
+  add what is specific to Antigravity and must not restate these rules.
+- `CODE_MAP_FAST.md` — compact, auto-generated line index of functions and
+  anchors for the main pages (`node scripts/mare-cli.js map`); `CODE_MAP.md`
+  (below) is the detailed, hand-curated index by feature area.
+- `BUGS_E_CORRECOES.md` — log of bugs, point fixes, regressions and
+  `/monitorarbugs` findings, plus the `🛡️ Armadilhas Conhecidas & Regras de
+  Ouro` section (read it before touching Firebase queries, auth or comments).
+  `CHANGELOG.md` is for **new features and structural deliveries only**
+  (July–Sept 2026 entries live in `docs/changelog-archive-2026-07-a-09.md`).
+- `scripts/mare-cli.js` — `status` / `bump` (version + cache-buster) / `log
+  --type feature|bug` (writes CHANGELOG or BUGS) / `map` (rebuilds
+  `CODE_MAP_FAST.md`). `.claude/skills/subirproprod/promover.js` — dev → prod
+  promotion preserving the prod-only lines (`--status` lists pending hunks).
 - `CODE_MAP.md` — index of stable function/const anchors by feature area
   (auth, board render, cards, supercards, automations, notas, notifications,
   Cloud Functions...) for `kanban.html`/`kanban-dev.html`/`painel.html`/
@@ -197,6 +217,8 @@ O que era tudo "Maré Digital" virou a família **Oceano**: **Maré Digital** (k
 
 **Rodada de 2026-10-14:** Ajuda do Radar (`#hlp-editar` em `okr-dev.html` v2.80: edição ✏️ e exclusão 🗑️ de comentários de Marco + moderação por ADM; Ajuda do Maré e FAQ do Oceano já estavam em dia com modo insistente e status VTEX), `docs/OCEANO.md` (lobby v1.34, sino, login único, 1ª abertura do dia, Mural, selo VTEX e Escala v1.10 marcados como em produção), `maredigital.html` (versões v8.30.858 / painel v5.68 / okr v2.78 / oceano v1.34 / escala v1.10 / mare-notif v31 / mare-metas v10, monitores `vtexStatus`/`githubStatus`/`firebaseStatus`, nós `marco_comments` e `*_status`/`*_saude`), `CODE_MAP.md` (seção da aba 🔋 Status no Painel + exports de `functions/index.js` + revalidação de âncoras) e `CHANGELOG.md` em dia.
 
+**Rodada de 2026-10-15 (auditoria multiagentes de documentação):** Sincronização completa de `kanban.html` (v8.30.863) / `kanban-dev.html` (v8.30.864-dev), `okr.html` (v2.88) / `okr-dev.html` (v2.89), `guia-okr.html`, `oceano-dev.html`, `docs/OCEANO.md`, `maredigital.html`, `CODE_MAP.md` e `AGENTS.md` — cobrindo a 11ª Submarca `Geral` (`tag_sm_geral`), `mare-metas(-dev).js` `?v=13` (gráfico diário/acumulado, modal `⛶ Expandir` com tabela diária Realizado/Esperado/∆ e popups de marco 20%–100%), e no Radar: aba `📈 Data Studio` (`kanban/okr/datastudio`), edição `✏️` e exclusão `🗑️` de anotações da reunião em qualquer data e no Calendário (autor ou ADM), sala ao vivo com controle permanente de ADM (`👑 Assumir` e `📍 Puxar sala`) e auto-fit de títulos longos (`_fitHeaderTitles`), limites de caracteres da Apresentação Executiva (`OKR_CHAR_LIMITS`) e fluxo de promoção `Próximo Passo (✅) → Progresso (🏁) → Marco` (UI + ferramenta `promover_item_okr` em `okrAgenteChat`).
+
 **Rodada de 2026-10-13:** Ajuda do Maré (Escala reescrita: filtros em mini tela, Gantt, pausas, JPG do Gantt; Notificações (escala/meta_lembrete); Instalar no celular (login direto); Menu de produtos (porta de entrada pelo Oceano); Calendário), FAQ do Oceano (login do iPhone; id duplicado `sino` corrigido), `maredigital.html` (versões, mare-login/escala/intake, Metas, regras novas, notif), `CODE_MAP.md` e `CHANGELOG.md` em dia. Ajuda do Radar e `guia-okr.html` sem mudança (o Radar só ganhou o módulo de lembretes). O conhecimento do Agente Ágil só muda quando a Ajuda/Changelog de PRODUÇÃO mudar (regenerar na promoção).
 
 **Rodada de 2026-10-10:** Ajuda do Maré (+💡 Dicas, +📊 Central de Dados) e do Radar (+🎙️ apresentar ao vivo, +⋮⋮⋮ menu de produtos), `guia-okr.html` (38 slides: +ao vivo, +menu/dicas), `maredigital.html` (Oceano, Dicas, Painel Fluxo/Visão, versões) e `CODE_MAP.md` (~420 âncoras revalidadas por `.claude/skills/atualizarcodemap/revalidar_ancoras.py`) em dia. 
@@ -232,10 +254,18 @@ page (`kanban.html`/`kanban-dev.html`/`painel.html`/`painel-dev.html`):
    right now" and "what changed between two releases" answerable with
    plain git (`git tag -l`, `git diff <old-tag> <new-tag>`) instead of
    spelunking through commit history.
-5. **Update `CHANGELOG.md`** with a new entry under the right page/version,
-   summarizing what changed and linking the PR number. Keep entries
-   user-facing (what changed and why), not a copy of the commit's internal
-   diff description.
+5. **Log the change — `CHANGELOG.md` vs `BUGS_E_CORRECOES.md` (mandatory split).**
+   - `CHANGELOG.md`: **new features and major/structural deliveries only**
+     (`node scripts/mare-cli.js log --type feature ...`) — user-facing (what
+     changed and why), link the PR number, not a copy of the commit diff.
+   - `BUGS_E_CORRECOES.md`: **bugs, point fixes, regressions and
+     `/monitorarbugs` findings** (`node scripts/mare-cli.js log --type bug
+     ...`); keep the `🛡️ Armadilhas Conhecidas` section current.
+   - Any skill that summarizes "what changed" (`/resumosemanal`, `/gerarokr`,
+     ...) must read **both** files.
+   - Every commit carries a trailer `Agent: claude` or `Agent: antigravity`
+     (both agents commit with the same git identity). Branches are
+     `claude/<topic>` / `antigravity/<topic>`. Nobody merges their own PR.
 6. **Send avisos + log the batch to the card.** Every time `kanban.html`
    (prod) gets promoted, always: (a) draft the two announcements — a Mural
    post (via console script against `painel.html`, or the
