@@ -61,6 +61,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · kanban-dev.html (v8.30.873-dev) — getDue mostrava selo "⚡ Hoje" para amanhã (diff===1) em vez de hoje (diff===0)
+
+- **Causa raiz:** Em `kanban-dev.html` (`getDue`), a condição do selo `⚡ Hoje` comparava `if(diff===1)` em vez de `if(diff===0)`, fazendo cards com prazo para amanhã exibirem `⚡ Hoje` (`due-warn`) e cards com prazo para hoje caírem no retorno padrão mostrando apenas a data.
+- **Correção:** Restaurada a verificação `if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};` em `getDue()` (`bug_ferias_1792190400351`).
+
 ### 2026-10-16 · oceano-dev.html (v1.50-dev) — cartão da Meta Global começava ~47 px abaixo dos quadrados dos apps
 
 - **Causa:** na grade da página inicial (só Meta, sem Mural) o cabeçalho "Meta Global · Digital" ficava acima do cartão e empurrava ele para baixo, deixando o topo desalinhado dos quadrados dos apps (o próprio cartão já traz o rótulo).
