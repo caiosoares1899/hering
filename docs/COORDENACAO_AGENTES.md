@@ -128,8 +128,8 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 1. **Três cópias do processo de release** (`CLAUDE.md`, `AGENTS.md`, `.agents/rules/release-process.md`) já divergindo
    (o `AGENTS.md` cita `CODE_MAP_FAST`/`BUGS_E_CORRECOES`; o `CLAUDE.md` não). → `CLAUDE.md` é a fonte; as outras viram ponteiro + o que é só do Antigravity. *(Claude)*
 2. **Duas ferramentas de versão/promoção** (`mare-cli.js` e `promover.js`) sobrepostas. → documentar quem faz o quê (`mare-cli`: bump/log/map; `promover.js`: promoção) num parágrafo só. *(Antigravity)*
-3. **Skills desatualizadas pela separação CHANGELOG × BUGS:** 7 skills ainda leem só o `CHANGELOG.md`
-   (`gerarokr`, `resumosemanal`, `atualizarcodemap`, `atualizarhelpcontent`, `otimizaçãoderotina`…), que agora só tem
+3. **Skills desatualizadas pela separação CHANGELOG × BUGS:** 5 skills ainda leem só o `CHANGELOG.md`
+   (`gerarokr`, `resumosemanal`, `atualizarcodemap`, `atualizarhelpcontent`, `otimizaçãoderotina`), que agora só tem
    features — correções ficam fora do resumo semanal. → fazê-las ler também `BUGS_E_CORRECOES.md`. *(Antigravity)*
 4. **Cadência de promoção** (seção 5): 3 promoções de feature num dia. → lote diário.
 5. **Armadilha nº 4** cita o domínio errado do Pages (`caiofsoares…`; o certo é `caiosoares1899.github.io`). *(Antigravity)*
