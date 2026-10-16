@@ -61,6 +61,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · kanban-dev.html (v8.30.869-dev) — clProg usava Math.floor (66% em 2/3) em vez de Math.round (67%)
+
+- **Causa raiz:** Em kanban-dev.html (L12307), clProg(cl) calculava o percentual da barra de progresso do checklist na face do card com Math.floor(d/cl.length*100) (retornando 66% para 2 de 3 itens concluídos), divergindo do modal do card (renderCL, L17640), que já usava Math.round(done/total*100) (67%).
+- **Correção:** Alinhado clProg(cl) para usar Math.round(d/cl.length*100), garantindo 67% para 2/3 tanto na face do card quanto dentro do modal (bug_ferias_1792179902877).
+
 ### 2026-10-16 · plantão automático: chave/segredo com espaço ou quebra de linha invisível derrubava a autenticação (401 / chave inválida)
 
 - **Sintoma:** no 1º deploy do modo automático o webhook do GitHub respondeu `401 assinatura inválida` e a chave do `plantaoProximo` deu `chave inválida`, com os segredos recém-criados.
