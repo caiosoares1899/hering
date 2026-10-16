@@ -11,7 +11,11 @@ description: Coloca o agente (Claude ou Antigravity) 100% em dia com tudo o que 
 
 ## O que ler e conferir (Ordem Rápida e Sem Desperdício de Contexto)
 
-> **Para o Antigravity:** Faça todas as leituras de arquivos abaixo usando **exclusivamente `view_file` em chamadas paralelas** (zero terminal para ler arquivos!). Só use terminal se o usuário pedir para sincronizar o git local (`git fetch`/`git pull`) ou no comando único final da tarefa.
+> **Para o Antigravity:** Faça todas as leituras de arquivos abaixo usando **exclusivamente `view_file` e `read_url_content` em chamadas paralelas** (zero terminal!). Inspecione até mesmo a branch e o último commit local lendo `.git/HEAD` e `.git/logs/HEAD` via `view_file`, e leia comentários de revisão do Claude (`🔍 Revisão do Claude`) nas PRs via `read_url_content` na URL da PR (`https://github.com/caiosoares1899/hering/pull/<N>`). Só use terminal no comando único final da tarefa (`node scripts/mare-cli.js ship`).
+
+### Passo 0 — Estado do Git Local e Revisões de PRs (`view_file` em `.git/HEAD` e `.git/logs/HEAD`)
+1. Leia `.git/HEAD` e o final de `.git/logs/HEAD` com `view_file` (sem usar `git status`/`git log` no terminal) para saber em qual branch e commit o clone local está.
+2. Se houver PR `antigravity/*` aberta, confira via `read_url_content` se há comentário `🔍 Revisão do Claude` (`docs/COORDENACAO_AGENTES.md` §4.1) antes de abrir qualquer nova frente.
 
 ### Passo 1 — Quadro de Coordenação e Divisão de Trabalho (`docs/COORDENACAO_AGENTES.md`)
 Leia `docs/COORDENACAO_AGENTES.md` inteiro (é curto, ~150 linhas) e verifique:

@@ -31,7 +31,11 @@ Ele não traz nome, e-mail, link nem print — **não peça nem procure esses da
    - guarda o resultado em `window._resultadosTeste` e termina com `console.table` de ✅/❌ por verificação (o cenário do bug e pelo menos 1 caso vizinho que não pode ter quebrado);
    - entregue o script **completo e visível na resposta** (não só um caminho de arquivo).
 6. **Comando único** (o ADM aprova com 1 clique — não rode `git`/`node` antes disso; agrupe tudo numa única chamada de terminal):
-   `git fetch origin && git checkout -b antigravity/bug-<id-curto> origin/main && <bump + log> && node scripts/checar.js && git add <arquivos> && git commit -m "<mensagem>` + linha em branco + `Agent: antigravity" && git push -u origin antigravity/bug-<id-curto>` e abrir o PR **de dev** contra `main` com título `Plantão: <resumo>` (token via `git credential fill`, como no `AGENTS.md`).
+   - **Via manifesto zero-approval (recomendado no Antigravity):** grave `.mare-ship.json` usando `write_to_file` (0 aprovações) contendo `branch`, `bump`, `log`, `testScript: { page, code }`, `commitMessage`, `prTitle` (`Plantão: <resumo>`) e `prSummary`, e rode como único comando de terminal:
+     `node scripts/mare-cli.js ship`
+     *(O `ship` valida automaticamente o script de teste contra o arquivo `-dev` via `check-script` — barrando funções inexistentes como `fmtDate` ou reatribuição de `const` antes mesmo do git —, faz `fetch`/`checkout` sem conflito de `version.json`/`BUGS_E_CORRECOES.md`, executa `bump` + `log` + `checar.js`, commita com `Agent: antigravity`, faz push e cria/atualiza a PR via `--body-file` sem erro de aspas no PowerShell).*
+   - **Ou via linha de comando equivalente:**
+     `git fetch origin && git checkout -b antigravity/bug-<id-curto> origin/main && <bump + log> && node scripts/checar.js && git add <arquivos> && git commit -m "<mensagem>` + linha em branco + `Agent: antigravity" && git push -u origin antigravity/bug-<id-curto>` e abrir o PR **de dev** contra `main` com título `Plantão: <resumo>` (token via `git credential fill`, como no `AGENTS.md`).
    **Nunca** faça merge, **nunca** push na `main`, **nunca** abra PR de prod (só depois do ✅ do ADM, e é outra tarefa: `/subirproprod`).
 7. **Feche com um bloco curto para o ADM** (e nada mais):
    - **Resumo** do conserto (3 linhas);
