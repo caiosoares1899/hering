@@ -93,7 +93,7 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Claude | `claude/agente-agil-orchestrator-jf99de` | **Plantão de Férias** (PR2 em andamento): `oceano-dev.html`, `mare-notif-dev.js`, `functions/plantao/`, `database.rules.json`. **Antigravity: não mexa nesses arquivos até o PR2 ser mergeado.** Plano e status em `docs/PLANTAO_BUGS.md`. | 16/10 |
+| — | — | — | — |
 
 ### Escalado para o Claude
 | Quem achou | O que | Como reproduzir | Data |
@@ -110,7 +110,7 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 ### Pendente de deploy (só o Caio roda)
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | **Plantão (PR2):** regras do nó `kanban/plantao` (só ADM) + funções `plantaoBugNovo`/`plantaoVigia` + `sendPushOnNotification` (tipo `plantao_bug`). **Antes: confirmar que André e Alisson têm `role: adm`** (ver `docs/PLANTAO_BUGS.md`). | `firebase deploy --only database ...` e `firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:sendPushOnNotification ...` (depois do resync do clone) | 16/10 |
+| Claude | **Plantão (PR2) — functions ✅ implantadas e confirmadas em 16/10 (aviso chegou aos ADMs); confirmar também o `--only database`:** regras do nó `kanban/plantao` (só ADM) + funções `plantaoBugNovo`/`plantaoVigia` + `sendPushOnNotification` (tipo `plantao_bug`). **Antes: confirmar que André e Alisson têm `role: adm`** (ver `docs/PLANTAO_BUGS.md`). | `firebase deploy --only database ...` e `firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:sendPushOnNotification ...` (depois do resync do clone) | 16/10 |
 | Claude | Regras do banco: `kanban/okr` com regra por filho (comentário do Marco só pelo autor; Data Studio só ADM/PO/Organizador/Gestor OKR). **Antes: rodar o script de checagem (só leitura) no console do Radar e conferir as listas 1 e 2.** | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do resync do clone) | 16/10 |
 
 ---
