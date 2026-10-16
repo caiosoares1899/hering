@@ -46,10 +46,12 @@ functions:secrets:set` command to run locally, first give them the sync
 step** — their local clone tracks the working branch and does not
 auto-update:
 ```bash
-cd C:\path\to\hering
+cd /d "C:\Users\caio.soares\.gemini\antigravity\scratch\hering"
 git fetch origin <branch-name>
 git reset --hard origin/<branch-name>
 ```
+**Caminho do clone do Caio (fixo, confirmado por ele em 16/10/2026):** `C:\Users\caio.soares\.gemini\antigravity\scratch\hering` — é o mesmo diretório em que o Antigravity trabalha. Use sempre `cd /d "…"` (a barra `/d` troca de unidade no `cmd`). Em PowerShell, `cd "…"` basta; ao entregar um resync, escreva o comando já com esse caminho, nunca um genérico.
+
 Skipping this is a real, repeated failure mode: `firebase deploy` silently
 discovers whatever `functions/index.js` exports **on disk locally** — if a
 new export (e.g. a new Cloud Function) isn't there yet because the merge
