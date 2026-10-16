@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Plantão de Bugs: layout (Oceano só usuário; controle de ADM no Painel › Monitor) + promoção para produção (oceano v1.48 · painel v5.76 · kanban v8.30.870 · mare-plantao.js)
+### 🛟 Plantão de Bugs: Oceano só com a visão do usuário e controle de ADM no Painel › Monitor (`oceano.html` v1.48 / `painel.html` v5.76 / `mare-plantao.js`) — 2026-10-16 · oceano v1.36→v1.48 · painel v5.75→v5.76 · kanban v8.30.865→v8.30.870 · mare-plantao.js v1 (PROD)
 
 - Em produção: aviso do assistente minimizado e dispensável no Oceano; 🛟 Plantão de Bugs na aba 🐛 Monitor do Painel; módulo mare-plantao.js; correção da barra de checklist (2/3 = 67%).
 - Painel: ordenação de relatos tolera criadoEm numérico (Oceano grava número).
