@@ -115,6 +115,8 @@ Fundo oceânico (variável `--ocean`, aplicada numa camada `position:fixed; inse
   linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
 ```
 
+**Páginas de ferramenta com muito texto (Painel, Radar — desde 18/10/2026):** vidro mais firme (`--glass: rgba(255,255,255,.66)`), fundo do oceano mais aberto (`linear-gradient(175deg,#7fd0e8,#2f9bd0)`) e tokens de **texto** seguros: `--teal #055f59`, `--warn #8a5a00`, `--danger #b3202f`, `--accent #005f8a`, `--txt2 .94`, `--txt3 .74`. Regra: **cor de status usada como texto precisa passar ~4,5:1 sobre o vidro**; superfície (modal, menu, painel) nunca é um RGB escuro literal — use `var(--glass)` ou `rgba(var(--ink-rgb),.97)`.
+
 No Maré há uma variante **mais escura** do claro (duplo clique no botão de
 tema). A leitura do fundo claro foi ajustada em várias rodadas de feedback do
 time ("tá muito claro"): em peça nova, **prefira o azul de `--deep` acima ao

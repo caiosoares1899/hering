@@ -1,5 +1,7 @@
 # Tema claro do Painel e do Radar — auditoria de 17/10/2026 (fazer em 18/10)
 
+**Status (18/10): feito em `painel-dev` v5.81 e `okr-dev` v2.90 — ver `BUGS_E_CORRECOES.md` (armadilha nº 12). Falta a validação do Caio e a promoção.**
+
 **Pedido do Caio:** "tá bem ruim esse tema claro no painel e no radar" — corrigir amanhã (18/10), só nos `-dev` (`painel-dev.html`, `okr-dev.html`), e depois promover na rotina de sempre.
 
 **Como foi medido:** `node docs/arezzo/testes/auditoria_temas.js` (servidor estático na raiz, porta 8941): Radar (6 telas) + Painel (9 abas) × escuro/claro/Vice City × 1280 e 390 px, Firebase falso. Mede contraste de texto (WCAG, fundo composto estimado), cores fixas e rolagem lateral, e salva prints em `/tmp/auditoria`. **0 erro de JS e 0 rolagem lateral** em todas as combinações; o problema é legibilidade, quase todo no claro (907 textos abaixo do mínimo só no claro × 154 no Vice).

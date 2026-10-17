@@ -19,7 +19,8 @@ const SCAN = () => {
   const ratio = (a, b) => { const l1 = lum(a), l2 = lum(b); return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); };
   const parse = s => { const m = s && s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
   const over = (top, bot) => { const a = top[3]; return [top[0] * a + bot[0] * (1 - a), top[1] * a + bot[1] * (1 - a), top[2] * a + bot[2] * (1 - a), 1]; };
-  const rootBg = parse(getComputedStyle(document.documentElement).getPropertyValue('--deep').trim().startsWith('#') ? hexRgb(getComputedStyle(document.documentElement).getPropertyValue('--deep').trim()) : getComputedStyle(document.body).backgroundColor) || [3, 13, 26, 1];
+  const oceanBg = (() => { const o = document.querySelector('.ocean'); const bi = o ? getComputedStyle(o).backgroundImage : ''; const cs = [...bi.matchAll(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g)]; if (!cs.length) return null; const u = cs[cs.length - 1]; return [+u[1], +u[2], +u[3], 1]; })();   // pior caso: a ÚLTIMA cor do degradê do fundo
+  const rootBg = oceanBg || parse(getComputedStyle(document.documentElement).getPropertyValue('--deep').trim().startsWith('#') ? hexRgb(getComputedStyle(document.documentElement).getPropertyValue('--deep').trim()) : getComputedStyle(document.body).backgroundColor) || [3, 13, 26, 1];
   function hexRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(x => x + x).join(''); return 'rgb(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ')'; }
   function bgOf(el) {   // fundo efetivo: compõe os fundos translúcidos dos ancestrais sobre o --deep
     const chain = []; let n = el, imagem = false;
