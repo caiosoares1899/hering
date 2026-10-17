@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Ecossistema: seção 🔥 Em destaque — Assistente Férias + Plantão de Bugs — 2026-10-17
+
+ecossistema.html ganhou a área 'Em destaque' (menu lateral + seção após o Resumo): como o Oceano se cuida durante as férias — Assistente Férias (6 abas, base local sem IA externa), Plantão de Bugs (ficha, vigia, validação sempre por ADM), busca automática do Antigravity, push de 'aguarda aprovação', travas de segurança e a situação de cada peça (produção × em ativação × aguardando deploy). Números medidos no repositório (46 testes do plantão, 5 funções, 10 estados); comando de conferência incluído na seção 14. Documento sem -dev: entra no ar no merge. Dica: não, é documentação.
+
 ### SÓ DEV — Cloud Functions passam para Node 22 (o Node 20 sai do ar em 30/10/2026) — 2026-10-17
 
 functions/package.json: engines.node 20 → 22; CI (checks.yml) também roda em Node 22. Os 911 testes de functions/ passam em Node 22. Aviso do Firebase CLI: o runtime Node.js 20 foi descontinuado em 30/04/2026 e será desativado em 30/10/2026, depois disso não dá para fazer deploy sem atualizar. A mudança só vale depois de reimplantar TODAS as funções (deploy geral). Dica: não, é infraestrutura.
