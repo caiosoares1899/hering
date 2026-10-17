@@ -12,6 +12,7 @@
  *   4. Referências nas docs .... entradas NOVAS de BUGS_E_CORRECOES.md (a partir de REFS_A_PARTIR_DE) só citam arquivos que existem
  *                                (nasceu de um caso real: entradas citando radar-dev.html / maredigital-dev.html, que não existem)
  *   6. Biblioteca .............. todo arquivo/pasta da RAIZ é citado em docs/BIBLIOTECA.md (o "bibliotecário" do repo) — raiz não vira bagunça
+ *   7. Mapa .................... docs/MAPA_DO_REPOSITORIO.md: bloco automático em dia (`node scripts/mapa.js`) e todo caminho da tabela "Por pasta" existe
  *
  * Os testes de functions/ (inclui as regras do banco) rodam à parte: `cd functions && npm test`.
  * Sai com código 1 se algo falhar; no GitHub Actions também emite anotações (::error) no PR.
@@ -172,12 +173,20 @@ function biblioteca() {
   ok.push(`Biblioteca: ${n} item(ns) da raiz descritos em ${arq}`);
 }
 
+// ── 7. Mapa do repositório: o bloco gerado (páginas × módulos, functions, nós do banco) e os caminhos citados têm que estar em dia ──
+function mapa() {
+  const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'mapa.js'), '--check'], { encoding: 'utf8' });
+  if (r.status !== 0) falha('Mapa', ((r.stderr || r.stdout || '').trim() || 'scripts/mapa.js --check falhou'), 'docs/MAPA_DO_REPOSITORIO.md');
+  else ok.push('Mapa do repositório: bloco automático em dia e caminhos conferidos');
+}
+
 jsonValidos();
 versoes();
 sintaxe();
 linhasVermelhas();
 referencias();
 biblioteca();
+mapa();
 
 for (const l of ok) console.log('✅', l);
 if (erros.length) {

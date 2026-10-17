@@ -64,7 +64,7 @@ letting them hit the error first.
 
 ## Key files and their roles
 
-- `docs/BIBLIOTECA.md` — **o "bibliotecário" do repo**: onde mora cada arquivo da raiz e de cada pasta, e por que as páginas/imagens/módulos ficam na raiz (URL do GitHub Pages = nome do arquivo). **Arquivo novo na raiz = linha nela** (`node scripts/checar.js` falha se faltar); screenshots/saídas de teste não vão pra raiz (`docs/capturas/`).
+- `docs/BIBLIOTECA.md` — **o "bibliotecário" do repo**: onde mora cada arquivo da raiz e de cada pasta, e por que as páginas/imagens/módulos ficam na raiz (URL do GitHub Pages = nome do arquivo). **Arquivo novo na raiz = linha nela** (`node scripts/checar.js` falha se faltar); screenshots/saídas de teste não vão pra raiz (`docs/capturas/`). Ao lado dele, `docs/MAPA_DO_REPOSITORIO.md` é **o mapa** (diagramas das relações páginas → módulos → Firebase → functions, dev → prod); o bloco "O que o código diz" é gerado por `node scripts/mapa.js` e a CI reprova se estiver velho — **mudou módulo de uma página, função exportada ou nó do banco → rode `node scripts/mapa.js` e commite**.
 
 - `docs/COORDENACAO_AGENTES.md` — **how the two agents share this repo**
   (Claude = big features/fixes, `functions/`, DB rules, shared modules;
