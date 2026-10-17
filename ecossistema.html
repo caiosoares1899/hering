@@ -209,6 +209,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="logo"><div class="logo-icon">🌊</div><div><div class="logo-text">Oceano</div><div class="logo-sub">Ecossistema · 17/10/2026</div></div></div>
   <div class="ng"><div class="ng-lbl">Visão geral</div>
     <a class="nl" onclick="goTo('resumo')"><span class="nd" style="background:var(--teal)"></span>⚡ Resumo para a TI</a>
+    <a class="nl" onclick="goTo('destaque')"><span class="nd" style="background:var(--orange)"></span>🔥 Em destaque</a>
     <a class="nl" onclick="goTo('produtos')"><span class="nd" style="background:var(--accent)"></span>🌊 O ecossistema</a>
     <a class="nl" onclick="goTo('arch')"><span class="nd" style="background:var(--cyan)"></span>🏗️ Arquitetura</a>
   </div>
@@ -285,6 +286,70 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 
   <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 17/10/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
+</section>
+
+<!-- ★ EM DESTAQUE -->
+<section class="section" id="destaque">
+  <div class="sh"><div class="sn">★</div><div>
+    <div class="stag" style="color:var(--orange)"><span style="background:var(--orange)"></span>Em destaque · hot feature</div>
+    <h2>🔥 O ecossistema se cuida sozinho: Assistente Férias + Plantão de Bugs</h2>
+    <p class="slead">De 16/10 a 03/11 o dono do sistema está de férias — 19 dias — e o Oceano continua atendendo: dúvida de usuário vira resposta na hora, bug vira ficha, correção em desenvolvimento e validação por um ADM. Sem pedir nada à TI, sem custo novo, sem dado pessoal chegando a quem corrige o código, e com um humano aprovando cada mudança.</p>
+  </div></div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kv">19</div><div class="kl">dias de férias cobertos<br><span>16/10 → 03/11/2026, plantão 24 h no Oceano</span></div></div>
+    <div class="kpi"><div class="kv">0</div><div class="kl">chamadas de IA externa no assistente e no servidor do plantão<br><span>base local (15 verbetes + FAQ da Ajuda) · plano gratuito do Firebase</span></div></div>
+    <div class="kpi"><div class="kv">5</div><div class="kl">Cloud Functions do plantão<br><span>ficha · vigia · busca do agente · webhook do GitHub · vigia de aprovação</span></div></div>
+    <div class="kpi"><div class="kv">46</div><div class="kl">testes automatizados do plantão<br><span>46 passam · incluem as travas de segurança</span></div></div>
+    <div class="kpi"><div class="kv">1</div><div class="kl">clique humano por correção<br><span>o comando único de git; a aprovação nunca é contornada</span></div></div>
+    <div class="kpi"><div class="kv">10</div><div class="kl">estados na vida de um bug<br><span>aguardando → … → validado → em produção (+ reprovado, escalado, duplicado)</span></div></div>
+  </div>
+
+  <div class="cl">O caminho de um bug, do relato à produção</div>
+  <div class="flow">
+    <span class="fb">🙋 pessoa relata no Oceano</span><span class="fa">→</span>
+    <span class="fb">🗂️ ficha + card na squad Dados</span><span class="fa">→</span>
+    <span class="fb t">🔔 ADMs avisados (sino + push)</span><span class="fa">→</span>
+    <span class="fb p">🤖 Antigravity busca o bug sozinho</span><span class="fa">→</span>
+    <span class="fb p">🛠️ corrige só o arquivo de dev + escreve o teste</span><span class="fa">→</span>
+    <span class="fb t">✋ push: "aguarda a sua aprovação"</span><span class="fa">→</span>
+    <span class="fb">🔀 PR de dev (1 clique)</span><span class="fa">→</span>
+    <span class="fb t">✅ ADM roda o teste e valida</span><span class="fa">→</span>
+    <span class="fb">🚀 promoção a produção + aviso a quem reportou</span>
+  </div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">🏖️</div><div class="wct">Assistente Férias do Caio (Oceano)</div></div><div class="wcb">Seis abas: <b>Perguntar (chat)</b>, <b>Reportar Bug</b>, <b>Socorro Rápido</b>, <b>Onde Paramos</b>, <b>Próximos Passos</b> e <b>Guia &amp; DevTools</b>. O chat responde por uma <b>base de conhecimento local</b> (15 verbetes + a FAQ da Ajuda do Oceano) — sem IA externa, sem custo por pergunta e sem texto de usuário saindo da empresa. Quem acha um erro anexa print (<code class="hl">Ctrl+V</code>), link do card e os erros do console, acompanha em <b>Meus chamados</b> e é avisado no sino quando o bug passa a <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido</b>.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🛟</div><div class="wct">Plantão de Bugs (Painel › Monitor)</div></div><div class="wcb">O relato vira uma <b>ficha</b> (<code class="hl">kanban/plantao</code>, legível e gravável só por ADM), duplicados são juntados, e os ADMs são avisados. Um <b>vigia</b> a cada 3 h (08–20 h) cobra bug parado; há <b>pausa geral</b> em um botão. A validação é sempre de um <b>ADM</b> — nunca de quem reportou (a tela recusa) e nunca do agente — e só funciona com <b>PR + script de teste</b> salvos na ficha.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🤖</div><div class="wct">O Antigravity pega o bug sozinho</div></div><div class="wcb">Uma função HTTP (<code class="hl">plantaoProximo</code>) entrega o próximo bug — 🔴 antes de 🟠 antes do resto — como texto puro, com <b>lease de 3 h</b> e <b>no máximo 3 entregas</b>. O que chega é um <b>pacote anônimo</b>: descrição e evidências, sem nome nem e-mail. Na 3ª reprovação o bug é <b>escalado</b> ao Claude, e o conserto dele também passa pela validação de um ADM.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">✋</div><div class="wct">Push quando o agente espera por um humano</div></div><div class="wcb">O Antigravity corporativo pede aprovação para cada comando de terminal, e a regra não é contornada. Então, <b>antes</b> do comando único, ele avisa o servidor e o ADM recebe um push no celular: "aguarda a sua aprovação". Se travar antes de avisar, <code class="hl">plantaoTravado</code> (a cada 10 min) alerta quando um bug pego há 20 min+ ainda não virou PR. O push avisa; a aprovação continua dentro do aplicativo dele.</div></div>
+  </div>
+
+  <div class="cl">Travas de segurança (todas verificáveis no código)</div>
+  <div class="sg">
+    <div class="si ok"><span class="bdg ok-b">Privacidade</span><div class="si-t">Pacote anônimo</div><div class="si-d">Dados pessoais de quem reportou ficam só no card da squad e na ficha restrita a ADM. Quem corrige o código recebe descrição e evidências, nunca identidade. Sem Issue pública no GitHub.</div></div>
+    <div class="si ok"><span class="bdg ok-b">Integridade</span><div class="si-t">Webhook assinado</div><div class="si-d"><code class="hl">plantaoGithubWebhook</code> valida HMAC-SHA256 e só aceita <code class="hl">pull_request</code> deste repositório, de branch <code class="hl">antigravity/bug-*</code>, sem fork, aberta por pessoas autorizadas.</div></div>
+    <div class="si ok"><span class="bdg ok-b">Credencial</span><div class="si-t">Chave só na tarefa do agente</div><div class="si-d">A chave de leitura fica em Secret Manager e na tarefa agendada — nunca em arquivo, issue, PR ou commit. Vazou? Troca-se o secret e reimplanta-se uma função.</div></div>
+    <div class="si ok"><span class="bdg ok-b">Humano</span><div class="si-t">Ninguém aprova a si mesmo</div><div class="si-d">O agente não faz merge, não aprova e não promove a produção. A CI reprova workflow que reaja a issue ou comentário de terceiros. Cada passo fica no Git com o trailer <code class="hl">Agent:</code>.</div></div>
+  </div>
+
+  <div class="cl">Situação de cada peça (retrato de 17/10/2026)</div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Peça</th><th>Situação</th></tr></thead>
+    <tbody>
+      <tr><td>Assistente Férias, relato de bug, ficha, aviso aos ADMs, vigia</td><td><b>Em produção.</b> Teste ao vivo em 16/10: o aviso chegou aos 3 ADMs e a trava "quem reportou não valida" foi confirmada.</td></tr>
+      <tr><td>Busca automática do Antigravity + webhook da PR</td><td>Implementado e testado. <b>Em ativação</b>: exige duas chaves, o webhook no GitHub e a tarefa agendada — passos feitos pelo dono, com deploy manual.</td></tr>
+      <tr><td>Push de "aguardando aprovação" + vigia de 20 min</td><td>Implementado e mesclado na <code class="hl">main</code>; <b>aguarda deploy</b> das funções.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><b>Por que isso importa para a TI.</b> É um exemplo concreto do modelo defendido neste documento: automação assistida <b>sem abrir mão de aprovação humana</b>, com custo zero de IA nesta fase, nenhum acesso novo pedido à TI e trilha de auditoria completa em Git. Se a TI internalizar o ecossistema, este fluxo vai junto: o runbook descreve a operação de ponta a ponta e a pausa geral desliga tudo em um clique.</div>
+
+  <div class="ctas">
+    <a class="cta pri" href="oceano.html" target="_blank" rel="noopener">🌊 Abrir o Oceano (Assistente Férias) ↗</a>
+    <a class="cta" href="https://github.com/caiosoares1899/hering/blob/main/docs/PLANTAO_BUGS.md" target="_blank" rel="noopener">📖 Runbook do Plantão de Bugs ↗</a>
+    <a class="cta" href="https://github.com/caiosoares1899/hering/tree/main/functions/plantao" target="_blank" rel="noopener">🧪 Código e testes (functions/plantao) ↗</a>
+  </div>
 </section>
 
 <!-- 01 ECOSSISTEMA -->
@@ -861,6 +926,7 @@ cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 902
 <span class="cm"># 2 · o que está pendente de promoção, e a lista de funções</span>
 node .claude/skills/subirproprod/promover.js --status
 grep -n "^exports\." functions/index.js    <span class="cm"># 35 funções exportadas</span>
+node --test functions/plantao/__tests__/*.test.js   <span class="cm"># Plantão de Bugs: 46 testes</span>
 
 <span class="cm"># 3 · segurança: regras e quem não pode o quê</span>
 less database.rules.json                   <span class="cm"># 395 linhas</span>
