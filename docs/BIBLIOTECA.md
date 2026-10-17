@@ -109,6 +109,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `PLANTAO_BUGS.md` | Plantão de Bugs: fluxo, regras e runbook |
 | `changelog-archive-2026-07-a-09.md` | Histórico do CHANGELOG de jul–set/2026 |
 | `ideias/camiseta-brasil-black-friday.md` | Ideia guardada para depois das férias |
+| `ideias/dossie-concorrencia-2026-10.md` | Dossiê de concorrência do Antigravity, já triado — backlog pós-férias |
 
 ---
 
