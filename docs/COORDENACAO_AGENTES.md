@@ -112,6 +112,9 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | O quê | Dono | Onde está o desenho |
 |---|---|---|
 | 🎨 **Corrigir o tema claro do Painel e do Radar** (toast invisível, abas/botões com cor fixa, status como texto, aba ativa, dia de hoje do calendário) + ajustes menores no Vice City; só nos `-dev` | Claude | `docs/ideias/tema-claro-painel-radar-2026-10-17.md` — script de auditoria: `docs/arezzo/testes/auditoria_temas.js` |
+| 🗺️ **Mapa do repositório no GitHub** (`docs/MAPA_DO_REPOSITORIO.md`: árvore + relações, Mermaid) | Claude | `docs/ideias/amanha-18-10-mapa-repo-e-push-antigravity.md` §1 |
+| 🌊 **Resumo do mapa no `ecossistema.html` + botão que leva direto ao repositório** (e atualizar as tags: agora publicadas) | Claude | idem §2 |
+| 📲 **Push no celular do Caio quando o Antigravity "pedir" algo no tratamento de bugs** — ver se já chega (o plantão já avisa os ADMs) e cobrir as lacunas (escalar ao Claude, PR fora do plantão) | Claude (deploy: Caio) | idem §3 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
