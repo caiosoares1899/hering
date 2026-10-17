@@ -4,7 +4,12 @@ description: >-
   Sincroniza o CODE_MAP.md com o código de verdade — revalida cada âncora existente (linha certa, função ainda existe com esse nome), acha áreas funcionais novas sem seção própria, e atualiza o rodapé "Retrato do commit". Use sempre que o usuário pedir "atualiza o codemap", "atualiza o mapa do código", "sincroniza o CODE_MAP", "revisa o CODE_MAP.md", "roda o atualizarcodemap", "o mapa do código tá desatualizado", ou invocar /atualizarcodemap diretamente — mesmo que a frase não mencione "CODE_MAP.md" explicitamente (ex.: "confere se o índice do código ainda bate com a realidade"). Diferente do passo 8 do /subirproprod (que só confere o diff de UMA promoção específica) — esta é a auditoria PROFUNDA do arquivo inteiro.
 ---
 
-# Atualizar CODE_MAP — Maré Digital
+# Atualizar CODE_MAP — ecossistema Oceano
+
+> **Escopo (2026-10-17): todas as seções que o `CODE_MAP.md` tem hoje**, não só `kanban`: `kanban(-dev)`, `painel(-dev)`, `okr(-dev)`, `okr-apresentacao.slide.html`, `oceano(-dev)`, `escala(-dev)`, `intake(-dev)`, os módulos `mare-*(-dev).js` e `functions/` (inclui o registro de exports do `functions/index.js`). Nos passos abaixo, onde está `kanban-dev.html` leia "o arquivo da seção que está sendo revalidada".
+> - **Revalidação em lote:** rode `python3 .claude/skills/atualizarcodemap/revalidar_ancoras.py` (extrai nome+linha de cada âncora, re-grepa no arquivo certo e relata drift/sumidas) e **confira à mão os casos de 2+ nomes na mesma linha** (já houve números trocados). Depois `node scripts/mare-cli.js map` regenera o `CODE_MAP_FAST.md` e revalida o que for automático.
+> - **Pares:** confirme só a premissa de cada par (kanban × kanban-dev idênticos salvo versão/favicon/`force_logout_after`; `painel`/`painel-dev` divergem de verdade; os demais pares seguem o ciclo dev→prod). `.claude/skills/subirproprod/promover.js --status` mostra rapidamente o estado de todos.
+> - **Áreas novas:** `git log --oneline -30 -- kanban-dev.html painel-dev.html okr-dev.html oceano-dev.html escala-dev.html intake-dev.html mare-*-dev.js functions/` (não só kanban/painel/functions).
 
 O `CODE_MAP.md` é mantido à mão — o próprio arquivo já avisa no
 cabeçalho que os números de linha são "um retrato de um commit
@@ -67,7 +72,7 @@ sem `-a` reportar "binary file matches" e não mostrar nada.)
 ## Passo 3 — Acha áreas funcionais novas sem seção
 
 ```bash
-git log --oneline -30 -- kanban-dev.html painel.html functions/
+git log --oneline -30 -- kanban-dev.html painel-dev.html okr-dev.html oceano-dev.html escala-dev.html intake-dev.html 'mare-*-dev.js' functions/
 ```
 
 Consulte também as entradas recentes tanto em `CHANGELOG.md` (features e

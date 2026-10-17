@@ -59,7 +59,7 @@ Desde out/2026, novas features e grandes entregas ficam no `CHANGELOG.md`, enqua
 Diferente do `/gerarokr` (que prioriza só `## kanban.html (produção)`),
 aqui vale escopo AMPLO — reunião de squad cobre tudo que rolou, não só o
 que chegou em prod: `kanban.html`/`kanban-dev.html`, `painel.html`/
-`painel-dev.html`, `okr.html`/`okr-dev.html`, `oceano.html`/`oceano-dev.html`, `escala.html`/`escala-dev.html`, Cloud Functions (`functions/okr/`, Agente Ágil
+`painel-dev.html`, `okr.html`/`okr-dev.html`, `oceano.html`/`oceano-dev.html`, `escala.html`/`escala-dev.html`, `intake.html`/`intake-dev.html`, `okr-apresentacao.slide.html`, os módulos `mare-notif|dicas|metas|login|plantao(-dev).js`, Cloud Functions (`functions/okr/`, Agente Ágil
 Orquestrador, Spotify, etc.), `database.rules.json`. Filtra pela data nos dois arquivos:
 
 ```bash

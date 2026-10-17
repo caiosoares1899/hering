@@ -1,10 +1,12 @@
 ---
 name: monitorarbugs
 description: >-
-  Varre o código do Maré Digital (kanban.html/kanban-dev.html principalmente, e por extensão painel.html/painel-dev.html, functions/ e database.rules.json quando a área tocar lá) como um engenheiro de arquitetura revisando o próprio sistema — procura bugs reais, inconsistências entre caminhos que deveriam se comportar igual, e código que sobrou de refactors incompletos, e corrige o que for claro. Use sempre que o usuário pedir "monitora bugs", "roda o monitorarbugs", "varre o código", "procura inconsistências", "audita o código atrás de bugs", "revisa essa área do código", "dá uma conferida se tem bug", ou invocar /monitorarbugs diretamente — mesmo que a frase não diga "bug" explicitamente (ex.: "dá uma olhada nessa parte, quero saber se tem algo pra corrigir"). Diferente de /otimizaçãoderotina (que é sobre bytes/performance/mobile, não correção de comportamento) e de /atualizarhelpcontent (documentação, não código).
+  Varre o código de TODO o ecossistema Oceano (kanban, painel, okr/Radar, okr-apresentacao.slide, oceano, escala, intake, os módulos mare-*.js, functions/ e database.rules.json — sempre nos arquivos -dev) como um engenheiro de arquitetura revisando o próprio sistema — procura bugs reais, inconsistências entre caminhos que deveriam se comportar igual, e código que sobrou de refactors incompletos, e corrige o que for claro. Use sempre que o usuário pedir "monitora bugs", "roda o monitorarbugs", "varre o código", "procura inconsistências", "audita o código atrás de bugs", "revisa essa área do código", "dá uma conferida se tem bug", ou invocar /monitorarbugs diretamente — mesmo que a frase não diga "bug" explicitamente (ex.: "dá uma olhada nessa parte, quero saber se tem algo pra corrigir"). Diferente de /otimizaçãoderotina (que é sobre bytes/performance/mobile, não correção de comportamento) e de /atualizarhelpcontent (documentação, não código).
 ---
 
-# Monitorar Bugs — Maré Digital
+# Monitorar Bugs — ecossistema Oceano
+
+> **Escopo (2026-10-17): o ecossistema todo.** Os exemplos usam o `kanban-dev.html` (onde a skill nasceu), mas qualquer rodada pode cair em: `kanban-dev`, `painel-dev`, `okr-dev` (Radar), `okr-apresentacao.slide.html`, `oceano-dev`, `escala-dev`, `intake-dev`, `mare-notif|dicas|metas|login|plantao-dev.js`, `functions/` e `database.rules.json`. Mapa de onde está cada coisa: `docs/BIBLIOTECA.md`.
 
 Nasceu de uma revisão pedida direto pelo usuário na área de Supercards (2
 níveis: campanha → criativo → versão) logo depois dela ir ao ar — usando o
@@ -38,9 +40,7 @@ abordagem do zero a cada vez.
      kanban-dev.html`) — código fresco é o de maior risco;
   2. áreas que o "Histórico de achados" abaixo e o `BUGS_E_CORRECOES.md` ainda não cobrem;
   3. se nada se destacar, pergunta ao usuário qual área focar.
-- Arquivo padrão: `kanban-dev.html`. Estende pra `painel.html`/
-  `painel-dev.html`, `functions/`, `database.rules.json` só se a área
-  escopada morar lá ou o pedido for amplo o bastante pra justificar.
+- Arquivo padrão: `kanban-dev.html`, mas **num pedido genérico olhe o `git log` de TODOS os `-dev` e módulos** (`git log --oneline -20 -- '*-dev.html' 'mare-*-dev.js' functions/ database.rules.json`) — o código mais fresco costuma estar em outra página. Estende pra `functions/` e `database.rules.json` quando a área morar lá.
 
 ## Passo 1 — Reconstituir o entry point
 
@@ -127,6 +127,12 @@ Regras pro script:
 - Entregue o script COMPLETO e visível na resposta — nunca só um
   caminho de arquivo salvo em disco.
 - `console.table(linhas)` no final, nome do teste + ✅/❌ + detalhe.
+- **Outros apps e módulos (2026-10-17):**
+  - `okr-dev`, `oceano-dev`, `escala-dev`, `intake-dev` e `painel-dev` têm `<script type="module">` + `<script>` clássico como o kanban — o console avalia no escopo do clássico; o que está no módulo só aparece se a página expôs em `window._…`.
+  - **Módulos compartilhados são IIFE** que expõem `window.MareNotif`, `window.MareMetas`, `window.MareDicas`, `window.MareLogin`, `window.MarePlantao`: teste pela API pública (`MareNotif.TIPOS`, `MareDicas.gatilho(...)`…), nunca por variável interna.
+  - **`const` de topo não se reatribui:** se o teste precisa trocar um `const`/estado de módulo, faça a mutação segura com `try { … } finally { restaurar }` (padrão em `docs/GUIA_DE_CODIGO.md`), nunca deixando o estado alterado.
+  - **Valide o script antes de entregar:** `node scripts/mare-cli.js check-script --page <arquivo-dev.html> (--file <script.js> | --code "<js>")` pega referência a função inexistente (o caso `fmtDate`) sem precisar abrir o navegador.
+  - Teste em Playwright de verdade: `docs/arezzo/testes/` (`fakefb.js` + Chromium); o script de console em português continua obrigatório na resposta.
 
 ## Histórico de achados (não repetir análise já feita)
 

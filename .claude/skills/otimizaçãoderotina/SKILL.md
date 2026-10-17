@@ -1,10 +1,19 @@
 ---
 name: otimizaçãoderotina
 description: >-
-  Audita o código do Maré Digital (kanban.html/kanban-dev.html, e por extensão painel.html se pedido) em busca de oportunidades reais de otimização de bytes de download da PÁGINA, performance, mobile, E consumo de LEITURA do Firebase (query/fallback/tree completa) — sem alterar a arquitetura de página única self-contained do projeto. Use sempre que o usuário pedir para "otimizar o código", "revisar performance do board", "economizar bytes/download", "deixar o board mais rápido", "otimização para mobile", "revisar consumo do Firebase", "rotina de otimização", ou pedir pra rodar essa rotina de novo — mesmo que a frase não mencione "kanban" ou "bytes" explicitamente (ex.: "o board tá pesado", "dá uma olhada se tem gordura pra cortar no código", "nosso consumo de Firebase tá alto").
+  Audita o código de TODO o ecossistema Oceano (kanban, painel, okr/Radar, okr-apresentacao.slide, oceano, escala, intake e os módulos mare-*.js — cada par -dev/prod; por padrão o -dev) em busca de oportunidades reais de otimização de bytes de download da PÁGINA, performance, mobile, E consumo de LEITURA do Firebase (query/fallback/tree completa) — sem alterar a arquitetura de página única self-contained do projeto. Use sempre que o usuário pedir para "otimizar o código", "revisar performance do board", "economizar bytes/download", "deixar o board mais rápido", "otimização para mobile", "revisar consumo do Firebase", "rotina de otimização", ou pedir pra rodar essa rotina de novo — mesmo que a frase não mencione "kanban" ou "bytes" explicitamente (ex.: "o board tá pesado", "dá uma olhada se tem gordura pra cortar no código", "nosso consumo de Firebase tá alto").
 ---
 
-# Rotina de otimização — Maré Digital
+# Rotina de otimização — ecossistema Oceano
+
+> **Escopo (2026-10-17): o ecossistema todo, não só o `kanban`.** Os exemplos abaixo usam `kanban-dev.html` porque foi onde a skill nasceu — **rode cada passo para cada alvo** (um alvo por vez, na ordem de maior risco: kanban → painel → okr → oceano → escala → intake):
+- **Páginas com par dev/prod:** `kanban(-dev).html` (Maré), `painel(-dev).html`, `okr(-dev).html` (Radar), `oceano(-dev).html`, `escala(-dev).html`, `intake(-dev).html`.
+- **Sem par dev (entram no ar no merge):** `okr-apresentacao.slide.html`, `guia-okr.html`, `ecossistema.html`, `maredigital.html`, `onboarding*.html`.
+- **Módulos compartilhados (par `-dev`/prod, `?v=N` nas páginas):** `mare-notif`, `mare-dicas`, `mare-metas`, `mare-login`, `mare-plantao`.
+- Mapa completo de onde está cada coisa: `docs/BIBLIOTECA.md`.
+> - Trocar `kanban-dev.html` pelo arquivo do alvo em todos os comandos (`wc -c`, `grep -an '^<script'`, `data:image`, `setInterval`, `backdrop-filter`…). Páginas pequenas (escala/intake) costumam fechar os Passos 1–3 e 5–8 em segundos.
+> - **Passos 1–3 e 5–8 valem para os módulos `mare-*-dev.js` também** (bytes, timers, `backdrop-filter` dos CSS que eles injetam), lembrando que um módulo é baixado por várias páginas — peso nele multiplica.
+> - **Passo 4.1 (Firebase) tem um item a mais para o ecossistema:** *listeners duplicados entre página hospedeira e módulo.* Liste os `onValue`/`onChildAdded`/`get` do módulo (`mare-notif` lê `notif_feed`/`notif_feed_seen`/`notif_config`; `mare-metas`, `mare-dicas`, `mare-plantao` têm os seus) e confira se a página hospedeira (kanban, painel, okr, oceano) **não abre o mesmo nó de novo** — duas assinaturas do mesmo caminho = banda em dobro a cada reload. O mesmo vale para o Oceano hospedando outras páginas em iframe.
 
 Auditoria repetível de bytes/performance/mobile no `kanban.html` (produção)
 e `kanban-dev.html` (dev), criada depois de uma primeira rodada manual que
@@ -323,11 +332,9 @@ console.log('open:',o,'close:',c,'balanced:',o===c);
 
 Siga o processo já documentado no `CLAUDE.md` ("Release process"):
 
-1. Aplique a correção só no `kanban-dev.html` — **nunca edite
-   `kanban.html` diretamente**.
-2. Bump da versão: `<div class="version">` dentro do HTML + a chave
-   `kanban_dev` em `version.json`.
-3. Entrada nova em **`BUGS_E_CORRECOES.md`** (sob `## 🐛 Histórico de Bugs e Correções`, via `node scripts/mare-cli.js log --type bug ...`) para correções de query/leak/bytes redundantes — ou em **`CHANGELOG.md`** se for uma entrega/otimização estrutural grande — separando claramente **o que foi corrigido agora** de **grandes oportunidades sinalizadas mas não implementadas** (ex.: externalizar o script principal — sempre mencionar como recomendação futura que precisa de aprovação, nunca implementar de bandeja). Antes de editar queries Firebase, confira também a seção `## 🛡️ Armadilhas Conhecidas` de `BUGS_E_CORRECOES.md`.
+1. Aplique a correção só no arquivo `-dev` do alvo (`kanban-dev.html`, `painel-dev.html`, `okr-dev.html`, `oceano-dev.html`, `escala-dev.html`, `intake-dev.html`, `mare-*-dev.js`) — **nunca edite o de produção diretamente**.
+2. Bump da versão: `node scripts/mare-cli.js bump <alvo>` (versão do `<div class="version">`/`const VERSION` + chave `_dev` do `version.json` + `?v=N` dos módulos nas páginas). Antes de abrir o PR: `node scripts/checar.js` (versões × HTML, sintaxe das páginas, JSON) e, se mexeu em `functions/`, `cd functions && npm test`.
+3. Entrada nova em **`BUGS_E_CORRECOES.md`** (sob `## 🐛 Histórico de Bugs e Correções`, via `node scripts/mare-cli.js log --type bug ...` — cite arquivos com o caminho completo, o `checar.js` confere) para correções de query/leak/bytes redundantes — ou em **`CHANGELOG.md`** se for uma entrega/otimização estrutural grande — separando claramente **o que foi corrigido agora** de **grandes oportunidades sinalizadas mas não implementadas** (ex.: externalizar o script principal — sempre mencionar como recomendação futura que precisa de aprovação, nunca implementar de bandeja). Antes de editar queries Firebase, confira também a seção `## 🛡️ Armadilhas Conhecidas` de `BUGS_E_CORRECOES.md`.
 4. `git add` dos arquivos certos (inclusive qualquer asset novo extraído,
    tipo `favicon.png`).
 5. `git fetch origin main && git rebase origin/main` — o `main` deste
