@@ -180,6 +180,20 @@ function mapa() {
   else ok.push('Mapa do repositório: bloco automático em dia e caminhos conferidos');
 }
 
+// ── 8. Identidade de produção: a página de prod não pode carregar nada de dev (título "· Dev"/🧪, favicon/manifest/módulo -dev) ──
+// (v2.87 do Radar foi ao ar com o título "🧪 Radar · Oceano · Dev" porque a promoção normalizava o título para outro texto)
+function identidadeProd() {
+  const prods = fs.readdirSync(ROOT).filter((f) => /\.html$/.test(f) && !/-dev\.html$/.test(f) && existe(f.replace(/\.html$/, '-dev.html')));
+  for (const arq of prods) {
+    const html = lê(arq);
+    const t = html.match(/<title[^>]*>([^<]*)<\/title>/);
+    if (t && /(·\s*dev\b|🧪)/i.test(t[1])) falha('Identidade de produção', `${arq}: o <title> diz "${t[1]}" (marca de dev em página de produção)`, arq);
+    const head = html.split('</head>')[0];
+    for (const m of head.matchAll(/<(?:link|script)[^>]*(?:href|src)="([^"]*-dev[^"]*)"/g)) falha('Identidade de produção', `${arq}: o <head> aponta para "${m[1]}" (arquivo de dev em página de produção)`, arq);
+  }
+  ok.push(`Identidade de produção: ${prods.length} página(s) de prod sem título/favicon/módulo de dev`);
+}
+
 jsonValidos();
 versoes();
 sintaxe();
@@ -187,6 +201,7 @@ linhasVermelhas();
 referencias();
 biblioteca();
 mapa();
+identidadeProd();
 
 for (const l of ok) console.log('✅', l);
 if (erros.length) {
