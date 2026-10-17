@@ -63,7 +63,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-10-16 · Painel (`painel-dev.html`) — Layout desalinhado dos chips de Squad(s) Alvo no modal de Comunicados (`#comunicado-compose-ov`)
+### 2026-10-17 · Processo — `/subirproprod` promoveu só o `kanban` e esqueceu o `painel` (v5.80 ficou só em dev)
+- **Sintoma:** na promoção do kanban v8.30.875 o Caio notou que o Painel (mudança do Antigravity em Comunicados) não foi junto.
+- **Causa:** o `.claude/skills/subirproprod/promover.js` tratava o painel como `git-patch` — só imprimia um aviso, nunca promovia nem entrava na lista automática — e o `--status` do painel olhava apenas a *string de versão*, sem comparar conteúdo; a skill também não avisava de pares `-dev` sem alvo.
+- **Correção:** o script agora promove o painel por **merge de 3 vias** (base = `painel-dev.html` no commit da última promoção do painel; linha de versão neutralizada e reescrita), compara o conteúdo real no `--status`, corrige a falsa pendência do `mare-plantao` (o módulo de dev aponta para as páginas de dev; `copiaParaProd()` traduz na cópia — antes uma promoção automática teria levado os caminhos `-dev` para prod) e avisa de qualquer arquivo `-dev` da raiz sem alvo. `.claude/skills/subirproprod/SKILL.md`: o Passo 1 começa sempre por `--status` e só declara "prod em dia" com tudo EM DIA + cobertura ✔.
+
+### 2026-10-16 · Painel (`painel.html` v5.80 · PROD / `painel-dev.html`) — Layout desalinhado dos chips de Squad(s) Alvo no modal de Comunicados (`#comunicado-compose-ov`)
 
 - **Cenário concreto:** No modal `+ Novo Comunicado` (`#comunicado-compose-ov`), o seletor multi-squad (`#cc-squad-chips`, com 9 chips) havia sido colocado na coluna direita do grid `1fr 1fr` ao lado do campo `Tipo` (`#cc-tipo`), empilhando os 9 botões verticalmente na direita e deixando um grande espaço vazio abaixo de `Tipo` no lado esquerdo.
 - **Causa:** Ao substituir o `<select id="cc-squad">` antigo pelo container de múltiplos chips `#cc-squad-chips`, o elemento permaneceu preso na segunda coluna estreita do grid `1fr 1fr`.

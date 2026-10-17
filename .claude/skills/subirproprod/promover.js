@@ -9,7 +9,8 @@
  *
  * Uso:
  *   node .claude/skills/subirproprod/promover.js --status
- *     Mostra quais alvos têm diferenças pendentes entre -dev e prod (e lista os hunks).
+ *     Confere TODOS os pares (kanban, okr, oceano, escala, intake, painel e os mare-*.js), lista os hunks pendentes
+ *     e avisa se existir algum arquivo -dev na raiz sem alvo aqui. O painel é promovido por merge de 3 vias.
  *
  *   node .claude/skills/subirproprod/promover.js [alvos...]
  *     Promove os alvos informados (ex.: `kanban okr intake mare-notif`) ou, se
@@ -66,7 +67,7 @@ const TARGETS = {
     prod: 'painel.html',
     versionProdKey: 'painel',
     versionDevKey: 'painel_dev',
-    mode: 'git-patch', // painel-dev.html tem instrumentação de debug própria; promove via git diff desde a última versão prod
+    mode: 'merge3', // painel-dev.html tem instrumentação de debug própria: promove só o que mudou no dev desde a última promoção (merge de 3 vias)
   },
   'mare-notif': {
     dev: 'mare-notif-dev.js',
@@ -368,6 +369,13 @@ function promoteSyncTarget(targetKey) {
 /**
  * Valida a sintaxe JS de todos os blocos <script> de um arquivo HTML ou JS.
  */
+/** Módulos mare-*.js: o -dev aponta para páginas -dev e tem o nome no cabeçalho; a cópia de prod usa os nomes de prod. */
+function copiaParaProd(devRaw) {
+  return devRaw
+    .replace(/mare-(notif|dicas|metas|login|plantao)-dev\.js/g, 'mare-$1.js')
+    .replace(/(n\s*\+\s*')-dev(\.html')/g, '$1$2');
+}
+
 function validateSyntax(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   if (filePath.endsWith('.js')) {
@@ -422,6 +430,60 @@ function syncVersionJson(promotedTargets) {
   return updatedKeys;
 }
 
+
+/**
+ * Pares -dev/prod que existem na raiz mas não estão em TARGETS (a skill nunca os verificaria).
+ * Exceções conhecidas: arquivos de ambiente que não se promovem.
+ */
+const SEM_PROMOCAO = new Set(['oceano-dev.webmanifest']);
+function paresNaoCobertos() {
+  const cobertos = new Set(Object.values(TARGETS).flatMap(c => [c.dev, c.prod]));
+  const out = [];
+  for (const f of fs.readdirSync(ROOT)) {
+    const m = /^(.*)-dev(\.[a-z]+)$/.exec(f);
+    if (!m || cobertos.has(f) || SEM_PROMOCAO.has(f) || /\.(png|webmanifest|mp3)$/.test(f)) continue;   // ícones/manifestos de ambiente não se promovem
+    const prod = m[1] + m[2];
+    out.push(fs.existsSync(path.join(ROOT, prod)) ? `${f} ↔ ${prod}` : `${f} (sem par de produção)`);
+  }
+  return out;
+}
+
+/**
+ * Painel (merge de 3 vias): base = painel-dev.html no commit da última promoção do painel (o que já está em prod);
+ * mescla  prod + (dev − base). As linhas de versão são neutralizadas antes (a de prod fica a de prod) e reescritas depois.
+ * Devolve { pending, conflicts, merged }.
+ */
+function analisarPainel() {
+  const cfg = TARGETS.painel;
+  const prodPath = path.join(ROOT, cfg.prod);
+  const devPath = path.join(ROOT, cfg.dev);
+  const prod = fs.readFileSync(prodPath, 'utf8');
+  const dev = fs.readFileSync(devPath, 'utf8');
+  const sha = execFileSync('git', ['log', '-1', '--format=%H', '-G"painel":', '--', 'version.json'], { cwd: ROOT, encoding: 'utf8' }).trim();
+  if (!sha) throw new Error('não achei o commit da última promoção do painel (version.json)');
+  const base = execFileSync('git', ['show', `${sha}:${cfg.dev}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const verRe = /<div class="version">[^<]*<\/div>/;
+  const prodVerLine = (verRe.exec(prod) || [])[0];
+  if (!prodVerLine) throw new Error('painel.html sem <div class="version">');
+  const neutro = t => t.replace(verRe, prodVerLine);
+  const os = require('os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'painel3-'));
+  const fP = path.join(dir, 'prod.html'), fB = path.join(dir, 'base.html'), fD = path.join(dir, 'dev.html');
+  fs.writeFileSync(fP, prod); fs.writeFileSync(fB, neutro(base)); fs.writeFileSync(fD, neutro(dev));
+  let merged, conflicts = 0;
+  try {
+    merged = execFileSync('git', ['merge-file', '-p', fP, fB, fD], { encoding: 'utf8', maxBuffer: 1 << 28 });
+  } catch (e) {
+    if (typeof e.status === 'number' && e.status > 0 && e.stdout) { merged = e.stdout; conflicts = e.status; }
+    else throw e;
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+  const versionData = JSON.parse(fs.readFileSync(VERSION_FILE, 'utf8'));
+  const newVer = (versionData[cfg.versionDevKey] || '').replace(/-dev$/, '');
+  if (newVer) merged = merged.replace(verRe, `<div class="version">${newVer}</div>`);
+  return { pending: merged !== prod, conflicts, merged };
+}
+
 function main() {
   const args = process.argv.slice(2);
   const statusOnly = args.includes('--status') || args.includes('--check') || args.includes('--diff');
@@ -442,7 +504,7 @@ function main() {
         : '';
 
       if (cfg.mode === 'copy') {
-        const stripHeader = s => s.replace(/\r\n/g, '\n').replace(/^\/\*[\s\S]*?\*\/\s*/, '');
+        const stripHeader = s => copiaParaProd(s).replace(/\r\n/g, '\n').replace(/^\/\*[\s\S]*?\*\/\s*/, '');
         const same =
           stripHeader(fs.readFileSync(prodPath, 'utf8')) ===
           stripHeader(fs.readFileSync(devPath, 'utf8'));
@@ -460,11 +522,14 @@ function main() {
         for (const fh of info.featureHunks) {
           console.log(`    • Hunk prod L${fh.pStart} (${fh.pCount}) <-> dev L${fh.dStart} (${fh.dCount})`);
         }
-      } else if (cfg.mode === 'git-patch') {
-        const vMatch = versionData[cfg.versionProdKey] === (versionData[cfg.versionDevKey] || '').replace(/-dev$/, '');
-        console.log(`- ${key}${verInfo}: ${vMatch ? 'EM DIA (versões iguais)' : 'PENDENTE (versão dev à frente)'}`);
+      } else if (cfg.mode === 'merge3') {
+        const a = analisarPainel();
+        console.log(`- ${key}${verInfo}: ${a.conflicts ? `PENDENTE com ${a.conflicts} CONFLITO(S) — resolver à mão` : a.pending ? 'PENDENTE (merge de 3 vias limpo)' : 'EM DIA'}`);
       }
     }
+    const nc = paresNaoCobertos();
+    if (nc.length) console.log(`⚠ Pares -dev sem alvo no promover.js (a skill NÃO os confere): ${nc.join(', ')}`);
+    else console.log('✔ Cobertura: todo arquivo -dev da raiz tem alvo no promover.js.');
     return;
   }
 
@@ -485,7 +550,7 @@ function main() {
       const devPath = path.join(ROOT, cfg.dev);
       if (!fs.existsSync(prodPath) || !fs.existsSync(devPath)) continue;
       if (cfg.mode === 'copy') {
-        const stripHeader = s => s.replace(/\r\n/g, '\n').replace(/^\/\*[\s\S]*?\*\/\s*/, '');
+        const stripHeader = s => copiaParaProd(s).replace(/\r\n/g, '\n').replace(/^\/\*[\s\S]*?\*\/\s*/, '');
         if (
           stripHeader(fs.readFileSync(prodPath, 'utf8')) !==
           stripHeader(fs.readFileSync(devPath, 'utf8'))
@@ -500,6 +565,8 @@ function main() {
         if (info.featureHunks.length > 0 || info.versionOrAssetHunks.length > 0 || verDiff) {
           targetsToPromote.push(key);
         }
+      } else if (cfg.mode === 'merge3') {
+        if (analisarPainel().pending) targetsToPromote.push(key);
       }
     }
   }
@@ -519,7 +586,7 @@ function main() {
       const devRaw = fs.readFileSync(devPath, 'utf8');
       const prodHeaderMatch = /^\/\*[\s\S]*?\*\/\r?\n/.exec(prodRaw);
       const devBody = devRaw.replace(/^\/\*[\s\S]*?\*\/\r?\n/, '');
-      const merged = prodHeaderMatch ? prodHeaderMatch[0] + devBody : devRaw;
+      const merged = copiaParaProd(prodHeaderMatch ? prodHeaderMatch[0] + devBody : devRaw);
       fs.writeFileSync(prodPath, merged, 'utf8');
       const { scriptsChecked } = validateSyntax(prodPath);
       console.log(`✔ ${key}: sincronizado ${cfg.dev} -> ${cfg.prod} (cabeçalho de prod preservado, sintaxe OK, ${scriptsChecked} script)`);
@@ -536,10 +603,15 @@ function main() {
       console.log(
         `✔ ${key}: promovido ${cfg.dev} -> ${cfg.prod} (${featureCount} hunks de código, ${versionUpdates} hunks de versão/asset, ${after.envHunks.length} hunks de ambiente preservados, ${scriptsChecked} blocos <script> validados)`
       );
-    } else if (cfg.mode === 'git-patch') {
-      console.log(
-        `ℹ Para ${key} (${cfg.prod} diverge de ${cfg.dev} por instrumentação de debug): aplique os hunks guiado pelas âncoras do CHANGELOG.md + CODE_MAP.md.`
-      );
+    } else if (cfg.mode === 'merge3') {
+      const a = analisarPainel();
+      if (a.conflicts) {
+        console.error(`✖ ${key}: o merge de 3 vias teve ${a.conflicts} conflito(s) — nada foi gravado. Resolva à mão (git merge-file) e rode de novo.`);
+        process.exit(1);
+      }
+      fs.writeFileSync(prodPath, a.merged, 'utf8');
+      const { scriptsChecked } = validateSyntax(prodPath);
+      console.log(`✔ ${key}: promovido ${cfg.dev} -> ${cfg.prod} por merge de 3 vias (só o que mudou no dev desde a última promoção; ${scriptsChecked} blocos <script> validados)`);
     }
   }
 
@@ -547,6 +619,8 @@ function main() {
   if (updatedVer.length > 0) {
     console.log(`✔ version.json atualizado: ${updatedVer.join(', ')}`);
   }
+  const nc = paresNaoCobertos();
+  if (nc.length) console.log(`⚠ Pares -dev sem alvo no promover.js (NÃO conferidos): ${nc.join(', ')}`);
 }
 
 main();
