@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Plantão: push no celular quando o Antigravity aguarda aprovação (functions/, deploy do Caio) — 2026-10-17
+
+O Antigravity avisa o servidor antes do comando que pede o clique do ADM (plantaoProximo com aguardando=<id>) e os ADMs recebem push 'Antigravity aguarda a sua aprovação'; nova função plantaoTravado (a cada 10 min, 08–20h) avisa se um bug pego há 20 min+ não virou PR. Quem recebe pode ser restrito em kanban/config/plantao_aprovadores. O push avisa — a aprovação continua dentro do app do Antigravity. Dica: não, é fluxo interno do ADM. Deploy: firebase deploy --only functions:plantaoProximo,functions:plantaoTravado
+
 ### SÓ DEV — Automação Zero-Approval (`mare-cli.js ship` & `check-script`) + Suporte a `mare-plantao.js` — 2026-10-16
 
 - **`node scripts/mare-cli.js check-script` (`verifyConsoleTestScript`):** validador estático e de escopo para scripts de teste de console (`F12 → Console`) que verifica sintaxe JS (`vm.Script`), conformidade read-only (bloqueando `_set`/`_update`/`_remove`/`saveCard`), ausência de reatribuição de `const` globais da página (como `today` em `kanban-dev.html`) e existência real de todas as funções livres e IDs DOM chamados no script contra o arquivo `-dev.html` e seus módulos compartilhados (prevenindo erros como `ReferenceError: fmtDate is not defined`, Linha Vermelha #4).

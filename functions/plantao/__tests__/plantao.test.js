@@ -130,3 +130,34 @@ test('vigia: Antigravity parou de buscar (> 2h) com bug esperando → avisa os A
   const semBug = db({ plantao: { v: ficha({ estado: 'validado' }) }, plantao_status: { agenteVistoEm: AGORA.getTime() - h(9) } });
   assert.equal((await rodarVigia({ db: semBug, agora: AGORA, log: quieto })).avisados, 0, 'sem bug esperando, não há o que buscar');
 });
+
+// ── 🤖 plantaoTravado: pegou o bug, 20 min depois nada de PR → avisa o(s) aprovador(es) ──
+const { rodarTravado } = require('../plantao');
+const emAn = (o) => Object.assign({ estado: 'em_analise', entregaEm: AGORA.getTime() - 25 * 60000, entregas: 1, impacto: '🟠 Atrapalha muito', resumo: 'Salvar não responde', cardId: 'c_ferias_1', criadoEm: 1, atualizadoEm: 1 }, o || {});
+
+test('travado: em análise há 25 min sem PR → 1 aviso por entrega para os ADMs (com card); rodar de novo não repete', async () => {
+  const d = db({ plantao: { b1: emAn() } });
+  const r = await rodarTravado({ db: d, agora: AGORA, log: quieto });
+  assert.deepEqual([r.travados, r.avisados], [1, 2]);
+  const n = dados(d).usuarios.adm1.notificacoes.plantao_travado_b1_1;
+  assert.equal(n.type, 'plantao_bug'); assert.equal(n.cardId, 'c_ferias_1'); assert.match(n.sub, /esperando a sua aprovação/);
+  assert.equal((await rodarTravado({ db: d, agora: AGORA, log: quieto })).avisados, 0);
+});
+
+test('travado: não avisa se pegou há < 20 min, se já abriu PR (outro estado), se passou de 6 h (caso do vigia), ou se o Antigravity já pediu a aprovação nesta entrega', async () => {
+  const d = db({ plantao: {
+    novo: emAn({ entregaEm: AGORA.getTime() - 10 * 60000 }), comPr: emAn({ estado: 'pr_aberto' }), velho: emAn({ entregaEm: AGORA.getTime() - 7 * 3600000 }),
+    jaPediu: emAn({ aprovacaoEntrega: 1 }),
+  } });
+  const r = await rodarTravado({ db: d, agora: AGORA, log: quieto });
+  assert.equal(r.avisados, 0); assert.equal(dados(d).usuarios.adm1.notificacoes, undefined);
+});
+
+test('travado: respeita aprovadores, a pausa geral e o horário (só 08–20h de Brasília)', async () => {
+  const a = db({ plantao: { b1: emAn() }, config: { plantao_aprovadores: { adm1: true } } });
+  await rodarTravado({ db: a, agora: AGORA, log: quieto });
+  assert.ok(dados(a).usuarios.adm1.notificacoes); assert.equal(dados(a).usuarios.adm2.notificacoes, undefined);
+  assert.equal((await rodarTravado({ db: db({ plantao: { b1: emAn() }, config: { plantao_ativo: false } }), agora: AGORA, log: quieto })).pulou, 'desligado');
+  const noite = new Date('2026-10-20T23:30:00Z');   // 20:30 em Brasília
+  assert.equal((await rodarTravado({ db: db({ plantao: { b1: emAn({ entregaEm: noite.getTime() - 25 * 60000 }) } }), agora: noite, log: quieto })).pulou, 'fora_do_horario');
+});

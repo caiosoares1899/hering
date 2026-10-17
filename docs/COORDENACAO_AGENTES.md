@@ -114,7 +114,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | 🎨 **Corrigir o tema claro do Painel e do Radar** (toast invisível, abas/botões com cor fixa, status como texto, aba ativa, dia de hoje do calendário) + ajustes menores no Vice City; só nos `-dev` | Claude | `docs/ideias/tema-claro-painel-radar-2026-10-17.md` — script de auditoria: `docs/arezzo/testes/auditoria_temas.js` |
 | ✅ (17→18/10, PR aberto) 🗺️ **Mapa do repositório no GitHub** (`docs/MAPA_DO_REPOSITORIO.md`: árvore + relações, Mermaid) | Claude | `docs/ideias/amanha-18-10-mapa-repo-e-push-antigravity.md` §1 |
 | ✅ (PR aberto) 🌊 **Resumo do mapa no `ecossistema.html` + botão que leva direto ao repositório** (e atualizar as tags: agora publicadas) | Claude | idem §2 |
-| 📲 **Push no celular do Caio quando o Antigravity "pedir" algo no tratamento de bugs** — ver se já chega (o plantão já avisa os ADMs) e cobrir as lacunas (escalar ao Claude, PR fora do plantão) | Claude (deploy: Caio) | idem §3 |
+| ✅ (PR aberto) 📲 **Push no celular do Caio quando o Antigravity fica esperando aprovação** — o Antigravity avisa antes do comando (`plantaoProximo…&aguardando=<id>&etapa=ship`) + vigia `plantaoTravado` (20 min sem PR). O push avisa; a aprovação continua dentro do app do Antigravity | Claude (deploy: Caio) | `docs/PLANTAO_BUGS.md` › "Aviso de aprovação" |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
@@ -138,6 +138,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Pendente de deploy (só o Caio roda)
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | **Plantão: aviso de aprovação no celular** — `plantaoProximo` (aviso `&aguardando=`) e nova `plantaoTravado` (a cada 10 min). Opcional: `kanban/config/plantao_aprovadores/{uid}=true` para restringir quem recebe. | `firebase deploy --only functions:plantaoProximo,functions:plantaoTravado` | 2026-10-18 |
 | Claude | **Plantão: comentário de correção no card** — ficha ganha `prTitulo`/`prResumo` (regras) e o webhook da PR passa a gravá-los. | `firebase deploy --only database` e `firebase deploy --only functions:plantaoGithubWebhook` (depois do resync; `--project hering-onboarding --account caio.soares@ciahering.com.br`) | 16/10 |
 | Claude | **Plantão automático (PR4):** 2 secrets (`PLANTAO_AGENTE_KEY`, `PLANTAO_WEBHOOK_SECRET`), `--only database` (nós `plantao_status` e campos novos da ficha), `--only functions:plantaoProximo,functions:plantaoGithubWebhook,functions:plantaoVigia`, webhook no GitHub e a tarefa agendada do Antigravity — passo a passo em `docs/PLANTAO_BUGS.md` ("Modo automático"). | ver o runbook | 16/10 |
 | Claude | **Plantão (PR2) — functions ✅ implantadas e confirmadas em 16/10 (aviso chegou aos ADMs); confirmar também o `--only database`:** regras do nó `kanban/plantao` (só ADM) + funções `plantaoBugNovo`/`plantaoVigia` + `sendPushOnNotification` (tipo `plantao_bug`). **Antes: confirmar que André e Alisson têm `role: adm`** (ver `docs/PLANTAO_BUGS.md`). | `firebase deploy --only database ...` e `firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:sendPushOnNotification ...` (depois do resync do clone) | 16/10 |
