@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.874</div>
+<div class="version">v8.30.875</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -29683,7 +29683,9 @@ function _applyBoardPrefsGlobal(){
   boardCardDensity = _boardPrefsGlobal.card_density || 'normal';
   _applyBoardCardDensity();
 }
-const ATALHO_RESERVADOS = new Set(['mod+k','mod+d','mod+s','mod+z','mod+c','mod+v','mod+x','mod+a','mod+f','mod+p','mod+r','mod+t','mod+w','mod+n','f1','f3','f5','f6','f7','f11','f12']);
+const ATALHO_RESERVADOS = new Set(['mod+k','mod+d','mod+s','mod+z','mod+c','mod+v','mod+x','mod+a','mod+f','mod+p','mod+r','mod+t','mod+w','mod+n','f1','f3','f5','f6','f7','f11','f12',
+  // o navegador pega ANTES da página (nunca chegam ao handler): abas/janelas anônimas, troca de aba e fechar janela
+  'mod+shift+n','mod+shift+t','mod+shift+w','mod+tab','mod+shift+tab','mod+pageup','mod+pagedown','alt+f4','mod+shift+i','mod+shift+j','mod+shift+c']);
 let _atalhosCustom = {};
 let _atalhoCapturando = null; // id da ação em modo "aperte a tecla" agora, ou null
 let _atalhosTab = 'global'; // 🗂️ Board (global) ou 📇 Modal do card (card)
@@ -29729,14 +29731,15 @@ function renderAtalhosBody(){
       <div style="font-size:12.5px;color:var(--txt);">${def.label}</div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         <span style="font-size:11px;font-family:monospace;background:rgba(var(--surface2-rgb),.8);padding:3px 8px;border-radius:6px;color:${combo?'var(--txt)':'var(--txt3)'};min-width:34px;text-align:center;">${capturando?'…':_atalhoComboLabel(combo)}</span>
-        <button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;" onclick="_atalhoIniciarCaptura(${jsq(id)})" onkeydown="_atalhoCapturaKeydown(event,${jsq(id)})" title="${capturando?'Aperte a combinação desejada (Esc cancela)':'Definir atalho'}">${capturando?'Aperte a tecla…':'Definir'}</button>
+        <button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;" data-atalho-id="${esc(id)}" onclick="_atalhoIniciarCaptura(${jsq(id)})" onkeydown="_atalhoCapturaKeydown(event,${jsq(id)})" title="${capturando?'Aperte a combinação desejada (Esc cancela)':'Definir atalho'}">${capturando?'Aperte a tecla…':'Definir'}</button>
         ${combo?`<button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;color:var(--danger);" onclick="_atalhoLimpar(${jsq(id)})" title="Remover este atalho">✕</button>`:''}
       </div>
     </div>`;
   }).join('');
   body.innerHTML = rows || '<div style="font-size:11px;color:var(--txt3);">Nenhuma ação disponível pra personalizar neste squad.</div>';
   if(_atalhoCapturando){
-    document.querySelector(`[onclick="_atalhoIniciarCaptura(${jsq(_atalhoCapturando)})"]`)?.focus();
+    // (2026-10-16) achava o botão pelo texto do onclick, mas desde o jsq() (XSS, 05/10) o atributo guarda aspas escapadas e o seletor nunca casava: o foco ia pro BODY e a tecla não chegava no botão "armado".
+    document.querySelector(`#atalhos-body [data-atalho-id="${CSS.escape(_atalhoCapturando)}"]`)?.focus();
   }
 }
 function _atalhoIniciarCaptura(id){

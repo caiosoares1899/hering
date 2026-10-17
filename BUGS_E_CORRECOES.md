@@ -69,7 +69,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Causa:** Ao substituir o `<select id="cc-squad">` antigo pelo container de múltiplos chips `#cc-squad-chips`, o elemento permaneceu preso na segunda coluna estreita do grid `1fr 1fr`.
 - **Correção (`painel-dev.html` L2544–2566, L8158–8176):** Os selects de linha única (`Tipo` `#cc-tipo` e `Quem recebe` `#cc-publico`) foram agrupados lado a lado no mesmo grid `1fr 1fr` superior (ambos com 38px de altura), e o bloco `Squad(s) alvo` (`#cc-squad-chips`) passou a ocupar uma linha própria com 100% da largura do modal em grade responsiva (`grid-template-columns: repeat(auto-fill, minmax(142px, 1fr))`), distribuindo os chips horizontalmente em 3 colunas uniformes de ponta a ponta.
 
-### 2026-10-16 · kanban-dev.html (v8.30.875-dev) — criar atalho de teclado não funcionava: clicar em Definir e apertar a combinação não gravava nada
+### 2026-10-16 · kanban.html (v8.30.875 · PROD) / kanban-dev.html (v8.30.875-dev) — criar atalho de teclado não funcionava: clicar em Definir e apertar a combinação não gravava nada
 
 - **Sintoma:** em ⌨️ Atalhos, clicar em *Definir* e apertar a combinação não gravava o atalho (reportado pelo Caio em 16/10).
 - **Causa:** `renderAtalhosBody()` devolvia o foco ao botão "armado" procurando-o por `[onclick="_atalhoIniciarCaptura(${jsq(id)})"]`. Desde a correção de XSS de 05/10 (#1171) o `onclick` passou a guardar o id via `jsq()` (aspas escapadas em `&quot;`), e esse seletor, montado como texto, nunca casava. O foco ia para o `<body>` e a tecla não chegava ao `onkeydown` do botão. Existe o mesmo código em `kanban.html` (produção).
