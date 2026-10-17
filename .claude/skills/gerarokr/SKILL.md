@@ -79,7 +79,7 @@ rodada — não é uma data fixa). Se o usuário pedir um período diferente
 ("desde a última rodada", "do mês inteiro"), usa esse.
 
 Fontes, nesta ordem de prioridade:
-1. **`CHANGELOG.md` (seção `## kanban.html (produção)`) e `BUGS_E_CORRECOES.md` (seção `## 🐛 Histórico de Bugs e Correções`)** — são as duas fontes principais (desde out/2026, features e grandes entregas ficam no `CHANGELOG.md` e correções de bugs/incidentes/rodadas de `/monitorarbugs` ficam em `BUGS_E_CORRECOES.md`). Filtra pelas datas do período em ambos os arquivos.
+1. **`CHANGELOG.md` (todas as entradas do período — kanban, painel, okr, oceano, escala, intake, módulos `mare-*`, functions) e `BUGS_E_CORRECOES.md` (seção `## 🐛 Histórico de Bugs e Correções`)** — são as duas fontes principais (desde out/2026, features e grandes entregas ficam no `CHANGELOG.md` e correções de bugs/incidentes/rodadas de `/monitorarbugs` ficam em `BUGS_E_CORRECOES.md`). Filtra pelas datas do período em ambos os arquivos (`grep -n "^##" CHANGELOG.md BUGS_E_CORRECOES.md | grep -E "<regex-das-datas>"`) — **o que conta como "concluído" é o que está marcado `(PROD)`** ou em seção de produção; `(SÓ DEV)` entra como "em andamento".
 2. **`CHANGELOG.md`, seção `## kanban-dev.html (ambiente de teste)`** —
    usa pra achar detalhe/contexto por trás de uma entrada de prod que
    ficou vaga, ou pra pegar trabalho que já está pronto em dev mas ainda
@@ -107,12 +107,18 @@ maioria merge/PR) é grande demais pra ler 1 a 1 — não tenta.
 ## Passo 2 — Separar por objetivo e curar em até 7 marcos
 
 Os 2 objetivos ativos hoje:
-- **Maré Digital** — tudo que é geral do board/painel: UI, mobile,
-  Automações, Firebase/custo/banda, bugs de dado, features de
-  produtividade que não são especificamente sobre o agente de IA.
+- **Maré Digital (= o Ecossistema Oceano inteiro)** — tudo que é geral do
+  board/painel: UI, mobile, Automações, Firebase/custo/banda, bugs de dado,
+  features de produtividade que não são especificamente sobre o agente de IA
+  — **e também** o que entrou nos demais produtos da família: **Oceano**
+  (lobby, Mural, login único), **Radar** (OKR: `okr.html`, apresentação,
+  Data Studio), **Metas** (`mare-metas.js`, "O mar tá pra peixe"), **Escala**,
+  **Intake/Pedido**, **Plantão de Bugs**, sino único e Dicas. Em texto de
+  slide use os nomes visíveis (Radar, Oceano…), nunca nome de arquivo.
 - **Agente Ágil** — tudo que é especificamente sobre o orquestrador
   (`functions/agente-agil-orquestrador/`), ferramentas do agente,
-  Agentes Externos/Agentes de IA, Histórico do Agente, roadmap do agente.
+  Agentes Externos/Agentes de IA, Histórico do Agente, roadmap do agente —
+  **inclui o Agente Estrategista do Radar** (`okrAgenteChat`, `functions/okr/`).
 
 Se surgir um 3º pilar/objetivo (novo slide no molde), pergunta ao usuário
 antes de inventar nome/objetivo/responsável pra ele.

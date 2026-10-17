@@ -1,10 +1,21 @@
 ---
 name: atualizarhelpcontent
 description: >-
-  Sincroniza a documentação in-app do Maré Digital (a Central de Ajuda "❓"/Ctrl+K, objeto `HELP_CONTENT` em kanban-dev.html, e o texto inline das telas de configuração) com o comportamento real de uma funcionalidade que acabou de mudar — ou audita tudo em busca de entradas desatualizadas. Use sempre que o usuário pedir para "atualiza o help content", "atualiza a central de ajuda", "sincroniza a documentação", "revisa a ajuda do board", "a documentação tá desatualizada", "roda a rotina de help content", ou perguntar algo como "atualizou o help content também?" depois de uma feature/fix — mesmo que a frase não mencione "HELP_CONTENT" ou "Ctrl+K" explicitamente.
+  Sincroniza a documentação in-app de TODO o ecossistema Oceano — Maré (Central de Ajuda "❓"/Ctrl+K, `HELP_CONTENT` em kanban-dev.html + textos inline das telas), Radar (modal de ajuda do okr-dev.html + guia-okr.html), Oceano (`FAQ` do oceano-dev.html) e as Dicas (`CATALOGO` do mare-dicas-dev.js) com o comportamento real de uma funcionalidade que acabou de mudar — ou audita tudo em busca de entradas desatualizadas. Use sempre que o usuário pedir para "atualiza o help content", "atualiza a central de ajuda", "sincroniza a documentação", "revisa a ajuda do board", "a documentação tá desatualizada", "roda a rotina de help content", ou perguntar algo como "atualizou o help content também?" depois de uma feature/fix — mesmo que a frase não mencione "HELP_CONTENT" ou "Ctrl+K" explicitamente.
 ---
 
-# Atualizar Help Content — Maré Digital
+# Atualizar Help Content — ecossistema Oceano
+
+> **Escopo (2026-10-17): 4 frentes de ajuda in-app.** Toda mudança visível pede a ajuda do(s) app(s) onde ela aparece — não só a do Maré. Os Passos 1–6 abaixo descrevem a frente do Maré em detalhe (onde a skill nasceu); as outras seguem o mesmo método (achar a entrada → conferir o texto inline → escrever no tom vizinho → checar sintaxe → release) nos lugares abaixo:
+>
+> | Frente | Onde mora | Observações |
+> |---|---|---|
+> | **Maré** (`kanban-dev.html`) | `HELP_CONTENT` + textos inline de ⚙ Configurações | Passos 1–6 abaixo |
+> | **Radar** (`okr-dev.html` + `guia-okr.html`) | modal `#okr-help-ov`, seções `#hlp-…` (`#hlp-agente`, `#hlp-datastudio`, `#hlp-editar`, `#hlp-atingimento`, `#hlp-apresentacao`…), FAQ e "O que eu posso fazer?" por papel | `guia-okr.html` é compartilhado (sem cópia dev) e seus prints envelhecem — refazer com `docs/arezzo/testes/gerar_prints_guia.js`, nunca editar o base64 à mão |
+> | **Oceano** (`oceano-dev.html`) | `const FAQ = [ {id,q,a} … ]` | **`id` único** — `mare-dicas` abre a pergunta por `#faq-<id>` ("Saiba mais"); id duplicado já quebrou o sino uma vez |
+> | **Dicas** (`mare-dicas-dev.js`) + **Painel/Escala/Intake** | `CATALOGO` (texto curto + `saiba`/`ajuda` apontando o tópico) e textos inline dessas telas | O Painel só *lista* as dicas (⚙ Configurações → 💡 Dicas); dica nova = 1 linha no `CATALOGO` |
+>
+> Ao fechar uma rodada: bump dos arquivos tocados com `node scripts/mare-cli.js bump <alvo>`, `node scripts/checar.js` e — se a Ajuda de **produção** mudou — regenerar o conhecimento do Agente Ágil (Passo 5.1).
 
 Rotina criada depois de um gap real: a funcionalidade de Supercard/fan-out
 mudou várias vezes numa mesma sessão (modelo do card pai, depois "vários
@@ -128,9 +139,8 @@ Mesmo processo do `CLAUDE.md` ("Release process") — texto de ajuda é
 conteúdo de `kanban-dev.html`, então segue as mesmas regras de qualquer
 outra mudança na página:
 
-1. Edite só `kanban-dev.html` — nunca `kanban.html` diretamente.
-2. Bump da versão: `<div class="version">` no HTML + a chave `kanban_dev`
-   em `version.json`.
+1. Edite só o arquivo `-dev` da frente (`kanban-dev.html`, `okr-dev.html`, `oceano-dev.html`, `mare-dicas-dev.js`…) — nunca o de produção diretamente.
+2. Bump da versão: `node scripts/mare-cli.js bump <alvo>` (versão no HTML + chave `_dev` do `version.json` + `?v=` dos módulos).
 3. Registro da mudança: se documentar uma feature nova ou revisão ampla,
    registre em `CHANGELOG.md`; se for correção pontual de texto/ajuda
    desatualizada, registre em `BUGS_E_CORRECOES.md`.
