@@ -122,8 +122,8 @@ function normalizeEnvLine(line) {
     .replace(/\b(kanban|painel|okr|oceano|escala|intake)_dev\b/g, '$1')
     .replace(/\b(kanban|painel|okr|oceano|escala|intake)-dev\b/g, '$1')
     .replace(/(v\d+\.\d+(?:\.\d+)?(?:\s*·\s*[a-z]+)?)-dev\b/g, '$1')
+    .replace(/<title>🧪\s*Radar\s*·\s*Oceano\s*·\s*Dev<\/title>/g, '<title>Radar · Oceano</title>')   // o título do Radar em prod é "Radar · Oceano" (sem emoji) — normalizar para outro texto fazia o título de dev vazar na promoção (v2.87)
     .replace(/\s*·\s*Dev<\/title>/g, '</title>')
-    .replace(/🧪\s*Radar\s*·\s*Oceano\s*·\s*Dev/g, '🎯 Radar · Oceano')
     .replace(/\s*<span class="devtag">dev<\/span>/gi, '');
 }
 

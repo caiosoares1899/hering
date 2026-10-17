@@ -110,9 +110,9 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
 | Maré Digital | `kanban.html` v8.30.875 | `kanban-dev.html` v8.30.875-dev | `mare-login` v3 · `mare-notif` v33 · `mare-metas` v16 · `mare-dicas` v5 |
-| Painel | `painel.html` v5.80 · painel | `painel-dev.html` v5.81 · painel-dev | `mare-notif` v33 · `mare-metas` v16 · `mare-plantao` v3 · `mare-dicas` v4 |
-| Radar | `okr.html` v2.89 · okr | `okr-dev.html` v2.90 · okr-dev | `mare-notif` v33 · `mare-dicas` v6 |
-| Oceano | `oceano.html` v1.52 · oceano | `oceano-dev.html` v1.53 · oceano-dev | `mare-login` v3 · `mare-notif` v33 · `mare-plantao` v3 · `mare-dicas` v5 · `mare-metas` v16 |
+| Painel | `painel.html` v5.82 · painel | `painel-dev.html` v5.82 · painel-dev | `mare-notif` v33 · `mare-metas` v16 · `mare-plantao` v3 · `mare-dicas` v4 |
+| Radar | `okr.html` v2.91 · okr | `okr-dev.html` v2.91 · okr-dev | `mare-notif` v33 · `mare-dicas` v6 |
+| Oceano | `oceano.html` v1.53 · oceano | `oceano-dev.html` v1.53 · oceano-dev | `mare-login` v3 · `mare-notif` v33 · `mare-plantao` v3 · `mare-dicas` v5 · `mare-metas` v16 |
 | Escala | `escala.html` v1.10 · escala | `escala-dev.html` v1.10 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
 

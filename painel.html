@@ -95,17 +95,48 @@
    rodadas de ajuste fino de contraste antes de fechar a paleta). Não é
    regressão, é o próximo passo natural desta feature. */
 :root[data-theme="light"]{
-  --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
-  --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#33D6D0;
-  --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
-  --warn:#F6B73C;--danger:#F15B6C;
+  --deep:#2f9bd0;--deep-rgb:47,155,208;--glass:rgba(255,255,255,0.66);--glass-b:rgba(0,124,168,0.30);
+  --blue:#0077AD;--accent:#005f8a;--cyan:#065670;--teal:#055f59;
+  --txt:#0B2436;--txt2:rgba(11,36,54,0.94);--txt3:rgba(11,36,54,0.74);
+  --warn:#8a5a00;--danger:#b3202f;
   --ink-rgb:251,253,255;--slate-rgb:235,245,250;
 }
 [data-theme="light"] .ocean{
   background:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),
              radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),
-             linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+             linear-gradient(175deg,#7fd0e8 0%,#2f9bd0 100%);
 }
+/* ═══ TEMA CLARO (Lençóis) — rodada de contraste de 18/10/2026 (auditoria: docs/ideias/tema-claro-painel-radar-2026-10-17.md) ═══
+   Achado: cor de status (--teal/--warn/--danger) era usada como TEXTO sobre vidro claro (1,0–1,8:1), o texto auxiliar (--txt2/--txt3)
+   ficava em ~2,8:1 e o aviso (toast) tinha texto escuro sobre fundo escuro. Em vez de caçar cada uso, os tokens do claro viram
+   "seguros para texto" (valores medidos contra o vidro claro) e o vidro fica um pouco mais firme; preenchimentos continuam legíveis. */
+[data-theme="light"] .toast{color:#e8f4fd;}   /* o toast é uma pílula escura nos dois temas: o texto tem que ser claro */
+[data-theme="light"] [style*="color:#ffd166"],[data-theme="light"] [style*="color:#ffd700"],[data-theme="light"] [style*="color:#ffb86b"],
+[data-theme="light"] [style*="color:#ff9f0a"],[data-theme="light"] [style*="color:#f97316"]{color:var(--warn) !important;}
+[data-theme="light"] [style*="color:#ff6b6b"]{color:var(--danger) !important;}
+[data-theme="light"] [style*="color:#38b6ff"],[data-theme="light"] [style*="color:#7eb3ff"]{color:var(--accent) !important;}
+[data-theme="light"] [style*="color:#d67fff"]{color:#6a2fa0 !important;}
+[data-theme="light"] .okr-cal-seg button.on,[data-theme="light"] .flow-win-btn.active,[data-theme="light"] .nc-chip.on{background:rgba(255,255,255,.9);color:var(--accent);}
+[data-theme="light"] .okr-online .online-ini{background:rgba(255,255,255,.9);}
+[data-theme="light"] .btn-p,[data-theme="light"] .save-btn,[data-theme="light"] .err-filter-btn.active{background:#1d56b0;border-color:#1d56b0;color:#fff;}   /* botão primário: azul sólido (o translúcido clareava e o branco ficava a 3,7:1) */
+[data-theme="light"] .dp-day.dp-sel{background:#38b6ff;}   /* dia escolhido: texto escuro precisa de fundo claro (o --accent do claro é escuro) */
+[data-theme="light"] .okr-avatar{background:#1d56b0;}
+[data-theme="vice"] [style*="color:#f97316"],[data-theme="vice"] [style*="color:#ffd166"]{color:var(--warn) !important;}
+/* superfícies que nasceram escuras (modais, painéis, menus): no claro viram "duna" (--ink-rgb) — antes o fundo escuro ficava com texto escuro e o título/rótulos sumiam */
+[data-theme="light"] .dp-pop,[data-theme="light"] .pg-switcher-dd,[data-theme="light"] .kr-picker,[data-theme="light"] .cfg-panel,[data-theme="light"] .cfg-hd,
+[data-theme="light"] .pev-modal,[data-theme="light"] .bs-modal,[data-theme="light"] .camp-panel,[data-theme="light"] .camp-cards-grid-panel,[data-theme="light"] .camp-edit-modal,
+[data-theme="light"] #painel-notif-drop,
+[data-theme="light"] [style*="background:rgba(6,18,36,.98)"],[data-theme="light"] [style*="background:rgba(6,18,36,.99)"],[data-theme="light"] [style*="background:rgba(8,22,42,.99)"],
+[data-theme="light"] [style*="background:rgba(6,26,46,.98)"]:not([style*="bottom:"]){background:rgba(var(--ink-rgb),.98) !important;}
+[data-theme="light"] .ptabs{background:rgba(var(--ink-rgb),.95);}
+[data-theme="light"] [style*="background:rgba(4,22,39,.97)"]{color:#e8f4fd !important;}   /* aviso de atualização: pílula escura nos dois temas */
+[data-theme="light"] [style*="background: rgba(6, 18, 36, 0.45)"]{background:rgba(255,255,255,.85) !important;}   /* selos de status pintados por JS com fundo escuro */
+[data-theme="light"] #firebase-status-pill,[data-theme="light"] #github-status-pill{background:rgba(255,255,255,.85) !important;}
+[data-theme="light"] .pcal-tab.on{color:var(--txt);}
+/* cores de status escritas por JS (style.color='#00c9a7' → "rgb(0, 201, 167)") e pelo módulo mare-plantao: no claro usam o teal/aviso/perigo seguros */
+[data-theme="light"] [style*="color: rgb(0, 201, 167)"],[data-theme="light"] [style*="color:#00c9a7"]{color:var(--teal) !important;}
+[data-theme="light"] [style*="color: rgb(110, 242, 165)"]{color:var(--teal) !important;}
+
 /* 🌴 Vice City — easter egg, mesma paleta/mecanismo do kanban-dev.html
    (piada com o trailer de GTA 6: céu lavanda, rosa/malva, horizonte
    pêssego/laranja, sombras em roxo-vinho — nunca azul-preto genérico).
@@ -117,9 +148,9 @@
    usam ficariam com o azul-marinho do tema escuro, destoando do resto. */
 :root[data-theme="vice"]{
   --deep:#2f1930;--deep-rgb:47,25,48;--glass:rgba(122,74,99,0.55);--glass-b:rgba(197,97,95,0.35);
-  --blue:#A084B0;--accent:#E59F7C;--cyan:#B36B6E;--teal:#9c6f8a;
-  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.72);--txt3:rgba(247,232,236,0.46);
-  --warn:#C9743F;--danger:#C5615F;
+  --blue:#A084B0;--accent:#E59F7C;--cyan:#e3a3a0;--teal:#d6a3c4;
+  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.82);--txt3:rgba(247,232,236,0.64);
+  --warn:#f0a36b;--danger:#f29a96;
   --ink-rgb:36,21,33;--slate-rgb:69,42,66;
 }
 [data-theme="vice"] .ocean{
@@ -823,11 +854,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .bs-modal{background:rgba(10,37,64,.97);border:1px solid rgba(56,182,255,.2);border-radius:14px;width:min(520px,95vw);max-height:92vh;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;}
 .bs-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(56,182,255,.12);flex-shrink:0;}
 .bs-title{font-family:"DM Sans",sans-serif;font-size:15px;font-weight:600;color:var(--txt);}
-.bs-close{background:none;border:none;color:rgba(200,230,255,.4);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;}
+.bs-close{background:none;border:none;color:var(--txt3);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;}
 .bs-close:hover{color:var(--txt);background:rgba(56,182,255,.1);}
 .bs-body{padding:20px;overflow-y:auto;flex:1;}
 .bs-field{margin-bottom:14px;}
-.bs-label{font-size:11px;color:rgba(200,230,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block;}
+.bs-label{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block;}
 .bs-inp{width:100%;background:rgba(var(--ink-rgb),.8);border:1px solid rgba(56,182,255,.2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:"DM Sans",sans-serif;outline:none;box-sizing:border-box;}
 .bs-inp:focus{border-color:var(--accent);}
 .bs-emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
@@ -838,12 +869,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .bs-color-opt.sel{border-color:white;}
 .bs-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid rgba(56,182,255,.1);flex-shrink:0;}
 .bs-existing{margin-bottom:16px;}
-.bs-existing-title{font-size:11px;color:rgba(200,230,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.bs-existing-title{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
 .bs-board-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(56,182,255,.05);border:1px solid rgba(56,182,255,.1);border-radius:8px;margin-bottom:6px;}
 .bs-board-icon{font-size:18px;width:28px;text-align:center;}
 .bs-board-info{flex:1;min-width:0;}
 .bs-board-name{font-size:13px;color:var(--txt);font-weight:600;}
-.bs-board-id{font-size:10px;color:rgba(200,230,255,.4);}
+.bs-board-id{font-size:10px;color:var(--txt3);}
 .bs-board-actions{display:flex;gap:6px;}
 .bs-del-btn{background:none;border:1px solid rgba(255,107,107,.3);color:rgba(255,107,107,.7);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;}
 .bs-del-btn:hover{background:rgba(255,107,107,.1);color:var(--danger);}
@@ -3061,7 +3092,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.80 · painel</div>
+<div class="version">v5.82 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3166,7 +3197,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 </script>
 <script src="mare-notif.js?v=33"></script>
 <script src="mare-metas.js?v=16"></script>
-<script src="mare-plantao.js?v=2"></script>
+<script src="mare-plantao.js?v=3"></script>
 <script src="mare-dicas.js?v=5"></script>
 
 <script>
@@ -13368,18 +13399,18 @@ function renderGlobalBackupStats(){
       <span style="font-size:18px;">${sq.icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:12px;font-weight:700;color:#e8f4fd;">${sq.label}</div>
-        <div style="font-size:10px;color:rgba(150,200,240,.6);">
+        <div style="font-size:10px;color:var(--txt3);">
           ${ativos.length} cards · ${done} concluídos · ${bloqueios>0?'<span style="color:#ff6b6b;">'+bloqueios+' bloqueios</span>':'0 bloqueios'}
         </div>
       </div>
-      <span style="font-size:10px;color:rgba(150,200,240,.4);">${(d.agilCfg?.sprintNum?'Sprint '+d.agilCfg.sprintNum:'sem sprint')}</span>
+      <span style="font-size:10px;color:var(--txt3);">${(d.agilCfg?.sprintNum?'Sprint '+d.agilCfg.sprintNum:'sem sprint')}</span>
     </div>`;
   }).join('') + (()=>{
     const lastManual = localStorage.getItem('gb_last_manual'); // só UI local, não é o mecanismo automático
     const lastAuto   = _gbCfgCache.lastRun;
     const total = SQUADS.reduce((a,sq)=>a+(squadData[sq.id]?.cards?.filter(c=>!c.archived)?.length||0),0);
-    return `<div style="font-size:11px;color:rgba(150,200,240,.5);padding:4px 0;">
-      Total: <strong style="color:rgba(200,230,255,.7);">${total} cards ativos</strong> em ${SQUADS.length} squads
+    return `<div style="font-size:11px;color:var(--txt3);padding:4px 0;">
+      Total: <strong style="color:var(--txt2);">${total} cards ativos</strong> em ${SQUADS.length} squads
       ${lastManual?' · Último manual: '+new Date(lastManual).toLocaleDateString('pt-BR'):''}
       ${lastAuto?' · Último auto: '+new Date(lastAuto).toLocaleDateString('pt-BR'):''}
     </div>`;
@@ -13598,7 +13629,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
   <div style="background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.18);border-radius:16px;width:min(580px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
     <div style="padding:14px 18px;border-bottom:1px solid rgba(56,182,255,.1);display:flex;align-items:center;justify-content:space-between;">
       <div style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;">💾 Backup Global — Todos os Squads</div>
-      <button onclick="closeGlobalBackup()" style="background:none;border:none;color:rgba(200,230,255,.5);cursor:pointer;font-size:18px;line-height:1;">✕</button>
+      <button onclick="closeGlobalBackup()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:18px;line-height:1;">✕</button>
     </div>
     <div style="padding:16px 18px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px;">
 
@@ -13658,9 +13689,9 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
           <button onclick="testGlobalBackupEmail()" class="btn" style="background:rgba(37,99,201,.6);border-color:rgba(37,99,201,.8);color:#fff;font-weight:700;">
             📤 Testar envio agora
           </button>
-          <span id="gb-auto-status" style="font-size:11px;color:rgba(150,200,240,.4);"></span>
+          <span id="gb-auto-status" style="font-size:11px;color:var(--txt3);"></span>
         </div>
-        <div id="gb-last-backup" style="font-size:10px;color:rgba(150,200,240,.35);margin-top:6px;"></div>
+        <div id="gb-last-backup" style="font-size:10px;color:var(--txt3);margin-top:6px;"></div>
       </div>
 
       <div style="background:rgba(37,99,201,.08);border:1px solid rgba(37,99,201,.2);border-radius:8px;padding:10px;font-size:10px;color:#7eb3ff;line-height:1.8;">
@@ -13694,7 +13725,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
         <div class="bs-existing-title" style="margin-bottom:12px;">Criar novo board</div>
 
         <div class="bs-field">
-          <label class="bs-label">ID do squad <span style="color:rgba(200,230,255,.35);font-size:10px;">(letras/números, sem espaços, ex: cx)</span></label>
+          <label class="bs-label">ID do squad <span style="color:var(--txt3);font-size:10px;">(letras/números, sem espaços, ex: cx)</span></label>
           <input class="bs-inp" id="bs-id" placeholder="ex: cx" maxlength="20"
             oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_-]/g,''); bsUpdatePreview();">
         </div>
