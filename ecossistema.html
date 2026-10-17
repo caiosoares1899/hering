@@ -264,7 +264,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="kpi"><div class="kv">35</div><div class="kl">Cloud Functions (gen2)<br><span>Node 20 · us-central1 · 117 arquivos de código</span></div></div>
     <div class="kpi"><div class="kv">899</div><div class="kl">testes automatizados<br><span>898 passam · 1 pulado · ~4 s</span></div></div>
     <div class="kpi"><div class="kv">468</div><div class="kl">tags de release<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
-    <div class="kpi"><div class="kv">10</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
+    <div class="kpi"><div class="kv">11</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
     <div class="kpi"><div class="kv">1475</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
   </div>
 
@@ -661,7 +661,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <p class="slead">Uma skill é um procedimento escrito, versionado e reutilizável. Elas guardam o método e a memória do projeto fora da cabeça de qualquer pessoa — ou agente.</p>
   </div></div>
 
-  <p class="wcb" style="margin-bottom:.6rem">As 10 skills vivem em <code class="hl">.claude/skills/</code>. O Antigravity aponta para a <b>mesma pasta</b> (<code class="hl">.agents/skills.json</code>), então os dois agentes seguem o mesmo procedimento — uma fonte, não duas cópias que divergem.</p>
+  <p class="wcb" style="margin-bottom:.6rem">As 11 skills vivem em <code class="hl">.claude/skills/</code>. O Antigravity aponta para a <b>mesma pasta</b> (<code class="hl">.agents/skills.json</code>), então os dois agentes seguem o mesmo procedimento — uma fonte, não duas cópias que divergem.</p>
   <div class="tbl-wrap"><table class="tbl prose">
     <thead><tr><th>Skill</th><th>O que faz</th><th>Trava / saída</th></tr></thead>
     <tbody>
@@ -673,6 +673,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>/atualizarcodemap</td><td>Revalida cada âncora do mapa de código e acha áreas novas sem seção.</td><td>Rodapé com o commit; histórico de 12+ rodadas.</td></tr>
       <tr><td>/atualizarhelpcontent</td><td>Mantém a Central de Ajuda in-app igual ao comportamento real.</td><td>Checa também o texto inline da tela.</td></tr>
       <tr><td>/otimizaçãoderotina</td><td>Bytes de página, performance mobile e — o que mais pesa — leitura do Firebase (query filtrada de verdade ou baixa a árvore?).</td><td>Nunca minifica nem quebra a arquitetura sem aprovação.</td></tr>
+      <tr><td>/melhoriauiux</td><td>Rodada de melhoria de UI/UX de uma tela (ou geral): audita renderizando a tela real em 2 tamanhos e 3 temas, classifica achados (bug × design × decisão de produto), corrige no <code class="hl">-dev</code> reaproveitando os componentes da casa. Acompanha o guia <code class="hl">docs/GUIA_UI_UX.md</code> ("como o Claude pensa fluxos, páginas e cores").</td><td>Só no <code class="hl">-dev</code>; mudança de métrica é decisão de produto; redesenho grande escala ao Claude.</td></tr>
       <tr><td>/resumosemanal · /gerarokr</td><td>Resumo da semana para a reunião da squad; prompt dos slides de planejamento estratégico.</td><td>Leem changelog <b>e</b> bugs.</td></tr>
     </tbody>
   </table></div>

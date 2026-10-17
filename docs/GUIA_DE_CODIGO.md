@@ -1,6 +1,6 @@
 # Guia de código — como escrever (e revisar) código neste repositório
 
-> Para **qualquer agente ou pessoa** que edite as páginas do Maré/Oceano/Radar/Painel, os módulos `mare-*.js` e `functions/`. Não repete as regras de processo do `CLAUDE.md` (dev-first, release, tags) — fala de **como o código é e onde ele costuma quebrar**. Cada item abaixo nasceu de um bug real registrado em `BUGS_E_CORRECOES.md` (leia a seção "🛡️ Armadilhas" antes de mexer em Firebase, login ou comentários).
+> Para **qualquer agente ou pessoa** que edite as páginas do Maré/Oceano/Radar/Painel, os módulos `mare-*.js` e `functions/`. Design e UX (cor, fluxo, páginas, mobile, tom de voz) estão em **`docs/GUIA_UI_UX.md`**. Não repete as regras de processo do `CLAUDE.md` (dev-first, release, tags) — fala de **como o código é e onde ele costuma quebrar**. Cada item abaixo nasceu de um bug real registrado em `BUGS_E_CORRECOES.md` (leia a seção "🛡️ Armadilhas" antes de mexer em Firebase, login ou comentários).
 
 ## 1. A base em 60 segundos (isso muda como você escreve)
 
