@@ -112,6 +112,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Ideia | Dono | Onde está o desenho |
 |---|---|---|
 | 👕 Camiseta Brasil que "ganha forma" conforme a meta da Black Friday (Oceano, enchimento + peças nos marcos de 20 %, modo telão) | Claude | `docs/ideias/camiseta-brasil-black-friday.md` — depende da arte oficial; Black Friday = 27/11 |
+| 🔬 Dossiê de concorrência do Antigravity (34 ideias): triagem em 4 levas — Radar (🧊 deriva, notas→Próximo Passo), Escala→Kanban, Digest do Painel, fluxo do Maré; Meus Pedidos e sino com adiar ficam com o Claude | Caio escolhe a ordem; Claude/Antigravity conforme a triagem | `docs/ideias/dossie-concorrencia-2026-10.md` — **nada roda antes de 04/11** |
 
 ### Escalado para o Claude
 | Quem achou | O que | Como reproduzir | Data |
