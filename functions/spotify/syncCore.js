@@ -1,7 +1,7 @@
 // functions/spotify/syncCore.js
 //
 // Lógica pura do sync do Spotify — sem nenhum import de firebase-functions,
-// só firebase-admin (via `db` injetado) e o fetch global do Node 20. Fica
+// só firebase-admin (via `db` injetado) e o fetch global do Node 22. Fica
 // separado de sync.js (o wrapper onSchedule) pelo mesmo motivo de
 // agente-agil/http.js vs. agente-agil/board.js: a parte testável com
 // node:test não deveria depender do runtime de Cloud Functions pra rodar.
