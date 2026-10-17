@@ -110,6 +110,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `changelog-archive-2026-07-a-09.md` | Histórico do CHANGELOG de jul–set/2026 |
 | `ideias/camiseta-brasil-black-friday.md` | Ideia guardada para depois das férias |
 | `ideias/dossie-concorrencia-2026-10.md` | Dossiê de concorrência do Antigravity, já triado — backlog pós-férias |
+| `ideias/tema-claro-painel-radar-2026-10-17.md` | Auditoria do tema claro/Vice no Painel e no Radar + plano de correção (18/10) |
 
 ---
 

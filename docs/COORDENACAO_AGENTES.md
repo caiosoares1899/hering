@@ -108,6 +108,11 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 |---|---|---|---|
 | — | — | — | — |
 
+### Para amanhã (18/10/2026) — combinado com o Caio
+| O quê | Dono | Onde está o desenho |
+|---|---|---|
+| 🎨 **Corrigir o tema claro do Painel e do Radar** (toast invisível, abas/botões com cor fixa, status como texto, aba ativa, dia de hoje do calendário) + ajustes menores no Vice City; só nos `-dev` | Claude | `docs/ideias/tema-claro-painel-radar-2026-10-17.md` — script de auditoria: `docs/arezzo/testes/auditoria_temas.js` |
+
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
 |---|---|---|
