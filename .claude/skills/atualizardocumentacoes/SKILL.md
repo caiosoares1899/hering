@@ -1,6 +1,6 @@
 ---
 name: atualizardocumentacoes
-description: Atualiza de ponta a ponta todas as documentações do ecossistema Oceano / Maré Digital (maredigital.html, HELP_CONTENT do kanban-dev.html, ajuda do okr-dev.html e guia-okr.html, FAQ de oceano-dev.html e docs/OCEANO.md, CHANGELOG.md, BUGS_E_CORRECOES.md, CODE_MAP.md + CODE_MAP_FAST.md e base de conhecimento do Agente Ágil). Usada tanto pelo Claude quanto pelo Antigravity (que delega aos subagentes de documentação respeitando o quadro de coordenação). Use sempre que o usuário pedir "atualiza as documentações", "roda o atualizardocumentacoes", "deixa a documentação em dia", "sincroniza docs/codemap/ajuda/maredigital", ou invocar /atualizardocumentacoes diretamente.
+description: Atualiza de ponta a ponta todas as documentações do ecossistema Oceano / Maré Digital (maredigital.html, ecossistema.html — o documento técnico para a TI —, HELP_CONTENT do kanban-dev.html, ajuda do okr-dev.html e guia-okr.html, FAQ de oceano-dev.html e docs/OCEANO.md, CHANGELOG.md, BUGS_E_CORRECOES.md, CODE_MAP.md + CODE_MAP_FAST.md e base de conhecimento do Agente Ágil). Usada tanto pelo Claude quanto pelo Antigravity (que delega aos subagentes de documentação respeitando o quadro de coordenação). Use sempre que o usuário pedir "atualiza as documentações", "roda o atualizardocumentacoes", "deixa a documentação em dia", "sincroniza docs/codemap/ajuda/maredigital", ou invocar /atualizardocumentacoes diretamente.
 ---
 
 # `/atualizardocumentacoes` — Sincronização Completa das Documentações (Claude + Antigravity)
@@ -36,9 +36,9 @@ Esta skill é compartilhada entre **Claude** e **Antigravity** para manter **tod
 
 ---
 
-## Os 7 Alvos da Documentação (Checklist Completo)
+## Os 8 Alvos da Documentação (Checklist Completo)
 
-Passe pelos 7 alvos abaixo. Se o usuário pediu `/atualizardocumentacoes` após uma entrega específica, atualize todos os alvos impactados por aquela entrega; se pediu uma revisão geral, audite todos frente às últimas entradas do `CHANGELOG.md` e `BUGS_E_CORRECOES.md`.
+Passe pelos 8 alvos abaixo (3 e 3-B são a documentação técnica). Se o usuário pediu `/atualizardocumentacoes` após uma entrega específica, atualize todos os alvos impactados por aquela entrega; se pediu uma revisão geral, audite todos frente às últimas entradas do `CHANGELOG.md` e `BUGS_E_CORRECOES.md`.
 
 ### 1. `CHANGELOG.md` e `BUGS_E_CORRECOES.md` (Histórico de Entregas vs. Bugs)
 - **`CHANGELOG.md`** — exclusivo para **novas funcionalidades (features)** e **grandes melhorias estruturais**:
@@ -57,12 +57,33 @@ Passe pelos 7 alvos abaixo. Se o usuário pediu `/atualizardocumentacoes` após 
   3. Rode `node scripts/mare-cli.js map` no passo final de terminal para recalcular automaticamente todos os números de linha (`Lxxxx`) em `CODE_MAP.md` e regenerar o `CODE_MAP_FAST.md`.
 - *(Para uma auditoria profunda de todas as âncoras do arquivo, consulte também a skill `.claude/skills/atualizarcodemap/SKILL.md`.)*
 
-### 3. `maredigital.html` e `ecossistema.html` (Documentação Técnica do Ecossistema)
-- `ecossistema.html` (criado em 16/10/2026 para a conversa com a TI) é a visão **técnica e de governança** do ecossistema Oceano: arquitetura, Google Cloud/conta corporativa, segurança, ambientes dev × prod, Agente Ágil e consumo de tokens, Claude × Antigravity, skills, subagentes, GitHub (PR, CI, auditoria), personalização por squad, riscos e caminho de internalização. **Cada número ali foi medido** — ao atualizar, refaça a medição (comandos na seção 14 da própria página: `node scripts/checar.js`, `cd functions && npm test`, `grep -n "^exports\." functions/index.js`, `git tag | wc -l`) e atualize o cabeçalho "Retrato de DD/MM/AAAA", os KPIs da seção 00, as versões da seção 01 e as listas de skills/subagentes. Nunca escreva afirmação que não aponte para um arquivo do repositório.
+### 3. `maredigital.html` (referência funcional do ecossistema)
 - `maredigital.html` é a referência **funcional detalhada** do Maré Digital, Radar, Oceano, Escala, Metas, Intake, Painel ADM e Agente Ágil.
 - Verifique e atualize:
   - **Cabeçalho/rodapé de versões e data de referência** (conferindo os valores reais em `version.json`).
-  - **Seções de funcionalidades por produto (em `maredigital.html`):** inclua as features recentes que já entraram no ecossistema (cards/tabelas de recursos do Maré, Radar, Oceano, Metas, Escala, Painel e Cloud Functions).
+  - **Seções de funcionalidades por produto:** inclua as features recentes que já entraram no ecossistema (cards/tabelas de recursos do Maré, Radar, Oceano, Metas, Escala, Painel e Cloud Functions).
+  - O banner/link para `ecossistema.html` no topo continua apontando para a página certa.
+
+### 3-B. `ecossistema.html` (documento técnico e de governança — o que a TI lê)
+`ecossistema.html` (criado em 16/10/2026 para a reunião com a TI de 30/10) é a visão **técnica e de governança** do ecossistema Oceano. **Não tem `-dev`: entra no ar no merge.** Cada número ali foi **medido no repositório** — ao atualizar, **refaça a medição** (não copie do texto anterior) e troque o cabeçalho "Retrato de DD/MM/AAAA" (pílula do topo e rodapé). Regra de ouro da página: **nunca escrever afirmação que não aponte para um arquivo do repositório.** Tom técnico e honesto, sem "vendedor".
+
+| Seção (`id`) | O que conferir | Como medir / fonte |
+|---|---|---|
+| `resumo` (KPIs) | funções exportadas, testes, regras, tags, nº de skills/subagentes | `grep -c "^exports\." functions/index.js` · `cd functions && npm test` (conte `# tests`) · `wc -l database.rules.json` · `git tag \| wc -l` · `ls .claude/skills \| wc -l` |
+| `produtos` | versões de cada produto e o que está em prod × só dev | `version.json` · `node .claude/skills/subirproprod/promover.js --status` |
+| `arch` | páginas e módulos `mare-*` (e o que usa cada um), funções e nós novos do banco | `docs/BIBLIOTECA.md` · `functions/index.js` · `database.rules.json` (nó novo no banco → também em `NOS_GLOBAIS` do backup) |
+| `google`, `seguranca` | contas/domínio, segredos, regras, backups (completo semanal + global diário + vigia) | `database.rules.json`, `storage.rules`, `functions/backup/`, `docs/arezzo/MARE_SO_HERING.md` |
+| `ambientes` | dev × prod: pares `-dev`, nós `_dev`, ciclo de promoção (a skill `/subirproprod` agora confere **todos** os pares) | `promover.js --status` · `CLAUDE.md` (Release process) |
+| `agente`, `agentes-dev` | modelos/roteamento, cache de prompt, limites, kill switch, ferramentas | `functions/agente-agil-orquestrador/` (README + constantes) — qualquer número de tokens/custo precisa de evidência no código |
+| `github` | política de PR, CI, linhas vermelhas, trilha `Agent:` | `.github/workflows/`, `scripts/checar.js` (agora também cobra a Biblioteca da raiz), `AGENTS.md`, `git log` |
+| `skills`, `subagentes` | lista **completa** de skills (hoje inclui `/melhoriauiux` e o guia `docs/GUIA_UI_UX.md`) e dos subagentes do Antigravity | `ls .claude/skills` · `.agents/` · `AGENTS.md` |
+| `squads` | personalização por squad (campos, colunas, automações, receitas) | `CODE_MAP.md` |
+| `operacao`, `riscos`, `internalizacao` | custo/monitores (VTEX, GitHub, Firebase), plantão de bugs, revisão automática das PRs do Antigravity, riscos e próximos passos | `docs/PLANTAO_BUGS.md`, `docs/COORDENACAO_AGENTES.md` (§4.1, Backlog) |
+| `auditar` (comandos) + tabela "Onde está cada documento" | os comandos ainda existem e os comentários com números batem; documento novo em `docs/` entra na tabela | rode os comandos da própria seção; `docs/BIBLIOTECA.md` |
+
+- **Sinal de drift conhecido (17/10):** a página citava 899 testes / 389 linhas de regras / 468 tags; as medições já eram 901–902 / 395 / 469+. Números envelhecem em dias — meça sempre.
+- Mudou algo que a TI vê (segurança, regras, backup, política de PR, novo produto)? Esta página entra **no mesmo PR** da mudança, não numa rodada posterior.
+- Link no Oceano: botão com `data-doc="ecossistema.html"` + `DOCS` em `oceano(-dev).html` — se renomear/mover a página, atualize os dois (e `maredigital.html`).
 
 ### 4. Central de Ajuda do Maré Digital (`HELP_CONTENT` em `kanban-dev.html`)
 - Localização: objeto `const HELP_CONTENT` em `kanban-dev.html` (consulte a linha exata em `CODE_MAP_FAST.md`) e textos inline das abas de `⚙ Configurações`.
