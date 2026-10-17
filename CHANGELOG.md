@@ -28,6 +28,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ecossistema.html ganhou a área 'Em destaque' (menu lateral + seção após o Resumo): como o Oceano se cuida durante as férias — Assistente Férias (6 abas, base local sem IA externa), Plantão de Bugs (ficha, vigia, validação sempre por ADM), busca automática do Antigravity, push de 'aguarda aprovação', travas de segurança e a situação de cada peça (produção × em ativação × aguardando deploy). Números medidos no repositório (46 testes do plantão, 5 funções, 10 estados); comando de conferência incluído na seção 14. Documento sem -dev: entra no ar no merge. Dica: não, é documentação.
 
+### SÓ DEV — Cloud Functions passam para Node 22 (o Node 20 sai do ar em 30/10/2026) — 2026-10-17
+
+functions/package.json: engines.node 20 → 22; CI (checks.yml) também roda em Node 22. Os 911 testes de functions/ passam em Node 22. Aviso do Firebase CLI: o runtime Node.js 20 foi descontinuado em 30/04/2026 e será desativado em 30/10/2026, depois disso não dá para fazer deploy sem atualizar. A mudança só vale depois de reimplantar TODAS as funções (deploy geral). Dica: não, é infraestrutura.
+
 ### SÓ DEV — Plantão: push no celular quando o Antigravity aguarda aprovação (functions/, deploy do Caio) — 2026-10-17
 
 O Antigravity avisa o servidor antes do comando que pede o clique do ADM (plantaoProximo com aguardando=<id>) e os ADMs recebem push 'Antigravity aguarda a sua aprovação'; nova função plantaoTravado (a cada 10 min, 08–20h) avisa se um bug pego há 20 min+ não virou PR. Quem recebe pode ser restrito em kanban/config/plantao_aprovadores. O push avisa — a aprovação continua dentro do app do Antigravity. Dica: não, é fluxo interno do ADM. Deploy: firebase deploy --only functions:plantaoProximo,functions:plantaoTravado

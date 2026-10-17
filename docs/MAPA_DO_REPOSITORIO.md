@@ -28,7 +28,7 @@ flowchart TB
     FCM["Cloud Messaging\n(push)"]
     STG["Cloud Storage\n(backups, anexos)"]
   end
-  CF["⚙️ Cloud Functions (Node 20)\nfunctions/ — deploy manual"]
+  CF["⚙️ Cloud Functions (Node 22)\nfunctions/ — deploy manual"]
   EXT["🌐 Serviços externos\nAPI da Anthropic (Agente Ágil)\nGoogle Calendar · Looker Studio\nstatus: VTEX · GitHub · Firebase"]
 
   P --> Pages

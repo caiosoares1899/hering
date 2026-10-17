@@ -249,7 +249,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <p class="hdesc">Documentação técnica do conjunto de aplicações internas que a Digital Hering construiu e opera: arquitetura, uso do Google Cloud e da conta corporativa, segurança, processo de engenharia (GitHub, CI, ambientes) e o trabalho com agentes de IA. Escrito para a equipe de TI avaliar — cada afirmação aponta para o arquivo do repositório que a comprova.</p>
   <div class="pills">
     <span class="pill pb">6 aplicações em produção</span>
-    <span class="pill pt">35 Cloud Functions · Node 20</span>
+    <span class="pill pt">35 Cloud Functions · Node 22</span>
     <span class="pill pw">902 testes automatizados</span>
     <span class="pill pp">Claude + Antigravity</span>
     <span class="pill po">Retrato de 17/10/2026</span>
@@ -272,7 +272,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
   <div class="kpis">
     <div class="kpi"><div class="kv">6</div><div class="kl">aplicações web em produção<br><span>Maré Digital · Painel · Radar · Oceano · Escala · Intake</span></div></div>
-    <div class="kpi"><div class="kv">35</div><div class="kl">Cloud Functions (gen2)<br><span>Node 20 · us-central1 · 117 arquivos de código</span></div></div>
+    <div class="kpi"><div class="kv">35</div><div class="kl">Cloud Functions (gen2)<br><span>Node 22 · us-central1 · 117 arquivos de código</span></div></div>
     <div class="kpi"><div class="kv">902</div><div class="kl">testes automatizados<br><span>901 passam · 1 pulado · ~4 s</span></div></div>
     <div class="kpi"><div class="kv">338</div><div class="kl">tags de release no GitHub<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
     <div class="kpi"><div class="kv">11</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
@@ -514,7 +514,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Firebase Auth (provedor Google)</td><td>Único método de login. Substituiu, em 08/10, a alternativa Microsoft/Arezzo, desligada por interruptor (<code class="hl">MARE_SO_HERING</code>) e documentada para religar.</td><td>Conta <code class="hl">@ciahering.com.br</code>. As regras do banco exigem e-mail do domínio <b>e</b> <code class="hl">sign_in_provider == 'google.com'</code>. Externos (visualizadores) só leem, por lista de autorizados (<code class="hl">painel_viewers</code>).</td></tr>
       <tr><td>Cliente OAuth web (Google Cloud Console)</td><td>Login direto em iPhone/iPad (<code class="hl">mare-login.js</code>), onde o popup do Firebase falha com "missing initial state".</td><td>Cada URL de página que usa o fluxo (<code class="hl">…/oceano.html</code>, <code class="hl">…/kanban.html</code> e os <code class="hl">-dev</code>) cadastrada em <i>URIs de redirecionamento autorizados</i>.</td></tr>
       <tr><td>Realtime Database</td><td>Todos os dados: cards, usuários, comentários, notificações, OKRs, metas, escala, plantão.</td><td>Projeto <code class="hl">hering-onboarding</code>. Regras em <code class="hl">database.rules.json</code> (espelho versionado do console), cobertas por testes (<code class="hl">functions/rules/__tests__</code>).</td></tr>
-      <tr><td>Cloud Functions gen2</td><td>Push, Agente Ágil, backups, lembretes de meta, monitores, plantão, intake.</td><td>Node 20, região <code class="hl">us-central1</code>, 35 exports em <code class="hl">functions/index.js</code> — cada um com seu comando de deploy documentado (<code class="hl">--only functions:nome</code>, nunca o deploy de tudo).</td></tr>
+      <tr><td>Cloud Functions gen2</td><td>Push, Agente Ágil, backups, lembretes de meta, monitores, plantão, intake.</td><td>Node 22, região <code class="hl">us-central1</code>, 35 exports em <code class="hl">functions/index.js</code> — cada um com seu comando de deploy documentado (<code class="hl">--only functions:nome</code>, nunca o deploy de tudo).</td></tr>
       <tr><td>Secret Manager</td><td>Chave da Anthropic e chaves do plantão.</td><td><code class="hl">defineSecret()</code> + <code class="hl">firebase functions:secrets:set</code>. Nunca em HTML, <code class="hl">localStorage</code> nem arquivo versionado.</td></tr>
       <tr><td>Cloud Storage</td><td>Backups (semanal do board; completo semanal; global diário) e anexos do Painel.</td><td>Pasta privada <code class="hl">backups-completos/</code>. Um vigia diário (<code class="hl">backupVigia</code>) avisa os ADMs se um backup falhar.</td></tr>
       <tr><td>Cloud Messaging (FCM)</td><td>Push web/mobile.</td><td>Service Worker <code class="hl">firebase-messaging-sw.js</code> na raiz do domínio.</td></tr>
@@ -896,8 +896,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Identidade</td><td>Google Workspace da empresa</td><td>Já corporativa. Definir papéis IAM por função e revisão periódica de acessos.</td><td>Baixo</td></tr>
       <tr><td>Projeto Google Cloud</td><td>Titularidade na conta de uma pessoa</td><td>Mover para a organização/pasta da empresa, faturamento corporativo, segundo administrador.</td><td>Baixo–médio</td></tr>
       <tr><td>Banco e regras</td><td>Realtime Database + 395 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
-      <tr><td>Backend</td><td>35 funções Node 20, deploy manual</td><td>Pipeline de deploy da TI (com aprovação humana), contas de serviço, logs no padrão da casa. O código é Node padrão; só os gatilhos de banco são específicos do Firebase.</td><td>Médio</td></tr>
-      <tr><td>CI/CD</td><td>GitHub Actions</td><td>Manter, ou espelhar <code class="hl">checar.js</code> + <code class="hl">npm test</code> na ferramenta da TI — ambos rodam em qualquer shell com Node 20.</td><td>Baixo</td></tr>
+      <tr><td>Backend</td><td>35 funções Node 22, deploy manual</td><td>Pipeline de deploy da TI (com aprovação humana), contas de serviço, logs no padrão da casa. O código é Node padrão; só os gatilhos de banco são específicos do Firebase.</td><td>Médio</td></tr>
+      <tr><td>CI/CD</td><td>GitHub Actions</td><td>Manter, ou espelhar <code class="hl">checar.js</code> + <code class="hl">npm test</code> na ferramenta da TI — ambos rodam em qualquer shell com Node 22.</td><td>Baixo</td></tr>
       <tr><td>IA em produção</td><td>Chave Anthropic no Secret Manager</td><td>Contrato e termos de dados sob gestão da TI; opção de passar por gateway/proxy interno; painel de consumo.</td><td>Médio</td></tr>
       <tr><td>Agentes de código</td><td>Claude Code + Antigravity corporativo</td><td>Definir política de uso (que dados entram em prompt), escopo de permissões e retenção de logs. As linhas vermelhas já documentadas são um ponto de partida.</td><td>Médio</td></tr>
       <tr><td>Dev separado</td><td>Mesmo banco para dev e prod</td><td>Segundo projeto Firebase para dev e cópia periódica de dados anonimizados.</td><td>Médio</td></tr>
@@ -918,7 +918,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 
   <div class="cl" id="auditar">Como conferir sozinho (15 minutos)</div>
-  <div class="code"><span class="cm"># 1 · clonar e rodar as verificações (Node 20)</span>
+  <div class="code"><span class="cm"># 1 · clonar e rodar as verificações (Node 22)</span>
 git clone https://github.com/caiosoares1899/hering &amp;&amp; cd hering
 node scripts/checar.js                     <span class="cm"># JSON, versões × HTML, sintaxe das 13 páginas, workflows, referências</span>
 cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 902 testes (901 passam, 1 pulado), inclui as regras do banco</span>

@@ -5,7 +5,7 @@
 // text, stopReason } — isso é o que permite os testes injetarem um cliente
 // 100% falso, sem rede, sem depender de nada daqui.
 //
-// Usa fetch() global (Node 20 já traz) direto em
+// Usa fetch() global (Node 22 já traz) direto em
 // https://api.anthropic.com/v1/messages, em vez do pacote @anthropic-ai/sdk,
 // pra não acrescentar dependência nova — functions/package.json hoje só tem
 // firebase-admin, firebase-functions, google-auth-library, zod e
