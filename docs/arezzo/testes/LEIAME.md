@@ -58,3 +58,4 @@ node docs/arezzo/testes/test_so_hering.js            # BASE=http://localhost:894
 Ajuste os caminhos `require('/opt/node22/lib/node_modules/playwright')` e `executablePath` pro seu ambiente.
 
 **Pra provar que religar funciona:** troque `window.MARE_SO_HERING = true` por `false` no `okr-dev.html`, rode as suítes antigas de torres/gerências/calendário (não versionadas; só existem nos históricos da sessão) e os testes de `functions/` com `MARE_MODO_TESTE=varias-torres` — na sessão de 2026-10-08 todas passaram nesse modo.
+- `auditoria_temas.js` — 🎨 auditoria de tema no Radar (6 telas) e no Painel (9 abas) × escuro/claro/Vice City × 1280/390: contraste de texto (WCAG), cores fixas, rolagem lateral, erros de JS e prints (`OUT=/tmp/auditoria`). Não é teste de pass/fail ainda — gera `resultado.json`; ver `docs/ideias/tema-claro-painel-radar-2026-10-17.md`.
