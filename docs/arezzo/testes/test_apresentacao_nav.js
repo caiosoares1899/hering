@@ -55,5 +55,5 @@ const seed=()=>({kanban:{okr:{
    t('ao esconder ao vivo o único Objetivo do slide atual, a apresentação não volta pra capa', jump.k!=='cover', jump);
    t('sem erro de JS', !errs.length, errs); await ctx.close(); }
  // visual das capas no modo só Hering
- { const {ctx,p}=await open(U('ana','Ana ADM')); await p.screenshot({path:'ap_capa.png'}); await p.evaluate(()=>_okrGoToKey('torre:digital')); await p.waitForTimeout(300); await p.screenshot({path:'ap_torre.png'}); await p.evaluate(()=>_okrGoToKey('ger:digital:tech')); await p.waitForTimeout(300); await p.screenshot({path:'ap_ger.png'}); await ctx.close(); }
+ { const {ctx,p}=await open(U('ana','Ana ADM')); await p.screenshot({path:'docs/capturas/ap_capa.png'}); await p.evaluate(()=>_okrGoToKey('torre:digital')); await p.waitForTimeout(300); await p.screenshot({path:'docs/capturas/ap_torre.png'}); await p.evaluate(()=>_okrGoToKey('ger:digital:tech')); await p.waitForTimeout(300); await p.screenshot({path:'docs/capturas/ap_ger.png'}); await ctx.close(); }
  await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();

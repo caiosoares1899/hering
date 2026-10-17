@@ -11,6 +11,7 @@
  *   3. Sintaxe das páginas ..... o maior <script> de cada página compila (equivale ao `node --check` que já usamos à mão)
  *   4. Referências nas docs .... entradas NOVAS de BUGS_E_CORRECOES.md (a partir de REFS_A_PARTIR_DE) só citam arquivos que existem
  *                                (nasceu de um caso real: entradas citando radar-dev.html / maredigital-dev.html, que não existem)
+ *   6. Biblioteca .............. todo arquivo/pasta da RAIZ é citado em docs/BIBLIOTECA.md (o "bibliotecário" do repo) — raiz não vira bagunça
  *
  * Os testes de functions/ (inclui as regras do banco) rodam à parte: `cd functions && npm test`.
  * Sai com código 1 se algo falhar; no GitHub Actions também emite anotações (::error) no PR.
@@ -149,11 +150,34 @@ function linhasVermelhas() {
   ok.push(`Linhas vermelhas: ${n} workflow(s) e ${PAGINAS.length} página(s) conferidos`);
 }
 
+// ── 6. Biblioteca: tudo que está na raiz tem que estar descrito em docs/BIBLIOTECA.md ──
+function biblioteca() {
+  const arq = 'docs/BIBLIOTECA.md';
+  if (!existe(arq)) { falha('Biblioteca', `${arq} não existe`, arq); return; }
+  const txt = lê(arq);
+  const git = spawnSync('git', ['ls-files', '--', ':!*/*'], { cwd: ROOT, encoding: 'utf8' });
+  let itens = git.status === 0
+    ? git.stdout.split('\n').filter(Boolean)
+    : fs.readdirSync(ROOT, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name);
+  itens = itens.concat(fs.readdirSync(ROOT, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name));
+  let n = 0;
+  for (const nome of new Set(itens)) {
+    if (nome.startsWith('.') || nome === 'node_modules') continue;   // dotfiles e pastas de ferramenta não são cobrados
+    // `mare-notif(-dev).js` cobre o par; aceita o nome exato, a forma com "(-dev)" ou a base entre crases
+    const par = /-dev\.[a-z]+$/.test(nome) ? nome.replace(/-dev(?=\.[a-z]+$)/, '(-dev)') : nome.replace(/(?=\.[a-z]+$)/, '(-dev)');
+    const base = nome.replace(/\.(html|js|webmanifest)$/, '');
+    if (txt.includes(nome) || txt.includes(par) || txt.includes('`' + base + '`') || txt.includes('`' + base + '/`')) { n++; continue; }
+    falha('Biblioteca', `"${nome}" está na raiz do repositório mas não aparece em ${arq} — descreva-o lá (ou, se for solto, mova-o para uma pasta de docs/)`, nome);
+  }
+  ok.push(`Biblioteca: ${n} item(ns) da raiz descritos em ${arq}`);
+}
+
 jsonValidos();
 versoes();
 sintaxe();
 linhasVermelhas();
 referencias();
+biblioteca();
 
 for (const l of ok) console.log('✅', l);
 if (erros.length) {

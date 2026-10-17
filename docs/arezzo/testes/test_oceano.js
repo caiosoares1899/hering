@@ -72,5 +72,5 @@ const PAGE=process.env.PAGE||'oceano-dev.html', D=/-dev/.test(PAGE)?'-dev':'';  
    await p.fill('#ajuda-busca','instalar'); const f=await p.evaluate(()=>[...document.querySelectorAll('#faq summary')].map(x=>x.textContent));
    t('movimento reduzido do sistema: peixinhos começam desligados', c.peixes===0 && c.ajuda>=8, c); t('busca da ajuda filtra', f.length>=1 && f.length<c.ajuda && f.some(x=>/instalo/i.test(x)), f); await ctx.close(); }
  // 8) celular
- { const {ctx,p,errs}=await open(U('ana','Ana Silva'),{w:390,h:844}); const r=await p.evaluate(()=>({sx:document.documentElement.scrollWidth>document.documentElement.clientWidth+1})); t('celular: sem rolagem lateral', !r.sx, r); await p.screenshot({path:process.env.SHOT||'oceano_m.png'}); t('sem erro de JS (celular)', !errs.length, errs); await ctx.close(); }
+ { const {ctx,p,errs}=await open(U('ana','Ana Silva'),{w:390,h:844}); const r=await p.evaluate(()=>({sx:document.documentElement.scrollWidth>document.documentElement.clientWidth+1})); t('celular: sem rolagem lateral', !r.sx, r); await p.screenshot({path:process.env.SHOT||'docs/capturas/oceano_m.png'}); t('sem erro de JS (celular)', !errs.length, errs); await ctx.close(); }
  await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();

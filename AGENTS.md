@@ -7,6 +7,7 @@
 > Este arquivo só guarda o que é específico do Antigravity; **não copie regras do `CLAUDE.md` para cá** (já divergiram uma vez).
 > Resumo do seu papel: monitoramento diário, pequenas features e correções localizadas (1 página), docs (`/atualizardocumentacoes`) e promoções rotineiras. Funções (`functions/`), regras do banco, módulos compartilhados e features grandes são do Claude — **escale pelo quadro**.
 > Todo commit leva o trailer `Agent: antigravity`; branches `antigravity/<assunto>`.
+> **Onde está cada coisa:** `docs/BIBLIOTECA.md`. Arquivo novo na **raiz** precisa de uma linha lá (a CI falha se faltar); capturas/saídas de teste vão para `docs/capturas/`, nunca para a raiz.
 
 - **Repositório local:** `C:\Users\caio.soares\.gemini\antigravity\scratch\hering` (remote: `https://github.com/caiosoares1899/hering.git`). Mesmo se nenhuma workspace estiver aberta na sessão, opere diretamente neste diretório.
 - **Execução Rápida sem Prompts Desnecessários (Política Corporativa):**

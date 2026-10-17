@@ -64,6 +64,8 @@ letting them hit the error first.
 
 ## Key files and their roles
 
+- `docs/BIBLIOTECA.md` — **o "bibliotecário" do repo**: onde mora cada arquivo da raiz e de cada pasta, e por que as páginas/imagens/módulos ficam na raiz (URL do GitHub Pages = nome do arquivo). **Arquivo novo na raiz = linha nela** (`node scripts/checar.js` falha se faltar); screenshots/saídas de teste não vão pra raiz (`docs/capturas/`).
+
 - `docs/COORDENACAO_AGENTES.md` — **how the two agents share this repo**
   (Claude = big features/fixes, `functions/`, DB rules, shared modules;
   Antigravity/Gemini = daily monitoring, small features/fixes, docs,
