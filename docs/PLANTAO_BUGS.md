@@ -72,6 +72,15 @@ ADM: abre a PR, roda o script no dev, ✅/❌ no painel 🛟  (❌ → o Antigra
 - `plantaoVigia`: agora também avisa se o Antigravity **parou de buscar** (> 2 h) com bug esperando (1×/dia; só depois do modo ser usado pela 1ª vez).
 - Painel › 🐛 Monitor › 🛟 Plantão de Bugs (ADM): o cabeçalho mostra "🤖 Antigravity buscou há X min".
 
+### ✋ Aviso de aprovação no celular (18/10/2026)
+
+O clique de aprovação só existe dentro do app do Antigravity — **o push avisa, mas não aprova**: ao receber, o Caio abre o Antigravity e clica.
+
+- **Antes do comando que pede aprovação**, o Antigravity chama `plantaoProximo?k=CHAVE&aguardando=<id>&etapa=ship` (`read_url_content`, sem aprovação; o texto entregue por `plantaoProximo` já instrui isso). O servidor manda a notificação **✋ Antigravity aguarda a sua aprovação** (tipo `plantao_bug`, sino + push, respeitando o 🔕 Não Perturbe e o interruptor da Central de Notificações). `etapa`: `ship` (comando único de git), `comando` (outro comando de terminal), `outro`; `&nota=` opcional (≤ 80 caracteres). Idempotente: 1 aviso por bug/entrega/etapa (sem id de bug, 1 por janela de 10 min). A ficha ganha `aprovacaoPedidaEm`/`aprovacaoEntrega`.
+- **Rede de segurança — `plantaoTravado`** (a cada 10 min, 08–20h de Brasília, respeita `plantao_ativo`): bug em `em_analise` pego há 20 min+ (até 6 h) sem PR e sem aviso de aprovação → **🤖 Antigravity pegou o bug e ainda não abriu a PR**. Cobre o caso de ele travar num pedido de permissão *antes* de conseguir avisar.
+- **Quem recebe:** todos os ADMs; para restringir, `kanban/config/plantao_aprovadores/{uid} = true` (só esses ADMs recebem). Sem esse nó, todos.
+- **Deploy** (resync do clone antes): `firebase deploy --only functions:plantaoProximo,functions:plantaoTravado --project hering-onboarding --account caio.soares@ciahering.com.br` — não precisa de `--only database` (`plantao_aprovadores` é lido por função, e `kanban/config` já é regra existente). A tarefa agendada do Antigravity **não precisa mudar**: o aviso vem da instrução entregue com o bug.
+
 ### Ligar (uma vez, só o Caio — Windows)
 
 1. **Duas chaves** (textos aleatórios longos; guarde só no cofre do Firebase e no passo 4):

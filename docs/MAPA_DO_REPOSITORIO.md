@@ -118,15 +118,15 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
-### Cloud Functions por pasta (35 exports em `functions/index.js`)
+### Cloud Functions por pasta (36 exports em `functions/index.js`)
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
 | `agente-agil-orquestrador/` | `agenteAgilMencao` · `agenteAgilMencaoDados` · `agenteAgilDueOverdueScan` · `agenteAgilResumoMeuDia` · `agenteAgilIntake` · `agenteAgilAnaliseDados` · `agenteAgilAnalisePO` |
 | `spotify/` | `spotifyOauthCallback` · `spotifyDisconnect` · `spotifySyncNow` · `spotifyPlayback` · `spotifyRadioOwnerCallback` · `spotifyRadioSearch` · `spotifyRadioSuggest` |
 | `backup/` | `weeklyBackup` · `backupCompletoSemanal` · `backupGlobalDiario` · `backupVigia` · `backupCompletoApi` |
+| `plantao/` | `plantaoBugNovo` · `plantaoVigia` · `plantaoProximo` · `plantaoGithubWebhook` · `plantaoTravado` |
 | `okr/` | `sendPushOnMural` · `okrDailyScan` · `okrWeeklySnapshot` · `okrAgenteChat` |
-| `plantao/` | `plantaoBugNovo` · `plantaoVigia` · `plantaoProximo` · `plantaoGithubWebhook` |
 | `agente-agil/` | `agenteAgil` |
 | `comentarios/` | `contarComentarios` |
 | `firebase/` | `firebaseStatus` |

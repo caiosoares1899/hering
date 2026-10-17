@@ -7,6 +7,9 @@
 //        • senão, avisa os ADMs (sino + push, tipo `plantao_bug`) — o aviso abre o card do bug na squad Dados.
 //   2. plantaoVigia — de 3 em 3 horas (só 08–20h de Brasília) avisa os ADMs de bug PARADO: aguardando há muito tempo (🔴 2h · 🟠 6h · resto 24h)
 //        ou em análise/PR/teste/escalado há mais de 24h. No máximo 1 aviso por bug por dia.
+//   3. plantaoTravado — de 10 em 10 min (08–20h): o Antigravity PEGOU o bug (em_analise) há 20+ min e a PR não abriu → avisa os APROVADORES ("pode estar
+//        esperando a sua aprovação"). É a rede de segurança do aviso explícito (agente.js: avisarAprovacao), que o próprio Antigravity dispara ANTES do comando
+//        único de git. Quem é "aprovador": kanban/config/plantao_aprovadores/{uid}=true; sem isso, todos os ADMs.
 // Chave geral: kanban/config/plantao_ativo = false pausa tudo (as duas funções saem sem fazer nada). Ausente = ligado.
 // Quem valida o conserto é SEMPRE um ADM (tela no Oceano → aba 🐛 Reportar Bug): a ficha guarda PR, script de teste, resultado e quem validou.
 const { onValueCreated } = require('firebase-functions/v2/database');
@@ -51,15 +54,23 @@ async function listarAdms(db) {
   return Object.keys(pubs).filter((uid) => pubs[uid] && pubs[uid].role === 'adm');
 }
 // Notifica todos os ADMs (id fixo = não duplica nem reabre uma já lida). Devolve quantos receberam.
-async function avisarAdms(db, { id, title, sub, cardId, agora }) {
+async function avisarAdms(db, { id, title, sub, cardId, agora, uids }) {
   let n = 0;
-  for (const uid of await listarAdms(db)) {
+  for (const uid of (uids ? (await listarAdms(db)).filter((u) => uids.includes(u)) : await listarAdms(db))) {
     const ref = db.ref(`kanban/usuarios/${uid}/notificacoes/${id}`);
     if ((await ref.get()).exists()) continue;
     await ref.set(Object.assign({ id, type: 'plantao_bug', title, sub: String(sub || '').slice(0, 280), squad: 'dados', read: false, ts: agora.toISOString() }, cardId ? { cardId } : {}));
     n++;
   }
   return n;
+}
+
+// Quem aprova no Antigravity: kanban/config/plantao_aprovadores/{uid}=true (só ADMs contam). Vazio/ausente = todos os ADMs.
+async function listarAprovadores(db) {
+  const adms = await listarAdms(db);
+  const cfg = (await db.ref('kanban/config/plantao_aprovadores').get()).val() || {};
+  const escolhidos = adms.filter((u) => cfg[u] === true);
+  return escolhidos.length ? escolhidos : adms;
 }
 
 // Mesmo cálculo de feriasCardIdBug (oceano-dev.html) — o teste cobre os dois formatos de entrada.
@@ -125,6 +136,29 @@ async function rodarVigia({ db, agora = new Date(), log = console }) {
   return { parados: parados.length, avisados };
 }
 
+const LIMITE_TRAVADO_MS = 20 * 60000;   // pegou o bug e, 20 min depois, nada de PR → provável aprovação pendente (ou trabalho longo: o aviso diz as duas coisas)
+
+// Bug "em análise" sem PR há 20+ min → aviso (1 por entrega). Só 08–20h de Brasília. Pula se o Antigravity já pediu a aprovação por conta própria.
+async function rodarTravado({ db, agora = new Date(), log = console }) {
+  if (!(await ativo(db))) return { pulou: 'desligado' };
+  const h = horaBr(agora);
+  if (h < 8 || h >= 20) return { pulou: 'fora_do_horario', hora: h };
+  const fichas = (await db.ref('kanban/plantao').get()).val() || {};
+  const aprovadores = await listarAprovadores(db);
+  let avisados = 0, travados = 0;
+  for (const [id, f] of Object.entries(fichas)) {
+    if (!f || f.estado !== 'em_analise' || !f.entregaEm) continue;
+    const parado = agora.getTime() - f.entregaEm;
+    if (parado < LIMITE_TRAVADO_MS || parado > 6 * 3600000) continue;     // passou de 6h: é caso do vigia (bug parado), não de aprovação pendente
+    travados++;
+    if (f.aprovacaoEntrega && f.aprovacaoEntrega === f.entregas) continue;   // ele mesmo já avisou nesta entrega
+    avisados += await avisarAdms(db, { id: `plantao_travado_${id}_${f.entregas || 1}`, title: '🤖 Antigravity pegou o bug e ainda não abriu a PR',
+      sub: `${Math.floor(parado / 60000)} min — pode estar esperando a sua aprovação no Antigravity (ou ainda trabalhando). ${f.impacto || ''}: ${String(f.resumo || '').slice(0, 110)}`, cardId: f.cardId, agora, uids: aprovadores });
+  }
+  if (travados) log.log(`[plantaoTravado] ${travados} bug(s) sem PR há 20+ min; ${avisados} aviso(s) novo(s).`);
+  return { travados, avisados };
+}
+
 exports.plantaoBugNovo = onValueCreated(
   { ref: '/kanban/feedback/{id}', region: 'us-central1', memory: '256MiB' },
   async (event) => { await processarBugNovo({ db: getDatabase(), id: event.params.id, bug: event.data.val() }); }
@@ -133,4 +167,8 @@ exports.plantaoVigia = onSchedule(
   { schedule: 'every 3 hours', timeZone: 'America/Sao_Paulo', region: 'us-central1', memory: '256MiB', timeoutSeconds: 60 },
   async () => { await rodarVigia({ db: getDatabase() }); }
 );
-Object.assign(exports, { processarBugNovo, rodarVigia, acharDuplicado, similaridade, avisarAdms, cardIdDoBug, ABERTOS, FIM });
+exports.plantaoTravado = onSchedule(
+  { schedule: 'every 10 minutes', timeZone: 'America/Sao_Paulo', region: 'us-central1', memory: '256MiB', timeoutSeconds: 60 },
+  async () => { await rodarTravado({ db: getDatabase() }); }
+);
+Object.assign(exports, { processarBugNovo, rodarVigia, rodarTravado, listarAprovadores, LIMITE_TRAVADO_MS, acharDuplicado, similaridade, avisarAdms, cardIdDoBug, ABERTOS, FIM });

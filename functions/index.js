@@ -227,6 +227,10 @@ exports.plantaoVigia = require('./plantao/plantao').plantaoVigia;
 //   firebase deploy --only functions:plantaoProximo,functions:plantaoGithubWebhook,functions:plantaoVigia
 exports.plantaoProximo = require('./plantao/agente').plantaoProximo;
 exports.plantaoGithubWebhook = require('./plantao/webhook').plantaoGithubWebhook;
+// ✋ Aviso de aprovação (18/10/2026): o Antigravity chama `plantaoProximo?...&aguardando=<id>&etapa=ship` antes do comando que pede o clique do Caio → push no
+// celular dos ADMs (ou só de quem estiver em kanban/config/plantao_aprovadores); `plantaoTravado` (a cada 10 min, 08–20h) avisa se um bug pego há 20 min+ não virou PR.
+// Deploy isolado (tipo `plantao_bug` já está no PUSH_TYPES): firebase deploy --only functions:plantaoProximo,functions:plantaoTravado
+exports.plantaoTravado = require('./plantao/plantao').plantaoTravado;
 
 // API da tela "🛟 Backup completo (nuvem)" do Maré (Config → Backup): lista/compara/restaura SÓ o que sumiu (comentários, config, intake, subtimes,
 // kudos) a partir do backup completo — HTTP + Bearer idToken, só ADM/PO/Organizador do squad (functions/backup/restaurarApi.js). Deploy isolado:
