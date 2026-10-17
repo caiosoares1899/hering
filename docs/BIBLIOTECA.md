@@ -94,7 +94,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `docs/imagens-antigas/` | Ícones que nenhuma página usa mais (versões antigas do Painel) |
 | `docs/ideias/` · `docs/demo/` | Ideias guardadas para depois · scripts de demonstração |
 | `functions/` | **Cloud Functions** (Node 20). `index.js` registra todas; cada subpasta é uma área (`agente-agil-orquestrador/`, `backup/`, `plantao/`, `okr/`, `metas/`, `spotify/`, `rules/` = testes das regras…). Único projeto Node do repo |
-| `scripts/` | `checar.js` (checagens que a CI roda) e `mare-cli.js` (`status`/`bump`/`log`/`map`/`ship`…) |
+| `scripts/` | `checar.js` (checagens que a CI roda), `mare-cli.js` (`status`/`bump`/`log`/`map`/`ship`…) e `mapa.js` (gera o bloco automático do mapa) |
 | `vendor/firebase-10.14.1/` | SDK do Firebase servido localmente (o FortiGate da Hering bloqueia o CDN) |
 | `.claude/skills/` | Skills do Claude/Antigravity (`/subirproprod`, `/monitorarbugs`, `/seatualizar`, `/plantaobug`…) |
 | `.agents/` | Regras e lista de skills do Antigravity |
@@ -103,6 +103,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 ### Índice de `docs/`
 | Documento | Assunto |
 |---|---|
+| `MAPA_DO_REPOSITORIO.md` | **O mapa**: como as peças se encaixam (diagramas), por pasta e as tabelas geradas do código (`scripts/mapa.js`) |
 | `COORDENACAO_AGENTES.md` | Como Claude e Antigravity dividem o repo; o **Quadro** (em andamento / escalado / pendente de deploy) |
 | `GUIA_DE_CODIGO.md` | Como escrever código e testes sem cair nas armadilhas conhecidas |
 | `OCEANO.md` | A família de produtos, nomes visíveis e fases |
