@@ -1,5 +1,7 @@
 # Hering — Ferramentas internas
 
+> 📚 **Procurando algo? Veja a [Biblioteca do repositório](docs/BIBLIOTECA.md)** — onde está cada página, módulo, imagem, doc e pasta.
+
 Repositório dos sites e ferramentas internas da Hering, hospedados via GitHub Pages em
 https://caiosoares1899.github.io/hering/
 
