@@ -200,7 +200,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
 <nav class="sidebar" id="sidebar">
 <div class="sidebar-inner">
-  <div class="logo"><div class="logo-icon">🌊</div><div><div class="logo-text">Oceano</div><div class="logo-sub">Ecossistema · 16/10/2026</div></div></div>
+  <div class="logo"><div class="logo-icon">🌊</div><div><div class="logo-text">Oceano</div><div class="logo-sub">Ecossistema · 17/10/2026</div></div></div>
   <div class="ng"><div class="ng-lbl">Visão geral</div>
     <a class="nl" onclick="goTo('resumo')"><span class="nd" style="background:var(--teal)"></span>⚡ Resumo para a TI</a>
     <a class="nl" onclick="goTo('produtos')"><span class="nd" style="background:var(--accent)"></span>🌊 O ecossistema</a>
@@ -243,9 +243,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="pills">
     <span class="pill pb">6 aplicações em produção</span>
     <span class="pill pt">35 Cloud Functions · Node 20</span>
-    <span class="pill pw">899 testes automatizados</span>
+    <span class="pill pw">902 testes automatizados</span>
     <span class="pill pp">Claude + Antigravity</span>
-    <span class="pill po">Retrato de 16/10/2026</span>
+    <span class="pill po">Retrato de 17/10/2026</span>
   </div>
 </div>
 
@@ -262,10 +262,10 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="kpis">
     <div class="kpi"><div class="kv">6</div><div class="kl">aplicações web em produção<br><span>Maré Digital · Painel · Radar · Oceano · Escala · Intake</span></div></div>
     <div class="kpi"><div class="kv">35</div><div class="kl">Cloud Functions (gen2)<br><span>Node 20 · us-central1 · 117 arquivos de código</span></div></div>
-    <div class="kpi"><div class="kv">899</div><div class="kl">testes automatizados<br><span>898 passam · 1 pulado · ~4 s</span></div></div>
-    <div class="kpi"><div class="kv">468</div><div class="kl">tags de release<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
+    <div class="kpi"><div class="kv">902</div><div class="kl">testes automatizados<br><span>901 passam · 1 pulado · ~4 s</span></div></div>
+    <div class="kpi"><div class="kv">338</div><div class="kl">tags de release no GitHub<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
     <div class="kpi"><div class="kv">11</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
-    <div class="kpi"><div class="kv">1475</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
+    <div class="kpi"><div class="kv">1494</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
   </div>
 
   <div class="grid g3">
@@ -274,7 +274,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="card"><div class="ci">🧑‍⚖️</div><div class="ct">Quem muda o quê</div><div class="cd">Mudança = Pull Request com CI. Dois agentes de IA propõem, <strong>uma pessoa aprova e faz o merge</strong> (ninguém aprova o próprio PR). Deploy de backend só pelo dono, com a conta corporativa: o Claude roda sem credencial de deploy; o Antigravity só executa deploy com confirmação explícita no chat.</div></div>
   </div>
 
-  <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 16/10/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
+  <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 17/10/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
 </section>
 
 <!-- 01 ECOSSISTEMA -->
@@ -288,10 +288,10 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="tbl-wrap"><table class="tbl prose">
     <thead><tr><th>Produto</th><th>Para quê</th><th>Arquivo (prod · dev)</th><th>Versão atual</th></tr></thead>
     <tbody>
-      <tr><td>🐟 Maré Digital</td><td>Kanban ágil multi-squad: cards, automações, sprint, métricas de fluxo, metas, calendário, Agente Ágil</td><td><code class="hl">kanban.html</code> · <code class="hl">kanban-dev.html</code></td><td>v8.30.871 · dev v8.30.872</td></tr>
-      <tr><td>🧭 Painel</td><td>Administração: pessoas e papéis, comunicados/Mural, central de notificações, monitores de status, plantão de bugs, dados e metas globais</td><td><code class="hl">painel.html</code> · <code class="hl">painel-dev.html</code></td><td>v5.77 · dev v5.78</td></tr>
-      <tr><td>📡 Radar</td><td>OKR: objetivos, marcos, atingimento, calendário de reuniões, apresentação ao vivo, Data Studio incorporado</td><td><code class="hl">okr.html</code> · <code class="hl">okr-dev.html</code></td><td>v2.89</td></tr>
-      <tr><td>🌊 Oceano</td><td>Lobby da família: login único, Mural de avisos, meta global, atalhos, ajuda, assistente de bugs; hospeda os produtos como app instalável</td><td><code class="hl">oceano.html</code> · <code class="hl">oceano-dev.html</code></td><td>v1.49 · dev v1.50</td></tr>
+      <tr><td>🐟 Maré Digital</td><td>Kanban ágil multi-squad: cards, automações, sprint, métricas de fluxo, metas, calendário, Agente Ágil</td><td><code class="hl">kanban.html</code> · <code class="hl">kanban-dev.html</code></td><td>v8.30.875 (dev e prod iguais)</td></tr>
+      <tr><td>🧭 Painel</td><td>Administração: pessoas e papéis, comunicados/Mural, central de notificações, monitores de status, plantão de bugs, dados e metas globais</td><td><code class="hl">painel.html</code> · <code class="hl">painel-dev.html</code></td><td>v5.80 (dev e prod iguais)</td></tr>
+      <tr><td>📡 Radar</td><td>OKR: objetivos, marcos, atingimento, calendário de reuniões, apresentação ao vivo, Data Studio incorporado</td><td><code class="hl">okr.html</code> · <code class="hl">okr-dev.html</code></td><td>v2.89 (dev e prod iguais)</td></tr>
+      <tr><td>🌊 Oceano</td><td>Lobby da família: login único, Mural de avisos, meta global, atalhos, ajuda, assistente de bugs; hospeda os produtos como app instalável</td><td><code class="hl">oceano.html</code> · <code class="hl">oceano-dev.html</code></td><td>v1.52 (dev e prod iguais)</td></tr>
       <tr><td>📅 Escala</td><td>Quem trabalha, está de plantão ou de folga em cada dia; visão por squad, global e Gantt</td><td><code class="hl">escala.html</code> · <code class="hl">escala-dev.html</code></td><td>v1.10</td></tr>
       <tr><td>📥 Intake</td><td>Entrada de pedidos para os squads (formulário público anônimo e versão interna com login Google)</td><td><code class="hl">intake.html</code> · <code class="hl">intake-dev.html</code></td><td>—</td></tr>
       <tr><td>🎙️ Apresentação do Radar</td><td>Slides executivos gerados a partir dos OKRs, com sala ao vivo</td><td><code class="hl">okr-apresentacao.slide.html</code></td><td>—</td></tr>
@@ -362,7 +362,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
     <rect x="460" y="52" width="150" height="62" rx="9" fill="rgba(29,233,182,.1)" stroke="rgba(29,233,182,.34)"/>
     <text x="535" y="78" text-anchor="middle" fill="#1de9b6" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Realtime Database</text>
-    <text x="535" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">389 linhas de regras</text>
+    <text x="535" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">395 linhas de regras</text>
 
     <rect x="290" y="130" width="150" height="62" rx="9" fill="rgba(56,182,255,.09)" stroke="rgba(56,182,255,.3)"/>
     <text x="365" y="156" text-anchor="middle" fill="#38b6ff" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Cloud Storage</text>
@@ -519,12 +519,13 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 
   <div class="grid g2">
-    <div class="wc"><div class="wch"><div class="wci">🔀</div><div class="wct">O que muda entre dev e prod</div></div><div class="wcb">Só 4 pontos divergem de propósito, e a promoção os preserva: <b>(a)</b> string de versão e <code class="hl">VERSION_KEY</code>/<code class="hl">FB_OVERRIDE_NS</code>; <b>(b)</b> ícone da aba (<code class="hl">favicon-dev.png</code>); <b>(c)</b> chave de logout remoto (<code class="hl">force_logout_after_dev</code>); <b>(d)</b> módulos compartilhados (<code class="hl">mare-*-dev.js?v=N</code> × <code class="hl">mare-*.js?v=N</code>). A ferramenta <code class="hl">promover.js</code> faz a promoção como merge de 3 vias e <code class="hl">--status</code> lista o que está pendente.</div></div>
-    <div class="wc"><div class="wch"><div class="wci">🏷️</div><div class="wct">Rastreabilidade de versão</div></div><div class="wcb">Cada página tem versão visível (<code class="hl">v8.30.871</code>) e chave em <code class="hl">version.json</code>; <code class="hl">scripts/checar.js</code> reprova o PR se uma não bater com a outra. Cada promoção ganha tag anotada (<code class="hl">kanban-v…</code>, <code class="hl">kanban_dev-v…-dev</code>, <code class="hl">painel-v…</code>): 468 tags hoje. "O que está no ar" e "o que mudou entre dois releases" respondem-se com <code class="hl">git</code>.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🔀</div><div class="wct">O que muda entre dev e prod</div></div><div class="wcb">Só 4 pontos divergem de propósito, e a promoção os preserva: <b>(a)</b> string de versão e <code class="hl">VERSION_KEY</code>/<code class="hl">FB_OVERRIDE_NS</code>; <b>(b)</b> ícone da aba (<code class="hl">favicon-dev.png</code>); <b>(c)</b> chave de logout remoto (<code class="hl">force_logout_after_dev</code>); <b>(d)</b> módulos compartilhados (<code class="hl">mare-*-dev.js?v=N</code> × <code class="hl">mare-*.js?v=N</code>). A ferramenta <code class="hl">promover.js</code> promove os 11 pares (6 páginas + 5 módulos): o Painel como merge de 3 vias (só o que mudou no dev desde a última promoção), os demais preservando as linhas de ambiente; <code class="hl">--status</code> lista o que está pendente e avisa se algum arquivo <code class="hl">-dev</code> da raiz não tem alvo.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🏷️</div><div class="wct">Rastreabilidade de versão</div></div><div class="wcb">Cada página tem versão visível (<code class="hl">v8.30.875</code>) e chave em <code class="hl">version.json</code>; <code class="hl">scripts/checar.js</code> reprova o PR se uma não bater com a outra. Cada promoção ganha tag anotada (<code class="hl">kanban-v…</code>, <code class="hl">kanban_dev-v…-dev</code>, <code class="hl">painel-v…</code>): 338 tags publicadas no GitHub. <b>Lacuna conhecida:</b> parte das promoções de set–out tem a tag apenas em cópia local, ainda não publicada (o push de tags não é automático). "O que está no ar" e "o que mudou entre dois releases" respondem-se com <code class="hl">git</code>.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🗓️</div><div class="wct">Cadência</div></div><div class="wcb"><b>Correção validada sobe na hora; funcionalidade sobe em lote, uma vez por dia.</b> Motivo medido: cada versão nova força todas as abas abertas a recarregar e a reabrir os listeners do banco; 13 promoções em ~40 h geraram os dois dias de maior tráfego do período (~210 MB e ~161 MB, contra 1–2 MB num dia calmo).</div></div>
     <div class="wc"><div class="wch"><div class="wci">🧪</div><div class="wct">Validação por script</div></div><div class="wcb">Toda correção de bug é entregue com um <b>script de teste em português</b> para o console (chama as funções reais da página, só leitura, imprime ✅/❌). No plantão de bugs, quem valida é sempre um ADM — nunca quem reportou, nunca o agente — e o PR de produção só existe depois do "validei".</div></div>
   </div>
 
+  <div class="note"><b>Um erro de processo achado e corrigido (17/10).</b> Numa promoção, o <code class="hl">promover.js</code> só imprimia um aviso para o Painel e o <code class="hl">--status</code> comparava apenas a string de versão — o Painel ficou para trás por um dia. A correção promove o Painel por merge de 3 vias, compara o conteúdo real e passa a apontar qualquer par <code class="hl">-dev</code> sem alvo; a skill <code class="hl">/subirproprod</code> agora começa sempre pelo <code class="hl">--status</code>. Registro em <code class="hl">BUGS_E_CORRECOES.md</code>.</div>
   <div class="note warn"><b>Limite conhecido.</b> Dev e produção usam, em grande parte, <b>o mesmo Realtime Database</b>; só seis nós têm irmão <code class="hl">_dev</code> (<code class="hl">campanhas_log_dev</code>, <code class="hl">dados_diarios_dev</code>, <code class="hl">force_logout_after_dev</code>, <code class="hl">metas_digital_dev</code>, <code class="hl">metas_log_dev</code>, <code class="hl">metas_squads_dev</code>). Por isso a regra operacional é "trate o dado do dev como real", e os testes de interface usam um Firebase falso (<code class="hl">docs/arezzo/testes/fakefb.js</code> + Playwright). O caminho natural é um segundo projeto Firebase para dev — a configuração já aceita override por página, falta decisão e custo (seção 14).</div>
 </section>
 
@@ -632,7 +633,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <tbody>
       <tr><td>Nada vai direto para <code class="hl">main</code>. Um PR = um assunto.</td><td>Convenção de branch por agente; a publicação (Pages) só acontece no push em <code class="hl">main</code>, ou seja, só depois do merge.</td></tr>
       <tr><td>Ninguém aprova o próprio PR; o merge é humano.</td><td>Regra registrada em <code class="hl">CLAUDE.md</code>, <code class="hl">AGENTS.md</code> e no quadro de coordenação. Proteção de branch no GitHub (aprovação obrigatória, sem push direto) é o complemento técnico a confirmar com a TI (seção 14).</td></tr>
-      <tr><td>CI verde antes do merge.</td><td><code class="hl">checks.yml</code> em PR e push: <code class="hl">node scripts/checar.js</code> (JSON válidos, versão × HTML, sintaxe das 13 páginas, linhas vermelhas dos workflows, referências nas docs) + <code class="hl">npm test</code> em <code class="hl">functions/</code> (899 testes, incluindo as regras do banco).</td></tr>
+      <tr><td>CI verde antes do merge.</td><td><code class="hl">checks.yml</code> em PR e push: <code class="hl">node scripts/checar.js</code> (JSON válidos, versão × HTML, sintaxe das 13 páginas, linhas vermelhas dos workflows, referências nas docs e a Biblioteca: todo arquivo da raiz precisa estar descrito em <code class="hl">docs/BIBLIOTECA.md</code>) + <code class="hl">npm test</code> em <code class="hl">functions/</code> (902 testes, incluindo as regras do banco).</td></tr>
       <tr><td>Dev primeiro, validação explícita, só depois prod.</td><td>Seção 05; a promoção é um PR separado e rastreável.</td></tr>
       <tr><td>Autoria legível e histórico dividido.</td><td>Trailer <code class="hl">Agent:</code> em todo commit. <code class="hl">CHANGELOG.md</code> = funcionalidades e entregas estruturais; <code class="hl">BUGS_E_CORRECOES.md</code> = bugs, correções e achados de auditoria (com data, arquivo e versão reais).</td></tr>
       <tr><td>Backend e regras: deploy fora do GitHub.</td><td>Documentado como "pendente de deploy" no quadro; só o dono executa, com a conta corporativa.</td></tr>
@@ -667,14 +668,14 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <tbody>
       <tr><td>/seatualizar</td><td>Põe o agente em dia com o que o outro e o dono mudaram antes de começar. Regra permanente.</td><td>Resumo do quadro, versões, últimos commits.</td></tr>
       <tr><td>/subirproprod</td><td>Promove o que foi validado de dev para produção em minutos, preservando as linhas só de prod.</td><td>Checagens de sintaxe, tag, aviso ao usuário, log no card do Firebase.</td></tr>
-      <tr><td>/monitorarbugs</td><td>Auditoria de uma área de código como um engenheiro de arquitetura: compara caminhos paralelos, confronta comentário × código, caça código morto.</td><td>Sempre termina com script de teste de console em português. ~3 mil linhas, com o histórico de achados reais para não repetir análise.</td></tr>
+      <tr><td>/monitorarbugs</td><td>Auditoria de uma área de código como um engenheiro de arquitetura: compara caminhos paralelos, confronta comentário × código, caça código morto.</td><td>Varre qualquer página, módulo ou função do ecossistema. Sempre termina com script de teste de console em português. ~3 mil linhas, com o histórico de achados reais para não repetir análise.</td></tr>
       <tr><td>/plantaobug</td><td>Conserta <b>um</b> bug a partir do pacote anônimo; edita só o <code class="hl">-dev</code> indicado.</td><td>Fora do escopo → responde "ESCALAR AO CLAUDE". Sem script de teste não entrega.</td></tr>
-      <tr><td>/atualizardocumentacoes</td><td>Sincroniza as 7 camadas de documentação (changelog, bugs, mapa de código, <code class="hl">maredigital.html</code>, ajuda do Maré, ajuda/guia do Radar, FAQ do Oceano, conhecimento do Agente Ágil).</td><td>Fecha com <code class="hl">checar.js</code>.</td></tr>
-      <tr><td>/atualizarcodemap</td><td>Revalida cada âncora do mapa de código e acha áreas novas sem seção.</td><td>Rodapé com o commit; histórico de 12+ rodadas.</td></tr>
-      <tr><td>/atualizarhelpcontent</td><td>Mantém a Central de Ajuda in-app igual ao comportamento real.</td><td>Checa também o texto inline da tela.</td></tr>
-      <tr><td>/otimizaçãoderotina</td><td>Bytes de página, performance mobile e — o que mais pesa — leitura do Firebase (query filtrada de verdade ou baixa a árvore?).</td><td>Nunca minifica nem quebra a arquitetura sem aprovação.</td></tr>
+      <tr><td>/atualizardocumentacoes</td><td>Sincroniza as 8 camadas de documentação (changelog, bugs, mapa de código, <code class="hl">maredigital.html</code>, <b>esta página</b> — cada número refeito por medição —, ajuda do Maré, ajuda/guia do Radar, FAQ do Oceano, conhecimento do Agente Ágil).</td><td>Fecha com <code class="hl">checar.js</code>.</td></tr>
+      <tr><td>/atualizarcodemap</td><td>Revalida cada âncora do mapa de código e acha áreas novas sem seção.</td><td>Rodapé com o commit; histórico de 15+ rodadas; cobre todas as seções do mapa (páginas, módulos e functions).</td></tr>
+      <tr><td>/atualizarhelpcontent</td><td>Mantém a ajuda in-app igual ao comportamento real nas 4 frentes: Maré, Radar, Oceano (FAQ) e Dicas.</td><td>Checa também o texto inline da tela.</td></tr>
+      <tr><td>/otimizaçãoderotina</td><td>Bytes de página, performance mobile e — o que mais pesa — leitura do Firebase (query filtrada de verdade ou baixa a árvore?).</td><td>Cobre o ecossistema todo e os listeners duplicados entre página e módulo. Nunca minifica nem quebra a arquitetura sem aprovação.</td></tr>
       <tr><td>/melhoriauiux</td><td>Rodada de melhoria de UI/UX de uma tela (ou geral): audita renderizando a tela real em 2 tamanhos e 3 temas, classifica achados (bug × design × decisão de produto), corrige no <code class="hl">-dev</code> reaproveitando os componentes da casa. Acompanha o guia <code class="hl">docs/GUIA_UI_UX.md</code> ("como o Claude pensa fluxos, páginas e cores").</td><td>Só no <code class="hl">-dev</code>; mudança de métrica é decisão de produto; redesenho grande escala ao Claude.</td></tr>
-      <tr><td>/resumosemanal · /gerarokr</td><td>Resumo da semana para a reunião da squad; prompt dos slides de planejamento estratégico.</td><td>Leem changelog <b>e</b> bugs.</td></tr>
+      <tr><td>/resumosemanal · /gerarokr</td><td>Resumo da semana para a reunião da squad; prompt dos slides de planejamento estratégico.</td><td>Leem changelog <b>e</b> bugs; o prompt dos slides conta Oceano, Radar, Metas, Escala e Plantão como entregas do objetivo Maré Digital.</td></tr>
     </tbody>
   </table></div>
   <div class="note"><b>Por que isso interessa à TI:</b> o conhecimento de operação não depende de uma sessão nem de uma pessoa. Quem assumir o projeto — ou um terceiro agente — recebe o mesmo método, as mesmas travas e o histórico de erros já cometidos.</div>
@@ -802,7 +803,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Hospedagem das páginas</td><td>GitHub Pages</td><td>Qualquer servidor web ou CDN interno: a raiz do repositório é o site. Sem build, sem runtime.</td><td>Baixo</td></tr>
       <tr><td>Identidade</td><td>Google Workspace da empresa</td><td>Já corporativa. Definir papéis IAM por função e revisão periódica de acessos.</td><td>Baixo</td></tr>
       <tr><td>Projeto Google Cloud</td><td>Titularidade na conta de uma pessoa</td><td>Mover para a organização/pasta da empresa, faturamento corporativo, segundo administrador.</td><td>Baixo–médio</td></tr>
-      <tr><td>Banco e regras</td><td>Realtime Database + 389 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
+      <tr><td>Banco e regras</td><td>Realtime Database + 395 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
       <tr><td>Backend</td><td>35 funções Node 20, deploy manual</td><td>Pipeline de deploy da TI (com aprovação humana), contas de serviço, logs no padrão da casa. O código é Node padrão; só os gatilhos de banco são específicos do Firebase.</td><td>Médio</td></tr>
       <tr><td>CI/CD</td><td>GitHub Actions</td><td>Manter, ou espelhar <code class="hl">checar.js</code> + <code class="hl">npm test</code> na ferramenta da TI — ambos rodam em qualquer shell com Node 20.</td><td>Baixo</td></tr>
       <tr><td>IA em produção</td><td>Chave Anthropic no Secret Manager</td><td>Contrato e termos de dados sob gestão da TI; opção de passar por gateway/proxy interno; painel de consumo.</td><td>Médio</td></tr>
@@ -827,14 +828,14 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="code"><span class="cm"># 1 · clonar e rodar as verificações (Node 20)</span>
 git clone https://github.com/caiosoares1899/hering &amp;&amp; cd hering
 node scripts/checar.js                     <span class="cm"># JSON, versões × HTML, sintaxe das 13 páginas, workflows, referências</span>
-cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 899 testes, inclui as regras do banco</span>
+cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 902 testes (901 passam, 1 pulado), inclui as regras do banco</span>
 
 <span class="cm"># 2 · o que está pendente de promoção, e a lista de funções</span>
 node .claude/skills/subirproprod/promover.js --status
 grep -n "^exports\." functions/index.js    <span class="cm"># 35 funções exportadas</span>
 
 <span class="cm"># 3 · segurança: regras e quem não pode o quê</span>
-less database.rules.json                   <span class="cm"># 389 linhas</span>
+less database.rules.json                   <span class="cm"># 395 linhas</span>
 ls functions/rules/__tests__               <span class="cm"># testes das regras</span>
 
 <span class="cm"># 4 · processo e trilha de auditoria</span>
@@ -855,6 +856,9 @@ less docs/COORDENACAO_AGENTES.md AGENTS.md CLAUDE.md   <span class="cm"># quadro
       <tr><td>Família Oceano</td><td><code class="hl">docs/OCEANO.md</code> · <code class="hl">docs/arezzo/MARE_SO_HERING.md</code></td></tr>
       <tr><td>Agente Ágil (decisões, etapas, testes)</td><td><code class="hl">functions/agente-agil-orquestrador/README.md</code></td></tr>
       <tr><td>Marca e design</td><td><code class="hl">MARINE_GLASS.md</code></td></tr>
+      <tr><td>Onde está cada arquivo do repositório</td><td><code class="hl">docs/BIBLIOTECA.md</code> (o "bibliotecário" — a CI reprova arquivo novo na raiz que não esteja descrito ali)</td></tr>
+      <tr><td>Como pensamos telas, cores e fluxos</td><td><code class="hl">docs/GUIA_UI_UX.md</code> · <code class="hl">MARINE_GLASS.md</code></td></tr>
+      <tr><td>Ideias guardadas e backlog pós-férias</td><td><code class="hl">docs/ideias/</code> · seção Backlog de <code class="hl">docs/COORDENACAO_AGENTES.md</code></td></tr>
       <tr><td>Detalhe funcional do Maré Digital</td><td><a class="elink" href="maredigital.html">maredigital.html</a></td></tr>
     </tbody>
   </table></div>
@@ -863,7 +867,7 @@ less docs/COORDENACAO_AGENTES.md AGENTS.md CLAUDE.md   <span class="cm"># quadro
 <div class="div"></div>
 <footer class="footer">
   <span>🌊 Oceano · Ecossistema de gestão · Digital Hering · Grupo Azzas 2154</span>
-  <span>Retrato de 16/10/2026 · mantido por <code class="hl">/atualizardocumentacoes</code></span>
+  <span>Retrato de 17/10/2026 · mantido por <code class="hl">/atualizardocumentacoes</code></span>
 </footer>
 
 </main>
