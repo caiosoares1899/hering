@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar: 🧊 Objetivo parado — selo e filtro (okr-dev v2.93) — 2026-10-18
+
+O Objetivo que passa 14 dias sem nenhuma atualização ganha o selo '🧊 Nd sem atualização' no cartão, e a faixa de resumo da aba ganha o botão '🧊 N parados' que filtra só eles (clicar de novo volta; ✕ Limpar também zera). Conta como atualização: editar o Objetivo, mexer em um Marco (mesmo arquivado), qualquer linha nova do Histórico ou registrar atingimento (vale a data em que foi lançado, não a data do valor). Não conta: reordenar nem mostrar/ocultar na apresentação. Ficam de fora: arquivados, concluídos (Marcos todos feitos ou meta batida) e os de atingimento Perene, Manter acima e Manter abaixo. Só cliente: nenhuma leitura nova no Firebase, nenhuma regra, nenhuma função. Limite em OKR_PARADO_DIAS (14). Ideia O1 do dossiê de concorrência do Antigravity. Dica: sim (parados, no Radar; mare-dicas-dev.js ?v=7). Ajuda do Radar: item 'Filtros e resumo da aba'. Teste: docs/arezzo/testes/test_okr_parados.js.
+
 ### SÓ DEV — Ecossistema: seção 🔥 Em destaque — Assistente Férias + Plantão de Bugs — 2026-10-17
 
 ecossistema.html ganhou a área 'Em destaque' (menu lateral + seção após o Resumo): como o Oceano se cuida durante as férias — Assistente Férias (6 abas, base local sem IA externa), Plantão de Bugs (ficha, vigia, validação sempre por ADM), busca automática do Antigravity, push de 'aguarda aprovação', travas de segurança e a situação de cada peça (produção × em ativação × aguardando deploy). Números medidos no repositório (46 testes do plantão, 5 funções, 10 estados); comando de conferência incluído na seção 14. Documento sem -dev: entra no ar no merge. Dica: não, é documentação.

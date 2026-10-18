@@ -56,29 +56,29 @@
   - **L2787**: Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
   - **L2826**: Aba "🛤️ Timeline" (criada 2026-09-04, presente nos dois arquivos —
   - **L2993**: Aba "🎯 OKR" (Objetivos/Marcos, Fase 1 — 2026-09-04, presente nos dois arquivos — promovido pra prod v3.18)
-  - **L3507**: 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; promovido como `okr.html` v1.0 · okr)
-  - **L3552**: Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
-  - **L3605**: Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
-  - **L3666**: Agentes Externos (2026-08-28/29, presente em painel.html e painel-dev.html;
-  - **L3718**: Aba "🤖 Agentes" (2026-09-01, presente em painel.html e painel-dev.html;
-  - **L3754**: Dashboard consolidado
-  - **L3773**: Board Setup
-  - **L3776**: Usuários
-- **L3780**: oceano-dev.html (lobby da família Oceano — 2026-10-09, só dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
-- **L3792**: okr-apresentacao.slide.html — 🎙️ Apresentação ao vivo (2026-10-09; controle ADM em 2026-10-15): `liveInit()` (idempotente: `_liveIniciado`) ouve `kanban/okr/apresentacao_live`; `_isAdmOkr()`/`liveSouAdm()`/`livePodeControlar()` (host ou ADM tem controle total de moderação: laser, caneta, limpar traços, passar/aceitar/recusar controle, assumir a qualquer momento, sincronizar slide e encerrar); `_liveComecar`/`_liveEncerrar`/`_livePassar`/`_livePedir`/`_liveAssumir`/`_livePuxarSlide`/`_liveFerr` (laser/caneta)/`liveAplicar(forcar)` (acompanhar; `forcar` = apresentador que recarregou retoma a posição, 1x — `_liveRetomar`)/`liveAposNavegar()` (envolve `_okrGoTo`/`_okrOpenDetail`/`_okrCloseDetail`)/`liveRender()`/`liveDesenhar()` (canvas dos traços + ponto do laser).
-- **L3794**: okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
-- **L3945**: functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
-  - **L3947**: index.js — registro de exports
-  - **L4006**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
-  - **L4316**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
-  - **L4378**: intake/ e backup/ — online
-  - **L4403**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
-  - **L4505**: spotify/ — PAUSADO (2026-08-04)
-  - **L4524**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
-  - **L4534**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
-  - **L4540**: 💬 Indicador de comentários na face do card (2026-10-05)
-  - **L4551**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
-  - **L4556**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
+  - **L3508**: 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; promovido como `okr.html` v1.0 · okr)
+  - **L3553**: Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
+  - **L3606**: Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
+  - **L3667**: Agentes Externos (2026-08-28/29, presente em painel.html e painel-dev.html;
+  - **L3719**: Aba "🤖 Agentes" (2026-09-01, presente em painel.html e painel-dev.html;
+  - **L3755**: Dashboard consolidado
+  - **L3774**: Board Setup
+  - **L3777**: Usuários
+- **L3781**: oceano-dev.html (lobby da família Oceano — 2026-10-09, só dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
+- **L3793**: okr-apresentacao.slide.html — 🎙️ Apresentação ao vivo (2026-10-09; controle ADM em 2026-10-15): `liveInit()` (idempotente: `_liveIniciado`) ouve `kanban/okr/apresentacao_live`; `_isAdmOkr()`/`liveSouAdm()`/`livePodeControlar()` (host ou ADM tem controle total de moderação: laser, caneta, limpar traços, passar/aceitar/recusar controle, assumir a qualquer momento, sincronizar slide e encerrar); `_liveComecar`/`_liveEncerrar`/`_livePassar`/`_livePedir`/`_liveAssumir`/`_livePuxarSlide`/`_liveFerr` (laser/caneta)/`liveAplicar(forcar)` (acompanhar; `forcar` = apresentador que recarregou retoma a posição, 1x — `_liveRetomar`)/`liveAposNavegar()` (envolve `_okrGoTo`/`_okrOpenDetail`/`_okrCloseDetail`)/`liveRender()`/`liveDesenhar()` (canvas dos traços + ponto do laser).
+- **L3795**: okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
+- **L3946**: functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
+  - **L3948**: index.js — registro de exports
+  - **L4007**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
+  - **L4317**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
+  - **L4379**: intake/ e backup/ — online
+  - **L4404**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
+  - **L4506**: spotify/ — PAUSADO (2026-08-04)
+  - **L4525**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
+  - **L4535**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
+  - **L4541**: 💬 Indicador de comentários na face do card (2026-10-05)
+  - **L4552**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
+  - **L4557**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
 
 ## 2. Principais Âncoras por Arquivo (`-dev`)
 
