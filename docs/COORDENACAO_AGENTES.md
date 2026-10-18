@@ -44,6 +44,7 @@ registre no "Quadro" (seção 6, coluna *Escalado*) com **como reproduzir** e si
 - **Nunca** dar merge de PR por conta própria. **Nunca** `git push --force` em branch alheia.
 - Antes do push: `git fetch origin && git rebase origin/main`.
 - Um PR = um assunto. Não misturar feature com refactor.
+- **A `main` está protegida (desde 18/10/2026):** não existe push direto — toda mudança entra por PR e o check `checks` (CI) precisa estar verde para o botão de merge liberar; sem force push nem exclusão. O fluxo de vocês não muda (já é branch + PR); se a CI ficar vermelha, corrija na branch, não tente contornar.
 
 ## 3. Arquivos "quentes" (onde os dois vão colidir)
 
