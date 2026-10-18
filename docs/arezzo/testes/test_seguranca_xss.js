@@ -41,6 +41,7 @@ function seedKanban() {
       usuarios_publicos: { eve: { uid: 'eve', nome: 'Eve', init: 'EV', role: 'po', squads: { dev: true } }, bia: { uid: 'bia', nome: 'Bia Souza', init: 'BS', role: 'membro', squads: { dev: true } } },
       config: { adm_emails: ['eve@ciahering.com.br'] },
       comunicados: { m1: { id: 'm1', titulo: 'Aviso', mensagem: 'texto do aviso', ativo: true, ts: iso('2026-10-15'), tipo: 'mural' } },
+      squads_meta: { novo: { id: 'novo', label: 'Squad Novo', emoji: '🐟', color: '#38b6ff', subtitle: 'sub', name: 'Novo' } },
       campanhas: { k1: { id: 'k1', nome: 'Campanha', desc: 'descrição', status: 'ativa', squads: ['dev'] } },
       squads: { dev: { dados } },
     },

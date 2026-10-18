@@ -620,7 +620,7 @@
       + '<div class="mpl-txt">' + E(f.resumo || '(sem descrição)') + '</div>'
       + '<div class="mpl-meta">' + (autor ? '<span>por <b>' + E(autor) + '</b></span>' : '')
       +   '<a href="' + E(urlCardSquadDados({ kanbanCardId: f.cardId, id: id })) + '" target="_blank" rel="noopener noreferrer">📋 Card na Squad Dados</a>'
-      +   (f.prUrl ? '<a href="' + E(f.prUrl) + '" target="_blank" rel="noopener noreferrer">🔀 PR #' + E(prNum) + '</a>' : '')
+      +   (f.prUrl && /^https:\/\/github\.com\//i.test(String(f.prUrl)) ? '<a href="' + E(f.prUrl) + '" target="_blank" rel="noopener noreferrer">🔀 PR #' + E(prNum) + '</a>' : '')
       +   (f.scriptTeste ? '<span>🧪 script salvo</span>' : '') + '<a href="#" data-mpl="pacote" data-id="' + E(id) + '">copiar pacote (modo manual)</a></div>'
       + aviso + nota + form
       + (f.estado === 'validado' ? '<div class="mpl-row"><button class="mpl-btn pri" data-mpl="prod" data-id="' + E(id) + '">🚀 PR de prod mergeado — marcar Resolvido e avisar quem reportou</button></div>' : '')
