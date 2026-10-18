@@ -55,6 +55,7 @@ const { cardsPath } = require('../agente-agil/board');
 const flowLib = require('../agente-agil/flow');
 const { escolheClienteParaTarefa } = require('./escolheClienteParaTarefa');
 const { isEnabled } = require('./limits');
+const { contaDaEmpresa } = require('../common/contaEmpresa');
 const { ANALISE_PO_SQUADS } = require('./squadScope');
 const { summarizeBoard, DEFAULT_PERIODO_DIAS } = require('./tools/visaoBoard');
 
@@ -240,16 +241,17 @@ async function handleAnalisePO(req, res) {
     return;
   }
 
-  let uid, email;
+  let uid, email, tokenOk;
   try {
     const decoded = await getAuth().verifyIdToken(match[1]);
     uid = decoded.uid;
     email = decoded.email || '';
+    tokenOk = contaDaEmpresa(decoded);   // domínio + e-mail verificado + provedor Google (common/contaEmpresa.js)
   } catch (e) {
     res.status(401).json({ ok: false, error: 'invalid_token' });
     return;
   }
-  if (!email.toLowerCase().endsWith('@ciahering.com.br')) {
+  if (!tokenOk) {
     res.status(403).json({ ok: false, error: 'domain_not_allowed' });
     return;
   }

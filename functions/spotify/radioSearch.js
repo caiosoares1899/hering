@@ -10,6 +10,7 @@
 // só dica de UI, ver database.rules.json/painel.html da mesma rodada).
 const { onRequest } = require('firebase-functions/v2/https');
 const { getAuth } = require('firebase-admin/auth');
+const { contaDaEmpresa } = require('../common/contaEmpresa');
 const { defineSecret } = require('firebase-functions/params');
 const { searchTracks } = require('./radioSearchCore');
 
@@ -25,15 +26,15 @@ exports.spotifyRadioSearch = onRequest(
       res.status(401).send('Faltou o header Authorization: Bearer <idToken>.');
       return;
     }
-    let email;
+    let tokenOk;
     try {
       const decoded = await getAuth().verifyIdToken(match[1]);
-      email = decoded.email || '';
+      tokenOk = contaDaEmpresa(decoded);   // domínio + e-mail verificado + provedor Google (common/contaEmpresa.js)
     } catch (e) {
       res.status(401).send('Token inválido ou expirado.');
       return;
     }
-    if (!email.toLowerCase().endsWith('@ciahering.com.br')) {
+    if (!tokenOk) {
       res.status(403).json({ error: 'domain_not_allowed' });
       return;
     }

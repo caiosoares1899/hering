@@ -3052,7 +3052,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.82 · painel-dev</div>
+<div class="version">v5.83 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3155,9 +3155,9 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=33"></script>
+<script src="mare-notif-dev.js?v=34"></script>
 <script src="mare-metas-dev.js?v=16"></script>
-<script src="mare-plantao-dev.js?v=3"></script>
+<script src="mare-plantao-dev.js?v=4"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
@@ -3427,6 +3427,8 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 // gera um literal JS válido e esc() protege o atributo HTML.
 function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
+// SEGURANÇA (18/10/2026): URL vinda do banco só vira link se for http(s)/mailto — esc() sozinho NÃO barra `javascript:` (XSS por clique).
+function _hrefOk(u){ u=String(u==null?'':u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) ? u : '#'; }
 // ── FILTRO DE SQUAD ────────────────────────────────────────────────
 let activeFilter = 'all';
 
@@ -3697,7 +3699,7 @@ function _pOpenCard(cardId, sqId){
   // abre board desse squad numa nova aba com o card já aberto
   window.open('kanban-dev.html?squad='+sqId+'&opencard='+cardId,'_blank');
 }
-function _pSafeUrl(u){ try{ return new URL(String(u)).href; }catch(e){ return '#'; } }
+function _pSafeUrl(u){ try{ const h=new URL(String(u)).href; return /^(https?:|mailto:)/i.test(h) ? h : '#'; }catch(e){ return '#'; } }   // só http(s)/mailto (new URL() aceita javascript:)
 
 // ── Cores por squad (painel) ──
 const _SQUAD_COLORS_CAMP = {
@@ -4272,6 +4274,9 @@ function renderCampDetalhe(c){
 // só de campanhas — achado real, 2026-09-17: texto do Agente Ágil com
 // **negrito** aparecia com asteriscos literais em todo canto que só fazia
 // esc()+nl2br sem passar por aqui).
+// SEGURANÇA (18/10/2026): id/URL entram em atributos (title/href) e o escape de & < > não cobre aspas — sem isto, [x](https://a.com" onmouseover="...)
+// virava atributo de evento (XSS armazenado). Aspas viram entidade; o & já foi escapado no início de _renderMd.
+function _mdAttr(u){ return String(u).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function _renderMd(txt){
   if(!txt) return '';
   txt = String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -4284,13 +4289,13 @@ function _renderMd(txt){
     '<span style="color:var(--teal);font-weight:600;">@'+h+'</span>');
   // Card vinculado [[CARD:id:title]]
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g,(m,id,title)=>
-    '<span style="color:#38b6ff;font-weight:600;cursor:default;" title="Card: '+id+'">📎 '+title+'</span>');
+    '<span style="color:#38b6ff;font-weight:600;cursor:default;" title="Card: '+_mdAttr(id)+'">📎 '+title+'</span>');
   // Links nomeados [texto](url)
   txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(m,label,url)=>
-    '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+label+'</a>');
+    '<a href="'+_mdAttr(url)+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+label+'</a>');
   // Links soltos
   txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g,(m,pre,url)=>
-    pre+'<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+url+'</a>');
+    pre+'<a href="'+_mdAttr(url)+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+url+'</a>');
   txt = txt.replace(/\n/g,'<br>');
   return txt;
 }
@@ -4768,7 +4773,7 @@ function renderPainelCamp(){
             ${sqRows}
             ${kvs.length?`<div style="margin-top:8px;border-top:1px solid rgba(255,209,102,.1);padding-top:8px;">
               <div style="font-size:9px;color:rgba(255,209,102,.6);font-weight:700;text-transform:uppercase;margin-bottom:4px;">🎨 KVs</div>
-              ${[...new Map(kvs.map(l=>[l.url,l])).values()].map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
+              ${[...new Map(kvs.map(l=>[l.url,l])).values()].map(l=>`<a href="${esc(_hrefOk(l.url))}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
             </div>`:''}
             <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,209,102,.1);">
               <button onclick="event.stopPropagation();_pCampActiveSquad=${jsq(allSquads[0]||'dados')};window._campViewMode='multi';openCampDetalhe(${jsq(c0.id)})"
@@ -4821,7 +4826,7 @@ function renderPainelCamp(){
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--txt3);">
             ${sqBadges}<span>📅 ${esc(periodo)}</span><span>📝 ${nEntradas}</span>
           </div>
-          ${kvs.length?`<div style="margin-top:5px;">${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🎨 ${esc(l.label||l.url)}</a>`).join('')}</div>`:''}
+          ${kvs.length?`<div style="margin-top:5px;">${kvs.map(l=>`<a href="${esc(_hrefOk(l.url))}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🎨 ${esc(l.label||l.url)}</a>`).join('')}</div>`:''}
         </div>
       </div>
     </div>`;
@@ -7188,7 +7193,7 @@ function renderGithubStatusUI(){
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:rgba(6,18,36,.5);color:var(--txt2);border:1px solid var(--glass-b);">${esc(inc.status || '')}</span>
               ${dtTxt ? `<span style="font-size:9.5px;color:var(--txt3);">${esc(dtTxt)}</span>` : ''}
-              ${inc.shortlink ? `<a href="${esc(inc.shortlink)}" target="_blank" rel="noopener" style="font-size:10px;color:var(--teal);text-decoration:none;font-weight:600;">Detalhes ↗</a>` : ''}
+              ${inc.shortlink ? `<a href="${esc(_hrefOk(inc.shortlink))}" target="_blank" rel="noopener" style="font-size:10px;color:var(--teal);text-decoration:none;font-weight:600;">Detalhes ↗</a>` : ''}
             </div>
           </div>
           ${inc.latestBody ? `<div style="font-size:10.5px;color:var(--txt2);margin-top:5px;line-height:1.45;">${esc(inc.latestBody)}</div>` : ''}
@@ -7501,7 +7506,7 @@ function renderFirebaseStatusUI(){
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:rgba(6,18,36,.5);color:var(--txt2);border:1px solid var(--glass-b);">${esc(inc.status || '')}</span>
               ${dtTxt ? `<span style="font-size:9.5px;color:var(--txt3);">${esc(dtTxt)}</span>` : ''}
-              ${inc.shortlink ? `<a href="${esc(inc.shortlink)}" target="_blank" rel="noopener" style="font-size:10px;color:var(--teal);text-decoration:none;font-weight:600;">Detalhes ↗</a>` : ''}
+              ${inc.shortlink ? `<a href="${esc(_hrefOk(inc.shortlink))}" target="_blank" rel="noopener" style="font-size:10px;color:var(--teal);text-decoration:none;font-weight:600;">Detalhes ↗</a>` : ''}
             </div>
           </div>
           ${inc.latestBody ? `<div style="font-size:10.5px;color:var(--txt2);margin-top:5px;line-height:1.45;">${esc(inc.latestBody)}</div>` : ''}
@@ -9366,7 +9371,7 @@ function renderDadosApresList(){
   const editor = isDadosEditor(window._currentUser);
   list.innerHTML = dadosApresentacoes.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;">
     <span style="font-size:14px;">🖥️</span>
-    <a href="${esc(a.url)}" target="_blank" rel="noopener" style="flex:1;font-size:11px;color:#e8f4fd;text-decoration:none;font-weight:600;" title="${esc(a.url)}">${esc(a.title||'Apresentação')}</a>
+    <a href="${esc(_hrefOk(a.url))}" target="_blank" rel="noopener" style="flex:1;font-size:11px;color:#e8f4fd;text-decoration:none;font-weight:600;" title="${esc(a.url)}">${esc(a.title||'Apresentação')}</a>
     ${editor?`<button onclick="removeDadosApresentacao(${jsq(a.id)})" title="Remover" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;">✕</button>`:''}
   </div>`).join('');
 }
@@ -9456,12 +9461,12 @@ function renderDadosHistorico(){
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           ${pct!=null?`<span class="badge" style="background:${ok?'rgba(29,233,182,.2)':'rgba(255,107,107,.2)'};color:${ok?'var(--teal)':'var(--danger)'};border:1px solid ${ok?'rgba(29,233,182,.3)':'rgba(255,107,107,.3)'};">${pct}% da meta do dia</span>`:''}
           ${pctAcum!=null?`<span class="badge" style="background:rgba(56,182,255,.15);color:var(--blue);border:1px solid rgba(56,182,255,.3);">${pctAcum}% acum.</span>`:''}
-          ${d.relatorioUrl?`<a href="${esc(d.relatorioUrl)}" target="_blank" rel="noopener" class="btn btn-sm" style="color:var(--cyan);border-color:rgba(126,200,227,.35);text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖 Relatório</a>`:''}
+          ${d.relatorioUrl?`<a href="${esc(_hrefOk(d.relatorioUrl))}" target="_blank" rel="noopener" class="btn btn-sm" style="color:var(--cyan);border-color:rgba(126,200,227,.35);text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖 Relatório</a>`:''}
           ${editor?`<button class="btn btn-sm" onclick="editDadosPost(${jsq(date)})" style="font-size:10px;" title="Carregar no formulário pra editar">✏️</button><button class="btn btn-sm" onclick="deleteDadosPost(${jsq(date)})" style="font-size:10px;color:var(--danger);" title="Excluir">🗑</button>`:''}
         </div>
       </div>
       ${d.texto?`<div style="font-size:11px;color:var(--txt2);margin-top:6px;white-space:pre-wrap;">${esc(d.texto)}</div>`:''}
-      <div style="font-size:10px;color:var(--txt3);margin-top:6px;">por ${esc(d.autorNome||'—')}${d.pdfUrl?` · <a href="${esc(d.pdfUrl)}" target="_blank" rel="noopener" style="color:var(--cyan);">📄 PDF</a>`:''}</div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:6px;">por ${esc(d.autorNome||'—')}${d.pdfUrl?` · <a href="${esc(_hrefOk(d.pdfUrl))}" target="_blank" rel="noopener" style="color:var(--cyan);">📄 PDF</a>`:''}</div>
     </div>`;
   }).join('');
 }

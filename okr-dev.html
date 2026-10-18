@@ -2044,7 +2044,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.91 · okr-dev</div>
+<div class="version">v2.92 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2095,7 +2095,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=33"></script>
+<script src="mare-notif-dev.js?v=34"></script>
 <script src="mare-dicas-dev.js?v=6"></script>
 
 <script>
@@ -2425,6 +2425,8 @@ function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 
 
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
+// SEGURANÇA (18/10/2026): URL vinda do banco só vira link se for http(s)/mailto — esc() sozinho NÃO barra `javascript:` (XSS por clique).
+function _hrefOk(u){ u=String(u==null?'':u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) ? u : '#'; }
 
 
 
@@ -2487,6 +2489,9 @@ function uiAviso(message, opts={}){ return _uiModalPainel({message, kind:'info',
 // só de campanhas — achado real, 2026-09-17: texto do Agente Ágil com
 // **negrito** aparecia com asteriscos literais em todo canto que só fazia
 // esc()+nl2br sem passar por aqui).
+// SEGURANÇA (18/10/2026): id/URL entram em atributos (title/href) e o escape de & < > não cobre aspas — sem isto, [x](https://a.com" onmouseover="...)
+// virava atributo de evento (XSS armazenado). Aspas viram entidade; o & já foi escapado no início de _renderMd.
+function _mdAttr(u){ return String(u).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function _renderMd(txt){
   if(!txt) return '';
   txt = String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -2499,13 +2504,13 @@ function _renderMd(txt){
     '<span style="color:var(--teal);font-weight:600;">@'+h+'</span>');
   // Card vinculado [[CARD:id:title]]
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g,(m,id,title)=>
-    '<span style="color:#38b6ff;font-weight:600;cursor:default;" title="Card: '+id+'">📎 '+title+'</span>');
+    '<span style="color:#38b6ff;font-weight:600;cursor:default;" title="Card: '+_mdAttr(id)+'">📎 '+title+'</span>');
   // Links nomeados [texto](url)
   txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(m,label,url)=>
-    '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+label+'</a>');
+    '<a href="'+_mdAttr(url)+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+label+'</a>');
   // Links soltos
   txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g,(m,pre,url)=>
-    pre+'<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+url+'</a>');
+    pre+'<a href="'+_mdAttr(url)+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+url+'</a>');
   txt = txt.replace(/\n/g,'<br>');
   return txt;
 }
@@ -5885,7 +5890,7 @@ function renderOkrEventoDetalhe(){
     <div class="okr-evd-linha">${OKR_SO_DIGITAL?'':(ti?`<span class="okr-torre-chip okr-t-${ti.id}">${ti.icon} ${esc(_okrCalAgendaNome(ev.torre))}</span>`:'<span class="okr-torre-chip okr-t-todas">🌐 Agenda global · todas as torres</span>')}${areas.map(a=>` <span class="badge">${esc(a)}</span>`).join('')}</div>
     ${_okrCalLista(ev.tagIds).filter(t=>okrTags[t]).length?`<div class="okr-evd-linha" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">🏷️ ${_okrCalLista(ev.tagIds).map(t=>_okrTagChipHtml(t)).join('')}</div>`:''}
     ${ev.local?`<div class="okr-evd-linha">📍 ${esc(ev.local)}</div>`:''}
-    ${link?`<div class="okr-evd-linha">🔗 <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">${esc(link.length>60?link.slice(0,58)+'…':link)}</a></div>`:''}
+    ${link?`<div class="okr-evd-linha">🔗 <a href="${esc(_hrefOk(link))}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">${esc(link.length>60?link.slice(0,58)+'…':link)}</a></div>`:''}
     ${_okrCalLista(ev.convidados).length?`<div class="okr-field-label" style="margin-top:10px;">👥 Convidados</div><div class="okr-evd-pessoas">${_okrCalLista(ev.convidados).map(u=>_okrCalPessoaChip(u,false)).join('')}</div>`:''}
     ${ev.descricao?`<div class="okr-evd-desc">${esc(ev.descricao).replace(/\n/g,'<br>')}</div>`:''}
     ${pauta.length?`<div class="okr-field-label" style="margin-top:14px;">🧭 Pauta sugerida <span class="mut" style="text-transform:none;letter-spacing:0;">— ${_okrCalLista(ev.objetivoIds).length&&!_okrCalLista(ev.tagIds).length&&!_okrCalLista(ev.areaIds).length?'Objetivos vinculados':'Objetivos do escopo, do mais urgente pro menos'}</span></div>
@@ -9760,7 +9765,7 @@ async function renderOkrDataStudio(){
         <button type="button" class="okr-ds-btn" onclick="_okrDsAuthPopup()" title="Se o painel não carregar ou pedir login na 1ª vez, clique aqui para validar sua conta Google @ciahering.com.br em uma janela rápida e recarregar o painel">🔑 Conectar conta (1ª vez)</button>
         <button type="button" class="okr-ds-btn" onclick="_okrDsReloadFrame()" title="Recarregar o painel atual">🔄 Atualizar</button>
         <button type="button" class="okr-ds-btn" id="okr-ds-fs-btn" onclick="_okrDsToggleFs()" title="Expandir painel em tela cheia (Esc sai)">${emFs ? '✕ Sair da tela cheia' : '⛶ Tela cheia'}</button>
-        <a class="okr-ds-btn" href="${_esc(viewUrl)}" target="_blank" rel="noopener noreferrer" title="Abrir este relatório direto no Looker Studio em nova guia">↗ Abrir no Looker Studio</a>
+        <a class="okr-ds-btn" href="${_esc(_hrefOk(viewUrl))}" target="_blank" rel="noopener noreferrer" title="Abrir este relatório direto no Looker Studio em nova guia">↗ Abrir no Looker Studio</a>
         ${podeCfg ? `<button type="button" class="okr-ds-btn pri" onclick="_okrDsOpenCfg()" title="Adicionar, editar ou reordenar painéis do Data Studio">⚙ Configurar</button>` : ''}
       </div>
     </div>

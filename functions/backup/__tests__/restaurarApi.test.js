@@ -8,7 +8,7 @@ const { faltantes, compararAreas, marcadoresDeMencao, AREAS_IDS } = require('../
 const { mencionaAgente } = require('../../agente-agil-orquestrador/detectaMencao');
 
 const AGORA = new Date('2026-10-14T12:00:00Z');
-const G = (uid, email, prov) => ({ uid, email, firebase: { sign_in_provider: prov || 'google.com' } });
+const G = (uid, email, prov, verificado) => ({ uid, email, email_verified: verificado === undefined ? true : verificado, firebase: { sign_in_provider: prov || 'google.com' } });
 const ADM = G('adm', 'adm@ciahering.com.br'), PO = G('po', 'po@ciahering.com.br'), MEM = G('mem', 'mem@ciahering.com.br'), PO_OUTRO = G('poo', 'poo@ciahering.com.br');
 
 const noBackup = () => ({
@@ -55,6 +55,7 @@ test('permissão: ADM, PO e Organizador do squad passam; membro, PO de OUTRO squ
   await nega(PO_OUTRO, { acao: 'listar', squad: 'dados' }, 403);
   await nega(G('x', 'x@gmail.com'), { acao: 'listar', squad: 'dados' }, 403);
   await nega(G('adm', 'adm@ciahering.com.br', 'password'), { acao: 'listar', squad: 'dados' }, 403);
+  await nega(G('adm', 'adm@ciahering.com.br', 'google.com', false), { acao: 'listar', squad: 'dados' }, 403);   // e-mail não verificado (auditoria de 18/10/2026)
   const d = seed(); d._data().kanban.usuarios.org = { role: 'membro', squads: { dados: true }, squads_roles: { dados: 'organizador' } };
   await chama(G('org', 'org@ciahering.com.br'), { acao: 'listar', squad: 'dados' }, d);
 });

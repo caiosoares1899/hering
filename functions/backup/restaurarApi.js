@@ -27,7 +27,7 @@ class ErroApi extends Error { constructor(status, msg) { super(msg); this.status
 // Mesma regra do board (canBulkDelete): ADM, PO ou Organizador. PO/Organizador só no squad em que estão inscritos; ADM em qualquer um.
 async function exigirPermissao(db, decoded, squad) {
   const email = String(decoded.email || '').toLowerCase();
-  if (!email.endsWith('@ciahering.com.br') || (decoded.firebase && decoded.firebase.sign_in_provider) !== 'google.com') throw new ErroApi(403, 'Só contas Google @ciahering.com.br.');
+  if (!email.endsWith('@ciahering.com.br') || (decoded.firebase && decoded.firebase.sign_in_provider) !== 'google.com' || decoded.email_verified !== true) throw new ErroApi(403, 'Só contas Google @ciahering.com.br com e-mail verificado.');
   const [uSnap, admSnap] = await Promise.all([db.ref(`kanban/usuarios/${decoded.uid}`).get(), db.ref('kanban/config/adm_emails').get()]);
   const u = uSnap.val() || {};
   const adms = (Array.isArray(admSnap.val()) ? admSnap.val() : DEFAULT_ADM_EMAILS).map((e) => String(e).toLowerCase());

@@ -194,6 +194,24 @@ function identidadeProd() {
   ok.push(`Identidade de produção: ${prods.length} página(s) de prod sem título/favicon/módulo de dev`);
 }
 
+// ── 9. Segurança das páginas (-dev e módulos): os dois buracos de XSS que a auditoria de 18/10/2026 achou não podem voltar ──
+//   a) link com URL do banco CRUA no atributo (`href="${x.url}"`) — sem esc(_hrefOk(..))/safeUrl() um `javascript:` vira XSS por clique;
+//   b) renderizador de markdown (renderMd/_renderMd) sem _mdAttr(): aspas na URL fecham o atributo e injetam `onmouseover=` (XSS armazenado).
+// (as páginas de produção entram na checagem quando o -dev é promovido — o promover.js copia o código já corrigido)
+function seguranca() {
+  const alvos = fs.readdirSync(ROOT).filter((f) => /(-dev\.html|-dev\.js)$/.test(f) || f === 'okr-apresentacao.slide.html');
+  const reHref = /href=\\?["'](?:\$\{|'?\s*\+\s*)\s*[A-Za-z_][A-Za-z0-9_.?\[\]]*(?:[uU]rl|[lL]ink|[hH]ref|shortlink)\b(?!\s*\()/;
+  let n = 0;
+  for (const arq of alvos) {
+    const linhas = lê(arq).split('\n');
+    linhas.forEach((l, i) => { if (reHref.test(l)) falha('Segurança', `${arq}:${i + 1} monta href com URL crua (use esc(_hrefOk(url)) ou safeUrl(url) — esc() sozinho não barra javascript:)`, arq); });
+    const txt = linhas.join('\n');
+    if (/function _?renderMd\(/.test(txt) && !/function _mdAttr\(/.test(txt)) falha('Segurança', `${arq} tem renderMd sem _mdAttr() — aspas na URL do markdown injetam atributo de evento`, arq);
+    n++;
+  }
+  ok.push(`Segurança das páginas: ${n} arquivo(s) sem href cru e com markdown protegido`);
+}
+
 jsonValidos();
 versoes();
 sintaxe();
@@ -202,6 +220,7 @@ referencias();
 biblioteca();
 mapa();
 identidadeProd();
+seguranca();
 
 for (const l of ok) console.log('✅', l);
 if (erros.length) {
