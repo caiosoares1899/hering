@@ -749,20 +749,22 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif.js?v=33"></script>
-<script src="mare-plantao.js?v=3"></script>
+<script src="mare-notif.js?v=34"></script>
+<script src="mare-plantao.js?v=4"></script>
 <script src="mare-dicas.js?v=5"></script>
 <script src="mare-metas.js?v=16"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.53 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.54 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
 const $ = (s,r)=> (r||document).querySelector(s), $$ = (s,r)=> Array.from((r||document).querySelectorAll(s));
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// SEGURANÇA (18/10/2026): URL vinda do banco só vira link se for http(s)/mailto — esc() sozinho NÃO barra `javascript:` (XSS por clique).
+const _hrefOk = u => { u = String(u==null?'':u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) ? u : '#'; };
 const reduzMov = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const standalone = ()=> (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
 
@@ -1301,7 +1303,7 @@ async function carregarLinks(){
   renderLinks();
 }
 function renderLinks(){
-  const html = lista => lista.map(l=>'<a class="lk" href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="lk-tx"><span class="lk-t">'+esc(l.titulo)+'</span>'+(l.desc?'<span class="lk-d">'+esc(l.desc)+'</span>':'')+'</span></a>').join('');
+  const html = lista => lista.map(l=>'<a class="lk" href="'+esc(_hrefOk(l.url))+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="lk-tx"><span class="lk-t">'+esc(l.titulo)+'</span>'+(l.desc?'<span class="lk-d">'+esc(l.desc)+'</span>':'')+'</span></a>').join('');
   const h = linksOrd(linksHering), m = linksOrd(linksMeus);
   $('#lk-hering-wrap').style.display = h.length ? 'block' : 'none'; $('#lk-hering').innerHTML = html(h);
   $('#lk-meus').innerHTML = m.length ? html(m) : '<div class="lk-vazio">Você ainda não tem atalhos. Adicione os sites que você mais usa.</div>';

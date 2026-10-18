@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.876-dev</div>
+<div class="version">v8.30.877-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7180,14 +7180,14 @@ function loadSquadsFromFirebase(callback) {
     // devem vazar pra tela de seleção do board de produção.
     const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
     Object.entries(val).forEach(([id, meta]) => {
-      if (SQUADS_FICTICIOS.has(id)) return;
+      if (SQUADS_FICTICIOS.has(id) || !_SQ_ID_OK.test(id)) return;
       if (meta && meta.label) {
         SQUAD_META_LIVE[id] = {
-          label:     meta.label,
-          subtitle:  meta.subtitle  || meta.label,
-          agentRole: meta.agentRole || id,
-          emoji:     meta.emoji     || '🐟',
-          color:     meta.color     || '#38b6ff',
+          label:     _sqTxt(meta.label),
+          subtitle:  _sqTxt(meta.subtitle || meta.label),
+          agentRole: _sqTxt(meta.agentRole || id, 40),
+          emoji:     _sqTxt(meta.emoji || '🐟', 8),
+          color:     _sqCorOk(meta.color),
         };
       }
     });
@@ -7335,6 +7335,11 @@ function renderHdMoreDD(){
 const today = new Date(); today.setHours(0,0,0,0);
 // ── Seguranca: escape de HTML e validacao de URL ──
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+// SEGURANÇA (18/10/2026): `kanban/squads_meta` e os nomes de coluna são gravados por qualquer @ciahering — entram em HTML e em style="" de vários pontos.
+// Sanitizados NA ENTRADA (id só [A-Za-z0-9_-]; texto sem < > " ' ` \; cor só hex/rgb()/var(--x)) para nenhum template precisar lembrar de escapar.
+const _SQ_ID_OK = /^[A-Za-z0-9_-]{1,40}$/;
+function _sqTxt(s,max){ return String(s==null?'':s).replace(/[<>"'`\\]/g,'').slice(0,max||80); }
+function _sqCorOk(c){ c=String(c==null?'':c).trim(); return /^(#[0-9a-fA-F]{3,8}|rgba?\([0-9\s.,%]+\)|var\(--[a-z0-9-]+\))$/.test(c) ? c : '#38b6ff'; }
 
 // Argumento STRING seguro pra handler inline (on*="f(${jsq(x)})"). Achado real
 // (/monitorarbugs 2026-10-05, áreas sensíveis): `on*="f('${esc(x)}')"` NÃO é seguro —

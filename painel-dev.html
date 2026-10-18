@@ -3052,7 +3052,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.83 · painel-dev</div>
+<div class="version">v5.84 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9786,6 +9786,11 @@ let SQUADS = [
 // Squads extras criados via painel são carregados do Firebase via loadExtraSquads()
 // URL helper: abre o board de um squad no kanban unificado
 function squadBoardUrl(squadId, cardId){ return 'kanban-dev.html?squad=' + squadId + (cardId ? '&card='+encodeURIComponent(cardId) : ''); }
+// SEGURANÇA (18/10/2026): `kanban/squads_meta` e os nomes de coluna são gravados por qualquer @ciahering — entram em HTML e em style="" de vários pontos.
+// Sanitizados NA ENTRADA (id só [A-Za-z0-9_-]; texto sem < > " ' ` \; cor só hex/rgb()/var(--x)) para nenhum template precisar lembrar de escapar.
+const _SQ_ID_OK = /^[A-Za-z0-9_-]{1,40}$/;
+function _sqTxt(s,max){ return String(s==null?'':s).replace(/[<>"'`\\]/g,'').slice(0,max||80); }
+function _sqCorOk(c){ c=String(c==null?'':c).trim(); return /^(#[0-9a-fA-F]{3,8}|rgba?\([0-9\s.,%]+\)|var\(--[a-z0-9-]+\))$/.test(c) ? c : '#38b6ff'; }
 
 // Painel-dev: squads fixas, não carrega squads_meta de produção
 function loadExtraSquads(callback){
@@ -9797,9 +9802,9 @@ function loadExtraSquads(callback){
     const val=snap.val()||{};
     let changed=false;
     Object.entries(val).forEach(([id,meta])=>{
-      if(!meta||!meta.label) return;
+      if(!meta||!meta.label||!_SQ_ID_OK.test(id)) return;
       if(!SQUADS.find(s=>s.id===id)){
-        SQUADS.push({id, label:meta.label, icon:meta.emoji||'🐟', color:meta.color||'#38b6ff', wipLimit:parseInt(meta.wipLimit)||3});
+        SQUADS.push({id, label:_sqTxt(meta.label), icon:_sqTxt(meta.emoji||'🐟',8), color:_sqCorOk(meta.color), wipLimit:parseInt(meta.wipLimit)||3});
         changed=true;
       }
     });
@@ -11091,7 +11096,7 @@ function renderSquadCards(){
           const n=cards.filter(c=>c.col===col.id).length;
           const pct=total>0?Math.round(n/total*100):0;
           return `<div class="col-row">
-            <span class="col-row-name" title="${col.name}">${col.name}</span>
+            <span class="col-row-name" title="${esc(col.name)}">${esc(col.name)}</span>
             <div class="col-track"><div class="col-fill" style="width:${pct}%;background:${col.color||'#38b6ff'};"></div></div>
             <span class="col-count">${n}</span>
           </div>`;
@@ -12308,7 +12313,7 @@ function renderColDist(){
           const n=cards.filter(c=>c.col===col.id).length;
           const pct=Math.round(n/total*100);
           return `<div class="col-row">
-            <span class="col-row-name" title="${col.name}">${col.name}</span>
+            <span class="col-row-name" title="${esc(col.name)}">${esc(col.name)}</span>
             <div class="col-track"><div class="col-fill" style="width:${pct}%;background:${col.color||'#38b6ff'};"></div></div>
             <span class="col-count">${n}</span>
           </div>`;

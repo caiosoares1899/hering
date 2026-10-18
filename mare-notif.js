@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════
    mare-notif.js — SINO ÚNICO do Maré Digital (módulo compartilhado, PRODUÇÃO)
-   Carregado por painel / okr (e kanban, quando promovido). Cópia de mare-notif-dev.js (que as páginas -dev carregam) — o código é o mesmo (o ambiente dev/prod é decidido pelo pathname); mudou um, mude o outro e suba o ?v= nas páginas.
+   Carregado por painel / okr (e kanban, quando promovido). Cópia de mare-notif.js (que as páginas -dev carregam) — o código é o mesmo (o ambiente dev/prod é decidido pelo pathname); mudou um, mude o outro e suba o ?v= nas páginas.
    Fica na raiz do domínio, como firebase-messaging-sw.js e favicon.png: é a única exceção à regra "sem import entre páginas".
 
    O que é "um só":
@@ -189,6 +189,18 @@
   const st = {uid:null, viewer:false, opts:null, feed:{}, seen:{ts:'', lidos:{}}, seenReady:false, torre:'digital', started:false};
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  // SEGURANÇA (18/10/2026): URL vinda do banco só vira link se for http(s)/mailto — esc() sozinho NÃO barra `javascript:` (XSS por clique).
+  function hrefOk(u){ u=String(u==null?'':u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) ? u : '#'; }
+  // Rede de segurança de TODAS as páginas que carregam este módulo (Maré, Painel, Radar, Oceano): link com esquema javascript:/vbscript: nunca navega,
+  // mesmo que algum ponto esqueça de filtrar (ofuscação com espaço/controle/maiúscula incluída).
+  (function(){
+    const bloqueia = e => {
+      const a = e.target && e.target.closest ? e.target.closest('a[href],area[href]') : null; if(!a) return;
+      const h = String(a.getAttribute('href')||'').replace(/[\u0000-\u0020\u007f-\u009f\u00a0\u1680\u2000-\u200f\u2028\u2029\u202f\u205f\u3000\ufeff]/g,'').toLowerCase();
+      if(/^(javascript|vbscript):/.test(h)){ e.preventDefault(); e.stopImmediatePropagation(); }
+    };
+    document.addEventListener('click', bloqueia, true); document.addEventListener('auxclick', bloqueia, true);
+  })();
   function emitir(){ try{ if(st.opts && st.opts.onChange) st.opts.onChange(); }catch(e){ console.warn('[MareNotif] onChange:', e); } }
   function emailKey(email){ return String(email||'').trim().toLowerCase().replace(/\./g, ','); }
   function seenLocalKey(){ return 'mare_feed_seen_'+emailKey(st.opts && st.opts.user && st.opts.user.email); }
@@ -695,7 +707,7 @@
   function linksHtml(lista, vazio){
     if(!lista.length) return '<div class="mn-lk-vazio">'+vazio+'</div>';
     // "inteligente": quantidade múltipla de 3 vira grade de quadrados (3 por fila, como a aba Produtos); qualquer outra fica em lista
-    return '<div class="mn-lk-lista'+(lista.length%3===0 ? ' mn-lk-grade' : '')+'">'+lista.map(l=>'<a class="mn-lk" role="menuitem" href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="mn-lk-tx"><span class="mn-lk-t">'+esc(l.titulo)+'</span>'+(l.desc ? '<span class="mn-lk-d">'+esc(l.desc)+'</span>' : '')+'</span></a>').join('')+'</div>';
+    return '<div class="mn-lk-lista'+(lista.length%3===0 ? ' mn-lk-grade' : '')+'">'+lista.map(l=>'<a class="mn-lk" role="menuitem" href="'+esc(hrefOk(l.url))+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="mn-lk-tx"><span class="mn-lk-t">'+esc(l.titulo)+'</span>'+(l.desc ? '<span class="mn-lk-d">'+esc(l.desc)+'</span>' : '')+'</span></a>').join('')+'</div>';
   }
   function appsLsKey(uid){ return 'mare_apps_'+uid; }
   function appsLsLer(uid){ try{ const o = JSON.parse(localStorage.getItem(appsLsKey(uid))||'null'); return (o && o.v && typeof o.v==='object') ? o : null; }catch(e){ return null; } }
