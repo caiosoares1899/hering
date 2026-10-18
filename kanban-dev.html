@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.875-dev</div>
+<div class="version">v8.30.876-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6918,7 +6918,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=33"></script>
+<script src="mare-notif-dev.js?v=34"></script>
 <script src="mare-metas-dev.js?v=16"></script>
 <script src="mare-dicas-dev.js?v=5"></script>
 
@@ -7345,6 +7345,8 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 // gera um literal JS válido e esc() protege o atributo HTML.
 function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
+// SEGURANÇA (18/10/2026): URL vinda do banco só vira link se for http(s)/mailto — esc() sozinho NÃO barra `javascript:` (XSS por clique).
+function _hrefOk(u){ u=String(u==null?'':u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) ? u : '#'; }
 
 // Achado real (/monitorarbugs 2026-09-17, técnica 1 — comparar caminhos
 // paralelos): os 5 drawers laterais (Lembretes/Dados/Kudos/Spotify/Notas)
@@ -7406,8 +7408,8 @@ function _renderDadosDay(date){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
       <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;">${esc(_fmtDateBR2(date))}</div>
       <div style="display:flex;align-items:center;gap:10px;">
-        ${d.relatorioUrl?`<a href="${esc(d.relatorioUrl)}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖 Relatório</a>`:''}
-        ${d.pdfUrl?`<a href="${esc(d.pdfUrl)}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;">📄 PDF completo</a>`:''}
+        ${d.relatorioUrl?`<a href="${esc(_hrefOk(d.relatorioUrl))}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖 Relatório</a>`:''}
+        ${d.pdfUrl?`<a href="${esc(_hrefOk(d.pdfUrl))}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;">📄 PDF completo</a>`:''}
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -7423,7 +7425,7 @@ function _renderDadosDayCompact(date){
   const d = dadosDiariosBoard[date]||{};
   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:rgba(var(--surface-rgb),.4);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;font-size:11px;">
     <span style="color:var(--txt2);">${esc(_fmtDateBR2(date))}</span>
-    ${d.relatorioUrl?`<a href="${esc(d.relatorioUrl)}" target="_blank" rel="noopener" style="text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖</a>`:''}
+    ${d.relatorioUrl?`<a href="${esc(_hrefOk(d.relatorioUrl))}" target="_blank" rel="noopener" style="text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖</a>`:''}
     <span style="color:var(--txt3);">${_fmtBRL(d.capDia)}</span>
     ${_pctBadgeDados(d.capDia,d.metaDia)}
   </div>`;
@@ -27094,6 +27096,8 @@ function swAgTab(tab){
 // INSERIR o token (não dá pra corrigir retroativamente texto já salvo, mas
 // evita todo caso novo daqui pra frente).
 function _sanitizeCardMentionTitle(t){ return String(t||'').replace(/\]/g,')'); }
+// Aspas viram entidade (a URL já passou pelo escape de & < > no topo de renderMd — não escapar o & de novo, ver a nota abaixo).
+function _mdAttr(u){ return String(u).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function renderMd(txt){
   txt = txt
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -27169,8 +27173,10 @@ function renderMd(txt){
   // vez, então o href final ficava com "&amp;" cru em vez de "&") — isso
   // quebrava qualquer URL assinada com mais de um parâmetro na query
   // (a query para de fato separar no primeiro "&", vira tudo um param só).
+  // SEGURANÇA (18/10/2026): a URL vai DENTRO de atributos (href/title) e o escape do topo só cobre & < > — aspas passavam, então
+  // [x](https://a.com" onmouseover="...) virava atributo de evento (XSS armazenado em descrição/comentário). _mdAttr() fecha isso.
   txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()]|\([^()]*\))+)\)/g, function(m, label, url){
-    url = url.trim();
+    url = _mdAttr(url.trim());
     return '<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+url+'">'+label+'</a>';
   });
   // Links automáticos: URLs http(s) soltas na frase viram <a> clicável.
@@ -27194,6 +27200,7 @@ function renderMd(txt){
   });
   // Mesmo motivo do bloco acima pra não chamar esc() de novo: url já veio escapada.
   txt = txt.replace(/(^|[^"'=\/])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g, function(m, pre, url){
+    url = _mdAttr(url);
     return pre + '<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+url+'</a>';
   });
   txt = txt.replace(/ (\d+) /g, (m,i)=>_autoLinkGuard[Number(i)]);
@@ -28711,11 +28718,11 @@ function renderLinkedChips(){
     const colColor = col?.color||'var(--glass-b)';
     const ownerTxt = relCard?.owner ? '👤 '+relCard.owner : '';
     card.innerHTML =
-      '<div class="minicard-left" style="background:'+colColor+';"></div>'+
+      '<div class="minicard-left" style="background:'+esc(colColor)+';"></div>'+
       '<div class="minicard-body">'+
         '<div class="minicard-title">'+esc(lc.title)+'</div>'+
         '<div class="minicard-meta">'+
-          '<span class="minicard-col">'+(col?.name||lc.col)+'</span>'+
+          '<span class="minicard-col">'+esc(col?.name||lc.col)+'</span>'+
           (ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>':'')+
         '</div>'+
       '</div>'+
@@ -31480,7 +31487,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
         const col = ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0]);
         const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById(${jsq(ev.id)})" title="Excluir evento">✕</button>` : '';
-        const meetBtn = ev.meetingLink ? `<a href="${esc(ev.meetingLink)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Entrar na reunião" style="flex-shrink:0;font-size:13px;text-decoration:none;">🎥</a>` : '';
+        const meetBtn = ev.meetingLink ? `<a href="${esc(_hrefOk(ev.meetingLink))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Entrar na reunião" style="flex-shrink:0;font-size:13px;text-decoration:none;">🎥</a>` : '';
         const horaLbl = (ev._gcal && !ev.isAllDay && ev.startDateTime) ? `<span style="flex-shrink:0;font-size:10px;opacity:.8;font-weight:600;">${new Date(ev.startDateTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>` : '';
         return `
           <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent(${jsq(ev.id)})">
@@ -31557,7 +31564,7 @@ function editEvent(evId){
   const meetWrap=document.getElementById('ev-meeting-link-wrap');
   const meetBtn=document.getElementById('ev-meeting-link');
   if(ev.meetingLink && meetWrap && meetBtn){
-    meetBtn.href=ev.meetingLink;
+    meetBtn.href=_hrefOk(ev.meetingLink);
     meetWrap.style.display='';
   } else if(meetWrap){
     meetWrap.style.display='none';
@@ -32247,7 +32254,7 @@ function checkUpcomingMeetings(){
             icon: 'marinheiro.png', // "/favicon.ico" nunca existiu neste repo (404 silencioso, ver PR #53)
             tag: 'meeting-' + ev.id, // evita duplicar se disparar 2x
           });
-          n.onclick = () => { window.open(ev.meetingLink, '_blank'); n.close(); };
+          n.onclick = () => { if(_hrefOk(ev.meetingLink)!=='#') window.open(ev.meetingLink, '_blank', 'noopener'); n.close(); };
         } catch(_){ /* navegador pode bloquear silenciosamente */ }
       }
 
@@ -34507,7 +34514,7 @@ function showCtxMenu(e, cardId){
     </div>`;
 
   menu.innerHTML = `
-    <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
+    <div class="ctx-label">${esc(card.title.substring(0,28))}${card.title.length>28?'…':''}</div>
     <div class="ctx-sep"></div>
 
     <div class="ctx-item" onclick="toggleCtxSubmenu(event,'mover')" onmouseenter="_ctxSubmenuHoverEnter(event,'mover')" onmouseleave="_ctxSubmenuScheduleClose()">
@@ -36353,9 +36360,9 @@ function searchDependsCards(q){
     // card é dependsOn (ver setDependsOn()/unlinkDependsOn() abaixo).
     const isCurrentParent = currentCard?.dependsOn===card.id;
     div.innerHTML=
-      '<div class="minicard-left" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
+      '<div class="minicard-left" style="background:'+esc(col?.color||'var(--glass-b)')+'"></div>'+
       '<div class="minicard-body"><div class="minicard-title">'+esc(card.title)+'</div>'+
-      '<div class="minicard-meta"><span class="minicard-col">'+(col?.name||card.col)+'</span></div></div>'+
+      '<div class="minicard-meta"><span class="minicard-col">'+esc(col?.name||card.col)+'</span></div></div>'+
       (isCurrentParent?'<span style="font-size:9px;color:var(--teal);">✓ pai atual</span>':'');
     div.onclick=()=>setDependsOn(card.id);
     res.appendChild(div);
@@ -37577,7 +37584,7 @@ function renderAttachList(links){
 
     const info = document.createElement('a');
     info.className = 'attach-info';
-    info.href = lnk.url;
+    info.href = _hrefOk(lnk.url);
     info.target = '_blank';
     info.rel = 'noopener noreferrer';
     info.title = 'Abrir ' + (lnk.title||displayUrl);
@@ -37595,7 +37602,7 @@ function renderAttachList(links){
     openBtn.className = 'attach-open';
     openBtn.title = 'Abrir';
     openBtn.textContent = '↗';
-    openBtn.onclick = ()=>window.open(lnk.url,'_blank');
+    openBtn.onclick = ()=>{ if(_hrefOk(lnk.url)!=='#') window.open(lnk.url,'_blank','noopener'); };
 
     const rmBtn = document.createElement('button');
     rmBtn.className = 'attach-rm';
@@ -37679,7 +37686,7 @@ function renderMilanoteLink(card){
   if(card?.milanoteLink){
     view.style.display = 'flex';
     inpRow.style.display = 'none';
-    if(link) link.href = card.milanoteLink;
+    if(link) link.href = _hrefOk(card.milanoteLink);
     if(previewBtn) previewBtn.style.display = _isMilanoteEmbeddable(card.milanoteLink) ? 'inline-flex' : 'none';
   } else {
     view.style.display = 'none';

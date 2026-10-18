@@ -72,7 +72,7 @@
           },
           "externos": {
             ".read": "auth != null",
-            ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
+            ".write": "auth != null && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador')"
           }
         }
       },
@@ -312,7 +312,7 @@
       },
       "painel_viewers": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
         "$k": {
           "acesso": {
             ".write": "auth != null && $k === auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',') && root.child('kanban/painel_viewers/' + $k).exists()",
@@ -322,7 +322,8 @@
       },
       "config": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
+        "adm_emails": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')" },
+        "$outro": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && $outro !== 'adm_emails'" }
       },
       "spotify_secrets": {
         ".read": false,
@@ -346,7 +347,8 @@
           "role": {
             ".validate": "((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)"
           },
-          "squads": {
+          "squads_roles": { "$squadId": { ".validate": "newData.val() === null || ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)" } },
+        "squads": {
             "$squadId": {
               ".validate": "newData.val() === null || (newData.val() === true && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/squads/' + $squadId + '/externos/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists()))"
             }
