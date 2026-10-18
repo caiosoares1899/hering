@@ -3196,6 +3196,7 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   `--accent` fixo — agora usa `okrStatusInfo(status).dot`, a MESMA cor
   do dot de status, reforçando risco à distância num grid com dezenas
   de cards.
+- **🧊 Objetivo parado** (2026-10-18, okr-dev v2.93) — selo `.okr-parado-badge` no cartão (`_okrObjCardHtml()`) + chip `.okr-stat-parado` na faixa de resumo (`_okrStatsStripHtml()`) + filtro `_okrFilter.parado` (aplicado em `renderOkrObjetivos()` depois do de status, entra em `_okrTemFiltroAtivo()`/`_okrClearFilters()`). Regra pura em `_okrObjUltimaAtividade()` — L4998 (maior entre `atualizadoEm`/`criadoEm` do Objetivo, `history[].at` exceto "…apresentação", `atualizadoEm` dos Marcos (inclusive arquivados) e `criadoEm` dos lançamentos de atingimento) — e `_okrObjParadoDias()` — L5010 (null = não aplica: arquivado, concluído, meta ≥ 100 %, Perene/Manter acima/abaixo, sem data); limite `OKR_PARADO_DIAS` = 14. Só cliente. Teste: `docs/arezzo/testes/test_okr_parados.js`. Dica `parados` no `CATALOGO` do Radar.
 - **Auditoria de UI/UX DENTRO do modal de Objetivo/Marco** (2026-10-01,
   continuação direta: "agora dentro do modal do okr") — 3 achados (ver
   `CHANGELOG.md` v3.86 · painel-dev): (1) `_okrHistorySectionHtml(entity)`
