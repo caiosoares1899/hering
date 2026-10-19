@@ -74,6 +74,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-19 · Oceano pesado (oceano-dev v1.55) — peixes no claro, animação sem ninguém olhando, fila de bugs com prints
+
+Relato do André: o Oceano pesa e trava até em reunião. Medido com Chromium + CDP (docs/arezzo/testes/test_oceano_leve.js cobre o que ficou). (1) Tema claro: o filtro brightness/saturate/drop-shadow em fish-wrap e em cada bolha era refeito a cada quadro — 9,8 quadros/s contra 60 sem peixes; agora as cores claras saem direto do CSS (56,5 quadros/s). (2) Escuro: as superfícies de vidro (backdrop-filter) refazem o desfoque a cada quadro enquanto peixes/bolhas se mexem atrás (43 quadros/s; sem o desfoque 60); peixes e bolhas agora pausam com a aba oculta (já era), janela sem foco (reunião), produto aberto por cima em iframe (o lobby de trás ficava animando escondido) e 60 s sem mexer (Oceano deixado no 2º monitor); mouse/teclado/toque voltam na hora. (3) Firebase: cada relato do Assistente Férias guarda o print em base64 (até ~100 KB) em kanban/feedback e TODO usuário baixava o nó inteiro ao abrir o Oceano; agora só ADM lê o nó todo (precisa dos relatos de todos para o sino) e os demais leem só os próprios (orderByChild uid + equalTo, filtrado no servidor; .indexOn uid em database.rules.json — funciona sem o deploy, só com aviso de índice no console). Dica: não (é desempenho, nada novo na tela); FAQ 'Os peixinhos pesam?' atualizada. Não mexi nos produtos em iframe: ficam até 4 abertos e cada um mantém os próprios listeners (decisão de produto pendente).
+
 ### 2026-10-18 · Promoção da correção de segurança a produção (kanban v8.30.877 · painel v5.84 · okr v2.92 · oceano v1.54 · mare-notif v34 · mare-plantao v4)
 
 Lote validado pelo Caio (deploy das regras e das funções conferido). Sem avisos. Checagem 'Segurança das páginas' do scripts/checar.js passa a cobrir também as páginas de produção. Ver docs/AUDITORIA_SEGURANCA_2026-10-18.md.

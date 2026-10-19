@@ -67,7 +67,12 @@ button{font-family:inherit;}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
-[data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{filter:brightness(2.3) saturate(.5) drop-shadow(0 0 3px rgba(0,35,55,.4));}
+/* Tema claro: SEM `filter` (brightness/saturate/drop-shadow) em cima de elemento animado — o navegador refazia o filtro a cada quadro de cada peixe/bolha
+   (medido: ~10 quadros/s no claro × 60 sem peixes). As silhuetas quase brancas com borda escura saem direto das cores abaixo. */
+[data-theme="light"] .fish-wrap svg polygon,[data-theme="light"] .fish-wrap svg ellipse{fill:rgba(236,247,252,.5);stroke:rgba(0,35,55,.38);stroke-width:1;}
+[data-theme="light"] .fish-wrap svg circle{fill:rgba(0,35,55,.5);}
+[data-theme="light"] .bubble{border-color:rgba(0,35,55,.3);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.75),rgba(255,255,255,.18));}
+.fish-ltr,.fish-rtl,.bubble{will-change:transform;}
 [data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble,[data-anim-paused] .porthole{animation-play-state:paused;}
 @media (prefers-reduced-motion:reduce){.fish-ltr,.fish-rtl,.bubble,.porthole{animation:none!important;}}
 
@@ -757,7 +762,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.54 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.55 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -837,7 +842,20 @@ function criarPeixes(){
   for(let i=0;i<nF;i++){ const f = document.createElement('div'); f.className = Math.random()>.5 ? 'fish-ltr' : 'fish-rtl'; f.style.top = (5+Math.random()*80)+'%'; f.style.animationDuration = (14+Math.random()*24)+'s'; f.style.animationDelay = (-Math.random()*24)+'s'; f.innerHTML = FISH_SVGS[i%FISH_SVGS.length]; fw.appendChild(f); }
   for(let i=0;i<nB;i++){ const b = document.createElement('div'), sz = 3+Math.random()*14; b.className = 'bubble'; b.style.cssText = 'width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;animation-duration:'+(8+Math.random()*18)+'s;animation-delay:-'+(Math.random()*18)+'s;'; bw.appendChild(b); }
 }
-document.addEventListener('visibilitychange', ()=> document.documentElement.toggleAttribute('data-anim-paused', document.hidden));
+// Peixes e bolhas só andam quando alguém está olhando pro lobby: aba oculta, janela sem foco (reunião, outro programa por cima), um produto aberto por cima (iframe)
+// ou 60 s sem mexer em nada (Oceano deixado aberto no 2º monitor) pausam; mexer no mouse/teclado/toque volta na hora. As superfícies de vidro (backdrop-filter) refazem o
+// desfoque a cada quadro enquanto algo se mexe atrás delas — é isso que pesava (medido: 43 quadros/s com peixes × 60 sem).
+let _animOcioso = false, _animTimer = null, _animUltimo = 0;
+function atualizarAnimacao(){ const h = document.getElementById('host'); document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || _animOcioso || !!(h && h.classList.contains('on'))); }
+function _animAtividade(){
+  const agora = Date.now(); if(!_animOcioso && agora-_animUltimo < 1000) return; _animUltimo = agora;
+  if(_animOcioso){ _animOcioso = false; atualizarAnimacao(); }
+  clearTimeout(_animTimer); _animTimer = setTimeout(()=>{ _animOcioso = true; atualizarAnimacao(); }, 60000);
+}
+['pointermove','pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev, _animAtividade, {passive:true, capture:true}));
+_animAtividade();
+document.addEventListener('visibilitychange', atualizarAnimacao);
+window.addEventListener('focus', atualizarAnimacao); window.addEventListener('blur', atualizarAnimacao);
 
 // ── Estado do usuário ──
 let U = null, perfilFb = {}, usoApps = {}, ehAdm = false;
@@ -1368,7 +1386,7 @@ function mostrarHost(id, url){
   if(url && fr.dataset.ok && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }
   host.atual = id; $$('#host-frames iframe').forEach(f=>f.classList.toggle('on', f.dataset.app===id));
   $('#host-load').style.display = fr.dataset.ok ? 'none' : 'flex'; $('#host-load-tx').textContent = 'Abrindo '+a.nome+'…';
-  $('#host').classList.add('on'); document.body.style.overflow = 'hidden';
+  $('#host').classList.add('on'); document.body.style.overflow = 'hidden'; atualizarAnimacao();
   document.title = a.nome+' · Oceano'+(IS_DEV?' (dev)':'');
   lembrarUltimo(id); renderHostTabs();
   if(location.hash !== '#/'+id) history.pushState(null,'','#/'+id);
@@ -1385,7 +1403,7 @@ function fecharApp(id, silencioso){
   renderAbertos();
 }
 function voltarLobby(){
-  $('#host').classList.remove('on'); document.body.style.overflow = ''; host.atual = null; document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
+  $('#host').classList.remove('on'); document.body.style.overflow = ''; host.atual = null; atualizarAnimacao(); document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
   if(location.hash.indexOf('#/')===0) history.pushState(null,'',location.pathname+location.search);
   renderAbertos();
 }
@@ -1489,7 +1507,7 @@ const FAQ = [
   {id:'mare', q:'Já uso o app do Maré Digital. Preciso trocar?', a:'<p>Não. O aplicativo do Maré Digital continua existindo e funcionando igual — quem só usa o board pode ficar com ele. O Oceano é um jeito a mais, para quem circula entre mais de um produto.</p>'},
   {id:'aqui', q:'Qual a diferença entre "abrir aqui dentro" e "aba nova"?', a:'<p><b>Aqui dentro:</b> o produto abre numa aba do próprio Oceano; dá pra manter vários abertos e voltar ao lobby sem perder nada. <b>Aba nova:</b> abre numa aba do navegador, como sempre. Mude em ⚙ Meu perfil → Como abrir os produtos. No automático, o app instalado abre aqui dentro e o navegador abre em aba nova.</p>'},
   {id:'painel', q:'Por que não vejo o Painel?', a:'<p>O Painel é a visão de gestão; ele aparece para administradores e para quem já o usa (quem é PO/Organizador, por exemplo). Se você precisa dele, fale com sua liderança ou com a squad.</p><p>Isso organiza a sua vitrine — o acesso de verdade é decidido no servidor.</p>'},
-  {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
+  {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam sozinhos quando a aba fica em segundo plano, a janela perde o foco (numa reunião, por exemplo), um produto está aberto por cima ou você fica 1 minuto sem mexer — e voltam assim que você mexe no mouse ou no teclado. Começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
   {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
   {id:'mural', q:'O que é o Mural na página inicial?', a:'<p>É onde a squad publica os <b>avisos</b> pra todo mundo: novidades, avisos, dicas e alertas urgentes. Quem publica é o administrador, no <b>Painel → Pessoas → Comunicados</b> (a opção "🌊 Mostrar no mural do Oceano" vem marcada; existe também "Só no Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro, e no botão dele, quando houver, pra ir direto ao assunto.</p><p>No computador o Mural fica <b>ao lado dos produtos</b> (produtos à esquerda, avisos à direita), tudo na primeira tela — se há muitos avisos, a lista rola dentro da coluna. No celular ele vem <b>recolhido</b> embaixo dos produtos. O cabeçalho mostra quantos avisos há e um selo <b>● N novos</b> (vermelho se tiver um urgente); clique nele pra abrir ou recolher — o Oceano lembra a sua escolha. Os avisos só contam como \"vistos\" depois de alguns segundos com o Mural aberto e à vista.</p><p>Você só vê o que é pra você: avisos de um squad específico aparecem pra quem é desse squad, e os "só PO" pra PO, Organizador e ADM. Aviso com data de validade some sozinho.</p>'},
@@ -2177,12 +2195,19 @@ function feriasProcessarSnapshotBugs(val){
   }
 }
 
+// Cada relato guarda o print em base64 (até ~100 KB). Antes TODO MUNDO baixava a fila inteira ao abrir o Oceano; agora só o ADM (que tem a fila)
+// lê o nó todo — os outros leem só os relatos em que `uid` é o deles (filtrado no servidor; índice em database.rules.json).
+function feriasRefBugs(){
+  const r = window._ref(window._db, 'kanban/feedback');
+  if(ehAdm || !U || !U.uid || !window._query || !window._orderByChild || !window._equalTo) return r;
+  return window._query(r, window._orderByChild('uid'), window._equalTo(U.uid));
+}
 function feriasIniciarBugsListener(){
   const onValFn = window._onValue || window._onVal;
   if(!onValFn || !window._ref || !window._db) return;
   if(feriasBugsUn){ try{ feriasBugsUn(); }catch(e){} feriasBugsUn = null; }
   try{
-    feriasBugsUn = onValFn(window._ref(window._db, 'kanban/feedback'), sn=>{
+    feriasBugsUn = onValFn(feriasRefBugs(), sn=>{
       feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
     }, ()=>{});
   }catch(e){}
@@ -2193,7 +2218,7 @@ window.feriasIniciarBugsListener = feriasIniciarBugsListener;
 async function feriasCarregarBugs(){
   if(!window._get || !window._ref || !window._db) return;
   try{
-    const sn = await window._get(window._ref(window._db, 'kanban/feedback'));
+    const sn = await window._get(feriasRefBugs());
     feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
   }catch(e){
     const el = $('#fbug-lista');
