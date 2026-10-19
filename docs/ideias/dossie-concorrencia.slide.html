@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dossiê de Engenharia Reversa &amp; Benchmark 360° · Ecossistema Oceano</title>
+<link rel="icon" href="../../favicon-oceano.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+/* ==========================================================================
+   MARINE GLASS DESIGN SYSTEM — 3 TEMAS OFICIAIS (docs/GUIA_UI_UX.md + MARINE_GLASS.md)
+   ========================================================================== */
+:root {
+  /* 🌙 Abrolhos (Padrão Escuro Oceânico) */
+  --deep: #030d1a;
+  --ocean-bg:
+    radial-gradient(ellipse at 18% 82%, rgba(0, 88, 170, 0.38) 0%, transparent 58%),
+    radial-gradient(ellipse at 82% 18%, rgba(0, 155, 185, 0.24) 0%, transparent 52%),
+    linear-gradient(180deg, #020913 0%, #06182e 52%, #030d1a 100%);
+  --glass-rgb: 10, 34, 62;
+  --glass: rgba(10, 34, 62, 0.68);
+  --glass-2: rgba(14, 44, 78, 0.52);
+  --glass-h: rgba(22, 62, 108, 0.72);
+  --glass-b: rgba(56, 182, 255, 0.20);
+  --glass-b-strong: rgba(56, 182, 255, 0.38);
+  --topbar-bg: rgba(4, 15, 30, 0.84);
+  --blue: #2563c9;
+  --accent: #38b6ff;
+  --accent-soft: rgba(56, 182, 255, 0.14);
+  --cyan: #7ec8e3;
+  --teal: #1de9b6;
+  --teal-soft: rgba(29, 233, 182, 0.13);
+  --warn: #ffd166;
+  --warn-soft: rgba(255, 209, 102, 0.14);
+  --danger: #ff6b6b;
+  --danger-soft: rgba(255, 107, 107, 0.14);
+  --purple: #b388ff;
+  --purple-soft: rgba(179, 136, 255, 0.15);
+  --txt: #e8f4fd;
+  --txt2: rgba(206, 232, 255, 0.78);
+  --txt3: rgba(164, 204, 240, 0.56);
+  --shadow: 0 14px 36px rgba(1, 6, 14, 0.45);
+  --code-bg: rgba(3, 13, 26, 0.65);
+}
+
+html[data-theme="light"] {
+  /* ☀️ Lençóis Maranhenses (Tema Claro com 1-2% de azul, contraste >= 4.5:1) */
+  --deep: #e6f2fa;
+  --ocean-bg:
+    radial-gradient(ellipse at 20% 80%, rgba(15, 135, 196, 0.18) 0%, transparent 58%),
+    radial-gradient(ellipse at 82% 18%, rgba(51, 214, 208, 0.18) 0%, transparent 52%),
+    linear-gradient(180deg, #eef6fc 0%, #dcecf8 55%, #e6f2fa 100%);
+  --glass-rgb: 251, 253, 255;
+  --glass: rgba(251, 253, 255, 0.86);
+  --glass-2: rgba(240, 247, 253, 0.78);
+  --glass-h: rgba(230, 242, 252, 0.94);
+  --glass-b: rgba(0, 119, 173, 0.22);
+  --glass-b-strong: rgba(0, 119, 173, 0.42);
+  --topbar-bg: rgba(244, 250, 255, 0.88);
+  --blue: #006699;
+  --accent: #006da3;
+  --accent-soft: rgba(0, 109, 163, 0.11);
+  --cyan: #065670;
+  --teal: #087f6c;
+  --teal-soft: rgba(8, 127, 108, 0.12);
+  --warn: #9a5b00;
+  --warn-soft: rgba(180, 83, 9, 0.12);
+  --danger: #b91c1c;
+  --danger-soft: rgba(185, 28, 28, 0.11);
+  --purple: #5b21b6;
+  --purple-soft: rgba(91, 33, 182, 0.11);
+  --txt: #0b2436;
+  --txt2: #244258;
+  --txt3: #496a82;
+  --shadow: 0 12px 30px rgba(11, 36, 54, 0.09);
+  --code-bg: rgba(223, 237, 248, 0.85);
+}
+
+html[data-theme="vice"] {
+  /* 🌴 Vice City (Neon Synthwave) */
+  --deep: #0b0418;
+  --ocean-bg:
+    radial-gradient(ellipse at 20% 80%, rgba(255, 42, 133, 0.26) 0%, transparent 58%),
+    radial-gradient(ellipse at 82% 20%, rgba(0, 240, 255, 0.20) 0%, transparent 52%),
+    linear-gradient(180deg, #090314 0%, #16082c 52%, #0b0418 100%);
+  --glass-rgb: 26, 10, 48;
+  --glass: rgba(26, 10, 48, 0.72);
+  --glass-2: rgba(38, 14, 68, 0.56);
+  --glass-h: rgba(52, 20, 92, 0.78);
+  --glass-b: rgba(255, 77, 157, 0.26);
+  --glass-b-strong: rgba(0, 240, 255, 0.45);
+  --topbar-bg: rgba(14, 5, 28, 0.86);
+  --blue: #7b2cbf;
+  --accent: #00e5ff;
+  --accent-soft: rgba(0, 229, 255, 0.14);
+  --cyan: #80ffdb;
+  --teal: #1de9b6;
+  --teal-soft: rgba(29, 233, 182, 0.14);
+  --warn: #ffbe0b;
+  --warn-soft: rgba(255, 190, 11, 0.15);
+  --danger: #ff4d6d;
+  --danger-soft: rgba(255, 77, 109, 0.16);
+  --purple: #ff5ca8;
+  --purple-soft: rgba(255, 92, 168, 0.16);
+  --txt: #f7ecff;
+  --txt2: rgba(238, 216, 255, 0.80);
+  --txt3: rgba(198, 166, 230, 0.58);
+  --shadow: 0 14px 36px rgba(5, 1, 12, 0.55);
+  --code-bg: rgba(15, 5, 30, 0.72);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: var(--deep);
+  color: var(--txt);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   FUNDO OCEÂNICO + PEIXINHOS E BOLHAS DISCRETOS (MARINE_GLASS.md §5)
+   ========================================================================== */
+#ocean-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--ocean-bg);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ocean-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(56, 182, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 182, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 45%, black 35%, transparent 85%);
+}
+
+.bg-fish {
+  position: absolute;
+  opacity: 0.06;
+  color: var(--accent);
+  animation: fishSwim linear infinite;
+}
+html[data-theme="light"] .bg-fish { opacity: 0.08; }
+
+@keyframes fishSwim {
+  0% { transform: translateX(-140px) translateY(0); }
+  50% { transform: translateX(50vw) translateY(-16px); }
+  100% { transform: translateX(calc(100vw + 140px)) translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-fish { animation: none !important; display: none; }
+}
+
+/* ==========================================================================
+   TOPBAR DE NAVEGAÇÃO (PADRÃO SLIDE DECK HERING)
+   ========================================================================== */
+#topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-b);
+}
+
+.tb-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tb-logo-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  border: 1px solid var(--glass-b-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.tb-title-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tb-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-subtitle {
+  font-size: 11px;
+  color: var(--txt3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tb-chapter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--glass-b);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tb-counter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--txt2);
+  font-variant-numeric: tabular-nums;
+  min-width: 54px;
+  text-align: center;
+}
+
+.tb-progress {
+  width: 110px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--glass-2);
+  border: 1px solid var(--glass-b);
+  overflow: hidden;
+}
+
+.tb-progress-fill {
+  height: 100%;
+  width: 8.33%;
+  background: linear-gradient(90deg, var(--accent), var(--teal));
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.tb-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--glass);
+  border: 1px solid var(--glass-b);
+  color: var(--txt);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  text-decoration: none;
+}
+
+.tb-btn:hover:not(:disabled) {
+  background: var(--glass-h);
+  border-color: var(--glass-b-strong);
+}
+
+.tb-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.tb-btn kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--code-bg);
+  border: 1px solid var(--glass-b);
+  color: var(--txt2);
+}
+
+/* ==========================================================================
+   HYPERFRAMES ROOT COMPOSITION & SLIDES (.clip)
+   ========================================================================== */
+#root {
+  position: fixed;
+  top: 56px;
+  bottom: 48px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.clip.slide {
+  position: absolute;
+  inset: 0;
+  padding: 24px 36px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.28s ease;
+}
+
+.clip.slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.slide-container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+/* ==========================================================================
+   CABEÇALHO DE SLIDE (PADRÃO F + REGRA DOS 10 SEGUNDOS — GUIA_UI_UX.md §2)
+   ========================================================================== */
+.slide-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-b);
+  flex-wrap: wrap;
+}
+
+.slide-head-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 920px;
+}
+
+.eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--glass-b);
+}
+
+.slide-h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.65rem, 2.7vw, 2.55rem);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  color: var(--txt);
+}
+
+.slide-h2 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--txt);
+}
+
+.slide-lead {
+  font-size: 14px;
+  color: var(--txt2);
+  max-width: 78ch;
+  line-height: 1.5;
+}
+
+.takeaway-box {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--glass);
+  border: 1px solid var(--glass-b);
+  border-left: 3px solid var(--teal);
+  font-size: 12px;
+  color: var(--txt2);
+  max-width: 400px;
+}
+
+.takeaway-box strong {
+  color: var(--txt);
+}
+
+/* ==========================================================================
+   COMPONENTES MARINE GLASS (SEM BLUR EMPILHADO — GUIA_UI_UX.md §3.3)
+   ========================================================================== */
+.glass-panel {
+  background: var(--glass);
+  border: 1px solid var(--glass-b);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+
+/* Dentro de .glass-panel, filhos usam fundo translúcido SEM novo backdrop-filter */
+.inner-card {
+  background: var(--glass-2);
+  border: 1px solid var(--glass-b);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.inner-card:hover {
+  border-color: var(--glass-b-strong);
+  background: var(--glass-h);
+}
+
+/* KPI STRIP (3 a 5 por linha — GUIA_UI_UX.md §2.3) */
+.kpi-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.kpi-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-b);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--kpi-color, var(--accent));
+}
+
+.kpi-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--txt3);
+}
+
+.kpi-val {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 2.4vw, 2.25rem);
+  line-height: 1.05;
+  color: var(--txt);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-sub {
+  font-size: 12px;
+  color: var(--txt2);
+  line-height: 1.4;
+}
+
+/* GRIDS DE CONTEÚDO (TOPO ALINHADO — GUIA_UI_UX.md §13) */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+/* BADGES SEMÂNTICOS (COR + ÍCONE + TEXTO — GUIA_UI_UX.md §3.2) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge-teal {
+  background: var(--teal-soft);
+  color: var(--teal);
+  border: 1px solid rgba(29, 233, 182, 0.32);
+}
+
+.badge-accent {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--glass-b-strong);
+}
+
+.badge-warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border: 1px solid rgba(255, 209, 102, 0.35);
+}
+
+.badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid rgba(255, 107, 107, 0.35);
+}
+
+.badge-purple {
+  background: var(--purple-soft);
+  color: var(--purple);
+  border: 1px solid rgba(179, 136, 255, 0.35);
+}
+
+.code-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--code-bg);
+  border: 1px solid var(--glass-b);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* CARDS DE FEATURE CATALOGADA (MÁX 3 NÍVEIS DE HIERARQUIA — GUIA_UI_UX.md §2.2) */
+.feat-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-b);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.18s, transform 0.15s;
+}
+
+.feat-card:hover {
+  border-color: var(--glass-b-strong);
+}
+
+.feat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.feat-id-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.feat-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  border: 1px solid var(--glass-b-strong);
+  color: var(--accent);
+}
+
+.feat-bench {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--txt3);
+}
+
+.feat-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.25;
+  color: var(--txt);
+}
+
+.feat-desc {
+  font-size: 12.5px;
+  color: var(--txt2);
+  line-height: 1.48;
+}
+
+.feat-arch {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed var(--glass-b);
+  font-size: 11.5px;
+  color: var(--txt3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* TABELAS COMPARATIVAS (GUIA_UI_UX.md §13: overflow-x DENTRO do contêiner) */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--glass-b);
+  background: var(--glass);
+}
+
+.mare-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12.5px;
+}
+
+.mare-table th {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  padding: 11px 14px;
+  background: var(--glass-2);
+  border-bottom: 1px solid var(--glass-b);
+}
+
+.mare-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--glass-b);
+  color: var(--txt2);
+  vertical-align: top;
+  line-height: 1.48;
+}
+
+.mare-table tr:last-child td {
+  border-bottom: none;
+}
+
+.mare-table td strong {
+  color: var(--txt);
+}
+
+/* ==========================================================================
+   BARRA INFERIOR + GAVETA DE ÍNDICE DE SLIDES
+   ========================================================================== */
+#bottombar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--glass-b);
+  gap: 12px;
+}
+
+.bb-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.slide-dot {
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-b);
+  background: var(--glass-2);
+  color: var(--txt3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+
+.slide-dot:hover {
+  color: var(--txt);
+  border-color: var(--glass-b-strong);
+}
+
+.slide-dot.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.bb-hint {
+  font-size: 11.5px;
+  color: var(--txt3);
+  white-space: nowrap;
+}
+
+/* EXPLORADOR INTERATIVO (SLIDE 12) */
+.explorer-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-b);
+  border-radius: 12px;
+}
+
+.filter-chip {
+  min-height: 32px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-b);
+  background: var(--glass-2);
+  color: var(--txt2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-chip:hover {
+  border-color: var(--glass-b-strong);
+  color: var(--txt);
+}
+
+.filter-chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.search-inp {
+  flex: 1;
+  min-width: 200px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-b);
+  background: var(--code-bg);
+  color: var(--txt);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px;
+  outline: none;
+}
+
+.search-inp:focus {
+  border-color: var(--accent);
+}
+
+/* DRAWER DE ÍNDICE DE SLIDES (TECLA G) */
+#index-drawer {
+  position: fixed;
+  inset: 56px 0 48px 0;
+  z-index: 150;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(18px);
+  padding: 24px 36px;
+  overflow-y: auto;
+  display: none;
+}
+
+#index-drawer.open {
+  display: block;
+}
+
+.drawer-grid {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE (DESKTOP 1280px E CELULAR 390px — GUIA_UI_UX.md §6)
+   ========================================================================== */
+@media (max-width: 1120px) {
+  .kpi-grid-4, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  #topbar { padding: 0 12px; }
+  .tb-subtitle, .tb-progress, .bb-hint, .tb-btn kbd { display: none; }
+  .clip.slide { padding: 14px 14px; }
+  .kpi-grid-4, .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .tb-btn { min-height: 40px; padding: 6px 10px; }
+  .slide-dot { height: 34px; padding: 0 11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- FUNDO OCEÂNICO -->
+<div id="ocean-bg" aria-hidden="true">
+  <div class="ocean-grid"></div>
+  <svg class="bg-fish" style="top:18%;width:64px;animation-duration:38s;" viewBox="0 0 64 32" fill="currentColor">
+    <path d="M46 16c0 7-11 12-24 12-7 0-13-3-18-7l-4 5V6l4 5c5-4 11-7 18-7 13 0 24 5 24 12zm-8-2a2 2 0 100-4 2 2 0 000 4z"/>
+  </svg>
+  <svg class="bg-fish" style="top:72%;width:48px;animation-duration:46s;animation-delay:-18s;" viewBox="0 0 64 32" fill="currentColor">
+    <path d="M46 16c0 7-11 12-24 12-7 0-13-3-18-7l-4 5V6l4 5c5-4 11-7 18-7 13 0 24 5 24 12zm-8-2a2 2 0 100-4 2 2 0 000 4z"/>
+  </svg>
+</div>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <div class="tb-brand">
+    <div class="tb-logo-badge" aria-hidden="true">🔬</div>
+    <div class="tb-title-wrap">
+      <div class="tb-title">Engenharia Reversa &amp; Benchmark 360°</div>
+      <div class="tb-subtitle">Ecossistema Oceano · Maré Digital · Radar · Painel · Intake · Escala · Agente Ágil</div>
+    </div>
+  </div>
+
+  <div class="tb-center">
+    <span class="tb-chapter-pill" id="tb-chapter">01 · Visão Executiva</span>
+    <span class="tb-counter" id="tb-counter">01 / 12</span>
+    <div class="tb-progress" aria-hidden="true">
+      <div class="tb-progress-fill" id="tb-progress-fill"></div>
+    </div>
+  </div>
+
+  <div class="tb-actions">
+    <button type="button" class="tb-btn" id="btn-index" onclick="toggleIndexDrawer()" title="Abrir índice de todos os slides (Tecla G)">
+      🗂️ <span>Índice</span> <kbd>G</kbd>
+    </button>
+    <button type="button" class="tb-btn" id="btn-theme" onclick="cycleTheme()" title="Alternar tema Marine Glass (Tecla T)">
+      <span id="theme-icon">🌙</span> <span id="theme-label">Abrolhos</span> <kbd>T</kbd>
+    </button>
+    <button type="button" class="tb-btn" id="btn-prev" onclick="prevSlide()" title="Slide anterior (←)">
+      ←
+    </button>
+    <button type="button" class="tb-btn" id="btn-next" onclick="nextSlide()" title="Próximo slide (→ ou Espaço)">
+      →
+    </button>
+  </div>
+</header>
+
+<!-- GAVETA DE ÍNDICE DE SLIDES -->
+<aside id="index-drawer" aria-label="Índice de slides">
+  <div style="max-width:1360px;margin:0 auto 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div>
+      <h2 class="slide-h2">🗂️ Índice Geral da Apresentação (12 Slides)</h2>
+      <p class="slide-lead">Clique em qualquer cartão para saltar diretamente ou pressione <span class="code-pill">Esc</span> / <span class="code-pill">G</span> para fechar.</p>
+    </div>
+    <button type="button" class="tb-btn" onclick="toggleIndexDrawer(false)">✕ Fechar</button>
+  </div>
+  <div class="drawer-grid" id="drawer-grid"></div>
+</aside>
+
+<!-- ==========================================================================
+     HYPERFRAMES ROOT COMPOSITION (data-composition-id="dossie-benchmark-mare")
+     ========================================================================== -->
+<main
+  id="root"
+  data-composition-id="dossie-benchmark-mare"
+  data-start="0"
+  data-duration="120"
+  data-width="1920"
+  data-height="1080"
+>
+
+  <!-- ========================================================================
+       SLIDE 01 — CAPA EXECUTIVA & RESUMO DA PESQUISA
+       ======================================================================== -->
+  <section class="clip slide active" id="slide-0" data-start="0" data-duration="10" data-track-index="1" data-chapter="01 · Visão Executiva" data-title="Capa &amp; Resumo Executivo">
+    <div class="slide-container" style="justify-content:center;">
+      <div class="glass-panel" style="padding:28px 32px;border-left:4px solid var(--accent);">
+        <div class="eyebrow-row" style="margin-bottom:12px;">
+          <span class="eyebrow">🌊 Dossiê de Produto &amp; Arquitetura · Outubro/2026</span>
+          <span class="badge badge-teal">✅ Cruzado com o código real + Triagem Pós-Férias (04/11)</span>
+          <span class="badge badge-accent">🎬 HyperFrames + Marine Glass</span>
+        </div>
+        <h1 class="slide-h1" style="margin-bottom:12px;">
+          Engenharia Reversa de Concorrentes &amp; Evolução do Ecossistema Oceano
+        </h1>
+        <p class="slide-lead" style="font-size:15.5px;max-width:86ch;">
+          Mapeamento profundo das melhores mecânicas de <strong>Linear, ClickUp 4.0, Shortcut, Jira, Tability, WorkBoard, Perdoo, Viva Goals, Notion Home e Atlassian Rovo</strong> — traduzidas para os arquivos, nós do Firebase RTDB e módulos que já existem no repositório <span class="code-pill">hering</span>.
+        </p>
+      </div>
+
+      <div class="kpi-grid-4">
+        <div class="kpi-card" style="--kpi-color:var(--accent);">
+          <span class="kpi-lbl">Catálogo Completo</span>
+          <div class="kpi-val">34 itens</div>
+          <p class="kpi-sub">Distribuídos em 8 códigos de domínio (<span class="code-pill">K</span> <span class="code-pill">I</span> <span class="code-pill">E</span> <span class="code-pill">O</span> <span class="code-pill">S</span> <span class="code-pill">M</span> <span class="code-pill">P</span> <span class="code-pill">A</span>) com arquitetura detalhada.</p>
+        </div>
+        <div class="kpi-card" style="--kpi-color:var(--teal);">
+          <span class="kpi-lbl">Pontes Internas</span>
+          <div class="kpi-val">5 elos</div>
+          <p class="kpi-sub">Dados que já moram no Firebase RTDB num produto e podem alimentar o produto vizinho sem retrabalho.</p>
+        </div>
+        <div class="kpi-card" style="--kpi-color:var(--warn);">
+          <span class="kpi-lbl">Plano Pós-Férias</span>
+          <div class="kpi-val">4 levas</div>
+          <p class="kpi-sub">Triadas por valor × risco a partir de <span class="code-pill">04/11/2026</span> (<span class="code-pill">docs/ideias/dossie-concorrencia-2026-10.md</span>).</p>
+        </div>
+        <div class="kpi-card" style="--kpi-color:var(--purple);">
+          <span class="kpi-lbl">Economia de IA</span>
+          <div class="kpi-val">R$ 0 API</div>
+          <p class="kpi-sub">Todas as Levas 1 a 4 rodam com heurísticas determinísticas no navegador — zero consumo extra de tokens.</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="inner-card">
+          <div class="feat-top">
+            <span class="badge badge-teal">🟢 O que já temos acima do mercado</span>
+          </div>
+          <p class="feat-desc">
+            <strong>Supercards com Fan-out</strong>, tempo líquido descontando pausas (<span class="code-pill">pausedMs</span>), simulador <strong>AutoLab</strong>, projeção fantasma em <span class="code-pill">mare-metas.js</span>, sala ao vivo com Laser/Caneta e <strong>Agente Ágil</strong> com Prompt Caching 1h.
+          </p>
+        </div>
+        <div class="inner-card">
+          <div class="feat-top">
+            <span class="badge badge-warn">🎯 Onde estão as maiores oportunidades</span>
+          </div>
+          <p class="feat-desc">
+            Transformar a <strong>Escala</strong> em cidadã do Kanban (alertando prazo em dia de folga), dar visibilidade de <strong>Meus Pedidos</strong> no Intake, detectar <strong>Objetivos congelados (14d+)</strong> no Radar e focar a QBR só em desvios.
+          </p>
+        </div>
+        <div class="inner-card">
+          <div class="feat-top">
+            <span class="badge badge-purple">🤝 Divisão Clara Claude × Antigravity</span>
+          </div>
+          <p class="feat-desc">
+            Melhorias de 1 página cliente (<span class="code-pill">okr-dev</span>, <span class="code-pill">escala-dev</span>, <span class="code-pill">painel-dev</span>, <span class="code-pill">kanban-dev</span>) ficam prontas para execução rápida; regras do banco, <span class="code-pill">mare-notif</span> e <span class="code-pill">functions/</span> ficam com o Claude.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 02 — MAPA ARQUITETURAL: AS 5 PONTES DE DADOS DO ECOSSISTEMA
+       ======================================================================== -->
+  <section class="clip slide" id="slide-1" data-start="10" data-duration="10" data-track-index="1" data-chapter="02 · Arquitetura &amp; Pontes" data-title="As 5 Pontes de Dados do Ecossistema">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">02 · Arquitetura do Ecossistema</span>
+            <span class="badge badge-accent">🔗 Dados já existentes no Firebase RTDB</span>
+          </div>
+          <h2 class="slide-h2">As 5 Pontes de Dados que Conectam Operação, Estratégia e Comando</h2>
+          <p class="slide-lead">O dado já existe num app do ecossistema, mas ainda não cruza para o app vizinho. Conectar essas pontes gera valor imediato sem criar novos cadastros.</p>
+        </div>
+        <div class="takeaway-box">
+          <strong>💡 Achado da Triagem:</strong> A leitura de <span class="code-pill">kanban/escala</span> por intervalo com cache <strong>já existe no Calendário do Maré</strong> — a Ponte 1 só reaproveita!
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="glass-panel" style="border-top:3px solid var(--accent);">
+          <div class="feat-top" style="margin-bottom:8px;">
+            <span class="badge badge-accent">🃏 Camada 1 · Operação &amp; Fluxo</span>
+          </div>
+          <h3 class="feat-title" style="margin-bottom:6px;">Maré Digital + Intake + Escala</h3>
+          <p class="feat-desc" style="margin-bottom:10px;">Onde o trabalho nasce, é triado pelo PO, executado pelas squads e cruzado com a disponibilidade real do time.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span class="code-pill">kanban-dev.html</span>
+            <span class="code-pill">intake-dev.html</span>
+            <span class="code-pill">escala-dev.html</span>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--teal);">
+          <div class="feat-top" style="margin-bottom:8px;">
+            <span class="badge badge-teal">📡 Camada 2 · Estratégia &amp; Metas</span>
+          </div>
+          <h3 class="feat-title" style="margin-bottom:6px;">Radar OKR + Slide Ao Vivo + Metas</h3>
+          <p class="feat-desc" style="margin-bottom:10px;">Onde os Objetivos trimestrais, Marcos, reuniões executivas sincronizadas e curvas comerciais (<span class="code-pill">mare-metas</span>) são acompanhados.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span class="code-pill">okr-dev.html</span>
+            <span class="code-pill">okr-apresentacao.slide.html</span>
+            <span class="code-pill">mare-metas-dev.js</span>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--purple);">
+          <div class="feat-top" style="margin-bottom:8px;">
+            <span class="badge badge-purple">🌊 Camada 3 · Lobby, Torre &amp; IA</span>
+          </div>
+          <h3 class="feat-title" style="margin-bottom:6px;">Oceano + Painel ADM + Sino &amp; Agente</h3>
+          <p class="feat-desc" style="margin-bottom:10px;">Porta de entrada diária do time, torre de controle executivo/plantão de bugs, sino unificado e orquestrador IA.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span class="code-pill">oceano-dev.html</span>
+            <span class="code-pill">painel-dev.html</span>
+            <span class="code-pill">mare-notif-dev.js</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="mare-table">
+          <thead>
+            <tr>
+              <th>Ponte</th>
+              <th>Origem → Destino</th>
+              <th>Nó / Função que já existe hoje</th>
+              <th>O que passa a acontecer na prática</th>
+              <th>Classificação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Ponte 1</strong></td>
+              <td><span class="code-pill">escala</span> ↔ <span class="code-pill">kanban</span></td>
+              <td><span class="code-pill">kanban/escala/{data}</span> + cache do Calendário do Maré + <span class="code-pill">🌅 Meu Dia</span></td>
+              <td>Alerta se o <span class="code-pill">due</span> do card cai em dia de <span class="badge badge-warn">🏖️ Folga</span> do dono; mostra quem está de folga/plantão hoje no <strong>Meu Dia</strong>.</td>
+              <td><span class="badge badge-teal">🟢 Leva 2 · Rápido</span></td>
+            </tr>
+            <tr>
+              <td><strong>Ponte 2</strong></td>
+              <td><span class="code-pill">intake</span> ↔ <span class="code-pill">kanban</span></td>
+              <td><span class="code-pill">intake_pending</span> + <span class="code-pill">solicitanteUid</span> + <span class="code-pill">origemIntake</span></td>
+              <td>Aba <strong>"📋 Meus Pedidos"</strong> para o solicitante ver se o pedido está na fila, em andamento (e em qual coluna) ou concluído + deflexão de duplicatas.</td>
+              <td><span class="badge badge-purple">🟣 Claude (Regra RTDB)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Ponte 3</strong></td>
+              <td><span class="code-pill">kanban</span> → <span class="code-pill">okr</span></td>
+              <td><span class="code-pill">o.cardLinks[]</span> + <span class="code-pill">_okrCardEnsure()</span> + <span class="code-pill">OKR_CHAR_LIMITS</span></td>
+              <td>Termômetro de cards vinculados no Objetivo (alerta se OKR está Verde mas tem cards atrasados) + auto-rascunho de check-in da semana.</td>
+              <td><span class="badge badge-teal">🟢 Leva 1/2 · Cliente</span></td>
+            </tr>
+            <tr>
+              <td><strong>Ponte 4</strong></td>
+              <td><span class="code-pill">okr-slide</span> → <span class="code-pill">okr</span></td>
+              <td><span class="code-pill">#notes-ov</span> + <span class="code-pill">okrObjetivos[objId].proximosPassos</span></td>
+              <td>Anotação tomada na reunião executiva ao vivo fica amarrada ao Objetivo aberto e vira <strong>Próximo Passo</strong> oficial com 1 clique.</td>
+              <td><span class="badge badge-teal">🟢 Leva 1 · Prioridade #1</span></td>
+            </tr>
+            <tr>
+              <td><strong>Ponte 5</strong></td>
+              <td><span class="code-pill">squadData</span> → <span class="code-pill">painel</span></td>
+              <td><span class="code-pill">squadData</span> + <span class="code-pill">metas_digital</span> + <span class="code-pill">#comunicado-compose-ov</span></td>
+              <td>Compila <strong>Digest Executivo Semanal</strong> (entregas, OKRs, bloqueios e projeção de metas) pronto para WhatsApp ou Mural multi-squad.</td>
+              <td><span class="badge badge-teal">🟢 Leva 3 · Determinístico</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 03 — DIAGNÓSTICO COMPARATIVO: ONDE JÁ SUPERAMOS VS. GAPS
+       ======================================================================== -->
+  <section class="clip slide" id="slide-2" data-start="20" data-duration="10" data-track-index="1" data-chapter="03 · Benchmark vs. Mercado" data-title="Onde Superamos o Mercado vs. Gaps">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">03 · Diagnóstico Comparativo</span>
+            <span class="badge badge-teal">🏆 SaaS Globais vs. Ecossistema Oceano</span>
+          </div>
+          <h2 class="slide-h2">Onde Já Superamos o Mercado vs. Onde Estão os Gaps de Produto</h2>
+          <p class="slide-lead">Comparação direta entre as ferramentas líderes de mercado (2025–2026) e o que já roda em produção hoje no repositório <span class="code-pill">hering</span>.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="mare-table">
+          <thead>
+            <tr>
+              <th style="width:18%;">Domínio &amp; Benchmarks</th>
+              <th style="width:41%;">🏆 Onde o Ecossistema Oceano JÁ SUPERA ou IGUALA</th>
+              <th style="width:41%;">🎯 Gaps Identificados (Oportunidades de Engenharia Reversa)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>🌊 Maré Digital</strong><br/>
+                <span style="font-size:11px;color:var(--txt3);">vs. Linear, ClickUp 4.0, Jira, Shortcut</span>
+              </td>
+              <td>
+                • <strong>Supercards + Fan-out por receita</strong> com propagação não-destrutiva de Ficha Técnica.<br/>
+                • <strong>Tempo líquido real</strong>: desconta <span class="code-pill">pausedMs</span> do Cycle/Lead Time e acumula <span class="code-pill">blockedMs</span>.<br/>
+                • <strong>AutoLab</strong> (simulador Butler-style) + <strong>Lock com Hand-off</strong> (<span class="code-pill">pedirCard</span>).
+              </td>
+              <td>
+                1. <strong>Cegueira de Escala</strong>: não avisa se o <span class="code-pill">due</span> do card cai em dia de folga do dono.<br/>
+                2. <strong>Time-in-Column visual</strong>: falta indicador de dias parado na coluna atual (<span class="code-pill">flow.enteredAt</span>).<br/>
+                3. <strong>Bloqueio mudo &amp; comentários novos</strong>: falta alerta <span class="code-pill">&gt;3d</span> bloqueado sem nota e divisor de não lidos.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>📝 Intake &amp; 🗓️ Escala</strong><br/>
+                <span style="font-size:11px;color:var(--txt3);">vs. Linear Asks, Jira Service, PagerDuty</span>
+              </td>
+              <td>
+                • <strong>Intake Público + Interno</strong> com rascunho seguro em <span class="code-pill">intake_pending</span> e anexos.<br/>
+                • <strong>Escala Semanal</strong> com trabalho, plantão, folga, pausas e troca de plantão.
+              </td>
+              <td>
+                1. <strong>Solicitante no escuro</strong>: falta aba <em>"Meus Pedidos"</em> mostrando se virou card e em qual coluna está.<br/>
+                2. <strong>Escala repetitiva</strong>: falta botão <em>"📋 Copiar semana anterior"</em> e aviso de card vencendo na folga.<br/>
+                3. <strong>Triagem</strong>: falta anti-duplicata ao digitar e chips de estrutura de briefing.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>📡 Radar, Slide &amp; 🐟 Metas</strong><br/>
+                <span style="font-size:11px;color:var(--txt3);">vs. Tability, WorkBoard, Perdoo, Viva Goals</span>
+              </td>
+              <td>
+                • <strong>Status derivado do pior Marco</strong> + promoção em 1 clique (<span class="code-pill">Próximo Passo → Progresso → Marco</span>).<br/>
+                • <strong>Sala ao vivo sincronizada</strong> com Laser (<span class="code-pill">L</span>), Caneta (<span class="code-pill">P</span>) e controle ADM.<br/>
+                • <strong>Projeção Fantasma (<span class="code-pill">mare-metas v16</span>)</strong> no anel e na curva diária.
+              </td>
+              <td>
+                1. <strong>Objetivos congelados (Drift)</strong>: falta selo <span class="code-pill">🧊 Sem check-in há 14d+</span> no topo do Radar.<br/>
+                2. <strong>Notas de reunião passivas</strong>: notas do slide ao vivo não viram <span class="code-pill">Próximo Passo</span> em 1 clique.<br/>
+                3. <strong>QBR sem filtro de exceção</strong>: falta botão <span class="code-pill">🔥 Só Atenção/Risco</span> nos slides.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>🏝️ Oceano &amp; 🧭 Painel</strong><br/>
+                <span style="font-size:11px;color:var(--txt3);">vs. Notion Home, Backstage, Linear Pulse</span>
+              </td>
+              <td>
+                • <strong>Oceano PWA</strong> com login único, redirecionamento matinal, mural multi-squad e monitor VTEX.<br/>
+                • <strong>Painel Executivo</strong> com métricas P85, Throughput, Aging WIP e Plantão de Bugs.
+              </td>
+              <td>
+                1. <strong>Boletim manual</strong>: falta gerador determinístico de <strong>Digest Executivo Semanal</strong> para WhatsApp/Mural.<br/>
+                2. <strong>Retorno rápido</strong>: falta faixa <em>"Continuar de onde parei"</em> (<span class="code-pill">localStorage</span>) no Oceano.<br/>
+                3. <strong>Síntese por squad</strong>: índice composto (após acordar pesos das métricas com o Caio).
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>🤖 Agente Ágil &amp; 🔔 Sino</strong><br/>
+                <span style="font-size:11px;color:var(--txt3);">vs. Linear Agents, Rovo, Shortwave</span>
+              </td>
+              <td>
+                • <strong>Agente Ágil</strong> com roteamento <span class="code-pill">haiku</span>/<span class="code-pill">sonnet</span>, Prompt Caching 1h e 15 tools.<br/>
+                • <strong>Sino Único (<span class="code-pill">mare-notif v33</span>)</strong> com 35 tipos, modo insistente e Web Push com <span class="code-pill">tagDoPush</span>.
+              </td>
+              <td>
+                1. <strong>Sino sem Rollup visual e sem Snooze</strong>: agrupar eventos do mesmo card na lista, filtrar <span class="code-pill">🎯 Só @Menções</span> e botão <span class="code-pill">💤 Adiar</span>.<br/>
+                2. <strong>Threads longas</strong>: botão <span class="code-pill">⚡ Resumo (TL;DR)</span> heurístico no topo dos comentários.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 04 — TRIAGEM DE ARQUITETURA (CRUZAMENTO COM O CÓDIGO REAL)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-3" data-start="30" data-duration="10" data-track-index="1" data-chapter="04 · Triagem de Arquitetura" data-title="Triagem Técnica &amp; O Que Já Existe">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">04 · Auditoria contra o Repositório</span>
+            <span class="badge badge-teal">📄 docs/ideias/dossie-concorrencia-2026-10.md</span>
+          </div>
+          <h2 class="slide-h2">Triagem Honesta: O Que Já Existe, O Que Entra e Quem Faz O Quê</h2>
+          <p class="slide-lead">Antes de construir qualquer item, cruzamos as 34 ideias com o código real para evitar duplicar o que já existe e separar com precisão o escopo de cada agente.</p>
+        </div>
+        <div class="takeaway-box">
+          <strong>🛡️ Regra de Ouro (GUIA_UI_UX.md §1.4):</strong> Reaproveitar e estender o componente que já existe vale mais do que criar um widget paralelo.
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="glass-panel" style="border-top:3px solid var(--teal);">
+          <div class="feat-top" style="margin-bottom:10px;">
+            <span class="badge badge-teal">🟢 Já Existe no Código (Não Duplicar!)</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">1. 🌅 Meu Dia já existe no Maré (<span class="code-pill">P1</span>)</div>
+              <p class="feat-desc">Há 27 menções em <span class="code-pill">kanban-dev.html</span>. Em vez de criar outro widget do zero no Oceano, estendemos o <strong>Meu Dia</strong> existente com quem está de folga/plantão hoje.</p>
+            </div>
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">2. Push Agrupado por Card (<span class="code-pill">A3.6</span>)</div>
+              <p class="feat-desc">O backend já possui <span class="code-pill">tagDoPush</span> em <span class="code-pill">functions/</span> com testes automatizados para colapsar notificações push do mesmo card.</p>
+            </div>
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">3. Leitura de Escala com Cache (<span class="code-pill">K3</span>)</div>
+              <p class="feat-desc">O Calendário do Maré já lê <span class="code-pill">kanban/escala</span> por intervalo com cache em memória — a ponte <span class="code-pill">K3</span> reaproveita essa mesma leitura.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--accent);">
+          <div class="feat-top" style="margin-bottom:10px;">
+            <span class="badge badge-accent">🔵 Escopo Antigravity (1 Página -dev)</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">Zero Banco / Zero Cloud Functions</div>
+              <p class="feat-desc">Mudanças localizadas em 1 página <span class="code-pill">-dev.html</span> por vez, sem alterar <span class="code-pill">database.rules.json</span> nem módulos compartilhados <span class="code-pill">mare-*.js</span>.</p>
+            </div>
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">Candidatos Ideais (Levas 1 a 4)</div>
+              <p class="feat-desc">
+                • <strong>Radar/Slide:</strong> <span class="code-pill">O1</span> (14d sem check-in), <span class="code-pill">S1</span> (nota → próximo passo), <span class="code-pill">S2</span> (filtro só risco).<br/>
+                • <strong>Escala/Maré:</strong> <span class="code-pill">E1</span> (copiar semana), <span class="code-pill">K3</span> (alerta folga no prazo), <span class="code-pill">K2</span> (dias na coluna), <span class="code-pill">K8</span> (divisor não lidos).<br/>
+                • <strong>Painel:</strong> <span class="code-pill">P4</span> (Digest Semanal WhatsApp/Mural).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--purple);">
+          <div class="feat-top" style="margin-bottom:10px;">
+            <span class="badge badge-purple">🟣 Escopo Claude (Estrutural / Multi-App)</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">1. 📋 Meus Pedidos no Intake (<span class="code-pill">I4</span>)</div>
+              <p class="feat-desc"><strong>Maior ganho de adoção da lista.</strong> Exige regra em <span class="code-pill">database.rules.json</span> para o solicitante ler apenas os próprios pedidos + vínculo pedido↔card.</p>
+            </div>
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">2. 🔔 Sino com Agrupar / Filtrar / Adiar (<span class="code-pill">A1</span>)</div>
+              <p class="feat-desc">Altera o módulo compartilhado <span class="code-pill">mare-notif-dev.js</span> (carregado por 4 produtos) e cria nó de preferências de snooze.</p>
+            </div>
+            <div class="inner-card">
+              <div class="feat-title" style="font-size:13.5px;">3. 🤖 Tools de IA &amp; Meta↔OKR (<span class="code-pill">A3</span>, <span class="code-pill">M1</span>)</div>
+              <p class="feat-desc">Mexem em <span class="code-pill">functions/</span> (avaliando custo de tokens) e em <span class="code-pill">mare-metas-dev.js</span> + <span class="code-pill">okr-dev.html</span>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 05 — PLANO DE ATAQUE PÓS-FÉRIAS (AS 4 LEVAS PRIORIZADAS)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-4" data-start="40" data-duration="10" data-track-index="1" data-chapter="05 · Roadmap em 4 Levas" data-title="Plano de Ataque Pós-Férias (4 Levas)">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">05 · Roadmap Sugerido (A partir de 04/11/2026)</span>
+            <span class="badge badge-warn">🗓️ Guarda de Férias Ativa até 03/11</span>
+          </div>
+          <h2 class="slide-h2">As 4 Levas Priorizadas por Ordem de Valor × Risco</h2>
+          <p class="slide-lead">Menos itens bem acabados (com dica avaliada, ajuda in-app e testes nos 3 temas) valem mais do que 12 mudanças soltas de uma vez.</p>
+        </div>
+        <div class="takeaway-box">
+          <strong>📦 Cuidado de Release:</strong> No Maré (<span class="code-pill">kanban.html</span>, 2,5 MB), promoções forçam recarga geral — agrupar features em lote no fim do dia.
+        </div>
+      </div>
+
+      <div class="grid-4">
+        <div class="glass-panel" style="border-top:3px solid var(--teal);display:flex;flex-direction:column;gap:10px;">
+          <div class="feat-top">
+            <span class="badge badge-teal">🥇 Leva 1 · Radar &amp; QBR</span>
+            <span class="code-pill">1 pág / cliente</span>
+          </div>
+          <h3 class="feat-title">Governança de OKR sem fricção</h3>
+          <div class="inner-card">
+            <span class="feat-id">O1</span>
+            <strong>🧊 Objetivo sem check-in há 14d+</strong>
+            <p class="feat-desc">Badge de deriva e filtro rápido na barra de estatísticas de <span class="code-pill">okr-dev.html</span>.</p>
+          </div>
+          <div class="inner-card">
+            <span class="feat-id">S1</span>
+            <strong>📌 Nota da reunião vira Próximo Passo</strong>
+            <p class="feat-desc">Amarra anotação do slide ao Objetivo aberto e promove em 1 clique.</p>
+          </div>
+          <div class="inner-card">
+            <span class="feat-id">S2</span>
+            <strong>🔥 Filtro "Só Atenção/Risco"</strong>
+            <p class="feat-desc">Oculta OKRs verdes na apresentação ao vivo para focar a diretoria nos desvios.</p>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--accent);display:flex;flex-direction:column;gap:10px;">
+          <div class="feat-top">
+            <span class="badge badge-accent">🥈 Leva 2 · Escala Cidadã</span>
+            <span class="code-pill">Reaproveita cache</span>
+          </div>
+          <h3 class="feat-title">Disponibilidade ligada ao Prazo</h3>
+          <div class="inner-card">
+            <span class="feat-id">K3</span>
+            <strong>🏖️ Alerta de Prazo em Dia de Folga</strong>
+            <p class="feat-desc">Sinaliza no card e no modal quando <span class="code-pill">card.due</span> cai num dia de folga do <span class="code-pill">owner</span>.</p>
+          </div>
+          <div class="inner-card">
+            <span class="feat-id">E1</span>
+            <strong>📋 Copiar Semana Anterior + Aviso</strong>
+            <p class="feat-desc">Clona a escala de <span class="code-pill">semana - 7d</span> em <span class="code-pill">escala-dev.html</span> e avisa se há card vencendo na folga.</p>
+          </div>
+          <div class="inner-card">
+            <span class="feat-id">P1*</span>
+            <strong>🌅 Estender o "Meu Dia" do Maré</strong>
+            <p class="feat-desc">Adiciona quem da squad está de folga ou plantão hoje dentro do Meu Dia existente.</p>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--warn);display:flex;flex-direction:column;gap:10px;">
+          <div class="feat-top">
+            <span class="badge badge-warn">🥉 Leva 3 · Painel ADM</span>
+            <span class="code-pill">Determinístico</span>
+          </div>
+          <h3 class="feat-title">Comunicação Executiva em 1 Clique</h3>
+          <div class="inner-card">
+            <span class="feat-id">P4</span>
+            <strong>📰 Digest Executivo Semanal</strong>
+            <p class="feat-desc">Compila entregas da semana, OKRs, bloqueios e projeção das metas pronto para copiar pro WhatsApp ou abrir no Mural.</p>
+          </div>
+          <div class="inner-card">
+            <span class="feat-id">P3</span>
+            <strong>💓 Squad Health Score (0–100)</strong>
+            <p class="feat-desc"><em>Com ressalva:</em> implementar somente após combinar os pesos exatos de WIP, SLA, Bloqueio e Throughput com o Caio.</p>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--purple);display:flex;flex-direction:column;gap:10px;">
+          <div class="feat-top">
+            <span class="badge badge-purple">🏅 Leva 4 · Fluxo no Maré</span>
+            <span class="code-pill">kanban-dev.html</span>
+          </div>
+          <h3 class="feat-title">Diagnóstico Visual de Gargalos</h3>
+          <div class="inner-card">
+            <span class="feat-id">K2</span>
+            <strong>⏳ Dias Parado na Coluna Atual</strong>
+            <p class="feat-desc">Usa <span class="code-pill">card.flow.enteredAt</span> (descontando pausas) para exibir dias na coluna + média no topo.</p>
+          </div>
+          <div class="inner-card">
+            <span class="feat-id">K8</span>
+            <strong>✨ Divisor "Novos Comentários"</strong>
+            <p class="feat-desc">Marca na thread do card o que entrou desde a sua última visita (<span class="code-pill">localStorage</span>).</p>
+          </div>
+          <div class="inner-card">
+            <span class="feat-id">K10</span>
+            <strong>🧊 Bloqueio Mudo (&gt; 3 dias)</strong>
+            <p class="feat-desc">Destaca cards bloqueados há mais de 3 dias sem comentário novo e oferece cobrança em 1 clique.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 06 — FRENTE 1A: MARÉ DIGITAL (FLUXO, VELOCIDADE & ESCALA — K1 A K6)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-5" data-start="50" data-duration="10" data-track-index="1" data-chapter="06 · Maré Digital (K1–K6)" data-title="Maré Digital: Fluxo, Velocidade e Escala (K1–K6)">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">06 · Engenharia Reversa · Maré Digital (Parte 1)</span>
+            <span class="code-pill">kanban-dev.html</span>
+          </div>
+          <h2 class="slide-h2">Fluxo, Tempo de Coluna e Integração com Escala (K1 a K6)</h2>
+          <p class="slide-lead">Inspirações de Linear, ClickUp 4.0, Jira e Shortcut desenhadas sobre <span class="code-pill">makeCardEl()</span>, <span class="code-pill">card.flow.enteredAt</span> e <span class="code-pill">kanban/escala</span>.</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K1</span>
+              <span class="feat-bench">Linear · Spacebar Peek</span>
+            </div>
+            <span class="badge badge-warn">🟡 Ressalva / 2ª Leva</span>
+          </div>
+          <div class="feat-title">👀 Peek Preview Lateral com Espaço (Sem Lock)</div>
+          <p class="feat-desc">Pairar sobre um card e teclar <span class="code-pill">Espaço</span> abre um drawer leve (<span class="code-pill">380px</span>) para ler descrição, checklist e últimos 5 comentários sem gravar <span class="code-pill">card_locks/{cid}</span>.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">_hoveredCardId</span> + <span class="code-pill">openCard()</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card" style="border-color:var(--glass-b-strong);">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K2</span>
+              <span class="feat-bench">Jira / ClickUp · Aging Dots</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 4 · Prioritário</span>
+          </div>
+          <div class="feat-title">⏳ Dias Parado na Coluna Atual &amp; Gargalo no Topo</div>
+          <p class="feat-desc">Calcula os dias líquidos desde <span class="code-pill">card.flow.enteredAt</span> (descontando pausas) e exibe pílula âmbar (<span class="code-pill">&ge;4d</span>) ou vermelha (<span class="code-pill">&ge;7d</span>) na face do card + média no header da coluna.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">makeCardEl()</span> + <span class="code-pill">renderNormal()</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card" style="border-color:var(--glass-b-strong);">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K3</span>
+              <span class="feat-bench">ClickUp 4.0 · PTO Warning</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 2 · Prioritário</span>
+          </div>
+          <div class="feat-title">🏖️ Ponte Escala → Kanban (Alerta de Folga no Prazo)</div>
+          <p class="feat-desc">Reaproveita o cache de <span class="code-pill">kanban/escala</span> do Calendário do Maré para exibir <span class="code-pill">🏖️ Folga hoje</span> nos avatares e alertar se <span class="code-pill">card.due</span> cai em dia de folga do dono.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">makeCardEl()</span> + <span class="code-pill">#m-owner</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K4</span>
+              <span class="feat-bench">Shortcut · Standup Runner</span>
+            </div>
+            <span class="badge badge-warn">🟡 Ressalva / 2ª Leva</span>
+          </div>
+          <div class="feat-title">🎙️ Modo Daily Guiado Pessoa a Pessoa com Timer</div>
+          <p class="feat-desc">Barra superior para guiar a Daily (<span class="code-pill">←</span>/<span class="code-pill">→</span> por membro) com timer de 1m30s, listando o que a pessoa moveu nas últimas 24h (<span class="code-pill">_marcosNoPeriodo</span>) e seus bloqueios.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">activeFilters.owner</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K5</span>
+              <span class="feat-bench">Linear Cycles · Scope Creep</span>
+            </div>
+            <span class="badge badge-accent">⚪ Backlog (Depende de Sprint)</span>
+          </div>
+          <div class="feat-title">🌊 KPI de Scope Creep (Planejado vs. Adicionado)</div>
+          <p class="feat-desc">Compara <span class="code-pill">_cardDataCriacaoStr(c)</span> com <span class="code-pill">agilCfg.sprintStart</span> no Burndown para separar o que estava no Dia 1 do que entrou depois (<span class="code-pill">+X% escopo extra</span>).</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">_renderBurndown()</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K6</span>
+              <span class="feat-bench">Float / ClickUp · Workload</span>
+            </div>
+            <span class="badge badge-accent">⚪ Backlog (Depende de SP)</span>
+          </div>
+          <div class="feat-title">⚖️ Capacidade Líquida por Pessoa vs. Escala</div>
+          <p class="feat-desc">Cruza a carga ativa de cada membro na sprint com os dias úteis reais escalados em <span class="code-pill">kanban/escala</span> (descontando folgas e feriados).</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">Raia · Pessoa</span> + Dados</span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 07 — FRENTE 1B: MARÉ DIGITAL (COLABORAÇÃO, COMENTÁRIOS & SAÚDE — K7 A K12)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-6" data-start="60" data-duration="10" data-track-index="1" data-chapter="07 · Maré Digital (K7–K12)" data-title="Maré Digital: Colaboração, Comentários e Saúde (K7–K12)">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">07 · Engenharia Reversa · Maré Digital (Parte 2)</span>
+            <span class="code-pill">kanban-dev.html</span>
+          </div>
+          <h2 class="slide-h2">Colaboração em Comentários, Ações em Lote e Diagnóstico de Card (K7 a K12)</h2>
+          <p class="slide-lead">Foco em reduzir o tempo de leitura em threads longas e revelar bloqueios silenciosos sem depender de chamadas caras de IA.</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K7</span>
+              <span class="feat-bench">Linear / Notion · Inline Edit</span>
+            </div>
+            <span class="badge badge-danger">⚠️ Evitar no Celular</span>
+          </div>
+          <div class="feat-title">🎯 Popover Rápido na Face do Card</div>
+          <p class="feat-desc">Trocar dono, prazo ou prioridade clicando direto no badge do card. <em>Ressalva da triagem:</em> alto risco de toque acidental no celular (390px) — deixado de lado por ora.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">makeCardEl()</span></span>
+            <span>Status: <strong>Pausado</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card" style="border-color:var(--glass-b-strong);">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K8</span>
+              <span class="feat-bench">Notion / ClickUp · Unread Line</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 4 · Prioritário</span>
+          </div>
+          <div class="feat-title">✨ Divisor "Novos Comentários Desde Sua Última Visita"</div>
+          <p class="feat-desc">Guarda timestamp LRU leve em <span class="code-pill">localStorage</span> ao abrir o card e insere um divisor visual na thread exatamente no primeiro comentário novo de outro autor.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">renderCommentList()</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K9</span>
+              <span class="feat-bench">Linear · Bulk Command Bar</span>
+            </div>
+            <span class="badge badge-accent">⚪ Backlog</span>
+          </div>
+          <div class="feat-title">📦 Expansão da Barra Multi-Select (Dono &amp; Prazo)</div>
+          <p class="feat-desc">Estende a barra de seleção em lote existente (<span class="code-pill">_doBulkBlockTag</span>) para permitir trocar responsável ou empurrar prazo (<span class="code-pill">+1d</span>, <span class="code-pill">+7d</span>) via <span class="code-pill">fbSaveAll()</span>.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">_doBulkBlockTag()</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card" style="border-color:var(--glass-b-strong);">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K10</span>
+              <span class="feat-bench">Jira AI / Linear Health</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 4 · Bloqueio Mudo</span>
+          </div>
+          <div class="feat-title">🧊 Alerta de Bloqueio Mudo (&gt;3d) &amp; Ping-Pong</div>
+          <p class="feat-desc">Detecta cards bloqueados há mais de 3 dias sem comentário novo (com botão de 1 clique no <span class="code-pill">🌅 Meu Dia</span> para cobrar atualização) e regressões repetidas de coluna.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">card.history[]</span> + Meu Dia</span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K11</span>
+              <span class="feat-bench">Linear / Slack · Thread Recap</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · Cliente</span>
+          </div>
+          <div class="feat-title">⚡ Botão "Resumo (TL;DR)" no Topo dos Comentários</div>
+          <p class="feat-desc">Ao lado do botão <span class="code-pill">🔍 Buscar (Ctrl+K)</span>, exibe em cards com <span class="code-pill">&ge;6</span> comentários um resumo instantâneo: última posição do dono, bloqueios citados e links da thread.</p>
+          <div class="feat-arch">
+            <span>Âncora: <span class="code-pill">#m-comments-wrap</span></span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">K12</span>
+              <span class="feat-bench">Copilot Workspace · Breakdown</span>
+            </div>
+            <span class="badge badge-accent">⚪ Backlog</span>
+          </div>
+          <div class="feat-title">Checklist Sugerida por Ficha Técnica</div>
+          <p class="feat-desc">Extrai tópicos da descrição e campos preenchidos na Ficha Técnica para sugerir etapas de checklist com preview antes de inserir.</p>
+          <div class="feat-arch">
+            <span>Âncora: Modal do Card · Checklist</span>
+            <span>Esforço: <strong>P</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 08 — FRENTE 1C: INTAKE & ESCALA (I1 A I4 + E1)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-7" data-start="70" data-duration="10" data-track-index="1" data-chapter="08 · Intake &amp; Escala" data-title="Portal de Pedidos (Intake) e Escala (I1–I4, E1)">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">08 · Engenharia Reversa · Intake &amp; Escala</span>
+            <span class="code-pill">intake-dev.html</span>
+            <span class="code-pill">escala-dev.html</span>
+          </div>
+          <h2 class="slide-h2">Transparência para quem Pede e Agilidade na Escala Semanal (I1–I4, E1)</h2>
+          <p class="slide-lead">Fechando o ciclo entre o solicitante externo/interno, a triagem do PO e o planejamento semanal de plantão e folgas.</p>
+        </div>
+        <div class="takeaway-box">
+          <strong>🏆 Destaque da Triagem:</strong> <span class="code-pill">I4 (Meus Pedidos)</span> foi classificado pelo Claude como o <strong>maior ganho de adoção</strong> de todo o dossiê.
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="glass-panel" style="border-left:4px solid var(--purple);display:flex;flex-direction:column;gap:10px;">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">I4</span>
+              <span class="feat-bench">Linear Asks · Customer Portal</span>
+            </div>
+            <span class="badge badge-purple">🟣 Escopo Claude · Maior Ganho de Adoção</span>
+          </div>
+          <h3 class="feat-title">📋 Aba "Meus Pedidos Enviados" com Status Ao Vivo</h3>
+          <p class="feat-desc">
+            Hoje quem envia uma demanda em <span class="code-pill">intake.html</span> fica sem saber se ela ainda está na fila de triagem, se já virou card no board da squad ou se foi concluída.
+          </p>
+          <div class="inner-card">
+            <strong>Como funciona na arquitetura real:</strong>
+            <p class="feat-desc">
+              • Regra em <span class="code-pill">database.rules.json</span> permitindo que o usuário autenticado leia apenas os registros onde <span class="code-pill">solicitanteUid === auth.uid</span>.<br/>
+              • Sincroniza o status do pedido com o card gerado (<span class="badge badge-warn">🟡 Na fila do PO</span> → <span class="badge badge-accent">🔵 Em andamento na coluna X (@Dono)</span> → <span class="badge badge-teal">🟢 Concluído</span>).
+            </p>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-left:4px solid var(--teal);display:flex;flex-direction:column;gap:10px;">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">E1</span>
+              <span class="feat-bench">PagerDuty / Shiftboard</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 2 · Escopo Antigravity (escala-dev.html)</span>
+          </div>
+          <h3 class="feat-title">🗓️ Botão "Copiar Semana Anterior" + Alerta de Conflito com Prazo</h3>
+          <p class="feat-desc">
+            Elimina o trabalho manual repetitivo de cadastrar a escala toda segunda-feira e previne prazos descobertos antes que aconteçam.
+          </p>
+          <div class="inner-card">
+            <strong>3 entregas em 1 página (<span class="code-pill">escala-dev.html</span>):</strong>
+            <p class="feat-desc">
+              1. <strong>📋 Repetir semana anterior:</strong> copia as alocações de <span class="code-pill">semana - 7d</span> da squad com preview antes de salvar.<br/>
+              2. <strong>⚠️ Aviso de card vencendo na folga:</strong> ao marcar <span class="code-pill">🏖️ Folga</span> em <span class="code-pill">abrirCadastro()</span>, avisa se o membro tem card com <span class="code-pill">due</span> naquele dia.<br/>
+              3. <strong>📅 Exportar meu plantão (<span class="code-pill">.ics</span>):</strong> gera arquivo de agenda para Outlook/Google Calendar.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">I1</span>
+              <span class="feat-bench">Linear Triage · Deflection</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · Barato</span>
+          </div>
+          <div class="feat-title">🔎 Detecção Ao Vivo de Pedido Duplicado</div>
+          <p class="feat-desc">Ao digitar o título em <span class="code-pill">intake-dev.html</span> (logado), busca termos equivalentes em <span class="code-pill">intake_pending</span> e cards ativos da squad e avisa se já existe demanda similar.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">I2</span>
+              <span class="feat-bench">ClickUp 4.0 · Dynamic Forms</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · Barato</span>
+          </div>
+          <div class="feat-title">📝 Chips de Estrutura Sugerida de Briefing</div>
+          <p class="feat-desc">4 chips acima de <span class="code-pill">#i-descricao</span> (<span class="code-pill">🐛 Erro</span>, <span class="code-pill">📊 Dados</span>, <span class="code-pill">🎨 Campanha</span>, <span class="code-pill">⚙️ Melhoria</span>) que inserem o roteiro ideal de perguntas sem apagar o texto já digitado.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">I3</span>
+              <span class="feat-bench">Linear Inbox · Keyboard Triage</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · kanban-dev</span>
+          </div>
+          <div class="feat-title">⌨️ Triagem Rápida por Teclado (1/2/3/4)</div>
+          <p class="feat-desc">Na modal <span class="code-pill">renderIntakeBody()</span> do Kanban, permite processar a fila com atalhos (<span class="code-pill">1</span> Criar card, <span class="code-pill">2</span> Guardar, <span class="code-pill">3</span> Vincular, <span class="code-pill">4</span> Recusar com motivo) + sugestão histórica de dono.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 09 — FRENTE 2A: RADAR OKR (O1 A O5)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-8" data-start="80" data-duration="10" data-track-index="1" data-chapter="09 · Radar OKR (O1–O5)" data-title="Radar OKR: Anti-Deriva, Rollup e Check-in (O1–O5)">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">09 · Engenharia Reversa · Radar OKR</span>
+            <span class="code-pill">okr-dev.html</span>
+          </div>
+          <h2 class="slide-h2">Anti-Deriva de Objetivos, Termômetro de Cards e Ritual de Check-in (O1–O5)</h2>
+          <p class="slide-lead">Inspirações de Tability, Viva Goals, Linear Initiatives e Atlassian Rovo para manter o Radar vivo toda semana.</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="feat-card" style="border-color:var(--teal);">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">O1</span>
+              <span class="feat-bench">Tability · Drift Detector</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 1 · Prioridade #1</span>
+          </div>
+          <div class="feat-title">🧊 Detector de Deriva ("Sem check-in há 14d+")</div>
+          <p class="feat-desc">Calcula a idade do último lançamento em <span class="code-pill">o.atingimento.lancamentos[]</span> ou <span class="code-pill">o.history[]</span>. Objetivos estagnados há <span class="code-pill">&ge;14 dias</span> recebem badge <span class="code-pill">🧊 Sem check-in há Xd</span> e filtro clicável na <span class="code-pill">#okr-stats-strip</span>.</p>
+          <div class="feat-arch">
+            <span>Arquivo: <span class="code-pill">okr-dev.html</span></span>
+            <span>Esforço: <strong>P [Antigravity]</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">O2</span>
+              <span class="feat-bench">Linear Initiatives · Rollup</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · okr-dev</span>
+          </div>
+          <div class="feat-title">🌡️ Termômetro de Execução dos Cards Vinculados</div>
+          <p class="feat-desc">Cruza <span class="code-pill">o.cardLinks</span> via <span class="code-pill">_okrCardEnsure()</span> e mostra barra segmentada (<span class="code-pill">✅ Concluídos</span> / <span class="code-pill">🔵 Andamento</span> / <span class="code-pill">🔴 Atrasados</span>), alertando quando um Objetivo <span class="code-pill">🟢 No prazo</span> possui cards atrasados no Kanban.</p>
+          <div class="feat-arch">
+            <span>Arquivo: <span class="code-pill">okr-dev.html</span></span>
+            <span>Esforço: <strong>P [Antigravity]</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">O3</span>
+              <span class="feat-bench">Atlassian Rovo · Auto Check-in</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · 100% Cliente</span>
+          </div>
+          <div class="feat-title">✨ Auto-Rascunho de Check-in a partir dos Cards</div>
+          <p class="feat-desc">Botão no modal do Objetivo que lê os cards vinculados movimentados nos últimos 7 dias e propõe automaticamente <strong>Progresso</strong> (concluídos), <strong>Próximo Passo</strong> (em andamento) e <strong>Risco</strong> (bloqueados) dentro de <span class="code-pill">OKR_CHAR_LIMITS</span>.</p>
+          <div class="feat-arch">
+            <span>Arquivo: <span class="code-pill">okr-dev.html</span></span>
+            <span>Esforço: <strong>M [Antigravity]</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">O4</span>
+              <span class="feat-bench">Tability Focus Mode &amp; Lattice Update</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · okr-dev</span>
+          </div>
+          <div class="feat-title">⏱️ Modo "Ritual de Check-in Rápido em 60s" + Confiança</div>
+          <p class="feat-desc">Stepper focado (<span class="code-pill">1 de N</span>) apenas nos Objetivos do usuário logado: atualiza atingimento, registra sentimento de confiança (<span class="code-pill">🟢 Confiante</span> / <span class="code-pill">🟡 Atenção</span> / <span class="code-pill">🔴 Em risco</span>), promove Próximos Passos concluídos e avança para o próximo.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">O5</span>
+              <span class="feat-bench">Perdoo Strategy Map &amp; Mooncamp Tree</span>
+            </div>
+            <span class="badge badge-accent">⚪ Backlog</span>
+          </div>
+          <div class="feat-title">🌳 Árvore de Impacto Visual (Strategy Map Canvas)</div>
+          <p class="feat-desc">Visão em árvore horizontal conectando <span class="code-pill">Gerência → Objetivo (% + semáforo) → Marcos Ativos → Cards Vinculados</span>. Triado para backlog posterior para priorizar os itens de ritual e reunião (<span class="code-pill">O1</span>, <span class="code-pill">S1</span>, <span class="code-pill">S2</span>).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 10 — FRENTE 2B: APRESENTAÇÃO AO VIVO & METAS (S1 A S3 + M1)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-9" data-start="90" data-duration="10" data-track-index="1" data-chapter="10 · QBR Ao Vivo &amp; Metas" data-title="Apresentação Ao Vivo e Metas (S1–S3, M1)">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">10 · Engenharia Reversa · Reunião Executiva &amp; Metas</span>
+            <span class="code-pill">okr-apresentacao.slide.html</span>
+            <span class="code-pill">mare-metas-dev.js</span>
+          </div>
+          <h2 class="slide-h2">De Apresentação Passiva a Sala de Decisão Executiva (S1–S3, M1)</h2>
+          <p class="slide-lead">Durante a reunião de resultados, cada decisão tomada na tela já vira ação rastreável no Objetivo, focando o tempo da liderança onde há risco real.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="glass-panel" style="border-top:3px solid var(--teal);display:flex;flex-direction:column;gap:12px;">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">S1</span>
+              <span class="feat-bench">WorkBoard · QBR Action Items</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 1 · Prioridade #1</span>
+          </div>
+          <h3 class="feat-title">📌 Notas de Decisão Contextuais → "Próximo Passo" em 1 Clique</h3>
+          <p class="feat-desc">
+            Hoje o bloco de anotações (<span class="code-pill">#notes-ov</span>) em <span class="code-pill">okr-apresentacao.slide.html</span> guarda texto livre solto. Com o <span class="code-pill">S1</span>:
+          </p>
+          <div class="inner-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <span class="badge badge-accent">🎯 Objetivo aberto: Maré Digital (obj_104)</span>
+              <span class="badge badge-teal">+ Enviar para Próximo Passo</span>
+            </div>
+            <p class="feat-desc">
+              • Amarra automaticamente cada nota ao <span class="code-pill">objId</span> visível no slide atual.<br/>
+              • Permite classificar como <span class="code-pill">⚡ Decisão</span>, <span class="code-pill">🎯 Próximo Passo</span> ou <span class="code-pill">🚧 Bloqueio</span>.<br/>
+              • Um clique grava direto em <span class="code-pill">okrObjetivos[objId].proximosPassos</span> no Firebase!
+            </p>
+          </div>
+        </div>
+
+        <div class="glass-panel" style="border-top:3px solid var(--teal);display:flex;flex-direction:column;gap:12px;">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">S2</span>
+              <span class="feat-bench">WorkBoard / Viva Goals · Exception-First</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 1 · Prioridade #1</span>
+          </div>
+          <h3 class="feat-title">🔥 Toggle "Só Atenção/Risco" na Apresentação Ao Vivo</h3>
+          <p class="feat-desc">
+            Em reuniões com muitas gerências, passar por todos os Objetivos <span class="code-pill">🟢 No prazo</span> consome o tempo que deveria discutir desvios.
+          </p>
+          <div class="inner-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <span class="badge badge-danger">🔥 Filtro Ativo: Só Risco &amp; Atraso</span>
+              <span class="code-pill">✨ +6 Objetivos No Prazo ocultos</span>
+            </div>
+            <p class="feat-desc">
+              • Botão na topbar do slide que filtra a fila de slides mantendo apenas Objetivos com status <span class="code-pill">🟡 Risco</span> ou <span class="code-pill">🔴 Atrasado</span>.<br/>
+              • Sincronizável via <span class="code-pill">apresentacao_live</span> quando o ADM controla a sala.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">S3</span>
+              <span class="feat-bench">Fellow.app · Smart Pacing</span>
+            </div>
+            <span class="badge badge-accent">⚪ Backlog</span>
+          </div>
+          <div class="feat-title">⏳ Orçamento de Tempo por Gerência Restante</div>
+          <p class="feat-desc">Ao lado de <span class="code-pill">#tb-countdown</span>, divide os minutos restantes pelo número de gerências ainda não apresentadas (<span class="code-pill">~7m/gerência</span>).</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">M1</span>
+              <span class="feat-bench">Perdoo KPI Link &amp; ChartMogul Simulator</span>
+            </div>
+            <span class="badge badge-purple">🟣 Escopo Claude (Módulo Compartilhado)</span>
+          </div>
+          <div class="feat-title">🐟 Vínculo Meta Comercial ↔ OKR &amp; Fator de Aceleração</div>
+          <p class="feat-desc">Conecta uma meta de <span class="code-pill">mare-metas-dev.js</span> ao atingimento de um Objetivo no Radar e calcula na tabela expandida quanto % acima da curva diária é necessário nos dias restantes para fechar em 100%.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 11 — FRENTE 2C & 3: OCEANO, PAINEL, SINO ÚNICO & AGENTE ÁGIL
+       ======================================================================== -->
+  <section class="clip slide" id="slide-10" data-start="100" data-duration="10" data-track-index="1" data-chapter="11 · Painel, Oceano &amp; IA" data-title="Painel Executivo, Oceano, Sino Único e IA (P1–P5, A1–A3)">
+    <div class="slide-container">
+      <div class="slide-head">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">11 · Engenharia Reversa · Comando, Notificações &amp; IA</span>
+            <span class="code-pill">painel-dev.html</span>
+            <span class="code-pill">oceano-dev.html</span>
+            <span class="code-pill">mare-notif-dev.js</span>
+            <span class="code-pill">functions/</span>
+          </div>
+          <h2 class="slide-h2">Síntese Executiva no Painel, Inbox Zero no Sino e Evoluções do Agente</h2>
+          <p class="slide-lead">Transformando dados brutos das squads em boletins executivos instantâneos e reduzindo o ruído de notificações.</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="feat-card" style="border-color:var(--teal);">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">P4</span>
+              <span class="feat-bench">Linear Pulse · Weekly Digest</span>
+            </div>
+            <span class="badge badge-teal">🟢 Leva 3 · Prioritário</span>
+          </div>
+          <div class="feat-title">📰 Gerador de Digest Executivo Semanal (WhatsApp &amp; Mural)</div>
+          <p class="feat-desc">Compila de forma 100% determinística a partir de <span class="code-pill">squadData</span> + <span class="code-pill">metas_digital</span>: entregas da semana, cards OKR concluídos, bloqueios críticos e projeção de metas, com botões para copiar pro WhatsApp ou abrir no Compositor de Comunicado.</p>
+          <div class="feat-arch">
+            <span>Arquivo: <span class="code-pill">painel-dev.html</span></span>
+            <span>Esforço: <strong>P [Antigravity]</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">P3</span>
+              <span class="feat-bench">WorkBoard Operational Score</span>
+            </div>
+            <span class="badge badge-warn">🟡 Leva 3 · Combinar Pesos</span>
+          </div>
+          <div class="feat-title">💓 Squad Health Score (Índice Composto 0–100)</div>
+          <p class="feat-desc">Sintetiza WIP, SLA/atraso, bloqueios e throughput numa nota por squad com explicação de qual pilar penalizou. <em>Ressalva:</em> combinar os pesos exatos com o Caio antes de exibir como nota oficial.</p>
+          <div class="feat-arch">
+            <span>Arquivo: <span class="code-pill">painel-dev.html</span></span>
+            <span>Esforço: <strong>P [Antigravity]</strong></span>
+          </div>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-top">
+            <div class="feat-id-wrap">
+              <span class="feat-id">P2 / P5</span>
+              <span class="feat-bench">Notion Recents &amp; Lattice Coverage</span>
+            </div>
+            <span class="badge badge-warn">🟡 2ª Leva · Oceano/Painel</span>
+          </div>
+          <div class="feat-title">🧭 "Continuar de onde parei" + Radar Carga × Escala</div>
+          <p class="feat-desc">No Oceano (<span class="code-pill">P2</span>), exibe os últimos 4 itens abertos via <span class="code-pill">localStorage</span> (zero leitura no banco). No Painel (<span class="code-pill">P5</span>), destaca quando há cards críticos vencendo hoje com responsáveis de folga.</p>
+          <div class="feat-arch">
+            <span>Arquivos: <span class="code-pill">oceano-dev</span> / <span class="code-pill">painel-dev</span></span>
+            <span>Esforço: <strong>P / M</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="glass-panel" style="border-left:4px solid var(--purple);">
+          <div class="feat-top" style="margin-bottom:6px;">
+            <div class="feat-id-wrap">
+              <span class="feat-id">A1</span>
+              <span class="feat-bench">Linear Inbox &amp; Shortwave Snooze</span>
+            </div>
+            <span class="badge badge-purple">🟣 Escopo Claude · mare-notif-dev.js</span>
+          </div>
+          <h3 class="feat-title" style="margin-bottom:6px;">🔔 Sino Único: Agrupamento por Card (Rollup), Filtro @Menções e Snooze</h3>
+          <p class="feat-desc">
+            Colapsa 5 eventos seguidos do mesmo card numa única linha expansível (<em>"5 atualizações no card X"</em>), adiciona filtro rápido <span class="code-pill">🎯 Só @Menções &amp; Urgentes</span> e botão <span class="code-pill">💤 Adiar (2h / Amanhã 9h)</span>.
+          </p>
+        </div>
+
+        <div class="glass-panel" style="border-left:4px solid var(--purple);">
+          <div class="feat-top" style="margin-bottom:6px;">
+            <div class="feat-id-wrap">
+              <span class="feat-id">A3</span>
+              <span class="feat-bench">Linear Agents &amp; Rovo · Backend</span>
+            </div>
+            <span class="badge badge-purple">🟣 Escopo Claude · functions/ (Com Cuidado de Tokens)</span>
+          </div>
+          <h3 class="feat-title" style="margin-bottom:6px;">🤖 Evoluções de Cloud Functions (Haiku + Cache por Card)</h3>
+          <p class="feat-desc">
+            Inclui <span class="code-pill">agenteAgilTldrCard</span> (cacheado por <span class="code-pill">lastCommentId</span> em <span class="code-pill">card_tldr_cache</span>), enriquecimento de triagem em <span class="code-pill">intakeTrigger.js</span>, tool léxica <span class="code-pill">buscar_cards_similares</span> e <span class="code-pill">inspecionar_cards_vinculados</span> no Radar.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SLIDE 12 — CATÁLOGO INTERATIVO COMPLETO (EXPLORADOR DAS 34 FUNCIONALIDADES)
+       ======================================================================== -->
+  <section class="clip slide" id="slide-11" data-start="110" data-duration="10" data-track-index="1" data-chapter="12 · Catálogo Interativo (34 Itens)" data-title="Catálogo Interativo das 34 Funcionalidades">
+    <div class="slide-container">
+      <div class="slide-head" style="padding-bottom:8px;">
+        <div class="slide-head-left">
+          <div class="eyebrow-row">
+            <span class="eyebrow">12 · Explorador Interativo Completo</span>
+            <span class="badge badge-teal" id="catalog-count-badge">Exibindo 34 de 34 itens</span>
+          </div>
+          <h2 class="slide-h2">Catálogo Completo das 34 Funcionalidades Mapeadas &amp; Triadas</h2>
+        </div>
+      </div>
+
+      <div class="explorer-controls" role="region" aria-label="Filtros do catálogo">
+        <button type="button" class="filter-chip active" data-filter-group="all" onclick="setCatalogFilter('all', this)">🌐 Todos (34)</button>
+        <button type="button" class="filter-chip" data-filter-group="levas" onclick="setCatalogFilter('levas', this)">🚀 Levas 1–4 Prioritárias (11)</button>
+        <button type="button" class="filter-chip" data-filter-group="claude" onclick="setCatalogFilter('claude', this)">🟣 Escopo Claude (5)</button>
+        <button type="button" class="filter-chip" data-filter-group="segunda" onclick="setCatalogFilter('segunda', this)">🟡 2ª Leva / Ressalvas (9)</button>
+        <button type="button" class="filter-chip" data-filter-group="existe" onclick="setCatalogFilter('existe', this)">🟢 Já Existe / Estender (2)</button>
+        <button type="button" class="filter-chip" data-filter-group="backlog" onclick="setCatalogFilter('backlog', this)">⚪ Backlog (7)</button>
+        <input
+          type="search"
+          id="catalog-search"
+          class="search-inp"
+          placeholder="🔎 Filtrar por código (K3, O1, S1, I4), arquivo ou palavra-chave…"
+          oninput="renderCatalogTable()"
+          onkeydown="event.stopPropagation();"
+        />
+      </div>
+
+      <div class="table-wrap" style="max-height:540px;overflow-y:auto;">
+        <table class="mare-table" id="catalog-table">
+          <thead>
+            <tr>
+              <th style="width:70px;">Código</th>
+              <th style="width:23%;">Funcionalidade &amp; Inspiração</th>
+              <th style="width:16%;">Arquivo Alvo</th>
+              <th style="width:36%;">Mecânica no Ecossistema Oceano</th>
+              <th style="width:18%;">Status na Triagem</th>
+            </tr>
+          </thead>
+          <tbody id="catalog-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- BARRA INFERIOR -->
+<footer id="bottombar">
+  <div class="bb-dots" id="bb-dots" role="tablist" aria-label="Navegação por slides"></div>
+  <div class="bb-hint">
+    Use <span class="code-pill">←</span> <span class="code-pill">→</span> ou <span class="code-pill">Espaço</span> para navegar · <span class="code-pill">G</span> Índice · <span class="code-pill">T</span> Tema
+  </div>
+</footer>
+
+<script>
+/* ==========================================================================
+   DADOS COMPLETOS DO CATÁLOGO (34 ITENS MAPEADOS + TRIAGEM PÓS-FÉRIAS)
+   ========================================================================== */
+const CATALOG_ITEMS = [
+  { id: 'O1', title: '🧊 Detector de Deriva ("Sem check-in há 14d+")', bench: 'Tability / Viva Goals', file: 'okr-dev.html', desc: 'Calcula idade do último lançamento em lancamentos[] e destaca Objetivos congelados há >=14d na #okr-stats-strip.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🥇 Leva 1 · Radar</span>' },
+  { id: 'S1', title: '📌 Nota da Reunião vira "Próximo Passo" em 1 Clique', bench: 'WorkBoard QBR', file: 'okr-apresentacao.slide.html', desc: 'Amarra notas de #notes-ov ao objId aberto na tela e permite promover a nota direto para okrObjetivos[objId].proximosPassos.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🥇 Leva 1 · Slide</span>' },
+  { id: 'S2', title: '🔥 Filtro "Só Atenção/Risco" na Apresentação Ao Vivo', bench: 'WorkBoard / Viva Goals', file: 'okr-apresentacao.slide.html', desc: 'Oculta temporariamente Objetivos 100% verdes na QBR para focar a reunião nos itens em Risco ou Atrasados.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🥇 Leva 1 · Slide</span>' },
+  { id: 'K3', title: '🏖️ Ponte Escala → Kanban (Alerta de Folga no Prazo)', bench: 'ClickUp 4.0 / Shortcut', file: 'kanban-dev.html', desc: 'Reaproveita o cache de kanban/escala do Calendário do Maré para alertar quando card.due cai em dia de folga do dono.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🥈 Leva 2 · Escala</span>' },
+  { id: 'E1', title: '📋 Copiar Semana Anterior + Aviso de Prazo na Folga + .ics', bench: 'PagerDuty / Shiftboard', file: 'escala-dev.html', desc: 'Clona escala de semana - 7d em 1 clique, avisa no modal se há card vencendo na folga e exporta plantão (.ics).', group: 'levas', badgeHtml: '<span class="badge badge-teal">🥈 Leva 2 · Escala</span>' },
+  { id: 'P1', title: '🌅 Estender o "Meu Dia" com Folgas e Plantão de Hoje', bench: 'Notion Home / Backstage', file: 'kanban-dev.html', desc: 'O Meu Dia já existe no Maré (27 menções); estende com quem da squad está de folga/plantão hoje em vez de criar widget novo.', group: 'existe', badgeHtml: '<span class="badge badge-teal">🟢 Já existe (Estender Leva 2)</span>' },
+  { id: 'P4', title: '📰 Gerador de Digest Executivo Semanal (WhatsApp/Mural)', bench: 'Linear Pulse Digest', file: 'painel-dev.html', desc: 'Compila entregas da semana, cards OKR, bloqueios e projeção de metas para copiar pro WhatsApp ou abrir no Mural.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🥉 Leva 3 · Painel</span>' },
+  { id: 'P3', title: '💓 Squad Health Score (Índice Composto 0–100)', bench: 'Linear Pulse / WorkBoard', file: 'painel-dev.html', desc: 'Nota composta por squad (WIP, atraso, bloqueio, throughput). Entrar após combinar os pesos exatos com o Caio.', group: 'levas', badgeHtml: '<span class="badge badge-warn">🥉 Leva 3 (Combinar pesos)</span>' },
+  { id: 'K2', title: '⏳ Dias Parado na Coluna Atual (Time-in-Column Dots)', bench: 'Jira Cloud / ClickUp', file: 'kanban-dev.html', desc: 'Usa card.flow.enteredAt (descontando pausas) para exibir dias na coluna atual na face do card + média no topo da coluna.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🏅 Leva 4 · Maré</span>' },
+  { id: 'K8', title: '✨ Divisor "Novos Comentários Desde Sua Última Visita"', bench: 'Notion / ClickUp 3.0', file: 'kanban-dev.html', desc: 'Guarda timestamp em localStorage ao abrir o card e insere divisor visual no primeiro comentário novo de outro autor.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🏅 Leva 4 · Maré</span>' },
+  { id: 'K10', title: '🧊 Alerta de Bloqueio Mudo (>3d sem nota) & Retrabalho', bench: 'Jira AI / Linear Health', file: 'kanban-dev.html', desc: 'Destaca cards bloqueados há >3 dias sem comentário novo com botão de cobrança em 1 clique no Meu Dia.', group: 'levas', badgeHtml: '<span class="badge badge-teal">🏅 Leva 4 · Maré</span>' },
+  { id: 'I4', title: '📋 Aba "Meus Pedidos Enviados" com Status Ao Vivo', bench: 'Linear Asks Portal', file: 'intake-dev.html + rules', desc: 'Solicitante acompanha se seu pedido está na fila, em andamento (coluna/dono) ou concluído. Maior ganho de adoção.', group: 'claude', badgeHtml: '<span class="badge badge-purple">🟣 Claude (Regra RTDB)</span>' },
+  { id: 'A1', title: '🔔 Sino Único com Rollup por Card, Filtro @Menções e Snooze', bench: 'Linear Inbox / Shortwave', file: 'mare-notif-dev.js', desc: 'Agrupa notificações do mesmo card numa linha expansível, filtra só @menções e permite adiar (2h / Amanhã 9h).', group: 'claude', badgeHtml: '<span class="badge badge-purple">🟣 Claude (mare-notif)</span>' },
+  { id: 'M1', title: '🐟 Vínculo Meta Comercial ↔ OKR & Fator de Aceleração', bench: 'Perdoo / ChartMogul', file: 'mare-metas-dev.js + okr', desc: 'Conecta meta comercial ao Objetivo no Radar e mostra o ritmo diário necessário na curva restante para bater 100%.', group: 'claude', badgeHtml: '<span class="badge badge-purple">🟣 Claude (mare-metas)</span>' },
+  { id: 'A3.1', title: '🤖 Endpoint Read-Only agenteAgilTldrCard com Cache', bench: 'Linear Issue Summary', file: 'functions/agente-agil/', desc: 'Resumo IA em 3 bullets cacheado em card_tldr_cache/{cardId} por lastCommentId (zero custo se não houve comentário novo).', group: 'claude', badgeHtml: '<span class="badge badge-purple">🟣 Claude (functions/)</span>' },
+  { id: 'A3.2', title: '🤖 Triagem IA no Intake & Busca de Similares (A3.2–A3.5)', bench: 'Linear Triage / Rovo', file: 'functions/agente-agil/', desc: 'Sugestão de dono/tags via Haiku no intakeTrigger, buscar_cards_similares e inspecionar_cards_vinculados (avaliar tokens).', group: 'claude', badgeHtml: '<span class="badge badge-purple">🟣 Claude (Avaliar Tokens)</span>' },
+  { id: 'A3.6', title: '📲 Batching / Collapse de Web Push por Card (tagDoPush)', bench: 'Linear Mobile Push', file: 'functions/', desc: 'Agrupamento de Web Push por card usando tagDoPush já existe em functions/ com testes unitários.', group: 'existe', badgeHtml: '<span class="badge badge-teal">🟢 Já existe em functions/</span>' },
+  { id: 'K1', title: '👀 Peek Preview Lateral com Espaço (Sem Lock)', bench: 'Linear / Notion Side Peek', file: 'kanban-dev.html', desc: 'Teclar Espaço sobre um card abre drawer leve à direita sem gravar lock em card_locks/{cid}.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva / Ressalva</span>' },
+  { id: 'K4', title: '🎙️ Modo Daily Guiado (Standup Runner com Timer)', bench: 'Shortcut / Jira Standup', file: 'kanban-dev.html', desc: 'Navegador pessoa a pessoa com timer de 1m30s e resumo das movimentações das últimas 24h.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva / Ressalva</span>' },
+  { id: 'K11', title: '⚡ Botão "Resumo (TL;DR)" Heurístico nos Comentários', bench: 'Linear / Slack Recap', file: 'kanban-dev.html', desc: 'Extrai no cliente a última posição do dono, comentários de bloqueio, parecer do Agente e links da thread.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Cliente</span>' },
+  { id: 'I1', title: '🔎 Detecção Ao Vivo de Pedido/Card Duplicado', bench: 'Linear Triage Deflection', file: 'intake-dev.html', desc: 'Enquanto o usuário digita o título no Intake logado, avisa se já existe card ou pedido parecido na squad.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Barato</span>' },
+  { id: 'I2', title: '📝 Chips de Estrutura Sugerida de Briefing', bench: 'ClickUp 4.0 Dynamic Forms', file: 'intake-dev.html', desc: '4 chips por tipo de pedido (Erro, Dados, Campanha, Melhoria) que inserem o esqueleto de perguntas no textarea.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Barato</span>' },
+  { id: 'I3', title: '⌨️ Triagem Rápida por Teclado (1/2/3/4) no Intake', bench: 'Linear Triage Inbox', file: 'kanban-dev.html', desc: 'Atalhos 1/2/3/4 na modal de Intake do Kanban + auto-sugestão de responsável por histórico da submarca.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Maré</span>' },
+  { id: 'O2', title: '🌡️ Termômetro de Execução dos Cards Vinculados', bench: 'Linear Initiatives Rollup', file: 'okr-dev.html', desc: 'Mostra barra segmentada dos cards vinculados ao Objetivo e alerta se o OKR está Verde mas possui cards atrasados.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Radar</span>' },
+  { id: 'O3', title: '✨ Auto-Rascunho de Check-in a partir dos Cards', bench: 'Atlassian Rovo Rollup', file: 'okr-dev.html', desc: 'Sugere textos de Progresso, Próximo Passo e Risco lendo os cards vinculados movimentados nos últimos 7 dias.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Radar</span>' },
+  { id: 'O4', title: '⏱️ Ritual de Check-in Rápido em 60s + Confiança', bench: 'Tability Focus / Lattice', file: 'okr-dev.html', desc: 'Stepper focado nos Objetivos do usuário logado com registro de humor/confiança e promoção de passos.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Radar</span>' },
+  { id: 'P2', title: '🧭 Faixa "Continuar de onde parei" (Recents)', bench: 'Notion Home / Linear', file: 'oceano-dev.html', desc: 'Exibe no Oceano os últimos 4 cards/objetivos abertos pelo usuário via localStorage (zero leitura no Firebase).', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Oceano</span>' },
+  { id: 'P5', title: '🛡️ Radar de Risco de Cobertura (Carga × Escala de Hoje)', bench: 'Lattice Capacity', file: 'painel-dev.html', desc: 'Cruza no Painel os cards que vencem hoje com kanban/escala/{hoje} para alertar prazos críticos sem cobertura.', group: 'segunda', badgeHtml: '<span class="badge badge-warn">🟡 2ª Leva · Painel</span>' },
+  { id: 'K5', title: '🌊 KPI de Scope Creep da Sprint (Dia 1 vs. Pós-Início)', bench: 'Linear Cycles', file: 'kanban-dev.html', desc: 'Separa no Burndown os cards planejados no Dia 1 dos adicionados depois (depende de sprint configurada).', group: 'backlog', badgeHtml: '<span class="badge badge-accent">⚪ Backlog</span>' },
+  { id: 'K6', title: '⚖️ Barra de Capacidade Líquida vs. Escala na Sprint', bench: 'ClickUp Workload / Float', file: 'kanban-dev.html', desc: 'Compara Story Points/cards ativos por pessoa com os dias úteis reais escalados (depende de SP).', group: 'backlog', badgeHtml: '<span class="badge badge-accent">⚪ Backlog</span>' },
+  { id: 'K7', title: '🎯 Edição Inline na Face do Card (Popovers)', bench: 'Linear / Notion', file: 'kanban-dev.html', desc: 'Pausado na triagem por risco de toque e edição acidental na visualização mobile (390px).', group: 'backlog', badgeHtml: '<span class="badge badge-danger">⚪ Pausado (Risco Mobile)</span>' },
+  { id: 'K9', title: '📦 Expansão da Barra Multi-Select (Dono e Prazo)', bench: 'Linear Command Bar', file: 'kanban-dev.html', desc: 'Adiciona troca de dono e empurrão de prazo (+1d/+7d) na barra de seleção múltipla.', group: 'backlog', badgeHtml: '<span class="badge badge-accent">⚪ Backlog</span>' },
+  { id: 'K12', title: 'Checklist Sugerida por Ficha Técnica / Descrição', bench: 'Copilot Workspace', file: 'kanban-dev.html', desc: 'Gera sugestão de checklist por fases a partir dos tópicos da descrição e Ficha Técnica.', group: 'backlog', badgeHtml: '<span class="badge badge-accent">⚪ Backlog</span>' },
+  { id: 'O5', title: '🌳 Árvore de Impacto Visual (Strategy Map Canvas)', bench: 'Perdoo / Mooncamp', file: 'okr-dev.html', desc: 'Visão em árvore conectando Gerência → Objetivo → Marcos → Cards vinculados.', group: 'backlog', badgeHtml: '<span class="badge badge-accent">⚪ Backlog</span>' },
+  { id: 'S3', title: '⏳ Orçamento de Tempo por Gerência Restante (Pacing)', bench: 'Fellow.app', file: 'okr-apresentacao.slide.html', desc: 'Calcula minutos restantes por gerência ainda não apresentada ao lado do cronômetro.', group: 'backlog', badgeHtml: '<span class="badge badge-accent">⚪ Backlog</span>' },
+  { id: 'A2', title: '💡 Novas Rotinas Aprendidas (Modelo & Automação)', bench: 'Atlassian Rovo Coaching', file: 'kanban-dev.html', desc: 'Detecta criação repetida de cards iguais ou movimentações idênticas e sugere criar Modelo ou Regra.', group: 'backlog', badgeHtml: '<span class="badge badge-accent">⚪ Backlog</span>' }
+];
+
+/* ==========================================================================
+   HYPERFRAMES TIMELINE REGISTRATION + SLIDESHOW CONTROLLER
+   ========================================================================== */
+window.__timelines = window.__timelines || {};
+const slides = Array.from(document.querySelectorAll('.clip.slide'));
+const totalSlides = slides.length;
+let currentSlide = 0;
+let activeCatalogGroup = 'all';
+
+function buildHyperFramesTimeline() {
+  if (typeof window.gsap === 'undefined') return null;
+  const tl = window.gsap.timeline({ paused: true });
+
+  slides.forEach((slideEl, idx) => {
+    const startSec = idx * 10;
+    const headerEl = slideEl.querySelector('.slide-head, .glass-panel');
+    const cardsEls = slideEl.querySelectorAll('.kpi-card, .feat-card, .inner-card, .table-wrap');
+
+    if (headerEl) {
+      tl.fromTo(
+        headerEl,
+        { y: 14, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.38, ease: 'power2.out', immediateRender: false },
+        startSec + 0.05
+      );
+    }
+    if (cardsEls.length) {
+      tl.fromTo(
+        cardsEls,
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.42, stagger: 0.04, ease: 'power2.out', immediateRender: false },
+        startSec + 0.14
+      );
+    }
+  });
+
+  // Sentinel no final da composição (120s) conforme contrato HyperFrames
+  tl.set({}, {}, 120);
+  window.__timelines['dossie-benchmark-mare'] = tl;
+  return tl;
+}
+
+const hfTimeline = buildHyperFramesTimeline();
+
+function renderNavigationDots() {
+  const dotsWrap = document.getElementById('bb-dots');
+  const drawerGrid = document.getElementById('drawer-grid');
+  dotsWrap.innerHTML = '';
+  drawerGrid.innerHTML = '';
+
+  slides.forEach((s, i) => {
+    const num = String(i + 1).padStart(2, '0');
+    const title = s.getAttribute('data-title') || `Slide ${num}`;
+    const chapter = s.getAttribute('data-chapter') || num;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'slide-dot' + (i === currentSlide ? ' active' : '');
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', i === currentSlide ? 'true' : 'false');
+    btn.title = `${num} · ${title}`;
+    btn.textContent = num;
+    btn.onclick = () => goToSlide(i);
+    dotsWrap.appendChild(btn);
+
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'feat-card';
+    card.style.textAlign = 'left';
+    card.style.cursor = 'pointer';
+    card.innerHTML = `
+      <div class="feat-top">
+        <span class="feat-id">${num}</span>
+        <span class="feat-bench">${chapter.replace(/^\d+\s*·\s*/, '')}</span>
+      </div>
+      <div class="feat-title" style="font-size:14px;">${title}</div>
+    `;
+    card.onclick = () => {
+      toggleIndexDrawer(false);
+      goToSlide(i);
+    };
+    drawerGrid.appendChild(card);
+  });
+}
+
+function goToSlide(index) {
+  if (index < 0 || index >= totalSlides) return;
+  currentSlide = index;
+
+  slides.forEach((s, i) => {
+    const isActive = i === currentSlide;
+    s.classList.toggle('active', isActive);
+    if (isActive) s.scrollTop = 0;
+  });
+
+  const activeEl = slides[currentSlide];
+  const numStr = String(currentSlide + 1).padStart(2, '0');
+  const totStr = String(totalSlides).padStart(2, '0');
+  document.getElementById('tb-counter').textContent = `${numStr} / ${totStr}`;
+  document.getElementById('tb-chapter').textContent = activeEl.getAttribute('data-chapter') || '';
+  document.getElementById('tb-progress-fill').style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+
+  document.getElementById('btn-prev').disabled = currentSlide === 0;
+  document.getElementById('btn-next').disabled = currentSlide === totalSlides - 1;
+
+  const dotBtns = document.querySelectorAll('.slide-dot');
+  dotBtns.forEach((b, i) => {
+    b.classList.toggle('active', i === currentSlide);
+    b.setAttribute('aria-selected', i === currentSlide ? 'true' : 'false');
+  });
+
+  if (hfTimeline) {
+    const startSec = currentSlide * 10;
+    hfTimeline.tweenFromTo(startSec, startSec + 0.9);
+  }
+}
+
+function nextSlide() {
+  if (currentSlide < totalSlides - 1) goToSlide(currentSlide + 1);
+}
+
+function prevSlide() {
+  if (currentSlide > 0) goToSlide(currentSlide - 1);
+}
+
+function toggleIndexDrawer(forceState) {
+  const dr = document.getElementById('index-drawer');
+  const next = typeof forceState === 'boolean' ? forceState : !dr.classList.contains('open');
+  dr.classList.toggle('open', next);
+}
+
+/* ==========================================================================
+   ALTERNADOR DOS 3 TEMAS MARINE GLASS (🌙 Abrolhos / ☀️ Lençóis / 🌴 Vice City)
+   ========================================================================== */
+const THEMES = [
+  { id: '', icon: '🌙', label: 'Abrolhos' },
+  { id: 'light', icon: '☀️', label: 'Lençóis' },
+  { id: 'vice', icon: '🌴', label: 'Vice City' }
+];
+let currentThemeIdx = 0;
+
+function cycleTheme() {
+  currentThemeIdx = (currentThemeIdx + 1) % THEMES.length;
+  const t = THEMES[currentThemeIdx];
+  if (t.id) {
+    document.documentElement.setAttribute('data-theme', t.id);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  document.getElementById('theme-icon').textContent = t.icon;
+  document.getElementById('theme-label').textContent = t.label;
+}
+
+/* ==========================================================================
+   EXPLORADOR INTERATIVO DO CATÁLOGO (SLIDE 12)
+   ========================================================================== */
+function setCatalogFilter(group, btnEl) {
+  activeCatalogGroup = group;
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  renderCatalogTable();
+}
+
+function renderCatalogTable() {
+  const tbody = document.getElementById('catalog-tbody');
+  const q = (document.getElementById('catalog-search')?.value || '').trim().toLowerCase();
+
+  const filtered = CATALOG_ITEMS.filter(item => {
+    if (activeCatalogGroup !== 'all' && item.group !== activeCatalogGroup) return false;
+    if (!q) return true;
+    const hay = `${item.id} ${item.title} ${item.bench} ${item.file} ${item.desc}`.toLowerCase();
+    return hay.includes(q);
+  });
+
+  const badge = document.getElementById('catalog-count-badge');
+  if (badge) badge.textContent = `Exibindo ${filtered.length} de ${CATALOG_ITEMS.length} itens`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--txt3);">Nenhum item encontrado para o filtro atual. Clique em <strong>🌐 Todos</strong> para limpar.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(item => `
+    <tr>
+      <td><span class="feat-id">${item.id}</span></td>
+      <td>
+        <strong>${item.title}</strong><br/>
+        <span style="font-size:11px;color:var(--txt3);">Inspiração: ${item.bench}</span>
+      </td>
+      <td><span class="code-pill">${item.file}</span></td>
+      <td>${item.desc}</td>
+      <td>${item.badgeHtml}</td>
+    </tr>
+  `).join('');
+}
+
+/* ==========================================================================
+   ATALHOS DE TECLADO (←, →, Espaço, G, T, Esc)
+   ========================================================================== */
+document.addEventListener('keydown', (e) => {
+  if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+  if (e.key === 'Escape') {
+    const dr = document.getElementById('index-drawer');
+    if (dr.classList.contains('open')) {
+      e.preventDefault();
+      toggleIndexDrawer(false);
+    }
+    return;
+  }
+
+  if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+    e.preventDefault();
+    nextSlide();
+  } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+    e.preventDefault();
+    prevSlide();
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    goToSlide(0);
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    goToSlide(totalSlides - 1);
+  } else if (e.key === 'g' || e.key === 'G') {
+    e.preventDefault();
+    toggleIndexDrawer();
+  } else if (e.key === 't' || e.key === 'T') {
+    e.preventDefault();
+    cycleTheme();
+  }
+});
+
+// Inicialização
+renderNavigationDots();
+renderCatalogTable();
+goToSlide(0);
+</script>
+</body>
+</html>
