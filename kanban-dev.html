@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.877-dev</div>
+<div class="version">v8.30.878-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -35917,14 +35917,22 @@ function _onRealAuthChange(fn){
   window.addEventListener('auth-change', handler);
 }
 _onFbReady(()=>{
-  // Limpa error_logs se tiver mais de 500 entradas (evita acúmulo do loop)
-  window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs')).then(s=>{
-    const val=s.val();
-    if(val&&Object.keys(val).length>500){
-      console.warn('Limpando error_logs acumulados:', Object.keys(val).length, 'entradas');
-      window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs'),{});
-      window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats'),{});
-    }
+  // Limpa error_logs se tiver mais de 500 entradas (evita acúmulo do loop).
+  // O número vem de error_stats (1 contador por dia, +1 a cada erro gravado — logError()) em vez de baixar o node error_logs INTEIRO
+  // (até ~500 entradas com stack) em todo boot de todo usuário; só se a soma passar de 500 é que baixa o node pra confirmar e limpar.
+  // (Apagar um erro pelo Painel não baixa o contador: a soma pode superestimar e cair na leitura completa — nunca subestima.)
+  window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats')).then(st=>{
+    const sv=st.val()||{};
+    const totalStats=Object.values(sv).reduce((a,n)=>a+(Number(n)||0),0);
+    if(totalStats<=500) return;
+    return window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs')).then(s=>{
+      const val=s.val();
+      if(val&&Object.keys(val).length>500){
+        console.warn('Limpando error_logs acumulados:', Object.keys(val).length, 'entradas');
+        window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs'),{});
+        window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats'),{});
+      }
+    });
   }).catch(()=>{});
   applyBlockerMode();
   // fbLoadAll() registra os listeners de /cards, /columns etc. — eles exigem
