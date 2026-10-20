@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Ecossistema: retrato de 20/10/2026 (segurança, main protegida, números remedidos) — 2026-10-20
+
+ecossistema.html atualizado com tudo medido de novo: 36 Cloud Functions, 944 testes (943 passam, 1 pulado), 398 linhas de regras, 116 arquivos de código em functions/, 14 pastas, versões atuais dos produtos (kanban v8.30.877, painel v5.84, Radar v2.93, Oceano v1.56). Novidades na página: pente fino de segurança de 18/10 (XSS armazenado, ninguém se promove a ADM, funções HTTP com conta da empresa de verdade, configurações feitas no console e que o repositório não prova), main protegida por ruleset (PR + CI verde, sem push direto; sem aprovador obrigatório), checagens novas da CI (segurança das páginas e identidade de produção), plantaoTravado na tabela de operação, card de desempenho medido (Oceano), 4 riscos novos (modelo de confiança interno com kanban/feedback legível, externos legíveis, sem CSP, dependências), ajuste do promover.js no merge do Painel e documento de auditoria na tabela de documentos. Dica: não (documentação).
+
 ### 2026-10-20 — Radar: 🧊 Objetivo parado — selo e filtro (PROD · okr v2.93 · mare-dicas.js v7)
 
 O Objetivo que passa 14 dias sem nenhuma atualização ganha o selo '🧊 Nd sem atualização' no cartão, e a faixa de resumo da aba ganha o botão '🧊 N parados' que filtra só eles (clicar de novo volta; ✕ Limpar também zera). Conta como atualização: editar o Objetivo, mexer em um Marco (mesmo arquivado), qualquer linha nova do Histórico ou registrar atingimento (vale a data em que foi lançado, não a data do valor). Não conta: reordenar nem mostrar/ocultar na apresentação. Ficam de fora: arquivados, concluídos (Marcos todos feitos ou meta batida) e os de atingimento Perene, Manter acima e Manter abaixo. Só cliente: nenhuma leitura nova no Firebase, nenhuma regra, nenhuma função. Limite em OKR_PARADO_DIAS (14). Ideia O1 do dossiê de concorrência do Antigravity. Dica: sim (parados, no Radar; mare-dicas-dev.js ?v=7). Ajuda do Radar: item 'Filtros e resumo da aba'. Teste: docs/arezzo/testes/test_okr_parados.js.

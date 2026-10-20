@@ -206,7 +206,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
 <nav class="sidebar" id="sidebar">
 <div class="sidebar-inner">
-  <div class="logo"><div class="logo-icon">🌊</div><div><div class="logo-text">Oceano</div><div class="logo-sub">Ecossistema · 17/10/2026</div></div></div>
+  <div class="logo"><div class="logo-icon">🌊</div><div><div class="logo-text">Oceano</div><div class="logo-sub">Ecossistema · 20/10/2026</div></div></div>
   <div class="ng"><div class="ng-lbl">Visão geral</div>
     <a class="nl" onclick="goTo('resumo')"><span class="nd" style="background:var(--teal)"></span>⚡ Resumo para a TI</a>
     <a class="nl" onclick="goTo('destaque')"><span class="nd" style="background:var(--orange)"></span>🔥 Em destaque</a>
@@ -249,10 +249,10 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <p class="hdesc">Documentação técnica do conjunto de aplicações internas que a Digital Hering construiu e opera: arquitetura, uso do Google Cloud e da conta corporativa, segurança, processo de engenharia (GitHub, CI, ambientes) e o trabalho com agentes de IA. Escrito para a equipe de TI avaliar — cada afirmação aponta para o arquivo do repositório que a comprova.</p>
   <div class="pills">
     <span class="pill pb">6 aplicações em produção</span>
-    <span class="pill pt">35 Cloud Functions · Node 22</span>
-    <span class="pill pw">902 testes automatizados</span>
+    <span class="pill pt">36 Cloud Functions · Node 22</span>
+    <span class="pill pw">944 testes automatizados</span>
     <span class="pill pp">Claude + Antigravity</span>
-    <span class="pill po">Retrato de 17/10/2026</span>
+    <span class="pill po">Retrato de 20/10/2026</span>
   </div>
   <div class="ctas">
     <a class="cta pri" href="https://github.com/caiosoares1899/hering" target="_blank" rel="noopener">🐙 Abrir o repositório no GitHub ↗</a>
@@ -272,11 +272,11 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
   <div class="kpis">
     <div class="kpi"><div class="kv">6</div><div class="kl">aplicações web em produção<br><span>Maré Digital · Painel · Radar · Oceano · Escala · Intake</span></div></div>
-    <div class="kpi"><div class="kv">35</div><div class="kl">Cloud Functions (gen2)<br><span>Node 22 · us-central1 · 117 arquivos de código</span></div></div>
-    <div class="kpi"><div class="kv">902</div><div class="kl">testes automatizados<br><span>901 passam · 1 pulado · ~4 s</span></div></div>
+    <div class="kpi"><div class="kv">36</div><div class="kl">Cloud Functions (gen2)<br><span>Node 22 · us-central1 · 116 arquivos de código</span></div></div>
+    <div class="kpi"><div class="kv">944</div><div class="kl">testes automatizados<br><span>943 passam · 1 pulado · ~4 s</span></div></div>
     <div class="kpi"><div class="kv">338</div><div class="kl">tags de release no GitHub<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
     <div class="kpi"><div class="kv">11</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
-    <div class="kpi"><div class="kv">1494</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
+    <div class="kpi"><div class="kv">1513</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
   </div>
 
   <div class="grid g3">
@@ -285,7 +285,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="card"><div class="ci">🧑‍⚖️</div><div class="ct">Quem muda o quê</div><div class="cd">Mudança = Pull Request com CI. Dois agentes de IA propõem, <strong>uma pessoa aprova e faz o merge</strong> (ninguém aprova o próprio PR). Deploy de backend só pelo dono, com a conta corporativa: o Claude roda sem credencial de deploy; o Antigravity só executa deploy com confirmação explícita no chat.</div></div>
   </div>
 
-  <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 17/10/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
+  <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 20/10/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
 </section>
 
 <!-- ★ EM DESTAQUE -->
@@ -333,13 +333,13 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="si ok"><span class="bdg ok-b">Humano</span><div class="si-t">Ninguém aprova a si mesmo</div><div class="si-d">O agente não faz merge, não aprova e não promove a produção. A CI reprova workflow que reaja a issue ou comentário de terceiros. Cada passo fica no Git com o trailer <code class="hl">Agent:</code>.</div></div>
   </div>
 
-  <div class="cl">Situação de cada peça (retrato de 17/10/2026)</div>
+  <div class="cl">Situação de cada peça (retrato de 20/10/2026)</div>
   <div class="tbl-wrap"><table class="tbl prose">
     <thead><tr><th>Peça</th><th>Situação</th></tr></thead>
     <tbody>
       <tr><td>Assistente Férias, relato de bug, ficha, aviso aos ADMs, vigia</td><td><b>Em produção.</b> Teste ao vivo em 16/10: o aviso chegou aos 3 ADMs e a trava "quem reportou não valida" foi confirmada.</td></tr>
       <tr><td>Busca automática do Antigravity + webhook da PR</td><td>Funções <b>implantadas em 18/10</b>. <b>Em ativação</b>: exige duas chaves, o webhook no GitHub e a tarefa agendada — passos feitos pelo dono.</td></tr>
-      <tr><td>Push de "aguardando aprovação" + vigia de 20 min</td><td><b>Implantado em 18/10</b> (deploy geral das 35 funções, já em Node 22).</td></tr>
+      <tr><td>Push de "aguardando aprovação" + vigia de 20 min</td><td><b>Implantado em 18/10</b> (deploy geral das funções, já em Node 22).</td></tr>
     </tbody>
   </table></div>
 
@@ -363,10 +363,10 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="tbl-wrap"><table class="tbl prose">
     <thead><tr><th>Produto</th><th>Para quê</th><th>Arquivo (prod · dev)</th><th>Versão atual</th></tr></thead>
     <tbody>
-      <tr><td>🐟 Maré Digital</td><td>Kanban ágil multi-squad: cards, automações, sprint, métricas de fluxo, metas, calendário, Agente Ágil</td><td><code class="hl">kanban.html</code> · <code class="hl">kanban-dev.html</code></td><td>v8.30.875 (dev e prod iguais)</td></tr>
-      <tr><td>🧭 Painel</td><td>Administração: pessoas e papéis, comunicados/Mural, central de notificações, monitores de status, plantão de bugs, dados e metas globais</td><td><code class="hl">painel.html</code> · <code class="hl">painel-dev.html</code></td><td>v5.80 (dev e prod iguais)</td></tr>
-      <tr><td>📡 Radar</td><td>OKR: objetivos, marcos, atingimento, calendário de reuniões, apresentação ao vivo, Data Studio incorporado</td><td><code class="hl">okr.html</code> · <code class="hl">okr-dev.html</code></td><td>v2.89 (dev e prod iguais)</td></tr>
-      <tr><td>🌊 Oceano</td><td>Lobby da família: login único, Mural de avisos, meta global, atalhos, ajuda, assistente de bugs; hospeda os produtos como app instalável</td><td><code class="hl">oceano.html</code> · <code class="hl">oceano-dev.html</code></td><td>v1.52 (dev e prod iguais)</td></tr>
+      <tr><td>🐟 Maré Digital</td><td>Kanban ágil multi-squad: cards, automações, sprint, métricas de fluxo, metas, calendário, Agente Ágil</td><td><code class="hl">kanban.html</code> · <code class="hl">kanban-dev.html</code></td><td>v8.30.877 (dev e prod iguais)</td></tr>
+      <tr><td>🧭 Painel</td><td>Administração: pessoas e papéis, comunicados/Mural, central de notificações, monitores de status, plantão de bugs, dados e metas globais</td><td><code class="hl">painel.html</code> · <code class="hl">painel-dev.html</code></td><td>v5.84 (dev e prod iguais)</td></tr>
+      <tr><td>📡 Radar</td><td>OKR: objetivos, marcos, atingimento, calendário de reuniões, apresentação ao vivo, Data Studio incorporado, selo 🧊 de Objetivo parado (14 dias sem atualização)</td><td><code class="hl">okr.html</code> · <code class="hl">okr-dev.html</code></td><td>v2.93 (dev e prod iguais)</td></tr>
+      <tr><td>🌊 Oceano</td><td>Lobby da família: login único, Mural de avisos, meta global, atalhos, ajuda, assistente de bugs; hospeda os produtos como app instalável</td><td><code class="hl">oceano.html</code> · <code class="hl">oceano-dev.html</code></td><td>v1.56 (dev e prod iguais)</td></tr>
       <tr><td>📅 Escala</td><td>Quem trabalha, está de plantão ou de folga em cada dia; visão por squad, global e Gantt</td><td><code class="hl">escala.html</code> · <code class="hl">escala-dev.html</code></td><td>v1.10</td></tr>
       <tr><td>📥 Intake</td><td>Entrada de pedidos para os squads (formulário público anônimo e versão interna com login Google)</td><td><code class="hl">intake.html</code> · <code class="hl">intake-dev.html</code></td><td>—</td></tr>
       <tr><td>🎙️ Apresentação do Radar</td><td>Slides executivos gerados a partir dos OKRs, com sala ao vivo</td><td><code class="hl">okr-apresentacao.slide.html</code></td><td>—</td></tr>
@@ -437,7 +437,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
     <rect x="460" y="52" width="150" height="62" rx="9" fill="rgba(29,233,182,.1)" stroke="rgba(29,233,182,.34)"/>
     <text x="535" y="78" text-anchor="middle" fill="#1de9b6" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Realtime Database</text>
-    <text x="535" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">395 linhas de regras</text>
+    <text x="535" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">398 linhas de regras</text>
 
     <rect x="290" y="130" width="150" height="62" rx="9" fill="rgba(56,182,255,.09)" stroke="rgba(56,182,255,.3)"/>
     <text x="365" y="156" text-anchor="middle" fill="#38b6ff" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Cloud Storage</text>
@@ -496,7 +496,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wc"><div class="wch"><div class="wci">📄</div><div class="wct">Por que páginas estáticas sem build</div></div><div class="wcb">Cada <code class="hl">.html</code> é autocontido (CSS e JS inline, SDK do Firebase por <code class="hl">import</code>). O que está no ar é <strong>exatamente o que está no repositório</strong> — sem bundler, sem artefato intermediário, sem servidor de aplicação para patch e monitoramento. Publicar é copiar arquivos; hospedar em outro lugar também. O custo é conhecido: o Maré tem ~2,5 MB e ~39 mil linhas num arquivo; a mitigação é um índice de código (seções 06 e 10).</div></div>
     <div class="wc"><div class="wch"><div class="wci">⚡</div><div class="wct">Tempo real e atualização das telas</div></div><div class="wcb">Listeners do Realtime Database (WebSocket) mantêm cards, presença, comentários e notificações sincronizados em menos de 1 s. Cada página confere <code class="hl">version.json</code> (sem cache) a cada 5 min e, se a versão mudou, mostra um aviso para recarregar — não recarrega sozinha para não perder o que a pessoa estava digitando.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🔔</div><div class="wct">Push</div></div><div class="wcb">O app grava a notificação em <code class="hl">kanban/usuarios/{uid}/notificacoes</code>; a função <code class="hl">sendPushOnNotification</code> decide se vira push (lista de tipos permitidos, interruptor por tipo na Central de Notificações, janela de Não Perturbe da pessoa) e envia mensagens <i>data-only</i> pelo FCM, evitando duplicidade no Safari/iOS. Tokens inválidos são removidos.</div></div>
-    <div class="wc"><div class="wch"><div class="wci">🧩</div><div class="wct">Backend sob demanda</div></div><div class="wcb">As 35 funções são gatilhos do banco (<code class="hl">onValueCreated/Written</code>), agendadas (<code class="hl">onSchedule</code>) ou HTTP (<code class="hl">onRequest</code>, com verificação manual do token do Firebase). Não há servidor ligado 24 h: o custo acompanha o uso, e o que roda sem navegador aberto (backups, lembretes de meta, monitores, varredura de prazos) é função agendada.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🧩</div><div class="wct">Backend sob demanda</div></div><div class="wcb">As 36 funções são gatilhos do banco (<code class="hl">onValueCreated/Written</code>), agendadas (<code class="hl">onSchedule</code>) ou HTTP (<code class="hl">onRequest</code>, com verificação manual do token do Firebase). Não há servidor ligado 24 h: o custo acompanha o uso, e o que roda sem navegador aberto (backups, lembretes de meta, monitores, varredura de prazos) é função agendada.</div></div>
   </div>
 </section>
 
@@ -545,6 +545,10 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="si ok"><span class="bdg ok-b">privacidade</span><div class="si-t">Dados de pessoas não saem do Firebase</div><div class="si-d">Quando um bug é reportado, o agente de código recebe só o <b>pacote anônimo</b> (app, arquivo, impacto, descrição e trecho de console sanitizados) — nome, e-mail, uid, link de card e print ficam no Firebase. Há teste para isso (<code class="hl">test_ferias_pacote_anonimo.js</code>). Antes, um fluxo abria Issue pública com esses dados: foi removido em 16/10.</div></div>
     <div class="si ok"><span class="bdg ok-b">CI</span><div class="si-t">Automação que reage a texto de terceiros é proibida</div><div class="si-d">Workflow com gatilho <code class="hl">issues</code>, <code class="hl">issue_comment</code> ou <code class="hl">pull_request_target</code> reprova o PR (<code class="hl">scripts/checar.js</code>): qualquer pessoa poderia disparar um robô com permissão de escrita.</div></div>
     <div class="si ok"><span class="bdg ok-b">controle</span><div class="si-t">Interruptores operacionais</div><div class="si-d">Kill switch do Agente Ágil no banco (desligado por padrão e em caso de erro), pausa geral do plantão, logout remoto de todas as sessões (<code class="hl">force_logout_after</code>), interruptor por tipo de notificação.</div></div>
+    <div class="si ok"><span class="bdg ok-b">XSS</span><div class="si-t">Texto de uma pessoa não vira código na tela de outra</div><div class="si-d">O pente fino de 18/10 (<code class="hl">docs/AUDITORIA_SEGURANCA_2026-10-18.md</code>) achou <b>XSS armazenado</b> em 3 variantes — aspas na URL de um link markdown, nomes de coluna e de squad vindos do banco, links <code class="hl">javascript:</code> — e todas foram corrigidas nas 4 páginas, no sino e no plantão (promovidas a produção no mesmo dia). Guarda contra recaída: <code class="hl">test_seguranca_xss.js</code> envenena todo campo do banco falso e a CI reprova link cru e markdown sem escape.</div></div>
+    <div class="si ok"><span class="bdg ok-b">privilégio</span><div class="si-t">Ninguém se promove sozinho</div><div class="si-d">Qualquer funcionário conseguia se incluir na lista de ADMs. As regras de <code class="hl">config/adm_emails</code>, <code class="hl">painel_viewers</code>, <code class="hl">squads/{id}/externos</code> e <code class="hl">usuarios/{uid}/squads_roles</code> agora só aceitam ADM/PO, com teste em <code class="hl">databaseRules</code>.</div></div>
+    <div class="si ok"><span class="bdg ok-b">funções</span><div class="si-t">Funções HTTP exigem conta da empresa de verdade</div><div class="si-d"><code class="hl">functions/common/contaEmpresa.js</code>: e-mail <code class="hl">@ciahering.com.br</code> <b>+ e-mail verificado + provedor Google</b> (antes só o final do e-mail era conferido) em 5 funções do agente/Spotify e na restauração de backup (<code class="hl">backupCompletoApi</code>), com teste.</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">fora do repo</span><div class="si-t">Configurações feitas no console do Google</div><div class="si-d">Chave web do Firebase restrita por referenciador HTTP e apenas o provedor Google ligado (Microsoft desativado), feitas pelo dono em 18/10. <b>O repositório não consegue provar isso</b>; o passo a passo e o teste estão na auditoria — a TI pode conferir direto no console.</div></div>
   </div>
 
   <div class="cl" style="margin-top:1rem">Continuidade dos dados</div>
@@ -567,7 +571,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Notificações, preferências, escala</td><td><code class="hl">usuarios/{uid}/…</code>, <code class="hl">kanban/escala</code></td><td>Escala = dia de trabalho/plantão/folga.</td></tr>
       <tr><td>Tokens de push (FCM)</td><td><code class="hl">usuarios/{uid}</code></td><td>Podados quando inválidos.</td></tr>
       <tr><td>Token OAuth do Spotify (opcional)</td><td><code class="hl">usuarios/{uid}</code></td><td>Apagado ao desconectar.</td></tr>
-      <tr><td>Relato de bug (autor identificado)</td><td><code class="hl">kanban/feedback</code> e ficha do plantão</td><td>Só ADM lê a ficha; nunca vai ao GitHub.</td></tr>
+      <tr><td>Relato de bug (autor identificado)</td><td><code class="hl">kanban/feedback</code> e ficha do plantão</td><td>Só ADM lê a ficha do plantão; nada disso vai ao GitHub. <b>Atenção:</b> o relato original (com nome, e-mail e o print) fica em <code class="hl">kanban/feedback</code>, que pelas regras qualquer conta da empresa consegue ler — a tela do Oceano mostra a cada pessoa só os próprios, mas isso é filtro de tela, não regra. Apertar exige mudar o fluxo de leitura do Oceano; está registrado como risco aceito.</td></tr>
     </tbody>
   </table></div>
   <div class="note warn"><b>Honestidade sobre o que falta.</b> Existe a regra de que dados de pessoas não vão ao repositório e há testes para o fluxo do plantão, mas <b>não há varredura automática de dados pessoais</b> no repositório. O inventário acima é nosso, não validado pelo DPO. Conteúdo de cards trafega para a API da Anthropic quando alguém aciona o Agente Ágil — os termos de tratamento de dados dessa API precisam de revisão da TI/jurídico (seção 14).</div>
@@ -595,11 +599,12 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
   <div class="grid g2">
     <div class="wc"><div class="wch"><div class="wci">🔀</div><div class="wct">O que muda entre dev e prod</div></div><div class="wcb">Só 4 pontos divergem de propósito, e a promoção os preserva: <b>(a)</b> string de versão e <code class="hl">VERSION_KEY</code>/<code class="hl">FB_OVERRIDE_NS</code>; <b>(b)</b> ícone da aba (<code class="hl">favicon-dev.png</code>); <b>(c)</b> chave de logout remoto (<code class="hl">force_logout_after_dev</code>); <b>(d)</b> módulos compartilhados (<code class="hl">mare-*-dev.js?v=N</code> × <code class="hl">mare-*.js?v=N</code>). A ferramenta <code class="hl">promover.js</code> promove os 11 pares (6 páginas + 5 módulos): o Painel como merge de 3 vias (só o que mudou no dev desde a última promoção), os demais preservando as linhas de ambiente; <code class="hl">--status</code> lista o que está pendente e avisa se algum arquivo <code class="hl">-dev</code> da raiz não tem alvo.</div></div>
-    <div class="wc"><div class="wch"><div class="wci">🏷️</div><div class="wct">Rastreabilidade de versão</div></div><div class="wcb">Cada página tem versão visível (<code class="hl">v8.30.875</code>) e chave em <code class="hl">version.json</code>; <code class="hl">scripts/checar.js</code> reprova o PR se uma não bater com a outra. Cada promoção ganha tag anotada (<code class="hl">kanban-v…</code>, <code class="hl">kanban_dev-v…-dev</code>, <code class="hl">painel-v…</code>): 338 tags publicadas no GitHub. <b>Lacuna conhecida:</b> parte das promoções de set–out tem a tag apenas em cópia local, ainda não publicada (o push de tags não é automático). "O que está no ar" e "o que mudou entre dois releases" respondem-se com <code class="hl">git</code>.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🏷️</div><div class="wct">Rastreabilidade de versão</div></div><div class="wcb">Cada página tem versão visível (<code class="hl">v8.30.877</code>) e chave em <code class="hl">version.json</code>; <code class="hl">scripts/checar.js</code> reprova o PR se uma não bater com a outra. Cada promoção ganha tag anotada (<code class="hl">kanban-v…</code>, <code class="hl">kanban_dev-v…-dev</code>, <code class="hl">painel-v…</code>): 338 tags publicadas no GitHub (a cópia de trabalho de 20/10 tem 472). <b>Lacuna conhecida:</b> parte das promoções de set–out tem a tag apenas em cópia local, ainda não publicada (o push de tags não é automático). "O que está no ar" e "o que mudou entre dois releases" respondem-se com <code class="hl">git</code>.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🗓️</div><div class="wct">Cadência</div></div><div class="wcb"><b>Correção validada sobe na hora; funcionalidade sobe em lote, uma vez por dia.</b> Motivo medido: cada versão nova força todas as abas abertas a recarregar e a reabrir os listeners do banco; 13 promoções em ~40 h geraram os dois dias de maior tráfego do período (~210 MB e ~161 MB, contra 1–2 MB num dia calmo).</div></div>
     <div class="wc"><div class="wch"><div class="wci">🧪</div><div class="wct">Validação por script</div></div><div class="wcb">Toda correção de bug é entregue com um <b>script de teste em português</b> para o console (chama as funções reais da página, só leitura, imprime ✅/❌). No plantão de bugs, quem valida é sempre um ADM — nunca quem reportou, nunca o agente — e o PR de produção só existe depois do "validei".</div></div>
   </div>
 
+  <div class="note"><b>Mais um ajuste de processo (20/10).</b> O merge do Painel dava <b>conflito</b> sempre que o número de versão de um módulo compartilhado subia no dev (o Painel de produção usa <code class="hl">mare-X.js</code>, o dev <code class="hl">mare-X-dev.js</code>); o <code class="hl">promover.js</code> agora ignora o <code class="hl">-dev</code> nos nomes e a promoção do Painel deixou de exigir passo manual.</div>
   <div class="note"><b>Um erro de processo achado e corrigido (17/10).</b> Numa promoção, o <code class="hl">promover.js</code> só imprimia um aviso para o Painel e o <code class="hl">--status</code> comparava apenas a string de versão — o Painel ficou para trás por um dia. A correção promove o Painel por merge de 3 vias, compara o conteúdo real e passa a apontar qualquer par <code class="hl">-dev</code> sem alvo; a skill <code class="hl">/subirproprod</code> agora começa sempre pelo <code class="hl">--status</code>. Registro em <code class="hl">BUGS_E_CORRECOES.md</code>.</div>
   <div class="note warn"><b>Limite conhecido.</b> Dev e produção usam, em grande parte, <b>o mesmo Realtime Database</b>; só seis nós têm irmão <code class="hl">_dev</code> (<code class="hl">campanhas_log_dev</code>, <code class="hl">dados_diarios_dev</code>, <code class="hl">force_logout_after_dev</code>, <code class="hl">metas_digital_dev</code>, <code class="hl">metas_log_dev</code>, <code class="hl">metas_squads_dev</code>). Por isso a regra operacional é "trate o dado do dev como real", e os testes de interface usam um Firebase falso (<code class="hl">docs/arezzo/testes/fakefb.js</code> + Playwright). O caminho natural é um segundo projeto Firebase para dev — a configuração já aceita override por página, falta decisão e custo (seção 14).</div>
 </section>
@@ -707,8 +712,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <thead><tr><th>Regra</th><th>Como é garantida</th></tr></thead>
     <tbody>
       <tr><td>Nada vai direto para <code class="hl">main</code>. Um PR = um assunto.</td><td>Convenção de branch por agente; a publicação (Pages) só acontece no push em <code class="hl">main</code>, ou seja, só depois do merge.</td></tr>
-      <tr><td>Ninguém aprova o próprio PR; o merge é humano.</td><td>Regra registrada em <code class="hl">CLAUDE.md</code>, <code class="hl">AGENTS.md</code> e no quadro de coordenação. Proteção de branch no GitHub (aprovação obrigatória, sem push direto) é o complemento técnico a confirmar com a TI (seção 14).</td></tr>
-      <tr><td>CI verde antes do merge.</td><td><code class="hl">checks.yml</code> em PR e push: <code class="hl">node scripts/checar.js</code> (JSON válidos, versão × HTML, sintaxe das 13 páginas, linhas vermelhas dos workflows, referências nas docs e a Biblioteca: todo arquivo da raiz precisa estar descrito em <code class="hl">docs/BIBLIOTECA.md</code>) + <code class="hl">npm test</code> em <code class="hl">functions/</code> (902 testes, incluindo as regras do banco).</td></tr>
+      <tr><td>Ninguém aprova o próprio PR; o merge é humano.</td><td>Regra registrada em <code class="hl">CLAUDE.md</code>, <code class="hl">AGENTS.md</code> e no quadro de coordenação. <b>Desde 18/10 a <code class="hl">main</code> está protegida por regra do GitHub</b> (ruleset): só entra por Pull Request, o check <code class="hl">checks</code> (a CI) precisa estar verde, e push forçado e exclusão da branch são bloqueados — testado no PR #1508. A regra <b>não exige aprovação de um segundo revisor</b> (hoje há uma única pessoa que faz o merge): exigir um aprovador adicional é decisão da TI (seção 14).</td></tr>
+      <tr><td>CI verde antes do merge.</td><td><code class="hl">checks.yml</code> em PR e push: <code class="hl">node scripts/checar.js</code> (JSON válidos, versão × HTML, sintaxe das 13 páginas, linhas vermelhas dos workflows, referências nas docs e a Biblioteca: todo arquivo da raiz precisa estar descrito em <code class="hl">docs/BIBLIOTECA.md</code>) + <code class="hl">npm test</code> em <code class="hl">functions/</code> (944 testes, incluindo as regras do banco). O <code class="hl">checar.js</code> também reprova links de URL do banco sem filtro e markdown sem escape (<b>Segurança das páginas</b>) e página de produção com título, ícone ou módulo de desenvolvimento (<b>Identidade de produção</b>).</td></tr>
       <tr><td>Dev primeiro, validação explícita, só depois prod.</td><td>Seção 05; a promoção é um PR separado e rastreável.</td></tr>
       <tr><td>Autoria legível e histórico dividido.</td><td>Trailer <code class="hl">Agent:</code> em todo commit. <code class="hl">CHANGELOG.md</code> = funcionalidades e entregas estruturais; <code class="hl">BUGS_E_CORRECOES.md</code> = bugs, correções e achados de auditoria (com data, arquivo e versão reais).</td></tr>
       <tr><td>Backend e regras: deploy fora do GitHub.</td><td>Documentado como "pendente de deploy" no quadro; só o dono executa, com a conta corporativa.</td></tr>
@@ -720,7 +725,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="grid g3">
     <div class="wc"><div class="wch"><div class="wci">📄</div><div class="wct">Raiz: o que o usuário abre</div></div><div class="wcb">6 produtos (Maré, Painel, Radar, Oceano, Escala, Intake), cada um com par <code class="hl">-dev</code>, mais a apresentação do Radar e os documentos navegáveis. <b>A URL é o nome do arquivo</b> — por isso as páginas ficam na raiz (<code class="hl">docs/BIBLIOTECA.md</code> explica o que fica onde e por quê).</div></div>
     <div class="wc"><div class="wch"><div class="wci">🧩</div><div class="wct">Módulos compartilhados</div></div><div class="wcb">5 arquivos <code class="hl">mare-*.js</code> (sino, dicas, metas, login, plantão) carregados por mais de uma página, versionados por <code class="hl">?v=N</code>; e o <code class="hl">firebase-messaging-sw.js</code> (push), que precisa ficar na raiz do domínio.</div></div>
-    <div class="wc"><div class="wch"><div class="wci">⚙️</div><div class="wct">functions/ — o backend</div></div><div class="wcb">35 Cloud Functions em 12 pastas por assunto (agente, backup, plantão, Radar, Spotify, monitores…), mais os testes — inclusive os das regras do banco (<code class="hl">functions/rules/</code>). Único projeto Node do repositório; deploy manual.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">⚙️</div><div class="wct">functions/ — o backend</div></div><div class="wcb">36 Cloud Functions em 14 pastas por assunto (agente, backup, plantão, Radar, Spotify, monitores…), mais os testes — inclusive os das regras do banco (<code class="hl">functions/rules/</code>). Único projeto Node do repositório; deploy manual.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🔐</div><div class="wct">Regras e dados</div></div><div class="wcb"><code class="hl">database.rules.json</code> e <code class="hl">storage.rules</code> na raiz; 36 nós de primeiro nível em <code class="hl">kanban/</code>, cada um com regra e teste. Nó novo exige regra e entra no backup (<code class="hl">NOS_GLOBAIS</code>).</div></div>
     <div class="wc"><div class="wch"><div class="wci">📚</div><div class="wct">docs/ e a Biblioteca</div></div><div class="wcb">Guias, plantão de bugs, família Oceano, coordenação dos agentes, testes de navegador e o histórico arquivado. <code class="hl">docs/BIBLIOTECA.md</code> é o "bibliotecário": a CI reprova arquivo novo na raiz que não esteja descrito.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🤖</div><div class="wct">Agentes e CI</div></div><div class="wcb"><code class="hl">.claude/skills/</code> (11 skills, lidas também pelo Antigravity), <code class="hl">.agents/</code> e <code class="hl">.github/workflows/</code> (CI + publicação). <code class="hl">scripts/</code> reúne <code class="hl">checar.js</code>, <code class="hl">mare-cli.js</code> e <code class="hl">mapa.js</code>.</div></div>
@@ -732,7 +737,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 
   <div class="cl">Regras de ouro (armadilhas que já custaram bug)</div>
-  <p class="wcb" style="margin-bottom:.6rem">Ficam em <code class="hl">BUGS_E_CORRECOES.md</code>, são lidas antes de mexer em código compartilhado, e cada uma nasceu de um incidente. Dez estão numeradas; estas ilustram o tipo:</p>
+  <p class="wcb" style="margin-bottom:.6rem">Ficam em <code class="hl">BUGS_E_CORRECOES.md</code>, são lidas antes de mexer em código compartilhado, e cada uma nasceu de um incidente. Treze estão numeradas; estas ilustram o tipo:</p>
   <div class="grid g2">
     <div class="wc"><div class="wcb"><b>Comentários:</b> <code class="hl">ts</code> é sempre string ISO. Um número quebra a ordenação (<code class="hl">localeCompare</code>) e some com <i>todos</i> os comentários do card.</div></div>
     <div class="wc"><div class="wcb"><b>Dois mundos de script:</b> o SDK vive num módulo ES; funções chamadas fora dele precisam do alias <code class="hl">window._x</code>, senão dão <code class="hl">ReferenceError</code> silencioso — foi a causa de uma leitura que baixava ~181 MB/30 dias sem filtro.</div></div>
@@ -837,6 +842,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>vtexStatus · githubStatus · firebaseStatus</td><td>a cada 5 min</td><td>Leem os feeds de status da VTEX, do GitHub (com foco em Pages) e do Firebase; abrem/fecham sozinhos um Comunicado no Mural e notificam. A aba Status do Painel mostra os três.</td></tr>
       <tr><td>backupVigia</td><td>diária</td><td>Confere se os backups rodaram; avisa os ADMs se falhou.</td></tr>
       <tr><td>plantaoVigia</td><td>de 3 em 3 h (08–20 h)</td><td>Avisa os ADMs de bug parado ou sem busca do Antigravity.</td></tr>
+      <tr><td>plantaoTravado</td><td>a cada 10 min (08–20 h)</td><td>Avisa os ADMs se um bug pego pelo Antigravity há 20 min ou mais não virou PR (push de "aguarda aprovação" junto).</td></tr>
       <tr><td>metasLembretes</td><td>a cada 15 min (horário de Brasília)</td><td>Lembretes de preenchimento de meta, com presets.</td></tr>
       <tr><td>agenteAgilDueOverdueScan</td><td>diária</td><td>Varredura de prazos que vencem/venceram; sem LLM para decidir quem avisar.</td></tr>
       <tr><td>okrDailyScan · okrWeeklySnapshot</td><td>diária · semanal</td><td>Recalcula status dos marcos; fotografia semanal para o histórico do Radar.</td></tr>
@@ -845,6 +851,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="grid g2">
     <div class="wc"><div class="wch"><div class="wci">🔔</div><div class="wct">Central de Notificações</div></div><div class="wcb">Catálogo de todos os tipos (<code class="hl">MareNotif.TIPOS</code>), interruptor de sino e de push por tipo, lista de quem está em Não Perturbe. Tipo novo = uma entrada no catálogo e, se for virar push, inclusão na lista permitida da função.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🪵</div><div class="wct">Auditoria no produto</div></div><div class="wcb">Histórico por card (quem, o quê, quando), histórico das ações do agente, registro de erros no banco, log de metas, e o log de cada promoção como comentário no card do Firebase.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🪶</div><div class="wct">Desempenho medido (19–20/10)</div></div><div class="wcb">Um relato de "Oceano pesado em reunião" virou medição (Chromium com perfilamento, comparação antes × depois): no tema claro, filtros de cor em cada peixe caíam a <b>~10 quadros/s</b> (60 sem) e passaram a <b>~56</b>; e o efeito de vidro refazia o desfoque a cada quadro, por isso peixes e bolhas agora <b>pausam</b> sem foco, com produto aberto por cima ou após 1 min parado. Do lado do banco, a fila de relatos de bug (cada um com print de até ~100 KB) deixou de ser baixada inteira por todos. Registro em <code class="hl">BUGS_E_CORRECOES.md</code>; teste <code class="hl">test_oceano_leve.js</code>. Medido em máquina de teste, sem telemetria real de usuários.</div></div>
   </div>
   <div class="note warn"><b>Lacuna de observabilidade.</b> Hoje os alertas chegam como notificações no próprio produto; não há integração com a ferramenta de monitoramento da TI, nem painel de custo de nuvem consolidado. Isso entra na pauta de internalização.</div>
 </section>
@@ -872,10 +879,14 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="cl">Riscos do desenho atual</div>
   <div class="sg">
     <div class="si"><span class="bdg" style="background:rgba(255,107,107,.14);color:var(--danger);border:1px solid rgba(255,107,107,.3)">alto</span><div class="si-t">Concentração em uma pessoa</div><div class="si-d">Titularidade do projeto Google, deploy de backend e merge dependem de uma conta. É o risco que a internalização resolve melhor.</div></div>
-    <div class="si"><span class="bdg" style="background:rgba(255,107,107,.14);color:var(--danger);border:1px solid rgba(255,107,107,.3)">alto</span><div class="si-t">Código em repositório público, em conta pessoal</div><div class="si-d">O repositório (<code class="hl">github.com/caiosoares1899/hering</code>) é <b>público</b> e pertence a uma conta pessoal, não a uma organização da empresa. Os segredos ficam fora do código (Secret Manager) e o que está nas páginas é configuração pública do Firebase, protegida pelas regras do banco — mas a arquitetura, os nomes dos nós do banco, o domínio de e-mail e os documentos internos ficam visíveis a qualquer pessoa. Caminho: organização GitHub da empresa (privada ou interna), com proteção de <code class="hl">main</code> e dono de reserva — decisão da TI (seção 14, perguntas 7 e 9).</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(255,107,107,.14);color:var(--danger);border:1px solid rgba(255,107,107,.3)">alto</span><div class="si-t">Código em repositório público, em conta pessoal</div><div class="si-d">O repositório (<code class="hl">github.com/caiosoares1899/hering</code>) é <b>público</b> e pertence a uma conta pessoal, não a uma organização da empresa. Os segredos ficam fora do código (Secret Manager) e o que está nas páginas é configuração pública do Firebase, protegida pelas regras do banco — mas a arquitetura, os nomes dos nós do banco, o domínio de e-mail e os documentos internos ficam visíveis a qualquer pessoa. Caminho: organização GitHub da empresa (privada ou interna), com a proteção de <code class="hl">main</code> que já existe (seção 08) e dono de reserva — decisão da TI (seção 14, perguntas 7 e 9).</div></div>
     <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Banco compartilhado entre dev e prod</div><div class="si-d">Mitigado por regra operacional e teste com Firebase falso; a correção estrutural é um projeto Firebase separado para dev.</div></div>
     <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Páginas monolíticas</div><div class="si-d">O Maré tem ~2,5 MB num arquivo. Funciona e é auditável, mas a leitura exige o índice de código. Partir em módulos é possível, e é decisão de arquitetura, não de urgência.</div></div>
     <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Custo de IA sem painel</div><div class="si-d">Há tetos e roteamento, mas o total consumido só se vê no console do fornecedor (seção 06).</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Modelo de confiança interno</div><div class="si-d">Qualquer conta <code class="hl">@ciahering</code> consegue gravar em qualquer squad e criar notificação para qualquer pessoa; a tela restringe por papel, o banco não. Também continuam abertos a qualquer funcionário o resto de <code class="hl">kanban/config</code> (links, filas, interruptores) e a leitura dos relatos de bug em <code class="hl">kanban/feedback</code> (seção 04) — a única chave que decidia poder foi fechada em 18/10. Mitigação: backups, histórico e restauração; apertar por squad é decisão de produto (auditoria, seção "Riscos aceitos").</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Lista de externos legível por qualquer conta logada</div><div class="si-d">Os e-mails dos externos autorizados de cada squad podem ser lidos por qualquer conta Google logada: o login do externo no Maré lê essa lista inteira, e apertar exigiria mudar esse fluxo sem trancar quem já usa.</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(56,182,255,.12);color:var(--accent);border:1px solid rgba(56,182,255,.3)">baixo</span><div class="si-t">Sem Content-Security-Policy</div><div class="si-d">O GitHub Pages não permite cabeçalhos e as páginas usam script inline por desenho (sem build). A defesa foi eliminar o XSS na origem (teste de regressão + CI); a política de cabeçalhos vem naturalmente com outra hospedagem (seção 14).</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(56,182,255,.12);color:var(--accent);border:1px solid rgba(56,182,255,.3)">baixo</span><div class="si-t">Dependências com vulnerabilidade conhecida</div><div class="si-d">A falha crítica e 3 altas saíram com atualização sem mudança de versão maior; sobram 10 que dependem de <code class="hl">firebase-admin</code> 14 e <code class="hl">firebase-functions</code> 7 (mudanças incompatíveis) — no backlog, com testes.</div></div>
     <div class="si"><span class="bdg" style="background:rgba(56,182,255,.12);color:var(--accent);border:1px solid rgba(56,182,255,.3)">baixo</span><div class="si-t">Regras do banco espelhadas à mão</div><div class="si-d"><code class="hl">database.rules.json</code> espelha o console; edição direta no console deixa o arquivo velho até alguém copiar de volta. Vale diff periódico, ou publicar sempre pelo repositório.</div></div>
     <div class="si"><span class="bdg" style="background:rgba(56,182,255,.12);color:var(--accent);border:1px solid rgba(56,182,255,.3)">baixo</span><div class="si-t">Deploy de funções manual</div><div class="si-d">É também uma trava de segurança (por regra, agentes não implantam). Com um pipeline aprovado pela TI, pode virar CI com aprovação humana.</div></div>
   </div>
@@ -895,8 +906,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Hospedagem das páginas</td><td>GitHub Pages</td><td>Qualquer servidor web ou CDN interno: a raiz do repositório é o site. Sem build, sem runtime.</td><td>Baixo</td></tr>
       <tr><td>Identidade</td><td>Google Workspace da empresa</td><td>Já corporativa. Definir papéis IAM por função e revisão periódica de acessos.</td><td>Baixo</td></tr>
       <tr><td>Projeto Google Cloud</td><td>Titularidade na conta de uma pessoa</td><td>Mover para a organização/pasta da empresa, faturamento corporativo, segundo administrador.</td><td>Baixo–médio</td></tr>
-      <tr><td>Banco e regras</td><td>Realtime Database + 395 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
-      <tr><td>Backend</td><td>35 funções Node 22, deploy manual</td><td>Pipeline de deploy da TI (com aprovação humana), contas de serviço, logs no padrão da casa. O código é Node padrão; só os gatilhos de banco são específicos do Firebase.</td><td>Médio</td></tr>
+      <tr><td>Banco e regras</td><td>Realtime Database + 398 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
+      <tr><td>Backend</td><td>36 funções Node 22, deploy manual</td><td>Pipeline de deploy da TI (com aprovação humana), contas de serviço, logs no padrão da casa. O código é Node padrão; só os gatilhos de banco são específicos do Firebase.</td><td>Médio</td></tr>
       <tr><td>CI/CD</td><td>GitHub Actions</td><td>Manter, ou espelhar <code class="hl">checar.js</code> + <code class="hl">npm test</code> na ferramenta da TI — ambos rodam em qualquer shell com Node 22.</td><td>Baixo</td></tr>
       <tr><td>IA em produção</td><td>Chave Anthropic no Secret Manager</td><td>Contrato e termos de dados sob gestão da TI; opção de passar por gateway/proxy interno; painel de consumo.</td><td>Médio</td></tr>
       <tr><td>Agentes de código</td><td>Claude Code + Antigravity corporativo</td><td>Definir política de uso (que dados entram em prompt), escopo de permissões e retenção de logs. As linhas vermelhas já documentadas são um ponto de partida.</td><td>Médio</td></tr>
@@ -912,7 +923,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wc"><div class="wcb">4. Dev em projeto separado: a TI provisiona e define a cópia de dados?</div></div>
     <div class="wc"><div class="wcb">5. Há padrão de logs/alertas e de gestão de segredos com o qual as funções devem se integrar?</div></div>
     <div class="wc"><div class="wcb">6. O DPO valida o inventário de dados pessoais (seção 04) e define retenção?</div></div>
-    <div class="wc"><div class="wcb">7. A TI ativa proteção de branch na <code class="hl">main</code> (aprovação obrigatória, sem push direto) e separa a credencial de deploy da máquina onde o agente roda?</div></div>
+    <div class="wc"><div class="wcb">7. A <code class="hl">main</code> já está protegida (PR + CI verde, sem push direto, desde 18/10). A TI quer exigir também a <b>aprovação de um segundo revisor</b> e separar a credencial de deploy da máquina onde o agente roda?</div></div>
     <div class="wc"><div class="wcb">8. Quem é o segundo responsável técnico, para o ecossistema não depender de uma pessoa?</div></div>
     <div class="wc"><div class="wcb">9. O código pode continuar público? Se não, em qual organização GitHub (privada/interna) ele passa a morar, e como migrar as URLs publicadas e o histórico?</div></div>
   </div>
@@ -921,15 +932,15 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="code"><span class="cm"># 1 · clonar e rodar as verificações (Node 22)</span>
 git clone https://github.com/caiosoares1899/hering &amp;&amp; cd hering
 node scripts/checar.js                     <span class="cm"># JSON, versões × HTML, sintaxe das 13 páginas, workflows, referências</span>
-cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 902 testes (901 passam, 1 pulado), inclui as regras do banco</span>
+cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 944 testes (943 passam, 1 pulado), inclui as regras do banco</span>
 
 <span class="cm"># 2 · o que está pendente de promoção, e a lista de funções</span>
 node .claude/skills/subirproprod/promover.js --status
-grep -n "^exports\." functions/index.js    <span class="cm"># 35 funções exportadas</span>
+grep -n "^exports\." functions/index.js    <span class="cm"># 36 funções exportadas</span>
 node --test functions/plantao/__tests__/*.test.js   <span class="cm"># Plantão de Bugs: 46 testes</span>
 
 <span class="cm"># 3 · segurança: regras e quem não pode o quê</span>
-less database.rules.json                   <span class="cm"># 395 linhas</span>
+less database.rules.json                   <span class="cm"># 398 linhas</span>
 ls functions/rules/__tests__               <span class="cm"># testes das regras</span>
 
 <span class="cm"># 4 · processo e trilha de auditoria</span>
@@ -948,6 +959,7 @@ less docs/COORDENACAO_AGENTES.md AGENTS.md CLAUDE.md   <span class="cm"># quadro
       <tr><td>Mapa de funções por área</td><td><code class="hl">CODE_MAP.md</code> · <code class="hl">CODE_MAP_FAST.md</code></td></tr>
       <tr><td>O que foi entregue e quando</td><td><code class="hl">CHANGELOG.md</code> · <code class="hl">docs/changelog-archive-2026-07-a-09.md</code></td></tr>
       <tr><td>Plantão de bugs</td><td><code class="hl">docs/PLANTAO_BUGS.md</code></td></tr>
+      <tr><td>Segurança: o que foi achado, riscos aceitos e como se defender</td><td><code class="hl">docs/AUDITORIA_SEGURANCA_2026-10-18.md</code> · <code class="hl">BUGS_E_CORRECOES.md</code> (armadilha nº 13)</td></tr>
       <tr><td>Família Oceano</td><td><code class="hl">docs/OCEANO.md</code> · <code class="hl">docs/arezzo/MARE_SO_HERING.md</code></td></tr>
       <tr><td>Agente Ágil (decisões, etapas, testes)</td><td><code class="hl">functions/agente-agil-orquestrador/README.md</code></td></tr>
       <tr><td>Marca e design</td><td><code class="hl">MARINE_GLASS.md</code></td></tr>
@@ -963,7 +975,7 @@ less docs/COORDENACAO_AGENTES.md AGENTS.md CLAUDE.md   <span class="cm"># quadro
 <div class="div"></div>
 <footer class="footer">
   <span>🌊 Oceano · Ecossistema de gestão · Digital Hering · Grupo Azzas 2154</span>
-  <span>Retrato de 17/10/2026 · mantido por <code class="hl">/atualizardocumentacoes</code></span>
+  <span>Retrato de 20/10/2026 · mantido por <code class="hl">/atualizardocumentacoes</code></span>
 </footer>
 
 </main>
