@@ -3198,7 +3198,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-notif.js?v=34"></script>
 <script src="mare-metas.js?v=16"></script>
 <script src="mare-plantao.js?v=4"></script>
-<script src="mare-dicas.js?v=5"></script>
+<script src="mare-dicas.js?v=7"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8025,6 +8025,23 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_radar_objetivos_parados_2026_10_20',
+    titulo: '🧊 Radar: agora dá pra ver quais Objetivos estão parados',
+    corpo: '<p>O Radar passou a marcar com o selo <b>🧊 sem atualização</b> o Objetivo que ficou <b>14 dias ou mais</b> sem ninguém mexer. Na faixa de resumo da aba <b>Objetivos</b>, o botão <b>🧊 parados</b> mostra só eles — clique de novo para voltar à lista completa.</p>'
+      + '<p>Conta como atualização: editar o Objetivo, mexer num Marco, escrever no Histórico ou <b>registrar o atingimento</b>. Reordenar a lista ou esconder da apresentação <b>não</b> conta. Objetivos concluídos, arquivados ou de acompanhamento contínuo (Perene, Manter acima/abaixo) ficam de fora.</p>'
+      + '<p>Boa hora para passar nos Objetivos com 🧊 antes da próxima reunião de check-in.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_oceano_leve_2026_10_20',
+    titulo: '🪶 Oceano mais leve — menos travadas, inclusive em reunião',
+    corpo: '<p>O <b>Oceano</b> estava pesando em alguns computadores, principalmente com Teams/Meet aberto. Já ajustamos: os <b>peixinhos e bolhas</b> agora <b>pausam sozinhos</b> quando você troca de janela, quando abre um produto por cima ou fica 1 minuto sem mexer (e voltam assim que você mexe no mouse). O tema claro ficou bem mais fluido e o efeito de vidro foi aliviado.</p>'
+      + '<p>Se o Oceano ainda pesar aí, avise com o <b>🐛 Reportar bug</b> dizendo qual tema você usa — ajuda a gente a achar.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_ferias_plantao_2026_10_16',
     titulo: '🏖️ Caio de férias (16/10 a 03/11) — achou um bug? Reporte no Oceano',

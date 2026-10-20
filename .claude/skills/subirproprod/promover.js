@@ -465,7 +465,9 @@ function analisarPainel() {
   const verRe = /<div class="version">[^<]*<\/div>/;
   const prodVerLine = (verRe.exec(prod) || [])[0];
   if (!prodVerLine) throw new Error('painel.html sem <div class="version">');
-  const neutro = t => t.replace(verRe, prodVerLine);
+  // Versão e nomes dos módulos compartilhados (mare-X-dev.js → mare-X.js) são neutralizados nos dois lados: sem isso, subir o ?v= de um módulo no dev
+  // (prod usa o arquivo sem "-dev") dava CONFLITO sempre, mesmo com prod já ajustado à mão.
+  const neutro = t => t.replace(verRe, prodVerLine).replace(/(<script src="mare-[a-z]+)-dev(\.js)/g, '$1$2');
   const os = require('os');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'painel3-'));
   const fP = path.join(dir, 'prod.html'), fB = path.join(dir, 'base.html'), fD = path.join(dir, 'dev.html');

@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Radar: 🧊 Objetivo parado — selo e filtro (okr-dev v2.93) — 2026-10-18
+### 2026-10-20 — Radar: 🧊 Objetivo parado — selo e filtro (PROD · okr v2.93 · mare-dicas.js v7)
 
 O Objetivo que passa 14 dias sem nenhuma atualização ganha o selo '🧊 Nd sem atualização' no cartão, e a faixa de resumo da aba ganha o botão '🧊 N parados' que filtra só eles (clicar de novo volta; ✕ Limpar também zera). Conta como atualização: editar o Objetivo, mexer em um Marco (mesmo arquivado), qualquer linha nova do Histórico ou registrar atingimento (vale a data em que foi lançado, não a data do valor). Não conta: reordenar nem mostrar/ocultar na apresentação. Ficam de fora: arquivados, concluídos (Marcos todos feitos ou meta batida) e os de atingimento Perene, Manter acima e Manter abaixo. Só cliente: nenhuma leitura nova no Firebase, nenhuma regra, nenhuma função. Limite em OKR_PARADO_DIAS (14). Ideia O1 do dossiê de concorrência do Antigravity. Dica: sim (parados, no Radar; mare-dicas-dev.js ?v=7). Ajuda do Radar: item 'Filtros e resumo da aba'. Teste: docs/arezzo/testes/test_okr_parados.js.
 

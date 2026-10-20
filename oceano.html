@@ -61,15 +61,22 @@ button{font-family:inherit;}
 /* ═══ PEIXINHOS E BOLHAS — as MESMAS do Maré Digital (kanban-dev: #fwrap/#bwrap, swimLTR/RTL, rise) ═══ */
 .bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
 @keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-110vh);opacity:0}}
-.fish-wrap,.bubble-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;}
+.fish-wrap,.bubble-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;contain:strict;}
 .bubble-wrap{z-index:-2;}.fish-wrap{z-index:-1;}
 .fish-ltr{position:absolute;animation:swimLTR linear infinite;}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
-[data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{filter:brightness(2.3) saturate(.5) drop-shadow(0 0 3px rgba(0,35,55,.4));}
-[data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble,[data-anim-paused] .porthole{animation-play-state:paused;}
-@media (prefers-reduced-motion:reduce){.fish-ltr,.fish-rtl,.bubble,.porthole{animation:none!important;}}
+/* Tema claro: SEM `filter` (brightness/saturate/drop-shadow) em cima de elemento animado — o navegador refazia o filtro a cada quadro de cada peixe/bolha
+   (medido: ~10 quadros/s no claro × 60 sem peixes). As silhuetas quase brancas com borda escura saem direto das cores abaixo. */
+[data-theme="light"] .fish-wrap svg polygon,[data-theme="light"] .fish-wrap svg ellipse{fill:rgba(236,247,252,.5);stroke:rgba(0,35,55,.38);stroke-width:1;}
+[data-theme="light"] .fish-wrap svg circle{fill:rgba(0,35,55,.5);}
+[data-theme="light"] .bubble{border-color:rgba(0,35,55,.3);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.75),rgba(255,255,255,.18));}
+.fish-ltr,.fish-rtl,.bubble{will-change:transform;}
+[data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble,[data-anim-paused] .porthole,[data-anim-paused] .vtex-pill.alerta::before,[data-anim-paused] .mural-novos::before{animation-play-state:paused!important;}
+[data-anim-paused] .topo,[data-anim-paused] .vidro,[data-anim-paused] .tile,[data-anim-paused] .ferias-banner,[data-anim-paused] .sino-drop,[data-anim-paused] .ov,[data-anim-paused] #login{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+[data-host-ativo] .fish-wrap,[data-host-ativo] .bubble-wrap{display:none!important;}
+@media (prefers-reduced-motion:reduce){.fish-ltr,.fish-rtl,.bubble,.porthole,.vtex-pill.alerta::before,.mural-novos::before{animation:none!important;}}
 
 /* ═══ CABEÇALHO (vidro, como o das outras páginas) ═══ */
 .topo{position:sticky;top:0;z-index:40;background:rgba(var(--deep-rgb),.74);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-b);}
@@ -85,7 +92,7 @@ button{font-family:inherit;}
 .nav a{color:var(--txt2);text-decoration:none;font-size:13px;font-weight:600;padding:8px 11px;border-radius:var(--r);white-space:nowrap;}
 .nav a:hover,.nav a.on{color:var(--txt);background:rgba(56,182,255,.1);}
 .topo-dir{display:flex;align-items:center;gap:8px;margin-left:auto;}
-.eu{display:flex;align-items:center;gap:8px;padding:3px 12px 3px 3px;border-radius:99px;background:var(--glass);border:1px solid var(--glass-b);color:var(--txt);cursor:pointer;font-size:12.5px;font-weight:600;backdrop-filter:blur(8px);}
+.eu{display:flex;align-items:center;gap:8px;padding:3px 12px 3px 3px;border-radius:99px;background:var(--glass);border:1px solid var(--glass-b);color:var(--txt);cursor:pointer;font-size:12.5px;font-weight:600;}
 .eu:hover{border-color:var(--accent);}
 .eu img,.eu .ini{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
 .eu-nome{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -99,17 +106,17 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .sec .lead{font-size:16px;line-height:1.6;color:var(--txt2);max-width:760px;margin-bottom:26px;}
 .linha{height:1px;border:0;background:var(--glass-b);margin:46px 0 0;}
 .vidro{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;font-size:13px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);text-decoration:none;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;font-size:13px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;text-decoration:none;}
 .btn:hover{border-color:var(--accent);}
 .btn.pri{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
 .btn.pri:hover{background:rgba(37,99,201,.85);}
 [data-theme="light"] .btn.pri{background:rgba(0,119,173,.9);}
 .btn.sm{padding:6px 12px;font-size:12px;}
 .btn[disabled]{opacity:.5;cursor:not-allowed;}
-.ibtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;backdrop-filter:blur(8px);}
+.ibtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;}
 .ibtn:hover{border-color:var(--accent);}
 /* 🚨 selinho do status da VTEX (kanban/vtex_saude, escrito pela função vtexStatus): azul = normal · vermelho = incidente · cinza = monitor sem leitura */
-.vtex-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;font-size:11.5px;font-weight:700;border:1px solid var(--glass-b);border-radius:999px;background:var(--glass);color:var(--txt);text-decoration:none;white-space:nowrap;backdrop-filter:blur(8px);}
+.vtex-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;font-size:11.5px;font-weight:700;border:1px solid var(--glass-b);border-radius:999px;background:var(--glass);color:var(--txt);text-decoration:none;white-space:nowrap;}
 .vtex-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#1E64EB;box-shadow:0 0 0 3px rgba(30,100,235,.22);flex:none;}
 .vtex-pill:hover{border-color:var(--accent);}
 .vtex-pill.alerta{border-color:rgba(255,107,107,.7);background:rgba(255,107,107,.14);}
@@ -166,7 +173,7 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .tile.futuro{opacity:.6;}.tile.futuro .tile-main{cursor:default;}
 .tile.ultimo .tile-n::after{content:'último';margin-left:7px;font-family:var(--ff);font-size:9.5px;font-weight:600;color:var(--teal);border:1px solid rgba(29,233,182,.4);border-radius:99px;padding:1px 7px;vertical-align:2px;}
 .atalhos{display:flex;flex-wrap:wrap;gap:8px;}
-.atalhos button{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;backdrop-filter:blur(8px);}
+.atalhos button{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;}
 .atalhos button:hover{border-color:var(--accent);}
 .atalhos img{width:16px;height:16px;border-radius:4px;}
 .dica{font-size:12px;color:var(--txt3);margin-top:22px;}
@@ -178,7 +185,7 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .sub-h{font-family:var(--ff-d);font-size:16px;font-weight:700;margin:34px 0 12px;}
 /* links (Hering e meus) */
 .lk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
-a.lk{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);color:var(--txt);text-decoration:none;backdrop-filter:blur(12px);transition:border-color .2s,transform .15s;min-width:0;}
+a.lk{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);color:var(--txt);text-decoration:none;transition:border-color .2s,transform .15s;min-width:0;}
 a.lk:hover,a.lk:focus-visible{border-color:var(--accent);transform:translateY(-1px);outline:none;}
 .lk-logo{width:36px;height:36px;border-radius:9px;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(56,182,255,.14);border:1px solid var(--glass-b);}
 .lk-logo img{width:100%;height:100%;object-fit:cover;display:block;}.lk-logo b{font-size:15px;color:var(--accent);}
@@ -224,7 +231,7 @@ a.lk:hover,a.lk:focus-visible{border-color:var(--accent);transform:translateY(-1
 
 /* ═══ PRODUTOS (abas) ═══ */
 .abas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-.aba{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:99px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);}
+.aba{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:99px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:13px;font-weight:600;cursor:pointer;}
 .aba .tile-logo{width:24px;height:24px;border-radius:7px;box-shadow:none;}
 .aba:hover{border-color:var(--accent);}
 .aba[aria-selected="true"]{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
@@ -312,7 +319,7 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .mural-mais{margin-top:8px;background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 4px;}
 .mural-mais:hover{text-decoration:underline;}
 .mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
-.av{position:relative;display:flex;flex-direction:column;overflow:hidden;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;text-align:left;transition:border-color .2s,transform .15s,box-shadow .2s;}
+.av{position:relative;display:flex;flex-direction:column;overflow:hidden;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);cursor:pointer;text-align:left;transition:border-color .2s,transform .15s,box-shadow .2s;}
 .av::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mc,var(--accent));z-index:1;}
 .av:hover,.av:focus-visible{border-color:var(--mc,var(--accent));box-shadow:0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);outline:none;}
 .av-capa{height:118px;background:rgba(var(--slate-rgb),.6);overflow:hidden;}
@@ -344,7 +351,7 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .aviso-corpo ul,.aviso-corpo ol{margin:.3em 0 .7em 1.3em;}
 .ov{position:fixed;inset:0;z-index:120;background:rgba(1,8,16,.78);backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto;}
 .ov.open{display:flex;}
-.modal{width:min(720px,100%);padding:0;overflow:hidden;background:rgba(var(--deep-rgb),.94);}
+.modal{width:min(720px,100%);padding:0;overflow:hidden;background:rgba(var(--deep-rgb),.94);backdrop-filter:none;-webkit-backdrop-filter:none;}
 [data-theme="light"] .modal{background:rgba(248,253,255,.97);}
 .modal-hd{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--glass-b);}
 .modal-hd h3{font-family:var(--ff-d);font-size:19px;flex:1;}
@@ -424,7 +431,7 @@ input.in[readonly]{opacity:.7;}
 :root[data-theme="light"] .ferias-chip,:root[data-tema="claro"] .ferias-chip{background:rgba(255,255,255,.75);}
 .ferias-chip:hover{border-color:var(--accent);transform:translateY(-1px);background:rgba(56,182,255,.14);}
 .ferias-pill-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
-.ferias-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;border:1px solid rgba(29,233,182,.45);background:linear-gradient(120deg,rgba(29,233,182,.16),var(--glass));color:var(--txt);font-size:12.5px;font-weight:700;cursor:pointer;backdrop-filter:blur(8px);transition:all .15s;}
+.ferias-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;border:1px solid rgba(29,233,182,.45);background:linear-gradient(120deg,rgba(29,233,182,.16),var(--glass));color:var(--txt);font-size:12.5px;font-weight:700;cursor:pointer;transition:all .15s;}
 .ferias-pill span{font-weight:500;color:var(--txt2);}
 .ferias-pill:hover{border-color:var(--accent);transform:translateY(-1px);}
 .ferias-pill-exp{background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:8px;}
@@ -751,13 +758,13 @@ window.dispatchEvent(new Event('fb-ready'));
 
 <script src="mare-notif.js?v=34"></script>
 <script src="mare-plantao.js?v=4"></script>
-<script src="mare-dicas.js?v=5"></script>
+<script src="mare-dicas.js?v=7"></script>
 <script src="mare-metas.js?v=16"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.54 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.56 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -837,7 +844,20 @@ function criarPeixes(){
   for(let i=0;i<nF;i++){ const f = document.createElement('div'); f.className = Math.random()>.5 ? 'fish-ltr' : 'fish-rtl'; f.style.top = (5+Math.random()*80)+'%'; f.style.animationDuration = (14+Math.random()*24)+'s'; f.style.animationDelay = (-Math.random()*24)+'s'; f.innerHTML = FISH_SVGS[i%FISH_SVGS.length]; fw.appendChild(f); }
   for(let i=0;i<nB;i++){ const b = document.createElement('div'), sz = 3+Math.random()*14; b.className = 'bubble'; b.style.cssText = 'width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;animation-duration:'+(8+Math.random()*18)+'s;animation-delay:-'+(Math.random()*18)+'s;'; bw.appendChild(b); }
 }
-document.addEventListener('visibilitychange', ()=> document.documentElement.toggleAttribute('data-anim-paused', document.hidden));
+// Peixes e bolhas só andam quando alguém está olhando pro lobby: aba oculta, janela sem foco (reunião, outro programa por cima), um produto aberto por cima (iframe)
+// ou 60 s sem mexer em nada (Oceano deixado aberto no 2º monitor) pausam; mexer no mouse/teclado/toque volta na hora. As superfícies de vidro (backdrop-filter) refazem o
+// desfoque a cada quadro enquanto algo se mexe atrás delas — é isso que pesava (medido: 43 quadros/s com peixes × 60 sem).
+let _animOcioso = false, _animTimer = null, _animUltimo = 0;
+function atualizarAnimacao(){ const h = document.getElementById('host'), hostOn = !!(h && h.classList.contains('on')); document.documentElement.toggleAttribute('data-host-ativo', hostOn); document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || _animOcioso || hostOn); }
+function _animAtividade(){
+  const agora = Date.now(); if(!_animOcioso && agora-_animUltimo < 1000) return; _animUltimo = agora;
+  if(_animOcioso){ _animOcioso = false; atualizarAnimacao(); }
+  clearTimeout(_animTimer); _animTimer = setTimeout(()=>{ _animOcioso = true; atualizarAnimacao(); }, 60000);
+}
+['pointermove','pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev, _animAtividade, {passive:true, capture:true}));
+_animAtividade();
+document.addEventListener('visibilitychange', atualizarAnimacao);
+window.addEventListener('focus', atualizarAnimacao); window.addEventListener('blur', atualizarAnimacao);
 
 // ── Estado do usuário ──
 let U = null, perfilFb = {}, usoApps = {}, ehAdm = false;
@@ -1368,7 +1388,7 @@ function mostrarHost(id, url){
   if(url && fr.dataset.ok && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }
   host.atual = id; $$('#host-frames iframe').forEach(f=>f.classList.toggle('on', f.dataset.app===id));
   $('#host-load').style.display = fr.dataset.ok ? 'none' : 'flex'; $('#host-load-tx').textContent = 'Abrindo '+a.nome+'…';
-  $('#host').classList.add('on'); document.body.style.overflow = 'hidden';
+  $('#host').classList.add('on'); document.body.style.overflow = 'hidden'; atualizarAnimacao();
   document.title = a.nome+' · Oceano'+(IS_DEV?' (dev)':'');
   lembrarUltimo(id); renderHostTabs();
   if(location.hash !== '#/'+id) history.pushState(null,'','#/'+id);
@@ -1385,7 +1405,7 @@ function fecharApp(id, silencioso){
   renderAbertos();
 }
 function voltarLobby(){
-  $('#host').classList.remove('on'); document.body.style.overflow = ''; host.atual = null; document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
+  $('#host').classList.remove('on'); document.body.style.overflow = ''; host.atual = null; atualizarAnimacao(); document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
   if(location.hash.indexOf('#/')===0) history.pushState(null,'',location.pathname+location.search);
   renderAbertos();
 }
@@ -1403,10 +1423,10 @@ function irAba(id, hash){
 function rotearHash(inicio){
   const h = location.hash||'';
   if(h==='#meus-links'){ irAba('inicio', false); abrirPerfil('links'); history.replaceState(null,'',location.pathname+location.search); return; }
-  if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; renderAbertos(); } return; }
+  if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; atualizarAnimacao(); renderAbertos(); } return; }
   const m = /^#\/(\w+)$/.exec(h);
   if(m && APP(m[1]) && visivel(APP(m[1])) && !APP(m[1]).futuro){ mostrarHost(m[1]); return; }
-  if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; document.title=(IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':''); renderAbertos(); return; }
+  if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; atualizarAnimacao(); document.title=(IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':''); renderAbertos(); return; }
   if(inicio && !location.hash){
     const ini = prefs.inicio;
     if(standalone() && ini && ini!=='lobby'){ const alvo = ini==='ultimo' ? prefs.ultimo : ini; if(APP(alvo) && visivel(APP(alvo)) && !APP(alvo).futuro) mostrarHost(alvo); }
@@ -1419,7 +1439,7 @@ window.addEventListener('message', e=>{
   else if(e.data.oceano==='abrir' && APP(e.data.app) && visivel(APP(e.data.app))) mostrarHost(e.data.app);
   else if(e.data.oceano==='prefs'){ voltarLobby(); abrirPerfil(e.data.secao); }
 });
-window.__oceanoHost = {abrir:id=>abrirApp(id,true), lobby:voltarLobby};   // gancho de teste/depuração
+window.__oceanoHost = {abrir:id=>abrirApp(id,true), lobby:voltarLobby, atualizarAnimacao, atualizarPausaAnim:atualizarAnimacao};   // gancho de teste/depuração
 
 // ── Modais ──
 let modalTopo = null;
@@ -1489,7 +1509,7 @@ const FAQ = [
   {id:'mare', q:'Já uso o app do Maré Digital. Preciso trocar?', a:'<p>Não. O aplicativo do Maré Digital continua existindo e funcionando igual — quem só usa o board pode ficar com ele. O Oceano é um jeito a mais, para quem circula entre mais de um produto.</p>'},
   {id:'aqui', q:'Qual a diferença entre "abrir aqui dentro" e "aba nova"?', a:'<p><b>Aqui dentro:</b> o produto abre numa aba do próprio Oceano; dá pra manter vários abertos e voltar ao lobby sem perder nada. <b>Aba nova:</b> abre numa aba do navegador, como sempre. Mude em ⚙ Meu perfil → Como abrir os produtos. No automático, o app instalado abre aqui dentro e o navegador abre em aba nova.</p>'},
   {id:'painel', q:'Por que não vejo o Painel?', a:'<p>O Painel é a visão de gestão; ele aparece para administradores e para quem já o usa (quem é PO/Organizador, por exemplo). Se você precisa dele, fale com sua liderança ou com a squad.</p><p>Isso organiza a sua vitrine — o acesso de verdade é decidido no servidor.</p>'},
-  {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
+  {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam sozinhos quando a aba fica em segundo plano, a janela perde o foco (numa reunião, por exemplo), um produto está aberto por cima ou você fica 1 minuto sem mexer — e voltam assim que você mexe no mouse ou no teclado. Começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
   {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
   {id:'mural', q:'O que é o Mural na página inicial?', a:'<p>É onde a squad publica os <b>avisos</b> pra todo mundo: novidades, avisos, dicas e alertas urgentes. Quem publica é o administrador, no <b>Painel → Pessoas → Comunicados</b> (a opção "🌊 Mostrar no mural do Oceano" vem marcada; existe também "Só no Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro, e no botão dele, quando houver, pra ir direto ao assunto.</p><p>No computador o Mural fica <b>ao lado dos produtos</b> (produtos à esquerda, avisos à direita), tudo na primeira tela — se há muitos avisos, a lista rola dentro da coluna. No celular ele vem <b>recolhido</b> embaixo dos produtos. O cabeçalho mostra quantos avisos há e um selo <b>● N novos</b> (vermelho se tiver um urgente); clique nele pra abrir ou recolher — o Oceano lembra a sua escolha. Os avisos só contam como \"vistos\" depois de alguns segundos com o Mural aberto e à vista.</p><p>Você só vê o que é pra você: avisos de um squad específico aparecem pra quem é desse squad, e os "só PO" pra PO, Organizador e ADM. Aviso com data de validade some sozinho.</p>'},
@@ -2177,12 +2197,19 @@ function feriasProcessarSnapshotBugs(val){
   }
 }
 
+// Cada relato guarda o print em base64 (até ~100 KB). Antes TODO MUNDO baixava a fila inteira ao abrir o Oceano; agora só o ADM (que tem a fila)
+// lê o nó todo — os outros leem só os relatos em que `uid` é o deles (filtrado no servidor; índice em database.rules.json).
+function feriasRefBugs(){
+  const r = window._ref(window._db, 'kanban/feedback');
+  if(ehAdm || !U || !U.uid || !window._query || !window._orderByChild || !window._equalTo) return r;
+  return window._query(r, window._orderByChild('uid'), window._equalTo(U.uid));
+}
 function feriasIniciarBugsListener(){
   const onValFn = window._onValue || window._onVal;
   if(!onValFn || !window._ref || !window._db) return;
   if(feriasBugsUn){ try{ feriasBugsUn(); }catch(e){} feriasBugsUn = null; }
   try{
-    feriasBugsUn = onValFn(window._ref(window._db, 'kanban/feedback'), sn=>{
+    feriasBugsUn = onValFn(feriasRefBugs(), sn=>{
       feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
     }, ()=>{});
   }catch(e){}
@@ -2193,7 +2220,7 @@ window.feriasIniciarBugsListener = feriasIniciarBugsListener;
 async function feriasCarregarBugs(){
   if(!window._get || !window._ref || !window._db) return;
   try{
-    const sn = await window._get(window._ref(window._db, 'kanban/feedback'));
+    const sn = await window._get(feriasRefBugs());
     feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
   }catch(e){
     const el = $('#fbug-lista');

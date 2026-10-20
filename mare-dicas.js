@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════
    mare-dicas.js — MINI POPUPS DE DICAS (módulo compartilhado, PRODUÇÃO)
-   Carregado por kanban (Maré), okr (Radar), oceano (Oceano) e painel (só lista o catálogo). Cópia de mare-dicas-dev.js (que as páginas -dev carregam) — o código é o mesmo; mudou um, mude o outro e suba o ?v= nas páginas.
+   Carregado por kanban (Maré), okr (Radar), oceano (Oceano) e painel (só lista o catálogo). Cópia de mare-dicas.js (que as páginas -dev carregam) — o código é o mesmo; mudou um, mude o outro e suba o ?v= nas páginas.
    Fica na raiz do domínio, como mare-notif(-dev).js: exceção à regra "sem import entre páginas", mesmo ciclo dev→prod (?v=N nas páginas).
 
    O que faz: mostra UMA dica curta por vez, no canto da tela, quando a pessoa chega num lugar do app (gatilho). Cada dica aparece uma vez só, e no máximo UMA POR DIA POR APP.
@@ -41,6 +41,7 @@
       {id:'modal-atalhos',gatilho:'obj-modal',      texto:'Os atalhos no topo levam direto a cada seção do Objetivo.', saiba:'modal', ajuda:'O modal do Objetivo'},
       {id:'trava',       gatilho:'obj-modal',       texto:'Duas pessoas no mesmo Objetivo? Quem abriu primeiro edita; a outra vê em modo leitura.', saiba:'trava', ajuda:'Edição simultânea do mesmo Objetivo', edita:true},
       {id:'promover-fluxo',gatilho:'obj-modal',     texto:'Um próximo passo avançou? Use ✅ pra virar Progresso e 🏁 num Progresso pra promovê-lo a Marco.', saiba:'editar', ajuda:'Criar e editar um Objetivo', edita:true},
+      {id:'parados',    gatilho:'boot',            texto:'Objetivo sem atualização há 14 dias ganha o selo 🧊. Clique em “🧊 parados” no resumo pra ver só eles.', saiba:'filtros', ajuda:'Filtros e resumo da aba'},
       {id:'dash-filtro', gatilho:'view:historico',  texto:'Clique numa situação (Atrasado, No prazo…) pra filtrar a tabela logo abaixo.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
       {id:'dash-contrib',gatilho:'view:historico',  texto:'Quer saber quem puxa a média pra baixo? Use 🧮 Como cada Objetivo contribui.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
       {id:'cal-dia',     gatilho:'view:calendario', texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', ajuda:'Calendário', edita:true},
