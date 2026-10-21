@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.877</div>
+<div class="version">v8.30.878</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6919,7 +6919,7 @@ getRedirectResult(auth).then(r=>{
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif.js?v=34"></script>
-<script src="mare-metas.js?v=16"></script>
+<script src="mare-metas.js?v=17"></script>
 <script src="mare-dicas.js?v=7"></script>
 
 <script>
@@ -35917,14 +35917,22 @@ function _onRealAuthChange(fn){
   window.addEventListener('auth-change', handler);
 }
 _onFbReady(()=>{
-  // Limpa error_logs se tiver mais de 500 entradas (evita acúmulo do loop)
-  window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs')).then(s=>{
-    const val=s.val();
-    if(val&&Object.keys(val).length>500){
-      console.warn('Limpando error_logs acumulados:', Object.keys(val).length, 'entradas');
-      window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs'),{});
-      window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats'),{});
-    }
+  // Limpa error_logs se tiver mais de 500 entradas (evita acúmulo do loop).
+  // O número vem de error_stats (1 contador por dia, +1 a cada erro gravado — logError()) em vez de baixar o node error_logs INTEIRO
+  // (até ~500 entradas com stack) em todo boot de todo usuário; só se a soma passar de 500 é que baixa o node pra confirmar e limpar.
+  // (Apagar um erro pelo Painel não baixa o contador: a soma pode superestimar e cair na leitura completa — nunca subestima.)
+  window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats')).then(st=>{
+    const sv=st.val()||{};
+    const totalStats=Object.values(sv).reduce((a,n)=>a+(Number(n)||0),0);
+    if(totalStats<=500) return;
+    return window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs')).then(s=>{
+      const val=s.val();
+      if(val&&Object.keys(val).length>500){
+        console.warn('Limpando error_logs acumulados:', Object.keys(val).length, 'entradas');
+        window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs'),{});
+        window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats'),{});
+      }
+    });
   }).catch(()=>{});
   applyBlockerMode();
   // fbLoadAll() registra os listeners de /cards, /columns etc. — eles exigem
