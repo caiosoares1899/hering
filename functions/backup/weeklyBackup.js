@@ -89,20 +89,34 @@ async function backupSquad(db, bucket, squadId, date) {
 // Reaproveitado por backup/completo.js (mesma lista de squads de produção) — não é uma Cloud Function.
 exports._listActiveSquads = listActiveSquads;
 
-exports.weeklyBackup = onSchedule(
-  { schedule: 'every sunday 04:00', timeZone: 'America/Sao_Paulo', region: 'us-central1', timeoutSeconds: 120 },
-  async () => {
-    const db = getDatabase();
-    const bucket = getStorage().bucket();
-    const date = todayStr();
-    const squads = await listActiveSquads(db);
-    for (const squadId of squads) {
-      try {
-        const n = await backupSquad(db, bucket, squadId, date);
-        console.log(`[weeklyBackup] ${squadId}: ${n} cards ativos salvos em backups/${squadId}/${date}.json`);
-      } catch (e) {
-        console.error(`[weeklyBackup] ${squadId} falhou:`, e);
-      }
+// Roda o backup do quadro de TODOS os squads (um de cada vez, pra não somar memória). `db`/`bucket` injetados (os testes passam fakes).
+// Antes (até 2026-10-20) o laço engolia o erro de cada squad e a função "terminava bem" mesmo faltando squads — e com 256 MiB / 120 s ela morria
+// (estouro de memória ou de tempo) no meio da lista: os squads pequenos e os 3 fixos salvavam, `outlet-crm` (~15 MB de `dados`) e o que vinha depois
+// (`site`) ficavam sem backup do quadro, e só o vigia (backupVigia) percebeu. Agora: mais memória/tempo (abaixo) e, se algum squad falhar, a execução
+// termina COM ERRO depois de tentar todos (o que deu certo já foi salvo), aparecendo como falha no Cloud Scheduler.
+async function rodarWeeklyBackup({ db, bucket, date, log } = {}) {
+  const say = log || console;
+  const dia = date || todayStr();
+  const squads = await listActiveSquads(db);
+  const salvos = [];
+  const falhas = [];
+  for (const squadId of squads) {
+    const t0 = Date.now();
+    try {
+      const n = await backupSquad(db, bucket, squadId, dia);
+      salvos.push(squadId);
+      say.log(`[weeklyBackup] ${squadId}: ${n} cards ativos salvos em backups/${squadId}/${dia}.json (${Math.round((Date.now() - t0) / 1000)} s)`);
+    } catch (e) {
+      falhas.push({ squad: squadId, erro: String((e && e.message) || e) });
+      say.error(`[weeklyBackup] ${squadId} falhou:`, e);
     }
   }
+  if (falhas.length) throw new Error(`weeklyBackup: ${falhas.length} squad(s) falharam: ${falhas.map((f) => f.squad).join(', ')}`);
+  return { salvos, falhas };
+}
+exports.rodarWeeklyBackup = rodarWeeklyBackup;
+
+exports.weeklyBackup = onSchedule(
+  { schedule: 'every sunday 04:00', timeZone: 'America/Sao_Paulo', region: 'us-central1', memory: '1GiB', timeoutSeconds: 540 },
+  async () => { await rodarWeeklyBackup({ db: getDatabase(), bucket: getStorage().bucket() }); }
 );
