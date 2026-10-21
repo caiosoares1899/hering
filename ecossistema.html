@@ -871,6 +871,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>API da Anthropic</td><td>Agente Ágil</td><td>O agente fica mudo; o board continua normal.</td><td>Kill switch, fallback de modelo, uso restrito a 2 squads.</td></tr>
       <tr><td>CDN <code class="hl">gstatic.com</code> (SDK do Firebase)</td><td>Carregar o SDK</td><td>A página não inicia.</td><td><b>Só o Maré usa cópia local</b> (<code class="hl">vendor/</code>). Painel, Radar, Oceano, Escala e Intake ainda carregam do CDN. Estender a cópia local é trabalho pequeno.</td></tr>
       <tr><td>Calendar API · Looker Studio</td><td>Agendas e painéis</td><td>Só esses recursos.</td><td>Leitura; falha isolada.</td></tr>
+      <tr><td>Google Cloud Translation API</td><td>Tradução (inglês → português) dos avisos da VTEX</td><td>O aviso sai em inglês, como antes; o alerta nunca espera a tradução.</td><td>Mesmo projeto Google, sem fornecedor novo; resultado em cache (só traduz quando o texto muda). Há interruptor <code class="hl">kanban/config/vtex_traducao_off</code>. <i>Em implantação (21/10).</i></td></tr>
       <tr><td>Google Fonts · People API</td><td>Tipografia · foto</td><td>Fonte genérica · sem foto.</td><td>Degradação visual apenas.</td></tr>
       <tr><td>Spotify · EmailJS</td><td>Rádio do Maré · backup por e-mail</td><td>Recurso opcional.</td><td>Spotify: sincronização agendada desligada. EmailJS: legado, configurável por squad.</td></tr>
     </tbody>

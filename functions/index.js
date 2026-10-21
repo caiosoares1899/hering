@@ -252,7 +252,8 @@ exports.metasLembretes = require('./metas/lembretes').metasLembretes;
 
 // 🚨 Alerta de incidente da VTEX (functions/vtex/statusVtex.js): a cada 5 min lê https://status.vtex.com/feed.rss e, com incidente/manutenção em
 // andamento, publica sozinho um Comunicado 🚨 (popup insistente, todos) + notificação `vtex_incidente` (sino + push, PUSH_TYPES acima) pra todo mundo;
-// resolvido/concluído → desativa o aviso. Interruptor: kanban/config/vtex_status_off=true. Deploy isolado:
+// resolvido/concluído → desativa o aviso. Interruptor: kanban/config/vtex_status_off=true. Título e resumo saem traduzidos pro português (Google Cloud Translation API —
+// precisa estar ATIVADA no projeto; sem ela o aviso sai em inglês; interruptor só da tradução: kanban/config/vtex_traducao_off=true). Deploy isolado:
 //   firebase deploy --only functions:vtexStatus,functions:sendPushOnNotification   (o 2º por causa do tipo novo no PUSH_TYPES)
 exports.vtexStatus = require('./vtex/statusVtex').vtexStatus;
 

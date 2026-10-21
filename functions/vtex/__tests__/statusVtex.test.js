@@ -10,6 +10,8 @@ const path = require('path');
 
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
 const { _test: V } = require('../statusVtex');
+// Estes testes são do comportamento SEM tradução (inglês, como era): a rede/API do Google nunca é chamada aqui (statusVtexTraducao.test.js cobre a tradução).
+require('../traduzir').traduzirEnPt = async () => { throw new Error('sem tradução nestes testes'); };
 
 const FEED = fs.readFileSync(path.join(__dirname, 'feed-real.rss'), 'utf8');
 const AGORA = Date.parse('2026-10-13T20:16:00Z');
