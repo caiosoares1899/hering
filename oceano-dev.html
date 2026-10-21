@@ -350,6 +350,9 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .aviso-corpo{font-size:14.5px;line-height:1.65;color:var(--txt);}
 .aviso-corpo p{margin:0 0 .7em;}.aviso-corpo a{color:var(--accent);}
 .aviso-corpo ul,.aviso-corpo ol{margin:.3em 0 .7em 1.3em;}
+.aviso-corpo details{margin:.7em 0;padding:8px 12px;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);}
+.aviso-corpo summary{cursor:pointer;font-weight:600;color:var(--accent);}
+.aviso-corpo details[open] summary{margin-bottom:.4em;}
 .ov{position:fixed;inset:0;z-index:120;background:rgba(1,8,16,.78);backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto;}
 .ov.open{display:flex;}
 .modal{width:min(720px,100%);padding:0;overflow:hidden;background:rgba(var(--deep-rgb),.94);backdrop-filter:none;-webkit-backdrop-filter:none;}
@@ -765,7 +768,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.57 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.58 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -989,8 +992,10 @@ function avPodeVer(c){
   return true;
 }
 // HTML do aviso vem de um editor simples do Painel (negrito, itálico, link) — mesmo assim sanitiza aqui: lista curta de tags, nenhum atributo (só href http/https/mailto).
-function avLimpa(html){
-  const OK = new Set(['B','STRONG','I','EM','U','A','BR','P','UL','OL','LI','DIV','SPAN']), SEM = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','NOSCRIPT','TEMPLATE']);
+// `resumo` (cartão do Mural): tira o "Ver original em inglês" (<details>) — o cartão é clicável e abre o aviso inteiro, onde o <details> abre e fecha normalmente.
+function avLimpa(html, resumo){
+  const OK = new Set(['B','STRONG','I','EM','U','A','BR','P','UL','OL','LI','DIV','SPAN','DETAILS','SUMMARY']), SEM = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','NOSCRIPT','TEMPLATE']);
+  if(resumo) SEM.add('DETAILS');   // (o aviso da VTEX traduzido leva o original em inglês num <details>)
   const doc = new DOMParser().parseFromString('<body>'+String(html||'')+'</body>', 'text/html');
   (function limpa(no){
     [...no.childNodes].forEach(f=>{
@@ -1021,7 +1026,7 @@ function avHtml(c, novo){
     + (c.fixado ? '<span class="av-pin">📌 Fixado</span>' : '') + (novo ? '<span class="av-novo">NOVO</span>' : '')
     + (quando ? '<span class="av-quando" title="'+esc(new Date(c.criadoEm).toLocaleString('pt-BR'))+'">'+esc(quando)+'</span>' : '') + '</div>'
     + '<h3 class="av-t">'+esc(c.titulo||'(sem título)')+'</h3>'
-    + '<div class="av-corpo">'+avLimpa(c.corpo)+'</div>'
+    + '<div class="av-corpo">'+avLimpa(c.corpo, true)+'</div>'
     + '<div class="av-rod">'+avBotaoHtml(c)+'<span class="av-ler" hidden>Ler tudo ›</span>'+(c.autor ? '<span class="av-autor">por '+esc(c.autor)+'</span>' : '')+'</div></div></article>';
 }
 function muralRender(){
