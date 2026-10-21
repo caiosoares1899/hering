@@ -74,6 +74,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-21 · VTEX: tradução com horário de Brasília, estado do componente em português e corte na última frase (functions/vtex/statusVtex.js)
+
+Ajustes pedidos depois do 1º aviso real traduzido (manutenção Marketplace Connectors, 21/10).
+• Horário: o aviso vinha só em UTC (01:00–03:00 UTC). Agora o Comunicado ganha a linha 🕒 Horário de Brasília (UTC−3), lida do texto original (não da tradução) e também no fallback em inglês; vira o dia quando precisa (20/10 22:00 → 00:00).
+• Estado do componente: "(Under maintenance)" → "(em manutenção)" (mapa fixo de estados; o nome do componente continua como veio).
+• Resumo longo: em vez de cortar no meio ("Agradecemos…"), corta na última frase completa dentro de 700 caracteres; só cai no corte por palavra com … se a 1ª frase já passar do limite; quando cortou, o link vira "Ver o aviso completo na página de status da VTEX".
+Testes: 4 novos em statusVtexTraducao.test.js (suíte de functions 959/959). Deploy: firebase deploy --only functions:vtexStatus (sem mudança na página).
+
 ### 2026-10-21 · Meta do Digital feia no tema claro do Oceano (mare-metas-dev.js ?v=17, SÓ DEV)
 
 Sintoma: no Oceano (e no Painel) com o tema claro, o cartão 🎯 Meta Global/desafios aparecia como uma placa azul-marinho translúcida com texto apagado, destoando do resto da página clara.

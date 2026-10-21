@@ -120,7 +120,40 @@ const rotuloPt = (est) => ROTULO_PT[String(est || '').toLowerCase()] || est || '
 
 // O que o Comunicado mostra do incidente: título sem o "Maintenance:" e o resumo do texto (até 700 caracteres). É ISSO que se traduz.
 const tituloBase = (item) => String(item.titulo || '').replace(/^maintenance\s*:\s*/i, '');
-const resumoDe = (item) => (item.corpoTexto.length > 700 ? item.corpoTexto.slice(0, 700).replace(/\s+\S*$/, '') + '…' : item.corpoTexto);
+// Texto longo: corta na ÚLTIMA FRASE COMPLETA dentro do limite (sem "Agradecemos…" no meio); se a 1ª frase já é enorme, volta ao corte por palavra com "…".
+const RESUMO_MAX = 700, RESUMO_MIN_FRASE = 300;
+function resumoDe(item) {
+  const t = item.corpoTexto;
+  if (t.length <= RESUMO_MAX) return t;
+  const corte = t.slice(0, RESUMO_MAX);
+  const frase = /^[\s\S]*[.!?](?=\s|$)/.exec(corte);
+  return frase && frase[0].length >= RESUMO_MIN_FRASE ? frase[0] : corte.replace(/\s+\S*$/, '') + '…';
+}
+const resumoCortado = (item) => resumoDe(item) !== item.corpoTexto;
+
+// Horário em Brasília (UTC−3, sem horário de verão desde 2019). A VTEX avisa em UTC ("Scheduled for Oct 21, 2026 at 01:00 - 03:00 UTC"); quem lê quer saber a hora daqui.
+// Lê do texto ORIGINAL (não da tradução, que muda a frase) e devolve uma linha pronta em português, ou '' se não achar um horário em UTC.
+const MESES_EN = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+const RE_HORARIO = /([A-Za-z]{3,9})\.? (\d{1,2}),? (\d{4}),? (?:at )?(\d{1,2}):(\d{2})\s*(?:-|–|—|to)\s*(?:([A-Za-z]{3,9})\.? (\d{1,2}),? (\d{4}),? (?:at )?)?(\d{1,2}):(\d{2})\s*UTC/i;
+function horarioBrasilia(texto) {
+  const m = RE_HORARIO.exec(String(texto || ''));
+  if (!m) return '';
+  const mes = (n) => MESES_EN[String(n || '').slice(0, 3).toLowerCase()];
+  const m1 = mes(m[1]);
+  if (m1 === undefined) return '';
+  const ini = Date.UTC(+m[3], m1, +m[2], +m[4], +m[5]);
+  let fim;
+  if (m[6]) { const m2 = mes(m[6]); if (m2 === undefined) return ''; fim = Date.UTC(+m[8], m2, +m[7], +m[9], +m[10]); }
+  else { fim = Date.UTC(+m[3], m1, +m[2], +m[9], +m[10]); if (fim < ini) fim += 86400000; }
+  if (!(fim >= ini) || +m[4] > 23 || +m[9] > 23) return '';
+  const BR = -3 * 3600000, pad = (n) => String(n).padStart(2, '0');
+  const a = new Date(ini + BR), b = new Date(fim + BR);
+  const dia = (d) => pad(d.getUTCDate()) + '/' + pad(d.getUTCMonth() + 1), hora = (d) => pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+  return dia(a) === dia(b) ? `${dia(a)}, das ${hora(a)} às ${hora(b)}` : `de ${dia(a)} às ${hora(a)} até ${dia(b)} às ${hora(b)}`;
+}
+// Estado de cada componente ("Under maintenance"…), sem tradutor: são poucos valores fixos da página de status.
+const COMP_PT = { 'under maintenance': 'em manutenção', operational: 'operacional', 'degraded performance': 'desempenho degradado', 'partial outage': 'indisponibilidade parcial', 'major outage': 'indisponibilidade total', outage: 'indisponibilidade', 'full outage': 'indisponibilidade total', 'service disruption': 'instabilidade' };
+const compEstadoPt = (e) => COMP_PT[String(e || '').trim().toLowerCase()] || e;
 const hashTexto = (item) => crypto.createHash('sha1').update(tituloBase(item) + '\n' + resumoDe(item)).digest('hex').slice(0, 16);
 
 // `trad` = { titulo, resumo } em português, ou null (tradução desligada/falhou: o aviso sai em inglês, como sempre — o alerta nunca espera tradução).
@@ -129,16 +162,19 @@ function comunicadoDe(item, fase, agora, existente, trad) {
   const base = tituloBase(item);
   const titulo = (urgente ? '🚨 VTEX: ' : '🛠️ VTEX: ') + (item.manutencao ? 'manutenção — ' : '') + (trad ? trad.titulo : base);
   const comps = item.componentes.length
-    ? '<p><b>Componentes afetados</b></p><ul>' + item.componentes.map((c) => `<li>${esc(c.nome)}${c.estado ? ' <i>(' + esc(c.estado) + ')</i>' : ''}</li>`).join('') + '</ul>' : '';
+    ? '<p><b>Componentes afetados</b></p><ul>' + item.componentes.map((c) => `<li>${esc(c.nome)}${c.estado ? ' <i>(' + esc(compEstadoPt(c.estado)) + ')</i>' : ''}</li>`).join('') + '</ul>' : '';
   const resumo = resumoDe(item);
+  const br = horarioBrasilia(item.corpoTexto);
+  const linhaBr = br ? `<p>🕒 <b>Horário de Brasília:</b> ${esc(br)}</p>` : '';
+  const verLink = `<p><a href="${esc(item.link || SITE)}">${resumoCortado(item) ? 'Ver o aviso completo na página de status da VTEX' : 'Ver na página de status da VTEX'}</a></p>`;
   const corpo = trad
     ? `<p><b>Situação: ${esc(rotuloPt(item.estado))}</b> <i>(informado pela VTEX — tradução automática; o original em inglês está logo abaixo)</i></p>`
-      + (trad.resumo ? '<p>' + esc(trad.resumo).replace(/\n+/g, '<br>') + '</p>' : '') + comps
+      + linhaBr + (trad.resumo ? '<p>' + esc(trad.resumo).replace(/\n+/g, '<br>') + '</p>' : '') + comps
       + `<details><summary>🇬🇧 Ver original em inglês</summary><p><b>${esc(base)}</b></p>${resumo ? '<p>' + esc(resumo).replace(/\n+/g, '<br>') + '</p>' : ''}</details>`
-      + `<p><a href="${esc(item.link || SITE)}">Ver na página de status da VTEX</a></p>`
+      + verLink
     : `<p><b>Situação: ${esc(rotuloPt(item.estado))}</b> <i>(informado pela VTEX — texto original em inglês)</i></p>`
-      + (resumo ? '<p>' + esc(resumo).replace(/\n+/g, '<br>') + '</p>' : '') + comps
-      + `<p><a href="${esc(item.link || SITE)}">Ver na página de status da VTEX</a></p>`;
+      + linhaBr + (resumo ? '<p>' + esc(resumo).replace(/\n+/g, '<br>') + '</p>' : '') + comps
+      + verLink;
   return {
     titulo: titulo.slice(0, 140), corpo,
     tipo: urgente ? 'urgente' : 'aviso', squad: '*', publico: 'todos', prioridade: 'popup', insistente: urgente, oceano: true,
@@ -301,4 +337,4 @@ exports.vtexStatus = onSchedule(
 );
 
 // Exportados pra teste (lógica pura, sem mockar firebase-functions).
-exports._test = { executar, alertarMonitor, LIMITE_FALHAS, TIPO_MONITOR, chaveDe, linkSeguro, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF, traducaoDoItem, hashTexto, tituloBase, resumoDe };
+exports._test = { executar, alertarMonitor, LIMITE_FALHAS, TIPO_MONITOR, chaveDe, linkSeguro, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF, traducaoDoItem, hashTexto, tituloBase, resumoDe, horarioBrasilia, compEstadoPt, resumoCortado };
