@@ -48,7 +48,7 @@ test('incidente aberto: Comunicado, sino e selinho em português; o original em 
   assert.match(cc.corpo, /tradução automática; o original em inglês está logo abaixo/);
   assert.match(cc.corpo, /<p>PT: We are investigating errors on Checkout for some stores\.<\/p>/);
   assert.match(cc.corpo, /<details><summary>🇬🇧 Ver original em inglês<\/summary><p><b>Checkout errors for some stores<\/b><\/p><p>We are investigating errors on Checkout for some stores\.<\/p><\/details>/);
-  assert.match(cc.corpo, /<li>Checkout <i>\(Partial outage\)<\/i><\/li>/, 'nome do componente não é traduzido');
+  assert.match(cc.corpo, /<li>Checkout <i>\(indisponibilidade parcial\)<\/i><\/li>/, 'nome do componente não é traduzido; o estado, sim');
   assert.match(cc.corpo, /status\.vtex\.com\/incidents\/INC9/);
   const n = Object.values((await db.ref('kanban/usuarios/ana/notificacoes').get()).val())[0];
   assert.equal(n.title, '🚨 VTEX: PT: Checkout errors for some stores');
@@ -104,4 +104,51 @@ test('texto da VTEX com HTML/script continua escapado (original e tradução)', 
   await V.processar({ db, itens: itens(Object.assign({}, INC, { texto: 'a &lt;b&gt; b' })), agora: AGORA, traduzir });
   const cc = await com(db, 'vtex_INC9');
   assert.ok(!/<script|<img/i.test(cc.corpo), cc.corpo);
+});
+
+// ── Ajustes de 21/10: horário em Brasília, estado do componente em português, corte na última frase completa ──
+const REAL = 'Scheduled for Oct 21, 2026 at 01:00 - 03:00 UTC\nWe will work on improvements to our platform that require controlled interruptions in Marketplace Connectors. As we upgrade the database supporting our Shopee integration, some stores might experience brief periods of interruption. ';
+
+test('horarioBrasilia: UTC → Brasília (−3h), inclusive virando o dia, com data final e sem horário', () => {
+  const h = V.horarioBrasilia;
+  assert.equal(h('Scheduled for Oct 21, 2026 at 01:00 - 03:00 UTC'), 'de 20/10 às 22:00 até 21/10 às 00:00', 'o caso real: 01–03 UTC = 22h–00h do dia anterior');
+  assert.equal(h('Scheduled for Oct 21, 2026 at 13:00 - 15:30 UTC'), '21/10, das 10:00 às 12:30');
+  assert.equal(h('Scheduled for Dec 31, 2026 at 23:00 - 01:00 UTC'), '31/12, das 20:00 às 22:00', 'fim menor que o início = termina no dia seguinte (UTC)');
+  assert.equal(h('from Oct 21, 2026 at 22:00 - Oct 22, 2026 at 02:00 UTC'), '21/10, das 19:00 às 23:00', 'com data no fim (cruza a meia-noite em UTC, não em Brasília)');
+  assert.equal(h('We are investigating errors on Checkout.'), '', 'sem horário em UTC: não inventa');
+  assert.equal(h('Oct 21, 2026 at 25:00 - 03:00 UTC'), '', 'hora inválida: ignora');
+});
+
+test('compEstadoPt: estados conhecidos viram português e os desconhecidos ficam como vieram', () => {
+  assert.equal(V.compEstadoPt('Under maintenance'), 'em manutenção');
+  assert.equal(V.compEstadoPt(' Partial Outage '), 'indisponibilidade parcial');
+  assert.equal(V.compEstadoPt('Something new'), 'Something new');
+});
+
+test('resumoDe: texto longo corta na última frase completa (sem "…"); sem frase aproveitável, corta por palavra com "…"', () => {
+  const frases = Array.from({ length: 30 }, (_, i) => `Esta é a frase número ${i} do aviso.`).join(' ');
+  const r = V.resumoDe({ corpoTexto: frases });
+  assert.ok(r.length <= 700 && r.endsWith('.') && !r.endsWith('…'), r.slice(-40));
+  assert.ok(frases.startsWith(r), 'é um prefixo do original');
+  const semFrase = V.resumoDe({ corpoTexto: 'palavra '.repeat(200) });
+  assert.ok(semFrase.endsWith('…') && semFrase.length <= 701, 'sem pontuação: corte por palavra');
+  assert.equal(V.resumoDe({ corpoTexto: 'curto.' }), 'curto.');
+  assert.equal(V.resumoCortado({ corpoTexto: frases }), true); assert.equal(V.resumoCortado({ corpoTexto: 'curto.' }), false);
+});
+
+test('Comunicado: linha "Horário de Brasília" (traduzido e em inglês), estado do componente em português e link "aviso completo" só quando cortou', async () => {
+  const longo = REAL + 'Detalhe adicional importante do aviso. '.repeat(30);
+  const mk = (corpoTexto, extra) => Object.assign({ guid: 'https://status.vtex.com//incidents/X1', titulo: 'Maintenance: Marketplace Connectors maintenance', estado: 'Scheduled', manutencao: true, link: 'https://status.vtex.com//incidents/X1', corpoTexto, componentes: [{ nome: 'Marketplace Connectors', estado: 'Under maintenance' }] }, extra || {});
+  const comTrad = V.comunicadoDe(mk(REAL), 'agendado', AGORA, null, { titulo: 'Manutenção', resumo: 'Texto em português.' }).corpo;
+  assert.match(comTrad, /🕒 <b>Horário de Brasília:<\/b> de 20\/10 às 22:00 até 21\/10 às 00:00/);
+  assert.match(comTrad, /Marketplace Connectors <i>\(em manutenção\)<\/i>/);
+  assert.match(comTrad, /Ver na página de status da VTEX/); assert.ok(!/aviso completo/.test(comTrad));
+  assert.ok(comTrad.indexOf('Horário de Brasília') < comTrad.indexOf('Texto em português'), 'o horário vem antes do texto');
+  assert.ok(!/Horário de Brasília[\s\S]*<details>[\s\S]*Horário de Brasília/.test(comTrad), 'só uma vez (não duplica dentro do original)');
+  const semTrad = V.comunicadoDe(mk(REAL), 'agendado', AGORA, null, null).corpo;
+  assert.match(semTrad, /Horário de Brasília/, 'no fallback em inglês também');
+  const cortado = V.comunicadoDe(mk(longo), 'agendado', AGORA, null, { titulo: 'M', resumo: 'R' }).corpo;
+  assert.match(cortado, /Ver o aviso completo na página de status da VTEX/);
+  const sem = V.comunicadoDe(mk('We are investigating errors.', { componentes: [] }), 'aberto', AGORA, null, null).corpo;
+  assert.ok(!/Horário de Brasília/.test(sem), 'sem horário em UTC, sem linha');
 });
