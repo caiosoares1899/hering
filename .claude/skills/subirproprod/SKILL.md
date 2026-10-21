@@ -73,11 +73,11 @@ Com o diagnóstico do Passo 1 em mãos, prepare as edições de texto usando `re
 
 Concluídas as edições de `CHANGELOG.md`, `CODE_MAP.md` e `painel.html` (`COMUNICADO_RASCUNHOS_SEED`), execute **uma única chamada `run_command`** que:
 1. Roda `node .claude/skills/subirproprod/promover.js` para sincronizar todos os pares espelhados (`kanban`, `okr`, `oceano`, `escala`, `intake`, `painel` — por merge de 3 vias —, `mare-notif`, `mare-dicas`, `mare-metas`, `mare-login`, `mare-plantao`), atualizar `version.json`, preservar 100% das linhas permanentes de prod e validar a sintaxe JS de todos os `<script>` via `vm.Script`.
-2. Regenera o conhecimento do Agente Ágil (`npm --prefix functions run conhecimento`) e roda o teste de frescor (`node --test functions/agente-agil-orquestrador/conhecimento.test.js`), pois o conhecimento lê `HELP_CONTENT` de `kanban.html`, a Ajuda de `okr.html`, o FAQ de `oceano.html` e o `CHANGELOG.md` de produção.
+2. Regenera o conhecimento do Agente Ágil (`npm --prefix functions run conhecimento`) e roda o teste de frescor (`node --test functions/agente-agil-orquestrador/__tests__/conhecimento.test.js`), pois o conhecimento lê `HELP_CONTENT` de `kanban.html`, a Ajuda de `okr.html`, o FAQ de `oceano.html` e o `CHANGELOG.md` de produção.
 3. Cria a branch a partir de `origin/main` (ou atualiza a branch de promoção caso já exista uma aberta), faz commit, push e abre a PR no GitHub.
 
 ```powershell
-$env:GH_TOKEN = ("protocol=https`nhost=github.com`n" | git credential fill | Select-String '^password=(.+)$').Matches[0].Groups[1].Value; node .claude/skills/subirproprod/promover.js && npm --prefix functions run conhecimento && node --test functions/agente-agil-orquestrador/conhecimento.test.js && git fetch origin && git checkout -b chore/promocao-prod-vX.Y.Z origin/main && git add -A && git commit -m "Promove vX.Y.Z pra prod" && git push -u origin chore/promocao-prod-vX.Y.Z && gh pr create --title "Promove vX.Y.Z pra prod" --body "Promove o lote validado em dev para produção."
+$env:GH_TOKEN = ("protocol=https`nhost=github.com`n" | git credential fill | Select-String '^password=(.+)$').Matches[0].Groups[1].Value; node .claude/skills/subirproprod/promover.js && npm --prefix functions run conhecimento && node --test functions/agente-agil-orquestrador/__tests__/conhecimento.test.js && git fetch origin && git checkout -b chore/promocao-prod-vX.Y.Z origin/main && git add -A && git commit -m "Promove vX.Y.Z pra prod" && git push -u origin chore/promocao-prod-vX.Y.Z && gh pr create --title "Promove vX.Y.Z pra prod" --body "Promove o lote validado em dev para produção."
 ```
 
 > **Opções úteis do `promover.js`:**

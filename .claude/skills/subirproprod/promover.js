@@ -467,7 +467,11 @@ function analisarPainel() {
   if (!prodVerLine) throw new Error('painel.html sem <div class="version">');
   // Versão e nomes dos módulos compartilhados (mare-X-dev.js → mare-X.js) são neutralizados nos dois lados: sem isso, subir o ?v= de um módulo no dev
   // (prod usa o arquivo sem "-dev") dava CONFLITO sempre, mesmo com prod já ajustado à mão.
-  const neutro = t => t.replace(verRe, prodVerLine).replace(/(<script src="mare-[a-z]+)-dev(\.js)/g, '$1$2');
+  // Favicon e <title> do painel-dev (🧪 …Dev) também são neutralizados: ficam adjacentes às linhas que o dev costuma acrescentar no <head> (ex.: preconnect) e davam CONFLITO fixo.
+  const titleRe = /<title>[^<]*<\/title>/;
+  const prodTitle = (titleRe.exec(prod) || ['<title></title>'])[0];
+  const neutro = t => t.replace(verRe, prodVerLine).replace(/(<script src="mare-[a-z]+)-dev(\.js)/g, '$1$2')
+    .replace(/favicon-painel-v2-dev\.png/g, 'favicon-painel-v2.png').replace(titleRe, prodTitle);
   const os = require('os');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'painel3-'));
   const fP = path.join(dir, 'prod.html'), fB = path.join(dir, 'base.html'), fD = path.join(dir, 'dev.html');
