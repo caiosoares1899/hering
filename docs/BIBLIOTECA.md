@@ -111,6 +111,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `changelog-archive-2026-07-a-09.md` | Histórico do CHANGELOG de jul–set/2026 |
 | `ideias/camiseta-brasil-black-friday.md` | Ideia guardada para depois das férias |
 | `ideias/dossie-concorrencia-2026-10.md` | Dossiê de concorrência do Antigravity, já triado — backlog pós-férias |
+| `ideias/travessia-2026-10-22.md` | Primeiro desenho do Travessia (pessoas/PDI/1:1): concorrência, princípios, modelo de dados, fases e decisões abertas |
 | `ideias/tema-claro-painel-radar-2026-10-17.md` | Auditoria do tema claro/Vice no Painel e no Radar + plano de correção (18/10) |
 | `AUDITORIA_SEGURANCA_2026-10-18.md` | Pente fino de segurança: achados, o que foi corrigido, riscos aceitos, o que o Caio vê no console do Google |
 | `ideias/amanha-18-10-mapa-repo-e-push-antigravity.md` | Mapa do repositório, resumo no Ecossistema e push dos pedidos do Antigravity (18/10) |
