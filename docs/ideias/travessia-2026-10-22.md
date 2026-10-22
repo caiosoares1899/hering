@@ -1,6 +1,6 @@
 # Travessia — primeiro desenho (22/10/2026)
 
-**Status:** pensamento inicial pedido pelo Caio. Nada foi construído. Este arquivo é o ponto de partida para decidirmos juntos; as decisões abertas estão na seção 9.
+**Status:** pensamento inicial pedido pelo Caio. Decisões de 22/10 na seção 9.1. Protótipo clicável (Fase 0, dados fictícios, sem banco) em `travessia-dev.html`.
 
 **O pedido, em uma frase:** um app onde cada PO/líder tem um quadro do seu time e cada pessoa tem o seu próprio, dentro do ciclo de performance, com **PDI** feito junto com o Agente Ágil, **1:1 planejados com recorrência** (semanal, quinzenal, mensal, trimestral), **planos de ação** e **acompanhamento de demandas** por pessoa, **alimentado por dados do Maré e do Radar** — e que seja mais que um sistema de RH: **inteligente, visual e participativo**.
 
@@ -162,6 +162,20 @@ travessia/
 6. **Piloto:** qual squad e quantas pessoas? *Sugiro 1 squad pequena, com PO engajado, 4 a 8 pessoas.*
 7. **Pulso de humor/clima:** entra no MVP ou fica para depois? *Recomendo depois* (sensível e exige anonimato bem feito).
 8. **LGPD/TI/RH:** levar o tema à reunião de 30/10 para validação de dado sensível antes de gravar qualquer dado real.
+
+---
+
+## 9.1 Decisões do Caio (22/10/2026)
+
+| # | Decisão | O que muda no desenho |
+|---|---|---|
+| 1 | **Processo de avaliação: "mais ou menos".** O RH provavelmente vai refazê-lo (estava parado; antes usavam o Feedz). | O Travessia pode ser o **veículo** do novo ciclo, não só um complemento. Ciclo, fases e competências ficam **configuráveis** (o RH define), e a decisão sobre nota/score segue aberta para quando o RH entrar na conversa. |
+| 2 | **Líder = PO da squad, mas há níveis acima** (ex.: gerente que lidera POs). | O vínculo vira uma **cadeia**: pessoa → PO → gerente (… → diretoria). Cada nível vê o que é seu e o **agregado** de baixo; o gerente também tem 1:1 e PDI com os POs. Detalhe por pessoa de dois níveis abaixo só se o PO compartilhar (a confirmar). |
+| 3 | **Cargo RH com acesso próprio.** | Papel `travessia_rh` (criado e dado pelo ADM). Vê adesão, PDIs, ciclo e o que os POs **compartilharem**; **não** vê notas privadas nem o conteúdo dos 1:1 (a confirmar com o RH). ADM comum continua sem leitura por padrão. |
+| 4 | **Notas exclusivas do PO, mais um espaço de anotações para o RH** (o PO leva aos encontros com o RH). | Dois espaços privados do PO: **notas por pessoa** e **pauta com o RH**. Na pauta, cada item nasce privado e o PO pode marcá-lo como "compartilhado com o RH". |
+| 6 | **Piloto: squad Dados.** | Fases 1 e 2 já pensadas para a squad Dados. |
+
+Ainda abertas: pulso de humor/clima (fica para depois), nota/score no ciclo (depende do RH), LGPD com TI/jurídico (reunião de 30/10).
 
 ---
 
