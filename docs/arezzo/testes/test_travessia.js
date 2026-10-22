@@ -25,6 +25,7 @@ const seed = () => ({ kanban: {
     encontros: { ana: { e1: { data: dAtras(20), tipo: 'acomp', por: 'pau', ts: 1 } }, bia: { e1: { data: dAtras(30), tipo: 'acomp', por: 'pau', ts: 1 } } },
     ciclos: { [CID]: { nome: 'Ciclo 2026/2', status: 'coleta', ts: 5, participantes: { ana: true, bia: true } } },
     avaliacoes: { [CID]: { ana: { pares: { bia: { aprovado: true, por: 'avaliado', ts: 1 } }, devolutiva: { texto: 'Síntese combinada na conversa.', liberada: false, ts: 1 }, auto: { q1: 'Minha entrega', ts: 1 }, resp_pares: { bia: { q1: 'Ótima colega', ts: 1 } } } } },
+    diario: { ana: { [dAtras(40)]: { n: 2, texto: 'Dia puxado, reunião longa.', ts: 1 }, [dAtras(3)]: { n: 5, texto: 'Entreguei o painel!\nGostei muito.', ts: 2 } } },
     pedidos_par: { bia: { [CID + '_ana']: { cid: CID, avaliado: 'ana', ts: 1 } } },
   },
   escala: Object.fromEntries([1, 2, 3, 4, 5, 6].map(i => [dAtras(i + 3), { dados: { ana: { t: 'folga', por: 'ana', ts: 1 } } }])),
@@ -56,7 +57,7 @@ const seed = () => ({ kanban: {
     await ctx.close(); }
   // 2) pessoa comum (Ana)
   { const { ctx, p, errs } = await abre(U('ana', 'Ana Lima'));
-    t('Ana (sem liderados, sem papel): vê só Minha travessia, Baú e Avaliação', (await tabs(p)).length === 3 && !(await tabs(p)).some(x => /Frota|Administração/.test(x)), await tabs(p));
+    t('Ana (sem liderados, sem papel): vê Minha travessia, Baú, Diário e Avaliação', (await tabs(p)).length === 4 && !(await tabs(p)).some(x => /Frota|Administração/.test(x)), await tabs(p));
     const f = await p.locator('.farol').first().innerText(); t('Ana: farol do 1:1 já desconta as folgas da Escala (20 dias − 6 folgas = 14 → 🟢 Em dia)', /Em dia/.test(f) && /6 dias de folga descontados/.test(f), f);
     t('Ana: mural de Estrelas aparece com as DELA (geral + squad, por uid e por sigla) e não a da Bia', (await p.locator('.star').count()) === 2 && !/Para a Bia/.test(await p.locator('#painel').innerText()), await p.locator('.star').count());
     await clica(p, '[data-act="humor"][data-n="4"]'); let h = await st(p, 'kanban/travessia/humor/ana/' + HOJE); t('humor: grava privado (sem compartilhar)', h && h.n === 4 && !(await st(p, 'kanban/travessia/humor_comp/ana/' + HOJE)), h);
@@ -71,6 +72,22 @@ const seed = () => ({ kanban: {
     await clica(p, '[data-act="filtro-bau"][data-f="kudo"]'); t('Baú: filtro por tipo', (await p.locator('.lst li').count()) === 1, await p.locator('.lst li').count());
     await clica(p, '[data-act="bau-del"] >> nth=0'); await p.click('#ov-ok'); await p.waitForTimeout(400); t('apagar pede confirmação própria (não o confirm do navegador) e remove', Object.keys((await st(p, 'kanban/travessia/bau/ana')) || {}).length === 1, '');
     t('Ana: sem erro de JS', !errs.length, errs); await ctx.close(); }
+  // 2b) 📓 diário do fechamento do dia
+  { const { ctx, p, errs } = await abre(U('ana', 'Ana Lima'));
+    t('Início tem o Fechamento do dia, com o aviso de que fica salvo só pra pessoa e ninguém lê', /Fechamento do dia/.test(await p.locator('#painel').innerText()) && /Fica salvo só pra você/.test(await p.locator('#painel').innerText()) && /nem o seu líder/.test(await p.locator('#painel').innerText()), '');
+    t('sem registro hoje: lembra o último (“Entreguei o painel!”)', /Seu último registro/.test(await p.locator('#painel').innerText()) && /Entreguei o painel/.test(await p.locator('#painel').innerText()), '');
+    await clica(p, '#painel button:has-text("Salvar o dia")'); t('salvar vazio não grava', !(await st(p, 'kanban/travessia/diario/ana/' + HOJE)), '');
+    await p.locator('[data-act="dia-n"][data-n="3"]').click(); await p.fill('#dia-txt', 'Dia normal <b>ok</b>'); await clica(p, '#painel button:has-text("Salvar o dia")');
+    const dd = await st(p, 'kanban/travessia/diario/ana/' + HOJE); t('salvar grava no diário (humor + texto)', dd && dd.n === 3 && dd.texto === 'Dia normal <b>ok</b>', dd);
+    t('depois de salvar mostra "salvo hoje"', /salvo hoje/.test(await p.locator('#painel').innerText()), '');
+    await aba(p, 'diario'); t('aba Diário lista os 3 dias (hoje, 3 dias atrás, 40 dias atrás) e escapa o HTML', (await p.locator('#painel .foco').count()) === 3 && (await p.locator('#painel .foco b').filter({ hasText: 'ok' }).count()) === 0, await p.locator('#painel .foco').count());
+    t('o diário agrupa por mês', (await p.locator('#painel h3').count()) >= 1, '');
+    await p.fill('#pesq', 'painel'); await p.waitForTimeout(500); t('busca no diário filtra pelo texto', (await p.locator('#painel .foco').count()) === 1 && /Entreguei o painel/.test(await p.locator('#painel .foco').innerText()), await p.locator('#painel .foco').count());
+    await clica(p, '[data-act="dia-bau"]'); const bau = Object.values((await st(p, 'kanban/travessia/bau/ana')) || {}); t('📌 leva um dia do diário para o Baú (título com a data, texto completo)', bau.length === 1 && bau[0].tipo === 'manual' && /Entreguei o painel/.test(bau[0].titulo) && /Gostei muito/.test(bau[0].texto), bau);
+    await p.fill('#pesq', ''); await p.waitForTimeout(500); await clica(p, '[data-act="dia-del"] >> nth=2'); await p.click('#ov-ok'); await p.waitForTimeout(500); t('apagar pede confirmação e remove só aquele dia', Object.keys(await st(p, 'kanban/travessia/diario/ana')).length === 2, Object.keys(await st(p, 'kanban/travessia/diario/ana')));
+    t('Diário: sem erro de JS', !errs.length, errs); await ctx.close(); }
+  { const { ctx, p } = await abre(U('pau', 'Pau Reis')); await aba(p, 'frota'); await clica(p, '.pcard:has-text("Ana Lima") [data-act="abrir"]');
+    t('o LÍDER não tem acesso ao diário da pessoa (nenhuma aba nem texto dele na Frota)', !/Diário|Entreguei o painel/.test(await p.locator('#detalhe').innerText()), await p.locator('#detalhe .tabs').innerText()); await ctx.close(); }
   // 3) avaliação do ponto de vista da pessoa: pares, autoavaliação e TRAVA
   { const sd3 = seed(); sd3.kanban.travessia.bau = { ana: { b1: { tipo: 'manual', titulo: 'Entrega da Black Friday', ts: 1, em: dAtras(5) } } }; const { ctx, p, errs } = await abre(U('ana', 'Ana Lima'), { seed: sd3 }); await aba(p, 'aval');
     t('Ana: ciclo com fase "Coleta" destacada', /Coleta/.test(await p.locator('.fase span.on').innerText()), '');

@@ -29,16 +29,25 @@ const radar = () => ({ kanban: { okr: { objetivos: { d1: mk('d1', 'Fidelidade do
     t('Maré: sem erro de JS', !errs.length, errs); await ctx.close(); }
   // ── Maré: humor no Meu Dia ──
   { const { ctx, p, errs } = await abre('kanban', mare(), '?squad=dev'); await p.evaluate(() => openMeuDia()); await p.waitForTimeout(900);
-    t('Meu Dia: 5 carinhas e a caixa de compartilhar, desmarcada', (await p.locator('#meudia-humor button').count()) === 5 && !(await p.locator('#meudia-humor-comp').isChecked()), await p.locator('#meudia-humor button').count());
-    await p.locator('#meudia-humor button').nth(3).click(); await p.waitForTimeout(500);
+    t('Meu Dia: 5 carinhas e a caixa de compartilhar, desmarcada', (await p.locator('#meudia-humor button[onclick^="_meuDiaHumorSet"]').count()) === 5 && !(await p.locator('#meudia-humor-comp').isChecked()), await p.locator('#meudia-humor button[onclick^="_meuDiaHumorSet"]').count());
+    await p.locator('#meudia-humor button[onclick^="_meuDiaHumorSet"]').nth(3).click(); await p.waitForTimeout(500);
     let h = await st(p, 'kanban/travessia/humor/ana/' + HOJE); t('escolher grava o humor do dia, PRIVADO (sem cópia pro líder)', h && h.n === 4 && !(await st(p, 'kanban/travessia/humor_comp/ana/' + HOJE)), h);
-    t('a carinha escolhida fica marcada (aria-pressed)', (await p.locator('#meudia-humor button[aria-pressed="true"]').count()) === 1, '');
+    t('a carinha escolhida fica marcada (aria-pressed)', (await p.locator('#meudia-humor button[onclick^="_meuDiaHumorSet"][aria-pressed="true"]').count()) === 1, '');
     await p.check('#meudia-humor-comp'); await p.waitForTimeout(500); t('marcar "compartilhar" grava a cópia do líder', (await st(p, 'kanban/travessia/humor_comp/ana/' + HOJE))?.n === 4, '');
-    await p.locator('#meudia-humor button').nth(1).click(); await p.waitForTimeout(500); const c2 = await st(p, 'kanban/travessia/humor_comp/ana/' + HOJE); t('mudar de humor com "compartilhar" marcado atualiza a cópia também', c2 && c2.n === 2 && (await st(p, 'kanban/travessia/humor/ana/' + HOJE)).n === 2, c2);
+    await p.locator('#meudia-humor button[onclick^="_meuDiaHumorSet"]').nth(1).click(); await p.waitForTimeout(500); const c2 = await st(p, 'kanban/travessia/humor_comp/ana/' + HOJE); t('mudar de humor com "compartilhar" marcado atualiza a cópia também', c2 && c2.n === 2 && (await st(p, 'kanban/travessia/humor/ana/' + HOJE)).n === 2, c2);
     await p.uncheck('#meudia-humor-comp'); await p.waitForTimeout(500); t('desmarcar apaga a cópia e mantém o registro privado', !(await st(p, 'kanban/travessia/humor_comp/ana/' + HOJE)) && (await st(p, 'kanban/travessia/humor/ana/' + HOJE)).n === 2, '');
+    // 🌙 fechamento do dia
+    t('Meu Dia: bloco "Fechamento do dia" com 5 carinhas, caixa de texto e o aviso de que fica salvo só pra pessoa, no Travessia', (await p.locator('#meudia-humor [data-dia-n]').count()) === 5 && (await p.locator('#meudia-dia-txt').count()) === 1 && /só pra você/.test(await p.locator('#meudia-humor').innerText()) && /Diário da Travessia/.test(await p.locator('#meudia-humor').innerText()) && (await p.locator('#meudia-humor a[href="travessia-dev.html"]').count()) === 1, await p.locator('#meudia-humor').innerText());
+    await p.click('#meudia-humor button:has-text("Salvar o dia")'); await p.waitForTimeout(300); t('salvar sem humor e sem texto avisa e não grava', !(await st(p, 'kanban/travessia/diario/ana')), '');
+    await p.locator('#meudia-humor [data-dia-n="4"]').click(); await p.fill('#meudia-dia-txt', 'Fechei a análise <i>x</i> e ajudei a Bia.'); await p.locator('#meudia-humor button[aria-label="Muito mal"]').first().click(); await p.waitForTimeout(500);
+    t('o rascunho do fechamento sobrevive quando o humor da manhã redesenha o bloco', (await p.inputValue('#meudia-dia-txt')) === 'Fechei a análise <i>x</i> e ajudei a Bia.', await p.inputValue('#meudia-dia-txt'));
+    await p.locator('#meudia-humor [data-dia-n="4"]').click(); await p.click('#meudia-humor button:has-text("Salvar o dia")'); await p.waitForTimeout(500);
+    const dd = await st(p, 'kanban/travessia/diario/ana/' + HOJE); t('salvar grava humor + texto no diário PRIVADO do dia', dd && dd.n === 4 && dd.texto === 'Fechei a análise <i>x</i> e ajudei a Bia.' && dd.ts, dd);
+    t('depois de salvar mostra "salvo hoje" e o texto volta preenchido; o texto HTML é escapado', /salvo hoje/.test(await p.locator('#meudia-humor').innerText()) && (await p.inputValue('#meudia-dia-txt')).includes('<i>x</i>') && (await p.locator('#meudia-humor i').count()) === 0, '');
+    t('o fechamento NÃO vazou pro humor compartilhado com o líder', !(await st(p, 'kanban/travessia/humor_comp/ana/' + HOJE)), '');
     t('Meu Dia: sem erro de JS', !errs.length, errs); await ctx.close(); }
   { const { ctx, p } = await abre('kanban', mare(), '?squad=dev'); await p.evaluate(() => { window.__denyGet = () => true; }); await p.evaluate(() => openMeuDia()); await p.waitForTimeout(900);
-    t('sem as regras publicadas (leitura negada) o bloco do humor some em silêncio e o Meu Dia segue funcionando', (await p.locator('#meudia-humor button').count()) === 0 && (await p.locator('#meudia-body').count()) === 1, ''); await ctx.close(); }
+    t('sem as regras publicadas (leitura negada) o bloco do humor some em silêncio e o Meu Dia segue funcionando', (await p.locator('#meudia-humor button[onclick^="_meuDiaHumorSet"]').count()) === 0 && (await p.locator('#meudia-body').count()) === 1, ''); await ctx.close(); }
   // ── Radar: 📌 no Marco ──
   { const { ctx, p, errs } = await abre('okr', radar(), '?torre=digital'); await p.evaluate(() => openOkrMarco('m1', 'd1')); await p.waitForTimeout(500);
     t('Radar: Marco existente mostra o 📌', await p.locator('#okr-marco-bau-btn').isVisible(), '');

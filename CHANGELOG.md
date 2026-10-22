@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌙 Fechamento do dia e 📓 Diário (SÓ DEV): humor de fim de dia com texto livre dentro do Meu Dia, salvo só pra pessoa no Travessia — kanban-dev v8.30.880 — 2026-10-22
+
+Ideia do Caio. No 🌅 Meu Dia, abaixo do humor da manhã, 'Fechamento do dia': cinco carinhas e uma caixa de texto ('Como foi o seu dia?'), com o aviso de que fica salvo só pra pessoa, no Diário da Travessia, pra ela se lembrar depois — nem o líder lê.
+• Dado em kanban/travessia/diario/{uid}/{dia} (n opcional 1 a 5, texto até 1500, ts), regra: só o dono lê e grava; não entra no humor compartilhado com o líder.
+• Travessia: bloco de fechamento em Minha travessia e aba 📓 Diário (por mês, busca, apagar, 📌 guardar um dia no Baú).
+• O que a pessoa já digitou e ainda não salvou sobrevive quando o humor da manhã redesenha o bloco.
+• Ajuda do Maré atualizada (Humor do dia). Dica: não, o bloco já está à vista. Exige firebase deploy --only database.
+
 ### 📌 Baú e 🌤️ humor chegam ao Maré e ao Radar (SÓ DEV): 📌 no card, humor no Meu Dia e 📌 no Marco — kanban-dev v8.30.879 · okr-dev v2.95 · mare-dicas-dev v8 — 2026-10-22
 
 Ganchos do Travessia (travessia-dev.html) nos produtos onde o trabalho acontece.

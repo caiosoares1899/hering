@@ -6569,7 +6569,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.879-dev</div>
+<div class="version">v8.30.880-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23676,6 +23676,7 @@ async function openMeuDia(){
   if(poBox){ poBox.style.display='none'; poBox.textContent=''; }
   const body=document.getElementById('meudia-body');
   if(body) body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--txt3);font-size:12px;">⏳ Carregando seus cards de todos os squads...</div>';
+  _meuDiaDiaN=undefined; _meuDiaDiaTxt=null;
   _meuDiaHumorRender();
   await _loadMeuDiaCrossSquads();
   renderMeuDia();
@@ -23686,15 +23687,36 @@ const _MEUDIA_FACES = [['😣','Muito mal'],['🙁','Mal'],['😐','Mais ou meno
 async function _meuDiaHumorRender(){
   const box=document.getElementById('meudia-humor'); if(!box) return;
   const u=window._currentUser; if(!u){ box.innerHTML=''; return; }
-  const hoje=_localDateStrBoard(new Date()); let atual=null, comp=false;
+  const hoje=_localDateStrBoard(new Date()); let atual=null, comp=false, dia=null;
   try{
-    const [a,c]=await Promise.all([window._get(window._ref(window._db,'kanban/travessia/humor/'+u.uid+'/'+hoje)), window._get(window._ref(window._db,'kanban/travessia/humor_comp/'+u.uid+'/'+hoje))]);
-    atual=a.val(); comp=!!c.val();
+    const [a,c,d]=await Promise.all([window._get(window._ref(window._db,'kanban/travessia/humor/'+u.uid+'/'+hoje)), window._get(window._ref(window._db,'kanban/travessia/humor_comp/'+u.uid+'/'+hoje)), window._get(window._ref(window._db,'kanban/travessia/diario/'+u.uid+'/'+hoje))]);
+    atual=a.val(); comp=!!c.val(); dia=d.val();
   }catch(e){ box.innerHTML=''; return; }
+  if(_meuDiaDiaN===undefined) _meuDiaDiaN = dia&&dia.n ? dia.n : null;   // o que a pessoa já escolheu/digitou e ainda não salvou sobrevive ao redesenho do bloco
+  const diaTxt = _meuDiaDiaTxt!==null ? _meuDiaDiaTxt : ((dia&&dia.texto)||'');
   box.innerHTML=`<div style="padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;">
     <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🌤️ Como você está hoje?</div>
     <div role="group" aria-label="Humor de hoje" style="display:flex;gap:6px;flex-wrap:wrap;">${_MEUDIA_FACES.map((f,i)=>`<button type="button" class="btn btn-sm" onclick="_meuDiaHumorSet(${i+1})" aria-pressed="${!!atual&&atual.n===i+1}" aria-label="${f[1]}" title="${f[1]}" style="font-size:20px;padding:4px 10px;${atual&&atual.n===i+1?'border-color:var(--accent);background:rgba(56,182,255,.2);':''}">${f[0]}</button>`).join('')}</div>
-    <label style="display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--txt2);margin-top:8px;cursor:pointer;"><input type="checkbox" id="meudia-humor-comp" ${comp?'checked':''} onchange="_meuDiaHumorComp(this.checked)"> Compartilhar com meu líder (só se você quiser — o padrão é só você ver)</label></div>`;
+    <label style="display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--txt2);margin-top:8px;cursor:pointer;"><input type="checkbox" id="meudia-humor-comp" ${comp?'checked':''} onchange="_meuDiaHumorComp(this.checked)"> Compartilhar com meu líder (só se você quiser — o padrão é só você ver)</label></div>
+  <div style="margin-top:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;">
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🌙 Fechamento do dia${dia?' <span style="font-weight:600;color:var(--txt2);">· ✔ salvo hoje</span>':''}</div>
+    <div role="group" aria-label="Humor do fim do dia" style="display:flex;gap:6px;flex-wrap:wrap;">${_MEUDIA_FACES.map((f,i)=>`<button type="button" class="btn btn-sm" data-dia-n="${i+1}" onclick="_meuDiaDiaSel(${i+1})" aria-pressed="${_meuDiaDiaN===i+1}" aria-label="${f[1]}" title="${f[1]}" style="font-size:20px;padding:4px 10px;${_meuDiaDiaN===i+1?'border-color:var(--accent);background:rgba(56,182,255,.2);':''}">${f[0]}</button>`).join('')}</div>
+    <label for="meudia-dia-txt" style="position:absolute;left:-9999px;">Como foi o seu dia</label>
+    <textarea id="meudia-dia-txt" maxlength="1500" oninput="_meuDiaDiaTxt=this.value" placeholder="Como foi o seu dia? O que rolou de bom, o que pesou, o que você aprendeu…" style="width:100%;min-height:72px;margin-top:8px;resize:vertical;background:rgba(var(--surface2-rgb),.85);border:1px solid rgba(56,182,255,.3);border-radius:8px;color:var(--txt);padding:8px 10px;font:inherit;font-size:13px;">${esc(diaTxt)}</textarea>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;"><button type="button" class="btn btn-sm" onclick="_meuDiaDiaSalvar()" style="color:var(--accent);border-color:rgba(56,182,255,.3);">💾 Salvar o dia</button>
+      <span style="font-size:11px;color:var(--txt2);line-height:1.4;">🔒 Fica salvo só pra você, no 📓 Diário da Travessia, pra você se lembrar depois — nem seu líder lê. <a href="${_travessiaPagina()}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Abrir o diário ↗</a></span></div></div>`;
+}
+let _meuDiaDiaN = undefined, _meuDiaDiaTxt = null;
+function _travessiaPagina(){ return (location.pathname.split('/').pop()||'kanban.html').replace(/^kanban/,'travessia').replace(/[^a-zA-Z0-9_.\-]/g,''); }
+function _meuDiaDiaSel(n){ _meuDiaDiaN=n; document.querySelectorAll('#meudia-humor [data-dia-n]').forEach(b=>{ const on=+b.dataset.diaN===n; b.setAttribute('aria-pressed',String(on)); b.style.borderColor=on?'var(--accent)':''; b.style.background=on?'rgba(56,182,255,.2)':''; }); }
+async function _meuDiaDiaSalvar(){
+  const u=window._currentUser; if(!u) return; const hoje=_localDateStrBoard(new Date());
+  const txt=(document.getElementById('meudia-dia-txt')?.value||'').trim(); const n=_meuDiaDiaN;
+  if(!n && !txt){ toast('Escolha como foi o dia ou escreva um pouco antes de salvar.'); return; }
+  const reg={ts:Date.now()}; if(n) reg.n=n; if(txt) reg.texto=txt.slice(0,1500);
+  try{ await window._set(window._ref(window._db,'kanban/travessia/diario/'+u.uid+'/'+hoje), reg); _meuDiaDiaTxt=null; toast('🌙 Dia guardado no seu diário da Travessia — só você lê.'); }
+  catch(e){ toast('⚠️ Não deu pra salvar o dia agora.'); return; }
+  _meuDiaHumorRender();
 }
 async function _meuDiaHumorSet(n){
   const u=window._currentUser; if(!u) return; const hoje=_localDateStrBoard(new Date());
@@ -28235,7 +28257,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
     { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.\n\n📆 <b>Prazo do card (opcional):</b> na mesma tela, dá pra definir de já um prazo pro card — uma data fixa, diferente da data de entrada. Deixe em branco pro card nascer sem prazo, como sempre foi.' },
     { icon:'📌', title:'Baú da Travessia (📌)', text:'O 📌 no topo do card (e "Guardar na Travessia" no menu de clique direito) guarda aquele card no seu <b>Baú da Travessia</b>: a lista das suas conquistas do ciclo, só sua (seu líder e seu gerente também leem). Na hora da avaliação você não depende da memória — o Baú aparece ao lado das suas respostas. Clicar de novo no mesmo card só atualiza o item. No Radar, o mesmo 📌 existe dentro do Marco; no Travessia você também registra conquistas à mão e guarda as ⭐ Estrelas que recebeu.' },
-    { icon:'🌤️', title:'Humor do dia (Meu Dia)', text:'No topo do 🌅 Meu Dia tem "Como você está hoje?", com cinco carinhas. O que você marca é <b>só seu</b>. Se quiser, marque "Compartilhar com meu líder": ele passa a ver aquele dia (desmarcar apaga a cópia dele). Ninguém, nem o sistema, analisa seu humor — serve para você acompanhar como anda e, se quiser, conversar com o líder.' },
+    { icon:'🌤️', title:'Humor do dia (Meu Dia)', text:'No topo do 🌅 Meu Dia tem "Como você está hoje?", com cinco carinhas. O que você marca é <b>só seu</b>. Se quiser, marque "Compartilhar com meu líder": ele passa a ver aquele dia (desmarcar apaga a cópia dele). Ninguém, nem o sistema, analisa seu humor — serve para você acompanhar como anda e, se quiser, conversar com o líder.\n\n🌙 <b>Fechamento do dia:</b> logo abaixo, escolha como foi o fim do dia e, se quiser, conte em um texto livre como foi. Isso fica salvo <b>só para você</b> (nem o seu líder lê) no 📓 Diário da Travessia, para você se lembrar depois — por exemplo na hora da avaliação ou de um 1:1.' },
     { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: ⚡ Automações (regras "Quando X → Então Y" e receitas de fan-out, ver dica "Automações"), 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar), 📦 Arquivados (cards que saíram do quadro) e 🧹 Cards antigos (arquivamento em lote de cards parados há muito tempo, disponível pra ADM/PO/Organizador). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
     { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.\n\nÉ só o marcador no card: o planejamento em si — Objetivos e Marcos por torre, o calendário de reuniões, o Dashboard e a apresentação — vive na página própria 📡 Radar (okr.html).' },

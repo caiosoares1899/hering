@@ -364,6 +364,27 @@
             }
           }
         },
+        "diario": {
+          "$uid": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $uid",
+            "$data": {
+              ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $uid",
+              ".validate": "$data.matches(/^20[0-9][0-9]-[01][0-9]-[0-3][0-9]$/) && newData.hasChild('ts') && (newData.hasChild('n') || newData.hasChild('texto'))",
+              "n": {
+                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5"
+              },
+              "texto": {
+                ".validate": "newData.isString() && newData.val().length <= 1500"
+              },
+              "ts": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
         "ciclos": {
           ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
           "$cid": {
