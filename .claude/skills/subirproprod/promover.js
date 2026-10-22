@@ -435,7 +435,7 @@ function syncVersionJson(promotedTargets) {
  * Pares -dev/prod que existem na raiz mas não estão em TARGETS (a skill nunca os verificaria).
  * Exceções conhecidas: arquivos de ambiente que não se promovem.
  */
-const SEM_PROMOCAO = new Set(['oceano-dev.webmanifest', 'travessia-dev.html']);   // travessia-dev.html = protótipo da Fase 0 (dados fictícios): só entra aqui como alvo quando virar produto
+const SEM_PROMOCAO = new Set(['oceano-dev.webmanifest', 'travessia-dev.html']);   // travessia-dev.html = Travessia em validação (ainda sem versão de produção): vira alvo de promoção quando o Caio validar
 function paresNaoCobertos() {
   const cobertos = new Set(Object.values(TARGETS).flatMap(c => [c.dev, c.prod]));
   const out = [];

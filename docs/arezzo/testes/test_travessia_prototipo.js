@@ -1,7 +1,7 @@
 // ⛵ Travessia — protótipo da Fase 0 (travessia-dev.html, dados fictícios): papéis, abas, interações, 3 temas, 1280 e 390 px, contraste e rolagem lateral.
 // Roda:  python3 -m http.server 8941 &   node docs/arezzo/testes/test_travessia_proto.js     (PRINTS=pasta salva as capturas)
 const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fs=require('fs');
-const URL='http://localhost:8941/travessia-dev.html';
+const URL='http://localhost:8941/docs/demo/travessia-prototipo-fase0.html';
 const lum=c=>{ const m=(c.match(/[\d.]+/g)||[]).map(Number); const f=v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }; return .2126*f(m[0])+.7152*f(m[1])+.0722*f(m[2]); };
 (async()=>{ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true;
  const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,400))); };

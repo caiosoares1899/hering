@@ -24,6 +24,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### ⛵ Travessia (SÓ DEV): Baú, faróis do 1:1, humor privado, mural de Estrelas e avaliação com indicação de pares e trava de devolutiva — travessia-dev.html — 2026-10-22
+
+Página nova do Oceano para pessoas e desenvolvimento (Fase 1), só em dev e ainda fora do menu de produtos.
+• 📦 Baú da Travessia: a pessoa guarda conquistas (manual agora; botão 📌 no Maré/Radar nas próximas PRs); líder e gerente leem.
+• 🚦 Faróis do 1:1: 🟢 até a cadência + 1 dia, 🟡 até 1,5× a cadência, 🔴 acima, descontando as folgas da Escala. O líder define a cadência (semanal, quinzenal, mensal, trimestral) e a pessoa ou o líder registram o 1:1.
+• 🌤️ Humor do dia: privado; a pessoa pode compartilhar com o líder direto (apagar a cópia tira o acesso).
+• ⭐ Mural de Estrelas: aparece só para quem recebeu; cada Estrela vai ao Baú com 1 clique.
+• 📐 Avaliação (só texto, sem nota): autoavaliação, líder e pares. O avaliado indica pares e o líder aprova; só par aprovado responde; o avaliado nunca lê o feedback individual dos pares nem a avaliação do líder. 🔒 Trava de devolutiva: a pessoa só lê depois que o líder libera.
+• ⚙ Administração: organograma (líder e gerente), papel de RH (só ADM concede) e ciclos (preparação → coleta → devolutiva → encerrado). ADM e RH não leem conteúdo de pessoas.
+Depende das regras novas do banco (PR de regras) publicadas: firebase deploy --only database.
+
 ### PROD (2026-10-21) — Avisos da VTEX traduzidos para português, com "Ver original em inglês" (functions/vtex + oceano-dev v1.58) — 2026-10-21
 
 O monitor da VTEX (vtexStatus) agora traduz título e resumo do incidente para português com a Google Cloud Translation API (functions/vtex/traduzir.js) e guarda o original em inglês num '🇬🇧 Ver original em inglês' dentro do mesmo aviso (popup do Maré, Mural do Oceano, Painel). Sino e push saem em português, e o selinho da VTEX no Oceano também. Nomes de produto (Checkout, VTEX IO, Master Data, Storefront, FastStore, Admin, API…) não são traduzidos. A tradução é cacheada em vtex_status/{guid}.trad — só chama o Google quando o texto muda — e NUNCA atrasa o alerta: se a API falhar ou estiver desligada, o aviso sai em inglês como antes. Interruptor só da tradução: kanban/config/vtex_traducao_off. oceano-dev: o sanitizador do aviso passa a aceitar details/summary (sem atributos) e o cartão do Mural não mostra o original. ORDEM DO DEPLOY: promover o Oceano ANTES de implantar a função (no Oceano de produção sem a mudança o original em inglês apareceria sempre aberto). Dica: não (o aviso já mostra que foi traduzido). Testes: functions/vtex/__tests__/statusVtexTraducao.test.js e docs/arezzo/testes/test_vtex_traducao_oceano.js.

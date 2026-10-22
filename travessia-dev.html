@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🧪 Travessia · Protótipo</title>
+<title>🧪 Travessia · Dev</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="favicon-oceano.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-/* ═══ Travessia — PROTÓTIPO da Fase 0 (docs/ideias/travessia-2026-10-22.md) ═══
+/* ═══ Travessia — página real da Fase 1 (docs/ideias/travessia-2026-10-22.md §13). Visual herdado do protótipo (docs/demo/travessia-prototipo-fase0.html) ═══
    Sem Firebase, sem login, sem banco: tudo aqui é FICTÍCIO (pessoas, números, datas). Serve para validar a metáfora e o fluxo com POs antes de tocar em regras.
    Marine Glass: mesmos tokens do Oceano (abrolhos = escuro, lencois = claro, entardecer). Estado nunca só pela cor (cor + ícone + texto). */
 :root{
@@ -145,7 +146,7 @@ textarea.in{width:100%;min-height:92px;resize:vertical;}
 
 /* frota */
 .pcard{padding:14px;cursor:default;}
-.pcard.at{border-color:var(--warn);border-left-width:5px;background:linear-gradient(var(--warn-bg),var(--warn-bg)),var(--glass);}
+.pcard.at{border-left:5px solid var(--warn);}
 .pcard .top{display:flex;gap:12px;align-items:center;}
 .av{width:42px;height:42px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--teal));color:var(--on-accent);}
 .strip{display:flex;gap:3px;margin-top:10px;}
@@ -178,6 +179,53 @@ textarea.in{width:100%;min-height:92px;resize:vertical;}
 }
 @media (hover:none) and (pointer:coarse){ .btn,.seg button,.tabs button,.filtros button{min-height:44px;} input,select,textarea{font-size:16px;} }
 @media (prefers-reduced-motion:reduce){ .porto .barco{animation:none;} }
+
+/* ═══ camada da página real (Fase 1) ═══ */
+[hidden]{display:none !important;}
+.login{max-width:440px;margin:8vh auto 0;padding:26px;text-align:center;}
+.login p{color:var(--txt2);margin:10px 0 16px;}
+.err{color:var(--txt);background:var(--bad-bg);border:1px solid var(--danger);border-radius:10px;padding:8px 12px;margin-top:12px;font-size:13px;text-align:left;}
+.carregando{padding:22px;text-align:center;color:var(--txt2);}
+.who{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--txt2);}
+.who img{width:26px;height:26px;border-radius:50%;object-fit:cover;}
+.farol{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.6);}
+.farol .lamp{font-size:22px;line-height:1;flex:none;}
+.farol.verde{border-color:var(--ok);background:linear-gradient(var(--ok-bg),var(--ok-bg)),rgba(var(--surface-rgb),.6);}
+.farol.amarelo{border-color:var(--warn);background:linear-gradient(var(--warn-bg),var(--warn-bg)),rgba(var(--surface-rgb),.6);}
+.farol.vermelho{border-color:var(--danger);background:linear-gradient(var(--bad-bg),var(--bad-bg)),rgba(var(--surface-rgb),.6);}
+.farol b{display:block;}
+.faces{display:flex;gap:8px;flex-wrap:wrap;}
+.faces button{width:52px;height:52px;border-radius:14px;border:2px solid var(--glass-b);background:rgba(var(--surface-rgb),.75);font-size:26px;line-height:1;}
+.faces button[aria-pressed="true"]{border-color:var(--accent);background:linear-gradient(var(--ag-bg),var(--ag-bg)),rgba(var(--surface-rgb),.9);box-shadow:0 0 0 3px var(--glass-h);}
+.faces button:hover{border-color:var(--accent);}
+.spark{display:flex;gap:3px;align-items:flex-end;height:34px;margin-top:8px;}
+.spark i{flex:1;max-width:16px;min-height:4px;border-radius:3px;background:var(--accent);opacity:.9;}
+.spark i.v{background:transparent;border:1px dashed var(--glass-b);}
+.star{padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);border-left:5px solid var(--warn);background:rgba(var(--surface-rgb),.6);}
+.star .de{font-weight:700;}
+.pill{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.7);padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;}
+.fase{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;}
+.fase span{padding:3px 10px;border-radius:999px;border:1px solid var(--glass-b);font-size:12px;font-weight:700;color:var(--txt2);}
+.fase span.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+.fase span.ok{border-color:var(--ok);color:var(--txt);}
+.sbs{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:14px;align-items:start;}
+@media (max-width:860px){ .sbs{grid-template-columns:1fr;} }
+.sbs .lado{position:sticky;top:76px;max-height:78vh;overflow:auto;}
+@media (max-width:860px){ .sbs .lado{position:static;max-height:none;} }
+.camp label{display:block;font-weight:700;margin:12px 0 4px;font-size:13px;}
+.ta{width:100%;min-height:96px;resize:vertical;background:rgba(var(--surface2-rgb),.85);border:1px solid var(--glass-b);border-radius:10px;padding:9px 12px;line-height:1.45;}
+.ta[readonly]{opacity:.9;background:rgba(var(--surface2-rgb),.5);}
+.cont{font-size:11.5px;color:var(--txt2);text-align:right;}
+.trava{border:1px dashed var(--warn);border-radius:12px;padding:12px 14px;background:rgba(var(--surface-rgb),.55);}
+.sel2{background:rgba(var(--surface-rgb),.85);border:1px solid var(--glass-b);border-radius:9px;padding:6px 8px;min-height:34px;max-width:100%;}
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.tbl select{width:100%;}
+.pesq{max-width:320px;}
+.ck{display:flex;gap:8px;align-items:center;font-size:13px;}
+.ck input{width:20px;height:20px;accent-color:var(--accent);}
+.divid{height:1px;background:var(--glass-b);margin:14px 0;}
+.ovl{position:fixed;inset:0;z-index:70;background:rgba(3,10,18,.62);display:flex;align-items:center;justify-content:center;}
+.ovl[hidden]{display:none;}
 </style>
 </head>
 <body>
@@ -185,350 +233,450 @@ textarea.in{width:100%;min-height:92px;resize:vertical;}
 <header class="topo">
   <div class="topo-in">
     <div class="logo">⛵ Travessia</div>
-    <span class="proto" title="Nada aqui é real: pessoas, números e datas são inventados">🧪 Protótipo · dados fictícios</span>
+    <span class="proto" title="Versão de teste (dev)">🧪 Dev</span>
     <div class="sp"></div>
+    <div class="who" id="quem" hidden><img id="quem-foto" alt="" hidden><span id="quem-nome"></span><button class="btn s" id="btn-sair" type="button">Sair</button></div>
     <button class="btn" id="btn-tema" type="button" style="padding:5px 12px;min-height:38px;font-size:17px" aria-label="Trocar tema" title="Clique para alternar: 🌙 Abrolhos → ☀️ Lençóis Maranhenses → 🌅 Entardecer. Preferência salva só neste navegador.">🌙</button>
-    <div class="row" style="gap:8px">
-      <span class="lbl" id="lbl-papel">Ver como</span>
-      <div class="seg" id="seg-papel" role="group" aria-labelledby="lbl-papel"></div>
-    </div>
   </div>
 </header>
-<main class="wrap" id="app"></main>
+<main class="wrap" id="app" hidden></main>
+<section class="wrap" id="login"><div class="gl login"><div class="logo" style="justify-content:center;font-size:26px">⛵ Travessia</div>
+  <p>Seu espaço de desenvolvimento, 1:1 e avaliação. Entre com a conta Google da Hering.</p>
+  <button class="btn p" id="btn-login" type="button">Entrar com Google</button>
+  <div class="err" id="login-err" role="alert" hidden></div></div></section>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="ovl" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ov-msg"><div class="gl pad stack" style="max-width:420px;width:92vw"><p id="ov-msg"></p><div class="row" style="justify-content:flex-end"><button class="btn" id="ov-no" type="button">Cancelar</button><button class="btn p" id="ov-ok" type="button">Confirmar</button></div></div></div>
 
-<script>
-(function(){
-'use strict';
-// ───────── dados FICTÍCIOS (hoje = 22/10/2026 fixo, para a demo não depender do relógio) ─────────
-const HOJE = new Date('2026-10-22T12:00:00');
-const FERIADOS = {'2026-11-02':'Finados','2026-11-20':'Consciência Negra','2026-12-25':'Natal'};
-const FOLGAS = {ana:{'2026-11-06':1,'2026-12-04':1}};
-const TIPO = {pratica:['🛠','Prática'],pessoas:['🤝','Com pessoas'],estudo:['📚','Estudo']};
-const SERIES_TIPO = {acomp:'Acompanhamento',pdi:'Check-in de PDI',carreira:'Carreira e ciclo'};
-const CAD = {semanal:'Semanal',quinzenal:'Quinzenal',mensal:'Mensal',trimestral:'Trimestral'};
+<script src="mare-login-dev.js?v=3"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, get, set, remove, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const PESSOAS = {
-  ana:{nome:'Ana Lima',papel:'Analista de Dados Pl.',serie:{cad:'quinzenal',tipo:'acomp'},ultimo:'2026-10-15',proximo:'2026-10-29',hora:'10:00',
-    tira:'dddmddmddd-d'.split('').slice(0,12),pdiParado:0,
-    focos:[
-      {t:'Comunicar análises para quem decide',acoes:[{t:'Apresentar o painel de vendas para a diretoria',tipo:'pratica',done:true},{t:'Mentoria com Elis sobre storytelling com dados',tipo:'pessoas',done:false,prazo:'12/11'},{t:'Curso “Data storytelling”',tipo:'estudo',done:false,prazo:'30/11'}]},
-      {t:'SQL avançado e performance de consultas',acoes:[{t:'Curso de SQL avançado',tipo:'estudo',done:true},{t:'Otimizar as 3 consultas mais lentas do time',tipo:'pratica',done:true},{t:'Pair review das consultas de um colega',tipo:'pessoas',done:false,prazo:'05/11'}]},
-      {t:'Liderar um projeto de ponta a ponta',acoes:[{t:'Liderar a análise da Black Friday (card no Maré)',tipo:'pratica',done:false,prazo:'27/11',card:true},{t:'Alinhar prioridades do projeto com Bruno',tipo:'pessoas',done:false,prazo:'29/10'}]}]},
-  caue:{nome:'Cauê Matos',papel:'Analista de BI',serie:{cad:'quinzenal',tipo:'acomp'},ultimo:'2026-10-02',proximo:null,atrasoDias:20,tira:'dddddmdmdm-m'.split('').slice(0,12),pdiParado:24,
-    focos:[{t:'Modelagem dimensional',acoes:[{t:'Livro “The Data Warehouse Toolkit” (cap. 1 a 5)',tipo:'estudo',done:true},{t:'Refazer o modelo de vendas',tipo:'pratica',done:false,prazo:'30/10'}]}]},
-  debora:{nome:'Débora Pinto',papel:'Engenheira de Dados',serie:{cad:'semanal',tipo:'acomp'},ultimo:'2026-10-19',proximo:'2026-10-26',hora:'15:00',tira:'dddddddmdddd'.split('').slice(0,12),pdiParado:3,
-    focos:[{t:'Orquestração e observabilidade',acoes:[{t:'Montar alertas das cargas diárias',tipo:'pratica',done:true},{t:'Palestra interna sobre data quality',tipo:'pessoas',done:false,prazo:'20/11'}]},{t:'Mentoria para quem está chegando',acoes:[{t:'Acompanhar o Gil nas 4 primeiras semanas',tipo:'pessoas',done:false,prazo:'20/11'}]}]},
-  eduardo:{nome:'Eduardo Nunes',papel:'Analista Jr.',serie:{cad:'quinzenal',tipo:'pdi'},ultimo:'2026-10-08',proximo:'2026-10-22',hora:'11:00',tira:'d-d-m-d-d-d-'.split('').slice(0,12),pdiParado:0,semFoco:true,vencendo:2,focos:[]},
-  fabiana:{nome:'Fabiana Souza',papel:'Cientista de Dados',serie:{cad:'quinzenal',tipo:'carreira'},ultimo:'2026-10-14',proximo:'2026-10-28',hora:'09:30',tira:'d-d-d-d-d-d-'.split('').slice(0,12),pdiParado:6,
-    focos:[{t:'Experimentação e causalidade',acoes:[{t:'Rodar o 1º teste A/B da squad',tipo:'pratica',done:true},{t:'Grupo de estudos de inferência causal',tipo:'pessoas',done:true},{t:'Curso de séries temporais',tipo:'estudo',done:false,prazo:'15/12'}]}]},
-  gil:{nome:'Gil Prado',papel:'Analista Jr. (novo)',serie:null,ultimo:null,proximo:null,tira:'------------'.split(''),pdiParado:0,semFoco:true,novo:true,focos:[]},
+const firebaseConfig = {
+  // Override manual sob chave PRÓPRIA desta página ('travessia_dev'): chaves cruas de localStorage são compartilhadas entre as páginas do domínio.
+  apiKey:            localStorage.getItem('fb_apiKeytravessia_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomaintravessia_dev')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURLtravessia_dev')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectIdtravessia_dev')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBuckettravessia_dev')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderIdtravessia_dev')|| '122502391131',
+  appId:             localStorage.getItem('fb_appIdtravessia_dev')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
 };
-const IDS = Object.keys(PESSOAS);
-
-const ACOES = [
-  {id:1,t:'Alinhar prioridades do projeto Black Friday',dono:'Ana',com:'Bruno',prazo:'29/10',origem:'1:1 de 15/10',done:false,dias:-7},
-  {id:2,t:'Pedido de apoio: acesso ao ambiente de homologação',dono:'Bruno',com:'Ana',prazo:'23/10',origem:'Pedido de apoio',done:false,dias:1},
-  {id:3,t:'Mentoria com Elis sobre storytelling',dono:'Ana',com:'Elis',prazo:'12/11',origem:'PDI',done:false,dias:-21},
-  {id:4,t:'Enviar o resumo da análise de churn',dono:'Ana',com:'Bruno',prazo:'20/10',origem:'1:1 de 15/10',done:false,dias:2,atrasada:true},
-  {id:5,t:'Reservar tempo semanal para estudo',dono:'Ana',com:'Bruno',prazo:'—',origem:'1:1 de 01/10',done:true,dias:0},
-];
-const PAUTA = [{t:'Prioridades da Black Friday',por:'Bruno'},{t:'Dúvida sobre o curso de storytelling',por:'Ana'}];
-const SUGESTOES = [
-  {t:'2 ações do último 1:1 continuam abertas',src:'1:1'},
-  {t:'Você fechou 6 cards desde o último 1:1',src:'Maré'},
-  {t:'O objetivo “Receita do trimestre” subiu para 68 %',src:'Radar'},
-  {t:'Kudos novo de Caio: “a análise salvou o dia”',src:'Kudos'},
-  {t:'O foco 3 do PDI não é atualizado há 12 dias',src:'PDI'},
-];
-const COPILOTO = [
-  {t:'Influenciar sem ter autoridade',porque:'Feedback de Bruno no último ciclo e 2 pedidos de apoio a outras squads.',acoes:[['pratica','Conduzir a reunião de priorização do próximo trimestre'],['pessoas','Conversar com 2 pessoas que lideram sem cargo'],['estudo','Ler “Influence without authority”']]},
-  {t:'Dar mentoria para quem está chegando',porque:'Você tem 14 cards entregues e o Gil entra na squad em novembro.',acoes:[['pessoas','Acompanhar o Gil nas 4 primeiras semanas'],['pratica','Montar o guia de boas-vindas dos dados']]},
-];
-const NOTAS_PO = {ana:['Pronta para liderar a Black Friday; combinar com ela o que quer abrir mão para ter tempo.','Percebi ansiedade com apresentações — apoiar com a mentoria da Elis.'],caue:['Sobrecarregado com 3 frentes; rever prioridades no próximo 1:1.']};
-const SQUADS = [
-  {nome:'Squad Dados',po:'Bruno Reis',pessoas:6,adesao:78,pdis:5,atencao:3,pilot:true},
-  {nome:'Squad Mídia',po:'Elis Duarte',pessoas:7,adesao:91,pdis:7,atencao:1},
-  {nome:'Squad CRM',po:'Fábio Alves',pessoas:5,adesao:54,pdis:2,atencao:3},
-  {nome:'Squad Conteúdo',po:'Gabi Torres',pessoas:6,adesao:85,pdis:4,atencao:1},
-];
-
-// ───────── estado ─────────
-const S = {papel:'pessoa',tab:{pessoa:'inicio',po:'frota',gerente:'cadeia',rh:'visao'},filtro:'todos',sel:null,
-  pauta:PAUTA.map(x=>({...x})),acoes:ACOES.map(x=>({...x})),focos:JSON.parse(JSON.stringify(PESSOAS.ana.focos)),rasc:[],notas:JSON.parse(JSON.stringify(NOTAS_PO)),
-  rh:[{t:'Como apoiar quem está com 3 frentes ao mesmo tempo (Cauê)',com:true},{t:'Dúvida sobre política de banco de horas na Black Friday',com:false}],
-  copilotoPedido:false,autoav:'',plan:null};
-const PAPEIS = [['pessoa','👤 Pessoa'],['po','🧭 PO'],['gerente','🏛 Gerente'],['rh','🤝 RH']];
-const TABS = {
-  pessoa:[['inicio','🗺 Minha travessia'],['pdi','🎯 PDI'],['um','🤝 1:1'],['acoes','✅ Ações'],['historia','📈 Minha história']],
-  po:[['frota','🚢 Frota'],['planejar','📅 Planejar 1:1'],['notas','🔒 Minhas notas'],['rh','🤝 Pauta com o RH']],
-  gerente:[['cadeia','🏛 Frota dos POs'],['planejar','📅 Planejar 1:1']],
-  rh:[['visao','🌊 Visão geral'],['pautas','🤝 Pautas dos POs']],
-};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const auth = getAuth(fbApp);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+window._signIn = () => signInWithPopup(auth, provider);
+// Login direto (iPhone/iPad — ver mare-login-dev.js): entrega o id_token que voltou do Google.
+window._signInIdToken = idToken => signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
 
 // ───────── utilidades ─────────
-const $ = s=>document.querySelector(s);
-const esc = s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-const ini = n=>n.split(' ').map(x=>x[0]).slice(0,2).join('');
-const pad = n=>String(n).padStart(2,'0');
-const iso = d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-const br = d=>pad(d.getDate())+'/'+pad(d.getMonth()+1);
-const brIso = s=>{ const d=new Date(s+'T12:00:00'); return br(d); };
-const DIAS = ['dom','seg','ter','qua','qui','sex','sáb'];
-const dia = d=>DIAS[d.getDay()]+' '+br(d);
-const pctFoco = f=>f.acoes.length?Math.round(f.acoes.filter(a=>a.done).length*100/f.acoes.length):0;
-const pctPdi = fs=>fs.length?Math.round(fs.reduce((s,f)=>s+pctFoco(f),0)/fs.length):0;
-let toastT=null;
-function toast(m){ const t=$('#toast'); t.textContent=m; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>{t.hidden=true;},3200); }
-function anel(p,size,cor){ const r=(size-8)/2,c=2*Math.PI*r; return `<div class="ring" style="width:${size}px;height:${size}px" role="img" aria-label="${p} % do plano"><svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--glass-b)" stroke-width="6"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${cor||'var(--accent)'}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(c*p/100).toFixed(1)} ${c.toFixed(1)}"/></svg><b>${p}%</b></div>`; }
-function tira(arr){
-  const sim={d:['d','✓','1:1 realizado'],m:['m','×','1:1 que não aconteceu'],r:['r','↻','1:1 remarcado'],'-':['v','·','sem 1:1 previsto na semana']};
-  return `<div class="strip" role="img" aria-label="Últimas 12 semanas: ${arr.filter(x=>x==='d').length} 1:1 realizados, ${arr.filter(x=>x==='m').length} perdidos">`+arr.map(x=>{ const s=sim[x]||sim['-']; return `<i class="${s[0]}" title="${s[2]}">${s[1]}</i>`; }).join('')+`</div>`;
+const T = 'kanban/travessia/';
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+const _hrefOk = u => { u = String(u == null ? '' : u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) || /^[a-z0-9_\-]+\.html(\?[^\s"'<>]*)?(#[^\s"'<>]*)?$/i.test(u) ? u : '#'; };
+const pad = n => String(n).padStart(2, '0');
+const isoDe = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const hojeISO = () => isoDe(new Date());
+const brDe = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '')); return m ? m[3] + '/' + m[2] : String(iso || ''); };
+const brFull = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '')); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(iso || ''); };
+const diasEntre = (a, b) => Math.round((Date.parse(b + 'T12:00:00') - Date.parse(a + 'T12:00:00')) / 86400000);
+const novoId = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+let toastT = null;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3600); }
+async function G(path) { const s = await get(ref(db, path)); return s.val(); }
+const W = (path, v) => set(ref(db, T + path), v);
+const D = path => remove(ref(db, T + path));
+function uiConfirm(msg, okTxt) {
+  return new Promise(res => { const ov = $('#ov'); $('#ov-msg').textContent = msg; $('#ov-ok').textContent = okTxt || 'Confirmar'; ov.hidden = false; $('#ov-ok').focus();
+    const fim = v => { ov.hidden = true; $('#ov-ok').onclick = $('#ov-no').onclick = null; document.removeEventListener('keydown', esc_); res(v); };
+    const esc_ = ev => { if (ev.key === 'Escape') fim(false); };
+    document.addEventListener('keydown', esc_); $('#ov-ok').onclick = () => fim(true); $('#ov-no').onclick = () => fim(false); });
 }
-const LEG = `<div class="leg"><span><i style="background:var(--ok);color:var(--on-accent)">✓</i>realizado</span><span><i style="border:2px solid var(--danger)">×</i>não aconteceu</span><span><i style="opacity:.55">·</i>sem 1:1 na semana</span></div>`;
+function erroAmigavel(e) {
+  const m = String((e && (e.code || e.message)) || e);
+  if (/PERMISSION_DENIED|permission/i.test(m)) return '🔒 Sem permissão. Se isso é novo, as regras do Travessia ainda podem não ter sido publicadas (firebase deploy --only database).';
+  return '⚠️ Não deu pra concluir (' + m.slice(0, 80) + '). Tente de novo.';
+}
+async function tenta(fn, ok) { try { await fn(); if (ok) toast(ok); return true; } catch (e) { toast(erroAmigavel(e)); console.warn('[travessia]', e); return false; } }
 
-// sinais por pessoa (tudo derivado dos dados, nada escrito à mão no cartão)
-function sinais(id){
-  const p=PESSOAS[id], out=[];
-  if(p.novo) out.push(['warn','🌱','Sem 1:1 marcado — chegou há 2 semanas']);
-  else if(p.atrasoDias) out.push(['bad','⏰',`1:1 atrasado há ${p.atrasoDias} dias`]);
-  if(p.vencendo) out.push(['warn','⏳',`${p.vencendo} ações vencendo`]);
-  if(p.pdiParado>=21) out.push(['warn','🧊',`PDI parado há ${p.pdiParado} dias`]);
-  if(p.semFoco&&!p.novo) out.push(['warn','🧭','PDI sem foco definido']);
-  if(!out.length) out.push(['ok','✅','Tudo em dia']);
-  return out;
+// ───────── regras de negócio (puras — expostas em window.Travessia para teste) ─────────
+const CAD = { semanal: 'Semanal', quinzenal: 'Quinzenal', mensal: 'Mensal', trimestral: 'Trimestral' };
+const CAD_DIAS = { semanal: 7, quinzenal: 14, mensal: 30, trimestral: 90 };
+const TIPO_1A1 = { acomp: 'Acompanhamento', pdi: 'Check-in de PDI', carreira: 'Carreira e ciclo' };
+const FACES = [['😣', 'Muito mal'], ['🙁', 'Mal'], ['😐', 'Mais ou menos'], ['🙂', 'Bem'], ['😄', 'Muito bem']];
+const FASES = [['preparacao', 'Preparação'], ['coleta', 'Coleta'], ['devolutiva', 'Devolutiva'], ['encerrado', 'Encerrado']];
+const PERGUNTAS_PADRAO = {
+  auto: { q1: 'Quais foram suas principais entregas neste ciclo e do que você mais se orgulha?', q2: 'Onde você sente que evoluiu? Dê exemplos.', q3: 'Onde você quer evoluir no próximo ciclo?', q4: 'Como seu líder e o time podem te apoiar?' },
+  lider: { q1: 'Entregas e impacto no ciclo.', q2: 'Comportamentos que a pessoa deve CONTINUAR fazendo.', q3: 'Comportamentos que deve COMEÇAR ou AJUSTAR para crescer.', q4: 'Próximos passos e oportunidades de desenvolvimento.' },
+  par: { q1: 'O que essa pessoa deve CONTINUAR fazendo?', q2: 'O que ela deve COMEÇAR ou AJUSTAR para crescer?', q3: 'Um exemplo concreto de colaboração com ela (opcional).' },
+};
+// Farol da cadência do 1:1: compara os dias desde o último encontro (menos as folgas da Escala) com a cadência combinada.
+// Verde até cadência+1 dia; amarelo até 1,5× a cadência; vermelho acima. Sem cadência ou sem encontro registrado = cinza (convite pra registrar).
+function farol({ ultimo, cad, folgas, hoje }) {
+  if (!cad || !CAD_DIAS[cad]) return { cor: 'cinza', ic: '⚪', titulo: 'Cadência não definida', sub: 'Defina a cadência do 1:1 (semanal, quinzenal, mensal ou trimestral).' };
+  if (!ultimo) return { cor: 'cinza', ic: '⚪', titulo: 'Nenhum 1:1 registrado', sub: 'Cadência ' + CAD[cad].toLowerCase() + '. Registre o último 1:1 para o farol funcionar.' };
+  const dias = Math.max(0, diasEntre(ultimo, hoje || hojeISO())); const fo = Math.min(Math.max(0, folgas || 0), dias); const ef = dias - fo;
+  const lim = CAD_DIAS[cad]; const cor = ef <= lim + 1 ? 'verde' : ef <= Math.ceil(lim * 1.5) ? 'amarelo' : 'vermelho';
+  const nome = { verde: 'Em dia', amarelo: 'Atenção', vermelho: 'Atrasado' }[cor]; const ic = { verde: '🟢', amarelo: '🟡', vermelho: '🔴' }[cor];
+  return { cor, ic, dias, efetivo: ef, titulo: nome + ' · ' + (dias === 0 ? 'último 1:1 hoje' : 'último 1:1 há ' + dias + (dias === 1 ? ' dia' : ' dias')),
+    sub: 'Cadência ' + CAD[cad].toLowerCase() + (fo ? ' · ' + fo + (fo === 1 ? ' dia de folga descontado' : ' dias de folga descontados') : '') };
 }
-const atencao = id=>sinais(id).some(s=>s[0]!=='ok');
-const chip = ([c,e,t])=>`<span class="chip ${c}">${e} ${esc(t)}</span>`;
+const ultimoEncontro = enc => Object.values(enc || {}).map(e => e && e.data).filter(Boolean).sort().pop() || null;
 
-// ───────── planejador de 1:1 (recorrência + Escala) ─────────
-function proxDiaSemana(base,dow){ const d=new Date(base); while(d.getDay()!==dow) d.setDate(d.getDate()+1); return d; }
-function somaMes(d,m){ const t=new Date(d); const alvo=t.getMonth()+m; const sem=t.getDay(); const n=Math.floor((t.getDate()-1)/7); t.setDate(1); t.setMonth(alvo); const p=proxDiaSemana(t,sem); p.setDate(p.getDate()+n*7); return p; }
-function ocorrencias(cfg){
-  const out=[]; let d=proxDiaSemana(new Date(HOJE.getTime()+86400000),cfg.dow); let guard=0;
-  while(out.length<8&&guard++<40){
-    let real=new Date(d), motivo='';
-    for(let k=0;k<10;k++){ const i=iso(real), w=real.getDay();
-      const fer=FERIADOS[i], fol=(FOLGAS[cfg.pessoa]||{})[i];
-      if(w===0||w===6||fer||fol){ if(!motivo) motivo=(fer?'feriado ('+fer+')':fol?'folga na Escala':'fim de semana'); real=new Date(real.getTime()+86400000); } else break; }
-    out.push({data:real,orig:motivo?d:null,motivo});
-    if(cfg.cad==='semanal') d=new Date(d.getTime()+7*86400000);
-    else if(cfg.cad==='quinzenal') d=new Date(d.getTime()+14*86400000);
-    else if(cfg.cad==='mensal') d=somaMes(d,1);
-    else d=somaMes(d,3);
-  }
-  return out;
-}
-function viewPlanejar(){
-  const c=S.plan||(S.plan={pessoa:'ana',tipo:'acomp',cad:'quinzenal',dow:4,hora:'10:00'});
-  const ocs=ocorrencias(c);
-  const pessoas=S.papel==='gerente'?[['bruno','Bruno Reis (PO)'],['elis','Elis Duarte (PO)']]:IDS.map(i=>[i,PESSOAS[i].nome]);
-  if(!pessoas.some(p=>p[0]===c.pessoa)) c.pessoa=pessoas[0][0];
-  const opt=(arr,v)=>arr.map(([k,l])=>`<option value="${k}"${String(k)===String(v)?' selected':''}>${esc(l)}</option>`).join('');
-  return `<div class="grid g2">
-   <section class="gl pad stack" aria-labelledby="pl-t"><h2 class="h2" id="pl-t">📅 Nova série de 1:1</h2>
-     <p class="sub">Uma série gera as próximas conversas sozinha, respeitando a Escala e os feriados.</p>
-     <div class="dois">
-       <label><span class="lbl">Com quem</span><select class="sel in" data-plan="pessoa" style="width:100%">${opt(pessoas,c.pessoa)}</select></label>
-       <label><span class="lbl">Tipo</span><select class="sel in" data-plan="tipo" style="width:100%">${opt(Object.entries(SERIES_TIPO),c.tipo)}</select></label>
-       <label><span class="lbl">Cadência</span><select class="sel in" data-plan="cad" style="width:100%">${opt(Object.entries(CAD),c.cad)}</select></label>
-       <label><span class="lbl">Dia da semana</span><select class="sel in" data-plan="dow" style="width:100%">${opt([[1,'Segunda'],[2,'Terça'],[3,'Quarta'],[4,'Quinta'],[5,'Sexta']],c.dow)}</select></label>
-       <label><span class="lbl">Hora</span><select class="sel in" data-plan="hora" style="width:100%">${opt(['09:00','09:30','10:00','11:00','14:00','15:00','16:00'].map(h=>[h,h]),c.hora)}</select></label>
-     </div>
-     <div class="nota">💡 ${c.cad==='semanal'?'Semanal funciona bem para quem está começando ou em momento crítico.':c.cad==='quinzenal'?'Quinzenal é o ritmo mais comum para acompanhamento.':c.cad==='mensal'?'Mensal combina com o check-in de PDI.':'Trimestral é a conversa de carreira e ajuste do ciclo.'}</div>
-     <div class="row"><button class="btn p" data-act="criar-serie">✅ Criar série</button></div>
-   </section>
-   <section class="gl pad" aria-labelledby="oc-t"><h2 class="h2" id="oc-t">🗓 Próximas 8 conversas</h2>
-     <ul class="lst ocorr">${ocs.map((o,i)=>`<li><span aria-hidden="true">${i===0?'🟢':'⚪'}</span><div class="tx"><b>${esc(dia(o.data))}</b> · ${esc(c.hora)}${o.motivo?`<div class="escala-aviso">↪ movido de ${esc(dia(o.orig))}: ${esc(o.motivo)}</div>`:''}</div></li>`).join('')}</ul>
-     <p class="small" style="margin-top:8px">Cada conversa vira um encontro com pauta compartilhada, notas e ações. Lembretes chegam pelo sino e pelo push do Oceano.</p>
-   </section></div>`;
-}
+// ───────── estado ─────────
+const S = { me: null, users: {}, vinc: {}, ciclos: {}, rh: false, adm: false, tab: 'inicio', cache: {}, sel: null, selTab: 'um', aval: {}, ultimoFoco: null, filtroBau: 'todos', pesq: '' };
+const nomeDe = uid => (S.users[uid] && (S.users[uid].nome || S.users[uid].name)) || (uid === S.me?.uid ? S.me.nome : 'Pessoa');
+const iniDe = uid => (nomeDe(uid).split(' ').map(x => x[0]).slice(0, 2).join('') || '?').toUpperCase();
+const liderDe = uid => S.vinc[uid]?.liderUid || null;
+const liderados = () => Object.keys(S.vinc).filter(u => S.vinc[u]?.liderUid === S.me.uid).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b)));
+const timeAmpliado = () => Object.keys(S.vinc).filter(u => S.vinc[u]?.gerenteUid === S.me.uid && S.vinc[u]?.liderUid !== S.me.uid).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b)));
+const ehLider = () => liderados().length > 0 || timeAmpliado().length > 0;
+const ciclosAtivos = () => Object.entries(S.ciclos).filter(([, c]) => c && c.status !== 'encerrado').sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+const participa = (c, uid) => !!(c && c.participantes && c.participantes[uid]);
+const perguntasDe = (c, g) => Object.assign({}, PERGUNTAS_PADRAO[g], (c && c.perguntas && c.perguntas[g]) || {});
+const avatar = uid => `<div class="av" aria-hidden="true">${esc(iniDe(uid))}</div>`;
+const chip = (t, c) => `<span class="chip ${c || ''}">${t}</span>`;
+const vazio = t => `<div class="vazio">${t}</div>`;
+const carregando = t => `<div class="carregando" role="status">${esc(t || 'Conferindo…')}</div>`;
 
-// ───────── visões da pessoa ─────────
-function viewRota(){
-  const portos=[['🏁','Início do ciclo','01/07','feito'],['🤝','1º 1:1 de carreira','18/07','feito'],['📚','Curso de SQL avançado','30/08','feito'],['🛠','Liderar a análise da Black Friday','27/11','atual'],['🤝','Check-in do PDI','12/11',''],['🎯','Fim do ciclo','31/12','']];
-  return `<ol class="rota" aria-label="Rota do ciclo">${portos.map(([e,t,d,st])=>`<li class="porto ${st}">${st==='atual'?'<span class="barco" aria-label="Você está aqui" role="img">⛵</span>':''}<div class="pt">${st==='feito'?'✓':e}</div><div><div class="t">${esc(t)}</div><div class="d">${d}${st==='feito'?' · concluído':st==='atual'?' · em andamento':''}</div></div></li>`).join('')}</ol>`;
+// ───────── leituras (sob demanda, cacheadas até o próximo salvamento) ─────────
+async function folgasDe(uid, desdeISO) {
+  // Dias de folga da pessoa na Escala entre o último 1:1 e hoje (qualquer squad). Leitura por faixa de datas (as chaves do nó são AAAA-MM-DD).
+  try {
+    const v = (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(desdeISO), endAt(hojeISO())))).val() || {};
+    const dias = new Set();
+    Object.keys(v).forEach(d => { if (d < desdeISO || d > hojeISO()) return; Object.values(v[d] || {}).forEach(sq => { const e = sq && sq[uid]; if (e && e.t === 'folga') dias.add(d); }); });
+    return dias.size;
+  } catch (e) { return 0; }
 }
-function blocoPdi(focos,editavel){
-  if(!focos.length) return `<div class="vazio">Nenhum foco de desenvolvimento ainda.<br>Peça uma sugestão ao Agente Ágil ou escreva o seu.</div>`;
-  return focos.map((f,fi)=>`<div class="foco ${f.rasc?'rasc':''}"><div class="foco-h">${anel(pctFoco(f),56)}<div class="tt">${esc(f.t)}${f.rasc?' <span class="chip ag">🤖 Rascunho do Agente</span>':''}<div class="small">${f.acoes.filter(a=>a.done).length} de ${f.acoes.length} ações</div></div></div>
-    <ul class="lst">${f.acoes.map((a,ai)=>`<li>${editavel?`<input class="cb" type="checkbox" data-act="acao-pdi" data-f="${fi}" data-a="${ai}" ${a.done?'checked':''} aria-label="Concluir: ${esc(a.t)}">`:`<span aria-hidden="true">${a.done?'✅':'⬜'}</span>`}<div class="tx"><span class="${a.done?'feita':''}">${esc(a.t)}</span><div class="meta"><span class="chip">${TIPO[a.tipo][0]} ${TIPO[a.tipo][1]}</span>${a.prazo?`<span class="chip">📅 até ${a.prazo}</span>`:''}${a.card?'<span class="chip">🔗 Card no Maré</span>':''}</div></div></li>`).join('')}</ul></div>`).join('<div style="height:10px"></div>');
+async function carregaUm(uid) {   // série + encontros + farol de UMA pessoa
+  const [serie, enc] = await Promise.all([G(T + 'serie/' + uid), G(T + 'encontros/' + uid)]);
+  const ultimo = ultimoEncontro(enc);
+  const folgas = ultimo && serie?.cad ? await folgasDe(uid, ultimo) : 0;
+  return { serie: serie || null, enc: enc || {}, ultimo, farol: farol({ ultimo, cad: serie?.cad, folgas }) };
 }
-function viewInicio(){
-  const abertas=S.acoes.filter(a=>!a.done);
+async function carregaHumor(uid, compartilhado) {
+  const v = (await G(T + (compartilhado ? 'humor_comp/' : 'humor/') + uid)) || {};
+  if (compartilhado) return v;
+  const c = (await G(T + 'humor_comp/' + uid)) || {};   // dias que a própria pessoa escolheu compartilhar com o líder
+  Object.keys(v).forEach(k => { v[k] = Object.assign({}, v[k], { comp: !!c[k] }); });
+  return v;
+}
+async function carregaBau(uid) { return (await G(T + 'bau/' + uid)) || {}; }
+async function carregaEstrelas() {
+  // Estrelas (Kudos) recebidas: mural geral + as squads da pessoa. Só mostramos a seção se houver alguma.
+  const eu = S.users[S.me.uid] || {}; const sqs = Object.keys(eu.squads || {}).filter(k => eu.squads[k]);
+  const leitura = async (path, escopo) => { try { const v = await G(path); const arr = Array.isArray(v) ? v : Object.values(v || {}); return arr.filter(Boolean).map(k => Object.assign({}, k, { _escopo: escopo })); } catch (e) { return []; } };
+  const todas = (await Promise.all([leitura('kanban/painel/kudos_geral', 'geral')].concat(sqs.map(s => leitura('kanban/squads/' + s + '/dados/kudos', s))))).flat();
+  const minhas = todas.filter(k => (k.toUid && k.toUid === S.me.uid) || (!k.toUid && eu.init && k.toInit === eu.init));
+  const vistos = new Set(); return minhas.filter(k => { const id = k.id || (k.ts + k.fromUid); if (vistos.has(id)) return false; vistos.add(id); return true; }).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+}
+async function carregaAval(cid, uid) {   // tudo que EU posso ler da avaliação de uma pessoa (cada nó tem a sua regra; o que nega vira null)
+  const ler = async p => { try { return await G(T + 'avaliacoes/' + cid + '/' + uid + '/' + p); } catch (e) { return null; } };
+  const [pares, auto, lider, resp, devol, ciente] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente')]);
+  return { pares: pares || {}, auto, lider, resp: resp || {}, devol, ciente };
+}
+const invalida = k => { Object.keys(S.cache).filter(x => x === k || x.startsWith(k + ':')).forEach(x => delete S.cache[x]); };
+async function cache(k, fn) { if (!(k in S.cache)) S.cache[k] = await fn(); return S.cache[k]; }
+
+// ───────── telas ─────────
+function viewFarol(uid, d, quem) {
+  const f = d.farol; return `<div class="farol ${f.cor}"><span class="lamp" aria-hidden="true">${f.ic}</span><div><b>${esc(f.titulo)}</b><span class="small">${esc(f.sub)}</span></div></div>`;
+}
+function sparkHumor(h, dias) {
+  const out = []; const hoje = new Date();
+  for (let i = dias - 1; i >= 0; i--) { const d = new Date(hoje); d.setDate(hoje.getDate() - i); const k = isoDe(d); const n = h[k] && h[k].n; out.push(n ? `<i style="height:${n * 20}%" title="${brDe(k)}: ${FACES[n - 1][1]}"></i>` : `<i class="v" title="${brDe(k)}: sem registro"></i>`); }
+  return `<div class="spark" role="img" aria-label="Humor dos últimos ${dias} dias">${out.join('')}</div>`;
+}
+async function viewInicio() {
+  const me = S.me.uid; const lid = liderDe(me);
+  const [um, humor, bau, estrelas] = await Promise.all([cache('um:' + me, () => carregaUm(me)), cache('humor:' + me, () => carregaHumor(me, false)), cache('bau:' + me, () => carregaBau(me)), cache('estrelas', carregaEstrelas)]);
+  const hj = hojeISO(); const hHoje = humor[hj]; const comp = !!(hHoje && hHoje.comp);
+  const itensBau = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const pend = []; ciclosAtivos().forEach(([cid, c]) => { if (participa(c, me)) pend.push(`<li><span aria-hidden="true">📐</span><div class="tx"><b>${esc(c.nome)}</b> — fase ${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</div><button class="btn s" data-tab="aval">Abrir</button></li>`); });
   return `<div class="stack">
-   <section class="gl pad" aria-labelledby="rt"><h2 class="h2" id="rt">🗺 Minha rota · ciclo jul–dez 2026</h2><div style="margin-top:14px">${viewRota()}</div></section>
    <div class="grid g2">
-     <section class="gl pad" aria-labelledby="pu"><h2 class="h2" id="pu">🤝 Próximo 1:1</h2>
-       <p style="margin-top:6px"><b>${dia(new Date(PESSOAS.ana.proximo+'T12:00:00'))} · ${PESSOAS.ana.hora}</b> com Bruno · quinzenal</p>
-       <ul class="lst">${S.pauta.slice(0,3).map(p=>`<li><span aria-hidden="true">•</span><div class="tx">${esc(p.t)} <span class="small">— ${esc(p.por)}</span></div></li>`).join('')}</ul>
-       <div class="row" style="margin-top:8px"><button class="btn s" data-act="ir" data-tab="um">Abrir pauta completa</button></div></section>
-     <section class="gl pad" aria-labelledby="pd"><h2 class="h2" id="pd">🎯 Meu PDI</h2>
-       <div class="row" style="margin-top:8px">${anel(pctPdi(S.focos),64)}<div><b>${S.focos.length} focos</b><div class="small">${S.focos.reduce((s,f)=>s+f.acoes.length,0)} ações no total</div></div></div>
-       <div class="row" style="margin-top:10px"><button class="btn s" data-act="ir" data-tab="pdi">Ver plano</button></div></section>
-   </div>
-   <section class="gl pad" aria-labelledby="ac"><h2 class="h2" id="ac">✅ Para esta semana</h2>
-     ${abertas.length?`<ul class="lst">${abertas.slice(0,4).map(a=>`<li><span aria-hidden="true">${a.atrasada?'⚠️':'⬜'}</span><div class="tx">${esc(a.t)}<div class="meta"><span class="chip ${a.atrasada?'bad':''}">${a.atrasada?'⚠ atrasada · ':'📅 '}${esc(a.prazo)}</span><span class="chip">de ${esc(a.dono)} com ${esc(a.com)}</span></div></div></li>`).join('')}</ul>`:'<div class="vazio">Nada pendente. 🎉</div>'}</section></div>`;
+    <section class="gl pad stack" aria-labelledby="t-um"><h2 class="h2" id="t-um">🚦 Meu 1:1${lid ? ' com ' + esc(nomeDe(lid)) : ''}</h2>
+      ${lid ? viewFarol(me, um) : `<div class="vazio">Seu líder ainda não foi definido no organograma. Peça ao ADM ou ao RH para configurar.</div>`}
+      ${lid ? `<form class="row" data-form="encontro" data-uid="${me}"><label class="sr" for="enc-d">Data do 1:1</label><input class="in" id="enc-d" type="date" name="data" value="${hj}" max="${hj}" style="max-width:170px"><button class="btn p" type="submit">✅ Registrei um 1:1</button></form>` : ''}
+      ${um.ultimo ? `<p class="small">Último registro: ${brFull(um.ultimo)}</p>` : ''}</section>
+    <section class="gl pad stack" aria-labelledby="t-hu"><h2 class="h2" id="t-hu">🌤️ Como você está hoje?</h2>
+      <div class="faces" role="group" aria-label="Humor de hoje">${FACES.map((f, i) => `<button type="button" data-act="humor" data-n="${i + 1}" aria-pressed="${hHoje && hHoje.n === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
+      <label class="ck"><input type="checkbox" id="humor-comp" ${comp ? 'checked' : ''} ${hHoje ? '' : ''}> Compartilhar com meu líder${lid ? ' (' + esc(nomeDe(lid)) + ')' : ''}</label>
+      <p class="small">Só você vê, a menos que compartilhe. Ninguém (nem o sistema) analisa seu humor.</p>
+      ${sparkHumor(humor, 14)}</section></div>
+   ${pend.length ? `<section class="gl pad" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
+   ${estrelas.length ? `<section class="gl pad stack" aria-labelledby="t-es"><h2 class="h2" id="t-es">⭐ Mural de Estrelas <span class="chip">${estrelas.length}</span></h2>
+      <div class="grid g3">${estrelas.slice(0, 9).map(k => `<article class="star"><div class="de">${esc(k.fromNome || 'Alguém')}</div><div>${esc(k.texto || '')}</div><div class="meta"><span class="chip">${esc(String(k.ts || '').slice(0, 10).split('-').reverse().join('/'))}</span><span class="chip">${k._escopo === 'geral' ? '🌊 Geral' : esc(k._escopo)}</span></div>
+      <div class="row" style="margin-top:8px"><button class="btn s" data-act="estrela-bau" data-id="${esc(k.id || '')}" data-i="${estrelas.indexOf(k)}">📌 Guardar no Baú</button></div></article>`).join('')}</div></section>` : ''}
+   <section class="gl pad stack" aria-labelledby="t-ba"><div class="row" style="justify-content:space-between"><h2 class="h2" id="t-ba">📦 Meu Baú <span class="chip">${itensBau.length}</span></h2><button class="btn s" data-tab="bau">Abrir o Baú</button></div>
+     ${itensBau.length ? `<ul class="lst">${itensBau.slice(0, 3).map(([id, b]) => `<li><span aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx">${esc(b.titulo)}<div class="meta"><span class="chip">${esc(brFull(b.em || isoDe(new Date(b.ts || 0))))}</span></div></div></li>`).join('')}</ul>` : vazio('Seu Baú está vazio. Guarde entregas e aprendizados para lembrar de tudo na hora da avaliação.')}</section></div>`;
 }
-function viewPdi(){
-  return `<div class="grid g2"><section class="gl pad stack" aria-labelledby="pdi-t"><h2 class="h2" id="pdi-t">🎯 Meu plano de desenvolvimento</h2>
-    <p class="sub">Poucos focos, ações de verdade. A maior parte do aprendizado vem da prática (🛠), depois de pessoas (🤝) e por último de estudo (📚).</p>
-    ${blocoPdi(S.focos,true)}</section>
-   <section class="gl pad stack" aria-labelledby="co-t"><h2 class="h2" id="co-t">✨ Agente Ágil</h2>
-    <p class="sub">Ele cruza o que já sabe (feedbacks, entregas no Maré, objetivos no Radar, seus 1:1) e <b>sugere</b>. Você decide.</p>
-    ${S.copilotoPedido?'':`<div class="row"><button class="btn p" data-act="pedir-copiloto">✨ Pedir sugestão de focos</button></div>`}
-    ${S.copilotoPedido?COPILOTO.filter(c=>!S.rasc.includes(c.t)).map((c,i)=>`<div class="foco rasc"><div class="tt"><b>${esc(c.t)}</b> <span class="chip ag">🤖 Sugerido pelo Agente</span></div><div class="small" style="margin-top:4px">Por quê: ${esc(c.porque)}</div>
-      <ul class="lst">${c.acoes.map(a=>`<li><span aria-hidden="true">${TIPO[a[0]][0]}</span><div class="tx">${esc(a[1])}</div></li>`).join('')}</ul>
-      <div class="row"><button class="btn s p" data-act="aceitar-foco" data-i="${COPILOTO.indexOf(c)}">Aceitar como rascunho</button><button class="btn s" data-act="editar-foco">Editar</button><button class="btn s" data-act="descartar-foco" data-i="${COPILOTO.indexOf(c)}">Descartar</button></div></div>`).join(''):''}
-    ${S.copilotoPedido&&COPILOTO.every(c=>S.rasc.includes(c.t))?'<div class="vazio">Sem mais sugestões por enquanto.</div>':''}
-    <div class="nota">🔒 O Agente nunca dá nota nem ranking, e não vê as anotações privadas de ninguém.</div></section></div>`;
-}
-function viewUm(){
-  const sug=SUGESTOES.filter(s=>!S.pauta.some(p=>p.t===s.t));
-  return `<div class="grid g2"><section class="gl pad stack" aria-labelledby="um-t"><h2 class="h2" id="um-t">🤝 Pauta de ${dia(new Date(PESSOAS.ana.proximo+'T12:00:00'))}</h2>
-    <p class="sub">Os dois lados adicionam tópicos antes da conversa.</p>
-    <ul class="lst">${S.pauta.map(p=>`<li><span aria-hidden="true">•</span><div class="tx">${esc(p.t)}<div class="meta"><span class="chip">${esc(p.por)}</span></div></div></li>`).join('')}</ul>
-    <form class="row" data-form="pauta"><label class="sr" for="np">Novo tópico</label><input class="in" id="np" name="t" maxlength="140" placeholder="Adicionar um tópico à pauta…" autocomplete="off"><button class="btn p" type="submit">+ Adicionar</button></form>
-    <div class="nota"><b>Última conversa (15/10):</b> combinamos priorizar a Black Friday e abrir tempo semanal de estudo. <div class="row" style="margin-top:8px"><button class="btn s" data-act="notas-acoes">🤖 Transformar decisões em ações</button></div></div></section>
-   <section class="gl pad stack" aria-labelledby="sg-t"><h2 class="h2" id="sg-t">💡 Sugeridos para a pauta</h2>
-    <p class="sub">Vêm do trabalho real, como assunto de conversa — nunca como nota.</p>
-    ${sug.length?`<ul class="lst">${sug.map((s,i)=>`<li><span class="chip">${esc(s.src)}</span><div class="tx">${esc(s.t)}</div><button class="btn s" data-act="add-sug" data-t="${esc(s.t)}" aria-label="Adicionar à pauta: ${esc(s.t)}">+ Pauta</button></li>`).join('')}</ul>`:'<div class="vazio">Todas as sugestões já estão na pauta.</div>'}
-    <h3 class="h2" style="margin-top:6px">Constância dos 1:1</h3>${tira(PESSOAS.ana.tira)}${LEG}</section></div>`;
-}
-function viewAcoes(){
-  const f=S.filtro==='todos'?S.acoes:S.filtro==='atrasadas'?S.acoes.filter(a=>a.atrasada&&!a.done):S.filtro==='minhas'?S.acoes.filter(a=>a.dono==='Ana'):S.acoes.filter(a=>a.dono!=='Ana');
-  return `<section class="gl pad stack" aria-labelledby="ac-t"><h2 class="h2" id="ac-t">✅ Ações e demandas</h2>
-   <p class="sub">O que combinamos nos 1:1 e no PDI, mais os pedidos de apoio. Trabalho do dia a dia continua no Maré (a ação pode apontar para o card).</p>
-   <div class="filtros" role="group" aria-label="Filtrar ações">${[['todos','Todas'],['minhas','Minhas'],['outros','De outras pessoas'],['atrasadas','⚠ Atrasadas']].map(([k,l])=>`<button data-act="filtro" data-f="${k}" aria-pressed="${S.filtro===k}">${l}</button>`).join('')}</div>
-   ${f.length?`<ul class="lst">${f.map(a=>`<li><input class="cb" type="checkbox" data-act="acao" data-id="${a.id}" ${a.done?'checked':''} aria-label="Concluir: ${esc(a.t)}"><div class="tx"><span class="${a.done?'feita':''}">${esc(a.t)}</span><div class="meta"><span class="chip ${a.atrasada&&!a.done?'bad':''}">${a.atrasada&&!a.done?'⚠ atrasada · ':'📅 '}${esc(a.prazo)}</span><span class="chip">${esc(a.dono)} → ${esc(a.com)}</span><span class="chip">${esc(a.origem)}</span></div></div></li>`).join('')}</ul>`:'<div class="vazio">Nenhuma ação neste filtro.</div>'}
-   <form class="row" data-form="acao"><label class="sr" for="na">Nova ação</label><input class="in" id="na" name="t" maxlength="140" placeholder="Nova ação ou pedido de apoio…" autocomplete="off"><button class="btn p" type="submit">+ Adicionar</button></form></section>`;
-}
-function viewHistoria(){
-  return `<div class="stack"><section class="gl pad stack" aria-labelledby="h-t"><h2 class="h2" id="h-t">📈 Minha história no ciclo</h2>
-   <p class="sub">Montada sozinha a partir do Maré, do Radar e dos Kudos. Serve para você lembrar o que fez — <b>é contexto de conversa, não nota</b>.</p>
-   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><div class="tile"><b>14</b><span>cards concluídos</span></div><div class="tile"><b>3</b><span>bloqueios destravados</span></div><div class="tile"><b>4</b><span>Kudos recebidos</span></div><div class="tile"><b>2</b><span>objetivos no Radar</span></div></div>
-   <ul class="lst"><li><span class="chip">Radar</span><div class="tx">Objetivo “Receita do trimestre” — você é responsável · 68 %</div></li><li><span class="chip">Radar</span><div class="tx">Objetivo “Painel executivo de vendas” — concluído em 30/09</div></li><li><span class="chip">Maré</span><div class="tx">Maior entrega: “Modelo de previsão de churn” (card concluído em 12/09)</div></li><li><span class="chip">Kudos</span><div class="tx">“Análise salvou o dia da campanha” — Caio, 14/10</div></li></ul></section>
-   <section class="gl pad stack" aria-labelledby="aa-t"><h2 class="h2" id="aa-t">📝 Autoavaliação</h2><p class="sub">Antes da conversa de ciclo. O Agente rascunha a partir da sua história; você reescreve do seu jeito.</p>
-   <div class="row"><button class="btn p" data-act="autoav">🤖 Rascunhar a partir da minha história</button></div>
-   <label class="sr" for="aav">Minha autoavaliação</label><textarea class="in" id="aav" data-in="autoav" placeholder="Como foi o ciclo para você?">${esc(S.autoav)}</textarea></section></div>`;
+const iconeBau = t => ({ card: '🌊', marco: '🎯', kudo: '⭐', manual: '✍️' }[t] || '📌');
+
+async function viewBau(uid, somenteLeitura) {
+  const bau = await cache('bau:' + uid, () => carregaBau(uid));
+  const itens = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).filter(([, b]) => S.filtroBau === 'todos' || b.tipo === S.filtroBau);
+  return `<section class="gl pad stack" aria-labelledby="bau-t"><h2 class="h2" id="bau-t">📦 ${somenteLeitura ? 'Baú de ' + esc(nomeDe(uid)) : 'Baú da Travessia'}</h2>
+   <p class="sub">Suas conquistas do ciclo, guardadas no dia a dia — assim a avaliação não depende da memória. Entregas do Maré, marcos do Radar e Estrelas entram com 1 clique (📌); o resto você registra aqui.</p>
+   <div class="filtros" role="group" aria-label="Filtrar o Baú">${[['todos', 'Tudo'], ['card', '🌊 Maré'], ['marco', '🎯 Radar'], ['kudo', '⭐ Estrelas'], ['manual', '✍️ Manual']].map(([k, l]) => `<button data-act="filtro-bau" data-f="${k}" aria-pressed="${S.filtroBau === k}">${l}</button>`).join('')}</div>
+   ${somenteLeitura ? '' : `<details class="foco"><summary class="h2" style="cursor:pointer">+ Registrar conquista ou aprendizado</summary>
+     <form data-form="bau" class="camp"><label for="b-t">Título</label><input class="in" id="b-t" name="titulo" maxlength="160" required placeholder="Ex.: Liderei a análise da Black Friday">
+     <label for="b-d">Desafio</label><textarea class="ta" id="b-d" name="desafio" maxlength="380" style="min-height:60px"></textarea>
+     <label for="b-a">O que eu fiz</label><textarea class="ta" id="b-a" name="acao" maxlength="380" style="min-height:60px"></textarea>
+     <label for="b-i">Impacto gerado</label><textarea class="ta" id="b-i" name="impacto" maxlength="380" style="min-height:60px"></textarea>
+     <label for="b-c">Competência <span class="small">(opcional)</span></label><input class="in" id="b-c" name="comp" maxlength="60" placeholder="Ex.: Comunicação, Liderança…">
+     <div class="row" style="margin-top:10px"><button class="btn p" type="submit">📌 Guardar no Baú</button></div></form></details>`}
+   ${itens.length ? `<ul class="lst">${itens.map(([id, b]) => `<li><span aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx"><b>${esc(b.titulo)}</b>${b.texto ? `<div class="small" style="white-space:pre-line">${esc(b.texto)}</div>` : ''}${b.nota ? `<div class="small">${esc(b.nota)}</div>` : ''}
+        <div class="meta"><span class="chip">${esc(brFull(b.em || isoDe(new Date(b.ts || 0))))}</span>${b.squad ? `<span class="chip">${esc(b.squad)}</span>` : ''}${b.comp ? `<span class="chip">🎓 ${esc(b.comp)}</span>` : ''}${b.link ? `<a class="chip" href="${esc(_hrefOk(b.link))}" target="_blank" rel="noopener noreferrer">↗ Abrir</a>` : ''}</div></div>
+        ${somenteLeitura ? '' : `<button class="btn s" data-act="bau-del" data-id="${esc(id)}" aria-label="Remover do Baú: ${esc(b.titulo)}">🗑</button>`}</li>`).join('')}</ul>` : vazio('Nada por aqui neste filtro.')}</section>`;
 }
 
-// ───────── PO: frota ─────────
-function viewFrota(){
-  const lista=IDS.filter(id=>S.filtro==='todos'||(S.filtro==='atencao'?atencao(id):!PESSOAS[id].proximo)).sort((a,b)=>(atencao(b)-atencao(a))||PESSOAS[a].nome.localeCompare(PESSOAS[b].nome));
-  const nAt=IDS.filter(atencao).length;
+// ───────── avaliação (pessoa) ─────────
+function sugestoesPares(cid, uid, pares) {
+  const eu = S.users[uid] || {}; const meus = new Set(Object.keys(eu.squads || {}).filter(k => eu.squads[k]));
+  const q = S.pesq.trim().toLowerCase();
+  return Object.keys(S.users).filter(u => u !== uid && !pares[u] && u !== liderDe(uid)).filter(u => {
+    const nm = nomeDe(u).toLowerCase(); if (q) return nm.includes(q);
+    const sq = S.users[u].squads || {}; return Object.keys(sq).some(k => sq[k] && meus.has(k));
+  }).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b))).slice(0, 12);
+}
+function formResp(cid, avaliado, grupo, dados, perguntas, editavel, acaoTipo, dono) {
+  const ks = Object.keys(perguntas).sort(); const ctx = cid + '_' + avaliado + (dono ? '_' + dono : '');
+  return ks.map(k => `<div class="camp"><label for="r-${esc(grupo)}-${esc(ctx)}-${k}">${esc(perguntas[k])}</label><textarea class="ta" id="r-${esc(grupo)}-${esc(ctx)}-${k}" data-resp="${esc(grupo)}" data-ctx="${esc(ctx)}" data-q="${k}" maxlength="2500" ${editavel ? '' : 'readonly'}>${esc((dados && dados[k]) || '')}</textarea></div>`).join('')
+    + (editavel ? `<div class="row" style="margin-top:10px"><button class="btn p" data-act="${acaoTipo}" data-cid="${esc(cid)}" data-av="${esc(avaliado)}">💾 Salvar</button>${dados && dados.ts ? `<span class="small">Salvo em ${esc(new Date(dados.ts).toLocaleString('pt-BR'))}</span>` : ''}</div>` : '');
+}
+async function viewAval() {
+  const me = S.me.uid; const meus = Object.entries(S.ciclos).filter(([, c]) => participa(c, me)).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const pedidos = Object.values((await cache('pedidos', () => G(T + 'pedidos_par/' + me))) || {});
+  const bau = await cache('bau:' + me, () => carregaBau(me));
+  const blocoBau = Object.entries(bau).length ? `<ul class="lst">${Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).map(([id, b]) => `<li><span aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx">${esc(b.titulo)}</div><button class="btn s" data-act="citar" data-t="${esc(b.titulo)}" aria-label="Citar na resposta: ${esc(b.titulo)}">📎 Citar</button></li>`).join('')}</ul>` : vazio('Seu Baú está vazio.');
+  let saida = '';
+  for (const [cid, c] of meus) {
+    const a = await cache('aval:' + cid + ':' + me, () => carregaAval(cid, me));
+    const fase = c.status; const coleta = fase === 'coleta'; const prep = fase === 'preparacao' || coleta;
+    const aprovados = Object.values(a.pares).filter(p => p.aprovado).length;
+    const lib = a.devol && a.devol.liberada === true;
+    saida += `<section class="gl pad stack" aria-labelledby="c-${esc(cid)}"><h2 class="h2" id="c-${esc(cid)}">📐 ${esc(c.nome)}</h2>
+     <div class="fase" aria-label="Fase do ciclo">${FASES.map(f => `<span class="${f[0] === fase ? 'on' : (FASES.findIndex(x => x[0] === fase) > FASES.findIndex(x => x[0] === f[0]) ? 'ok' : '')}">${f[1]}</span>`).join('')}</div>
+     <div class="foco"><h3 class="h2">🤝 Meus pares</h3><p class="small">Indique de 2 a 4 colegas que trabalharam com você. Seu líder aprova a lista; só quem for aprovado responde. Você não vê o que cada par escreveu.</p>
+       <ul class="lst">${Object.entries(a.pares).map(([u, p]) => `<li>${avatar(u)}<div class="tx"><b>${esc(nomeDe(u))}</b><div class="meta">${p.aprovado ? chip('✅ Aprovado pelo líder', 'ok') : chip('⏳ Aguardando aprovação', 'warn')}</div></div>${!p.aprovado && prep ? `<button class="btn s" data-act="par-retirar" data-cid="${esc(cid)}" data-par="${esc(u)}">Retirar</button>` : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
+       ${prep ? `<label class="sr" for="pesq">Buscar colega</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar colega pelo nome…" value="${esc(S.pesq)}" autocomplete="off">
+       <div class="chips" style="margin-top:8px">${sugestoesPares(cid, me, a.pares).map(u => `<button class="btn s" data-act="par-sugerir" data-cid="${esc(cid)}" data-par="${esc(u)}" aria-label="Indicar ${esc(nomeDe(u))}">+ ${esc(nomeDe(u))}</button>`).join('') || '<span class="small">Sem sugestões — use a busca.</span>'}</div>` : ''}
+       ${aprovados < 2 && prep ? `<p class="small">⚠ Faltam pares aprovados (mínimo 2). Hoje: ${aprovados}.</p>` : ''}</div>
+     <div class="sbs"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
+        ${formResp(cid, me, 'auto', a.auto, perguntasDe(c, 'auto'), coleta, 'auto-salvar')}</div>
+       <aside class="foco lado" aria-label="Meu Baú para consulta"><h3 class="h2">📦 Meu Baú</h3><p class="small">Toque em 📎 para citar uma conquista na resposta em que você está escrevendo.</p>${blocoBau}</aside></div>
+     <div class="${lib ? 'foco' : 'trava'}"><h3 class="h2">${lib ? '🔓 Minha devolutiva' : '🔒 Devolutiva'}</h3>
+       ${lib ? `<p style="white-space:pre-line">${esc(a.devol.texto || '')}</p>${a.ciente ? `<p class="small">✔ Ciência registrada.</p>` : `<button class="btn p" data-act="ciente" data-cid="${esc(cid)}">✔ Li e estou ciente</button>`}`
+         : '<p>O resultado fica guardado até a conversa de devolutiva com o seu líder. Ele libera durante ou logo depois da conversa — você não precisa fazer nada agora.</p>'}</div></section>`;
+  }
+  const cabine = pedidos.filter(Boolean).filter(p => S.ciclos[p.cid]);
+  let respPar = '';
+  for (const p of cabine) {
+    const c = S.ciclos[p.cid]; const dados = await cache('resp:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/resp_pares/' + me); } catch (e) { return null; } });
+    respPar += `<section class="gl pad stack"><h2 class="h2">🤝 Feedback para ${esc(nomeDe(p.avaliado))} <span class="chip">${esc(c.nome)}</span></h2>
+      ${c.status === 'coleta' ? '<p class="small">Seja específico e use exemplos. Quem lê é só o líder da pessoa; ela não vê o que você escreveu individualmente.</p>' : '<p class="small">A coleta não está aberta.</p>'}
+      ${formResp(p.cid, p.avaliado, 'par', dados, perguntasDe(c, 'par'), c.status === 'coleta', 'par-salvar')}</section>`;
+  }
+  if (!saida && !respPar) return vazio('Você não está em nenhum ciclo de avaliação agora. Quando o RH abrir um, ele aparece aqui.');
+  return `<div class="stack">${saida}${respPar}</div>`;
+}
+
+// ───────── frota (líder) ─────────
+async function viewFrota() {
+  const meus = liderados(), amp = timeAmpliado();
+  if (!meus.length && !amp.length) return vazio('Você não tem liderados no organograma. Se isso está errado, peça ao ADM ou ao RH.');
+  const dados = {}; await Promise.all(meus.concat(amp).map(async u => { dados[u] = { um: await cache('um:' + u, () => carregaUm(u)) }; }));
+  const humor = {}; await Promise.all(meus.map(async u => { humor[u] = await cache('humorc:' + u, () => carregaHumor(u, true).catch(() => ({}))); }));
+  const cartao = (u, completo) => { const d = dados[u].um; const h = humor[u];
+    return `<article class="gl pcard ${d.farol.cor === 'vermelho' || d.farol.cor === 'amarelo' ? 'at' : ''}" aria-label="${esc(nomeDe(u))}"><div class="top">${avatar(u)}<div style="flex:1;min-width:0"><b>${esc(nomeDe(u))}</b><div class="small">${d.serie ? esc(CAD[d.serie.cad]) : 'sem cadência'}</div></div></div>
+      <div style="margin-top:10px">${viewFarol(u, d)}</div>
+      ${completo && h && Object.keys(h).length ? `<div class="small" style="margin-top:8px">🌤️ Humor compartilhado (14 dias)</div>${sparkHumor(h, 14)}` : (completo ? '<p class="small" style="margin-top:8px">🌤️ Humor não compartilhado.</p>' : '')}
+      ${completo ? `<div class="acts"><button class="btn s p" data-act="abrir" data-uid="${esc(u)}">Abrir</button></div>` : ''}</article>`; };
+  return `<div class="stack"><section class="gl pad"><h2 class="h2">🚢 Frota</h2><p class="sub">${meus.length} ${meus.length === 1 ? 'pessoa' : 'pessoas'} que você lidera. Os faróis mostram a cadência dos 1:1, já descontando as folgas da Escala.</p></section>
+   ${meus.length ? `<div class="grid g3">${meus.map(u => cartao(u, true)).join('')}</div>` : ''}
+   ${amp.length ? `<section class="gl pad"><h2 class="h2">🏛 Time dos meus líderes</h2><p class="small">Visão de farol; os detalhes ficam com cada líder.</p></section><div class="grid g3">${amp.map(u => cartao(u, false)).join('')}</div>` : ''}
+   ${S.sel ? await viewDetalhe(S.sel) : ''}</div>`;
+}
+async function viewDetalhe(uid) {
+  const d = await cache('um:' + uid, () => carregaUm(uid)); const t = S.selTab;
+  const abas = [['um', '🤝 1:1 e cadência'], ['bau', '📦 Baú'], ['aval', '📐 Avaliação']];
+  let corpo = '';
+  if (t === 'um') {
+    const encs = Object.entries(d.enc).sort((a, b) => String(b[1].data).localeCompare(String(a[1].data)));
+    corpo = `<div class="grid g2"><div class="stack"><h3 class="h2">Cadência combinada</h3>
+      <div class="row"><label class="sr" for="cad-sel">Cadência</label><select class="sel2" id="cad-sel" data-act-change="cad" data-uid="${esc(uid)}">${['', ...Object.keys(CAD)].map(k => `<option value="${k}" ${((d.serie && d.serie.cad) || '') === k ? 'selected' : ''}>${k ? CAD[k] : 'Escolher…'}</option>`).join('')}</select></div>
+      ${viewFarol(uid, d)}
+      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button></form></div>
+      <div><h3 class="h2">Registros</h3>${encs.length ? `<ul class="lst">${encs.slice(0, 12).map(([id, e]) => `<li><span aria-hidden="true">🤝</span><div class="tx">${esc(brFull(e.data))} <span class="small">· ${esc(TIPO_1A1[e.tipo] || '1:1')} · por ${esc(nomeDe(e.por))}</span></div>${e.por === S.me.uid ? `<button class="btn s" data-act="enc-del" data-uid="${esc(uid)}" data-id="${esc(id)}" aria-label="Apagar registro">🗑</button>` : ''}</li>`).join('')}</ul>` : vazio('Nenhum 1:1 registrado.')}</div></div>`;
+  } else if (t === 'bau') corpo = await viewBau(uid, true);
+  else corpo = await viewAvalLider(uid);
+  return `<section class="gl pad stack" id="detalhe" style="border-color:var(--accent)" aria-labelledby="dt-t"><div class="row" style="justify-content:space-between"><h2 class="h2" id="dt-t">${avatar(uid)} ${esc(nomeDe(uid))}</h2><button class="btn s" data-act="fechar">✕ Fechar</button></div>
+   <div class="tabs" role="tablist" aria-label="Seções da pessoa">${abas.map(([k, l]) => `<button role="tab" data-act="sel-aba" data-k="${k}" aria-selected="${t === k}">${l}</button>`).join('')}</div>${corpo}</section>`;
+}
+async function viewAvalLider(uid) {
+  const cs = Object.entries(S.ciclos).filter(([, c]) => participa(c, uid) && c.status !== 'encerrado');
+  const ehMeuLiderado = liderDe(uid) === S.me.uid;
+  if (!cs.length) return vazio('Esta pessoa não está em nenhum ciclo em andamento.');
+  let saida = '';
+  for (const [cid, c] of cs) {
+    const a = await cache('aval:' + cid + ':' + uid, () => carregaAval(cid, uid)); const coleta = c.status === 'coleta'; const lib = a.devol && a.devol.liberada === true;
+    const pares = Object.entries(a.pares); const aprov = pares.filter(([, p]) => p.aprovado).length;
+    saida += `<div class="stack"><h3 class="h2">📐 ${esc(c.nome)} <span class="chip">${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</span></h3>
+     <div class="foco"><h4 class="h2">🤝 Pares (${aprov} aprovados)</h4>
+      <ul class="lst">${pares.map(([u, p]) => `<li>${avatar(u)}<div class="tx"><b>${esc(nomeDe(u))}</b><div class="meta">${p.aprovado ? chip('✅ Aprovado', 'ok') : chip('⏳ Sugerido' + (p.por === 'lider' ? ' por você' : ' pela pessoa'), 'warn')}${a.resp[u] ? chip('✍️ respondeu', 'ok') : ''}</div></div>
+        ${ehMeuLiderado ? (p.aprovado ? `<button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Retirar</button>` : `<button class="btn s p" data-act="par-aprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Aprovar</button><button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Recusar</button>`) : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
+      ${aprov > 4 ? '<p class="small">⚠ Mais de 4 pares aprovados: considere reduzir para evitar fadiga de avaliação.</p>' : ''}</div>
+     <details class="foco" ${a.auto ? 'open' : ''}><summary class="h2" style="cursor:pointer">📝 Autoavaliação de ${esc(nomeDe(uid))}</summary>${a.auto ? formResp(cid, uid, 'auto', a.auto, perguntasDe(c, 'auto'), false) : '<p class="small">Ainda não respondeu.</p>'}</details>
+     ${ehMeuLiderado ? `<details class="foco"><summary class="h2" style="cursor:pointer">✍️ Minha avaliação (só você e seu gerente leem)</summary>${formResp(cid, uid, 'lider', a.lider, perguntasDe(c, 'lider'), c.status !== 'encerrado', 'lider-salvar')}</details>` : ''}
+     <details class="foco"><summary class="h2" style="cursor:pointer">💬 Feedback dos pares (${Object.keys(a.resp).length})</summary>${Object.entries(a.resp).map(([u, r]) => `<div class="foco"><b>${esc(nomeDe(u))}</b>${formResp(cid, uid, 'par', r, perguntasDe(c, 'par'), false, '', u)}</div>`).join('') || '<p class="small">Ninguém respondeu ainda.</p>'}</details>
+     ${ehMeuLiderado ? `<div class="${lib ? 'foco' : 'trava'}"><h4 class="h2">${lib ? '🔓 Devolutiva liberada' : '🔒 Devolutiva (a pessoa ainda não vê)'}</h4>
+       <label class="sr" for="dv-t">Síntese da devolutiva</label><textarea class="ta" id="dv-t" data-devol="1" maxlength="6000" placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
+       <div class="row" style="margin-top:8px"><button class="btn" data-act="devol-salvar" data-cid="${esc(cid)}" data-av="${esc(uid)}">💾 Salvar rascunho</button>
+        ${lib ? `<button class="btn" data-act="devol-recolher" data-cid="${esc(cid)}" data-av="${esc(uid)}">↩ Recolher liberação</button>` : `<button class="btn p" data-act="devol-liberar" data-cid="${esc(cid)}" data-av="${esc(uid)}">🔓 Liberar para ${esc(nomeDe(uid).split(' ')[0])}</button>`}${a.ciente ? '<span class="chip ok">✔ ciência registrada</span>' : ''}</div></div>` : ''}</div>`;
+  }
+  return saida;
+}
+
+// ───────── administração (ADM e RH) ─────────
+async function viewAdmin() {
+  const lista = Object.keys(S.users).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b)));
+  const q = S.pesq.trim().toLowerCase(); const filtrada = q ? lista.filter(u => nomeDe(u).toLowerCase().includes(q)) : lista;
+  const opt = (sel, excl) => `<option value="">—</option>` + lista.filter(u => u !== excl).map(u => `<option value="${esc(u)}" ${u === sel ? 'selected' : ''}>${esc(nomeDe(u))}</option>`).join('');
+  const rhs = S.adm ? ((await cache('papeis', async () => (await G(T + 'papeis')) || {}))) : {};
   return `<div class="stack">
-   <section class="gl pad" aria-labelledby="fr-t"><div class="row" style="justify-content:space-between"><h2 class="h2" id="fr-t">🚢 Frota — Squad Dados</h2><span class="chip ${nAt?'warn':'ok'}">${nAt?'⚠ '+nAt+' precisam de atenção':'✅ todos em dia'}</span></div>
-    <div class="nota"><b>🤖 Resumo da semana (rascunho):</b> 4 conversas aconteceram, 1 ficou atrasada (Cauê) e o Gil ainda não tem 1:1 marcado. 2 PDIs sem foco. <button class="btn s" data-act="resumo" style="margin-left:6px">Copiar</button></div></section>
-   <div class="filtros" role="group" aria-label="Filtrar pessoas">${[['todos','Todas'],['atencao','⚠ Precisam de atenção'],['sem','Sem 1:1 marcado']].map(([k,l])=>`<button data-act="filtro" data-f="${k}" aria-pressed="${S.filtro===k}">${l}</button>`).join('')}</div>
-   ${lista.length?`<div class="grid g3">${lista.map(id=>{ const p=PESSOAS[id]; return `<article class="gl pcard ${atencao(id)?'at':''}" aria-label="${esc(p.nome)}"><div class="top"><div class="av" aria-hidden="true">${esc(ini(p.nome))}</div><div style="flex:1;min-width:0"><b>${esc(p.nome)}</b><div class="small">${esc(p.papel)}</div></div>${anel(id==='ana'?pctPdi(S.focos):pctPdi(p.focos),48)}</div>
-     <div class="meta" style="margin-top:10px">${sinais(id).map(chip).join('')}</div>
-     <p class="small" style="margin-top:8px">${p.proximo?`Próximo 1:1: <b>${esc(dia(new Date(p.proximo+'T12:00:00')))}</b> · ${esc(p.hora)}`:'Próximo 1:1: <b>não marcado</b>'}</p>${tira(p.tira)}
-     <div class="acts"><button class="btn s p" data-act="abrir" data-id="${id}">Abrir</button><button class="btn s" data-act="agendar" data-id="${id}">📅 Marcar 1:1</button></div></article>`; }).join('')}</div>${LEG}`:'<div class="vazio">Ninguém neste filtro.</div>'}
-   ${S.sel?viewDetalhe(S.sel):''}</div>`;
+   <section class="gl pad stack" aria-labelledby="ad-or"><h2 class="h2" id="ad-or">🏛 Organograma</h2><p class="sub">Quem lidera quem. O líder direto enxerga o Baú, os 1:1 e conduz a avaliação; o gerente acompanha e lê as avaliações. Todo mundo da empresa vê esta lista.</p>
+    <label class="sr" for="pesq">Buscar pessoa</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar pessoa…" value="${esc(S.pesq)}" autocomplete="off">
+    <table class="tbl"><caption class="sr">Organograma</caption><thead><tr><th>Pessoa</th><th>Líder direto</th><th>Gerente</th></tr></thead><tbody>${filtrada.slice(0, 60).map(u => { const v = S.vinc[u] || {}; return `<tr><td data-l="Pessoa"><b>${esc(nomeDe(u))}</b></td><td data-l="Líder direto"><select class="sel2" data-vinc="${esc(u)}" data-campo="liderUid" aria-label="Líder de ${esc(nomeDe(u))}">${opt(v.liderUid, u)}</select></td><td data-l="Gerente"><select class="sel2" data-vinc="${esc(u)}" data-campo="gerenteUid" aria-label="Gerente de ${esc(nomeDe(u))}">${opt(v.gerenteUid, u)}</select></td></tr>`; }).join('')}</tbody></table>
+    ${filtrada.length > 60 ? '<p class="small">Mostrando 60 — refine a busca.</p>' : ''}</section>
+   ${S.adm ? `<section class="gl pad stack" aria-labelledby="ad-rh"><h2 class="h2" id="ad-rh">🤝 Papel de RH da Travessia</h2><p class="sub">O RH cria ciclos e cuida do organograma, mas <b>não lê</b> Baú, 1:1, humor nem avaliações de ninguém.</p>
+    <ul class="lst">${lista.map(u => `<li>${avatar(u)}<div class="tx">${esc(nomeDe(u))}</div><label class="ck"><input type="checkbox" data-rh="${esc(u)}" ${rhs[u] === 'rh' ? 'checked' : ''} aria-label="RH: ${esc(nomeDe(u))}"> RH</label></li>`).join('')}</ul></section>` : ''}
+   <section class="gl pad stack" aria-labelledby="ad-ci"><h2 class="h2" id="ad-ci">📐 Ciclos de avaliação</h2>
+    <details class="foco"><summary class="h2" style="cursor:pointer">+ Novo ciclo</summary><form data-form="ciclo" class="camp"><label for="ci-n">Nome do ciclo</label><input class="in" id="ci-n" name="nome" maxlength="80" required placeholder="Ex.: Ciclo 2026/2">
+      <label>Quem participa</label><p class="small">Marque as squads (todas as pessoas delas entram) ou escolha pessoas na lista do organograma depois.</p>
+      <div class="chips">${squadsDisponiveis().map(s => `<label class="ck"><input type="checkbox" name="sq" value="${esc(s)}"> ${esc(s)}</label>`).join('')}</div>
+      <div class="row" style="margin-top:10px"><button class="btn p" type="submit">Criar ciclo (fase: preparação)</button></div></form></details>
+    ${Object.entries(S.ciclos).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).map(([cid, c]) => `<div class="foco"><div class="row" style="justify-content:space-between"><b>${esc(c.nome)}</b><span class="chip">${Object.keys(c.participantes || {}).length} pessoas</span></div>
+      <div class="fase">${FASES.map(f => `<span class="${f[0] === c.status ? 'on' : ''}">${f[1]}</span>`).join('')}</div>
+      <div class="row">${FASES.filter(f => f[0] !== c.status).map(f => `<button class="btn s" data-act="ciclo-fase" data-cid="${esc(cid)}" data-fase="${f[0]}">→ ${f[1]}</button>`).join('')}</div></div>`).join('') || vazio('Nenhum ciclo criado ainda.')}</section></div>`;
 }
-function viewDetalhe(id){
-  const p=PESSOAS[id], focos=id==='ana'?S.focos:p.focos;
-  return `<section class="gl pad stack" id="detalhe" aria-labelledby="dt-t" style="border-color:var(--accent)"><div class="row" style="justify-content:space-between"><h2 class="h2" id="dt-t">${esc(p.nome)} · visão do PO</h2><button class="btn s" data-act="fechar" aria-label="Fechar detalhe">✕ Fechar</button></div>
-   <p class="small">Aqui você vê <b>o mesmo que ${esc(p.nome.split(' ')[0])} vê</b> (simetria), mais o seu espaço privado.</p>
-   <div class="grid g2"><div class="stack"><h3 class="h2">🎯 PDI</h3>${blocoPdi(focos,false)}</div>
-   <div class="stack"><h3 class="h2">🔒 Suas notas sobre ${esc(p.nome.split(' ')[0])} <span class="chip warn">só você vê</span></h3>
-     ${(S.notas[id]||[]).length?`<ul class="lst">${S.notas[id].map(n=>`<li><span aria-hidden="true">🔒</span><div class="tx">${esc(n)}</div></li>`).join('')}</ul>`:'<div class="vazio">Sem notas ainda.</div>'}
-     <form class="row" data-form="nota" data-id="${id}"><label class="sr" for="nn">Nova nota privada</label><input class="in" id="nn" name="t" maxlength="200" placeholder="Anotar (só você vê)…" autocomplete="off"><button class="btn s p" type="submit">Salvar</button></form>
-     <div class="row"><button class="btn s" data-act="levar-rh" data-id="${id}">🤝 Levar ao encontro com o RH</button></div></div></div></section>`;
-}
-function viewNotas(){
-  const ids=Object.keys(S.notas).filter(i=>S.notas[i].length);
-  return `<section class="gl pad stack" aria-labelledby="nt-t"><h2 class="h2" id="nt-t">🔒 Minhas notas <span class="chip warn">só você vê</span></h2><p class="sub">Notas exclusivas do PO. Nem a pessoa, nem o gerente, nem o RH, nem o Agente Ágil leem.</p>
-   ${ids.map(i=>`<div class="foco"><b>${esc(PESSOAS[i].nome)}</b><ul class="lst">${S.notas[i].map(n=>`<li><span aria-hidden="true">🔒</span><div class="tx">${esc(n)}</div></li>`).join('')}</ul></div>`).join('')||'<div class="vazio">Nenhuma nota ainda. Abra uma pessoa na Frota para anotar.</div>'}</section>`;
-}
-function viewPautaRh(){
-  return `<section class="gl pad stack" aria-labelledby="pr-t"><h2 class="h2" id="pr-t">🤝 Pauta com o RH · próximo encontro qui 05/11</h2>
-   <p class="sub">Seu espaço para preparar as conversas com o RH. Cada item nasce <b>privado</b>; marque “compartilhar” só se quiser que o RH veja antes.</p>
-   <ul class="lst">${S.rh.map((r,i)=>`<li><span aria-hidden="true">${r.com?'👁':'🔒'}</span><div class="tx">${esc(r.t)}<div class="meta"><span class="chip ${r.com?'ok':'warn'}">${r.com?'Compartilhado com o RH':'Privado'}</span></div></div><button class="btn s" data-act="rh-toggle" data-i="${i}">${r.com?'Tornar privado':'Compartilhar'}</button></li>`).join('')}</ul>
-   <form class="row" data-form="rh"><label class="sr" for="nr">Novo item</label><input class="in" id="nr" name="t" maxlength="160" placeholder="Algo para levar ao RH…" autocomplete="off"><button class="btn p" type="submit">+ Adicionar</button></form></section>`;
-}
-
-// ───────── gerente e RH ─────────
-function viewCadeia(){
-  return `<div class="stack"><section class="gl pad"><h2 class="h2">🏛 Frota dos POs</h2><p class="sub" style="margin-top:4px">Você acompanha os POs (1:1 e PDI como com qualquer pessoa) e vê o <b>agregado</b> de cada time. Detalhe por pessoa só se o PO compartilhar.</p></section>
-   <div class="grid g3">${SQUADS.map(s=>`<article class="gl pcard ${s.atencao>=3?'at':''}"><div class="top"><div class="av" aria-hidden="true">${esc(ini(s.po))}</div><div style="flex:1"><b>${esc(s.po)}</b><div class="small">PO · ${esc(s.nome)} · ${s.pessoas} pessoas</div></div></div>
-     <div style="margin-top:12px"><div class="row" style="justify-content:space-between"><span class="small">Constância dos 1:1</span><b>${s.adesao}%</b></div><div class="bar" role="img" aria-label="${s.adesao}% de constância"><i style="width:${s.adesao}%"></i></div></div>
-     <div class="meta" style="margin-top:10px"><span class="chip">🎯 ${s.pdis} PDIs ativos</span><span class="chip ${s.atencao>=3?'warn':''}">${s.atencao>=3?'⚠ ':''}${s.atencao} precisam de atenção</span></div>
-     <p class="small" style="margin-top:8px">Seu próximo 1:1 com ${esc(s.po.split(' ')[0])}: <b>${s.po==='Bruno Reis'?'qua 28/10':'a marcar'}</b></p></article>`).join('')}</div></div>`;
-}
-function viewRhVisao(){
-  return `<div class="stack"><section class="gl pad stack"><h2 class="h2">🌊 Visão geral do ciclo · jul–dez 2026</h2>
-   <div class="nota">🔒 <b>O que o RH vê:</b> constância, PDIs ativos, ciclo e o que os POs compartilharem. <b>Não vê:</b> notas privadas dos POs nem o conteúdo dos 1:1. <span class="small">(proposta — a validar com o RH)</span></div>
-   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><div class="tile"><b>24</b><span>pessoas no piloto</span></div><div class="tile"><b>76%</b><span>constância dos 1:1</span></div><div class="tile"><b>18</b><span>PDIs ativos</span></div><div class="tile"><b>8</b><span>pedem atenção</span></div></div></section>
-   <section class="gl pad"><table class="tbl"><caption class="sr">Squads</caption><thead><tr><th>Squad</th><th>PO</th><th>Constância</th><th>PDIs</th><th>Atenção</th></tr></thead><tbody>${SQUADS.map(s=>`<tr><td data-l="Squad"><b>${esc(s.nome)}</b>${s.pilot?' <span class="chip ag">piloto</span>':''}</td><td data-l="PO">${esc(s.po)}</td><td data-l="Constância"><div class="bar" role="img" aria-label="${s.adesao}%"><i style="width:${s.adesao}%"></i></div><span class="small">${s.adesao}%</span></td><td data-l="PDIs ativos">${s.pdis}</td><td data-l="Atenção">${s.atencao>=3?'⚠ ':''}${s.atencao} pessoa(s)</td></tr>`).join('')}</tbody></table></section></div>`;
-}
-function viewRhPautas(){
-  const comp=S.rh.filter(r=>r.com);
-  return `<section class="gl pad stack"><h2 class="h2">🤝 Pautas compartilhadas pelos POs</h2><p class="sub">Só aparece o que o PO marcou como compartilhado.</p>
-   ${comp.length?`<ul class="lst">${comp.map(r=>`<li><span aria-hidden="true">👁</span><div class="tx">${esc(r.t)}<div class="meta"><span class="chip">Bruno Reis · Squad Dados</span></div></div></li>`).join('')}</ul>`:'<div class="vazio">Nenhum item compartilhado ainda. (No papel de PO, abra “Pauta com o RH” e compartilhe um item.)</div>'}</section>`;
-}
+const squadsDisponiveis = () => { const s = new Set(); Object.values(S.users).forEach(u => Object.keys(u.squads || {}).forEach(k => { if (u.squads[k]) s.add(k); })); return [...s].sort(); };
 
 // ───────── montagem ─────────
-function render(){
-  const seg=$('#seg-papel'); seg.innerHTML=PAPEIS.map(([k,l])=>`<button data-papel="${k}" aria-pressed="${S.papel===k}">${l}</button>`).join('');
-  const abas=TABS[S.papel], tab=S.tab[S.papel];
-  const titulos={pessoa:['Olá, Ana 👋','Sua travessia: o que você quer construir e como a gente te ajuda a chegar lá.'],po:['Olá, Bruno 👋','Sua frota: como o time está e quem precisa de uma conversa.'],gerente:['Olá, Carla 👋','A visão dos POs que você lidera.'],rh:['Olá, Dani 👋','O ciclo de pessoas, sem abrir o que é privado.']};
-  const V={pessoa:{inicio:viewInicio,pdi:viewPdi,um:viewUm,acoes:viewAcoes,historia:viewHistoria},po:{frota:viewFrota,planejar:viewPlanejar,notas:viewNotas,rh:viewPautaRh},gerente:{cadeia:viewCadeia,planejar:viewPlanejar},rh:{visao:viewRhVisao,pautas:viewRhPautas}};
-  const foco=document.activeElement&&document.activeElement.id;
-  $('#app').innerHTML=`<div class="hero"><div><h1 class="h1">${titulos[S.papel][0]}</h1><p class="sub">${titulos[S.papel][1]}</p></div></div>
-   <div class="tabs" role="tablist" aria-label="Seções">${abas.map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}</div>
-   <div role="tabpanel">${V[S.papel][tab]()}</div>`;
-  if(foco){ const e=document.getElementById(foco); if(e) e.focus(); }
+const TABS = () => [['inicio', '🗺 Minha travessia'], ['bau', '📦 Baú'], ['aval', '📐 Avaliação']].concat(ehLider() ? [['frota', '🚢 Frota']] : []).concat(S.adm || S.rh ? [['admin', '⚙ Administração']] : []);
+let rendering = 0;
+async function render() {
+  const eu = ++rendering; const tabs = TABS(); const rasc = {}; document.querySelectorAll('textarea.ta:not([readonly])').forEach(t => { if (t.id) rasc[t.id] = t.value; }); if (!tabs.some(t => t[0] === S.tab)) S.tab = 'inicio';
+  const foco = document.activeElement && document.activeElement.id; const sel = document.activeElement && document.activeElement.selectionStart;
+  $('#app').innerHTML = `<div class="hero"><div><h1 class="h1">Olá, ${esc((S.me.nome || '').split(' ')[0] || 'bem-vinda(o)')} 👋</h1><p class="sub">Sua travessia: o que você quer construir e como a gente te ajuda a chegar lá.</p></div></div>
+    <div class="tabs" role="tablist" aria-label="Seções">${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join('')}</div><div role="tabpanel" id="painel">${carregando()}</div>`;
+  let html = '';
+  try { html = await ({ inicio: viewInicio, bau: () => viewBau(S.me.uid, false), aval: viewAval, frota: viewFrota, admin: viewAdmin }[S.tab])(); }
+  catch (e) { console.warn('[travessia]', e); html = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
+  if (eu !== rendering) return;
+  $('#painel').innerHTML = html;
+  Object.keys(rasc).forEach(id => { const el = document.getElementById(id); if (el && !el.readOnly && rasc[id] && !el.value) el.value = rasc[id]; });   // não perde o que a pessoa estava escrevendo
+  if (foco) { const el = document.getElementById(foco); if (el) { el.focus(); try { if (sel != null) el.setSelectionRange(sel, sel); } catch (_) {} } }
 }
 
-// ───────── eventos ─────────
-document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-papel],[data-tab],[data-act]'); if(!b) return;
-  if(b.dataset.papel){ S.papel=b.dataset.papel; S.filtro='todos'; S.sel=null; try{ history.replaceState(null,'','#'+S.papel);}catch(_){} return render(); }
-  if(b.dataset.tab&&!b.dataset.act){ S.tab[S.papel]=b.dataset.tab; S.filtro='todos'; return render(); }
-  const a=b.dataset.act;
-  if(a==='ir'){ S.tab[S.papel]=b.dataset.tab; return render(); }
-  if(a==='filtro'){ S.filtro=b.dataset.f; return render(); }
-  if(a==='abrir'){ S.sel=b.dataset.id; render(); const d=$('#detalhe'); if(d) d.scrollIntoView({behavior:'smooth',block:'start'}); return; }
-  if(a==='fechar'){ S.sel=null; return render(); }
-  if(a==='agendar'){ S.plan={pessoa:b.dataset.id,tipo:'acomp',cad:'quinzenal',dow:4,hora:'10:00'}; S.tab.po='planejar'; return render(); }
-  if(a==='criar-serie'){ const c=S.plan; toast(`✅ Série criada: ${CAD[c.cad]}, ${DIAS[c.dow]} às ${c.hora}. As próximas conversas já estão na agenda.`); return; }
-  if(a==='pedir-copiloto'){ S.copilotoPedido=true; toast('🤖 Analisando feedbacks, entregas e objetivos…'); return render(); }
-  if(a==='aceitar-foco'){ const c=COPILOTO[+b.dataset.i]; S.focos.push({t:c.t,rasc:true,acoes:c.acoes.map(x=>({tipo:x[0],t:x[1],done:false}))}); S.rasc.push(c.t); toast('Entrou no seu PDI como rascunho. Seu PO vai poder comentar.'); return render(); }
-  if(a==='descartar-foco'){ S.rasc.push(COPILOTO[+b.dataset.i].t); return render(); }
-  if(a==='editar-foco'){ toast('✏️ Na versão real você edita o texto antes de aceitar.'); return; }
-  if(a==='add-sug'){ S.pauta.push({t:b.dataset.t,por:'Sugerido pelo sistema'}); return render(); }
-  if(a==='notas-acoes'){ S.acoes.unshift({id:Date.now(),t:'Abrir tempo semanal para estudo (rascunho do Agente)',dono:'Ana',com:'Bruno',prazo:'05/11',origem:'1:1 de 15/10 · rascunho',done:false,dias:0}); toast('🤖 Criei 1 ação em rascunho na aba Ações.'); return render(); }
-  if(a==='resumo'){ toast('📋 Resumo copiado (na versão real, para colar no WhatsApp ou no Mural).'); return; }
-  if(a==='levar-rh'){ S.rh.unshift({t:'Sobre '+PESSOAS[b.dataset.id].nome.split(' ')[0]+': preciso de apoio do RH',com:false}); toast('🔒 Adicionado à sua pauta com o RH (privado).'); return; }
-  if(a==='rh-toggle'){ const r=S.rh[+b.dataset.i]; r.com=!r.com; toast(r.com?'👁 Agora o RH vê esse item.':'🔒 Voltou a ser privado.'); return render(); }
-  if(a==='autoav'){ S.autoav='Neste ciclo entreguei 14 cards, destravei 3 bloqueios e fui responsável por 2 objetivos no Radar. Meu maior orgulho foi o modelo de churn. Quero evoluir em comunicar análises e em liderar um projeto de ponta a ponta. (Rascunho do Agente — edite do seu jeito.)'; return render(); }
+// ───────── ações ─────────
+async function guardarBau(item) { const id = novoId(); item.ts = Date.now(); item.em = item.em || hojeISO(); const ok = await tenta(() => W('bau/' + S.me.uid + '/' + id, item), '📌 Guardado no seu Baú!'); if (ok) { invalida('bau:' + S.me.uid); } return ok; }
+const salvaResp = async (cid, av, grupo, caminho) => {
+  const dados = { ts: Date.now() }; document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`).forEach(t => { if (t.value.trim()) dados[t.dataset.q] = t.value.trim(); });
+  if (Object.keys(dados).length < 2) { toast('Escreva pelo menos uma resposta antes de salvar.'); return false; }
+  return tenta(() => W(caminho, dados), '💾 Salvo!');
+};
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tab],[data-act]'); if (!b) return;
+  const a = b.dataset.act; const me = S.me && S.me.uid;
+  if (b.dataset.tab && !a) { S.tab = b.dataset.tab; S.sel = null; S.pesq = ''; return render(); }
+  if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
+  if (a === 'humor') {
+    const n = +b.dataset.n; const k = hojeISO(); const comp = $('#humor-comp') && $('#humor-comp').checked; const reg = { n, ts: Date.now() };
+    const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); if (comp) await W('humor_comp/' + me + '/' + k, reg); else await D('humor_comp/' + me + '/' + k); }, FACES[n - 1][0] + ' Humor de hoje registrado.');
+    if (ok) { S.cache['humor:' + me] = Object.assign({}, S.cache['humor:' + me], { [k]: Object.assign({ comp }, reg) }); render(); } return;
+  }
+  if (a === 'estrela-bau') { const est = await cache('estrelas', carregaEstrelas); const k = est[+b.dataset.i]; if (!k) return; const ok = await guardarBau({ tipo: 'kudo', titulo: ('Estrela de ' + (k.fromNome || 'alguém')).slice(0, 160), texto: String(k.texto || '').slice(0, 1200), ref: String(k.id || '').slice(0, 200), squad: k._escopo === 'geral' ? 'geral' : k._escopo, em: String(k.ts || '').slice(0, 10) || hojeISO() }); if (ok) render(); return; }
+  if (a === 'bau-del') { if (!(await uiConfirm('Remover este item do Baú?', 'Remover'))) return; if (await tenta(() => D('bau/' + me + '/' + b.dataset.id), 'Removido.')) { invalida('bau:' + me); render(); } return; }
+  if (a === 'abrir') { S.sel = b.dataset.uid; S.selTab = 'um'; await render(); const d = $('#detalhe'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (a === 'fechar') { S.sel = null; return render(); }
+  if (a === 'sel-aba') { S.selTab = b.dataset.k; return render(); }
+  if (a === 'enc-del') { if (await tenta(() => D('encontros/' + b.dataset.uid + '/' + b.dataset.id), 'Registro apagado.')) { invalida('um:' + b.dataset.uid); render(); } return; }
+  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { el.value = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; el.focus(); } return; }
+  if (a === 'par-sugerir') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => W(`avaliacoes/${cid}/${me}/pares/${par}`, { aprovado: false, por: 'avaliado', ts: Date.now() }), 'Indicação enviada ao seu líder.')) { invalida('aval:' + cid + ':' + me); render(); } return; }
+  if (a === 'par-retirar') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => D(`avaliacoes/${cid}/${me}/pares/${par}`))) { invalida('aval:' + cid + ':' + me); render(); } return; }
+  if (a === 'auto-salvar') { if (await salvaResp(b.dataset.cid, me, 'auto', `avaliacoes/${b.dataset.cid}/${me}/auto`)) { invalida('aval:' + b.dataset.cid + ':' + me); render(); } return; }
+  if (a === 'par-salvar') { const { cid, av } = b.dataset; if (await salvaResp(cid, av, 'par', `avaliacoes/${cid}/${av}/resp_pares/${me}`)) { invalida('resp:' + cid + ':' + av); render(); } return; }
+  if (a === 'lider-salvar') { const { cid, av } = b.dataset; if (await salvaResp(cid, av, 'lider', `avaliacoes/${cid}/${av}/lider`)) { invalida('aval:' + cid + ':' + av); render(); } return; }
+  if (a === 'ciente') { const cid = b.dataset.cid; if (await tenta(() => W(`avaliacoes/${cid}/${me}/ciente`, Date.now()), '✔ Ciência registrada.')) { invalida('aval:' + cid + ':' + me); render(); } return; }
+  if (a === 'par-aprovar' || a === 'par-reprovar') {
+    const { cid, av, par } = b.dataset; const existente = (S.cache['aval:' + cid + ':' + av]?.pares || {})[par] || {};
+    const ok = await tenta(async () => {
+      if (a === 'par-aprovar') { await W(`avaliacoes/${cid}/${av}/pares/${par}`, { aprovado: true, por: existente.por || 'lider', ts: Date.now() }); await W(`pedidos_par/${par}/${cid}_${av}`, { cid, avaliado: av, ts: Date.now() }); }
+      else { await D(`pedidos_par/${par}/${cid}_${av}`); await D(`avaliacoes/${cid}/${av}/pares/${par}`); }
+    }, a === 'par-aprovar' ? '✅ Par aprovado — ele já pode responder.' : 'Par retirado.');
+    if (ok) { invalida('aval:' + cid + ':' + av); render(); } return;
+  }
+  if (a === 'devol-salvar' || a === 'devol-liberar' || a === 'devol-recolher') {
+    const { cid, av } = b.dataset; const txt = ($('#dv-t') && $('#dv-t').value.trim()) || ''; const atual = S.cache['aval:' + cid + ':' + av]?.devol || {};
+    if (a === 'devol-liberar' && !txt) { toast('Escreva a síntese antes de liberar.'); return; }
+    if (a === 'devol-liberar' && !(await uiConfirm('Liberar a devolutiva para ' + nomeDe(av).split(' ')[0] + '? A pessoa passa a ver o texto agora.', '🔓 Liberar'))) return;
+    const dados = { texto: txt.slice(0, 6000), liberada: a === 'devol-liberar' ? true : (a === 'devol-recolher' ? false : atual.liberada === true), ts: Date.now(), por: me };
+    if (dados.liberada) dados.liberadaEm = atual.liberadaEm || Date.now();
+    if (await tenta(() => W(`avaliacoes/${cid}/${av}/devolutiva`, dados), a === 'devol-liberar' ? '🔓 Devolutiva liberada.' : a === 'devol-recolher' ? '🔒 Liberação recolhida.' : '💾 Rascunho salvo.')) { invalida('aval:' + cid + ':' + av); render(); } return;
+  }
+  if (a === 'ciclo-fase') { const { cid, fase } = b.dataset; const c = Object.assign({}, S.ciclos[cid], { status: fase }); if (await tenta(() => W('ciclos/' + cid + '/status', fase), 'Fase atualizada.')) { S.ciclos[cid] = c; render(); } return; }
 });
-document.addEventListener('change',e=>{
-  const t=e.target;
-  if(t.dataset.plan){ S.plan=S.plan||{}; S.plan[t.dataset.plan]=t.dataset.plan==='dow'?+t.value:t.value; return render(); }
-  if(t.dataset.act==='acao'){ const a=S.acoes.find(x=>x.id==t.dataset.id); a.done=t.checked; toast(a.done?'✅ Ação concluída':'↩ Ação reaberta'); return render(); }
-  if(t.dataset.act==='acao-pdi'){ S.focos[+t.dataset.f].acoes[+t.dataset.a].done=t.checked; return render(); }
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.dataset.actChange === 'cad') { const uid = t.dataset.uid; if (!t.value) return; if (await tenta(() => W('serie/' + uid, { cad: t.value, tipo: 'acomp', ts: Date.now() }), 'Cadência definida.')) { invalida('um:' + uid); render(); } return; }
+  if (t.dataset.vinc) { const uid = t.dataset.vinc; const v = Object.assign({}, S.vinc[uid] || {}); v[t.dataset.campo] = t.value || null; if (!v.liderUid) { if (await tenta(() => D('vinculos/' + uid), 'Vínculo removido.')) { delete S.vinc[uid]; } return render(); } Object.keys(v).forEach(k => { if (!v[k]) delete v[k]; }); if (await tenta(() => W('vinculos/' + uid, v), 'Organograma atualizado.')) { S.vinc[uid] = v; } return; }
+  if (t.dataset.rh) { const uid = t.dataset.rh; if (await tenta(() => (t.checked ? W('papeis/' + uid, 'rh') : D('papeis/' + uid)), t.checked ? '🤝 Papel de RH concedido.' : 'Papel de RH removido.')) invalida('papeis'); else t.checked = !t.checked; return; }
 });
-document.addEventListener('input',e=>{ if(e.target.dataset.in==='autoav') S.autoav=e.target.value; });
-document.addEventListener('submit',e=>{
-  const f=e.target.closest('[data-form]'); if(!f) return; e.preventDefault();
-  const v=(new FormData(f).get('t')||'').trim(); if(!v) return;
-  const k=f.dataset.form;
-  if(k==='pauta') S.pauta.push({t:v,por:'Ana'});
-  else if(k==='acao') S.acoes.unshift({id:Date.now(),t:v,dono:'Ana',com:'Bruno',prazo:'a definir',origem:'Adicionada por você',done:false,dias:0});
-  else if(k==='nota'){ const id=f.dataset.id; (S.notas[id]=S.notas[id]||[]).unshift(v); }
-  else if(k==='rh') S.rh.unshift({t:v,com:false});
-  render();
+document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('textarea[data-resp]')) S.ultimoFoco = e.target.id; });
+document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.pesq) { S.pesq = e.target.value; clearTimeout(window.__pT); window.__pT = setTimeout(render, 220); } });
+document.addEventListener('submit', async e => {
+  const f = e.target.closest('[data-form]'); if (!f) return; e.preventDefault(); const k = f.dataset.form; const fd = new FormData(f); const me = S.me.uid;
+  if (k === 'encontro') { const uid = f.dataset.uid; const data = fd.get('data'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) { toast('Escolha a data do 1:1.'); return; } if (data > hojeISO()) { toast('O 1:1 registrado não pode estar no futuro.'); return; }
+    if (await tenta(() => W('encontros/' + uid + '/' + novoId(), { data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }), '✅ 1:1 registrado.')) { invalida('um:' + uid); render(); } return; }
+  if (k === 'bau') { const titulo = (fd.get('titulo') || '').trim(); if (!titulo) return; const partes = []; [['desafio', 'Desafio'], ['acao', 'O que fiz'], ['impacto', 'Impacto']].forEach(([c, r]) => { const v = (fd.get(c) || '').trim(); if (v) partes.push(r + ': ' + v); });
+    const item = { tipo: 'manual', titulo: titulo.slice(0, 160) }; if (partes.length) item.texto = partes.join('\n').slice(0, 1200); if ((fd.get('comp') || '').trim()) item.comp = fd.get('comp').trim().slice(0, 60); if (await guardarBau(item)) render(); return; }
+  if (k === 'ciclo') { const nome = (fd.get('nome') || '').trim(); if (!nome) return; const sqs = fd.getAll('sq'); const part = {}; Object.keys(S.users).forEach(u => { const us = S.users[u].squads || {}; if (sqs.some(s => us[s])) part[u] = true; });
+    if (!Object.keys(part).length) { toast('Marque ao menos uma squad com pessoas.'); return; }
+    const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO };
+    if (await tenta(() => W('ciclos/' + cid, c), '📐 Ciclo criado.')) { S.ciclos[cid] = c; render(); } return; }
 });
-const TEMAS=[['','🌙','Abrolhos'],['light','☀️','Lençóis Maranhenses'],['sunset','🌅','Entardecer']];
-function aplicaTema(v,avisa){ const i=Math.max(0,TEMAS.findIndex(x=>x[0]===v)), t=TEMAS[i]; if(t[0]) document.documentElement.setAttribute('data-theme',t[0]); else document.documentElement.removeAttribute('data-theme'); $('#btn-tema').textContent=t[1]; try{ localStorage.setItem('travessia_tema',t[0]); }catch(_){} if(avisa) toast(t[1]+' '+t[2]); }
-$('#btn-tema').addEventListener('click',()=>{ const atual=document.documentElement.getAttribute('data-theme')||''; const i=TEMAS.findIndex(x=>x[0]===atual); aplicaTema(TEMAS[(i+1)%TEMAS.length][0],true); });
-try{ const t=localStorage.getItem('travessia_tema'); if(t) aplicaTema(t); }catch(_){}
-const h=(location.hash||'').slice(1); if(TABS[h]) S.papel=h;
-render();
-})();
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-pesq]')) e.preventDefault(); });
+
+// ───────── login e boot ─────────
+function mostraLogin(msg) { $('#login').hidden = false; $('#app').hidden = true; $('#quem').hidden = true; $('#login-err').textContent = msg || ''; $('#login-err').hidden = !msg; }
+$('#btn-login').addEventListener('click', () => { $('#login-err').hidden = true; if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; } window._signIn().catch(e => mostraLogin('Não deu pra entrar: ' + (e && e.message || e))); });
+$('#btn-sair').addEventListener('click', () => signOut(auth));
+$('#btn-tema').addEventListener('click', () => { const atual = document.documentElement.getAttribute('data-theme') || ''; const i = TEMAS.findIndex(x => x[0] === atual); aplicaTema(TEMAS[(i + 1) % TEMAS.length][0], true); });
+const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhenses'], ['sunset', '🌅', 'Entardecer']];
+function aplicaTema(v, avisa) { const i = Math.max(0, TEMAS.findIndex(x => x[0] === v)), t = TEMAS[i]; if (t[0]) document.documentElement.setAttribute('data-theme', t[0]); else document.documentElement.removeAttribute('data-theme'); $('#btn-tema').textContent = t[1]; try { localStorage.setItem('mare_theme', t[0] === 'light' ? 'light' : t[0] === 'sunset' ? 'vice' : 'dark'); localStorage.setItem('travessia_tema', t[0]); } catch (_) {} if (avisa) toast(t[1] + ' ' + t[2]); }
+try { const t = localStorage.getItem('travessia_tema'); if (t) aplicaTema(t); else { const m = localStorage.getItem('mare_theme'); if (m === 'light') aplicaTema('light'); } } catch (_) {}
+
+onAuthStateChanged(auth, async u => {
+  if (window.MareLogin && MareLogin.voltando) return;
+  if (!u) { S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
+  const empresa = /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com');
+  if (!empresa) { S.aviso = 'O Travessia é só para contas Google @ciahering.com.br.'; mostraLogin(S.aviso); signOut(auth).catch(() => {}); return; }
+  S.me = { uid: u.uid, email: u.email, nome: u.displayName || u.email, foto: u.photoURL || '' };
+  $('#login').hidden = true; $('#app').hidden = false; $('#quem').hidden = false; $('#quem-nome').textContent = S.me.nome; if (S.me.foto) { $('#quem-foto').src = S.me.foto; $('#quem-foto').hidden = false; }
+  $('#app').innerHTML = carregando('Abrindo sua travessia…');
+  try {
+    const [users, eu, vinc, ciclos, papel] = await Promise.all([G('kanban/usuarios_publicos'), G('kanban/usuarios/' + u.uid), G(T + 'vinculos'), G(T + 'ciclos'), G(T + 'papeis/' + u.uid)]);
+    S.users = users || {}; S.adm = !!((eu && eu.role === 'adm') || (u.email || '').toLowerCase() === 'caio.soares@ciahering.com.br'); S.vinc = vinc || {}; S.ciclos = ciclos || {}; S.rh = papel === 'rh';
+    if (!S.users[u.uid]) S.users[u.uid] = { nome: S.me.nome, squads: (eu && eu.squads) || {}, init: (eu && eu.init) || '' };
+    await render();
+  } catch (e) { console.warn('[travessia]', e); $('#app').innerHTML = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
+});
+window.Travessia = { farol, ultimoEncontro, diasEntre, CAD_DIAS, estado: S, render };
 </script>
 </body>
 </html>
