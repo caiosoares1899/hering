@@ -202,6 +202,368 @@
           }
         }
       },
+      "travessia": {
+        "papeis": {
+          ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
+          "$uid": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
+            ".validate": "newData.val() === 'rh'"
+          }
+        },
+        "vinculos": {
+          ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+          ".indexOn": [
+            "liderUid",
+            "gerenteUid"
+          ],
+          "$uid": {
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || root.child('kanban/travessia/papeis/' + auth.uid).val() === 'rh')",
+            ".validate": "newData.hasChild('liderUid') && newData.child('liderUid').isString() && newData.child('liderUid').val() != $uid",
+            "liderUid": {
+              ".validate": "newData.isString() && newData.val().length <= 64"
+            },
+            "gerenteUid": {
+              ".validate": "newData.isString() && newData.val().length <= 64 && newData.val() != $uid"
+            },
+            "squad": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "bau": {
+          "$uid": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $uid || root.child('kanban/travessia/vinculos/' + $uid + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $uid + '/gerenteUid').val() === auth.uid)",
+            "$itemId": {
+              ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $uid",
+              ".validate": "newData.hasChildren(['tipo','titulo','ts'])",
+              "tipo": {
+                ".validate": "newData.val() === 'card' || newData.val() === 'marco' || newData.val() === 'kudo' || newData.val() === 'manual'"
+              },
+              "titulo": {
+                ".validate": "newData.isString() && newData.val().length <= 160"
+              },
+              "texto": {
+                ".validate": "newData.isString() && newData.val().length <= 1200"
+              },
+              "nota": {
+                ".validate": "newData.isString() && newData.val().length <= 600"
+              },
+              "ref": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "link": {
+                ".validate": "newData.isString() && newData.val().length <= 300"
+              },
+              "squad": {
+                ".validate": "newData.isString() && newData.val().length <= 40"
+              },
+              "comp": {
+                ".validate": "newData.isString() && newData.val().length <= 60"
+              },
+              "em": {
+                ".validate": "newData.isString() && newData.val().length <= 10"
+              },
+              "ts": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "serie": {
+          "$uid": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $uid || root.child('kanban/travessia/vinculos/' + $uid + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $uid + '/gerenteUid').val() === auth.uid)",
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/travessia/vinculos/' + $uid + '/liderUid').val() === auth.uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || root.child('kanban/travessia/papeis/' + auth.uid).val() === 'rh')",
+            ".validate": "newData.hasChild('cad')",
+            "cad": {
+              ".validate": "newData.val() === 'semanal' || newData.val() === 'quinzenal' || newData.val() === 'mensal' || newData.val() === 'trimestral'"
+            },
+            "tipo": {
+              ".validate": "newData.val() === 'acomp' || newData.val() === 'pdi' || newData.val() === 'carreira'"
+            },
+            "ts": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "encontros": {
+          "$uid": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $uid || root.child('kanban/travessia/vinculos/' + $uid + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $uid + '/gerenteUid').val() === auth.uid)",
+            "$id": {
+              ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((root.child('kanban/travessia/vinculos/' + $uid + '/liderUid').val() === auth.uid || auth.uid === $uid) && newData.child('por').val() === auth.uid || (!newData.exists() && data.child('por').val() === auth.uid))",
+              ".validate": "newData.hasChildren(['data','por','ts'])",
+              "data": {
+                ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-[01][0-9]-[0-3][0-9]$/)"
+              },
+              "tipo": {
+                ".validate": "newData.val() === 'acomp' || newData.val() === 'pdi' || newData.val() === 'carreira'"
+              },
+              "nota": {
+                ".validate": "newData.isString() && newData.val().length <= 280"
+              },
+              "por": {
+                ".validate": "newData.isString()"
+              },
+              "ts": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "humor": {
+          "$uid": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $uid",
+            "$data": {
+              ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $uid",
+              ".validate": "newData.hasChildren(['n','ts']) && $data.matches(/^20[0-9][0-9]-[01][0-9]-[0-3][0-9]$/)",
+              "n": {
+                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5"
+              },
+              "nota": {
+                ".validate": "newData.isString() && newData.val().length <= 140"
+              },
+              "ts": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "humor_comp": {
+          "$uid": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $uid || root.child('kanban/travessia/vinculos/' + $uid + '/liderUid').val() === auth.uid)",
+            "$data": {
+              ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $uid",
+              ".validate": "newData.hasChildren(['n','ts']) && $data.matches(/^20[0-9][0-9]-[01][0-9]-[0-3][0-9]$/)",
+              "n": {
+                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5"
+              },
+              "nota": {
+                ".validate": "newData.isString() && newData.val().length <= 140"
+              },
+              "ts": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "ciclos": {
+          ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+          "$cid": {
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || root.child('kanban/travessia/papeis/' + auth.uid).val() === 'rh')",
+            ".validate": "newData.hasChildren(['nome','status','ts'])",
+            "nome": {
+              ".validate": "newData.isString() && newData.val().length <= 80"
+            },
+            "status": {
+              ".validate": "newData.val() === 'preparacao' || newData.val() === 'coleta' || newData.val() === 'devolutiva' || newData.val() === 'encerrado'"
+            },
+            "prazos": {
+              ".validate": "newData.hasChildren() || !newData.exists()",
+              "$k": {
+                ".validate": "newData.isString() && newData.val().length <= 10"
+              }
+            },
+            "perguntas": {
+              "$grupo": {
+                "$q": {
+                  ".validate": "newData.isString() && newData.val().length <= 300"
+                }
+              }
+            },
+            "participantes": {
+              "$uid": {
+                ".validate": "newData.val() === true"
+              }
+            },
+            "criadoPor": {
+              ".validate": "newData.isString()"
+            },
+            "ts": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "avaliacoes": {
+          "$cid": {
+            "$avaliado": {
+              "pares": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                "$par": {
+                  ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || auth.uid === $par || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                  ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((auth.uid === $avaliado && (!newData.exists() || newData.child('aprovado').val() === false) && data.child('aprovado').val() !== true && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() !== 'encerrado') || (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() !== 'encerrado'))",
+                  ".validate": "newData.hasChildren(['aprovado','ts']) && $par != $avaliado",
+                  "aprovado": {
+                    ".validate": "newData.isBoolean()"
+                  },
+                  "por": {
+                    ".validate": "newData.val() === 'avaliado' || newData.val() === 'lider'"
+                  },
+                  "ts": {
+                    ".validate": "newData.isNumber()"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              },
+              "auto": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $avaliado && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() === 'coleta'",
+                ".validate": "newData.hasChild('ts')",
+                "q1": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q2": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q3": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q4": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q5": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "ts": {
+                  ".validate": "newData.isNumber()"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "lider": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() !== 'encerrado'",
+                ".validate": "newData.hasChild('ts')",
+                "q1": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q2": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q3": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q4": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "q5": {
+                  ".validate": "newData.isString() && newData.val().length <= 2500"
+                },
+                "ts": {
+                  ".validate": "newData.isNumber()"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "resp_pares": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                "$par": {
+                  ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $par || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                  ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $par && root.child('kanban/travessia/avaliacoes/' + $cid + '/' + $avaliado + '/pares/' + auth.uid + '/aprovado').val() === true && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() === 'coleta'",
+                  ".validate": "newData.hasChild('ts')",
+                  "q1": {
+                    ".validate": "newData.isString() && newData.val().length <= 2500"
+                  },
+                  "q2": {
+                    ".validate": "newData.isString() && newData.val().length <= 2500"
+                  },
+                  "q3": {
+                    ".validate": "newData.isString() && newData.val().length <= 2500"
+                  },
+                  "q4": {
+                    ".validate": "newData.isString() && newData.val().length <= 2500"
+                  },
+                  "q5": {
+                    ".validate": "newData.isString() && newData.val().length <= 2500"
+                  },
+                  "ts": {
+                    ".validate": "newData.isNumber()"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              },
+              "devolutiva": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid || (auth.uid === $avaliado && data.child('liberada').val() === true))",
+                ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() !== 'encerrado'",
+                ".validate": "newData.hasChildren(['liberada','ts'])",
+                "texto": {
+                  ".validate": "newData.isString() && newData.val().length <= 6000"
+                },
+                "liberada": {
+                  ".validate": "newData.isBoolean()"
+                },
+                "liberadaEm": {
+                  ".validate": "newData.isNumber()"
+                },
+                "por": {
+                  ".validate": "newData.isString()"
+                },
+                "ts": {
+                  ".validate": "newData.isNumber()"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              },
+              "ciente": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid)",
+                ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $avaliado && root.child('kanban/travessia/avaliacoes/' + $cid + '/' + $avaliado + '/devolutiva/liberada').val() === true",
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+        "pedidos_par": {
+          "$par": {
+            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $par",
+            "$k": {
+              ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && root.child('kanban/travessia/vinculos/' + (newData.exists() ? newData.child('avaliado').val() : data.child('avaliado').val()) + '/liderUid').val() === auth.uid",
+              ".validate": "newData.hasChildren(['cid','avaliado','ts'])",
+              "cid": {
+                ".validate": "newData.isString()"
+              },
+              "avaliado": {
+                ".validate": "newData.isString()"
+              },
+              "ts": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        }
+      },
       "plantao_status": {
         ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')"
       },

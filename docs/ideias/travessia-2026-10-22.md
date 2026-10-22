@@ -243,3 +243,34 @@ O Antigravity entregou um dossiê de benchmarking (Lattice, Leapsome, Culture Am
 | **1 — Rituais** | Vínculos (líder, gerente, RH), séries de 1:1, pauta colaborativa, notas compartilhadas e privadas, ações, carryover, radar de cadência, lembretes, **Baú da Travessia** (+ botão no Maré e no Radar). Regras e testes de regras. Piloto: squad Dados. |
 | **2 — PDI e feedback** | PDI 70-20-10 com vínculo a cards, co-piloto de PDI, briefing de 1:1, **feedback SCI** com visibilidade e pedido de feedback, contexto automático Maré/Radar. |
 | **3 — Frota e ciclo** | Quadro do time e do gerente, resumo semanal, painel de evidências, ciclo configurável pelo RH (autoavaliação, pares, devolutiva com trava). Nota/9-Box só se o RH decidir. |
+
+## 13. Fase 1 — o que o Caio mandou fazer já (22/10/2026, tarde)
+
+**Escopo pedido:** 📦 Baú · 🚦 faróis · 🌤️ humor dentro do 🌅 Meu Dia · 🔓 trava de devolutiva e 🤝 indicação de pares dentro da avaliação · ⭐ mural de Estrelas (Kudos) dentro do Travessia, só para quem tem.
+
+**Como interpretei (corrigir se estiver errado):**
+- **Faróis** = semáforo de cadência do 1:1 por pessoa (🟢 em dia, 🟡 atenção, 🔴 atrasado), medido contra a cadência combinada (semanal, quinzenal, mensal ou trimestral), **descontando as folgas da Escala**. Para o farol existir, entra um registro simples de 1:1 realizado (data e tipo), sem pauta nem série completa ainda.
+- **Humor no Meu Dia** = um "como você está hoje?" de 1 a 5 no painel 🌅 Meu Dia do Maré. **Privado por padrão** (só a pessoa lê). Ela pode escolher **compartilhar com o líder direto**; descompartilhar apaga a cópia. Nenhum modelo analisa humor.
+- **Avaliação v1** = só texto (sem nota, como combinado), com três vozes: autoavaliação, líder e pares. Perguntas padrão por ciclo (o RH poderá trocar depois). Fases: preparação (indicação de pares) → coleta → devolutiva → encerrado.
+- **Indicação de pares:** o avaliado sugere, **o líder aprova**; só par aprovado responde; o avaliado nunca lê o feedback individual dos pares. Sugestões iniciais = colegas das mesmas squads.
+- **Trava de devolutiva:** o avaliado só lê a devolutiva **depois que o líder libera**; mesmo liberada, a avaliação bruta do líder e os feedbacks individuais dos pares continuam fechados (a devolutiva é a síntese do líder).
+- **Mural de Estrelas:** lê as Estrelas que a pessoa recebeu (nas squads dela e no mural geral); a seção só aparece se houver alguma; cada Estrela pode ir para o Baú com 1 clique.
+
+**Já feito nesta etapa (PR de fundação):** regras do banco `kanban/travessia/*` + 11 testes de regras (inclui "o avaliado não lê a avaliação do líder", "humor privado", "ADM e RH não leem conteúdo") + o nó entra no backup semanal (não no diário).
+
+**Quem lê o quê (resumo das regras):**
+| Dado | Pessoa | Líder direto | Gerente | RH | ADM |
+|---|---|---|---|---|---|
+| Baú | ✅ grava e lê | lê | lê | ❌ | ❌ |
+| Registro de 1:1 e cadência | ✅ | ✅ | lê | ❌ | ❌ |
+| Humor | ✅ (privado) | só o que ela compartilhar | ❌ | ❌ | ❌ |
+| Autoavaliação | ✅ | lê | lê | ❌ | ❌ |
+| Avaliação do líder | ❌ | ✅ | lê | ❌ | ❌ |
+| Feedback de cada par | ❌ | lê | lê | ❌ | ❌ |
+| Devolutiva | só depois de liberada | ✅ | lê | ❌ | ❌ |
+| Organograma (vínculos) | lê | lê | lê | grava | grava |
+| Ciclos (nome, fase) | lê | lê | lê | grava | grava |
+
+O ADM e o RH administram o **organograma e os ciclos**, mas **não leem conteúdo de pessoas** (lembrando: quem administra o projeto do Firebase contorna as regras — seção 12.3).
+
+**Falta fazer (próximas PRs):** a tela real `travessia-dev.html` (login, Minha travessia, Frota, Avaliação, administração do organograma/RH/ciclos) · botão 📌 no card do Maré, no marco do Radar e na Estrela · humor no Meu Dia · notificação para o par indicado · Ajuda e dica.

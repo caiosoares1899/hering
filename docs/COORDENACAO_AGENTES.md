@@ -143,7 +143,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| — | — | — | — |
+| Claude | **Travessia — regras do banco** (`kanban/travessia/*`: Baú, 1:1, humor privado, avaliação com trava de devolutiva) e o nó no backup semanal (`functions/backup/completo.js`). Sem a regra publicada, a tela do Travessia não grava. | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` e `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario,functions:backupCompletoApi --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do resync) | 22/10/2026 |
 
 ---
 
