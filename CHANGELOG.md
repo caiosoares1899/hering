@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📌 Baú e 🌤️ humor chegam ao Maré e ao Radar (SÓ DEV): 📌 no card, humor no Meu Dia e 📌 no Marco — kanban-dev v8.30.879 · okr-dev v2.95 · mare-dicas-dev v8 — 2026-10-22
+
+Ganchos do Travessia (travessia-dev.html) nos produtos onde o trabalho acontece.
+• Maré: 📌 no topo do card (e 'Guardar na Travessia' no clique direito) guarda o card no Baú da pessoa; clicar de novo atualiza em vez de duplicar.
+• Maré, Meu Dia: 'Como você está hoje?' com 5 carinhas. Privado; marcar 'Compartilhar com meu líder' grava a cópia que o líder lê (desmarcar apaga). Se as regras do banco ainda não foram publicadas, o bloco some em silêncio.
+• Radar: 📌 dentro do Marco existente guarda o Marco (com o Objetivo no texto) no Baú.
+• Dica 'bau' (ao abrir um card) e dois tópicos novos na Ajuda do Maré: Baú da Travessia (📌) e Humor do dia (Meu Dia). Depende das regras novas do banco: firebase deploy --only database.
+
 ### ⛵ Travessia (SÓ DEV): Baú, faróis do 1:1, humor privado, mural de Estrelas e avaliação com indicação de pares e trava de devolutiva — travessia-dev.html — 2026-10-22
 
 Página nova do Oceano para pessoas e desenvolvimento (Fase 1), só em dev e ainda fora do menu de produtos.
