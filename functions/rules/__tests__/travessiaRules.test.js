@@ -149,6 +149,16 @@ test('indicação de pares: o avaliado SUGERE (sempre não aprovado); só o líd
   assert.equal(grava(AV('pares/cae'), A.ana, { aprovado: false, por: 'avaliado', ts: 1 }), false, 'ciclo encerrado');
 });
 
+test('listas de pares: o avaliado, o líder e o gerente listam; o par só lê o próprio item; resp_pares só o líder e o gerente listam', () => {
+  reset();
+  ['ana', 'pau', 'gil'].forEach(k => assert.equal(lê(AV('pares'), A[k]), true, 'lista de pares: ' + k));
+  ['bia', 'cae', 'dani', 'adm', 'forasteiro'].forEach(k => assert.equal(lê(AV('pares'), A[k]), false, 'lista de pares: ' + k));
+  assert.equal(lê(AV('pares/bia'), A.bia), true, 'o par lê só o seu');
+  ['pau', 'gil'].forEach(k => assert.equal(lê(AV('resp_pares'), A[k]), true, 'lista de respostas: ' + k));
+  ['ana', 'bia', 'dani', 'adm', 'caio'].forEach(k => assert.equal(lê(AV('resp_pares'), A[k]), false, 'lista de respostas: ' + k));
+  assert.equal(lê(AV('resp_pares/bia'), A.bia), true, 'o par lê a própria resposta');
+});
+
 test('autoavaliação, avaliação do líder e feedback de pares: cada um escreve o seu; o AVALIADO NÃO LÊ o do líder nem o dos pares', () => {
   reset();
   assert.equal(grava(AV('auto'), A.ana, { q1: 'orgulho', ts: 2 }), true);

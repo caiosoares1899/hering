@@ -407,6 +407,7 @@
           "$cid": {
             "$avaliado": {
               "pares": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
                 "$par": {
                   ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || auth.uid === $par || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
                   ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((auth.uid === $avaliado && newData.child('aprovado').val() === false && data.child('aprovado').val() !== true && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() !== 'encerrado') || (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() !== 'encerrado'))",
@@ -478,6 +479,7 @@
                 }
               },
               "resp_pares": {
+                ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
                 "$par": {
                   ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $par || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
                   ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $par && root.child('kanban/travessia/avaliacoes/' + $cid + '/' + $avaliado + '/pares/' + auth.uid + '/aprovado').val() === true && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() === 'coleta'",
