@@ -109,10 +109,10 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.878 | `kanban-dev.html` v8.30.880-dev | `mare-login` v3 · `mare-notif` v34 · `mare-metas` v17 · `mare-dicas` v8 |
-| Painel | `painel.html` v5.85 · painel | `painel-dev.html` v5.85 · painel-dev | `mare-notif` v34 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v8 |
-| Radar | `okr.html` v2.94 · okr | `okr-dev.html` v2.95 · okr-dev | `mare-notif` v34 · `mare-dicas` v8 |
-| Oceano | `oceano.html` v1.58 · oceano | `oceano-dev.html` v1.58 · oceano-dev | `mare-login` v3 · `mare-notif` v34 · `mare-plantao` v4 · `mare-dicas` v8 · `mare-metas` v17 |
+| Maré Digital | `kanban.html` v8.30.878 | `kanban-dev.html` v8.30.881-dev | `mare-login` v3 · `mare-notif` v35 · `mare-metas` v17 · `mare-dicas` v8 |
+| Painel | `painel.html` v5.85 · painel | `painel-dev.html` v5.85 · painel-dev | `mare-notif` v35 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v8 |
+| Radar | `okr.html` v2.94 · okr | `okr-dev.html` v2.95 · okr-dev | `mare-notif` v35 · `mare-dicas` v8 |
+| Oceano | `oceano.html` v1.58 · oceano | `oceano-dev.html` v1.58 · oceano-dev | `mare-login` v3 · `mare-notif` v35 · `mare-plantao` v4 · `mare-dicas` v8 · `mare-metas` v17 |
 | Escala | `escala.html` v1.10 · escala | `escala-dev.html` v1.10 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
 

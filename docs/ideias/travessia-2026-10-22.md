@@ -282,3 +282,14 @@ Ideia do Caio: dentro do 🌅 Meu Dia, além do humor da manhã, um **humor de f
 - **No Travessia:** o bloco de fechamento aparece em *Minha travessia* e há uma aba **📓 Diário** (lista por mês, busca, apagar um dia e 📌 guardar um dia no Baú).
 - **Backup:** entra no backup semanal junto com o resto de `kanban/travessia`. Como é o dado mais pessoal de todos, vale a mesma conversa da §12.3 com a TI: **recomendo excluir o diário do backup** (hoje não está excluído).
 - **Dica:** não, o bloco já está à vista no Meu Dia. A Ajuda do Maré foi atualizada.
+
+
+### 13.2 Acréscimo (22/10/2026, noite): 🌡️ termômetro do time e 🫶 aviso de apoio ao líder
+Pedido do Caio: o líder precisa de um **termômetro da média do time**, com **quantas respostas** existem, e **receber um alerta quando alguém marca que está mal**, só para ficar de olho e ajudar.
+- **Como respeita a privacidade:** o humor continua **privado por padrão**. O termômetro e o alerta só consideram quem **escolheu compartilhar com o líder** (a caixa "Compartilhar com meu líder", agora com o texto explícito: "ele vê no termômetro do time e recebe um aviso se eu marcar que não estou bem, pra poder me apoiar"). Quem não compartilha não entra na média nem gera aviso, e o líder vê quantas pessoas não compartilham.
+- **Termômetro (Frota):** média dos últimos 7 dias de 1 a 5 com a carinha correspondente e a cor (🟢 ≥ 3,5, 🟡 ≥ 2,5, 🔴 abaixo), comparação com a semana anterior (subiu, estável ou caiu), distribuição por humor, gráfico dos últimos 14 dias e a contagem "N respostas de P de T pessoas (quem compartilhou)".
+- **Aviso de apoio:** quando uma pessoa que compartilha marca "mal" ou "muito mal", o líder direto recebe uma notificação no sino (tipo `travessia_apoio`, um por pessoa por dia, nova área "Travessia (gente)" na Central de Notificações) e vê na Frota a lista "🫶 Pra ficar de olho" (últimos 3 dias) e um selo "vale um oi" no cartão da pessoa. Clicar no aviso abre a Frota. **Sem push** por enquanto: o texto de uma notificação no celular poderia aparecer na tela bloqueada (fica como decisão do Caio).
+- **Decisões que continuam abertas (do Caio e do RH):**
+  1. **Opt-in × padrão compartilhado.** Hoje a cobertura depende de cada pessoa compartilhar. Se o Caio quiser a média do time inteira, a alternativa é um **agregado anônimo calculado no servidor** (só aparece com pelo menos 5 respostas, sem nomes e sem aviso individual) — exige mudar o texto prometido às pessoas e validar com RH/LGPD (humor pode ser considerado dado de saúde). Os avisos por pessoa continuariam dependendo de consentimento.
+  2. **Push** para o aviso de apoio (com texto genérico, sem nome).
+  3. Se o **gerente** também deve ver o termômetro dos times dos seus líderes (hoje só o líder direto lê o humor compartilhado).

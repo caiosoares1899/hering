@@ -6569,7 +6569,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.880-dev</div>
+<div class="version">v8.30.881-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6920,7 +6920,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=34"></script>
+<script src="mare-notif-dev.js?v=35"></script>
 <script src="mare-metas-dev.js?v=17"></script>
 <script src="mare-dicas-dev.js?v=8"></script>
 
@@ -23697,7 +23697,7 @@ async function _meuDiaHumorRender(){
   box.innerHTML=`<div style="padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;">
     <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🌤️ Como você está hoje?</div>
     <div role="group" aria-label="Humor de hoje" style="display:flex;gap:6px;flex-wrap:wrap;">${_MEUDIA_FACES.map((f,i)=>`<button type="button" class="btn btn-sm" onclick="_meuDiaHumorSet(${i+1})" aria-pressed="${!!atual&&atual.n===i+1}" aria-label="${f[1]}" title="${f[1]}" style="font-size:20px;padding:4px 10px;${atual&&atual.n===i+1?'border-color:var(--accent);background:rgba(56,182,255,.2);':''}">${f[0]}</button>`).join('')}</div>
-    <label style="display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--txt2);margin-top:8px;cursor:pointer;"><input type="checkbox" id="meudia-humor-comp" ${comp?'checked':''} onchange="_meuDiaHumorComp(this.checked)"> Compartilhar com meu líder (só se você quiser — o padrão é só você ver)</label></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--txt2);margin-top:8px;cursor:pointer;"><input type="checkbox" id="meudia-humor-comp" ${comp?'checked':''} onchange="_meuDiaHumorComp(this.checked)"> Compartilhar com meu líder — ele vê no termômetro do time e recebe um aviso se eu marcar que não estou bem, pra poder me apoiar (só se você quiser; o padrão é só você ver)</label></div>
   <div style="margin-top:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;">
     <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🌙 Fechamento do dia${dia?' <span style="font-weight:600;color:var(--txt2);">· ✔ salvo hoje</span>':''}</div>
     <div role="group" aria-label="Humor do fim do dia" style="display:flex;gap:6px;flex-wrap:wrap;">${_MEUDIA_FACES.map((f,i)=>`<button type="button" class="btn btn-sm" data-dia-n="${i+1}" onclick="_meuDiaDiaSel(${i+1})" aria-pressed="${_meuDiaDiaN===i+1}" aria-label="${f[1]}" title="${f[1]}" style="font-size:20px;padding:4px 10px;${_meuDiaDiaN===i+1?'border-color:var(--accent);background:rgba(56,182,255,.2);':''}">${f[0]}</button>`).join('')}</div>
@@ -23726,15 +23726,26 @@ async function _meuDiaHumorSet(n){
     if(comp) await window._set(window._ref(window._db,'kanban/travessia/humor_comp/'+u.uid+'/'+hoje), reg);
     else await window._remove(window._ref(window._db,'kanban/travessia/humor_comp/'+u.uid+'/'+hoje));
     toast(_MEUDIA_FACES[n-1][0]+' Humor de hoje registrado.');
+    if(comp) _travessiaAlertaApoio(n);
   }catch(e){ toast('⚠️ Não deu pra registrar o humor agora.'); }
   _meuDiaHumorRender();
+}
+// 🫶 Só quando a pessoa ESCOLHEU compartilhar com o líder e marcou "mal" (2) ou "muito mal" (1): avisa o líder direto (organograma da Travessia) pelo sino, pra ele ficar de olho e apoiar.
+// Um aviso por pessoa por dia (id fixo; a regra do banco só grava se ainda não existe). Falha em silêncio: o humor da pessoa já foi salvo.
+async function _travessiaAlertaApoio(n){
+  if(!(n<=2)) return; const u=window._currentUser; if(!u) return;
+  try{
+    const lid=(await window._get(window._ref(window._db,'kanban/travessia/vinculos/'+u.uid+'/liderUid'))).val(); if(!lid||lid===u.uid) return;
+    const nome=String(u.displayName||u.email||'Alguém').split(' ')[0];
+    createNotif(lid,'travessia_apoio','🫶 '+nome+' marcou que não está bem hoje','Compartilhou com você para você poder apoiar. Que tal um "oi"?',null,'apoio_'+u.uid+'_'+_localDateStrBoard(new Date()));
+  }catch(e){}
 }
 async function _meuDiaHumorComp(marcado){
   const u=window._currentUser; if(!u) return; const hoje=_localDateStrBoard(new Date());
   try{
     const snap=await window._get(window._ref(window._db,'kanban/travessia/humor/'+u.uid+'/'+hoje)); const reg=snap.val();
     if(!reg){ toast('Escolha primeiro como você está.'); _meuDiaHumorRender(); return; }
-    if(marcado) await window._set(window._ref(window._db,'kanban/travessia/humor_comp/'+u.uid+'/'+hoje), {n:reg.n, ts:reg.ts});
+    if(marcado){ await window._set(window._ref(window._db,'kanban/travessia/humor_comp/'+u.uid+'/'+hoje), {n:reg.n, ts:reg.ts}); _travessiaAlertaApoio(reg.n); }
     else await window._remove(window._ref(window._db,'kanban/travessia/humor_comp/'+u.uid+'/'+hoje));
     toast(marcado?'👁 Seu líder passa a ver o humor de hoje.':'🔒 Voltou a ser só seu.');
   }catch(e){ toast('⚠️ Não deu pra atualizar agora.'); _meuDiaHumorRender(); }
@@ -28257,7 +28268,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
     { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.\n\n📆 <b>Prazo do card (opcional):</b> na mesma tela, dá pra definir de já um prazo pro card — uma data fixa, diferente da data de entrada. Deixe em branco pro card nascer sem prazo, como sempre foi.' },
     { icon:'📌', title:'Baú da Travessia (📌)', text:'O 📌 no topo do card (e "Guardar na Travessia" no menu de clique direito) guarda aquele card no seu <b>Baú da Travessia</b>: a lista das suas conquistas do ciclo, só sua (seu líder e seu gerente também leem). Na hora da avaliação você não depende da memória — o Baú aparece ao lado das suas respostas. Clicar de novo no mesmo card só atualiza o item. No Radar, o mesmo 📌 existe dentro do Marco; no Travessia você também registra conquistas à mão e guarda as ⭐ Estrelas que recebeu.' },
-    { icon:'🌤️', title:'Humor do dia (Meu Dia)', text:'No topo do 🌅 Meu Dia tem "Como você está hoje?", com cinco carinhas. O que você marca é <b>só seu</b>. Se quiser, marque "Compartilhar com meu líder": ele passa a ver aquele dia (desmarcar apaga a cópia dele). Ninguém, nem o sistema, analisa seu humor — serve para você acompanhar como anda e, se quiser, conversar com o líder.\n\n🌙 <b>Fechamento do dia:</b> logo abaixo, escolha como foi o fim do dia e, se quiser, conte em um texto livre como foi. Isso fica salvo <b>só para você</b> (nem o seu líder lê) no 📓 Diário da Travessia, para você se lembrar depois — por exemplo na hora da avaliação ou de um 1:1.' },
+    { icon:'🌤️', title:'Humor do dia (Meu Dia)', text:'No topo do 🌅 Meu Dia tem "Como você está hoje?", com cinco carinhas. O que você marca é <b>só seu</b>. Se quiser, marque "Compartilhar com meu líder": ele passa a ver aquele dia no <b>termômetro do time</b> (a média das respostas, com quantas pessoas responderam) e, se você marcar "mal" ou "muito mal", recebe um aviso no sino só para ficar de olho e te apoiar (desmarcar apaga a cópia dele). Quem não compartilha não entra em nada disso. Ninguém, nem o sistema, analisa seu humor — serve para você acompanhar como anda e, se quiser, conversar com o líder.\n\n🌙 <b>Fechamento do dia:</b> logo abaixo, escolha como foi o fim do dia e, se quiser, conte em um texto livre como foi. Isso fica salvo <b>só para você</b> (nem o seu líder lê) no 📓 Diário da Travessia, para você se lembrar depois — por exemplo na hora da avaliação ou de um 1:1.' },
     { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: ⚡ Automações (regras "Quando X → Então Y" e receitas de fan-out, ver dica "Automações"), 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar), 📦 Arquivados (cards que saíram do quadro) e 🧹 Cards antigos (arquivamento em lote de cards parados há muito tempo, disponível pra ADM/PO/Organizador). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
     { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.\n\nÉ só o marcador no card: o planejamento em si — Objetivos e Marcos por torre, o calendário de reuniões, o Dashboard e a apresentação — vive na página própria 📡 Radar (okr.html).' },
@@ -29332,6 +29343,7 @@ const NOTIF_ICONS = {
   vtex_incidente: '🚨',
   vtex_monitor_falhou: '🛰️',
   escala: '🗓️',
+  travessia_apoio: '🫶',
 };
 
 function toggleNotifPanel(){
@@ -30375,6 +30387,12 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
     return;
   }
   // 🗓️ Escala cadastrada por um gestor: abre a Escala na semana cadastrada (okrObjId = 1ª data).
+  // 🫶 Alguém do time marcou que não está bem (e compartilhou com o líder): abre a Frota na Travessia, onde fica o termômetro do time.
+  if(type==='travessia_apoio'){
+    const u = MareNotif.urlPessoal({type:'travessia_apoio'});
+    if(u && u.url) MareNotif.abrirPagina(u.url);
+    return;
+  }
   if(type==='escala'){
     const u = MareNotif.urlPessoal({type:'escala', squad, okrObjId});
     if(u && u.url) MareNotif.abrirPagina(u.url);

@@ -46,7 +46,7 @@ let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n
    t('aba 🔔 Notificações existe', await p.evaluate(()=>!!document.getElementById('ptab-notifs')&&!!document.getElementById('ppane-notifs')));
    await p.evaluate(()=>swPtab('notifs')); await p.waitForTimeout(700);
    const v=await p.evaluate(()=>({linhas:document.querySelectorAll('#nc-tipos .nc-row').length,total:MareNotif.TIPOS.length,areas:document.querySelectorAll('#nc-tipos .nc-area').length,resumo:[...document.querySelectorAll('#nc-resumo .met')].map(m=>m.textContent.replace(/\s+/g,' ').trim()),visivel:document.getElementById('ppane-notifs').classList.contains('on')}));
-   t('lista todos os tipos do catálogo, agrupados por área', v.visivel && v.linhas===v.total && v.areas===6, v);
+   t('lista todos os tipos do catálogo, agrupados por área', v.visivel && v.linhas===v.total && v.areas===7, v);
    t('resumo: 🔕 Não Perturbe agora = 2 (Bia com fim futuro + Dan sem fim; Caro venceu)', /Não Perturbe agora\s*2/.test(v.resumo[2]) && /Bia/.test(v.resumo[2]) && /Dan/.test(v.resumo[2]) && !/Caro/.test(v.resumo[2]), v.resumo);
    t('resumo: pessoas com push = 2 de 4', /2\s*\/4/.test(v.resumo[3].replace(/\s/g,'')) , v.resumo[3]);
    const pes=await p.evaluate(()=>[...document.querySelectorAll('#nc-pessoas .nc-pess:not(.hd)')].map(r=>({nome:r.querySelector('b').textContent,txt:r.textContent.replace(/\s+/g,' ')})));

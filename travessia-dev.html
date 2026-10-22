@@ -324,6 +324,17 @@ function farol({ ultimo, cad, folgas, hoje }) {
   return { cor, ic, dias, efetivo: ef, titulo: nome + ' · ' + (dias === 0 ? 'último 1:1 hoje' : 'último 1:1 há ' + dias + (dias === 1 ? ' dia' : ' dias')),
     sub: 'Cadência ' + CAD[cad].toLowerCase() + (fo ? ' · ' + fo + (fo === 1 ? ' dia de folga descontado' : ' dias de folga descontados') : '') };
 }
+// 🌡️ Termômetro do time: só entra o humor que as pessoas ESCOLHERAM compartilhar com o líder (humor_comp). Janela de 7 dias contra os 7 anteriores.
+// `apoio` = quem marcou "mal" ou "muito mal" (1 ou 2) nos últimos 3 dias — só um sinal pro líder ficar de olho e apoiar.
+function termometro(hc, hoje, totalPessoas) {
+  const idade = k => diasEntre(k, hoje); const w = (a, b) => { const v = []; Object.keys(hc || {}).forEach(u => Object.entries(hc[u] || {}).forEach(([k, e]) => { const i = idade(k); if (e && e.n && i >= a && i <= b) v.push({ u, k, n: e.n }); })); return v; };
+  const atual = w(0, 6), ant = w(7, 13); const media = v => v.length ? v.reduce((s, x) => s + x.n, 0) / v.length : null;
+  const dist = [0, 0, 0, 0, 0]; atual.forEach(x => dist[x.n - 1]++);
+  const dias = []; for (let i = 13; i >= 0; i--) { const d = new Date(Date.parse(hoje + 'T12:00:00')); d.setDate(d.getDate() - i); const k = isoDe(d); const v = w(0, 13).filter(x => x.k === k); dias.push({ k, media: media(v), n: v.length }); }
+  const apoio = []; Object.keys(hc || {}).forEach(u => { const es = Object.entries(hc[u] || {}).filter(([k, e]) => e && e.n && idade(k) >= 0 && idade(k) <= 2).sort((a, b) => b[0].localeCompare(a[0])); if (es.length && es[0][1].n <= 2) apoio.push({ uid: u, n: es[0][1].n, k: es[0][0] }); });
+  const m = media(atual), pessoas = new Set(atual.map(x => x.u)).size;
+  return { media: m, respostas: atual.length, pessoas, total: totalPessoas || 0, anterior: media(ant), dist, dias, apoio, cor: m == null ? 'cinza' : m >= 3.5 ? 'verde' : m >= 2.5 ? 'amarelo' : 'vermelho' };
+}
 const ultimoEncontro = enc => Object.values(enc || {}).map(e => e && e.data).filter(Boolean).sort().pop() || null;
 
 // ───────── estado ─────────
@@ -431,8 +442,8 @@ async function viewInicio() {
       ${um.ultimo ? `<p class="small">Último registro: ${brFull(um.ultimo)}</p>` : ''}</section>
     <section class="gl pad stack" aria-labelledby="t-hu"><h2 class="h2" id="t-hu">🌤️ Como você está hoje?</h2>
       <div class="faces" role="group" aria-label="Humor de hoje">${FACES.map((f, i) => `<button type="button" data-act="humor" data-n="${i + 1}" aria-pressed="${hHoje && hHoje.n === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
-      <label class="ck"><input type="checkbox" id="humor-comp" ${comp ? 'checked' : ''} ${hHoje ? '' : ''}> Compartilhar com meu líder${lid ? ' (' + esc(nomeDe(lid)) + ')' : ''}</label>
-      <p class="small">Só você vê, a menos que compartilhe. Ninguém (nem o sistema) analisa seu humor.</p>
+      <label class="ck"><input type="checkbox" id="humor-comp" ${comp ? 'checked' : ''}> Compartilhar com meu líder${lid ? ' (' + esc(nomeDe(lid)) + ')' : ''}</label>
+      <p class="small">Só você vê, a menos que compartilhe. Se compartilhar, seu líder vê no termômetro do time e recebe um aviso se você marcar que não está bem — pra poder te apoiar. Ninguém (nem o sistema) analisa seu humor.</p>
       ${sparkHumor(humor, 14)}</section></div>
    ${blocoFechamento(diario)}
    ${pend.length ? `<section class="gl pad" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
@@ -519,15 +530,29 @@ async function viewFrota() {
   if (!meus.length && !amp.length) return vazio('Você não tem liderados no organograma. Se isso está errado, peça ao ADM ou ao RH.');
   const dados = {}; await Promise.all(meus.concat(amp).map(async u => { dados[u] = { um: await cache('um:' + u, () => carregaUm(u)) }; }));
   const humor = {}; await Promise.all(meus.map(async u => { humor[u] = await cache('humorc:' + u, () => carregaHumor(u, true).catch(() => ({}))); }));
+  const termo = termometro(humor, hojeISO(), meus.length); const apoioDe = Object.fromEntries(termo.apoio.map(a => [a.uid, a]));
   const cartao = (u, completo) => { const d = dados[u].um; const h = humor[u];
     return `<article class="gl pcard ${d.farol.cor === 'vermelho' || d.farol.cor === 'amarelo' ? 'at' : ''}" aria-label="${esc(nomeDe(u))}"><div class="top">${avatar(u)}<div style="flex:1;min-width:0"><b>${esc(nomeDe(u))}</b><div class="small">${d.serie ? esc(CAD[d.serie.cad]) : 'sem cadência'}</div></div></div>
       <div style="margin-top:10px">${viewFarol(u, d)}</div>
       ${completo && h && Object.keys(h).length ? `<div class="small" style="margin-top:8px">🌤️ Humor compartilhado (14 dias)</div>${sparkHumor(h, 14)}` : (completo ? '<p class="small" style="margin-top:8px">🌤️ Humor não compartilhado.</p>' : '')}
+      ${apoioDe[u] ? `<div style="margin-top:8px">${chip('🫶 Marcou ' + FACES[apoioDe[u].n - 1][1].toLowerCase() + ' em ' + esc(brDe(apoioDe[u].k)) + ' — vale um oi', 'warn')}</div>` : ''}
       ${completo ? `<div class="acts"><button class="btn s p" data-act="abrir" data-uid="${esc(u)}">Abrir</button></div>` : ''}</article>`; };
   return `<div class="stack"><section class="gl pad"><h2 class="h2">🚢 Frota</h2><p class="sub">${meus.length} ${meus.length === 1 ? 'pessoa' : 'pessoas'} que você lidera. Os faróis mostram a cadência dos 1:1, já descontando as folgas da Escala.</p></section>
+   ${meus.length ? viewTermometro(termo, meus) : ''}
    ${meus.length ? `<div class="grid g3">${meus.map(u => cartao(u, true)).join('')}</div>` : ''}
    ${amp.length ? `<section class="gl pad"><h2 class="h2">🏛 Time dos meus líderes</h2><p class="small">Visão de farol; os detalhes ficam com cada líder.</p></section><div class="grid g3">${amp.map(u => cartao(u, false)).join('')}</div>` : ''}
    ${S.sel ? await viewDetalhe(S.sel) : ''}</div>`;
+}
+function viewTermometro(t, meus) {
+  const fm = t.media == null ? null : FACES[Math.min(5, Math.max(1, Math.round(t.media))) - 1]; const max = Math.max(1, ...t.dist);
+  const tend = t.media != null && t.anterior != null ? (t.media - t.anterior >= 0.3 ? '↗ subiu' : t.media - t.anterior <= -0.3 ? '↘ caiu' : '→ estável') + ' em relação à semana anterior' : '';
+  const sp = `<div class="spark" role="img" aria-label="Média diária do time nos últimos 14 dias">${t.dias.map(d => d.media ? `<i style="height:${Math.round(d.media * 20)}%" title="${esc(brDe(d.k))}: média ${d.media.toFixed(1).replace('.', ',')} (${d.n} resp.)"></i>` : `<i class="v" title="${esc(brDe(d.k))}: sem respostas"></i>`).join('')}</div>`;
+  return `<section class="gl pad stack" aria-labelledby="te-t"><h2 class="h2" id="te-t">🌡️ Termômetro do time <span class="small">· últimos 7 dias</span></h2>
+    ${t.media == null ? vazio('Ninguém compartilhou o humor nos últimos 7 dias. O humor é privado por padrão — quem quiser, compartilha no Meu Dia (Maré) ou na Minha travessia.') : `<div class="grid g2"><div class="farol ${t.cor}"><span class="lamp" aria-hidden="true" style="font-size:34px">${fm[0]}</span><div><b style="font-size:20px">${t.media.toFixed(1).replace('.', ',')} <span class="small">de 5 · ${esc(fm[1])}</span></b><span class="small">${esc(tend)}</span></div></div>
+      <div><div class="small"><b>${t.respostas}</b> ${t.respostas === 1 ? 'resposta' : 'respostas'} de <b>${t.pessoas}</b> de ${t.total} ${t.total === 1 ? 'pessoa' : 'pessoas'} (quem compartilhou)</div>
+      ${t.dist.map((c, i) => `<div class="row" style="gap:8px;margin-top:4px"><span style="width:26px" aria-hidden="true">${FACES[i][0]}</span><div class="bar" style="flex:1" role="img" aria-label="${FACES[i][1]}: ${c}"><i style="width:${Math.round(c * 100 / max)}%"></i></div><span class="small" style="width:22px;text-align:right">${c}</span></div>`).join('')}</div></div>${sp}
+      ${t.pessoas < t.total ? `<p class="small">${t.total - t.pessoas} ${t.total - t.pessoas === 1 ? 'pessoa não compartilha' : 'pessoas não compartilham'} o humor — a escolha delas é respeitada e não entra na média.</p>` : ''}`}
+    ${t.apoio.length ? `<div class="trava" style="margin-top:10px"><b>🫶 Pra ficar de olho</b><p class="small">Marcaram “mal” ou “muito mal” nos últimos 3 dias e escolheram compartilhar com você. Vale um oi, sem pressão.</p><ul class="lst">${t.apoio.map(a => `<li>${avatar(a.uid)}<div class="tx"><b>${esc(nomeDe(a.uid))}</b> <span class="small">${FACES[a.n - 1][0]} ${esc(FACES[a.n - 1][1])} · ${esc(brDe(a.k))}</span></div><button class="btn s" data-act="abrir" data-uid="${esc(a.uid)}">Abrir</button></li>`).join('')}</ul></div>` : ''}</section>`;
 }
 async function viewDetalhe(uid) {
   const d = await cache('um:' + uid, () => carregaUm(uid)); const t = S.selTab;
@@ -617,6 +642,12 @@ const salvaResp = async (cid, av, grupo, caminho) => {
   if (Object.keys(dados).length < 2) { toast('Escreva pelo menos uma resposta antes de salvar.'); return false; }
   return tenta(() => W(caminho, dados), '💾 Salvo!');
 };
+// 🫶 Só quando a pessoa ESCOLHEU compartilhar e marcou "mal" (2) ou "muito mal" (1): avisa o líder direto pelo sino (um por pessoa por dia; a regra só grava se ainda não existe).
+async function alertaApoio(n) {
+  const lid = liderDe(S.me.uid); if (!(n <= 2) || !lid || lid === S.me.uid) return;
+  const id = 'apoio_' + S.me.uid + '_' + hojeISO(); const nome = (S.me.nome || 'Alguém').split(' ')[0];
+  try { await set(ref(db, 'kanban/usuarios/' + lid + '/notificacoes/' + id), { id, type: 'travessia_apoio', title: '🫶 ' + nome + ' marcou que não está bem hoje', sub: 'Compartilhou com você para você poder apoiar. Que tal um "oi"?', cardId: null, read: false, ts: new Date().toISOString(), squad: '' }); } catch (e) { /* já avisado hoje, ou sem regra: o humor da pessoa já foi salvo */ }
+}
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-tab],[data-act]'); if (!b) return;
   const a = b.dataset.act; const me = S.me && S.me.uid;
@@ -625,6 +656,7 @@ document.addEventListener('click', async e => {
   if (a === 'humor') {
     const n = +b.dataset.n; const k = hojeISO(); const comp = $('#humor-comp') && $('#humor-comp').checked; const reg = { n, ts: Date.now() };
     const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); if (comp) await W('humor_comp/' + me + '/' + k, reg); else await D('humor_comp/' + me + '/' + k); }, FACES[n - 1][0] + ' Humor de hoje registrado.');
+    if (ok && comp) alertaApoio(n);
     if (ok) { S.cache['humor:' + me] = Object.assign({}, S.cache['humor:' + me], { [k]: Object.assign({ comp }, reg) }); render(); } return;
   }
   if (a === 'dia-n') { S.diaN = +b.dataset.n; document.querySelectorAll('[data-act="dia-n"]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === S.diaN))); return; }
@@ -668,6 +700,8 @@ document.addEventListener('click', async e => {
 });
 document.addEventListener('change', async e => {
   const t = e.target;
+  if (t.id === 'humor-comp') { const me = S.me.uid, k = hojeISO(); const h = (S.cache['humor:' + me] || {})[k]; if (!h) return;   // só vale depois de escolher o humor; o clique na carinha já usa a caixa
+    const reg = { n: h.n, ts: h.ts }; const ok = await tenta(() => (t.checked ? W('humor_comp/' + me + '/' + k, reg) : D('humor_comp/' + me + '/' + k)), t.checked ? '👁 Seu líder passa a ver o humor de hoje.' : '🔒 Voltou a ser só seu.'); if (ok) { S.cache['humor:' + me][k].comp = t.checked; if (t.checked) alertaApoio(h.n); } else t.checked = !t.checked; return; }
   if (t.dataset.actChange === 'cad') { const uid = t.dataset.uid; if (!t.value) return; if (await tenta(() => W('serie/' + uid, { cad: t.value, tipo: 'acomp', ts: Date.now() }), 'Cadência definida.')) { invalida('um:' + uid); render(); } return; }
   if (t.dataset.vinc) { const uid = t.dataset.vinc; const v = Object.assign({}, S.vinc[uid] || {}); v[t.dataset.campo] = t.value || null; if (!v.liderUid) { if (await tenta(() => D('vinculos/' + uid), 'Vínculo removido.')) { delete S.vinc[uid]; } return render(); } Object.keys(v).forEach(k => { if (!v[k]) delete v[k]; }); if (await tenta(() => W('vinculos/' + uid, v), 'Organograma atualizado.')) { S.vinc[uid] = v; } return; }
   if (t.dataset.rh) { const uid = t.dataset.rh; if (await tenta(() => (t.checked ? W('papeis/' + uid, 'rh') : D('papeis/' + uid)), t.checked ? '🤝 Papel de RH concedido.' : 'Papel de RH removido.')) invalida('papeis'); else t.checked = !t.checked; return; }
@@ -696,6 +730,7 @@ const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhen
 function aplicaTema(v, avisa) { const i = Math.max(0, TEMAS.findIndex(x => x[0] === v)), t = TEMAS[i]; if (t[0]) document.documentElement.setAttribute('data-theme', t[0]); else document.documentElement.removeAttribute('data-theme'); $('#btn-tema').textContent = t[1]; try { localStorage.setItem('mare_theme', t[0] === 'light' ? 'light' : t[0] === 'sunset' ? 'vice' : 'dark'); localStorage.setItem('travessia_tema', t[0]); } catch (_) {} if (avisa) toast(t[1] + ' ' + t[2]); }
 try { const t = localStorage.getItem('travessia_tema'); if (t) aplicaTema(t); else { const m = localStorage.getItem('mare_theme'); if (m === 'light') aplicaTema('light'); } } catch (_) {}
 
+try { const qt = new URLSearchParams(location.search).get('tab'); if (qt && /^[a-z]{2,12}$/.test(qt)) S.tab = qt; } catch (_) {}
 onAuthStateChanged(auth, async u => {
   if (window.MareLogin && MareLogin.voltando) return;
   if (!u) { S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
@@ -711,7 +746,7 @@ onAuthStateChanged(auth, async u => {
     await render();
   } catch (e) { console.warn('[travessia]', e); $('#app').innerHTML = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
 });
-window.Travessia = { farol, ultimoEncontro, diasEntre, CAD_DIAS, estado: S, render };
+window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, CAD_DIAS, estado: S, render };
 </script>
 </body>
 </html>
