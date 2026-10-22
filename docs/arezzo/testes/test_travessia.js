@@ -26,6 +26,7 @@ const seed = () => ({ kanban: {
     ciclos: { [CID]: { nome: 'Ciclo 2026/2', status: 'coleta', ts: 5, participantes: { ana: true, bia: true } } },
     avaliacoes: { [CID]: { ana: { pares: { bia: { aprovado: true, por: 'avaliado', ts: 1 } }, devolutiva: { texto: 'Síntese combinada na conversa.', liberada: false, ts: 1 }, auto: { q1: 'Minha entrega', ts: 1 }, resp_pares: { bia: { q1: 'Ótima colega', ts: 1 } } } } },
     diario: { ana: { [dAtras(40)]: { n: 2, texto: 'Dia puxado, reunião longa.', ts: 1 }, [dAtras(3)]: { n: 5, texto: 'Entreguei o painel!\nGostei muito.', ts: 2 } } },
+    humor_comp: { ana: { [dAtras(1)]: { n: 2, ts: 1 }, [dAtras(5)]: { n: 4, ts: 1 }, [dAtras(9)]: { n: 5, ts: 1 } }, bia: { [dAtras(2)]: { n: 5, ts: 1 }, [dAtras(6)]: { n: 3, ts: 1 } } },
     pedidos_par: { bia: { [CID + '_ana']: { cid: CID, avaliado: 'ana', ts: 1 } } },
   },
   escala: Object.fromEntries([1, 2, 3, 4, 5, 6].map(i => [dAtras(i + 3), { dados: { ana: { t: 'folga', por: 'ana', ts: 1 } } }])),
@@ -50,6 +51,17 @@ const seed = () => ({ kanban: {
     const fo = await F({ ...base, cad: 'quinzenal', ultimo: '2026-10-01', folgas: 7 }); t('farol desconta as folgas da Escala (21 dias − 7 = 14 → verde) e diz isso', fo.cor === 'verde' && /7 dias de folga descontados/.test(fo.sub), fo);
     t('farol semanal e mensal e trimestral usam a própria cadência', (await F({ ...base, cad: 'semanal', ultimo: '2026-10-12' })).cor === 'amarelo' && (await F({ ...base, cad: 'mensal', ultimo: '2026-09-18' })).cor === 'amarelo' && (await F({ ...base, cad: 'mensal', ultimo: '2026-09-22' })).cor === 'verde' && (await F({ ...base, cad: 'trimestral', ultimo: '2026-07-24' })).cor === 'verde', '');
     await ctx.close(); }
+  // 0b) regra pura do termômetro
+  { const { ctx, p } = await abre(null); const TM = (hc, hoje, n) => p.evaluate(x => window.Travessia.termometro(x.hc, x.hoje, x.n), { hc, hoje, n });
+    const H = '2026-10-22'; const d = (n) => { const x = new Date('2026-10-22T12:00:00'); x.setDate(x.getDate() - n); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+    const r = await TM({ a: { [d(0)]: { n: 4 }, [d(6)]: { n: 2 } }, b: { [d(3)]: { n: 5 }, [d(7)]: { n: 1 } }, c: { [d(14)]: { n: 1 } } }, H, 5);
+    t('termômetro: média e contagens só dos últimos 7 dias (dias 0 a 6), de quem compartilhou', r.respostas === 3 && r.pessoas === 2 && r.total === 5 && Math.abs(r.media - (4 + 2 + 5) / 3) < 1e-9, r);
+    t('termômetro: semana anterior à parte (dia 7) e fora da janela (dia 14) não entram na média atual', r.anterior === 1 && r.dist.reduce((s, x) => s + x, 0) === 3, r);
+    t('termômetro: distribuição por humor', r.dist[1] === 1 && r.dist[3] === 1 && r.dist[4] === 1, r.dist);
+    t('termômetro: cor verde ≥ 3,5 / amarela ≥ 2,5 / vermelha abaixo; sem dados = cinza', r.cor === 'verde' && (await TM({ a: { [d(0)]: { n: 3 } } }, H, 1)).cor === 'amarelo' && (await TM({ a: { [d(0)]: { n: 2 } } }, H, 1)).cor === 'vermelho' && (await TM({}, H, 3)).cor === 'cinza' && (await TM({}, H, 3)).media === null, '');
+    const ap = (await TM({ a: { [d(2)]: { n: 2 } }, b: { [d(3)]: { n: 1 } }, c: { [d(1)]: { n: 3 } }, e: { [d(0)]: { n: 1 }, [d(2)]: { n: 5 } }, f: { [d(1)]: { n: 2 }, [d(0)]: { n: 4 } } }, H, 6)).apoio.map(x => x.uid).sort();
+    t('alerta de apoio: marcou 1 ou 2 nos últimos 3 dias (hoje, ontem, anteontem); não alerta quem marcou 3, quem marcou há 3 dias, nem quem já melhorou depois', JSON.stringify(ap) === JSON.stringify(['a', 'e']), ap);
+    t('termômetro: 14 pontos diários para o gráfico', (await TM({}, H, 1)).dias.length === 14, ''); await ctx.close(); }
   // 1) login
   { const { ctx, p } = await abre(null); t('sem login: mostra a tela de entrada e não o app', await p.locator('#login').isVisible() && !(await p.locator('#app').isVisible()), '');
     await p.evaluate(() => window.__authCb({ uid: 'x', email: 'alguem@gmail.com', displayName: 'X', providerData: [{ providerId: 'google.com' }] })); await p.waitForTimeout(300);
@@ -131,6 +143,29 @@ const seed = () => ({ kanban: {
     await clica(p, '[data-act="devol-liberar"]'); await p.click('#ov-ok'); await p.waitForTimeout(500); const dv = await st(p, `kanban/travessia/avaliacoes/${CID}/ana/devolutiva`); t('liberar pede confirmação e só então libera', dv.liberada === true && dv.texto === 'Síntese nova' && dv.por === 'pau' && dv.liberadaEm, dv);
     await clica(p, '[data-act="devol-recolher"]'); t('recolher a liberação volta a trancar', (await st(p, `kanban/travessia/avaliacoes/${CID}/ana/devolutiva`)).liberada === false, '');
     t('Pau: sem erro de JS', !errs.length, errs); await ctx.close(); }
+  // 5b) 🌡️ termômetro e alerta de apoio (líder)
+  { const { ctx, p, errs } = await abre(U('pau', 'Pau Reis')); await aba(p, 'frota');
+    const tx = await p.locator('#painel').innerText();
+    t('Frota: Termômetro do time com média 3,5 de 5 e a contagem de respostas e de pessoas', /Termômetro do time/.test(tx) && /3,5/.test(tx) && /4\s*respostas de\s*2\s*de 2 pessoas/.test(tx.replace(/\n/g, ' ')), tx.slice(0, 400));
+    t('Frota: compara com a semana anterior (caiu)', /caiu em relação à semana anterior/.test(tx), '');
+    t('Frota: "Pra ficar de olho" lista a Ana (marcou mal ontem), com texto e botão de abrir, e não a Bia', /Pra ficar de olho/.test(tx) && (await p.locator('.trava li', { hasText: 'Ana Lima' }).count()) === 1 && (await p.locator('.trava li', { hasText: 'Bia Souza' }).count()) === 0, '');
+    t('cartão da Ana ganha o selo 🫶 "vale um oi"; o da Bia não', /vale um oi/.test(await p.locator('.pcard', { hasText: 'Ana Lima' }).innerText()) && !/vale um oi/.test(await p.locator('.pcard', { hasText: 'Bia Souza' }).innerText()), '');
+    t('a nota de privacidade aparece quando alguém não compartilha (aqui todos compartilham, então não)', !/não compartilh/.test(tx), '');
+    t('Pau: sem erro de JS', !errs.length, errs); await ctx.close(); }
+  { const sd = seed(); delete sd.kanban.travessia.humor_comp.bia; const { ctx, p } = await abre(U('pau', 'Pau Reis'), { seed: sd }); await aba(p, 'frota'); const tx = (await p.locator('#painel').innerText()).replace(/\n/g, ' ');
+    t('quem não compartilha não entra na média e o líder é avisado de que a escolha é respeitada', /1 pessoa não compartilha/.test(tx) && /de 1 de 2 pessoas/.test(tx), tx.slice(0, 500)); await ctx.close(); }
+  { const sd = seed(); delete sd.kanban.travessia.humor_comp; const { ctx, p } = await abre(U('pau', 'Pau Reis'), { seed: sd }); await aba(p, 'frota');
+    t('sem nenhum humor compartilhado: explica que é privado por padrão (sem média inventada)', /Ninguém compartilhou o humor/.test(await p.locator('#painel').innerText()) && !/de 5 ·/.test(await p.locator('#painel').innerText()), ''); await ctx.close(); }
+  { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, seed()); const p = await ctx.newPage(); await p.goto('http://localhost:8941/travessia-dev.html?tab=frota'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('pau', 'Pau Reis')); await p.waitForTimeout(900);
+    t('?tab=frota abre direto na Frota (destino do aviso do sino)', /Termômetro do time/.test(await p.locator('#painel').innerText()), ''); await ctx.close(); }
+  // 🫶 alerta ao líder quando a pessoa compartilha e marca mal
+  { const { ctx, p } = await abre(U('ana', 'Ana Lima')); const nots = () => st(p, 'kanban/usuarios/pau/notificacoes');
+    await clica(p, '[data-act="humor"][data-n="2"]'); t('marcou "mal" SEM compartilhar: o líder NÃO é avisado', !(await nots()), await nots());
+    await p.check('#humor-comp'); await p.waitForTimeout(500); const n1 = await nots(); const k1 = n1 && n1['apoio_ana_' + HOJE]; t('compartilhar depois de ter marcado "mal" avisa o líder (tipo travessia_apoio, com o nome)', k1 && k1.type === 'travessia_apoio' && /Ana/.test(k1.title) && k1.read === false, n1);
+    await p.uncheck('#humor-comp'); await p.waitForTimeout(300); await clica(p, '[data-act="humor"][data-n="4"]'); await p.check('#humor-comp'); await p.waitForTimeout(400); await clica(p, '[data-act="humor"][data-n="1"]');
+    t('um aviso por pessoa por dia (id fixo, sem duplicar)', Object.keys(await nots()).length === 1, Object.keys(await nots())); await ctx.close(); }
+  { const { ctx, p } = await abre(U('ana', 'Ana Lima')); await p.check('#humor-comp'); await clica(p, '[data-act="humor"][data-n="4"]'); t('compartilhou mas marcou "bem": nenhum aviso', !(await st(p, 'kanban/usuarios/pau/notificacoes')), ''); await ctx.close(); }
+  { const sd = seed(); sd.kanban.travessia.vinculos = {}; const { ctx, p, errs } = await abre(U('ana', 'Ana Lima'), { seed: sd }); await p.check('#humor-comp'); await clica(p, '[data-act="humor"][data-n="1"]'); t('sem líder no organograma: salva o humor e não quebra nem avisa ninguém', (await st(p, 'kanban/travessia/humor/ana/' + HOJE)).n === 1 && !(await st(p, 'kanban/usuarios/pau/notificacoes')) && !errs.length, errs); await ctx.close(); }
   // 6) gerente (Gil): vê o time ampliado só com farol, sem detalhe
   { const { ctx, p } = await abre(U('gil', 'Gil Prado')); await aba(p, 'frota'); t('Gil (gerente do Pau): vê Ana, Bia como "time dos meus líderes" só com farol e o Pau como liderado', (await p.locator('.pcard').count()) === 3 && (await p.locator('.pcard [data-act="abrir"]').count()) === 1, await p.locator('.pcard').count()); await ctx.close(); }
   // 7) par (Bia): recebe o pedido e responde

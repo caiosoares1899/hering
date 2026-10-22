@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌡️ Termômetro do time e 🫶 aviso de apoio ao líder (SÓ DEV): média do humor compartilhado, contagem de respostas e sino quando alguém marca que não está bem — travessia-dev · kanban-dev v8.30.881 · mare-notif-dev v35 — 2026-10-22
+
+Pedido do Caio. O humor segue privado por padrão; o termômetro e o aviso só consideram quem escolheu compartilhar com o líder (a caixa agora diz isso com todas as letras).
+• Frota: 🌡️ Termômetro do time — média dos últimos 7 dias (1 a 5, carinha e cor), comparação com a semana anterior, distribuição, gráfico de 14 dias e 'N respostas de P de T pessoas (quem compartilhou)'; quem não compartilha não entra e o líder vê quantos são.
+• 🫶 Aviso de apoio: quando quem compartilha marca 'mal' ou 'muito mal', o líder direto recebe uma notificação (tipo travessia_apoio, um por pessoa por dia, área nova 'Travessia (gente)' na Central de Notificações) e vê 'Pra ficar de olho' na Frota e o selo 'vale um oi' no cartão. Clicar no aviso abre a Frota (?tab=frota). Sem push.
+• Funciona no Meu Dia (Maré) e na Minha travessia; compartilhar depois de já ter marcado 'mal' também avisa. Ajuda do Maré atualizada. Sem mudança de regra do banco além das já pedidas.
+
 ### 🌙 Fechamento do dia e 📓 Diário (SÓ DEV): humor de fim de dia com texto livre dentro do Meu Dia, salvo só pra pessoa no Travessia — kanban-dev v8.30.880 — 2026-10-22
 
 Ideia do Caio. No 🌅 Meu Dia, abaixo do humor da manhã, 'Fechamento do dia': cinco carinhas e uma caixa de texto ('Como foi o seu dia?'), com o aviso de que fica salvo só pra pessoa, no Diário da Travessia, pra ela se lembrar depois — nem o líder lê.
