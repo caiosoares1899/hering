@@ -115,10 +115,10 @@ O risco inverso: virar "o Feedz do Maré" com 30 funções mal acabadas. Preferi
 
 ## 7. Modelo de dados e segurança (esboço para discutir)
 
-**Nó de topo `travessia/`** (fora de `kanban/`), com regras próprias. Consequência: entra em `NOS_GLOBAIS` do backup completo (senão não tem backup) e ganha testes de regras.
+**Nó `kanban/travessia/`** (decidido na triagem do dossiê do Antigravity, seção 12; antes eu havia sugerido um nó de topo): fica junto dos outros nós do banco, **sem `.read` no pai** e com regras próprias em cada sub-árvore. Importante: **não pode morar dentro de `kanban/usuarios/{uid}`**, porque a leitura liberada ali para qualquer conta da empresa desce para todos os filhos e não dá para revogar mais abaixo. Entra em `NOS_GLOBAIS` do backup completo (senão não tem backup — e aí vale a decisão da seção 12.3) e ganha testes de regras.
 
 ```
-travessia/
+kanban/travessia/
   vinculos/{uid}                 líder direto, squad, desde        (escrita: ADM/RH)
   pessoas/{uid}/
     perfil                       aspirações, interesses            (a pessoa escreve)
@@ -197,3 +197,49 @@ Cada fase segue o processo de sempre: dev primeiro, promoção só após valida�
 
 ## 11. Próximo passo sugerido
 Fechar as decisões 1 a 4 e 6 (conversa rápida), e eu monto o **protótipo clicável da Fase 0** (Minha travessia + Frota + um 1:1), em `travessia-dev.html`, com dados falsos e Marine Glass nos 3 temas, para validar a metáfora e o fluxo antes de tocar em banco ou regras.
+
+
+---
+
+## 12. Triagem do dossiê do Antigravity (22/10/2026)
+
+O Antigravity entregou um dossiê de benchmarking (Lattice, Leapsome, Culture Amp, 15Five, Fellow, Small Improvements, Qulture.Rocks, Elofy, Feedz etc.) com arquitetura de segurança e roadmap. Conferi o que dá para conferir no repositório. **Não verifiquei os produtos concorrentes** (é pesquisa dele, de fontes que não revisei), então trate as descrições de mercado como hipóteses.
+
+### 12.1 Conferido no repositório
+| Afirmação do dossiê | Resultado |
+|---|---|
+| `.read` aberto em `kanban/usuarios` desce para os filhos, então dado sensível não pode ficar ali | **Correto** (`database.rules.json`). Já vale para o nosso desenho. |
+| `kanban` não tem `.read` na raiz, então uma árvore `kanban/travessia/` com regras próprias funciona | **Correto.** Adotado (seção 7). |
+| "O Copiloto reaproveita o `llmClient.js` com `gemini-2.5-flash` e prompt caching" | **Errado.** O `llmClient.js` chama a **API da Anthropic** (`claude-sonnet-5-5`, com fallback). A ideia de reaproveitar o cliente do Agente Ágil vale; o modelo citado não. |
+| "Posicionamento oficial: *1:1 · PDI · Carreira…*" em `OCEANO.md` e `oceano-dev.html` | **Não encontrei esse texto.** O que existe é "ciclo de performance e desenvolvimento de gente: avaliação, PDI e dia a dia", marcado como *futuro*. |
+| "Nem ADMs técnicos leem as notas privadas" | **Só vale para o cliente.** As regras do banco bloqueiam, mas quem tem o console do Firebase e as Cloud Functions (admin) leem tudo. Precisa ficar dito com todas as letras para o RH e para a TI (seção 12.3). |
+
+### 12.2 O que adotar (melhora o desenho)
+| Ideia do dossiê | Como entra |
+|---|---|
+| **📦 Baú da Travessia** (guardar conquista com 1 clique em card do Maré, marco do Radar ou Kudo) | Substitui e reforça a "Minha história". Excelente contra o viés de recência. **Fase 1.** Exige botão no `kanban-dev.html` e no `okr-dev.html`. |
+| **Carryover automático** (ponto não discutido e ação pendente passam ao próximo 1:1, com selo "↩ herdado") | Entra na Fase 1. |
+| **Radar de cadência** com 🟢 até 15 dias, 🟡 16 a 21, 🔴 acima de 21, **descontando férias da Escala** | Entra nos sinais da Frota (hoje só tenho "1:1 atrasado"). |
+| **Notas compartilhadas × privadas** no encontro, em caminhos físicos separados | Já era a decisão 4 do Caio; o dossiê dá o desenho de regras (nota privada só do autor). |
+| **Feedback no método SCI** (situação, comportamento, impacto) com **visibilidade escolhida e imutável** (só destinatário, destinatário + líder, só líder) e botão **"pedir feedback sobre esta entrega"** ao concluir card/marco | Entra na Fase 2. O Agente atua como coach de redação (reescrever julgamento em comportamento), sem nunca decidir nada. |
+| **Painel lateral de evidências** (lado a lado com o formulário de avaliação) | Entra quando houver ciclo (Fase 3). |
+| **Trava de devolutiva** (o liderado só vê o resultado depois que o líder libera na conversa) | Entra no ciclo (Fase 3), se o ciclo tiver resultado individual. |
+| **Indicação de pares** sugerida por quem colaborou nos mesmos Supercards/Marcos, aprovada pelo líder | Entra no ciclo; é um diferencial real nosso. |
+| **PDI ligado a card do Maré** (a ação de 70 % avança quando o card conclui) | Já estava no desenho como vínculo opcional; passa a ser regra da Fase 2. |
+| **Separar papel ágil de papel de gente** (PO organiza backlog; líder de carreira é outro vínculo) | Confirma a decisão 2 do Caio. Usar vínculo explícito `liderUid`/`gerenteUid` e um papel `bp`/RH. |
+
+### 12.3 Pontos de cuidado (decidir antes de construir)
+1. **Backup.** O backup completo copia os nós listados em `NOS_GLOBAIS` para o bucket. Se `kanban/travessia/` entrar, **notas privadas e feedbacks vão junto** (bucket privado, mas legível por quem administra o projeto). Opções: (a) não fazer backup das notas privadas, aceitando que não há como restaurá-las; (b) fazer backup cifrado; (c) fazer backup de tudo e documentar o acesso. *Recomendo (a) para notas privadas e (c) para o resto, a validar com a TI.*
+2. **Quem administra o projeto enxerga tudo.** Console e funções contornam as regras. Isso precisa constar na conversa com RH/TI (30/10) e na política de acesso, em vez de prometer sigilo que o banco não garante contra administradores.
+3. **Nota e 9-Box (BARS de 4 níveis, calibração, eixo de "potencial").** Não conflita com o desenho, mas **depende da decisão do RH**, que vai refazer o processo. O eixo "potencial" é o mais contestado em pesquisa de RH (alto risco de viés) e um modelo com nota individual tem implicações trabalhistas. *Fica como Fase 3 opcional; nada de nota na v1.*
+4. **Termômetro de energia pré-1:1 (autorrelato de 1 a 5).** Faz sentido como autorrelato **visível só ao par**. Mantenho a linha vermelha de que **nenhum modelo analisa sentimento ou "risco de burnout" por pessoa**; o gráfico de tendência é do líder olhar, não do sistema inferir.
+5. **Upward feedback com trava de 3 respondentes.** Em squads de 5 a 7 pessoas, 3 respostas ainda identificam. Prefiro agregar por **gerência** (mais gente) ou subir a trava, e nunca mostrar comentário aberto sem moderação.
+6. **Excesso de escopo.** O dossiê lista cerca de 25 funções. A lição do dossiê de concorrência do Maré vale aqui: **poucas coisas bem acabadas.**
+
+### 12.4 Fases revisadas (juntando o dossiê com o que já tínhamos)
+| Fase | Entrega |
+|---|---|
+| **0 — Validar** (feito, PR #1522) | Protótipo clicável com dados fictícios. |
+| **1 — Rituais** | Vínculos (líder, gerente, RH), séries de 1:1, pauta colaborativa, notas compartilhadas e privadas, ações, carryover, radar de cadência, lembretes, **Baú da Travessia** (+ botão no Maré e no Radar). Regras e testes de regras. Piloto: squad Dados. |
+| **2 — PDI e feedback** | PDI 70-20-10 com vínculo a cards, co-piloto de PDI, briefing de 1:1, **feedback SCI** com visibilidade e pedido de feedback, contexto automático Maré/Radar. |
+| **3 — Frota e ciclo** | Quadro do time e do gerente, resumo semanal, painel de evidências, ciclo configurável pelo RH (autoavaliação, pares, devolutiva com trava). Nota/9-Box só se o RH decidir. |
