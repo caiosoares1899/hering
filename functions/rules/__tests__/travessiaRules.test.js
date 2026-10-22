@@ -53,6 +53,7 @@ test('papéis: só o ADM concede RH; a própria pessoa lê o seu', () => {
   assert.equal(grava(T + 'papeis/ana', A.dani, 'rh'), false, 'nem o RH concede RH');
   assert.equal(lê(T + 'papeis/dani', A.dani), true); assert.equal(lê(T + 'papeis/dani', A.ana), false);
   assert.equal(grava(T + 'papeis/ana', A.adm, 'qualquer'), false, 'valor inválido');
+  assert.equal(lê(T + 'papeis', A.adm), true, 'o ADM lista quem tem o papel'); assert.equal(lê(T + 'papeis', A.ana), false); assert.equal(lê(T + 'papeis', A.dani), false);
 });
 
 test('vínculos (organograma): a empresa lê; só ADM e RH gravam; ninguém lidera a si mesmo', () => {
@@ -136,6 +137,11 @@ test('indicação de pares: o avaliado SUGERE (sempre não aprovado); só o líd
   reset();
   assert.equal(grava(AV('pares/cae'), A.ana, { aprovado: false, por: 'avaliado', ts: 1 }), true, 'sugerir');
   assert.equal(grava(AV('pares/cae'), A.ana, { aprovado: true, por: 'avaliado', ts: 1 }), false, 'o avaliado não aprova a própria indicação');
+  DB.kanban.travessia.avaliacoes[CID].ana.pares.cae = { aprovado: false, por: 'avaliado', ts: 1 };
+  assert.equal(grava(AV('pares/cae'), A.ana, null), true, 'o avaliado retira a sugestão que ainda não foi aprovada');
+  assert.equal(grava(AV('pares/bia'), A.ana, null), false, 'mas não retira um par já aprovado');
+  assert.equal(grava(AV('pares/bia'), A.pau, null), true, 'o líder pode retirar');
+  reset();
   assert.equal(grava(AV('pares/ana'), A.ana, { aprovado: false, por: 'avaliado', ts: 1 }), false, 'indicar a si mesmo');
   assert.equal(grava(AV('pares/cae'), A.pau, { aprovado: true, por: 'avaliado', ts: 1 }), true, 'o líder aprova');
   assert.equal(grava(AV('pares/cae'), A.bia, { aprovado: true, por: 'lider', ts: 1 }), false, 'colega não aprova');
