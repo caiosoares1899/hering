@@ -34,6 +34,7 @@ const NOS_GLOBAIS = [
   { no: 'metas_squads', diario: true },
   { no: 'metas_log', diario: true },
   { no: 'escala', diario: true },            // 🗓️ Escala
+  { no: 'travessia', diario: false },         // ⛵ Travessia (Baú, 1:1, humor, avaliações): dado SENSÍVEL, só no backup semanal. Quem administra o projeto lê o bucket — ver docs/ideias/travessia-2026-10-22.md §12.3
   { no: 'vtex_status', diario: false },      // 🚨 estado do monitor de incidentes da VTEX (reconstituível a partir do feed)
   { no: 'github_status', diario: false },    // 🐙 estado do monitor de incidentes do GitHub / GitHub Pages (reconstituível a partir da API)
   { no: 'firebase_status', diario: false },  // 🔥 estado do monitor de incidentes do Firebase (reconstituível a partir da API)
