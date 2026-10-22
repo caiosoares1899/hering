@@ -123,6 +123,24 @@ test('humor: PRIVADO (só a pessoa lê, nem o líder); o líder só enxerga a c�
   assert.equal(grava(T + 'humor_comp/ana/2026-10-22', A.ana, null), true, 'descompartilhar');
 });
 
+test('diário do fechamento: PRIVADO (só a pessoa lê e grava); aceita humor, texto ou os dois; limites de tamanho', () => {
+  reset();
+  const dia = '2026-10-22'; const d = { n: 4, texto: 'Dia produtivo, fechei a análise.', ts: 1 };
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, d), true);
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, { texto: 'só texto', ts: 1 }), true, 'só texto');
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, { n: 2, ts: 1 }), true, 'só humor');
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, { ts: 1 }), false, 'sem humor nem texto');
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, { n: 6, ts: 1 }), false, 'humor fora de 1 a 5');
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, { texto: 'x'.repeat(1501), ts: 1 }), false, 'texto enorme');
+  assert.equal(grava(T + 'diario/ana/22-10-2026', A.ana, d), false, 'dia fora do formato');
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, { ...d, extra: 1 }), false, 'campo extra');
+  ['pau', 'gil', 'bia', 'dani', 'adm', 'caio', 'forasteiro', 'arezzo'].forEach(k => assert.equal(grava(T + 'diario/ana/' + dia, A[k], d), false, 'ninguém grava no diário alheio: ' + k));
+  DB.kanban.travessia.diario = { ana: { [dia]: d } };
+  assert.equal(lê(T + 'diario/ana', A.ana), true);
+  ['pau', 'gil', 'bia', 'dani', 'adm', 'caio', 'forasteiro', 'arezzo'].forEach(k => assert.equal(lê(T + 'diario/ana', A[k]), false, 'diário privado: ' + k));
+  assert.equal(grava(T + 'diario/ana/' + dia, A.ana, null), true, 'a pessoa apaga o próprio registro');
+});
+
 test('ciclos: todos leem o básico; só ADM/RH criam e mudam a fase', () => {
   reset();
   const c = { nome: 'Ciclo 2027/1', status: 'preparacao', ts: 1, participantes: { ana: true }, prazos: { auto: '2027-03-10' }, perguntas: { auto: { q1: 'O que você entregou?' } } };
@@ -225,7 +243,7 @@ test('caixa de entrada de pares: o líder escreve ao aprovar; só o indicado lê
 
 test('ninguém de fora (Gmail, Arezzo) lê nem grava nada em kanban/travessia; o ADM técnico não lê conteúdo de pessoas', () => {
   reset();
-  const caminhos = ['bau/ana', 'humor/ana', 'humor_comp/ana', 'encontros/ana', 'serie/ana', AV('auto'), AV('lider'), AV('devolutiva'), AV('resp_pares/bia'), 'pedidos_par/bia'].map(p => p.startsWith('kanban') ? p : T + p);
+  const caminhos = ['bau/ana', 'diario/ana', 'humor/ana', 'humor_comp/ana', 'encontros/ana', 'serie/ana', AV('auto'), AV('lider'), AV('devolutiva'), AV('resp_pares/bia'), 'pedidos_par/bia'].map(p => p.startsWith('kanban') ? p : T + p);
   caminhos.forEach(p => { ['forasteiro', 'arezzo'].forEach(k => assert.equal(lê(p, A[k]), false, k + ' ' + p)); });
   caminhos.filter(p => !/pares\/bia|devolutiva|humor_comp/.test(p) || true).forEach(p => ['adm', 'caio', 'dani'].forEach(k => assert.equal(lê(p, A[k]), false, `${k} não lê ${p}`)));
   // ...mas ADM e RH administram o organograma e os ciclos (sem ler conteúdo)

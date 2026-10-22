@@ -365,6 +365,7 @@ async function carregaHumor(uid, compartilhado) {
   Object.keys(v).forEach(k => { v[k] = Object.assign({}, v[k], { comp: !!c[k] }); });
   return v;
 }
+async function carregaDiario(uid) { return (await G(T + 'diario/' + uid)) || {}; }
 async function carregaBau(uid) { return (await G(T + 'bau/' + uid)) || {}; }
 async function carregaEstrelas() {
   // Estrelas (Kudos) recebidas: mural geral + as squads da pessoa. Só mostramos a seção se houver alguma.
@@ -383,6 +384,31 @@ const invalida = k => { Object.keys(S.cache).filter(x => x === k || x.startsWith
 async function cache(k, fn) { if (!(k in S.cache)) S.cache[k] = await fn(); return S.cache[k]; }
 
 // ───────── telas ─────────
+// 📓 Fechamento do dia: humor de fim de dia + texto livre. PRIVADO (kanban/travessia/diario/{uid}/{dia}): só a própria pessoa lê; fica guardado pra ela se lembrar depois.
+function blocoFechamento(diario) {
+  const hj = hojeISO(); const hoje = diario[hj]; if (S.diaN === undefined) S.diaN = hoje && hoje.n ? hoje.n : null;
+  const passadas = Object.keys(diario).filter(k => k < hj).sort().reverse(); const ult = passadas.length ? diario[passadas[0]] : null;
+  return `<section class="gl pad stack" aria-labelledby="t-fe"><h2 class="h2" id="t-fe">🌙 Fechamento do dia${hoje ? ' <span class="chip ok">✔ salvo hoje</span>' : ''}</h2>
+    <p class="sub">Como foi o seu dia? Conte do seu jeito — o que rolou de bom, o que pesou, o que você aprendeu.</p>
+    <div class="faces" role="group" aria-label="Humor do fim do dia">${FACES.map((f, i) => `<button type="button" data-act="dia-n" data-n="${i + 1}" aria-pressed="${S.diaN === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
+    <label class="sr" for="dia-txt">Como foi o seu dia</label><textarea class="ta" id="dia-txt" maxlength="1500" placeholder="Hoje eu…">${esc((hoje && hoje.texto) || '')}</textarea>
+    <div class="row"><button class="btn p" data-act="dia-salvar">💾 Salvar o dia</button><span class="small">🔒 Fica salvo só pra você, no 📓 Diário da Travessia, pra você se lembrar depois. Ninguém lê — nem o seu líder.</span></div>
+    ${!hoje && ult && ult.texto ? `<p class="small">Seu último registro (${esc(brDe(passadas[0]))}): “${esc(String(ult.texto).slice(0, 140))}${String(ult.texto).length > 140 ? '…' : ''}”</p>` : ''}</section>`;
+}
+async function viewDiario() {
+  const d = await cache('diario:' + S.me.uid, () => carregaDiario(S.me.uid)); const q = S.pesq.trim().toLowerCase();
+  const dias = Object.keys(d).sort().reverse().filter(k => !q || String(d[k].texto || '').toLowerCase().includes(q));
+  const mes = k => { const [a, m] = k.split('-'); return ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+m - 1] + ' de ' + a; };
+  let atual = '', lista = '';
+  dias.forEach(k => { if (mes(k) !== atual) { atual = mes(k); lista += `<h3 class="h2" style="margin-top:14px">${esc(atual)}</h3>`; } const e = d[k];
+    lista += `<div class="foco" style="margin-top:8px"><div class="row" style="justify-content:space-between"><b>${esc(brFull(k))}</b><span>${e.n ? `<span aria-label="${FACES[e.n - 1][1]}" title="${FACES[e.n - 1][1]}" style="font-size:20px">${FACES[e.n - 1][0]}</span>` : ''}</span></div>
+      ${e.texto ? `<p style="white-space:pre-line;margin-top:6px">${esc(e.texto)}</p>` : '<p class="small">Só o humor, sem texto.</p>'}
+      <div class="row" style="margin-top:8px">${e.texto ? `<button class="btn s" data-act="dia-bau" data-d="${esc(k)}">📌 Guardar no Baú</button>` : ''}<button class="btn s" data-act="dia-del" data-d="${esc(k)}" aria-label="Apagar o registro de ${esc(brFull(k))}">🗑</button></div></div>`; });
+  return `<div class="stack">${blocoFechamento(d)}<section class="gl pad stack" aria-labelledby="di-t"><h2 class="h2" id="di-t">📓 Meu diário <span class="chip">${Object.keys(d).length}</span></h2>
+    <p class="sub">Seus fechamentos de dia, só seus. Na hora da avaliação ou de um 1:1, é um bom lugar pra lembrar como foi o ciclo — e dá pra guardar um dia no 📦 Baú.</p>
+    <label class="sr" for="pesq">Buscar no diário</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar no diário…" value="${esc(S.pesq)}" autocomplete="off">
+    ${lista || vazio(q ? 'Nada encontrado.' : 'Seu diário está vazio. Escreva o primeiro fechamento acima.')}</section></div>`;
+}
 function viewFarol(uid, d, quem) {
   const f = d.farol; return `<div class="farol ${f.cor}"><span class="lamp" aria-hidden="true">${f.ic}</span><div><b>${esc(f.titulo)}</b><span class="small">${esc(f.sub)}</span></div></div>`;
 }
@@ -393,7 +419,7 @@ function sparkHumor(h, dias) {
 }
 async function viewInicio() {
   const me = S.me.uid; const lid = liderDe(me);
-  const [um, humor, bau, estrelas] = await Promise.all([cache('um:' + me, () => carregaUm(me)), cache('humor:' + me, () => carregaHumor(me, false)), cache('bau:' + me, () => carregaBau(me)), cache('estrelas', carregaEstrelas)]);
+  const [um, humor, bau, estrelas, diario] = await Promise.all([cache('um:' + me, () => carregaUm(me)), cache('humor:' + me, () => carregaHumor(me, false)), cache('bau:' + me, () => carregaBau(me)), cache('estrelas', carregaEstrelas), cache('diario:' + me, () => carregaDiario(me))]);
   const hj = hojeISO(); const hHoje = humor[hj]; const comp = !!(hHoje && hHoje.comp);
   const itensBau = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
   const pend = []; ciclosAtivos().forEach(([cid, c]) => { if (participa(c, me)) pend.push(`<li><span aria-hidden="true">📐</span><div class="tx"><b>${esc(c.nome)}</b> — fase ${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</div><button class="btn s" data-tab="aval">Abrir</button></li>`); });
@@ -408,6 +434,7 @@ async function viewInicio() {
       <label class="ck"><input type="checkbox" id="humor-comp" ${comp ? 'checked' : ''} ${hHoje ? '' : ''}> Compartilhar com meu líder${lid ? ' (' + esc(nomeDe(lid)) + ')' : ''}</label>
       <p class="small">Só você vê, a menos que compartilhe. Ninguém (nem o sistema) analisa seu humor.</p>
       ${sparkHumor(humor, 14)}</section></div>
+   ${blocoFechamento(diario)}
    ${pend.length ? `<section class="gl pad" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
    ${estrelas.length ? `<section class="gl pad stack" aria-labelledby="t-es"><h2 class="h2" id="t-es">⭐ Mural de Estrelas <span class="chip">${estrelas.length}</span></h2>
       <div class="grid g3">${estrelas.slice(0, 9).map(k => `<article class="star"><div class="de">${esc(k.fromNome || 'Alguém')}</div><div>${esc(k.texto || '')}</div><div class="meta"><span class="chip">${esc(String(k.ts || '').slice(0, 10).split('-').reverse().join('/'))}</span><span class="chip">${k._escopo === 'geral' ? '🌊 Geral' : esc(k._escopo)}</span></div>
@@ -567,7 +594,7 @@ async function viewAdmin() {
 const squadsDisponiveis = () => { const s = new Set(); Object.values(S.users).forEach(u => Object.keys(u.squads || {}).forEach(k => { if (u.squads[k]) s.add(k); })); return [...s].sort(); };
 
 // ───────── montagem ─────────
-const TABS = () => [['inicio', '🗺 Minha travessia'], ['bau', '📦 Baú'], ['aval', '📐 Avaliação']].concat(ehLider() ? [['frota', '🚢 Frota']] : []).concat(S.adm || S.rh ? [['admin', '⚙ Administração']] : []);
+const TABS = () => [['inicio', '🗺 Minha travessia'], ['bau', '📦 Baú'], ['diario', '📓 Diário'], ['aval', '📐 Avaliação']].concat(ehLider() ? [['frota', '🚢 Frota']] : []).concat(S.adm || S.rh ? [['admin', '⚙ Administração']] : []);
 let rendering = 0;
 async function render() {
   const eu = ++rendering; const tabs = TABS(); const rasc = {}; document.querySelectorAll('textarea.ta:not([readonly])').forEach(t => { if (t.id) rasc[t.id] = t.value; }); if (!tabs.some(t => t[0] === S.tab)) S.tab = 'inicio';
@@ -575,7 +602,7 @@ async function render() {
   $('#app').innerHTML = `<div class="hero"><div><h1 class="h1">Olá, ${esc((S.me.nome || '').split(' ')[0] || 'bem-vinda(o)')} 👋</h1><p class="sub">Sua travessia: o que você quer construir e como a gente te ajuda a chegar lá.</p></div></div>
     <div class="tabs" role="tablist" aria-label="Seções">${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join('')}</div><div role="tabpanel" id="painel">${carregando()}</div>`;
   let html = '';
-  try { html = await ({ inicio: viewInicio, bau: () => viewBau(S.me.uid, false), aval: viewAval, frota: viewFrota, admin: viewAdmin }[S.tab])(); }
+  try { html = await ({ inicio: viewInicio, bau: () => viewBau(S.me.uid, false), diario: viewDiario, aval: viewAval, frota: viewFrota, admin: viewAdmin }[S.tab])(); }
   catch (e) { console.warn('[travessia]', e); html = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
   if (eu !== rendering) return;
   $('#painel').innerHTML = html;
@@ -600,6 +627,14 @@ document.addEventListener('click', async e => {
     const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); if (comp) await W('humor_comp/' + me + '/' + k, reg); else await D('humor_comp/' + me + '/' + k); }, FACES[n - 1][0] + ' Humor de hoje registrado.');
     if (ok) { S.cache['humor:' + me] = Object.assign({}, S.cache['humor:' + me], { [k]: Object.assign({ comp }, reg) }); render(); } return;
   }
+  if (a === 'dia-n') { S.diaN = +b.dataset.n; document.querySelectorAll('[data-act="dia-n"]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === S.diaN))); return; }
+  if (a === 'dia-salvar') {
+    const txt = ($('#dia-txt') && $('#dia-txt').value.trim()) || ''; if (!S.diaN && !txt) { toast('Escolha como foi o dia ou escreva um pouco antes de salvar.'); return; }
+    const reg = { ts: Date.now() }; if (S.diaN) reg.n = S.diaN; if (txt) reg.texto = txt.slice(0, 1500);
+    if (await tenta(() => W('diario/' + me + '/' + hojeISO(), reg), '🌙 Dia guardado no seu diário — só você lê.')) { invalida('diario:' + me); render(); } return;
+  }
+  if (a === 'dia-bau') { const d = (await cache('diario:' + me, () => carregaDiario(me)))[b.dataset.d]; if (!d || !d.texto) return; if (await guardarBau({ tipo: 'manual', titulo: ('Dia ' + brDe(b.dataset.d) + ' — ' + d.texto.split('\n')[0]).slice(0, 160), texto: d.texto.slice(0, 1200), em: b.dataset.d })) render(); return; }
+  if (a === 'dia-del') { if (!(await uiConfirm('Apagar o registro de ' + brFull(b.dataset.d) + '? Não dá pra recuperar.', 'Apagar'))) return; if (await tenta(() => D('diario/' + me + '/' + b.dataset.d), 'Registro apagado.')) { invalida('diario:' + me); if (b.dataset.d === hojeISO()) S.diaN = undefined; render(); } return; }
   if (a === 'estrela-bau') { const est = await cache('estrelas', carregaEstrelas); const k = est[+b.dataset.i]; if (!k) return; const ok = await guardarBau({ tipo: 'kudo', titulo: ('Estrela de ' + (k.fromNome || 'alguém')).slice(0, 160), texto: String(k.texto || '').slice(0, 1200), ref: String(k.id || '').slice(0, 200), squad: k._escopo === 'geral' ? 'geral' : k._escopo, em: String(k.ts || '').slice(0, 10) || hojeISO() }); if (ok) render(); return; }
   if (a === 'bau-del') { if (!(await uiConfirm('Remover este item do Baú?', 'Remover'))) return; if (await tenta(() => D('bau/' + me + '/' + b.dataset.id), 'Removido.')) { invalida('bau:' + me); render(); } return; }
   if (a === 'abrir') { S.sel = b.dataset.uid; S.selTab = 'um'; await render(); const d = $('#detalhe'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }

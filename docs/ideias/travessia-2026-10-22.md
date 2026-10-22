@@ -274,3 +274,11 @@ O Antigravity entregou um dossiê de benchmarking (Lattice, Leapsome, Culture Am
 O ADM e o RH administram o **organograma e os ciclos**, mas **não leem conteúdo de pessoas** (lembrando: quem administra o projeto do Firebase contorna as regras — seção 12.3).
 
 **Falta fazer (próximas PRs):** a tela real `travessia-dev.html` (login, Minha travessia, Frota, Avaliação, administração do organograma/RH/ciclos) · botão 📌 no card do Maré, no marco do Radar e na Estrela · humor no Meu Dia · notificação para o par indicado · Ajuda e dica.
+
+
+### 13.1 Acréscimo (22/10/2026, noite): 🌙 Fechamento do dia e 📓 Diário
+Ideia do Caio: dentro do 🌅 Meu Dia, além do humor da manhã, um **humor de fechamento do dia** com uma **caixa de texto** para a pessoa relatar como foi o dia, **avisando que fica salvo para ela se lembrar no Travessia**.
+- **Onde grava:** `kanban/travessia/diario/{uid}/{dia}` com `n` (1 a 5, opcional), `texto` (até 1500 caracteres, opcional) e `ts`. **Privado:** só a própria pessoa lê e grava. Nem o líder, nem o gerente, nem o RH, nem o ADM, nem o Agente Ágil leem (e o fechamento **não** vai para o humor compartilhado). O texto de aviso na tela diz isso.
+- **No Travessia:** o bloco de fechamento aparece em *Minha travessia* e há uma aba **📓 Diário** (lista por mês, busca, apagar um dia e 📌 guardar um dia no Baú).
+- **Backup:** entra no backup semanal junto com o resto de `kanban/travessia`. Como é o dado mais pessoal de todos, vale a mesma conversa da §12.3 com a TI: **recomendo excluir o diário do backup** (hoje não está excluído).
+- **Dica:** não, o bloco já está à vista no Meu Dia. A Ajuda do Maré foi atualizada.
