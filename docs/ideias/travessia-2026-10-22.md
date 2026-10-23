@@ -293,3 +293,9 @@ Pedido do Caio: o líder precisa de um **termômetro da média do time**, com **
   1. **Opt-in × padrão compartilhado.** Hoje a cobertura depende de cada pessoa compartilhar. Se o Caio quiser a média do time inteira, a alternativa é um **agregado anônimo calculado no servidor** (só aparece com pelo menos 5 respostas, sem nomes e sem aviso individual) — exige mudar o texto prometido às pessoas e validar com RH/LGPD (humor pode ser considerado dado de saúde). Os avisos por pessoa continuariam dependendo de consentimento.
   2. **Push** para o aviso de apoio (com texto genérico, sem nome).
   3. Se o **gerente** também deve ver o termômetro dos times dos seus líderes (hoje só o líder direto lê o humor compartilhado).
+
+
+### 13.3 Modo demonstração (`travessia-dev.html?demo=1`)
+Para ver a Travessia "cheia" sem tocar em dado real: o parâmetro `?demo=1` liga um **banco em memória** com ~2 trimestres de uso **fictício** (13 pessoas inventadas em 2 squads, hierarquia pessoa → PO → gerente, RH e ADM), sem login e **sem nenhuma chamada ao Firebase**. Um seletor "Ver como" troca a pessoa que está olhando: Ana (pessoa), Bia (colega e par), Pau (líder), Gil (gerente), Dani (RH) e Adm (ADM); `&como=pau&tab=frota` abre direto. O que o demo contém: 1:1 por ~6 meses com faróis variados (🟢, 🟡 e 🔴), folgas da Escala descontadas, humor e diário de ~180 dias, Baú com 16 itens da Ana, Estrelas, **Ciclo 2026/1 encerrado** (autoavaliação, líder, pares, devolutiva liberada e ciência) e **Ciclo 2026/2 em coleta** (autoavaliação parcial, par aguardando aprovação, devolutiva travada) e um aviso "pra ficar de olho" no termômetro. Gravar no demo vale só para a aba (recarregar volta ao início).
+
+Por que não gravar dado de mentira no banco de verdade: o Baú, o humor, o diário e as avaliações só aceitam escrita do próprio dono, então nem o ADM consegue semear pessoas fictícias pelas regras, e o organograma é visível para toda a empresa.

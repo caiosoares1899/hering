@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🎭 Travessia em modo demonstração (SÓ DEV): travessia-dev.html?demo=1 mostra 2 trimestres de uso fictício, sem tocar no Firebase — 2026-10-22
+
+Para ver a Travessia preenchida sem usar dado real. ?demo=1 liga um banco em memória (sem login e sem nenhuma chamada ao Firebase) com ~180 dias de uso fictício: 13 pessoas inventadas em 2 squads (pessoa → PO → gerente), RH e ADM.
+• Seletor 'Ver como': Ana (pessoa), Bia (colega e par), Pau (líder), Gil (gerente), Dani (RH) e Adm. Atalhos: ?demo=1&como=pau&tab=frota.
+• Conteúdo: 1:1 por ~6 meses com faróis 🟢/🟡/🔴 e folgas descontadas, humor e diário de ~180 dias, Baú com 16 itens, Estrelas, termômetro com aviso 'pra ficar de olho', Ciclo 2026/1 encerrado (com devolutiva liberada e ciência) e Ciclo 2026/2 em coleta (devolutiva travada).
+• Gravar no demo vale só para a aba. Líder agora também vê os ciclos encerrados da pessoa (só leitura); o diário de meses antigos vem recolhido por mês com o humor médio.
+• Corrigido: leitura das folgas da Escala (a chamada ficou com o .val() no lugar errado ao deixar o código ciente do demo; o teste pegou antes de subir).
+
 ### 🌡️ Termômetro do time e 🫶 aviso de apoio ao líder (SÓ DEV): média do humor compartilhado, contagem de respostas e sino quando alguém marca que não está bem — travessia-dev · kanban-dev v8.30.881 · mare-notif-dev v35 — 2026-10-22
 
 Pedido do Caio. O humor segue privado por padrão; o termômetro e o aviso só consideram quem escolheu compartilhar com o líder (a caixa agora diz isso com todas as letras).

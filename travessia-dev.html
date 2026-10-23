@@ -239,6 +239,7 @@ textarea.in{width:100%;min-height:92px;resize:vertical;}
     <button class="btn" id="btn-tema" type="button" style="padding:5px 12px;min-height:38px;font-size:17px" aria-label="Trocar tema" title="Clique para alternar: 🌙 Abrolhos → ☀️ Lençóis Maranhenses → 🌅 Entardecer. Preferência salva só neste navegador.">🌙</button>
   </div>
 </header>
+<div class="wrap demo-bar" id="demo-bar" hidden><div class="gl pad row" style="margin-top:12px;justify-content:space-between"><div><b>🎭 Modo demonstração</b> <span class="small">· dados fictícios de 2 trimestres de uso. Nada é gravado no Firebase; o que você mexer vale só nesta aba.</span></div><label class="row" style="gap:8px"><span class="lbl">Ver como</span><select class="sel2" id="demo-persona" aria-label="Ver como"></select></label></div></div>
 <main class="wrap" id="app" hidden></main>
 <section class="wrap" id="login"><div class="gl login"><div class="logo" style="justify-content:center;font-size:26px">⛵ Travessia</div>
   <p>Seu espaço de desenvolvimento, 1:1 e avaliação. Entre com a conta Google da Hering.</p>
@@ -286,9 +287,10 @@ const diasEntre = (a, b) => Math.round((Date.parse(b + 'T12:00:00') - Date.parse
 const novoId = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 let toastT = null;
 function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3600); }
-async function G(path) { const s = await get(ref(db, path)); return s.val(); }
-const W = (path, v) => set(ref(db, T + path), v);
-const D = path => remove(ref(db, T + path));
+async function G(path) { if (DEMO) return JSON.parse(JSON.stringify(memGet(path))); const s = await get(ref(db, path)); return s.val(); }
+const W = (path, v) => DEMO ? Promise.resolve(memSet(T + path, v)) : set(ref(db, T + path), v);
+const D = path => DEMO ? Promise.resolve(memSet(T + path, null)) : remove(ref(db, T + path));
+const WABS = (path, v) => DEMO ? Promise.resolve(memSet(path, v)) : set(ref(db, path), v);   // caminho absoluto (ex.: notificação do líder)
 function uiConfirm(msg, okTxt) {
   return new Promise(res => { const ov = $('#ov'); $('#ov-msg').textContent = msg; $('#ov-ok').textContent = okTxt || 'Confirmar'; ov.hidden = false; $('#ov-ok').focus();
     const fim = v => { ov.hidden = true; $('#ov-ok').onclick = $('#ov-no').onclick = null; document.removeEventListener('keydown', esc_); res(v); };
@@ -357,7 +359,7 @@ const carregando = t => `<div class="carregando" role="status">${esc(t || 'Confe
 async function folgasDe(uid, desdeISO) {
   // Dias de folga da pessoa na Escala entre o último 1:1 e hoje (qualquer squad). Leitura por faixa de datas (as chaves do nó são AAAA-MM-DD).
   try {
-    const v = (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(desdeISO), endAt(hojeISO())))).val() || {};
+    const v = (DEMO ? memGet('kanban/escala') : (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(desdeISO), endAt(hojeISO())))).val()) || {};
     const dias = new Set();
     Object.keys(v).forEach(d => { if (d < desdeISO || d > hojeISO()) return; Object.values(v[d] || {}).forEach(sq => { const e = sq && sq[uid]; if (e && e.t === 'folga') dias.add(d); }); });
     return dias.size;
@@ -410,11 +412,13 @@ async function viewDiario() {
   const d = await cache('diario:' + S.me.uid, () => carregaDiario(S.me.uid)); const q = S.pesq.trim().toLowerCase();
   const dias = Object.keys(d).sort().reverse().filter(k => !q || String(d[k].texto || '').toLowerCase().includes(q));
   const mes = k => { const [a, m] = k.split('-'); return ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+m - 1] + ' de ' + a; };
-  let atual = '', lista = '';
-  dias.forEach(k => { if (mes(k) !== atual) { atual = mes(k); lista += `<h3 class="h2" style="margin-top:14px">${esc(atual)}</h3>`; } const e = d[k];
-    lista += `<div class="foco" style="margin-top:8px"><div class="row" style="justify-content:space-between"><b>${esc(brFull(k))}</b><span>${e.n ? `<span aria-label="${FACES[e.n - 1][1]}" title="${FACES[e.n - 1][1]}" style="font-size:20px">${FACES[e.n - 1][0]}</span>` : ''}</span></div>
+  const grupos = []; dias.forEach(k => { const m = mes(k); if (!grupos.length || grupos[grupos.length - 1].m !== m) grupos.push({ m, ks: [] }); grupos[grupos.length - 1].ks.push(k); });
+  const card = k => { const e = d[k]; return `<div class="foco" style="margin-top:8px"><div class="row" style="justify-content:space-between"><b>${esc(brFull(k))}</b><span>${e.n ? `<span aria-label="${FACES[e.n - 1][1]}" title="${FACES[e.n - 1][1]}" style="font-size:20px">${FACES[e.n - 1][0]}</span>` : ''}</span></div>
       ${e.texto ? `<p style="white-space:pre-line;margin-top:6px">${esc(e.texto)}</p>` : '<p class="small">Só o humor, sem texto.</p>'}
-      <div class="row" style="margin-top:8px">${e.texto ? `<button class="btn s" data-act="dia-bau" data-d="${esc(k)}">📌 Guardar no Baú</button>` : ''}<button class="btn s" data-act="dia-del" data-d="${esc(k)}" aria-label="Apagar o registro de ${esc(brFull(k))}">🗑</button></div></div>`; });
+      <div class="row" style="margin-top:8px">${e.texto ? `<button class="btn s" data-act="dia-bau" data-d="${esc(k)}">📌 Guardar no Baú</button>` : ''}<button class="btn s" data-act="dia-del" data-d="${esc(k)}" aria-label="Apagar o registro de ${esc(brFull(k))}">🗑</button></div></div>`; };
+  // Só o mês mais recente (ou o resultado de uma busca) vem aberto; os meses antigos ficam recolhidos com o resumo (quantos dias e o humor médio) — 2 trimestres de diário não viram uma parede de texto.
+  const lista = grupos.map((g, i) => { const ns = g.ks.map(k => d[k].n).filter(Boolean); const md = ns.length ? FACES[Math.min(5, Math.max(1, Math.round(ns.reduce((x, y) => x + y, 0) / ns.length))) - 1] : null;
+    return `<details class="foco" style="margin-top:10px" ${i === 0 || q ? 'open' : ''}><summary class="h2" style="cursor:pointer">${esc(g.m)} <span class="chip">${g.ks.length} ${g.ks.length === 1 ? 'dia' : 'dias'}</span>${md ? ` <span class="small" title="Humor médio do mês">${md[0]} média ${esc(md[1].toLowerCase())}</span>` : ''}</summary>${g.ks.map(card).join('')}</details>`; }).join('');
   return `<div class="stack">${blocoFechamento(d)}<section class="gl pad stack" aria-labelledby="di-t"><h2 class="h2" id="di-t">📓 Meu diário <span class="chip">${Object.keys(d).length}</span></h2>
     <p class="sub">Seus fechamentos de dia, só seus. Na hora da avaliação ou de um 1:1, é um bom lugar pra lembrar como foi o ciclo — e dá pra guardar um dia no 📦 Baú.</p>
     <label class="sr" for="pesq">Buscar no diário</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar no diário…" value="${esc(S.pesq)}" autocomplete="off">
@@ -500,14 +504,14 @@ async function viewAval() {
     const lib = a.devol && a.devol.liberada === true;
     saida += `<section class="gl pad stack" aria-labelledby="c-${esc(cid)}"><h2 class="h2" id="c-${esc(cid)}">📐 ${esc(c.nome)}</h2>
      <div class="fase" aria-label="Fase do ciclo">${FASES.map(f => `<span class="${f[0] === fase ? 'on' : (FASES.findIndex(x => x[0] === fase) > FASES.findIndex(x => x[0] === f[0]) ? 'ok' : '')}">${f[1]}</span>`).join('')}</div>
-     <div class="foco"><h3 class="h2">🤝 Meus pares</h3><p class="small">Indique de 2 a 4 colegas que trabalharam com você. Seu líder aprova a lista; só quem for aprovado responde. Você não vê o que cada par escreveu.</p>
+     <div class="foco"><h3 class="h2">🤝 Meus pares</h3>${prep ? '<p class="small">Indique de 2 a 4 colegas que trabalharam com você. Seu líder aprova a lista; só quem for aprovado responde. Você não vê o que cada par escreveu.</p>' : '<p class="small">Pares que responderam neste ciclo. Você não vê o que cada um escreveu.</p>'}
        <ul class="lst">${Object.entries(a.pares).map(([u, p]) => `<li>${avatar(u)}<div class="tx"><b>${esc(nomeDe(u))}</b><div class="meta">${p.aprovado ? chip('✅ Aprovado pelo líder', 'ok') : chip('⏳ Aguardando aprovação', 'warn')}</div></div>${!p.aprovado && prep ? `<button class="btn s" data-act="par-retirar" data-cid="${esc(cid)}" data-par="${esc(u)}">Retirar</button>` : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
        ${prep ? `<label class="sr" for="pesq">Buscar colega</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar colega pelo nome…" value="${esc(S.pesq)}" autocomplete="off">
        <div class="chips" style="margin-top:8px">${sugestoesPares(cid, me, a.pares).map(u => `<button class="btn s" data-act="par-sugerir" data-cid="${esc(cid)}" data-par="${esc(u)}" aria-label="Indicar ${esc(nomeDe(u))}">+ ${esc(nomeDe(u))}</button>`).join('') || '<span class="small">Sem sugestões — use a busca.</span>'}</div>` : ''}
        ${aprovados < 2 && prep ? `<p class="small">⚠ Faltam pares aprovados (mínimo 2). Hoje: ${aprovados}.</p>` : ''}</div>
-     <div class="sbs"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
+     <div class="${coleta ? 'sbs' : ''}"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
         ${formResp(cid, me, 'auto', a.auto, perguntasDe(c, 'auto'), coleta, 'auto-salvar')}</div>
-       <aside class="foco lado" aria-label="Meu Baú para consulta"><h3 class="h2">📦 Meu Baú</h3><p class="small">Toque em 📎 para citar uma conquista na resposta em que você está escrevendo.</p>${blocoBau}</aside></div>
+       ${coleta ? `<aside class="foco lado" aria-label="Meu Baú para consulta"><h3 class="h2">📦 Meu Baú</h3><p class="small">Toque em 📎 para citar uma conquista na resposta em que você está escrevendo.</p>${blocoBau}</aside>` : ''}</div>
      <div class="${lib ? 'foco' : 'trava'}"><h3 class="h2">${lib ? '🔓 Minha devolutiva' : '🔒 Devolutiva'}</h3>
        ${lib ? `<p style="white-space:pre-line">${esc(a.devol.texto || '')}</p>${a.ciente ? `<p class="small">✔ Ciência registrada.</p>` : `<button class="btn p" data-act="ciente" data-cid="${esc(cid)}">✔ Li e estou ciente</button>`}`
          : '<p>O resultado fica guardado até a conversa de devolutiva com o seu líder. Ele libera durante ou logo depois da conversa — você não precisa fazer nada agora.</p>'}</div></section>`;
@@ -571,24 +575,25 @@ async function viewDetalhe(uid) {
    <div class="tabs" role="tablist" aria-label="Seções da pessoa">${abas.map(([k, l]) => `<button role="tab" data-act="sel-aba" data-k="${k}" aria-selected="${t === k}">${l}</button>`).join('')}</div>${corpo}</section>`;
 }
 async function viewAvalLider(uid) {
-  const cs = Object.entries(S.ciclos).filter(([, c]) => participa(c, uid) && c.status !== 'encerrado');
+  const cs = Object.entries(S.ciclos).filter(([, c]) => participa(c, uid)).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
   const ehMeuLiderado = liderDe(uid) === S.me.uid;
-  if (!cs.length) return vazio('Esta pessoa não está em nenhum ciclo em andamento.');
+  if (!cs.length) return vazio('Esta pessoa não está em nenhum ciclo de avaliação.');
   let saida = '';
   for (const [cid, c] of cs) {
-    const a = await cache('aval:' + cid + ':' + uid, () => carregaAval(cid, uid)); const coleta = c.status === 'coleta'; const lib = a.devol && a.devol.liberada === true;
+    const a = await cache('aval:' + cid + ':' + uid, () => carregaAval(cid, uid)); const coleta = c.status === 'coleta'; const enc = c.status === 'encerrado'; const lib = a.devol && a.devol.liberada === true;
     const pares = Object.entries(a.pares); const aprov = pares.filter(([, p]) => p.aprovado).length;
     saida += `<div class="stack"><h3 class="h2">📐 ${esc(c.nome)} <span class="chip">${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</span></h3>
      <div class="foco"><h4 class="h2">🤝 Pares (${aprov} aprovados)</h4>
       <ul class="lst">${pares.map(([u, p]) => `<li>${avatar(u)}<div class="tx"><b>${esc(nomeDe(u))}</b><div class="meta">${p.aprovado ? chip('✅ Aprovado', 'ok') : chip('⏳ Sugerido' + (p.por === 'lider' ? ' por você' : ' pela pessoa'), 'warn')}${a.resp[u] ? chip('✍️ respondeu', 'ok') : ''}</div></div>
-        ${ehMeuLiderado ? (p.aprovado ? `<button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Retirar</button>` : `<button class="btn s p" data-act="par-aprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Aprovar</button><button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Recusar</button>`) : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
+        ${ehMeuLiderado && !enc ? (p.aprovado ? `<button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Retirar</button>` : `<button class="btn s p" data-act="par-aprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Aprovar</button><button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Recusar</button>`) : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
       ${aprov > 4 ? '<p class="small">⚠ Mais de 4 pares aprovados: considere reduzir para evitar fadiga de avaliação.</p>' : ''}</div>
      <details class="foco" ${a.auto ? 'open' : ''}><summary class="h2" style="cursor:pointer">📝 Autoavaliação de ${esc(nomeDe(uid))}</summary>${a.auto ? formResp(cid, uid, 'auto', a.auto, perguntasDe(c, 'auto'), false) : '<p class="small">Ainda não respondeu.</p>'}</details>
-     ${ehMeuLiderado ? `<details class="foco"><summary class="h2" style="cursor:pointer">✍️ Minha avaliação (só você e seu gerente leem)</summary>${formResp(cid, uid, 'lider', a.lider, perguntasDe(c, 'lider'), c.status !== 'encerrado', 'lider-salvar')}</details>` : ''}
+     ${ehMeuLiderado ? `<details class="foco"><summary class="h2" style="cursor:pointer">✍️ Minha avaliação (só você e seu gerente leem)</summary>${formResp(cid, uid, 'lider', a.lider, perguntasDe(c, 'lider'), !enc, 'lider-salvar')}</details>` : ''}
      <details class="foco"><summary class="h2" style="cursor:pointer">💬 Feedback dos pares (${Object.keys(a.resp).length})</summary>${Object.entries(a.resp).map(([u, r]) => `<div class="foco"><b>${esc(nomeDe(u))}</b>${formResp(cid, uid, 'par', r, perguntasDe(c, 'par'), false, '', u)}</div>`).join('') || '<p class="small">Ninguém respondeu ainda.</p>'}</details>
      ${ehMeuLiderado ? `<div class="${lib ? 'foco' : 'trava'}"><h4 class="h2">${lib ? '🔓 Devolutiva liberada' : '🔒 Devolutiva (a pessoa ainda não vê)'}</h4>
-       <label class="sr" for="dv-t">Síntese da devolutiva</label><textarea class="ta" id="dv-t" data-devol="1" maxlength="6000" placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
-       <div class="row" style="margin-top:8px"><button class="btn" data-act="devol-salvar" data-cid="${esc(cid)}" data-av="${esc(uid)}">💾 Salvar rascunho</button>
+       <label class="sr" for="dv-t">Síntese da devolutiva</label><textarea class="ta" id="dv-t" data-devol="1" maxlength="6000" ${enc ? 'readonly' : ''} placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
+       ${enc ? `<p class="small">Ciclo encerrado — só leitura.${a.ciente ? ' ✔ Ciência registrada.' : ''}</p>` : ''}
+       <div class="row" style="margin-top:8px" ${enc ? 'hidden' : ''}><button class="btn" data-act="devol-salvar" data-cid="${esc(cid)}" data-av="${esc(uid)}">💾 Salvar rascunho</button>
         ${lib ? `<button class="btn" data-act="devol-recolher" data-cid="${esc(cid)}" data-av="${esc(uid)}">↩ Recolher liberação</button>` : `<button class="btn p" data-act="devol-liberar" data-cid="${esc(cid)}" data-av="${esc(uid)}">🔓 Liberar para ${esc(nomeDe(uid).split(' ')[0])}</button>`}${a.ciente ? '<span class="chip ok">✔ ciência registrada</span>' : ''}</div></div>` : ''}</div>`;
   }
   return saida;
@@ -646,7 +651,7 @@ const salvaResp = async (cid, av, grupo, caminho) => {
 async function alertaApoio(n) {
   const lid = liderDe(S.me.uid); if (!(n <= 2) || !lid || lid === S.me.uid) return;
   const id = 'apoio_' + S.me.uid + '_' + hojeISO(); const nome = (S.me.nome || 'Alguém').split(' ')[0];
-  try { await set(ref(db, 'kanban/usuarios/' + lid + '/notificacoes/' + id), { id, type: 'travessia_apoio', title: '🫶 ' + nome + ' marcou que não está bem hoje', sub: 'Compartilhou com você para você poder apoiar. Que tal um "oi"?', cardId: null, read: false, ts: new Date().toISOString(), squad: '' }); } catch (e) { /* já avisado hoje, ou sem regra: o humor da pessoa já foi salvo */ }
+  try { await WABS('kanban/usuarios/' + lid + '/notificacoes/' + id, { id, type: 'travessia_apoio', title: '🫶 ' + nome + ' marcou que não está bem hoje', sub: 'Compartilhou com você para você poder apoiar. Que tal um "oi"?', cardId: null, read: false, ts: new Date().toISOString(), squad: '' }); } catch (e) { /* já avisado hoje, ou sem regra: o humor da pessoa já foi salvo */ }
 }
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-tab],[data-act]'); if (!b) return;
@@ -721,6 +726,71 @@ document.addEventListener('submit', async e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-pesq]')) e.preventDefault(); });
 
+// ───────── 🎭 MODO DEMONSTRAÇÃO (?demo=1) ─────────
+// Nada aqui toca o Firebase: um banco em memória é preenchido com ~2 trimestres de uso FICTÍCIO (pessoas, números e textos inventados) para ver a Travessia "cheia".
+// Gravar no modo demo só muda a memória da aba (recarregar volta ao início). Os dados são calculados em relação a HOJE, então estão sempre "frescos".
+const DEMO = /[?&]demo=1(&|$)/.test(location.search);
+const MEM = {};
+const memGet = p => { const v = String(p).split('/').filter(Boolean).reduce((a, k) => (a == null ? undefined : a[k]), MEM); return v === undefined ? null : v; };
+function memSet(p, v) { const ks = String(p).split('/').filter(Boolean); let o = MEM; ks.slice(0, -1).forEach(k => { if (o[k] == null || typeof o[k] !== 'object') o[k] = {}; o = o[k]; }); const u = ks[ks.length - 1]; if (v === null || v === undefined) delete o[u]; else o[u] = JSON.parse(JSON.stringify(v)); }
+const DEMO_PERSONAS = [['ana', '👤 Ana · pessoa'], ['bia', '🤝 Bia · colega e par'], ['pau', '🧭 Pau · líder (PO)'], ['gil', '🏛 Gil · gerente'], ['dan', '⚙ Dani · RH'], ['adm', '🛠 Adm · ADM']];
+function demoDados() {
+  let seed = 20261022; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; const pick = a => a[Math.floor(rnd() * a.length)];
+  const hoje = hojeISO(); const dia = n => { const d = new Date(Date.parse(hoje + 'T12:00:00')); d.setDate(d.getDate() - n); return isoDe(d); }; const util = k => { const w = new Date(k + 'T12:00:00').getDay(); return w !== 0 && w !== 6; };
+  const ts = n => Date.parse(dia(n) + 'T10:00:00');
+  const PES = [['ana', 'Ana Lima', 'AL', 'dados'], ['bia', 'Bia Souza', 'BS', 'dados'], ['cae', 'Cauê Matos', 'CM', 'dados'], ['deb', 'Débora Pinto', 'DP', 'dados'], ['edu', 'Eduardo Nunes', 'EN', 'dados'], ['fab', 'Fabiana Souza', 'FS', 'dados'],
+    ['gus', 'Gustavo Alves', 'GA', 'midia'], ['lia', 'Lívia Torres', 'LT', 'midia'], ['pau', 'Pau Reis', 'PR', 'dados'], ['eli', 'Elis Duarte', 'ED', 'midia'], ['gil', 'Gil Prado', 'GP', 'dados'], ['dan', 'Dani Rocha', 'DR', ''], ['adm', 'Adm Demo', 'AD', '']];
+  const out = { kanban: { usuarios_publicos: {}, usuarios: {}, travessia: { papeis: { dan: 'rh' }, vinculos: {}, serie: {}, encontros: {}, humor: {}, humor_comp: {}, diario: {}, bau: {}, ciclos: {}, avaliacoes: {}, pedidos_par: {} }, escala: {}, painel: { kudos_geral: [] }, squads: { dados: { dados: { kudos: [] } }, midia: { dados: { kudos: [] } } } } };
+  const K = out.kanban, TR = K.travessia;
+  PES.forEach(([u, nome, ini, sq]) => { const sqs = sq ? { [sq]: true } : {}; K.usuarios_publicos[u] = { uid: u, nome, init: ini, email: u + '@demo.ciahering.com.br', role: u === 'adm' ? 'adm' : 'membro', squads: sqs }; K.usuarios[u] = { role: u === 'adm' ? 'adm' : (u === 'pau' || u === 'eli' ? 'po' : 'membro'), init: ini, squads: sqs }; });
+  // organograma: pessoas → PO → gerente
+  ['ana', 'bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { TR.vinculos[u] = { liderUid: 'pau', gerenteUid: 'gil', squad: 'dados' }; }); ['gus', 'lia'].forEach(u => { TR.vinculos[u] = { liderUid: 'eli', gerenteUid: 'gil', squad: 'midia' }; }); TR.vinculos.pau = { liderUid: 'gil' }; TR.vinculos.eli = { liderUid: 'gil' };
+  // 1:1: cadência e histórico de ~180 dias (último encontro define o farol de hoje)
+  const SER = { ana: ['quinzenal', 6], bia: ['semanal', 14], cae: ['quinzenal', 26], deb: ['semanal', 4], edu: ['mensal', 40], fab: ['quinzenal', 9], gus: ['quinzenal', 5], lia: ['semanal', 3] }; const PASSO = { semanal: 7, quinzenal: 14, mensal: 30 };
+  Object.entries(SER).forEach(([u, [cad, ult]]) => { TR.serie[u] = { cad, tipo: 'acomp', ts: ts(190) }; TR.encontros[u] = {}; let n = ult, i = 0; while (n < 185) { const k = dia(n); const tipo = i % 6 === 5 ? 'carreira' : (i % 3 === 2 ? 'pdi' : 'acomp'); TR.encontros[u]['e' + i] = { data: k, tipo, por: i % 4 === 0 ? u : (u === 'gus' || u === 'lia' ? 'eli' : 'pau'), ts: ts(n) }; n += PASSO[cad] + (rnd() < 0.25 ? 3 : 0); i++; } });
+  // folgas (a Escala desconta do farol)
+  [[3, 'ana'], [4, 'ana'], [11, 'ana'], [12, 'ana'], [20, 'deb'], [21, 'deb'], [7, 'edu'], [8, 'edu'], [9, 'edu']].forEach(([n, u]) => { const k = dia(n); K.escala[k] = K.escala[k] || { dados: {} }; K.escala[k].dados[u] = { t: 'folga', por: u, ts: ts(n) }; });
+  // humor e diário (tendência: começa morno, melhora, tem um vale perto de uma entrega, hoje bem)
+  const HUM = { ana: 0.95, bia: 0.8, cae: 0.7, deb: 0.9, edu: 0.6, fab: 0.85 }; const COMP = { ana: 0.85, bia: 0.7, cae: 0.6, deb: 0.5, edu: 0.0, fab: 0.0 };
+  const humorDe = n => { const base = 3 + (n < 60 ? 0.9 : n < 120 ? 0.5 : 0.1) + (n > 75 && n < 85 ? -1.3 : 0) + (rnd() - 0.5) * 1.8; return Math.max(1, Math.min(5, Math.round(base))); };
+  Object.keys(HUM).forEach(u => { TR.humor[u] = {}; TR.humor_comp[u] = {}; TR.diario[u] = {}; for (let n = 0; n < 182; n++) { const k = dia(n); if (!util(k) || rnd() > HUM[u]) continue; const h = humorDe(n); TR.humor[u][k] = { n: h, ts: ts(n) }; if (rnd() < COMP[u]) TR.humor_comp[u][k] = { n: h, ts: ts(n) }; } });
+  TR.humor_comp.cae[dia(1)] = { n: 2, ts: ts(1) }; TR.humor.cae[dia(1)] = { n: 2, ts: ts(1) }; delete TR.humor_comp.ana[dia(0)]; delete TR.humor.ana[dia(0)];
+  const TXT = ['Fechei a análise do funil e apresentei para a diretoria. Cansativo, mas valeu.', 'Dia de reuniões em sequência; só consegui produzir à tarde.', 'Destravei a consulta lenta que vinha me incomodando. Aprendi bastante com a Débora.', 'Hoje foi puxado: três pedidos urgentes ao mesmo tempo.', 'Bom dia de foco. Entreguei o painel e ainda sobrou tempo para estudar.',
+    'Feedback do Pau sobre a apresentação: clareza ótima, preciso resumir mais. Anotado.', 'Dia tranquilo, organizei o backlog e revisei o trabalho de um colega.', 'Me senti perdida na priorização, vou levar isso para o próximo 1:1.', 'A campanha bateu a meta do dia e a squad comemorou. Orgulho do time!', 'Estudei SQL avançado por uma hora, está rendendo.',
+    'Reunião difícil com a área de negócio, mas saímos com um combinado claro.', 'Ajudei a Bia a montar o modelo de previsão. Gostei de ensinar.', 'Dia longo; preciso cuidar mais do horário de almoço.', 'Primeiro dia testando a automação nova, economizou muito tempo.', 'Retrospectiva da sprint: o time pediu mais tempo de estudo, vou apoiar.'];
+  Object.keys(TR.diario).forEach(u => { const ks = Object.keys(TR.humor[u]).sort(); ks.forEach((k, i) => { if (rnd() < (u === 'ana' ? 0.55 : 0.25)) TR.diario[u][k] = { n: Math.max(1, Math.min(5, TR.humor[u][k].n + (rnd() < 0.3 ? -1 : 0))), texto: pick(TXT), ts: TR.humor[u][k].ts + 3600000 * 8 }; }); });
+  // Baú: conquistas guardadas ao longo dos 2 trimestres
+  const bau = (u, itens) => { TR.bau[u] = {}; itens.forEach(([n, tipo, titulo, extra], i) => { TR.bau[u]['b' + i] = Object.assign({ tipo, titulo, ts: ts(n), em: dia(n) }, extra || {}); }); };
+  bau('ana', [[170, 'manual', 'Assumi a análise semanal de vendas', { texto: 'Desafio: o relatório saía sempre atrasado\nO que fiz: automatizei a coleta e criei um painel\nImpacto: de 2 dias para 2 horas', comp: 'Automação' }], [158, 'card', 'Modelo de previsão de churn', { squad: 'dados', link: 'kanban-dev.html?squad=dados&card=churn' }], [150, 'kudo', 'Estrela de Pau Reis', { texto: 'A análise de churn mudou a conversa com o comercial!', squad: 'dados' }],
+    [141, 'marco', 'Painel executivo de vendas no ar', { texto: 'Objetivo: Visibilidade comercial', link: 'okr-dev.html?okr=painel' }], [133, 'manual', 'Mentoria para a Bia em SQL', { texto: 'Desafio: a Bia travava em consultas lentas\nO que fiz: 4 encontros de pair programming\nImpacto: consultas 5× mais rápidas', comp: 'Colaboração' }], [120, 'card', 'Migração das cargas para o novo orquestrador', { squad: 'dados' }], [109, 'kudo', 'Estrela de Gil Prado', { texto: 'Obrigado por assumir a apresentação em cima da hora.', squad: 'geral' }],
+    [97, 'manual', 'Apresentação para a diretoria', { texto: 'Desafio: explicar o modelo para quem não é de dados\nO que fiz: storytelling com 3 gráficos\nImpacto: aprovação do orçamento do trimestre', comp: 'Comunicação' }], [84, 'marco', 'Metas do trimestre fechadas em 112%', { texto: 'Objetivo: Receita do trimestre' }], [71, 'card', 'Black Friday: planejamento das análises', { squad: 'dados' }], [60, 'manual', 'Curso de Data Storytelling concluído', { texto: 'Nota do PDI: estudo (10%)', comp: 'Comunicação' }],
+    [47, 'card', 'Dashboard de acompanhamento de campanhas', { squad: 'dados' }], [33, 'kudo', 'Estrela de Elis Duarte', { texto: 'Sua análise salvou o dia da campanha!', squad: 'geral' }], [21, 'manual', 'Liderei o time na semana de pico', { texto: 'Desafio: três pedidos urgentes juntos\nO que fiz: priorizei com o Pau e dividi a squad\nImpacto: tudo entregue no prazo', comp: 'Liderança' }], [9, 'marco', 'Modelo de churn em produção', { texto: 'Objetivo: Reduzir cancelamentos' }], [3, 'manual', 'Documentei o processo de análise', { texto: 'Impacto: qualquer pessoa da squad consegue refazer a análise', comp: 'Documentação' }]]);
+  bau('bia', [[130, 'card', 'Automação do relatório mensal', { squad: 'dados' }], [100, 'manual', 'Primeira apresentação para o cliente interno', { texto: 'Impacto: pedido de uma segunda análise', comp: 'Comunicação' }], [74, 'kudo', 'Estrela de Ana Lima', { texto: 'Obrigada pela mentoria em SQL!', squad: 'dados' }], [40, 'card', 'Qualidade de dados das campanhas', { squad: 'dados' }], [12, 'marco', 'Painel de qualidade no ar', { texto: 'Objetivo: Confiança nos dados' }]]);
+  bau('deb', [[160, 'card', 'Alertas das cargas diárias', { squad: 'dados' }], [90, 'manual', 'Palestra interna sobre data quality', { comp: 'Comunicação' }], [30, 'card', 'Observabilidade do pipeline', { squad: 'dados' }]]);
+  bau('cae', [[120, 'card', 'Modelo dimensional de vendas', { squad: 'dados' }], [55, 'manual', 'Estudo de modelagem dimensional', { comp: 'Estudo' }]]);
+  // Estrelas (Kudos) recebidas
+  const est = (de, para, txt, n, esc) => ({ id: 'k' + de + para + n, fromUid: de, fromNome: K.usuarios_publicos[de].nome, toUid: para, toInit: K.usuarios_publicos[para].init, texto: txt, ts: new Date(Date.parse(dia(n) + 'T15:00:00')).toISOString(), scope: esc });
+  K.painel.kudos_geral = [est('pau', 'ana', 'A análise de churn mudou a conversa com o comercial!', 150, 'geral'), est('gil', 'ana', 'Obrigado por assumir a apresentação em cima da hora.', 109, 'geral'), est('eli', 'ana', 'Sua análise salvou o dia da campanha!', 33, 'geral'), est('pau', 'bia', 'Entrega impecável do relatório!', 60, 'geral'), est('gil', 'deb', 'Excelente palestra sobre qualidade de dados.', 88, 'geral')];
+  K.squads.dados.dados.kudos = [est('bia', 'ana', 'Obrigada pela mentoria em SQL!', 74, 'dados'), est('deb', 'ana', 'Sempre disponível para ajudar o time.', 19, 'dados'), est('ana', 'bia', 'Parabéns pelo painel de qualidade!', 12, 'dados')];
+  // Ciclos: 2026/1 encerrado (com devolutiva liberada e ciência) e 2026/2 em coleta
+  const PART = {}; ['ana', 'bia', 'cae', 'deb', 'edu', 'fab', 'gus', 'lia'].forEach(u => { PART[u] = true; });
+  TR.ciclos.c2026s1 = { nome: 'Ciclo 2026/1', status: 'encerrado', ts: ts(172), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
+  TR.ciclos.c2026s2 = { nome: 'Ciclo 2026/2', status: 'coleta', ts: ts(24), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
+  const R = (o) => Object.assign({ ts: ts(100) }, o);
+  const AV1 = TR.avaliacoes.c2026s1 = {};
+  AV1.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(150) }, cae: { aprovado: true, por: 'avaliado', ts: ts(150) }, deb: { aprovado: true, por: 'lider', ts: ts(149) } },
+    auto: R({ q1: 'Assumi a análise semanal de vendas e a automatizei (de 2 dias para 2 horas). Entreguei o modelo de churn e o painel executivo. Do que mais me orgulho: a mentoria que fiz para a Bia.', q2: 'Evoluí em SQL e em automação. Antes eu dependia de planilhas; hoje cuido de pipelines.', q3: 'Quero melhorar minha comunicação com a diretoria e liderar um projeto de ponta a ponta.', q4: 'Preciso de mais espaço para estudar e de feedback mais frequente sobre apresentações.' }),
+    lider: R({ q1: 'Entrega consistente e acima do esperado: churn, painel e automação. Referência técnica da squad.', q2: 'Continuar mentorando colegas, documentar o que faz e trazer soluções antes de ser pedida.', q3: 'Ajustar a comunicação executiva (resumir mais) e aprender a delegar.', q4: 'Pronta para liderar um projeto de ponta a ponta no próximo ciclo; combinar plano de PDI.' }),
+    resp_pares: { bia: R({ q1: 'Continuar compartilhando conhecimento — a mentoria em SQL mudou meu trabalho.', q2: 'Começar a registrar as decisões das análises para o time consultar.', q3: 'Quando destravou a consulta lenta da campanha.' }), cae: R({ q1: 'Clareza ao explicar análises complexas.', q2: 'Ajustar o tempo das reuniões: às vezes se estende além do necessário.' }), deb: R({ q1: 'Proatividade com qualidade de dados.', q2: 'Compartilhar mais cedo os rascunhos para receber feedback.', q3: 'Revisão conjunta do modelo de churn.' }) },
+    devolutiva: { texto: 'Ótimo ciclo. Reconhecemos a entrega de churn, painel e automação, e a mentoria com a Bia. Pontos de atenção: resumir mais as apresentações para a diretoria e delegar. Combinamos um PDI com três focos: comunicação executiva, liderança de projeto e documentação.', liberada: true, liberadaEm: ts(70), por: 'pau', ts: ts(70) }, ciente: ts(68) };
+  ['bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { AV1[u] = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(150) } }, auto: R({ q1: 'Entregas do ciclo concluídas no prazo.', q2: 'Evolução em técnica e comunicação.', q3: 'Quero assumir mais responsabilidade.', q4: 'Mais feedback frequente.' }), lider: R({ q1: 'Boa entrega.', q2: 'Manter a qualidade.', q3: 'Ampliar a autonomia.', q4: 'Plano de PDI combinado.' }), devolutiva: { texto: 'Bom ciclo; combinamos o PDI e os próximos passos.', liberada: true, liberadaEm: ts(70), por: 'pau', ts: ts(70) }, ciente: ts(66) }; });
+  const AV2 = TR.avaliacoes.c2026s2 = {};
+  AV2.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(18) }, deb: { aprovado: true, por: 'lider', ts: ts(17) }, fab: { aprovado: false, por: 'avaliado', ts: ts(2) } }, auto: R({ q1: 'Modelo de churn em produção, Black Friday planejada e o curso de storytelling concluído.', q2: 'Evoluí em comunicação: a última apresentação foi bem avaliada.', ts: ts(4) }), resp_pares: { bia: R({ q1: 'Continuar mentorando.', q2: 'Documentar mais as decisões.', ts: ts(5) }) }, devolutiva: { texto: '(rascunho) Ciclo muito forte; destacar liderança na semana de pico e o churn em produção.', liberada: false, ts: ts(1), por: 'pau' }, lider: R({ q1: 'Rascunho da avaliação do líder.', ts: ts(1) }) };
+  AV2.bia = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(17) }, cae: { aprovado: false, por: 'avaliado', ts: ts(3) } } };
+  TR.pedidos_par = { bia: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, deb: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, ana: { c2026s2_bia: { cid: 'c2026s2', avaliado: 'bia', ts: ts(17) } } };
+  return out;
+}
+
 // ───────── login e boot ─────────
 function mostraLogin(msg) { $('#login').hidden = false; $('#app').hidden = true; $('#quem').hidden = true; $('#login-err').textContent = msg || ''; $('#login-err').hidden = !msg; }
 $('#btn-login').addEventListener('click', () => { $('#login-err').hidden = true; if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; } window._signIn().catch(e => mostraLogin('Não deu pra entrar: ' + (e && e.message || e))); });
@@ -730,14 +800,9 @@ const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhen
 function aplicaTema(v, avisa) { const i = Math.max(0, TEMAS.findIndex(x => x[0] === v)), t = TEMAS[i]; if (t[0]) document.documentElement.setAttribute('data-theme', t[0]); else document.documentElement.removeAttribute('data-theme'); $('#btn-tema').textContent = t[1]; try { localStorage.setItem('mare_theme', t[0] === 'light' ? 'light' : t[0] === 'sunset' ? 'vice' : 'dark'); localStorage.setItem('travessia_tema', t[0]); } catch (_) {} if (avisa) toast(t[1] + ' ' + t[2]); }
 try { const t = localStorage.getItem('travessia_tema'); if (t) aplicaTema(t); else { const m = localStorage.getItem('mare_theme'); if (m === 'light') aplicaTema('light'); } } catch (_) {}
 
-try { const qt = new URLSearchParams(location.search).get('tab'); if (qt && /^[a-z]{2,12}$/.test(qt)) S.tab = qt; } catch (_) {}
-onAuthStateChanged(auth, async u => {
-  if (window.MareLogin && MareLogin.voltando) return;
-  if (!u) { S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
-  const empresa = /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com');
-  if (!empresa) { S.aviso = 'O Travessia é só para contas Google @ciahering.com.br.'; mostraLogin(S.aviso); signOut(auth).catch(() => {}); return; }
+async function abrirApp(u) {
   S.me = { uid: u.uid, email: u.email, nome: u.displayName || u.email, foto: u.photoURL || '' };
-  $('#login').hidden = true; $('#app').hidden = false; $('#quem').hidden = false; $('#quem-nome').textContent = S.me.nome; if (S.me.foto) { $('#quem-foto').src = S.me.foto; $('#quem-foto').hidden = false; }
+  $('#login').hidden = true; $('#app').hidden = false; $('#quem').hidden = DEMO; $('#quem-nome').textContent = S.me.nome; if (S.me.foto) { $('#quem-foto').src = S.me.foto; $('#quem-foto').hidden = false; }
   $('#app').innerHTML = carregando('Abrindo sua travessia…');
   try {
     const [users, eu, vinc, ciclos, papel] = await Promise.all([G('kanban/usuarios_publicos'), G('kanban/usuarios/' + u.uid), G(T + 'vinculos'), G(T + 'ciclos'), G(T + 'papeis/' + u.uid)]);
@@ -745,7 +810,25 @@ onAuthStateChanged(auth, async u => {
     if (!S.users[u.uid]) S.users[u.uid] = { nome: S.me.nome, squads: (eu && eu.squads) || {}, init: (eu && eu.init) || '' };
     await render();
   } catch (e) { console.warn('[travessia]', e); $('#app').innerHTML = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
-});
+}
+try { const qt = new URLSearchParams(location.search).get('tab'); if (qt && /^[a-z]{2,12}$/.test(qt)) S.tab = qt; } catch (_) {}
+if (DEMO) {
+  // 🎭 Modo demonstração: sem login e sem Firebase. O seletor do topo troca a pessoa que está "olhando" (cada visão enxerga o que as regras permitiriam).
+  Object.assign(MEM, demoDados());
+  const sel = $('#demo-persona'); sel.innerHTML = DEMO_PERSONAS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(''); $('#demo-bar').hidden = false; document.body.classList.add('demo');
+  const entrar = k => { const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
+  sel.addEventListener('change', () => { S.tab = 'inicio'; entrar(sel.value); });
+  try { const qp = new URLSearchParams(location.search).get('como'); if (qp && DEMO_PERSONAS.some(x => x[0] === qp)) sel.value = qp; } catch (_) {}
+  entrar(sel.value);
+} else {
+  onAuthStateChanged(auth, async u => {
+    if (window.MareLogin && MareLogin.voltando) return;
+    if (!u) { S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
+    const empresa = /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com');
+    if (!empresa) { S.aviso = 'O Travessia é só para contas Google @ciahering.com.br.'; mostraLogin(S.aviso); signOut(auth).catch(() => {}); return; }
+    await abrirApp(u);
+  });
+}
 window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, CAD_DIAS, estado: S, render };
 </script>
 </body>
