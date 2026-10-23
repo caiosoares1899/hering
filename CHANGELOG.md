@@ -24,6 +24,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🎨 Travessia com outra cara (SÓ DEV): menos caixa, mais mar — travessia-dev.html — 2026-10-23
+
+O Caio achou o visual 'com cara de checkbox, tudo meio quadradão'. Mesma identidade Marine Glass e mesmos 3 temas, comportamento e dados intactos; mudou a forma.
+• Antes → depois: cartões retos com borda forte → vidro com cantos grandes, borda suave e brilho no topo; botões e abas retangulares → pílulas; caixinha de marcar → interruptor (e pílulas marcáveis para escolher squads); abas de texto → pílula de navegação no desktop e barra inferior com ícone no celular.
+• Topo da página virou um cartão de boas-vindas (bom dia/tarde/noite, data, mar e barquinho). Títulos ganharam bolinha de ícone.
+• Meu 1:1: o farol ganhou um anel com os dias desde o último 1:1 (ainda diz o estado em cor + ícone + texto). Humor: carinhas redondas com o nome do humor escolhido. Avaliação: trilha segmentada das 4 fases.
+• Estrelas em carrossel dourado; Baú em cartões com faixa colorida por tipo (Maré, Radar, Estrelas, Manual); Diário em linha do tempo, com os meses antigos recolhidos.
+• Frota: cartões com avatar na cor do farol; termômetro com medidor em meia-lua, histograma dos 5 humores e a média dos 14 dias. Administração: linhas macias, RH em interruptor, fases do ciclo na mesma trilha.
+• Movimento reduzido desliga o barquinho e as transições. Dica: não (redesenho de tela já existente, nada novo para a pessoa descobrir).
+• Teste novo: docs/arezzo/testes/test_travessia_ui.js (3 temas × 1280/390 px: sem rolagem lateral, cantos, interruptor, alvos de toque, contraste, nome longo, movimento reduzido); as 3 suítes antigas seguem verdes sem mudança.
+
 ### 🎭 Travessia em modo demonstração (SÓ DEV): travessia-dev.html?demo=1 mostra 2 trimestres de uso fictício, sem tocar no Firebase — 2026-10-22
 
 Para ver a Travessia preenchida sem usar dado real. ?demo=1 liga um banco em memória (sem login e sem nenhuma chamada ao Firebase) com ~180 dias de uso fictício: 13 pessoas inventadas em 2 squads (pessoa → PO → gerente), RH e ADM.

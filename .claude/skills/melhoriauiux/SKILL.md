@@ -104,6 +104,7 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 - **2026-10-09 · Radar › Dashboard:** KPIs repetidos cortados, um número grande + linha no desenho do atingimento, sem eixo duplo, tabela por pior situação (okr-dev v2.58).
 - **2026-10-10 · Painel › Visão e Fluxo:** cor = squad (cheia/clara/vermelha), uma pergunta por visão, "Parado há mais tempo" (mudança de métrica **de propósito**), filtro de squad que nunca nascia (painel-dev v5.36–v5.37).
 - **2026-10-16 · Oceano:** plantão separado por audiência (usuário no Oceano, ADM no Painel); cartão da Meta alinhado pelo topo (oceano v1.48–v1.50). **Metas:** projeção como "volta fantasma" no anel e linha no gráfico (mare-metas v16).
+- **2026-10-23 · Travessia (inteira):** "cara de checkbox, tudo quadradão" → cantos grandes, pílulas, interruptor, hero, anel do farol, medidor do termômetro, Baú em cartões, Diário em linha do tempo, barra inferior no celular (travessia-dev, PR desta rodada; teste `test_travessia_ui.js`).
 - **2026-10-16 · Maré › Atalhos:** foco do botão "Definir" (bug) + combinações reservadas do navegador (v8.30.875-dev).
 
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
