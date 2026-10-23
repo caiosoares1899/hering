@@ -334,6 +334,7 @@ for (const [w, h, nome] of [[1280, 900, 'desktop'], [390, 800, 'celular']]) {
 | Restrição só na tela | regra do banco aberta | 1.5 |
 | Cartão deformado ao "alinhar" | esticar o vizinho em vez de alinhar o topo | alinhar topo, não altura |
 | `[object Object]` na tela | campo aceita texto **ou** objeto | normalizar antes de renderizar |
+| "Cara de checkbox, tudo quadradão" (Travessia) | raio pequeno, borda forte em tudo, caixinha nativa, abas retas, todo bloco com o mesmo peso | cantos grandes (cartão ≥ 22 px, botão em pílula), borda suave + brilho, **interruptor** para ligar/desligar e **pílula marcável** para escolher, ícone de título em bolinha, 1 bloco de destaque por tela (hero), componentes com forma própria (anel, medidor, trilha, linha do tempo) |
 | Rolagem lateral no celular | largura fixa / tabela larga | 1 coluna; tabela em `overflow-x` **dentro** do contêiner, nunca na página |
 
 ---
