@@ -79,7 +79,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-10-28 · Boot de qualquer aparelho regravava o /cards inteiro (backfill de flow) e apagava/desalinhava cards (SÓ DEV v8.30.884-dev)
+### 2026-10-28 · Boot de qualquer aparelho regravava o /cards inteiro (backfill de flow) e apagava/desalinhava cards (PROD v8.30.881 · dev v8.30.884-dev)
 
 - **Sintoma (relato de produção 28/10, squad `midiacriativa`, Black Friday):** cards sumindo "quando as pessoas entravam", voltando antigos ou em outra posição; episódios sem nenhuma ação de ninguém por perto (12:09, 2 cards, 8 aparelhos).
 - **Causa-raiz:** em `_applyCardsSync`, o backfill de `flow` (rodado por QUALQUER aparelho que carregasse um card sem `flow`) fazia `set` do array LOCAL inteiro em `/cards`. Esse caminho passava por FORA do resgate de `fbSaveAll`: apagava os arquivados (que o aparelho não baixa) e compactava as posições (0,1,3,4,5 → 0,1,2,3,4), deixando `cards_index` apontando para o card errado. Reproduzido em teste: na produção o card arquivado some e o índice desalinha.
