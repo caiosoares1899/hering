@@ -74,6 +74,16 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-28 · Maré — save estrutural apagava cards que o aparelho ainda não tinha recebido (fbSaveAll) (SÓ DEV, kanban-dev v8.30.882-dev)
+
+• Sintoma (relato Juliana Massuda, squad midiacriativa, Black Friday, 28/10/2026): cards sumindo e cards voltando sem o conteúdo já salvo. Os 2 exemplos: um card criado em 16/10 sumiu de 27 para 28/10; outro voltou à coluna e ao conteúdo antigos.
+• Diagnóstico em produção (script somente leitura): o card sumido não existe em /cards, nem em cards_index, cards_updated_at, cards_archived ou cards_deleted_intentionally = foi apagado por uma regravação completa do array. 408 alarmes de "card sumiu" = 36 cards em 12 episódios desde 27/08, todos entre 11h e 18h (uso normal, ~10 aparelhos conectados), 4 episódios só em 27/10 (17:41–18:42, 11 cards). Índice sem posições trocadas nem cards sem flow: o backfill de _applyCardsSync NÃO é a causa.
+• Causa: fbSaveAll() reescreve /cards, /cards_index e /cards_updated_at por completo a partir do array local. Se o aparelho está com o array atrasado (evento ao vivo ainda não aplicado — _applyCardsSync ignora eventos por 2 s depois de um save local e não se reagenda —, carga ainda incompleta), qualquer ação em massa/reordenar coluna apaga do banco o card que outra pessoa criou ou editou, para todo mundo, sem erro. Reproduzido nos testes (K=kanban: card criado por outra pessoa é apagado).
+• Correção: _resgatarCardsAusentes() — antes de gravar, fbSaveAll() relê o cards_index e mantém qualquer card que existe no banco, não está sendo excluído de propósito (marca em `extra` ou _intentionalDeleteIds) e falta no array local; o resgate fica em cards_resgates/{id}. Só adiciona: nunca troca o conteúdo de um card que o aparelho já tem. Falha de leitura não impede o save. Opção `substituirTudo` (3º parâmetro) para o que substitui o conjunto de propósito: restaurar backup e importar do Trello sem mesclar.
+• Achado de passagem: Arquivados → excluir selecionados, Cards antigos → excluir, Excluir arquivados antigos e a ferramenta excluir_card do Agente Ágil apagavam sem gravar cards_deleted_intentionally (falso alarme "card sumiu sozinho", e agora o resgate os traria de volta). Passaram a gravar a marca na mesma escrita atômica, como bulkDeleteSelected().
+• NÃO corrigido (decisão pendente): o conteúdo que "volta" (versão velha por cima da nova) quando o aparelho atrasado tem o card mas com conteúdo antigo — exige tratar conflito de edição por card (ex.: gravar só os cards tocados em vez de /cards inteiro). Também fica de fora tornar _applyCardsSync reagendável após a janela de 2 s. Recorrentes/Agendamentos rodam num timer fixo de 3,5 s sem esperar o carregamento (reproduzido com rede lenta); o resgate agora os protege, mas vale esperar o carregamento terminar.
+• Teste: docs/arezzo/testes/test_cards_resgate.js (K=kanban-dev passa; K=kanban falha no cenário A e nas marcas de exclusão — prova que pega o bug).
+
 ### 2026-10-21 · VTEX: tradução com horário de Brasília, estado do componente em português e corte na última frase (functions/vtex/statusVtex.js)
 
 Ajustes pedidos depois do 1º aviso real traduzido (manutenção Marketplace Connectors, 21/10).
