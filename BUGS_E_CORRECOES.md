@@ -79,7 +79,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-10-28 · Maré — card novo criado numa coluna com mais de 80 cards ficava atrás do "Ver mais" e parecia ter sumido (SÓ DEV, kanban-dev v8.30.883-dev)
+### 2026-10-28 · Maré — card novo criado numa coluna com mais de 80 cards ficava atrás do "Ver mais" e parecia ter sumido (DEV v8.30.883-dev · PROD kanban v8.30.880, promoção isolada)
 
 • Sintoma (relato Marina Saran Bernardo, squad midiacriativa, Black Friday, 28/10/2026 11:34): "estou abrindo cards para o time de criação e eles estão sumindo". Ela cria direto na squad (criacao é só apelido de midiacriativa).
 • Causa (reproduzida): cada coluna só renderiza os 80 primeiros cards (_colRenderLimit; o resto fica atrás de "▼ Ver mais N ocultos") e nada expandia o limite na criação. Com a squad em 611 cards ativos, um card novo que cai depois da 80ª posição (ordenação por prioridade: o novo é "média", depois dos "alta") é criado e gravado, mas fica escondido. Teste: coluna com 100 cards → card criado e no banco, 0 no DOM. Falha de criação NÃO era o caso: o modal fica aberto com aviso. Zero alarmes de card apagado depois do hotfix do fbSaveAll (v8.30.879) e zero resgates = não é regravação.
