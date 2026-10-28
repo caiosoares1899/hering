@@ -79,6 +79,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-28 · Backup do quadro passou de semanal para diário (functions/backup/weeklyBackup.js, 04:00 Brasília)
+
+- **Por quê:** na Black Friday (28/10) cards criados no meio da semana ficaram sem nenhuma cópia: o último backup do quadro era de domingo 25/10 e 5 cards de 27–28/10 só puderam ser recriados vazios.
+- **O que mudou:** `weeklyBackup` agora roda `every day 04:00` (o nome da função foi mantido de propósito para não criar uma função nova e deixar a antiga agendada). `backupVigia` passa a cobrar o quadro com 3 dias (antes 8). Retenção continua 60 dias (`storage-lifecycle.json`), ≈60 arquivos por squad.
+- **Deploy (só o Caio):** `firebase deploy --only functions:weeklyBackup,functions:backupVigia`. Sem mudança em regras do banco nem nas páginas.
+
 ### 2026-10-28 · Boot de qualquer aparelho regravava o /cards inteiro (backfill de flow) e apagava/desalinhava cards (PROD v8.30.881 · dev v8.30.884-dev)
 
 - **Sintoma (relato de produção 28/10, squad `midiacriativa`, Black Friday):** cards sumindo "quando as pessoas entravam", voltando antigos ou em outra posição; episódios sem nenhuma ação de ninguém por perto (12:09, 2 cards, 8 aparelhos).

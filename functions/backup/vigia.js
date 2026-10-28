@@ -16,6 +16,8 @@ const { _listActiveSquads } = require('./weeklyBackup');
 const { dataBrasilia, PREFIXO } = require('./completo');
 
 const LIMITE_DIAS = 8;
+// O backup do QUADRO (weeklyBackup) passou a ser diário em 2026-10-28: 3 dias sem arquivo já é falha (o completo semanal segue com LIMITE_DIAS).
+const LIMITE_QUADRO_DIAS = 3;
 const dias = (de, ate) => Math.round((Date.parse(ate + 'T00:00:00Z') - Date.parse(de + 'T00:00:00Z')) / 86400000);
 
 async function lerManifesto(bucket, caminho) {
@@ -53,8 +55,8 @@ async function verificar({ db, bucket, agora }) {
     const m = /^backups\/([^/]+)\/(\d{4}-\d{2}-\d{2})\.json$/.exec(f.name);
     if (m && (!ultimoPorSquad[m[1]] || m[2] > ultimoPorSquad[m[1]])) ultimoPorSquad[m[1]] = m[2];
   });
-  const atrasados = squads.filter((s) => !ultimoPorSquad[s] || dias(ultimoPorSquad[s], hoje) > LIMITE_DIAS);
-  if (atrasados.length) problemas.push({ codigo: 'quadro_atrasado', texto: `sem backup do quadro (weeklyBackup) nos últimos ${LIMITE_DIAS} dias: ${atrasados.join(', ')}` });
+  const atrasados = squads.filter((s) => !ultimoPorSquad[s] || dias(ultimoPorSquad[s], hoje) > LIMITE_QUADRO_DIAS);
+  if (atrasados.length) problemas.push({ codigo: 'quadro_atrasado', texto: `sem backup do quadro (weeklyBackup) nos últimos ${LIMITE_QUADRO_DIAS} dias: ${atrasados.join(', ')}` });
 
   return { problemas, hoje };
 }
