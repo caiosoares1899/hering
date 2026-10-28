@@ -1,6 +1,7 @@
 // functions/backup/weeklyBackup.js
 //
-// Backup semanal automático de cada squad pro Cloud Storage — roda sozinho,
+// Backup automático (DIÁRIO desde 2026-10-28; nasceu semanal — por isso o nome `weeklyBackup`, mantido de propósito: renomear a função
+// criaria outra no Firebase e deixaria a antiga agendada) de cada squad pro Cloud Storage — roda sozinho,
 // sem depender de ninguém abrir o kanban-dev.html (o backup existente,
 // saveSnapshotToFirebase() em kanban-dev.html, só grava quando alguém
 // clica "Baixar JSON agora" ou quando o board fica aberto 7+ dias sem
@@ -13,16 +14,13 @@
 // poder ser restaurado direto pela UI "🧯 Restaurar backup" do board, sem
 // precisar de conversão nenhuma.
 //
-// Cadência semanal (não diária, não por-minuto): ver o comentário em
-// functions/index.js sobre spotifySync ter sido pausado por rodar 24h/dia
-// — esse aqui roda ~4-5x/mês, ordens de grandeza mais barato, fica bem
-// dentro do free tier tanto do Cloud Scheduler quanto de invocações de
-// Cloud Functions.
+// Cadência DIÁRIA (04:00 de Brasília, 2026-10-28): na Black Friday o intervalo de até 7 dias entre backups deixou cards criados no meio da
+// semana sem nenhuma cópia (ver BUGS_E_CORRECOES.md, 2026-10-28). O custo continua pequeno — 1 invocação/dia (~30/mês, free tier do
+// Cloud Scheduler/Functions) e alguns MB por squad no Storage (ver a retenção abaixo).
 //
 // Retenção: NÃO apaga nada aqui dentro — reaproveita o mesmo mecanismo de
-// storage-lifecycle.json (ver README.md "Retenção dos relatórios"),
-// adicionando uma regra pro prefixo backups/. Region de vida no bucket,
-// não na function; mais simples que reimplementar poda manual.
+// storage-lifecycle.json: a regra do prefixo backups/ apaga com 60 dias (≈60 arquivos por squad com a cadência diária).
+// Region de vida no bucket, não na function; mais simples que reimplementar poda manual.
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getDatabase } = require('firebase-admin/database');
 const { getStorage } = require('firebase-admin/storage');
@@ -69,7 +67,7 @@ async function backupSquad(db, bucket, squadId, date) {
     version: 'cloud-backup',
     squad: squadId,
     exportedAt: new Date().toISOString(),
-    exportedBy: 'Backup automático semanal (Cloud Function)',
+    exportedBy: 'Backup automático diário (Cloud Function)',
     board: {
       cards: _cleanArr(dados.cards),
       columns: _cleanArr(dados.columns),
@@ -117,6 +115,6 @@ async function rodarWeeklyBackup({ db, bucket, date, log } = {}) {
 exports.rodarWeeklyBackup = rodarWeeklyBackup;
 
 exports.weeklyBackup = onSchedule(
-  { schedule: 'every sunday 04:00', timeZone: 'America/Sao_Paulo', region: 'us-central1', memory: '1GiB', timeoutSeconds: 540 },
+  { schedule: 'every day 04:00', timeZone: 'America/Sao_Paulo', region: 'us-central1', memory: '1GiB', timeoutSeconds: 540 },
   async () => { await rodarWeeklyBackup({ db: getDatabase(), bucket: getStorage().bucket() }); }
 );

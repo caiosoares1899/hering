@@ -69,3 +69,11 @@ test('no máximo 1 aviso por dia: reexecutar não duplica nem reabre uma notific
   const amanha = await rodarVigia({ db: d, bucket: b, agora: new Date('2026-10-15T12:00:00Z'), log: quieto });
   assert.ok(amanha.problemas.length >= 1, 'no dia seguinte o problema persiste e avisa de novo');
 });
+
+test('o backup do QUADRO agora é diário: 3 dias sem arquivo ainda passa, 4 dias vira problema (o completo semanal segue com 8)', async () => {
+  const tres = tudoCerto(); delete tres['backups/prf/2026-10-11.json']; tres['backups/prf/2026-10-11.json'] = '{}';
+  assert.equal((await verificar({ db: db(), bucket: fakeBucket(tres), agora: AGORA })).problemas.length, 0);
+  const quatro = tudoCerto(); delete quatro['backups/prf/2026-10-11.json']; quatro['backups/prf/2026-10-10.json'] = '{}';
+  const { problemas } = await verificar({ db: db(), bucket: fakeBucket(quatro), agora: AGORA });
+  assert.equal(problemas.length, 1); assert.equal(problemas[0].codigo, 'quadro_atrasado'); assert.match(problemas[0].texto, /prf/); assert.match(problemas[0].texto, /3 dias/);
+});
