@@ -79,7 +79,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-10-28 · Aba desatualizada seguia gravando cards; versão só era checada a cada 5 min; cache local sem versão (SÓ DEV v8.30.885-dev)
+### 2026-10-28 · Aba desatualizada seguia gravando cards; versão só era checada a cada 5 min; cache local sem versão (PROD v8.30.882 · dev v8.30.885-dev)
 
 - **Sintoma (Black Friday, squad `midiacriativa`):** abas antigas continuavam regravando `/cards` a partir de um array defasado: a tela "Atualizar agora" do AUTO-UPDATE só cobria a página, o código velho seguia vivo por baixo (timers, listeners, saves); e quem reabria uma aba esquecida / PWA retomado rodava a versão velha até o próximo tick de 5 min.
 - **Correção (só dev, v8.30.885-dev):** (1) com o aviso na tela, `fbSaveAll`/`fbSaveCard`/`fbCreateCard` recusam (promessa rejeitada `VersaoDesatualizada`, ignorada pelo `onunhandledrejection`) — só depois de CONFIRMAR versão nova no `version.json`, rede fora não trava; (2) a checagem de versão roda também ao voltar à aba (`visibilitychange`), ao retomar do bfcache (`pageshow` com `persisted`) e quando a rede volta (`online`), no máx. 1 consulta a cada 10 s; (3) o cache local de cards (IndexedDB) ganhou `_CARDS_CACHE_SCHEMA`: subir o número descarta o cache de todos na próxima abertura (cada aparelho rebusca do banco; nada é apagado — o cache é só cópia). Cache antigo sem o campo vale como 1, então o deploy não invalida ninguém.
