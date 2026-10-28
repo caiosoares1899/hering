@@ -6569,7 +6569,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.884-dev</div>
+<div class="version">v8.30.885-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9673,7 +9673,16 @@ async function _resgatarCardsAusentes(extra, soConferir){
   }
 }
 // opts.substituirTudo: o chamador SUBSTITUI o conjunto de cards de propósito (restaurar backup, importar do Trello sem mesclar) — aí não há o que resgatar.
+// 🔒 Aba desatualizada não grava (relato de produção 2026-10-28): a tela "Atualizar agora" do AUTO-UPDATE só cobria a página — o código velho seguia vivo por baixo
+// (timers, listeners, saves) e regravava `/cards` a partir de um array defasado. Quando o aviso aparece, `window._auStale` vira true e as 3 primitivas de escrita de
+// card recusam (promessa rejeitada, para os chamadores já tratarem como falha de save). Só vale depois de CONFIRMAR versão nova no version.json — rede fora não trava.
+function _recusaSeDesatualizado(){
+  if(!window._auStale) return null;
+  const e = new Error('Esta aba está desatualizada — recarregue a página para continuar salvando.'); e.name = 'VersaoDesatualizada';
+  return Promise.reject(e);
+}
 async function fbSaveAll(extra, touchedIds, opts){
+  { const _r = _recusaSeDesatualizado(); if(_r) return _r; }
   const _pilhaChamada = _pilhaCurta(1);   // capturada ANTES do 1º await: depois dele a pilha perde quem chamou
   // Garante que os arquivados que este device nunca baixou (ficaram de fora
   // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
@@ -9873,6 +9882,7 @@ function _garantirCardVisivel(card){
   }catch(e){ console.warn('[_garantirCardVisivel] não consegui conferir a visibilidade do card novo:', e); }
 }
 async function fbCreateCard(card){
+  { const _r = _recusaSeDesatualizado(); if(_r) return _r; }
   // _isQLTemp: nunca cria de verdade um card temporário de edição de
   // Modelo/Recorrente/Agendamento (ver fbSaveAll()/fbSaveCard() logo
   // acima/abaixo pro mesmo guard, e o comentário completo em
@@ -9938,6 +9948,7 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
   }).catch(()=>{});
 }
  function fbSaveCard(card){
+      { const _r = _recusaSeDesatualizado(); if(_r) return _r; }
       // Salva SOMENTE este card (update num path especifico), em vez de
       // sobrescrever o array `cards` inteiro. Isso evita que edicoes
       // concorrentes de outras pessoas no board (ex.: adicionar um risco
@@ -10379,6 +10390,11 @@ let _cardsSyncDebounce = null;
   // de dado estruturado maior. Guarda o objeto direto (structured clone),
   // sem precisar serializar pra string como o localStorage exige.
   const _CARDS_CACHE_KEY = 'cardsCache_v1_'+ACTIVE_SQUAD;
+  // Versão do FORMATO/CONFIANÇA do cache local. O cache só é validado por `cards_updated_at`: se um bug mexer no conteúdo de /cards sem carimbar o timestamp
+  // (foi o caso do backfill de flow, 2026-10-28), o aparelho segue exibindo — e regravando — a cópia velha até alguém editar o card. Alavanca de emergência:
+  // SUBIR este número descarta o cache de todo mundo na próxima abertura (cada aparelho rebusca os cards ativos do banco; NADA é apagado do banco — o cache é só uma
+  // cópia e os arquivados são buscados sob demanda). Cache antigo sem o campo conta como 1, então o deploy desta versão não invalida ninguém à toa.
+  const _CARDS_CACHE_SCHEMA = 1;
   const _CARDS_CACHE_STALE_RATIO = 0.4;
   // Piso absoluto — sem ele, um squad PEQUENO cai no fallback (listener
   // vitalício em /cards inteiro, sem filtro de arquivados, que sangra banda
@@ -10434,6 +10450,7 @@ let _cardsSyncDebounce = null;
       if(!_cleanedOldLsCache){ _cleanedOldLsCache = true; try{ safeLS.removeItem(_CARDS_CACHE_KEY); }catch(e){} }
       const parsed = await _idbGetCache(_CARDS_CACHE_KEY);
       if(!parsed || !parsed.cardsById || !parsed.updatedAtById) return null;
+      if((parsed.schema||1) !== _CARDS_CACHE_SCHEMA) return null;   // formato/confiança diferente: descarta (o cache novo é regravado no 1º sync)
       return parsed;
     }catch(e){ return null; }
   }
@@ -10441,7 +10458,7 @@ let _cardsSyncDebounce = null;
     // Pior caso (IndexedDB bloqueado — modo privado antigo do Safari, etc.):
     // perde o cache, nunca quebra o board — próxima carga só cai pro
     // caminho completo de novo.
-    try{ await _idbSetCache(_CARDS_CACHE_KEY, {cardsById, updatedAtById}); }catch(e){}
+    try{ await _idbSetCache(_CARDS_CACHE_KEY, {cardsById, updatedAtById, schema:_CARDS_CACHE_SCHEMA}); }catch(e){}
   }
   // Persiste o cache a partir do array `cards` atual — chamado a cada sync
   // (já debounced por _scheduleCardsSync), assim QUALQUER caminho de carga
@@ -32546,6 +32563,7 @@ window.onunhandledrejection = function(e){
   if(_errCount>10) return;
   const msg=e.reason?.message||String(e.reason)||'Promise rejeitada';
   if(msg.includes('error_logs')||msg.includes('error_stats')) return; // ignora erros de log
+  if(e.reason && e.reason.name==='VersaoDesatualizada') return; // aba desatualizada recusando gravar (ver _recusaSeDesatualizado) — esperado, não é erro do sistema
   // Rede de segurança: popup de login fechado/bloqueado pelo usuário é comportamento
   // normal, não um erro do sistema — nunca deveria virar entrada no painel de erros.
   const code = e.reason?.code || '';
@@ -35611,6 +35629,7 @@ if(window.visualViewport){
   }
   let _auShown = false, _auPollTimer = null;
   function _auShowBlock(){
+    window._auStale = true;   // trava as gravações de card (ver _recusaSeDesatualizado)
     if(_auShown) return;
     _auShown = true;
     const ov = document.createElement('div');
@@ -35620,7 +35639,9 @@ if(window.visualViewport){
     document.body.appendChild(ov);
     document.getElementById('_au-block-btn').onclick=()=>location.reload();
   }
+  let _auUltimaChecagem = 0;
   async function _auCheckVersion(){
+    _auUltimaChecagem = Date.now();
     try{
       const res = await fetch('version.json?_='+Date.now(), {cache:'no-store'});
       if(!res.ok) return;
@@ -35635,6 +35656,17 @@ if(window.visualViewport){
   }
   setTimeout(_auCheckVersion, FIRST_CHECK_DELAY_MS);
   _auPollTimer = setInterval(_auCheckVersion, CHECK_INTERVAL_MS);
+  // Checa na hora ao VOLTAR pra aba/app (aba esquecida, PWA retomado, rede que voltou) — antes a pessoa rodava a versão velha até o próximo tick de 5 min, justamente
+  // quando ela "entra" e grava. No máx. 1 consulta a cada 10 s (visibilitychange + pageshow + online podem disparar juntos).
+  function _auAoVoltar(){
+    if(_auShown || document.hidden) return;
+    if(Date.now() - _auUltimaChecagem < 10000) return;
+    _auCheckVersion();
+  }
+  document.addEventListener('visibilitychange', _auAoVoltar);
+  window.addEventListener('pageshow', e=>{ if(e.persisted) _auAoVoltar(); });   // persisted = voltou do cache de páginas (bfcache); a carga normal já checa no 1º tick
+  window.addEventListener('online', _auAoVoltar);
+  window._auCheckVersion = _auCheckVersion;
 })();
 // ══ FIM AUTO-UPDATE ══
 
