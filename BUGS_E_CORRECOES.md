@@ -79,6 +79,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-28 · Descrição não salvava em card duplicado: a cópia herdava o Demandante (e a proteção) e o próprio Demandante ficava bloqueado (SÓ DEV v8.30.886-dev)
+
+- **Sintoma (relato de produção 28/10, squad `midiacriativa`):** "não salva edição de descrição" num card duplicado (`c1792534461525_27t`). Não era falha de gravação: a CÓPIA herdava o `demandante` do card original e, com Demandante definido, a descrição principal fica protegida (caixa treme / autosave e Salvar descartam o texto que não contém o original) para quem não é ADM/PO/Organizador.
+- **Correção (só dev, v8.30.886-dev):** (1) `_duplicarCardObj` não copia mais o `demandante` (vale para duplicar, duplicar em massa, com filhos e enviar a outro squad); (2) o próprio Demandante também edita a descrição (`_souDemandanteDoCard`: compara pelo cadastro do membro — uid/e-mail —, não pelas iniciais, e usa o demandante já SALVO no card, então escolher a si mesmo no select não destrava antes de salvar). Avisos 🔒 e Ajuda ("Duplicar card", "Campo Demandante") atualizados.
+- **Decisão de produto registrada:** a cópia nasce sem Demandante; quem duplica define o da cópia se precisar. Cards já duplicados antes continuam com o Demandante herdado (ajustar na mão, ou ADM/PO edita).
+- **Teste:** `docs/arezzo/testes/test_demandante_descricao.js` (A–E, 15 checks; `K=kanban` reproduz o problema na produção).
+
 ### 2026-10-28 · Aba desatualizada seguia gravando cards; versão só era checada a cada 5 min; cache local sem versão (PROD v8.30.882 · dev v8.30.885-dev)
 
 - **Sintoma (Black Friday, squad `midiacriativa`):** abas antigas continuavam regravando `/cards` a partir de um array defasado: a tela "Atualizar agora" do AUTO-UPDATE só cobria a página, o código velho seguia vivo por baixo (timers, listeners, saves); e quem reabria uma aba esquecida / PWA retomado rodava a versão velha até o próximo tick de 5 min.
