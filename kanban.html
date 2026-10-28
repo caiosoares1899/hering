@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.879</div>
+<div class="version">v8.30.880</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9834,6 +9834,22 @@ async function fbSaveAll(extra, touchedIds, opts){
 // ainda não usado em cards_index, o que também tolera buracos (cards
 // excluídos deixam a posição livre pra reuso, mesmo comportamento que
 // fbSaveAll() já tinha ao recompactar o array do zero a cada save).
+// Card recém-criado que "some" (relato de produção 2026-10-28, squad midiacriativa, Black Friday: "estou abrindo cards e eles estão sumindo"):
+// o board só renderiza os primeiros 80 cards de cada coluna (_colRenderLimit, botão "▼ Ver mais N ocultos") e nada expandia esse limite na criação —
+// com a squad passando de 600 cards ativos, um card novo que cai depois da 80ª posição foi criado e gravado, mas fica escondido atrás do "Ver mais".
+// Reproduzido: coluna com 100 cards → card novo criado e persistido, 0 no DOM. Aqui o limite da coluna cresce o mínimo necessário (em passos de 80, como o
+// próprio botão) para o card aparecer; e se o que esconde o card é o FILTRO ativo (não o limite), avisa em vez de deixar a pessoa achar que sumiu.
+// Chamada por fbCreateCard() — ponto único por onde passam todas as criações (modal, duplicar, filho de supercard, fan-out) — antes do renderBoard() dos chamadores.
+function _garantirCardVisivel(card){
+  try{
+    if(!card || !card.col || card.archived) return;
+    if(!passesFilter(card)){ showToast('ℹ️ Card criado, mas o filtro atual o esconde do board — limpe os filtros para vê-lo.'); return; }
+    const lista = _sortCards(cards.filter(c=>c && c.id!==card.id && !c.archived && c.col===card.col && passesFilter(c)).concat([card]), card.col);
+    const pos = lista.findIndex(c=>c.id===card.id) + 1;
+    const limite = _colRenderLimit[card.col] || 80;
+    if(pos > limite) _colRenderLimit[card.col] = Math.ceil(pos/80)*80;
+  }catch(e){ console.warn('[_garantirCardVisivel] não consegui conferir a visibilidade do card novo:', e); }
+}
 async function fbCreateCard(card){
   // _isQLTemp: nunca cria de verdade um card temporário de edição de
   // Modelo/Recorrente/Agendamento (ver fbSaveAll()/fbSaveCard() logo
@@ -9841,6 +9857,7 @@ async function fbCreateCard(card){
   // openQLEdit()) — mesma defesa em profundidade, pro caso de algum call
   // site novo tentar criar um card a partir desse objeto por engano.
   if(card && card._isQLTemp) return Promise.resolve();
+  _garantirCardVisivel(card); // síncrono, antes de qualquer await: os chamadores redesenham o board logo em seguida
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady) await _waitForFirebaseReady();
