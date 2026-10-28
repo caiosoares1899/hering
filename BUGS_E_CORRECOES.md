@@ -79,6 +79,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-28 · Aba desatualizada seguia gravando cards; versão só era checada a cada 5 min; cache local sem versão (SÓ DEV v8.30.885-dev)
+
+- **Sintoma (Black Friday, squad `midiacriativa`):** abas antigas continuavam regravando `/cards` a partir de um array defasado: a tela "Atualizar agora" do AUTO-UPDATE só cobria a página, o código velho seguia vivo por baixo (timers, listeners, saves); e quem reabria uma aba esquecida / PWA retomado rodava a versão velha até o próximo tick de 5 min.
+- **Correção (só dev, v8.30.885-dev):** (1) com o aviso na tela, `fbSaveAll`/`fbSaveCard`/`fbCreateCard` recusam (promessa rejeitada `VersaoDesatualizada`, ignorada pelo `onunhandledrejection`) — só depois de CONFIRMAR versão nova no `version.json`, rede fora não trava; (2) a checagem de versão roda também ao voltar à aba (`visibilitychange`), ao retomar do bfcache (`pageshow` com `persisted`) e quando a rede volta (`online`), no máx. 1 consulta a cada 10 s; (3) o cache local de cards (IndexedDB) ganhou `_CARDS_CACHE_SCHEMA`: subir o número descarta o cache de todos na próxima abertura (cada aparelho rebusca do banco; nada é apagado — o cache é só cópia). Cache antigo sem o campo vale como 1, então o deploy não invalida ninguém.
+- **Teste:** `docs/arezzo/testes/test_versao_travada.js` (A–E, 14 checks; `K=kanban` reproduz o problema na produção).
+
 ### 2026-10-28 · Backup do quadro passou de semanal para diário (functions/backup/weeklyBackup.js, 04:00 Brasília)
 
 - **Por quê:** na Black Friday (28/10) cards criados no meio da semana ficaram sem nenhuma cópia: o último backup do quadro era de domingo 25/10 e 5 cards de 27–28/10 só puderam ser recriados vazios.
