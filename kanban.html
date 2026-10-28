@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.878</div>
+<div class="version">v8.30.879</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9613,7 +9613,48 @@ function _waitForFirebaseReady(timeoutMs=15000){
     window.addEventListener('fb-ready', onReady, {once:true});
   });
 }
-async function fbSaveAll(extra, touchedIds){
+// 🛟 Rede de segurança do save estrutural (relato de produção 2026-10-28, squad midiacriativa: "cards sumindo e voltando sem conteúdo", crítico na
+// Black Friday). fbSaveAll() reescreve /cards, /cards_index e /cards_updated_at POR COMPLETO a partir do array LOCAL. Se esse array estiver sem algum
+// card que existe no banco (aparelho com estado atrasado: evento ao vivo ainda não aplicado — _applyCardsSync ignora eventos por 2 s depois de
+// qualquer save local e não se reagenda —, carga em duas etapas ainda incompleta, etc.), o save APAGA o card para todo mundo, sem erro e sem passar
+// por cards_deleted_intentionally. Diagnóstico real: 12 episódios desde 27/08, sempre em horário de uso (11h–18h) com ~10 aparelhos conectados.
+// Aqui, antes de gravar, relê o cards_index (leve) e traz de volta qualquer card que (1) existe no índice, (2) ainda existe em /cards e (3) NÃO está
+// sendo excluído de propósito — nem agora (marca em `extra`), nem antes (_intentionalDeleteIds). Só ADICIONA cards ao array; nunca troca o conteúdo
+// de um card que o aparelho já tem (isso é outro problema: conflito de edição). Falha de leitura NÃO bloqueia o save (segue como antes + aviso).
+// `soConferir` = só devolve o que seria resgatado, sem mexer em `cards` (usado pelo script de teste de console).
+async function _resgatarCardsAusentes(extra, soConferir){
+  try{
+    if(!window._fbReady) return [];
+    const remoteIdx = (await fbGet(FB+'/cards_index')).val() || {};
+    const have = new Set(cards.map(c=>c && c.id).filter(Boolean));
+    const PFX = 'cards_deleted_intentionally/';
+    const excluindoAgora = new Set(Object.keys(extra||{}).filter(k=>k.startsWith(PFX)).map(k=>k.slice(PFX.length)));
+    // modo conferir: arquivados que este aparelho não baixou DE PROPÓSITO não contam como ausentes (no save real, _ensureArchivedCardsLoaded já os trouxe antes)
+    const arquivados = soConferir ? ((await fbGet(FB+'/cards_archived')).val() || {}) : {};
+    const faltam = Object.keys(remoteIdx).filter(id=>!have.has(id) && !excluindoAgora.has(id) && !_intentionalDeleteIds.has(id) && !arquivados[id]);
+    if(!faltam.length) return [];
+    const achados = [];
+    await Promise.all(faltam.map(async id=>{
+      const snap = await window._get(fb(FB+'/cards/'+remoteIdx[id]));
+      const c = snap.val();
+      if(c && c.id===id && !c._isQLTemp) achados.push(c);   // o card pode ter sido excluído entre a leitura do índice e esta: aí não ressuscita
+    }));
+    if(!achados.length || soConferir) return achados;
+    achados.forEach(c=>cards.push(c));
+    console.warn('[fbSaveAll] 🛟 '+achados.length+' card(s) existiam no banco mas faltavam neste aparelho — mantidos em vez de apagados:', achados.map(c=>c.id+' "'+c.title+'"'));
+    try{
+      window._set(window._ref(window._db, FB+'/cards_resgates/res'+Date.now()+Math.random().toString(36).slice(2,6)), {
+        ids: achados.map(c=>c.id), por: window._currentUser?.displayName||window._currentUser?.email||null, em: new Date().toISOString(),
+      }).catch(()=>{});
+    }catch(_){}
+    return achados;
+  }catch(err){
+    console.warn('[fbSaveAll] não deu pra conferir cards ausentes antes de gravar (segue como antes):', err);
+    return [];
+  }
+}
+// opts.substituirTudo: o chamador SUBSTITUI o conjunto de cards de propósito (restaurar backup, importar do Trello sem mesclar) — aí não há o que resgatar.
+async function fbSaveAll(extra, touchedIds, opts){
   // Garante que os arquivados que este device nunca baixou (ficaram de fora
   // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
   // `cards` ANTES de ler o array abaixo -- fbSaveAll reescreve /cards por
@@ -9626,6 +9667,8 @@ async function fbSaveAll(extra, touchedIds){
   // dentro de fbLoadAll(), inacessível daqui; só existe depois que fbLoadAll
   // rodou pelo menos 1x, por isso a checagem).
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
+  // 🛟 nunca apagar o que existe no banco só porque este aparelho ainda não o recebeu (ver _resgatarCardsAusentes)
+  if(!(opts && opts.substituirTudo)) await _resgatarCardsAusentes(extra);
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
@@ -24800,7 +24843,8 @@ async function deleteSelectedArchived(){
   if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
   const idSet=new Set(ids);
   cards=cards.filter(c=>!idSet.has(c.id));
-  fbSaveAll(undefined, []);
+  const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });   // sem a marca o board acusava "card sumiu sozinho" (e o save de outro aparelho poderia trazê-lo de volta)
+  fbSaveAll(_delExtra, []);
   showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
   openArquivados();
 }
@@ -24873,7 +24917,8 @@ async function deleteSelectedOldCards(){
   if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
   const idSet=new Set(ids);
   cards=cards.filter(c=>!idSet.has(c.id));
-  fbSaveAll(undefined, []); renderBoard();
+  const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
+  fbSaveAll(_delExtra, []); renderBoard();
   showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
   renderCleanupList();
 }
@@ -24905,7 +24950,8 @@ async function purgeOldArchived(){
   if((digitado||'').trim().toUpperCase()!=='EXCLUIR'){ if(digitado!==null) showToast('Cancelado — texto não confere.'); return; }
   const ids=new Set(alvo.map(c=>c.id));
   cards=cards.filter(c=>!ids.has(c.id));
-  fbSaveAll(undefined, []);
+  const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
+  fbSaveAll(_delExtra, []);
   showToast('🗑 '+alvo.length+' card(s) excluído(s) permanentemente.');
   openArquivados();
 }
@@ -26986,7 +27032,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       const titulo=c.title;
       cards=cards.filter(x=>x.id!==input.card_id);
-      renderBoard(); fbSaveAll(undefined, []);
+      renderBoard(); fbSaveAll({['cards_deleted_intentionally/'+input.card_id]:true}, []);
       return{ok:true,msg:`Card "${titulo}" excluído permanentemente`};
     }
     case 'atualizar_descricao':{
@@ -28107,7 +28153,7 @@ async function doTrelloImport(){
   const btn=document.getElementById('btn-confirm-import');
   btn.disabled=true; btn.style.opacity='.4'; btn.textContent='💾 Salvando...';
   try{
-    await fbSaveAll(undefined, cleanCards.map(c=>c.id));
+    await fbSaveAll(undefined, cleanCards.map(c=>c.id), { substituirTudo: !merge });   // sem mesclar, o import substitui todos os cards de propósito
   }catch(e){
     console.warn('[doTrelloImport] falha ao salvar:', e);
     btn.disabled=false; btn.style.opacity='1'; btn.textContent='📥 Importar';
@@ -38510,7 +38556,7 @@ async function _applyRestorePayload(payload){
     await fbSaveAll({
       columns, tags, agil_cfg: agilCfg, ql_items: qlItems,
       links, cal_events: calEvents, auto_rules: autoRules,
-    });
+    }, undefined, { substituirTudo:true });   // restaurar backup SUBSTITUI o conjunto de cards de propósito — nada a resgatar
 
     applyAgilCfg();
     renderBoard();

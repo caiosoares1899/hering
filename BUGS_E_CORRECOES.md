@@ -70,11 +70,16 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
    - **Rede de segurança:** `mare-notif(-dev).js` bloqueia o clique em qualquer `<a href="javascript:…">` das páginas que o carregam — é backstop, não desculpa para pular o filtro no ponto de renderização.
    - **Teste de regressão:** `node docs/arezzo/testes/test_seguranca_xss.js` envenena os campos de texto/URL do banco falso e abre as telas; falha se algum payload executa ou deixa atributo de evento / `javascript:` no DOM (Maré, Painel, Radar e Oceano).
 
+14. **`fbSaveAll()` reescreve `/cards` inteiro a partir do array LOCAL — nunca assuma que o array local tem tudo (desde 28/10/2026):**
+   - Um aparelho com estado atrasado (evento ao vivo ainda não aplicado: `_applyCardsSync` ignora eventos por 2 s depois de um save local e não se reagenda; carga em duas etapas incompleta) apaga do banco, para todo mundo e sem erro, o card que outra pessoa criou. Sinal no banco: o card some de `/cards`, `cards_index` e `cards_updated_at` sem entrada em `cards_deleted_intentionally`.
+   - Defesa: `_resgatarCardsAusentes()` (chamada dentro de `fbSaveAll`) mantém o que existe no banco. Quem **exclui** cards por `fbSaveAll` TEM de gravar `cards_deleted_intentionally/{id}` em `extra` (senão o resgate o traz de volta); quem **substitui o conjunto de propósito** (restaurar backup, importar sem mesclar) passa `{substituirTudo:true}` como 3º parâmetro. Criar 1 card = `fbCreateCard`; editar 1 card = `fbSaveCard` — nunca `fbSaveAll`.
+   - Ainda aberto: o conteúdo de um card que o aparelho já tem mas está velho continua sendo regravado por cima do novo (exige gravar só os cards tocados).
+
 ---
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-10-28 · Maré — save estrutural apagava cards que o aparelho ainda não tinha recebido (fbSaveAll) (SÓ DEV, kanban-dev v8.30.882-dev)
+### 2026-10-28 · Maré — save estrutural apagava cards que o aparelho ainda não tinha recebido (fbSaveAll) (DEV v8.30.882-dev · PROD kanban v8.30.879, promoção isolada do hotfix)
 
 • Sintoma (relato Juliana Massuda, squad midiacriativa, Black Friday, 28/10/2026): cards sumindo e cards voltando sem o conteúdo já salvo. Os 2 exemplos: um card criado em 16/10 sumiu de 27 para 28/10; outro voltou à coluna e ao conteúdo antigos.
 • Diagnóstico em produção (script somente leitura): o card sumido não existe em /cards, nem em cards_index, cards_updated_at, cards_archived ou cards_deleted_intentionally = foi apagado por uma regravação completa do array. 408 alarmes de "card sumiu" = 36 cards em 12 episódios desde 27/08, todos entre 11h e 18h (uso normal, ~10 aparelhos conectados), 4 episódios só em 27/10 (17:41–18:42, 11 cards). Índice sem posições trocadas nem cards sem flow: o backfill de _applyCardsSync NÃO é a causa.
