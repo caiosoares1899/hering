@@ -79,6 +79,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-28 · Boot de qualquer aparelho regravava o /cards inteiro (backfill de flow) e apagava/desalinhava cards (SÓ DEV v8.30.884-dev)
+
+- **Sintoma (relato de produção 28/10, squad `midiacriativa`, Black Friday):** cards sumindo "quando as pessoas entravam", voltando antigos ou em outra posição; episódios sem nenhuma ação de ninguém por perto (12:09, 2 cards, 8 aparelhos).
+- **Causa-raiz:** em `_applyCardsSync`, o backfill de `flow` (rodado por QUALQUER aparelho que carregasse um card sem `flow`) fazia `set` do array LOCAL inteiro em `/cards`. Esse caminho passava por FORA do resgate de `fbSaveAll`: apagava os arquivados (que o aparelho não baixa) e compactava as posições (0,1,3,4,5 → 0,1,2,3,4), deixando `cards_index` apontando para o card errado. Reproduzido em teste: na produção o card arquivado some e o índice desalinha.
+- **Correção (só dev, v8.30.884-dev):** o backfill grava apenas `cards/<posição real>/flow` dos cards afetados (`window._ultimosBackfill`), sem tocar em mais nada. Nova trilha de auditoria `cards_auditoria/a{0..1999}` (anel): `fbSaveAll` e o backfill registram quem gravou, versão da página, nº de cards e a pilha de chamadas — o próximo sumiço já nasce com culpado (o alarme de "card sumiu" só dizia quem VIU).
+- **Teste:** `docs/arezzo/testes/test_backfill_seguro.js` (A–G; `K=kanban` reproduz o bug na produção).
+
 ### 2026-10-28 · Maré — card novo criado numa coluna com mais de 80 cards ficava atrás do "Ver mais" e parecia ter sumido (DEV v8.30.883-dev · PROD kanban v8.30.880, promoção isolada)
 
 • Sintoma (relato Marina Saran Bernardo, squad midiacriativa, Black Friday, 28/10/2026 11:34): "estou abrindo cards para o time de criação e eles estão sumindo". Ela cria direto na squad (criacao é só apelido de midiacriativa).

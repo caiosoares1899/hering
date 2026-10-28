@@ -6569,7 +6569,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.883-dev</div>
+<div class="version">v8.30.884-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9287,8 +9287,9 @@ function backfillFlow(card){
   }
 }
 function backfillAllFlow(){
-  let n=0;
-  (cards||[]).forEach(c=>{ if(c && !c.flow){ backfillFlow(c); n++; } });
+  let n=0; const tocados=[];
+  (cards||[]).forEach(c=>{ if(c && !c.flow){ backfillFlow(c); n++; tocados.push(c); } });
+  window._ultimosBackfill = tocados;   // _applyCardsSync() grava só o `flow` destes cards (nunca o /cards inteiro)
   return n;
 }
 
@@ -9615,6 +9616,22 @@ function _waitForFirebaseReady(timeoutMs=15000){
     window.addEventListener('fb-ready', onReady, {once:true});
   });
 }
+// 🔎 Trilha de auditoria das gravações que mexem em VÁRIOS cards (fbSaveAll e o backfill de fluxo). Relato de produção 2026-10-28 (midiacriativa): cards sumiam "quando as
+// pessoas entravam" e o alarme de "card sumiu" só diz quem VIU, nunca quem GRAVOU. Aqui fica quem gravou, de qual função (pilha), em qual versão da página e com quantos
+// cards — anel de 2000 posições em cards_auditoria/ (sobrescreve as mais antigas; ~300 bytes cada), para o próximo episódio já nascer com culpado. Melhor esforço: nunca bloqueia.
+function _pilhaCurta(pular){
+  try{ return String(new Error().stack||'').split('\n').slice(1+(pular||0),7+(pular||0)).map(l=>l.trim().replace(/^at\s+/,'').replace(/\(?https?:\/\/[^\s)]*\/([^/\s):]+)(:\d+)(:\d+)?\)?/,'$1$2')).join(' < ').slice(0,320); }catch(_){ return ''; }
+}
+function _auditarEscritaDeCards(origem, info, pilhaPronta){
+  try{
+    if(!window._fbReady || !window._db) return;
+    const pilha = pilhaPronta || _pilhaCurta(2);
+    window._set(window._ref(window._db, FB+'/cards_auditoria/a'+(Date.now()%2000)), Object.assign({
+      em:new Date().toISOString(), por:window._currentUser?.displayName||window._currentUser?.email||null,
+      ver:((document.querySelector('.version')||{}).textContent||'').trim(), origem, pilha, nLocal:(cards||[]).length,
+    }, info||{})).catch(()=>{});
+  }catch(_){}
+}
 // 🛟 Rede de segurança do save estrutural (relato de produção 2026-10-28, squad midiacriativa: "cards sumindo e voltando sem conteúdo", crítico na
 // Black Friday). fbSaveAll() reescreve /cards, /cards_index e /cards_updated_at POR COMPLETO a partir do array LOCAL. Se esse array estiver sem algum
 // card que existe no banco (aparelho com estado atrasado: evento ao vivo ainda não aplicado — _applyCardsSync ignora eventos por 2 s depois de
@@ -9657,6 +9674,7 @@ async function _resgatarCardsAusentes(extra, soConferir){
 }
 // opts.substituirTudo: o chamador SUBSTITUI o conjunto de cards de propósito (restaurar backup, importar do Trello sem mesclar) — aí não há o que resgatar.
 async function fbSaveAll(extra, touchedIds, opts){
+  const _pilhaChamada = _pilhaCurta(1);   // capturada ANTES do 1º await: depois dele a pilha perde quem chamou
   // Garante que os arquivados que este device nunca baixou (ficaram de fora
   // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
   // `cards` ANTES de ler o array abaixo -- fbSaveAll reescreve /cards por
@@ -9670,7 +9688,9 @@ async function fbSaveAll(extra, touchedIds, opts){
   // rodou pelo menos 1x, por isso a checagem).
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   // 🛟 nunca apagar o que existe no banco só porque este aparelho ainda não o recebeu (ver _resgatarCardsAusentes)
-  if(!(opts && opts.substituirTudo)) await _resgatarCardsAusentes(extra);
+  let _resgatados = [];
+  if(!(opts && opts.substituirTudo)) _resgatados = await _resgatarCardsAusentes(extra);
+  _auditarEscritaDeCards('fbSaveAll', { resgatados:_resgatados.length, tocados:(touchedIds?touchedIds.length:'todos'), extra:Object.keys(extra||{}).slice(0,3).join(','), substituirTudo:!!(opts&&opts.substituirTudo) }, _pilhaChamada);
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
@@ -10306,7 +10326,17 @@ let _cardsSyncDebounce = null;
       // menos logam. Fix: mesmo strip (aqui é um valor aninhado comum,
       // não um objeto de update multi-path — _stripUndefinedDeep() é o
       // helper certo, não _stripUndefinedMultiPath()) + warn visível.
-      if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), _stripUndefinedDeep(cards)).catch(err=>console.warn('[_applyCardsSync] backfill write failed:', err)); }
+      // 🛟 (2026-10-28) Antes: window._set(fb(FB+'/cards'), cards) — SUBSTITUÍA o /cards inteiro pelo array local. Esse array não tem os arquivados (que o aparelho não baixa de
+      // propósito) nem nada que outra pessoa gravou depois, e é compactado (as posições viravam 0..n-1 e o cards_index ficava apontando pro lugar errado). Isso rodava no boot de QUALQUER
+      // pessoa que carregasse um card sem `flow` — e passava por fora do resgate de fbSaveAll(). Agora grava só o `flow` dos cards afetados, na posição real de cada um.
+      if(_bf>0 && window._fbReady){
+        _lastLocalSave=Date.now();
+        const ups={}; (window._ultimosBackfill||[]).forEach(c=>{ const k=Object.keys(_cardsByKey).find(x=>_cardsByKey[x]===c); if(k!=null && c.id && !_intentionalDeleteIds.has(c.id)) ups['cards/'+k+'/flow']=c.flow; });
+        if(Object.keys(ups).length){
+          _auditarEscritaDeCards('applyCardsSync-backfill', { cardsAfetados:Object.keys(ups).length });
+          window._update(fb(FB), _stripUndefinedMultiPath(ups)).catch(err=>console.warn('[_applyCardsSync] backfill write failed:', err));
+        }
+      }
       _persistCardsCacheFromCurrent();
     }
   }
