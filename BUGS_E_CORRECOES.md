@@ -79,6 +79,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-28 · Maré — card novo criado numa coluna com mais de 80 cards ficava atrás do "Ver mais" e parecia ter sumido (SÓ DEV, kanban-dev v8.30.883-dev)
+
+• Sintoma (relato Marina Saran Bernardo, squad midiacriativa, Black Friday, 28/10/2026 11:34): "estou abrindo cards para o time de criação e eles estão sumindo". Ela cria direto na squad (criacao é só apelido de midiacriativa).
+• Causa (reproduzida): cada coluna só renderiza os 80 primeiros cards (_colRenderLimit; o resto fica atrás de "▼ Ver mais N ocultos") e nada expandia o limite na criação. Com a squad em 611 cards ativos, um card novo que cai depois da 80ª posição (ordenação por prioridade: o novo é "média", depois dos "alta") é criado e gravado, mas fica escondido. Teste: coluna com 100 cards → card criado e no banco, 0 no DOM. Falha de criação NÃO era o caso: o modal fica aberto com aviso. Zero alarmes de card apagado depois do hotfix do fbSaveAll (v8.30.879) e zero resgates = não é regravação.
+• Correção: _garantirCardVisivel(card), chamada por fbCreateCard (ponto único de toda criação: modal, duplicar, filho de supercard, fan-out) antes do renderBoard dos chamadores: o limite da coluna cresce o mínimo necessário (passos de 80, como o botão) para o card aparecer. Se quem esconde o card é o FILTRO ativo, avisa com toast em vez de deixar parecer que sumiu.
+• Não cobre: cards criados por recorrência/agendamento (entram via fbSaveAll). Ordenação continua por prioridade: o card novo "média" fica abaixo dos "alta" — agora visível, mas não no topo.
+• Teste: docs/arezzo/testes/test_card_novo_visivel.js (K=kanban-dev passa; K=kanban falha nos cenários A e D — prova que pega o bug).
+
 ### 2026-10-28 · Maré — save estrutural apagava cards que o aparelho ainda não tinha recebido (fbSaveAll) (DEV v8.30.882-dev · PROD kanban v8.30.879, promoção isolada do hotfix)
 
 • Sintoma (relato Juliana Massuda, squad midiacriativa, Black Friday, 28/10/2026): cards sumindo e cards voltando sem o conteúdo já salvo. Os 2 exemplos: um card criado em 16/10 sumiu de 27 para 28/10; outro voltou à coluna e ao conteúdo antigos.
