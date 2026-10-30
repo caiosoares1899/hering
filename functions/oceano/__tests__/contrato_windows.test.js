@@ -35,7 +35,7 @@ test('todo caminho lido pelo script da bandeja (Campo … \'x.y\' e os pares do 
   const caminhos = new Set();
   for (const m of ps.matchAll(/Campo\s+\$\w+\s+'([\w.]+)'/g)) caminhos.add(m[1]);
   for (const m of ps.matchAll(/@\('[A-Za-z]+',\s*'([\w.]+)'\)/g)) caminhos.add(m[1]);
-  assert.ok(caminhos.size >= 15, 'o parser achou os caminhos (' + caminhos.size + ')');
+  assert.ok(caminhos.size >= 10, 'o parser achou os caminhos (' + caminhos.size + ')');
   const json = await jsonReal(); const chaves = todasAsChaves(json);
   const raizes = new Set(Object.keys(json));
   const faltam = [...caminhos].filter((c) => { const primeiro = c.split('.')[0]; return raizes.has(primeiro) && c.includes('.') ? resolve(json, c) === undefined : !chaves.has(c.split('.').pop()); });

@@ -82,6 +82,18 @@ h2{font-family:'Syne',sans-serif;font-size:13px;letter-spacing:.12em;text-transf
   .grid{grid-template-columns:1fr}.nums{grid-template-columns:repeat(2,minmax(0,1fr))}
   .brand small{display:none}.hero{padding:16px;gap:14px}.ring{width:60px;height:60px;font-size:28px}.hero h1{font-size:21px}
 }
+/* ?compacto=1 — a "mini tela" do ícone da bandeja/barra de menu (janela de ~440 px): tudo numa tela só, sem rolagem na maior parte dos casos */
+.compacto .wrap{padding:6px 8px 10px}
+.compacto .top{margin:0 0 8px}.compacto .brand{font-size:16px}.compacto .brand small{display:none}
+.compacto .hero{padding:9px 12px;margin-bottom:2px;gap:12px}.compacto .ring{width:44px;height:44px;font-size:20px;border-width:4px}.compacto button,.compacto .btn{min-height:36px;min-width:36px;padding:0 10px}.compacto .hero h1{font-size:18px}.compacto .hero p{font-size:12px;margin-top:2px}
+.compacto h2{margin:8px 4px 3px;font-size:11px}
+.compacto .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;grid-auto-flow:row dense}
+.compacto .tile{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'nome est' 'txt txt';align-items:center;padding:7px 10px;gap:2px 6px}.compacto .tile .nome{font-size:13px;gap:6px}.compacto .tile .est{font-size:11px}
+.compacto .tile .nome{grid-area:nome}.compacto .tile .dot{display:none}.compacto .tile .est{grid-area:est}.compacto .tile .txt{grid-area:txt;font-size:12px}
+.compacto .tile.ok .txt{display:none}.compacto .tile:not(.ok){grid-column:1 / -1}
+.compacto .nums{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:6px}.compacto .num{padding:8px 4px}.compacto .num b{font-size:22px}.compacto .num span{font-size:11px}
+.compacto .lista li{padding:6px 12px;font-size:13px}
+.compacto .vazio{padding:12px;font-size:13px}.compacto .rodape{display:none}
 @media (prefers-reduced-motion:no-preference){.ring{transition:border-color .3s}}
 </style>
 </head>
@@ -103,6 +115,8 @@ h2{font-family:'Syne',sans-serif;font-size:13px;letter-spacing:.12em;text-transf
 const ENDERECO_PADRAO = 'https://us-central1-hering-onboarding.cloudfunctions.net/oceanoResumo';
 const INTERVALO_MS = 60000, VELHO_MS = 5 * 60000;
 const DEMO = /[?&]demo=1(&|$)/.test(location.search);
+const COMPACTO = /[?&]compacto=1(&|$)/.test(location.search);
+if (COMPACTO) document.body.classList.add('compacto');
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ls = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
@@ -130,7 +144,7 @@ function quando(x) {
   if (x.prazo) { const p = x.prazo.split('-'); return ['ok', 'vence ' + p[2] + '/' + p[1]]; }
   return ['ok', 'sem prazo'];
 }
-function tile(nome, icone, t) { const e = (t && t.estado) || 'desconhecido'; return `<div class="gl tile"><div class="nome"><span aria-hidden="true">${icone}</span>${esc(nome)}<span class="dot ${esc(e)}" aria-hidden="true" style="margin-left:auto"></span></div><div class="est ${esc(e)}">${ICONE[e] || '⚪'} ${esc(ROTULO[e] || e)}</div><div class="txt">${esc((t && t.texto) || 'sem leitura')}</div></div>`; }
+function tile(nome, icone, t) { const e = (t && t.estado) || 'desconhecido'; return `<div class="gl tile ${esc(e)}"><div class="nome"><span aria-hidden="true">${icone}</span>${esc(nome)}<span class="dot ${esc(e)}" aria-hidden="true" style="margin-left:auto"></span></div><div class="est ${esc(e)}">${ICONE[e] || '⚪'} ${esc(ROTULO[e] || e)}</div><div class="txt">${esc((t && t.texto) || 'sem leitura')}</div></div>`; }
 
 function desenhar() {
   const app = $('#app');
@@ -152,10 +166,10 @@ function desenhar() {
   <h2>Sistema</h2>
   <div class="grid">${tile('VTEX', '🛒', r.status && r.status.vtex)}${tile('GitHub', '🐙', r.status && r.status.github)}${tile('Firebase', '🔥', r.status && r.status.firebase)}</div>
   <h2>Dados e rotina</h2>
-  <div class="grid">${tile('Backup', '🛟', r.backup)}${tile('Cards sumindo (24 h)', '🫥', al ? { estado: alEst, texto: al.ultimas24h > 0 ? al.ultimas24h + (al.ultimas24h > 1 ? ' cards sumiram' : ' card sumiu') + ' sem exclusão' : 'nenhum alarme' } : null)}${tile('Plantão de bugs', '🐛', pl ? { estado: plEst, texto: pl.abertos ? pl.abertos + ' aberto' + (pl.abertos > 1 ? 's' : '') + (pl.aguardandoValidacao ? ' · ' + pl.aguardandoValidacao + ' p/ validar' : '') + (pl.escalados ? ' · ' + pl.escalados + ' escalado(s)' : '') : 'nenhum bug aberto' } : null)}</div>
+  <div class="grid">${tile('Backup', '🛟', r.backup)}${tile('Cards sumindo', '🫥', al ? { estado: alEst, texto: al.ultimas24h > 0 ? al.ultimas24h + (al.ultimas24h > 1 ? ' cards sumiram' : ' card sumiu') + ' sem exclusão (24 h)' : 'nenhum alarme em 24 h' } : null)}${tile('Plantão de bugs', '🐛', pl ? { estado: plEst, texto: pl.abertos ? pl.abertos + ' aberto' + (pl.abertos > 1 ? 's' : '') + (pl.aguardandoValidacao ? ' · ' + pl.aguardandoValidacao + ' p/ validar' : '') + (pl.escalados ? ' · ' + pl.escalados + ' escalado(s)' : '') : 'nenhum bug aberto' } : null)}</div>
   <h2>Meus cards</h2>
   ${mc ? `<div class="nums"><div class="gl num ${mc.atrasados ? 'bad' : ''}"><b>${+mc.atrasados || 0}</b><span>atrasados</span></div><div class="gl num ${mc.venceHoje ? 'warn' : ''}"><b>${+mc.venceHoje || 0}</b><span>vencem hoje</span></div><div class="gl num ${mc.bloqueados ? 'warn' : ''}"><b>${+mc.bloqueados || 0}</b><span>bloqueados</span></div><div class="gl num"><b>${+mc.venceEm7dias || 0}</b><span>nos próx. 7 dias</span></div></div>
-  ${(mc.lista || []).length ? `<ul class="gl lista">${mc.lista.map((x) => { const w = quando(x); return `<li><span class="t">${esc(x.titulo)}</span><span class="chip">${esc(x.squad)}</span><span class="when ${w[0]}">${esc(w[1])}</span></li>`; }).join('')}</ul>` : '<div class="gl vazio">🎉 Nada atrasado, bloqueado ou vencendo nos próximos 7 dias.</div>'}` : '<div class="gl vazio">Sem leitura dos seus cards (cadastro ou squads não encontrados).</div>'}`;
+  ${(mc.lista || []).length ? `<ul class="gl lista">${mc.lista.slice(0, COMPACTO ? 5 : 8).map((x) => { const w = quando(x); return `<li><span class="t">${esc(x.titulo)}</span><span class="chip">${esc(x.squad)}</span><span class="when ${w[0]}">${esc(w[1])}</span></li>`; }).join('')}</ul>` : '<div class="gl vazio">🎉 Nada atrasado, bloqueado ou vencendo nos próximos 7 dias.</div>'}` : '<div class="gl vazio">Sem leitura dos seus cards (cadastro ou squads não encontrados).</div>'}`;
   $('#rodape').textContent = (mc ? mc.ativos + ' cards ativos como responsável · ' : '') + 'atualiza sozinho a cada minuto' + (r.dono && r.dono.iniciais ? ' · ' + r.dono.iniciais : '');
 }
 
