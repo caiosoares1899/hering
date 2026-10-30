@@ -103,9 +103,9 @@ struct MenuView: View {
         let plantaoPeca = Resumo.Peca(estado: plEstado, texto: plTexto)
         return VStack(alignment: .leading, spacing: 4) {
             titulo("Dados e rotina")
-            linhaPeca("Backup", "🛟", r.backup)
+            linhaPeca("Backup", "💾", r.backup)
             detalhe(r.backup)
-            linhaPeca("Cards sumindo (24 h)", "🫥", alarmePeca)
+            linhaPeca("Cards sumindo (24 h)", "👻", alarmePeca)
             detalhe(alarmePeca)
             linhaPeca("Plantão de bugs", "🐛", plantaoPeca)
             detalhe(plantaoPeca)
