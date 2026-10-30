@@ -61,3 +61,12 @@ test('o script não compila C# na hora (Add-Type com DllImport/MemberDefinition 
   assert.ok(!/Add-Type\s+-MemberDefinition|Add-Type\s+-TypeDefinition|DllImport/i.test(ps), 'Add-Type com C# trava o script em máquinas onde o compilador é bloqueado (visto em 30/10)');
   assert.match(ps, /oceano-bandeja\.log/); assert.match(ps, /\btrap\s*\{/); assert.match(ps, /function Registrar/);
 });
+
+test('a janela mostra "+ N" dos cards que não cabem: o teto da lista no script bate com o da função, e os textos do estado OK existem', () => {
+  const ps = fs.readFileSync(path.join(RAIZ, 'oceano-bandeja.ps1'), 'utf8');
+  const fn = fs.readFileSync(path.join(__dirname, '..', 'resumo.js'), 'utf8');
+  const noScript = ps.match(/\$MAX_LISTA_FUNCAO\s*=\s*(\d+)/); const naFuncao = fn.match(/const MAX_CARDS_LISTA\s*=\s*(\d+)/);
+  assert.ok(noScript && naFuncao, 'não achei os dois tetos');
+  assert.equal(noScript[1], naFuncao[1], 'o teto da lista mudou na função: atualize $MAX_LISTA_FUNCAO no script (senão o "+ N ou mais" erra)');
+  assert.match(ps, /\+ \{0\}\{1\} · abrir página inteira/); assert.match(ps, /if \(\$ok -and \$t\)/); assert.match(ps, /nenhum em 24 h/); assert.match(ps, /nada aberto/);
+});
