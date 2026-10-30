@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🍎 Mini painel para Mac (SÓ DEV — nunca compilado): bolinha 🟢🟡🔴 na barra de menu e widget de mesa — mac/ (Swift, XcodeGen) — 2026-10-30
+
+Desenho do app do Mac do Caio: a barra de menu mostra a bolinha do estado geral (e o nº de cards atrasados); ao clicar, VTEX, GitHub, Firebase, backup, alarmes de 'card sumiu', plantão e os cards dele; o widget (pequeno e médio) mostra o mesmo resumo na mesa. Lê o mesmo JSON da página minipainel.html (função oceanoResumo), atualiza a cada minuto e tem 'Abrir ao iniciar sessão'.
+• Projeto gerado por XcodeGen (project.yml); a chave e o Team ID ficam em mac/Local.xcconfig (fora do Git). Passo a passo em mac/README.md.
+• Escrito sem Xcode: o contrato com a função é conferido por teste (contrato_mac.test.js), mas a primeira compilação é no Mac do Caio. Dica: não (ferramenta pessoal).
+
 ### 🌊 Mini painel (SÓ DEV — falta o deploy da função): VTEX, GitHub, Firebase, backup, plantão, alarmes de card sumindo e os seus cards numa tela só — minipainel.html + oceanoResumo — 2026-10-30
 
 Para o Caio bater o olho e saber se está tudo bem e rodando. Uma função nova (`oceanoResumo`, GET com chave, só o resumo do dono) junta o que o Painel já mostra (monitores de status, backup, plantão) com os cards dele (atrasados, vencem hoje, bloqueados, próximos 7 dias); a página `minipainel.html` (sem login) mostra tudo com 🟢🟡🔴 + texto, atualiza a cada minuto, tem tema claro/escuro e `?demo=1` com dados de exemplo.

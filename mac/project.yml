@@ -1,0 +1,60 @@
+# Projeto Xcode do mini painel para Mac (barra de menu + widget). Gere com:  cd mac && xcodegen generate
+# Passo a passo completo em mac/README.md. A chave e o Team ID vêm de mac/Local.xcconfig (fora do Git).
+name: OceanoBar
+options:
+  bundleIdPrefix: br.com.hering.oceano
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+configFiles:
+  Debug: Local.xcconfig
+  Release: Local.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: $(OCEANO_TEAM)
+    ENABLE_HARDENED_RUNTIME: YES
+targets:
+  OceanoBar:
+    type: application
+    platform: macOS
+    sources:
+      - App
+      - Shared
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Oceano
+        LSUIElement: true
+        OceanoChave: $(OCEANO_CHAVE)
+        OceanoHost: $(OCEANO_HOST)
+    entitlements:
+      path: App/OceanoBar.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+    dependencies:
+      - target: OceanoWidget
+        embed: true
+  OceanoWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - Widget
+      - Shared
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Oceano
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        OceanoChave: $(OCEANO_CHAVE)
+        OceanoHost: $(OCEANO_HOST)
+    entitlements:
+      path: Widget/OceanoWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true

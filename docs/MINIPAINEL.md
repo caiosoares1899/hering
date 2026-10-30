@@ -29,5 +29,8 @@ Depois abra `https://caiosoares1899.github.io/hering/minipainel.html`, cole a ch
 - Os cards são os de que o dono é **responsável** (participante não entra: o Firebase não consegue consultar array), ativos, fora das colunas de fim, nos squads em que ele é membro.
 - A chave fica no `localStorage` do navegador onde você colou. Em computador compartilhado, use ⚙ → trocar a chave ao sair.
 
+## App do Mac (barra de menu + widget)
+Em `mac/` (Swift/SwiftUI, projeto gerado por XcodeGen): lê o mesmo JSON. Escrito sem Xcode e **ainda não compilado** — passo a passo e problemas comuns em `mac/README.md`. O teste `functions/oceano/__tests__/contrato_mac.test.js` garante que os campos que o Swift espera existem no JSON da função.
+
 ## Testes
-`cd functions && node --test oceano/__tests__/resumo.test.js` (12) · `node docs/arezzo/testes/test_minipainel.js` (navegador, 3 temas × 2 tamanhos, XSS, chave errada, função fora do ar).
+`cd functions && node --test oceano/__tests__/*.test.js` (13: função + contrato com o app do Mac) · `node docs/arezzo/testes/test_minipainel.js` (navegador, 3 temas × 2 tamanhos, XSS, chave errada, função fora do ar).
