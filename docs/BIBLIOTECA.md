@@ -120,6 +120,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `ideias/dossie-concorrencia-2026-10.md` | Dossiê de concorrência do Antigravity, já triado — backlog pós-férias |
 | `ideias/travessia-2026-10-22.md` | Desenho do Travessia (pessoas/PDI/1:1): concorrência, princípios, modelo de dados, fases, decisões do Caio e triagem do dossiê do Antigravity |
 | `ideias/tema-claro-painel-radar-2026-10-17.md` | Auditoria do tema claro/Vice no Painel e no Radar + plano de correção (18/10) |
+| `MIGRACAO_DOMINIO.md` | Internalização (30/10/2026): inventário de tudo que depende do endereço atual (código, CORS das funções, login Google, PWA, dados do navegador, links gravados) + checklist da virada |
 | `AUDITORIA_SEGURANCA_2026-10-18.md` | Pente fino de segurança: achados, o que foi corrigido, riscos aceitos, o que o Caio vê no console do Google |
 | `ideias/amanha-18-10-mapa-repo-e-push-antigravity.md` | Mapa do repositório, resumo no Ecossistema e push dos pedidos do Antigravity (18/10) |
 
