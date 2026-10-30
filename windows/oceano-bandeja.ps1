@@ -68,7 +68,7 @@ function Campo($obj, [string]$caminho) {
 function Numero($v) { if ($null -eq $v) { return 0 } else { return [int]$v } }
 
 function Rotulo($estado) {
-  switch ($estado) { 'ok' { 'OK' } 'atencao' { 'ATENCAO' } 'fora' { 'FORA DO AR' } 'off' { 'desligado' } default { 'sem leitura' } }
+  switch ($estado) { 'ok' { 'OK' } 'atencao' { 'ATENÇÃO' } 'fora' { 'FORA DO AR' } 'off' { 'desligado' } default { 'sem leitura' } }
 }
 function Gravidade($estado) { switch ($estado) { 'fora' { 2 } 'atencao' { 1 } 'ok' { 0 } default { 0 } } }
 
@@ -169,27 +169,245 @@ function DefinirAutoinicio([bool]$ligar) {
   } else { Remove-ItemProperty -Path $chave -Name 'OceanoBandeja' -ErrorAction SilentlyContinue }
 }
 
-# Clique no icone = abre o PROPRIO mini painel (minipainel.html?compacto=1) numa janelinha do Edge no canto da tela, sem barra de enderecos.
-# A chave fica no armazenamento do Edge (a pagina pede uma vez). Sem o Edge, abre no navegador padrao.
-function AbrirJanela {
-  $url = $script:PaginaWeb + $(if ($script:PaginaWeb.Contains('?')) { '&' } else { '?' }) + 'compacto=1'
-  try {
-    $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
-    $w = 440; $h = [Math]::Min(760, $wa.Height - 24)
-    $x = [Math]::Max($wa.Left, $wa.Right - $w - 12); $y = [Math]::Max($wa.Top, $wa.Bottom - $h - 12)
-    Start-Process -FilePath 'msedge.exe' -ArgumentList @("--app=$url", "--window-size=$w,$h", "--window-position=$x,$y")
-  } catch {
-    Registrar ('Edge indisponivel, abrindo no navegador padrao: ' + $_.Exception.Message)
-    Start-Process $url
+# ---------------------------------------------------------------------------------------------------------------------------------------------
+# JANELA NATIVA: clicar no icone abre um painel desenhado aqui mesmo (WinForms), sem navegador. Fecha ao clicar fora ou com Esc; clicar no icone de novo tambem fecha.
+$script:LARGURA = 380
+$script:cFundo = [System.Drawing.Color]::FromArgb(7, 26, 46)
+$script:cCartao = [System.Drawing.Color]::FromArgb(13, 42, 69)
+$script:cCartaoHover = [System.Drawing.Color]::FromArgb(24, 64, 102)
+$script:cBorda = [System.Drawing.Color]::FromArgb(42, 111, 156)
+$script:cTexto = [System.Drawing.Color]::FromArgb(232, 244, 253)
+$script:cCinza = [System.Drawing.Color]::FromArgb(143, 176, 201)
+$script:fN = New-Object System.Drawing.Font('Segoe UI', 10)
+$script:fNegrito = New-Object System.Drawing.Font('Segoe UI', 10, [System.Drawing.FontStyle]::Bold)
+$script:fTitulo = New-Object System.Drawing.Font('Segoe UI', 14.5, [System.Drawing.FontStyle]::Bold)
+$script:fPeq = New-Object System.Drawing.Font('Segoe UI', 8.5)
+$script:fPeqNegrito = New-Object System.Drawing.Font('Segoe UI', 8.5, [System.Drawing.FontStyle]::Bold)
+$script:fGrande = New-Object System.Drawing.Font('Segoe UI', 17, [System.Drawing.FontStyle]::Bold)
+$script:fBolinha = New-Object System.Drawing.Font('Segoe UI', 22)
+$script:painel = $null
+$script:painelAbertoEm = [datetime]::MinValue
+$script:painelFechadoEm = [datetime]::MinValue
+$script:py = 0
+
+function CorDoEstado([string]$e) {
+  switch ($e) {
+    'ok' { [System.Drawing.Color]::FromArgb(46, 204, 113) }
+    'atencao' { [System.Drawing.Color]::FromArgb(255, 193, 7) }
+    'fora' { [System.Drawing.Color]::FromArgb(231, 76, 60) }
+    default { [System.Drawing.Color]::FromArgb(149, 165, 166) }
+  }
+}
+function CorDoCard($c) {
+  if (Campo $c 'atrasado') { return [System.Drawing.Color]::FromArgb(231, 76, 60) }
+  if ((Campo $c 'bloqueado') -or (Campo $c 'venceHoje')) { return [System.Drawing.Color]::FromArgb(255, 193, 7) }
+  return $script:cCinza
+}
+function Corta([string]$t, [int]$n) { if ($t.Length -gt $n) { return $t.Substring(0, $n - 1) + '…' } else { return $t } }
+
+function CaminhoArredondado([int]$x, [int]$y, [int]$w, [int]$h, [int]$r) {
+  $p = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $d = $r * 2
+  $p.AddArc($x, $y, $d, $d, 180, 90)
+  $p.AddArc($x + $w - $d, $y, $d, $d, 270, 90)
+  $p.AddArc($x + $w - $d, $y + $h - $d, $d, $d, 0, 90)
+  $p.AddArc($x, $y + $h - $d, $d, $d, 90, 90)
+  $p.CloseFigure()
+  return $p
+}
+
+function NovoRotulo($pai, [string]$texto, [int]$x, [int]$y, [int]$w, [int]$h, $fonte, $cor, [string]$alinho = 'Esq') {
+  $l = New-Object System.Windows.Forms.Label
+  $l.AutoSize = $false
+  $l.Text = $texto
+  $l.Location = New-Object System.Drawing.Point($x, $y)
+  $l.Size = New-Object System.Drawing.Size($w, $h)
+  $l.Font = $fonte
+  $l.ForeColor = $cor
+  $l.BackColor = [System.Drawing.Color]::Transparent
+  $l.TextAlign = switch ($alinho) { 'Dir' { [System.Drawing.ContentAlignment]::MiddleRight } 'Cen' { [System.Drawing.ContentAlignment]::MiddleCenter } default { [System.Drawing.ContentAlignment]::MiddleLeft } }
+  $pai.Controls.Add($l)
+  return $l
+}
+
+# botao simples (rotulo com fundo de cartao + efeito ao passar o mouse); a acao vai em .Tag
+function NovoBotao($pai, [string]$texto, [string]$acao, [int]$x, [int]$y, [int]$w, [int]$h) {
+  $l = NovoRotulo $pai $texto $x $y $w $h $script:fN $script:cTexto 'Cen'
+  $l.BackColor = $script:cCartao
+  $l.Tag = $acao
+  $l.Cursor = [System.Windows.Forms.Cursors]::Hand
+  $l.Add_MouseEnter($script:aoEntrar)
+  $l.Add_MouseLeave($script:aoSair)
+  $l.Add_Click($script:aoClicarAcao)
+  return $l
+}
+
+function TextoAutoinicio { if (Autoinicio) { 'Iniciar com o Windows: sim' } else { 'Iniciar com o Windows: não' } }
+
+$script:aoEntrar = { param($s, $e) if ($s.Tag -ne 'auto') { $s.BackColor = $script:cCartaoHover } else { $s.ForeColor = $script:cTexto } }
+$script:aoSair = { param($s, $e) if ($s.Tag -ne 'auto') { $s.BackColor = $script:cCartao } else { $s.ForeColor = $script:cCinza } }
+$script:aoClicarAcao = {
+  param($s, $e)
+  switch ([string]$s.Tag) {
+    'atualizar' { Atualizar; if ($script:painel -and -not $script:painel.IsDisposed) { $script:painel.Close() }; MostrarPainel }
+    'pagina' { if ($script:painel -and -not $script:painel.IsDisposed) { $script:painel.Close() }; Start-Process $script:PaginaWeb }
+    'sair' { $script:notify.Visible = $false; [System.Windows.Forms.Application]::Exit() }
+    'auto' {
+      try { DefinirAutoinicio (-not (Autoinicio)) } catch { [System.Windows.Forms.MessageBox]::Show('Não consegui mudar o início automático: ' + $_.Exception.Message, 'Oceano') | Out-Null }
+      $s.Text = TextoAutoinicio
+    }
   }
 }
 
-# Menu do botao direito (curto): o resumo mora na janelinha.
+function SecaoPainel($f, [string]$titulo) {
+  [void](NovoRotulo $f $titulo.ToUpper() 18 $script:py ($script:LARGURA - 36) 16 $script:fPeqNegrito $script:cCinza)
+  $script:py += 20
+}
+
+function LinhaPeca($f, [string]$nome, $peca) {
+  $e = [string](Campo $peca 'estado')
+  $cor = CorDoEstado $e
+  [void](NovoRotulo $f '●' 16 $script:py 22 22 $script:fN $cor 'Cen')
+  [void](NovoRotulo $f $nome 40 $script:py 170 22 $script:fN $script:cTexto)
+  [void](NovoRotulo $f (Rotulo $e) ($script:LARGURA - 18 - 120) $script:py 120 22 $script:fPeqNegrito $cor 'Dir')
+  $script:py += 22
+  $t = [string](Campo $peca 'texto')
+  if ($e -ne 'ok' -and $t) {
+    [void](NovoRotulo $f (Corta $t 60) 40 $script:py ($script:LARGURA - 58) 18 $script:fPeq $script:cCinza)
+    $script:py += 20
+  }
+  $script:py += 4
+}
+
+function MostrarPainel {
+  if ($script:painel -and -not $script:painel.IsDisposed) { $script:painel.Close(); return }
+  $W = $script:LARGURA
+  $r = $script:ultimo
+  $f = New-Object System.Windows.Forms.Form
+  $f.FormBorderStyle = 'None'
+  $f.StartPosition = 'Manual'
+  $f.ShowInTaskbar = $false
+  $f.TopMost = $true
+  $f.KeyPreview = $true
+  $f.BackColor = $script:cFundo
+  $f.Width = $W
+  $f.SuspendLayout()
+
+  # cabecalho
+  $g = if ($r) { [string](Campo $r 'geral') } else { 'desconhecido' }
+  if ($script:erro -and -not $r) { $g = 'desconhecido' }
+  $titulo = switch ($g) { 'ok' { 'Tudo certo' } 'atencao' { 'Atenção' } 'fora' { 'Algo fora do ar' } default { 'Sem leitura' } }
+  $sub = if ($r) { 'Atualizado às ' + (HoraDe (Campo $r 'geradoEm')) } elseif ($script:erro) { $script:erro } else { 'Carregando…' }
+  if ($r -and $script:erro) { $sub += ' · sem conexão, mostrando o último dado' }
+  [void](NovoRotulo $f '●' 14 12 40 44 $script:fBolinha (CorDoEstado $g) 'Cen')
+  [void](NovoRotulo $f $titulo 58 14 ($W - 58 - 90) 26 $script:fTitulo $script:cTexto)
+  [void](NovoRotulo $f (Corta $sub 52) 58 40 ($W - 58 - 90) 18 $script:fPeq $script:cCinza)
+  $atualizar = NovoRotulo $f 'Atualizar' ($W - 18 - 76) 16 76 24 $script:fPeqNegrito $script:cCinza 'Dir'
+  $atualizar.Tag = 'atualizar'; $atualizar.Cursor = [System.Windows.Forms.Cursors]::Hand
+  $atualizar.Add_Click($script:aoClicarAcao)
+  $script:py = 70
+
+  if ($r) {
+    SecaoPainel $f 'Sistema'
+    LinhaPeca $f 'VTEX' (Campo $r 'status.vtex')
+    LinhaPeca $f 'GitHub' (Campo $r 'status.github')
+    LinhaPeca $f 'Firebase' (Campo $r 'status.firebase')
+    $script:py += 4
+    SecaoPainel $f 'Dados e rotina'
+    LinhaPeca $f 'Backup' (Campo $r 'backup')
+    $al = Numero (Campo $r 'alarmesSumico.ultimas24h')
+    LinhaPeca $f 'Cards sumindo' @{ estado = $(if ($al -gt 0) { 'atencao' } else { 'ok' }); texto = $(if ($al -gt 0) { "$al card(s) sumiram sem exclusão nas últimas 24 h" } else { '' }) }
+    $ab = Numero (Campo $r 'plantao.abertos'); $val = Numero (Campo $r 'plantao.aguardandoValidacao'); $esc = Numero (Campo $r 'plantao.escalados')
+    $plTexto = if ($ab -gt 0) { "$ab aberto(s)" + $(if ($val -gt 0) { " · $val p/ validar" } else { '' }) + $(if ($esc -gt 0) { " · $esc escalado(s)" } else { '' }) } else { '' }
+    LinhaPeca $f 'Plantão de bugs' @{ estado = $(if ($esc -gt 0) { 'atencao' } else { 'ok' }); texto = $(if ($esc -gt 0) { $plTexto } else { '' }) }
+    $script:py += 4
+
+    $mc = Campo $r 'meusCards'
+    SecaoPainel $f 'Meus cards'
+    if ($mc) {
+      $bw = [int](($W - 36 - 18) / 4)
+      $nums = @(
+        @((Numero (Campo $mc 'atrasados')), 'atrasados', [System.Drawing.Color]::FromArgb(231, 76, 60)),
+        @((Numero (Campo $mc 'venceHoje')), 'hoje', [System.Drawing.Color]::FromArgb(255, 193, 7)),
+        @((Numero (Campo $mc 'bloqueados')), 'bloqueados', [System.Drawing.Color]::FromArgb(255, 193, 7)),
+        @((Numero (Campo $mc 'venceEm7dias')), 'em 7 dias', $script:cTexto)
+      )
+      for ($i = 0; $i -lt 4; $i++) {
+        $box = New-Object System.Windows.Forms.Panel
+        $box.Location = New-Object System.Drawing.Point((18 + $i * ($bw + 6)), $script:py)
+        $box.Size = New-Object System.Drawing.Size($bw, 52)
+        $box.BackColor = $script:cCartao
+        $cor = if ($nums[$i][0] -gt 0) { $nums[$i][2] } else { $script:cTexto }
+        [void](NovoRotulo $box ([string]$nums[$i][0]) 0 2 $bw 30 $script:fGrande $cor 'Cen')
+        [void](NovoRotulo $box $nums[$i][1] 0 32 $bw 16 $script:fPeq $script:cCinza 'Cen')
+        $f.Controls.Add($box)
+      }
+      $script:py += 60
+      $lista = @(Campo $mc 'lista') | Where-Object { $null -ne $_ } | Select-Object -First 5
+      if (@($lista).Count -eq 0) {
+        [void](NovoRotulo $f 'Nada atrasado, bloqueado ou vencendo nos próximos 7 dias.' 18 $script:py ($W - 36) 22 $script:fPeq $script:cCinza)
+        $script:py += 26
+      } else {
+        foreach ($c in $lista) {
+          [void](NovoRotulo $f (Corta ([string](Campo $c 'titulo')) 33) 18 $script:py ($W - 36 - 130) 22 $script:fN $script:cTexto)
+          [void](NovoRotulo $f ((QuandoDoCard $c) + ' · ' + [string](Campo $c 'squad')) ($W - 18 - 150) $script:py 150 22 $script:fPeqNegrito (CorDoCard $c) 'Dir')
+          $script:py += 24
+        }
+      }
+    } else {
+      [void](NovoRotulo $f 'Sem leitura dos seus cards.' 18 $script:py ($W - 36) 22 $script:fPeq $script:cCinza)
+      $script:py += 26
+    }
+  } else {
+    [void](NovoRotulo $f $(if ($script:erro) { $script:erro } else { 'Carregando…' }) 18 $script:py ($W - 36) 44 $script:fN $script:cTexto)
+    $script:py += 50
+  }
+
+  # rodape
+  $script:py += 4
+  $linha = New-Object System.Windows.Forms.Panel
+  $linha.Location = New-Object System.Drawing.Point(18, $script:py); $linha.Size = New-Object System.Drawing.Size(($W - 36), 1); $linha.BackColor = $script:cBorda
+  $f.Controls.Add($linha)
+  $script:py += 10
+  [void](NovoBotao $f 'Abrir página inteira' 'pagina' 18 $script:py 214 28)
+  [void](NovoBotao $f 'Sair' 'sair' (18 + 214 + 6) $script:py ($W - 36 - 214 - 6) 28)
+  $script:py += 34
+  $auto = NovoRotulo $f (TextoAutoinicio) 18 $script:py ($W - 36) 24 $script:fPeq $script:cCinza
+  $auto.Tag = 'auto'; $auto.Cursor = [System.Windows.Forms.Cursors]::Hand
+  $auto.Add_MouseEnter($script:aoEntrar); $auto.Add_MouseLeave($script:aoSair); $auto.Add_Click($script:aoClicarAcao)
+  $script:py += 30
+
+  $f.Height = $script:py
+  $f.ResumeLayout($false)
+
+  # cantos arredondados + borda; canto inferior direito da area util (acima da barra de tarefas)
+  $f.Region = New-Object System.Drawing.Region (CaminhoArredondado 0 0 $W $f.Height 14)
+  $f.Tag = (CaminhoArredondado 1 1 ($W - 2) ($f.Height - 2) 13)
+  $f.Add_Paint({
+    param($s, $e)
+    $e.Graphics.SmoothingMode = 'AntiAlias'
+    $pen = New-Object System.Drawing.Pen($script:cBorda, 1.5)
+    $e.Graphics.DrawPath($pen, $s.Tag)
+    $pen.Dispose()
+  })
+  $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+  $f.Location = New-Object System.Drawing.Point([Math]::Max($wa.Left, $wa.Right - $W - 12), [Math]::Max($wa.Top, $wa.Bottom - $f.Height - 12))
+
+  $f.Add_Deactivate({ param($s, $e) if (((Get-Date) - $script:painelAbertoEm).TotalMilliseconds -gt 400) { $s.Close() } })
+  $f.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $s.Close() } })
+  $f.Add_FormClosed({ $script:painel = $null; $script:painelFechadoEm = Get-Date })
+  $script:painel = $f
+  $script:painelAbertoEm = Get-Date
+  $f.Show()
+  [void]$f.Activate()
+}
+
+# Menu do botao direito (curto): o resumo mora na janela.
 function MontarMenuSimples {
   $menu.Items.Clear()
   $iAbrir = New-Object System.Windows.Forms.ToolStripMenuItem 'Abrir o mini painel'
   $iAbrir.Font = New-Object System.Drawing.Font($iAbrir.Font, [System.Drawing.FontStyle]::Bold)
-  $iAbrir.Add_Click({ AbrirJanela })
+  $iAbrir.Add_Click({ MostrarPainel })
   [void]$menu.Items.Add($iAbrir)
   $iAtualizar = New-Object System.Windows.Forms.ToolStripMenuItem 'Atualizar o ícone agora'
   $iAtualizar.Add_Click({ Atualizar })
@@ -243,12 +461,13 @@ function Atualizar {
   }
 }
 
-# clique esquerdo abre a janelinha com o mini painel; o botao direito abre o menu curto
+# clique esquerdo abre o painel nativo com o mini painel; o botao direito abre o menu curto
 $notify.Add_MouseClick({
   param($remetente, $e)
-  if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) { AbrirJanela }
+  # clicar no icone com o painel aberto: o painel fecha sozinho ao perder o foco ANTES deste clique chegar; sem esta guarda ele reabriria na hora
+  if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left -and (((Get-Date) - $script:painelFechadoEm).TotalMilliseconds -gt 400)) { MostrarPainel }
 })
-$notify.Add_BalloonTipClicked({ AbrirJanela })   # clicar no aviso abre o painel
+$notify.Add_BalloonTipClicked({ MostrarPainel })   # clicar no aviso abre o painel
 
 $notify.Icon = NovoIcone 'desconhecido' 0
 $script:iconeAtual = $notify.Icon

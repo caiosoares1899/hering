@@ -24,6 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🪟 Mini painel do Windows vira janela nativa, sem navegador (SÓ DEV — ainda não viu uma tela real) — windows/oceano-bandeja.ps1 — 2026-10-30
+
+Pedido do Caio: 'a janelinha não tem como ser dentro do sistema Windows sem abrir um navegador?'. Clicar no ícone agora abre um painel desenhado pelo próprio script (WinForms): fundo escuro Marine Glass, cantos arredondados, bolinhas coloridas por peça (VTEX, GitHub, Firebase, backup, cards sumindo, plantão), 4 contadores dos cards e a lista dos 5 mais urgentes, botões Atualizar / Abrir página inteira / Sair e 'Iniciar com o Windows'. Fecha ao clicar fora, com Esc ou clicando no ícone de novo; clicar no balão de aviso também abre.
+• Não usa o Edge nem a página minipainel.html; o modo `?compacto=1` da página continua existindo (útil no navegador estreito). Escrito sem Windows: a leitura do JSON e o arquivo são testados, o desenho é a primeira execução do Caio. Dica: não (ferramenta pessoal).
+
 ### 🪟 Mini painel: janelinha compacta e ícone do Windows que a abre (SÓ DEV para o ícone; a página entra com o merge) — minipainel.html?compacto=1 · windows/ — 2026-10-30
 
 O menu de texto da bandeja do Windows ficou 'bagunçado' (pedido do Caio: 'não pode ser uma mini tela do painel mesmo?'). Agora clicar no ícone abre uma janelinha do Edge (modo aplicativo, sem barra de endereços, no canto da tela) com o próprio mini painel.
