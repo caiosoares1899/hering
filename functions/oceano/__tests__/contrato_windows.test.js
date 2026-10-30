@@ -55,3 +55,9 @@ test('o script usa a mesma função/endereço/chave que a página web e não lev
   assert.match(ps, /cloudfunctions\.net\/oceanoResumo/); assert.match(ps, /chave-oceano\.txt/); assert.match(ps, /minipainel\.html/);
   assert.ok(!/[0-9a-f]{40,}/i.test(ps), 'parece haver uma chave embutida');
 });
+
+test('o script não compila C# na hora (Add-Type com DllImport/MemberDefinition falha em Windows corporativo) e registra todo erro em log', () => {
+  const ps = fs.readFileSync(path.join(RAIZ, 'oceano-bandeja.ps1'), 'utf8');
+  assert.ok(!/Add-Type\s+-MemberDefinition|Add-Type\s+-TypeDefinition|DllImport/i.test(ps), 'Add-Type com C# trava o script em máquinas onde o compilador é bloqueado (visto em 30/10)');
+  assert.match(ps, /oceano-bandeja\.log/); assert.match(ps, /\btrap\s*\{/); assert.match(ps, /function Registrar/);
+});

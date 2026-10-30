@@ -25,6 +25,9 @@ windows\iniciar-oceano.cmd -Visivel
 ```
 Roda **nesta janela do `cmd`** (não escondido), escreve "Mini painel iniciado" e, se algo falhar, mostra o erro e espera uma tecla. Feche a janela para sair.
 
+## Log
+Todo erro (e o início/fim) é gravado em `%TEMP%\oceano-bandeja.log`, inclusive quando roda escondido: `type %TEMP%\oceano-bandeja.log`.
+
 ## Parâmetros (opcionais)
 `-ArquivoChave <caminho>` · `-Endereco <url da função>` · `-IntervaloSegundos 60` · `-Visivel`. Exemplo: `windows\iniciar-oceano.cmd -Endereco https://oceanoresumo-xxxx-uc.a.run.app`.
 
