@@ -268,16 +268,24 @@ function LinhaPeca($f, [string]$nome, $peca) {
   $e = [string](Campo $peca 'estado')
   $cor = CorDoEstado $e
   [void](NovoRotulo $f '●' 16 $script:py 22 22 $script:fN $cor 'Cen')
-  [void](NovoRotulo $f $nome 40 $script:py 170 22 $script:fN $script:cTexto)
-  [void](NovoRotulo $f (Rotulo $e) ($script:LARGURA - 18 - 120) $script:py 120 22 $script:fPeqNegrito $cor 'Dir')
-  $script:py += 22
   $t = [string](Campo $peca 'texto')
-  if ($e -ne 'ok' -and $t) {
+  $ok = ($e -eq 'ok')
+  # OK: o detalhe ("operando", "em dia"...) vai na mesma linha, em cinza, encostado no "OK"; nos demais estados vai embaixo, mais longo
+  $wRotulo = if ($ok) { 44 } else { 120 }
+  [void](NovoRotulo $f $nome 40 $script:py 112 22 $script:fN $script:cTexto)
+  [void](NovoRotulo $f (Rotulo $e) ($script:LARGURA - 18 - $wRotulo) $script:py $wRotulo 22 $script:fPeqNegrito $cor 'Dir')
+  if ($ok -and $t) { [void](NovoRotulo $f (Corta $t 30) 156 $script:py ($script:LARGURA - 18 - $wRotulo - 156 - 2) 22 $script:fPeq $script:cCinza 'Dir') }
+  $script:py += 22
+  if (-not $ok -and $t) {
     [void](NovoRotulo $f (Corta $t 60) 40 $script:py ($script:LARGURA - 58) 18 $script:fPeq $script:cCinza)
     $script:py += 20
   }
   $script:py += 4
 }
+
+# quantos cards cabem na janela, e o teto que a funcao oceanoResumo manda na lista (MAX_CARDS_LISTA em functions/oceano/resumo.js; o teste contrato_windows confere)
+$MAX_LINHAS_CARDS = 5
+$MAX_LISTA_FUNCAO = 8
 
 function MostrarPainel {
   if ($script:painel -and -not $script:painel.IsDisposed) { $script:painel.Close(); return }
@@ -316,10 +324,10 @@ function MostrarPainel {
     SecaoPainel $f 'Dados e rotina'
     LinhaPeca $f 'Backup' (Campo $r 'backup')
     $al = Numero (Campo $r 'alarmesSumico.ultimas24h')
-    LinhaPeca $f 'Cards sumindo' @{ estado = $(if ($al -gt 0) { 'atencao' } else { 'ok' }); texto = $(if ($al -gt 0) { "$al card(s) sumiram sem exclusão nas últimas 24 h" } else { '' }) }
+    LinhaPeca $f 'Cards sumindo' @{ estado = $(if ($al -gt 0) { 'atencao' } else { 'ok' }); texto = $(if ($al -gt 0) { "$al card(s) sumiram sem exclusão nas últimas 24 h" } else { 'nenhum em 24 h' }) }
     $ab = Numero (Campo $r 'plantao.abertos'); $val = Numero (Campo $r 'plantao.aguardandoValidacao'); $esc = Numero (Campo $r 'plantao.escalados')
     $plTexto = if ($ab -gt 0) { "$ab aberto(s)" + $(if ($val -gt 0) { " · $val p/ validar" } else { '' }) + $(if ($esc -gt 0) { " · $esc escalado(s)" } else { '' }) } else { '' }
-    LinhaPeca $f 'Plantão de bugs' @{ estado = $(if ($esc -gt 0) { 'atencao' } else { 'ok' }); texto = $(if ($esc -gt 0) { $plTexto } else { '' }) }
+    LinhaPeca $f 'Plantão de bugs' @{ estado = $(if ($esc -gt 0) { 'atencao' } else { 'ok' }); texto = $(if ($plTexto) { $plTexto } else { 'nada aberto' }) }
     $script:py += 4
 
     $mc = Campo $r 'meusCards'
@@ -343,7 +351,8 @@ function MostrarPainel {
         $f.Controls.Add($box)
       }
       $script:py += 60
-      $lista = @(Campo $mc 'lista') | Where-Object { $null -ne $_ } | Select-Object -First 5
+      $todos = @(@(Campo $mc 'lista') | Where-Object { $null -ne $_ })
+      $lista = $todos | Select-Object -First $MAX_LINHAS_CARDS
       if (@($lista).Count -eq 0) {
         [void](NovoRotulo $f 'Nada atrasado, bloqueado ou vencendo nos próximos 7 dias.' 18 $script:py ($W - 36) 22 $script:fPeq $script:cCinza)
         $script:py += 26
@@ -351,6 +360,17 @@ function MostrarPainel {
         foreach ($c in $lista) {
           [void](NovoRotulo $f (Corta ([string](Campo $c 'titulo')) 33) 18 $script:py ($W - 36 - 130) 22 $script:fN $script:cTexto)
           [void](NovoRotulo $f ((QuandoDoCard $c) + ' · ' + [string](Campo $c 'squad')) ($W - 18 - 150) $script:py 150 22 $script:fPeqNegrito (CorDoCard $c) 'Dir')
+          $script:py += 24
+        }
+        # a funcao manda no maximo $MAX_LISTA_FUNCAO cards; se veio cheia, o total real e desconhecido: so se sabe o minimo (os contadores acima)
+        $cheia = ($todos.Count -ge $MAX_LISTA_FUNCAO)
+        $total = if ($cheia) { [Math]::Max($todos.Count, [Math]::Max((Numero (Campo $mc 'atrasados')) + (Numero (Campo $mc 'venceHoje')) + (Numero (Campo $mc 'venceEm7dias')), (Numero (Campo $mc 'bloqueados')))) } else { $todos.Count }
+        $ocultos = $total - @($lista).Count
+        if ($ocultos -gt 0) {
+          $mais = [string]::Format('+ {0}{1} · abrir página inteira', $ocultos, $(if ($cheia) { ' ou mais' } else { '' }))
+          $lm = NovoRotulo $f $mais 18 $script:py ($W - 36) 20 $script:fPeqNegrito $script:cCinza
+          $lm.Tag = 'pagina'; $lm.Cursor = [System.Windows.Forms.Cursors]::Hand
+          $lm.Add_Click($script:aoClicarAcao)
           $script:py += 24
         }
       }
