@@ -140,11 +140,12 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Pendente de deploy (só o Caio roda)
 
 > ✅ Deploys acumulados até 21/10/2026 (`vtexStatus`, `weeklyBackup`, as 5 funções do Agente Ágil/`okrAgenteChat`, funções gerais em Node 22 e `database.rules.json`) publicados pelo Caio em 21/10/2026.
+>
+> ✅ **Backup do quadro diário** (`weeklyBackup` todo dia 04:00 + `backupVigia` cobrando 3 dias) publicado pelo Caio em 28–29/10/2026.
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
 | Claude | **Travessia — regras do banco** (`kanban/travessia/*`: Baú, 1:1, humor privado, avaliação com trava de devolutiva) e o nó no backup semanal (`functions/backup/completo.js`). Sem a regra publicada, a tela do Travessia não grava. | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` e `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario,functions:backupCompletoApi --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do resync) | 22/10/2026 |
-| Claude | **Backup do quadro diário** (`weeklyBackup` passa de domingo para todo dia 04:00; `backupVigia` cobra o quadro com 3 dias). | `firebase deploy --only functions:weeklyBackup,functions:backupVigia` (antes, o resync da `main`) | 28/10/2026 |
 
 ---
 
