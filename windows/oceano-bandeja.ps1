@@ -22,23 +22,36 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Todo erro vai para um arquivo de log (%TEMP%\oceano-bandeja.log) E para a tela (no modo -Visivel): rodando escondido, e a unica pista do que houve.
+$script:arquivoLog = Join-Path $env:TEMP 'oceano-bandeja.log'
+function Registrar([string]$texto) {
+  try { Add-Content -LiteralPath $script:arquivoLog -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + ' ' + $texto) } catch {}
+}
+trap {
+  Registrar ('ERRO: ' + $_.Exception.Message + ' | ' + ($_.InvocationInfo.PositionMessage -replace '\s+', ' '))
+  if ($Visivel) { Write-Host ('ERRO: ' + $_.Exception.Message); Write-Host ($_ | Out-String) }
+  break
+}
+Registrar 'iniciando'
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
 try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
 
-Add-Type -MemberDefinition @'
-[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool DestroyIcon(System.IntPtr handle);
-[System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern System.IntPtr GetConsoleWindow();
-[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool ShowWindow(System.IntPtr hWnd, int nCmdShow);
-'@ -Name Nativo -Namespace Oceano
-
-if (-not $Visivel) { [void][Oceano.Nativo]::ShowWindow([Oceano.Nativo]::GetConsoleWindow(), 0) }
+# (Nada de Add-Type com C#: em alguns Windows corporativos a compilacao e bloqueada. A janela escondida vem do iniciar-oceano.cmd.)
 
 # Uma instancia so: abrir de novo nao duplica o icone.
 $script:mutex = New-Object System.Threading.Mutex($false, 'Local\OceanoBandejaMiniPainel')
-if (-not $script:mutex.WaitOne(0)) { [System.Windows.Forms.MessageBox]::Show('O mini painel ja esta na bandeja (procure o icone perto do relogio).', 'Oceano') | Out-Null; exit }
+if (-not $script:mutex.WaitOne(0)) {
+  Registrar 'ja estava rodando: saindo'
+  if ($Visivel) { Write-Host 'O mini painel ja esta rodando (procure o icone perto do relogio ou na setinha ^).' }
+  [System.Windows.Forms.MessageBox]::Show('O mini painel ja esta na bandeja (procure o icone perto do relogio).', 'Oceano') | Out-Null
+  exit
+}
 
+Registrar 'abrindo o icone'
 if ($Visivel) { Write-Host 'Mini painel iniciado. Procure o icone perto do relogio (ou na setinha ^ da bandeja). Feche esta janela para sair.' }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -102,13 +115,16 @@ function Buscar {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------
-# Icone: bolinha colorida (+ numero de atrasados). Libera o icone antigo (senao vaza um handle por minuto).
+# Icone: bolinha colorida (+ numero de atrasados). Cada combinacao e criada uma vez e reaproveitada.
 $script:cores = @{
   ok = [System.Drawing.Color]::FromArgb(46, 204, 113); atencao = [System.Drawing.Color]::FromArgb(255, 193, 7)
   fora = [System.Drawing.Color]::FromArgb(231, 76, 60); desconhecido = [System.Drawing.Color]::FromArgb(149, 165, 166)
 }
 $script:iconeAtual = $null
+$script:cacheIcones = @{}   # no maximo 4 estados x 11 contagens: o numero de handles de icone fica limitado (sem DestroyIcon)
 function NovoIcone([string]$estado, [int]$numero) {
+  $chaveCache = $estado + '|' + [string][Math]::Min($numero, 10)
+  if ($script:cacheIcones.ContainsKey($chaveCache)) { return $script:cacheIcones[$chaveCache] }
   $cor = $script:cores[$estado]; if (-not $cor) { $cor = $script:cores['desconhecido'] }
   $bmp = New-Object System.Drawing.Bitmap 32, 32
   $g = [System.Drawing.Graphics]::FromImage($bmp)
@@ -130,12 +146,10 @@ function NovoIcone([string]$estado, [int]$numero) {
     $fonte.Dispose(); $fmt.Dispose(); $sombra.Dispose()
   }
   $g.Dispose(); $pincel.Dispose(); $caneta.Dispose()
-  $h = $bmp.GetHicon()
-  $ico = [System.Drawing.Icon]::FromHandle($h)
-  $copia = $ico.Clone()
-  [void][Oceano.Nativo]::DestroyIcon($h)
-  $ico.Dispose(); $bmp.Dispose()
-  return $copia
+  $ico = [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
+  $bmp.Dispose()
+  $script:cacheIcones[$chaveCache] = $ico
+  return $ico
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -220,10 +234,8 @@ function Atualizar {
     $estado = if ($r) { [string](Campo $r 'geral') } else { 'desconhecido' }
     $atrasados = if ($r) { Numero (Campo $r 'meusCards.atrasados') } else { 0 }
     $novo = NovoIcone $(if ($script:erro) { 'desconhecido' } else { $estado }) $atrasados
-    $velho = $script:iconeAtual
     $notify.Icon = $novo
     $script:iconeAtual = $novo
-    if ($velho) { $velho.Dispose() }
     # dica ao passar o mouse (limite de 63 caracteres do Windows)
     $dica = if ($r) { 'Oceano: ' + $(switch ($estado) { 'ok' { 'tudo certo' } 'atencao' { 'atencao' } 'fora' { 'fora do ar' } default { 'sem leitura' } }) + $(if ($atrasados -gt 0) { " | $atrasados atrasado(s)" } else { '' }) + $(if ($script:erro) { ' | sem conexao' } else { '' }) } else { 'Oceano: ' + $(if ($script:erro) { $script:erro } else { 'carregando' }) }
     if ($dica.Length -gt 63) { $dica = $dica.Substring(0, 63) }
@@ -245,7 +257,8 @@ function Atualizar {
     MontarMenu
   } catch {
     $notify.Text = 'Oceano: erro inesperado'
-    if ($Visivel) { Write-Host $_ }
+    Registrar ('ERRO ao atualizar: ' + $_.Exception.Message)
+    if ($Visivel) { Write-Host ('ERRO ao atualizar: ' + $_.Exception.Message) }
   }
 }
 
@@ -274,6 +287,5 @@ Atualizar
 try { [System.Windows.Forms.Application]::Run() }
 finally {
   $temporizador.Stop(); $notify.Visible = $false; $notify.Dispose(); $menu.Dispose()
-  if ($script:iconeAtual) { $script:iconeAtual.Dispose() }
   $script:mutex.ReleaseMutex() | Out-Null; $script:mutex.Dispose()
 }
