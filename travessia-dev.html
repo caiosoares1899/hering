@@ -476,7 +476,7 @@ async function viewDiario() {
   const grupos = []; dias.forEach(k => { const m = mes(k); if (!grupos.length || grupos[grupos.length - 1].m !== m) grupos.push({ m, ks: [] }); grupos[grupos.length - 1].ks.push(k); });
   const card = k => { const e = d[k]; return `<article class="dia"><div class="dh"><b>${esc(brFull(k))}</b>${e.n ? `<span class="mo" role="img" aria-label="${FACES[e.n - 1][1]}" title="${FACES[e.n - 1][1]}">${FACES[e.n - 1][0]}</span>` : ''}</div>
       ${e.texto ? `<p>${esc(e.texto)}</p>` : '<p class="small">Só o humor, sem texto.</p>'}
-      <div class="row" style="margin-top:8px">${e.texto ? `<button class="btn s" data-act="dia-bau" data-d="${esc(k)}">📌 Guardar no Baú</button>` : ''}<button class="btn s" data-act="dia-del" data-d="${esc(k)}" aria-label="Apagar o registro de ${esc(brFull(k))}">🗑</button></div></article>`; };
+      <div class="row" style="margin-top:8px">${e.texto ? `<button class="btn s" data-act="dia-bau" data-d="${esc(k)}">💼 Guardar no Baú</button>` : ''}<button class="btn s" data-act="dia-del" data-d="${esc(k)}" aria-label="Apagar o registro de ${esc(brFull(k))}">🗑</button></div></article>`; };
   // Só o mês mais recente (ou o resultado de uma busca) vem aberto; os meses antigos ficam recolhidos com o resumo (quantos dias e o humor médio) — 2 trimestres de diário não viram uma parede de texto.
   const lista = grupos.map((g, i) => { const ns = g.ks.map(k => d[k].n).filter(Boolean); const md = ns.length ? FACES[Math.min(5, Math.max(1, Math.round(ns.reduce((x, y) => x + y, 0) / ns.length))) - 1] : null;
     return `<details class="mes" style="margin-top:12px" ${i === 0 || q ? 'open' : ''}><summary class="h2">${esc(g.m)} <span class="chip">${g.ks.length} ${g.ks.length === 1 ? 'dia' : 'dias'}</span>${md ? ` <span class="small" title="Humor médio do mês">${md[0]} média ${esc(md[1].toLowerCase())}</span>` : ''}</summary><div class="tl">${g.ks.map(card).join('')}</div></details>`; }).join('');
@@ -518,17 +518,17 @@ async function viewInicio() {
    ${pend.length ? `<section class="gl pad" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
    ${estrelas.length ? `<section class="gl pad stack" aria-labelledby="t-es"><h2 class="h2" id="t-es">⭐ Mural de Estrelas <span class="chip">${estrelas.length}</span></h2>
       <div class="carr">${estrelas.slice(0, 9).map(k => `<article class="star"><div class="de">${esc(k.fromNome || 'Alguém')}</div><div>${esc(k.texto || '')}</div><div class="meta"><span class="chip">${esc(String(k.ts || '').slice(0, 10).split('-').reverse().join('/'))}</span><span class="chip">${k._escopo === 'geral' ? '🌊 Geral' : esc(k._escopo)}</span></div>
-      <div class="row" style="margin-top:8px"><button class="btn s" data-act="estrela-bau" data-id="${esc(k.id || '')}" data-i="${estrelas.indexOf(k)}">📌 Guardar no Baú</button></div></article>`).join('')}</div></section>` : ''}
+      <div class="row" style="margin-top:8px"><button class="btn s" data-act="estrela-bau" data-id="${esc(k.id || '')}" data-i="${estrelas.indexOf(k)}">💼 Guardar no Baú</button></div></article>`).join('')}</div></section>` : ''}
    <section class="gl pad stack" aria-labelledby="t-ba"><div class="row" style="justify-content:space-between"><h2 class="h2" id="t-ba">📦 Meu Baú <span class="chip">${itensBau.length}</span></h2><button class="btn s" data-tab="bau">Abrir o Baú</button></div>
      ${itensBau.length ? `<ul class="lst">${itensBau.slice(0, 3).map(([id, b]) => `<li class="b-${esc(b.tipo || 'manual')}"><span class="bb" aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx">${esc(b.titulo)}<div class="meta"><span class="chip">${esc(brFull(b.em || isoDe(new Date(b.ts || 0))))}</span></div></div></li>`).join('')}</ul>` : vazio('Seu Baú está vazio. Guarde entregas e aprendizados para lembrar de tudo na hora da avaliação.')}</section></div>`;
 }
-const iconeBau = t => ({ card: '🌊', marco: '🎯', kudo: '⭐', manual: '✍️' }[t] || '📌');
+const iconeBau = t => ({ card: '🌊', marco: '🎯', kudo: '⭐', manual: '✍️' }[t] || '💼');
 
 async function viewBau(uid, somenteLeitura) {
   const bau = await cache('bau:' + uid, () => carregaBau(uid));
   const itens = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).filter(([, b]) => S.filtroBau === 'todos' || b.tipo === S.filtroBau);
   return `<section class="gl pad stack" aria-labelledby="bau-t"><h2 class="h2" id="bau-t">📦 ${somenteLeitura ? 'Baú de ' + esc(nomeDe(uid)) : 'Baú da Travessia'}</h2>
-   <p class="sub">Suas conquistas do ciclo, guardadas no dia a dia — assim a avaliação não depende da memória. Entregas do Maré, marcos do Radar e Estrelas entram com 1 clique (📌); o resto você registra aqui.</p>
+   <p class="sub">Suas conquistas do ciclo, guardadas no dia a dia — assim a avaliação não depende da memória. Entregas do Maré, marcos do Radar e Estrelas entram com 1 clique (💼); o resto você registra aqui.</p>
    <div class="filtros" role="group" aria-label="Filtrar o Baú">${[['todos', 'Tudo'], ['card', '🌊 Maré'], ['marco', '🎯 Radar'], ['kudo', '⭐ Estrelas'], ['manual', '✍️ Manual']].map(([k, l]) => `<button data-act="filtro-bau" data-f="${k}" aria-pressed="${S.filtroBau === k}">${l}</button>`).join('')}</div>
    ${somenteLeitura ? '' : `<details class="foco"><summary class="h2">+ Registrar conquista ou aprendizado</summary>
      <form data-form="bau" class="camp"><label for="b-t">Título</label><input class="in" id="b-t" name="titulo" maxlength="160" required placeholder="Ex.: Liderei a análise da Black Friday">
@@ -536,7 +536,7 @@ async function viewBau(uid, somenteLeitura) {
      <label for="b-a">O que eu fiz</label><textarea class="ta" id="b-a" name="acao" maxlength="380" style="min-height:60px"></textarea>
      <label for="b-i">Impacto gerado</label><textarea class="ta" id="b-i" name="impacto" maxlength="380" style="min-height:60px"></textarea>
      <label for="b-c">Competência <span class="small">(opcional)</span></label><input class="in" id="b-c" name="comp" maxlength="60" placeholder="Ex.: Comunicação, Liderança…">
-     <div class="row" style="margin-top:10px"><button class="btn p" type="submit">📌 Guardar no Baú</button></div></form></details>`}
+     <div class="row" style="margin-top:10px"><button class="btn p" type="submit">💼 Guardar no Baú</button></div></form></details>`}
    ${itens.length ? `<ul class="lst cards">${itens.map(([id, b]) => `<li class="b-${esc(b.tipo || 'manual')}"><span class="bb" aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx"><b>${esc(b.titulo)}</b>${b.texto ? `<div class="small" style="white-space:pre-line">${esc(b.texto)}</div>` : ''}${b.nota ? `<div class="small">${esc(b.nota)}</div>` : ''}
         <div class="meta"><span class="chip">${esc(brFull(b.em || isoDe(new Date(b.ts || 0))))}</span>${b.squad ? `<span class="chip">${esc(b.squad)}</span>` : ''}${b.comp ? `<span class="chip">🎓 ${esc(b.comp)}</span>` : ''}${b.link ? `<a class="chip" href="${esc(_hrefOk(b.link))}" target="_blank" rel="noopener noreferrer">↗ Abrir</a>` : ''}</div></div>
         ${somenteLeitura ? '' : `<button class="btn s" data-act="bau-del" data-id="${esc(id)}" aria-label="Remover do Baú: ${esc(b.titulo)}">🗑</button>`}</li>`).join('')}</ul>` : vazio('Nada por aqui neste filtro.')}</section>`;
@@ -720,7 +720,7 @@ async function render() {
 }
 
 // ───────── ações ─────────
-async function guardarBau(item) { const id = novoId(); item.ts = Date.now(); item.em = item.em || hojeISO(); const ok = await tenta(() => W('bau/' + S.me.uid + '/' + id, item), '📌 Guardado no seu Baú!'); if (ok) { invalida('bau:' + S.me.uid); } return ok; }
+async function guardarBau(item) { const id = novoId(); item.ts = Date.now(); item.em = item.em || hojeISO(); const ok = await tenta(() => W('bau/' + S.me.uid + '/' + id, item), '💼 Guardado no seu Baú!'); if (ok) { invalida('bau:' + S.me.uid); } return ok; }
 const salvaResp = async (cid, av, grupo, caminho) => {
   const dados = { ts: Date.now() }; document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`).forEach(t => { if (t.value.trim()) dados[t.dataset.q] = t.value.trim(); });
   if (Object.keys(dados).length < 2) { toast('Escreva pelo menos uma resposta antes de salvar.'); return false; }

@@ -79,6 +79,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-30 · Baú da Travessia usava o mesmo ícone do pin de card (📌); agora 💼 (SÓ DEV v8.30.887-dev)
+
+- **Sintoma (feedback do Caio):** o botão que guarda no Baú da Travessia usava 📌, o mesmo ícone de fixar um card no topo da coluna (pin) — dois significados no mesmo símbolo.
+- **Correção (só dev, kanban-dev v8.30.887-dev · okr-dev v2.96 · mare-dicas-dev ?v=9):** o Baú passa a usar 💼 em todo lugar: botão no topo do card e item "Guardar na Travessia" do menu de clique direito (Maré), botão dentro do Marco (Radar), "Guardar no Baú" no Diário, nas Estrelas e no formulário do Baú (Travessia), toasts, tópico da Ajuda ("Baú da Travessia (💼)") e dica "bau". O 📌 continua só no pin de card, no Lembretes e no Squad padrão.
+- **Teste:** `test_travessia`, `test_travessia_ganchos`, `test_travessia_demo`, `test_travessia_ui` e `test_demandante_descricao` ✅ (os dois primeiros ajustados para o novo ícone).
+
 ### 2026-10-28 · Descrição não salvava em card duplicado: a cópia herdava o Demandante (e a proteção) e o próprio Demandante ficava bloqueado (SÓ DEV v8.30.886-dev)
 
 - **Sintoma (relato de produção 28/10, squad `midiacriativa`):** "não salva edição de descrição" num card duplicado (`c1792534461525_27t`). Não era falha de gravação: a CÓPIA herdava o `demandante` do card original e, com Demandante definido, a descrição principal fica protegida (caixa treme / autosave e Salvar descartam o texto que não contém o original) para quem não é ADM/PO/Organizador.

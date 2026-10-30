@@ -1,4 +1,4 @@
-// ⛵ Ganchos do Travessia nos outros produtos: 📌 no card do Maré (e no menu de clique direito), 🌤️ humor dentro do 🌅 Meu Dia e 📌 no Marco do Radar.
+// ⛵ Ganchos do Travessia nos outros produtos: 💼 no card do Maré (e no menu de clique direito), 🌤️ humor dentro do 🌅 Meu Dia e 💼 no Marco do Radar.
 // Boot real das páginas -dev com Firebase falso. Roda:  python3 -m http.server 8941 &   node docs/arezzo/testes/test_travessia_ganchos.js
 const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake = require('./fakefb.js'); const fs = require('fs');
 const U = (uid, n) => ({ uid, email: uid + '@ciahering.com.br', displayName: n, photoURL: '', providerData: [{ providerId: 'google.com' }] });
@@ -16,11 +16,11 @@ const radar = () => ({ kanban: { okr: { objetivos: { d1: mk('d1', 'Fidelidade do
   const abre = async (pag, sd, qs) => { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, sd); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
     await p.goto('http://localhost:8941/' + pag + '-dev.html' + (qs || '')); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('ana', 'Ana')); await p.waitForTimeout(2200); await p.evaluate(() => { try { document.getElementById('boasvindas-ov')?.classList.remove('open'); } catch (e) {} }); return { ctx, p, errs }; };
   const st = (p, path) => p.evaluate(x => x.split('/').reduce((a, k) => (a == null ? undefined : a[k]), window.__store), path);
-  // ── Maré: 📌 no card ──
+  // ── Maré: 💼 no card ──
   { const { ctx, p, errs } = await abre('kanban', mare(), '?squad=dev'); await p.evaluate(() => openCard('c1')); await p.waitForTimeout(600);
-    t('Maré: o botão 📌 existe no topo do card, com rótulo acessível', (await p.locator('#m-travessia-btn').count()) === 1 && /Travessia/.test(await p.locator('#m-travessia-btn').getAttribute('aria-label')), '');
+    t('Maré: o botão 💼 existe no topo do card, com rótulo acessível', (await p.locator('#m-travessia-btn').count()) === 1 && /Travessia/.test(await p.locator('#m-travessia-btn').getAttribute('aria-label')), '');
     await p.evaluate(() => document.getElementById('m-travessia-btn').click()); await p.waitForTimeout(400);
-    const bau = await st(p, 'kanban/travessia/bau/ana'); const it = bau && bau.card_dev_c1; t('📌 grava no Baú da própria pessoa (tipo card, squad, link relativo da página atual)', it && it.tipo === 'card' && it.squad === 'dev' && it.titulo === 'Modelo de churn <b>x</b>' && it.link === 'kanban-dev.html?squad=dev&card=c1' && /^\d{4}-\d{2}-\d{2}$/.test(it.em), bau);
+    const bau = await st(p, 'kanban/travessia/bau/ana'); const it = bau && bau.card_dev_c1; t('💼 grava no Baú da própria pessoa (tipo card, squad, link relativo da página atual)', it && it.tipo === 'card' && it.squad === 'dev' && it.titulo === 'Modelo de churn <b>x</b>' && it.link === 'kanban-dev.html?squad=dev&card=c1' && /^\d{4}-\d{2}-\d{2}$/.test(it.em), bau);
     await p.evaluate(() => document.getElementById('m-travessia-btn').click()); await p.waitForTimeout(300); t('clicar de novo atualiza em vez de duplicar', Object.keys(await st(p, 'kanban/travessia/bau/ana')).length === 1, '');
     t('avisa com toast', /Baú da Travessia/.test(await p.evaluate(() => document.body.innerText)), '');
     await p.evaluate(() => { window.__denySet = () => true; document.getElementById('m-travessia-btn').click(); }); await p.waitForTimeout(400);
@@ -59,11 +59,11 @@ const radar = () => ({ kanban: { okr: { objetivos: { d1: mk('d1', 'Fidelidade do
     t('sem as regras publicadas (leitura negada) o bloco do humor some em silêncio e o Meu Dia segue funcionando', (await p.locator('#meudia-humor button[onclick^="_meuDiaHumorSet"]').count()) === 0 && (await p.locator('#meudia-body').count()) === 1, ''); await ctx.close(); }
   // ── Radar: 📌 no Marco ──
   { const { ctx, p, errs } = await abre('okr', radar(), '?torre=digital'); await p.evaluate(() => openOkrMarco('m1', 'd1')); await p.waitForTimeout(500);
-    t('Radar: Marco existente mostra o 📌', await p.locator('#okr-marco-bau-btn').isVisible(), '');
-    await p.click('#okr-marco-bau-btn'); await p.waitForTimeout(400); const it = (await st(p, 'kanban/travessia/bau/ana') || {}).marco_m1; t('📌 grava o Marco no Baú (tipo marco, objetivo no texto, link do Radar)', it && it.tipo === 'marco' && it.titulo === 'Lançar o novo CRM' && /Fidelidade do cliente/.test(it.texto) && it.link === 'okr-dev.html?okr=d1', it);
+    t('Radar: Marco existente mostra o 💼', await p.locator('#okr-marco-bau-btn').isVisible(), '');
+    await p.click('#okr-marco-bau-btn'); await p.waitForTimeout(400); const it = (await st(p, 'kanban/travessia/bau/ana') || {}).marco_m1; t('💼 grava o Marco no Baú (tipo marco, objetivo no texto, link do Radar)', it && it.tipo === 'marco' && it.titulo === 'Lançar o novo CRM' && /Fidelidade do cliente/.test(it.texto) && it.link === 'okr-dev.html?okr=d1', it);
     await p.evaluate(() => { _okrTryCloseMarco && _okrTryCloseMarco(); }); await p.evaluate(() => openOkrMarco(null, 'd1')); await p.waitForTimeout(400); t('Marco novo (ainda não existe) NÃO mostra o 📌', !(await p.locator('#okr-marco-bau-btn').isVisible()), '');
     t('Radar: sem erro de JS', !errs.length, errs); await ctx.close(); }
   // ── Dica e Ajuda ──
   { const src = fs.readFileSync(__dirname + '/../../../mare-dicas-dev.js', 'utf8'); const k = fs.readFileSync(__dirname + '/../../../kanban-dev.html', 'utf8');
-    t('Dica "bau" existe no catálogo do Maré e aponta para um tópico que existe na Ajuda', /id:'bau'/.test(src) && /title:'Baú da Travessia \(📌\)'/.test(k) && /title:'Humor do dia \(Meu Dia\)'/.test(k), ''); }
+    t('Dica "bau" existe no catálogo do Maré e aponta para um tópico que existe na Ajuda', /id:'bau'/.test(src) && /title:'Baú da Travessia \(💼\)'/.test(k) && /title:'Humor do dia \(Meu Dia\)'/.test(k), ''); }
   await b.close(); console.log(ok ? 'TUDO OK' : 'HÁ FALHAS'); })();
