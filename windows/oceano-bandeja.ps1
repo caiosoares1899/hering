@@ -160,12 +160,6 @@ $script:ultimo = $null          # ultimo resumo bom
 $script:erro = $null
 $script:geralAnterior = $null
 
-function ItemInfo([string]$texto, [bool]$negrito = $false) {
-  $i = New-Object System.Windows.Forms.ToolStripMenuItem ($texto -replace '&', '&&')   # '&' num item de menu sublinha a letra seguinte
-  if ($negrito) { $i.Font = New-Object System.Drawing.Font($i.Font, [System.Drawing.FontStyle]::Bold) }
-  return $i
-}
-
 function Autoinicio { try { return [bool](Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'OceanoBandeja' -ErrorAction Stop) } catch { return $false } }
 function DefinirAutoinicio([bool]$ligar) {
   $chave = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
@@ -175,51 +169,39 @@ function DefinirAutoinicio([bool]$ligar) {
   } else { Remove-ItemProperty -Path $chave -Name 'OceanoBandeja' -ErrorAction SilentlyContinue }
 }
 
-function MontarMenu {
-  $menu.Items.Clear()
-  $r = $script:ultimo
-  if ($r) {
-    $g = [string](Campo $r 'geral')
-    $titulo = switch ($g) { 'ok' { 'Tudo certo' } 'atencao' { 'Atencao' } 'fora' { 'Algo fora do ar' } default { 'Sem leitura' } }
-    [void]$menu.Items.Add((ItemInfo ($titulo + ' - atualizado as ' + (HoraDe (Campo $r 'geradoEm'))) $true))
-    if ($script:erro) { [void]$menu.Items.Add((ItemInfo ('! ' + $script:erro + ' (mostrando o ultimo dado)'))) }
-    [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
-    foreach ($par in @(@('VTEX', 'status.vtex'), @('GitHub', 'status.github'), @('Firebase', 'status.firebase'), @('Backup', 'backup'))) {
-      $p = Campo $r $par[1]
-      $linha = $par[0] + ': ' + (Rotulo ([string](Campo $p 'estado')))
-      $t = [string](Campo $p 'texto'); if ($t -and ([string](Campo $p 'estado')) -ne 'ok') { $linha += ' - ' + $t }
-      [void]$menu.Items.Add((ItemInfo $linha))
-    }
-    $al = Numero (Campo $r 'alarmesSumico.ultimas24h')
-    [void]$menu.Items.Add((ItemInfo ('Cards sumindo (24 h): ' + $(if ($al -gt 0) { "$al card(s) sem exclusao" } else { 'nenhum alarme' }))))
-    $ab = Numero (Campo $r 'plantao.abertos'); $val = Numero (Campo $r 'plantao.aguardandoValidacao'); $esc = Numero (Campo $r 'plantao.escalados')
-    $pl = if ($ab -gt 0) { "$ab aberto(s)" + $(if ($val -gt 0) { " - $val p/ validar" } else { '' }) + $(if ($esc -gt 0) { " - $esc escalado(s)" } else { '' }) } else { 'nenhum bug aberto' }
-    [void]$menu.Items.Add((ItemInfo ('Plantao de bugs: ' + $pl)))
-    [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
-    $mc = Campo $r 'meusCards'
-    if ($mc) {
-      [void]$menu.Items.Add((ItemInfo ('Meus cards: ' + (Numero (Campo $mc 'atrasados')) + ' atrasados - ' + (Numero (Campo $mc 'venceHoje')) + ' hoje - ' + (Numero (Campo $mc 'bloqueados')) + ' bloqueados - ' + (Numero (Campo $mc 'venceEm7dias')) + ' em 7 dias') $true))
-      $lista = @(Campo $mc 'lista')
-      foreach ($c in ($lista | Select-Object -First 6)) {
-        if ($null -eq $c) { continue }
-        $tt = [string](Campo $c 'titulo'); if ($tt.Length -gt 55) { $tt = $tt.Substring(0, 52) + '...' }
-        [void]$menu.Items.Add((ItemInfo ('   ' + $tt + '  [' + [string](Campo $c 'squad') + ']  ' + (QuandoDoCard $c))))
-      }
-      if ($lista.Count -eq 0 -or ($lista.Count -eq 1 -and $null -eq $lista[0])) { [void]$menu.Items.Add((ItemInfo '   Nada atrasado, bloqueado ou vencendo nos proximos 7 dias.')) }
-    }
-  } else {
-    [void]$menu.Items.Add((ItemInfo $(if ($script:erro) { $script:erro } else { 'Carregando...' }) $true))
+# Clique no icone = abre o PROPRIO mini painel (minipainel.html?compacto=1) numa janelinha do Edge no canto da tela, sem barra de enderecos.
+# A chave fica no armazenamento do Edge (a pagina pede uma vez). Sem o Edge, abre no navegador padrao.
+function AbrirJanela {
+  $url = $script:PaginaWeb + $(if ($script:PaginaWeb.Contains('?')) { '&' } else { '?' }) + 'compacto=1'
+  try {
+    $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $w = 440; $h = [Math]::Min(760, $wa.Height - 24)
+    $x = [Math]::Max($wa.Left, $wa.Right - $w - 12); $y = [Math]::Max($wa.Top, $wa.Bottom - $h - 12)
+    Start-Process -FilePath 'msedge.exe' -ArgumentList @("--app=$url", "--window-size=$w,$h", "--window-position=$x,$y")
+  } catch {
+    Registrar ('Edge indisponivel, abrindo no navegador padrao: ' + $_.Exception.Message)
+    Start-Process $url
   }
-  [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
-  $iAtualizar = New-Object System.Windows.Forms.ToolStripMenuItem 'Atualizar agora'
+}
+
+# Menu do botao direito (curto): o resumo mora na janelinha.
+function MontarMenuSimples {
+  $menu.Items.Clear()
+  $iAbrir = New-Object System.Windows.Forms.ToolStripMenuItem 'Abrir o mini painel'
+  $iAbrir.Font = New-Object System.Drawing.Font($iAbrir.Font, [System.Drawing.FontStyle]::Bold)
+  $iAbrir.Add_Click({ AbrirJanela })
+  [void]$menu.Items.Add($iAbrir)
+  $iAtualizar = New-Object System.Windows.Forms.ToolStripMenuItem 'Atualizar o ícone agora'
   $iAtualizar.Add_Click({ Atualizar })
   [void]$menu.Items.Add($iAtualizar)
-  $iWeb = New-Object System.Windows.Forms.ToolStripMenuItem 'Abrir mini painel (navegador)'
+  $iWeb = New-Object System.Windows.Forms.ToolStripMenuItem 'Abrir no navegador (página inteira)'
   $iWeb.Add_Click({ Start-Process $script:PaginaWeb })
   [void]$menu.Items.Add($iWeb)
+  [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
   $iAuto = New-Object System.Windows.Forms.ToolStripMenuItem 'Iniciar com o Windows'
   $iAuto.Checked = (Autoinicio)
-  $iAuto.Add_Click({ try { DefinirAutoinicio (-not (Autoinicio)) } catch { [System.Windows.Forms.MessageBox]::Show('Nao consegui mudar o inicio automatico: ' + $_.Exception.Message, 'Oceano') | Out-Null } })
+  $iAuto.Add_Click({ try { DefinirAutoinicio (-not (Autoinicio)) } catch { [System.Windows.Forms.MessageBox]::Show('Não consegui mudar o início automático: ' + $_.Exception.Message, 'Oceano') | Out-Null } })
+  $script:itemAuto = $iAuto
   [void]$menu.Items.Add($iAuto)
   $iSair = New-Object System.Windows.Forms.ToolStripMenuItem 'Sair'
   $iSair.Add_Click({ $script:notify.Visible = $false; [System.Windows.Forms.Application]::Exit() })
@@ -254,7 +236,6 @@ function Atualizar {
       }
       $script:geralAnterior = $estado
     }
-    MontarMenu
   } catch {
     $notify.Text = 'Oceano: erro inesperado'
     Registrar ('ERRO ao atualizar: ' + $_.Exception.Message)
@@ -262,21 +243,19 @@ function Atualizar {
   }
 }
 
-# clique esquerdo abre o menu (por padrao so o direito abre); duplo clique abre a pagina
+# clique esquerdo abre a janelinha com o mini painel; o botao direito abre o menu curto
 $notify.Add_MouseClick({
   param($remetente, $e)
-  if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
-    $m = [System.Windows.Forms.NotifyIcon].GetMethod('ShowContextMenu', [System.Reflection.BindingFlags]'Instance,NonPublic')
-    [void]$m.Invoke($script:notify, $null)
-  }
+  if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) { AbrirJanela }
 })
-$notify.Add_DoubleClick({ Start-Process $script:PaginaWeb })
+$notify.Add_BalloonTipClicked({ AbrirJanela })   # clicar no aviso abre o painel
 
 $notify.Icon = NovoIcone 'desconhecido' 0
 $script:iconeAtual = $notify.Icon
 $notify.Text = 'Oceano: carregando'
 $notify.Visible = $true
-MontarMenu
+MontarMenuSimples
+$menu.Add_Opening({ try { $script:itemAuto.Checked = (Autoinicio) } catch {} })   # o 'visto' reflete o estado real do registro
 
 $temporizador = New-Object System.Windows.Forms.Timer
 $temporizador.Interval = [Math]::Max(15, $IntervaloSegundos) * 1000

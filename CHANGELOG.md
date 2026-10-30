@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🪟 Mini painel: janelinha compacta e ícone do Windows que a abre (SÓ DEV para o ícone; a página entra com o merge) — minipainel.html?compacto=1 · windows/ — 2026-10-30
+
+O menu de texto da bandeja do Windows ficou 'bagunçado' (pedido do Caio: 'não pode ser uma mini tela do painel mesmo?'). Agora clicar no ícone abre uma janelinha do Edge (modo aplicativo, sem barra de endereços, no canto da tela) com o próprio mini painel.
+• Página: novo modo `?compacto=1` (janela de ~440 px): peças OK em uma linha e em duas colunas, problemas em linha cheia com o motivo, 4 contadores de cards em uma linha, lista dos 5 mais urgentes, sem rodapé; cabe em 760 px de altura nos 2 temas (teste test_minipainel.js, bloco K).
+• Ícone: botão direito abre um menu curto (abrir, atualizar o ícone, página inteira, iniciar com o Windows, sair); clicar no balão de aviso também abre a janelinha. Dica: não (ferramenta pessoal).
+
 ### 🪟 Mini painel na bandeja do Windows (SÓ DEV — nunca rodou no Windows): ícone 🟢🟡🔴 perto do relógio, com menu e aviso quando piora — windows/ — 2026-10-30
 
 Versão Windows do app do Mac: um script PowerShell lançado pelo cmd (iniciar-oceano.cmd, com -NoProfile) mostra a bolinha do estado geral e o nº de cards atrasados; ao clicar, VTEX, GitHub, Firebase, backup, alarmes de 'card sumiu', plantão e os cards do dono; duplo clique abre a página. Atualiza a cada minuto e dá um balão quando o estado PIORA, com o motivo. 'Iniciar com o Windows' no próprio menu.

@@ -32,7 +32,7 @@ const base = (extra) => Object.assign({ geral: 'ok', geradoEm: new Date().toISOS
       { squad: 'prf', titulo: 'Card atrasado', prazo: '2026-10-20', atrasado: true, diasAtraso: 10 }, { squad: 'dados', titulo: 'Card bloqueado', prazo: '2026-11-10', bloqueado: true }, { squad: 'dev', titulo: 'Vence hoje', prazo: hoje, venceHoje: true }, { squad: 'dev', titulo: 'Mais para frente', prazo: '2026-11-04' }] } })); 
     const x = await txt(p);   // C: problemas
     t('C1. problema grave: "Algo fora do ar" com 🔴 e o motivo de cada peça', /Algo fora do ar/.test(x) && /Checkout lento/.test(x) && /monitor sem resposta \(4 falhas\)/.test(x) && /sem backup do quadro/.test(x), x);
-    t('C2. alarmes e plantão aparecem com números', /2 cards sumiram sem exclusão/.test(x) && /3 abertos · 1 p\/ validar · 1 escalado/.test(x), x);
+    t('C2. alarmes e plantão aparecem com números', /2 cards sumiram sem exclusão \(24 h\)/.test(x) && /3 abertos · 1 p\/ validar · 1 escalado/.test(x), x);
     t('C3. meus cards: contadores e lista com "atrasado 10 dias", "bloqueado", "vence hoje" e "vence 04/11"', /atrasado 10 dias/.test(x) && /bloqueado\n?/.test(x) && /vence hoje/.test(x) && /vence 04\/11/.test(x) && (await p.locator('.num.bad b').innerText()) === '2', x); await ctx.close(); }
 
   { const { ctx, p } = await abre({ __http: 403, json: { erro: 'chave inválida' } });   // D: chave errada
@@ -59,4 +59,10 @@ const base = (extra) => Object.assign({ geral: 'ok', geradoEm: new Date().toISOS
 
   { const { ctx, p } = await abre(base()); await p.click('#b-tema'); const t1 = await p.evaluate(() => [document.documentElement.getAttribute('data-theme'), localStorage.getItem('minipainel_tema')]);
     t('J. o botão de tema alterna claro/escuro e lembra a escolha', t1[0] === 'light' && t1[1] === 'light', t1); await ctx.close(); }
+  for (const tema of ['dark', 'light']) {   // K: ?compacto=1 — a mini tela do ícone (janela ~440 px): sem rolagem lateral, sem rolagem vertical com um dia típico, peças OK em 1 linha
+    const lista = ['2026-10-20', '2026-10-28', hoje, '2026-11-02', '2026-11-04'].map((d, i) => ({ squad: 'dados', titulo: 'Card número ' + i + ' com um título de tamanho razoável', prazo: d, atrasado: i < 2, diasAtraso: 3, venceHoje: i === 2 }));
+    const { ctx, p, errs } = await abre(base({ geral: 'atencao', status: { vtex: { estado: 'ok', texto: 'operando' }, github: { estado: 'atencao', texto: 'GitHub Pages afetado (Lentidão / degradação)' }, firebase: { estado: 'ok', texto: 'operando' } }, plantao: { abertos: 1, aguardandoValidacao: 1, escalados: 0 },
+      meusCards: { ativos: 9, atrasados: 2, venceHoje: 1, bloqueados: 0, semPrazo: 0, venceEm7dias: 2, hoje, lista } }), { tema, vp: { width: 440, height: 760 }, qs: '?compacto=1' });
+    const m = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, sh: document.documentElement.scrollHeight, compacto: document.body.classList.contains('compacto'), txtOk: [...document.querySelectorAll('.tile.ok .txt')].every(e => getComputedStyle(e).display === 'none'), rodape: getComputedStyle(document.querySelector('.rodape')).display }));
+    t(`K. compacto ${tema} 440 px: sem rolagem lateral, cabe em 760 px de altura (${m.sh}), peças OK em 1 linha, sem rodapé, sem erro de JS`, m.compacto && m.sw <= m.cw && m.sh <= 760 && m.txtOk && m.rodape === 'none' && !errs.length, m); await ctx.close(); }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1); })();
