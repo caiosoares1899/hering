@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Mini painel · Oceano</title>
+<meta name="description" content="Miniatura do Painel: VTEX, GitHub, Firebase, backup, plantão e os seus cards, para bater o olho e saber se está tudo bem.">
+<script>
+/* tema antes de pintar (evita o clarão): preferência salva > preferência do sistema */
+(function(){ try{ var t=localStorage.getItem('minipainel_tema'); if(!t) t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark'; document.documentElement.setAttribute('data-theme',t); }catch(e){ document.documentElement.setAttribute('data-theme','dark'); } })();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Marine Glass (ver MARINE_GLASS.md): mesmos tokens do Oceano; 🌙 Abrolhos (padrão) e ☀️ Lençóis Maranhenses ([data-theme="light"]) */
+:root{
+  --deep:#030d1a;--glass:rgba(10,37,64,.55);--glass-b:rgba(56,182,255,.18);--accent:#38b6ff;--teal:#1de9b6;
+  --ok:#1de9b6;--warn:#ffd166;--danger:#ff6b6b;--muted:#8aa4bb;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,.72);--txt3:rgba(170,210,245,.5);
+  --ocean:radial-gradient(ellipse at 15% 85%,rgba(0,70,140,.5) 0%,transparent 55%),radial-gradient(ellipse at 85% 15%,rgba(0,130,160,.22) 0%,transparent 50%),#010810;
+  --shadow:0 10px 30px rgba(0,0,0,.35);--r:16px;
+}
+:root[data-theme="light"]{
+  --deep:#0F87C4;--glass:rgba(255,255,255,.62);--glass-b:rgba(0,124,168,.3);--accent:#0077AD;--teal:#0a8f86;
+  --ok:#157a43;--warn:#8a5a00;--danger:#b4232f;--muted:#4a6577;
+  --txt:#0B2436;--txt2:rgba(11,36,54,.78);--txt3:rgba(11,36,54,.6);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+  --shadow:0 10px 30px rgba(7,70,110,.22);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;overflow-x:hidden}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--txt);background:var(--deep);background-image:var(--ocean);background-attachment:fixed;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 48px}
+.gl{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 14px}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:18px}
+.brand small{font-family:'DM Sans',sans-serif;font-weight:500;font-size:12px;color:var(--txt3);display:block;letter-spacing:.04em}
+.tools{display:flex;gap:8px}
+button,.btn{font:inherit;color:var(--txt);background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;min-height:44px;min-width:44px;padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.pri{background:var(--accent);color:#04182b;border-color:transparent;font-weight:700}
+:root[data-theme="light"] button.pri{color:#fff}
+.hero{padding:22px;display:flex;align-items:center;gap:18px;margin-bottom:14px}
+.ring{flex:none;width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:34px;border:5px solid var(--muted);background:rgba(255,255,255,.04)}
+.ring.ok{border-color:var(--ok)}.ring.atencao{border-color:var(--warn)}.ring.fora{border-color:var(--danger)}
+.hero h1{font-family:'Syne',sans-serif;font-size:26px;line-height:1.15}
+.hero p{color:var(--txt2);font-size:14px;margin-top:4px}
+.hero .vel{color:var(--warn);font-weight:700}
+h2{font-family:'Syne',sans-serif;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin:20px 4px 8px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tile{padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile .nome{display:flex;align-items:center;gap:8px;font-weight:700}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;background:var(--muted)}
+.dot.ok{background:var(--ok)}.dot.atencao{background:var(--warn)}.dot.fora{background:var(--danger)}
+.tile .est{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.est.ok{color:var(--ok)}.est.atencao{color:var(--warn)}.est.fora{color:var(--danger)}.est.off,.est.desconhecido{color:var(--txt3)}
+.tile .txt{color:var(--txt2);font-size:13px;overflow-wrap:anywhere}
+.nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.num{padding:14px;text-align:center}
+.num b{display:block;font-family:'Syne',sans-serif;font-size:30px;line-height:1.1}
+.num span{font-size:12px;color:var(--txt2)}
+.num.bad b{color:var(--danger)}.num.warn b{color:var(--warn)}
+.lista{list-style:none;display:flex;flex-direction:column}
+.lista li{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--glass-b);min-width:0}
+.lista li:first-child{border-top:0}
+.lista .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.chip{flex:none;font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--glass-b);color:var(--txt2)}
+.when{flex:none;font-size:12px;font-weight:700;text-align:right}
+.when.bad{color:var(--danger)}.when.warn{color:var(--warn)}.when.ok{color:var(--txt2)}
+.vazio,.erro{padding:22px;text-align:center;color:var(--txt2)}
+.erro{border-color:var(--danger)}
+.setup{padding:22px;max-width:520px;margin:30px auto}
+.setup h1{font-family:'Syne',sans-serif;font-size:22px;margin-bottom:8px}
+.setup p{color:var(--txt2);font-size:14px;margin-bottom:12px}
+.setup label{display:block;font-size:12px;font-weight:700;color:var(--txt3);margin:10px 0 4px;letter-spacing:.06em;text-transform:uppercase}
+.setup input{width:100%;min-height:44px;font:inherit;font-size:16px;color:var(--txt);background:rgba(0,0,0,.18);border:1px solid var(--glass-b);border-radius:12px;padding:0 12px}
+.rodape{margin:22px 4px 0;color:var(--txt2);font-size:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:640px){
+  .grid{grid-template-columns:1fr}.nums{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .brand small{display:none}.hero{padding:16px;gap:14px}.ring{width:60px;height:60px;font-size:28px}.hero h1{font-size:21px}
+}
+@media (prefers-reduced-motion:no-preference){.ring{transition:border-color .3s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span aria-hidden="true" style="font-size:26px">🌊</span><div>Mini painel<small>Oceano · para bater o olho</small></div></div>
+    <div class="tools">
+      <button type="button" id="b-atualizar" aria-label="Atualizar agora" title="Atualizar agora">🔄</button>
+      <button type="button" id="b-tema" aria-label="Alternar tema claro/escuro" title="Alternar tema">🌓</button>
+      <button type="button" id="b-config" aria-label="Chave e endereço" title="Chave e endereço">⚙</button>
+    </div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+  <p class="rodape" id="rodape"></p>
+</div>
+<script>
+'use strict';
+const ENDERECO_PADRAO = 'https://us-central1-hering-onboarding.cloudfunctions.net/oceanoResumo';
+const INTERVALO_MS = 60000, VELHO_MS = 5 * 60000;
+const DEMO = /[?&]demo=1(&|$)/.test(location.search);
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ls = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+const ROTULO = { ok: 'OK', atencao: 'Atenção', fora: 'Fora do ar', off: 'Desligado', desconhecido: 'Sem leitura' };
+const ICONE = { ok: '🟢', atencao: '🟡', fora: '🔴', off: '⚪', desconhecido: '⚪' };
+let ultimo = null, ultimoEm = 0, erro = null, timer = null, carregando = false;
+
+function demoDados() {
+  const agora = Date.now(), d = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+  return { geral: 'atencao', geradoEm: new Date(agora).toISOString(), dono: { iniciais: 'CO', squads: 4 },
+    status: { vtex: { estado: 'ok', texto: 'operando' }, github: { estado: 'atencao', texto: 'GitHub Pages afetado (Degradado)' }, firebase: { estado: 'ok', texto: 'operando' } },
+    backup: { estado: 'ok', texto: 'em dia' }, plantao: { abertos: 2, aguardandoValidacao: 1, escalados: 0 }, alarmesSumico: { ultimas24h: 0, ultimoEm: null },
+    meusCards: { ativos: 14, atrasados: 2, venceHoje: 1, bloqueados: 1, semPrazo: 3, venceEm7dias: 4, hoje: d(0), lista: [
+      { squad: 'dados', titulo: 'Relatório semanal da Black Friday', prazo: d(-3), atrasado: true, diasAtraso: 3 },
+      { squad: 'dev', titulo: 'Revisar PR do mini painel', prazo: d(-1), atrasado: true, diasAtraso: 1 },
+      { squad: 'prf', titulo: 'Card bloqueado esperando a VTEX', prazo: d(2), bloqueado: true },
+      { squad: 'dados', titulo: 'Apresentar números para a TI', prazo: d(0), venceHoje: true },
+      { squad: 'dev', titulo: 'Atualizar documentação do Oceano', prazo: d(4) } ] } };
+}
+
+function quando(x) {
+  if (x.atrasado) return ['bad', 'atrasado ' + (x.diasAtraso || 1) + (x.diasAtraso === 1 ? ' dia' : ' dias')];
+  if (x.bloqueado) return ['warn', 'bloqueado'];
+  if (x.venceHoje) return ['warn', 'vence hoje'];
+  if (x.prazo) { const p = x.prazo.split('-'); return ['ok', 'vence ' + p[2] + '/' + p[1]]; }
+  return ['ok', 'sem prazo'];
+}
+function tile(nome, icone, t) { const e = (t && t.estado) || 'desconhecido'; return `<div class="gl tile"><div class="nome"><span aria-hidden="true">${icone}</span>${esc(nome)}<span class="dot ${esc(e)}" aria-hidden="true" style="margin-left:auto"></span></div><div class="est ${esc(e)}">${ICONE[e] || '⚪'} ${esc(ROTULO[e] || e)}</div><div class="txt">${esc((t && t.texto) || 'sem leitura')}</div></div>`; }
+
+function desenhar() {
+  const app = $('#app');
+  if (!ls.get('minipainel_chave') && !DEMO) {
+    app.innerHTML = `<form class="gl setup" id="f-chave" autocomplete="off"><h1>Conectar o mini painel</h1><p>Cole a chave do <b>oceanoResumo</b> (a mesma que você cadastrou no Secret Manager). Ela fica só neste navegador.</p><label for="i-chave">Chave</label><input id="i-chave" type="password" required autocomplete="off" spellcheck="false"><label for="i-end">Endereço da função (opcional)</label><input id="i-end" type="url" placeholder="${esc(ENDERECO_PADRAO)}" value="${esc(ls.get('minipainel_endereco') || '')}"><div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap"><button class="pri" type="submit">Conectar</button><a class="btn" href="?demo=1">Ver com dados de exemplo</a></div></form>`;
+    $('#f-chave').onsubmit = (ev) => { ev.preventDefault(); ls.set('minipainel_chave', $('#i-chave').value.trim()); const en = $('#i-end').value.trim(); if (en) ls.set('minipainel_endereco', en); else ls.del('minipainel_endereco'); erro = null; ultimo = null; desenhar(); buscar(); };
+    $('#rodape').textContent = ''; return;
+  }
+  if (erro && !ultimo) { app.innerHTML = `<div class="gl erro" role="alert"><p><b>${esc(erro.titulo)}</b></p><p style="margin-top:6px">${esc(erro.detalhe)}</p><div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="pri" type="button" id="b-de-novo">Tentar de novo</button><button type="button" id="b-trocar">Trocar a chave</button></div></div>`; $('#b-de-novo').onclick = buscar; $('#b-trocar').onclick = trocarChave; $('#rodape').textContent = ''; return; }
+  if (!ultimo) { app.innerHTML = '<div class="gl vazio">Carregando…</div>'; return; }
+  const r = ultimo, g = r.geral || 'desconhecido', idade = Date.now() - ultimoEm, velho = idade > VELHO_MS;
+  const titulo = g === 'ok' ? 'Tudo certo' : g === 'atencao' ? 'Atenção' : g === 'fora' ? 'Algo fora do ar' : 'Sem leitura';
+  const hh = new Date(r.geradoEm || ultimoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const mc = r.meusCards, pl = r.plantao, al = r.alarmesSumico;
+  const alEst = al ? (al.ultimas24h > 0 ? 'atencao' : 'ok') : 'desconhecido';
+  const plEst = pl ? (pl.escalados > 0 ? 'atencao' : 'ok') : 'desconhecido';
+  app.innerHTML = `
+  <section class="gl hero" aria-labelledby="h-geral"><div class="ring ${esc(g)}" aria-hidden="true">${ICONE[g] || '⚪'}</div><div><h1 id="h-geral">${esc(titulo)}</h1><p>${DEMO ? '<b>Dados de exemplo.</b> ' : ''}Atualizado às ${esc(hh)}${velho ? ' <span class="vel">· dado antigo, sem conexão?</span>' : ''}${erro ? ' <span class="vel">· ' + esc(erro.titulo) + '</span>' : ''}</p></div></section>
+  <h2>Sistema</h2>
+  <div class="grid">${tile('VTEX', '🛒', r.status && r.status.vtex)}${tile('GitHub', '🐙', r.status && r.status.github)}${tile('Firebase', '🔥', r.status && r.status.firebase)}</div>
+  <h2>Dados e rotina</h2>
+  <div class="grid">${tile('Backup', '🛟', r.backup)}${tile('Cards sumindo (24 h)', '🫥', al ? { estado: alEst, texto: al.ultimas24h > 0 ? al.ultimas24h + (al.ultimas24h > 1 ? ' cards sumiram' : ' card sumiu') + ' sem exclusão' : 'nenhum alarme' } : null)}${tile('Plantão de bugs', '🐛', pl ? { estado: plEst, texto: pl.abertos ? pl.abertos + ' aberto' + (pl.abertos > 1 ? 's' : '') + (pl.aguardandoValidacao ? ' · ' + pl.aguardandoValidacao + ' p/ validar' : '') + (pl.escalados ? ' · ' + pl.escalados + ' escalado(s)' : '') : 'nenhum bug aberto' } : null)}</div>
+  <h2>Meus cards</h2>
+  ${mc ? `<div class="nums"><div class="gl num ${mc.atrasados ? 'bad' : ''}"><b>${+mc.atrasados || 0}</b><span>atrasados</span></div><div class="gl num ${mc.venceHoje ? 'warn' : ''}"><b>${+mc.venceHoje || 0}</b><span>vencem hoje</span></div><div class="gl num ${mc.bloqueados ? 'warn' : ''}"><b>${+mc.bloqueados || 0}</b><span>bloqueados</span></div><div class="gl num"><b>${+mc.venceEm7dias || 0}</b><span>nos próx. 7 dias</span></div></div>
+  ${(mc.lista || []).length ? `<ul class="gl lista">${mc.lista.map((x) => { const w = quando(x); return `<li><span class="t">${esc(x.titulo)}</span><span class="chip">${esc(x.squad)}</span><span class="when ${w[0]}">${esc(w[1])}</span></li>`; }).join('')}</ul>` : '<div class="gl vazio">🎉 Nada atrasado, bloqueado ou vencendo nos próximos 7 dias.</div>'}` : '<div class="gl vazio">Sem leitura dos seus cards (cadastro ou squads não encontrados).</div>'}`;
+  $('#rodape').textContent = (mc ? mc.ativos + ' cards ativos como responsável · ' : '') + 'atualiza sozinho a cada minuto' + (r.dono && r.dono.iniciais ? ' · ' + r.dono.iniciais : '');
+}
+
+function trocarChave() { ls.del('minipainel_chave'); ultimo = null; erro = null; desenhar(); }
+async function buscar() {
+  if (carregando) return; carregando = true;
+  try {
+    if (DEMO) { ultimo = demoDados(); ultimoEm = Date.now(); erro = null; return; }
+    const chave = ls.get('minipainel_chave'); if (!chave) return;
+    const base = ls.get('minipainel_endereco') || ENDERECO_PADRAO;
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 15000);
+    let res; try { res = await fetch(base + (base.includes('?') ? '&' : '?') + 'k=' + encodeURIComponent(chave), { cache: 'no-store', signal: ctl.signal }); } finally { clearTimeout(to); }
+    if (res.status === 403) { erro = { titulo: 'Chave não aceita', detalhe: 'A função recusou a chave. Confira se é a mesma do Secret Manager (OCEANO_RESUMO_KEY).' }; ultimo = null; return; }
+    if (res.status === 429) { erro = { titulo: 'Muitas consultas', detalhe: 'O limite por hora foi atingido; tente de novo em alguns minutos.' }; return; }
+    if (!res.ok) { erro = { titulo: 'A função respondeu com erro', detalhe: 'HTTP ' + res.status + '. Se o deploy ainda não foi feito, falta publicar a função oceanoResumo.' }; return; }
+    ultimo = await res.json(); ultimoEm = Date.now(); erro = null;
+  } catch (e) { erro = { titulo: 'Sem conexão com a função', detalhe: 'Não consegui falar com ' + (ls.get('minipainel_endereco') || ENDERECO_PADRAO) + '. Verifique a rede ou o endereço em ⚙.' }; }
+  finally { carregando = false; desenhar(); }
+}
+function agendar() { clearInterval(timer); timer = setInterval(() => { if (!document.hidden) buscar(); }, INTERVALO_MS); }
+
+$('#b-atualizar').onclick = buscar;
+$('#b-tema').onclick = () => { const t = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); ls.set('minipainel_tema', t); };
+$('#b-config').onclick = () => { if (DEMO) { location.href = location.pathname; return; } if (confirm('Trocar a chave e o endereço desta página?')) trocarChave(); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - ultimoEm > 15000) buscar(); });
+window.addEventListener('online', buscar);
+desenhar(); buscar(); agendar();
+</script>
+</body>
+</html>

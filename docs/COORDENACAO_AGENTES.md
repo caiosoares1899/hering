@@ -145,6 +145,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | **Mini painel** (`functions/oceano/resumo.js` + `minipainel.html`): índice `owner` em `dados/cards` (regras) e a função `oceanoResumo` com a chave `OCEANO_RESUMO_KEY`. **Ordem:** regras primeiro (sem o índice cada consulta baixaria os cards inteiros). Runbook em `docs/MINIPAINEL.md`. | `firebase deploy --only database` · `firebase functions:secrets:set OCEANO_RESUMO_KEY` · `firebase deploy --only functions:oceanoResumo` (antes, o resync da `main`) | 30/10/2026 |
 | Claude | **Travessia — regras do banco** (`kanban/travessia/*`: Baú, 1:1, humor privado, avaliação com trava de devolutiva) e o nó no backup semanal (`functions/backup/completo.js`). Sem a regra publicada, a tela do Travessia não grava. | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` e `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario,functions:backupCompletoApi --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do resync) | 22/10/2026 |
 
 ---

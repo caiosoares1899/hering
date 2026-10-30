@@ -237,6 +237,14 @@ exports.plantaoTravado = require('./plantao/plantao').plantaoTravado;
 //   firebase deploy --only functions:backupCompletoApi
 exports.backupCompletoApi = require('./backup/restaurarApi').backupCompletoApi;
 
+// 🌊 Mini painel do Caio (30/10/2026, functions/oceano/resumo.js): GET com chave que devolve UM JSON com VTEX/GitHub/Firebase, backup, plantão, alarmes de "card sumiu"
+// e os cards dele (atrasados, vencem hoje, bloqueados) — lido pela página `minipainel.html` (e, depois, pela barra de menu/widget do Mac). Abre só o resumo do dono (DONO_EMAIL).
+// Passo a passo (nesta ordem — o 1º é o índice por responsável, sem ele cada leitura baixaria os cards inteiros):
+//   firebase deploy --only database
+//   firebase functions:secrets:set OCEANO_RESUMO_KEY        (valor: texto aleatório longo — é a chave que vai na URL/na página)
+//   firebase deploy --only functions:oceanoResumo
+exports.oceanoResumo = require('./oceano/resumo').oceanoResumo;
+
 // 🎯 OKR — scan diário (prazo de marco chegando, período de editar, véspera
 // de reunião — ver functions/okr/dailyScan.js). Roda sozinho, sem depender
 // de ninguém abrir o painel. Lê kanban/painel/config/gcal_cache (mesmo
