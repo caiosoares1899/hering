@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Mini painel (SÓ DEV — falta o deploy da função): VTEX, GitHub, Firebase, backup, plantão, alarmes de card sumindo e os seus cards numa tela só — minipainel.html + oceanoResumo — 2026-10-30
+
+Para o Caio bater o olho e saber se está tudo bem e rodando. Uma função nova (`oceanoResumo`, GET com chave, só o resumo do dono) junta o que o Painel já mostra (monitores de status, backup, plantão) com os cards dele (atrasados, vencem hoje, bloqueados, próximos 7 dias); a página `minipainel.html` (sem login) mostra tudo com 🟢🟡🔴 + texto, atualiza a cada minuto, tem tema claro/escuro e `?demo=1` com dados de exemplo.
+• Os cards vêm de uma consulta por responsável (novo índice `owner` em `dados/cards`): só o resultado trafega, não os cards inteiros. Cache de 60 s/5 min/15 min.
+• Deploy: regras primeiro (`firebase deploy --only database`), depois o secret `OCEANO_RESUMO_KEY` e `firebase deploy --only functions:oceanoResumo`. Runbook: docs/MINIPAINEL.md. É a base do item da barra de menu e do widget do Mac. Dica: não (ferramenta pessoal, fora do Maré).
+
 ### 🎨 Travessia com outra cara (SÓ DEV): menos caixa, mais mar — travessia-dev.html — 2026-10-23
 
 O Caio achou o visual 'com cara de checkbox, tudo meio quadradão'. Mesma identidade Marine Glass e mesmos 3 temas, comportamento e dados intactos; mudou a forma.

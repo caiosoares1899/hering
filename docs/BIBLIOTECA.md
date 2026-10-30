@@ -34,6 +34,9 @@ Sem par dev: `okr-apresentacao.slide.html` (apresentação do Radar) · `guia-ok
 ### Documentação técnica navegável
 `ecossistema.html` (Ecossistema de gestão — para a TI) · `maredigital.html` (documentação técnica do Maré Digital).
 
+### Painel em miniatura
+`minipainel.html` (Mini painel do Caio: saúde do ecossistema e os cards dele, lido da função `oceanoResumo`; `?demo=1` mostra dados de exemplo — runbook em `docs/MINIPAINEL.md`).
+
 ### Ferramentas e apresentações avulsas (não dependem do Maré; só links entre si)
 | Arquivo | O que é |
 |---|---|
@@ -109,6 +112,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `GUIA_DE_CODIGO.md` | Como escrever código e testes sem cair nas armadilhas conhecidas |
 | `OCEANO.md` | A família de produtos, nomes visíveis e fases |
 | `PLANTAO_BUGS.md` | Plantão de Bugs: fluxo, regras e runbook |
+| `MINIPAINEL.md` | Mini painel do Caio (`minipainel.html` + função `oceanoResumo`): peças, deploy, chave e limites |
 | `changelog-archive-2026-07-a-09.md` | Histórico do CHANGELOG de jul–set/2026 |
 | `ideias/camiseta-brasil-black-friday.md` | Ideia guardada para depois das férias |
 | `ideias/dossie-concorrencia-2026-10.md` | Dossiê de concorrência do Antigravity, já triado — backlog pós-férias |

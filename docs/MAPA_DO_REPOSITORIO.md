@@ -118,7 +118,7 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
-### Cloud Functions por pasta (36 exports em `functions/index.js`)
+### Cloud Functions por pasta (37 exports em `functions/index.js`)
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
@@ -134,6 +134,7 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `index.js (definidas no próprio arquivo)` | `sendPushOnNotification` |
 | `intake/` | `intakeSubmit` |
 | `metas/` | `metasLembretes` |
+| `oceano/` | `oceanoResumo` |
 | `vtex/` | `vtexStatus` |
 
 ### Nós de primeiro nível em `kanban/` nas regras do banco (37)
