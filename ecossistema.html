@@ -250,7 +250,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="pills">
     <span class="pill pb">6 aplicações em produção</span>
     <span class="pill pt">37 Cloud Functions · Node 22</span>
-    <span class="pill pw">987 testes automatizados</span>
+    <span class="pill pw">990 testes automatizados</span>
     <span class="pill pp">Claude + Antigravity</span>
     <span class="pill po">Retrato de 30/10/2026</span>
   </div>
@@ -273,7 +273,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="kpis">
     <div class="kpi"><div class="kv">6</div><div class="kl">aplicações web em produção<br><span>Maré Digital · Painel · Radar · Oceano · Escala · Intake</span></div></div>
     <div class="kpi"><div class="kv">37</div><div class="kl">Cloud Functions (gen2)<br><span>Node 22 · us-central1 · 118 arquivos de código</span></div></div>
-    <div class="kpi"><div class="kv">987</div><div class="kl">testes automatizados<br><span>986 passam · 1 pulado · ~4 s</span></div></div>
+    <div class="kpi"><div class="kv">990</div><div class="kl">testes automatizados<br><span>989 passam · 1 pulado · ~4 s</span></div></div>
     <div class="kpi"><div class="kv">338</div><div class="kl">tags de release no GitHub<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
     <div class="kpi"><div class="kv">11</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
     <div class="kpi"><div class="kv">1540</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
@@ -715,7 +715,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <tbody>
       <tr><td>Nada vai direto para <code class="hl">main</code>. Um PR = um assunto.</td><td>Convenção de branch por agente; a publicação (Pages) só acontece no push em <code class="hl">main</code>, ou seja, só depois do merge.</td></tr>
       <tr><td>Ninguém aprova o próprio PR; o merge é humano.</td><td>Regra registrada em <code class="hl">CLAUDE.md</code>, <code class="hl">AGENTS.md</code> e no quadro de coordenação. <b>Desde 18/10 a <code class="hl">main</code> está protegida por regra do GitHub</b> (ruleset): só entra por Pull Request, o check <code class="hl">checks</code> (a CI) precisa estar verde, e push forçado e exclusão da branch são bloqueados — testado no PR #1508. A regra <b>não exige aprovação de um segundo revisor</b> (hoje há uma única pessoa que faz o merge): exigir um aprovador adicional é decisão da TI (seção 14).</td></tr>
-      <tr><td>CI verde antes do merge.</td><td><code class="hl">checks.yml</code> em PR e push: <code class="hl">node scripts/checar.js</code> (JSON válidos, versão × HTML, sintaxe das 13 páginas, linhas vermelhas dos workflows, referências nas docs e a Biblioteca: todo arquivo da raiz precisa estar descrito em <code class="hl">docs/BIBLIOTECA.md</code>) + <code class="hl">npm test</code> em <code class="hl">functions/</code> (987 testes, incluindo as regras do banco). O <code class="hl">checar.js</code> também reprova links de URL do banco sem filtro e markdown sem escape (<b>Segurança das páginas</b>) e página de produção com título, ícone ou módulo de desenvolvimento (<b>Identidade de produção</b>).</td></tr>
+      <tr><td>CI verde antes do merge.</td><td><code class="hl">checks.yml</code> em PR e push: <code class="hl">node scripts/checar.js</code> (JSON válidos, versão × HTML, sintaxe das 13 páginas, linhas vermelhas dos workflows, referências nas docs e a Biblioteca: todo arquivo da raiz precisa estar descrito em <code class="hl">docs/BIBLIOTECA.md</code>) + <code class="hl">npm test</code> em <code class="hl">functions/</code> (990 testes, incluindo as regras do banco). O <code class="hl">checar.js</code> também reprova links de URL do banco sem filtro e markdown sem escape (<b>Segurança das páginas</b>) e página de produção com título, ícone ou módulo de desenvolvimento (<b>Identidade de produção</b>).</td></tr>
       <tr><td>Dev primeiro, validação explícita, só depois prod.</td><td>Seção 05; a promoção é um PR separado e rastreável.</td></tr>
       <tr><td>Autoria legível e histórico dividido.</td><td>Trailer <code class="hl">Agent:</code> em todo commit. <code class="hl">CHANGELOG.md</code> = funcionalidades e entregas estruturais; <code class="hl">BUGS_E_CORRECOES.md</code> = bugs, correções e achados de auditoria (com data, arquivo e versão reais).</td></tr>
       <tr><td>Backend e regras: deploy fora do GitHub.</td><td>Documentado como "pendente de deploy" no quadro; só o dono executa, com a conta corporativa.</td></tr>
@@ -936,7 +936,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="code"><span class="cm"># 1 · clonar e rodar as verificações (Node 22)</span>
 git clone https://github.com/caiosoares1899/hering &amp;&amp; cd hering
 node scripts/checar.js                     <span class="cm"># JSON, versões × HTML, sintaxe das 13 páginas, workflows, referências</span>
-cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 987 testes (986 passam, 1 pulado), inclui as regras do banco</span>
+cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 990 testes (989 passam, 1 pulado), inclui as regras do banco</span>
 
 <span class="cm"># 2 · o que está pendente de promoção, e a lista de funções</span>
 node .claude/skills/subirproprod/promover.js --status

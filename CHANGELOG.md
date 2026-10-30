@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🪟 Mini painel na bandeja do Windows (SÓ DEV — nunca rodou no Windows): ícone 🟢🟡🔴 perto do relógio, com menu e aviso quando piora — windows/ — 2026-10-30
+
+Versão Windows do app do Mac: um script PowerShell lançado pelo cmd (iniciar-oceano.cmd, com -NoProfile) mostra a bolinha do estado geral e o nº de cards atrasados; ao clicar, VTEX, GitHub, Firebase, backup, alarmes de 'card sumiu', plantão e os cards do dono; duplo clique abre a página. Atualiza a cada minuto e dá um balão quando o estado PIORA, com o motivo. 'Iniciar com o Windows' no próprio menu.
+• Lê a chave de %USERPROFILE%\chave-oceano.txt (a mesma da página). Nada é instalado. Passo a passo em windows/README.md.
+• Escrito sem Windows: o contrato com a função, o BOM UTF-8 do .ps1 e o lançador são conferidos por teste (contrato_windows.test.js); o ícone e o menu rodam pela primeira vez na máquina do Caio. Dica: não (ferramenta pessoal).
+
 ### 🍎 Mini painel para Mac (SÓ DEV — nunca compilado): bolinha 🟢🟡🔴 na barra de menu e widget de mesa — mac/ (Swift, XcodeGen) — 2026-10-30
 
 Desenho do app do Mac do Caio: a barra de menu mostra a bolinha do estado geral (e o nº de cards atrasados); ao clicar, VTEX, GitHub, Firebase, backup, alarmes de 'card sumiu', plantão e os cards dele; o widget (pequeno e médio) mostra o mesmo resumo na mesa. Lê o mesmo JSON da página minipainel.html (função oceanoResumo), atualiza a cada minuto e tem 'Abrir ao iniciar sessão'.
