@@ -919,6 +919,23 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     </tbody>
   </table></div>
 
+  <div class="note"><b>Internalização aprovada (30/10/2026).</b> O endereço provável é <code class="hl">oceano.hering…</code> (a confirmar). A linguagem do back-end — o código das funções já é Node 22 — e um banco mais robusto serão desenhados pelos times de desenvolvimento e infraestrutura nas próximas semanas; <b>nada disso está decidido</b>. O inventário abaixo existe para que, quando o desenho sair, nenhuma dependência do endereço atual seja descoberta só na virada.</div>
+
+  <div class="cl" id="migracao-dominio">Migração de endereço: o que depende do domínio de hoje</div>
+  <p class="slead" style="margin:0 0 10px">Medido no repositório em 30/10/2026; lista completa, com comandos para refazer a medição, em <code class="hl">docs/MIGRACAO_DOMINIO.md</code>.</p>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Camada</th><th>Situação hoje</th><th>O que precisa mudar na virada</th><th>Quem</th></tr></thead>
+    <tbody>
+      <tr><td>Páginas</td><td>Servidas em <code class="hl">caiosoares1899.github.io/hering/</code>. O prefixo <code class="hl">/hering/</code> é do GitHub Pages de projeto; as páginas usam caminhos relativos.</td><td>Em domínio próprio o site costuma ficar na raiz. O endereço absoluto está escrito no Service Worker, no módulo do sino (<code class="hl">mare-notif.js</code>), nas páginas de onboarding e do painel, e nos apps de bandeja do Windows e do Mac.</td><td>Desenvolvimento</td></tr>
+      <tr><td>Funções (Cloud Functions)</td><td>A mesma origem está escrita em 13 declarações em <code class="hl">functions/</code>: lista de origens permitidas (CORS) de 11 funções e a base de URL dos pushes.</td><td>Sem republicar com a origem nova, o navegador bloqueia as chamadas. Aceitar as duas origens durante a transição e centralizar a lista em um só arquivo. Exige deploy.</td><td>Desenvolvimento + deploy</td></tr>
+      <tr><td>Login Google</td><td>O login direto do iPhone usa a URL de cada página como endereço de retorno.</td><td>Cadastrar cada URL nova no cliente OAuth (Google Cloud Console) e autorizar o domínio no Firebase Auth.</td><td>Infraestrutura</td></tr>
+      <tr><td>Aplicativo instalado (PWA)</td><td>O Oceano pode estar instalado na tela inicial.</td><td>O app instalado fica preso à origem antiga: cada pessoa reinstala. Manter na origem antiga uma página que redireciona.</td><td>Comunicação</td></tr>
+      <tr><td>Dados do navegador</td><td>Sessão, cache de cards, preferências locais e o <b>token de notificação push</b> são guardados por origem.</td><td>Não migram. Todos precisam entrar de novo e reativar o 🔔 em cada aparelho; até lá, ninguém recebe push no endereço novo.</td><td>Comunicação</td></tr>
+      <tr><td>Links já gravados</td><td>Avisos do Mural, links da Hering, notificações e comentários podem ter o endereço antigo no banco.</td><td>Não dá para achar só pelo código: varrer o banco (leitura) e decidir entre reescrever e manter redirecionamento.</td><td>Desenvolvimento</td></tr>
+      <tr><td>Trocar o banco</td><td>As páginas falam direto com o Firebase Realtime Database; as 782 linhas de regras fazem o papel de back-end.</td><td>Trocar de banco implica reescrever autorização, validações e o tempo real (cards, presença, sino). É o trecho de maior esforço, e só pode ser dimensionado quando o desenho existir.</td><td>Desenvolvimento + infraestrutura</td></tr>
+    </tbody>
+  </table></div>
+
   <div class="cl">Perguntas para a reunião</div>
   <div class="grid g2">
     <div class="wc"><div class="wcb">1. Em qual organização/pasta do Google Cloud o projeto deve morar, e quem são os administradores?</div></div>
@@ -930,6 +947,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wc"><div class="wcb">7. A <code class="hl">main</code> já está protegida (PR + CI verde, sem push direto, desde 18/10). A TI quer exigir também a <b>aprovação de um segundo revisor</b> e separar a credencial de deploy da máquina onde o agente roda?</div></div>
     <div class="wc"><div class="wcb">8. Quem é o segundo responsável técnico, para o ecossistema não depender de uma pessoa?</div></div>
     <div class="wc"><div class="wcb">9. O código pode continuar público? Se não, em qual organização GitHub (privada/interna) ele passa a morar, e como migrar as URLs publicadas e o histórico?</div></div>
+    <div class="wc"><div class="wcb">10. Qual é o endereço definitivo (<code class="hl">oceano.hering…</code>) e a data de entrada? O login Google e as funções precisam aceitar o endereço novo <b>antes</b> da virada.</div></div>
   </div>
 
   <div class="cl" id="auditar">Como conferir sozinho (15 minutos)</div>
@@ -964,6 +982,7 @@ less docs/COORDENACAO_AGENTES.md AGENTS.md CLAUDE.md   <span class="cm"># quadro
       <tr><td>O que foi entregue e quando</td><td><code class="hl">CHANGELOG.md</code> · <code class="hl">docs/changelog-archive-2026-07-a-09.md</code></td></tr>
       <tr><td>Plantão de bugs</td><td><code class="hl">docs/PLANTAO_BUGS.md</code></td></tr>
       <tr><td>Segurança: o que foi achado, riscos aceitos e como se defender</td><td><code class="hl">docs/AUDITORIA_SEGURANCA_2026-10-18.md</code> · <code class="hl">BUGS_E_CORRECOES.md</code> (armadilhas nº 13 e 14)</td></tr>
+      <tr><td>Migração de domínio (o que depende do endereço atual)</td><td><code class="hl">docs/MIGRACAO_DOMINIO.md</code></td></tr>
       <tr><td>Família Oceano</td><td><code class="hl">docs/OCEANO.md</code> · <code class="hl">docs/arezzo/MARE_SO_HERING.md</code></td></tr>
       <tr><td>Agente Ágil (decisões, etapas, testes)</td><td><code class="hl">functions/agente-agil-orquestrador/README.md</code></td></tr>
       <tr><td>Marca e design</td><td><code class="hl">MARINE_GLASS.md</code></td></tr>
