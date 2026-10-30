@@ -2,8 +2,8 @@
 
 Um ícone perto do relógio com a cor do estado do ecossistema (🟢 tudo certo · 🟡 atenção · 🔴 fora do ar) e o nº de cards atrasados. Lê o mesmo JSON da página `minipainel.html` (função `oceanoResumo`) a cada minuto. Nada é instalado.
 
-- **Passar o mouse:** resumo curto. **Clique no ícone:** abre uma **janelinha com o próprio mini painel** (a página `minipainel.html?compacto=1`, em janela do Edge sem barra de endereços, no canto da tela): VTEX, GitHub, Firebase, backup, alarmes de "card sumiu", plantão e os seus cards. **Botão direito:** menu curto (abrir, atualizar o ícone, página inteira, iniciar com o Windows, sair).
-- **Aviso (balão)** quando o estado **piora** (ex.: de OK para Fora do ar), com o motivo; clicar no aviso abre a janelinha.
+- **Passar o mouse:** resumo curto. **Clique no ícone:** abre uma **janela nativa do Windows** (desenhada pelo próprio script, sem navegador) no canto inferior direito: VTEX, GitHub, Firebase, backup, alarmes de "card sumiu", plantão e os seus cards. Fecha ao clicar fora, com Esc ou clicando no ícone de novo. **Botão direito:** menu curto.
+- **Aviso (balão)** quando o estado **piora** (ex.: de OK para Fora do ar), com o motivo; clicar no aviso abre a janela.
 - **Iniciar com o Windows:** opção no próprio menu.
 
 > ⚠️ **Escrito sem Windows.** Foi escrito numa sessão Linux: a leitura do JSON e os nomes dos campos são testados (`functions/oceano/__tests__/contrato_windows.test.js`), mas o ícone e o menu **nunca rodaram**. Se algo falhar, rode com `-Visivel` (abaixo) e cole a mensagem para o Claude.
@@ -41,8 +41,8 @@ Todo erro (e o início/fim) é gravado em `%TEMP%\oceano-bandeja.log`, inclusive
 | Acentos estranhos nas mensagens | o `.ps1` precisa continuar salvo como **UTF-8 com BOM** (um teste confere isso) |
 | Abrir duas vezes | não duplica: avisa que já está na bandeja |
 
-## A janelinha
-É o Edge em modo aplicativo (`msedge --app=…`), então a chave fica no armazenamento do próprio Edge: na **primeira vez** a página pede a chave (cole o conteúdo do `chave-oceano.txt`); depois não pede mais. Sem o Edge, abre no navegador padrão. Para fechar, feche a janela (cada clique no ícone abre uma nova).
+## A janela
+É um formulário do próprio Windows (WinForms), com o mesmo visual do painel (fundo escuro, bolinhas coloridas). Não usa navegador nem a página `minipainel.html`; usa a mesma chave do `chave-oceano.txt`. Botões: **Atualizar**, **Abrir página inteira** (no navegador padrão), **Sair** e a opção **Iniciar com o Windows**.
 
 ## Segurança
 A chave fica só no seu `chave-oceano.txt` (fora do repositório) e vai na consulta à função, como na página web. O script não grava nada além da entrada opcional de **Iniciar com o Windows** (`HKCU\...\Run`, valor `OceanoBandeja`).

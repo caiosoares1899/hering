@@ -33,7 +33,7 @@ Depois abra `https://caiosoares1899.github.io/hering/minipainel.html`, cole a ch
 Em `mac/` (Swift/SwiftUI, projeto gerado por XcodeGen): lê o mesmo JSON. Escrito sem Xcode e **ainda não compilado** — passo a passo e problemas comuns em `mac/README.md`. O teste `functions/oceano/__tests__/contrato_mac.test.js` garante que os campos que o Swift espera existem no JSON da função.
 
 ## Ícone na bandeja do Windows
-Em `windows/` (`iniciar-oceano.cmd` → `oceano-bandeja.ps1`): mesma ideia da barra de menu do Mac, com aviso (balão) quando o estado piora. **Clicar no ícone abre uma janelinha do Edge com `minipainel.html?compacto=1`** (a "mini tela do painel"); o modo `?compacto=1` da página é pensado para ~440 × 760 px. Roda pelo `cmd` com `-NoProfile`. Escrito sem Windows; o teste `functions/oceano/__tests__/contrato_windows.test.js` confere os campos lidos, o BOM UTF-8 do `.ps1` e o lançador. Passo a passo em `windows/README.md`.
+Em `windows/` (`iniciar-oceano.cmd` → `oceano-bandeja.ps1`): mesma ideia da barra de menu do Mac, com aviso (balão) quando o estado piora. **Clicar no ícone abre uma janela nativa do Windows** (desenhada pelo próprio script, sem navegador e sem a página web), com o mesmo resumo. Roda pelo `cmd` com `-NoProfile`. Escrito sem Windows; o teste `functions/oceano/__tests__/contrato_windows.test.js` confere os campos lidos, o BOM UTF-8 do `.ps1` e o lançador. Passo a passo em `windows/README.md`.
 
 ## Testes
 `cd functions && node --test oceano/__tests__/*.test.js` (16: função + contrato com o app do Mac e com o ícone do Windows) · `node docs/arezzo/testes/test_minipainel.js` (navegador, 3 temas × 2 tamanhos, XSS, chave errada, função fora do ar).
