@@ -39,6 +39,8 @@ if (-not $Visivel) { [void][Oceano.Nativo]::ShowWindow([Oceano.Nativo]::GetConso
 $script:mutex = New-Object System.Threading.Mutex($false, 'Local\OceanoBandejaMiniPainel')
 if (-not $script:mutex.WaitOne(0)) { [System.Windows.Forms.MessageBox]::Show('O mini painel ja esta na bandeja (procure o icone perto do relogio).', 'Oceano') | Out-Null; exit }
 
+if ($Visivel) { Write-Host 'Mini painel iniciado. Procure o icone perto do relogio (ou na setinha ^ da bandeja). Feche esta janela para sair.' }
+
 # ---------------------------------------------------------------------------------------------------------------------------------------------
 # Leitura do JSON. SEMPRE por Campo <obj> 'caminho.do.campo': o teste functions/oceano/__tests__/contrato_windows.test.js confere
 # que cada caminho existe no JSON real da funcao.

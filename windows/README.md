@@ -23,7 +23,7 @@ O ícone pode ir para a **setinha ^** da bandeja; arraste-o para a barra para de
 ```
 windows\iniciar-oceano.cmd -Visivel
 ```
-Mantém a janela aberta e escreve o erro, se houver.
+Roda **nesta janela do `cmd`** (não escondido), escreve "Mini painel iniciado" e, se algo falhar, mostra o erro e espera uma tecla. Feche a janela para sair.
 
 ## Parâmetros (opcionais)
 `-ArquivoChave <caminho>` · `-Endereco <url da função>` · `-IntervaloSegundos 60` · `-Visivel`. Exemplo: `windows\iniciar-oceano.cmd -Endereco https://oceanoresumo-xxxx-uc.a.run.app`.
