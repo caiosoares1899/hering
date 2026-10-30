@@ -568,7 +568,7 @@ detalhe dos 4 call sites.
   persistir), afetando qualquer pessoa/squad, não só quem reportou.
   Fix: `_stripUndefinedMultiPath()` aplica `_stripUndefinedDeep()` em
   cada VALOR do update, preservando as chaves de nível superior —
-  mesmo padrão que `_notasUpdate()` (L20765) já usava certo. Trocada
+  mesmo padrão que `_notasUpdate()` (L20782) já usava certo. Trocada
   nos 3 pontos de escrita (`fbSaveAll()`/`fbCreateCard()`/
   `fbSaveCard()`). **Lição**: `_stripUndefinedDeep(val)` só deve
   receber um VALOR a ser escrito (um card, um bloco de Nota) — nunca o
@@ -576,7 +576,7 @@ detalhe dos 4 call sites.
 - `_saveCardWithRetry(card, label)` — L9959 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
   usada por `scheduleAutoSave()`/`_performAutoSave()` (L15042/L15100),
-  `saveExtraDesc()` (L15891) e a simulação de agente (perto de L19579+).
+  `saveExtraDesc()` (L15907) e a simulação de agente (perto de L19579+).
   **Retorna a promise de verdade desde 2026-09-21** (`/monitorarbugs`,
   relato direto de usuária — "salvo beleza, mas some ao atualizar"):
   antes era fire-and-forget, e os 3 call sites mostravam feedback de
@@ -595,7 +595,7 @@ detalhe dos 4 call sites.
   (`editingId` já aponta pro card novo). `_flushAutoSave()` cancela o
   timer e roda a escrita na hora, chamada no topo dos dois pontos acima
   — antes de qualquer um mexer em `editingId`/DOM. **Achado 2026-09-22,
-  3º ponto**: `openNewCard()` (L16698) tinha o MESMO gap — chamada por
+  3º ponto**: `openNewCard()` (L16714) tinha o MESMO gap — chamada por
   `usarQLItem()`/`_intakeCriarCard()` sem fechar `#card-ov` primeiro
   (só fecham `ql-ov`/`intake-ov`, overlays que ficam empilhados por
   cima de um card já aberto — comportamento já documentado no próprio
@@ -2454,7 +2454,7 @@ derivado do card mudando).
   33767/16908 — total "efetivo até agora" (fechado + episódio aberto).
 - `_renderCardTimeInfo(c)` — L34245 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L16261).
+  bloco de Impedimento), chamado no `openCard()` (L16277).
 - Dashboards: `renderBoardDataInsights()` (L22113, seção "Tempo em
   atraso/bloqueado") e `renderCriativosDashboard()` (L19035, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
