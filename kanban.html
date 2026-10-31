@@ -6567,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.883</div>
+<div class="version">v8.30.888</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10317,6 +10317,7 @@ let _cardsSyncDebounce = null;
     const incoming = keys.map(k=>_cardsByKey[k]).filter(Boolean);
     if(JSON.stringify(incoming) !== JSON.stringify(cards)){
       cards = incoming;
+      _modalSyncCol();
       // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
       const _bf = backfillAllFlow();
       // Garante que _lastFlowCol esteja consistente com a coluna atual
@@ -15262,6 +15263,11 @@ function _performAutoSave(){
     // aba/pessoa via drag-and-drop enquanto este modal ficou aberto).
     const _selCol=document.getElementById('m-col').value;
     const _colToSave=(_selCol===_modalOpenCol)?c.col:_selCol;
+    // Achado real (/monitorarbugs, 2026-10-30, relato do time: "a automação moveu o card e depois ele voltou"): a linha de base só era
+    // gravada ao ABRIR o modal. Mudou a coluna no select (A→B) e salvou → o select seguia em B e a base em A; quando a automação
+    // ("movido para B → mover para C") ou outra pessoa levava o card pra C com o modal aberto, o PRÓXIMO autosave/Salvar via
+    // "select (B) ≠ base (A)", entendia como escolha da pessoa e regravava B por cima de C. Depois de gravar, a base é o que o select mostra.
+    _modalOpenCol=_selCol;
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:_colToSave,owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',
       due:document.getElementById('m-due').value,noDue:_mNoDue,desc:_descProtViolada?c.desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
@@ -15763,6 +15769,16 @@ if(!window._cardLockBeforeUnloadSet){
 // silenciosamente o card pra coluna antiga (bug: card "volta sozinho" pra
 // coluna anterior depois de ser movido por outra aba/pessoa).
 let _modalOpenCol=null;
+// Card aberto no modal e a coluna dele mudou por fora (Automação, outra pessoa/aba, Agente Ágil): se a pessoa NÃO mexeu no select,
+// ele e a linha de base acompanham a coluna real — senão o modal segue mostrando a coluna antiga como se o card ainda estivesse lá.
+// Se ela já escolheu outra coluna e ainda não salvou, a escolha dela é preservada (comportamento de sempre).
+function _modalSyncCol(){
+  if(!editingId) return;
+  const ov=document.getElementById('card-ov'); if(!ov || !ov.classList.contains('open')) return;
+  const sel=document.getElementById('m-col'); if(!sel || sel.value!==_modalOpenCol) return;
+  const c=cards.find(x=>x.id===editingId); if(!c || c.col===_modalOpenCol || !columns.some(x=>x.id===c.col)) return;
+  sel.value=c.col; _modalOpenCol=c.col;
+}
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
@@ -16954,6 +16970,7 @@ function saveCard(){
     // se o valor do <select> divergir do que estava quando o modal abriu.
     const _selCol=document.getElementById('m-col').value;
     const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
+    _modalOpenCol=_selCol; // ver o comentário em _performAutoSave(): a base acompanha o que o select mostra depois de gravar
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
     const _prevOwnerSave=c.owner||'', _prevParticipantsSave=(c.participants||[]).slice();
@@ -34126,7 +34143,10 @@ function _runAutoRuleAction(rule, cardId){
   });
   if(ruleChanged){
     card.edited='Automação'; card.editedAt=td;
-    fbSaveCard(card).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err));
+    _modalSyncCol(); // card aberto no modal: o select acompanha a coluna nova (ver _modalSyncCol)
+    // Com retry + aviso (como o autosave): antes era fbSaveCard() com .catch só no console — se a gravação falhasse, o toast abaixo dizia "aplicada",
+    // o card ficava no lugar novo só na tela e voltava sozinho na próxima sincronização (outro jeito de a automação parecer "desfeita").
+    _saveCardWithRetry(card, 'A mudança da Automação').catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err));
     renderBoard();
     showToast('⚡ Automação "'+(rule.label||'Sem nome')+'" foi aplicada');
   }

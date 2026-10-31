@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-10-30.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-10-31.
 > Use este índice para localizar rapidamente a linha no `CODE_MAP.md` ou as âncoras `Lxxxx` diretas nos arquivos `-dev`.
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
