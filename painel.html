@@ -3197,10 +3197,10 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=34"></script>
+<script src="mare-notif.js?v=36"></script>
 <script src="mare-metas.js?v=17"></script>
 <script src="mare-plantao.js?v=4"></script>
-<script src="mare-dicas.js?v=7"></script>
+<script src="mare-dicas.js?v=9"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8027,6 +8027,15 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_travessia_2026_10_31',
+    titulo: '⛵ Chegou a Travessia: seu Baú, seu 1:1 e seu humor do dia',
+    corpo: '<p>A <b>Travessia</b> é o espaço do Oceano para <b>pessoas e desenvolvimento</b>. Por enquanto você chega nela por dois caminhos: o <b>💼</b> no alto de um card (guarda aquela entrega no seu <b>Baú</b> de conquistas, para você lembrar na hora da avaliação) e o <b>🌅 Meu Dia</b>, que ganhou o <b>“Como você está hoje?”</b> e o <b>🌙 Fechamento do dia</b>.</p>'
+      + '<p>👁 <b>Importante:</b> o <b>humor do dia vai para o seu líder direto</b> — ele vê a média do time e, se você marcar que não está bem, recebe um aviso para poder te apoiar. Ninguém, nem o sistema, analisa. O que você escreve no <b>Fechamento do dia</b> (texto livre) fica <b>só com você</b>, no seu Diário.</p>'
+      + '<p>Na Travessia você também acompanha o <b>1:1</b> com seu líder, recebe suas <b>⭐ Estrelas</b> e participa da <b>avaliação</b>. Dúvidas? Pergunte ao Agente Ágil ou fale com o Caio.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_ferias_plantao_2026_10_16',
     titulo: '🏖️ Caio de férias (16/10 a 03/11) — achou um bug? Reporte no Oceano',

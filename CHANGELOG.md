@@ -24,7 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🌤️ Humor vai sempre pro líder direto (sem caixa de compartilhar) — Meu Dia + Travessia (SÓ DEV) — 2026-10-31
+### ⛵ Travessia entra em produção: travessia.html + ganchos no Maré e no Radar (PROD · maré v8.30.889 · radar v2.96) — 2026-10-31
+
+A Travessia (pessoas, 1:1 e avaliação) entra em produção como página nova: travessia.html. Entrada discreta: o card da Travessia no Oceano continua 'em breve' por enquanto; as pessoas chegam pelo 💼 do card e do Marco e pelo humor do Meu Dia, e os líderes pelo aviso de apoio no sino.
+• Maré: 💼 no card (e 'Guardar na Travessia' no clique direito) guarda a conquista no Baú; Meu Dia ganha 'Como você está hoje?' (o humor vai sempre para o líder direto) e o 🌙 Fechamento do dia (texto livre, só da pessoa, no Diário).
+• Radar: 💼 dentro do Marco guarda o Marco no Baú. A Central de Notificações ganha a área 'Travessia (gente)' (aviso de apoio ao líder).
+• Travessia: Baú, faróis do 1:1 (com as folgas da Escala), humor e termômetro do time, mural de Estrelas, avaliação com indicação de pares e trava de devolutiva, administração (organograma, RH, ciclos) e Diário.
+• Precisa que o organograma (líder de cada pessoa) seja cadastrado na aba Administração da Travessia; sem líder, humor e 1:1 não chegam a ninguém. Regras do banco e backup já publicados. Ajuda do Maré atualizada (Baú e Humor).
+
+### 🌤️ Humor vai sempre pro líder direto (sem caixa de compartilhar) — Meu Dia + Travessia (PROD · 2026-10-31) — 2026-10-31
 
 Decisão do Caio (31/10/2026): a pessoa não precisa mais permitir — o humor do dia vai SEMPRE para o líder direto. Sai a caixa "Compartilhar com meu líder" (Meu Dia no Maré e Minha travessia); ao escolher a carinha, o sistema grava o registro dela e a cópia que o líder lê (humor_comp), e o aviso 🫶 de apoio sai sempre que a pessoa marca "mal" ou "muito mal".
 • Transparência: no lugar da caixa, a tela diz com todas as letras o que o líder vê (a média do time no termômetro e o aviso de apoio) e que o fechamento do dia (texto livre, Diário) continua só da pessoa.
@@ -62,7 +70,7 @@ Para o Caio bater o olho e saber se está tudo bem e rodando. Uma função nova 
 • Os cards vêm de uma consulta por responsável (novo índice `owner` em `dados/cards`): só o resultado trafega, não os cards inteiros. Cache de 60 s/5 min/15 min.
 • Deploy: regras primeiro (`firebase deploy --only database`), depois o secret `OCEANO_RESUMO_KEY` e `firebase deploy --only functions:oceanoResumo`. Runbook: docs/MINIPAINEL.md. É a base do item da barra de menu e do widget do Mac. Dica: não (ferramenta pessoal, fora do Maré).
 
-### 🎨 Travessia com outra cara (SÓ DEV): menos caixa, mais mar — travessia-dev.html — 2026-10-23
+### 🎨 Travessia com outra cara (PROD · 2026-10-31): menos caixa, mais mar — travessia-dev.html — 2026-10-23
 
 O Caio achou o visual 'com cara de checkbox, tudo meio quadradão'. Mesma identidade Marine Glass e mesmos 3 temas, comportamento e dados intactos; mudou a forma.
 • Antes → depois: cartões retos com borda forte → vidro com cantos grandes, borda suave e brilho no topo; botões e abas retangulares → pílulas; caixinha de marcar → interruptor (e pílulas marcáveis para escolher squads); abas de texto → pílula de navegação no desktop e barra inferior com ícone no celular.
@@ -73,7 +81,7 @@ O Caio achou o visual 'com cara de checkbox, tudo meio quadradão'. Mesma identi
 • Movimento reduzido desliga o barquinho e as transições. Dica: não (redesenho de tela já existente, nada novo para a pessoa descobrir).
 • Teste novo: docs/arezzo/testes/test_travessia_ui.js (3 temas × 1280/390 px: sem rolagem lateral, cantos, interruptor, alvos de toque, contraste, nome longo, movimento reduzido); as 3 suítes antigas seguem verdes sem mudança.
 
-### 🎭 Travessia em modo demonstração (SÓ DEV): travessia-dev.html?demo=1 mostra 2 trimestres de uso fictício, sem tocar no Firebase — 2026-10-22
+### 🎭 Travessia em modo demonstração (PROD · 2026-10-31): travessia-dev.html?demo=1 mostra 2 trimestres de uso fictício, sem tocar no Firebase — 2026-10-22
 
 Para ver a Travessia preenchida sem usar dado real. ?demo=1 liga um banco em memória (sem login e sem nenhuma chamada ao Firebase) com ~180 dias de uso fictício: 13 pessoas inventadas em 2 squads (pessoa → PO → gerente), RH e ADM.
 • Seletor 'Ver como': Ana (pessoa), Bia (colega e par), Pau (líder), Gil (gerente), Dani (RH) e Adm. Atalhos: ?demo=1&como=pau&tab=frota.
@@ -81,35 +89,35 @@ Para ver a Travessia preenchida sem usar dado real. ?demo=1 liga um banco em mem
 • Gravar no demo vale só para a aba. Líder agora também vê os ciclos encerrados da pessoa (só leitura); o diário de meses antigos vem recolhido por mês com o humor médio.
 • Corrigido: leitura das folgas da Escala (a chamada ficou com o .val() no lugar errado ao deixar o código ciente do demo; o teste pegou antes de subir).
 
-### 🌡️ Termômetro do time e 🫶 aviso de apoio ao líder (SÓ DEV): média do humor compartilhado, contagem de respostas e sino quando alguém marca que não está bem — travessia-dev · kanban-dev v8.30.881 · mare-notif-dev v35 — 2026-10-22
+### 🌡️ Termômetro do time e 🫶 aviso de apoio ao líder (PROD · 2026-10-31): média do humor do time, contagem de respostas e sino quando alguém marca que não está bem — travessia-dev · kanban-dev v8.30.881 · mare-notif-dev v35 — 2026-10-22
 
-Pedido do Caio. O humor segue privado por padrão; o termômetro e o aviso só consideram quem escolheu compartilhar com o líder (a caixa agora diz isso com todas as letras).
-• Frota: 🌡️ Termômetro do time — média dos últimos 7 dias (1 a 5, carinha e cor), comparação com a semana anterior, distribuição, gráfico de 14 dias e 'N respostas de P de T pessoas (quem compartilhou)'; quem não compartilha não entra e o líder vê quantos são.
-• 🫶 Aviso de apoio: quando quem compartilha marca 'mal' ou 'muito mal', o líder direto recebe uma notificação (tipo travessia_apoio, um por pessoa por dia, área nova 'Travessia (gente)' na Central de Notificações) e vê 'Pra ficar de olho' na Frota e o selo 'vale um oi' no cartão. Clicar no aviso abre a Frota (?tab=frota). Sem push.
-• Funciona no Meu Dia (Maré) e na Minha travessia; compartilhar depois de já ter marcado 'mal' também avisa. Ajuda do Maré atualizada. Sem mudança de regra do banco além das já pedidas.
+Pedido do Caio. (Desde 31/10/2026 o humor vai sempre ao líder direto, sem caixa de compartilhar — ver a entrada 'Humor vai sempre pro líder direto'.) O termômetro e o aviso consideram quem registrou o humor.
+• Frota: 🌡️ Termômetro do time — média dos últimos 7 dias (1 a 5, carinha e cor), comparação com a semana anterior, distribuição, gráfico de 14 dias e 'N respostas de P de T pessoas (quem registrou)'; quem ainda não registrou não entra e o líder vê quantos faltam.
+• 🫶 Aviso de apoio: quando alguém marca 'mal' ou 'muito mal', o líder direto recebe uma notificação (tipo travessia_apoio, um por pessoa por dia, área nova 'Travessia (gente)' na Central de Notificações) e vê 'Pra ficar de olho' na Frota e o selo 'vale um oi' no cartão. Clicar no aviso abre a Frota (?tab=frota). Sem push.
+• Funciona no Meu Dia (Maré) e na Minha travessia. Ajuda do Maré atualizada. Sem mudança de regra do banco além das já pedidas.
 
-### 🌙 Fechamento do dia e 📓 Diário (SÓ DEV): humor de fim de dia com texto livre dentro do Meu Dia, salvo só pra pessoa no Travessia — kanban-dev v8.30.880 — 2026-10-22
+### 🌙 Fechamento do dia e 📓 Diário (PROD · 2026-10-31): humor de fim de dia com texto livre dentro do Meu Dia, salvo só pra pessoa no Travessia — kanban-dev v8.30.880 — 2026-10-22
 
 Ideia do Caio. No 🌅 Meu Dia, abaixo do humor da manhã, 'Fechamento do dia': cinco carinhas e uma caixa de texto ('Como foi o seu dia?'), com o aviso de que fica salvo só pra pessoa, no Diário da Travessia, pra ela se lembrar depois — nem o líder lê.
-• Dado em kanban/travessia/diario/{uid}/{dia} (n opcional 1 a 5, texto até 1500, ts), regra: só o dono lê e grava; não entra no humor compartilhado com o líder.
+• Dado em kanban/travessia/diario/{uid}/{dia} (n opcional 1 a 5, texto até 1500, ts), regra: só o dono lê e grava; não vai para o líder (só o humor de 1 a 5 do Meu Dia vai).
 • Travessia: bloco de fechamento em Minha travessia e aba 📓 Diário (por mês, busca, apagar, 💼 guardar um dia no Baú).
 • O que a pessoa já digitou e ainda não salvou sobrevive quando o humor da manhã redesenha o bloco.
 • Ajuda do Maré atualizada (Humor do dia). Dica: não, o bloco já está à vista. Exige firebase deploy --only database.
 
-### 💼 Baú e 🌤️ humor chegam ao Maré e ao Radar (SÓ DEV): 💼 no card, humor no Meu Dia e 💼 no Marco — kanban-dev v8.30.879 · okr-dev v2.95 · mare-dicas-dev v8 — 2026-10-22
+### 💼 Baú e 🌤️ humor chegam ao Maré e ao Radar (PROD · 2026-10-31): 💼 no card, humor no Meu Dia e 💼 no Marco — kanban-dev v8.30.879 · okr-dev v2.95 · mare-dicas-dev v8 — 2026-10-22
 
 Ganchos do Travessia (travessia-dev.html) nos produtos onde o trabalho acontece.
 • Maré: 💼 no topo do card (e 'Guardar na Travessia' no clique direito) guarda o card no Baú da pessoa; clicar de novo atualiza em vez de duplicar.
-• Maré, Meu Dia: 'Como você está hoje?' com 5 carinhas. Privado; marcar 'Compartilhar com meu líder' grava a cópia que o líder lê (desmarcar apaga). Se as regras do banco ainda não foram publicadas, o bloco some em silêncio.
+• Maré, Meu Dia: 'Como você está hoje?' com 5 carinhas. O humor vai para o líder direto (desde 31/10/2026, sem caixa de compartilhar). Se as regras do banco ainda não foram publicadas, o bloco some em silêncio.
 • Radar: 💼 dentro do Marco existente guarda o Marco (com o Objetivo no texto) no Baú.
 • Dica 'bau' (ao abrir um card) e dois tópicos novos na Ajuda do Maré: Baú da Travessia (💼) e Humor do dia (Meu Dia). Depende das regras novas do banco: firebase deploy --only database.
 
-### ⛵ Travessia (SÓ DEV): Baú, faróis do 1:1, humor privado, mural de Estrelas e avaliação com indicação de pares e trava de devolutiva — travessia-dev.html — 2026-10-22
+### ⛵ Travessia (PROD · 2026-10-31): Baú, faróis do 1:1, humor, mural de Estrelas e avaliação com indicação de pares e trava de devolutiva — travessia-dev.html — 2026-10-22
 
 Página nova do Oceano para pessoas e desenvolvimento (Fase 1), só em dev e ainda fora do menu de produtos.
 • 📦 Baú da Travessia: a pessoa guarda conquistas (manual agora; botão 💼 no Maré/Radar nas próximas PRs); líder e gerente leem.
 • 🚦 Faróis do 1:1: 🟢 até a cadência + 1 dia, 🟡 até 1,5× a cadência, 🔴 acima, descontando as folgas da Escala. O líder define a cadência (semanal, quinzenal, mensal, trimestral) e a pessoa ou o líder registram o 1:1.
-• 🌤️ Humor do dia: privado; a pessoa pode compartilhar com o líder direto (apagar a cópia tira o acesso).
+• 🌤️ Humor do dia: vai para o líder direto (desde 31/10/2026; antes era opcional, com a caixa 'Compartilhar com meu líder').
 • ⭐ Mural de Estrelas: aparece só para quem recebeu; cada Estrela vai ao Baú com 1 clique.
 • 📐 Avaliação (só texto, sem nota): autoavaliação, líder e pares. O avaliado indica pares e o líder aprova; só par aprovado responde; o avaliado nunca lê o feedback individual dos pares nem a avaliação do líder. 🔒 Trava de devolutiva: a pessoa só lê depois que o líder libera.
 • ⚙ Administração: organograma (líder e gerente), papel de RH (só ADM concede) e ciclos (preparação → coleta → devolutiva → encerrado). ADM e RH não leem conteúdo de pessoas.

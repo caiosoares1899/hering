@@ -2027,6 +2027,7 @@ window.MARE_SO_HERING = true;
     <div class="pc-modal-hd">
       <div class="pc-modal-hd-title" id="okr-marco-title">🏁 Marco</div>
       <span class="okr-torre-chip okr-modal-torre-chip"></span>
+      <button class="x-btn" id="okr-marco-bau-btn" onclick="_okrMarcoParaTravessia()" title="Guardar este Marco no seu Baú da Travessia (suas conquistas do ciclo)" aria-label="Guardar na Travessia" style="display:none;margin-right:4px;">💼</button>
       <button class="x-btn" onclick="_okrTryCloseMarco()">✕</button>
     </div>
     <div class="okr-nav" id="okr-marco-nav"></div>
@@ -2047,7 +2048,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.94 · okr</div>
+<div class="version">v2.96 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2098,8 +2099,8 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=34"></script>
-<script src="mare-dicas.js?v=7"></script>
+<script src="mare-notif.js?v=36"></script>
+<script src="mare-dicas.js?v=9"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -8669,6 +8670,18 @@ let _okrMarcoOpenSnapshot = null;
 let _okrMarcoFromProgresso = null;   // { objId, index, text } quando o modal de Novo Marco veio do botão 🏁 de um item de Progressos
 
 
+// 💼 Baú da Travessia (2026-10-22): guarda o Marco como conquista da própria pessoa em kanban/travessia/bau/{uid}/{id} (a regra só deixa o DONO gravar ali). Id fixo por Marco: clicar de novo atualiza.
+async function _okrMarcoParaTravessia(){
+  const id=_okrEditingMarcoId, m=okrMarcos[id], u=window._currentUser;
+  if(!u){ showToast('Faça login pra guardar na Travessia.'); return; }
+  if(!id||!m) return;
+  const obj=okrObjetivos[m.objetivoId]||{}; const arq=(location.pathname.split('/').pop()||'okr.html').replace(/[^a-zA-Z0-9_.\-]/g,'');
+  const item={ tipo:'marco', titulo:String(m.nome||'Marco').slice(0,160), ts:Date.now(), em:_todayStr(), ref:String(id).slice(0,200), link:(arq+'?okr='+encodeURIComponent(m.objetivoId||'')).slice(0,300) };
+  if(obj.titulo) item.texto=('Objetivo: '+obj.titulo).slice(0,1200);
+  const chave=('marco_'+id).replace(/[^a-zA-Z0-9_\-]/g,'_').slice(0,120);
+  try{ await window._set(window._ref(window._db,'kanban/travessia/bau/'+u.uid+'/'+chave), item); showToast('💼 Guardado no seu Baú da Travessia!'); }
+  catch(e){ showToast(e&&e.code==='PERMISSION_DENIED' ? '🔒 Não deu pra guardar: as regras da Travessia ainda não foram publicadas.' : '⚠️ Não deu pra guardar na Travessia. Tente de novo.'); }
+}
 function openOkrMarco(id, objId, prefill){
   if(id && !okrMarcos[id]) return;
   _okrEditingMarcoId = id;
@@ -8688,6 +8701,7 @@ function openOkrMarco(id, objId, prefill){
     _okrMarcoDraft.responsavel = respPadrao;
   }
   _okrMarcoOpenSnapshot = JSON.stringify(_okrMarcoDraft);
+  { const b=document.getElementById('okr-marco-bau-btn'); if(b) b.style.display = id ? '' : 'none'; }   // 💼 só em Marco que já existe
   document.getElementById('okr-marco-title').textContent = id ? '🏁 Editar Marco' : (_okrMarcoFromProgresso ? '🏁 Promover a Marco' : '🏁 Novo Marco');
   document.getElementById('okr-obj-ov').classList.remove('open'); // 1 modal por vez, evita empilhar
   document.getElementById('okr-marco-ov').classList.add('open');

@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travessia · Oceano</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="favicon-oceano.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══ Travessia — página real (docs/ideias/travessia-2026-10-22.md §13). Visual Marine Glass: mar, vidro e curvas — sem caixas retas.
+   Regras de desenho (docs/GUIA_UI_UX.md): tokens `var(--…)`, estado = cor + ícone + texto, alvos ≥ 44 px no toque, campos 16 px, sem rolagem lateral, blur só numa camada. ═══ */
+:root{
+  --deep:#030d1a;--deep-rgb:3,13,26;--glass:rgba(10,37,64,0.72);--glass-b:rgba(56,182,255,0.3);--glass-h:rgba(56,182,255,0.14);
+  --line:rgba(120,200,255,.16);--line2:rgba(120,200,255,.26);--sheen:rgba(255,255,255,.06);
+  --accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,0.78);--txt3:rgba(150,200,240,0.6);
+  --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:14px;--r2:22px;--r3:30px;
+  --surface-rgb:10,30,55;--surface2-rgb:6,22,40;--ink-rgb:3,13,26;--on-accent:#04141f;
+  --ok-bg:rgba(74,222,128,.16);--warn-bg:rgba(255,209,102,.16);--bad-bg:rgba(255,107,107,.18);--ag-bg:rgba(56,182,255,.16);
+  --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;--shadow:0 10px 34px rgba(0,0,0,.35);--lift:0 8px 24px rgba(0,0,0,.28);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;
+}
+:root[data-theme="light"]{
+  --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.74);--glass-b:rgba(0,124,168,0.28);--glass-h:rgba(0,124,168,0.12);
+  --line:rgba(0,90,130,.16);--line2:rgba(0,90,130,.28);--sheen:rgba(255,255,255,.7);
+  --accent:#006a9a;--cyan:#065670;--teal:#0a7d75;
+  --txt:#0B2436;--txt2:rgba(11,36,54,0.84);--txt3:rgba(11,36,54,0.68);
+  --warn:#8a5a00;--danger:#b3261e;--ok:#1a7a44;--surface-rgb:251,253,255;--surface2-rgb:235,245,250;--ink-rgb:251,253,255;--on-accent:#ffffff;
+  --ok-bg:rgba(26,122,68,.14);--warn-bg:rgba(138,90,0,.14);--bad-bg:rgba(179,38,30,.12);--ag-bg:rgba(0,106,154,.12);--shadow:0 10px 30px rgba(7,70,110,.22);--lift:0 8px 22px rgba(7,70,110,.18);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+}
+:root[data-theme="sunset"]{
+  --deep:#1a1530;--deep-rgb:26,21,48;--glass:rgba(38,28,58,0.8);--glass-b:rgba(255,176,110,0.38);--glass-h:rgba(255,176,110,0.16);
+  --line:rgba(255,190,130,.2);--line2:rgba(255,190,130,.32);--sheen:rgba(255,255,255,.08);
+  --accent:#ffb36b;--cyan:#ffd2a1;--teal:#ffcf6e;
+  --txt:#fdf1e4;--txt2:rgba(253,241,228,0.84);--txt3:rgba(253,241,228,0.66);
+  --surface-rgb:48,34,66;--surface2-rgb:34,24,50;--ink-rgb:26,21,48;--on-accent:#2a1405;
+  --ok-bg:rgba(74,222,128,.17);--warn-bg:rgba(255,207,110,.18);--bad-bg:rgba(255,120,120,.2);--ag-bg:rgba(255,179,107,.18);
+  --ocean:radial-gradient(ellipse 80% 45% at 50% 38%,rgba(255,160,70,.5) 0%,rgba(255,120,60,.16) 45%,transparent 70%),linear-gradient(180deg,#141d3f 0%,#2a2a55 22%,#7a4a56 38%,#d98a58 47%,#1b4a63 48.4%,#0d2f4b 62%,#071c33 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;}
+body{font-family:var(--ff);color:var(--txt);background:var(--deep);font-size:14.5px;line-height:1.5;overflow-x:hidden;}
+button,input,select,textarea{font:inherit;color:inherit;}
+button{cursor:pointer;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:12px;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.wrap{max-width:1120px;margin:0 auto;padding:0 18px 56px;}
+[hidden]{display:none !important;}
+.ocean{position:fixed;inset:0;z-index:-3;pointer-events:none;background:var(--ocean);}
+
+/* topo: fino, só marca + conta + tema */
+.topo{position:sticky;top:0;z-index:30;background:rgba(var(--deep-rgb),.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);}
+.topo-in{max-width:1120px;margin:0 auto;padding:9px 18px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;}
+:root[data-theme="light"] .topo{background:rgba(255,255,255,.82);}
+.logo{font-family:var(--ff-d);font-weight:800;font-size:19px;letter-spacing:.01em;display:flex;align-items:center;gap:9px;}
+.logo .lg{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;background:linear-gradient(135deg,var(--accent),var(--teal));box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.proto{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--warn-bg);color:var(--txt);}
+.lbl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;}
+.topo .sp{flex:1;}
+.who{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--txt2);}
+.who img{width:28px;height:28px;border-radius:50%;object-fit:cover;}
+
+/* vidro: borda suave, brilho no topo, cantos grandes */
+.gl{background:linear-gradient(165deg,var(--sheen),transparent 45%),var(--glass);border:1px solid var(--line);border-radius:var(--r2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--lift);}
+.pad{padding:22px;}
+.h1{font-family:var(--ff-d);font-size:30px;font-weight:800;line-height:1.1;letter-spacing:-.01em;}
+.h2{font-family:var(--ff-d);font-size:16.5px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.h2 .ib{width:34px;height:34px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:17px;background:var(--ag-bg);box-shadow:inset 0 0 0 1px var(--line);}
+.foco .h2 .ib,.trava .h2 .ib{width:28px;height:28px;font-size:14px;}
+.sub{color:var(--txt2);font-size:13.5px;}
+.small{font-size:12.5px;color:var(--txt2);}
+.grid{display:grid;gap:16px;}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));}
+.g3{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));}
+.stack>*+*{margin-top:14px;}
+
+/* hero: saudação + mar */
+.hero{position:relative;overflow:hidden;margin:18px 0 14px;padding:26px 28px 44px;border-radius:var(--r3);border:1px solid var(--line);background:linear-gradient(125deg,var(--ag-bg),transparent 70%),linear-gradient(165deg,var(--sheen),transparent 50%),var(--glass);box-shadow:var(--shadow);}
+.hero .eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
+.hero .sub{margin-top:6px;max-width:560px;}
+.hero .ondas{position:absolute;left:0;right:0;bottom:0;height:34px;width:100%;pointer-events:none;}
+.hero .ondas path{fill:var(--accent);opacity:.16;}
+.hero .ondas path+path{opacity:.1;}
+.hero .barco{position:absolute;right:30px;bottom:18px;font-size:44px;line-height:1;animation:bob 3.2s ease-in-out infinite;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3));}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-6px) rotate(-5deg);}}
+
+/* navegação: pílula no desktop, barra inferior no celular */
+.nav{position:sticky;top:62px;z-index:25;display:flex;gap:4px;margin:0 0 18px;padding:5px;border-radius:999px;background:rgba(var(--surface-rgb),.82);border:1px solid var(--line);box-shadow:var(--lift);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-x:auto;scrollbar-width:none;width:fit-content;max-width:100%;}
+.nav::-webkit-scrollbar{display:none;}
+.nav button{flex:none;display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:10px 18px;border-radius:999px;font-weight:700;font-size:13.5px;color:var(--txt2);min-height:42px;white-space:nowrap;transition:background .18s,color .18s,transform .18s;}
+.nav button:hover{background:var(--glass-h);color:var(--txt);}
+.nav button[aria-selected="true"]{background:linear-gradient(135deg,var(--accent),var(--teal));color:var(--on-accent);box-shadow:0 4px 14px rgba(0,0,0,.28);}
+.nav .short{display:none;}
+.tabs{display:flex;gap:4px;margin:4px 0 2px;overflow-x:auto;padding:4px;border-radius:999px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--line);scrollbar-width:none;width:fit-content;max-width:100%;}
+.tabs button{flex:none;border:0;background:none;padding:8px 16px;border-radius:999px;font-weight:700;font-size:13px;color:var(--txt2);min-height:38px;white-space:nowrap;}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--on-accent);}
+
+/* botões e chips: pílulas */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line2);background:rgba(var(--surface-rgb),.7);padding:9px 18px;border-radius:999px;font-weight:700;font-size:13.5px;min-height:42px;transition:transform .15s,border-color .15s,background .15s;}
+.btn:hover{border-color:var(--accent);background:var(--glass-h);}
+.btn:active{transform:scale(.97);}
+.btn.p{background:linear-gradient(135deg,var(--accent),var(--teal));color:var(--on-accent);border:0;box-shadow:0 6px 16px rgba(0,0,0,.25);}
+.btn.p:hover{filter:brightness(1.07);}
+.btn.s{padding:5px 14px;min-height:34px;font-size:12.5px;}
+.btn:disabled{opacity:.55;cursor:default;}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:999px;background:rgba(var(--surface2-rgb),.7);box-shadow:inset 0 0 0 1px var(--line);color:var(--txt);white-space:nowrap;}
+.chip.ok{background:var(--ok-bg);box-shadow:inset 0 0 0 1px var(--ok);} .chip.warn{background:var(--warn-bg);box-shadow:inset 0 0 0 1px var(--warn);} .chip.bad{background:var(--bad-bg);box-shadow:inset 0 0 0 1px var(--danger);} .chip.ag{background:var(--ag-bg);box-shadow:inset 0 0 0 1px var(--accent);}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filtros button{border:0;background:rgba(var(--surface2-rgb),.6);box-shadow:inset 0 0 0 1px var(--line);padding:7px 15px;border-radius:999px;font-size:13px;font-weight:700;min-height:38px;color:var(--txt);}
+.filtros button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);box-shadow:none;}
+
+/* campos */
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.in{flex:1;min-width:160px;background:rgba(var(--surface2-rgb),.7);border:1px solid var(--line2);border-radius:999px;padding:10px 18px;min-height:44px;}
+.in:focus,.ta:focus,.sel2:focus{outline:2px solid var(--accent);outline-offset:1px;}
+.ta{width:100%;min-height:104px;resize:vertical;background:rgba(var(--surface2-rgb),.7);border:1px solid var(--line2);border-radius:20px;padding:13px 16px;line-height:1.5;}
+.ta[readonly]{opacity:.92;background:rgba(var(--surface2-rgb),.4);}
+textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:20px;}
+.sel2{background:rgba(var(--surface-rgb),.8);border:1px solid var(--line2);border-radius:999px;padding:7px 14px;min-height:40px;max-width:100%;}
+.camp label{display:block;font-weight:700;margin:14px 2px 6px;font-size:13px;}
+.cont{font-size:11.5px;color:var(--txt2);text-align:right;}
+.pesq{max-width:340px;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+/* interruptor (no lugar da caixinha de marcar) */
+.ck{display:flex;gap:12px;align-items:center;font-size:13.5px;cursor:pointer;}
+.ck input{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:rgba(var(--ink-rgb),.35);box-shadow:inset 0 0 0 1px var(--line2);position:relative;cursor:pointer;transition:background .2s;}
+:root[data-theme="light"] .ck input{background:rgba(11,36,54,.16);}
+.ck input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--txt);box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform .2s;}
+.ck input:checked{background:linear-gradient(135deg,var(--accent),var(--teal));box-shadow:none;}
+.ck input:checked::after{transform:translateX(18px);background:#fff;}
+/* escolha de squads: pílulas */
+.chips .ck{gap:0;position:relative;padding:8px 16px;border-radius:999px;background:rgba(var(--surface2-rgb),.6);box-shadow:inset 0 0 0 1px var(--line2);font-weight:700;min-height:40px;}
+.chips .ck input{position:absolute;opacity:0;width:100%;height:100%;inset:0;border-radius:999px;}
+.chips .ck:has(input:checked){background:var(--accent);color:var(--on-accent);box-shadow:none;}
+.chips .ck:has(input:checked)::before{content:"✓ ";margin-right:4px;}
+.chips .ck:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:3px;}
+
+/* listas */
+.lst{list-style:none;}
+.lst li{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);}
+.lst li:last-child{border-bottom:0;}
+.lst .tx{flex:1;min-width:0;word-break:break-word;}
+.lst li>.fase{flex:0 0 100%;margin-top:4px;}
+.lst li:has(>.fase){flex-wrap:wrap;}
+.lst .feita{text-decoration:line-through;opacity:.85;}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.foco{padding:18px;border-radius:var(--r2);background:rgba(var(--surface2-rgb),.45);box-shadow:inset 0 0 0 1px var(--line);}
+.vazio{border:1.5px dashed var(--line2);border-radius:var(--r2);padding:22px 18px;text-align:center;color:var(--txt2);font-size:13.5px;}
+.divid{height:1px;background:var(--line);margin:14px 0;}
+details>summary{list-style:none;cursor:pointer;}
+details>summary::-webkit-details-marker{display:none;}
+details>summary::after{content:"";width:9px;height:9px;margin-left:auto;border-right:2px solid var(--txt2);border-bottom:2px solid var(--txt2);transform:rotate(45deg) translateY(-2px);transition:transform .2s;flex:none;}
+details[open]>summary::after{transform:rotate(-135deg) translateY(-2px);}
+details>summary.h2{width:100%;}
+
+/* avatar com anel */
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--teal));color:var(--on-accent);box-shadow:0 0 0 3px var(--ag-bg);}
+.av.a1{background:linear-gradient(135deg,var(--cyan),var(--accent));} .av.a2{background:linear-gradient(135deg,var(--teal),var(--warn));} .av.a3{background:linear-gradient(135deg,var(--warn),var(--accent));} .av.a4{background:linear-gradient(135deg,var(--cyan),var(--teal));}
+
+/* farol: anel de tempo + texto */
+.farol{display:flex;gap:16px;align-items:center;padding:14px 18px;border-radius:var(--r2);background:rgba(var(--surface-rgb),.5);box-shadow:inset 0 0 0 1px var(--line);--c:var(--txt3);}
+.farol.verde{--c:var(--ok);background:linear-gradient(var(--ok-bg),var(--ok-bg)),rgba(var(--surface-rgb),.5);}
+.farol.amarelo{--c:var(--warn);background:linear-gradient(var(--warn-bg),var(--warn-bg)),rgba(var(--surface-rgb),.5);}
+.farol.vermelho{--c:var(--danger);background:linear-gradient(var(--bad-bg),var(--bad-bg)),rgba(var(--surface-rgb),.5);}
+.farol b{display:block;}
+.fring{position:relative;flex:none;width:68px;height:68px;}
+.fring svg{display:block;transform:rotate(-90deg);width:100%;height:100%;}
+.fring circle{fill:none;stroke-width:7;stroke-linecap:round;}
+.fring .bg{stroke:var(--line2);} .fring .fg{stroke:var(--c);transition:stroke-dashoffset .6s ease;}
+.fring span{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;}
+.fring span b{font-family:var(--ff-d);font-size:20px;} .fring span i{font-style:normal;font-size:9.5px;color:var(--txt2);margin-top:2px;letter-spacing:.04em;}
+.fring .lamp{font-size:26px;font-style:normal;}
+
+/* humor: carinhas redondas */
+.faces{display:flex;gap:10px;flex-wrap:wrap;}
+.faces button{width:56px;height:56px;border-radius:50%;border:0;background:rgba(var(--surface2-rgb),.7);box-shadow:inset 0 0 0 1px var(--line2);font-size:28px;line-height:1;transition:transform .18s,box-shadow .18s,background .18s;}
+.faces button:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 2px var(--accent);}
+.faces button[aria-pressed="true"]{background:linear-gradient(var(--ag-bg),var(--ag-bg)),rgba(var(--surface-rgb),.95);box-shadow:0 0 0 3px var(--accent),0 8px 18px rgba(0,0,0,.3);transform:scale(1.12);}
+.mood-lbl{min-height:20px;font-size:13px;font-weight:700;color:var(--txt2);}
+.spark{display:flex;gap:4px;align-items:flex-end;height:44px;margin-top:6px;}
+.spark i{flex:1;max-width:18px;min-height:5px;border-radius:99px;background:linear-gradient(var(--teal),var(--accent));opacity:.95;}
+.spark i.v{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2);}
+
+/* estrelas: carrossel dourado */
+.carr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:thin;}
+.star{flex:0 0 min(300px,84%);scroll-snap-align:start;position:relative;padding:18px 18px 16px;border-radius:var(--r2);background:linear-gradient(150deg,var(--warn-bg),transparent 80%),rgba(var(--surface-rgb),.6);box-shadow:inset 0 0 0 1px var(--warn);}
+.star::before{content:"“";position:absolute;right:16px;top:-2px;font-family:var(--ff-d);font-size:64px;line-height:1;color:var(--warn);opacity:.4;}
+.star .de{font-weight:800;font-family:var(--ff-d);margin-bottom:4px;}
+
+/* fases do ciclo: trilha segmentada */
+.fase{display:flex;gap:8px;margin:2px 0;}
+.fase span{flex:1;min-width:0;text-align:center;font-size:12px;font-weight:700;color:var(--txt2);}
+.fase span::before{content:"";display:block;height:7px;border-radius:99px;background:var(--line2);margin-bottom:7px;}
+.fase span.ok::before{background:var(--ok);} .fase span.on::before{background:linear-gradient(90deg,var(--accent),var(--teal));box-shadow:0 0 10px var(--glass-h);}
+.fase span.on{color:var(--txt);} .fase span.ok{color:var(--txt);}
+.sbs{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start;}
+.sbs .lado{position:sticky;top:130px;max-height:78vh;overflow:auto;}
+.trava{border-radius:var(--r2);padding:18px;background:linear-gradient(var(--warn-bg),var(--warn-bg)),rgba(var(--surface-rgb),.4);box-shadow:inset 0 0 0 1.5px var(--warn);}
+.trava>p{margin-top:6px;}
+.pill{display:inline-flex;gap:5px;align-items:center;background:rgba(var(--surface2-rgb),.7);padding:3px 11px;border-radius:999px;font-size:12px;font-weight:700;}
+
+/* Baú: cartões coloridos por tipo */
+.lst.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px;}
+.lst.cards li{align-items:flex-start;padding:16px;border:0;border-radius:var(--r2);background:rgba(var(--surface2-rgb),.5);box-shadow:inset 0 0 0 1px var(--line);position:relative;overflow:hidden;}
+.lst.cards li::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--tc);opacity:.85;}
+.bb{width:40px;height:40px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:19px;background:var(--ag-bg);box-shadow:inset 0 0 0 1px var(--line);}
+.b-card{--tc:var(--accent);} .b-marco{--tc:var(--teal);} .b-kudo{--tc:var(--warn);} .b-manual{--tc:var(--cyan);}
+.lst.cards li .bb{background:linear-gradient(var(--ag-bg),var(--ag-bg)),rgba(var(--surface-rgb),.6);}
+.lst.cards li .btn.s{align-self:flex-start;}
+
+/* Diário: linha do tempo */
+.mes{border-radius:var(--r2);background:rgba(var(--surface2-rgb),.45);box-shadow:inset 0 0 0 1px var(--line);padding:6px 18px;}
+.mes>summary{padding:12px 0;min-height:44px;}
+.tl{position:relative;margin:4px 0 12px 14px;padding-left:22px;border-left:2px solid var(--line2);}
+.dia{position:relative;padding:4px 0 16px;}
+.dia::before{content:"";position:absolute;left:-30px;top:8px;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--deep),0 0 0 5px var(--line2);}
+:root[data-theme="light"] .dia::before{box-shadow:0 0 0 4px #e9f6fb,0 0 0 5px var(--line2);}
+.dia .dh{display:flex;gap:10px;align-items:center;justify-content:space-between;}
+.dia .mo{width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:22px;background:var(--ag-bg);flex:none;}
+.dia p{margin-top:6px;white-space:pre-line;}
+
+/* Frota */
+.pcard{padding:20px;cursor:default;--c:var(--txt3);}
+.pcard.verde{--c:var(--ok);} .pcard.amarelo{--c:var(--warn);} .pcard.vermelho{--c:var(--danger);}
+.pcard .top{display:flex;gap:14px;align-items:center;}
+.pcard .av{width:52px;height:52px;font-size:17px;box-shadow:0 0 0 3px var(--c);}
+.pcard .acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.termo{display:grid;grid-template-columns:minmax(220px,260px) 1fr;gap:22px;align-items:center;}
+.gauge{position:relative;width:100%;max-width:260px;margin:0 auto;}
+.gauge svg{display:block;width:100%;height:auto;}
+.gauge path{fill:none;stroke-width:14;stroke-linecap:round;}
+.gauge .bg{stroke:var(--line2);} .gauge .fg{stroke:var(--c);}
+.gauge .gc{position:absolute;left:0;right:0;bottom:2px;text-align:center;line-height:1.1;}
+.gauge .gc .e{font-size:34px;display:block;} .gauge .gc b{font-family:var(--ff-d);font-size:22px;}
+.termo.verde{--c:var(--ok);} .termo.amarelo{--c:var(--warn);} .termo.vermelho{--c:var(--danger);} .termo.cinza{--c:var(--txt3);}
+.hist{display:flex;gap:10px;align-items:flex-end;height:112px;max-width:440px;}
+.btn.s[data-act$="-del"]{width:36px;min-height:36px;padding:0;border-radius:50%;flex:none;}
+.hist .hc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;}
+.hist .hc i{display:block;width:100%;max-width:38px;border-radius:12px 12px 6px 6px;background:linear-gradient(var(--teal),var(--accent));min-height:6px;}
+.hist .hc.z i{background:var(--line2);}
+.hist .hc span{font-size:11.5px;font-weight:700;color:var(--txt2);} .hist .hc em{font-style:normal;font-size:18px;}
+.bar{height:8px;border-radius:99px;background:rgba(var(--ink-rgb),.35);overflow:hidden;}
+:root[data-theme="light"] .bar{background:rgba(11,36,54,.14);}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--teal));}
+
+/* tabela do organograma */
+.tbl{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:13.5px;}
+.tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);text-align:left;padding:4px 12px;}
+.tbl td{padding:10px 12px;background:rgba(var(--surface2-rgb),.45);vertical-align:middle;}
+.tbl td:first-child{border-radius:18px 0 0 18px;} .tbl td:last-child{border-radius:0 18px 18px 0;}
+.tbl select{width:100%;}
+
+/* demo, login, toast, confirmação */
+.demo-bar .gl{border-radius:var(--r2);}
+.login{max-width:440px;margin:8vh auto 0;padding:32px;text-align:center;}
+.login p{color:var(--txt2);margin:12px 0 18px;}
+.err{color:var(--txt);background:var(--bad-bg);box-shadow:inset 0 0 0 1px var(--danger);border-radius:var(--r);padding:10px 14px;margin-top:12px;font-size:13px;text-align:left;}
+.carregando{padding:26px;text-align:center;color:var(--txt2);}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;max-width:min(92vw,480px);padding:12px 20px;border-radius:999px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent);box-shadow:var(--shadow);font-weight:600;}
+.ovl{position:fixed;inset:0;z-index:70;background:rgba(3,10,18,.62);display:flex;align-items:center;justify-content:center;}
+.dois{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+@media (max-width:860px){ .sbs{grid-template-columns:1fr;} .sbs .lado{position:static;max-height:none;} .termo{grid-template-columns:1fr;} }
+@media (max-width:760px){
+  body{padding-bottom:92px;}
+  .wrap{padding:0 14px 40px;}
+  .nav{position:fixed;top:auto;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));width:auto;margin:0;padding:6px;justify-content:space-between;gap:2px;border-radius:28px;overflow:visible;}
+  .nav button{flex:1;flex-direction:column;gap:2px;padding:7px 2px;border-radius:22px;font-size:10.5px;min-height:52px;min-width:0;}
+  .nav .ni{font-size:19px;line-height:1;} .nav .long{display:none;} .nav .short{display:inline;}
+  .toast{bottom:100px;}
+  .hero{padding:20px 20px 40px;border-radius:26px;} .hero .barco{font-size:34px;right:18px;}
+  .pad{padding:18px;} .h1{font-size:25px;}
+}
+@media (max-width:560px){
+  .dois{grid-template-columns:1fr;}
+  .tbl thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%;}
+  .tbl tr{padding:10px 4px;margin-bottom:8px;border-radius:20px;background:rgba(var(--surface2-rgb),.45);} .tbl td{background:none;border:0;padding:5px 10px;display:flex;gap:10px;align-items:center;justify-content:space-between;border-radius:0 !important;}
+  .tbl td::before{content:attr(data-l);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);flex:none;}
+  .faces{justify-content:space-between;} .faces button{width:52px;height:52px;font-size:26px;}
+  .fase span{font-size:11px;}
+}
+@media (hover:none) and (pointer:coarse){ .btn,.nav button,.tabs button,.filtros button{min-height:44px;} input,select,textarea{font-size:16px;} .btn.s{min-height:40px;} }
+@media (prefers-reduced-motion:reduce){ .hero .barco{animation:none;} *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="ocean" aria-hidden="true"></div>
+<header class="topo">
+  <div class="topo-in">
+    <div class="logo"><span class="lg" aria-hidden="true">⛵</span> Travessia</div>
+    <div class="sp"></div>
+    <div class="who" id="quem" hidden><img id="quem-foto" alt="" hidden><span id="quem-nome"></span><button class="btn s" id="btn-sair" type="button">Sair</button></div>
+    <button class="btn" id="btn-tema" type="button" style="padding:5px 14px;min-height:40px;font-size:17px" aria-label="Trocar tema" title="Clique para alternar: 🌙 Abrolhos → ☀️ Lençóis Maranhenses → 🌅 Entardecer. Preferência salva só neste navegador.">🌙</button>
+  </div>
+</header>
+<div class="wrap demo-bar" id="demo-bar" hidden><div class="gl pad row" style="margin-top:12px;justify-content:space-between"><div><b>🎭 Modo demonstração</b> <span class="small">· dados fictícios de 2 trimestres de uso. Nada é gravado no Firebase; o que você mexer vale só nesta aba.</span></div><label class="row" style="gap:8px"><span class="lbl">Ver como</span><select class="sel2" id="demo-persona" aria-label="Ver como"></select></label></div></div>
+<main class="wrap" id="app" hidden></main>
+<section class="wrap" id="login"><div class="gl login"><div class="logo" style="justify-content:center;font-size:26px">⛵ Travessia</div>
+  <p>Seu espaço de desenvolvimento, 1:1 e avaliação. Entre com a conta Google da Hering.</p>
+  <button class="btn p" id="btn-login" type="button">Entrar com Google</button>
+  <div class="err" id="login-err" role="alert" hidden></div></div></section>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="ovl" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ov-msg"><div class="gl pad stack" style="max-width:420px;width:92vw"><p id="ov-msg"></p><div class="row" style="justify-content:flex-end"><button class="btn" id="ov-no" type="button">Cancelar</button><button class="btn p" id="ov-ok" type="button">Confirmar</button></div></div></div>
+
+<script src="mare-login.js?v=3"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, get, set, remove, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  // Override manual sob chave PRÓPRIA desta página ('travessia'): chaves cruas de localStorage são compartilhadas entre as páginas do domínio.
+  apiKey:            localStorage.getItem('fb_apiKeytravessia')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomaintravessia')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURLtravessia')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectIdtravessia')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBuckettravessia')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderIdtravessia')|| '122502391131',
+  appId:             localStorage.getItem('fb_appIdtravessia')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const auth = getAuth(fbApp);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+window._signIn = () => signInWithPopup(auth, provider);
+// Login direto (iPhone/iPad — ver mare-login-dev.js): entrega o id_token que voltou do Google.
+window._signInIdToken = idToken => signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+
+// ───────── utilidades ─────────
+const T = 'kanban/travessia/';
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+const _hrefOk = u => { u = String(u == null ? '' : u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) || /^[a-z0-9_\-]+\.html(\?[^\s"'<>]*)?(#[^\s"'<>]*)?$/i.test(u) ? u : '#'; };
+const pad = n => String(n).padStart(2, '0');
+const isoDe = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const hojeISO = () => isoDe(new Date());
+const brDe = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '')); return m ? m[3] + '/' + m[2] : String(iso || ''); };
+const brFull = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '')); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(iso || ''); };
+const diasEntre = (a, b) => Math.round((Date.parse(b + 'T12:00:00') - Date.parse(a + 'T12:00:00')) / 86400000);
+const novoId = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+let toastT = null;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3600); }
+async function G(path) { if (DEMO) return JSON.parse(JSON.stringify(memGet(path))); const s = await get(ref(db, path)); return s.val(); }
+const W = (path, v) => DEMO ? Promise.resolve(memSet(T + path, v)) : set(ref(db, T + path), v);
+const D = path => DEMO ? Promise.resolve(memSet(T + path, null)) : remove(ref(db, T + path));
+const WABS = (path, v) => DEMO ? Promise.resolve(memSet(path, v)) : set(ref(db, path), v);   // caminho absoluto (ex.: notificação do líder)
+function uiConfirm(msg, okTxt) {
+  return new Promise(res => { const ov = $('#ov'); $('#ov-msg').textContent = msg; $('#ov-ok').textContent = okTxt || 'Confirmar'; ov.hidden = false; $('#ov-ok').focus();
+    const fim = v => { ov.hidden = true; $('#ov-ok').onclick = $('#ov-no').onclick = null; document.removeEventListener('keydown', esc_); res(v); };
+    const esc_ = ev => { if (ev.key === 'Escape') fim(false); };
+    document.addEventListener('keydown', esc_); $('#ov-ok').onclick = () => fim(true); $('#ov-no').onclick = () => fim(false); });
+}
+function erroAmigavel(e) {
+  const m = String((e && (e.code || e.message)) || e);
+  if (/PERMISSION_DENIED|permission/i.test(m)) return '🔒 Sem permissão. Se isso é novo, as regras do Travessia ainda podem não ter sido publicadas (firebase deploy --only database).';
+  return '⚠️ Não deu pra concluir (' + m.slice(0, 80) + '). Tente de novo.';
+}
+async function tenta(fn, ok) { try { await fn(); if (ok) toast(ok); return true; } catch (e) { toast(erroAmigavel(e)); console.warn('[travessia]', e); return false; } }
+
+// ───────── regras de negócio (puras — expostas em window.Travessia para teste) ─────────
+const CAD = { semanal: 'Semanal', quinzenal: 'Quinzenal', mensal: 'Mensal', trimestral: 'Trimestral' };
+const CAD_DIAS = { semanal: 7, quinzenal: 14, mensal: 30, trimestral: 90 };
+const TIPO_1A1 = { acomp: 'Acompanhamento', pdi: 'Check-in de PDI', carreira: 'Carreira e ciclo' };
+const FACES = [['😣', 'Muito mal'], ['🙁', 'Mal'], ['😐', 'Mais ou menos'], ['🙂', 'Bem'], ['😄', 'Muito bem']];
+const FASES = [['preparacao', 'Preparação'], ['coleta', 'Coleta'], ['devolutiva', 'Devolutiva'], ['encerrado', 'Encerrado']];
+const PERGUNTAS_PADRAO = {
+  auto: { q1: 'Quais foram suas principais entregas neste ciclo e do que você mais se orgulha?', q2: 'Onde você sente que evoluiu? Dê exemplos.', q3: 'Onde você quer evoluir no próximo ciclo?', q4: 'Como seu líder e o time podem te apoiar?' },
+  lider: { q1: 'Entregas e impacto no ciclo.', q2: 'Comportamentos que a pessoa deve CONTINUAR fazendo.', q3: 'Comportamentos que deve COMEÇAR ou AJUSTAR para crescer.', q4: 'Próximos passos e oportunidades de desenvolvimento.' },
+  par: { q1: 'O que essa pessoa deve CONTINUAR fazendo?', q2: 'O que ela deve COMEÇAR ou AJUSTAR para crescer?', q3: 'Um exemplo concreto de colaboração com ela (opcional).' },
+};
+// Farol da cadência do 1:1: compara os dias desde o último encontro (menos as folgas da Escala) com a cadência combinada.
+// Verde até cadência+1 dia; amarelo até 1,5× a cadência; vermelho acima. Sem cadência ou sem encontro registrado = cinza (convite pra registrar).
+function farol({ ultimo, cad, folgas, hoje }) {
+  if (!cad || !CAD_DIAS[cad]) return { cor: 'cinza', ic: '⚪', titulo: 'Cadência não definida', sub: 'Defina a cadência do 1:1 (semanal, quinzenal, mensal ou trimestral).' };
+  if (!ultimo) return { cor: 'cinza', ic: '⚪', titulo: 'Nenhum 1:1 registrado', sub: 'Cadência ' + CAD[cad].toLowerCase() + '. Registre o último 1:1 para o farol funcionar.' };
+  const dias = Math.max(0, diasEntre(ultimo, hoje || hojeISO())); const fo = Math.min(Math.max(0, folgas || 0), dias); const ef = dias - fo;
+  const lim = CAD_DIAS[cad]; const cor = ef <= lim + 1 ? 'verde' : ef <= Math.ceil(lim * 1.5) ? 'amarelo' : 'vermelho';
+  const nome = { verde: 'Em dia', amarelo: 'Atenção', vermelho: 'Atrasado' }[cor]; const ic = { verde: '🟢', amarelo: '🟡', vermelho: '🔴' }[cor];
+  return { cor, ic, dias, efetivo: ef, titulo: nome + ' · ' + (dias === 0 ? 'último 1:1 hoje' : 'último 1:1 há ' + dias + (dias === 1 ? ' dia' : ' dias')),
+    sub: 'Cadência ' + CAD[cad].toLowerCase() + (fo ? ' · ' + fo + (fo === 1 ? ' dia de folga descontado' : ' dias de folga descontados') : '') };
+}
+// 🌡️ Termômetro do time: entra o humor que as pessoas registraram a partir de 31/10/2026 (humor_comp — o humor agora vai SEMPRE pro líder direto; o que foi registrado antes, sob a promessa de privacidade, ficou só da pessoa). Janela de 7 dias contra os 7 anteriores.
+// `apoio` = quem marcou "mal" ou "muito mal" (1 ou 2) nos últimos 3 dias — só um sinal pro líder ficar de olho e apoiar.
+function termometro(hc, hoje, totalPessoas) {
+  const idade = k => diasEntre(k, hoje); const w = (a, b) => { const v = []; Object.keys(hc || {}).forEach(u => Object.entries(hc[u] || {}).forEach(([k, e]) => { const i = idade(k); if (e && e.n && i >= a && i <= b) v.push({ u, k, n: e.n }); })); return v; };
+  const atual = w(0, 6), ant = w(7, 13); const media = v => v.length ? v.reduce((s, x) => s + x.n, 0) / v.length : null;
+  const dist = [0, 0, 0, 0, 0]; atual.forEach(x => dist[x.n - 1]++);
+  const dias = []; for (let i = 13; i >= 0; i--) { const d = new Date(Date.parse(hoje + 'T12:00:00')); d.setDate(d.getDate() - i); const k = isoDe(d); const v = w(0, 13).filter(x => x.k === k); dias.push({ k, media: media(v), n: v.length }); }
+  const apoio = []; Object.keys(hc || {}).forEach(u => { const es = Object.entries(hc[u] || {}).filter(([k, e]) => e && e.n && idade(k) >= 0 && idade(k) <= 2).sort((a, b) => b[0].localeCompare(a[0])); if (es.length && es[0][1].n <= 2) apoio.push({ uid: u, n: es[0][1].n, k: es[0][0] }); });
+  const m = media(atual), pessoas = new Set(atual.map(x => x.u)).size;
+  return { media: m, respostas: atual.length, pessoas, total: totalPessoas || 0, anterior: media(ant), dist, dias, apoio, cor: m == null ? 'cinza' : m >= 3.5 ? 'verde' : m >= 2.5 ? 'amarelo' : 'vermelho' };
+}
+const ultimoEncontro = enc => Object.values(enc || {}).map(e => e && e.data).filter(Boolean).sort().pop() || null;
+
+// ───────── estado ─────────
+const S = { me: null, users: {}, vinc: {}, ciclos: {}, rh: false, adm: false, tab: 'inicio', cache: {}, sel: null, selTab: 'um', aval: {}, ultimoFoco: null, filtroBau: 'todos', pesq: '' };
+const nomeDe = uid => (S.users[uid] && (S.users[uid].nome || S.users[uid].name)) || (uid === S.me?.uid ? S.me.nome : 'Pessoa');
+const iniDe = uid => (nomeDe(uid).split(' ').map(x => x[0]).slice(0, 2).join('') || '?').toUpperCase();
+const liderDe = uid => S.vinc[uid]?.liderUid || null;
+const liderados = () => Object.keys(S.vinc).filter(u => S.vinc[u]?.liderUid === S.me.uid).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b)));
+const timeAmpliado = () => Object.keys(S.vinc).filter(u => S.vinc[u]?.gerenteUid === S.me.uid && S.vinc[u]?.liderUid !== S.me.uid).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b)));
+const ehLider = () => liderados().length > 0 || timeAmpliado().length > 0;
+const ciclosAtivos = () => Object.entries(S.ciclos).filter(([, c]) => c && c.status !== 'encerrado').sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+const participa = (c, uid) => !!(c && c.participantes && c.participantes[uid]);
+const perguntasDe = (c, g) => Object.assign({}, PERGUNTAS_PADRAO[g], (c && c.perguntas && c.perguntas[g]) || {});
+const avatar = uid => `<div class="av a${[...nomeDe(uid)].reduce((a, c) => a + c.charCodeAt(0), 0) % 5}" aria-hidden="true">${esc(iniDe(uid))}</div>`;
+const chip = (t, c) => `<span class="chip ${c || ''}">${t}</span>`;
+const vazio = t => `<div class="vazio">${t}</div>`;
+const carregando = t => `<div class="carregando" role="status">${esc(t || 'Conferindo…')}</div>`;
+
+// ───────── leituras (sob demanda, cacheadas até o próximo salvamento) ─────────
+async function folgasDe(uid, desdeISO) {
+  // Dias de folga da pessoa na Escala entre o último 1:1 e hoje (qualquer squad). Leitura por faixa de datas (as chaves do nó são AAAA-MM-DD).
+  try {
+    const v = (DEMO ? memGet('kanban/escala') : (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(desdeISO), endAt(hojeISO())))).val()) || {};
+    const dias = new Set();
+    Object.keys(v).forEach(d => { if (d < desdeISO || d > hojeISO()) return; Object.values(v[d] || {}).forEach(sq => { const e = sq && sq[uid]; if (e && e.t === 'folga') dias.add(d); }); });
+    return dias.size;
+  } catch (e) { return 0; }
+}
+async function carregaUm(uid) {   // série + encontros + farol de UMA pessoa
+  const [serie, enc] = await Promise.all([G(T + 'serie/' + uid), G(T + 'encontros/' + uid)]);
+  const ultimo = ultimoEncontro(enc);
+  const folgas = ultimo && serie?.cad ? await folgasDe(uid, ultimo) : 0;
+  return { serie: serie || null, enc: enc || {}, ultimo, farol: farol({ ultimo, cad: serie?.cad, folgas }) };
+}
+async function carregaHumor(uid, compartilhado) {
+  const v = (await G(T + (compartilhado ? 'humor_comp/' : 'humor/') + uid)) || {};
+  if (compartilhado) return v;
+  const c = (await G(T + 'humor_comp/' + uid)) || {};   // dias que a própria pessoa escolheu compartilhar com o líder
+  Object.keys(v).forEach(k => { v[k] = Object.assign({}, v[k], { comp: !!c[k] }); });
+  return v;
+}
+async function carregaDiario(uid) { return (await G(T + 'diario/' + uid)) || {}; }
+async function carregaBau(uid) { return (await G(T + 'bau/' + uid)) || {}; }
+async function carregaEstrelas() {
+  // Estrelas (Kudos) recebidas: mural geral + as squads da pessoa. Só mostramos a seção se houver alguma.
+  const eu = S.users[S.me.uid] || {}; const sqs = Object.keys(eu.squads || {}).filter(k => eu.squads[k]);
+  const leitura = async (path, escopo) => { try { const v = await G(path); const arr = Array.isArray(v) ? v : Object.values(v || {}); return arr.filter(Boolean).map(k => Object.assign({}, k, { _escopo: escopo })); } catch (e) { return []; } };
+  const todas = (await Promise.all([leitura('kanban/painel/kudos_geral', 'geral')].concat(sqs.map(s => leitura('kanban/squads/' + s + '/dados/kudos', s))))).flat();
+  const minhas = todas.filter(k => (k.toUid && k.toUid === S.me.uid) || (!k.toUid && eu.init && k.toInit === eu.init));
+  const vistos = new Set(); return minhas.filter(k => { const id = k.id || (k.ts + k.fromUid); if (vistos.has(id)) return false; vistos.add(id); return true; }).sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+}
+async function carregaAval(cid, uid) {   // tudo que EU posso ler da avaliação de uma pessoa (cada nó tem a sua regra; o que nega vira null)
+  const ler = async p => { try { return await G(T + 'avaliacoes/' + cid + '/' + uid + '/' + p); } catch (e) { return null; } };
+  const [pares, auto, lider, resp, devol, ciente] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente')]);
+  return { pares: pares || {}, auto, lider, resp: resp || {}, devol, ciente };
+}
+const invalida = k => { Object.keys(S.cache).filter(x => x === k || x.startsWith(k + ':')).forEach(x => delete S.cache[x]); };
+async function cache(k, fn) { if (!(k in S.cache)) S.cache[k] = await fn(); return S.cache[k]; }
+
+// ───────── telas ─────────
+// 📓 Fechamento do dia: humor de fim de dia + texto livre. PRIVADO (kanban/travessia/diario/{uid}/{dia}): só a própria pessoa lê; fica guardado pra ela se lembrar depois.
+function blocoFechamento(diario) {
+  const hj = hojeISO(); const hoje = diario[hj]; if (S.diaN === undefined) S.diaN = hoje && hoje.n ? hoje.n : null;
+  const passadas = Object.keys(diario).filter(k => k < hj).sort().reverse(); const ult = passadas.length ? diario[passadas[0]] : null;
+  return `<section class="gl pad stack" aria-labelledby="t-fe"><h2 class="h2" id="t-fe">🌙 Fechamento do dia${hoje ? ' <span class="chip ok">✔ salvo hoje</span>' : ''}</h2>
+    <p class="sub">Como foi o seu dia? Conte do seu jeito — o que rolou de bom, o que pesou, o que você aprendeu.</p>
+    <div class="faces" role="group" aria-label="Humor do fim do dia">${FACES.map((f, i) => `<button type="button" data-act="dia-n" data-n="${i + 1}" aria-pressed="${S.diaN === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
+    <div class="mood-lbl" id="dia-lbl" aria-live="polite">${S.diaN ? esc(FACES[S.diaN - 1][1]) : 'Toque numa carinha'}</div>
+    <label class="sr" for="dia-txt">Como foi o seu dia</label><textarea class="ta" id="dia-txt" maxlength="1500" placeholder="Hoje eu…">${esc((hoje && hoje.texto) || '')}</textarea>
+    <div class="row"><button class="btn p" data-act="dia-salvar">💾 Salvar o dia</button><span class="small">🔒 Fica salvo só pra você, no 📓 Diário da Travessia, pra você se lembrar depois. Ninguém lê — nem o seu líder.</span></div>
+    ${!hoje && ult && ult.texto ? `<p class="small">Seu último registro (${esc(brDe(passadas[0]))}): “${esc(String(ult.texto).slice(0, 140))}${String(ult.texto).length > 140 ? '…' : ''}”</p>` : ''}</section>`;
+}
+async function viewDiario() {
+  const d = await cache('diario:' + S.me.uid, () => carregaDiario(S.me.uid)); const q = S.pesq.trim().toLowerCase();
+  const dias = Object.keys(d).sort().reverse().filter(k => !q || String(d[k].texto || '').toLowerCase().includes(q));
+  const mes = k => { const [a, m] = k.split('-'); return ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+m - 1] + ' de ' + a; };
+  const grupos = []; dias.forEach(k => { const m = mes(k); if (!grupos.length || grupos[grupos.length - 1].m !== m) grupos.push({ m, ks: [] }); grupos[grupos.length - 1].ks.push(k); });
+  const card = k => { const e = d[k]; return `<article class="dia"><div class="dh"><b>${esc(brFull(k))}</b>${e.n ? `<span class="mo" role="img" aria-label="${FACES[e.n - 1][1]}" title="${FACES[e.n - 1][1]}">${FACES[e.n - 1][0]}</span>` : ''}</div>
+      ${e.texto ? `<p>${esc(e.texto)}</p>` : '<p class="small">Só o humor, sem texto.</p>'}
+      <div class="row" style="margin-top:8px">${e.texto ? `<button class="btn s" data-act="dia-bau" data-d="${esc(k)}">💼 Guardar no Baú</button>` : ''}<button class="btn s" data-act="dia-del" data-d="${esc(k)}" aria-label="Apagar o registro de ${esc(brFull(k))}">🗑</button></div></article>`; };
+  // Só o mês mais recente (ou o resultado de uma busca) vem aberto; os meses antigos ficam recolhidos com o resumo (quantos dias e o humor médio) — 2 trimestres de diário não viram uma parede de texto.
+  const lista = grupos.map((g, i) => { const ns = g.ks.map(k => d[k].n).filter(Boolean); const md = ns.length ? FACES[Math.min(5, Math.max(1, Math.round(ns.reduce((x, y) => x + y, 0) / ns.length))) - 1] : null;
+    return `<details class="mes" style="margin-top:12px" ${i === 0 || q ? 'open' : ''}><summary class="h2">${esc(g.m)} <span class="chip">${g.ks.length} ${g.ks.length === 1 ? 'dia' : 'dias'}</span>${md ? ` <span class="small" title="Humor médio do mês">${md[0]} média ${esc(md[1].toLowerCase())}</span>` : ''}</summary><div class="tl">${g.ks.map(card).join('')}</div></details>`; }).join('');
+  return `<div class="stack">${blocoFechamento(d)}<section class="gl pad stack" aria-labelledby="di-t"><h2 class="h2" id="di-t">📓 Meu diário <span class="chip">${Object.keys(d).length}</span></h2>
+    <p class="sub">Seus fechamentos de dia, só seus. Na hora da avaliação ou de um 1:1, é um bom lugar pra lembrar como foi o ciclo — e dá pra guardar um dia no 📦 Baú.</p>
+    <label class="sr" for="pesq">Buscar no diário</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar no diário…" value="${esc(S.pesq)}" autocomplete="off">
+    ${lista || vazio(q ? 'Nada encontrado.' : 'Seu diário está vazio. Escreva o primeiro fechamento acima.')}</section></div>`;
+}
+function viewFarol(uid, d, quem) {
+  // Anel do tempo desde o último 1:1: enche até 1,5× a cadência (aí vira vermelho). Decorativo — o estado vem em cor + ícone + texto ao lado.
+  const f = d.farol; const lim = CAD_DIAS[d.serie && d.serie.cad] || 0; const C = 2 * Math.PI * 29; const pct = f.dias != null && lim ? Math.min(1, f.efetivo / Math.ceil(lim * 1.5)) : 0;
+  const centro = f.dias != null ? `<b>${f.dias}</b><i>${f.dias === 1 ? 'DIA' : 'DIAS'}</i>` : `<em class="lamp">${f.ic}</em>`;
+  return `<div class="farol ${f.cor}"><div class="fring" aria-hidden="true"><svg viewBox="0 0 68 68"><circle class="bg" cx="34" cy="34" r="29"/><circle class="fg" cx="34" cy="34" r="29" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}"/></svg><span>${centro}</span></div><div><b><span aria-hidden="true">${f.ic} </span>${esc(f.titulo)}</b><span class="small">${esc(f.sub)}</span></div></div>`;
+}
+function sparkHumor(h, dias) {
+  const out = []; const hoje = new Date();
+  for (let i = dias - 1; i >= 0; i--) { const d = new Date(hoje); d.setDate(hoje.getDate() - i); const k = isoDe(d); const n = h[k] && h[k].n; out.push(n ? `<i style="height:${n * 20}%" title="${brDe(k)}: ${FACES[n - 1][1]}"></i>` : `<i class="v" title="${brDe(k)}: sem registro"></i>`); }
+  return `<div class="spark" role="img" aria-label="Humor dos últimos ${dias} dias">${out.join('')}</div>`;
+}
+async function viewInicio() {
+  const me = S.me.uid; const lid = liderDe(me);
+  const [um, humor, bau, estrelas, diario] = await Promise.all([cache('um:' + me, () => carregaUm(me)), cache('humor:' + me, () => carregaHumor(me, false)), cache('bau:' + me, () => carregaBau(me)), cache('estrelas', carregaEstrelas), cache('diario:' + me, () => carregaDiario(me))]);
+  const hj = hojeISO(); const hHoje = humor[hj];
+  const itensBau = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const pend = []; ciclosAtivos().forEach(([cid, c]) => { if (participa(c, me)) pend.push(`<li><span class="bb" aria-hidden="true">📐</span><div class="tx"><b>${esc(c.nome)}</b> — fase ${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</div><button class="btn s" data-tab="aval">Abrir</button><div class="fase" aria-label="Fase do ciclo">${FASES.map(f => `<span class="${f[0] === c.status ? 'on' : (FASES.findIndex(x => x[0] === c.status) > FASES.findIndex(x => x[0] === f[0]) ? 'ok' : '')}">${f[1]}</span>`).join('')}</div></li>`); });
+  return `<div class="stack">
+   <div class="grid g2">
+    <section class="gl pad stack" aria-labelledby="t-um"><h2 class="h2" id="t-um">🚦 Meu 1:1${lid ? ' com ' + esc(nomeDe(lid)) : ''}</h2>
+      ${lid ? viewFarol(me, um) : `<div class="vazio">Seu líder ainda não foi definido no organograma. Peça ao ADM ou ao RH para configurar.</div>`}
+      ${lid ? `<form class="row" data-form="encontro" data-uid="${me}"><label class="sr" for="enc-d">Data do 1:1</label><input class="in" id="enc-d" type="date" name="data" value="${hj}" max="${hj}" style="max-width:170px"><button class="btn p" type="submit">✅ Registrei um 1:1</button></form>` : ''}
+      ${um.ultimo ? `<p class="small">Último registro: ${brFull(um.ultimo)}</p>` : ''}</section>
+    <section class="gl pad stack" aria-labelledby="t-hu"><h2 class="h2" id="t-hu">🌤️ Como você está hoje?</h2>
+      <div class="faces" role="group" aria-label="Humor de hoje">${FACES.map((f, i) => `<button type="button" data-act="humor" data-n="${i + 1}" aria-pressed="${hHoje && hHoje.n === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
+      <div class="mood-lbl" aria-live="polite">${hHoje && hHoje.n ? esc(FACES[hHoje.n - 1][1]) + ' hoje' : 'Toque numa carinha'}</div>
+      <p class="small">👁 ${lid ? 'Seu líder (' + esc(nomeDe(lid)) + ') vê' : 'Quando seu líder for definido no organograma, ele passa a ver'} o seu humor: a média do time no termômetro dele e, se você marcar que não está bem, um aviso para ele poder te apoiar. Ninguém (nem o sistema) analisa seu humor. O que você registrou antes de 31/10/2026 continua só seu, e o fechamento do dia (abaixo) também.</p>
+      ${sparkHumor(humor, 14)}</section></div>
+   ${blocoFechamento(diario)}
+   ${pend.length ? `<section class="gl pad" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
+   ${estrelas.length ? `<section class="gl pad stack" aria-labelledby="t-es"><h2 class="h2" id="t-es">⭐ Mural de Estrelas <span class="chip">${estrelas.length}</span></h2>
+      <div class="carr">${estrelas.slice(0, 9).map(k => `<article class="star"><div class="de">${esc(k.fromNome || 'Alguém')}</div><div>${esc(k.texto || '')}</div><div class="meta"><span class="chip">${esc(String(k.ts || '').slice(0, 10).split('-').reverse().join('/'))}</span><span class="chip">${k._escopo === 'geral' ? '🌊 Geral' : esc(k._escopo)}</span></div>
+      <div class="row" style="margin-top:8px"><button class="btn s" data-act="estrela-bau" data-id="${esc(k.id || '')}" data-i="${estrelas.indexOf(k)}">💼 Guardar no Baú</button></div></article>`).join('')}</div></section>` : ''}
+   <section class="gl pad stack" aria-labelledby="t-ba"><div class="row" style="justify-content:space-between"><h2 class="h2" id="t-ba">📦 Meu Baú <span class="chip">${itensBau.length}</span></h2><button class="btn s" data-tab="bau">Abrir o Baú</button></div>
+     ${itensBau.length ? `<ul class="lst">${itensBau.slice(0, 3).map(([id, b]) => `<li class="b-${esc(b.tipo || 'manual')}"><span class="bb" aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx">${esc(b.titulo)}<div class="meta"><span class="chip">${esc(brFull(b.em || isoDe(new Date(b.ts || 0))))}</span></div></div></li>`).join('')}</ul>` : vazio('Seu Baú está vazio. Guarde entregas e aprendizados para lembrar de tudo na hora da avaliação.')}</section></div>`;
+}
+const iconeBau = t => ({ card: '🌊', marco: '🎯', kudo: '⭐', manual: '✍️' }[t] || '💼');
+
+async function viewBau(uid, somenteLeitura) {
+  const bau = await cache('bau:' + uid, () => carregaBau(uid));
+  const itens = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).filter(([, b]) => S.filtroBau === 'todos' || b.tipo === S.filtroBau);
+  return `<section class="gl pad stack" aria-labelledby="bau-t"><h2 class="h2" id="bau-t">📦 ${somenteLeitura ? 'Baú de ' + esc(nomeDe(uid)) : 'Baú da Travessia'}</h2>
+   <p class="sub">Suas conquistas do ciclo, guardadas no dia a dia — assim a avaliação não depende da memória. Entregas do Maré, marcos do Radar e Estrelas entram com 1 clique (💼); o resto você registra aqui.</p>
+   <div class="filtros" role="group" aria-label="Filtrar o Baú">${[['todos', 'Tudo'], ['card', '🌊 Maré'], ['marco', '🎯 Radar'], ['kudo', '⭐ Estrelas'], ['manual', '✍️ Manual']].map(([k, l]) => `<button data-act="filtro-bau" data-f="${k}" aria-pressed="${S.filtroBau === k}">${l}</button>`).join('')}</div>
+   ${somenteLeitura ? '' : `<details class="foco"><summary class="h2">+ Registrar conquista ou aprendizado</summary>
+     <form data-form="bau" class="camp"><label for="b-t">Título</label><input class="in" id="b-t" name="titulo" maxlength="160" required placeholder="Ex.: Liderei a análise da Black Friday">
+     <label for="b-d">Desafio</label><textarea class="ta" id="b-d" name="desafio" maxlength="380" style="min-height:60px"></textarea>
+     <label for="b-a">O que eu fiz</label><textarea class="ta" id="b-a" name="acao" maxlength="380" style="min-height:60px"></textarea>
+     <label for="b-i">Impacto gerado</label><textarea class="ta" id="b-i" name="impacto" maxlength="380" style="min-height:60px"></textarea>
+     <label for="b-c">Competência <span class="small">(opcional)</span></label><input class="in" id="b-c" name="comp" maxlength="60" placeholder="Ex.: Comunicação, Liderança…">
+     <div class="row" style="margin-top:10px"><button class="btn p" type="submit">💼 Guardar no Baú</button></div></form></details>`}
+   ${itens.length ? `<ul class="lst cards">${itens.map(([id, b]) => `<li class="b-${esc(b.tipo || 'manual')}"><span class="bb" aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx"><b>${esc(b.titulo)}</b>${b.texto ? `<div class="small" style="white-space:pre-line">${esc(b.texto)}</div>` : ''}${b.nota ? `<div class="small">${esc(b.nota)}</div>` : ''}
+        <div class="meta"><span class="chip">${esc(brFull(b.em || isoDe(new Date(b.ts || 0))))}</span>${b.squad ? `<span class="chip">${esc(b.squad)}</span>` : ''}${b.comp ? `<span class="chip">🎓 ${esc(b.comp)}</span>` : ''}${b.link ? `<a class="chip" href="${esc(_hrefOk(b.link))}" target="_blank" rel="noopener noreferrer">↗ Abrir</a>` : ''}</div></div>
+        ${somenteLeitura ? '' : `<button class="btn s" data-act="bau-del" data-id="${esc(id)}" aria-label="Remover do Baú: ${esc(b.titulo)}">🗑</button>`}</li>`).join('')}</ul>` : vazio('Nada por aqui neste filtro.')}</section>`;
+}
+
+// ───────── avaliação (pessoa) ─────────
+function sugestoesPares(cid, uid, pares) {
+  const eu = S.users[uid] || {}; const meus = new Set(Object.keys(eu.squads || {}).filter(k => eu.squads[k]));
+  const q = S.pesq.trim().toLowerCase();
+  return Object.keys(S.users).filter(u => u !== uid && !pares[u] && u !== liderDe(uid)).filter(u => {
+    const nm = nomeDe(u).toLowerCase(); if (q) return nm.includes(q);
+    const sq = S.users[u].squads || {}; return Object.keys(sq).some(k => sq[k] && meus.has(k));
+  }).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b))).slice(0, 12);
+}
+function formResp(cid, avaliado, grupo, dados, perguntas, editavel, acaoTipo, dono) {
+  const ks = Object.keys(perguntas).sort(); const ctx = cid + '_' + avaliado + (dono ? '_' + dono : '');
+  return ks.map(k => `<div class="camp"><label for="r-${esc(grupo)}-${esc(ctx)}-${k}">${esc(perguntas[k])}</label><textarea class="ta" id="r-${esc(grupo)}-${esc(ctx)}-${k}" data-resp="${esc(grupo)}" data-ctx="${esc(ctx)}" data-q="${k}" maxlength="2500" ${editavel ? '' : 'readonly'}>${esc((dados && dados[k]) || '')}</textarea></div>`).join('')
+    + (editavel ? `<div class="row" style="margin-top:10px"><button class="btn p" data-act="${acaoTipo}" data-cid="${esc(cid)}" data-av="${esc(avaliado)}">💾 Salvar</button>${dados && dados.ts ? `<span class="small">Salvo em ${esc(new Date(dados.ts).toLocaleString('pt-BR'))}</span>` : ''}</div>` : '');
+}
+async function viewAval() {
+  const me = S.me.uid; const meus = Object.entries(S.ciclos).filter(([, c]) => participa(c, me)).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const pedidos = Object.values((await cache('pedidos', () => G(T + 'pedidos_par/' + me))) || {});
+  const bau = await cache('bau:' + me, () => carregaBau(me));
+  const blocoBau = Object.entries(bau).length ? `<ul class="lst">${Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).map(([id, b]) => `<li><span aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx">${esc(b.titulo)}</div><button class="btn s" data-act="citar" data-t="${esc(b.titulo)}" aria-label="Citar na resposta: ${esc(b.titulo)}">📎 Citar</button></li>`).join('')}</ul>` : vazio('Seu Baú está vazio.');
+  let saida = '';
+  for (const [cid, c] of meus) {
+    const a = await cache('aval:' + cid + ':' + me, () => carregaAval(cid, me));
+    const fase = c.status; const coleta = fase === 'coleta'; const prep = fase === 'preparacao' || coleta;
+    const aprovados = Object.values(a.pares).filter(p => p.aprovado).length;
+    const lib = a.devol && a.devol.liberada === true;
+    saida += `<section class="gl pad stack" aria-labelledby="c-${esc(cid)}"><h2 class="h2" id="c-${esc(cid)}">📐 ${esc(c.nome)}</h2>
+     <div class="fase" aria-label="Fase do ciclo">${FASES.map(f => `<span class="${f[0] === fase ? 'on' : (FASES.findIndex(x => x[0] === fase) > FASES.findIndex(x => x[0] === f[0]) ? 'ok' : '')}">${f[1]}</span>`).join('')}</div>
+     <div class="foco"><h3 class="h2">🤝 Meus pares</h3>${prep ? '<p class="small">Indique de 2 a 4 colegas que trabalharam com você. Seu líder aprova a lista; só quem for aprovado responde. Você não vê o que cada par escreveu.</p>' : '<p class="small">Pares que responderam neste ciclo. Você não vê o que cada um escreveu.</p>'}
+       <ul class="lst">${Object.entries(a.pares).map(([u, p]) => `<li>${avatar(u)}<div class="tx"><b>${esc(nomeDe(u))}</b><div class="meta">${p.aprovado ? chip('✅ Aprovado pelo líder', 'ok') : chip('⏳ Aguardando aprovação', 'warn')}</div></div>${!p.aprovado && prep ? `<button class="btn s" data-act="par-retirar" data-cid="${esc(cid)}" data-par="${esc(u)}">Retirar</button>` : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
+       ${prep ? `<label class="sr" for="pesq">Buscar colega</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar colega pelo nome…" value="${esc(S.pesq)}" autocomplete="off">
+       <div class="chips" style="margin-top:8px">${sugestoesPares(cid, me, a.pares).map(u => `<button class="btn s" data-act="par-sugerir" data-cid="${esc(cid)}" data-par="${esc(u)}" aria-label="Indicar ${esc(nomeDe(u))}">+ ${esc(nomeDe(u))}</button>`).join('') || '<span class="small">Sem sugestões — use a busca.</span>'}</div>` : ''}
+       ${aprovados < 2 && prep ? `<p class="small">⚠ Faltam pares aprovados (mínimo 2). Hoje: ${aprovados}.</p>` : ''}</div>
+     <div class="${coleta ? 'sbs' : ''}"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
+        ${formResp(cid, me, 'auto', a.auto, perguntasDe(c, 'auto'), coleta, 'auto-salvar')}</div>
+       ${coleta ? `<aside class="foco lado" aria-label="Meu Baú para consulta"><h3 class="h2">📦 Meu Baú</h3><p class="small">Toque em 📎 para citar uma conquista na resposta em que você está escrevendo.</p>${blocoBau}</aside>` : ''}</div>
+     <div class="${lib ? 'foco' : 'trava'}"><h3 class="h2">${lib ? '🔓 Minha devolutiva' : '🔒 Devolutiva'}</h3>
+       ${lib ? `<p style="white-space:pre-line">${esc(a.devol.texto || '')}</p>${a.ciente ? `<p class="small">✔ Ciência registrada.</p>` : `<button class="btn p" data-act="ciente" data-cid="${esc(cid)}">✔ Li e estou ciente</button>`}`
+         : '<p>O resultado fica guardado até a conversa de devolutiva com o seu líder. Ele libera durante ou logo depois da conversa — você não precisa fazer nada agora.</p>'}</div></section>`;
+  }
+  const cabine = pedidos.filter(Boolean).filter(p => S.ciclos[p.cid]);
+  let respPar = '';
+  for (const p of cabine) {
+    const c = S.ciclos[p.cid]; const dados = await cache('resp:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/resp_pares/' + me); } catch (e) { return null; } });
+    respPar += `<section class="gl pad stack"><h2 class="h2">🤝 Feedback para ${esc(nomeDe(p.avaliado))} <span class="chip">${esc(c.nome)}</span></h2>
+      ${c.status === 'coleta' ? '<p class="small">Seja específico e use exemplos. Quem lê é só o líder da pessoa; ela não vê o que você escreveu individualmente.</p>' : '<p class="small">A coleta não está aberta.</p>'}
+      ${formResp(p.cid, p.avaliado, 'par', dados, perguntasDe(c, 'par'), c.status === 'coleta', 'par-salvar')}</section>`;
+  }
+  if (!saida && !respPar) return vazio('Você não está em nenhum ciclo de avaliação agora. Quando o RH abrir um, ele aparece aqui.');
+  return `<div class="stack">${saida}${respPar}</div>`;
+}
+
+// ───────── frota (líder) ─────────
+async function viewFrota() {
+  const meus = liderados(), amp = timeAmpliado();
+  if (!meus.length && !amp.length) return vazio('Você não tem liderados no organograma. Se isso está errado, peça ao ADM ou ao RH.');
+  const dados = {}; await Promise.all(meus.concat(amp).map(async u => { dados[u] = { um: await cache('um:' + u, () => carregaUm(u)) }; }));
+  const humor = {}; await Promise.all(meus.map(async u => { humor[u] = await cache('humorc:' + u, () => carregaHumor(u, true).catch(() => ({}))); }));
+  const termo = termometro(humor, hojeISO(), meus.length); const apoioDe = Object.fromEntries(termo.apoio.map(a => [a.uid, a]));
+  const cartao = (u, completo) => { const d = dados[u].um; const h = humor[u];
+    return `<article class="gl pcard ${d.farol.cor} ${d.farol.cor === 'vermelho' || d.farol.cor === 'amarelo' ? 'at' : ''}" aria-label="${esc(nomeDe(u))}"><div class="top">${avatar(u)}<div style="flex:1;min-width:0"><b>${esc(nomeDe(u))}</b><div class="small">${d.serie ? esc(CAD[d.serie.cad]) : 'sem cadência'}</div></div></div>
+      <div style="margin-top:10px">${viewFarol(u, d)}</div>
+      ${completo && h && Object.keys(h).length ? `<div class="small" style="margin-top:8px">🌤️ Humor (14 dias)</div>${sparkHumor(h, 14)}` : (completo ? '<p class="small" style="margin-top:8px">🌤️ Sem humor registrado.</p>' : '')}
+      ${apoioDe[u] ? `<div style="margin-top:8px">${chip('🫶 Marcou ' + FACES[apoioDe[u].n - 1][1].toLowerCase() + ' em ' + esc(brDe(apoioDe[u].k)) + ' — vale um oi', 'warn')}</div>` : ''}
+      ${completo ? `<div class="acts"><button class="btn s p" data-act="abrir" data-uid="${esc(u)}">Abrir</button></div>` : ''}</article>`; };
+  return `<div class="stack"><section class="gl pad"><h2 class="h2">🚢 Frota</h2><p class="sub">${meus.length} ${meus.length === 1 ? 'pessoa' : 'pessoas'} que você lidera. Os faróis mostram a cadência dos 1:1, já descontando as folgas da Escala.</p></section>
+   ${meus.length ? viewTermometro(termo, meus) : ''}
+   ${meus.length ? `<div class="grid g3">${meus.map(u => cartao(u, true)).join('')}</div>` : ''}
+   ${amp.length ? `<section class="gl pad"><h2 class="h2">🏛 Time dos meus líderes</h2><p class="small">Visão de farol; os detalhes ficam com cada líder.</p></section><div class="grid g3">${amp.map(u => cartao(u, false)).join('')}</div>` : ''}
+   ${S.sel ? await viewDetalhe(S.sel) : ''}</div>`;
+}
+function viewTermometro(t, meus) {
+  const fm = t.media == null ? null : FACES[Math.min(5, Math.max(1, Math.round(t.media))) - 1]; const max = Math.max(1, ...t.dist);
+  const tend = t.media != null && t.anterior != null ? (t.media - t.anterior >= 0.3 ? '↗ subiu' : t.media - t.anterior <= -0.3 ? '↘ caiu' : '→ estável') + ' em relação à semana anterior' : '';
+  const sp = `<div class="spark" role="img" aria-label="Média diária do time nos últimos 14 dias">${t.dias.map(d => d.media ? `<i style="height:${Math.round(d.media * 20)}%" title="${esc(brDe(d.k))}: média ${d.media.toFixed(1).replace('.', ',')} (${d.n} resp.)"></i>` : `<i class="v" title="${esc(brDe(d.k))}: sem respostas"></i>`).join('')}</div>`;
+  // Medidor em meia-lua (1 a 5): o arco enche conforme a média; a cor e o rótulo dizem o mesmo (nunca só a cor).
+  const L = Math.PI * 80; const pct = t.media == null ? 0 : (t.media - 1) / 4;
+  const arco = 'M20 100A80 80 0 0 1 180 100';
+  const gauge = fm ? `<div class="gauge" role="img" aria-label="Humor médio do time: ${t.media.toFixed(1).replace('.', ',')} de 5, ${esc(fm[1])}"><svg viewBox="0 0 200 108" aria-hidden="true"><path class="bg" d="${arco}"/><path class="fg" d="${arco}" stroke-dasharray="${L.toFixed(1)}" stroke-dashoffset="${(L * (1 - pct)).toFixed(1)}"/></svg><div class="gc"><span class="e" aria-hidden="true">${fm[0]}</span><b>${t.media.toFixed(1).replace('.', ',')}</b> <span class="small">de 5 · ${esc(fm[1])}</span></div></div>` : '';
+  const hist = `<div class="hist" role="group" aria-label="Quantas pessoas marcaram cada humor">${t.dist.map((c, i) => `<div class="hc ${c ? '' : 'z'}" role="img" aria-label="${FACES[i][1]}: ${c}"><span>${c}</span><i style="height:${Math.max(6, Math.round(c * 80 / max))}px"></i><em aria-hidden="true">${FACES[i][0]}</em></div>`).join('')}</div>`;
+  return `<section class="gl pad stack" aria-labelledby="te-t"><h2 class="h2" id="te-t">🌡️ Termômetro do time <span class="small">· últimos 7 dias</span></h2>
+    ${t.media == null ? vazio('Ninguém registrou o humor nos últimos 7 dias. Cada pessoa registra no Meu Dia (Maré) ou na Minha travessia.') : `<div class="termo ${t.cor}">${gauge}
+      <div class="stack"><div class="small"><b>${t.respostas}</b> ${t.respostas === 1 ? 'resposta' : 'respostas'} de <b>${t.pessoas}</b> de ${t.total} ${t.total === 1 ? 'pessoa' : 'pessoas'} (quem registrou)${tend ? ' · ' + esc(tend) : ''}</div>${hist}</div></div><div class="small">Média diária do time · últimos 14 dias</div>${sp}
+      ${t.pessoas < t.total ? `<p class="small">${t.total - t.pessoas} ${t.total - t.pessoas === 1 ? 'pessoa ainda não registrou' : 'pessoas ainda não registraram'} o humor nesta semana e não ${t.total - t.pessoas === 1 ? 'entra' : 'entram'} na média.</p>` : ''}`}
+    ${t.apoio.length ? `<div class="trava" style="margin-top:10px"><b>🫶 Pra ficar de olho</b><p class="small">Marcaram “mal” ou “muito mal” nos últimos 3 dias. Vale um oi, sem pressão.</p><ul class="lst">${t.apoio.map(a => `<li>${avatar(a.uid)}<div class="tx"><b>${esc(nomeDe(a.uid))}</b> <span class="small">${FACES[a.n - 1][0]} ${esc(FACES[a.n - 1][1])} · ${esc(brDe(a.k))}</span></div><button class="btn s" data-act="abrir" data-uid="${esc(a.uid)}">Abrir</button></li>`).join('')}</ul></div>` : ''}</section>`;
+}
+async function viewDetalhe(uid) {
+  const d = await cache('um:' + uid, () => carregaUm(uid)); const t = S.selTab;
+  const abas = [['um', '🤝 1:1 e cadência'], ['bau', '📦 Baú'], ['aval', '📐 Avaliação']];
+  let corpo = '';
+  if (t === 'um') {
+    const encs = Object.entries(d.enc).sort((a, b) => String(b[1].data).localeCompare(String(a[1].data)));
+    corpo = `<div class="grid g2"><div class="stack"><h3 class="h2">Cadência combinada</h3>
+      <div class="row"><label class="sr" for="cad-sel">Cadência</label><select class="sel2" id="cad-sel" data-act-change="cad" data-uid="${esc(uid)}">${['', ...Object.keys(CAD)].map(k => `<option value="${k}" ${((d.serie && d.serie.cad) || '') === k ? 'selected' : ''}>${k ? CAD[k] : 'Escolher…'}</option>`).join('')}</select></div>
+      ${viewFarol(uid, d)}
+      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button></form></div>
+      <div><h3 class="h2">Registros</h3>${encs.length ? `<ul class="lst">${encs.slice(0, 12).map(([id, e]) => `<li><span aria-hidden="true">🤝</span><div class="tx">${esc(brFull(e.data))} <span class="small">· ${esc(TIPO_1A1[e.tipo] || '1:1')} · por ${esc(nomeDe(e.por))}</span></div>${e.por === S.me.uid ? `<button class="btn s" data-act="enc-del" data-uid="${esc(uid)}" data-id="${esc(id)}" aria-label="Apagar registro">🗑</button>` : ''}</li>`).join('')}</ul>` : vazio('Nenhum 1:1 registrado.')}</div></div>`;
+  } else if (t === 'bau') corpo = await viewBau(uid, true);
+  else corpo = await viewAvalLider(uid);
+  return `<section class="gl pad stack" id="detalhe" style="border-color:var(--accent)" aria-labelledby="dt-t"><div class="row" style="justify-content:space-between"><h2 class="h2" id="dt-t">${avatar(uid)} ${esc(nomeDe(uid))}</h2><button class="btn s" data-act="fechar">✕ Fechar</button></div>
+   <div class="tabs" role="tablist" aria-label="Seções da pessoa">${abas.map(([k, l]) => `<button role="tab" data-act="sel-aba" data-k="${k}" aria-selected="${t === k}">${l}</button>`).join('')}</div>${corpo}</section>`;
+}
+async function viewAvalLider(uid) {
+  const cs = Object.entries(S.ciclos).filter(([, c]) => participa(c, uid)).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  const ehMeuLiderado = liderDe(uid) === S.me.uid;
+  if (!cs.length) return vazio('Esta pessoa não está em nenhum ciclo de avaliação.');
+  let saida = '';
+  for (const [cid, c] of cs) {
+    const a = await cache('aval:' + cid + ':' + uid, () => carregaAval(cid, uid)); const coleta = c.status === 'coleta'; const enc = c.status === 'encerrado'; const lib = a.devol && a.devol.liberada === true;
+    const pares = Object.entries(a.pares); const aprov = pares.filter(([, p]) => p.aprovado).length;
+    saida += `<div class="stack"><h3 class="h2">📐 ${esc(c.nome)} <span class="chip">${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</span></h3>
+     <div class="foco"><h4 class="h2">🤝 Pares (${aprov} aprovados)</h4>
+      <ul class="lst">${pares.map(([u, p]) => `<li>${avatar(u)}<div class="tx"><b>${esc(nomeDe(u))}</b><div class="meta">${p.aprovado ? chip('✅ Aprovado', 'ok') : chip('⏳ Sugerido' + (p.por === 'lider' ? ' por você' : ' pela pessoa'), 'warn')}${a.resp[u] ? chip('✍️ respondeu', 'ok') : ''}</div></div>
+        ${ehMeuLiderado && !enc ? (p.aprovado ? `<button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Retirar</button>` : `<button class="btn s p" data-act="par-aprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Aprovar</button><button class="btn s" data-act="par-reprovar" data-cid="${esc(cid)}" data-av="${esc(uid)}" data-par="${esc(u)}">Recusar</button>`) : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
+      ${aprov > 4 ? '<p class="small">⚠ Mais de 4 pares aprovados: considere reduzir para evitar fadiga de avaliação.</p>' : ''}</div>
+     <details class="foco" ${a.auto ? 'open' : ''}><summary class="h2">📝 Autoavaliação de ${esc(nomeDe(uid))}</summary>${a.auto ? formResp(cid, uid, 'auto', a.auto, perguntasDe(c, 'auto'), false) : '<p class="small">Ainda não respondeu.</p>'}</details>
+     ${ehMeuLiderado ? `<details class="foco"><summary class="h2">✍️ Minha avaliação (só você e seu gerente leem)</summary>${formResp(cid, uid, 'lider', a.lider, perguntasDe(c, 'lider'), !enc, 'lider-salvar')}</details>` : ''}
+     <details class="foco"><summary class="h2">💬 Feedback dos pares (${Object.keys(a.resp).length})</summary>${Object.entries(a.resp).map(([u, r]) => `<div class="foco"><b>${esc(nomeDe(u))}</b>${formResp(cid, uid, 'par', r, perguntasDe(c, 'par'), false, '', u)}</div>`).join('') || '<p class="small">Ninguém respondeu ainda.</p>'}</details>
+     ${ehMeuLiderado ? `<div class="${lib ? 'foco' : 'trava'}"><h4 class="h2">${lib ? '🔓 Devolutiva liberada' : '🔒 Devolutiva (a pessoa ainda não vê)'}</h4>
+       <label class="sr" for="dv-t">Síntese da devolutiva</label><textarea class="ta" id="dv-t" data-devol="1" maxlength="6000" ${enc ? 'readonly' : ''} placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
+       ${enc ? `<p class="small">Ciclo encerrado — só leitura.${a.ciente ? ' ✔ Ciência registrada.' : ''}</p>` : ''}
+       <div class="row" style="margin-top:8px" ${enc ? 'hidden' : ''}><button class="btn" data-act="devol-salvar" data-cid="${esc(cid)}" data-av="${esc(uid)}">💾 Salvar rascunho</button>
+        ${lib ? `<button class="btn" data-act="devol-recolher" data-cid="${esc(cid)}" data-av="${esc(uid)}">↩ Recolher liberação</button>` : `<button class="btn p" data-act="devol-liberar" data-cid="${esc(cid)}" data-av="${esc(uid)}">🔓 Liberar para ${esc(nomeDe(uid).split(' ')[0])}</button>`}${a.ciente ? '<span class="chip ok">✔ ciência registrada</span>' : ''}</div></div>` : ''}</div>`;
+  }
+  return saida;
+}
+
+// ───────── administração (ADM e RH) ─────────
+async function viewAdmin() {
+  const lista = Object.keys(S.users).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b)));
+  const q = S.pesq.trim().toLowerCase(); const filtrada = q ? lista.filter(u => nomeDe(u).toLowerCase().includes(q)) : lista;
+  const opt = (sel, excl) => `<option value="">—</option>` + lista.filter(u => u !== excl).map(u => `<option value="${esc(u)}" ${u === sel ? 'selected' : ''}>${esc(nomeDe(u))}</option>`).join('');
+  const rhs = S.adm ? ((await cache('papeis', async () => (await G(T + 'papeis')) || {}))) : {};
+  return `<div class="stack">
+   <section class="gl pad stack" aria-labelledby="ad-or"><h2 class="h2" id="ad-or">🏛 Organograma</h2><p class="sub">Quem lidera quem. O líder direto enxerga o Baú, os 1:1 e conduz a avaliação; o gerente acompanha e lê as avaliações. Todo mundo da empresa vê esta lista.</p>
+    <label class="sr" for="pesq">Buscar pessoa</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar pessoa…" value="${esc(S.pesq)}" autocomplete="off">
+    <table class="tbl"><caption class="sr">Organograma</caption><thead><tr><th>Pessoa</th><th>Líder direto</th><th>Gerente</th></tr></thead><tbody>${filtrada.slice(0, 60).map(u => { const v = S.vinc[u] || {}; return `<tr><td data-l="Pessoa"><b>${esc(nomeDe(u))}</b></td><td data-l="Líder direto"><select class="sel2" data-vinc="${esc(u)}" data-campo="liderUid" aria-label="Líder de ${esc(nomeDe(u))}">${opt(v.liderUid, u)}</select></td><td data-l="Gerente"><select class="sel2" data-vinc="${esc(u)}" data-campo="gerenteUid" aria-label="Gerente de ${esc(nomeDe(u))}">${opt(v.gerenteUid, u)}</select></td></tr>`; }).join('')}</tbody></table>
+    ${filtrada.length > 60 ? '<p class="small">Mostrando 60 — refine a busca.</p>' : ''}</section>
+   ${S.adm ? `<section class="gl pad stack" aria-labelledby="ad-rh"><h2 class="h2" id="ad-rh">🤝 Papel de RH da Travessia</h2><p class="sub">O RH cria ciclos e cuida do organograma, mas <b>não lê</b> Baú, 1:1, humor nem avaliações de ninguém.</p>
+    <ul class="lst">${lista.map(u => `<li>${avatar(u)}<div class="tx">${esc(nomeDe(u))}</div><label class="ck"><input type="checkbox" data-rh="${esc(u)}" ${rhs[u] === 'rh' ? 'checked' : ''} aria-label="RH: ${esc(nomeDe(u))}"> RH</label></li>`).join('')}</ul></section>` : ''}
+   <section class="gl pad stack" aria-labelledby="ad-ci"><h2 class="h2" id="ad-ci">📐 Ciclos de avaliação</h2>
+    <details class="foco"><summary class="h2">+ Novo ciclo</summary><form data-form="ciclo" class="camp"><label for="ci-n">Nome do ciclo</label><input class="in" id="ci-n" name="nome" maxlength="80" required placeholder="Ex.: Ciclo 2026/2">
+      <label>Quem participa</label><p class="small">Marque as squads (todas as pessoas delas entram) ou escolha pessoas na lista do organograma depois.</p>
+      <div class="chips">${squadsDisponiveis().map(s => `<label class="ck"><input type="checkbox" name="sq" value="${esc(s)}"> ${esc(s)}</label>`).join('')}</div>
+      <div class="row" style="margin-top:10px"><button class="btn p" type="submit">Criar ciclo (fase: preparação)</button></div></form></details>
+    ${Object.entries(S.ciclos).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).map(([cid, c]) => `<div class="foco"><div class="row" style="justify-content:space-between"><b>${esc(c.nome)}</b><span class="chip">${Object.keys(c.participantes || {}).length} pessoas</span></div>
+      <div class="fase">${FASES.map(f => `<span class="${f[0] === c.status ? 'on' : ''}">${f[1]}</span>`).join('')}</div>
+      <div class="row">${FASES.filter(f => f[0] !== c.status).map(f => `<button class="btn s" data-act="ciclo-fase" data-cid="${esc(cid)}" data-fase="${f[0]}">→ ${f[1]}</button>`).join('')}</div></div>`).join('') || vazio('Nenhum ciclo criado ainda.')}</section></div>`;
+}
+const squadsDisponiveis = () => { const s = new Set(); Object.values(S.users).forEach(u => Object.keys(u.squads || {}).forEach(k => { if (u.squads[k]) s.add(k); })); return [...s].sort(); };
+
+// ───────── montagem ─────────
+const TABS = () => [['inicio', '🗺 Minha travessia'], ['bau', '📦 Baú'], ['diario', '📓 Diário'], ['aval', '📐 Avaliação']].concat(ehLider() ? [['frota', '🚢 Frota']] : []).concat(S.adm || S.rh ? [['admin', '⚙ Administração']] : []);
+const TAB_CURTO = { inicio: 'Início', bau: 'Baú', diario: 'Diário', aval: 'Avaliação', frota: 'Frota', admin: 'Admin' };
+// O emoji que abre um título vira uma bolinha de ícone (visual); o texto continua o mesmo para leitores de tela e busca.
+const EMO = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
+function bolhas(raiz) {
+  raiz.querySelectorAll('h2.h2,h3.h2,h4.h2').forEach(h => { const n = h.firstChild; if (!n || n.nodeType !== 3) return; const m = EMO.exec(n.nodeValue); if (!m) return;
+    const b = document.createElement('span'); b.className = 'ib'; b.setAttribute('aria-hidden', 'true'); b.textContent = m[1]; n.nodeValue = n.nodeValue.slice(m[0].length); h.insertBefore(b, n); });
+}
+const saudacao = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
+let rendering = 0;
+async function render() {
+  const eu = ++rendering; const tabs = TABS(); const rasc = {}; document.querySelectorAll('textarea.ta:not([readonly])').forEach(t => { if (t.id) rasc[t.id] = t.value; }); if (!tabs.some(t => t[0] === S.tab)) S.tab = 'inicio';
+  const foco = document.activeElement && document.activeElement.id; const sel = document.activeElement && document.activeElement.selectionStart;
+  const dataHoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  $('#app').innerHTML = `<section class="hero"><span class="eyebrow">${saudacao()} · ${esc(dataHoje)}</span><h1 class="h1">Olá, ${esc((S.me.nome || '').split(' ')[0] || 'bem-vinda(o)')} 👋</h1><p class="sub">Sua travessia: o que você quer construir e como a gente te ajuda a chegar lá.</p>
+      <span class="barco" aria-hidden="true">⛵</span><svg class="ondas" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 18Q150 0 300 18T600 18T900 18T1200 18V34H0Z"/><path d="M0 25Q150 9 300 25T600 25T900 25T1200 25V34H0Z"/></svg></section>
+    <div class="nav" role="tablist" aria-label="Seções">${tabs.map(([k, l]) => { const i = l.indexOf(' '); const nome = l.slice(i + 1); return `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}" aria-label="${esc(nome)}"><span class="ni" aria-hidden="true">${l.slice(0, i)}</span><span class="nl"><span class="long">${esc(nome)}</span><span class="short">${esc(TAB_CURTO[k] || nome)}</span></span></button>`; }).join('')}</div><div role="tabpanel" id="painel">${carregando()}</div>`;
+  let html = '';
+  try { html = await ({ inicio: viewInicio, bau: () => viewBau(S.me.uid, false), diario: viewDiario, aval: viewAval, frota: viewFrota, admin: viewAdmin }[S.tab])(); }
+  catch (e) { console.warn('[travessia]', e); html = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
+  if (eu !== rendering) return;
+  $('#painel').innerHTML = html; bolhas($('#painel'));
+  Object.keys(rasc).forEach(id => { const el = document.getElementById(id); if (el && !el.readOnly && rasc[id] && !el.value) el.value = rasc[id]; });   // não perde o que a pessoa estava escrevendo
+  if (foco) { const el = document.getElementById(foco); if (el) { el.focus(); try { if (sel != null) el.setSelectionRange(sel, sel); } catch (_) {} } }
+}
+
+// ───────── ações ─────────
+async function guardarBau(item) { const id = novoId(); item.ts = Date.now(); item.em = item.em || hojeISO(); const ok = await tenta(() => W('bau/' + S.me.uid + '/' + id, item), '💼 Guardado no seu Baú!'); if (ok) { invalida('bau:' + S.me.uid); } return ok; }
+const salvaResp = async (cid, av, grupo, caminho) => {
+  const dados = { ts: Date.now() }; document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`).forEach(t => { if (t.value.trim()) dados[t.dataset.q] = t.value.trim(); });
+  if (Object.keys(dados).length < 2) { toast('Escreva pelo menos uma resposta antes de salvar.'); return false; }
+  return tenta(() => W(caminho, dados), '💾 Salvo!');
+};
+// 🫶 Quando a pessoa marca "mal" (2) ou "muito mal" (1): avisa o líder direto pelo sino (um por pessoa por dia; a regra só grava se ainda não existe).
+async function alertaApoio(n) {
+  const lid = liderDe(S.me.uid); if (!(n <= 2) || !lid || lid === S.me.uid) return;
+  const id = 'apoio_' + S.me.uid + '_' + hojeISO(); const nome = (S.me.nome || 'Alguém').split(' ')[0];
+  try { await WABS('kanban/usuarios/' + lid + '/notificacoes/' + id, { id, type: 'travessia_apoio', title: '🫶 ' + nome + ' marcou que não está bem hoje', sub: 'Para você poder apoiar. Que tal um "oi"?', cardId: null, read: false, ts: new Date().toISOString(), squad: '' }); } catch (e) { /* já avisado hoje, ou sem regra: o humor da pessoa já foi salvo */ }
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-tab],[data-act]'); if (!b) return;
+  const a = b.dataset.act; const me = S.me && S.me.uid;
+  if (b.dataset.tab && !a) { S.tab = b.dataset.tab; S.sel = null; S.pesq = ''; return render(); }
+  if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
+  if (a === 'humor') {
+    const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() };
+    const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); await W('humor_comp/' + me + '/' + k, reg); }, FACES[n - 1][0] + ' Humor de hoje registrado — seu líder também vê.');
+    if (ok) alertaApoio(n);
+    if (ok) { S.cache['humor:' + me] = Object.assign({}, S.cache['humor:' + me], { [k]: Object.assign({ comp: true }, reg) }); render(); } return;
+  }
+  if (a === 'dia-n') { S.diaN = +b.dataset.n; document.querySelectorAll('[data-act="dia-n"]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === S.diaN))); const l = $('#dia-lbl'); if (l) l.textContent = FACES[S.diaN - 1][1]; return; }
+  if (a === 'dia-salvar') {
+    const txt = ($('#dia-txt') && $('#dia-txt').value.trim()) || ''; if (!S.diaN && !txt) { toast('Escolha como foi o dia ou escreva um pouco antes de salvar.'); return; }
+    const reg = { ts: Date.now() }; if (S.diaN) reg.n = S.diaN; if (txt) reg.texto = txt.slice(0, 1500);
+    if (await tenta(() => W('diario/' + me + '/' + hojeISO(), reg), '🌙 Dia guardado no seu diário — só você lê.')) { invalida('diario:' + me); render(); } return;
+  }
+  if (a === 'dia-bau') { const d = (await cache('diario:' + me, () => carregaDiario(me)))[b.dataset.d]; if (!d || !d.texto) return; if (await guardarBau({ tipo: 'manual', titulo: ('Dia ' + brDe(b.dataset.d) + ' — ' + d.texto.split('\n')[0]).slice(0, 160), texto: d.texto.slice(0, 1200), em: b.dataset.d })) render(); return; }
+  if (a === 'dia-del') { if (!(await uiConfirm('Apagar o registro de ' + brFull(b.dataset.d) + '? Não dá pra recuperar.', 'Apagar'))) return; if (await tenta(() => D('diario/' + me + '/' + b.dataset.d), 'Registro apagado.')) { invalida('diario:' + me); if (b.dataset.d === hojeISO()) S.diaN = undefined; render(); } return; }
+  if (a === 'estrela-bau') { const est = await cache('estrelas', carregaEstrelas); const k = est[+b.dataset.i]; if (!k) return; const ok = await guardarBau({ tipo: 'kudo', titulo: ('Estrela de ' + (k.fromNome || 'alguém')).slice(0, 160), texto: String(k.texto || '').slice(0, 1200), ref: String(k.id || '').slice(0, 200), squad: k._escopo === 'geral' ? 'geral' : k._escopo, em: String(k.ts || '').slice(0, 10) || hojeISO() }); if (ok) render(); return; }
+  if (a === 'bau-del') { if (!(await uiConfirm('Remover este item do Baú?', 'Remover'))) return; if (await tenta(() => D('bau/' + me + '/' + b.dataset.id), 'Removido.')) { invalida('bau:' + me); render(); } return; }
+  if (a === 'abrir') { S.sel = b.dataset.uid; S.selTab = 'um'; await render(); const d = $('#detalhe'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (a === 'fechar') { S.sel = null; return render(); }
+  if (a === 'sel-aba') { S.selTab = b.dataset.k; return render(); }
+  if (a === 'enc-del') { if (await tenta(() => D('encontros/' + b.dataset.uid + '/' + b.dataset.id), 'Registro apagado.')) { invalida('um:' + b.dataset.uid); render(); } return; }
+  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { el.value = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; el.focus(); } return; }
+  if (a === 'par-sugerir') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => W(`avaliacoes/${cid}/${me}/pares/${par}`, { aprovado: false, por: 'avaliado', ts: Date.now() }), 'Indicação enviada ao seu líder.')) { invalida('aval:' + cid + ':' + me); render(); } return; }
+  if (a === 'par-retirar') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => D(`avaliacoes/${cid}/${me}/pares/${par}`))) { invalida('aval:' + cid + ':' + me); render(); } return; }
+  if (a === 'auto-salvar') { if (await salvaResp(b.dataset.cid, me, 'auto', `avaliacoes/${b.dataset.cid}/${me}/auto`)) { invalida('aval:' + b.dataset.cid + ':' + me); render(); } return; }
+  if (a === 'par-salvar') { const { cid, av } = b.dataset; if (await salvaResp(cid, av, 'par', `avaliacoes/${cid}/${av}/resp_pares/${me}`)) { invalida('resp:' + cid + ':' + av); render(); } return; }
+  if (a === 'lider-salvar') { const { cid, av } = b.dataset; if (await salvaResp(cid, av, 'lider', `avaliacoes/${cid}/${av}/lider`)) { invalida('aval:' + cid + ':' + av); render(); } return; }
+  if (a === 'ciente') { const cid = b.dataset.cid; if (await tenta(() => W(`avaliacoes/${cid}/${me}/ciente`, Date.now()), '✔ Ciência registrada.')) { invalida('aval:' + cid + ':' + me); render(); } return; }
+  if (a === 'par-aprovar' || a === 'par-reprovar') {
+    const { cid, av, par } = b.dataset; const existente = (S.cache['aval:' + cid + ':' + av]?.pares || {})[par] || {};
+    const ok = await tenta(async () => {
+      if (a === 'par-aprovar') { await W(`avaliacoes/${cid}/${av}/pares/${par}`, { aprovado: true, por: existente.por || 'lider', ts: Date.now() }); await W(`pedidos_par/${par}/${cid}_${av}`, { cid, avaliado: av, ts: Date.now() }); }
+      else { await D(`pedidos_par/${par}/${cid}_${av}`); await D(`avaliacoes/${cid}/${av}/pares/${par}`); }
+    }, a === 'par-aprovar' ? '✅ Par aprovado — ele já pode responder.' : 'Par retirado.');
+    if (ok) { invalida('aval:' + cid + ':' + av); render(); } return;
+  }
+  if (a === 'devol-salvar' || a === 'devol-liberar' || a === 'devol-recolher') {
+    const { cid, av } = b.dataset; const txt = ($('#dv-t') && $('#dv-t').value.trim()) || ''; const atual = S.cache['aval:' + cid + ':' + av]?.devol || {};
+    if (a === 'devol-liberar' && !txt) { toast('Escreva a síntese antes de liberar.'); return; }
+    if (a === 'devol-liberar' && !(await uiConfirm('Liberar a devolutiva para ' + nomeDe(av).split(' ')[0] + '? A pessoa passa a ver o texto agora.', '🔓 Liberar'))) return;
+    const dados = { texto: txt.slice(0, 6000), liberada: a === 'devol-liberar' ? true : (a === 'devol-recolher' ? false : atual.liberada === true), ts: Date.now(), por: me };
+    if (dados.liberada) dados.liberadaEm = atual.liberadaEm || Date.now();
+    if (await tenta(() => W(`avaliacoes/${cid}/${av}/devolutiva`, dados), a === 'devol-liberar' ? '🔓 Devolutiva liberada.' : a === 'devol-recolher' ? '🔒 Liberação recolhida.' : '💾 Rascunho salvo.')) { invalida('aval:' + cid + ':' + av); render(); } return;
+  }
+  if (a === 'ciclo-fase') { const { cid, fase } = b.dataset; const c = Object.assign({}, S.ciclos[cid], { status: fase }); if (await tenta(() => W('ciclos/' + cid + '/status', fase), 'Fase atualizada.')) { S.ciclos[cid] = c; render(); } return; }
+});
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.dataset.actChange === 'cad') { const uid = t.dataset.uid; if (!t.value) return; if (await tenta(() => W('serie/' + uid, { cad: t.value, tipo: 'acomp', ts: Date.now() }), 'Cadência definida.')) { invalida('um:' + uid); render(); } return; }
+  if (t.dataset.vinc) { const uid = t.dataset.vinc; const v = Object.assign({}, S.vinc[uid] || {}); v[t.dataset.campo] = t.value || null; if (!v.liderUid) { if (await tenta(() => D('vinculos/' + uid), 'Vínculo removido.')) { delete S.vinc[uid]; } return render(); } Object.keys(v).forEach(k => { if (!v[k]) delete v[k]; }); if (await tenta(() => W('vinculos/' + uid, v), 'Organograma atualizado.')) { S.vinc[uid] = v; } return; }
+  if (t.dataset.rh) { const uid = t.dataset.rh; if (await tenta(() => (t.checked ? W('papeis/' + uid, 'rh') : D('papeis/' + uid)), t.checked ? '🤝 Papel de RH concedido.' : 'Papel de RH removido.')) invalida('papeis'); else t.checked = !t.checked; return; }
+});
+document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('textarea[data-resp]')) S.ultimoFoco = e.target.id; });
+document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.pesq) { S.pesq = e.target.value; clearTimeout(window.__pT); window.__pT = setTimeout(render, 220); } });
+document.addEventListener('submit', async e => {
+  const f = e.target.closest('[data-form]'); if (!f) return; e.preventDefault(); const k = f.dataset.form; const fd = new FormData(f); const me = S.me.uid;
+  if (k === 'encontro') { const uid = f.dataset.uid; const data = fd.get('data'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) { toast('Escolha a data do 1:1.'); return; } if (data > hojeISO()) { toast('O 1:1 registrado não pode estar no futuro.'); return; }
+    if (await tenta(() => W('encontros/' + uid + '/' + novoId(), { data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }), '✅ 1:1 registrado.')) { invalida('um:' + uid); render(); } return; }
+  if (k === 'bau') { const titulo = (fd.get('titulo') || '').trim(); if (!titulo) return; const partes = []; [['desafio', 'Desafio'], ['acao', 'O que fiz'], ['impacto', 'Impacto']].forEach(([c, r]) => { const v = (fd.get(c) || '').trim(); if (v) partes.push(r + ': ' + v); });
+    const item = { tipo: 'manual', titulo: titulo.slice(0, 160) }; if (partes.length) item.texto = partes.join('\n').slice(0, 1200); if ((fd.get('comp') || '').trim()) item.comp = fd.get('comp').trim().slice(0, 60); if (await guardarBau(item)) render(); return; }
+  if (k === 'ciclo') { const nome = (fd.get('nome') || '').trim(); if (!nome) return; const sqs = fd.getAll('sq'); const part = {}; Object.keys(S.users).forEach(u => { const us = S.users[u].squads || {}; if (sqs.some(s => us[s])) part[u] = true; });
+    if (!Object.keys(part).length) { toast('Marque ao menos uma squad com pessoas.'); return; }
+    const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO };
+    if (await tenta(() => W('ciclos/' + cid, c), '📐 Ciclo criado.')) { S.ciclos[cid] = c; render(); } return; }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-pesq]')) e.preventDefault(); });
+
+// ───────── 🎭 MODO DEMONSTRAÇÃO (?demo=1) ─────────
+// Nada aqui toca o Firebase: um banco em memória é preenchido com ~2 trimestres de uso FICTÍCIO (pessoas, números e textos inventados) para ver a Travessia "cheia".
+// Gravar no modo demo só muda a memória da aba (recarregar volta ao início). Os dados são calculados em relação a HOJE, então estão sempre "frescos".
+const DEMO = /[?&]demo=1(&|$)/.test(location.search);
+const MEM = {};
+const memGet = p => { const v = String(p).split('/').filter(Boolean).reduce((a, k) => (a == null ? undefined : a[k]), MEM); return v === undefined ? null : v; };
+function memSet(p, v) { const ks = String(p).split('/').filter(Boolean); let o = MEM; ks.slice(0, -1).forEach(k => { if (o[k] == null || typeof o[k] !== 'object') o[k] = {}; o = o[k]; }); const u = ks[ks.length - 1]; if (v === null || v === undefined) delete o[u]; else o[u] = JSON.parse(JSON.stringify(v)); }
+const DEMO_PERSONAS = [['ana', '👤 Ana · pessoa'], ['bia', '🤝 Bia · colega e par'], ['pau', '🧭 Pau · líder (PO)'], ['gil', '🏛 Gil · gerente'], ['dan', '⚙ Dani · RH'], ['adm', '🛠 Adm · ADM']];
+function demoDados() {
+  let seed = 20261022; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; const pick = a => a[Math.floor(rnd() * a.length)];
+  const hoje = hojeISO(); const dia = n => { const d = new Date(Date.parse(hoje + 'T12:00:00')); d.setDate(d.getDate() - n); return isoDe(d); }; const util = k => { const w = new Date(k + 'T12:00:00').getDay(); return w !== 0 && w !== 6; };
+  const ts = n => Date.parse(dia(n) + 'T10:00:00');
+  const PES = [['ana', 'Ana Lima', 'AL', 'dados'], ['bia', 'Bia Souza', 'BS', 'dados'], ['cae', 'Cauê Matos', 'CM', 'dados'], ['deb', 'Débora Pinto', 'DP', 'dados'], ['edu', 'Eduardo Nunes', 'EN', 'dados'], ['fab', 'Fabiana Souza', 'FS', 'dados'],
+    ['gus', 'Gustavo Alves', 'GA', 'midia'], ['lia', 'Lívia Torres', 'LT', 'midia'], ['pau', 'Pau Reis', 'PR', 'dados'], ['eli', 'Elis Duarte', 'ED', 'midia'], ['gil', 'Gil Prado', 'GP', 'dados'], ['dan', 'Dani Rocha', 'DR', ''], ['adm', 'Adm Demo', 'AD', '']];
+  const out = { kanban: { usuarios_publicos: {}, usuarios: {}, travessia: { papeis: { dan: 'rh' }, vinculos: {}, serie: {}, encontros: {}, humor: {}, humor_comp: {}, diario: {}, bau: {}, ciclos: {}, avaliacoes: {}, pedidos_par: {} }, escala: {}, painel: { kudos_geral: [] }, squads: { dados: { dados: { kudos: [] } }, midia: { dados: { kudos: [] } } } } };
+  const K = out.kanban, TR = K.travessia;
+  PES.forEach(([u, nome, ini, sq]) => { const sqs = sq ? { [sq]: true } : {}; K.usuarios_publicos[u] = { uid: u, nome, init: ini, email: u + '@demo.ciahering.com.br', role: u === 'adm' ? 'adm' : 'membro', squads: sqs }; K.usuarios[u] = { role: u === 'adm' ? 'adm' : (u === 'pau' || u === 'eli' ? 'po' : 'membro'), init: ini, squads: sqs }; });
+  // organograma: pessoas → PO → gerente
+  ['ana', 'bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { TR.vinculos[u] = { liderUid: 'pau', gerenteUid: 'gil', squad: 'dados' }; }); ['gus', 'lia'].forEach(u => { TR.vinculos[u] = { liderUid: 'eli', gerenteUid: 'gil', squad: 'midia' }; }); TR.vinculos.pau = { liderUid: 'gil' }; TR.vinculos.eli = { liderUid: 'gil' };
+  // 1:1: cadência e histórico de ~180 dias (último encontro define o farol de hoje)
+  const SER = { ana: ['quinzenal', 6], bia: ['semanal', 14], cae: ['quinzenal', 26], deb: ['semanal', 4], edu: ['mensal', 40], fab: ['quinzenal', 9], gus: ['quinzenal', 5], lia: ['semanal', 3] }; const PASSO = { semanal: 7, quinzenal: 14, mensal: 30 };
+  Object.entries(SER).forEach(([u, [cad, ult]]) => { TR.serie[u] = { cad, tipo: 'acomp', ts: ts(190) }; TR.encontros[u] = {}; let n = ult, i = 0; while (n < 185) { const k = dia(n); const tipo = i % 6 === 5 ? 'carreira' : (i % 3 === 2 ? 'pdi' : 'acomp'); TR.encontros[u]['e' + i] = { data: k, tipo, por: i % 4 === 0 ? u : (u === 'gus' || u === 'lia' ? 'eli' : 'pau'), ts: ts(n) }; n += PASSO[cad] + (rnd() < 0.25 ? 3 : 0); i++; } });
+  // folgas (a Escala desconta do farol)
+  [[3, 'ana'], [4, 'ana'], [11, 'ana'], [12, 'ana'], [20, 'deb'], [21, 'deb'], [7, 'edu'], [8, 'edu'], [9, 'edu']].forEach(([n, u]) => { const k = dia(n); K.escala[k] = K.escala[k] || { dados: {} }; K.escala[k].dados[u] = { t: 'folga', por: u, ts: ts(n) }; });
+  // humor e diário (tendência: começa morno, melhora, tem um vale perto de uma entrega, hoje bem)
+  const HUM = { ana: 0.95, bia: 0.8, cae: 0.7, deb: 0.9, edu: 0.6, fab: 0.85 }; const COMP = { ana: 0.85, bia: 0.7, cae: 0.6, deb: 0.5, edu: 0.0, fab: 0.0 };
+  const humorDe = n => { const base = 3 + (n < 60 ? 0.9 : n < 120 ? 0.5 : 0.1) + (n > 75 && n < 85 ? -1.3 : 0) + (rnd() - 0.5) * 1.8; return Math.max(1, Math.min(5, Math.round(base))); };
+  Object.keys(HUM).forEach(u => { TR.humor[u] = {}; TR.humor_comp[u] = {}; TR.diario[u] = {}; for (let n = 0; n < 182; n++) { const k = dia(n); if (!util(k) || rnd() > HUM[u]) continue; const h = humorDe(n); TR.humor[u][k] = { n: h, ts: ts(n) }; if (rnd() < COMP[u]) TR.humor_comp[u][k] = { n: h, ts: ts(n) }; } });
+  TR.humor_comp.cae[dia(1)] = { n: 2, ts: ts(1) }; TR.humor.cae[dia(1)] = { n: 2, ts: ts(1) }; delete TR.humor_comp.ana[dia(0)]; delete TR.humor.ana[dia(0)];
+  const TXT = ['Fechei a análise do funil e apresentei para a diretoria. Cansativo, mas valeu.', 'Dia de reuniões em sequência; só consegui produzir à tarde.', 'Destravei a consulta lenta que vinha me incomodando. Aprendi bastante com a Débora.', 'Hoje foi puxado: três pedidos urgentes ao mesmo tempo.', 'Bom dia de foco. Entreguei o painel e ainda sobrou tempo para estudar.',
+    'Feedback do Pau sobre a apresentação: clareza ótima, preciso resumir mais. Anotado.', 'Dia tranquilo, organizei o backlog e revisei o trabalho de um colega.', 'Me senti perdida na priorização, vou levar isso para o próximo 1:1.', 'A campanha bateu a meta do dia e a squad comemorou. Orgulho do time!', 'Estudei SQL avançado por uma hora, está rendendo.',
+    'Reunião difícil com a área de negócio, mas saímos com um combinado claro.', 'Ajudei a Bia a montar o modelo de previsão. Gostei de ensinar.', 'Dia longo; preciso cuidar mais do horário de almoço.', 'Primeiro dia testando a automação nova, economizou muito tempo.', 'Retrospectiva da sprint: o time pediu mais tempo de estudo, vou apoiar.'];
+  Object.keys(TR.diario).forEach(u => { const ks = Object.keys(TR.humor[u]).sort(); ks.forEach((k, i) => { if (rnd() < (u === 'ana' ? 0.55 : 0.25)) TR.diario[u][k] = { n: Math.max(1, Math.min(5, TR.humor[u][k].n + (rnd() < 0.3 ? -1 : 0))), texto: pick(TXT), ts: TR.humor[u][k].ts + 3600000 * 8 }; }); });
+  // Baú: conquistas guardadas ao longo dos 2 trimestres
+  const bau = (u, itens) => { TR.bau[u] = {}; itens.forEach(([n, tipo, titulo, extra], i) => { TR.bau[u]['b' + i] = Object.assign({ tipo, titulo, ts: ts(n), em: dia(n) }, extra || {}); }); };
+  bau('ana', [[170, 'manual', 'Assumi a análise semanal de vendas', { texto: 'Desafio: o relatório saía sempre atrasado\nO que fiz: automatizei a coleta e criei um painel\nImpacto: de 2 dias para 2 horas', comp: 'Automação' }], [158, 'card', 'Modelo de previsão de churn', { squad: 'dados', link: 'kanban-dev.html?squad=dados&card=churn' }], [150, 'kudo', 'Estrela de Pau Reis', { texto: 'A análise de churn mudou a conversa com o comercial!', squad: 'dados' }],
+    [141, 'marco', 'Painel executivo de vendas no ar', { texto: 'Objetivo: Visibilidade comercial', link: 'okr.html?okr=painel' }], [133, 'manual', 'Mentoria para a Bia em SQL', { texto: 'Desafio: a Bia travava em consultas lentas\nO que fiz: 4 encontros de pair programming\nImpacto: consultas 5× mais rápidas', comp: 'Colaboração' }], [120, 'card', 'Migração das cargas para o novo orquestrador', { squad: 'dados' }], [109, 'kudo', 'Estrela de Gil Prado', { texto: 'Obrigado por assumir a apresentação em cima da hora.', squad: 'geral' }],
+    [97, 'manual', 'Apresentação para a diretoria', { texto: 'Desafio: explicar o modelo para quem não é de dados\nO que fiz: storytelling com 3 gráficos\nImpacto: aprovação do orçamento do trimestre', comp: 'Comunicação' }], [84, 'marco', 'Metas do trimestre fechadas em 112%', { texto: 'Objetivo: Receita do trimestre' }], [71, 'card', 'Black Friday: planejamento das análises', { squad: 'dados' }], [60, 'manual', 'Curso de Data Storytelling concluído', { texto: 'Nota do PDI: estudo (10%)', comp: 'Comunicação' }],
+    [47, 'card', 'Dashboard de acompanhamento de campanhas', { squad: 'dados' }], [33, 'kudo', 'Estrela de Elis Duarte', { texto: 'Sua análise salvou o dia da campanha!', squad: 'geral' }], [21, 'manual', 'Liderei o time na semana de pico', { texto: 'Desafio: três pedidos urgentes juntos\nO que fiz: priorizei com o Pau e dividi a squad\nImpacto: tudo entregue no prazo', comp: 'Liderança' }], [9, 'marco', 'Modelo de churn em produção', { texto: 'Objetivo: Reduzir cancelamentos' }], [3, 'manual', 'Documentei o processo de análise', { texto: 'Impacto: qualquer pessoa da squad consegue refazer a análise', comp: 'Documentação' }]]);
+  bau('bia', [[130, 'card', 'Automação do relatório mensal', { squad: 'dados' }], [100, 'manual', 'Primeira apresentação para o cliente interno', { texto: 'Impacto: pedido de uma segunda análise', comp: 'Comunicação' }], [74, 'kudo', 'Estrela de Ana Lima', { texto: 'Obrigada pela mentoria em SQL!', squad: 'dados' }], [40, 'card', 'Qualidade de dados das campanhas', { squad: 'dados' }], [12, 'marco', 'Painel de qualidade no ar', { texto: 'Objetivo: Confiança nos dados' }]]);
+  bau('deb', [[160, 'card', 'Alertas das cargas diárias', { squad: 'dados' }], [90, 'manual', 'Palestra interna sobre data quality', { comp: 'Comunicação' }], [30, 'card', 'Observabilidade do pipeline', { squad: 'dados' }]]);
+  bau('cae', [[120, 'card', 'Modelo dimensional de vendas', { squad: 'dados' }], [55, 'manual', 'Estudo de modelagem dimensional', { comp: 'Estudo' }]]);
+  // Estrelas (Kudos) recebidas
+  const est = (de, para, txt, n, esc) => ({ id: 'k' + de + para + n, fromUid: de, fromNome: K.usuarios_publicos[de].nome, toUid: para, toInit: K.usuarios_publicos[para].init, texto: txt, ts: new Date(Date.parse(dia(n) + 'T15:00:00')).toISOString(), scope: esc });
+  K.painel.kudos_geral = [est('pau', 'ana', 'A análise de churn mudou a conversa com o comercial!', 150, 'geral'), est('gil', 'ana', 'Obrigado por assumir a apresentação em cima da hora.', 109, 'geral'), est('eli', 'ana', 'Sua análise salvou o dia da campanha!', 33, 'geral'), est('pau', 'bia', 'Entrega impecável do relatório!', 60, 'geral'), est('gil', 'deb', 'Excelente palestra sobre qualidade de dados.', 88, 'geral')];
+  K.squads.dados.dados.kudos = [est('bia', 'ana', 'Obrigada pela mentoria em SQL!', 74, 'dados'), est('deb', 'ana', 'Sempre disponível para ajudar o time.', 19, 'dados'), est('ana', 'bia', 'Parabéns pelo painel de qualidade!', 12, 'dados')];
+  // Ciclos: 2026/1 encerrado (com devolutiva liberada e ciência) e 2026/2 em coleta
+  const PART = {}; ['ana', 'bia', 'cae', 'deb', 'edu', 'fab', 'gus', 'lia'].forEach(u => { PART[u] = true; });
+  TR.ciclos.c2026s1 = { nome: 'Ciclo 2026/1', status: 'encerrado', ts: ts(172), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
+  TR.ciclos.c2026s2 = { nome: 'Ciclo 2026/2', status: 'coleta', ts: ts(24), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
+  const R = (o) => Object.assign({ ts: ts(100) }, o);
+  const AV1 = TR.avaliacoes.c2026s1 = {};
+  AV1.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(150) }, cae: { aprovado: true, por: 'avaliado', ts: ts(150) }, deb: { aprovado: true, por: 'lider', ts: ts(149) } },
+    auto: R({ q1: 'Assumi a análise semanal de vendas e a automatizei (de 2 dias para 2 horas). Entreguei o modelo de churn e o painel executivo. Do que mais me orgulho: a mentoria que fiz para a Bia.', q2: 'Evoluí em SQL e em automação. Antes eu dependia de planilhas; hoje cuido de pipelines.', q3: 'Quero melhorar minha comunicação com a diretoria e liderar um projeto de ponta a ponta.', q4: 'Preciso de mais espaço para estudar e de feedback mais frequente sobre apresentações.' }),
+    lider: R({ q1: 'Entrega consistente e acima do esperado: churn, painel e automação. Referência técnica da squad.', q2: 'Continuar mentorando colegas, documentar o que faz e trazer soluções antes de ser pedida.', q3: 'Ajustar a comunicação executiva (resumir mais) e aprender a delegar.', q4: 'Pronta para liderar um projeto de ponta a ponta no próximo ciclo; combinar plano de PDI.' }),
+    resp_pares: { bia: R({ q1: 'Continuar compartilhando conhecimento — a mentoria em SQL mudou meu trabalho.', q2: 'Começar a registrar as decisões das análises para o time consultar.', q3: 'Quando destravou a consulta lenta da campanha.' }), cae: R({ q1: 'Clareza ao explicar análises complexas.', q2: 'Ajustar o tempo das reuniões: às vezes se estende além do necessário.' }), deb: R({ q1: 'Proatividade com qualidade de dados.', q2: 'Compartilhar mais cedo os rascunhos para receber feedback.', q3: 'Revisão conjunta do modelo de churn.' }) },
+    devolutiva: { texto: 'Ótimo ciclo. Reconhecemos a entrega de churn, painel e automação, e a mentoria com a Bia. Pontos de atenção: resumir mais as apresentações para a diretoria e delegar. Combinamos um PDI com três focos: comunicação executiva, liderança de projeto e documentação.', liberada: true, liberadaEm: ts(70), por: 'pau', ts: ts(70) }, ciente: ts(68) };
+  ['bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { AV1[u] = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(150) } }, auto: R({ q1: 'Entregas do ciclo concluídas no prazo.', q2: 'Evolução em técnica e comunicação.', q3: 'Quero assumir mais responsabilidade.', q4: 'Mais feedback frequente.' }), lider: R({ q1: 'Boa entrega.', q2: 'Manter a qualidade.', q3: 'Ampliar a autonomia.', q4: 'Plano de PDI combinado.' }), devolutiva: { texto: 'Bom ciclo; combinamos o PDI e os próximos passos.', liberada: true, liberadaEm: ts(70), por: 'pau', ts: ts(70) }, ciente: ts(66) }; });
+  const AV2 = TR.avaliacoes.c2026s2 = {};
+  AV2.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(18) }, deb: { aprovado: true, por: 'lider', ts: ts(17) }, fab: { aprovado: false, por: 'avaliado', ts: ts(2) } }, auto: R({ q1: 'Modelo de churn em produção, Black Friday planejada e o curso de storytelling concluído.', q2: 'Evoluí em comunicação: a última apresentação foi bem avaliada.', ts: ts(4) }), resp_pares: { bia: R({ q1: 'Continuar mentorando.', q2: 'Documentar mais as decisões.', ts: ts(5) }) }, devolutiva: { texto: '(rascunho) Ciclo muito forte; destacar liderança na semana de pico e o churn em produção.', liberada: false, ts: ts(1), por: 'pau' }, lider: R({ q1: 'Rascunho da avaliação do líder.', ts: ts(1) }) };
+  AV2.bia = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(17) }, cae: { aprovado: false, por: 'avaliado', ts: ts(3) } } };
+  TR.pedidos_par = { bia: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, deb: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, ana: { c2026s2_bia: { cid: 'c2026s2', avaliado: 'bia', ts: ts(17) } } };
+  return out;
+}
+
+// ───────── login e boot ─────────
+function mostraLogin(msg) { $('#login').hidden = false; $('#app').hidden = true; $('#quem').hidden = true; $('#login-err').textContent = msg || ''; $('#login-err').hidden = !msg; }
+$('#btn-login').addEventListener('click', () => { $('#login-err').hidden = true; if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; } window._signIn().catch(e => mostraLogin('Não deu pra entrar: ' + (e && e.message || e))); });
+$('#btn-sair').addEventListener('click', () => signOut(auth));
+$('#btn-tema').addEventListener('click', () => { const atual = document.documentElement.getAttribute('data-theme') || ''; const i = TEMAS.findIndex(x => x[0] === atual); aplicaTema(TEMAS[(i + 1) % TEMAS.length][0], true); });
+const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhenses'], ['sunset', '🌅', 'Entardecer']];
+function aplicaTema(v, avisa) { const i = Math.max(0, TEMAS.findIndex(x => x[0] === v)), t = TEMAS[i]; if (t[0]) document.documentElement.setAttribute('data-theme', t[0]); else document.documentElement.removeAttribute('data-theme'); $('#btn-tema').textContent = t[1]; try { localStorage.setItem('mare_theme', t[0] === 'light' ? 'light' : t[0] === 'sunset' ? 'vice' : 'dark'); localStorage.setItem('travessia_tema', t[0]); } catch (_) {} if (avisa) toast(t[1] + ' ' + t[2]); }
+try { const t = localStorage.getItem('travessia_tema'); if (t) aplicaTema(t); else { const m = localStorage.getItem('mare_theme'); if (m === 'light') aplicaTema('light'); } } catch (_) {}
+
+async function abrirApp(u) {
+  S.me = { uid: u.uid, email: u.email, nome: u.displayName || u.email, foto: u.photoURL || '' };
+  $('#login').hidden = true; $('#app').hidden = false; $('#quem').hidden = DEMO; $('#quem-nome').textContent = S.me.nome; if (S.me.foto) { $('#quem-foto').src = S.me.foto; $('#quem-foto').hidden = false; }
+  $('#app').innerHTML = carregando('Abrindo sua travessia…');
+  try {
+    const [users, eu, vinc, ciclos, papel] = await Promise.all([G('kanban/usuarios_publicos'), G('kanban/usuarios/' + u.uid), G(T + 'vinculos'), G(T + 'ciclos'), G(T + 'papeis/' + u.uid)]);
+    S.users = users || {}; S.adm = !!((eu && eu.role === 'adm') || (u.email || '').toLowerCase() === 'caio.soares@ciahering.com.br'); S.vinc = vinc || {}; S.ciclos = ciclos || {}; S.rh = papel === 'rh';
+    if (!S.users[u.uid]) S.users[u.uid] = { nome: S.me.nome, squads: (eu && eu.squads) || {}, init: (eu && eu.init) || '' };
+    await render();
+  } catch (e) { console.warn('[travessia]', e); $('#app').innerHTML = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
+}
+try { const qt = new URLSearchParams(location.search).get('tab'); if (qt && /^[a-z]{2,12}$/.test(qt)) S.tab = qt; } catch (_) {}
+if (DEMO) {
+  // 🎭 Modo demonstração: sem login e sem Firebase. O seletor do topo troca a pessoa que está "olhando" (cada visão enxerga o que as regras permitiriam).
+  Object.assign(MEM, demoDados());
+  const sel = $('#demo-persona'); sel.innerHTML = DEMO_PERSONAS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(''); $('#demo-bar').hidden = false; document.body.classList.add('demo');
+  const entrar = k => { const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
+  sel.addEventListener('change', () => { S.tab = 'inicio'; entrar(sel.value); });
+  try { const qp = new URLSearchParams(location.search).get('como'); if (qp && DEMO_PERSONAS.some(x => x[0] === qp)) sel.value = qp; } catch (_) {}
+  entrar(sel.value);
+} else {
+  onAuthStateChanged(auth, async u => {
+    if (window.MareLogin && MareLogin.voltando) return;
+    if (!u) { S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
+    const empresa = /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com');
+    if (!empresa) { S.aviso = 'O Travessia é só para contas Google @ciahering.com.br.'; mostraLogin(S.aviso); signOut(auth).catch(() => {}); return; }
+    await abrirApp(u);
+  });
+}
+window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, CAD_DIAS, estado: S, render };
+</script>
+</body>
+</html>

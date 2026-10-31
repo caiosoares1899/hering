@@ -3,6 +3,7 @@
 // As REGRAS do banco são testadas à parte (functions/rules/__tests__/travessiaRules.test.js); aqui o foco é o que a tela faz e grava.
 // Roda:  python3 -m http.server 8941 &   node docs/arezzo/testes/test_travessia.js
 const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake = require('./fakefb.js');
+const SUF = process.env.SUF === undefined ? '-dev' : process.env.SUF;   // SUF='' roda o MESMO teste nas páginas de PRODUÇÃO (kanban.html, okr.html, travessia.html…)
 const U = (uid, n, email) => ({ uid, email: email || uid + '@ciahering.com.br', displayName: n, photoURL: '', providerData: [{ providerId: 'google.com' }] });
 const pad = n => String(n).padStart(2, '0'); const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const dAtras = n => { const d = new Date(); d.setDate(d.getDate() - n); return iso(d); };
@@ -37,7 +38,7 @@ const seed = () => ({ kanban: {
   const t = (n, c, d) => { if (!c) ok = false; console.log((c ? '✅ ' : '❌ ') + n + (c ? '' : ' → ' + JSON.stringify(d).slice(0, 360))); };
   const abre = async (user, o) => { const ctx = await b.newContext({ viewport: (o && o.vp) || { width: 1280, height: 900 } }); await fake.install(ctx, (o && o.seed) || seed());
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
-    await p.goto('http://localhost:8941/travessia-dev.html'); await p.waitForFunction(() => !!window.__authCb); if (user) { await p.evaluate(x => window.__authCb(x), user); await p.waitForSelector('#app .h1', { timeout: 6000 }).catch(() => {}); await p.waitForTimeout(400); } return { ctx, p, errs }; };
+    await p.goto('http://localhost:8941/travessia' + SUF + '.html'); await p.waitForFunction(() => !!window.__authCb); if (user) { await p.evaluate(x => window.__authCb(x), user); await p.waitForSelector('#app .h1', { timeout: 6000 }).catch(() => {}); await p.waitForTimeout(400); } return { ctx, p, errs }; };
   const st = (p, path) => p.evaluate(x => x.split('/').reduce((a, k) => (a == null ? undefined : a[k]), window.__store), path);
   const aba = async (p, nome) => { await p.click(`[role=tab][data-tab="${nome}"]`); await p.waitForTimeout(500); };
   const tabs = p => p.locator('[role=tab][data-tab]').allInnerTexts();
@@ -156,7 +157,7 @@ const seed = () => ({ kanban: {
     t('quem ainda não registrou não entra na média e o líder vê quantas faltam', /1 pessoa ainda não registrou/.test(tx) && /de 1 de 2 pessoas/.test(tx), tx.slice(0, 500)); await ctx.close(); }
   { const sd = seed(); delete sd.kanban.travessia.humor_comp; const { ctx, p } = await abre(U('pau', 'Pau Reis'), { seed: sd }); await aba(p, 'frota');
     t('sem nenhum humor registrado: explica (sem média inventada)', /Ninguém registrou o humor/.test(await p.locator('#painel').innerText()) && !/de 5 ·/.test(await p.locator('#painel').innerText()), ''); await ctx.close(); }
-  { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, seed()); const p = await ctx.newPage(); await p.goto('http://localhost:8941/travessia-dev.html?tab=frota'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('pau', 'Pau Reis')); await p.waitForTimeout(900);
+  { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, seed()); const p = await ctx.newPage(); await p.goto('http://localhost:8941/travessia' + SUF + '.html?tab=frota'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('pau', 'Pau Reis')); await p.waitForTimeout(900);
     t('?tab=frota abre direto na Frota (destino do aviso do sino)', /Termômetro do time/.test(await p.locator('#painel').innerText()), ''); await ctx.close(); }
   // 🫶 alerta ao líder quando a pessoa compartilha e marca mal
   { const { ctx, p } = await abre(U('ana', 'Ana Lima')); const nots = () => st(p, 'kanban/usuarios/pau/notificacoes');

@@ -56,6 +56,7 @@
       {id:'oceano',   gatilho:'boot',      texto:'O botão ⋮⋮⋮ do topo leva ao Radar e à página Oceano.', saiba:{tab:'board', q:'Menu de produtos'}, ajuda:'Menu de produtos (⋮⋮⋮) e a página Oceano'},
       {id:'mencao',   gatilho:'card-open', texto:'Digite @ na descrição ou num comentário pra chamar alguém. A pessoa recebe um aviso.', saiba:{tab:'cards', q:'Menções'}, ajuda:'Menções'},
       {id:'checklist',gatilho:'card-open', texto:'No checklist, cole uma lista: cada linha vira um item.', saiba:{tab:'cards', q:'Checklist'}, ajuda:'Checklist'},
+      {id:'bau',     gatilho:'card-open', texto:'Entregou algo de que se orgulha? O 💼 no topo do card guarda no seu Baú da Travessia, pra lembrar na hora da avaliação.', saiba:{tab:'cards', q:'Baú da Travessia'}, ajuda:'Baú da Travessia (💼)'},
       {id:'travado',  gatilho:'card-open', texto:'Duas pessoas no mesmo card? Quem abre primeiro edita; a outra vê em modo leitura.', saiba:{tab:'cards', q:'Card travado'}, ajuda:'Card travado (duas pessoas no mesmo card)'},
       {id:'automacao',gatilho:'cfg-open',  texto:'Em Automações, regras do tipo "quando acontecer X, faça Y" trabalham por você.', saiba:{tab:'automacoes', q:'O que é uma automação'}, ajuda:'O que é uma automação'}]},
     oceano:{nome:'Oceano', icone:'🌐', gatilhos:{boot:'Ao entrar', sino:'Ao abrir o 🔔', perfil:'Ao abrir ⚙ Meu perfil'}, dicas:[
