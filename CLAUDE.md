@@ -51,6 +51,7 @@ git fetch origin <branch-name>
 git reset --hard origin/<branch-name>
 ```
 **Caminho do clone do Caio (fixo, confirmado por ele em 16/10/2026):** `C:\Users\caio.soares\.gemini\antigravity\scratch\hering` — é o mesmo diretório em que o Antigravity trabalha. Use sempre `cd /d "…"` (a barra `/d` troca de unidade no `cmd`). Em PowerShell, `cd "…"` basta; ao entregar um resync, escreva o comando já com esse caminho, nunca um genérico.
+**MacBook do Caio (31/10/2026):** o clone fica em `~/hering` e o Claude Code está instalado lá (sessão própria, que não enxerga o que esta sessão fez: antes de qualquer pedido, `cd ~/hering && git pull`). O app do mini painel (`mac/`) roda dele; atualizar = `cd ~/hering/mac && git pull && xcodegen generate` e ⌘+R no Xcode. Os deploys de `functions/` continuam sendo feitos no Windows.
 
 Skipping this is a real, repeated failure mode: `firebase deploy` silently
 discovers whatever `functions/index.js` exports **on disk locally** — if a

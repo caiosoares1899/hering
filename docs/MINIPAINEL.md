@@ -30,7 +30,7 @@ Depois abra `https://caiosoares1899.github.io/hering/minipainel.html`, cole a ch
 - A chave fica no `localStorage` do navegador onde você colou. Em computador compartilhado, use ⚙ → trocar a chave ao sair.
 
 ## App do Mac (barra de menu + widget)
-Em `mac/` (Swift/SwiftUI, projeto gerado por XcodeGen): lê o mesmo JSON. Escrito sem Xcode e **ainda não compilado** — passo a passo e problemas comuns em `mac/README.md`. O teste `functions/oceano/__tests__/contrato_mac.test.js` garante que os campos que o Swift espera existem no JSON da função.
+Em `mac/` (Swift/SwiftUI, projeto gerado por XcodeGen): lê o mesmo JSON. Escrito sem Xcode; **compilado e rodando no Mac do Caio desde 31/10/2026** (barra de menu + widget, instalado em *Aplicativos*) — passo a passo (inclusive para quem nunca usou o Terminal) e problemas comuns em `mac/README.md`. O teste `functions/oceano/__tests__/contrato_mac.test.js` garante que os campos que o Swift espera existem no JSON da função.
 
 ## Ícone na bandeja do Windows
 Em `windows/` (`iniciar-oceano.cmd` → `oceano-bandeja.ps1`): mesma ideia da barra de menu do Mac, com aviso (balão) quando o estado piora. **Clicar no ícone abre uma janela nativa do Windows** (desenhada pelo próprio script, sem navegador e sem a página web), com o mesmo resumo. Roda pelo `cmd` com `-NoProfile`. Escrito sem Windows; o teste `functions/oceano/__tests__/contrato_windows.test.js` confere os campos lidos, o BOM UTF-8 do `.ps1` e o lançador. Passo a passo em `windows/README.md`.

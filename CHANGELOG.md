@@ -41,11 +41,11 @@ Versão Windows do app do Mac: um script PowerShell lançado pelo cmd (iniciar-o
 • Lê a chave de %USERPROFILE%\chave-oceano.txt (a mesma da página). Nada é instalado. Passo a passo em windows/README.md.
 • Escrito sem Windows: o contrato com a função, o BOM UTF-8 do .ps1 e o lançador são conferidos por teste (contrato_windows.test.js); o ícone e o menu rodam pela primeira vez na máquina do Caio. Dica: não (ferramenta pessoal).
 
-### 🍎 Mini painel para Mac (SÓ DEV — nunca compilado): bolinha 🟢🟡🔴 na barra de menu e widget de mesa — mac/ (Swift, XcodeGen) — 2026-10-30
+### 🍎 Mini painel para Mac (SÓ DEV — ferramenta pessoal: compilado e rodando no Mac do Caio em 31/10/2026, não vai pra produção): bolinha 🟢🟡🔴 na barra de menu e widget de mesa — mac/ (Swift, XcodeGen) — 2026-10-30
 
 Desenho do app do Mac do Caio: a barra de menu mostra a bolinha do estado geral (e o nº de cards atrasados); ao clicar, VTEX, GitHub, Firebase, backup, alarmes de 'card sumiu', plantão e os cards dele; o widget (pequeno e médio) mostra o mesmo resumo na mesa. Lê o mesmo JSON da página minipainel.html (função oceanoResumo), atualiza a cada minuto e tem 'Abrir ao iniciar sessão'.
 • Projeto gerado por XcodeGen (project.yml); a chave e o Team ID ficam em mac/Local.xcconfig (fora do Git). Passo a passo em mac/README.md.
-• Escrito sem Xcode: o contrato com a função é conferido por teste (contrato_mac.test.js), mas a primeira compilação é no Mac do Caio. Dica: não (ferramenta pessoal).
+• Escrito sem Xcode e conferido por teste (contrato_mac.test.js). A 1ª compilação (31/10/2026, Xcode 27.2) apontou um erro — o id do widget não começava com o do app (corrigido em mac/project.yml, PR #1556) — e depois o app e o widget rodaram, lendo os dados reais. Instalado em Aplicativos com 'Abrir ao iniciar sessão'. O README ganhou o roteiro para quem nunca usou o Terminal. Dica: não (ferramenta pessoal).
 
 ### 🌊 Mini painel (SÓ DEV — falta o deploy da função): VTEX, GitHub, Firebase, backup, plantão, alarmes de card sumindo e os seus cards numa tela só — minipainel.html + oceanoResumo — 2026-10-30
 

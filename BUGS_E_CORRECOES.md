@@ -79,6 +79,19 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-31 · Mini painel: 'meus cards' lia o relógio real e o teste quebrou na virada do dia (functions/oceano/resumo.js)
+
+- Sintoma: o CI (`checks`) das PRs #1555 e #1556 ficou vermelho com 1 teste de 992 ("meus cards: só os ATIVOS do dono…", `functions/oceano/__tests__/resumo.test.js`), bloqueando o merge. As PRs pareciam "com conflito", mas o estado era `blocked` (CI), não `dirty`.
+- Causa-raiz: `resumirCards()` (functions/oceano/resumo.js) calculava "hoje" com `todaySP()` (relógio real) em vez de usar o `agora` injetado; o teste fixa `agora` em 30/10/2026, então na virada do dia (31/10) os cálculos de atrasado/vence hoje mudaram. Falharia em qualquer PR aberta naquele dia.
+- Correção: o dia é calculado a partir do `agora` recebido (em produção é a hora real: mesmo resultado). 991 de 991 testes passam. Armadilha: teste com relógio fixo + código que lê o relógio real = quebra na virada do dia; toda função pura recebe o "agora".
+
+### 2026-10-31 · Mac: id do widget precisava começar com o do app (1º build no Xcode, mac/project.yml, PR #1556)
+
+- Sintoma (1º build no Xcode do Caio, 31/10/2026): "Embedded binary's bundle identifier is not prefixed with the parent app's bundle identifier."
+- Causa-raiz: o XcodeGen dava ao widget `br.com.hering.oceano.OceanoWidget` e ao app `br.com.hering.oceano.OceanoBar`; o macOS exige que o id de uma extensão embutida COMECE com o id do app pai.
+- Correção: `PRODUCT_BUNDLE_IDENTIFIER: br.com.hering.oceano.OceanoBar.Widget` no alvo `OceanoWidget` de `mac/project.yml` (PR #1556). Depois disso o app e o widget compilaram e rodaram.
+- Armadilha: extensão de app (widget) sempre deriva o id do app pai.
+
 ### 2026-10-30 · Automação 'mover card' parecia desfeita: o modal aberto regravava a coluna antiga (kanban v8.30.888 em PROD; dev v8.30.888-dev)
 
 - Sintoma (relato do time, 2026-10-30): a Automação "Mover card para coluna" rodava (toast "Automação aplicada", card mudava de coluna) e depois o card voltava sozinho para a coluna de antes, como um "undo".
