@@ -13,7 +13,7 @@ const { getDatabase } = require('firebase-admin/database');
 const { getAuth } = require('firebase-admin/auth');
 const { getStorage } = require('firebase-admin/storage');
 const flowLib = require('../agente-agil/flow');
-const { sinaisDoCard, todaySP } = require('../agente-agil-orquestrador/resumoMeuDia');
+const { sinaisDoCard } = require('../agente-agil-orquestrador/resumoMeuDia');
 const { verificar: verificarBackups } = require('../backup/vigia');
 const { chaveOk } = require('../plantao/agente');
 
@@ -100,7 +100,7 @@ async function cardsDoDono(db, squadId, init) {
   return Array.isArray(v) ? v.filter(Boolean) : Object.values(v || {});
 }
 async function resumirCards({ db, squads, init, agora }) {
-  const hoje = todaySP();
+  const hoje = new Date(agora).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });   // do `agora` recebido (não do relógio): em produção é o mesmo dia; nos testes o dia fica fixo
   const lista = [];
   const porSquad = await Promise.all(squads.map(async (sq) => {
     const [cards, meta] = await Promise.all([cardsDoDono(db, sq, init), flowLib.readFlowMeta(db, sq)]);
