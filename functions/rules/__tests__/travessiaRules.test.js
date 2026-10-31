@@ -103,7 +103,7 @@ test('faróis: série definida pelo líder; encontros registrados pela pessoa ou
   ['bia', 'dani', 'adm', 'forasteiro'].forEach(k => assert.equal(lê(T + 'encontros/ana', A[k]), false, k));
 });
 
-test('humor: PRIVADO (só a pessoa lê, nem o líder); o líder só enxerga a cópia que a pessoa escolheu compartilhar', () => {
+test('humor: o registro é privado (só a pessoa lê, nem o líder); o líder só enxerga a cópia (humor_comp), que a própria pessoa grava', () => {
   reset();
   const h = { n: 4, ts: 1, nota: 'dia bom' };
   assert.equal(grava(T + 'humor/ana/2026-10-22', A.ana, h), true);

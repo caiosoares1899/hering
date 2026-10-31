@@ -250,7 +250,7 @@ O Antigravity entregou um dossiê de benchmarking (Lattice, Leapsome, Culture Am
 
 **Como interpretei (corrigir se estiver errado):**
 - **Faróis** = semáforo de cadência do 1:1 por pessoa (🟢 em dia, 🟡 atenção, 🔴 atrasado), medido contra a cadência combinada (semanal, quinzenal, mensal ou trimestral), **descontando as folgas da Escala**. Para o farol existir, entra um registro simples de 1:1 realizado (data e tipo), sem pauta nem série completa ainda.
-- **Humor no Meu Dia** = um "como você está hoje?" de 1 a 5 no painel 🌅 Meu Dia do Maré. **Privado por padrão** (só a pessoa lê). Ela pode escolher **compartilhar com o líder direto**; descompartilhar apaga a cópia. Nenhum modelo analisa humor.
+- **Humor no Meu Dia** = um "como você está hoje?" de 1 a 5 no painel 🌅 Meu Dia do Maré. **Decisão do Caio (31/10/2026): o humor vai sempre para o líder direto** — não há mais caixa "compartilhar" nem como descompartilhar; a tela diz isso com todas as letras. Vale só daqui para a frente: o que foi registrado antes, sob a promessa de privacidade, continua só da pessoa. O fechamento do dia (texto livre) segue só dela. Nenhum modelo analisa humor. *(Até 30/10 era privado por padrão, com a caixa "Compartilhar com meu líder".)*
 - **Avaliação v1** = só texto (sem nota, como combinado), com três vozes: autoavaliação, líder e pares. Perguntas padrão por ciclo (o RH poderá trocar depois). Fases: preparação (indicação de pares) → coleta → devolutiva → encerrado.
 - **Indicação de pares:** o avaliado sugere, **o líder aprova**; só par aprovado responde; o avaliado nunca lê o feedback individual dos pares. Sugestões iniciais = colegas das mesmas squads.
 - **Trava de devolutiva:** o avaliado só lê a devolutiva **depois que o líder libera**; mesmo liberada, a avaliação bruta do líder e os feedbacks individuais dos pares continuam fechados (a devolutiva é a síntese do líder).
@@ -263,7 +263,7 @@ O Antigravity entregou um dossiê de benchmarking (Lattice, Leapsome, Culture Am
 |---|---|---|---|---|---|
 | Baú | ✅ grava e lê | lê | lê | ❌ | ❌ |
 | Registro de 1:1 e cadência | ✅ | ✅ | lê | ❌ | ❌ |
-| Humor | ✅ (privado) | só o que ela compartilhar | ❌ | ❌ | ❌ |
+| Humor | ✅ | ✅ (sempre, desde 31/10/2026) | ❌ | ❌ | ❌ |
 | Autoavaliação | ✅ | lê | lê | ❌ | ❌ |
 | Avaliação do líder | ❌ | ✅ | lê | ❌ | ❌ |
 | Feedback de cada par | ❌ | lê | lê | ❌ | ❌ |
@@ -286,9 +286,9 @@ Ideia do Caio: dentro do 🌅 Meu Dia, além do humor da manhã, um **humor de f
 
 ### 13.2 Acréscimo (22/10/2026, noite): 🌡️ termômetro do time e 🫶 aviso de apoio ao líder
 Pedido do Caio: o líder precisa de um **termômetro da média do time**, com **quantas respostas** existem, e **receber um alerta quando alguém marca que está mal**, só para ficar de olho e ajudar.
-- **Como respeita a privacidade:** o humor continua **privado por padrão**. O termômetro e o alerta só consideram quem **escolheu compartilhar com o líder** (a caixa "Compartilhar com meu líder", agora com o texto explícito: "ele vê no termômetro do time e recebe um aviso se eu marcar que não estou bem, pra poder me apoiar"). Quem não compartilha não entra na média nem gera aviso, e o líder vê quantas pessoas não compartilham.
-- **Termômetro (Frota):** média dos últimos 7 dias de 1 a 5 com a carinha correspondente e a cor (🟢 ≥ 3,5, 🟡 ≥ 2,5, 🔴 abaixo), comparação com a semana anterior (subiu, estável ou caiu), distribuição por humor, gráfico dos últimos 14 dias e a contagem "N respostas de P de T pessoas (quem compartilhou)".
-- **Aviso de apoio:** quando uma pessoa que compartilha marca "mal" ou "muito mal", o líder direto recebe uma notificação no sino (tipo `travessia_apoio`, um por pessoa por dia, nova área "Travessia (gente)" na Central de Notificações) e vê na Frota a lista "🫶 Pra ficar de olho" (últimos 3 dias) e um selo "vale um oi" no cartão da pessoa. Clicar no aviso abre a Frota. **Sem push** por enquanto: o texto de uma notificação no celular poderia aparecer na tela bloqueada (fica como decisão do Caio).
+- **Como trata a privacidade (mudou em 31/10/2026):** o humor **sempre** vai para o líder direto; a tela avisa isso ("Seu líder vê o seu humor: a média do time no termômetro dele e, se você marcar que não está bem, um aviso para ele poder te apoiar"). Antes era privado por padrão, com a caixa "Compartilhar com meu líder"; o que foi registrado naquela época continua privado. O termômetro e o alerta consideram quem registrou o humor; quem ainda não registrou não entra na média e o líder vê quantas faltam. **Pontos a validar com o DPO (pergunta 6 do `ecossistema.html`):** base legal e transparência para um dado de bem-estar enviado ao gestor sem opção de recusa.
+- **Termômetro (Frota):** média dos últimos 7 dias de 1 a 5 com a carinha correspondente e a cor (🟢 ≥ 3,5, 🟡 ≥ 2,5, 🔴 abaixo), comparação com a semana anterior (subiu, estável ou caiu), distribuição por humor, gráfico dos últimos 14 dias e a contagem "N respostas de P de T pessoas (quem registrou)".
+- **Aviso de apoio:** quando uma pessoa marca "mal" ou "muito mal", o líder direto recebe uma notificação no sino (tipo `travessia_apoio`, um por pessoa por dia, nova área "Travessia (gente)" na Central de Notificações) e vê na Frota a lista "🫶 Pra ficar de olho" (últimos 3 dias) e um selo "vale um oi" no cartão da pessoa. Clicar no aviso abre a Frota. **Sem push** por enquanto: o texto de uma notificação no celular poderia aparecer na tela bloqueada (fica como decisão do Caio).
 - **Decisões que continuam abertas (do Caio e do RH):**
   1. **Opt-in × padrão compartilhado.** Hoje a cobertura depende de cada pessoa compartilhar. Se o Caio quiser a média do time inteira, a alternativa é um **agregado anônimo calculado no servidor** (só aparece com pelo menos 5 respostas, sem nomes e sem aviso individual) — exige mudar o texto prometido às pessoas e validar com RH/LGPD (humor pode ser considerado dado de saúde). Os avisos por pessoa continuariam dependendo de consentimento.
   2. **Push** para o aviso de apoio (com texto genérico, sem nome).

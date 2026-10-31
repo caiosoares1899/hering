@@ -159,7 +159,7 @@
       quando:'Um Marco passa para Concluído.', quem:'A torre do Objetivo (feed único).', onde:'Radar: salvar Marco → feed.'},
     // ── Travessia (gente) ──
     {id:'travessia_apoio', area:'gente', fonte:'pessoal', nome:'Alguém do time marcou que não está bem', pushPossivel:false,
-      quando:'Uma pessoa que você lidera marca "mal" ou "muito mal" no humor do dia E escolheu compartilhar o humor com você (a caixa "Compartilhar com meu líder"). Um aviso por pessoa por dia.',
+      quando:'Uma pessoa que você lidera marca "mal" ou "muito mal" no humor do dia (o humor vai sempre para o líder direto). Um aviso por pessoa por dia.',
       quem:'O líder direto da pessoa (organograma da Travessia). Ninguém mais.', onde:'Maré (🌅 Meu Dia) e Travessia, ao registrar o humor. É só um sinal pra você ficar de olho e apoiar.'},
     // ── Calendário e reuniões ──
     {id:'reuniao', area:'agenda', fonte:'pessoal', nome:'Lembrete de reunião',

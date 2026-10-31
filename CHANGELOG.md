@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌤️ Humor vai sempre pro líder direto (sem caixa de compartilhar) — Meu Dia + Travessia (SÓ DEV) — 2026-10-31
+
+Decisão do Caio (31/10/2026): a pessoa não precisa mais permitir — o humor do dia vai SEMPRE para o líder direto. Sai a caixa "Compartilhar com meu líder" (Meu Dia no Maré e Minha travessia); ao escolher a carinha, o sistema grava o registro dela e a cópia que o líder lê (humor_comp), e o aviso 🫶 de apoio sai sempre que a pessoa marca "mal" ou "muito mal".
+• Transparência: no lugar da caixa, a tela diz com todas as letras o que o líder vê (a média do time no termômetro e o aviso de apoio) e que o fechamento do dia (texto livre, Diário) continua só da pessoa.
+• Só daqui pra frente: o humor registrado antes de 31/10/2026, sob a promessa de privacidade, NÃO é copiado pro líder e continua só da pessoa.
+• Frota (líder): os textos deixam de falar em "quem compartilhou"; passam a "quem registrou", e o líder vê quantas pessoas ainda não registraram na semana.
+• Sem mudança nas regras do banco (a pessoa já gravava a própria cópia em humor_comp); kanban-dev v8.30.889-dev, travessia-dev, mare-notif-dev ?v=36 (texto da Central de Notificações). Ajuda do Maré atualizada. Testes: test_travessia (+ganchos) ajustados.
+• Ponto a validar com o DPO (pergunta 6 do ecossistema): base legal e transparência para um dado de bem-estar enviado ao gestor sem opção de recusa. Dica: não (muda o comportamento de algo que já existia, e a tela já explica).
+
 ### 🪟 Mini painel do Windows vira janela nativa, sem navegador (SÓ DEV — ainda não viu uma tela real) — windows/oceano-bandeja.ps1 — 2026-10-30
 
 Pedido do Caio: 'a janelinha não tem como ser dentro do sistema Windows sem abrir um navegador?'. Clicar no ícone agora abre um painel desenhado pelo próprio script (WinForms): fundo escuro Marine Glass, cantos arredondados, bolinhas coloridas por peça (VTEX, GitHub, Firebase, backup, cards sumindo, plantão), 4 contadores dos cards e a lista dos 5 mais urgentes, botões Atualizar / Abrir página inteira / Sair e 'Iniciar com o Windows'. Fecha ao clicar fora, com Esc ou clicando no ícone de novo; clicar no balão de aviso também abre.
