@@ -8,7 +8,7 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 | **Painel** | gestão/diretoria, pessoas, comunicados | `painel.html` | mantém o nome (a ideia "Passadiço" foi descartada) |
 | **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (`okr.html` v2.88 · dev `okr-dev.html` v2.89; `mare-metas.js` v16) — logo: `favicon-radar.png`. Inclui aba **📊 Data Studio**, promoção **Próximo Passo → Progresso → Marco** e Metas com **📅 Curva diária**, **Projeção de Fechamento** e expansão em tela cheia (**⛶ Expandir**) |
 | **A Bordo** | onboarding | `onboarding.html` | a renomear (não mexido ainda) |
-| **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | — | projeto futuro |
+| **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | `travessia.html` | **em produção desde 31/10/2026** (entrada discreta: Baú 💼 no Maré/Radar e humor no Meu Dia; o card no Oceano segue "em breve" até decidirmos abrir a porta) |
 
 **Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v33 · `mare-metas.js` v16 · `mare-dicas.js` v6 · `mare-login.js` v3 · `mare-plantao.js` v1.
 

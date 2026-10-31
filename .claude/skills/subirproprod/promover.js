@@ -69,6 +69,13 @@ const TARGETS = {
     versionDevKey: 'painel_dev',
     mode: 'merge3', // painel-dev.html tem instrumentação de debug própria: promove só o que mudou no dev desde a última promoção (merge de 3 vias)
   },
+  travessia: {
+    dev: 'travessia-dev.html',
+    prod: 'travessia.html',
+    versionProdKey: null,
+    versionDevKey: null,
+    mode: 'sync',   // Travessia (2026-10-31): sem versão própria (não se atualiza sozinha); título e selo "🧪 Dev" são de ambiente (normalizeEnvLine / isDevOnlyBannerHunk)
+  },
   'mare-notif': {
     dev: 'mare-notif-dev.js',
     prod: 'mare-notif.js',
@@ -118,11 +125,12 @@ function normalizeEnvLine(line) {
     .replace(/oceano-dev\.webmanifest/g, 'oceano.webmanifest')
     .replace(/mare-(notif|dicas|metas|login|plantao)-dev\.js/g, 'mare-$1.js')
     .replace(/force_logout_after_dev/g, 'force_logout_after')
-    .replace(/fb_(apiKey|authDomain|databaseURL|projectId|storageBucket|messagingSenderId|appId)(kanban|painel|okr|oceano|escala|intake)_dev/g, 'fb_$1$2')
-    .replace(/\b(kanban|painel|okr|oceano|escala|intake)_dev\b/g, '$1')
-    .replace(/\b(kanban|painel|okr|oceano|escala|intake)-dev\b/g, '$1')
+    .replace(/fb_(apiKey|authDomain|databaseURL|projectId|storageBucket|messagingSenderId|appId)(kanban|painel|okr|oceano|escala|intake|travessia)_dev/g, 'fb_$1$2')
+    .replace(/\b(kanban|painel|okr|oceano|escala|intake|travessia)_dev\b/g, '$1')
+    .replace(/\b(kanban|painel|okr|oceano|escala|intake|travessia)-dev\b/g, '$1')
     .replace(/(v\d+\.\d+(?:\.\d+)?(?:\s*·\s*[a-z]+)?)-dev\b/g, '$1')
     .replace(/<title>🧪\s*Radar\s*·\s*Oceano\s*·\s*Dev<\/title>/g, '<title>Radar · Oceano</title>')   // o título do Radar em prod é "Radar · Oceano" (sem emoji) — normalizar para outro texto fazia o título de dev vazar na promoção (v2.87)
+    .replace(/<title>🧪\s*Travessia\s*·\s*Dev<\/title>/g, '<title>Travessia · Oceano</title>')
     .replace(/\s*·\s*Dev<\/title>/g, '</title>')
     .replace(/\s*<span class="devtag">dev<\/span>/gi, '');
 }
@@ -151,13 +159,13 @@ function isSameEnvSlot(prodLine, devLine) {
 function isDevOnlyBannerHunk(prodSlice, devSlice) {
   if (devSlice.length === 0) return false;
   if (!prodSlice.every(l => l.replace(/\r$/, '').trim() === '')) return false;
-  const hasBanner = devSlice.some(l => /id="dev-banner"|id="devbar"|🧪\s*RADAR\s*DEV|AMBIENTE\s*DEV/i.test(l));
+  const hasBanner = devSlice.some(l => /id="dev-banner"|id="devbar"|🧪\s*RADAR\s*DEV|AMBIENTE\s*DEV|class="proto"[^>]*>🧪\s*Dev</i.test(l));
   if (!hasBanner) return false;
   return devSlice.every(l => {
     const t = l.replace(/\r$/, '').trim();
     return (
       t === '' ||
-      /id="dev-banner"|id="devbar"|🧪\s*RADAR\s*DEV|AMBIENTE\s*DEV/i.test(t) ||
+      /id="dev-banner"|id="devbar"|🧪\s*RADAR\s*DEV|AMBIENTE\s*DEV|class="proto"[^>]*>🧪\s*Dev</i.test(t) ||
       /^<div style="height:\d+px;"><\/div>$/i.test(t)
     );
   });
@@ -435,7 +443,7 @@ function syncVersionJson(promotedTargets) {
  * Pares -dev/prod que existem na raiz mas não estão em TARGETS (a skill nunca os verificaria).
  * Exceções conhecidas: arquivos de ambiente que não se promovem.
  */
-const SEM_PROMOCAO = new Set(['oceano-dev.webmanifest', 'travessia-dev.html']);   // travessia-dev.html = Travessia em validação (ainda sem versão de produção): vira alvo de promoção quando o Caio validar
+const SEM_PROMOCAO = new Set(['oceano-dev.webmanifest']);
 function paresNaoCobertos() {
   const cobertos = new Set(Object.values(TARGETS).flatMap(c => [c.dev, c.prod]));
   const out = [];

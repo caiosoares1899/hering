@@ -21,8 +21,8 @@
   const FEED = 'kanban/notif_feed', SEEN = 'kanban/notif_feed_seen', FEED_LIMIT = 60;
   const IS_DEV = /-dev\.html/.test(location.pathname);
   const PAGES = IS_DEV
-    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html', escala:'escala-dev.html'}
-    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html', escala:'escala.html'};
+    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html', escala:'escala-dev.html', travessia:'travessia-dev.html'}
+    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html', escala:'escala.html', travessia:'travessia.html'};
 
   // Ícone de cada tipo (pessoais + feed). As páginas podem ter o próprio mapa; este é o de referência.
   const ICONS = {
@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', travessia_apoio:'🫶', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -58,6 +58,7 @@
     {id:'pessoas', icone:'⭐', nome:'Pessoas e reconhecimento',  desc:'Estrelas do Mar, reações, mensagens ao ADM'},
     {id:'radar',   icone:'📡', nome:'Radar (OKR)',               desc:'Objetivos, Marcos, reuniões e Mural do Radar'},
     {id:'agenda',  icone:'🎥', nome:'Calendário e reuniões',     desc:'Agendas do Google e lembretes de reunião'},
+    {id:'gente',   icone:'⛵', nome:'Travessia (gente)',          desc:'Avisos de apoio ao time e de avaliação'},
     {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
   ];
   // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
@@ -156,6 +157,10 @@
       quando:'Um novo Objetivo é criado (ou duplicado) no Radar.', quem:'A torre do Objetivo (feed único — sem notificação por pessoa).', onde:'Radar: salvar/duplicar Objetivo → feed.'},
     {id:'marco_concluido', area:'radar', fonte:'feed', nome:'Marco concluído', pushPossivel:false,
       quando:'Um Marco passa para Concluído.', quem:'A torre do Objetivo (feed único).', onde:'Radar: salvar Marco → feed.'},
+    // ── Travessia (gente) ──
+    {id:'travessia_apoio', area:'gente', fonte:'pessoal', nome:'Alguém do time marcou que não está bem', pushPossivel:false,
+      quando:'Uma pessoa que você lidera marca "mal" ou "muito mal" no humor do dia (o humor vai sempre para o líder direto). Um aviso por pessoa por dia.',
+      quem:'O líder direto da pessoa (organograma da Travessia). Ninguém mais.', onde:'Maré (🌅 Meu Dia) e Travessia, ao registrar o humor. É só um sinal pra você ficar de olho e apoiar.'},
     // ── Calendário e reuniões ──
     {id:'reuniao', area:'agenda', fonte:'pessoal', nome:'Lembrete de reunião',
       quando:'Faltam alguns minutos para uma reunião do Google Agenda ligada ao board (com botão de entrar).', quem:'Você mesmo, no navegador com o board aberto.', onde:'Maré: checkUpcomingMeetings().'},
@@ -314,6 +319,7 @@
     if(t==='feedback') return {url:PAGES.painel+'?tab=monitor'};
     if(t==='github_incidente' || t==='github_monitor_falhou' || t==='firebase_incidente' || t==='firebase_monitor_falhou') return {url:PAGES.painel+'?tab=status'};   // incidente/monitor do GitHub ou Firebase (só ADMs): abre a aba 🔋 Status do Painel
     if(t==='backup_falhou' || t==='vtex_monitor_falhou') return {url:PAGES.painel};   // aviso pros ADMs: abre o Painel
+    if(t==='travessia_apoio') return {url:PAGES.travessia+'?tab=frota'};   // abre a Frota (termômetro do time) na Travessia
     if(t==='escala') return {url:PAGES.escala+'?visao=squad'+(n.squad?'&squad='+encodeURIComponent(n.squad):'')+(/^\d{4}-\d{2}-\d{2}$/.test(n.okrObjId||'')?'&semana='+n.okrObjId:'')};   // abre a Escala na semana cadastrada
     if(t==='meta_lembrete') return {url:PAGES.kanban+'?'+(n.squad?'squad='+encodeURIComponent(n.squad)+'&':'')+'dados='+(n.okrObjId==='digital'?'digital':'squad')};   // abre a aba 📊 Dados (Squad ou Digital) do Maré
     if(t==='reuniao') return /^https?:\/\//i.test(String(n.meetingLink||'')) ? {url:n.meetingLink, externo:true} : null;   // só http(s): um javascript: gravado na notificação viraria XSS no window.open

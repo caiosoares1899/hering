@@ -27,7 +27,7 @@ Tudo que **não** é servido ao usuário (documentação, testes, capturas, scri
 | 🗓️ **Escala** | `escala.html` | `escala-dev.html` | Trabalho / plantão / folga por dia |
 | 📝 **Pedido (Intake)** | `intake.html` | `intake-dev.html` | Formulário de pedidos para as squads |
 | 🛟 **A Bordo** (onboarding) | `onboarding.html` | — | Onboarding ágil |
-| ⛵ **Travessia** (pessoas / 1:1 / avaliação) | — | `travessia-dev.html` | Fase 1: Baú, faróis, humor, mural de Estrelas, avaliação com indicação de pares e trava de devolutiva (desenho em `docs/ideias/travessia-2026-10-22.md`; protótipo antigo em `docs/demo/travessia-prototipo-fase0.html`) |
+| ⛵ **Travessia** (pessoas / 1:1 / avaliação) | em produção desde 31/10/2026 (entrada discreta: o card do Oceano segue "em breve") | `travessia.html` ↔ `travessia-dev.html` (sem versão própria; alvo `travessia` do `promover.js`) | Fase 1: Baú, faróis, humor, mural de Estrelas, avaliação com indicação de pares e trava de devolutiva (desenho em `docs/ideias/travessia-2026-10-22.md`; protótipo antigo em `docs/demo/travessia-prototipo-fase0.html`) |
 
 Sem par dev: `okr-apresentacao.slide.html` (apresentação do Radar) · `guia-okr.html` (guia do Radar, 14 MB — prints embutidos).
 

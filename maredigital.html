@@ -194,7 +194,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('firebase-db')"><span class="nd" style="background:var(--teal)"></span>🔥 Estrutura Firebase</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.882</div>
+  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.889</div>
     <a class="nl" onclick="goTo('auth')"><span class="nd" style="background:var(--purple)"></span>🔐 Autenticação & papéis</a>
     <a class="nl" onclick="goTo('board')"><span class="nd" style="background:var(--accent)"></span>📋 Board & visualizações</a>
     <a class="nl" onclick="goTo('cards')"><span class="nd" style="background:var(--cyan)"></span>🗃️ Sistema de cards</a>
@@ -208,7 +208,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('personalizacao')"><span class="nd" style="background:var(--warn)"></span>🎛️ Personalização <span class="nb nb-t">novo</span></a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.886-dev</div>
+  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.889-dev</div>
     <a class="nl" onclick="goTo('dev')"><span class="nd" style="background:var(--orange)"></span>🧪 Sandbox & Dev Seed <span class="nb nb-p">dev</span></a>
   </div>
 
@@ -238,8 +238,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <h1>Maré Digital<br><span>Documentação Técnica</span></h1>
   <p class="hdesc">Sistema Kanban desenvolvido internamente. Páginas HTML autocontidas (sem build, sem servidor próprio), sincronização em tempo real via Firebase, um orquestrador de IA rodando em Cloud Functions e suporte a múltiplos squads.</p>
   <div class="pills">
-    <span class="pill pb">kanban.html · v8.30.882</span>
-    <span class="pill pp">kanban-dev.html · v8.30.886-dev</span>
+    <span class="pill pb">kanban.html · v8.30.889</span>
+    <span class="pill pp">kanban-dev.html · v8.30.889-dev</span>
     <span class="pill pt">painel.html · v5.85</span>
     <span class="pill pw">🤖 Agente Ágil · Claude</span>
     <span class="pill po">☁ Firebase RTDB + Functions</span>
@@ -323,8 +323,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <table class="tbl">
     <thead><tr><th>Arquivo</th><th>Versão</th><th>URL / squad padrão</th><th>Para quem</th></tr></thead>
     <tbody>
-      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.882 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
-      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.886-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
+      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.889 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
+      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.889-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
       <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v5.85 prod · v5.85-dev</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads, Central de Notificações, <strong>Comunicados Multi-Squad</strong> (<code class="hl">#cc-squad-chips</code>), <strong>🛟 Plantão de Bugs</strong> em 🐛 Monitor e <strong>monitores de saúde do GitHub Pages &amp; Firebase</strong> na aba 🔋 Status (o OKR agora é o 📡 Radar, uma página própria — linha abaixo). Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
       <tr><td>okr.html / okr-dev.html</td><td><span class="bdg nb-t">v2.94 prod · v2.95-dev</span></td><td><code class="hl">?evento=&lt;id&gt;&amp;data=&lt;dia&gt;</code> · <code class="hl">?okr=&lt;id&gt;</code> · <code class="hl">?okr=chat</code> · <code class="hl">?okr=notas</code></td><td>Página própria do 📡 Radar (o OKR; saiu do painel na v5.0): Digital Hering 🐟 (única torre ativa no modo só Hering), Objetivos/Marcos (com limites de caracteres <code class="hl">OKR_CHAR_LIMITS</code>, promoção <code class="hl">Próximo Passo → Progresso → Marco</code>, comentários de Marco e editar/excluir), 📅 Calendário, Mural, sino, Dashboard, Anotações (com ✏️ editar e 🗑️ excluir em qualquer data), <strong>📈 Data Studio</strong> (relatórios Looker Studio ao vivo em <code class="hl">kanban/okr/datastudio</code>) e Central Agente Ágil — ver seção "📡 Radar". Os dois <strong>divergem</strong> (dev tem banner e usa a mesma base de dados). Aceita <strong>visualizadores externos</strong> (só leitura)</td></tr>
       <tr><td>oceano.html / oceano-dev.html</td><td><span class="bdg nb-t">v1.58 prod · v1.58-dev</span></td><td>acesso direto · <code class="hl">#/okr</code> <code class="hl">#/kanban</code>…</td><td>🌊 Lobby da família Oceano: <strong>🎯 Meta Global · Digital</strong> em destaque na home (<code class="hl">#col-meta</code>), <strong>Mural do Oceano</strong> (comunicados, enquetes, feedbacks e alertas automáticos de incidente da VTEX), <strong>🏖️ Assistente Férias do Caio</strong> (banner minimizado em 1 linha dispensável + aba <strong>🐛 Reportar Bug</strong> com formulário e lista "Meus chamados"), vitrine por pessoa, <strong>login único</strong> e <strong>1ª abertura do dia</strong> das abas internas, selinho <code class="hl">#vtex-pill</code>, cadastro/personalização, ajuda e <b>host</b> dos produtos em iframe (app instalável próprio, sem tocar no do Maré). Só Google @ciahering.</td></tr>

@@ -141,12 +141,14 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 > ✅ Deploys acumulados até 21/10/2026 (`vtexStatus`, `weeklyBackup`, as 5 funções do Agente Ágil/`okrAgenteChat`, funções gerais em Node 22 e `database.rules.json`) publicados pelo Caio em 21/10/2026.
 >
+> ✅ **Travessia — regras do banco** (`kanban/travessia/*`) e **backup com o nó da Travessia** (`backupCompletoSemanal`, `backupGlobalDiario`, `backupCompletoApi`) publicados pelo Caio em 31/10/2026, **a partir do Mac dele** (`brew install firebase-cli node@22`; `npm ci` em `functions/`).
+>
 > ✅ **Backup do quadro diário** (`weeklyBackup` todo dia 04:00 + `backupVigia` cobrando 3 dias) publicado pelo Caio em 28–29/10/2026.
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
 | Claude | **Mini painel** (`functions/oceano/resumo.js` + `minipainel.html`): índice `owner` em `dados/cards` (regras) e a função `oceanoResumo` com a chave `OCEANO_RESUMO_KEY`. **Ordem:** regras primeiro (sem o índice cada consulta baixaria os cards inteiros). Runbook em `docs/MINIPAINEL.md`. | `firebase deploy --only database` · `firebase functions:secrets:set OCEANO_RESUMO_KEY` · `firebase deploy --only functions:oceanoResumo` (antes, o resync da `main`) | 30/10/2026 |
-| Claude | **Travessia — regras do banco** (`kanban/travessia/*`: Baú, 1:1, humor (vai sempre pro líder direto desde 31/10), avaliação com trava de devolutiva) e o nó no backup semanal (`functions/backup/completo.js`). Sem a regra publicada, a tela do Travessia não grava. | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` e `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario,functions:backupCompletoApi --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do resync) | 22/10/2026 |
+| Claude | **Agente Ágil — conhecimento regenerado (Travessia em produção, 31/10/2026):** a Ajuda do Maré ganhou os verbetes do Baú e do Humor; as funções que leem `conhecimento/*.json` precisam ser republicadas. Pode ser feito do Mac do Caio (Node 22 + `npm ci` em `functions/`). | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do `git pull`) | 31/10/2026 |
 
 ---
 
