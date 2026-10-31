@@ -41,7 +41,7 @@ Versão Windows do app do Mac: um script PowerShell lançado pelo cmd (iniciar-o
 • Lê a chave de %USERPROFILE%\chave-oceano.txt (a mesma da página). Nada é instalado. Passo a passo em windows/README.md.
 • Escrito sem Windows: o contrato com a função, o BOM UTF-8 do .ps1 e o lançador são conferidos por teste (contrato_windows.test.js); o ícone e o menu rodam pela primeira vez na máquina do Caio. Dica: não (ferramenta pessoal).
 
-### 🍎 Mini painel para Mac (compilado e rodando no Mac do Caio em 31/10/2026; ferramenta pessoal, não vai pra produção): bolinha 🟢🟡🔴 na barra de menu e widget de mesa — mac/ (Swift, XcodeGen) — 2026-10-30
+### 🍎 Mini painel para Mac (SÓ DEV — ferramenta pessoal: compilado e rodando no Mac do Caio em 31/10/2026, não vai pra produção): bolinha 🟢🟡🔴 na barra de menu e widget de mesa — mac/ (Swift, XcodeGen) — 2026-10-30
 
 Desenho do app do Mac do Caio: a barra de menu mostra a bolinha do estado geral (e o nº de cards atrasados); ao clicar, VTEX, GitHub, Firebase, backup, alarmes de 'card sumiu', plantão e os cards dele; o widget (pequeno e médio) mostra o mesmo resumo na mesa. Lê o mesmo JSON da página minipainel.html (função oceanoResumo), atualiza a cada minuto e tem 'Abrir ao iniciar sessão'.
 • Projeto gerado por XcodeGen (project.yml); a chave e o Team ID ficam em mac/Local.xcconfig (fora do Git). Passo a passo em mac/README.md.
