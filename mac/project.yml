@@ -42,6 +42,10 @@ targets:
   OceanoWidget:
     type: app-extension
     platform: macOS
+    # O macOS exige que o id do widget COMECE com o id do app que o embute (senão: "Embedded binary's bundle identifier is not prefixed with the parent app's bundle identifier").
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: br.com.hering.oceano.OceanoBar.Widget
     sources:
       - Widget
       - Shared
