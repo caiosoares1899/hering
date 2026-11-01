@@ -109,16 +109,16 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.889 | `kanban-dev.html` v8.30.890-dev | `mare-login` v3 · `mare-notif` v36 · `mare-metas` v17 · `mare-dicas` v9 |
-| Painel | `painel.html` v5.85 · painel | `painel-dev.html` v5.85 · painel-dev | `mare-notif` v36 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v9 |
-| Radar | `okr.html` v2.96 · okr | `okr-dev.html` v2.96 · okr-dev | `mare-notif` v36 · `mare-dicas` v9 |
-| Oceano | `oceano.html` v1.58 · oceano | `oceano-dev.html` v1.58 · oceano-dev | `mare-login` v3 · `mare-notif` v36 · `mare-plantao` v4 · `mare-dicas` v9 · `mare-metas` v17 |
+| Maré Digital | `kanban.html` v8.30.889 | `kanban-dev.html` v8.30.891-dev | `mare-login` v3 · `mare-notif` v37 · `mare-metas` v17 · `mare-dicas` v10 |
+| Painel | `painel.html` v5.85 · painel | `painel-dev.html` v5.85 · painel-dev | `mare-notif` v37 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v10 |
+| Radar | `okr.html` v2.96 · okr | `okr-dev.html` v2.96 · okr-dev | `mare-notif` v37 · `mare-dicas` v10 |
+| Oceano | `oceano.html` v1.58 · oceano | `oceano-dev.html` v1.58 · oceano-dev | `mare-login` v3 · `mare-notif` v37 · `mare-plantao` v4 · `mare-dicas` v10 · `mare-metas` v17 |
 | Escala | `escala.html` v1.10 · escala | `escala-dev.html` v1.10 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
-### Cloud Functions por pasta (37 exports em `functions/index.js`)
+### Cloud Functions por pasta (38 exports em `functions/index.js`)
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
@@ -135,11 +135,12 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `intake/` | `intakeSubmit` |
 | `metas/` | `metasLembretes` |
 | `oceano/` | `oceanoResumo` |
+| `timers/` | `timersVigia` |
 | `vtex/` | `vtexStatus` |
 
-### Nós de primeiro nível em `kanban/` nas regras do banco (37)
+### Nós de primeiro nível em `kanban/` nas regras do banco (38)
 
-`campanhas` · `campanhas_log` · `campanhas_log_dev` · `dados_diarios` · `dados_diarios_dev` · `comunicados` · `feedback` · `squads_meta` · `squads` · `metas_digital` · `metas_squads` · `metas_log` · `metas_digital_dev` · `metas_squads_dev` · `metas_log_dev` · `escala` · `painel` · `okr` · `travessia` · `plantao_status` · `plantao` · `notif_feed` · `notif_feed_seen` · `vtex_saude` · `github_saude` · `firebase_saude` · `notif_config` · `painel_viewers` · `config` · `spotify_secrets` · `spotify_radio_owner_secret` · `oauth_pending` · `usuarios` · `usuarios_publicos` · `init_registry` · `presence` · `global`
+`campanhas` · `campanhas_log` · `campanhas_log_dev` · `dados_diarios` · `dados_diarios_dev` · `comunicados` · `feedback` · `squads_meta` · `squads` · `metas_digital` · `metas_squads` · `metas_log` · `metas_digital_dev` · `metas_squads_dev` · `metas_log_dev` · `escala` · `painel` · `okr` · `travessia` · `plantao_status` · `plantao` · `timers_ativos` · `notif_feed` · `notif_feed_seen` · `vtex_saude` · `github_saude` · `firebase_saude` · `notif_config` · `painel_viewers` · `config` · `spotify_secrets` · `spotify_radio_owner_secret` · `oauth_pending` · `usuarios` · `usuarios_publicos` · `init_registry` · `presence` · `global`
 
 _Nó novo no banco = regra nova em `database.rules.json` (+ teste em `functions/rules/__tests__/`) e, se for dado que importa, entrada em `NOS_GLOBAIS` de `functions/backup/completo.js`._
 <!-- mapa:auto:fim -->

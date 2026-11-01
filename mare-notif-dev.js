@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', travessia_apoio:'🫶', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', travessia_apoio:'🫶', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -62,7 +62,7 @@
     {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
   ];
   // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
-  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou']);
+  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou','timer_criado','timer_zero','timer_esquecido','timer_encerrado']);
   // fonte: 'pessoal' = notificação gravada na caixa de cada pessoa (kanban/usuarios/{uid}/notificacoes); 'feed' = evento único da torre (kanban/notif_feed).
   const TIPOS = [
     // ── Cards do board ──
@@ -100,6 +100,18 @@
       quando:'Uma meta ou desafio (🐟 O mar tá pra peixe) pede lembrete de preenchimento: a cada 1–4 h, 1× por dia ou em horários exatos, no horário de Brasília — só dentro do período da meta, enquanto ela não bateu 100 % e se ninguém atualizou há pouco.',
       quem:'Os responsáveis marcados na meta; sem ninguém marcado, PO e Organizadores da squad (ou os ADMs, nas metas do Digital).',
       onde:'Servidor: metasLembretes (functions/metas/lembretes.js, agendada de 15 em 15 min). Clicar abre a aba 📊 Dados do Maré.'},
+    {id:'timer_criado', area:'board', fonte:'pessoal', nome:'Atividade criada para você (timer)', pushPossivel:true,
+      quando:'Alguém cria, no modal de um card, uma atividade de Timer e Produtividade em seu nome. Quem cria uma atividade para si mesmo não se avisa.',
+      quem:'A pessoa que vai executar a atividade.', onde:'Maré: tmCriar() (kanban-dev.html). Clicar abre o card.'},
+    {id:'timer_encerrado', area:'board', fonte:'pessoal', nome:'Atividade encerrada (timer)', pushPossivel:true,
+      quando:'A pessoa encerra uma atividade que OUTRA pessoa criou para ela — o aviso traz o tempo registrado. Atividade que a pessoa criou para si mesma não avisa ninguém.',
+      quem:'Quem criou a atividade.', onde:'Maré: tmAcao() (kanban-dev.html). Clicar abre o card.'},
+    {id:'timer_zero', area:'prazos', fonte:'pessoal', nome:'Timer chegou a zero', pushPossivel:true,
+      quando:'Um timer (com duração) que está rodando esgota o tempo. 1 aviso por timer, no máximo 1 minuto depois de zerar, mesmo com a aba fechada.',
+      quem:'Quem está executando a atividade.', onde:'Servidor: timersVigia (functions/timers/vigia.js, agendada a cada minuto). Clicar abre o card.'},
+    {id:'timer_esquecido', area:'prazos', fonte:'pessoal', nome:'Timer esquecido rodando', pushPossivel:true,
+      quando:'Uma atividade segue rodando, sem pausa, há 4 horas — e de novo aos 8 e 12 horas (depois disso para de avisar). Pausar e retomar reinicia a contagem.',
+      quem:'Quem está executando a atividade.', onde:'Servidor: timersVigia (functions/timers/vigia.js). Clicar abre o card.'},
     {id:'escala', area:'agenda', fonte:'pessoal', nome:'Sua escala foi cadastrada', pushPossivel:true,
       quando:'PO, Organizador ou ADM cadastra (ou limpa) a escala de trabalho/plantão/folga de OUTRA pessoa — uma notificação por cadastro, com o período e o tipo. Quem cadastra a própria escala não se avisa.',
       quem:'A pessoa dona da escala.', onde:'Escala (escala-dev.html → avisarPessoa()). Clicar abre a Escala na semana cadastrada.'},

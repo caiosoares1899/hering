@@ -534,7 +534,7 @@ detalhe dos 4 call sites.
   beleza, mas some ao atualizar a página" (3ª causa achada na mesma
   investigação, depois de `_saveCardWithRetry()`/`_flushAutoSave()`
   também terem sido corrigidos sem resolver o sintoma por completo):
-  `_applyCardsSync()` (L10316) reconstrói TODO o array `cards` a partir
+  `_applyCardsSync()` (L10366) reconstrói TODO o array `cards` a partir
   de `window._cardsByKey` sempre que o listener de QUALQUER OUTRO card
   dispara, protegido só por uma janela fixa de 2s desde `_lastLocalSave`
   (carimbado no INÍCIO da tentativa, não na confirmação) — sem o
@@ -568,7 +568,7 @@ detalhe dos 4 call sites.
   persistir), afetando qualquer pessoa/squad, não só quem reportou.
   Fix: `_stripUndefinedMultiPath()` aplica `_stripUndefinedDeep()` em
   cada VALOR do update, preservando as chaves de nível superior —
-  mesmo padrão que `_notasUpdate()` (L20796) já usava certo. Trocada
+  mesmo padrão que `_notasUpdate()` (L20848) já usava certo. Trocada
   nos 3 pontos de escrita (`fbSaveAll()`/`fbCreateCard()`/
   `fbSaveCard()`). **Lição**: `_stripUndefinedDeep(val)` só deve
   receber um VALOR a ser escrito (um card, um bloco de Nota) — nunca o
@@ -576,7 +576,7 @@ detalhe dos 4 call sites.
 - `_saveCardWithRetry(card, label)` — L9959 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
   usada por `scheduleAutoSave()`/`_performAutoSave()` (L15042/L15100),
-  `saveExtraDesc()` (L15919) e a simulação de agente (perto de L19579+).
+  `saveExtraDesc()` (L15969) e a simulação de agente (perto de L19579+).
   **Retorna a promise de verdade desde 2026-09-21** (`/monitorarbugs`,
   relato direto de usuária — "salvo beleza, mas some ao atualizar"):
   antes era fire-and-forget, e os 3 call sites mostravam feedback de
@@ -595,7 +595,7 @@ detalhe dos 4 call sites.
   (`editingId` já aponta pro card novo). `_flushAutoSave()` cancela o
   timer e roda a escrita na hora, chamada no topo dos dois pontos acima
   — antes de qualquer um mexer em `editingId`/DOM. **Achado 2026-09-22,
-  3º ponto**: `openNewCard()` (L16727) tinha o MESMO gap — chamada por
+  3º ponto**: `openNewCard()` (L16778) tinha o MESMO gap — chamada por
   `usarQLItem()`/`_intakeCriarCard()` sem fechar `#card-ov` primeiro
   (só fecham `ql-ov`/`intake-ov`, overlays que ficam empilhados por
   cima de um card já aberto — comportamento já documentado no próprio
@@ -616,8 +616,8 @@ detalhe dos 4 call sites.
   Realtime Database (vazia ou com `.#$/[]`) de qualquer objeto aninhado
   — Firebase rejeita a escrita MULTI-PATH INTEIRA se qualquer um dos
   dois aparecer em qualquer lugar da árvore, não só no campo tocado.
-  Causa raiz do achado de chave inválida: `backfillFlow()` (L9266) e
-  `recordMove()` (L9140) usam `card.col`/`toCol` como chave de
+  Causa raiz do achado de chave inválida: `backfillFlow()` (L9316) e
+  `recordMove()` (L9190) usam `card.col`/`toCol` como chave de
   `flow.enteredAt` — as duas agora só gravam quando o valor não é vazio
   (card criado fora do fluxo normal, sem coluna, é o único jeito
   observado de chegar nesse estado). `_stripUndefinedDeep()` continua
@@ -1966,6 +1966,23 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   `TODOS_MENTION_ENTRY` (sempre 1ª opção) e `AGENTE_AGIL_MENTION_ENTRY`
   (só em squads com Cloud Function ouvindo).
 
+### ⏲ Timer e Produtividade (2026-11-01, só dev)
+Atividades medidas dentro do modal do card (seção `#m-timers-sec`, abaixo do Checklist; entrada `timers` em `CARD_SECTIONS`) + atalho `#tb-timers` na
+barra do topo (popover `#tm-pop`). Código em bloco único, antes de `loadComments()` (prefixo `tm`/`_tm`), em `kanban-dev.html`:
+- **Dados**: registro completo `FB/card_timers/{cardId}/{tid}` (entra no backup do squad) + índice pessoal `kanban/timers_ativos/{uid}/{tid}` (só o dono
+  lê; regras em `database.rules.json`; `timers_ativos` está em `EXCLUIDOS` de `functions/backup/completo.js`). Status: `novo → rodando ⇄ pausado → encerrado`;
+  tempo = `accMs` + (agora − `startedAt`) enquanto `rodando` (`_tmDecorrido()`).
+- **Escrita**: `_tmEscrever()` — L36811 (por campo, registro + índice num `update` só) · `_tmPatch()` — L36820 (transições play/pause/stop) ·
+  `tmAcao()` — L36831 (só o dono controla; encerrar avisa quem criou) · `tmCriar()` — L36862 (aviso `timer_criado` quando é pra outra pessoa) ·
+  `tmSalvarCampo()` — L36841 · `tmExcluir()` — L36850.
+- **Leitura**: `tmOpenCard()` — L36882 (listener do card aberto; fechado em `_finishCloseOv`) · `tmIniciarIndice()` — L36897 (listener do índice pessoal, alimenta o selo do topo).
+- **Tela**: `tmRender()` — L36942 (não redesenha com foco num campo; `_tmPendente`) · `_tmTick()` — L36977 (relógio de 1 s só atualiza os números) ·
+  `tmAlternarPop()` — L36997 · `_tmRenderPop()` — L37010.
+- **Avisos**: `timer_criado`/`timer_encerrado` nascem no navegador; `timer_zero`/`timer_esquecido` vêm da função agendada `timersVigia`
+  (`functions/timers/vigia.js`, a cada minuto, marcadores em `timers_ativos/{uid}/{tid}/avisos`). Os 4 estão no `PUSH_TYPES` e em `MareNotif.TIPOS` (`mare-notif-dev.js`).
+- **Agente Ágil**: `ler_card` devolve `timers` + `tempo_total_timers` (`resumoTimers()` em `agente-agil-orquestrador/tools/lerCard.js`, caminho `cardTimersPath()` em `agente-agil/board.js`) — só leitura.
+- **Testes**: `docs/arezzo/testes/test_timers_card.js`, `functions/timers/__tests__/vigia.test.js`, `functions/rules/__tests__/timersRules.test.js`.
+
 ### 📅 Calendários (Google Calendar) — nunca teve seção própria até 2026-09-18
 Arquitetura em 2 camadas independentes, sem token OAuth próprio pro squad
 comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
@@ -2454,7 +2471,7 @@ derivado do card mudando).
   33767/16908 — total "efetivo até agora" (fechado + episódio aberto).
 - `_renderCardTimeInfo(c)` — L34245 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L16289).
+  bloco de Impedimento), chamado no `openCard()` (L16339).
 - Dashboards: `renderBoardDataInsights()` (L22113, seção "Tempo em
   atraso/bloqueado") e `renderCriativosDashboard()` (L19035, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao

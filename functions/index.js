@@ -23,7 +23,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug', 'timer_criado', 'timer_zero', 'timer_esquecido', 'timer_encerrado']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -257,6 +257,12 @@ exports.okrDailyScan = require('./okr/dailyScan').okrDailyScan;
 // (que também é push — PUSH_TYPES acima). Deploy isolado: firebase deploy --only functions:metasLembretes
 // (e, junto, sendPushOnNotification — ela precisa conhecer o tipo novo — e `firebase deploy --only database` pras regras das metas).
 exports.metasLembretes = require('./metas/lembretes').metasLembretes;
+
+// ⏲ Timer e Produtividade — vigia dos timers (functions/timers/vigia.js): a cada minuto lê o índice `kanban/timers_ativos` e avisa quem tem um timer que
+// chegou a zero (`timer_zero`) ou que segue "rodando" sem pausa há 4 h (`timer_esquecido`); os outros dois avisos (`timer_criado`, `timer_encerrado`) nascem no
+// navegador. Os quatro tipos são push (PUSH_TYPES acima). Deploy isolado: firebase deploy --only functions:timersVigia
+// (e, junto, functions:sendPushOnNotification — ela precisa conhecer os tipos novos — e `firebase deploy --only database` pras regras de `timers_ativos`).
+exports.timersVigia = require('./timers/vigia').timersVigia;
 
 // 🚨 Alerta de incidente da VTEX (functions/vtex/statusVtex.js): a cada 5 min lê https://status.vtex.com/feed.rss e, com incidente/manutenção em
 // andamento, publica sozinho um Comunicado 🚨 (popup insistente, todos) + notificação `vtex_incidente` (sino + push, PUSH_TYPES acima) pra todo mundo;

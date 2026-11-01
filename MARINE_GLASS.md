@@ -332,6 +332,7 @@ mesma categoria, sempre no início da frase/label:
 | 🐛 | bug |
 | 🛟 | Plantão de Bugs (pedido de ajuda) |
 | 🎯 | meta / objetivo |
+| ⏲ | timer / tempo medido (Timer e Produtividade no card) |
 
 **Os produtos têm emoji fixo** (use sempre o mesmo, no início do nome): 🐟 Maré Digital ·
 🧭 Painel · 📡 Radar · 🌊 Oceano · 📅 Escala · 📥 Intake/Pedido · 🎙️ apresentação
