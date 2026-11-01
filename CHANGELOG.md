@@ -28,7 +28,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 - **Seção "⏲ Timer e Produtividade" no modal do card**, logo abaixo do Checklist: cada atividade é uma linha minimalista (carinha de quem executa, nome, Timer ou Cronômetro, iniciar/pausar/encerrar e o tempo) que expande para descrição, tag, participantes e quem criou. Vários relógios no mesmo card (e rodando ao mesmo tempo); o total somado fica no topo da seção. Dá para criar para si ou para outra pessoa do squad.
 - **Quem controla:** só quem recebeu a atividade inicia/pausa/encerra; quem criou para outra pessoa só edita/exclui enquanto ela não começou.
-- **Atalho "⏲ Timers" na barra do topo** (arrastável no "Reorganizar barra"): lista os timers ativos da pessoa em todos os squads, com o selo de quantos estão rodando, e permite pausar/retomar/encerrar sem abrir o card.
+- **Atalho ⏲ no cabeçalho** (ao lado do botão de tema, no topo da tela): lista os timers ativos da pessoa em todos os squads, com o selo de quantos estão rodando, e permite pausar/retomar/encerrar sem abrir o card.
 - **Quatro avisos novos** (sino + push, ligáveis na Central de Notificações): atividade criada para você, atividade encerrada (avisa quem criou, com o tempo), Timer chegou a zero e atividade esquecida rodando (4 h, 8 h, 12 h). Os dois últimos vêm da função agendada `timersVigia` (a cada minuto, mesmo com a aba fechada).
 - **Agente Ágil:** `ler_card` passa a devolver as atividades medidas e o tempo registrado do card — só leitura, ele nunca liga/desliga um relógio.
 - Dados: registro completo em `squads/{squad}/dados/card_timers/{card}/{id}` (entra no backup do squad) e índice pessoal em `kanban/timers_ativos/{uid}` (regras novas — exige `firebase deploy --only database`).
