@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-01 · ⏲ Timer ilegível no Vice City (kanban-dev v8.30.893-dev)
+
+- Sintoma: no tema Vice City o botão ⏲ do cabeçalho e o selo ficavam quase invisíveis. Causa: o --teal do Vice City é um malva apagado (#9c6f8a) e o selo usava teal sobre teal translúcido. Correção: selo com cor fixa de alto contraste (verde #1de9b6 / amarelo #ffd166 com texto escuro), glifo ⏲ maior e em --txt, estado 'ligado' com borda --accent no Vice City e textos secundários em --txt2. Conferido nos 3 temas (arquivo: kanban-dev.html, bloco de CSS '.tm-').
+
 ### 2026-10-31 · Automação (tag/responsável) não é mais desfeita pelo modal aberto
 
 Sintoma: com o card aberto no modal, uma Automação 'adicionar/remover tag' ou 'atribuir responsável' mudava o card e a próxima digitação (autosave) ou o Salvar regravava as tags e o responsável lidos na abertura do modal — a automação parecia desfeita. Causa: só a coluna tinha linha de base (_modalOpenCol/_modalSyncCol, v8.30.888); editingTags e #m-owner só eram lidos em openCard(). Fix: _modalSyncCol() também sincroniza Responsável e Tags quando a pessoa não mexeu no campo (bases _modalOpenOwner/_modalOpenTags, atualizadas a cada gravação); se ela mexeu, a escolha dela vale.

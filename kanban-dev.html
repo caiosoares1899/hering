@@ -1225,14 +1225,23 @@ input[type="date"]{-moz-appearance:textfield;}
 .tm-form-r{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
 .tm-form-r .fi{flex:1;min-width:90px;font-size:11px;padding:5px 8px;}
 .tm-chk{font-size:11px;color:var(--txt2);display:inline-flex;gap:5px;align-items:center;cursor:pointer;}
-.tm-badge{display:inline-block;min-width:15px;padding:0 4px;margin-left:5px;border-radius:999px;background:rgba(29,233,182,.2);color:var(--teal);font-size:10px;font-weight:700;line-height:15px;text-align:center;}
-.tm-badge.espera{background:rgba(255,209,102,.2);color:var(--warn);}
-#tb-timers.tm-on{color:var(--teal);border-color:rgba(29,233,182,.4);}
+.tm-badge{display:inline-block;min-width:15px;padding:0 4px;margin-left:5px;border-radius:999px;background:#1de9b6;color:#06201a;font-size:10px;font-weight:800;line-height:15px;text-align:center;}
+.tm-badge.espera{background:#ffd166;color:#2a1f00;}
+#tb-timers{font-size:15px;line-height:1;color:var(--txt);}
+#tb-timers.tm-on{border-color:#1de9b6;background:rgba(29,233,182,.14);}
 .tm-pop{right:auto;width:340px;max-width:calc(100vw - 16px);}
 .tm-prow{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(56,182,255,.06);}
 .tm-pinfo{flex:1 1 0;width:0;min-width:0;cursor:pointer;}
 .tm-pinfo b{display:block;font-size:12px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tm-pinfo small{display:block;font-size:10px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Vice City: o --teal do tema é um malva apagado (#9c6f8a) e some contra o fundo roxo — o "ligado" usa o --accent (salmão) e o texto o --txt */
+[data-theme="vice"] #tb-timers.tm-on{border-color:var(--accent);background:rgba(229,159,124,.22);}
+[data-theme="vice"] .tm-row.run{border-color:var(--accent);}
+[data-theme="vice"] .tm-b{color:var(--txt);border-color:rgba(247,232,236,.35);}
+[data-theme="vice"] .tm-b:hover{color:var(--accent);border-color:var(--accent);background:rgba(229,159,124,.15);}
+[data-theme="vice"] .tm-b.stop:hover{color:#ffb4b2;border-color:#ffb4b2;background:rgba(255,180,178,.12);}
+[data-theme="vice"] .tm-kind,[data-theme="vice"] .tm-meta{color:var(--txt2);}
+[data-theme="vice"] .tm-time.esg{color:#ffd7a8;}
 @media (hover:none) and (pointer:coarse){ .tm-b{width:44px;height:44px;} .tm-main{min-height:48px;} .tm-form-r .fi,.tm-det .fi{font-size:16px;} }
 @media (prefers-reduced-motion:no-preference){ .tm-row.run{transition:border-color .3s;} }
 .cl-items{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
@@ -6618,7 +6627,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.892-dev</div>
+<div class="version">v8.30.893-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
