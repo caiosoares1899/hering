@@ -1200,6 +1200,50 @@ input[type="date"]{-moz-appearance:textfield;}
 .cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
 .cl-copy-all{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:4px;transition:all .12s;}
 .cl-copy-all:hover{color:var(--cyan);background:rgba(56,182,255,.1);}
+/* ⏲ Timer e Produtividade (seção do modal do card + atalho do topo) — mesmos tokens/vidro do checklist e do sino */
+.tm-total{font-size:11px;font-weight:700;color:var(--txt2);font-variant-numeric:tabular-nums;}
+.tm-vazio{font-size:11px;color:var(--txt3);padding:2px 0 6px;}
+.tm-row{border:1px solid var(--glass-b);border-radius:10px;background:rgba(var(--surface-rgb),.45);margin-bottom:6px;}
+.tm-row.run{border-color:rgba(29,233,182,.4);}
+.tm-row.enc{opacity:.7;}
+.tm-main{display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;min-height:36px;}
+.tm-main:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px;border-radius:10px;}
+.tm-nm{flex:1 1 0;width:0;min-width:0;}
+.tm-name{display:block;font-size:12px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tm-kind{display:block;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tm-time{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);min-width:46px;text-align:right;}
+.tm-time.esg{color:var(--warn);}
+.tm-ctl{display:inline-flex;gap:3px;flex-shrink:0;}
+.tm-b{width:28px;height:28px;border-radius:7px;border:1px solid var(--glass-b);background:transparent;color:var(--txt2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:all .12s;}
+.tm-b:hover{color:var(--teal);border-color:rgba(29,233,182,.45);background:rgba(29,233,182,.08);}
+.tm-b.stop:hover{color:var(--danger);border-color:rgba(255,107,107,.45);background:rgba(255,107,107,.08);}
+.tm-b svg{width:12px;height:12px;fill:currentColor;}
+.tm-det{border-top:1px solid var(--glass-b);padding:8px;display:flex;flex-direction:column;gap:6px;}
+.tm-meta{font-size:10px;color:var(--txt3);line-height:1.5;}
+.tm-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.tm-form{display:flex;flex-direction:column;gap:6px;margin-bottom:6px;}
+.tm-form-r{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.tm-form-r .fi{flex:1;min-width:90px;font-size:11px;padding:5px 8px;}
+.tm-chk{font-size:11px;color:var(--txt2);display:inline-flex;gap:5px;align-items:center;cursor:pointer;}
+.tm-badge{display:inline-block;min-width:15px;padding:0 4px;margin-left:5px;border-radius:999px;background:#1de9b6;color:#06201a;font-size:10px;font-weight:800;line-height:15px;text-align:center;}
+.tm-badge.espera{background:#ffd166;color:#2a1f00;}
+#tb-timers{font-size:15px;line-height:1;color:var(--txt);}
+#tb-timers.tm-on{border-color:#1de9b6;background:rgba(29,233,182,.14);}
+.tm-pop{right:auto;width:340px;max-width:calc(100vw - 16px);}
+.tm-prow{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(56,182,255,.06);}
+.tm-pinfo{flex:1 1 0;width:0;min-width:0;cursor:pointer;}
+.tm-pinfo b{display:block;font-size:12px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tm-pinfo small{display:block;font-size:10px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Vice City: o --teal do tema é um malva apagado (#9c6f8a) e some contra o fundo roxo — o "ligado" usa o --accent (salmão) e o texto o --txt */
+[data-theme="vice"] #tb-timers.tm-on{border-color:var(--accent);background:rgba(229,159,124,.22);}
+[data-theme="vice"] .tm-row.run{border-color:var(--accent);}
+[data-theme="vice"] .tm-b{color:var(--txt);border-color:rgba(247,232,236,.35);}
+[data-theme="vice"] .tm-b:hover{color:var(--accent);border-color:var(--accent);background:rgba(229,159,124,.15);}
+[data-theme="vice"] .tm-b.stop:hover{color:#ffb4b2;border-color:#ffb4b2;background:rgba(255,180,178,.12);}
+[data-theme="vice"] .tm-kind,[data-theme="vice"] .tm-meta{color:var(--txt2);}
+[data-theme="vice"] .tm-time.esg{color:#ffd7a8;}
+@media (hover:none) and (pointer:coarse){ .tm-b{width:44px;height:44px;} .tm-main{min-height:48px;} .tm-form-r .fi,.tm-det .fi{font-size:16px;} }
+@media (prefers-reduced-motion:no-preference){ .tm-row.run{transition:border-color .3s;} }
 .cl-items{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
 #m-checklist{max-height:340px;overflow-y:auto;}
 .cl-item{display:flex;align-items:center;gap:6px;font-size:12px;border-radius:6px;padding:2px 4px;transition:background .15s;cursor:grab;}
@@ -3721,6 +3765,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
+    <button id="tb-timers" class="btn btn-sm" onclick="tmAlternarPop(event)" aria-haspopup="true" aria-expanded="false" aria-label="Meus timers" title="Seus timers e cronômetros" style="padding:5px 9px;">⏲<span class="tm-badge" id="tb-timers-n" style="display:none"></span></button>
     <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" ontouchstart="_themeBtnTouchStart(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito (ou toque com 2 dedos): 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
@@ -3998,6 +4043,10 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 <!-- NOTIFICAÇÕES -->
+<div class="notif-panel tm-pop" id="tm-pop" role="dialog" aria-label="Timers em andamento">
+  <div class="notif-hd"><span>⏲ Meus timers</span></div>
+  <div class="notif-list" id="tm-pop-list"><div class="notif-empty">Nenhum timer ativo</div></div>
+</div>
 <div class="notif-panel" id="notif-panel">
   <div class="notif-hd">
     <span>🔔 Notificações</span>
@@ -4462,6 +4511,15 @@ window.MARE_LOGIN_PELO_OCEANO = true;
           <div class="cl-add-r">
             <button class="btn btn-sm" onclick="addChecklistGroup()">+ Novo checklist</button>
             <button class="btn btn-sm" onclick="doUndo()" title="Desfazer última ação (Ctrl+Z)" style="padding:4px 8px;font-size:13px;color:rgba(150,200,240,.5);border-color:rgba(56,182,255,.2);border-radius:var(--r);">↩</button>
+          </div>
+        </div>
+        <div class="cl-sec" id="m-timers-sec">
+          <div class="cl-hd-row"><div class="cl-hd">⏲ Timer e Produtividade</div><span class="tm-total" id="m-timers-total" title="Tempo total somado de todas as atividades deste card"></span></div>
+          <div id="m-timers"></div>
+          <div id="m-timer-form" style="display:none"></div>
+          <datalist id="tm-tags"></datalist>
+          <div class="cl-add-r">
+            <button type="button" class="btn btn-sm" id="m-timer-add" onclick="tmAbrirForm()">+ Novo timer</button>
           </div>
         </div>
         <div class="cl-sec" id="m-riscos-sec" style="border-color:rgba(255,209,102,.25);">
@@ -6569,7 +6627,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.889</div>
+<div class="version">v8.30.894</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6920,9 +6978,9 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=36"></script>
+<script src="mare-notif.js?v=37"></script>
 <script src="mare-metas.js?v=17"></script>
-<script src="mare-dicas.js?v=9"></script>
+<script src="mare-dicas.js?v=10"></script>
 
 <script>
 
@@ -7780,6 +7838,7 @@ const CARD_SECTIONS=[
   {key:'participantes', id:'m-participantes-field', label:'👥 Participantes'},
   {key:'demandante', id:'m-demandante-row', label:'📢 Demandante'},
   {key:'checklist', id:'m-checklist-sec', label:'☑ Checklist'},
+  {key:'timers', id:'m-timers-sec', label:'⏲ Timer e Produtividade'},
   {key:'riscos', id:'m-riscos-sec', label:'⚠ Riscos'},
   {key:'criativo', id:'m-criativo-sec', label:'🎬 Campos de produção criativa'},
   {key:'milanote', id:'m-milanote-wrap', label:'🎨 Peça no Milanote'},
@@ -15270,6 +15329,7 @@ function _performAutoSave(){
     // ("movido para B → mover para C") ou outra pessoa levava o card pra C com o modal aberto, o PRÓXIMO autosave/Salvar via
     // "select (B) ≠ base (A)", entendia como escolha da pessoa e regravava B por cima de C. Depois de gravar, a base é o que o select mostra.
     _modalOpenCol=_selCol;
+    _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags); // base de Responsável/Tags = o que está sendo gravado (ver _modalSyncCol)
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:_colToSave,owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',
       due:document.getElementById('m-due').value,noDue:_mNoDue,desc:_descProtViolada?c.desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
@@ -15777,10 +15837,21 @@ let _modalOpenCol=null;
 function _modalSyncCol(){
   if(!editingId) return;
   const ov=document.getElementById('card-ov'); if(!ov || !ov.classList.contains('open')) return;
-  const sel=document.getElementById('m-col'); if(!sel || sel.value!==_modalOpenCol) return;
-  const c=cards.find(x=>x.id===editingId); if(!c || c.col===_modalOpenCol || !columns.some(x=>x.id===c.col)) return;
-  sel.value=c.col; _modalOpenCol=c.col;
+  const c=cards.find(x=>x.id===editingId); if(!c) return;
+  const sel=document.getElementById('m-col');
+  if(sel && sel.value===_modalOpenCol && c.col!==_modalOpenCol && columns.some(x=>x.id===c.col)){ sel.value=c.col; _modalOpenCol=c.col; }
+  // Achado real (/monitorarbugs, 2026-10-31, continuação do "a automação moveu e voltou"): Responsável e Tags tinham o MESMO furo da coluna — o
+  // autosave/Salvar regravam o <select> do responsável e o array editingTags lidos na ABERTURA do modal. Automação "adicionar tag"/"remover tag"/
+  // "atribuir responsável" (ou outra pessoa/aba) mudava o card com o modal aberto e a próxima digitação desfazia a mudança em silêncio. Mesma regra
+  // da coluna: se a pessoa NÃO mexeu no campo desde a última gravação, ele acompanha o card; se mexeu, a escolha dela é preservada.
+  const so=document.getElementById('m-owner');
+  if(so && so.value===_modalOpenOwner && (c.owner||'')!==_modalOpenOwner && [...so.options].some(o=>o.value===(c.owner||''))){ so.value=c.owner||''; _modalOpenOwner=so.value; }
+  if(JSON.stringify(editingTags)===_modalOpenTags){
+    const ct=getCardTags(c).slice();
+    if(JSON.stringify(ct)!==_modalOpenTags){ editingTags=ct; _modalOpenTags=JSON.stringify(ct); populateTagSelect(); }
+  }
 }
+let _modalOpenOwner=null, _modalOpenTags=null; // linha de base de Responsável/Tags (ver _modalSyncCol)
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
@@ -16315,6 +16386,7 @@ function openCard(id){
   document.getElementById('m-col').value=c.col;
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
+  _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags);
   document.getElementById('m-demandante').value=c.demandante||'';
   _updateDescProtectedBadge();
   _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
@@ -16436,6 +16508,7 @@ function openCard(id){
       _cardManualSnap = _manualFieldsNow();
     }
     loadComments(id);
+    tmOpenCard(id);
     renderDescPreview();
     renderCardDepMini(id);
     const _card=cards.find(c=>c.id===id); loadAttachments(_card);
@@ -16780,6 +16853,7 @@ function openNewCard(col, prefillOwner, prefillTagId){
   _detachAgenteHotlineCommentsListener();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
+  tmOpenCard(null); // card novo ainda não tem id: a seção avisa para salvar primeiro
   if(typeof toggleCommentSearch==='function') toggleCommentSearch(false, true);
   _updateAgenteThinkingBanner(); // editingId já foi zerado acima — força esconder o banner do card anterior
   // BUGFIX (relato real, 2026-09-01: "criei um card do zero e trouxe um
@@ -16973,6 +17047,7 @@ function saveCard(){
     const _selCol=document.getElementById('m-col').value;
     const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
     _modalOpenCol=_selCol; // ver o comentário em _performAutoSave(): a base acompanha o que o select mostra depois de gravar
+    _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags);
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
     const _prevOwnerSave=c.owner||'', _prevParticipantsSave=(c.participants||[]).slice();
@@ -28383,6 +28458,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
+    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo.\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
@@ -29443,6 +29519,7 @@ let _notifListener = null;
 
 // Ícone por tipo
 const NOTIF_ICONS = {
+  timer_criado: '⏲', timer_zero: '⏲', timer_esquecido: '⏲', timer_encerrado: '⏲',
   mention:    '💬',
   assigned:   '👤',
   kudos:      '⭐',
@@ -35534,6 +35611,7 @@ function _finishCloseOv(id){
     _stopDirtyWatch();
     if(editingId) _releaseCardLock(editingId);
     _detachAgenteHotlineCommentsListener();
+    tmFecharCard();
     if(typeof toggleCommentSearch==='function') toggleCommentSearch(false, true);
     _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
@@ -36193,7 +36271,7 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   _onRealAuthChange(()=>{
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); loadSugestoesRecusadas(); loadTemasDescobertos(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ tmIniciarIndice(); loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); loadSugestoesRecusadas(); loadTemasDescobertos(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   });
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
   // 09:00 (horário de SP, ver DAILY_TRIGGER_HOUR_SP) — sem isso, quem abre o
@@ -36714,6 +36792,258 @@ function _migrateLegacyComments(cardObj){
     delete cardObj.comments;
     fbSaveCard(cardObj); // some do campo legado — a próxima retransmissão do card já não carrega mais os comentários
   }).catch(err=>console.warn('[comments] migração de', cardObj.id, 'falhou:', err));
+}
+
+// ═══ ⏲ TIMER E PRODUTIVIDADE ═══════════════════════════════════════════════
+// Registro completo: FB/card_timers/{cardId}/{tid} (dentro do squad → entra no backup do squad).
+// Índice pessoal dos ativos: kanban/timers_ativos/{uid}/{tid} (só o dono lê) — alimenta o atalho "⏲ Timers" do topo
+// e a função agendada timersVigia (zero / esquecido). Status: novo (criado p/ alguém, ainda não iniciado)
+// → rodando ⇄ pausado → encerrado. Tempo = accMs (acumulado) + (agora − startedAt) enquanto rodando.
+// Só quem RECEBEU a atividade controla (play/pausa/encerrar); quem criou só edita/exclui enquanto está 'novo'.
+// Vários timers rodando ao mesmo tempo por pessoa é permitido (pedido do Caio).
+const TM_RAIZ='kanban/timers_ativos';
+let _tmCardId=null, _tmOff=null, _tmRecs={}, _tmAberto=new Set(), _tmIntervalo=null, _tmIdxOff=null, _tmMeus={};
+let _tmAvisouZero=new Set(), _tmFormAberto=false, _tmPendente=false, _tmPopAberto=false;
+function _tmDecorrido(t,agora){ return Math.max(0,(+t.accMs||0)+((t.status==='rodando'&&t.startedAt)?(agora-t.startedAt):0)); }
+function _tmFmt(ms){ const s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600), m=Math.floor(s%3600/60), p=n=>String(n).padStart(2,'0'); return h? h+':'+p(m)+':'+p(s%60) : p(m)+':'+p(s%60); }
+// Cronômetro mostra o decorrido; timer mostra o que falta e, passando de zero, o excedente com "+".
+function _tmMostra(t,agora){ const d=_tmDecorrido(t,agora); if(t.tipo==='timer' && t.durMs){ const r=t.durMs-d; return r>=0 ? {txt:_tmFmt(r),esg:false} : {txt:'+'+_tmFmt(-r),esg:true}; } return {txt:_tmFmt(d),esg:false}; }
+function _tmMembro(uid){ return members.find(m=>m.uid===uid)||null; }
+function _tmNome(uid){ const m=_tmMembro(uid); return m ? (m.name||m.email||'?') : '?'; }
+function _tmEstado(t){ return {novo:'aguardando início',rodando:'em andamento',pausado:'pausado',encerrado:'encerrado'}[t.status]||t.status; }
+function _tmIdx(t){ return {sq:t.sq,cardId:t.cardId,cardTitle:t.cardTitle||'',atividade:t.atividade,tipo:t.tipo,status:t.status,startedAt:t.startedAt||null,accMs:t.accMs||0,durMs:t.durMs||null,porUid:t.porUid||''}; }
+const _TM_SVG={ play:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1v10l8.5-5z"/></svg>', pause:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10" rx=".6"/><rect x="7" y="1" width="3" height="10" rx=".6"/></svg>', stop:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1"/></svg>' };
+function _tmBtn(t,ac,rotulo){ return `<button type="button" class="tm-b${ac==='stop'?' stop':''}" data-tm-ac="${ac}" aria-label="${rotulo}" title="${rotulo}" onclick="event.stopPropagation();tmAcao(${jsq(t.sq)},${jsq(t.cardId)},${jsq(t.id)},'${ac}')">${_TM_SVG[ac]}</button>`; }
+function _tmCtl(t,meu){ if(!meu||t.status==='encerrado') return ''; return '<span class="tm-ctl">'+(t.status==='rodando'?_tmBtn(t,'pause','Pausar'):_tmBtn(t,'play',t.status==='novo'?'Iniciar':'Retomar'))+_tmBtn(t,'stop','Encerrar')+'</span>'; }
+
+// ── escrita: registro (por campo, não sobrescreve descrição editada por outro) + índice do dono, num update só ──
+function _tmEscrever(t, patch, opts){
+  const base='kanban/squads/'+t.sq+'/dados/card_timers/'+t.cardId+'/'+t.id, idx=TM_RAIZ+'/'+t.uid+'/'+t.id, upd={};
+  Object.keys(patch).forEach(k=>{ if(patch[k]!==undefined) upd[base+'/'+k]=patch[k]; });
+  const novo=Object.assign({},t,patch);
+  if(novo.status==='encerrado') upd[idx]=null;
+  else if(opts&&opts.criar) upd[idx]=_tmIdx(novo);
+  else ['status','startedAt','accMs','atividade','durMs','tipo'].forEach(k=>{ if(k in patch) upd[idx+'/'+k]=patch[k]; });
+  return window._update(window._ref(window._db), upd);
+}
+function _tmPatch(t,acao,agora){
+  const dec=_tmDecorrido(t,agora);
+  if(acao==='play' && (t.status==='novo'||t.status==='pausado')){ const p={status:'rodando',startedAt:agora,accMs:t.accMs||0}; if(!t.iniciadoEm) p.iniciadoEm=new Date(agora).toISOString(); return p; }
+  if(acao==='pause' && t.status==='rodando') return {status:'pausado',startedAt:null,accMs:dec};
+  if(acao==='stop' && t.status!=='encerrado') return {status:'encerrado',startedAt:null,accMs:dec,encerradoEm:new Date(agora).toISOString()};
+  return null;
+}
+function _tmBuscar(sq,cardId,tid){
+  const r=_tmRecs[tid]; if(r && r.cardId===cardId) return r;
+  const m=_tmMeus[tid]; return (m && m.cardId===cardId && m.sq===sq) ? m : null;
+}
+async function tmAcao(sq,cardId,tid,acao){
+  const me=window._currentUser, t=_tmBuscar(sq,cardId,tid); if(!me||!t) return;
+  if(t.uid!==me.uid){ showToast('Só quem recebeu a atividade controla o timer.'); return; }
+  const patch=_tmPatch(t,acao,Date.now()); if(!patch) return;
+  try{ await _tmEscrever(t,patch); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível atualizar o timer.'); return; }
+  if(acao==='stop'){
+    showToast('Atividade encerrada — '+_tmFmt(patch.accMs));
+    if(t.porUid && t.porUid!==t.uid) createNotif(t.porUid,'timer_encerrado',(me.displayName||'Alguém')+' encerrou "'+t.atividade+'"','Tempo registrado: '+_tmFmt(patch.accMs),t.cardId,null,null,{squad:t.sq},t.id);
+  }
+}
+async function tmSalvarCampo(sq,cardId,tid,campo,valor){
+  const me=window._currentUser, t=_tmBuscar(sq,cardId,tid); if(!me||!t||!_tmPodeEditar(t)) return;
+  if(campo==='desc') valor=String(valor||'').slice(0,500).trim()||null;
+  else if(campo==='tag') valor=String(valor||'').slice(0,30).trim()||null;
+  else if(campo==='partes') valor=(Array.isArray(valor)&&valor.length)?valor.slice(0,20):null;
+  else return;
+  try{ await _tmEscrever(t,{[campo]:valor}); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível salvar.'); }
+}
+function _tmPodeEditar(t){ const me=window._currentUser; return !!me && (t.uid===me.uid || (t.porUid===me.uid && t.status==='novo')); }
+async function tmExcluir(sq,cardId,tid){
+  const me=window._currentUser, t=_tmBuscar(sq,cardId,tid); if(!me||!t||!_tmPodeEditar(t)) return;
+  if(!(await uiConfirm('Excluir a atividade "'+t.atividade+'"? O tempo registrado nela some do card.',{okText:'Excluir',danger:true}))) return;
+  const upd={}; upd['kanban/squads/'+t.sq+'/dados/card_timers/'+t.cardId+'/'+t.id]=null; upd[TM_RAIZ+'/'+t.uid+'/'+t.id]=null;
+  try{ await window._update(window._ref(window._db), upd); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível excluir.'); }
+}
+
+// ── criação ──
+let _tmFormPartes=[];
+function tmAbrirForm(){ _tmFormAberto=true; _tmFormPartes=[]; tmRender(); setTimeout(()=>document.getElementById('tm-f-nome')?.focus(),30); }
+function tmFecharForm(){ _tmFormAberto=false; tmRender(); }
+function tmFormTipo(){ const t=document.getElementById('tm-f-tipo')?.value, m=document.getElementById('tm-f-min'); if(m) m.style.display = t==='timer' ? '' : 'none'; }
+function tmFormPara(){
+  const v=document.getElementById('tm-f-para')?.value, eu=v===window._currentUser?.uid, l=document.getElementById('tm-f-ini-l'); if(l) l.style.display = eu ? '' : 'none';
+  _tmFormPartes=_tmFormPartes.filter(u=>u!==v); tmFormPartesRender();   // quem executa não entra como participante
+}
+function tmFormParte(uid,adicionar){ const i=_tmFormPartes.indexOf(uid); if(adicionar&&i<0) _tmFormPartes.push(uid); else if(!adicionar&&i>=0) _tmFormPartes.splice(i,1); tmFormPartesRender(); }
+function tmFormPartesRender(){
+  const box=document.getElementById('tm-f-partes'); if(!box) return;
+  const exec=document.getElementById('tm-f-para')?.value;
+  const chips=_tmFormPartes.map(u=>`<span class="part-chip">${esc(_tmNome(u))}<button type="button" class="part-chip-del" aria-label="Remover participante" onclick="tmFormParte(${jsq(u)},false)">×</button></span>`).join('');
+  const opts=members.filter(x=>x.uid&&x.uid!==exec&&!_tmFormPartes.includes(x.uid)).map(x=>`<option value="${esc(x.uid)}">${esc(x.name||x.email)}</option>`).join('');
+  box.innerHTML=chips+(opts?`<select class="fi" style="flex:0 1 160px;font-size:11px;padding:4px 6px;" aria-label="Adicionar participante" onchange="if(this.value)tmFormParte(this.value,true)"><option value="">+ Participante</option>${opts}</select>`:'');
+}
+async function tmCriar(){
+  const me=window._currentUser, card=cards.find(c=>c.id===_tmCardId); if(!me||!card) return;
+  const nome=(document.getElementById('tm-f-nome')?.value||'').trim().slice(0,120);
+  if(!nome){ showToast('Dê um nome para a atividade.'); document.getElementById('tm-f-nome')?.focus(); return; }
+  const tipo=document.getElementById('tm-f-tipo')?.value==='timer'?'timer':'cron';
+  let durMs=null;
+  if(tipo==='timer'){ const min=parseInt(document.getElementById('tm-f-min')?.value,10); if(!(min>=1&&min<=1440)){ showToast('Informe a duração do timer em minutos (1 a 1440).'); document.getElementById('tm-f-min')?.focus(); return; } durMs=min*60000; }
+  const para=document.getElementById('tm-f-para')?.value||me.uid, paraMim=para===me.uid;
+  if(!paraMim && !_tmMembro(para)){ showToast('Escolha uma pessoa deste squad.'); return; }
+  const desc=(document.getElementById('tm-f-desc')?.value||'').trim().slice(0,500), tag=(document.getElementById('tm-f-tag')?.value||'').trim().slice(0,30), partes=_tmFormPartes.filter(u=>u!==para&&_tmMembro(u)).slice(0,20);
+  const agora=Date.now(), iniciar=paraMim && !!document.getElementById('tm-f-ini')?.checked;
+  const id='t'+agora.toString(36)+Math.random().toString(36).slice(2,6);
+  const rec={id,sq:ACTIVE_SQUAD,cardId:card.id,cardTitle:String(card.title||'').slice(0,120),uid:para,porUid:me.uid,atividade:nome,tipo,durMs,
+    status:iniciar?'rodando':'novo',startedAt:iniciar?agora:null,accMs:0,iniciadoEm:iniciar?new Date(agora).toISOString():null,criadoEm:new Date(agora).toISOString(),desc:desc||null,tag:tag||null,partes:partes.length?partes:null};
+  Object.keys(rec).forEach(k=>{ if(rec[k]===null) delete rec[k]; });
+  try{ await _tmEscrever(rec,rec,{criar:true}); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível criar o timer.'); return; }
+  _tmFormAberto=false; _tmAberto.delete(id); tmRender();
+  if(!paraMim) createNotif(para,'timer_criado',(me.displayName||'Alguém')+' criou uma atividade para você','"'+nome+'" · '+(card.title||'card'),card.id,null,null,{squad:ACTIVE_SQUAD},id);
+}
+
+// ── listeners ──
+function tmOpenCard(cardId){
+  tmFecharCard(); _tmCardId=cardId||null; _tmFormAberto=false;
+  if(cardId){
+    try{
+      _tmOff=window._onValue(fb(FB+'/card_timers/'+cardId), snap=>{
+        if(_tmCardId!==cardId) return;
+        const v=snap.val()||{}; _tmRecs={};
+        Object.keys(v).forEach(k=>{ if(v[k]&&typeof v[k]==='object') _tmRecs[k]=Object.assign({},v[k],{id:k}); });
+        tmRender(); _tmLigarRelogio();
+      }, err=>console.warn('[timer] leitura:',err));
+    }catch(e){ console.warn('[timer]',e); }
+  }
+  tmRender();
+}
+function tmFecharCard(){ if(_tmOff){ try{ _tmOff(); }catch(e){} _tmOff=null; } _tmCardId=null; _tmRecs={}; }
+function tmIniciarIndice(){
+  const u=window._currentUser; if(!u||_tmIdxOff||!window._fbReady) return;
+  try{
+    _tmIdxOff=window._onValue(fb(TM_RAIZ+'/'+u.uid), snap=>{
+      const v=snap.val()||{}; _tmMeus={};
+      Object.keys(v).forEach(id=>{ if(v[id]&&typeof v[id]==='object') _tmMeus[id]=Object.assign({},v[id],{id,uid:u.uid}); });
+      _tmAtualizarBadge(); if(_tmPopAberto) _tmRenderPop(); _tmLigarRelogio();
+    }, err=>console.warn('[timer] índice:',err));
+  }catch(e){ console.warn('[timer]',e); }
+}
+
+// ── seção do modal ──
+function _tmAvatar(uid){ const m=_tmMembro(uid); return _ownerAvatarHtml(m?m.init:''); }
+function _tmLinhaHtml(t,agora){
+  const me=window._currentUser, meu=!!me&&t.uid===me.uid, aberto=_tmAberto.has(t.id), m=_tmMostra(t,agora);
+  const cls='tm-row'+(t.status==='rodando'?' run':'')+(t.status==='encerrado'?' enc':'');
+  const kind=(t.tipo==='timer'?'Timer':'Cronômetro')+(t.status==='rodando'?'':' · '+_tmEstado(t));
+  let det='';
+  if(aberto){
+    const pode=_tmPodeEditar(t), dis=pode?'':' disabled';
+    const partes=Array.isArray(t.partes)?t.partes:[], arg=`${jsq(t.sq)},${jsq(t.cardId)},${jsq(t.id)}`;
+    const chips=partes.map(u=>`<span class="part-chip">${esc(_tmNome(u))}${pode?`<button type="button" class="part-chip-del" aria-label="Remover participante" onclick="tmPartes(${arg},${jsq(u)},false)">×</button>`:''}</span>`).join('');
+    const opts=members.filter(x=>x.uid&&x.uid!==t.uid&&!partes.includes(x.uid)).map(x=>`<option value="${esc(x.uid)}">${esc(x.name||x.email)}</option>`).join('');
+    det=`<div class="tm-det">
+      <div class="tm-meta">${t.porUid&&t.porUid!==t.uid?'Criado por <b>'+esc(_tmNome(t.porUid))+'</b> para <b>'+esc(_tmNome(t.uid))+'</b>':'Criado por <b>'+esc(_tmNome(t.uid))+'</b>'} · ${esc(_tmDataHora(t.criadoEm))}${t.tipo==='timer'&&t.durMs?' · duração '+_tmFmt(t.durMs):''}${t.encerradoEm?' · encerrado '+esc(_tmDataHora(t.encerradoEm)):''}</div>
+      <textarea class="fi" rows="2" maxlength="500" placeholder="Descrição (opcional)"${dis} aria-label="Descrição da atividade" onchange="tmSalvarCampo(${arg},'desc',this.value)">${esc(t.desc||'')}</textarea>
+      <input class="fi" list="tm-tags" maxlength="30" placeholder="Tag (opcional)" value="${esc(t.tag||'')}"${dis} aria-label="Tag da atividade" onchange="tmSalvarCampo(${arg},'tag',this.value)">
+      <div class="tm-chips">${chips}${pode&&opts?`<select class="fi" style="flex:0 1 160px;font-size:11px;padding:4px 6px;" aria-label="Adicionar participante" onchange="if(this.value)tmPartes(${arg},this.value,true)"><option value="">+ Participante</option>${opts}</select>`:''}${!partes.length&&!pode?'<span class="tm-meta">Sem participantes</span>':''}</div>
+      ${pode?`<div><button type="button" class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="tmExcluir(${arg})">Excluir atividade</button></div>`:''}
+    </div>`;
+  }
+  return `<div class="${cls}" data-tm-row="${esc(t.id)}">
+    <div class="tm-main" role="button" tabindex="0" aria-expanded="${aberto}" onclick="tmAlternar(${jsq(t.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tmAlternar(${jsq(t.id)})}">
+      ${_tmAvatar(t.uid)}<span class="tm-nm"><span class="tm-name" title="${esc(t.atividade)}">${esc(t.atividade)}</span><span class="tm-kind">${esc(kind)}</span></span>
+      ${_tmCtl(t,meu)}<span class="tm-time tm-live${m.esg?' esg':''}" data-tm-t="${esc(t.id)}">${m.txt}</span>
+    </div>${det}</div>`;
+}
+function _tmDataHora(iso){ try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function tmAlternar(tid){ if(_tmAberto.has(tid)) _tmAberto.delete(tid); else _tmAberto.add(tid); tmRender(); }
+function tmPartes(sq,cardId,tid,uid,adicionar){
+  const t=_tmBuscar(sq,cardId,tid); if(!t) return;
+  const atual=Array.isArray(t.partes)?t.partes.slice():[]; const i=atual.indexOf(uid);
+  if(adicionar&&i<0) atual.push(uid); else if(!adicionar&&i>=0) atual.splice(i,1);
+  tmSalvarCampo(sq,cardId,tid,'partes',atual);
+}
+function tmRender(){
+  const box=document.getElementById('m-timers'); if(!box) return;
+  const ae=document.activeElement;
+  if(ae && box.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)){ _tmPendente=true; return; } // não destrói o que a pessoa está digitando
+  _tmPendente=false;
+  const add=document.getElementById('m-timer-add'), tot=document.getElementById('m-timers-total'), form=document.getElementById('m-timer-form');
+  const dl=document.getElementById('tm-tags'); if(dl) dl.innerHTML=tags.map(t=>`<option value="${esc(t.label||t.id)}">`).join('');
+  if(!_tmCardId){ box.innerHTML='<div class="tm-vazio">Salve o card para usar o timer.</div>'; if(add) add.style.display='none'; if(tot) tot.textContent=''; if(form) form.style.display='none'; return; }
+  const agora=Date.now();
+  const lista=Object.values(_tmRecs).sort((a,b)=>((a.status==='encerrado')-(b.status==='encerrado'))||String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+  box.innerHTML = lista.length ? lista.map(t=>_tmLinhaHtml(t,agora)).join('') : (_tmFormAberto?'':'<div class="tm-vazio">Nenhum timer neste card. Meça o tempo de uma atividade — a sua ou de alguém do squad.</div>');
+  if(add) add.style.display=_tmFormAberto?'none':'';
+  if(form){
+    form.style.display=_tmFormAberto?'':'none';
+    if(_tmFormAberto && !form.firstElementChild){
+      const me=window._currentUser;
+      const op=members.filter(x=>x.uid&&x.uid!==me?.uid).map(x=>`<option value="${esc(x.uid)}">${esc(x.name||x.email)}</option>`).join('');
+      form.innerHTML=`<div class="tm-form">
+        <input class="fi" id="tm-f-nome" maxlength="120" placeholder="Nome da atividade..." aria-label="Nome da atividade" onkeydown="if(event.key==='Enter')tmCriar()">
+        <div class="tm-form-r">
+          <select class="fi" id="tm-f-tipo" aria-label="Tipo" onchange="tmFormTipo()"><option value="cron">Cronômetro</option><option value="timer">Timer</option></select>
+          <input class="fi" id="tm-f-min" type="number" min="1" max="1440" placeholder="minutos" aria-label="Duração em minutos" style="display:none" onkeydown="if(event.key==='Enter')tmCriar()">
+          <select class="fi" id="tm-f-para" aria-label="Para quem" onchange="tmFormPara()"><option value="${esc(me?.uid||'')}">Para mim</option>${op}</select>
+        </div>
+        <textarea class="fi" id="tm-f-desc" rows="2" maxlength="500" placeholder="Descrição (opcional)" aria-label="Descrição da atividade" style="font-size:11px;padding:5px 8px;"></textarea>
+        <div class="tm-form-r"><input class="fi" id="tm-f-tag" list="tm-tags" maxlength="30" placeholder="Tag (opcional)" aria-label="Tag da atividade"><span class="tm-chips" id="tm-f-partes" style="flex:2 1 160px;"></span></div>
+        <div class="tm-form-r"><label class="tm-chk" id="tm-f-ini-l"><input type="checkbox" id="tm-f-ini" checked> Iniciar agora</label>
+          <span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="tmFecharForm()">Cancelar</button><button type="button" class="btn btn-sm btn-teal" onclick="tmCriar()">Criar</button></div>
+      </div>`;
+      tmFormPartesRender();
+    } else if(!_tmFormAberto) form.innerHTML='';
+  }
+  _tmTick(true);
+}
+(function(){ const box=document.getElementById('m-timers'); if(box) box.addEventListener('focusout',()=>setTimeout(()=>{ if(_tmPendente) tmRender(); },80)); })();
+
+// ── relógio (1 s): só atualiza os números, nunca redesenha ──
+function _tmLigarRelogio(){ if(!_tmIntervalo) _tmIntervalo=setInterval(()=>_tmTick(false),1000); }
+function _tmTick(semParar){
+  const agora=Date.now(); let vivo=false;
+  document.querySelectorAll('[data-tm-t]').forEach(el=>{ const t=_tmRecs[el.dataset.tmT]||_tmMeus[el.dataset.tmT]; if(!t) return; const m=_tmMostra(t,agora); if(el.textContent!==m.txt) el.textContent=m.txt; el.classList.toggle('esg',m.esg); });
+  let soma=0, n=0; Object.values(_tmRecs).forEach(t=>{ soma+=_tmDecorrido(t,agora); n++; if(t.status==='rodando') vivo=true; });
+  const tot=document.getElementById('m-timers-total'); if(tot) tot.textContent = n ? 'Total '+_tmFmt(soma) : '';
+  Object.values(_tmMeus).forEach(t=>{
+    if(t.status!=='rodando') return; vivo=true;
+    if(t.tipo==='timer' && t.durMs && !_tmAvisouZero.has(t.id)){ const sobra=_tmDecorrido(t,agora)-t.durMs; if(sobra>=0){ _tmAvisouZero.add(t.id); if(sobra<8000) showToast('O tempo de "'+t.atividade+'" acabou.'); } }
+  });
+  if(!vivo && !semParar && !_tmPopAberto && _tmIntervalo){ clearInterval(_tmIntervalo); _tmIntervalo=null; }
+}
+
+// ── atalho do topo + popover ──
+function _tmAtualizarBadge(){
+  const b=document.getElementById('tb-timers-n'), btn=document.getElementById('tb-timers'); if(!b||!btn) return;
+  const l=Object.values(_tmMeus), run=l.filter(t=>t.status==='rodando').length, esp=l.filter(t=>t.status==='novo').length;
+  b.style.display=(run||esp)?'':'none'; b.textContent=run||esp; b.classList.toggle('espera',!run&&!!esp);
+  btn.classList.toggle('tm-on',run>0);
+  btn.title = run ? run+' em andamento — clique para pausar, retomar ou encerrar' : (esp ? esp+' atividade(s) esperando você iniciar' : 'Seus timers e cronômetros');
+}
+function tmAlternarPop(ev){
+  if(ev) ev.stopPropagation();
+  const pop=document.getElementById('tm-pop'), btn=document.getElementById('tb-timers'); if(!pop||!btn) return;
+  _tmPopAberto=!_tmPopAberto; pop.classList.toggle('open',_tmPopAberto); btn.setAttribute('aria-expanded',_tmPopAberto);
+  if(_tmPopAberto){
+    _tmRenderPop();
+    const r=btn.getBoundingClientRect(); pop.style.top=(r.bottom+6)+'px'; pop.style.left=Math.max(8,Math.min(r.left,innerWidth-pop.offsetWidth-8))+'px';
+    _tmLigarRelogio();
+  }
+}
+function _tmFecharPop(){ if(!_tmPopAberto) return; _tmPopAberto=false; document.getElementById('tm-pop')?.classList.remove('open'); document.getElementById('tb-timers')?.setAttribute('aria-expanded','false'); }
+document.addEventListener('click',e=>{ if(_tmPopAberto && !e.target.closest('#tm-pop') && !e.target.closest('#tb-timers')) _tmFecharPop(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && _tmPopAberto){ _tmFecharPop(); document.getElementById('tb-timers')?.focus(); } });
+function _tmRenderPop(){
+  const list=document.getElementById('tm-pop-list'); if(!list) return;
+  const ord={rodando:0,novo:1,pausado:2}, l=Object.values(_tmMeus).sort((a,b)=>(ord[a.status]-ord[b.status])||String(a.id).localeCompare(String(b.id)));
+  const agora=Date.now();
+  list.innerHTML = l.length ? l.map(t=>{ const m=_tmMostra(t,agora);
+    return `<div class="tm-prow"><div class="tm-pinfo" role="button" tabindex="0" onclick="tmAbrirCard(${jsq(t.sq)},${jsq(t.cardId)})" onkeydown="if(event.key==='Enter')tmAbrirCard(${jsq(t.sq)},${jsq(t.cardId)})"><b>${esc(t.atividade)}</b><small>${esc(t.cardTitle||'card')} · ${t.tipo==='timer'?'Timer':'Cronômetro'}${t.status==='rodando'?'':' · '+_tmEstado(t)}</small></div>${_tmCtl(t,true)}<span class="tm-time tm-live${m.esg?' esg':''}" data-tm-t="${esc(t.id)}">${m.txt}</span></div>`; }).join('')
+    : '<div class="notif-empty">Nenhum timer ativo. Abra um card e crie o primeiro em "Timer e Produtividade".</div>';
+}
+function tmAbrirCard(sq,cardId){
+  _tmFecharPop();
+  if(sq && sq!==ACTIVE_SQUAD){ window.location.href=window.location.pathname+'?squad='+encodeURIComponent(sq)+'&card='+encodeURIComponent(cardId); return; }
+  if(cards.find(c=>c.id===cardId)) openCard(cardId); else showToast('Esse card não está mais neste quadro.');
 }
 
 async function loadComments(cardId){

@@ -3094,7 +3094,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.85 · painel</div>
+<div class="version">v5.86 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3197,10 +3197,10 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=36"></script>
+<script src="mare-notif.js?v=37"></script>
 <script src="mare-metas.js?v=17"></script>
 <script src="mare-plantao.js?v=4"></script>
-<script src="mare-dicas.js?v=9"></script>
+<script src="mare-dicas.js?v=10"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8027,6 +8027,16 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_timer_produtividade_2026_11_01',
+    titulo: '⏲ Novo no card: Timer e Produtividade — meça o tempo das suas atividades',
+    corpo: '<p>Agora dá para <b>medir o tempo de uma atividade direto no card</b>. Abra um card e procure <b>⏲ Timer e Produtividade</b>, logo abaixo do Checklist.</p>'
+      + '<p>• <b>Cronômetro</b> (conta pra cima) ou <b>Timer</b> (conta pra baixo, com a duração que você escolher)<br>• Crie pra você <b>ou pra outra pessoa</b> do squad — quem recebe é quem liga, pausa e encerra<br>• Já dá para colocar <b>descrição, tag e participantes</b> na hora de criar<br>• Vários timers no mesmo card, e o <b>total</b> somado aparece no topo da seção</p>'
+      + '<p>O botão <b>⏲</b> no topo da tela, ao lado do tema, mostra os seus timers de <b>todos os squads</b>: dá para pausar, retomar e encerrar sem abrir o card.</p>'
+      + '<p>🔔 Você recebe aviso quando <b>alguém cria uma atividade para você</b>, quando um <b>Timer chega a zero</b>, quando uma atividade <b>fica rodando por 4 horas</b> (para você lembrar de pausar) e quem criou é avisado quando a atividade é <b>encerrada</b>. O Agente Ágil também enxerga o tempo registrado do card.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_travessia_2026_10_31',
     titulo: '⛵ Chegou a Travessia: seu Baú, seu 1:1 e seu humor do dia',
