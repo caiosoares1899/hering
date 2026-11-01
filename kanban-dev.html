@@ -6569,7 +6569,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.889-dev</div>
+<div class="version">v8.30.890-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -15270,6 +15270,7 @@ function _performAutoSave(){
     // ("movido para B → mover para C") ou outra pessoa levava o card pra C com o modal aberto, o PRÓXIMO autosave/Salvar via
     // "select (B) ≠ base (A)", entendia como escolha da pessoa e regravava B por cima de C. Depois de gravar, a base é o que o select mostra.
     _modalOpenCol=_selCol;
+    _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags); // base de Responsável/Tags = o que está sendo gravado (ver _modalSyncCol)
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:_colToSave,owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',
       due:document.getElementById('m-due').value,noDue:_mNoDue,desc:_descProtViolada?c.desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
@@ -15777,10 +15778,21 @@ let _modalOpenCol=null;
 function _modalSyncCol(){
   if(!editingId) return;
   const ov=document.getElementById('card-ov'); if(!ov || !ov.classList.contains('open')) return;
-  const sel=document.getElementById('m-col'); if(!sel || sel.value!==_modalOpenCol) return;
-  const c=cards.find(x=>x.id===editingId); if(!c || c.col===_modalOpenCol || !columns.some(x=>x.id===c.col)) return;
-  sel.value=c.col; _modalOpenCol=c.col;
+  const c=cards.find(x=>x.id===editingId); if(!c) return;
+  const sel=document.getElementById('m-col');
+  if(sel && sel.value===_modalOpenCol && c.col!==_modalOpenCol && columns.some(x=>x.id===c.col)){ sel.value=c.col; _modalOpenCol=c.col; }
+  // Achado real (/monitorarbugs, 2026-10-31, continuação do "a automação moveu e voltou"): Responsável e Tags tinham o MESMO furo da coluna — o
+  // autosave/Salvar regravam o <select> do responsável e o array editingTags lidos na ABERTURA do modal. Automação "adicionar tag"/"remover tag"/
+  // "atribuir responsável" (ou outra pessoa/aba) mudava o card com o modal aberto e a próxima digitação desfazia a mudança em silêncio. Mesma regra
+  // da coluna: se a pessoa NÃO mexeu no campo desde a última gravação, ele acompanha o card; se mexeu, a escolha dela é preservada.
+  const so=document.getElementById('m-owner');
+  if(so && so.value===_modalOpenOwner && (c.owner||'')!==_modalOpenOwner && [...so.options].some(o=>o.value===(c.owner||''))){ so.value=c.owner||''; _modalOpenOwner=so.value; }
+  if(JSON.stringify(editingTags)===_modalOpenTags){
+    const ct=getCardTags(c).slice();
+    if(JSON.stringify(ct)!==_modalOpenTags){ editingTags=ct; _modalOpenTags=JSON.stringify(ct); populateTagSelect(); }
+  }
 }
+let _modalOpenOwner=null, _modalOpenTags=null; // linha de base de Responsável/Tags (ver _modalSyncCol)
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
@@ -16315,6 +16327,7 @@ function openCard(id){
   document.getElementById('m-col').value=c.col;
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
+  _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags);
   document.getElementById('m-demandante').value=c.demandante||'';
   _updateDescProtectedBadge();
   _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
@@ -16973,6 +16986,7 @@ function saveCard(){
     const _selCol=document.getElementById('m-col').value;
     const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
     _modalOpenCol=_selCol; // ver o comentário em _performAutoSave(): a base acompanha o que o select mostra depois de gravar
+    _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags);
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
     const _prevOwnerSave=c.owner||'', _prevParticipantsSave=(c.participants||[]).slice();
