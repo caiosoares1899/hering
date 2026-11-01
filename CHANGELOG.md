@@ -24,6 +24,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — ⏲ Timer e Produtividade no card (kanban-dev v8.30.891-dev) — 2026-11-01
+
+- **Seção "⏲ Timer e Produtividade" no modal do card**, logo abaixo do Checklist: cada atividade é uma linha minimalista (carinha de quem executa, nome, Timer ou Cronômetro, iniciar/pausar/encerrar e o tempo) que expande para descrição, tag, participantes e quem criou. Vários relógios no mesmo card (e rodando ao mesmo tempo); o total somado fica no topo da seção. Dá para criar para si ou para outra pessoa do squad.
+- **Quem controla:** só quem recebeu a atividade inicia/pausa/encerra; quem criou para outra pessoa só edita/exclui enquanto ela não começou.
+- **Atalho "⏲ Timers" na barra do topo** (arrastável no "Reorganizar barra"): lista os timers ativos da pessoa em todos os squads, com o selo de quantos estão rodando, e permite pausar/retomar/encerrar sem abrir o card.
+- **Quatro avisos novos** (sino + push, ligáveis na Central de Notificações): atividade criada para você, atividade encerrada (avisa quem criou, com o tempo), Timer chegou a zero e atividade esquecida rodando (4 h, 8 h, 12 h). Os dois últimos vêm da função agendada `timersVigia` (a cada minuto, mesmo com a aba fechada).
+- **Agente Ágil:** `ler_card` passa a devolver as atividades medidas e o tempo registrado do card — só leitura, ele nunca liga/desliga um relógio.
+- Dados: registro completo em `squads/{squad}/dados/card_timers/{card}/{id}` (entra no backup do squad) e índice pessoal em `kanban/timers_ativos/{uid}` (regras novas — exige `firebase deploy --only database`).
+- Visual: segue o vidro/tokens do checklist, sem emoji novo além do ⏲ (categoria nova) e ícones de mídia desenhados em SVG; funciona nos 3 temas e no celular (alvos de 44 px em toque).
+- Dica: sim — "Quer saber quanto tempo uma atividade leva? Use ⏲ Timer e Produtividade" (ao abrir um card; `mare-dicas-dev.js` v10). Ajuda do Maré: verbete "Timer e Produtividade" em Cards.
+- `mare-notif-dev.js` v37 (4 tipos novos), kanban-dev v8.30.891-dev. Testes: `docs/arezzo/testes/test_timers_card.js` (35 verificações), `functions/timers/__tests__/vigia.test.js`, `functions/rules/__tests__/timersRules.test.js`, `ler_card` em `lerCard.test.js`.
+
 ### ⛵ Travessia entra em produção: travessia.html + ganchos no Maré e no Radar (PROD · maré v8.30.889 · radar v2.96) — 2026-10-31
 
 A Travessia (pessoas, 1:1 e avaliação) entra em produção como página nova: travessia.html. Entrada discreta: o card da Travessia no Oceano continua 'em breve' por enquanto; as pessoas chegam pelo 💼 do card e do Marco e pelo humor do Meu Dia, e os líderes pelo aviso de apoio no sino.

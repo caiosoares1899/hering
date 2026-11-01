@@ -671,6 +671,18 @@
           }
         }
       },
+      "timers_ativos": {
+        "$uid": {
+          ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $uid",
+          "$tid": {
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $uid || (!data.exists() && newData.child('porUid').val() === auth.uid) || (data.exists() && data.child('porUid').val() === auth.uid && data.child('status').val() === 'novo'))",
+            ".validate": "$tid.matches(/^[A-Za-z0-9_-]{6,40}$/) && newData.hasChildren(['sq','cardId','atividade','tipo','status']) && newData.child('sq').isString() && newData.child('cardId').isString() && newData.child('atividade').isString() && newData.child('atividade').val().length <= 120 && newData.child('tipo').isString() && newData.child('tipo').val().matches(/^(timer|cron)$/) && newData.child('status').isString() && newData.child('status').val().matches(/^(novo|rodando|pausado)$/)",
+            "startedAt": { ".validate": "newData.isNumber()" },
+            "accMs": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "durMs": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 86400000" }
+          }
+        }
+      },
       "notif_feed": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"

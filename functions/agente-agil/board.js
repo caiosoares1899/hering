@@ -80,6 +80,8 @@ const tagsPath = (squadId) => `kanban/squads/${squadId}/dados/tags`;
 // check automático passando. Corrigido usando este path (mesmo que
 // FB+'/card_comments/'+cardId+'/'+commentId em kanban-dev.html).
 const cardCommentsPath = (squadId, cardId) => `kanban/squads/${squadId}/dados/card_comments/${cardId}`;
+// ⏲ Timer e Produtividade: as atividades medidas do card (só LEITURA pro agente — quem controla o relógio é a pessoa dona da atividade).
+const cardTimersPath = (squadId, cardId) => `kanban/squads/${squadId}/dados/card_timers/${cardId}`;
 
 // Constantes pré-calculadas pro squad default — mantidas por compatibilidade
 // (http.js e os testes existentes as importam literalmente; ver funções
@@ -329,6 +331,7 @@ module.exports = {
   cardsIndexPath,
   cardsUpdatedAtPath,
   cardCommentsPath,
+  cardTimersPath,
   recorrentesIndexPath,
   tagsPath,
   resolveCardKey,

@@ -28,7 +28,7 @@
 // vazio, o LLM não precisa (nem deveria) informar nada de novo.
 
 const { z } = require('zod');
-const { resolveCardKey, cardsPath, tagsPath, cardCommentsPath } = require('../../agente-agil/board');
+const { resolveCardKey, cardsPath, tagsPath, cardCommentsPath, cardTimersPath } = require('../../agente-agil/board');
 const flowLib = require('../../agente-agil/flow');
 const membersLib = require('../../agente-agil/members');
 
@@ -38,6 +38,37 @@ const membersLib = require('../../agente-agil/members');
 const COMMENTS_CAP = 20;
 
 const lerCardSchema = z.object({});
+
+// ⏲ Timer e Produtividade (2026-11-01): atividades medidas do card (kanban-dev.html → "Timer e Produtividade"). SÓ LEITURA: o agente enxerga o tempo
+// já registrado (pra responder "quanto tempo gastamos nesse card?", apontar atividade esquecida rodando etc.), mas nunca inicia/pausa/encerra um relógio.
+// Mesmo cálculo do navegador e do vigia: accMs + (agora − startedAt) enquanto 'rodando'. No máximo TIMERS_CAP (as mais recentes).
+const TIMERS_CAP = 20;
+function fmtDuracao(ms) {
+  const s = Math.max(0, Math.floor((Number(ms) || 0) / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), p = (n) => String(n).padStart(2, '0');
+  return h ? `${h}:${p(m)}:${p(s % 60)}` : `${p(m)}:${p(s % 60)}`;
+}
+function resumoTimers(timers, members, agora) {
+  const lista = Object.entries(timers || {}).filter(([, t]) => t && typeof t === 'object').map(([id, t]) => ({ id, ...t }));
+  if (!lista.length) return null;
+  const nome = (uid) => { const m = (members || []).find((mm) => mm.uid === uid); return m ? m.name : null; };
+  const dec = (t) => Math.max(0, (Number(t.accMs) || 0) + (t.status === 'rodando' && t.startedAt ? agora - Number(t.startedAt) : 0));
+  const atividades = lista
+    .sort((a, b) => String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')))
+    .slice(-TIMERS_CAP)
+    .map((t) => ({
+      atividade: t.atividade || '',
+      tipo: t.tipo === 'timer' ? 'timer' : 'cronometro',
+      status: t.status || 'novo',
+      responsavel: nome(t.uid),
+      criado_por: t.porUid && t.porUid !== t.uid ? nome(t.porUid) : null,
+      tempo: fmtDuracao(dec(t)),
+      duracao_planejada: t.tipo === 'timer' && t.durMs ? fmtDuracao(t.durMs) : null,
+      tag: t.tag || null,
+      descricao: t.desc || null,
+      participantes: (Array.isArray(t.partes) ? t.partes : []).map(nome).filter(Boolean),
+    }));
+  return { atividades, tempo_total: fmtDuracao(lista.reduce((s, t) => s + dec(t), 0)) };
+}
 
 // Ponto 4 do desenho combinado "orquestrador lendo input de especialistas
 // externos" (README.md, 2026-08-25 — implementado 2026-08-27): em vez de
@@ -97,7 +128,7 @@ function resolveMember(members, init) {
 // fecha essa lacuna: toda vez que o agente chama ler_card (já orientado
 // pelo system prompt a fazer isso em pedidos abertos/falta de contexto),
 // ganha a lista completa pra resolver nome -> id antes de mover_coluna.
-function summarizeCard(card, { columns, flowConfig, squadTags, members, comments }) {
+function summarizeCard(card, { columns, flowConfig, squadTags, members, comments, timers, agora }) {
   const tagsPorId = new Map((squadTags || []).map((t) => [t.id, t.label]));
   const doneIds = new Set(flowLib.doneColumnIds({ columns, flowConfig }));
   const colunasDisponiveis = (columns || []).map((c) => ({ id: c.id, nome: c.name || c.id, fim: doneIds.has(c.id) }));
@@ -121,6 +152,8 @@ function summarizeCard(card, { columns, flowConfig, squadTags, members, comments
     return { texto: item.t, done: !!item.done, grupo: grupo ? grupo.title : item.grp };
   });
 
+  const resumoT = resumoTimers(timers, members, agora == null ? Date.now() : agora);
+
   return {
     titulo: card.title || '',
     desc: card.desc || '',
@@ -132,6 +165,8 @@ function summarizeCard(card, { columns, flowConfig, squadTags, members, comments
     participantes,
     checklist,
     comentarios,
+    // só aparece quando o card tem atividades medidas (não polui o resumo dos demais)
+    ...(resumoT ? { timers: resumoT.atividades, tempo_total_timers: resumoT.tempo_total } : {}),
   };
 }
 
@@ -166,12 +201,13 @@ function makeRealLerCardHandler({ db, squadId, cardId }) {
     const cardKey = await resolveCardKey(db, cardId, { squadId });
     if (!cardKey) return { ok: false, error: 'card_not_found', cardId, squadId };
 
-    const [cardSnap, meta, squadTagsSnap, members, commentsSnap] = await Promise.all([
+    const [cardSnap, meta, squadTagsSnap, members, commentsSnap, timersSnap] = await Promise.all([
       db.ref(`${cardsPath(squadId)}/${cardKey}`).get(),
       flowLib.readFlowMeta(db, squadId),
       db.ref(tagsPath(squadId)).get(),
       membersLib.readSquadMembers(db, squadId),
       db.ref(cardCommentsPath(squadId, cardId)).get(),
+      db.ref(cardTimersPath(squadId, cardId)).get(),
     ]);
     const card = cardSnap.val() || {};
     const squadTags = squadTagsSnap.val() || [];
@@ -180,9 +216,9 @@ function makeRealLerCardHandler({ db, squadId, cardId }) {
     return {
       ok: true,
       tool: 'ler_card',
-      card: summarizeCard(card, { columns: meta.columns, flowConfig: meta.flowConfig, squadTags, members, comments }),
+      card: summarizeCard(card, { columns: meta.columns, flowConfig: meta.flowConfig, squadTags, members, comments, timers: timersSnap.val() || {} }),
     };
   };
 }
 
-module.exports = { lerCardSchema, summarizeCard, origemDoComentario, especialistaIdDoComentario, makeFakeLerCardHandler, makeRealLerCardHandler, COMMENTS_CAP };
+module.exports = { lerCardSchema, summarizeCard, origemDoComentario, especialistaIdDoComentario, makeFakeLerCardHandler, makeRealLerCardHandler, COMMENTS_CAP, TIMERS_CAP, resumoTimers };

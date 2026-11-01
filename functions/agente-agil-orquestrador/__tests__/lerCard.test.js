@@ -277,3 +277,26 @@ test('integração: o loop consegue encadear ler_card -> comentario com o client
   const cardAposEscrita = await db.ref('kanban/squads/dev/dados/cards/9').get();
   assert.deepEqual(cardAposEscrita.val().comments, {}); // campo morto continua vazio, não recebe mais nada
 });
+
+// ⏲ Timer e Produtividade (2026-11-01): ler_card devolve as atividades medidas do card — só leitura, mesmo cálculo do navegador.
+test('ler_card expõe os timers do card (tempo registrado, andamento e total), só quando existem', async () => {
+  const { resumoTimers } = require('../tools/lerCard');
+  const T0 = Date.parse('2026-11-02T12:00:00-03:00');
+  assert.equal(resumoTimers({}, MEMBERS, T0), null);
+  const r = resumoTimers({
+    a: { atividade: 'Roteiro', tipo: 'cron', status: 'encerrado', uid: 'uidAna', porUid: 'uidBru', accMs: 90 * 60000, criadoEm: '2026-11-02T10:00:00Z', tag: 'Vídeo', partes: ['uidBru'] },
+    b: { atividade: 'Daily', tipo: 'timer', durMs: 15 * 60000, status: 'rodando', uid: 'uidBru', porUid: 'uidBru', startedAt: T0 - 5 * 60000, accMs: 60000, criadoEm: '2026-11-02T11:00:00Z' },
+  }, MEMBERS, T0 + 1000);
+  assert.equal(r.atividades.length, 2);
+  assert.deepEqual(r.atividades[0], { atividade: 'Roteiro', tipo: 'cronometro', status: 'encerrado', responsavel: 'Ana Silva', criado_por: 'Bruno Tanaka', tempo: '1:30:00', duracao_planejada: null, tag: 'Vídeo', descricao: null, participantes: ['Bruno Tanaka'] });
+  assert.equal(r.atividades[1].tempo, '06:01'); assert.equal(r.atividades[1].duracao_planejada, '15:00'); assert.equal(r.atividades[1].criado_por, null);
+  assert.equal(r.tempo_total, '1:36:01');
+});
+test('ler_card (real) lê card_timers do card e inclui no resumo; sem timers o resumo não ganha o campo', async () => {
+  const mk = (timers) => makeFakeDb({ kanban: { squads: { dev: { dados: {
+    cards: { 0: { id: 'c1', title: 'Card', col: 'backlog' } }, cards_index: { c1: '0' }, columns: COLUMNS, card_timers: timers ? { c1: timers } : undefined } } }, usuarios: {}, usuarios_publicos: {} } });
+  const sem = await makeRealLerCardHandler({ db: mk(null), squadId: 'dev', cardId: 'c1' })();
+  assert.equal(sem.ok, true); assert.equal('timers' in sem.card, false);
+  const com = await makeRealLerCardHandler({ db: mk({ t1: { atividade: 'X', tipo: 'cron', status: 'pausado', uid: 'u', accMs: 61000, criadoEm: '2026-11-02T10:00:00Z' } }), squadId: 'dev', cardId: 'c1' })();
+  assert.equal(com.card.timers.length, 1); assert.equal(com.card.timers[0].tempo, '01:01'); assert.equal(com.card.tempo_total_timers, '01:01');
+});
