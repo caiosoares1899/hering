@@ -1,6 +1,11 @@
 [
  {
   "data": "2026-11-01",
+  "titulo": "🏖️ Assistente Férias do Caio encerrado em 03/11/2026 — desativado, não apagado (PROD · oceano v1.59) — 2026-11-01",
+  "texto": "- O Oceano deixa de mostrar o banner, a pílula e o modal do Assistente Férias a partir de 03/11/2026 (o Caio voltou): FERIAS_FIM passou a 2026-11-02 e abrirFerias() ficou guardado por feriasAtivo() (sino/link antigo de chamado só avisa que o assistente foi encerrado). ?ferias=1 na URL religa só para quem abrir assim.\n- Nada foi apagado: código do Oceano, módulo mare-plantao, funções plantao*, regras, aba do Painel e skill /plantaobug continuam no repositório.\n- Novo docs/ASSISTENTE_FERIAS.md: panorama, interruptor, inventário completo, checklist do dia da volta e passo a passo para religar numa próxima ausência; avisos de 'encerrado' em PLANTAO_BUGS.md, OCEANO.md, AGENTS.md, CLAUDE.md e BIBLIOTECA.md.\n- Backup: plantao (fichas) entra no backup completo semanal e plantao_status fica fora (exige deploy das 3 funções de backup).\n- Testes: test_ferias_encerrado.js (02/11, 03/11 e depois da volta) e os testes do assistente passam a abrir com ?ferias=1 para não dependerem da data."
+ },
+ {
+  "data": "2026-11-01",
   "titulo": "⏲ Timer e Produtividade no card (PROD · maré v8.30.894 · painel v5.86) — 2026-11-01",
   "texto": "- Seção \"⏲ Timer e Produtividade\" no modal do card, logo abaixo do Checklist: cada atividade é uma linha minimalista (carinha de quem executa, nome, Timer ou Cronômetro, iniciar/pausar/encerrar e o tempo) que expande para descrição, tag, participantes e quem criou. Vários relógios no mesmo card (e rodando ao mesmo tempo); o total somado fica no topo da seção. Dá para criar para si ou para outra pessoa do squad.\n- Quem controla: só quem recebeu a atividade inicia/pausa/encerra; quem criou para outra pessoa só edita/exclui enquanto ela não começou.\n- Descrição, tag e participantes já no formulário de criação (antes do start).\n- Atalho ⏲ no cabeçalho (ao lado do botão de tema, no topo da tela): lista os timers ativos da pessoa em todos os squads, com o selo de quantos estão rodando, e permite pausar/retomar/encerrar sem abrir o card.\n- Quatro avisos novos (sino + push, ligáveis na Central de Notificações): atividade criada para você, atividade encerrada (avisa quem criou, com o tempo), Timer chegou a zero e atividade esquecida rodando (4 h, 8 h, 12 h). Os dois últimos vêm da função agendada timersVigia (a cada minuto, mesmo com a aba fechada).\n- Agente Ágil: ler_card passa a devolver as atividades medidas e o tempo registrado do card — só leitura, ele nunca liga/desliga um relógio.\n- Dados: registro completo em squads/{squad}/dados/card_timers/{card}/{id} (entra no backup do squad"
  },
@@ -143,10 +148,5 @@
   "data": "2026-10-14",
   "titulo": "🚀 Promoção: editar e apagar comentários nos Marcos do Radar (+ moderação ADM) — 2026-10-14 · okr v2.78 (com avisos)",
   "texto": "- ✏️ Editar o próprio comentário do Marco (_okrCommentEdit / _okrCommentEditSave): botão ✏️ ao lado da data em cada comentário feito pela própria pessoa no modal do Marco abre edição inline (Salvar/Cancelar, Enter/Esc), grava apenas text + editadoEm e exibe · editado. Não perde o que estiver sendo digitado no Marco e avisa caso o comentário tenha sido removido antes de salvar.\n- 🗑️ Apagar comentário no Marco (_okrCommentDel): botão 🗑️ ao lado do comentário (com confirmação uiConfirm) permite que o próprio autor apague seu comentário e que ADMs (_isAdmPainel()) também apaguem comentários de qualquer pessoa para moderação. Visualizadores externos continuam em modo somente leitura.\n- Conhecimento do Agente Ágil (novidades.json) regenerado. Dica: não (ícones diretos no comentário). Detalhes nas entradas de dev de 14/10 (okr-dev v2.76→v2.78)."
- },
- {
-  "data": "2026-10-14",
-  "titulo": "🚀 Promoção: buzina de navio no popup \"O mar tá pra peixe\" — 2026-10-14 · kanban v8.30.858 · painel v5.67 · mare-metas.js v10 · `buzina-navio.mp3` (sem avisos)",
-  "texto": "- 🚢 Buzina no popup 🐟: ao cruzar um marco de 20 % da meta (e na meta batida 🏆), o popup dos peixinhos toca uma buzina de navio inteira (~9,5 s) e fecha cerca de 1 s depois que ela acaba. Respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s (14 s na meta batida). Marco comum soa mais baixo (0,7) que a meta batida (0,85). Fechar o popup antes para a buzina.\n- Ajuda do Maré (Metas e desafios) atualizada; conhecimento do Agente Ágil regenerado. Detalhes nas entradas de dev de 14/10. Dica: não (efeito automático)."
  }
 ]

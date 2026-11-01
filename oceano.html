@@ -768,7 +768,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.58 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.59 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1537,7 +1537,10 @@ $('#btn-eu').addEventListener('click', ()=>abrirPerfil());
 $('#lk-add').addEventListener('click', ()=>abrirPerfil('links'));
 
 // ── 🏖️ Assistente Férias do Caio (16/10 a 03/11) — visão do USUÁRIO (o controle de ADM do plantão fica no Painel › 🐛 Monitor) ──
-const FERIAS_FIM = '2026-11-03';
+// ⏸ ASSISTENTE ENCERRADO (01/11/2026): o Caio volta em 03/11/2026, então o último dia de plantão é 02/11 — a partir de 03/11 a vitrine NÃO mostra mais o banner, a pílula
+// nem o modal (nada foi apagado: o código, o módulo mare-plantao, as funções e a aba do Painel continuam aqui). Como reativar numa próxima ausência:
+// docs/ASSISTENTE_FERIAS.md (resumo: mude FERIAS_INICIO/FERIAS_FIM e os textos de data; `?ferias=1` na URL liga só para quem abrir — serve para testar).
+const FERIAS_FIM = '2026-11-02';
 const FERIAS_EXP_LS = 'oceano_ferias_expandido';   // padrão: a área abre MINIMIZADA; quem expandir fica expandido até minimizar
 
 // Captura passiva dos últimos erros vermelhos da sessão para facilitar preenchimento automático
@@ -1559,7 +1562,7 @@ window.addEventListener('unhandledrejection', ev=>{
 function feriasHoje(){ try{ return new Date().toLocaleDateString('sv-SE'); }catch(e){ return '2026-10-16'; } }
 function feriasAtivo(){
   try{
-    if(location.search.includes('ferias=1')) return true;
+    if(location.search.includes('ferias=1')) return true;   // liga só pra quem abriu assim (teste / demonstração) — não grava nada
     return feriasHoje() <= FERIAS_FIM;
   }catch(e){ return true; }
 }
@@ -2336,6 +2339,8 @@ function feriasRenderModal(){
 }
 
 function abrirFerias(aba, extra){
+  // Assistente encerrado: sem o modal (um sino/link antigo de chamado cai aqui). Os chamados continuam guardados no Firebase e no Painel › 🐛 Monitor.
+  if(!feriasAtivo()){ toast('O Assistente Férias do Caio foi encerrado — o Caio já voltou. Fale com ele ou com o seu PO.'); return; }
   if(aba && ['chat','socorro','status','proximos','guia','bugs'].includes(aba)) feriasAbaAtual = aba;
   if(feriasAbaAtual==='bugs' && typeof extra==='string' && extra) feriasBugPrefill = extra;
   feriasRenderModal();
