@@ -1967,8 +1967,8 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   (só em squads com Cloud Function ouvindo).
 
 ### ⏲ Timer e Produtividade (2026-11-01, só dev)
-Atividades medidas dentro do modal do card (seção `#m-timers-sec`, abaixo do Checklist; entrada `timers` em `CARD_SECTIONS`) + atalho `#tb-timers` na
-barra do topo (popover `#tm-pop`). Código em bloco único, antes de `loadComments()` (prefixo `tm`/`_tm`), em `kanban-dev.html`:
+Atividades medidas dentro do modal do card (seção `#m-timers-sec`, abaixo do Checklist; entrada `timers` em `CARD_SECTIONS`) + atalho `#tb-timers` no
+cabeçalho, ao lado do tema (popover `#tm-pop`). Código em bloco único, antes de `loadComments()` (prefixo `tm`/`_tm`), em `kanban-dev.html`:
 - **Dados**: registro completo `FB/card_timers/{cardId}/{tid}` (entra no backup do squad) + índice pessoal `kanban/timers_ativos/{uid}/{tid}` (só o dono
   lê; regras em `database.rules.json`; `timers_ativos` está em `EXCLUIDOS` de `functions/backup/completo.js`). Status: `novo → rodando ⇄ pausado → encerrado`;
   tempo = `accMs` + (agora − `startedAt`) enquanto `rodando` (`_tmDecorrido()`).
