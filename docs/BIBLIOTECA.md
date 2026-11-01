@@ -114,6 +114,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `GUIA_DE_CODIGO.md` | Como escrever código e testes sem cair nas armadilhas conhecidas |
 | `OCEANO.md` | A família de produtos, nomes visíveis e fases |
 | `PLANTAO_BUGS.md` | Plantão de Bugs: fluxo, regras e runbook |
+| `ASSISTENTE_FERIAS.md` | 🏖️ Assistente Férias do Caio — **desativado em 03/11/2026, guardado para reuso**: interruptor, inventário das peças, checklist da volta e como religar |
 | `MINIPAINEL.md` | Mini painel do Caio (`minipainel.html` + função `oceanoResumo`): peças, deploy, chave e limites |
 | `changelog-archive-2026-07-a-09.md` | Histórico do CHANGELOG de jul–set/2026 |
 | `ideias/camiseta-brasil-black-friday.md` | Ideia guardada para depois das férias |
@@ -138,4 +139,5 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | Rodar as checagens da CI | `node scripts/checar.js` e `cd functions && npm test` |
 | Testar uma tela no navegador | `docs/arezzo/testes/` (`fakefb.js` + Playwright) |
 | Saber como o plantão de bugs funciona | `docs/PLANTAO_BUGS.md` |
+| Religar (ou entender) o Assistente Férias numa próxima ausência | `docs/ASSISTENTE_FERIAS.md` |
 | Criar tela nova no estilo da família | `MARINE_GLASS.md` |

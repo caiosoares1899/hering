@@ -23,7 +23,7 @@ const PII = ['Eve', 'Souza', 'eve@ciahering', 'maria.silva@ciahering.com.br', 'h
   const c = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(c, seed());
   const chamadasGithub = []; await c.route(/github\.com/, r => { chamadasGithub.push(r.request().url()); r.abort(); });
   const p = await c.newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message));
-  await p.goto(`${BASE}/${OC}.html`); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('eve', 'Eve Souza')); await p.waitForTimeout(2500);
+  await p.goto(`${BASE}/${OC}.html?ferias=1`); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('eve', 'Eve Souza')); await p.waitForTimeout(2500);
 
   // A) funções puras
   const pura = await p.evaluate(() => ({

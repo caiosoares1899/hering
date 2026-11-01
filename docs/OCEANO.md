@@ -77,6 +77,8 @@ O módulo compartilhado de metas (`mare-metas.js` v16, consumido no Oceano, Rada
 - **Gráfico e KPI:** desenha uma **linha pontilhada de projeção** no gráfico acumulado e destaca o **KPI de projeção** de fechamento ao lado do realizado e da meta.
 
 ## Assistente Férias do Caio & Plantão de Bugs (`mare-plantao.js` v1)
+> ⏸ **Desativado a partir de 03/11/2026 (o Caio voltou), sem apagar nada** — `FERIAS_FIM = '2026-11-02'` em `oceano(-dev).html`; `?ferias=1` religa só para quem abrir assim. Tudo (interruptor, inventário, checklist da volta e como reativar) em **`docs/ASSISTENTE_FERIAS.md`**.
+
 Módulo compartilhado `mare-plantao(-dev).js` (v1) para suporte guiado, FAQ com IA e recepção estruturada de bugs:
 - **No Oceano (`oceano.html` v1.52 / `oceano-dev.html` v1.52):** o banner de férias abre **minimizado em 1 linha** (dispensável pelo usuário em `localStorage`) para não ocupar espaço vertical na vitrine, e a aba `🐛 Reportar Bug` do modal exibe **apenas o formulário de reporte e "Meus chamados"** para o usuário acompanhar seus próprios tickets.
 - **Centralização ADM no Painel:** toda a gestão de ADM (fila completa de bugs, geração de pacote anônimo para diagnóstico, disparo de workflow para o GitHub Actions e validação/fechamento de chamados) fica centralizada exclusivamente em **`Painel › 🐛 Monitor › 🛟 Plantão de Bugs`**.

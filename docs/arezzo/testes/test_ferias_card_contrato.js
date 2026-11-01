@@ -31,7 +31,7 @@ const BUG = (n, impacto, extra) => Object.assign({ id: 'bug_ferias_t' + n, texto
   // ───────── A) OCEANO grava ─────────
   const c1 = await b.newContext({ viewport: { width: 1280, height: 800 } }); await fake.install(c1, seed());
   const p1 = await c1.newPage(); const errsA = []; p1.on('pageerror', e => errsA.push(e.message));
-  await p1.goto(`${BASE}/${OC}.html`); await p1.waitForFunction(() => !!window.__authCb); await p1.evaluate(x => window.__authCb(x), U('ana', 'Ana Silva')); await p1.waitForTimeout(2500);
+  await p1.goto(`${BASE}/${OC}.html?ferias=1`); await p1.waitForFunction(() => !!window.__authCb); await p1.evaluate(x => window.__authCb(x), U('ana', 'Ana Silva')); await p1.waitForTimeout(2500);
   const cria = (bug, ev) => p1.evaluate(([bg, e]) => window.feriasSincronizarCardSquadDados(bg, e), [bug, ev || 'aberto']);
   const dados = () => p1.evaluate(() => JSON.parse(JSON.stringify(window.__store.kanban.squads.dados.dados)));
   const bugs = [BUG(1, '🔴 Bloqueia a operação'), BUG(2, '🟠 Atrapalha muito'), BUG(3, '🟡 Dá pra contornar')];

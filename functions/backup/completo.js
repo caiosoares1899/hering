@@ -53,12 +53,14 @@ const NOS_GLOBAIS = [
   { no: 'dados_diarios', diario: false },
   { no: 'dados_diarios_dev', diario: false }, // exceção ao "nada de _dev": a Central de Dados também é publicada pelo painel de teste (painel-dev)
   { no: 'feedback', diario: false },
+  { no: 'plantao', diario: false },          // 🛟 fichas do Plantão de Bugs / Assistente Férias (histórico: PR, script de teste, quem validou) — só ADM lê; ver docs/ASSISTENTE_FERIAS.md
 ];
 
 // O que NUNCA entra (documentado no manifesto pra ninguém achar que "esqueceu"):
 const EXCLUIDOS = [
   'spotify_secrets', 'spotify_radio_owner_secret', 'oauth_pending',           // segredos
   'presence', 'notif_feed', 'notif_feed_seen', 'vtex_saude', 'github_saude', 'firebase_saude', // efêmeros (o feed é derivado; *_saude = batimento dos monitores)
+  'plantao_status',                                                           // 🛟 batimento do Antigravity (efêmero)
   'timers_ativos',                                                            // ⏱️ índice efêmero dos timers rodando/pausados (o registro completo mora em squads/*/dados/card_timers e entra no backup do squad)
   'usuarios/*/notificacoes', 'usuarios/*/fcm_tokens',                         // caixa de notificações e tokens de push
   'painel/{okr_presence,presence,spotify_now_geral,_debug_*}', 'okr/obj_locks', // presença, travas e debug
