@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-31 · Automação (tag/responsável) não é mais desfeita pelo modal aberto
+
+Sintoma: com o card aberto no modal, uma Automação 'adicionar/remover tag' ou 'atribuir responsável' mudava o card e a próxima digitação (autosave) ou o Salvar regravava as tags e o responsável lidos na abertura do modal — a automação parecia desfeita. Causa: só a coluna tinha linha de base (_modalOpenCol/_modalSyncCol, v8.30.888); editingTags e #m-owner só eram lidos em openCard(). Fix: _modalSyncCol() também sincroniza Responsável e Tags quando a pessoa não mexeu no campo (bases _modalOpenOwner/_modalOpenTags, atualizadas a cada gravação); se ela mexeu, a escolha dela vale.
+
 ### 2026-10-31 · Mini painel: 'meus cards' lia o relógio real e o teste quebrou na virada do dia (functions/oceano/resumo.js)
 
 - Sintoma: o CI (`checks`) das PRs #1555 e #1556 ficou vermelho com 1 teste de 992 ("meus cards: só os ATIVOS do dono…", `functions/oceano/__tests__/resumo.test.js`), bloqueando o merge. As PRs pareciam "com conflito", mas o estado era `blocked` (CI), não `dirty`.

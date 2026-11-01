@@ -109,7 +109,7 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.889 | `kanban-dev.html` v8.30.889-dev | `mare-login` v3 · `mare-notif` v36 · `mare-metas` v17 · `mare-dicas` v9 |
+| Maré Digital | `kanban.html` v8.30.889 | `kanban-dev.html` v8.30.890-dev | `mare-login` v3 · `mare-notif` v36 · `mare-metas` v17 · `mare-dicas` v9 |
 | Painel | `painel.html` v5.85 · painel | `painel-dev.html` v5.85 · painel-dev | `mare-notif` v36 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v9 |
 | Radar | `okr.html` v2.96 · okr | `okr-dev.html` v2.96 · okr-dev | `mare-notif` v36 · `mare-dicas` v9 |
 | Oceano | `oceano.html` v1.58 · oceano | `oceano-dev.html` v1.58 · oceano-dev | `mare-login` v3 · `mare-notif` v36 · `mare-plantao` v4 · `mare-dicas` v9 · `mare-metas` v17 |
