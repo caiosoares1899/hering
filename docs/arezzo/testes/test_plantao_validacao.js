@@ -23,7 +23,7 @@ const seed = () => ({ kanban: {
   const abre = async (uid, nome) => {
     const c = await b.newContext({ viewport: { width: 1280, height: 1000 } }); await fake.install(c, seed());
     const p = await c.newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
-    await p.goto(`${BASE}/${OC}.html`); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U(uid, nome)); await p.waitForTimeout(2500);
+    await p.goto(`${BASE}/${OC}.html?ferias=1`); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U(uid, nome)); await p.waitForTimeout(2500);
     await p.evaluate(() => swPtab('monitor')); await p.waitForTimeout(1200); return { p, erros, c };
   };
   const pl = (p, id) => p.evaluate(i => JSON.parse(JSON.stringify(window.__store.kanban.plantao[i])), id);
@@ -84,7 +84,7 @@ const seed = () => ({ kanban: {
   const s2 = seed(); s2.kanban.usuarios.bia = { uid: 'bia', nome: 'Bia ADM', role: 'adm', inscrito: true, squads: { dados: true } }; s2.kanban.usuarios_publicos.bia = { role: 'adm' }; s2.kanban.config.adm_emails.push('bia@ciahering.com.br');
   const c = await b.newContext({ viewport: { width: 1280, height: 1000 } }); await fake.install(c, s2);
   const p = await c.newPage(); const erros = []; p.on('pageerror', x => erros.push(x.message));
-  await p.goto(`${BASE}/${OC}.html`); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('bia', 'Bia ADM')); await p.waitForTimeout(2500);
+  await p.goto(`${BASE}/${OC}.html?ferias=1`); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('bia', 'Bia ADM')); await p.waitForTimeout(2500);
   await p.evaluate(() => swPtab('monitor')); await p.waitForTimeout(1200);
   await preenche(p, '#mpl-nt-bug_ferias_2', 'Rodei o script: tudo ok'); await clica(p, 'bug_ferias_2', 'validei');
   f = await pl(p, 'bug_ferias_2'); t('Outro ADM valida: estado validado, resultado ok, quem validou e quando', f.estado === 'validado' && f.resultadoTeste === 'ok' && f.validadoPorUid === 'bia' && f.validadoPor === 'Bia ADM' && f.validadoEm > 0, f);

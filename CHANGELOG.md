@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 🏖️ Assistente Férias do Caio encerrado em 03/11/2026 — desativado, não apagado (oceano-dev v1.59) — 2026-11-01
+
+- O Oceano deixa de mostrar o banner, a pílula e o modal do Assistente Férias a partir de 03/11/2026 (o Caio voltou): `FERIAS_FIM` passou a `2026-11-02` e `abrirFerias()` ficou guardado por `feriasAtivo()` (sino/link antigo de chamado só avisa que o assistente foi encerrado). `?ferias=1` na URL religa só para quem abrir assim.
+- **Nada foi apagado:** código do Oceano, módulo `mare-plantao`, funções `plantao*`, regras, aba do Painel e skill `/plantaobug` continuam no repositório.
+- Novo `docs/ASSISTENTE_FERIAS.md`: panorama, interruptor, inventário completo, checklist do dia da volta e passo a passo para religar numa próxima ausência; avisos de 'encerrado' em `PLANTAO_BUGS.md`, `OCEANO.md`, `AGENTS.md`, `CLAUDE.md` e `BIBLIOTECA.md`.
+- Backup: `plantao` (fichas) entra no backup completo semanal e `plantao_status` fica fora (exige deploy das 3 funções de backup).
+- Testes: `test_ferias_encerrado.js` (02/11, 03/11 e depois da volta) e os testes do assistente passam a abrir com `?ferias=1` para não dependerem da data.
+
 ### ⏲ Timer e Produtividade no card (PROD · maré v8.30.894 · painel v5.86) — 2026-11-01
 
 - **Seção "⏲ Timer e Produtividade" no modal do card**, logo abaixo do Checklist: cada atividade é uma linha minimalista (carinha de quem executa, nome, Timer ou Cronômetro, iniciar/pausar/encerrar e o tempo) que expande para descrição, tag, participantes e quem criou. Vários relógios no mesmo card (e rodando ao mesmo tempo); o total somado fica no topo da seção. Dá para criar para si ou para outra pessoa do squad.

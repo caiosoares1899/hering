@@ -1,5 +1,7 @@
 # Plantão de Bugs (férias do Caio, 16/10 → 03/11/2026)
 
+> ⏸ **Encerrado em 03/11/2026 e guardado para reuso** — o Oceano deixou de mostrar o Assistente Férias; nada foi apagado. Panorama, interruptor (`FERIAS_FIM` / `?ferias=1`), checklist do dia da volta e passo a passo para religar: **`docs/ASSISTENTE_FERIAS.md`**. Este arquivo continua sendo o runbook técnico (fluxo, estados da ficha, deploy, segredos, limites).
+
 > Runbook vivo. Cada PR do plantão atualiza a seção **Status**. Regras de conduta dos agentes: `AGENTS.md` ("Linhas vermelhas"); divisão de trabalho: `docs/COORDENACAO_AGENTES.md`.
 
 ## O problema e as restrições
