@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-01 · ⏲ Detalhes do timer na criação (kanban-dev v8.30.894-dev)
+
+- Sintoma: descrição, tag e participantes só apareciam depois de iniciar a atividade (ao expandir a linha). Causa: o formulário de criação só pedia nome, tipo, duração e destinatário. Correção: o formulário agora traz descrição, tag e participantes desde a configuração inicial (gravados já na criação, inclusive quando a atividade é para outra pessoa e ainda não foi iniciada); a linha expandida continua permitindo editar. Arquivo: kanban-dev.html (tmCriar/tmRender).
+
 ### 2026-11-01 · ⏲ Timer ilegível no Vice City (kanban-dev v8.30.893-dev)
 
 - Sintoma: no tema Vice City o botão ⏲ do cabeçalho e o selo ficavam quase invisíveis. Causa: o --teal do Vice City é um malva apagado (#9c6f8a) e o selo usava teal sobre teal translúcido. Correção: selo com cor fixa de alto contraste (verde #1de9b6 / amarelo #ffd166 com texto escuro), glifo ⏲ maior e em --txt, estado 'ligado' com borda --accent no Vice City e textos secundários em --txt2. Conferido nos 3 temas (arquivo: kanban-dev.html, bloco de CSS '.tm-').

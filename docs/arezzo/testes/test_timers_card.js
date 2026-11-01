@@ -29,7 +29,11 @@ const mk = () => ({ kanban: { usuarios: {
     const ordem = await p.evaluate(() => { const a = document.getElementById('m-checklist-sec'), b = document.getElementById('m-timers-sec'), c = document.getElementById('m-riscos-sec'); return !!(a.compareDocumentPosition(b) & 4) && !!(b.compareDocumentPosition(c) & 4); });
     t('A1. a seção "Timer e Produtividade" fica abaixo do Checklist (e acima de Riscos)', ordem, ordem);
     t('A2. sem timers: texto de estado vazio e sem total', (await p.textContent('#m-timers')).includes('Nenhum timer') && (await p.textContent('#m-timers-total')) === '', null);
-    await cria(p, { nome: 'Revisar peças', tipo: 'cron' });
+    // detalhes já na configuração inicial (antes de dar o start)
+    await p.click('#m-timer-add'); await p.fill('#tm-f-nome', 'Revisar peças'); await p.fill('#tm-f-desc', 'Peças da campanha de novembro'); await p.fill('#tm-f-tag', 'Feature'); await p.selectOption('#tm-f-partes select', 'bob');
+    t('A2b. o formulário de criação já traz descrição, tag e participantes', (await p.locator('#tm-f-partes .part-chip').count()) === 1, null);
+    await p.click('#m-timer-form .btn-teal'); await p.waitForTimeout(400);
+    { const r0 = (await timers(p))[0]; t('A2c. detalhes gravados na criação, sem precisar iniciar nem expandir', r0.desc === 'Peças da campanha de novembro' && r0.tag === 'Feature' && Array.isArray(r0.partes) && r0.partes[0] === 'bob', r0); }
     let l = await timers(p); t('A3. cronômetro criado já rodando', l.length === 1 && l[0].status === 'rodando' && l[0].tipo === 'cron' && l[0].uid === 'eve' && l[0].sq === SQ, l);
     const idx = await store(p, 'kanban/timers_ativos/eve'); t('A4. índice pessoal gravado', idx && Object.values(idx)[0]?.status === 'rodando' && Object.values(idx)[0]?.cardId === 'c1', idx);
     await p.waitForTimeout(2300); const txt = await p.textContent('.tm-row .tm-time'); t('A5. o tempo anda sozinho na linha (≥ 00:02)', /^00:0[2-9]$/.test(txt.trim()), txt);
