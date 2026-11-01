@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — 🏖️ Assistente Férias do Caio encerrado em 03/11/2026 — desativado, não apagado (oceano-dev v1.59) — 2026-11-01
+### 🏖️ Assistente Férias do Caio encerrado em 03/11/2026 — desativado, não apagado (PROD · oceano v1.59) — 2026-11-01
 
 - O Oceano deixa de mostrar o banner, a pílula e o modal do Assistente Férias a partir de 03/11/2026 (o Caio voltou): `FERIAS_FIM` passou a `2026-11-02` e `abrirFerias()` ficou guardado por `feriasAtivo()` (sino/link antigo de chamado só avisa que o assistente foi encerrado). `?ferias=1` na URL religa só para quem abrir assim.
 - **Nada foi apagado:** código do Oceano, módulo `mare-plantao`, funções `plantao*`, regras, aba do Painel e skill `/plantaobug` continuam no repositório.

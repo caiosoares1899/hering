@@ -112,7 +112,7 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 | Maré Digital | `kanban.html` v8.30.894 | `kanban-dev.html` v8.30.894-dev | `mare-login` v3 · `mare-notif` v37 · `mare-metas` v17 · `mare-dicas` v10 |
 | Painel | `painel.html` v5.86 · painel | `painel-dev.html` v5.86 · painel-dev | `mare-notif` v37 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v10 |
 | Radar | `okr.html` v2.96 · okr | `okr-dev.html` v2.96 · okr-dev | `mare-notif` v37 · `mare-dicas` v10 |
-| Oceano | `oceano.html` v1.58 · oceano | `oceano-dev.html` v1.59 · oceano-dev | `mare-login` v3 · `mare-notif` v37 · `mare-plantao` v4 · `mare-dicas` v10 · `mare-metas` v17 |
+| Oceano | `oceano.html` v1.59 · oceano | `oceano-dev.html` v1.59 · oceano-dev | `mare-login` v3 · `mare-notif` v37 · `mare-plantao` v4 · `mare-dicas` v10 · `mare-metas` v17 |
 | Escala | `escala.html` v1.10 · escala | `escala-dev.html` v1.10 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
 
