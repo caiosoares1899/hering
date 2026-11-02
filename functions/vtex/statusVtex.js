@@ -98,8 +98,12 @@ function parseFeed(xml) {
 }
 
 // 'final' | 'agendado' | 'aberto' | 'desconhecido' (sem "Status:" legível: o formato do feed mudou — nunca alarma em cima de um estado que não deu pra ler)
+// O estado de MANUTENÇÃO chega com a janela entre parênteses: "Complete (Thu, 29 Oct 2026 01:00:00 GMT - Thu, 29 Oct 2026 03:00:00 GMT)". Antes só o texto exato
+// ("Complete") era reconhecido; com a janela, a manutenção já concluída virava 'aberto', o Comunicado era renovado a cada tick e o aviso 🚨 ficava no Mural
+// (e no selo de incidente) pra sempre — achado 02/11/2026. Agora a janela é tirada antes de comparar.
+const estadoBase = (e) => String(e || '').trim().replace(/\s*\([^)]*\)\s*$/, '').trim();
 function faseDe(item) {
-  const est = String(item.estado || '').trim();
+  const est = estadoBase(item.estado);
   if (!est) return 'desconhecido';
   if (FINAIS.test(est)) return 'final';
   if (AGENDADOS.test(est)) return 'agendado';
@@ -116,7 +120,12 @@ const chaveDe = (guid) => String(guid || '').replace(/\/+$/, '').split('/').pop(
 
 // ── Comunicado / notificação ──
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const rotuloPt = (est) => ROTULO_PT[String(est || '').toLowerCase()] || est || 'Em andamento';
+// "Complete (janela…)" → "Concluída (janela…)": traduz só o estado e mantém a janela da manutenção como veio.
+const rotuloPt = (est) => {
+  const bruto = String(est || '').trim(), base = estadoBase(bruto), janela = bruto.slice(base.length).trim();
+  const pt = ROTULO_PT[base.toLowerCase()] || base || 'Em andamento';
+  return janela ? pt + ' ' + janela : pt;
+};
 
 // O que o Comunicado mostra do incidente: título sem o "Maintenance:" e o resumo do texto (até 700 caracteres). É ISSO que se traduz.
 const tituloBase = (item) => String(item.titulo || '').replace(/^maintenance\s*:\s*/i, '');
@@ -337,4 +346,4 @@ exports.vtexStatus = onSchedule(
 );
 
 // Exportados pra teste (lógica pura, sem mockar firebase-functions).
-exports._test = { executar, alertarMonitor, LIMITE_FALHAS, TIPO_MONITOR, chaveDe, linkSeguro, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF, traducaoDoItem, hashTexto, tituloBase, resumoDe, horarioBrasilia, compEstadoPt, resumoCortado };
+exports._test = { estadoBase, executar, alertarMonitor, LIMITE_FALHAS, TIPO_MONITOR, chaveDe, linkSeguro, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF, traducaoDoItem, hashTexto, tituloBase, resumoDe, horarioBrasilia, compEstadoPt, resumoCortado };
