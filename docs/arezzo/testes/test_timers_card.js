@@ -19,7 +19,7 @@ const mk = () => ({ kanban: { usuarios: {
     await p.goto('http://localhost:8941/' + K + '.html?squad=' + SQ); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U(uid, nome)); await p.waitForTimeout(4000);
     await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); }); return { ctx, p, errs }; };
   const store = (p, path) => p.evaluate(path => path.split('/').reduce((a, k) => (a == null ? undefined : a[k]), window.__store), path);
-  const cria = async (p, { nome, tipo, min, para, ini }) => { await p.click('#m-timer-add'); await p.fill('#tm-f-nome', nome); if (tipo) await p.selectOption('#tm-f-tipo', tipo); if (min) await p.fill('#tm-f-min', String(min)); if (para) await p.selectOption('#tm-f-para', para);
+  const cria = async (p, { nome, tipo, min, para, ini }) => { await p.click('#m-timer-add'); await p.waitForTimeout(120); await p.fill('#tm-f-nome', nome); if (tipo) await p.selectOption('#tm-f-tipo', tipo); if (min) await p.fill('#tm-f-min', String(min)); if (para) await p.selectOption('#tm-f-para', para);
     if (ini === false) await p.evaluate(() => { document.getElementById('tm-f-ini').checked = false; }); await p.click('#m-timer-form .btn-teal'); await p.waitForTimeout(400); };
   const tsPath = id => `kanban/squads/${SQ}/dados/card_timers/c1/${id}`;
   const timers = async p => Object.values((await store(p, `kanban/squads/${SQ}/dados/card_timers/c1`)) || {});
@@ -30,7 +30,7 @@ const mk = () => ({ kanban: { usuarios: {
     t('A1. a seção "Timer e Produtividade" fica abaixo do Checklist (e acima de Riscos)', ordem, ordem);
     t('A2. sem timers: texto de estado vazio e sem total', (await p.textContent('#m-timers')).includes('Nenhum timer') && (await p.textContent('#m-timers-total')) === '', null);
     // detalhes já na configuração inicial (antes de dar o start)
-    await p.click('#m-timer-add'); await p.fill('#tm-f-nome', 'Revisar peças'); await p.fill('#tm-f-desc', 'Peças da campanha de novembro'); await p.fill('#tm-f-tag', 'Feature'); await p.selectOption('#tm-f-partes select', 'bob');
+    await p.click('#m-timer-add'); await p.waitForTimeout(120); await p.fill('#tm-f-nome', 'Revisar peças'); await p.fill('#tm-f-desc', 'Peças da campanha de novembro'); await p.fill('#tm-f-tag', 'Feature'); await p.selectOption('#tm-f-partes select', 'bob');
     t('A2b. o formulário de criação já traz descrição, tag e participantes', (await p.locator('#tm-f-partes .part-chip').count()) === 1, null);
     await p.click('#m-timer-form .btn-teal'); await p.waitForTimeout(400);
     { const r0 = (await timers(p))[0]; t('A2c. detalhes gravados na criação, sem precisar iniciar nem expandir', r0.desc === 'Peças da campanha de novembro' && r0.tag === 'Feature' && Array.isArray(r0.partes) && r0.partes[0] === 'bob', r0); }

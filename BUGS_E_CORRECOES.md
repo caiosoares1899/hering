@@ -79,6 +79,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-02 · ⏲ Timer e Produtividade — rodada /monitorarbugs: clique duplo, Modelo, entrada pela metade e card excluído (kanban-dev v8.30.895-dev + functions/timers/vigia.js)
+
+- **Clique duplo em Criar** gravava 2 atividades (id novo por chamada + gravação assíncrona, sem trava — a mesma lição de 06/10 e 13/10): trava `_tmCriando` + botão desabilitado.
+- **Modal de Modelo/Recorrente/Agendamento** (card temporário `__qltmp__`) oferecia o timer: criava registro num id que nunca existe de verdade. Agora mostra "Timer vale para cards de verdade".
+- **Entrada pela metade no índice pessoal** (só `avisos`): o vigia gravava o marcador com `update` e, se o dono encerrasse no meio da varredura, o nó era recriado sem status — no atalho do topo virava uma linha "undefined" e entrava no selo. O vigia agora grava o marcador em transação (não recria o que sumiu e não avisa) e remove entradas incompletas; o navegador também ignora entradas incompletas.
+- **Card excluído com timer rodando**: a linha do atalho e os avisos de "esquecido" (4/8/12 h) ficavam pra sempre. O vigia encerra o timer (o tempo fica no registro, `motivo: card_excluido`) e o tira do índice, mas só quando o card tem a marca `cards_deleted_intentionally` E não está mais em `cards_index` (card que sumiu sozinho ou que foi restaurado pelo Ctrl+Z nunca perde timer).
+- Testes: `docs/arezzo/testes/test_monitorarbugs_timer.js` (3 cenários, os 3 falham no código anterior) e +5 em `functions/timers/__tests__/vigia.test.js`. Reportado, não corrigido: o tempo usa o relógio de cada aparelho (`startedAt`) e o vigia o do servidor — relógio de aparelho adiantado/atrasado adianta/atrasa o aviso de zero em segundos a minutos; sincronizar com `.info/serverTimeOffset` é decisão à parte. Requer `firebase deploy --only functions:timersVigia`.
+
 ### 2026-11-02 · 🚨 Manutenção da VTEX já concluída ficava no Mural pra sempre (functions/vtex/statusVtex.js)
 
 - Sintoma: dois avisos 🚨 "VTEX: manutenção" (de 27/10 e 29/10) seguiam no Mural como Urgente/NOVO, mesmo com a manutenção concluída e a página da VTEX toda normal. Causa: o feed da VTEX passou a mandar o estado das manutenções com a janela entre parênteses ("Complete (Thu, 29 Oct 2026 01:00:00 GMT - … GMT)") e `faseDe()` só reconhecia o texto exato ("Complete"). Resultado: a manutenção concluída virava 'aberto', o Comunicado era renovado a cada 5 min (expira em 3 h) e nunca era desativado — e a janela aparecia crua em "Situação:". Correção: `estadoBase()` tira a janela antes de comparar (final/agendado/aberto) e `rotuloPt()` mostra "Concluída (janela)". Testes novos em statusVtex.test.js. Exige `firebase deploy --only functions:vtexStatus`; no tick seguinte (≤ 5 min) o monitor fecha os dois avisos sozinho.
