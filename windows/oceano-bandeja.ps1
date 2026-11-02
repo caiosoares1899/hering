@@ -71,6 +71,23 @@ function Rotulo($estado) {
   switch ($estado) { 'ok' { 'OK' } 'atencao' { 'ATENÇÃO' } 'fora' { 'FORA DO AR' } 'off' { 'desligado' } default { 'sem leitura' } }
 }
 function Gravidade($estado) { switch ($estado) { 'fora' { 2 } 'atencao' { 1 } 'ok' { 0 } default { 0 } } }
+# O que esta "fora do normal" agora, em texto curto (a mesma lista do menu e do aviso): pecas em atencao/fora + cards sumindo + bug escalado.
+function ProblemasDe($r) {
+  $m = @()
+  foreach ($par in @(@('VTEX', 'status.vtex'), @('GitHub', 'status.github'), @('Firebase', 'status.firebase'), @('Backup', 'backup'))) {
+    $e = [string](Campo (Campo $r $par[1]) 'estado'); if ($e -eq 'atencao' -or $e -eq 'fora') { $m += ($par[0] + ': ' + (Rotulo $e)) }
+  }
+  if ((Numero (Campo $r 'alarmesSumico.ultimas24h')) -gt 0) { $m += 'cards sumindo' }
+  if ((Numero (Campo $r 'plantao.escalados')) -gt 0) { $m += 'bug escalado' }
+  return , $m
+}
+# Interruptor dos avisos (menu do icone): um arquivo marcador ao lado da chave. Ausente = ligado.
+function ArquivoAvisosOff { return (Join-Path (Split-Path -Parent $ArquivoChave) 'oceano-avisos-desligados.txt') }
+function AvisosLigados { return (-not (Test-Path -LiteralPath (ArquivoAvisosOff))) }
+function DefinirAvisos([bool]$ligar) {
+  $f = ArquivoAvisosOff
+  if ($ligar) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } } else { Set-Content -LiteralPath $f -Value 'avisos desligados no menu do icone' -Encoding UTF8 }
+}
 
 function HoraDe($valor) {
   try {
@@ -159,6 +176,8 @@ $notify.ContextMenuStrip = $menu
 $script:ultimo = $null          # ultimo resumo bom
 $script:erro = $null
 $script:geralAnterior = $null
+$script:assinAnterior = $null          # estado + lista de problemas da leitura anterior (base pra saber se ALGO mudou)
+$script:problemasAnteriores = @()
 
 function Autoinicio { try { return [bool](Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'OceanoBandeja' -ErrorAction Stop) } catch { return $false } }
 function DefinirAutoinicio([bool]$ligar) {
@@ -441,6 +460,14 @@ function MontarMenuSimples {
   $iAuto.Add_Click({ try { DefinirAutoinicio (-not (Autoinicio)) } catch { [System.Windows.Forms.MessageBox]::Show('Não consegui mudar o início automático: ' + $_.Exception.Message, 'Oceano') | Out-Null } })
   $script:itemAuto = $iAuto
   [void]$menu.Items.Add($iAuto)
+  $iAvisos = New-Object System.Windows.Forms.ToolStripMenuItem 'Avisar quando algo mudar'
+  $iAvisos.Checked = (AvisosLigados)
+  $iAvisos.Add_Click({ DefinirAvisos (-not (AvisosLigados)); $script:itemAvisos.Checked = (AvisosLigados) })
+  $script:itemAvisos = $iAvisos
+  [void]$menu.Items.Add($iAvisos)
+  $iTeste = New-Object System.Windows.Forms.ToolStripMenuItem 'Testar o aviso'
+  $iTeste.Add_Click({ $notify.ShowBalloonTip(6000, 'Oceano: teste do aviso', 'Se voce esta lendo isto, os avisos funcionam neste computador.', [System.Windows.Forms.ToolTipIcon]::Info) })
+  [void]$menu.Items.Add($iTeste)
   $iSair = New-Object System.Windows.Forms.ToolStripMenuItem 'Sair'
   $iSair.Add_Click({ $script:notify.Visible = $false; [System.Windows.Forms.Application]::Exit() })
   [void]$menu.Items.Add($iSair)
@@ -460,18 +487,40 @@ function Atualizar {
     $dica = if ($r) { 'Oceano: ' + $(switch ($estado) { 'ok' { 'tudo certo' } 'atencao' { 'atencao' } 'fora' { 'fora do ar' } default { 'sem leitura' } }) + $(if ($atrasados -gt 0) { " | $atrasados atrasado(s)" } else { '' }) + $(if ($script:erro) { ' | sem conexao' } else { '' }) } else { 'Oceano: ' + $(if ($script:erro) { $script:erro } else { 'carregando' }) }
     if ($dica.Length -gt 63) { $dica = $dica.Substring(0, 63) }
     $notify.Text = $dica
-    # aviso quando PIORA (ok -> atencao/fora, atencao -> fora)
+    # aviso quando ALGO MUDA (02/11/2026): piorou, melhorou/voltou ao normal, ou apareceu/sumiu um problema mesmo com a cor igual.
+    # (Antes so avisava quando a cor PIORAVA; ficar amarelo e depois aparecer um 2o problema, ou voltar ao verde, passava em silencio.)
     if ($r -and -not $script:erro) {
-      if ($null -ne $script:geralAnterior -and (Gravidade $estado) -gt (Gravidade $script:geralAnterior)) {
-        $motivos = @()
-        foreach ($par in @(@('VTEX', 'status.vtex'), @('GitHub', 'status.github'), @('Firebase', 'status.firebase'), @('Backup', 'backup'))) {
-          $e = [string](Campo (Campo $r $par[1]) 'estado'); if ($e -eq 'atencao' -or $e -eq 'fora') { $motivos += ($par[0] + ': ' + (Rotulo $e)) }
+      $problemas = @(ProblemasDe $r)
+      $assin = $estado + '|' + ((@($problemas) | Sort-Object) -join ';')
+      if ($null -ne $script:assinAnterior -and $assin -ne $script:assinAnterior -and (AvisosLigados)) {
+        $novos = @($problemas | Where-Object { $script:problemasAnteriores -notcontains $_ })
+        $resolvidos = @($script:problemasAnteriores | Where-Object { $problemas -notcontains $_ })
+        $gDepois = Gravidade $estado; $gAntes = Gravidade $script:geralAnterior
+        if ($gDepois -gt $gAntes) {
+          $titulo = if ($estado -eq 'fora') { 'Oceano: algo fora do ar' } else { 'Oceano: atencao' }
+          $corpo = if ($problemas.Count -gt 0) { $problemas -join ' | ' } else { 'veja o menu do icone' }
+          $icone = if ($estado -eq 'fora') { [System.Windows.Forms.ToolTipIcon]::Error } else { [System.Windows.Forms.ToolTipIcon]::Warning }
+        } elseif ($gDepois -eq 0 -and $gAntes -gt 0) {
+          $titulo = 'Oceano: voltou ao normal'
+          $corpo = if ($resolvidos.Count -gt 0) { 'Resolvido: ' + ($resolvidos -join ' | ') } else { 'Tudo certo agora' }
+          $icone = [System.Windows.Forms.ToolTipIcon]::Info
+        } elseif ($gDepois -eq $gAntes -and $novos.Count -eq 0 -and $resolvidos.Count -eq 0) {
+          $titulo = $null   # so mudou entre 'ok'/'sem leitura'/'desligado': nao e novidade
+        } else {
+          $titulo = if ($gDepois -lt $gAntes) { 'Oceano: melhorou' } else { 'Oceano: mudou' }
+          $partes = @()
+          if ($novos.Count -gt 0) { $partes += ('Novo: ' + ($novos -join ' | ')) }
+          if ($resolvidos.Count -gt 0) { $partes += ('Resolvido: ' + ($resolvidos -join ' | ')) }
+          $corpo = if ($partes.Count -gt 0) { $partes -join '  ' } else { 'veja o menu do icone' }
+          $icone = if ($gDepois -lt $gAntes) { [System.Windows.Forms.ToolTipIcon]::Info } else { [System.Windows.Forms.ToolTipIcon]::Warning }
         }
-        if ((Numero (Campo $r 'alarmesSumico.ultimas24h')) -gt 0) { $motivos += 'cards sumindo' }
-        if ((Numero (Campo $r 'plantao.escalados')) -gt 0) { $motivos += 'bug escalado' }
-        if ($motivos.Count -eq 0) { $motivos = @('veja o menu do icone') }   # o balao nao aceita texto vazio
-        $notify.ShowBalloonTip(8000, $(if ($estado -eq 'fora') { 'Oceano: algo fora do ar' } else { 'Oceano: atencao' }), ($motivos -join ' | '), $(if ($estado -eq 'fora') { [System.Windows.Forms.ToolTipIcon]::Error } else { [System.Windows.Forms.ToolTipIcon]::Warning }))
+        if ($titulo) {
+          if ($corpo.Length -gt 250) { $corpo = $corpo.Substring(0, 250) }   # o balao aceita ate 255 caracteres e nao aceita texto vazio
+          $notify.ShowBalloonTip(8000, $titulo, $corpo, $icone)
+        }
       }
+      $script:assinAnterior = $assin
+      $script:problemasAnteriores = $problemas
       $script:geralAnterior = $estado
     }
   } catch {

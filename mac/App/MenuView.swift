@@ -171,6 +171,12 @@ struct MenuView: View {
                     }
                 }))
                 .toggleStyle(.checkbox)
+            Toggle("Avisar quando algo mudar", isOn: Binding(
+                get: { modelo.avisosLigados },
+                set: { modelo.avisosLigados = $0 }))
+                .toggleStyle(.checkbox)
+            Button("Testar o aviso") { modelo.testarAviso() }
+                .buttonStyle(.link)
             HStack {
                 Button("Abrir mini painel") { NSWorkspace.shared.open(Config.urlMiniPainel) }
                 Spacer()
