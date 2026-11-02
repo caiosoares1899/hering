@@ -212,25 +212,23 @@ exports.backupGlobalDiario = require('./backup/completo').backupGlobalDiario;
 //   firebase deploy --only functions:backupVigia,functions:sendPushOnNotification   (o 2º por causa do novo tipo no PUSH_TYPES)
 exports.backupVigia = require('./backup/vigia').backupVigia;
 
-// 🛟 Plantão de Bugs (férias do Caio, 16/10→03/11/2026 — docs/PLANTAO_BUGS.md): `plantaoBugNovo` cria a ficha do bug em kanban/plantao/{id}, junta
-// duplicados e avisa os ADMs (tipo `plantao_bug`, em PUSH_TYPES); `plantaoVigia` (de 3 em 3 h, 08–20h de Brasília) avisa de bug parado. Pausa geral:
-// kanban/config/plantao_ativo = false. Deploy isolado (o 3º por causa do novo tipo no PUSH_TYPES; as regras do nó plantao saem com `--only database`):
-//   firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:sendPushOnNotification
-exports.plantaoBugNovo = require('./plantao/plantao').plantaoBugNovo;
-exports.plantaoVigia = require('./plantao/plantao').plantaoVigia;
-
-// 🤖 Plantão automático (16/10/2026): `plantaoProximo` (GET com chave — o Antigravity BUSCA o próximo bug sozinho, tarefa agendada dele) e
-// `plantaoGithubWebhook` (o GitHub avisa quando a PR do bug abre: grava PR + script de teste na ficha e avisa os ADMs). Exigem 2 secrets (uma vez):
-//   firebase functions:secrets:set PLANTAO_AGENTE_KEY        (valor: texto aleatório longo — é a chave que vai na URL do Antigravity)
-//   firebase functions:secrets:set PLANTAO_WEBHOOK_SECRET    (o mesmo texto que você põe no webhook do GitHub)
-// Deploy isolado (+ database, por causa de plantao_status e dos campos novos da ficha) — passo a passo em docs/PLANTAO_BUGS.md:
-//   firebase deploy --only functions:plantaoProximo,functions:plantaoGithubWebhook,functions:plantaoVigia
-exports.plantaoProximo = require('./plantao/agente').plantaoProximo;
-exports.plantaoGithubWebhook = require('./plantao/webhook').plantaoGithubWebhook;
-// ✋ Aviso de aprovação (18/10/2026): o Antigravity chama `plantaoProximo?...&aguardando=<id>&etapa=ship` antes do comando que pede o clique do Caio → push no
-// celular dos ADMs (ou só de quem estiver em kanban/config/plantao_aprovadores); `plantaoTravado` (a cada 10 min, 08–20h) avisa se um bug pego há 20 min+ não virou PR.
-// Deploy isolado (tipo `plantao_bug` já está no PUSH_TYPES): firebase deploy --only functions:plantaoProximo,functions:plantaoTravado
-exports.plantaoTravado = require('./plantao/plantao').plantaoTravado;
+// ⏸ PLANTÃO DE BUGS / ASSISTENTE FÉRIAS — DESLIGADO NO SERVIDOR (02/11/2026, o Caio voltou em 03/11). As 5 funções abaixo estão COMENTADAS de propósito (mesmo padrão do
+// `spotifySync`): o código continua em `functions/plantao/` (com testes), só não é mais publicado — assim deixam de existir as chamadas agendadas (`plantaoTravado`
+// a cada 10 min, `plantaoVigia` a cada 3 h) e os jobs do Cloud Scheduler. Os segredos `PLANTAO_AGENTE_KEY` e `PLANTAO_WEBHOOK_SECRET` NÃO foram apagados.
+// COMO RELIGAR (numa próxima ausência): descomente as linhas, faça o resync do clone e rode o deploy abaixo — passo a passo completo em docs/ASSISTENTE_FERIAS.md:
+//   firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:plantaoTravado,functions:plantaoProximo,functions:plantaoGithubWebhook,functions:sendPushOnNotification
+// COMO REMOVER DO AR (uma vez; só deploy não basta, o Firebase não apaga sozinho com --only):
+//   firebase functions:delete plantaoBugNovo plantaoVigia plantaoTravado plantaoProximo plantaoGithubWebhook --region us-central1 --project hering-onboarding
+// O tipo `plantao_bug` continua no PUSH_TYPES (inofensivo) e as regras de `kanban/plantao` continuam no banco.
+//
+// Histórico (como eram): `plantaoBugNovo` cria a ficha do bug em kanban/plantao/{id}, junta duplicados e avisa os ADMs; `plantaoVigia` (de 3 em 3 h, 08–20h) avisa de
+// bug parado; `plantaoProximo` (GET com chave) é por onde o Antigravity BUSCA o próximo bug; `plantaoGithubWebhook` grava PR + script de teste na ficha quando a PR abre;
+// `plantaoTravado` (a cada 10 min, 08–20h) avisa se um bug pego há 20 min+ não virou PR. Pausa geral (sem desligar): kanban/config/plantao_ativo = false.
+// exports.plantaoBugNovo = require('./plantao/plantao').plantaoBugNovo;
+// exports.plantaoVigia = require('./plantao/plantao').plantaoVigia;
+// exports.plantaoProximo = require('./plantao/agente').plantaoProximo;
+// exports.plantaoGithubWebhook = require('./plantao/webhook').plantaoGithubWebhook;
+// exports.plantaoTravado = require('./plantao/plantao').plantaoTravado;
 
 // API da tela "🛟 Backup completo (nuvem)" do Maré (Config → Backup): lista/compara/restaura SÓ o que sumiu (comentários, config, intake, subtimes,
 // kudos) a partir do backup completo — HTTP + Bearer idToken, só ADM/PO/Organizador do squad (functions/backup/restaurarApi.js). Deploy isolado:
