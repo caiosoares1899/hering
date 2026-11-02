@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-02 · 🚨 Manutenção da VTEX já concluída ficava no Mural pra sempre (functions/vtex/statusVtex.js)
+
+- Sintoma: dois avisos 🚨 "VTEX: manutenção" (de 27/10 e 29/10) seguiam no Mural como Urgente/NOVO, mesmo com a manutenção concluída e a página da VTEX toda normal. Causa: o feed da VTEX passou a mandar o estado das manutenções com a janela entre parênteses ("Complete (Thu, 29 Oct 2026 01:00:00 GMT - … GMT)") e `faseDe()` só reconhecia o texto exato ("Complete"). Resultado: a manutenção concluída virava 'aberto', o Comunicado era renovado a cada 5 min (expira em 3 h) e nunca era desativado — e a janela aparecia crua em "Situação:". Correção: `estadoBase()` tira a janela antes de comparar (final/agendado/aberto) e `rotuloPt()` mostra "Concluída (janela)". Testes novos em statusVtex.test.js. Exige `firebase deploy --only functions:vtexStatus`; no tick seguinte (≤ 5 min) o monitor fecha os dois avisos sozinho.
+
 ### 2026-11-01 · ⏲ Detalhes do timer na criação (kanban-dev v8.30.894-dev)
 
 - Sintoma: descrição, tag e participantes só apareciam depois de iniciar a atividade (ao expandir a linha). Causa: o formulário de criação só pedia nome, tipo, duração e destinatário. Correção: o formulário agora traz descrição, tag e participantes desde a configuração inicial (gravados já na criação, inclusive quando a atividade é para outra pessoa e ainda não foi iniciada); a linha expandida continua permitindo editar. Arquivo: kanban-dev.html (tmCriar/tmRender).

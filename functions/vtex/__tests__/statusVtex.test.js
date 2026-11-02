@@ -58,6 +58,31 @@ test('faseDe: final · agendado · aberto (inclui estados novos desconhecidos)',
   ['Investigating', 'Identified', 'Monitoring', 'In progress', 'Degraded', 'Algo novo'].forEach((e) => assert.equal(f(e), 'aberto', e));
 });
 
+test('faseDe: manutenção com a JANELA entre parênteses também é reconhecida (achado 02/11: "Complete (Thu… - Thu…)" ficava aberto pra sempre)', () => {
+  const j = ' (Thu, 29 Oct 2026 01:00:00 GMT - Thu, 29 Oct 2026 03:00:00 GMT)';
+  assert.equal(V.faseDe({ estado: 'Complete' + j }), 'final');
+  assert.equal(V.faseDe({ estado: 'Completed' + j }), 'final');
+  assert.equal(V.faseDe({ estado: 'Scheduled' + j }), 'agendado');
+  assert.equal(V.faseDe({ estado: 'In progress' + j }), 'aberto');
+  assert.equal(V.faseDe({ estado: 'Algo novo' }), 'aberto');
+  assert.equal(V.faseDe({ estado: '(só a janela)' }), 'desconhecido');
+});
+
+test('manutenção que acabou (estado com janela) FECHA o Comunicado que estava ativo, e o texto mostra "Concluída (janela)"', async () => {
+  const db = novoDb(); const T = AGORA;
+  const item = (estado) => ({ guid: 'https://status.vtex.com/incidents/01MANUT0000000000000000001', titulo: 'Maintenance: Manutenção do banco', link: 'https://status.vtex.com/incidents/01MANUT0000000000000000001',
+    publicadoEm: T - 3600000, estado, corpoTexto: 'Em andamento.', componentes: [{ nome: 'Payments Gateway', estado: 'Operational' }], manutencao: true });
+  const JAN = ' (Tue, 27 Oct 2026 03:00:00 GMT - Tue, 27 Oct 2026 04:00:00 GMT)';
+  await V.processar({ db, itens: [item('In progress' + JAN)], agora: T });
+  const aberto = (await db.ref('kanban/comunicados').get()).val();
+  const id = Object.keys(aberto)[0]; assert.equal(aberto[id].ativo !== false, true);
+  assert.match(aberto[id].mensagem || aberto[id].corpo || JSON.stringify(aberto[id]), /Em andamento \(Tue/);
+  const r = await V.processar({ db, itens: [item('Complete' + JAN)], agora: T + 600000 });
+  assert.equal(r.fechados, 1);
+  assert.equal((await db.ref('kanban/comunicados/' + id).get()).val().ativo, false);
+  assert.equal((await db.ref('kanban/vtex_status/01MANUT0000000000000000001').get()).val().fechado, true);
+});
+
 test('1ª execução com o feed real (só histórico encerrado): não cria NADA', async () => {
   const db = novoDb();
   const r = await V.processar({ db, itens: V.parseFeed(FEED), agora: AGORA });
