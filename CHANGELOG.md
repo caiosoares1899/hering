@@ -24,6 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — ⏸ Plantão de Bugs desligado no servidor — funções comentadas, código guardado (functions/index.js) — 2026-11-02
+
+- As 5 funções do plantão (`plantaoBugNovo`, `plantaoVigia`, `plantaoTravado`, `plantaoProximo`, `plantaoGithubWebhook`) ficam com o `exports` comentado em `functions/index.js`, como o `spotifySync`: o código e os testes continuam em `functions/plantao/`, mas deixam de ser publicadas — fim das chamadas agendadas (`plantaoTravado` a cada 10 min, `plantaoVigia` a cada 3 h) e dos jobs do Cloud Scheduler. Segredos `PLANTAO_*` mantidos.
+- Para tirar do ar de fato é preciso um `firebase functions:delete` (só comentar não remove); para religar, descomentar e fazer o deploy — ambos em `docs/ASSISTENTE_FERIAS.md` e na linha do Quadro.
+
 ### 🔔 Mini painel (Mac e Windows) avisa quando o semáforo muda — não só quando piora (SÓ DEV — ferramenta pessoal, não vai pra produção) — 2026-11-02
 
 - **Mac:** o app da barra de menu agora manda notificação do macOS quando o semáforo (ou a lista de problemas) muda; clicar abre o mini painel. Menu: *Avisar quando algo mudar* e *Testar o aviso*. Regra em `mac/Shared/Aviso.swift`, envio em `mac/App/Avisador.swift`.

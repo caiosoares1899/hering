@@ -38,7 +38,7 @@ Teste do interruptor: `docs/arezzo/testes/test_ferias_encerrado.js` (congela o r
 - **Sino** — tipos `plantao_bug` (push, para ADMs; entrada em `MareNotif.TIPOS` e no `PUSH_TYPES` de `functions/index.js`) e `ferias_bug_status` (aviso a quem reportou, ids `nf_bug_*`).
 - **Skill `/plantaobug`** — `.claude/skills/plantaobug/SKILL.md` (procedimento do Antigravity para UM bug a partir do pacote anônimo) e as linhas vermelhas do `AGENTS.md`.
 
-### 3.2 Servidor (`functions/plantao/`, registradas em `functions/index.js`)
+### 3.2 Servidor (`functions/plantao/` — **exports COMENTADOS em `functions/index.js` desde 02/11/2026**, ver §4 e §5)
 | Função | O que faz |
 |---|---|
 | `plantaoBugNovo` (RTDB, ao criar `kanban/feedback/{id}` de origem `assistente_ferias`) | cria a ficha em `kanban/plantao/{id}`, junta duplicados (mesmo arquivo + descrição ≥ 50% parecida, 14 dias), avisa os ADMs |
@@ -64,7 +64,7 @@ Nada abaixo é obrigatório para o Oceano parar de mostrar o assistente (isso j�
 3. **Antigravity:** remover (ou pausar) a **tarefa agendada de 30 min** que chama `plantaoProximo`. Sem ela o batimento para sozinho; com a pausa do passo 2 ela só recebe `SEM_BUG_PENDENTE`.
 4. **Webhook do GitHub (opcional):** Settings → Webhooks → desmarcar *Active* (reativar é um clique). Com o passo 2 ele já recusa tudo (`desligado`).
 5. **Comunicar:** o texto de "o Caio voltou" (Mural/WhatsApp) já pode mencionar que o assistente se despediu; o canal de bug volta a ser o de sempre (card "Melhorias Maré Digital", "Fale com o ADM" no Maré, ADM da squad).
-6. **Funções ociosas:** podem ficar publicadas (custo praticamente zero sem bug) — **não** apague as funções nem os segredos se a ideia é reaproveitar. Se um dia quiser remover do servidor: comente os `exports.plantao*` em `functions/index.js` (como já foi feito com `spotifySync`) e faça o deploy confirmando a remoção.
+6. **Funções no servidor — DESLIGADAS (02/11/2026):** os 5 `exports.plantao*` de `functions/index.js` estão comentados (o código e os testes continuam em `functions/plantao/`). Só comentar não tira do ar: depois do merge, rode **uma vez** (do Mac, com o resync) `firebase functions:delete plantaoBugNovo plantaoVigia plantaoTravado plantaoProximo plantaoGithubWebhook --region us-central1 --project hering-onboarding` (confirme com `y`). Isso acaba com as chamadas agendadas (`plantaoTravado` a cada 10 min, `plantaoVigia` a cada 3 h) e com os jobs do Cloud Scheduler. **Não apague os segredos** `PLANTAO_AGENTE_KEY` e `PLANTAO_WEBHOOK_SECRET` (religar fica mais simples; ao religar, rotacione). Com as funções fora do ar, o ⏸ Pausar do passo 2 vira só uma rede de segurança.
 
 ## 5. Como religar numa próxima ausência (passo a passo)
 
@@ -72,7 +72,7 @@ Nada abaixo é obrigatório para o Oceano parar de mostrar o assistente (isso j�
 2. **Conteúdo:** revise `FERIAS_KB` (respostas), a aba 🆘 Socorro Rápido (quem resolve cada coisa **naquela época** — nomes e papéis mudam) e a de Próximos Passos. O que o assistente diz tem que ser verdade na data.
 3. **Teste local:** `?ferias=1` na URL mostra o assistente a qualquer data; rode `test_ferias_encerrado.js`, `test_ferias_pacote_anonimo.js`, `test_plantao_validacao.js` e `test_ferias_card_contrato.js` (os três últimos já abrem a página com `?ferias=1`).
 4. **Promover** pelo fluxo normal (`/subirproprod`: `oceano` e, se mexeu no módulo, `mare-plantao` + `painel`).
-5. **Servidor** (só o Caio, resync antes — ver `CLAUDE.md`): confirmar que as funções estão publicadas (`firebase functions:list --project hering-onboarding | grep plantao`); se não estiverem, `firebase deploy --only database` e `firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:plantaoTravado,functions:plantaoProximo,functions:plantaoGithubWebhook,functions:sendPushOnNotification`. Segredos: `firebase functions:secrets:set PLANTAO_AGENTE_KEY` e `PLANTAO_WEBHOOK_SECRET` (rotacione — a chave anterior deve ser considerada encerrada).
+5. **Servidor** (só o Caio, resync antes — ver `CLAUDE.md`): **descomente os 5 `exports.plantao*` em `functions/index.js`** (estão comentados desde 02/11/2026), faça o merge, o resync e então `firebase deploy --only database` e `firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:plantaoTravado,functions:plantaoProximo,functions:plantaoGithubWebhook,functions:sendPushOnNotification`. Segredos: `firebase functions:secrets:set PLANTAO_AGENTE_KEY` e `PLANTAO_WEBHOOK_SECRET` (rotacione — a chave anterior deve ser considerada encerrada).
 6. **Religar a pausa:** Painel › 🛟 Plantão de Bugs › **▶ Retomar** (apaga `plantao_ativo`).
 7. **Webhook do GitHub** (reativar ou recriar; *Payload URL* = URL do `plantaoGithubWebhook`, *Secret* = `PLANTAO_WEBHOOK_SECRET`, evento só *Pull requests*) e a **tarefa de 30 min do Antigravity** — texto pronto na seção "Ligar (uma vez, só o Caio)" de `docs/PLANTAO_BUGS.md`.
 8. **ADMs:** conferir que quem vai validar tem `role === 'adm'` em `usuarios_publicos` (as regras só reconhecem esse papel) e quem recebe o aviso de aprovação (`plantao_aprovadores`).
@@ -87,4 +87,5 @@ Nada abaixo é obrigatório para o Oceano parar de mostrar o assistente (isso j�
 ## 7. Histórico
 - **16/10/2026** — PR 1 (contenção), PR 2 (servidor + validação), PR 3 (`/plantaobug`), PR 4 (modo automático).
 - **17–18/10/2026** — aviso minimizado no Oceano, centralização do controle de ADM no Painel, aviso de aprovação no celular e `plantaoTravado`.
+- **02/11/2026** — funções do plantão desligadas no servidor (exports comentados, `functions:delete` pelo Caio) para parar as chamadas agendadas e os jobs do Cloud Scheduler.
 - **01/11/2026** — encerrado: `FERIAS_FIM` → `2026-11-02` (ativo até 02/11, inclusive), `abrirFerias()` guardado por `feriasAtivo()`, testes das páginas passam a abrir com `?ferias=1`, este documento criado.
