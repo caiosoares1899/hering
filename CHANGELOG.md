@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔔 Mini painel (Mac e Windows) avisa quando o semáforo muda — não só quando piora (SÓ DEV — ferramenta pessoal, não vai pra produção) — 2026-11-02
+
+- **Mac:** o app da barra de menu agora manda notificação do macOS quando o semáforo (ou a lista de problemas) muda; clicar abre o mini painel. Menu: *Avisar quando algo mudar* e *Testar o aviso*. Regra em `mac/Shared/Aviso.swift`, envio em `mac/App/Avisador.swift`.
+- **Windows:** o balão da bandeja, que só avisava quando a cor piorava, passa a avisar também quando melhora/volta ao normal ou quando aparece/some um problema com a cor igual; menu do ícone ganha *Avisar quando algo mudar* e *Testar o aviso*.
+- O que conta como 'problema': VTEX, GitHub, Firebase, Backup (atenção/fora), cards sumindo e bug escalado. Mudar só entre ok/sem leitura/desligado não avisa.
+- Escrito sem Mac e sem Windows à mão (não compila/roda aqui): validar no Xcode (⌘+R) e no Windows; testes de contrato de `functions/oceano` seguem ok.
+
 ### 🏖️ Assistente Férias do Caio encerrado em 03/11/2026 — desativado, não apagado (PROD · oceano v1.59) — 2026-11-01
 
 - O Oceano deixa de mostrar o banner, a pílula e o modal do Assistente Férias a partir de 03/11/2026 (o Caio voltou): `FERIAS_FIM` passou a `2026-11-02` e `abrirFerias()` ficou guardado por `feriasAtivo()` (sino/link antigo de chamado só avisa que o assistente foi encerrado). `?ferias=1` na URL religa só para quem abrir assim.

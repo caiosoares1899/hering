@@ -36,6 +36,15 @@ A bolinha aparece na barra de menu. Clique nela.
 O menu **Product** fica na barra de menu **do Mac** (topo da tela), não dentro da janela do Xcode (se o Xcode estiver em tela cheia, leve o mouse à borda de cima). Pare o app (■) antes.
 Menu *Product ▸ Archive* → *Distribute App ▸ Copy App* (não use App Store/Notarization: exigem conta paga) → salve → arraste o `OceanoBar.app` para *Aplicativos*. **Atalho sem Organizer:** `find ~/Library/Developer/Xcode/DerivedData -name "OceanoBar.app" -path "*Debug*" -maxdepth 6` e `open -R "<caminho>"` mostram no Finder o app já compilado. Se o Mac bloquear a abertura: *Ajustes do Sistema ▸ Privacidade e Segurança ▸ Abrir Mesmo Assim* (o app é seu, gerado no seu Mac). Pela linha de comando: `xcodebuild -project OceanoBar.xcodeproj -scheme OceanoBar -configuration Release build` e copie o `OceanoBar.app` (em `~/Library/Developer/Xcode/DerivedData/…/Build/Products/Release/`) para `/Applications`. Abra uma vez e marque **Abrir ao iniciar sessão** no menu do app.
 
+## Avisos (notificação quando algo muda)
+
+O app manda uma **notificação do macOS** quando o semáforo muda: a cor piora (🟡/🔴), melhora ou volta ao normal (🟢), ou aparece/some um problema mesmo com a cor igual (VTEX, GitHub, Firebase, Backup, cards sumindo, bug escalado). Clicar na notificação abre o mini painel. A mesma regra vale no ícone da bandeja do Windows.
+
+- Na **1ª vez** o macOS pergunta se o Oceano pode mandar notificações — responda **Permitir** (depois: Ajustes do Sistema → Notificações → Oceano).
+- No menu do app: **Avisar quando algo mudar** (liga/desliga, vem ligado) e **Testar o aviso** (confirma que a permissão está certa).
+- A regra de decisão mora em `Shared/Aviso.swift`; o envio, em `App/Avisador.swift`.
+- Atualizar: `cd ~/hering/mac && git pull && xcodegen generate` e ⌘+R (os arquivos novos entram sozinhos).
+
 ## Widget
 Com o app aberto pelo menos uma vez: clique com o botão direito na mesa ▸ *Editar Widgets…* ▸ procure **Oceano**. Se não aparecer, saia e abra o app de novo (o macOS só descobre o widget depois que o app foi assinado e aberto) e confira se os **dois alvos** têm o mesmo Team. O macOS decide quando atualizar o widget (algumas vezes por hora); o app da barra de menu atualiza a cada minuto.
 

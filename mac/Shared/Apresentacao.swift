@@ -47,6 +47,19 @@ enum Estado {
 extension Resumo {
     var estadoGeral: Estado { Estado(geral) }
 
+    /// O que está fora do normal agora, em texto curto (a mesma lista do aviso do Windows): peças em atenção/fora + cards sumindo + bug escalado.
+    var problemas: [String] {
+        var p: [String] = []
+        let pecas: [(String, Peca?)] = [("VTEX", status?.vtex), ("GitHub", status?.github), ("Firebase", status?.firebase), ("Backup", backup)]
+        for (nome, peca) in pecas {
+            let e = Estado(peca?.estado)
+            if e == .atencao || e == .fora { p.append("\(nome): \(e.rotulo)") }
+        }
+        if (alarmesSumico?.ultimas24h ?? 0) > 0 { p.append("cards sumindo") }
+        if (plantao?.escalados ?? 0) > 0 { p.append("bug escalado") }
+        return p
+    }
+
     var tituloGeral: String {
         switch estadoGeral {
         case .ok: return "Tudo certo"
