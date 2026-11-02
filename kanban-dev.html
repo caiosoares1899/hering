@@ -6627,7 +6627,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.894-dev</div>
+<div class="version">v8.30.895-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -36880,7 +36880,9 @@ function tmFormPartesRender(){
   const opts=members.filter(x=>x.uid&&x.uid!==exec&&!_tmFormPartes.includes(x.uid)).map(x=>`<option value="${esc(x.uid)}">${esc(x.name||x.email)}</option>`).join('');
   box.innerHTML=chips+(opts?`<select class="fi" style="flex:0 1 160px;font-size:11px;padding:4px 6px;" aria-label="Adicionar participante" onchange="if(this.value)tmFormParte(this.value,true)"><option value="">+ Participante</option>${opts}</select>`:'');
 }
+let _tmCriando=false;   // trava: o id é novo a cada chamada e a gravação é assíncrona — 2 cliques seguidos criavam 2 atividades (/monitorarbugs 02/11/2026)
 async function tmCriar(){
+  if(_tmCriando) return;
   const me=window._currentUser, card=cards.find(c=>c.id===_tmCardId); if(!me||!card) return;
   const nome=(document.getElementById('tm-f-nome')?.value||'').trim().slice(0,120);
   if(!nome){ showToast('Dê um nome para a atividade.'); document.getElementById('tm-f-nome')?.focus(); return; }
@@ -36895,14 +36897,19 @@ async function tmCriar(){
   const rec={id,sq:ACTIVE_SQUAD,cardId:card.id,cardTitle:String(card.title||'').slice(0,120),uid:para,porUid:me.uid,atividade:nome,tipo,durMs,
     status:iniciar?'rodando':'novo',startedAt:iniciar?agora:null,accMs:0,iniciadoEm:iniciar?new Date(agora).toISOString():null,criadoEm:new Date(agora).toISOString(),desc:desc||null,tag:tag||null,partes:partes.length?partes:null};
   Object.keys(rec).forEach(k=>{ if(rec[k]===null) delete rec[k]; });
-  try{ await _tmEscrever(rec,rec,{criar:true}); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível criar o timer.'); return; }
-  _tmFormAberto=false; _tmAberto.delete(id); tmRender();
+  _tmCriando=true; const _bCriar=document.querySelector('#m-timer-form .btn-teal'); if(_bCriar) _bCriar.disabled=true;
+  try{ await _tmEscrever(rec,rec,{criar:true}); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível criar o timer.'); _tmCriando=false; if(_bCriar) _bCriar.disabled=false; return; }
+  _tmCriando=false; _tmFormAberto=false; _tmAberto.delete(id); tmRender();
   if(!paraMim) createNotif(para,'timer_criado',(me.displayName||'Alguém')+' criou uma atividade para você','"'+nome+'" · '+(card.title||'card'),card.id,null,null,{squad:ACTIVE_SQUAD},id);
 }
 
 // ── listeners ──
+let _tmTemp=false;   // modal de um Modelo/Recorrente/Agendamento: o "card" é temporário (__qltmp__), nunca existe de verdade — timer ali ficaria pendurado num id fantasma
 function tmOpenCard(cardId){
-  tmFecharCard(); _tmCardId=cardId||null; _tmFormAberto=false;
+  tmFecharCard(); _tmFormAberto=false;
+  const _co=cardId ? cards.find(c=>c.id===cardId) : null;
+  _tmTemp=!!(_co && _co._isQLTemp); if(_tmTemp) cardId=null;
+  _tmCardId=cardId||null;
   if(cardId){
     try{
       _tmOff=window._onValue(fb(FB+'/card_timers/'+cardId), snap=>{
@@ -36921,7 +36928,8 @@ function tmIniciarIndice(){
   try{
     _tmIdxOff=window._onValue(fb(TM_RAIZ+'/'+u.uid), snap=>{
       const v=snap.val()||{}; _tmMeus={};
-      Object.keys(v).forEach(id=>{ if(v[id]&&typeof v[id]==='object') _tmMeus[id]=Object.assign({},v[id],{id,uid:u.uid}); });
+      // só entradas completas: uma corrida pode deixar só `avisos` depois do encerrar (o servidor limpa; aqui nunca vira linha "undefined")
+      Object.keys(v).forEach(id=>{ const e=v[id]; if(e&&typeof e==='object'&&e.sq&&e.cardId&&e.atividade&&e.status) _tmMeus[id]=Object.assign({},e,{id,uid:u.uid}); });
       _tmAtualizarBadge(); if(_tmPopAberto) _tmRenderPop(); _tmLigarRelogio();
     }, err=>console.warn('[timer] índice:',err));
   }catch(e){ console.warn('[timer]',e); }
@@ -36968,7 +36976,7 @@ function tmRender(){
   _tmPendente=false;
   const add=document.getElementById('m-timer-add'), tot=document.getElementById('m-timers-total'), form=document.getElementById('m-timer-form');
   const dl=document.getElementById('tm-tags'); if(dl) dl.innerHTML=tags.map(t=>`<option value="${esc(t.label||t.id)}">`).join('');
-  if(!_tmCardId){ box.innerHTML='<div class="tm-vazio">Salve o card para usar o timer.</div>'; if(add) add.style.display='none'; if(tot) tot.textContent=''; if(form) form.style.display='none'; return; }
+  if(!_tmCardId){ box.innerHTML='<div class="tm-vazio">'+(_tmTemp?'Timer vale para cards de verdade — não para um Modelo, Recorrente ou Agendamento.':'Salve o card para usar o timer.')+'</div>'; if(add) add.style.display='none'; if(tot) tot.textContent=''; if(form) form.style.display='none'; return; }
   const agora=Date.now();
   const lista=Object.values(_tmRecs).sort((a,b)=>((a.status==='encerrado')-(b.status==='encerrado'))||String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
   box.innerHTML = lista.length ? lista.map(t=>_tmLinhaHtml(t,agora)).join('') : (_tmFormAberto?'':'<div class="tm-vazio">Nenhum timer neste card. Meça o tempo de uma atividade — a sua ou de alguém do squad.</div>');

@@ -9,6 +9,11 @@
 // Idempotência: o que já foi avisado fica em `kanban/timers_ativos/{uid}/{tid}/avisos` ({zero:true, esq:n, segEsq:startedAt}) — o id da notificação é
 // determinístico, e o marcador evita recriar (e reabrir como "não lida") um aviso que a limpeza por TTL do sino já apagou. `segEsq` amarra a contagem das
 // 4 h ao trecho atual: pausar e retomar começa um trecho novo e zera a contagem.
+// Limpeza (02/11/2026, /monitorarbugs): (a) entrada INCOMPLETA no índice (só `avisos`, sem sq/cardId/status) é o rastro de uma corrida — o dono encerrou entre a nossa leitura e a nossa
+// escrita e o `update` recriou o nó pela metade: é removida (no navegador viraria uma linha "undefined"); por isso o marcador `avisos` é gravado em TRANSAÇÃO, que não recria o que sumiu.
+// (b) card EXCLUÍDO com timer rodando: o aviso 🔔 e a linha do atalho ficariam pra sempre (e o "esquecido" insistiria 3×). Só vale como "excluído" quando as DUAS marcas existem —
+// `cards_deleted_intentionally/{id}` (escrita por toda exclusão de verdade) E ausência em `cards_index/{id}` (o desfazer restaura o card e o índice) —, então "card sumiu sozinho" ou
+// desfazer nunca apagam timer. O timer do card excluído é ENCERRADO (o tempo fica no registro) e sai do índice.
 // O tempo decorrido é o mesmo do navegador: accMs + (agora − startedAt) enquanto 'rodando'.
 //
 // Deploy isolado: firebase deploy --only functions:timersVigia   (e, junto, functions:sendPushOnNotification — ela precisa conhecer os tipos novos no PUSH_TYPES)
@@ -43,24 +48,40 @@ function avisosDoTimer(uid, tid, t, agora) {
   return out;
 }
 
+const cartaoExcluido = async (db, sq, cardId) => {
+  const base = `kanban/squads/${sq}/dados`;
+  if ((await db.ref(`${base}/cards_deleted_intentionally/${cardId}`).get()).val() !== true) return false;
+  return (await db.ref(`${base}/cards_index/${cardId}`).get()).val() == null;
+};
+
 // Varre o índice e grava o que for devido. `agoraMs` existe pra teste determinístico (em produção vem do relógio).
 async function runTimersVigia(db, agoraMs) {
   agoraMs = agoraMs == null ? Date.now() : agoraMs;
   const raiz = (await db.ref('kanban/timers_ativos').get()).val() || {};
-  let enviados = 0, lidos = 0;
+  let enviados = 0, lidos = 0, limpos = 0; const excluidos = new Map();
   for (const [uid, porTid] of Object.entries(raiz)) {
     for (const [tid, t] of Object.entries(porTid || {})) {
       lidos++;
+      const refIdx = db.ref(`kanban/timers_ativos/${uid}/${tid}`);
+      if (!t || typeof t !== 'object' || !t.sq || !t.cardId || !t.status) { await refIdx.remove(); limpos++; continue; }   // rastro de corrida: nó pela metade
+      const chave = `${t.sq}/${t.cardId}`;
+      if (!excluidos.has(chave)) excluidos.set(chave, await cartaoExcluido(db, t.sq, t.cardId).catch(() => false));
+      if (excluidos.get(chave)) {                                                                                       // card excluído: encerra o timer e tira do índice
+        const refRec = db.ref(`kanban/squads/${t.sq}/dados/card_timers/${t.cardId}/${tid}`);
+        if ((await refRec.get()).exists()) await refRec.update({ status: 'encerrado', startedAt: null, accMs: decorrido(t, agoraMs), encerradoEm: new Date(agoraMs).toISOString(), encerradoPor: 'vigia', motivo: 'card_excluido' });
+        await refIdx.remove(); limpos++; continue;
+      }
       for (const a of avisosDoTimer(uid, tid, t, agoraMs)) {
         const refN = db.ref(`kanban/usuarios/${uid}/notificacoes/${a.id}`);
         // marca ANTES de notificar (nunca avisa em dobro; se a escrita da notificação falhar, o aviso se perde — preferível a spam a cada minuto)
-        await db.ref(`kanban/timers_ativos/${uid}/${tid}/avisos`).update(a.campos);
+        const tx = await refIdx.transaction((cur) => (cur ? Object.assign({}, cur, { avisos: Object.assign({}, cur.avisos || {}, a.campos) }) : cur));
+        if (!tx || !tx.snapshot || !tx.snapshot.val()) continue;   // o timer foi encerrado/excluído enquanto a gente decidia: não avisa
         try { await refN.set(a.notif); enviados++; }
         catch (e) { console.error('[timersVigia] notificação falhou:', uid, tid, e); }
       }
     }
   }
-  return { lidos, enviados };
+  return { lidos, enviados, limpos };
 }
 
 exports.timersVigia = onSchedule(
