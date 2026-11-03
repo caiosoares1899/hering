@@ -192,6 +192,8 @@
         "obj_locks": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
         "mural": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
         "apresentacao_live": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "cobranca_config": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')" },
+        "cobrancas_log": { ".write": false },
         "datastudio": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador' || root.child('kanban/usuarios/' + auth.uid + '/gestorOkr').val() === true))" },
         "marco_comments": {
           "$marcoId": {

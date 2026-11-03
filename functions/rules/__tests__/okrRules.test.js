@@ -113,6 +113,13 @@ test('Data Studio — só ADM, PO, Organizador ou Gestor OKR configuram', () => 
   assert.equal(check(RULES, DB, 'read', 'kanban/okr/datastudio', A.membro), true, 'todo mundo continua LENDO os painéis');
 });
 
+test('cobrança das entregas — lista de quem recebe o escalonamento só o ADM edita; o carimbo é só do servidor', () => {
+  for (const a of lista('adm', 'caio')) assert.equal(pode(a, 'kanban/okr/cobranca_config/gestores', { rafael: true }), true, a);
+  for (const a of lista('membro', 'po', 'org', 'gestor', 'forasteiro', 'arezzo', 'visualizador')) assert.equal(pode(a, 'kanban/okr/cobranca_config/gestores', { rafael: true }), false, a);
+  for (const a of lista('adm', 'caio', 'membro', 'forasteiro')) assert.equal(pode(a, 'kanban/okr/cobrancas_log/e1/preventivo', { data: '2026-11-10' }), false, `${a} não grava o carimbo`);
+  assert.equal(check(RULES, DB, 'read', 'kanban/okr/cobranca_config', A.membro), true, 'ler continua aberto a quem lê o Radar');
+});
+
 test('cobertura: todo nó de kanban/okr usado no código tem regra de escrita (senão ele perderia a escrita)', () => {
   const okr = RULES.rules.kanban.okr;
   const declarados = new Set(Object.keys(okr).filter(k => !k.startsWith('.')));

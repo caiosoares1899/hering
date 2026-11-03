@@ -42,6 +42,8 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { torreAtiva } = require('../common/mareModo');
 const { getDatabase } = require('firebase-admin/database');
 const cal = require('./calendario');
+const { runCobrancaEntregas } = require('./cobranca');
+const { DEFAULT_ADM_EMAILS } = require('./agenteHelpers');
 
 // ── Bloco quinzenal — mesma fórmula de painel-dev.html (OKR_BLOCO_AREAS/
 // _okrBlocoDaArea/_okrBlocoNaData). 2026-09-03 é uma quinta confirmada
@@ -190,6 +192,12 @@ async function runOkrDailyScan(db, hojeOverride) {
   try {
     await avisaEventosDoCalendario(db, eventos, objetivos, hoje, amanhaStr);
   } catch (e) { console.error('[okrDailyScan] calendário falhou:', e); }
+
+  // 4) 📦 Cobrança das ENTREGAS do calendário de gestão (functions/okr/cobranca.js): preventivo, atraso, escalonamento e resumo da segunda.
+  try {
+    const r = await runCobrancaEntregas({ db, eventos, hoje, diasAte, writeNotif, defaultAdmEmails: DEFAULT_ADM_EMAILS });
+    if (r.avisados || r.escalonados || r.resumo) console.log('[okrDailyScan] cobrança:', JSON.stringify(r));
+  } catch (e) { console.error('[okrDailyScan] cobrança falhou:', e); }
 }
 
 async function avisaEventosDoCalendario(db, eventos, objetivos, hoje, amanhaStr) {
