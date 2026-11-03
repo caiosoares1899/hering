@@ -187,3 +187,15 @@ test('migração: um evento qualquer do calendário (sem origem) NÃO desliga o 
   await runOkrDailyScan(db, '2026-09-30');
   const a = await todasNotifs(db, 'ana'); assert.equal(a.length, 1); assert.match(a[0].title, /é amanhã/);
 });
+
+test('scan: 📦 entrega amanhã → "Prazo amanhã", "Você é responsável por esta entrega" (não "convidado"), só pro responsável; entregue não avisa', async () => {
+  const db = seed({
+    p1: { id: 'p1', titulo: 'Plano Comercial — 1º tri', tipo: 'entrega', status: 'a_fazer', data: addDias(1), torre: 'digital', diaInteiro: true, convidados: ['bia'] },
+    p2: { id: 'p2', titulo: 'Plano de Mídia', tipo: 'entrega', status: 'entregue', data: addDias(1), torre: 'digital', diaInteiro: true, convidados: ['bia'] },
+  });
+  await runOkrDailyScan(db);
+  const n = await notifsDe(db, 'bia');
+  assert.equal(n.length, 1, 'só a entrega aberta avisa');
+  assert.match(n[0].title, /^📦 Prazo amanhã: Plano Comercial/); assert.match(n[0].sub, /Você é responsável por esta entrega/); assert.doesNotMatch(n[0].sub, /convidado/);
+  assert.equal(n[0].type, 'okr_reuniao');
+});
