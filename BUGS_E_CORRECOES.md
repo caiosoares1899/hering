@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-03 · Convidado externo em loop Oceano ↔ Maré (SÓ DEV) — kanban-dev v8.30.897-dev
+
+Sintoma: convidado externo (visualizador) abrindo o Maré pelo link geral da tela de login do Oceano (sem ?squad=) voltava pro Oceano. Causa: o modo convidado (?login=local) só era guardado na aba (sessionStorage mare_login_local) quando a pessoa chegava deslogada; o cadastro guiado (resolveSquadAndShow / _squadsDoExterno) manda pra ?squad=X sem o ?login=local, então qualquer abertura sem a sessão pronta (nova aba, F5, sessão caída) era empurrada pelo login único de volta pro Oceano, que manda de novo pro Maré. Correção em kanban-dev.html: a flag é gravada no boot quando a URL tem ?login=local, e também ao validar qualquer e-mail fora do domínio confiável; os dois redirecionamentos do cadastro guiado mantêm &login=local (_mantemLocal()). Teste: docs/arezzo/testes/test_convidado_sem_loop.js. Limite: o loop exato do relato não foi reproduzido em teste (o fluxo de popup não loopava); o endurecimento cobre o caso em que a URL perde o login=local.
+
 ### 2026-11-03 · Ajuda do Maré — Timer e Produtividade: avisos, Modelos e card excluído (kanban-dev v8.30.896-dev)
 
 - Rodada /atualizarhelpcontent (03/11/2026). Gap real: a entrada de Notificações não citava os 4 tipos de aviso do Timer (criada pra você, encerrada, tempo acabou, esquecido rodando) — acrescentado parágrafo; a entrada Timer e Produtividade ganhou duas frases do que mudou na rodada de /monitorarbugs: o timer não aparece ao editar Modelo/Recorrente/Agendamento e timer de card excluído se encerra sozinho. Radar, guia-okr e FAQ do Oceano conferidos: sem mudança (o Assistente Férias saiu da vitrine; o FAQ nunca o citou, só a base interna dele). Dica do Timer já existe (mare-dicas-dev.js v10).
