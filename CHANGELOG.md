@@ -24,12 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Radar — calendário de gestão do Digital: 📦 Entrega, macros PLAN/CHECK/DO/ENGAJAMENTO e 📋 Cadência do Digital (SÓ DEV) — okr-dev v2.98 — 2026-11-03
+### Radar — calendário de gestão do Digital: 📦 Entrega, macros PLAN/CHECK/DO/ENGAJAMENTO e 📋 Cadência do Digital (SÓ DEV) — okr-dev v2.99 — 2026-11-03
 
 - Novo tipo 📦 Entrega no 📅 Calendário do Radar: prazo, responsáveis (recebem véspera e dia), situação (A fazer · Em andamento · Entregue) e plano maior opcional ("Faz parte de": o Plano Tático mostra 3/7). O responsável marca a própria entrega; entregue não lembra mais; passou do prazo aparece Atrasada. Entrega não repete.
 - Macro opcional em qualquer item (PLAN · CHECK · DO · ENGAJAMENTO), com selo e filtro na barra.
-- Botão 📋 Cadência do Digital (só ADM): gera sem duplicar os planos do trimestre escolhido (Plano Tático + 7 planos, Plano de Compras + Out/Inv/Ver/AV; no 3º tri, os planos anuais), o All Hands, a Reunião de Resultados do E-commerce (semanal), as Iniciativas do Digital (quinzenal) e o lembrete do Pulso dos Times. Datas provisórias (dia inteiro), o ADM ajusta e define os responsáveis. Showroom e Lançamento das Coleções ficam pra cadastro manual (Entrega, macro DO).
+- Botão 📋 Cadência do Digital (só ADM): gera sem duplicar os planos do trimestre escolhido (Plano Tático + 7 planos, Plano de Compras da coleção do trimestre — cada trimestre fecha uma; no 3º tri, os planos anuais), o All Hands, a Reunião de Resultados do E-commerce (semanal) e o lembrete do Pulso dos Times. As Iniciativas do Digital são o bloco quinzenal já importável pelo banner (agora com macro CHECK). Datas provisórias (dia inteiro), o ADM ajusta e define os responsáveis. Showroom e Lançamento das Coleções ficam pra cadastro manual (Entrega, macro DO).
 - Servidor: functions/okr/calendario.js lembretesDe() — entrega entregue não manda mais véspera/dia (exige deploy de okrDailyScan junto com a promoção; sem deploy, o aviso continua saindo).
+- Plano pai conclui sozinho quando todas as filhas entregam (e reabre se uma volta atrás); excluir um plano com filhas pergunta se leva as filhas junto; o aviso do prazo diz "📦 Prazo amanhã" e "Você é responsável por esta entrega" (functions/okr/dailyScan.js); o status é gravado em 1 `update` só.
 - Próximos passos: cobrança automática (vence em breve / atrasada / escalonamento) e subagente de agenda no agente do Radar. Teste: docs/arezzo/testes/test_calendario_gestao.js; dica: não (recurso do ADM).
 
 ### SÓ DEV — ⏸ Revisão automática das PRs do Antigravity pausada (tarefa agendada desabilitada, não apagada) — 2026-11-03
