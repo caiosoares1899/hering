@@ -118,7 +118,7 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
-### Cloud Functions por pasta (35 exports em `functions/index.js`)
+### Cloud Functions por pasta (36 exports em `functions/index.js`)
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
@@ -126,7 +126,7 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `spotify/` | `spotifyOauthCallback` · `spotifyDisconnect` · `spotifySyncNow` · `spotifyPlayback` · `spotifyRadioOwnerCallback` · `spotifyRadioSearch` · `spotifyRadioSuggest` |
 | `backup/` | `weeklyBackup` · `backupCompletoSemanal` · `backupGlobalDiario` · `backupVigia` · `backupCompletoApi` |
 | `okr/` | `sendPushOnMural` · `okrDailyScan` · `okrWeeklySnapshot` · `okrAgenteChat` |
-| `cards/` | `cardsEspelhar` · `cardsGuardiao` |
+| `cards/` | `cardsEspelhar` · `cardsGuardiao` · `cardsEspelhoVarredura` |
 | `agente-agil/` | `agenteAgil` |
 | `comentarios/` | `contarComentarios` |
 | `firebase/` | `firebaseStatus` |
