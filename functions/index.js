@@ -23,7 +23,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_cobranca', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug', 'timer_criado', 'timer_zero', 'timer_esquecido', 'timer_encerrado']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_cobranca', 'card_resgatado', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug', 'timer_criado', 'timer_zero', 'timer_esquecido', 'timer_encerrado']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -261,6 +261,12 @@ exports.metasLembretes = require('./metas/lembretes').metasLembretes;
 // navegador. Os quatro tipos são push (PUSH_TYPES acima). Deploy isolado: firebase deploy --only functions:timersVigia
 // (e, junto, functions:sendPushOnNotification — ela precisa conhecer os tipos novos — e `firebase deploy --only database` pras regras de `timers_ativos`).
 exports.timersVigia = require('./timers/vigia').timersVigia;
+
+// 🛡️ Guardião dos cards (03/11/2026): `cardsEspelhar` guarda a última versão de cada card (kanban/cards_espelho/{squad}/{id}, sem acesso dos navegadores) e `cardsGuardiao`
+// restaura do espelho o card que sai de cards_index sem marca de exclusão, registra o incidente e avisa ADMs/POs (tipo card_resgatado, push). Ver functions/cards/guardiao.js.
+// Deploy isolado: firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao   (e functions:sendPushOnNotification, que conhece o tipo novo) + firebase deploy --only database
+exports.cardsEspelhar = require('./cards/guardiao').cardsEspelhar;
+exports.cardsGuardiao = require('./cards/guardiao').cardsGuardiao;
 
 // 🚨 Alerta de incidente da VTEX (functions/vtex/statusVtex.js): a cada 5 min lê https://status.vtex.com/feed.rss e, com incidente/manutenção em
 // andamento, publica sozinho um Comunicado 🚨 (popup insistente, todos) + notificação `vtex_incidente` (sino + push, PUSH_TYPES acima) pra todo mundo;

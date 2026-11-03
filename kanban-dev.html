@@ -6636,7 +6636,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.899-dev</div>
+<div class="version">v8.30.900-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6987,7 +6987,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=39"></script>
+<script src="mare-notif-dev.js?v=40"></script>
 <script src="mare-metas-dev.js?v=17"></script>
 <script src="mare-dicas-dev.js?v=10"></script>
 
@@ -9832,6 +9832,13 @@ async function _resgatarCardsAusentes(extra, soConferir){
 // (timers, listeners, saves) e regravava `/cards` a partir de um array defasado. Quando o aviso aparece, `window._auStale` vira true e as 3 primitivas de escrita de
 // card recusam (promessa rejeitada, para os chamadores já tratarem como falha de save). Só vale depois de CONFIRMAR versão nova no version.json — rede fora não trava.
 function _recusaSeDesatualizado(){
+  // 🧊 Offline há mais de 1 min: o SDK do Firebase GUARDA a escrita numa fila e a despeja quando a rede volta — por cima do que os colegas gravaram nesse meio-tempo
+  // (foi um dos caminhos do "conteúdo velho volta"). Sem rede NÃO gravamos card: a pessoa vê o aviso e não acha que salvou.
+  if(!window._auStale && window._auOfflineDesde && Date.now()-window._auOfflineDesde > 60000){
+    if(!window._auOfflineAvisoTs || Date.now()-window._auOfflineAvisoTs > 20000){ window._auOfflineAvisoTs = Date.now(); try{ showToast('📵 Sem conexão — esta alteração NÃO foi salva. Volte a ficar online e recarregue a página antes de continuar.'); }catch(_){} }
+    const e = new Error('Sem conexão há mais de 1 minuto — o card não foi salvo.'); e.name = 'VersaoDesatualizada';
+    return Promise.reject(e);
+  }
   if(!window._auStale) return null;
   const e = new Error('Esta aba está desatualizada — recarregue a página para continuar salvando.'); e.name = 'VersaoDesatualizada';
   return Promise.reject(e);
@@ -9854,6 +9861,9 @@ async function fbSaveAll(extra, touchedIds, opts){
   // 🛟 nunca apagar o que existe no banco só porque este aparelho ainda não o recebeu (ver _resgatarCardsAusentes)
   let _resgatados = [];
   if(!(opts && opts.substituirTudo)) _resgatados = await _resgatarCardsAusentes(extra);
+  // 🛡️ O guardião do servidor restaura o card que some do índice sem marca de exclusão — ao SUBSTITUIR o conjunto de propósito (restaurar backup/importar sem mesclar) ele precisa
+  // saber, senão desfaria a operação: pausa de 5 min, escrita ANTES do save (functions/cards/guardiao.js, `cards_guardiao_pausa_ate`).
+  if(opts && opts.substituirTudo && window._fbReady){ try{ await window._set(window._ref(window._db, FB+'/cards_guardiao_pausa_ate'), Date.now()+5*60*1000); }catch(_){} }
   _auditarEscritaDeCards('fbSaveAll', { resgatados:_resgatados.length, tocados:(touchedIds?touchedIds.length:'todos'), extra:Object.keys(extra||{}).slice(0,3).join(','), substituirTudo:!!(opts&&opts.substituirTudo) }, _pilhaChamada);
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
@@ -10116,7 +10126,7 @@ async function fbCreateCard(card){
 // só garante que alguém saiba na hora, em vez de descobrir dias depois.
 function _reportUnexpectedCardDisappearance(cardId, cardTitle){
   const label = cardTitle ? '"'+cardTitle+'"' : cardId;
-  showToast('⚠️ Um card sumiu do quadro sem ninguém ter excluído: '+label+'. Avisem o time de tecnologia.');
+  showToast('⚠️ Um card sumiu do quadro sem ninguém ter excluído: '+label+'. O guardião tenta restaurá-lo sozinho em instantes — se não voltar, avisem o time de tecnologia.');
   console.error('[card sumiu inesperadamente]', cardId, cardTitle, 'squad:', ACTIVE_SQUAD);
   if(!window._fbReady) return;
   const incId = 'inc'+Date.now()+Math.random().toString(36).slice(2,6);
@@ -10863,7 +10873,9 @@ let _cardsSyncDebounce = null;
       delete _liveCardsIndexById[snap.key];
       const key = snap.val();
       const removedId = snap.key;
-      const removedTitle = (key!=null && _cardsByKey[key]) ? _cardsByKey[key].title : null;
+      // título pelo ID (nunca pela posição: as posições deslocam e o alarme de 31/10 acusou o título de OUTRO card — _cardsByKey é indexado por posição)
+      const _cRem = (typeof cards!=='undefined' ? cards : []).find(c=>c && c.id===removedId);
+      const removedTitle = _cRem ? _cRem.title : null;
       if(key!=null){ delete _cardsByKey[key]; _scheduleCardsSync(); }
       // Debounce de ~3s antes de decidir que o sumiço foi inesperado: dá
       // tempo do evento irmão de /cards_deleted_intentionally (escrito na
@@ -10894,6 +10906,19 @@ let _cardsSyncDebounce = null;
     // listener de /cards_index acima. Nunca é lido fora disso.
     const _delRef = fb(FB+'/cards_deleted_intentionally');
     window._onChildAdded(_delRef, snap=>{ _dbgTrack('/cards_deleted_intentionally:live', null); _intentionalDeleteIds.add(snap.key); });
+
+    // 🛡️ Guardião (servidor): quando ele restaura (ou não consegue restaurar) um card, TODO MUNDO com a squad aberta vê — o card volta sozinho pela sincronização normal.
+    // `ultimo` é um nó único, sobrescrito a cada incidente (~200 bytes); o 1º valor ao abrir só serve de referência (não repete aviso velho).
+    { let _guardiaoVisto = null, _guardiaoPrimeiro = true;
+      window._onValue(window._ref(window._db,'kanban/cards_guardiao/'+ACTIVE_SQUAD+'/ultimo'), snap=>{
+        const v = snap.val(); const chave = v ? (v.detectadoEm||'')+'|'+(v.cardId||'') : null;
+        if(_guardiaoPrimeiro){ _guardiaoPrimeiro = false; _guardiaoVisto = chave; return; }
+        if(!v || chave===_guardiaoVisto) return; _guardiaoVisto = chave;
+        const t = v.titulo ? '"'+String(v.titulo).slice(0,80)+'"' : 'um card';
+        if(v.acao==='restaurado') showToast('🛡️ '+t+' saiu do quadro sem ninguém excluir — o guardião já o restaurou. Se você estava editando, confira o conteúdo.');
+        else showToast('🚨 '+t+' sumiu do quadro e NÃO deu pra restaurar sozinho ('+(v.acao==='sem_espelho'?'sem cópia de segurança':v.acao==='em_massa'?'sumiço em massa':'reincidente')+'). Os ADMs já foram avisados — não recriem o card ainda.');
+      });
+    }
 
     const _uaRef = fb(FB+'/cards_updated_at');
     async function _onCardsUpdatedAtLive(snap){
@@ -11354,6 +11379,7 @@ let _cardsSyncDebounce = null;
   if(window._fbReady){
     window._onValue(window._ref(window._db,'.info/connected'), snap=>{
       _isOnline = snap.val()===true;
+      if(window._auConexaoMudou) window._auConexaoMudou(_isOnline);   // trava de sessão velha (ver AUTO-UPDATE)
       const badge=document.getElementById('conn-badge');
       if(badge) badge.style.display = _isOnline ? 'none' : 'flex';
     });
@@ -28643,7 +28669,7 @@ const HELP_CONTENT = {
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\n📍 Colunas na conta: o popup 📊 Dados do Board é grande (usa a tela) e tem, logo abaixo das abas, uma barra única com um botãozinho por coluna — clique numa pra tirá-la da conta (ou trazê-la de volta) e todos os números das <b>3 abas</b> (Visão Geral, Insights e CFD) recalculam juntos. Os gráficos preenchem a largura disponível e, no celular, os blocos empilham.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
-    { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
+    { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor. Passado 1 minuto sem conexão o Maré para de gravar cards e avisa "esta alteração NÃO foi salva" (um save guardado de uma tela desatualizada, despejado depois, poderia apagar o que os colegas fizeram nesse meio-tempo). Se a rede ficar fora por mais de 3 minutos — ou a tela ficar parada por mais de 30 minutos (notebook que dormiu, aba esquecida) — ao voltar aparece uma tela pedindo pra atualizar: é rápido, e evita sobrescrever o trabalho de outras pessoas. Se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu.\n\n🛡️ Guardião dos cards: se um card sair do quadro sem ninguém ter excluído, o servidor o restaura sozinho em segundos a partir de uma cópia de segurança, avisa todo mundo com a squad aberta e notifica os ADMs e POs.' },
     { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; de lá dá pra Criar card, Vincular ou Descartar a qualquer momento) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🏢 <b>Pedido interno (quem é da Hering)</b>: o MESMO link tem dois modos. Sem login, é o formulário de sempre. Quem entra com a conta Google da Hering (botão "🔐 Entrar com Google" no topo — ou já logado no Maré) vê um formulário de toques: nome, contato e time vêm do login, e dá pra marcar prioridade (sugerida), prazo (com atalhos Hoje/Amanhã/Sexta), submarca (as 11 opções fixas, incluindo a transversal "Geral" para demandas que valem para todas as submarcas), canal de venda, tags e um link (Drive, Figma…). Dá pra escolher outro squad em "Pedir para". O pedido chega na caixa de entrada com 🏢 e chips; ao clicar "✅ Criar card", prioridade, tags, submarca, canal, prazo e link já vêm no modal. A prioridade é só uma sugestão — quem cria o card confirma.\n\n⚙ <b>Quais campos perguntar</b>: em ⚙ Config → Ágil → "🏢 Pedido interno — campos do formulário", o PO liga/desliga e marca como obrigatório cada campo (Prioridade, Prazo, Submarca e Canal — só se o squad usa —, Tags, Link). Em Tags dá pra escolher quais tags aparecem. Sem mexer em nada vale o padrão: Prioridade, Prazo e Link opcionais; Submarca/Canal obrigatórios só se já são obrigatórios no card. Quanto menos campos, mais rápido de preencher.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
   cards: [
@@ -35924,14 +35950,14 @@ if(window.visualViewport){
     return el ? el.textContent.trim() : '';
   }
   let _auShown = false, _auPollTimer = null;
-  function _auShowBlock(){
+  function _auShowBlock(msg){
     window._auStale = true;   // trava as gravações de card (ver _recusaSeDesatualizado)
     if(_auShown) return;
     _auShown = true;
     const ov = document.createElement('div');
     ov.id = '_au-block';
     ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(4,10,18,.94);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:"DM Sans",sans-serif;padding:20px;';
-    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">🔄</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">Versão desatualizada</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo, e o que você já digitou fica salvo.</div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
+    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">'+(msg?'🧊':'🔄')+'</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">'+(msg?'Sua tela ficou parada':'Versão desatualizada')+'</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">'+(msg||'Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo, e o que você já digitou fica salvo.')+'</div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
     document.body.appendChild(ov);
     document.getElementById('_au-block-btn').onclick=()=>location.reload();
   }
@@ -35963,6 +35989,27 @@ if(window.visualViewport){
   window.addEventListener('pageshow', e=>{ if(e.persisted) _auAoVoltar(); });   // persisted = voltou do cache de páginas (bfcache); a carga normal já checa no 1º tick
   window.addEventListener('online', _auAoVoltar);
   window._auCheckVersion = _auCheckVersion;
+  // 🧊 SESSÃO VELHA (03/11/2026): aba parada por muito tempo (notebook que dormiu, aba esquecida em segundo plano) ou rede fora por alguns minutos guardam na memória uma
+  // cópia ANTIGA dos cards — e é dela que sai o save que apaga o que os colegas fizeram. Voltando de uma parada longa a tela é BLOQUEADA (as gravações de card também:
+  // _auStale) até atualizar. Limiares: 30 min parada · 3 min offline. Um "batimento" a cada 30 s marca que a aba esteve viva, visível e conectada.
+  const PARADA_MAX_MS = 30*60*1000, OFFLINE_MAX_MS = 3*60*1000;
+  let _batimento = Date.now();
+  function _auSessaoVelha(texto){ if(_auShown) return; if(_auPollTimer){ clearInterval(_auPollTimer); _auPollTimer=null; } _auShowBlock(texto); }
+  function _auConferirParada(){
+    if(_auShown || document.hidden) return;
+    const gap = Date.now() - _batimento;
+    if(gap > PARADA_MAX_MS) _auSessaoVelha('Ela ficou sem uso por cerca de '+Math.round(gap/60000)+' min e pode estar com cards antigos. Pra não sobrescrever o trabalho dos colegas, atualize antes de continuar — leva 1 segundo.');
+  }
+  setInterval(()=>{ _auConferirParada(); if(!document.hidden && window._auOfflineDesde==null) _batimento = Date.now(); }, 30000);
+  document.addEventListener('visibilitychange', _auConferirParada);
+  window.addEventListener('pageshow', _auConferirParada);
+  // chamado pelo monitor de conexão (.info/connected): guarda desde quando está offline; ao voltar depois de 3 min, bloqueia
+  window._auConexaoMudou = function(online){
+    if(!online){ if(window._auOfflineDesde==null) window._auOfflineDesde = Date.now(); return; }
+    const off = window._auOfflineDesde; window._auOfflineDesde = null;
+    if(off && Date.now()-off > OFFLINE_MAX_MS) _auSessaoVelha('Ela ficou sem internet por cerca de '+Math.round((Date.now()-off)/60000)+' min e pode estar com cards antigos. Atualize antes de continuar — leva 1 segundo.');
+    else if(off) _batimento = Date.now();
+  };
 })();
 // ══ FIM AUTO-UPDATE ══
 
