@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré — reordenar os checklists do card por arrastar (SÓ DEV) — kanban-dev v8.30.899 — 2026-11-03
+
+- Card com mais de um checklist ganha, em cada cabeçalho, uma alça ⠿ para arrastar o checklist inteiro pra cima ou pra baixo (itens e marcações vão juntos e a ordem é gravada no card pelo autosave).
+- Teclado: com o foco na alça, ↑/↓ movem o checklist e o foco continua nele. Celular/tablet (toque): aparecem botões ▲▼ no cabeçalho (o arrastar nativo não funciona em toque).
+- Card com um checklist só não mostra alça nem setas. A reordenação dos itens dentro de um checklist segue como antes.
+- Dica: não — a alça ⠿ é o mesmo gesto dos itens, já descrito na Ajuda (verbete Checklist atualizado).
+
 ### Radar — subagente de agenda: o Agente Ágil marca reunião, cria entrega e cobra (com confirmação) (SÓ DEV) — okr-dev v2.102 — 2026-11-03
 
 - O Agente Ágil do Radar passa a orquestrar o calendário de gestão por conversa: "marca um All Hands dia 20 às 10h", "cria a entrega Showroom de Inverno pra 15/05 com a Fulana", "muda o prazo do Plano Comercial", "marca o Plano de Mídia como entregue", "cobra os atrasados", "o que está atrasado na gestão do Digital?".
