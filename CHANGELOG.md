@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar — subagente de agenda: o Agente Ágil marca reunião, cria entrega e cobra (com confirmação) (SÓ DEV) — okr-dev v2.102 — 2026-11-03
+
+- O Agente Ágil do Radar passa a orquestrar o calendário de gestão por conversa: "marca um All Hands dia 20 às 10h", "cria a entrega Showroom de Inverno pra 15/05 com a Fulana", "muda o prazo do Plano Comercial", "marca o Plano de Mídia como entregue", "cobra os atrasados", "o que está atrasado na gestão do Digital?".
+- Regra de ouro: ele NUNCA grava no calendário. Prepara uma proposta (kanban/okr/agenda_propostas) e a pessoa confirma com ✅ no cartão sob a resposta dele (ou descarta). Só quem pediu (ou ADM) confirma; a confirmação aplica pelos mesmos caminhos e permissões da tela, com os mesmos avisos no sino. Proposta de edição com base velha (o evento mudou depois) não grava.
+- Ferramentas novas (functions/okr/agendaAgente.js): propor_agenda_evento (criar/editar/excluir/mudar_situacao), propor_cobranca (1 manual por entrega a cada 48 h). listar_agenda agora devolve macro, situação, plano pai e responsáveis (nomes) e filtra por tipo, macro, situação, so_atrasadas e sem_responsavel. Nunca inventa data, hora ou responsável; nome ambíguo vira pergunta; permissão espelha a da tela.
+- Regras: nó agenda_propostas (qualquer @ciahering escreve, como o resto do Radar); propostas com mais de 30 dias são limpas.
+- Exige: firebase deploy --only database + functions:okrAgenteChat. Dica: não (o chip "📦 O que está atrasado na gestão?" já apresenta). Testes: functions/okr/__tests__/agendaAgente.test.js (10), docs/arezzo/testes/test_radar_agenda_agente.js.
+
 ### Radar — cobrança automática das entregas do calendário de gestão (SÓ DEV) — okr-dev v2.100 — 2026-11-03
 
 - Toda manhã (7h, só dia útil) o okrDailyScan cobra os responsáveis das entregas: 2–3 dias antes (preventivo), 1–2 dias depois do prazo (atrasada) e, com 3+ dias de atraso, também escala pros gestores (lista configurável em kanban/okr/cobranca_config/gestores; sem lista, os ADMs — Caio e Rafael) e pra quem criou a entrega; segue cobrando toda segunda enquanto atrasar.

@@ -29,6 +29,7 @@ const {
 } = require('./agenteHelpers');
 const ating = require('./atingimento');
 const cal = require('./calendario');
+const { buildAgendaTools } = require('./agendaAgente');
 
 // As 7 gerências ORIGINAIS (Digital). Desde 2026-10-07 as gerências são configuráveis por torre (kanban/okr/gerencias/{torre}) — o schema aceita qualquer id e
 // cada handler valida contra a lista da torre do Objetivo (listar_gerencias mostra as que existem). A constante fica exportada pra compatibilidade.
@@ -116,6 +117,11 @@ const listarAgendaSchema = z.object({
   objetivo_id: z.string().min(1).optional(),
   titulo_objetivo: z.string().min(1).optional(),
   evento_id: z.string().min(1).optional(),
+  tipo: z.enum(['reuniao', 'evento', 'lembrete', 'entrega']).optional().describe('Só itens desse tipo (entrega = prazo com responsáveis e situação).'),
+  macro: z.enum(['plan', 'check', 'do', 'engajamento']).optional().describe('Só itens dessa macro da gestão.'),
+  situacao: z.enum(['a_fazer', 'andamento', 'entregue']).optional().describe('Só entregas nessa situação.'),
+  so_atrasadas: z.boolean().optional().describe('true = só ENTREGAS abertas com o prazo já vencido (inclui as de antes de hoje, com dias_atraso).'),
+  sem_responsavel: z.boolean().optional().describe('true = só entregas sem ninguém responsável.'),
 });
 
 const lerObjetivoSchema = z.object({
@@ -928,8 +934,24 @@ function makeListarAgendaHandler({ db }) {
 
     const eventos = Object.entries(evSnap.val() || {}).filter(([, e]) => e && e.data && torreAtiva(e.torre)).map(([id, e]) => ({ ...e, id: e.id || id }));
     const linhas = [];
+    const soEntregas = !!(inp.so_atrasadas || inp.situacao || inp.sem_responsavel || inp.tipo === 'entrega');
+    const nomes = soEntregas || inp.evento_id || eventos.some((e) => e.tipo === 'entrega') ? Object.fromEntries(Object.entries((await db.ref('kanban/usuarios_publicos').get()).val() || {}).map(([u, p]) => [u, p && p.nome])) : {};
+    const campos = (ev) => ({
+      macro: ev.macro || null,
+      ...(ev.tipo === 'entrega' ? { situacao: ev.status || 'a_fazer', plano_pai_id: ev.paiId || null } : {}),
+      responsaveis: cal.convidadosDe(ev).map((u) => ({ uid: u, nome: nomes[u] || u })),
+    });
+    const passaFiltro = (ev) => {
+      if (inp.tipo && ev.tipo !== inp.tipo) return false;
+      if (inp.macro && ev.macro !== inp.macro) return false;
+      if (inp.situacao && !(ev.tipo === 'entrega' && (ev.status || 'a_fazer') === inp.situacao)) return false;
+      if (inp.sem_responsavel && !(ev.tipo === 'entrega' && !cal.convidadosDe(ev).length)) return false;
+      if (inp.so_atrasadas && !(ev.tipo === 'entrega' && ev.status !== 'entregue' && ev.data < hoje)) return false;
+      return true;
+    };
     for (const ev of eventos) {
       if (inp.evento_id && ev.id !== inp.evento_id) continue;
+      if (!inp.evento_id && !passaFiltro(ev)) continue;
       if (inp.torre === 'global' && ev.torre) continue;
       if (inp.torre && inp.torre !== 'global' && ev.torre && ev.torre !== inp.torre) continue;   // numa torre: a agenda dela + a global
       if (alvoObj && !cal.abrange(ev, alvoObj)) continue;
@@ -937,8 +959,13 @@ function makeListarAgendaHandler({ db }) {
         linhas.push({
           evento_id: ev.id, data, hora: cal.horaTxt(ev) || null, titulo: ev.titulo || '', tipo: ev.tipo || 'evento', agenda: cal.agendaNome(ev),
           repete: cal.recTexto(ev) || null, local: ev.local || null, tags: cal.lista(ev.tagIds).map((t) => tagsCfg[t] && tagsCfg[t].label).filter(Boolean),
-          convidados: cal.convidadosDe(ev).length,
+          convidados: cal.convidadosDe(ev).length, ...campos(ev),
         });
+      }
+      // entregas ABERTAS com o prazo já vencido não têm "próxima ocorrência" — entram à parte, com os dias de atraso
+      if (!inp.evento_id && ev.tipo === 'entrega' && ev.status !== 'entregue' && ev.data < hoje && (inp.so_atrasadas || inp.tipo === 'entrega' || inp.situacao)) {
+        const dias = Math.round((new Date(hoje + 'T00:00:00') - new Date(ev.data + 'T00:00:00')) / 86400000);
+        linhas.push({ evento_id: ev.id, data: ev.data, hora: null, titulo: ev.titulo || '', tipo: 'entrega', agenda: cal.agendaNome(ev), repete: null, local: ev.local || null, tags: [], convidados: cal.convidadosDe(ev).length, atrasada: true, dias_atraso: dias, ...campos(ev) });
       }
     }
     linhas.sort((a, b) => a.data.localeCompare(b.data) || String(a.hora || '').localeCompare(String(b.hora || '')));
@@ -957,7 +984,7 @@ function makeListarAgendaHandler({ db }) {
   };
 }
 
-function makeResponderHandler({ db, dryRun }) {
+function makeResponderHandler({ db, dryRun, coletor }) {
   return async (input) => {
     if (dryRun) return { ok: true, dryRun: true, tool: 'responder', wouldHaveExecuted: input };
     const ref = db.ref('kanban/okr/agente_chat').push();
@@ -969,6 +996,8 @@ function makeResponderHandler({ db, dryRun }) {
       foto: '',
       text: input.texto,
       ts: new Date().toISOString(),
+      // 🗓️ propostas de agenda preparadas nesta rodada: o cliente desenha um cartão ✅/✖ pra cada uma (functions/okr/agendaAgente.js)
+      ...(coletor && coletor.length ? { propostas: coletor.slice() } : {}),
     });
     return { ok: true, dryRun: false, tool: 'responder', message_id: ref.key };
   };
@@ -984,6 +1013,7 @@ function buildOkrTools(options = {}) {
     throw new Error('buildOkrTools({mode:"real"}) precisa de db e requestingUid.');
   }
 
+  const coletor = [];   // ids das propostas de agenda desta rodada (o `responder` anexa à mensagem)
   const defs = [
     {
       name: 'listar_objetivos',
@@ -999,10 +1029,11 @@ function buildOkrTools(options = {}) {
     },
     {
       name: 'listar_agenda',
-      description: 'Lê o CALENDÁRIO do OKR (reuniões, eventos e lembretes; agenda global + agenda de cada torre): próximas ocorrências nos próximos `dias` (padrão 14, máx. 120) com data, hora, título, tipo, agenda, repetição, local, tags e nº de convidados. Filtros: torre ("global" = só a agenda global; uma torre = a dela + a global), objetivo (só o que diz respeito àquele Objetivo, pelo mesmo escopo da pauta: vínculo, tag ou gerência) e evento_id (detalhe: descrição e a pauta de Objetivos). SÓ LEITURA — criar/editar evento é pela tela 📅 Calendário do OKR. Use pra "quando é a próxima reunião de X", "o que tem na agenda essa semana".',
+      description: 'Lê o CALENDÁRIO do OKR (reuniões, eventos e lembretes; agenda global + agenda de cada torre): próximas ocorrências nos próximos `dias` (padrão 14, máx. 120) com data, hora, título, tipo, agenda, repetição, local, tags e nº de convidados. Filtros: torre ("global" = só a agenda global; uma torre = a dela + a global), objetivo (só o que diz respeito àquele Objetivo, pelo mesmo escopo da pauta: vínculo, tag ou gerência) e evento_id (detalhe: descrição e a pauta de Objetivos). SÓ LEITURA — criar/editar evento é pela tela 📅 Calendário do OKR. Use pra "quando é a próxima reunião de X", "o que tem na agenda essa semana". Também devolve macro (plan/check/do/engajamento), situacao e plano_pai_id das ENTREGAS e os responsaveis (nomes). Filtros extras: tipo, macro, situacao, so_atrasadas (entregas abertas com prazo vencido, com dias_atraso), sem_responsavel.',
       input_schema: zodToJsonSchema(listarAgendaSchema),
       handler: mode === 'real' ? makeListarAgendaHandler({ db }) : fake('listar_agenda'),
     },
+    ...buildAgendaTools({ mode, db, requestingUid, dryRun, coletor, fake }),
     {
       name: 'ler_objetivo',
       description: 'Lê um Objetivo específico por id ou por título (busca aproximada) — torre, gerência, tags, todos os campos (Objetivo, Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação), a lista de Marcos com status/prazo, o % de progresso da barra (progresso_pct, e se vem do atingimento ou dos marcos) e o ATINGIMENTO (tipo, meta, valor atual, % e últimos registros; null se não tiver). Use antes de editar, pra saber o que já existe e não repetir conteúdo.',
@@ -1067,7 +1098,7 @@ function buildOkrTools(options = {}) {
       name: 'responder',
       description: 'Posta a resposta final pra pessoa, no mesmo chat. SEMPRE termine a conversa chamando esta ferramenta com um texto explicando o que foi feito (ou por que não deu, se faltou permissão/informação) — sem isso, sua resposta nunca chega até quem perguntou.',
       input_schema: zodToJsonSchema(responderSchema),
-      handler: mode === 'real' ? makeResponderHandler({ db, dryRun }) : fake('responder'),
+      handler: mode === 'real' ? makeResponderHandler({ db, dryRun, coletor }) : fake('responder'),
     },
   ];
 

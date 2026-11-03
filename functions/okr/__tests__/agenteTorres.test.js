@@ -217,5 +217,6 @@ test('listar_agenda é só leitura: nada muda no calendário, e o fake (mode:fak
   assert.equal(JSON.stringify((await db.ref('kanban/okr/calendario').get()).val()), antes);
   const f = buildOkrTools().find((t) => t.name === 'listar_agenda');
   assert.equal((await f.handler({ dias: 7 })).simulated, true);
-  assert.ok(!buildOkrTools().some((t) => /evento/.test(t.name) && t.name !== 'listar_agenda'), 'o agente não ganhou ferramenta de escrita de evento');
+  // desde 03/11/2026 o agente tem ferramentas de agenda, mas só PROPÕE (propor_*, a pessoa confirma no cartão) — nenhuma grava direto no calendário (ver agendaAgente.test.js)
+  assert.ok(!buildOkrTools().some((t) => /evento/.test(t.name) && t.name !== 'listar_agenda' && !/^propor_/.test(t.name)), 'o agente não ganhou ferramenta que GRAVA evento direto');
 });
