@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — ⏸ Revisão automática das PRs do Antigravity pausada (tarefa agendada desabilitada, não apagada) — 2026-11-03
+
+- Junto com o fim do plantão de férias: a tarefa agendada que acordava a sessão 'Revisor das PRs do Antigravity' (seg–sex, de 2 em 2 h) foi desabilitada. Nada foi apagado: id, horário e sessão ficam guardados; religar = pedir ao Claude ou reabilitar no claude.ai. Enquanto pausada, o Claude revisa à mão quando o Caio o chama e há PR do Antigravity aberta. Documentado em docs/COORDENACAO_AGENTES.md §4.1, CLAUDE.md, AGENTS.md e ecossistema.html.
+
 ### SÓ DEV — ⏸ Plantão de Bugs desligado no servidor — funções comentadas, código guardado (functions/index.js) — 2026-11-02
 
 - As 5 funções do plantão (`plantaoBugNovo`, `plantaoVigia`, `plantaoTravado`, `plantaoProximo`, `plantaoGithubWebhook`) ficam com o `exports` comentado em `functions/index.js`, como o `spotifySync`: o código e os testes continuam em `functions/plantao/`, mas deixam de ser publicadas — fim das chamadas agendadas (`plantaoTravado` a cada 10 min, `plantaoVigia` a cada 3 h) e dos jobs do Cloud Scheduler. Segredos `PLANTAO_*` mantidos.
