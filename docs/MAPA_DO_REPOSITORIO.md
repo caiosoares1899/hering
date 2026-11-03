@@ -109,16 +109,16 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.895 | `kanban-dev.html` v8.30.899-dev | `mare-login` v3 · `mare-notif` v39 · `mare-metas` v17 · `mare-dicas` v10 |
-| Painel | `painel.html` v5.86 · painel | `painel-dev.html` v5.86 · painel-dev | `mare-notif` v39 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v10 |
-| Radar | `okr.html` v2.96 · okr | `okr-dev.html` v2.103 · okr-dev | `mare-notif` v39 · `mare-dicas` v10 |
-| Oceano | `oceano.html` v1.59 · oceano | `oceano-dev.html` v1.59 · oceano-dev | `mare-login` v3 · `mare-notif` v39 · `mare-plantao` v4 · `mare-dicas` v10 · `mare-metas` v17 |
+| Maré Digital | `kanban.html` v8.30.895 | `kanban-dev.html` v8.30.900-dev | `mare-login` v3 · `mare-notif` v40 · `mare-metas` v17 · `mare-dicas` v10 |
+| Painel | `painel.html` v5.86 · painel | `painel-dev.html` v5.86 · painel-dev | `mare-notif` v40 · `mare-metas` v17 · `mare-plantao` v4 · `mare-dicas` v10 |
+| Radar | `okr.html` v2.96 · okr | `okr-dev.html` v2.103 · okr-dev | `mare-notif` v40 · `mare-dicas` v10 |
+| Oceano | `oceano.html` v1.59 · oceano | `oceano-dev.html` v1.59 · oceano-dev | `mare-login` v3 · `mare-notif` v40 · `mare-plantao` v4 · `mare-dicas` v10 · `mare-metas` v17 |
 | Escala | `escala.html` v1.10 · escala | `escala-dev.html` v1.10 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
-### Cloud Functions por pasta (33 exports em `functions/index.js`)
+### Cloud Functions por pasta (35 exports em `functions/index.js`)
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
@@ -126,6 +126,7 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `spotify/` | `spotifyOauthCallback` · `spotifyDisconnect` · `spotifySyncNow` · `spotifyPlayback` · `spotifyRadioOwnerCallback` · `spotifyRadioSearch` · `spotifyRadioSuggest` |
 | `backup/` | `weeklyBackup` · `backupCompletoSemanal` · `backupGlobalDiario` · `backupVigia` · `backupCompletoApi` |
 | `okr/` | `sendPushOnMural` · `okrDailyScan` · `okrWeeklySnapshot` · `okrAgenteChat` |
+| `cards/` | `cardsEspelhar` · `cardsGuardiao` |
 | `agente-agil/` | `agenteAgil` |
 | `comentarios/` | `contarComentarios` |
 | `firebase/` | `firebaseStatus` |
@@ -137,9 +138,9 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `timers/` | `timersVigia` |
 | `vtex/` | `vtexStatus` |
 
-### Nós de primeiro nível em `kanban/` nas regras do banco (38)
+### Nós de primeiro nível em `kanban/` nas regras do banco (39)
 
-`campanhas` · `campanhas_log` · `campanhas_log_dev` · `dados_diarios` · `dados_diarios_dev` · `comunicados` · `feedback` · `squads_meta` · `squads` · `metas_digital` · `metas_squads` · `metas_log` · `metas_digital_dev` · `metas_squads_dev` · `metas_log_dev` · `escala` · `painel` · `okr` · `travessia` · `plantao_status` · `plantao` · `timers_ativos` · `notif_feed` · `notif_feed_seen` · `vtex_saude` · `github_saude` · `firebase_saude` · `notif_config` · `painel_viewers` · `config` · `spotify_secrets` · `spotify_radio_owner_secret` · `oauth_pending` · `usuarios` · `usuarios_publicos` · `init_registry` · `presence` · `global`
+`campanhas` · `campanhas_log` · `campanhas_log_dev` · `dados_diarios` · `dados_diarios_dev` · `comunicados` · `feedback` · `squads_meta` · `squads` · `metas_digital` · `metas_squads` · `metas_log` · `metas_digital_dev` · `metas_squads_dev` · `metas_log_dev` · `escala` · `painel` · `okr` · `travessia` · `plantao_status` · `plantao` · `timers_ativos` · `cards_guardiao` · `notif_feed` · `notif_feed_seen` · `vtex_saude` · `github_saude` · `firebase_saude` · `notif_config` · `painel_viewers` · `config` · `spotify_secrets` · `spotify_radio_owner_secret` · `oauth_pending` · `usuarios` · `usuarios_publicos` · `init_registry` · `presence` · `global`
 
 _Nó novo no banco = regra nova em `database.rules.json` (+ teste em `functions/rules/__tests__/`) e, se for dado que importa, entrada em `NOS_GLOBAIS` de `functions/backup/completo.js`._
 <!-- mapa:auto:fim -->

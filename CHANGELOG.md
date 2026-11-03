@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Guardião dos cards: o servidor restaura sozinho o card que some + trava de tela velha (SÓ DEV) — kanban-dev v8.30.900, mare-notif v40, functions cardsEspelhar/cardsGuardiao — 2026-11-03
+
+Card sumido sem ninguém excluir é RESTAURADO pelo servidor em segundos (cópia de segurança de cada card em kanban/cards_espelho, sem acesso dos navegadores) e o episódio é registrado em kanban/cards_guardiao/{squad}. ADMs e POs da squad recebem a notificação 🛡️ (sino + push, tipo card_resgatado) e todo mundo com a squad aberta vê o aviso na tela.
+Freios: pausa declarada ao restaurar backup/importar, sumiço em massa (mais de 30 em 2 min) só alerta sem restaurar, o mesmo card restaurado 2x em 24 h para de ser restaurado, índice vazio não restaura.
+Trava de tela velha no Maré: aba parada por mais de 30 min ou sem internet por mais de 3 min bloqueia a tela e pede pra atualizar antes de continuar; offline por mais de 1 min recusa gravar card (a fila offline do Firebase despejava um save velho por cima do trabalho dos colegas) e avisa que não foi salvo.
+O alarme de card sumido passou a mostrar o título pelo id (antes acusava o título de outro card). Deploy: firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao,functions:sendPushOnNotification + firebase deploy --only database.
+Dica: não — é proteção que atua sozinha; a Ajuda (Indicador de conexão) foi atualizada.
+
 ### Maré — reordenar os checklists do card por arrastar (SÓ DEV) — kanban-dev v8.30.899 — 2026-11-03
 
 - Card com mais de um checklist ganha, em cada cabeçalho, uma alça ⠿ para arrastar o checklist inteiro pra cima ou pra baixo (itens e marcações vão juntos e a ordem é gravada no card pelo autosave).

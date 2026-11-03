@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_cobranca:'📦', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', travessia_apoio:'🫶', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -62,7 +62,7 @@
     {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
   ];
   // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
-  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_cobranca','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou','timer_criado','timer_zero','timer_esquecido','timer_encerrado']);
+  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_cobranca','card_resgatado','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou','timer_criado','timer_zero','timer_esquecido','timer_encerrado']);
   // fonte: 'pessoal' = notificação gravada na caixa de cada pessoa (kanban/usuarios/{uid}/notificacoes); 'feed' = evento único da torre (kanban/notif_feed).
   const TIPOS = [
     // ── Cards do board ──
@@ -116,6 +116,9 @@
       quando:'PO, Organizador ou ADM cadastra (ou limpa) a escala de trabalho/plantão/folga de OUTRA pessoa — uma notificação por cadastro, com o período e o tipo. Quem cadastra a própria escala não se avisa.',
       quem:'A pessoa dona da escala.', onde:'Escala (escala-dev.html → avisarPessoa()). Clicar abre a Escala na semana cadastrada.'},
     // ── Painel e sistema ──
+    {id:'card_resgatado', area:'board', fonte:'pessoal', nome:'Card restaurado pelo guardião', pushPossivel:true,
+      quando:'Um card SAIU do quadro sem ninguém ter excluído (gravação de uma aba velha/offline, por exemplo) e o guardião do servidor o restaurou da cópia de segurança em segundos — ou não conseguiu (sem cópia, sumiço em massa ou card que some de novo).',
+      quem:'Os ADMs e os POs da squad do card.', onde:'Servidor: cardsGuardiao (functions/cards/guardiao.js). Clicar abre o card (ou a squad). Todo mundo com a squad aberta também vê um aviso na tela.'},
     {id:'backup_falhou', area:'sistema', fonte:'pessoal', nome:'Backup com problema', pushPossivel:true,
       quando:'O vigia dos backups (todo dia 09:00, horário de Brasília) confere o RESULTADO no Cloud Storage e acha um problema: o backup completo diário de hoje não foi gerado ou teve erro, o completo semanal está velho (> 8 dias) ou com erro, ou o backup do quadro de algum squad está atrasado. No máximo 1 aviso por dia.',
       quem:'Os ADMs.', onde:'Servidor: backupVigia (functions/backup/vigia.js). Clicar abre o Painel; os detalhes estão no próprio aviso e no manifesto.json da pasta do backup no Storage.'},
