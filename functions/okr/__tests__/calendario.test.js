@@ -60,6 +60,12 @@ test('lembretes: padrão = véspera e dia; respeita o evento; lembrete só no di
   assert.equal(J(cal.lembretesDe({ tipo: 'reuniao', lembrar: { vespera: true, dia: false } })), J({ vespera: true, dia: false }));
   assert.equal(J(cal.lembretesDe({ tipo: 'lembrete' })), J({ vespera: false, dia: true }));
 });
+test('entrega: lembra véspera e dia enquanto aberta; entregue não lembra mais', () => {
+  assert.equal(J(cal.lembretesDe({ tipo: 'entrega', status: 'a_fazer' })), J({ vespera: true, dia: true }));
+  assert.equal(J(cal.lembretesDe({ tipo: 'entrega', status: 'andamento' })), J({ vespera: true, dia: true }));
+  assert.equal(J(cal.lembretesDe({ tipo: 'entrega', status: 'entregue' })), J({ vespera: false, dia: false }));
+  assert.equal(J(cal.lembretesDe({ tipo: 'reuniao', status: 'entregue' })), J({ vespera: true, dia: true }), 'só entrega é afetada');
+});
 
 // ── gatilho 3 do dailyScan ──
 const HOJE = todaySP();
