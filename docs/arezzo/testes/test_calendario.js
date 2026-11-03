@@ -17,7 +17,7 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
  // ─── modo só Hering
  { const {ctx,p,errs}=await open(U('ana','Ana ADM'));
    let l=await leg(p); console.log('   legenda:',JSON.stringify(l.map(x=>x.t)));
-   t('legenda tem 4 chips (Reunião, Evento, Lembrete, Prazo de Marco) com contagem do mês', l.length===4 && l.map(x=>x.t).join('|')===`🗓️ Reunião 2|📌 Evento 1|🔔 Lembrete 2|◆ Prazo de Marco 1`, l.map(x=>x.t));
+   t('legenda tem 5 chips (Reunião, Entrega, Evento, Lembrete, Prazo de Marco) com contagem do mês', l.length===5 && l.map(x=>x.t).join('|')===`🗓️ Reunião 2|📦 Entrega 0|📌 Evento 1|🔔 Lembrete 2|◆ Prazo de Marco 1`, l.map(x=>x.t));
    t('Comercial/Corporativa fora (evento e prazo de Marco)', !/Reunião da Comercial|Contrato \(Comercial\)/.test(await p.evaluate(()=>document.getElementById('okr-cal-root').innerText)), '');
    const txt=await p.evaluate(()=>document.getElementById('okr-cal-root').innerText);
    t('sem resquício de torre/agenda/Arezzo na barra do calendário', !/agenda global|todas as agendas|Agenda Digital|todas as torres|torre|arezzo|microsoft/i.test(txt) && !(await p.evaluate(()=>{ const s=document.querySelector('#okr-cal-root select[aria-label=Torre]'); return s&&getComputedStyle(s).display!=='none'; })), txt.slice(0,300));
@@ -27,10 +27,10 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
    t('clicar em 🗓️ Reunião esconde as reuniões (chip fica riscado, aria-pressed=false, contagem preservada) e aparece "Mostrar todos"', l[0].off && l[0].pr==='false' && /Reunião 2/.test(l[0].t) && !!(await p.$('.okr-cal-lg-reset')), l);
    const chips=await p.evaluate(()=>[...document.querySelectorAll('.okr-cal-chip')].map(c=>c.innerText.trim()));
    t('no mês: só aparecem eventos/lembretes/prazos (nenhuma reunião)', chips.length>0 && !chips.some(c=>/Check-in global|Reunião Digital/.test(c)), chips);
-   await p.click('.okr-cal-lg:nth-child(4)'); await p.waitForTimeout(150); const chips2=await p.evaluate(()=>[...document.querySelectorAll('.okr-cal-chip')].map(c=>c.innerText.trim())); t('esconder também ◆ Prazo tira o prazo do Marco', !chips2.some(c=>/Regras aprovadas/.test(c)), chips2);
+   await p.click('.okr-cal-lg:nth-child(5)'); await p.waitForTimeout(150); const chips2=await p.evaluate(()=>[...document.querySelectorAll('.okr-cal-chip')].map(c=>c.innerText.trim())); t('esconder também ◆ Prazo tira o prazo do Marco', !chips2.some(c=>/Regras aprovadas/.test(c)), chips2);
    await p.click('.okr-cal-lg-reset'); await p.waitForTimeout(150); l=await leg(p); t('"Mostrar todos" religa tudo', l.every(x=>!x.off) && !(await p.$('.okr-cal-lg-reset')), l);
    // vista Agenda também filtra, e a legenda acompanha
-   await p.evaluate(()=>_okrCalSetVista('agenda')); await p.waitForTimeout(200); await p.click('.okr-cal-lg:nth-child(3)'); await p.waitForTimeout(150);
+   await p.evaluate(()=>_okrCalSetVista('agenda')); await p.waitForTimeout(200); await p.click('.okr-cal-lg:nth-child(4)'); await p.waitForTimeout(150);
    const ag=await p.evaluate(()=>[...document.querySelectorAll('.okr-cal-item .tt')].map(x=>x.innerText.trim())); t('vista Agenda: esconder 🔔 Lembrete tira os lembretes', !ag.some(x=>/Fechar mês|Lembrete 2/.test(x)) && ag.some(x=>/Check-in global/.test(x)), ag);
    // detalhe e editor: sem resquício
    await p.evaluate(()=>{ _okrCalMostrarTodos(); openOkrEvento('e1', todaySPStr()); }); await p.waitForTimeout(300);
@@ -46,8 +46,8 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
    const msg=await p.evaluate(()=>_okrCalOrgTxt()); t('aviso de permissão não fala de "organizador da torre"', !/torre/.test(msg), msg); t('PO sem erro de JS', !errs.length, errs); await ctx.close(); }
  // ─── 3 torres (interruptor desligado): tudo como era + legenda funciona
  { const {ctx,p,errs}=await open(U('ana','Ana ADM'),{hering:false}); const sel=await p.evaluate(()=>{ const s=document.querySelector('#okr-cal-root select[aria-label=Torre]'); return s&&getComputedStyle(s).display!=='none'; }); const l=await leg(p);
-   t('3 torres: seletor de agenda continua aparecendo', !!sel, sel); t('3 torres: legenda por tipo funciona igual', l.length===4, l);
+   t('3 torres: seletor de agenda continua aparecendo', !!sel, sel); t('3 torres: legenda por tipo funciona igual', l.length===5, l);
    await p.click('.okr-cal-lg:nth-child(1)'); await p.waitForTimeout(150); t('3 torres: esconder Reunião', (await leg(p))[0].off, ''); t('3 torres sem erro de JS', !errs.length, errs); await ctx.close(); }
  // ─── deep link do sino/link reabre tudo
- { const {ctx,p}=await open(U('ana','Ana ADM')); await p.click('.okr-cal-lg:nth-child(2)'); await p.evaluate(()=>_okrAbrirEvento('e3', todaySPStr())); await p.waitForTimeout(400); const l=await leg(p); t('abrir um evento pelo sino/link religa os tipos (o evento tem que aparecer na lista por baixo)', l.every(x=>!x.off), l); await ctx.close(); }
+ { const {ctx,p}=await open(U('ana','Ana ADM')); await p.click('.okr-cal-lg:nth-child(3)'); await p.evaluate(()=>_okrAbrirEvento('e3', todaySPStr())); await p.waitForTimeout(400); const l=await leg(p); t('abrir um evento pelo sino/link religa os tipos (o evento tem que aparecer na lista por baixo)', l.every(x=>!x.off), l); await ctx.close(); }
  await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();

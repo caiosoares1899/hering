@@ -3,7 +3,7 @@
 // 📅 Calendário do OKR — parte PURA usada pelo dailyScan (lembretes de véspera e do dia). Espelha, em Node, a lógica que o cliente tem em okr-dev.html
 // (`_okrCalOcorrencia`/`_okrCalRecNorm`/`_okrCalOcorrencias`/`_okrCalAbrange`) — mude uma, mude a outra (os casos de teste são os mesmos).
 //
-// Evento: kanban/okr/calendario/eventos/{id} = {id, titulo, tipo:'reuniao'|'evento'|'lembrete', data:'YYYY-MM-DD', diaInteiro, hi, hf, torre:''|torreId,
+// Evento: kanban/okr/calendario/eventos/{id} = {id, titulo, tipo:'reuniao'|'evento'|'lembrete'|'entrega', data:'YYYY-MM-DD', diaInteiro, hi, hf, torre:''|torreId,
 //   areaIds:[], objetivoIds:[], local, link, descricao, rec:null|{tipo, unidade:'dia'|'semana'|'mes'|'ano', intervalo, ate}, excecoes:{'YYYY-MM-DD':true},
 //   lembrar:{vespera:bool, dia:bool}}. torre '' = agenda GLOBAL (todas as torres); torre preenchida = agenda LOCAL da torre.
 
@@ -74,6 +74,7 @@ function convidadosDe(ev) { return lista(ev && ev.convidados); }
 
 // Quais lembretes o evento quer (sem o campo = véspera e dia; lembrete só no dia).
 function lembretesDe(ev) {
+  if (ev && ev.tipo === 'entrega' && ev.status === 'entregue') return { vespera: false, dia: false };   // entrega concluída não lembra mais (calendário de gestão, 2026-11-03)
   const l = ev && ev.lembrar && typeof ev.lembrar === 'object' ? ev.lembrar : {};
   const vespera = l.vespera !== undefined ? !!l.vespera : true, dia = l.dia !== undefined ? !!l.dia : true;
   return { vespera: ev && ev.tipo === 'lembrete' ? false : vespera, dia };
