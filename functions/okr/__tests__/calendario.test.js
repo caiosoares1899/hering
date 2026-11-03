@@ -188,14 +188,13 @@ test('migração: um evento qualquer do calendário (sem origem) NÃO desliga o 
   const a = await todasNotifs(db, 'ana'); assert.equal(a.length, 1); assert.match(a[0].title, /é amanhã/);
 });
 
-test('scan: 📦 entrega amanhã → "Prazo amanhã", "Você é responsável por esta entrega" (não "convidado"), só pro responsável; entregue não avisa', async () => {
+test('scan: 📦 entrega NÃO sai pelo gatilho do calendário (okr_reuniao) — véspera/dia/atraso das entregas são da cobrança (dias úteis, 1 aviso por pessoa, okr_cobranca)', async () => {
   const db = seed({
     p1: { id: 'p1', titulo: 'Plano Comercial — 1º tri', tipo: 'entrega', status: 'a_fazer', data: addDias(1), torre: 'digital', diaInteiro: true, convidados: ['bia'] },
-    p2: { id: 'p2', titulo: 'Plano de Mídia', tipo: 'entrega', status: 'entregue', data: addDias(1), torre: 'digital', diaInteiro: true, convidados: ['bia'] },
+    r1: { id: 'r1', titulo: 'Reunião normal', tipo: 'reuniao', data: addDias(1), torre: 'digital', hi: '10:00', convidados: ['bia'] },
   });
   await runOkrDailyScan(db);
   const n = await notifsDe(db, 'bia');
-  assert.equal(n.length, 1, 'só a entrega aberta avisa');
-  assert.match(n[0].title, /^📦 Prazo amanhã: Plano Comercial/); assert.match(n[0].sub, /Você é responsável por esta entrega/); assert.doesNotMatch(n[0].sub, /convidado/);
-  assert.equal(n[0].type, 'okr_reuniao');
+  assert.ok(!n.some((x) => x.type === 'okr_reuniao' && /Plano Comercial/.test(x.title)), 'a entrega não aparece no gatilho 3 como okr_reuniao');
+  assert.ok(n.some((x) => /Reunião normal/.test(x.title)), 'e a reunião continua avisando');
 });

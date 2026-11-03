@@ -204,6 +204,7 @@ async function avisaEventosDoCalendario(db, eventos, objetivos, hoje, amanhaStr)
   for (const evId of Object.keys(eventos)) {
     const ev0 = eventos[evId];
     if (!ev0 || !ev0.data) continue;
+    if (ev0.tipo === 'entrega') continue;   // 📦 entrega: véspera, dia, preventivo e atraso saem de functions/okr/cobranca.js (dias úteis, 1 aviso por pessoa, tipo okr_cobranca)
     const ev = { ...ev0, id: ev0.id || evId };
     const lem = cal.lembretesDe(ev);
     const janelas = [];
@@ -220,10 +221,8 @@ async function avisaEventosDoCalendario(db, eventos, objetivos, hoje, amanhaStr)
         try {
           const objs = alvos[uid].filter(Boolean);
           const pauta = objs.length ? 'Na pauta: ' + objs.slice(0, 2).join(' · ') + (objs.length > 2 ? ` +${objs.length - 2}` : '') : '';
-          const entrega = ev.tipo === 'entrega';   // 📦 entrega: o aviso é do PRAZO e quem recebe é o responsável (não "convidado")
-          const sub = [entrega ? '' : cal.horaTxt(ev), cal.agendaNome(ev), ev.local || '', convidados.has(uid) ? (entrega ? 'Você é responsável por esta entrega' : 'Você está convidado(a)') : '', pauta].filter(Boolean).join(' · ');
-          const titulo = entrega ? `📦 Prazo ${j.quando.toLowerCase()}: ${ev.titulo || 'Entrega'}` : `🗓️ ${j.quando}: ${ev.titulo || 'Evento do OKR'}`;
-          await writeNotif(db, uid, 'okr_reuniao', titulo, sub, null, { okrEventoId: ev.id, okrEventoData: j.data });
+          const sub = [cal.horaTxt(ev), cal.agendaNome(ev), ev.local || '', convidados.has(uid) ? 'Você está convidado(a)' : '', pauta].filter(Boolean).join(' · ');
+          await writeNotif(db, uid, 'okr_reuniao', `🗓️ ${j.quando}: ${ev.titulo || 'Evento do OKR'}`, sub, null, { okrEventoId: ev.id, okrEventoData: j.data });
         } catch (e) { console.error('[okrDailyScan] calendário falhou:', evId, uid, e); }
       }
     }

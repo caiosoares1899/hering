@@ -159,7 +159,7 @@
       quando:'Convite, mudança ou cancelamento de reunião no calendário do Radar; e véspera e dia da reunião (7h).', quem:'Convidados e responsáveis dos Objetivos da pauta.',
       onde:'Radar: salvar evento do calendário. Servidor: okrDailyScan.'},
     {id:'okr_cobranca', area:'radar', fonte:'pessoal', nome:'Cobrança de entregas da gestão (Radar)',
-      quando:'Entrega do calendário de gestão perto do prazo (2–3 dias) ou atrasada (1–2 dias; 3+ dias escala; toda segunda enquanto atrasar) e o resumo semanal da gestão (segunda). Uma notificação por pessoa por dia, nunca em fim de semana.',
+      quando:'Entrega do calendário de gestão perto do prazo (2–3 dias úteis antes, a véspera e o dia) ou atrasada (1–2 dias úteis; 3+ escala; toda segunda enquanto atrasar) e o resumo semanal da gestão (segunda). Uma notificação por pessoa por dia, nunca em fim de semana.',
       quem:'Responsáveis da entrega; atraso de 3+ dias também vai pros gestores (lista em Radar ou, sem lista, os ADMs) e pra quem criou a entrega; o resumo da segunda vai só pros gestores.',
       onde:'Servidor: okrDailyScan → functions/okr/cobranca.js (carimbos em kanban/okr/cobrancas_log).'},
     {id:'okr_agente', area:'radar', fonte:'pessoal', nome:'Agente Ágil respondeu (Radar)',

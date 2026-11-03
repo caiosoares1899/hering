@@ -3,11 +3,15 @@
 // 📦 Cobrança automática das ENTREGAS do calendário de gestão do Digital (2026-11-03). Roda dentro do okrDailyScan (todo dia às 7h, horário de Brasília) — sem IA:
 // é por data, previsível, e não inventa prazo nem pessoa. Quem é cobrado = os `convidados` da entrega (na tela, "Responsáveis").
 //
-// Régua (por entrega ABERTA, isto é, status diferente de "entregue"; entrega com filhas não é cobrada — as filhas são):
-//   • preventivo  — faltam 2 ou 3 dias (a véspera e o dia já são os lembretes de sempre, calendario.js/lembretesDe)  → os responsáveis
-//   • atraso-1    — passou 1 ou 2 dias do prazo                                                                     → os responsáveis
-//   • atraso-3    — passou 3 dias ou mais (1x)                                                                      → os responsáveis + ESCALONAMENTO
-//   • semanal     — toda segunda, enquanto seguir atrasada (depois do atraso-3)                                     → os responsáveis
+// Régua (por entrega ABERTA, isto é, status diferente de "entregue"; entrega com filhas não é cobrada — as filhas são). Conta em DIAS ÚTEIS (sábado e domingo não contam:
+// o scan não roda neles, e contar em dias corridos fazia o prazo de sexta pular o "atrasou 1 dia" e escalar na segunda, e o prazo de terça nunca receber o preventivo):
+//   • preventivo  — faltam 2 ou 3 dias úteis                                                                        → os responsáveis
+//   • véspera     — falta 1 dia útil (prazo de segunda avisa na sexta)  — respeita `lembrar.vespera` do evento     → os responsáveis
+//   • dia         — vence hoje (prazo em fim de semana avisa na sexta)  — respeita `lembrar.dia` do evento         → os responsáveis
+//   • atraso-1    — passou 1 ou 2 dias úteis do prazo                                                              → os responsáveis
+//   • atraso-3    — passou 3 dias úteis ou mais (1x)                                                               → os responsáveis + ESCALONAMENTO
+//   • semanal     — toda segunda, enquanto seguir atrasada (depois do atraso-3)                                    → os responsáveis
+// (Véspera e dia das ENTREGAS saem DAQUI, não do gatilho 3 do dailyScan: lá não tinha o fim de semana, o agrupamento por pessoa nem o tipo okr_cobranca.)
 // Escalonamento (atraso-3) = quem está em kanban/okr/cobranca_config/gestores (a tela do Radar grava) — sem a lista, os ADMs — + quem criou a entrega.
 // Resumo da segunda: 1 aviso pros gestores (atrasadas · vencem na semana · sem responsável).
 // Anti-spam: 1 notificação por pessoa por dia (várias entregas viram um resumo), nada em sábado/domingo, e cada aviso fica carimbado em
@@ -30,18 +34,34 @@ function semanaIso(ds) {
   return ano + '-W' + String(Math.ceil(((d - ini) / 86400000 + 1) / 7)).padStart(2, '0');
 }
 
-// Quais estágios a entrega pede HOJE (antes de olhar os carimbos). `dias` = dias até o prazo (negativo = atrasada).
-function estagiosDe(dias, hoje) {
+// Dias ÚTEIS entre `hoje` e `alvo` (YYYY-MM-DD): quantos dias de semana há depois de `hoje` até `alvo` (positivo), ou, se `alvo` já passou, quantos dias de semana
+// há depois do prazo até hoje (negativo). Mesmo dia = 0. Prazo em sábado/domingo conta como se fosse a sexta antes (0 a partir da sexta).
+function diasUteisAte(hoje, alvo) {
+  const h = String(hoje).slice(0, 10), a = String(alvo).slice(0, 10);
+  if (h === a) return 0;
+  const [de, ate, sinal] = a > h ? [h, a, 1] : [a, h, -1];
+  let n = 0;
+  const d = new Date(de + 'T12:00:00Z'), fim = new Date(ate + 'T12:00:00Z');
+  for (d.setUTCDate(d.getUTCDate() + 1); d <= fim; d.setUTCDate(d.getUTCDate() + 1)) { const w = d.getUTCDay(); if (w !== 0 && w !== 6) n++; }
+  return sinal * n;
+}
+
+// Quais estágios a entrega pede HOJE (antes de olhar os carimbos). `du` = dias úteis até o prazo (negativo = atrasada), `dias` = dias corridos, `lem` = lembretesDe(ev).
+function estagiosDe(du, dias, hoje, lem) {
+  const l = lem || { vespera: true, dia: true };
   const out = [];
-  if (dias === 2 || dias === 3) out.push('preventivo');
-  if (dias <= -1 && dias >= -2) out.push('atraso-1');
-  if (dias <= -3) out.push('atraso-3');
-  if (dias <= -3 && diaDaSemana(hoje) === 1) out.push('semanal-' + semanaIso(hoje));
+  if (du === 2 || du === 3) out.push('preventivo');
+  if (l.vespera && du === 1 && dias >= 1) out.push('vespera');
+  if (l.dia && (dias === 0 || (du === 0 && dias > 0))) out.push('dia');
+  if (du <= -1 && du >= -2) out.push('atraso-1');
+  if (du <= -3) out.push('atraso-3');
+  if (du <= -3 && diaDaSemana(hoje) === 1) out.push('semanal-' + semanaIso(hoje));
   return out;
 }
 
 const lista = cal.lista;
-const rotuloDias = (d) => (d < 0 ? `${-d} dia${d === -1 ? '' : 's'} de atraso` : `prazo em ${d} dias`);
+const rotuloDias = (d) => (d < 0 ? `${-d} dia${d === -1 ? '' : 's'} de atraso` : d === 0 ? 'vence hoje' : d === 1 ? 'vence amanhã' : `prazo em ${d} dias`);
+const quandoTxt = (d) => (d === 0 ? 'hoje' : d === 1 ? 'amanhã' : `em ${d} dias`);
 
 // Quem recebe o escalonamento e o resumo: a lista configurada (uids); sem lista, os ADMs (e-mails de kanban/config/adm_emails casados com usuarios_publicos).
 async function gestoresDe(db, defaultAdmEmails) {
@@ -83,7 +103,8 @@ async function runCobrancaEntregas(ctx) {
     const dias = diasAte(ev.data); if (dias === null) continue;
     const resp = lista(ev.convidados);
     if (!resp.length) { semDono.push({ ev, dias }); continue; }
-    let estagios = estagiosDe(dias, hoje);
+    const du = diasUteisAte(hoje, ev.data);
+    let estagios = estagiosDe(du, dias, hoje, cal.lembretesDe(ev));
     // semanal e atraso-3 no mesmo dia (atraso-3 ainda não avisado): só o atraso-3 avisa (ele já escala)
     if (estagios.includes('atraso-3') && !carimbada(ev, 'atraso-3')) estagios = estagios.filter((e) => !e.startsWith('semanal'));
     const finais = estagios.filter((est) => !carimbada(ev, est));
@@ -102,7 +123,7 @@ async function runCobrancaEntregas(ctx) {
     const um = topo[0];
     const title = atras.length
       ? (atras.length === 1 ? `📦 Entrega atrasada: ${um.ev.titulo}` : `📦 Você tem ${atras.length} entregas atrasadas`)
-      : (venc.length === 1 ? `📦 Vence em ${um.dias} dias: ${um.ev.titulo}` : `📦 Você tem ${venc.length} entregas vencendo em até 3 dias`);
+      : (venc.length === 1 ? `📦 Vence ${quandoTxt(um.dias)}: ${um.ev.titulo}` : `📦 Você tem ${venc.length} entregas vencendo agora`);
     const linhas = topo.slice(0, 3).map((i) => `${i.ev.titulo} (${rotuloDias(i.dias)})`);
     const sub = linhas.join(' · ') + (itens.length > 3 ? ` · +${itens.length - 3}` : '') + (atras.length && venc.length ? ` · e ${venc.length} vencendo em breve` : '');
     try {
@@ -156,4 +177,4 @@ async function runCobrancaEntregas(ctx) {
   return res;
 }
 
-module.exports = { runCobrancaEntregas, estagiosDe, semanaIso, diaDaSemana, gestoresDe, TIPO, LOG, CFG };
+module.exports = { runCobrancaEntregas, estagiosDe, diasUteisAte, semanaIso, diaDaSemana, gestoresDe, TIPO, LOG, CFG };

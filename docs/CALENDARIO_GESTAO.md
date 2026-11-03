@@ -76,24 +76,25 @@ Gera **de uma vez e sem duplicar** (id fixo `cad_<chave>`; aplicar de novo não 
 - no **3º trimestre**, também os 5 planos anuais: Estratégia de Crescimento, Planejamento Estratégico Anual, Plano Financeiro (pai) com Orçamento de Vendas e de Despesas;
 - **fixos (uma vez, repetem):** Reunião de Resultados do E-commerce (semanal) e lembrete do Pulso dos Times / Travessia (mensal).
 
-Prazo dos planos: **15 dias antes do início do trimestre**, em dia útil (os anuais, no fim do 3º tri). **Tudo nasce provisório** (dia inteiro, sem responsável): o ADM ajusta datas e escolhe os responsáveis. **Showroom e Lançamento das Coleções ficam de fora** — a data é de cada coleção; cadastre como **Entrega, macro DO**, com os responsáveis. "Iniciativas do Digital" **não** é gerada: é o bloco quinzenal (banner "📥 Importar bloco quinzenal").
+Prazo dos planos: **15 dias antes do início do trimestre**, em dia útil (os anuais, no fim do 3º tri). **Tudo nasce provisório** (dia inteiro, sem responsável): o ADM ajusta datas e escolhe os responsáveis. **As reuniões (All Hands, Resultados) e o lembrete nascem com os lembretes DESLIGADOS**: uma reunião sem recorte cobre a torre inteira e, com o banco compartilhado entre dev e produção, um lembrete ligado avisaria todos os donos de OKR do Digital de uma data chutada. Ligue em ✏️ Editar → 🔔 Avisos depois de confirmar data e participantes. **Showroom e Lançamento das Coleções ficam de fora** — a data é de cada coleção; cadastre como **Entrega, macro DO**, com os responsáveis. "Iniciativas do Digital" **não** é gerada: é o bloco quinzenal (banner "📥 Importar bloco quinzenal").
 
 ## 4. 🔔 Cobrança automática (`functions/okr/cobranca.js`)
 
-Roda **dentro do `okrDailyScan`** (todo dia às 7h, Brasília) — **sem IA**, por data: previsível, não inventa prazo nem pessoa. Alvo da cobrança = os **responsáveis (`convidados`)** da entrega **aberta**; **plano pai com filhas não é cobrado** (as filhas são); entrega **sem responsável** não tem a quem cobrar e aparece só no resumo.
+Roda **dentro do `okrDailyScan`** (todo dia às 7h, Brasília) — **sem IA**, por data: previsível, não inventa prazo nem pessoa. **A contagem é em DIAS ÚTEIS** (sábado e domingo não contam; revisão do Antigravity, 03/11): em dias corridos, o prazo de sexta pulava o "atrasou 1 dia" e escalava na segunda, e o prazo de terça nunca recebia o preventivo. Alvo da cobrança = os **responsáveis (`convidados`)** da entrega **aberta**; **plano pai com filhas não é cobrado** (as filhas são); entrega **sem responsável** não tem a quem cobrar e aparece só no resumo.
 
 | Estágio | Quando | Quem recebe |
 |---|---|---|
-| preventivo | faltam 2 ou 3 dias | responsáveis |
-| atraso-1 | 1 ou 2 dias depois do prazo | responsáveis |
-| atraso-3 | 3 dias ou mais (1×) | responsáveis **+ escalonamento**: gestores e quem criou a entrega |
+| preventivo | faltam 2 ou 3 **dias úteis** | responsáveis |
+| véspera | falta 1 dia útil (prazo de segunda avisa na **sexta**, nunca no domingo); respeita `lembrar.vespera` | responsáveis |
+| dia | vence hoje (prazo em fim de semana avisa na sexta); respeita `lembrar.dia` | responsáveis |
+| atraso-1 | 1 ou 2 dias úteis depois do prazo | responsáveis |
+| atraso-3 | 3 dias úteis ou mais (1×) | responsáveis **+ escalonamento**: gestores e quem criou a entrega |
 | semanal | toda **segunda**, enquanto atrasada (depois do atraso-3) | responsáveis |
-| véspera e dia | (já existiam — `lembretesDe`) | responsáveis |
 | **resumo da gestão** | toda segunda | só os **gestores**: *N atrasadas · M vencem esta semana · K sem responsável* |
 
 **Gestores** = `kanban/okr/cobranca_config/gestores` (mapa `{uid:true}`); **sem lista, os ADMs** (e-mails de `kanban/config/adm_emails`, com o padrão do código — **Caio e Rafael**). Hoje **não há tela** para editar a lista (só ADM escreve esse nó, regra do banco).
 
-**Anti-spam:** 1 notificação **por pessoa por dia** (várias entregas viram um resumo); **nada em sábado/domingo**; **entregue encerra**; cada aviso é **carimbado** em `kanban/okr/cobrancas_log/{eventoId}/{estágio}` com a **data do prazo** (mudou o prazo, a régua recomeça; o mesmo aviso nunca sai 2×; carimbo de entrega apagada é limpo). Tipo da notificação: **`okr_cobranca`** (sino + push; o ADM liga/desliga na 🔔 Central de Notificações do Painel). O aviso de **entrega** usa texto próprio: "📦 Prazo amanhã: …" / "Você é responsável por esta entrega".
+**Anti-spam:** 1 notificação **por pessoa por dia** (várias entregas viram um resumo); **nada em sábado/domingo**; **entregue encerra**; cada aviso é **carimbado** em `kanban/okr/cobrancas_log/{eventoId}/{estágio}` com a **data do prazo** (mudou o prazo, a régua recomeça; o mesmo aviso nunca sai 2×; carimbo de entrega apagada é limpo). Tipo da notificação: **`okr_cobranca`** (sino + push; o ADM liga/desliga na 🔔 Central de Notificações do Painel). **Véspera e dia das entregas saem daqui** (e não do gatilho 3 do `dailyScan`, que ignora `tipo:'entrega'`): assim valem fim de semana, 1 notificação por pessoa e o tipo `okr_cobranca` (desligar esse tipo na Central desliga todos os avisos de entrega). Textos: "📦 Vence amanhã/hoje: …", "📦 Entrega atrasada: …".
 
 ## 5. 🗓️ Subagente de agenda (`functions/okr/agendaAgente.js`)
 
@@ -140,8 +141,8 @@ O **Agente Ágil do Radar** (chat do botão 🤖, função `okrAgenteChat`) ganh
 | O quê | Comando (no Mac, `cd ~/hering && git pull`, projeto `hering-onboarding`) | Estado |
 |---|---|---|
 | Regras (`cobranca_config`, `cobrancas_log`, `agenda_propostas`) | `firebase deploy --only database --project hering-onboarding` | informado como feito em 03/11 |
-| Cobrança + aviso de entrega | `firebase deploy --only functions:okrDailyScan,functions:sendPushOnNotification --project hering-onboarding` | feito (confirmado após a #1577) |
-| Subagente | `firebase deploy --only functions:okrAgenteChat --project hering-onboarding` | informado como feito em 03/11 — **confirmar** |
+| Cobrança + véspera/dia/atraso das entregas (dias úteis) | `firebase deploy --only functions:okrDailyScan,functions:sendPushOnNotification --project hering-onboarding` | #1577 feito; **a correção de dias úteis precisa de novo deploy de `okrDailyScan`** |
+| Subagente (e o aviso de filhas no cartão de exclusão) | `firebase deploy --only functions:okrAgenteChat --project hering-onboarding` | informado como feito em 03/11 — **confirmar; refazer após a correção de dias úteis** |
 
 **Promoção para produção (pendente):** `okr.html` + `mare-notif.js` (`?v=38` em kanban/painel/okr/oceano) via `/subirproprod` (as páginas dev à frente de prod hoje: Radar v2.102, Maré dev, Painel, Oceano). Como o agente **lê a Ajuda de produção**, a promoção também **regenera o conhecimento** (`cd functions && npm run conhecimento`) e **republica as funções do agente** (`agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO`, `okrAgenteChat`). Avisos (Mural/WhatsApp): decidir na promoção.
 
@@ -166,5 +167,6 @@ O **Agente Ágil do Radar** (chat do botão 🤖, função `okrAgenteChat`) ganh
 ## 12. Histórico de decisões e revisões
 
 - **03/11/2026** — pedido do Rafael → desenho no Radar; rascunho transcrito; respostas do Caio (seção 2); **revisão do Antigravity** apontou 4 achados reais, todos corrigidos na #1576: plano pai "Atrasada" com 7/7 filhas entregues, filhas órfãs ao excluir o pai, texto de aviso de entrega ("convidado" → "responsável"), `update` atômico do status. Apontou também (não implementado): regras do banco abertas e uso de agenda compartilhada do Google.
+- **2ª rodada do Antigravity (03/11, leitura do código):** 4 riscos reais, todos corrigidos — (1) contagem em dias corridos × fim de semana pulado (sexta escalava na segunda; terça sem preventivo) → **dias úteis**; (2) reuniões da Cadência avisariam a torre inteira com data provisória → **lembretes desligados**; (3) véspera/dia das entregas saíam do gatilho 3 (domingo, sem agrupar, tipo `okr_reuniao`, pai com responsável) → **movidos para `cobranca.js`**; (4) cartão de exclusão de plano não avisava que as filhas ficam avulsas → **aviso no cartão**.
 - Erros factuais do relatório do Antigravity (conferidos no código, **não** vale seguir): o agente do Radar usa **Claude** (não Gemini); `okr_users`, `kanban/painel/config/admins` e o deep link `?cal=` **não existem**.
 - Registro técnico: `CHANGELOG.md` (4 entradas "SÓ DEV" de 03/11/2026) e `BUGS_E_CORRECOES.md` (achados pós-revisão).

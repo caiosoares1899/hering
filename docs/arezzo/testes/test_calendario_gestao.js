@@ -23,6 +23,9 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
    const n1=await p.evaluate(()=>Object.values(okrEventos).filter(e=>e.cadencia).length); t('criou os 10 do trimestre + 2 fixos = 12 itens', n1===12, n1);
    const pais=await p.evaluate(()=>{ const tat=Object.values(okrEventos).find(e=>/^cad_\d+q\d_tatico$/.test(e.id)); const cp=Object.values(okrEventos).find(e=>/_compras$/.test(e.id)); return {tat:_okrCalFilhos(tat.id).length, cp:_okrCalFilhos(cp.id).length, macro:tat.macro, st:tat.status, tipo:tat.tipo, rec:Object.values(okrEventos).filter(e=>e.rec).map(e=>e.rec.tipo).sort()}; });
    t('Plano Tático tem 7 filhos, Plano de Compras é uma entrega só (uma coleção); macro PLAN, status a_fazer; recorrências semanal/mensal', pais.tat===7 && pais.cp===0 && pais.macro==='plan' && pais.st==='a_fazer' && pais.rec.join()==='mensal,semanal', pais);
+   // reuniões geradas (data provisória, sem participantes) nascem com os lembretes DESLIGADOS — reunião sem recorte cobre a torre inteira
+   const lem=await p.evaluate(()=>Object.values(okrEventos).filter(e=>e.cadencia).map(e=>({tipo:e.tipo,v:e.lembrar&&e.lembrar.vespera,d:e.lembrar&&e.lembrar.dia})));
+   t('reuniões e lembrete da cadência nascem com lembretes DESLIGADOS; entregas com véspera e dia ligados', lem.filter(x=>x.tipo!=='entrega').every(x=>x.v===false&&x.d===false) && lem.filter(x=>x.tipo==='entrega').every(x=>x.v===true&&x.d===true), lem);
    // idempotente
    await p.evaluate(()=>{ window.__cad=_okrCadenciaAbrir(); }); await p.waitForTimeout(300); await p.evaluate(()=>document.querySelector('div[style*="z-index: 9999"] button[data-i="0"]').click()); await p.waitForTimeout(800);
    t('aplicar de novo não duplica', (await p.evaluate(()=>Object.values(okrEventos).filter(e=>e.cadencia).length))===12, '');
