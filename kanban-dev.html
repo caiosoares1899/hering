@@ -6627,7 +6627,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.896-dev</div>
+<div class="version">v8.30.897-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7048,6 +7048,11 @@ function _loginProviderMismatchMsg(user){
 // Deslogado em Maré/Painel → Oceano (?next=<esta página, com query/hash>) → login + cadastro → volta pra cá. Devolve true se mandou embora.
 // NÃO manda: dentro do host do Oceano (iframe), com ?login=local (convidado externo/visualizador — o Oceano é só @ciahering; a escolha
 // vale pela aba), com recusa/aviso já escrito (ou guardado em login_notice) na tela de login (a pessoa precisa ler), ou se já mandou há menos de 45 s (anti-loop).
+// Convidado externo (?login=local): a escolha vale pela ABA inteira. Antes só era guardada quando a pessoa chegava deslogada — quem entrava já logada
+// (ex.: com a sessão do Oceano) não guardava nada, e o cadastro guiado manda pra ?squad=X SEM o ?login=local; qualquer deslogada ali (sessão que
+// caiu, F5 antes do Firebase restaurar) era empurrada de volta pro Oceano, que mandava de novo pro Maré: o looping do convidado.
+try{ if(new URLSearchParams(location.search).get('login')==='local') sessionStorage.setItem('mare_login_local','1'); }catch(e){}
+function _mantemLocal(){ try{ return sessionStorage.getItem('mare_login_local')==='1' ? '&login=local' : ''; }catch(e){ return ''; } }
 function _irParaOceano(){
   try{
     if(window.MARE_LOGIN_PELO_OCEANO===false) return false;
@@ -11808,6 +11813,7 @@ window.addEventListener('auth-change',e=>{
     if(_mismatchMsg){ _rejectLoginAfterReload(_mismatchMsg); window._signOut('provider_mismatch'); return; }
     // Valida domínio: ver TRUSTED_DOMAINS (@ciahering.com.br/@arezzo.com.br) OU email na whitelist de externos
     if(user.email && !_isTrustedDomainEmail(user.email)){
+      try{ sessionStorage.setItem('mare_login_local','1'); }catch(e){}   // externo só entra como convidado: nunca é mandado pro Oceano nesta aba
       // Verifica whitelist de emails externos (gerenciada pelo PO em Configurações)
       // Fix bug de desconexão de usuária externa (relatada por Roberta): antes essa consulta ao
       // Firebase rodava de novo toda vez que o auth-change disparava — o que pode acontecer sozinho,
@@ -12058,7 +12064,7 @@ async function _completarSquadFaltando(user){
     const upd={}; upd['squads/'+alvo]=true;
     await Promise.all([fbUpdate('kanban/usuarios/'+user.uid,upd), fbUpdate('kanban/usuarios_publicos/'+user.uid,upd)]);
     const _f=location.pathname.split('/').pop()||'kanban.html';
-    if(alvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(alvo)); else location.reload();
+    if(alvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(alvo)+_mantemLocal()); else location.reload();
     return true;
   }catch(e){
     console.warn('[cadastro] não foi possível completar o squad:', e);
@@ -12154,7 +12160,7 @@ function autoRegistrar(user){
           role:_roleGravar, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles }); }catch(e){}
         try{ safeLS.setItem('cad_welcome', newRole); safeLS.setItem('cad_insc','1'); }catch(e){}
         const _f=location.pathname.split('/').pop()||'kanban.html';
-        if(_sqAlvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(_sqAlvo)); else location.reload();
+        if(_sqAlvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(_sqAlvo)+_mantemLocal()); else location.reload();
         return;
       }
       // Espelha só os campos leves em usuarios_publicos/{uid} — node magro que
