@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
-const { espelharCard, verificarRemocao } = require('../guardiao');
+const { espelharCard, verificarRemocao, varrerEspelho } = require('../guardiao');
 
 const AGORA = new Date('2026-11-03T20:00:00Z');
 const SQ = 'midiacriativa';
@@ -96,4 +96,20 @@ test('reincidente: o mesmo card restaurado 2× em 24 h e some de novo → para d
 test('card arquivado restaurado volta marcado como arquivado', async () => {
   const d = mk(); dados(d).cards['1'] = card('c1', { archived: true }); await espelharCard(d, SQ, 'c1', AGORA); apagaDoIndice(d, 'c1');
   assert.equal((await rodar(d, 'c1')).acao, 'restaurado'); assert.equal(dados(d).cards_archived.c1, true);
+});
+
+test('varredura: preenche o espelho dos cards nunca editados, atualiza o desatualizado e não regrava o que já está igual', async () => {
+  const d = mk(); dados(d).cards['0'].updatedAt = 'A'; dados(d).cards['1'].updatedAt = 'B';
+  assert.deepEqual((await varrerEspelho(d, [SQ], AGORA))[SQ], { novos: 2, atualizados: 0, iguais: 0 });
+  assert.equal(d._data().kanban.cards_espelho[SQ].c1.card.updatedAt, 'B');
+  assert.deepEqual((await varrerEspelho(d, [SQ], AGORA))[SQ], { novos: 0, atualizados: 0, iguais: 2 });
+  dados(d).cards['1'] = Object.assign({}, dados(d).cards['1'], { updatedAt: 'C', title: 'Novo título' });   // objeto novo: o fake guarda por referência
+  assert.deepEqual((await varrerEspelho(d, [SQ], AGORA))[SQ], { novos: 0, atualizados: 1, iguais: 1 });
+  assert.equal(d._data().kanban.cards_espelho[SQ].c1.card.title, 'Novo título');
+});
+
+test('varredura: ignora posição que o índice não reconhece (card órfão/trocado)', async () => {
+  const d = mk(); dados(d).cards['5'] = card('cOrfao');                 // existe em /cards mas não está no índice
+  const r = (await varrerEspelho(d, [SQ], AGORA))[SQ];
+  assert.equal(r.novos, 2); assert.equal(d._data().kanban.cards_espelho[SQ].cOrfao, undefined);
 });
