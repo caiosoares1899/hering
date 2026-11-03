@@ -75,7 +75,9 @@ Rodar na `main` atualizada e registrar o resultado em uma linha no Quadro:
 Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BUGS_E_CORRECOES.md`;
 **grande** → coluna *Escalado* do Quadro.
 
-## 4.1 Revisão automática das PRs do Antigravity (desde 16/10/2026)
+## 4.1 Revisão automática das PRs do Antigravity (desde 16/10/2026) — ⏸ PAUSADA em 03/11/2026
+
+> **Pausada em 03/11/2026**, junto com o fim do plantão de férias: a tarefa agendada foi **desabilitada** (`enabled:false`, não apagada — o id, o horário e a sessão fixa continuam guardados). Enquanto estiver pausada, **ninguém revisa as PRs `antigravity/*` automaticamente**: quando o Caio chamar o Claude numa conversa e houver PR do Antigravity aberta, a revisão é feita na hora, à mão (regra do `CLAUDE.md`). **Como religar:** pedir ao Claude ("religa a revisão das PRs do Antigravity" — ele reabilita o `trig_017bZw6eQFCHxkAMRb1piCtf` com `update_trigger enabled=true`) ou reabilitar a tarefa agendada no claude.ai. Frequência original: seg–sex, de 2 em 2 h, 8h07–20h07 de Brasília (`CRON_TZ=America/Sao_Paulo 7 8-20/2 * * 1-5`).
 
 Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM validar ou o Caio mergear — não depende de alguém lembrar.
 
@@ -84,7 +86,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 - **Formato:** **um** comentário curto por commit, começando com `<!-- revisao-claude:SHA7 -->` e "🔍 Revisão do Claude (commit SHA7)": `✅ Sem achados` ou lista numerada com arquivo:linha. Sem PR nova, não comenta nada.
 - **Limites:** nunca faz merge, aprovação formal, push na branch dele nem abre PR; só aponta, não corrige. **Não substitui** a validação do ADM com o script no console (linha vermelha nº 4/5 do `AGENTS.md`).
 - **Antigravity:** leia o comentário do Claude na sua PR (via `/seatualizar` ou na página da PR) e corrija **no mesmo branch** com novo commit; item marcado "ESCALAR AO CLAUDE" para a execução e vai para a coluna *Escalado* do Quadro.
-- **Operar:** pausar ou mudar a frequência = pedir ao Claude (ou desabilitar a tarefa agendada no claude.ai). Custo: checagem vazia é curta; só PR nova gasta mais.
+- **Operar:** pausar, religar ou mudar a frequência = pedir ao Claude (ou habilitar/desabilitar a tarefa agendada no claude.ai). Custo: checagem vazia é curta; só PR nova gasta mais.
 
 ## 5. Release, deploy e avisos
 
@@ -154,6 +156,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Claude | **🚨 Monitor da VTEX (02/11/2026):** manutenção concluída com a janela no estado ("Complete (Thu… - …)") não era reconhecida e o aviso 🚨 ficava no Mural pra sempre; `faseDe()` corrigido. No tick seguinte ao deploy o monitor fecha sozinho os 2 avisos que estão no ar. | `firebase deploy --only functions:vtexStatus --project hering-onboarding` | 02/11/2026 |
 | Claude | **⏸ Plantão de Bugs desligado no servidor (02/11/2026):** os 5 `exports.plantao*` de `functions/index.js` foram comentados (código e testes seguem em `functions/plantao/`); isso para as chamadas agendadas (`plantaoTravado` a cada 10 min, `plantaoVigia` a cada 3 h). **Só comentar não remove do ar** — depois do merge e do resync, o Caio roda o `functions:delete` (confirmar com `y`). Os segredos `PLANTAO_*` ficam. Como religar: `docs/ASSISTENTE_FERIAS.md`. | `firebase functions:delete plantaoBugNovo plantaoVigia plantaoTravado plantaoProximo plantaoGithubWebhook --region us-central1 --project hering-onboarding` | 02/11/2026 |
 | Claude | **⏲ timersVigia — rodada /monitorarbugs (02/11/2026):** marcador de aviso em transação (não recria o nó se o dono encerrou no meio), remoção de entradas incompletas e encerramento automático de timer de card excluído. | `firebase deploy --only functions:timersVigia --project hering-onboarding` | 02/11/2026 |
+| Claude | **⏸ Revisão automática das PRs do Antigravity pausada (03/11/2026):** tarefa agendada `trig_017bZw6eQFCHxkAMRb1piCtf` desabilitada pelo Claude (já feito, não precisa de deploy). Nada a rodar — a linha só registra o estado. | — (religar: pedir ao Claude ou reabilitar no claude.ai) | 03/11/2026 |
 
 ---
 
