@@ -139,7 +139,8 @@ function makeProporEventoHandler({ db, requestingUid, dryRun, coletor }) {
     if (inp.acao === 'excluir') {
       if (!(await podeNaAgenda(db, requestingUid, antigo.torre || ''))) return { ok: false, error: 'sem_permissao', message: 'Só ADM, ou PO/Organizador/Gestor OKR da torre da agenda, exclui evento.' };
       const rec = cal.recTexto(antigo);
-      const resumo = `**Excluir ${ROTULO_TIPO[antigo.tipo] || 'evento'}: ${antigo.titulo}** — ${quando(antigo)}${rec ? ` · ${rec} (a série inteira)` : ''}`;
+      const filhas = antigo.tipo === 'entrega' ? Object.values(eventos).filter((e) => e && e.paiId === inp.evento_id).length : 0;   // a tela pergunta se leva as filhas; aqui elas só ficam avulsas
+      const resumo = `**Excluir ${ROTULO_TIPO[antigo.tipo] || 'evento'}: ${antigo.titulo}** — ${quando(antigo)}${rec ? ` · ${rec} (a série inteira)` : ''}${filhas ? ` · ⚠ as ${filhas} entrega${filhas === 1 ? '' : 's'} filha${filhas === 1 ? '' : 's'} NÃO são excluída${filhas === 1 ? '' : 's'}: ficam avulsas (pra apagar junto, use a tela do calendário)` : ''}`;
       const id = await gravarProposta(db, { ...base, eventoId: inp.evento_id, resumo });
       coletor.push(id);
       return { ok: true, proposta_id: id, resumo, proximo_passo: 'Avise que a exclusão só acontece quando a pessoa confirmar no cartão (✅). NÃO diga que já excluiu.' };

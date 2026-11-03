@@ -105,3 +105,10 @@ test('listar_agenda enriquecida: atrasadas (com dias), sem responsável, filtros
   const todas = await f.listar_agenda({ tipo: 'entrega', situacao: 'a_fazer' }); assert.deepEqual(todas.eventos.map((e) => e.evento_id).sort(), ['a', 'b']);
   assert.equal((await f.listar_agenda({})).eventos.some((e) => e.evento_id === 'a'), false, 'sem filtro de atraso segue olhando pra frente');
 });
+
+test('excluir um plano com filhas: o cartão AVISA que as filhas ficam avulsas (a tela é que leva junto)', async () => {
+  const db = seed({ pai: ev('pai'), f1: ev('f1', { paiId: 'pai' }), f2: ev('f2', { paiId: 'pai' }), solo: ev('solo') }); const f = ferr(db, 'adm');
+  const r = await f.propor_agenda_evento({ acao: 'excluir', evento_id: 'pai' });
+  assert.equal(r.ok, true); assert.match(r.resumo, /as 2 entregas filhas NÃO são excluídas: ficam avulsas/);
+  const s = await f.propor_agenda_evento({ acao: 'excluir', evento_id: 'solo' }); assert.doesNotMatch(s.resumo, /filha/);
+});
