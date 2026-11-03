@@ -19,10 +19,11 @@
 //   • mais de MAX_JANELA remoções sem marca em 2 min = operação em massa: NÃO restaura sozinho, só alerta (decisão humana);
 //   • o mesmo card restaurado MAX_REINCIDENCIA vezes em 24 h para de ser restaurado (alguém o está apagando por um caminho sem marca) — alerta de reincidência.
 //
-// Deploy isolado: firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao   (e functions:sendPushOnNotification — conhece os tipos novos)
+// Deploy isolado: firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao,functions:cardsEspelhoVarredura   (e functions:sendPushOnNotification — conhece os tipos novos)
 //   + firebase deploy --only database   (regras de kanban/cards_guardiao)
 
 const { onValueWritten, onValueDeleted } = require('firebase-functions/v2/database');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getDatabase } = require('firebase-admin/database');
 
 const ESPERA_MS = 6000;
@@ -140,6 +141,37 @@ async function verificarRemocao(db, squadId, cardId, opts) {
   return { acao: 'restaurado', reg };
 }
 
+// ─── 3) VARREDURA DIÁRIA DO ESPELHO ──────────────────────────────────────────────────────────────────────────────────────────────────
+// Dois papéis: (a) PREENCHE o espelho dos cards que ninguém editou desde o deploy (sem isso o guardião diria "sem cópia" pra eles) e (b) fecha qualquer buraco do gatilho
+// (evento perdido, posição trocada no meio da escrita). Compara `updatedAt` do card com o do espelho e só grava o que diverge. Roda de madrugada (05:30, depois dos backups).
+async function varrerEspelho(db, squads, agora) {
+  const ts = (agora || new Date()).toISOString(); const out = {};
+  for (const sq of squads) {
+    const [cardsV, idxV, espV] = await Promise.all([db.ref(`${base(sq)}/cards`).get(), db.ref(`${base(sq)}/cards_index`).get(), db.ref(`kanban/cards_espelho/${sq}`).get()]);
+    const cards = cardsV.val() || {}, idx = idxV.val() || {}, esp = espV.val() || {};
+    const lista = Array.isArray(cards) ? cards.map((c, i) => [String(i), c]) : Object.entries(cards);
+    let novos = 0, atualizados = 0, iguais = 0;
+    for (const [pos, c] of lista) {
+      if (!c || !c.id || String(idx[c.id]) !== String(pos)) continue;       // só o que o índice reconhece naquela posição
+      const e = esp[c.id];
+      if (e && e.card && e.card.updatedAt === c.updatedAt) { iguais++; continue; }
+      await db.ref(`kanban/cards_espelho/${sq}/${c.id}`).set({ card: c, em: ts });
+      if (e) atualizados++; else novos++;
+    }
+    out[sq] = { novos, atualizados, iguais };
+  }
+  return out;
+}
+
+const cardsEspelhoVarredura = onSchedule(
+  { schedule: 'every day 05:30', timeZone: 'America/Sao_Paulo', region: 'us-central1', memory: '1GiB', timeoutSeconds: 540 },
+  async () => {
+    const db = getDatabase();
+    const squads = await require('../backup/weeklyBackup')._listActiveSquads(db);
+    console.log('[cardsEspelhoVarredura]', JSON.stringify(await varrerEspelho(db, squads)));
+  }
+);
+
 const cardsEspelhar = onValueWritten(
   { ref: '/kanban/squads/{squadId}/dados/cards_updated_at/{cardId}', region: 'us-central1' },
   async (event) => {
@@ -156,4 +188,4 @@ const cardsGuardiao = onValueDeleted(
   }
 );
 
-module.exports = { cardsEspelhar, cardsGuardiao, espelharCard, verificarRemocao, destinatarios, MAX_JANELA, MAX_REINCIDENCIA };
+module.exports = { cardsEspelhar, cardsGuardiao, cardsEspelhoVarredura, varrerEspelho, espelharCard, verificarRemocao, destinatarios, MAX_JANELA, MAX_REINCIDENCIA };

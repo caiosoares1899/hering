@@ -267,6 +267,7 @@ exports.timersVigia = require('./timers/vigia').timersVigia;
 // Deploy isolado: firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao   (e functions:sendPushOnNotification, que conhece o tipo novo) + firebase deploy --only database
 exports.cardsEspelhar = require('./cards/guardiao').cardsEspelhar;
 exports.cardsGuardiao = require('./cards/guardiao').cardsGuardiao;
+exports.cardsEspelhoVarredura = require('./cards/guardiao').cardsEspelhoVarredura;   // 05:30 diário: preenche/atualiza o espelho do que ninguém editou
 
 // 🚨 Alerta de incidente da VTEX (functions/vtex/statusVtex.js): a cada 5 min lê https://status.vtex.com/feed.rss e, com incidente/manutenção em
 // andamento, publica sozinho um Comunicado 🚨 (popup insistente, todos) + notificação `vtex_incidente` (sino + push, PUSH_TYPES acima) pra todo mundo;
