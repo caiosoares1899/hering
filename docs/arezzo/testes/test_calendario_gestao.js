@@ -12,7 +12,7 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
    t('botão 📋 Cadência do Digital aparece pro ADM', !!(await p.$('button[onclick="_okrCadenciaAbrir()"]')), '');
    const it=await p.evaluate(()=>{ const t=_okrCadTrimestres(4); return {t, q4:_okrCadenciaItens(t[0].ano,t[0].q).length, q3:_okrCadenciaItens(2027,3).length, fixos:_okrCadenciaFixos().length}; });
    console.log('   itens:',JSON.stringify(it));
-   t('trimestre sem 3º tri: 1+7 (tático) +1+4 (compras) +1 (All Hands) = 14; 3º tri soma 5 anuais = 19; 3 fixos', it.q4===14 && it.q3===19 && it.fixos===3, it);
+   t('trimestre sem 3º tri: 1+7 (tático) +1 (compras de UMA coleção) +1 (All Hands) = 10; 3º tri soma 5 anuais = 15; 2 fixos (Resultados e Pulso — Iniciativas é o bloco quinzenal)', it.q4===10 && it.q3===15 && it.fixos===2, it);
    const prazo=await p.evaluate(()=>{ const t=_okrCadTrimestres(1)[0]; const i=_okrCadenciaItens(t.ano,t.q)[0]; const d=_calParse(i.data); return {data:i.data, dow:d.getDay(), ini:_okrCadTriInicio(t.ano,t.q), dias:_calDiasEntre(i.data,_okrCadTriInicio(t.ano,t.q))}; });
    t('prazo do plano: ~15 dias antes do trimestre e em dia útil', prazo.dow>=1 && prazo.dow<=5 && prazo.dias>=15 && prazo.dias<=17, prazo);
    // aplica o 1º trimestre pelo diálogo
@@ -20,12 +20,12 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
    const rot=await p.evaluate(()=>[...document.querySelectorAll('div[style*="z-index: 9999"] button')].map(b=>b.innerText));
    t('diálogo lista 4 trimestres + Cancelar, com contagem de itens novos', rot.length===5 && /novo/.test(rot[0]) && rot[4]==='Cancelar', rot);
    await p.evaluate(()=>document.querySelector('div[style*="z-index: 9999"] button[data-i="0"]').click()); await p.waitForTimeout(1200);
-   const n1=await p.evaluate(()=>Object.values(okrEventos).filter(e=>e.cadencia).length); t('criou os 14 do trimestre + 3 fixos = 17 itens', n1===17, n1);
+   const n1=await p.evaluate(()=>Object.values(okrEventos).filter(e=>e.cadencia).length); t('criou os 10 do trimestre + 2 fixos = 12 itens', n1===12, n1);
    const pais=await p.evaluate(()=>{ const tat=Object.values(okrEventos).find(e=>/^cad_\d+q\d_tatico$/.test(e.id)); const cp=Object.values(okrEventos).find(e=>/_compras$/.test(e.id)); return {tat:_okrCalFilhos(tat.id).length, cp:_okrCalFilhos(cp.id).length, macro:tat.macro, st:tat.status, tipo:tat.tipo, rec:Object.values(okrEventos).filter(e=>e.rec).map(e=>e.rec.tipo).sort()}; });
-   t('Plano Tático tem 7 filhos, Plano de Compras 4; macro PLAN, status a_fazer; recorrências semanal/quinzenal/mensal', pais.tat===7 && pais.cp===4 && pais.macro==='plan' && pais.st==='a_fazer' && pais.rec.join()==='mensal,quinzenal,semanal', pais);
+   t('Plano Tático tem 7 filhos, Plano de Compras é uma entrega só (uma coleção); macro PLAN, status a_fazer; recorrências semanal/mensal', pais.tat===7 && pais.cp===0 && pais.macro==='plan' && pais.st==='a_fazer' && pais.rec.join()==='mensal,semanal', pais);
    // idempotente
    await p.evaluate(()=>{ window.__cad=_okrCadenciaAbrir(); }); await p.waitForTimeout(300); await p.evaluate(()=>document.querySelector('div[style*="z-index: 9999"] button[data-i="0"]').click()); await p.waitForTimeout(800);
-   t('aplicar de novo não duplica', (await p.evaluate(()=>Object.values(okrEventos).filter(e=>e.cadencia).length))===17, '');
+   t('aplicar de novo não duplica', (await p.evaluate(()=>Object.values(okrEventos).filter(e=>e.cadencia).length))===12, '');
    // filtro de macro + selos
    await p.evaluate(()=>{ _okrCalSetVista('mes'); _okrCalAgendaDias=400; _okrCalSetMacro('check'); }); await p.waitForTimeout(300);
    const itC=await p.evaluate(()=>_okrCalItens('2020-01-01','2030-12-31','').map(i=>i.ev&&i.ev.macro)); t('filtro CHECK só traz itens CHECK', itC.length>0 && itC.every(m=>m==='check'), itC.slice(0,5));
@@ -37,6 +37,16 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
    const det=await p.evaluate(()=>document.getElementById('okr-evd-body').innerText);
    t('detalhe do plano lista as entregas filhas com o andamento', /Entregas deste plano/i.test(det) && /1\/7/.test(det) && /Plano Comercial/.test(det) && /PLAN/.test(det), det.slice(0,300));
    // lembrete do servidor espelhado no cliente: entregue some do chip como feito
+   // pai conclui sozinho quando TODAS as filhas entregam; reabre se uma volta atrás
+   const sync=await p.evaluate(async()=>{ const tat=Object.values(okrEventos).find(e=>/_tatico$/.test(e.id)); const f=_okrCalFilhos(tat.id); const antes=okrEventos[tat.id].status;
+     for(const x of f) await _okrEvStatus(x.id,'entregue'); const depois=okrEventos[tat.id].status, por=okrEventos[tat.id].statusPor&&okrEventos[tat.id].statusPor.nome, pr=_okrCalProgresso(okrEventos[tat.id]);
+     await _okrEvStatus(f[2].id,'andamento'); const reabriu=okrEventos[tat.id].status; return {antes,depois,por,pr,reabriu}; });
+   t('7/7 filhas entregues conclui o plano pai (gravado, com quem); uma filha voltando atrás reabre o pai', sync.antes==='a_fazer' && sync.depois==='entregue' && sync.pr.n===7 && sync.por==='Ana ADM' && sync.reabriu==='andamento', sync);
+   // excluir o pai com filhas: "só o plano" solta as filhas
+   const exc=await p.evaluate(async()=>{ const tat=Object.values(okrEventos).find(e=>/_tatico$/.test(e.id)); const ids=_okrCalFilhos(tat.id).map(x=>x.id); window.__ex=_okrEvExcluir(tat.id,tat.data); await new Promise(r=>setTimeout(r,300));
+     const bs=[...document.querySelectorAll('div[style*="z-index: 9999"] button')].map(b=>b.innerText); [...document.querySelectorAll('div[style*="z-index: 9999"] button')].find(b=>/só o plano/i.test(b.innerText)).click(); await window.__ex; await new Promise(r=>setTimeout(r,500));
+     return {bs, paiSumiu:!okrEventos[tat.id], soltas:ids.every(i=>okrEventos[i] && !okrEventos[i].paiId)}; });
+   t('excluir plano com filhas pergunta (só o plano / plano e filhas) e "só o plano" deixa as filhas avulsas', exc.bs.length===3 && exc.paiSumiu && exc.soltas, exc);
    const feito=await p.evaluate(()=>{ _okrCalSetVista('agenda'); const e=Object.values(okrEventos).find(x=>x.status==='entregue'); return _okrCalSelos(e,e.data); }); t('selo "Entregue" aparece', /Entregue/.test(feito), feito);
    t('sem erro de JS', errs.length===0, errs); await ctx.close(); }
  // ── formulário: entrega
