@@ -1252,6 +1252,15 @@ input[type="date"]{-moz-appearance:textfield;}
 .cl-item.dragging{opacity:.4;}
 .cl-drag-handle{color:rgba(150,200,240,.25);font-size:12px;cursor:grab;padding:0 2px;user-select:none;flex-shrink:0;}
 .cl-drag-handle:hover{color:rgba(150,200,240,.6);}
+/* 📋 reordenar os CHECKLISTS (grupos) — alça no cabeçalho do grupo; setas ↑↓ com o foco na alça; ▲▼ só em tela de toque (arrastar nativo não é confiável no celular) */
+.cl-group-handle{font-size:13px;line-height:1;min-width:22px;min-height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;}   /* <span role=button>, não <button>: navegador não inicia o arrastar de um ancestral a partir de <button> (igual à alça dos itens) */
+.cl-group-handle:focus-visible{outline:2px solid var(--teal);outline-offset:1px;color:var(--teal);}
+.cl-group.dragging{opacity:.45;}
+.cl-group.drag-over-top{box-shadow:0 -3px 0 var(--teal);border-radius:6px;}
+.cl-group.drag-over-bottom{box-shadow:0 3px 0 var(--teal);border-radius:6px;}
+.cl-group-mv{display:none;background:none;border:1px solid var(--glass-b);color:var(--txt2);border-radius:6px;font-size:10px;min-width:30px;min-height:30px;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;}
+.cl-group-mv:disabled{opacity:.3;cursor:default;}
+@media (pointer:coarse){ .cl-group-mv{display:inline-flex;} .cl-group-handle{min-width:30px;min-height:30px;} }
 .cl-it{flex:1;cursor:text;word-break:break-word;min-width:0;border-radius:4px;padding:2px 4px;}
 .cl-it.cl-it-done{text-decoration:line-through;opacity:.5;}
 .cl-it:hover{background:rgba(56,182,255,.1);}
@@ -6627,7 +6636,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.898-dev</div>
+<div class="version">v8.30.899-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17929,6 +17938,28 @@ function _consumirTransferSquad(payload){
 // 100% de compatibilidade com todo código legado que só lê card.checklist
 // (progresso do card no board, notificações, agente, modelos, import Trello).
 let _mCurrentGroups = [{id:'default', title:'Checklist'}];
+let _clDragGid = null;   // id do checklist que está sendo arrastado (null = nenhum; os itens têm o drag deles, separado)
+// Reordenar os checklists entre si (pedido do Caio, 03/11/2026): arrastar pela alça ⠿ do cabeçalho, ↑/↓ no teclado (com o foco na alça) ou ▲▼ em tela de toque.
+// Só mexe na ORDEM de _mCurrentGroups: os itens têm `grp` explícito (renderCL normaliza) e saem na ordem dos checklists; getCL() lê o DOM, então o salvamento segue a ordem nova.
+function moveChecklistGroup(gid, alvoGid, depois){
+  const i=_mCurrentGroups.findIndex(x=>x.id===gid), j0=_mCurrentGroups.findIndex(x=>x.id===alvoGid);
+  if(i<0 || j0<0 || i===j0) return false;
+  saveUndo('reordenar checklists');
+  const [g]=_mCurrentGroups.splice(i,1);
+  const j=_mCurrentGroups.findIndex(x=>x.id===alvoGid);
+  _mCurrentGroups.splice(depois ? j+1 : j, 0, g);
+  renderCL(getCL()); scheduleAutoSave();
+  return true;
+}
+function moveChecklistGroupBy(gid, delta, refocar){
+  const i=_mCurrentGroups.findIndex(x=>x.id===gid), j=i+delta;
+  if(i<0 || j<0 || j>=_mCurrentGroups.length) return;
+  if(moveChecklistGroup(gid, _mCurrentGroups[j].id, delta>0)){
+    const sel='#m-checklist .cl-group[data-gid="'+String(gid).replace(/"/g,'')+'"] '+(refocar?'.cl-group-handle':(delta>0?'.cl-group-mv[data-dir="1"]':'.cl-group-mv[data-dir="-1"]'));
+    const el=document.querySelector(sel) || document.querySelector('#m-checklist .cl-group[data-gid="'+String(gid).replace(/"/g,'')+'"] .cl-group-handle');   // renderCL já refez o DOM (síncrono): devolve o foco na hora, pra ↑↓ seguidos funcionarem
+    if(el && !el.disabled) el.focus();
+  }
+}
 function _clNewGroupId(){ return 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 // Chamar sempre que um card (ou card novo/modelo) for carregado no modal, antes de renderCL().
 function _clGroupsInit(card){
@@ -18003,8 +18034,16 @@ function renderCL(cl){
     const done=groupItems.filter(it=>it.done).length, total=groupItems.length;
     const pct = total? Math.round(done/total*100) : 0;
 
-    const sec=document.createElement('div'); sec.className='cl-group'; sec.style.cssText='margin-bottom:14px;';
+    const sec=document.createElement('div'); sec.className='cl-group'; sec.style.cssText='margin-bottom:14px;'; sec.dataset.gid=g.id;
     const hd=document.createElement('div'); hd.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    const _gi = _mCurrentGroups.indexOf(g), _varios = _mCurrentGroups.length>1;
+    // só arrasta o checklist pela alça (o resto do bloco continua com seleção de texto/itens); o item tem o drag próprio e não dispara este (e.target!==sec)
+    sec.addEventListener('dragstart',e=>{ if(e.target!==sec) return; _clDragGid=g.id; e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain','checklist:'+g.id); }catch(_){} sec.classList.add('dragging'); });
+    sec.addEventListener('dragend',()=>{ sec.draggable=false; sec.classList.remove('dragging'); _clDragGid=null; document.querySelectorAll('#m-checklist .cl-group').forEach(x=>x.classList.remove('drag-over-top','drag-over-bottom')); });
+    const _marca = e=>{ const r=sec.getBoundingClientRect(), baixo=e.clientY > r.top + r.height/2; sec.classList.toggle('drag-over-bottom', baixo); sec.classList.toggle('drag-over-top', !baixo); return baixo; };
+    sec.addEventListener('dragover',e=>{ if(!_clDragGid || _clDragGid===g.id) return; e.preventDefault(); e.dataTransfer.dropEffect='move'; _marca(e); });
+    sec.addEventListener('dragleave',e=>{ if(!sec.contains(e.relatedTarget)) sec.classList.remove('drag-over-top','drag-over-bottom'); });
+    sec.addEventListener('drop',e=>{ if(!_clDragGid || _clDragGid===g.id) return; e.preventDefault(); const r=sec.getBoundingClientRect(), baixo=e.clientY > r.top + r.height/2; const de=_clDragGid; _clDragGid=null; moveChecklistGroup(de, g.id, baixo); });
     const collapseBtn=document.createElement('button'); collapseBtn.type='button'; collapseBtn.className='cl-collapse-btn';
     collapseBtn.style.cssText='background:none;border:none;color:var(--txt3);cursor:pointer;padding:2px 4px;font-size:11px;flex-shrink:0;line-height:1;';
     collapseBtn.textContent = g.colapsado ? '▸' : '▾';
@@ -18023,6 +18062,18 @@ function renderCL(cl){
     pctEl.textContent = total? `${done}/${total} · ${pct}%` : '';
     const delGrpBtn=document.createElement('button'); delGrpBtn.className='cl-del'; delGrpBtn.textContent='✕'; delGrpBtn.title='Excluir este checklist';
     delGrpBtn.onclick=()=>delChecklistGroup(g.id);
+    if(_varios){
+      const gh=document.createElement('span'); gh.setAttribute('role','button'); gh.tabIndex=0; gh.className='cl-drag-handle cl-group-handle'; gh.textContent='⠿';
+      gh.title='Arrastar para reordenar os checklists (ou use as setas ↑ ↓ com o foco aqui)';
+      gh.setAttribute('aria-label','Mover o checklist "'+g.title+'": arraste, ou use as setas para cima e para baixo');
+      gh.addEventListener('mousedown',()=>{ sec.draggable=true; });
+      gh.addEventListener('touchstart',()=>{ sec.draggable=true; },{passive:true});
+      gh.addEventListener('mouseup',()=>{ if(!_clDragGid) sec.draggable=false; });
+      gh.addEventListener('keydown',e=>{ if(e.key==='ArrowUp' || e.key==='ArrowDown'){ e.preventDefault(); moveChecklistGroupBy(g.id, e.key==='ArrowUp'?-1:1, true); } });
+      const mk=(dir,txt,rot)=>{ const b=document.createElement('button'); b.type='button'; b.className='cl-group-mv'; b.dataset.dir=String(dir); b.textContent=txt; b.setAttribute('aria-label',rot+' o checklist "'+g.title+'"'); b.title=rot+' este checklist';
+        b.disabled = dir<0 ? _gi===0 : _gi===_mCurrentGroups.length-1; b.onclick=()=>moveChecklistGroupBy(g.id, dir, false); return b; };
+      hd.append(gh, mk(-1,'▲','Subir'), mk(1,'▼','Descer'));
+    }
     hd.append(collapseBtn,titleEl,pctEl,delGrpBtn);
     sec.appendChild(hd);
 
@@ -18045,9 +18096,10 @@ function renderCL(cl){
       d.className='cl-item'; d.dataset.idx=i; d.dataset.grp=g.id;
       d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; itemsWrap._dragLi=li; d.classList.add('dragging'); });
       d.addEventListener('dragend',()=>{ d.draggable=false; d.classList.remove('dragging'); itemsWrap.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
-      d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
+      d.addEventListener('dragover',e=>{ if(_clDragGid) return; e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });   // arrastando um CHECKLIST: o item não aceita, quem aceita é o bloco
       d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
       d.addEventListener('drop',e=>{
+        if(_clDragGid) return;
         e.preventDefault(); d.classList.remove('drag-over');
         const from=itemsWrap._dragLi; const to=li; if(from==null||from===to) return;
         saveUndo('reordenar checklist');
@@ -28600,7 +28652,7 @@ const HELP_CONTENT = {
     { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
-    { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
+    { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
     { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },

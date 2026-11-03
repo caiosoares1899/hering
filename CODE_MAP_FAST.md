@@ -84,5 +84,5 @@
 ## 2. Principais Âncoras por Arquivo (`-dev`)
 
 ### `kanban-dev.html` (7 símbolos mapeados)
-- `_applyCardsSync` (L10516) · `_notasUpdate` (L21000) · `saveExtraDesc` (L16121) · `openNewCard` (L16930) · `backfillFlow` (L9330) · `recordMove` (L9204)
-- `openCard` (L16491)
+- `_applyCardsSync` (L10525) · `_notasUpdate` (L21052) · `saveExtraDesc` (L16130) · `openNewCard` (L16939) · `backfillFlow` (L9339) · `recordMove` (L9213)
+- `openCard` (L16500)
