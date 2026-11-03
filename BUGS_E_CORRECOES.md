@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-03 · Ajuda do Maré — Timer e Produtividade: avisos, Modelos e card excluído (kanban-dev v8.30.896-dev)
+
+- Rodada /atualizarhelpcontent (03/11/2026). Gap real: a entrada de Notificações não citava os 4 tipos de aviso do Timer (criada pra você, encerrada, tempo acabou, esquecido rodando) — acrescentado parágrafo; a entrada Timer e Produtividade ganhou duas frases do que mudou na rodada de /monitorarbugs: o timer não aparece ao editar Modelo/Recorrente/Agendamento e timer de card excluído se encerra sozinho. Radar, guia-okr e FAQ do Oceano conferidos: sem mudança (o Assistente Férias saiu da vitrine; o FAQ nunca o citou, só a base interna dele). Dica do Timer já existe (mare-dicas-dev.js v10).
+
 ### 2026-11-02 · ⏲ Timer e Produtividade — rodada /monitorarbugs: clique duplo, Modelo, entrada pela metade e card excluído (kanban-dev v8.30.895-dev + functions/timers/vigia.js)
 
 - **Clique duplo em Criar** gravava 2 atividades (id novo por chamada + gravação assíncrona, sem trava — a mesma lição de 06/10 e 13/10): trava `_tmCriando` + botão desabilitado.
