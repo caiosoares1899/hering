@@ -45,7 +45,7 @@ const lista = (...n) => n;
 
 test('regressão: os nós comuns do Radar continuam abertos a qualquer conta @ciahering (e fechados a quem é de fora)', () => {
   const nos = ['objetivos/o1', 'objetivos/o1/tagIds', 'marcos/m1', 'marcos/m1/progresso', 'tags/t1', 'gerencias/g1', 'calendario/e1', 'agente_chat/c1',
-    'agente_chat_processed/c1', 'reuniao_notas/d1', 'reuniao_agenda/d1', 'snapshots/s1', 'obj_locks/o1', 'mural/a1', 'apresentacao_live/x'];
+    'agente_chat_processed/c1', 'agenda_propostas/p1', 'agenda_propostas/p1/status', 'reuniao_notas/d1', 'reuniao_agenda/d1', 'snapshots/s1', 'obj_locks/o1', 'mural/a1', 'apresentacao_live/x'];
   for (const n of nos) {
     for (const ator of lista('membro', 'po', 'adm', 'caio')) assert.equal(pode(ator, 'kanban/okr/' + n, { x: 1 }), true, `${ator} deveria escrever em okr/${n}`);
     for (const ator of lista('forasteiro', 'arezzo', 'visualizador')) assert.equal(pode(ator, 'kanban/okr/' + n, { x: 1 }), false, `${ator} NÃO deveria escrever em okr/${n}`);

@@ -1049,6 +1049,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-agente-msg b{color:var(--teal);}
 
 .okr-agente-msg.okr-agente-msg-humano{border-left-color:var(--accent);}
+.okr-prop{margin:8px 0 2px;padding:9px 11px;border-radius:10px;border:1px solid rgba(var(--okr-focus-rgb,56,182,255),.5);background:rgba(var(--okr-focus-rgb,56,182,255),.08);}
+.okr-prop-tt{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--accent);margin-bottom:4px;}
+.okr-prop-bd{font-size:12px;line-height:1.5;color:var(--txt);}
+.okr-prop-ft{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;font-size:11.5px;}
+.okr-prop-ft .btn{min-height:34px;}
+.okr-prop.confirmada{border-color:rgba(29,233,182,.45);background:rgba(29,233,182,.07);} .okr-prop.confirmada .okr-prop-tt{color:var(--teal,#1de9b6);}
+.okr-prop.descartada,.okr-prop.falhou{opacity:.8;border-color:var(--glass-b);background:transparent;} .okr-prop.falhou .okr-prop-tt{color:var(--danger);}
 
 .okr-agente-msg.okr-agente-msg-humano b{color:var(--accent);}
 
@@ -1785,11 +1792,12 @@ window.MARE_SO_HERING = true;
             <li><b>🧮 Como cada Objetivo contribui</b> (botão ao lado do número grande): abre uma janela grande com a <b>média em destaque</b>, quem <b>mais puxa a média pra baixo</b> e quem <b>mais a sustenta</b>, e um gráfico. Por padrão ele mostra os <b>⭐ Destaques</b>: a média numa linha branca grossa, os <b>3 Objetivos que mais subiram</b> (verde) e os <b>3 que mais caíram</b> (vermelho), com o nome no fim da linha, e os demais em cinza de fundo — passe o mouse numa linha, num chip ou numa linha da tabela pra destacar aquele Objetivo. Outras visões nos chips <b>Linhas do gráfico</b>: <b>Todas coloridas</b> (uma cor por Objetivo), <b>Por gerência</b>, <b>Só a média</b> (com a faixa do menor ao maior) e <b>Mini-gráficos</b> (um cartão por Objetivo, com a média tracejada de fundo, do que mais caiu pro que mais subiu). Também dá pra filtrar por <b>período</b>, <b>status</b> do Objetivo e <b>gerência</b>. Os Objetivos aparecem como chips agrupados por gerência: <b>clique num pra tirá-lo da conta</b> (ou trazê-lo de volta) e a média, o gráfico, o indicador do Dashboard e a tabela de contribuição recalculam na hora (com um aviso de simulação e <b>Restaurar tudo</b>). É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
             <li><b>🔄 O que mudou</b>: o que piorou, melhorou, subiu ou caiu de progresso, os Objetivos novos e os que saíram, entre os dois últimos snapshots. Clique numa mudança pra ver o Objetivo.</li>
             <li><b>Por Objetivo</b>: tabela com status, progresso, variação, mini-tendência e marcos de cada Objetivo, com busca e filtros de gerência e status, e ordenação (maior alta, maior queda, pior status…). Clique numa linha pra abrir a curva de progresso e o quadro semana a semana (com o atingimento) e o botão <b>📂 Abrir Objetivo</b>.</li>
-          </ul></div></details><details class="hlp-it" id="hlp-apresentacao" data-tab="navegar" data-kw="apresentação slides reunião tela cheia f setas teclado capa torres marco colapsar concluídos filtro tag anterior próximo ordem rola ao vivo apresentar laser caneta passar controle meet acompanhar"><summary><span class="hlp-ic">🖥️</span><span class="hlp-tt"><b>Apresentação em slides</b><small>1 slide por Objetivo, tela cheia, ao vivo (laser e caneta) e filtro por tag</small></span></summary><div class="hlp-bd"><p>Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>.</p><ul><li><b>Atalhos</b>: <code>F</code> pra tela cheia, <code>←</code> <code>→</code>/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe.</li><li><b>Capa e torres</b>: a capa mostra as <b>3 torres</b> (cartões com contagem e progresso), cada torre tem o seu slide com as gerências, e a barra do topo filtra por torre.</li><li><b>Objetivos na apresentação</b>: um Objetivo marcado como <b>🙈 fora da apresentação</b> (botão direito → Ocultar, ou ⚙ Configurações) some de tudo — capa, grade, slides, painel geral e contadores. <b>Marcos na apresentação</b>: cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no Radar) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso.</li><li><b>Atingimento</b>: a barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.</li><li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no Radar (dentro de cada gerência) — sem ordem manual, vai por título.</li><li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li><li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último. As <b>setas ← → do teclado</b> fazem o mesmo (com o detalhe fechado, passam os slides).</li><li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li><li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no Radar) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li><li><b>🎙️ Apresentar ao vivo</b> (reunião no Meet): quem clica em <b>🎙️ Apresentar ao vivo</b> vira o <b>apresentador</b> — o slide e o Objetivo aberto no detalhe passam pro Firebase, e <b>quem abrir a página acompanha sozinho</b> ("Acompanhando ✓"); só o apresentador compartilha a aba, os outros abrem o link. Mexer nos slides por conta própria tira você da sincronização e aparece <b>↩ Voltar a seguir</b>. No botão flutuante 🎙️ (canto, por cima até do detalhe) o apresentador tem: <b>🔴 Laser</b> (tecla <code>L</code> — um ponto vermelho que todo mundo vê), <b>🖍️ Caneta</b> (tecla <code>P</code>, 4 cores, traço <b>fixo</b>; <code>T</code> liga a <b>temporária</b>, que some sozinha em 5 s), <b>↩ Desfazer</b> (<code>Z</code>, só o último traço fixo), <b>🧽 Apagar tudo</b> e <b>Passar o controle pra…</b> (clique no nome de quem está na sala). Quem acompanha pode <b>✋ Pedir o controle</b>; se o apresentador ficar 90 s sem sinal, qualquer pessoa pode <b>🎙️ Assumir</b>. <b>⏹ Encerrar</b> apaga a sessão. Visualizador externo acompanha, mas não apresenta.</li></ul></div></details><details class="hlp-it" id="hlp-datastudio" data-tab="navegar" data-kw="data studio looker studio painel relatório bi incorporado embed tela cheia atualizar configurar credenciais proprietário restrito workspace conectar conta"><summary><span class="hlp-ic">📈</span><span class="hlp-tt"><b>Data Studio (Looker Studio ao vivo)</b><small>Painéis incorporados direto no Radar, restritos ao Workspace @ciahering.com.br</small></span></summary><div class="hlp-bd"><p>A aba <b>📈 Data Studio</b> abre os painéis do Looker Studio usados no dia a dia dentro do próprio Radar, sem sair do Oceano. Os links ficam guardados só no Firebase (protegidos por login <code>@ciahering.com.br</code>) e só são carregados quando alguém clica na aba.</p><ul><li><b>Troca rápida e tela cheia</b>: se houver mais de um painel cadastrado, alterne pelos botões no topo; <b>⛶ Tela cheia</b> (ou <code>Esc</code> pra sair) expande o painel na tela toda, <b>🔄 Atualizar</b> recarrega o iframe e <b>↗ Abrir no Looker Studio</b> abre numa nova guia.</li><li><b>⚙ Configurar painéis</b> (ADM, PO/Organizador e 🎯 Gestor OKR): adicione, edite ou reordene os relatórios colando o link de compartilhamento ou de incorporação (o Radar converte automaticamente para <code>/embed/reporting/...</code>).</li><li><b>🔐 Acesso 100% restrito ao Google Workspace (<code>@ciahering.com.br</code>)</b>: no Looker Studio, em <b>Compartilhar</b>, mantenha o relatório <b>restrito à Cia. Hering (<code>@ciahering.com.br</code>)</b> ou às pessoas/grupos autorizados (não precisa deixar como "Não listado"), configure a fonte de dados com <b>Credenciais do proprietário</b> e ative <b>Arquivo → Incorporar relatório</b>. No Chrome onde você já usa o e-mail da Hering, o painel abre direto; se for a 1ª vez ou o navegador pedir autenticação, clique em <b>🔑 Conectar conta (1ª vez)</b> no topo da aba para validar sua sessão Google em uma janela rápida e recarregar o painel automaticamente dentro do Radar.</li></ul></div></details></section><section class="hlp-pane" id="hlp-pane-agente" data-pane="agente" role="tabpanel" aria-labelledby="hlp-tab-agente" hidden><div class="hlp-panehd"><span>💬 Agente Ágil</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agente')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-agente" data-tab="agente" data-kw="agente ágil chat ia assistente pedir criar objetivo marco progresso próximo passo risco agenda atingimento registrar permissão trava" open data-open0="1"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>Central Agente Ágil</b><small>Chat que preenche Objetivos, Marcos e atingimento por você</small></span></summary><div class="hlp-bd">Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs. Fica no <b>botão flutuante 🤖 Agente Ágil</b> (canto inferior direito de qualquer tela): no computador abre um painel no canto, <b>sem bloquear a página</b> (dá pra consultar o Radar enquanto conversa); no celular abre em tela cheia. Um selo vermelho avisa quando ele respondeu a você, e atalhos de pergunta ajudam a começar. Não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
+          </ul></div></details><details class="hlp-it" id="hlp-apresentacao" data-tab="navegar" data-kw="apresentação slides reunião tela cheia f setas teclado capa torres marco colapsar concluídos filtro tag anterior próximo ordem rola ao vivo apresentar laser caneta passar controle meet acompanhar"><summary><span class="hlp-ic">🖥️</span><span class="hlp-tt"><b>Apresentação em slides</b><small>1 slide por Objetivo, tela cheia, ao vivo (laser e caneta) e filtro por tag</small></span></summary><div class="hlp-bd"><p>Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>.</p><ul><li><b>Atalhos</b>: <code>F</code> pra tela cheia, <code>←</code> <code>→</code>/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe.</li><li><b>Capa e torres</b>: a capa mostra as <b>3 torres</b> (cartões com contagem e progresso), cada torre tem o seu slide com as gerências, e a barra do topo filtra por torre.</li><li><b>Objetivos na apresentação</b>: um Objetivo marcado como <b>🙈 fora da apresentação</b> (botão direito → Ocultar, ou ⚙ Configurações) some de tudo — capa, grade, slides, painel geral e contadores. <b>Marcos na apresentação</b>: cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no Radar) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso.</li><li><b>Atingimento</b>: a barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.</li><li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no Radar (dentro de cada gerência) — sem ordem manual, vai por título.</li><li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li><li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último. As <b>setas ← → do teclado</b> fazem o mesmo (com o detalhe fechado, passam os slides).</li><li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li><li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no Radar) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li><li><b>🎙️ Apresentar ao vivo</b> (reunião no Meet): quem clica em <b>🎙️ Apresentar ao vivo</b> vira o <b>apresentador</b> — o slide e o Objetivo aberto no detalhe passam pro Firebase, e <b>quem abrir a página acompanha sozinho</b> ("Acompanhando ✓"); só o apresentador compartilha a aba, os outros abrem o link. Mexer nos slides por conta própria tira você da sincronização e aparece <b>↩ Voltar a seguir</b>. No botão flutuante 🎙️ (canto, por cima até do detalhe) o apresentador tem: <b>🔴 Laser</b> (tecla <code>L</code> — um ponto vermelho que todo mundo vê), <b>🖍️ Caneta</b> (tecla <code>P</code>, 4 cores, traço <b>fixo</b>; <code>T</code> liga a <b>temporária</b>, que some sozinha em 5 s), <b>↩ Desfazer</b> (<code>Z</code>, só o último traço fixo), <b>🧽 Apagar tudo</b> e <b>Passar o controle pra…</b> (clique no nome de quem está na sala). Quem acompanha pode <b>✋ Pedir o controle</b>; se o apresentador ficar 90 s sem sinal, qualquer pessoa pode <b>🎙️ Assumir</b>. <b>⏹ Encerrar</b> apaga a sessão. Visualizador externo acompanha, mas não apresenta.</li></ul></div></details><details class="hlp-it" id="hlp-datastudio" data-tab="navegar" data-kw="data studio looker studio painel relatório bi incorporado embed tela cheia atualizar configurar credenciais proprietário restrito workspace conectar conta"><summary><span class="hlp-ic">📈</span><span class="hlp-tt"><b>Data Studio (Looker Studio ao vivo)</b><small>Painéis incorporados direto no Radar, restritos ao Workspace @ciahering.com.br</small></span></summary><div class="hlp-bd"><p>A aba <b>📈 Data Studio</b> abre os painéis do Looker Studio usados no dia a dia dentro do próprio Radar, sem sair do Oceano. Os links ficam guardados só no Firebase (protegidos por login <code>@ciahering.com.br</code>) e só são carregados quando alguém clica na aba.</p><ul><li><b>Troca rápida e tela cheia</b>: se houver mais de um painel cadastrado, alterne pelos botões no topo; <b>⛶ Tela cheia</b> (ou <code>Esc</code> pra sair) expande o painel na tela toda, <b>🔄 Atualizar</b> recarrega o iframe e <b>↗ Abrir no Looker Studio</b> abre numa nova guia.</li><li><b>⚙ Configurar painéis</b> (ADM, PO/Organizador e 🎯 Gestor OKR): adicione, edite ou reordene os relatórios colando o link de compartilhamento ou de incorporação (o Radar converte automaticamente para <code>/embed/reporting/...</code>).</li><li><b>🔐 Acesso 100% restrito ao Google Workspace (<code>@ciahering.com.br</code>)</b>: no Looker Studio, em <b>Compartilhar</b>, mantenha o relatório <b>restrito à Cia. Hering (<code>@ciahering.com.br</code>)</b> ou às pessoas/grupos autorizados (não precisa deixar como "Não listado"), configure a fonte de dados com <b>Credenciais do proprietário</b> e ative <b>Arquivo → Incorporar relatório</b>. No Chrome onde você já usa o e-mail da Hering, o painel abre direto; se for a 1ª vez ou o navegador pedir autenticação, clique em <b>🔑 Conectar conta (1ª vez)</b> no topo da aba para validar sua sessão Google em uma janela rápida e recarregar o painel automaticamente dentro do Radar.</li></ul></div></details></section><section class="hlp-pane" id="hlp-pane-agente" data-pane="agente" role="tabpanel" aria-labelledby="hlp-tab-agente" hidden><div class="hlp-panehd"><span>💬 Agente Ágil</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agente')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-agente" data-tab="agente" data-kw="agente ágil chat ia assistente pedir criar objetivo marco progresso próximo passo risco agenda atingimento registrar permissão trava marcar reunião entrega cobrar atrasado proposta confirmar" open data-open0="1"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>Central Agente Ágil</b><small>Chat que preenche Objetivos, Marcos e atingimento por você</small></span></summary><div class="hlp-bd">Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs. Fica no <b>botão flutuante 🤖 Agente Ágil</b> (canto inferior direito de qualquer tela): no computador abre um painel no canto, <b>sem bloquear a página</b> (dá pra consultar o Radar enquanto conversa); no celular abre em tela cheia. Um selo vermelho avisa quando ele respondeu a você, e atalhos de pergunta ajudam a começar. Não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
           <ul>
             <li>Conte a situação com suas palavras (ex.: "já validamos a viabilidade do OMNI, falta apresentar pro conselho") — ele identifica o Objetivo certo (ou pergunta, se não tiver certeza) e separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b>, escrevendo direto nesses campos.</li>
             <li>Também cria Objetivo novo (ADM, ou PO/Organizador/🎯 Gestor OKR na própria torre — ele pergunta a <b>torre</b> e a <b>gerência</b>, que mudam por torre), cria/atualiza Marco — inclusive mudar o status de um Marco por texto ("marca tal marco como concluído") — e <b>promove itens do fluxo</b> ("transforma o próximo passo X em progresso" ou "promove o progresso Y a marco", ajustando o texto com você se passar do limite de caracteres). Objetivo criado e Marco concluído por ele aparecem no 🔔 sino da torre, igual à tela.</li>
-        <li><b>📅 Agenda</b> (só leitura): "quando é a próxima reunião de CX?", "o que tem na agenda dessa semana?", "qual a pauta da reunião de quinta?" — ele lê o calendário (global + torres). Criar, editar ou cancelar reunião e convidar gente é pela aba 📅 Calendário.</li>
+        <li><b>📅 Agenda</b>: "quando é a próxima reunião de CX?", "o que tem na agenda dessa semana?", "o que está atrasado na gestão do Digital?", "quem está sem responsável?" — ele lê o calendário (global + torres), inclusive as 📦 entregas (situação, responsáveis, atraso).</li>
+            <li><b>🗓️ Marcar, remarcar e cobrar — com confirmação</b>: peça "marca um All Hands dia 20 às 10h", "cria a entrega Showroom de Inverno pra 15/05 com a Fulana", "muda o prazo do Plano Comercial", "marca o Plano de Mídia como entregue" ou "cobra os atrasados". O agente <b>nunca grava direto na agenda</b>: ele deixa uma <b>proposta</b> num cartão sob a resposta dele e você confirma com <b>✅ Confirmar</b> (ou ✖ Descartar). Só quem pediu (ou o ADM) confirma, com as mesmas permissões da tela (ADM, PO/Organizador/Gestor OKR criam e editam; o responsável marca a própria entrega). Ele nunca inventa data, hora ou responsável — pergunta, e nome repetido ("Ana") vira pergunta de qual. Cobrança manual: no máximo 1 por entrega a cada 48 h.</li>
             <li><b>📈 Atingimento</b>: ele consegue <b>ler</b> a meta, o valor atual e o % de cada Objetivo ("como estão os atingimentos?", "quem está sem registro há mais de 15 dias?"), <b>registrar</b> um valor ("fechamos setembro em R$ 48 mil" — ele usa a data de hoje se você não disser outra) e <b>configurar</b> o tipo/meta de um Objetivo que ainda não tem. Ele nunca inventa valor (pergunta se faltar), não apaga registro nem remove atingimento (isso é pela tela do Objetivo) e, se for trocar o tipo de um atingimento que já tem registros, confirma com você antes. O % é calculado igual ao da barra do Objetivo.</li>
             <li>Respeita a mesma regra de permissão de cima (por torre): se você não for Responsável, ADM nem PO/Organizador/Gestor OKR da torre daquele Objetivo, ele explica e não faz a mudança — em vez de fingir que funcionou. E se alguém está editando o Objetivo (🔒), ele espera.</li>
             <li>A conversa fica salva ali, pra sempre — dá pra rolar pra cima e ver os pedidos e respostas anteriores, de qualquer pessoa.</li>
@@ -1812,13 +1820,14 @@ window.MARE_SO_HERING = true;
       <button type="button" class="x-btn" onclick="_okrFecharAgente()" aria-label="Fechar o Agente Ágil">✕</button>
     </div>
     <details class="okr-agente-info"><summary>ℹ️ O que ele faz</summary>
-      <div>Conte a situação com suas palavras — o Agente Ágil separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b> e já escreve direto no Objetivo certo. Ele também <b>lê e registra o 📈 Atingimento</b> (ex.: “fechamos setembro em R$ 48 mil”, “como estão os atingimentos?”) e lê a <b>📅 agenda</b>. Ele só edita o que você é Responsável (ou se você for ADM, ou PO/Organizador/Gestor OKR da torre).</div>
+      <div>Conte a situação com suas palavras — o Agente Ágil separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b> e já escreve direto no Objetivo certo. Ele também <b>lê e registra o 📈 Atingimento</b> (ex.: “fechamos setembro em R$ 48 mil”, “como estão os atingimentos?”) e lê a <b>📅 agenda</b> — e <b>prepara</b> reunião, entrega e cobrança pra você confirmar com 1 clique (✅). Ele só edita o que você é Responsável (ou se você for ADM, ou PO/Organizador/Gestor OKR da torre).</div>
     </details>
     <div id="okr-agente-chat-list" class="okr-agente-list"></div>
     <div class="okr-agente-ex" id="okr-agente-ex">
       <button type="button" onclick="_okrAgenteExemplo('Como estão os atingimentos?')">📈 Como estão os atingimentos?</button>
       <button type="button" onclick="_okrAgenteExemplo('Quem está sem registro de atingimento há mais de 15 dias?')">⏰ Quem está sem registro?</button>
       <button type="button" onclick="_okrAgenteExemplo('Qual a pauta da próxima reunião?')">📅 Pauta da próxima reunião</button>
+      <button type="button" onclick="_okrAgenteExemplo('O que está atrasado na gestão do Digital?')">📦 O que está atrasado na gestão?</button>
       <button type="button" onclick="_okrAgenteExemplo('Atualização do Objetivo ')">✍️ Contar uma novidade</button>
     </div>
     <div class="okr-list-add okr-agente-add">
@@ -2057,7 +2066,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.100 · okr-dev</div>
+<div class="version">v2.102 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2922,6 +2931,7 @@ function loadOkrAgenteChat(){
 function renderOkrAgenteChat(){
   const list = document.getElementById('okr-agente-chat-list');
   if(!list) return;
+  if(!_okrAgendaPropLigado && Object.values(okrAgenteChatMsgs).some(m=>m && m.propostas)) _okrAgendaPropLiga();   // só baixa as propostas quando há uma no chat
   const msgs = Object.values(okrAgenteChatMsgs).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
   const wasNearBottom = _okrAgenteForceBottom || (list.scrollHeight - list.scrollTop - list.clientHeight) < 60;
   _okrAgenteForceBottom = false;
@@ -2934,7 +2944,7 @@ function renderOkrAgenteChat(){
     const cls = 'okr-comment okr-agente-msg' + (isAgente ? '' : ' okr-agente-msg-humano');
     const dt = m.ts ? new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
     const autor = isAgente ? '🤖 Agente Ágil' : esc(m.author||m.init||'?');
-    return `<div class="${cls}"><span class="okr-comment-ts">${dt}</span><b>${autor}</b><br>${_renderMd(m.text||'')}</div>`;
+    return `<div class="${cls}"><span class="okr-comment-ts">${dt}</span><b>${autor}</b><br>${_renderMd(m.text||'')}${isAgente?_okrAgendaCartoes(m):''}</div>`;
   }).join('');
   // "pensando…": minha mensagem é a última e tem menos de 90 s (o agente responde em segundos; some sozinho se ele não responder)
   const ult = msgs[msgs.length-1];
@@ -2963,6 +2973,118 @@ async function _okrAgenteChatSend(){
   setTimeout(()=>{ if(_okrShowAgenteChat) renderOkrAgenteChat(); }, 91000);   // tira o "pensando…" se o agente não respondeu
 }
 
+
+
+// ── 🗓️ Propostas de agenda do Agente Ágil (functions/okr/agendaAgente.js) ──
+// O agente NUNCA grava no calendário: prepara uma proposta (kanban/okr/agenda_propostas/{id}) e a pessoa confirma com 1 clique no cartão sob a resposta dele. A confirmação
+// aplica pelos mesmos caminhos e com as mesmas permissões da tela (criar/editar/excluir/situação/cobrança), com os mesmos avisos no sino. Só a pessoa que pediu (ou um ADM) confirma.
+const OKR_AGENDA_PROPOSTAS = 'kanban/okr/agenda_propostas';
+let okrAgendaPropostas = {}, _okrAgendaPropLigado = false, _okrAgendaOcupado = {};
+const OKR_AGENDA_ACAO = {criar:'criar evento', editar:'editar evento', excluir:'excluir evento', mudar_situacao:'mudar situação', cobrar:'cobrar responsáveis'};
+function _okrAgendaPropLiga(){
+  if(_okrAgendaPropLigado) return; _okrAgendaPropLigado = true;
+  window._onValue(window._ref(window._db, OKR_AGENDA_PROPOSTAS), snap=>{ okrAgendaPropostas = snap.val() || {}; if(_okrShowAgenteChat) renderOkrAgenteChat(); });
+}
+function _okrAgendaCartoes(m){
+  const ids = _okrCalLista(m.propostas); if(!ids.length) return '';
+  const eu = window._currentUser?.uid || '', adm = isAdmUser(window._currentUser);
+  return ids.map(id=>{
+    const p = okrAgendaPropostas[id];
+    if(!p) return `<div class="okr-prop descartada"><div class="okr-prop-bd mut">${_okrAgendaPropLigado && Object.keys(okrAgendaPropostas).length ? 'Proposta não encontrada (expirou?).' : 'Carregando a proposta…'}</div></div>`;
+    const pode = !window._isPainelViewer && (p.porUid===eu || adm);
+    let rodape;
+    if(p.status==='pendente') rodape = pode
+      ? `<button type="button" class="btn btn-p btn-sm" onclick="_okrAgendaConfirmar(${jsq(id)})">✅ Confirmar</button><button type="button" class="btn btn-sm" onclick="_okrAgendaDescartar(${jsq(id)})">✖ Descartar</button>`
+      : `<span class="mut">Aguardando ${esc(p.porNome||'quem pediu')} confirmar.</span>`;
+    else if(p.status==='confirmada') rodape = `<span>✔ Confirmada${p.por&&p.por.nome?' por '+esc(p.por.nome):''}</span>`;
+    else if(p.status==='descartada') rodape = `<span class="mut">✖ Descartada${p.por&&p.por.nome?' por '+esc(p.por.nome):''}</span>`;
+    else rodape = `<span>⚠ Não foi aplicada: ${esc(p.erro||'erro')}</span>`;
+    return `<div class="okr-prop ${esc(p.status||'pendente')}" data-prop="${esc(id)}" role="group" aria-label="Proposta de agenda"><div class="okr-prop-tt">📅 PROPOSTA · ${esc((OKR_AGENDA_ACAO[p.acao]||'agenda').toUpperCase())}</div><div class="okr-prop-bd">${_renderMd(p.resumo||'')}</div><div class="okr-prop-ft">${rodape}</div></div>`;
+  }).join('');
+}
+async function _okrAgendaMarca(pid, patch){ await window._update(window._ref(window._db, OKR_AGENDA_PROPOSTAS+'/'+pid), patch); }
+async function _okrAgendaDescartar(pid){
+  const p = okrAgendaPropostas[pid]; if(!p || p.status!=='pendente') return;
+  const u = window._currentUser;
+  try{ await _okrAgendaMarca(pid, {status:'descartada', por:{uid:u.uid, nome:u.displayName||u.email||'?'}, em:new Date().toISOString()}); }catch(e){ showToast('❌ '+(e?.message||e)); }
+}
+async function _okrAgendaConfirmar(pid){
+  const p = okrAgendaPropostas[pid]; if(!p || p.status!=='pendente' || _okrAgendaOcupado[pid]) return;
+  if(window._isPainelViewer){ showToast('👁 Modo visualização — sem permissão de escrita.'); return; }
+  _okrAgendaOcupado[pid] = true;
+  const u = window._currentUser, quem = {uid:u.uid, nome:u.displayName||u.email||'?'};
+  try{
+    const msg = await _okrAgendaAplicar(p, quem);
+    await _okrAgendaMarca(pid, {status:'confirmada', por:quem, em:new Date().toISOString()});
+    showToast('✅ '+msg);
+  }catch(e){
+    showToast('⚠ '+(e?.message||e));
+    try{ await _okrAgendaMarca(pid, {status:'falhou', erro:String(e?.message||e).slice(0,200), por:quem, em:new Date().toISOString()}); }catch(e2){}
+  }finally{ delete _okrAgendaOcupado[pid]; }
+}
+// Aplica uma proposta. Falha esperada = Error com a mensagem pra pessoa (vira "Não foi aplicada: …" no cartão).
+async function _okrAgendaAplicar(p, quem){
+  const raiz = ()=>window._ref(window._db, OKR_CAL_PATH), ts = new Date().toISOString(), hojeS = todaySPStr();
+  const normaliza = e=>({ ...e, areaIds:_okrCalLista(e.areaIds), objetivoIds:_okrCalLista(e.objetivoIds), tagIds:_okrCalLista(e.tagIds), convidados:_okrCalLista(e.convidados), excecoes:e.excecoes||{}, rec:e.rec||null,
+    lembrar:e.lembrar||{vespera:true, dia:true}, hi:e.hi||'', hf:e.hf||'', local:e.local||'', link:e.link||'', descricao:e.descricao||'', macro:e.macro||'' });
+  const paiPatch = (ev, antigo)=>{ const pt = {};
+    if(ev && ev.tipo==='entrega' && ev.paiId) Object.assign(pt, _okrCalPaiPatch(ev.paiId, ts, quem, {id:ev.id, st:ev.status}));
+    if(antigo && antigo.tipo==='entrega' && antigo.paiId && (!ev || antigo.paiId!==ev.paiId)) Object.assign(pt, _okrCalPaiPatch(antigo.paiId, ts, quem, {id:antigo.id, st:null}));
+    return pt; };
+  if(p.acao==='criar'){
+    const ev = normaliza(p.ev||{});
+    if(!ev.id || okrEventos[ev.id]) throw new Error('Esse evento já existe.');
+    if(!_okrCalPodeCriar(ev.torre||'')) throw new Error('Você não tem permissão pra criar evento nessa agenda ('+_okrCalOrgTxt()+').');
+    await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+ev.id), ev);
+    const pt = paiPatch(ev, null); if(Object.keys(pt).length) await window._update(raiz(), pt);
+    _okrCalAvisaFeed('novo', ev); if(ev.convidados.length) _okrCalAvisaConvidados('convite', ev, ev.convidados);
+    _okrCalSel = ev.data; { const t = _calParse(ev.data); _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); } if(_okrShowCal) renderOkrCalendario();
+    return 'Evento criado: '+ev.titulo;
+  }
+  const antigo = okrEventos[p.eventoId];
+  if(p.acao==='editar'){
+    const ev = normaliza(p.ev||{});
+    if(!antigo) throw new Error('Esse evento não existe mais.');
+    if(!_okrCalPodeEditar(antigo)) throw new Error('Você não tem permissão pra editar este evento ('+_okrCalOrgTxt()+').');
+    if(p.baseEm && (antigo.atualizadoEm||'')!==p.baseEm) throw new Error('O evento mudou depois dessa proposta — peça de novo ao agente.');
+    await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+ev.id), ev);
+    const pt = paiPatch(ev, antigo); if(Object.keys(pt).length) await window._update(raiz(), pt);
+    const mudou = _okrCalMudou(antigo, ev), jaConv = _okrCalLista(antigo.convidados), novos = ev.convidados.filter(x=>!jaConv.includes(x));
+    if(mudou) _okrCalAvisaFeed('mudou', ev);
+    if(novos.length) _okrCalAvisaConvidados('convite', ev, novos);
+    if(mudou){ const ficam = ev.convidados.filter(x=>jaConv.includes(x)); if(ficam.length) _okrCalAvisaConvidados('mudou', ev, ficam); }
+    if(_okrShowCal) renderOkrCalendario();
+    return 'Evento atualizado: '+ev.titulo;
+  }
+  if(p.acao==='excluir'){
+    if(!antigo) throw new Error('Esse evento já foi excluído.');
+    if(!_okrCalPodeEditar(antigo)) throw new Error('Você não tem permissão pra excluir este evento ('+_okrCalOrgTxt()+').');
+    const upd = {[antigo.id]:null}; _okrCalFilhos(antigo.id).forEach(f=>{ upd[f.id+'/paiId'] = ''; });   // filhas ficam avulsas (a tela pergunta; pelo agente a escolha segura é não apagar o que ele não citou)
+    Object.assign(upd, paiPatch(null, antigo));
+    await window._update(raiz(), upd);
+    const avisoData = _okrCalRecNorm(antigo) ? (_okrCalOcorrencias(antigo, hojeS, _calSomaDias(hojeS, 400))[0]||'') : (antigo.data>=hojeS ? antigo.data : '');
+    if(avisoData){ _okrCalAvisaFeed('cancelada', antigo, avisoData); _okrCalAvisaConvidados('cancelada', antigo, null, avisoData); }
+    if(_okrShowCal) renderOkrCalendario();
+    return 'Evento excluído: '+antigo.titulo;
+  }
+  if(p.acao==='mudar_situacao'){
+    if(!antigo || antigo.tipo!=='entrega') throw new Error('Essa entrega não existe mais.');
+    if(!_okrCalPodeStatus(antigo)) throw new Error('Só quem é responsável pela entrega (ou '+_okrCalOrgTxt()+') muda a situação.');
+    await _okrEvStatus(antigo.id, p.situacao);
+    return 'Situação atualizada: '+antigo.titulo;
+  }
+  if(p.acao==='cobrar'){
+    if(!antigo || antigo.tipo!=='entrega') throw new Error('Essa entrega não existe mais.');
+    if(_okrCalStatusDe(antigo)==='entregue') throw new Error('Essa entrega já foi marcada como entregue.');
+    if(!_okrCalPodeEditar(antigo) && !(antigo.criadoPor && antigo.criadoPor.uid===quem.uid)) throw new Error('Só '+_okrCalOrgTxt()+' (ou quem criou a entrega) cobra.');
+    const alvos = _okrCalLista(antigo.convidados).filter(x=>x!==quem.uid);
+    if(!alvos.length) throw new Error('Não há outro responsável a cobrar nessa entrega.');
+    await Promise.all(alvos.map(uid=>{ const id = 'n'+Date.now()+Math.random().toString(36).slice(2,6);
+      return window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+id), {id, type:'okr_cobranca', title:'📦 '+quem.nome+' perguntou: '+antigo.titulo, sub:String(p.mensagem||'').slice(0,300), okrEventoId:antigo.id, okrEventoData:antigo.data||'', read:false, ts:new Date().toISOString()}); }));
+    return 'Cobrança enviada ('+alvos.length+' pessoa'+(alvos.length===1?'':'s')+').';
+  }
+  throw new Error('Ação desconhecida.');
+}
 
 
 // ── 📋 Anotações da reunião — mesmo dado ao vivo de
