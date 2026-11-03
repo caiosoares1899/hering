@@ -10,7 +10,7 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 | **A Bordo** | onboarding | `onboarding.html` | a renomear (não mexido ainda) |
 | **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | `travessia.html` | **em produção desde 31/10/2026** (entrada discreta: Baú 💼 no Maré/Radar e humor no Meu Dia; o card no Oceano segue "em breve" até decidirmos abrir a porta) |
 
-**Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v33 · `mare-metas.js` v16 · `mare-dicas.js` v6 · `mare-login.js` v3 · `mare-plantao.js` v1.
+**Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v37 · `mare-metas.js` v17 · `mare-dicas.js` v10 · `mare-login.js` v3 · `mare-plantao.js` v4 (desativado, guardado). Versões do dia 03/11/2026: Maré v8.30.894 · Painel v5.86 · Radar v2.96 · Oceano v1.59 · Escala v1.10.
 
 ## Regras do que renomear (e do que NÃO)
 - **Renomeia** onde "OKR" é o **nome da página/produto**: título da aba do navegador, cabeçalho, "Ajuda do Radar", "Mural do Radar", "Notificações do Radar", "Online no Radar", "Guia do Radar", links/abas nas outras páginas, textos de ajuda/inscrição, notificação "te mencionou nas anotações do Radar".
@@ -32,7 +32,7 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 ## Logos
 - **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
 
-## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.52; dev: `oceano-dev.html` v1.52)
+## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.59; dev: `oceano-dev.html` v1.59)
 `oceano.html` é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `ecossistema.html` — visão do ecossistema para a TI — e `maredigital.html`, referência detalhada do Maré), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
 - **Host dos produtos:** com o app instalado (ou preferência "sempre aqui dentro"), os produtos abrem em **iframes de nome `oceano-frame`** dentro do Oceano. O menu de 9 pontinhos (`mare-notif(-dev).js` v12+) detecta esse nome e troca de produto via `postMessage({oceano:'abrir'|'lobby'})` em vez de abrir aba nova. Páginas não precisam mudar.
 - **PWA próprio:** `oceano(-dev).webmanifest` (id e escopo só da página). **Não mexe no aplicativo do Maré Digital**, que continua com o manifesto dele.
@@ -80,6 +80,6 @@ O módulo compartilhado de metas (`mare-metas.js` v16, consumido no Oceano, Rada
 > ⏸ **Desativado a partir de 03/11/2026 (o Caio voltou), sem apagar nada** — `FERIAS_FIM = '2026-11-02'` em `oceano(-dev).html`; `?ferias=1` religa só para quem abrir assim. Tudo (interruptor, inventário, checklist da volta e como reativar) em **`docs/ASSISTENTE_FERIAS.md`**.
 
 Módulo compartilhado `mare-plantao(-dev).js` (v1) para suporte guiado, FAQ com IA e recepção estruturada de bugs:
-- **No Oceano (`oceano.html` v1.52 / `oceano-dev.html` v1.52):** o banner de férias abre **minimizado em 1 linha** (dispensável pelo usuário em `localStorage`) para não ocupar espaço vertical na vitrine, e a aba `🐛 Reportar Bug` do modal exibe **apenas o formulário de reporte e "Meus chamados"** para o usuário acompanhar seus próprios tickets.
+- **No Oceano (`oceano.html` v1.59 / `oceano-dev.html` v1.59):** o banner de férias abre **minimizado em 1 linha** (dispensável pelo usuário em `localStorage`) para não ocupar espaço vertical na vitrine, e a aba `🐛 Reportar Bug` do modal exibe **apenas o formulário de reporte e "Meus chamados"** para o usuário acompanhar seus próprios tickets.
 - **Centralização ADM no Painel:** toda a gestão de ADM (fila completa de bugs, geração de pacote anônimo para diagnóstico, disparo de workflow para o GitHub Actions e validação/fechamento de chamados) fica centralizada exclusivamente em **`Painel › 🐛 Monitor › 🛟 Plantão de Bugs`**.
 
