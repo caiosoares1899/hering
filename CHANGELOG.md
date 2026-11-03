@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar — cobrança automática das entregas do calendário de gestão (SÓ DEV) — okr-dev v2.100 — 2026-11-03
+
+- Toda manhã (7h, só dia útil) o okrDailyScan cobra os responsáveis das entregas: 2–3 dias antes (preventivo), 1–2 dias depois do prazo (atrasada) e, com 3+ dias de atraso, também escala pros gestores (lista configurável em kanban/okr/cobranca_config/gestores; sem lista, os ADMs — Caio e Rafael) e pra quem criou a entrega; segue cobrando toda segunda enquanto atrasar.
+- 1 notificação por pessoa por dia (várias entregas = 1 resumo); entregue encerra; plano pai não é cobrado (as filhas são); entrega sem responsável aparece no resumo.
+- Resumo da gestão toda segunda, só pros gestores: atrasadas · vencem na semana · sem responsável.
+- Cada aviso é carimbado em kanban/okr/cobrancas_log (com a data do prazo: mudou o prazo, a régua recomeça).
+- Tipo novo okr_cobranca (sino + push; liga/desliga na Central de Notificações): PUSH_TYPES, mare-notif-dev.js ?v=38. Regras: cobranca_config só ADM, cobrancas_log só servidor.
+- Dica: não (aviso automático, a pessoa descobre pelo sino). Exige: firebase deploy --only database + functions:okrDailyScan,sendPushOnNotification. Testes: functions/okr/__tests__/cobranca.test.js, okrRules.test.js.
+
 ### Radar — calendário de gestão do Digital: 📦 Entrega, macros PLAN/CHECK/DO/ENGAJAMENTO e 📋 Cadência do Digital (SÓ DEV) — okr-dev v2.99 — 2026-11-03
 
 - Novo tipo 📦 Entrega no 📅 Calendário do Radar: prazo, responsáveis (recebem véspera e dia), situação (A fazer · Em andamento · Entregue) e plano maior opcional ("Faz parte de": o Plano Tático mostra 3/7). O responsável marca a própria entrega; entregue não lembra mais; passou do prazo aparece Atrasada. Entrega não repete.
