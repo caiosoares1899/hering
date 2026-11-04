@@ -27,7 +27,7 @@ const seed = (comIncidentes) => ({ kanban: { usuarios: { ana: { uid: 'ana', nome
   { const { ctx, p, errs } = await abre(true);
     const lista = await txt(p, 'sc-lista'), resumo = await txt(p, 'sc-resumo'), badge = await txt(p, 'sc-badge');
     t('A. o cartão existe na aba Status', await p.evaluate(() => !!document.getElementById('st-cards-card') && document.getElementById('ppane-status').classList.contains('on')), '');
-    t('B. restaurado aparece com "Restaurado sozinho" e link pra abrir o card', /Restaurado sozinho/.test(lista) && await p.evaluate(() => [...document.querySelectorAll('#sc-lista a')].some(a => /opencard=c1/.test(a.href) && /squad=midiacriativa/.test(a.href) && /kanban-dev\.html/.test(a.href))), lista.slice(0, 300));
+    t('B. restaurado aparece com "Restaurado sozinho" e link pra abrir o card', /Restaurado sozinho/.test(lista) && await p.evaluate(dev => [...document.querySelectorAll('#sc-lista a')].some(a => /opencard=c1/.test(a.href) && /squad=midiacriativa/.test(a.href) && (dev ? /kanban-dev\.html/ : /kanban\.html/).test(a.href)), PAGE.includes('-dev')), lista.slice(0, 300));
     t('C. sem cópia, em massa e reincidente aparecem como sem socorro', /Sem cópia/.test(lista) && /Sumiço em massa/.test(lista) && /Voltou a sumir/.test(lista), lista.slice(0, 600));
     t('D. o alarme do navegador JÁ socorrido não duplica; o sem restauração aparece', !/outro título/.test(lista) && /Alarme sem restauração/.test(lista) && /Alarme do navegador, sem restauração/.test(lista) && /midiacriativa/.test(lista), lista.slice(0, 600));
     t('E. fora da janela de 30 dias não entra', !/Fora da janela/.test(lista), lista.slice(-200));

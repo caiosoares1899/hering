@@ -24,22 +24,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Maré — supercard: a lista de cards filhos mostra a submarca de cada filho (SÓ DEV) — kanban-dev — 2026-11-04
+### Maré — supercard: a lista de cards filhos mostra a submarca de cada filho (PROD) — kanban v8.30.904 — 2026-11-04
 
 Na lista 'Cards filhos (supercard)' do card, cada linha ganha a pílula da submarca do filho (a mesma cor do board: Hering Kids Comercial, Sports Cadastro, Geral…) ao lado da coluna e do responsável. Antes só dava pra ver quem estava atrasado, não de qual marca. Nos squads que usam o campo Submarca, o filho sem submarca aparece como '🏷️ sem submarca' (discreto); nos outros squads não aparece nada nesse caso. Título do filho continua escapado; celular e 3 temas ok. Ajuda (verbete Supercard) atualizada. Dica: não — informação a mais numa lista que já é usada.
 
-### Maré — desempenho: o quadro em repouso gastava ~1 núcleo de CPU/GPU; agora ~3% (SÓ DEV) — kanban-dev v8.30.902 — 2026-11-04
+### Maré — desempenho: o quadro em repouso gastava ~1 núcleo de CPU/GPU; agora ~3% (PROD) — kanban v8.30.904 — 2026-11-04
 
 Sintoma (Caio e André): lentidão nos PCs, inclusive no Mac. Medido no Chromium com 900 cards, quadro aberto e ninguém mexendo: ~100% de um núcleo (todos os processos) só pelos 24 peixes/bolhas animados atrás de superfícies com backdrop-filter — cada quadro de animação refazia o desfoque do que está atrás (7 colunas, gavetas, ~135 botões).
 Mudanças (identidade visual mantida; prints antes/depois nos 3 temas indistinguíveis): (1) peixes e bolhas pausam com a aba oculta (já havia), a JANELA SEM FOCO, 60 s SEM USO (mouse/teclado/rolagem/toque; voltam no primeiro movimento) e com um modal/tela aberta por cima — mesma lógica que o Oceano já usava; (2) colunas do board, gavetas, abas das gavetas e botões perdem o backdrop-filter (o fundo já é translúcido e os peixes ficam a 22% de opacidade: o desfoque ali era imperceptível); modais, cabeçalho e telas de entrada mantêm o vidro.
 Resultado medido: em uso 101% → 19%; parado 101% → ~1–3%. Harness repetível em docs/arezzo/perf/medir_repouso.js (CPU de todos os processos, animações, backdrop-filter, intervalos). Próximo da fila: Oceano (39% em repouso), depois Travessia (5%); Painel, Radar e Escala já estão em ~0%. Dica: não.
 
-### Maré — Meu Dia: os blocos de humor recolhem e o painel todo rola junto (SÓ DEV) — kanban-dev — 2026-11-04
+### Maré — Meu Dia: os blocos de humor recolhem e o painel todo rola junto (PROD) — kanban v8.30.904 — 2026-11-04
 
 Os blocos '🌤️ Como você está hoje?' e '🌙 Fechamento do dia' ocupavam metade da tela e espremiam a lista de cards. Agora cada um tem uma setinha ▾/▸ para recolher (preferência salva no aparelho; padrão: o de hoje abre recolhido depois que a pessoa responde, o fechamento vem recolhido; com o bloco recolhido o cabeçalho mostra a carinha escolhida / 'salvo hoje'), e o painel inteiro — humor, botões do Agente e cards — tem UM scroll só, em vez de a lista rolar sozinha no fim da página.
 Redesenhar ao escolher uma carinha ou salvar o dia mantém o que a pessoa está vendo e o rascunho do fechamento. Teclado e toque (alvo ≥ 44 px) cobertos. Dica: não — ajuste de layout de uma tela já usada; a Ajuda (verbete Meu Dia) foi atualizada.
 
-### Painel — 🛡️ Saúde dos cards na aba Status: episódios do guardião e alarmes sem socorro (SÓ DEV) — painel-dev — 2026-11-04
+### Painel — 🛡️ Saúde dos cards na aba Status: episódios do guardião e alarmes sem socorro (PROD) — painel v5.87 — 2026-11-04
 
 Novo cartão na aba 🔋 Status do Painel: os últimos 30 dias de episódios do guardião dos cards, de todas as squads — restaurado sozinho (com link pra abrir o card), sem cópia (buscar no backup), sumiço em massa e card que volta a sumir — mais os alarmes do navegador que o guardião NÃO restaurou. Resumo dos 7 dias (restaurados · sem socorro · episódios · squads vigiadas) e selo verde/vermelho. O aviso lembra de procurar o card no backup antes de recriar.
 Só leitura de kanban/cards_guardiao/{squad}/incidentes e cards_incidentes_sumico (pequenos); o espelho segue ilegível pelo navegador. Texto do card escapado. Dica: não — é tela de consulta de ADM.
