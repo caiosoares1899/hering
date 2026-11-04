@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré — supercard: a lista de cards filhos mostra a submarca de cada filho (SÓ DEV) — kanban-dev — 2026-11-04
+
+Na lista 'Cards filhos (supercard)' do card, cada linha ganha a pílula da submarca do filho (a mesma cor do board: Hering Kids Comercial, Sports Cadastro, Geral…) ao lado da coluna e do responsável. Antes só dava pra ver quem estava atrasado, não de qual marca. Nos squads que usam o campo Submarca, o filho sem submarca aparece como '🏷️ sem submarca' (discreto); nos outros squads não aparece nada nesse caso. Título do filho continua escapado; celular e 3 temas ok. Ajuda (verbete Supercard) atualizada. Dica: não — informação a mais numa lista que já é usada.
+
 ### Maré — desempenho: o quadro em repouso gastava ~1 núcleo de CPU/GPU; agora ~3% (SÓ DEV) — kanban-dev v8.30.902 — 2026-11-04
 
 Sintoma (Caio e André): lentidão nos PCs, inclusive no Mac. Medido no Chromium com 900 cards, quadro aberto e ninguém mexendo: ~100% de um núcleo (todos os processos) só pelos 24 peixes/bolhas animados atrás de superfícies com backdrop-filter — cada quadro de animação refazia o desfoque do que está atrás (7 colunas, gavetas, ~135 botões).
