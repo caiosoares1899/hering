@@ -82,15 +82,34 @@ async function resumirPlantao({ db }) {
   return { abertos: total, porEstado: c, aguardandoValidacao: (c.testando || 0) + (c.pr_aberto || 0), escalados: c.escalado || 0 };
 }
 
-// ── alarmes "card sumiu" das últimas 24 h, nos squads do dono ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// ── alarmes "card sumiu" das últimas 24 h, nos squads do dono ──────────────────────────────────────────────────────────────────────
+// Com o 🛡️ guardião (functions/cards/guardiao.js) o alarme do navegador deixou de ser sinônimo de card perdido: ele restaura do espelho em segundos e registra em
+// kanban/cards_guardiao/{squad}/incidentes. Então o semáforo só fica em ATENÇÃO para o que NÃO teve socorro:
+//   • `ultimas24h`   = cards sem socorro (alarme sem restauração do guardião, + incidentes do guardião que não deu pra restaurar: sem cópia, em massa, reincidente) — é o que pinta o semáforo;
+//   • `restaurados24h` = cards que o guardião devolveu sozinho (informativo, verde);  • `alarmes24h` = alarmes brutos do navegador (como `ultimas24h` era antes).
+const TOLERANCIA_SOCORRO_MS = 60000;   // o guardião decide ~6 s depois do alarme; folga pra relógio/reexecução
 async function resumirAlarmes({ db, squads, agora }) {
   const corte = new Date(agora - 24 * 3600000).toISOString();
-  const lidos = await Promise.all(squads.map(async (sq) => ({ sq, v: (await db.ref(`kanban/squads/${sq}/dados/cards_incidentes_sumico`).get()).val() || {} })));
-  const itens = [];
-  lidos.forEach(({ sq, v }) => Object.values(v).forEach((x) => { if (x && x.detectadoEm >= corte) itens.push({ sq, cardId: x.cardId, em: x.detectadoEm }); }));
+  const lidos = await Promise.all(squads.map(async (sq) => ({
+    sq,
+    v: (await db.ref(`kanban/squads/${sq}/dados/cards_incidentes_sumico`).get()).val() || {},
+    g: (await db.ref(`kanban/cards_guardiao/${sq}/incidentes`).get()).val() || {},
+  })));
+  const itens = [], restauradosPorCard = new Map(), naoRestaurados = new Set(), restaurados = new Set();
+  lidos.forEach(({ sq, v, g }) => {
+    Object.values(v).forEach((x) => { if (x && x.detectadoEm >= corte) itens.push({ sq, cardId: x.cardId, em: x.detectadoEm }); });
+    Object.values(g).forEach((x) => {
+      if (!x || !x.cardId || !(x.detectadoEm >= corte)) return;
+      if (x.acao === 'restaurado') { restaurados.add(sq + ':' + x.cardId); restauradosPorCard.set(sq + ':' + x.cardId, x.detectadoEm); }
+      else naoRestaurados.add(sq + ':' + x.cardId);          // sem_espelho / em_massa / reincidente: ninguém restaurou
+    });
+  });
+  const socorrido = (i) => { const t = restauradosPorCard.get(i.sq + ':' + i.cardId); return !!t && Date.parse(t) >= Date.parse(i.em) - TOLERANCIA_SOCORRO_MS; };
   const distintos = new Set(itens.map((i) => i.sq + ':' + i.cardId));
+  const semSocorro = new Set(naoRestaurados);
+  itens.filter((i) => !socorrido(i)).forEach((i) => semSocorro.add(i.sq + ':' + i.cardId));
   const ultimo = itens.sort((a, b) => b.em.localeCompare(a.em))[0];
-  return { ultimas24h: distintos.size, ultimoEm: ultimo ? ultimo.em : null, squadUltimo: ultimo ? ultimo.sq : null };
+  return { ultimas24h: semSocorro.size, restaurados24h: restaurados.size, alarmes24h: distintos.size, ultimoEm: ultimo ? ultimo.em : null, squadUltimo: ultimo ? ultimo.sq : null };
 }
 
 // ── meus cards (responsável) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

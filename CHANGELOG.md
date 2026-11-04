@@ -24,6 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Mini painel: "Cards sumindo" entende o guardião — card restaurado sozinho não pinta o semáforo (functions/oceano/resumo.js, minipainel.html) — 2026-11-04
+
+O semáforo 'Cards sumindo (24 h)' do mini painel passa a descontar o que o guardião dos cards restaurou: só fica em Atenção o que NÃO teve socorro (alarme sem restauração, sem cópia de segurança, sumiço em massa, reincidente). O que foi restaurado aparece como informativo verde (restaurados24h).
+Contrato do JSON: ultimas24h agora = cards sem socorro; novos campos restaurados24h e alarmes24h (o antigo ultimas24h). Mac e Windows mostram verde na hora (só o servidor mudou); o texto '1 restaurado sozinho' só aparece no minipainel.html por enquanto. Deploy: firebase deploy --only functions:oceanoResumo.
+
 ### Guardião dos cards: o servidor restaura sozinho o card que some + trava de tela velha (PROD) — kanban v8.30.900, mare-notif v40, functions cardsEspelhar/cardsGuardiao — 2026-11-03
 
 Card sumido sem ninguém excluir é RESTAURADO pelo servidor em segundos (cópia de segurança de cada card em kanban/cards_espelho, sem acesso dos navegadores) e o episódio é registrado em kanban/cards_guardiao/{squad}. ADMs e POs da squad recebem a notificação 🛡️ (sino + push, tipo card_resgatado) e todo mundo com a squad aberta vê o aviso na tela.

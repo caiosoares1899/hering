@@ -76,6 +76,25 @@ test('alarmes de "card sumiu": conta cards distintos das últimas 24 h nos squad
   const limpo = await monta().run(); assert.equal(limpo.alarmesSumico.ultimas24h, 0);
 });
 
+test('com o guardião: alarme que ele restaurou NÃO pinta o semáforo (vira "restaurados24h"); o que ele não conseguiu restaurar pinta', async () => {
+  const d = seed(); const T = (m) => iso(m);
+  d.kanban.squads.dados.dados.cards_incidentes_sumico = { i1: { cardId: 'c1', detectadoEm: T(60) }, i2: { cardId: 'c2', detectadoEm: T(40) } };
+  d.kanban.cards_guardiao = { dados: { incidentes: { g1: { cardId: 'c1', acao: 'restaurado', detectadoEm: T(59.9) } } } };
+  const r = await monta(d).run();
+  assert.equal(r.alarmesSumico.alarmes24h, 2); assert.equal(r.alarmesSumico.restaurados24h, 1);
+  assert.equal(r.alarmesSumico.ultimas24h, 1, 'c1 foi restaurado; só c2 segue sem socorro'); assert.equal(r.geral, 'atencao');
+  d.kanban.cards_guardiao.dados.incidentes.g2 = { cardId: 'c2', acao: 'restaurado', detectadoEm: T(39.9) };
+  const r2 = await monta(d).run();
+  assert.equal(r2.alarmesSumico.ultimas24h, 0); assert.equal(r2.alarmesSumico.restaurados24h, 2); assert.notEqual(r2.geral, 'atencao', 'tudo restaurado: semáforo verde');
+});
+
+test('com o guardião: sem cópia / em massa / reincidente contam como sem socorro, mesmo sem alarme do navegador; restaurado sem alarme é só informativo', async () => {
+  const d = seed(); d.kanban.cards_guardiao = { dados: { incidentes: {
+    a: { cardId: 'x1', acao: 'sem_espelho', detectadoEm: iso(30) }, b: { cardId: 'x2', acao: 'restaurado', detectadoEm: iso(20) }, c: { cardId: 'velho', acao: 'sem_espelho', detectadoEm: iso(60 * 30) } } } };
+  const r = await monta(d).run();
+  assert.equal(r.alarmesSumico.ultimas24h, 1); assert.equal(r.alarmesSumico.restaurados24h, 1); assert.equal(r.alarmesSumico.alarmes24h, 0); assert.equal(r.geral, 'atencao');
+});
+
 test('plantão: conta só as fichas abertas; ficha escalada deixa o geral em atenção', async () => {
   const d = seed({ plantao: { b1: { estado: 'aguardando' }, b2: { estado: 'testando' }, b3: { estado: 'pr_aberto' }, b4: { estado: 'validado' }, b5: { estado: 'escalado' } } });
   const r = await monta(d).run();
