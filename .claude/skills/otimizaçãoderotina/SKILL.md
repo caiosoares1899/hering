@@ -25,7 +25,7 @@ precisar reconstruir o método do zero a cada vez.
 
 O app não tem build step, não tem bundler — cada página é um único arquivo
 HTML self-contained, com `<style>` e `<script>` inline, sem imports entre
-páginas (ver `CLAUDE.md`, seção "What this repo is"). Isso é uma decisão de
+páginas (ver `CLAUDE.md`, seção "O que é este repo"). Isso é uma decisão de
 arquitetura deliberada, não um descuido. Por isso:
 
 - **Nunca minifique** o HTML/CSS/JS fonte — não existe pipeline de build

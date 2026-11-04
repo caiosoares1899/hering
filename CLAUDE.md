@@ -1,326 +1,75 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guia para o Claude Code neste repositório. É a **fonte única das regras do projeto** (`AGENTS.md` e `.agents/rules/` só acrescentam o que é do Antigravity). Mantenha enxuto: detalhe por arquivo vive em `docs/BIBLIOTECA.md` (§6) e em `.claude/rules/*.md`.
 
-## What this repo is
+## O que é este repo
 
-Internal tools for Hering, deployed as static pages via GitHub Pages at
-https://caiosoares1899.github.io/hering/. There is no build step, no bundler,
-no npm project at the root — each `.html` file is a single self-contained
-page (inline `<style>`, inline `<script type="module">`, no imports between
-pages). The only Node project is `functions/` (a Firebase Cloud Function).
+Ferramentas internas da Hering, publicadas como páginas estáticas no GitHub Pages (https://caiosoares1899.github.io/hering/). Sem build, sem bundler, sem npm na raiz — cada `.html` é uma página autocontida (`<style>` e `<script type="module">` inline, sem imports entre páginas). O único projeto Node é `functions/` (Cloud Functions do Firebase).
 
-The centerpiece is **Maré Digital**, a kanban-based squad management system
-with an admin panel and push notifications, backed by Firebase Realtime
-Database + Firebase Auth (Google sign-in) + Firebase Cloud Messaging.
+O centro é a família **Oceano**: **Maré Digital** (kanban), **Painel**, **Radar** (= o OKR, `okr.html`), **A Bordo** (onboarding), **Travessia**, Escala, Intake e o Mini painel, sobre Firebase Realtime Database + Auth (Google) + Cloud Messaging. Só os **nomes visíveis** mudam; arquivos, URLs e caminhos do banco ficam. "OKR" segue como metodologia, papel e selo dos cards; texto novo que cite a página do OKR diz "Radar". Regras e fases em `docs/OCEANO.md` — **leia antes de renomear qualquer texto**.
 
-## Commands
+Modo "só Hering" (login só Google `@ciahering.com.br`, uma torre, @menção só Hering): nada foi apagado, está atrás de `MARE_SO_HERING`. **Antes de mexer em login, torres, domínios ou regras, leia `docs/arezzo/MARE_SO_HERING.md`.**
 
-There is no lint/test/build tooling in this repo — changes are made directly
-to the HTML files and validated by opening them in a browser.
+## Comandos
 
-```bash
-# Install/run the Cloud Function locally
-cd functions && npm install
+Não há lint/test/build na raiz: edita-se o HTML e valida-se no navegador. Checagens: `node scripts/checar.js` (a CI roda) e `cd functions && npm test`. As páginas publicam sozinhas a cada push na `main` (`.github/workflows/pages.yml`).
 
-# Deploy the push-notification Cloud Function
-cd functions && firebase deploy --only functions   # requires `firebase login`
+### Deploy de `functions/` e do banco — é do Caio, na máquina dele, e sempre com resync antes
 
-# Push updated Realtime Database rules (database.rules.json) to Firebase
-firebase deploy --only database
-```
+- Os agentes **nunca rodam `firebase deploy`** (sem credencial no sandbox): acrescentam a linha em "Pendente de deploy" de `docs/COORDENACAO_AGENTES.md`.
+- **Sempre que for entregar um `firebase deploy`/`secrets:set`, entregue antes o resync** — o clone dele não se atualiza: `cd /d "C:\Users\caio.soares\.gemini\antigravity\scratch\hering"` → `git fetch origin <branch>` → `git reset --hard origin/<branch>`. Sem isso o deploy falha com `No function matches the filter`.
+- Deploy de função é sempre `firebase deploy --only functions:<nome>`, nunca `--only functions` puro. Regras do banco: `firebase deploy --only database` (regras primeiro).
+- MacBook do Caio: clone em `~/hering`, com Claude Code próprio — antes de qualquer pedido, `cd ~/hering && git pull`. Detalhes (caminhos, Mac, push, backup, conhecimento do Agente Ágil) em `.claude/rules/functions-e-banco.md`, que carrega ao tocar em `functions/**` ou `database.rules.json`.
 
-Deploying the static pages themselves is automatic: `.github/workflows/pages.yml`
-publishes the entire repo root to GitHub Pages on every push to `main` — there
-is no separate deploy step for the HTML files.
+## Onde está cada coisa
 
-### `functions/` deploys run on the user's own machine — always resync first
-
-Unlike the HTML pages (auto-published by GitHub Pages), anything under
-`functions/` (Cloud Functions, `firebase functions:secrets:set`, `firebase
-deploy --only functions:...`) has to be run by the user on their own Windows
-machine, with their own `firebase-tools` login — this session's sandbox has
-no deploy credentials. **Every single time a PR touching `functions/` gets
-merged, and you're about to hand the user a `firebase deploy`/`firebase
-functions:secrets:set` command to run locally, first give them the sync
-step** — their local clone tracks the working branch and does not
-auto-update:
-```bash
-cd /d "C:\Users\caio.soares\.gemini\antigravity\scratch\hering"
-git fetch origin <branch-name>
-git reset --hard origin/<branch-name>
-```
-**Caminho do clone do Caio (fixo, confirmado por ele em 16/10/2026):** `C:\Users\caio.soares\.gemini\antigravity\scratch\hering` — é o mesmo diretório em que o Antigravity trabalha. Use sempre `cd /d "…"` (a barra `/d` troca de unidade no `cmd`). Em PowerShell, `cd "…"` basta; ao entregar um resync, escreva o comando já com esse caminho, nunca um genérico.
-**MacBook do Caio (31/10/2026):** o clone fica em `~/hering` e o Claude Code está instalado lá (sessão própria, que não enxerga o que esta sessão fez: antes de qualquer pedido, `cd ~/hering && git pull`). O app do mini painel (`mac/`) roda dele; atualizar = `cd ~/hering/mac && git pull && xcodegen generate` e ⌘+R no Xcode. Os deploys de `functions/` continuam sendo feitos no Windows.
-
-Skipping this is a real, repeated failure mode: `firebase deploy` silently
-discovers whatever `functions/index.js` exports **on disk locally** — if a
-new export (e.g. a new Cloud Function) isn't there yet because the merge
-happened after their last pull, the deploy fails with a confusing `No
-function matches the filter: default:<name>` instead of any obviously
-git-related error. Same applies before `npm install`/testing anything
-in `functions/` locally after you've pushed changes — always assume their
-clone is stale until they've resynced, and say so up front rather than
-letting them hit the error first.
-
-## Key files and their roles
-
-- `docs/BIBLIOTECA.md` — **o "bibliotecário" do repo**: onde mora cada arquivo da raiz e de cada pasta, e por que as páginas/imagens/módulos ficam na raiz (URL do GitHub Pages = nome do arquivo). **Arquivo novo na raiz = linha nela** (`node scripts/checar.js` falha se faltar); screenshots/saídas de teste não vão pra raiz (`docs/capturas/`). Ao lado dele, `docs/MAPA_DO_REPOSITORIO.md` é **o mapa** (diagramas das relações páginas → módulos → Firebase → functions, dev → prod); o bloco "O que o código diz" é gerado por `node scripts/mapa.js` e a CI reprova se estiver velho — **mudou módulo de uma página, função exportada ou nó do banco → rode `node scripts/mapa.js` e commite**.
-
-- `docs/ASSISTENTE_FERIAS.md` — **Assistente Férias do Caio + Plantão de Bugs: desativado em 03/11/2026, guardado para reuso** (nada foi apagado): o interruptor (`FERIAS_FIM` / `?ferias=1` em `oceano(-dev).html`), o inventário de todas as peças (front, módulo `mare-plantao`, funções `plantao*`, regras, skill `/plantaobug`), o checklist do dia da volta e o passo a passo para religar numa próxima ausência. O runbook técnico do plantão continua em `docs/PLANTAO_BUGS.md`.
-- `docs/COORDENACAO_AGENTES.md` — **how the two agents share this repo**
-  (Claude = big features/fixes, `functions/`, DB rules, shared modules;
-  Antigravity/Gemini = daily monitoring, small features/fixes, docs,
-  routine promotions), branch/commit conventions, the shared "board"
-  (in progress / escalated / pending deploy) and the daily checklist.
-  **Read it before starting any task.** This `CLAUDE.md` is the single
-  source of truth for project rules; `AGENTS.md` and `.agents/rules/` only
-  add what is specific to Antigravity and must not restate these rules.
-- **Revisão automática das PRs do Antigravity (2026-10-16) — ⏸ PAUSADA em 03/11/2026 (tarefa agendada desabilitada, não apagada; religar = pedir ao Claude ou reabilitar no claude.ai, ver `docs/COORDENACAO_AGENTES.md` §4.1)** — enquanto pausada, não há revisão automática; mesmo assim, quando você (Claude) for chamado numa conversa com o Caio e houver PR do Antigravity aberta, revise à mão. Como era: tarefa agendada acorda a sessão fixa "Revisor das PRs do Antigravity" (seg–sex, de 2 em 2 h, 8h–20h Brasília) para revisar toda PR `antigravity/*` e comentar nela (`<!-- revisao-claude:SHA7 -->`); nunca faz merge/aprovação/push. Procedimento, limites e como pausar em `docs/COORDENACAO_AGENTES.md` §4.1. Quando você (Claude) for chamado numa conversa com o Caio e houver PR aberta do Antigravity sem comentário de revisão, revise na hora.
-- `CODE_MAP_FAST.md` — compact, auto-generated line index of functions and
-  anchors for the main pages (`node scripts/mare-cli.js map`); `CODE_MAP.md`
-  (below) is the detailed, hand-curated index by feature area.
-- `BUGS_E_CORRECOES.md` — log of bugs, point fixes, regressions and
-  `/monitorarbugs` findings, plus the `🛡️ Armadilhas Conhecidas & Regras de
-  Ouro` section (read it before touching Firebase queries, auth or comments).
-  `CHANGELOG.md` is for **new features and structural deliveries only**
-  (July–Sept 2026 entries live in `docs/changelog-archive-2026-07-a-09.md`).
-- `scripts/mare-cli.js` — `status` / `bump` (version + cache-buster) / `log
-  --type feature|bug` (writes CHANGELOG or BUGS) / `map` (rebuilds
-  `CODE_MAP_FAST.md`). `.claude/skills/subirproprod/promover.js` — dev → prod
-  promotion preserving the prod-only lines (`--status` lists pending hunks).
-- `CODE_MAP.md` — index of stable function/const anchors by feature area
-  (auth, board render, cards, supercards, automations, notas, notifications,
-  Cloud Functions...) for `kanban.html`/`kanban-dev.html`/`painel.html`/
-  `functions/`. Use it to jump straight to the right area instead of reading
-  the whole file — but always re-`grep` the anchor name before trusting a
-  line number, since it's a snapshot that drifts on every edit.
-- `MARINE_GLASS.md` — the brand/design-system manual for "Marine Glass"
-  (the "glass over ocean" visual identity — dark oceanic gradient background
-  + glassmorphism surfaces, "Abrolhos"/"Lençóis Maranhenses" theme names,
-  Syne/DM Sans typography, semantic emoji, tone of voice) shared across
-  `kanban.html`/`painel.html`, `onboarding.html`, and `bolao.html`. Written
-  by the user from the real CSS/copy already in those pages — reference it
-  (color tokens, glass blur recipe, the ready-made prompt template in its
-  §10) before styling any new page or standalone piece (slide, WhatsApp art)
-  that should read as "part of the family." Update it if the palette or
-  conventions evolve in a new piece, same spirit as `CODE_MAP.md`.
-- `docs/GUIA_UI_UX.md` + skill **`/melhoriauiux`** (2026-10-17) — a "aula" de UI/UX do ecossistema (como se pensam fluxos, páginas, cores, estados, mobile/toque, acessibilidade, dataviz, tom de voz, método de auditoria com Playwright + 3 temas) e o procedimento da rodada de melhoria de UI/UX (direcionada a uma tela ou geral). Complementa `MARINE_GLASS.md` (identidade) e `docs/GUIA_DE_CODIGO.md` (código). **Leia antes de desenhar ou alterar qualquer tela.** Descobriu regra de design nova? Ela entra no guia.
-- `ecossistema.html` — **Oceano · Ecossistema de gestão** (2026-10-16, criado para a reunião com a TI de 30/10): documento técnico único (sem `-dev`, entra no ar no merge) sobre arquitetura, uso do Google Cloud/conta corporativa, segurança e dados, ambientes dev × prod, Agente Ágil e consumo de tokens, Claude × Antigravity, skills, subagentes, política de PR/CI/auditoria no GitHub, personalização por squad, riscos e internalização. Todo número ali é medido no repositório (comandos na seção 14) — **mantido por `/atualizardocumentacoes`**; `maredigital.html` virou a referência detalhada do Maré e aponta para ele. Aberto pelo Oceano (botão "Ecossistema de gestão").
-- `kanban.html` — production kanban board (squad management).
-- `kanban-dev.html` — test/dev copy of the board. **Currently byte-identical
-  to `kanban.html`** — historically it's meant for testing changes safely
-  before they hit prod, so keep changes to the two in sync deliberately, and
-  never point the dev board at production data without reviewing first.
-- `painel.html` / `painel-dev.html` — admin panel (people management,
-  announcements, manual push notifications) and its dev counterpart. Unlike
-  the kanban pair, these two **do** diverge (dev has extra debug
-  instrumentation, a "dev" banner, etc.) — check `diff painel.html
-  painel-dev.html` before assuming a change should land in both.
-- `mare-notif-dev.js` / `mare-notif.js` — **sino único**: módulo compartilhado (raiz do domínio, único arquivo
-  carregado por mais de uma página) que mantém o **feed da torre** (`kanban/notif_feed`, "lido" em
-  `kanban/notif_feed_seen/{uid}`) e o roteador de tipos de notificação (ícone + URL entre páginas), além do rodapé do sino (🔊 som · permissão deste aparelho/push · 🔕 Não Perturbe) usado pelo OKR e pelo painel, usado pelo sino de
-  `kanban`, `painel` e `okr` — a notificação tem que aparecer igual em qualquer página. Segue o mesmo ciclo dev→prod
-  (as páginas `-dev` carregam `mare-notif-dev.js?v=N`, as de prod `mare-notif.js?v=N`; ao mudar o módulo, bump o `?v=` nas páginas).
-- `mare-dicas-dev.js` / `mare-dicas.js` — **dicas (mini popups)**: segundo módulo compartilhado (raiz do domínio), usado só por `kanban` (Maré), `okr` (Radar) e `oceano` — Painel e A Bordo não mostram dicas (o Painel só **lista** todas, em ⚙ Configurações → 💡 Dicas). O **catálogo de todos os apps vive no módulo** (`CATALOGO`: id, gatilho, texto curto, `saiba` → tópico da Ajuda, `ajuda` = nome do tópico); cada página só chama `MareDicas.init({app, user, quando:{id:fn}, abrirAjuda})` e `MareDicas.gatilho(...)` onde a pessoa chega. O módulo cuida de aparecer 1 por vez, uma vez só, **no máximo 1 por dia por app** (`dicas/ultima/{app}`), e do liga/desliga por app (`kanban/usuarios/{uid}/dicas`). **Dica nova = 1 linha no `CATALOGO` + (se depender do estado da tela) 1 entrada em `quando` na página.** Mesmo ciclo dev→prod do `mare-notif` (`?v=` nas páginas — bump em todas ao mudar o módulo).
-- **Conhecimento do Agente Ágil (2026-10-10)** — `functions/agente-agil-orquestrador/conhecimento/*.json` são **gerados** (`cd functions && npm run conhecimento`) a partir de `HELP_CONTENT` (kanban.html), da Ajuda do Radar (okr.html), do FAQ do Oceano (oceano.html) e do CHANGELOG (produção); o teste `conhecimento.test.js` falha se ficarem velhos. **Mudou a Ajuda ou promoveu pra prod → regenerar, commitar e republicar as funções do agente** (`agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO`, `okrAgenteChat`) — Cloud Functions não leem o repo em runtime. Detalhes no `README.md` da pasta.
-- **Central de Notificações (2026-10-10)** — aba 🔔 Notificações do `painel(-dev).html`: catálogo de todos os tipos (`MareNotif.TIPOS` em `mare-notif(-dev).js` — **tipo de notificação novo = 1 entrada lá**), interruptores sino/push por tipo em `kanban/notif_config/{tipo}` (regras: só PO/ADM gravam), e quem está com Não Perturbe/push. O push respeita o interruptor via `functions/common/notifConfig.js` (deploy de `sendPushOnNotification`/`sendPushOnMural` + `firebase deploy --only database`).
-- `mare-metas-dev.js` / `mare-metas.js` — **metas e desafios ("O mar tá pra peixe", 2026-10-12, em prod desde 2026-10-13)**: terceiro módulo compartilhado (raiz do domínio), usado por `kanban` (aba lateral 📊 Dados com 2 abas Squad|Digital + ⚙ Config → 🐟 Metas) e `painel` (📊 Dados → metas do Digital). Concentra matemática (% / ritmo / situação / marcos de 20 %), gráficos no estilo do Radar, formulários, popup 🐟 e a camada de dados (`kanban/metas_digital[_dev]`, `kanban/metas_squads[_dev]/{squad}`, `kanban/metas_log[_dev]` — **regras novas, exige `firebase deploy --only database`**). Mesmo ciclo dev→prod do `mare-notif` (`?v=` nas páginas; ao promover: `mare-metas.js` + `kanban.html` + `painel.html` juntos). Recursos: ritmo não linear (diarização), entrada retroativa como parte do total e 🗂 Entradas (editar/excluir). Lembretes de preenchimento: função agendada `metasLembretes` (`functions/metas/lembretes.js`, a cada 15 min no horário de Brasília; deploy: `firebase deploy --only functions:metasLembretes,functions:sendPushOnNotification` + `firebase deploy --only database`; tipo `meta_lembrete` em `PUSH_TYPES` e em `MareNotif.TIPOS`).
-- `firebase-messaging-sw.js` — the Service Worker. **Must stay at the domain
-  root** (not in a subfolder) — it handles both offline caching and showing
-  push notifications when the tab is closed/backgrounded.
-- `functions/index.js` — registers every deployed Cloud Function (each
-  `exports.xxx = require('./yyy/zzz').xxx` line documents its own deploy
-  command in a comment above it — always deploy with
-  `firebase deploy --only functions:<name>`, never a bare
-  `--only functions`, unless you mean to touch every function at once).
-  Currently live: `sendPushOnNotification` (push), `agenteAgilMencao`
-  (Agente Ágil orquestrador, `agente-agil-orquestrador/`), `agenteAgil`
-  (older HTTP-based agent v0-v3, `agente-agil/`), `intakeSubmit`
-  (anonymous public form → `intake_pending`, `intake/`), `weeklyBackup`
-  (automatic weekly board backup to Cloud Storage, `backup/weeklyBackup.js` — board only), `backupCompletoSemanal`/`backupGlobalDiario` (**full database backup**, `backup/completo.js` → private `backups-completos/`; **a new top-level node in the database = add it to `NOS_GLOBAIS` there, or it has no backup**; restore with `backup/restaurar.js` or the 🛟 screen in Config → Backup via `backupCompletoApi`; `backupVigia` alerts the ADMs when a backup fails), and most of
-  the Spotify integration (`spotify/`, see below) — **except**
-  `spotifySync`, which is commented out. See `CODE_MAP.md` for the full
-  export list with line numbers.
-- `database.rules.json` — Realtime Database security rules. This is a
-  **manual mirror** of what's configured in the Firebase Console; if someone
-  edits rules directly in the console, this file goes stale until someone
-  copies the change back. Worth diffing against the console occasionally.
-- `version.json` — the version each page's auto-update mechanism polls (see
-  below). Bump the relevant key whenever a versioned page changes.
-- Other standalone tools with no relation to Maré Digital: `bolao.html`,
-  `capacitacao.html`, `onboarding.html` (+ `onboarding.slide.html`),
-  `apresentacao.html`, `maredigital.html`, `resumo.slide.html`,
-  `ai-slide.html`, `ai-txt.html`, `controle.html`.
+- `docs/BIBLIOTECA.md` — **o bibliotecário**: onde mora cada arquivo e por quê (URL do Pages = nome do arquivo). **Arquivo novo na raiz = linha nela** (`checar.js` falha se faltar); screenshots/saídas de teste vão para `docs/capturas/`. A §6 tem o catálogo detalhado dos arquivos-chave (módulos `mare-*`, Service Worker, `functions/index.js`, ecossistema…).
+- `docs/MAPA_DO_REPOSITORIO.md` — diagramas páginas → módulos → Firebase → functions. O bloco "O que o código diz" é gerado: mudou módulo de uma página, função exportada ou nó do banco → `node scripts/mapa.js` e commite (a CI reprova se estiver velho).
+- `docs/COORDENACAO_AGENTES.md` — como Claude e Antigravity dividem o repo, convenções e o **Quadro** (em andamento / escalado / pendente de deploy). **Leia antes de qualquer tarefa.** A revisão automática das PRs do Antigravity está **⏸ pausada** (§4.1): se houver PR `antigravity/*` aberta sem comentário de revisão, revise à mão.
+- `CODE_MAP_FAST.md` (gerado: `node scripts/mare-cli.js map`) e `CODE_MAP.md` (curado por área) — índices de funções/âncoras. Consulte **antes** de explorar; re-`grep` o nome, pois os números de linha envelhecem.
+- `BUGS_E_CORRECOES.md` — bugs, correções, achados do `/monitorarbugs` e a seção `🛡️ Armadilhas Conhecidas & Regras de Ouro` (**leia antes de mexer em queries do Firebase, auth ou comentários**). `CHANGELOG.md` — só features e entregas estruturais.
+- `scripts/mare-cli.js` (`status`/`bump`/`log --type feature|bug`/`map`) e `.claude/skills/subirproprod/promover.js` (promoção dev → prod, `--status` lista pendências).
+- Guias: `docs/GUIA_DE_CODIGO.md` (como codar sem cair nas armadilhas), `docs/GUIA_UI_UX.md` + `/melhoriauiux` e `MARINE_GLASS.md` (identidade) — **leia antes de desenhar ou alterar uma tela**.
+- Outros: `docs/ASSISTENTE_FERIAS.md` (Assistente Férias + Plantão, desativado em 03/11/2026, guardado), `docs/CALENDARIO_GESTAO.md`, `docs/MINIPAINEL.md`, `ecossistema.html` (mantido por `/atualizardocumentacoes`; histórico das rodadas em `docs/HISTORICO_DOCUMENTACAO.md`).
 
 ## Regras por área (carregam sozinhas ao tocar nos arquivos)
 
-Detalhes que só importam a quem mexe numa área ficam em `.claude/rules/*.md`, cada uma com `paths:` — o Claude Code as lê **quando um arquivo daquela área é lido ou editado**. **Antigravity: leia o arquivo da área antes de editar** (o `AGENTS.md` aponta para cá).
-- `.claude/rules/radar-okr.md` — Radar: `okr*.html`, `guia-okr.html`, `functions/okr/**`, calendário de gestão (`docs/CALENDARIO_GESTAO.md`).
-- `.claude/rules/oceano-login-escala.md` — Oceano, login direto (`mare-login`), Escala/Intake/Travessia, Mini painel (`mac/`, `windows/`), `functions/oceano/**`.
+Ficam em `.claude/rules/*.md`, cada uma com `paths:`. **Antigravity: leia o arquivo da área antes de editar** (o `AGENTS.md` aponta para cá).
+- `radar-okr.md` — Radar: `okr*.html`, `guia-okr.html`, `functions/okr/**`, `docs/CALENDARIO_GESTAO.md`.
+- `oceano-login-escala.md` — Oceano, `mare-login`, Escala/Intake/Travessia, Mini painel (`mac/`, `windows/`), `functions/oceano/**`.
+- `functions-e-banco.md` — `functions/**` e `database.rules.json`.
 
-Regras que valem **fora de qualquer arquivo** (resync antes de deploy, release dev→prod, tags, avisos, dica) **ficam aqui no `CLAUDE.md`** — uma regra por caminho não carrega quando você só entrega um comando.
+Regras que valem **fora de qualquer arquivo** (resync, release dev→prod, tags, avisos, dica) ficam aqui — uma regra por caminho não carrega quando você só entrega um comando.
 
-## Architecture notes for the Maré Digital pages
+## Arquitetura (resumo)
 
-- **Firebase, no build step.** Pages import the Firebase JS SDK straight from
-  the `gstatic.com` CDN inside a `<script type="module">` block (e.g. `import
-  { getDatabase } from 'https://www.gstatic.com/firebasejs/10.12.0/...'`).
-  `firebaseConfig` lives inline; values fall back to hardcoded defaults but
-  can be overridden via `localStorage` (see the "firebase" settings tab /
-  `saveFbConfig()`), which is how the dev pages can point at a different
-  Firebase project without a code change.
-- **Data model**: everything lives under a `kanban/` root in the Realtime
-  Database — `kanban/usuarios/{uid}`, `kanban/squads/{squadId}/...`,
-  `kanban/painel`, `kanban/config`, `kanban/global`, etc. `database.rules.json`
-  gates almost all read/write on `auth.token.email` ending in
-  `@ciahering.com.br`, with per-squad membership checks via
-  `kanban/usuarios/{uid}/squads/{squadId}`. Several nodes have parallel
-  `_dev` siblings (e.g. `dados_diarios` / `dados_diarios_dev`,
-  `campanhas_log` / `campanhas_log_dev`) used by the dev pages to avoid
-  touching production data.
-- **Push notifications, end to end**: the app itself decides something is
-  notification-worthy and writes to
-  `kanban/usuarios/{uid}/notificacoes/{notifId}`. The Cloud Function
-  (`functions/index.js`) only decides whether that notification should also
-  become a push — it does this by checking `notif.type` against the
-  `PUSH_TYPES` allow-list (currently `assigned`, `mention`, `unblocked`,
-  `risk`, `recorrente`, `painel_broadcast`, `okr_mencao`, …; see the constant). The Mural do OKR's new-notice push is a separate function, `sendPushOnMural`, because that notice is one `kanban/notif_feed` event rather than a per-user notification. **To make a new notification
-  type trigger push, add it to `PUSH_TYPES` and redeploy the function** — a
-  front-end-only change is not enough. The function also respects each
-  user's "Não Perturbe" (do-not-disturb) window at
-  `kanban/usuarios/{uid}/notif_prefs/dnd`, and prunes FCM tokens that come
-  back as invalid/unregistered. It sends `data`-only FCM messages (no
-  `notification` field) deliberately — sending both causes some browsers
-  (notably Safari/iOS) to show the notification automatically in addition to
-  the Service Worker's `onBackgroundMessage`, causing duplicates.
-- **Self-updating client**: each versioned page polls `version.json` (with
-  `cache: 'no-store'`) on an interval and compares the value at its own
-  `VERSION_KEY` (e.g. `'kanban'`, `'painel_dev'`) against the version baked
-  into the loaded page. On mismatch it blocks the UI with an "update now"
-  overlay rather than silently reloading, so in-progress input isn't lost.
-  When you change a versioned page, bump its key in `version.json` (and the
-  `<div class="version">...</div>` string in the HTML) or clients won't be
-  prompted to refresh.
-- Given the file sizes (kanban/painel HTML files run several thousand lines
-  and 400KB–1.1MB), use `grep`/targeted `Read` offsets rather than reading a
-  whole file at once when investigating. **Check `CODE_MAP.md` first** for
-  the feature area you're touching — it names the actual function/const to
-  grep for, so you skip the broad exploratory search entirely. Re-grep the
-  name to get the current line number (the map's numbers are a snapshot,
-  not live) and read from there. This applies to any investigation or edit
-  across `kanban.html`/`kanban-dev.html`/`painel.html`/`functions/`, not
-  just open-ended exploration.
-
-## Modo "só Hering" (2026-10-08) — Arezzo/Microsoft, Torres e menção ficaram atrás de um interruptor
-
-O Maré passou a atender só a Hering: login só Google (`@ciahering.com.br`), OKR de uma torre só (Digital), @menção só a quem é `@ciahering`. Nada foi apagado — `window.MARE_SO_HERING` (1º `<script>` de `kanban(-dev)`, `painel(-dev)`, `okr(-dev)`; `const MARE_SO_HERING` em `okr-apresentacao.slide.html`; `functions/common/mareModo.js`; `database.rules.json` sem a alternativa Arezzo). **Antes de mexer em login, torres, domínios ou regras, leia `docs/arezzo/MARE_SO_HERING.md`** (o que existia, como foi implementado, lista de interruptores e passo a passo pra religar). Os testes de torres/Arezzo das funções rodam com `MARE_MODO_TESTE=varias-torres`.
-
-## Oceano (2026-10-09) — a família de produtos e os nomes
-
-O que era tudo "Maré Digital" virou a família **Oceano**: **Maré Digital** (kanban), **Painel**, **Radar** (= o OKR, `okr.html`), **A Bordo** (onboarding) e **Travessia** (futuro, performance/gente). Só os **nomes visíveis** mudam — arquivos, URLs e caminhos do banco ficam. "OKR" continua como metodologia, papel ("🎯 Gestor OKR") e selo dos cards. Regras e fases em `docs/OCEANO.md` — **leia antes de renomear qualquer texto**; texto novo que cite a página do OKR deve dizer "Radar".
-
-**Página Oceano (2026-10-09, em produção):** `oceano.html` / `oceano-dev.html` é o lobby/boas-vindas da família (login só Google, vitrine por pessoa, personalização, ajuda, selo `#vtex-pill` de status da VTEX e **host** dos produtos em iframe quando instalada como app — o PWA do Maré Digital não muda). Detalhes em `docs/OCEANO.md`. **Mural do Oceano (2026-10-11, em produção desde 2026-10-13):** os Comunicados do Painel (aba Pessoas) têm 🌊 "Mostrar no mural do Oceano" (padrão ligado) e "Só no Oceano" — página inicial do Oceano, ver `docs/OCEANO.md`. **Login único + 1ª abertura do dia (2026-10-11/14, em produção):** quem não está logado no Maré/Painel (ou na 1ª abertura do dia em `_oceanoDoDia`) é mandado pro Oceano (`?next=`), faz login + cadastro lá e **fica no Oceano** (vê o Mural; atalho "↩ Continuar" no topo leva de volta); Radar e convidados externos (`?login=local`) ficam de fora — ver `docs/OCEANO.md`, interruptores `MARE_LOGIN_PELO_OCEANO` e `MARE_OCEANO_DIARIO`. **Menu de produtos (⋮⋮⋮, `mare-notif(-dev).js`)** com abas Produtos · Hering · Meus links — links da Hering em `kanban/config/links_hering` (nó compartilhado dev/prod), pessoais em `kanban/usuarios/{uid}/links`; em prod em `kanban`, `painel`, `okr` e `oceano` desde 2026-10-09.
-
-## Pendências conhecidas de documentação
-
-O histórico das rodadas de documentação (o que foi sincronizado em cada data) fica em `docs/HISTORICO_DOCUMENTACAO.md` — não é lido por padrão. Quem for auditar Ajuda, `maredigital.html`, `ecossistema.html` ou `CODE_MAP.md` começa por lá e pela skill `/atualizardocumentacoes`.
+- **Firebase sem build:** as páginas importam o SDK do CDN `gstatic.com` num `<script type="module">`; `firebaseConfig` inline, sobrescrevível por `localStorage` (como as páginas `-dev` apontam para outro projeto sem mudar código).
+- **Dados** sob `kanban/` (`usuarios/{uid}`, `squads/{id}/...`, `painel`, `config`, `global`…); nós com irmão `_dev` evitam tocar a produção nas páginas `-dev`. Regras exigem e-mail `@ciahering.com.br` e checam squad por `kanban/usuarios/{uid}/squads/{id}`.
+- **Módulos compartilhados** (`mare-notif`, `mare-dicas`, `mare-metas`, `mare-login`; únicos arquivos carregados por mais de uma página) seguem o ciclo dev→prod com `?v=N` nas páginas: **ao mudar o módulo, bump o `?v=` em todas as páginas que o carregam** e promova módulo + páginas juntos. Detalhes de cada um em `docs/BIBLIOTECA.md` §6. Atalhos: **dica nova = 1 linha no `CATALOGO` de `mare-dicas-dev.js`**; **tipo de notificação novo = 1 entrada em `MareNotif.TIPOS`** (e em `PUSH_TYPES` se for push — ver a regra de `functions/`).
+- **Auto-atualização:** cada página versionada consulta `version.json` (`cache: 'no-store'`) e, se o valor da sua `VERSION_KEY` mudou, bloqueia a tela com "atualizar agora". **Mudou página versionada → bump da chave em `version.json` e do `<div class="version">…</div>`** (`node scripts/mare-cli.js bump`).
+- **Arquivos grandes** (centenas de KB): nunca leia a página inteira — `CODE_MAP_FAST.md` → `grep` → `Read` com offset, lendo a função alvo inteira.
+- `kanban.html` e `kanban-dev.html` evoluem em sincronia deliberada; `painel.html` e `painel-dev.html` **divergem** (debug, banner dev) — `diff` antes de supor que a mudança vale nos dois. `firebase-messaging-sw.js` **fica na raiz** (cache offline + push com a aba fechada).
 
 ## Economia de tokens e higiene de sessão
 
 - **Resposta curta, sem repetição:** vá direto ao diagnóstico e ao diff; não repita regra do `CLAUDE.md` nem decisão já fechada na sessão.
-- **Busca cirúrgica, mas função inteira:** nunca leia página `.html` inteira — `CODE_MAP_FAST.md` → `grep -na` → leia a função alvo **de ponta a ponta** e todos os escritores do mesmo nó antes de editar (`docs/GUIA_DE_CODIGO.md` §2). Subagente só para área grande ou vários arquivos (§6); para bug pequeno faça direto.
-- **Mudou de assunto = contexto novo:** ao fechar um PR ou trocar de produto, sugira `/compact` ou uma sessão nova (começando por `/seatualizar`).
+- **Busca cirúrgica, mas função inteira:** `CODE_MAP_FAST.md` → `grep -na` → leia a função alvo **de ponta a ponta** e todos os escritores do mesmo nó antes de editar (`docs/GUIA_DE_CODIGO.md` §2). Subagente só para área grande ou vários arquivos (§6); bug pequeno, faça direto.
+- **Mudou de assunto = contexto novo:** ao fechar um PR ou trocar de produto, sugira `/compact` ou sessão nova (começando por `/seatualizar`).
 
 ## Release process
 
-Since deploy is automatic on push to `main` and there's no staging/CI gate,
-this is what stands in for one — follow it for any change to a versioned
-page (`kanban.html`/`kanban-dev.html`/`painel.html`/`painel-dev.html`):
+Deploy é automático a cada push na `main` e não há gate de staging; isto faz o papel dele para toda página versionada (`kanban`, `painel`, `okr`, `oceano`, `escala`, `intake` e os pares `-dev`):
 
-1. **Dev first.** Land the fix in the `-dev` file only, bump its key in
-   `version.json` **and** the `<div class="version">...</div>` string in
-   that HTML file, open a PR, merge it. GitHub Pages only redeploys on a
-   push to `main` — a commit sitting on a feature branch never reaches the
-   live site, so the PR has to actually merge before anyone can test it
-   there.
-2. **Wait for explicit validation** from whoever asked for the fix before
-   touching the prod file. Don't promote on your own judgement that "it
-   looks right."
-3. **Promote to prod** once validated: diff the `-dev` file against the prod
-   file (`diff kanban.html kanban-dev.html`) — it should be exactly the
-   accumulated fixes plus the version string/`VERSION_KEY` line. Apply that
-   diff to the prod file, restore its own version string/`VERSION_KEY`
-   (don't carry over the `-dev` one), bump `version.json`'s prod key, PR,
-   merge.
-4. **Tag the release.** On the commit that merged into `main` (the actual
-   live state), create an annotated tag:
-   - `kanban-vX.Y.Z` / `kanban_dev-vX.Y.Z-dev` for the kanban pair
-   - `painel-vX.Y` / `painel_dev-vX.Y-dev` for the painel pair
-   Push tags with `git push origin <tag>`. This is what makes "what's live
-   right now" and "what changed between two releases" answerable with
-   plain git (`git tag -l`, `git diff <old-tag> <new-tag>`) instead of
-   spelunking through commit history.
-5. **Log the change — `CHANGELOG.md` vs `BUGS_E_CORRECOES.md` (mandatory split).**
-   - `CHANGELOG.md`: **new features and major/structural deliveries only**
-     (`node scripts/mare-cli.js log --type feature ...`) — user-facing (what
-     changed and why), link the PR number, not a copy of the commit diff.
-   - `BUGS_E_CORRECOES.md`: **bugs, point fixes, regressions and
-     `/monitorarbugs` findings** (`node scripts/mare-cli.js log --type bug
-     ...`); keep the `🛡️ Armadilhas Conhecidas` section current.
-   - Any skill that summarizes "what changed" (`/resumosemanal`, `/gerarokr`,
-     ...) must read **both** files.
-   - Every commit carries a trailer `Agent: claude` or `Agent: antigravity`
-     (both agents commit with the same git identity). Branches are
-     `claude/<topic>` / `antigravity/<topic>`. Nobody merges their own PR.
-6. **Send avisos + log the batch to the card.** Every time `kanban.html`
-   (prod) gets promoted, always: (a) draft the two announcements — a Mural
-   post (via console script against `painel.html`, or the
-   `COMUNICADO_RASCUNHOS_SEED` seed mechanism if GitHub/deploy access is
-   available) and a WhatsApp-ready text — summarizing what's new/changed in
-   user-facing terms; and (b) log the batch as a comment on the right
-   Firebase card, via a console script (squad `dados` for both):
-   - **`c1785199972010_nd0`** ("Implementação Agente Ágil") — anything
-     about the Agente Ágil, either implementation (`functions/agente-agil/`,
-     `functions/agente-agil-orquestrador/`, the client-side agent tools in
-     `kanban.html`/`kanban-dev.html`) — comments, checklist items, canário/
-     scenario results, next-steps planning, all of it.
-   - **`c1783541085140`** ("Melhorias Maré Digital") — everything else
-     about Maré Digital (kanban/painel features, Firebase cost work,
-     optimization routines, etc.).
-   This is a standing rule, not something that needs to be asked for each
-   time. **Always use `ts: new Date().toISOString()` for any comment written
-   this way — never `ts: Date.now()`** — `loadComments()` sorts with
-   `a.ts.localeCompare(b.ts)`, which throws and silently breaks the ENTIRE
-   comment list for that card if `ts` isn't a string.
+1. **Dev primeiro.** A mudança entra só no `-dev`; bump da chave em `version.json` **e** do `<div class="version">` da página; PR; merge (o Pages só publica o que chega à `main`).
+2. **Espere a validação explícita** de quem pediu antes de tocar no prod. Nada de promover por achar que "parece certo".
+3. **Promova** (`/subirproprod`, `promover.js`): o `diff` -dev × prod deve ser exatamente as correções acumuladas + a linha de versão/`VERSION_KEY`; restaure a versão/`VERSION_KEY` do prod (não leve a do `-dev`), bump da chave de prod, PR, merge.
+4. **Tag** anotada no commit de merge, e `git push origin <tag>`: `kanban-vX.Y.Z` / `kanban_dev-vX.Y.Z-dev`, `painel-vX.Y` / `painel_dev-vX.Y-dev`.
+5. **Registre — o split é obrigatório.** `CHANGELOG.md`: só features/entregas estruturais (`mare-cli.js log --type feature`), com o nº do PR. `BUGS_E_CORRECOES.md`: bugs, correções, regressões, achados do `/monitorarbugs` (`log --type bug`); mantenha as Armadilhas em dia. Skill que resume "o que mudou" lê **os dois**. Todo commit leva o trailer `Agent: claude` ou `Agent: antigravity`; branches `claude/<assunto>` / `antigravity/<assunto>`; **ninguém dá merge no próprio PR**.
+6. **Avisos + log no card (regra fixa, a cada promoção do `kanban.html` de prod).** (a) Rascunhe o post do Mural (script de console no `painel.html` ou `COMUNICADO_RASCUNHOS_SEED`) e um texto de WhatsApp, em linguagem de usuário; (b) registre o lote como comentário no card certo, por script de console (squad `dados`): **`c1785199972010_nd0`** ("Implementação Agente Ágil") para tudo do Agente Ágil (`functions/agente-agil*/`, ferramentas do agente no kanban); **`c1783541085140`** ("Melhorias Maré Digital") para o resto. **Use sempre `ts: new Date().toISOString()`, nunca `Date.now()`** — `loadComments()` ordena com `a.ts.localeCompare(b.ts)`, que lança se `ts` não for string e quebra a lista de comentários inteira do card.
+7. **Avaliar uma dica (regra permanente, 09/10/2026).** Toda coisa **nova e visível** em Radar, Maré ou Oceano: avalie se vale um mini popup e **diga na resposta** ("dica: sim, X" / "dica: não, porque Y"). Vale para atalho/recurso que a pessoa não descobre sozinha e que poupa tempo; não vale para bug, mudança interna ou o que já é óbvio. Uma frase, com "Saiba mais" se houver tópico na Ajuda (que também deve estar em dia — `/atualizarhelpcontent`). Implementar = linha no `CATALOGO` + entrada no `CHANGELOG.md`.
 
-7. **Avaliar uma dica (regra permanente, 2026-10-09).** Toda vez que implementarmos algo **novo e visível** em Radar, Maré ou Oceano, avalie se vale uma dica (mini popup) sobre isso — e diga na resposta o que decidiu ("dica: sim, X" ou "dica: não, porque Y"). Vale uma dica quando é um atalho/recurso que a pessoa não descobre sozinha e que economiza tempo; **não vale** pra correção de bug, mudança só interna, ou algo que já é óbvio na tela. Texto simples e curto (uma frase), com "Saiba mais" se houver tópico na Ajuda (e a Ajuda também precisa estar em dia — `/atualizarhelpcontent`). Implementar = linha no `CATALOGO` de `mare-dicas-dev.js` (+ `quando`/gatilho se for lugar novo) e entrada no `CHANGELOG.md`.
+Sem par `-dev` (`firebase-messaging-sw.js`, `database.rules.json`, `functions/`): pulam o dev-first (são compartilhados ou têm deploy próprio), mas **tag e log valem** (ver `agente-agil-v1a` no `CHANGELOG.md`).
 
-Files without a `-dev` counterpart (`firebase-messaging-sw.js`,
-`database.rules.json`, `functions/`) skip the dev-first step — they're
-either shared (the service worker lives at the domain root for both
-environments) or deployed through their own separate command, not GitHub
-Pages. Still tag and log Cloud Function releases (see the `agente-agil-v1a`
-example in `CHANGELOG.md`) since they're versioned independently of
-`version.json`.
+### Cadência de promoção do prod: bug agora, feature em lote
 
-### Promotion cadence for `kanban.html`/`painel.html` (prod): bugs now, features batched
-
-Standing rule (2026-08-14): **bug fixes still promote to prod immediately**
-once validated (step 3 above, no change there) — but **feature promotions
-get batched and concentrated at the end of the day** instead of shipping
-one-by-one as each gets validated. Exceptions handled ad hoc when they come
-up in conversation (e.g. something time-sensitive), not a rigid rule.
-
-Why: every prod version bump forces every open tab to reload within
-`CHECK_INTERVAL_MS` (5 min) via the auto-update overlay (`kanban.html`
-~line 24439). A reload isn't free — it re-authenticates and re-attaches
-every Firebase listener from scratch (`cards`, `cards_index`, `tags`,
-`columns`, `presence`, ...), which is the expensive "cold start" the
-`_dbg` byte-measurement system (~line 6702) tracks. Confirmed against real
-data: 13 separate "Promove pra prod" merges landed within ~40h on
-2026-08-04/05, and those are the two highest-bandwidth days in the
-`_debug_bytes_daily` sample for that window (~210MB and ~161MB, vs. a
-typical quiet day around 1-2MB) — each promotion re-charges the cold-start
-cost to everyone who had the board open at the time. Batching feature
-promotions into one push per day means one forced reload instead of many.
+**Bug validado sobe na hora; feature sobe em lote, 1× por dia, no fim do dia** (exceção só ad hoc, ex.: algo urgente). Cada bump de prod força toda aba aberta a recarregar em até 5 min (`CHECK_INTERVAL_MS`) e re-anexar todos os listeners do Firebase; 13 promoções em ~40 h (04–05/08) foram os dois dias de maior banda medidos. O porquê completo está em `docs/BIBLIOTECA.md` §6.
