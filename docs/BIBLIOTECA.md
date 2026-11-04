@@ -114,6 +114,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `GUIA_DE_CODIGO.md` | Como escrever código e testes sem cair nas armadilhas conhecidas |
 | `OCEANO.md` | A família de produtos, nomes visíveis e fases |
 | `PLANTAO_BUGS.md` | Plantão de Bugs: fluxo, regras e runbook |
+| `HISTORICO_DOCUMENTACAO.md` | 📚 Histórico das rodadas de documentação (o que foi sincronizado em cada data) — saiu do `CLAUDE.md` em 04/11/2026 para não ser lido a cada sessão; a skill `/atualizardocumentacoes` é o procedimento |
 | `CALENDARIO_GESTAO.md` | 📅 Calendário de gestão do Digital (Radar): o pedido do Rafael, decisões, Entrega/macro/Cadência, cobrança automática, subagente de agenda, limites, deploy, roteiro de validação e próximos passos |
 | `ASSISTENTE_FERIAS.md` | 🏖️ Assistente Férias do Caio — **desativado em 03/11/2026, guardado para reuso**: interruptor, inventário das peças, checklist da volta e como religar |
 | `MINIPAINEL.md` | Mini painel do Caio (`minipainel.html` + função `oceanoResumo`): peças, deploy, chave e limites |
@@ -141,5 +142,6 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | Testar uma tela no navegador | `docs/arezzo/testes/` (`fakefb.js` + Playwright) |
 | Saber como o plantão de bugs funciona | `docs/PLANTAO_BUGS.md` |
 | Religar (ou entender) o Assistente Férias numa próxima ausência | `docs/ASSISTENTE_FERIAS.md` |
+| Regras por área (Radar/OKR; Oceano, login, Escala, Mini painel) que o Claude Code carrega ao tocar nos arquivos | `.claude/rules/*.md` (apontadas pelo `CLAUDE.md` e pelo `AGENTS.md`) |
 | Entender o calendário de gestão do Digital (Entrega, Cadência, cobrança, subagente de agenda) | `docs/CALENDARIO_GESTAO.md` |
 | Criar tela nova no estilo da família | `MARINE_GLASS.md` |

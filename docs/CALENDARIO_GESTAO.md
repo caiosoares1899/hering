@@ -1,6 +1,6 @@
 # 📅 Calendário de gestão do Digital (Radar)
 
-> **Estado em 03/11/2026.** Tudo abaixo está **mergeado no `main` e só em DEV** (`okr-dev.html` v2.102 · `mare-notif-dev.js` ?v=38). **Produção (`okr.html` v2.96) ainda não tem nada disso** — falta a validação do Caio e do Rafael no dev e a promoção (`/subirproprod`, que também regenera o conhecimento do Agente Ágil e republica as funções dele). Este documento existe para a ideia não se perder: o que foi pedido, o que foi decidido, o que existe, como funciona por dentro, o que ficou de fora e o que vem depois.
+> **Estado em 04/11/2026.** Tudo abaixo está **em produção** (`okr.html` v2.103, PR #1588) e o OKR do próprio calendário foi criado no Radar (Objetivo "Calendário de gestão do Digital", script `docs/arezzo/okr_calendario_gestao.js`). O texto das seções 3 a 11 foi escrito quando só existia em dev: onde disser "só em DEV" ou "pendente de promoção", leia como já promovido; o que ainda falta está na seção 11 e nos Marcos a fazer do OKR.
 
 ## 1. O que é e por que existe
 
