@@ -1,0 +1,26 @@
+name: Sincronizar com GitLab Hering
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Cria o botão "Run workflow" para atualizar manualmente via web
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enviar para o GitLab da Hering
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITLAB_SSH_PRIVATE_KEY }}
+          GITLAB_HOST: "gitlab.ciahering.com.br"
+          GITLAB_REPO: "git@gitlab.ciahering.com.br:ciahering1/b2c/hering-oceano/oceano-html.git"
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -T 10 "$GITLAB_HOST" >> ~/.ssh/known_hosts
+          git push --force "$GITLAB_REPO" HEAD:refs/heads/main
