@@ -195,16 +195,27 @@ function comunicadoDe(item, fase, agora, existente, trad) {
 }
 
 // Tradução do item, com cache: só chama o Google quando o texto mudou desde a última vez (o monitor roda a cada 5 min e reescreve o Comunicado a cada tick).
-// Qualquer falha (API desligada, permissão, rede, tempo) → devolve o que já tinha em cache ou null: o aviso sai em inglês e tenta de novo no próximo tick.
-async function traducaoDoItem({ item, est, traduzir, off }) {
+// Traduz UMA vez e guarda NA HORA (`salvar`), antes de qualquer outra coisa do tick: se algo falhar depois (gravar o Comunicado, notificar…), o próximo tick acha a
+// tradução pronta em vez de pagar o Google de novo (furo achado em 04/11/2026: o cache só era gravado no fim do processamento, então um erro persistente depois de
+// traduzir significava uma tradução paga a cada 5 min). Falha da API → recua `RECUO_FALHA_MS` (um timeout pode ter sido cobrado mesmo sem resposta) e o aviso sai
+// em inglês nesse meio tempo. `ctx.falhaEm` devolve o instante da falha pra quem chama guardar.
+const RECUO_FALHA_MS = 15 * 60000;
+async function traducaoDoItem({ item, est, traduzir, off, salvar, agora, ctx }) {
   if (off) return null;
   const h = hashTexto(item);
   if (est && est.trad && est.trad.h === h && est.trad.titulo != null) return est.trad;
+  const t = agora == null ? Date.now() : agora;
+  if (est && est.tradFalhaEm && t - Date.parse(est.tradFalhaEm) < RECUO_FALHA_MS) { if (ctx) ctx.falhaEm = est.tradFalhaEm; return null; }
   try {
     const [titulo, resumo] = await (traduzir || traducao.traduzirEnPt)([tituloBase(item), resumoDe(item)]);
-    return { h, titulo: String(titulo || '').slice(0, 200), resumo: String(resumo || '').slice(0, 1800) };
+    const trad = { h, titulo: String(titulo || '').slice(0, 200), resumo: String(resumo || '').slice(0, 1800) };
+    if (salvar) { try { await salvar(trad); } catch (e) { console.warn('[vtexStatus] não consegui guardar a tradução:', (e && e.message) || e); } }
+    return trad;
   } catch (e) {
     console.warn('[vtexStatus] tradução indisponível (o aviso sai em inglês):', (e && e.message) || e);
+    const falhaEm = new Date(t).toISOString();
+    if (ctx) ctx.falhaEm = falhaEm;
+    if (salvar) { try { await salvar(null, falhaEm); } catch (_) { /* sem cache de falha: só perde o recuo */ } }
     return null;
   }
 }
@@ -246,7 +257,9 @@ async function processar({ db, itens, agora, traduzir }) {
 
 async function processarItem({ db, item, fase, chave, t, out, traduzir, traducaoOff }) {
   const estRef = db.ref(`kanban/vtex_status/${chave}`);
-  const est = (await estRef.get()).val();
+  const raw = (await estRef.get()).val();
+  // O nó pode existir só com a tradução guardada (cache gravado antes de o Comunicado existir): isso NÃO conta como "já vimos esse incidente".
+  const est = raw && raw.comunicadoId ? raw : null;
   const comId = `vtex_${chave}`;
   const comRef = db.ref(`kanban/comunicados/${comId}`);
 
@@ -259,7 +272,9 @@ async function processarItem({ db, item, fase, chave, t, out, traduzir, traducao
   }
   if (!recente(item, t)) { out.ignorados++; return; }
 
-  const trad = await traducaoDoItem({ item, est, traduzir, off: traducaoOff });
+  const ctxTrad = {};
+  const salvar = async (tr, falhaEm) => { if (tr) await db.ref(`kanban/vtex_status/${chave}/trad`).set(tr); else if (falhaEm) await db.ref(`kanban/vtex_status/${chave}/tradFalhaEm`).set(falhaEm); };
+  const trad = await traducaoDoItem({ item, est: raw, traduzir, off: traducaoOff, salvar, agora: t, ctx: ctxTrad });
   if (fase === 'aberto') out.incidentes.push({ titulo: (trad ? trad.titulo : item.titulo).slice(0, 120), link: item.link || SITE, estado: item.estado });
   const atual = (await comRef.get()).val();
   if (est && !atual) { out.ignorados++; return; }                 // um ADM apagou o aviso: respeita
@@ -270,6 +285,7 @@ async function processarItem({ db, item, fase, chave, t, out, traduzir, traducao
   const novoEst = { comunicadoId: comId, estado: item.estado, criadoEm: est?.criadoEm || new Date(t).toISOString(), atualizadoEm: new Date(t).toISOString() };
   if (est?.notificadoEm) novoEst.notificadoEm = est.notificadoEm;
   if (trad) novoEst.trad = trad;
+  else if (ctxTrad.falhaEm) novoEst.tradFalhaEm = ctxTrad.falhaEm;
   if (fase === 'aberto' && !est?.notificadoEm) {
     out.notificados += await notificar({ db, item, comunicadoId: comId, agora: t, trad });
     novoEst.notificadoEm = new Date(t).toISOString();

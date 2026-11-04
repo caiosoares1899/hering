@@ -2,7 +2,7 @@
 //
 // Por que Google: o texto do incidente é público (status.vtex.com), então privacidade não pesa; o que pesa é NÃO abrir um fornecedor novo — o projeto já é do
 // Google Cloud e a chamada usa a conta de serviço da própria função (sem chave guardada em lugar nenhum). Custo: as primeiras 500 mil letras por mês são grátis; o
-// monitor traduz só o que mudou (statusVtex.js guarda o resultado), algumas dezenas de textos por mês.
+// monitor traduz só o que mudou (statusVtex.js guarda o resultado NA HORA, antes de qualquer outra gravação — ver BUGS_E_CORRECOES de 04/11/2026), algumas dezenas de textos por mês.
 // Pré-requisito (uma vez, no console): ativar a "Cloud Translation API" no projeto hering-onboarding. A conta de serviço padrão das funções já costuma ter permissão.
 //
 // Nomes de produto/termos de plataforma NÃO são traduzidos (ver PROTEGIDOS): sem isso "Checkout" viraria "Finalizar compra" e "Storefront" "Vitrine", e ninguém
