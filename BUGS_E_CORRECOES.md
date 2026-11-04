@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-04 · VTEX: tradução paga de novo a cada 5 min quando algo falhava depois de traduzir (functions/vtex, só funções)
+
+Sintoma: no relatório do Google Cloud a Cloud Translation API apareceu com R$ 72,27 brutos em ago–nov/2026 (R$ 12,95 líquidos depois do uso gratuito), quando o desenho previa só algumas dezenas de textos por mês.|Causa: statusVtex.js traduzia título e resumo e só gravava o cache (kanban/vtex_status/{chave}/trad) no FIM do processamento do item; qualquer erro persistente depois de traduzir (gravar o Comunicado, notificar) fazia o próximo tick traduzir e cobrar de novo, a cada 5 min. Reproduzido em teste: 10 ticks com erro = 10 traduções. Também não havia recuo depois de falha da API (um timeout pode ser cobrado sem resposta).|Correção: a tradução é gravada na hora, antes do resto do tick; falha da API recua 15 min (tradFalhaEm); o nó com só a tradução não conta como 'incidente já visto'. 2 testes novos (statusVtexTraducao.test.js). Exige deploy: firebase deploy --only functions:vtexStatus --project hering-onboarding. Interruptor da tradução (kanban/config/vtex_traducao_off) continua valendo.
+
 ### 2026-11-04 · Maré — botões ↕ Ordenação e 🔍 Fonte não faziam nada no Safari/Mac (Safari e web app) (DEV v8.30.903-dev · PROD kanban v8.30.904)
 
 Sintoma (Caio e André, Mac — Safari e web app instalado; Windows funcionava): clicar em Ordenação ou Fonte na toolbar do board não abria menu nenhum.

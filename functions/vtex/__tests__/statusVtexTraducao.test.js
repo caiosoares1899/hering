@@ -78,10 +78,30 @@ test('tradução falhou (API desligada, permissão, rede): o aviso sai em inglê
   assert.equal(cc.titulo, '🚨 VTEX: Checkout errors for some stores');
   assert.match(cc.corpo, /texto original em inglês/); assert.ok(!/<details>/.test(cc.corpo));
   assert.equal((await db.ref('kanban/vtex_status/INC9/trad').get()).val(), null, 'falha não vai pro cache');
-  falha = false;
   await V.processar({ db, itens: itens(INC), agora: AGORA + 5 * 60000, traduzir });
+  assert.equal(n, 1, 'falhou há 5 min: recua (um timeout pode ter sido cobrado) em vez de tentar a cada tick');
+  falha = false;
+  await V.processar({ db, itens: itens(INC), agora: AGORA + 20 * 60000, traduzir });
   assert.match((await com(db, 'vtex_INC9')).titulo, /PT: Checkout errors/);
   assert.equal(n, 2);
+  assert.equal((await db.ref('kanban/vtex_status/INC9/tradFalhaEm').get()).val(), null, 'deu certo: o recuo some');
+});
+
+test('traduz UMA vez e guarda na hora: erro persistente DEPOIS de traduzir não paga o Google a cada tick (furo de 04/11/2026)', async () => {
+  const db = novoDb(); const traduzir = falso();
+  const refOrig = db.ref.bind(db);
+  db.ref = (p) => { const r = refOrig(p); if (p === 'kanban/comunicados/vtex_INC9') r.set = async () => { throw new Error('falha de escrita simulada'); }; return r; };
+  const err = console.error; console.error = () => {};
+  try { for (let i = 0; i < 10; i++) await V.processar({ db, itens: itens(INC), agora: AGORA + i * 5 * 60000, traduzir }); } finally { console.error = err; }
+  assert.equal(traduzir.chamadas, 1, '10 ticks com erro, 1 só tradução');
+  assert.equal((await db.ref('kanban/vtex_status/INC9/trad/titulo').get()).val(), 'PT: Checkout errors for some stores', 'tradução guardada mesmo sem o Comunicado');
+  // O erro passa: o Comunicado nasce (o nó só com a tradução NÃO conta como "já vimos o incidente") e ainda sem nova tradução.
+  db.ref = refOrig;
+  const r = await V.processar({ db, itens: itens(INC), agora: AGORA + 60 * 60000, traduzir });
+  assert.equal(r.criados, 1);
+  assert.equal(traduzir.chamadas, 1);
+  assert.match((await com(db, 'vtex_INC9')).titulo, /PT: Checkout errors/);
+  assert.ok((await db.ref('kanban/vtex_status/INC9/trad').get()).val(), 'a tradução continua guardada depois do tick completo');
 });
 
 test('interruptor kanban/config/vtex_traducao_off: não chama o Google, aviso em inglês', async () => {
