@@ -6636,7 +6636,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.900</div>
+<div class="version">v8.30.901</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14874,18 +14874,23 @@ function toggleSortMenu(){
   if(willShow){
     const btn = document.getElementById('btn-sort');
     const r = btn.getBoundingClientRect();
+    _menuToolbarNoBody(menu);   // fora da barra: o Safari (Mac e web app) não mostrava um menu fixed DENTRO da barra rolável
     menu.style.position = 'fixed';
     menu.style.top = (r.bottom+6)+'px';
     menu.style.left = r.left+'px';
   }
   menu.style.display = willShow ? 'block' : 'none';
 }
+// 🍎 Safari/Mac (04/11/2026): os menus ↕ Ordenação e 🔍 Fonte ficavam DENTRO de `.toolbar` (overflow-x:auto → overflow-y também vira auto; -webkit-overflow-scrolling:touch). No Chrome/Edge um
+// `position:fixed` escapa dessa rolagem; no WebKit ele é recortado/atrelado à barra e o menu abre "invisível" — o clique parecia não fazer nada (relato do Caio e do André, Mac: Safari e web app;
+// Windows funcionava). Solução que não depende do navegador: ao abrir, o menu vai para o <body>, fora de qualquer contêiner de rolagem.
+function _menuToolbarNoBody(menu){ if(menu && menu.parentNode!==document.body) document.body.appendChild(menu); }
 function closeSortMenu(){
   const menu = document.getElementById('sort-menu');
   if(menu) menu.style.display = 'none';
 }
 document.addEventListener('click', e=>{
-  if(!e.target.closest('#sort-menu-wrap')) closeSortMenu();
+  if(!e.target.closest('#sort-menu-wrap, #sort-menu')) closeSortMenu();
 });
 // Tamanho de fonte do board — pedido direto (relato de dificuldade de
 // leitura). Preferência pessoal, sincronizada por conta desde a rodada 2
@@ -14944,6 +14949,7 @@ function toggleFontSizeMenu(){
   if(willShow){
     const btn = document.getElementById('btn-fontsize');
     const r = btn.getBoundingClientRect();
+    _menuToolbarNoBody(menu);   // ver o comentário em toggleSortMenu()
     menu.style.position = 'fixed';
     menu.style.top = (r.bottom+6)+'px';
     menu.style.left = r.left+'px';
@@ -14955,7 +14961,7 @@ function closeFontSizeMenu(){
   if(menu) menu.style.display = 'none';
 }
 document.addEventListener('click', e=>{
-  if(!e.target.closest('#fontsize-menu-wrap')) closeFontSizeMenu();
+  if(!e.target.closest('#fontsize-menu-wrap, #fontsize-menu')) closeFontSizeMenu();
 });
 
 function _applyColSortBtnUI(){
