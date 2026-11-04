@@ -24,6 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré — Meu Dia: os blocos de humor recolhem e o painel todo rola junto (SÓ DEV) — kanban-dev — 2026-11-04
+
+Os blocos '🌤️ Como você está hoje?' e '🌙 Fechamento do dia' ocupavam metade da tela e espremiam a lista de cards. Agora cada um tem uma setinha ▾/▸ para recolher (preferência salva no aparelho; padrão: o de hoje abre recolhido depois que a pessoa responde, o fechamento vem recolhido; com o bloco recolhido o cabeçalho mostra a carinha escolhida / 'salvo hoje'), e o painel inteiro — humor, botões do Agente e cards — tem UM scroll só, em vez de a lista rolar sozinha no fim da página.
+Redesenhar ao escolher uma carinha ou salvar o dia mantém o que a pessoa está vendo e o rascunho do fechamento. Teclado e toque (alvo ≥ 44 px) cobertos. Dica: não — ajuste de layout de uma tela já usada; a Ajuda (verbete Meu Dia) foi atualizada.
+
 ### Painel — 🛡️ Saúde dos cards na aba Status: episódios do guardião e alarmes sem socorro (SÓ DEV) — painel-dev — 2026-11-04
 
 Novo cartão na aba 🔋 Status do Painel: os últimos 30 dias de episódios do guardião dos cards, de todas as squads — restaurado sozinho (com link pra abrir o card), sem cópia (buscar no backup), sumiço em massa e card que volta a sumir — mais os alarmes do navegador que o guardião NÃO restaurou. Resumo dos 7 dias (restaurados · sem socorro · episódios · squads vigiadas) e selo verde/vermelho. O aviso lembra de procurar o card no backup antes de recriar.
