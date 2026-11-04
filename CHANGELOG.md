@@ -24,6 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Painel — 🛡️ Saúde dos cards na aba Status: episódios do guardião e alarmes sem socorro (SÓ DEV) — painel-dev — 2026-11-04
+
+Novo cartão na aba 🔋 Status do Painel: os últimos 30 dias de episódios do guardião dos cards, de todas as squads — restaurado sozinho (com link pra abrir o card), sem cópia (buscar no backup), sumiço em massa e card que volta a sumir — mais os alarmes do navegador que o guardião NÃO restaurou. Resumo dos 7 dias (restaurados · sem socorro · episódios · squads vigiadas) e selo verde/vermelho. O aviso lembra de procurar o card no backup antes de recriar.
+Só leitura de kanban/cards_guardiao/{squad}/incidentes e cards_incidentes_sumico (pequenos); o espelho segue ilegível pelo navegador. Texto do card escapado. Dica: não — é tela de consulta de ADM.
+
 ### SÓ DEV — Mini painel: "Cards sumindo" entende o guardião — card restaurado sozinho não pinta o semáforo (functions/oceano/resumo.js, minipainel.html) — 2026-11-04
 
 O semáforo 'Cards sumindo (24 h)' do mini painel passa a descontar o que o guardião dos cards restaurou: só fica em Atenção o que NÃO teve socorro (alarme sem restauração, sem cópia de segurança, sumiço em massa, reincidente). O que foi restaurado aparece como informativo verde (restaurados24h).
