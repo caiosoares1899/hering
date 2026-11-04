@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré — desempenho: o quadro em repouso gastava ~1 núcleo de CPU/GPU; agora ~3% (SÓ DEV) — kanban-dev v8.30.902 — 2026-11-04
+
+Sintoma (Caio e André): lentidão nos PCs, inclusive no Mac. Medido no Chromium com 900 cards, quadro aberto e ninguém mexendo: ~100% de um núcleo (todos os processos) só pelos 24 peixes/bolhas animados atrás de superfícies com backdrop-filter — cada quadro de animação refazia o desfoque do que está atrás (7 colunas, gavetas, ~135 botões).
+Mudanças (identidade visual mantida; prints antes/depois nos 3 temas indistinguíveis): (1) peixes e bolhas pausam com a aba oculta (já havia), a JANELA SEM FOCO, 60 s SEM USO (mouse/teclado/rolagem/toque; voltam no primeiro movimento) e com um modal/tela aberta por cima — mesma lógica que o Oceano já usava; (2) colunas do board, gavetas, abas das gavetas e botões perdem o backdrop-filter (o fundo já é translúcido e os peixes ficam a 22% de opacidade: o desfoque ali era imperceptível); modais, cabeçalho e telas de entrada mantêm o vidro.
+Resultado medido: em uso 101% → 19%; parado 101% → ~1–3%. Harness repetível em docs/arezzo/perf/medir_repouso.js (CPU de todos os processos, animações, backdrop-filter, intervalos). Próximo da fila: Oceano (39% em repouso), depois Travessia (5%); Painel, Radar e Escala já estão em ~0%. Dica: não.
+
 ### Maré — Meu Dia: os blocos de humor recolhem e o painel todo rola junto (SÓ DEV) — kanban-dev — 2026-11-04
 
 Os blocos '🌤️ Como você está hoje?' e '🌙 Fechamento do dia' ocupavam metade da tela e espremiam a lista de cards. Agora cada um tem uma setinha ▾/▸ para recolher (preferência salva no aparelho; padrão: o de hoje abre recolhido depois que a pessoa responde, o fechamento vem recolhido; com o bloco recolhido o cabeçalho mostra a carinha escolhida / 'salvo hoje'), e o painel inteiro — humor, botões do Agente e cards — tem UM scroll só, em vez de a lista rolar sozinha no fim da página.

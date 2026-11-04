@@ -724,6 +724,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 [data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble{
   animation-play-state:paused;
 }
+/* ⚡ DESEMPENHO (04/11/2026) — medido no Chromium com 900 cards, repouso, quadro aberto: ~100% de um núcleo (CPU+GPU) só pelos peixes/bolhas animados ATRÁS de superfícies com
+   backdrop-filter (cada quadro refaz o desfoque do que está atrás). Parando as animações: ~3%. Duas medidas, sem mudar a identidade visual:
+   (1) peixes/bolhas também pausam com um modal/tela aberta por cima (ninguém os vê e o desfoque de tela cheia é o mais caro de todos) — além da pausa por aba oculta, janela
+       sem foco e 60 s sem uso (JS "ANIMAÇÃO AMBIENTE" mais abaixo);
+   (2) as superfícies REPETIDAS e grandes (as colunas do board, as gavetas, os botões) perdem o desfoque — o fundo tem peixes a 22% de opacidade, o desfoque ali é imperceptível e
+       as superfícies já têm fundo translúcido próprio (var(--glass)). O desfoque fica nos modais, no cabeçalho e nas telas de entrada (poucas e grandes, só aparecem de vez em quando). */
+html:has(.ov.open) .fish-ltr,html:has(.ov.open) .fish-rtl,html:has(.ov.open) .bubble,
+html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.login-ov.open) .bubble{animation-play-state:paused;}
+.col,.lem-drawer,.lem-tab,.btn,.btn-sm,.btn-p,.btn-teal{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
 /* prefers-reduced-motion: desliga as animações contínuas e "ambiente"
    (peixinhos, bolhas, pulsos de alerta) — não mexe em animações curtas/
    pontuais (popup de notificação, toast, abrir modal), que não são o tipo
@@ -6644,7 +6653,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.901-dev</div>
+<div class="version">v8.30.902-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -36470,9 +36479,23 @@ _applyThemeAutoButtonState(); // idem pro botão 🕐, com o estado ligado/desli
 // Pausa a animação de peixes/bolhas quando a aba vai pro background — não
 // tem sentido gastar CPU/bateria animando algo que ninguém está vendo.
 // Ver regra [data-anim-paused] .fish-ltr/.fish-rtl/.bubble no CSS.
-document.addEventListener('visibilitychange', ()=>{
-  document.documentElement.toggleAttribute('data-anim-paused', document.hidden);
-});
+// ANIMAÇÃO AMBIENTE (04/11/2026): além da aba oculta, pausa com a JANELA SEM FOCO (outro programa na frente / outro monitor) e depois de 60 s SEM USO (mouse, teclado, rolagem, toque);
+// volta sozinha no primeiro movimento. Mesma lógica do Oceano (oceano-dev.html › atualizarAnimacao). Peixes e bolhas são só enfeite — rodar o dia inteiro atrás do quadro custava
+// ~um núcleo de CPU/GPU nos PCs (ver o comentário de DESEMPENHO no CSS). `window._animOciosoMs` existe só para o teste encurtar o tempo.
+(function(){
+  let ocioso=false, ultimo=0, timer=null;
+  function atualizar(){ document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || ocioso); }
+  function atividade(){
+    const agora=Date.now(); if(!ocioso && agora-ultimo<1000) return; ultimo=agora;
+    if(ocioso){ ocioso=false; atualizar(); }
+    clearTimeout(timer); timer=setTimeout(()=>{ ocioso=true; atualizar(); }, window._animOciosoMs||60000);
+  }
+  ['pointermove','pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev, atividade, {passive:true, capture:true}));
+  document.addEventListener('visibilitychange', atualizar);
+  window.addEventListener('focus', ()=>{ atividade(); atualizar(); });
+  window.addEventListener('blur', atualizar);
+  atividade(); atualizar();
+})();
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });
