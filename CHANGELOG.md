@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Guardião dos cards: o servidor restaura sozinho o card que some + trava de tela velha (SÓ DEV) — kanban-dev v8.30.900, mare-notif v40, functions cardsEspelhar/cardsGuardiao — 2026-11-03
+### Guardião dos cards: o servidor restaura sozinho o card que some + trava de tela velha (PROD) — kanban v8.30.900, mare-notif v40, functions cardsEspelhar/cardsGuardiao — 2026-11-03
 
 Card sumido sem ninguém excluir é RESTAURADO pelo servidor em segundos (cópia de segurança de cada card em kanban/cards_espelho, sem acesso dos navegadores) e o episódio é registrado em kanban/cards_guardiao/{squad}. ADMs e POs da squad recebem a notificação 🛡️ (sino + push, tipo card_resgatado) e todo mundo com a squad aberta vê o aviso na tela.
 Freios: pausa declarada ao restaurar backup/importar, sumiço em massa (mais de 30 em 2 min) só alerta sem restaurar, o mesmo card restaurado 2x em 24 h para de ser restaurado, índice vazio não restaura.
@@ -32,14 +32,14 @@ Trava de tela velha no Maré: aba parada por mais de 30 min ou sem internet por 
 O alarme de card sumido passou a mostrar o título pelo id (antes acusava o título de outro card). Deploy: firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao,functions:cardsEspelhoVarredura,functions:sendPushOnNotification + firebase deploy --only database.
 Dica: não — é proteção que atua sozinha; a Ajuda (Indicador de conexão) foi atualizada.
 
-### Maré — reordenar os checklists do card por arrastar (SÓ DEV) — kanban-dev v8.30.899 — 2026-11-03
+### Maré — reordenar os checklists do card por arrastar (PROD) — kanban v8.30.900 — 2026-11-03
 
 - Card com mais de um checklist ganha, em cada cabeçalho, uma alça ⠿ para arrastar o checklist inteiro pra cima ou pra baixo (itens e marcações vão juntos e a ordem é gravada no card pelo autosave).
 - Teclado: com o foco na alça, ↑/↓ movem o checklist e o foco continua nele. Celular/tablet (toque): aparecem botões ▲▼ no cabeçalho (o arrastar nativo não funciona em toque).
 - Card com um checklist só não mostra alça nem setas. A reordenação dos itens dentro de um checklist segue como antes.
 - Dica: não — a alça ⠿ é o mesmo gesto dos itens, já descrito na Ajuda (verbete Checklist atualizado).
 
-### Radar — subagente de agenda: o Agente Ágil marca reunião, cria entrega e cobra (com confirmação) (SÓ DEV) — okr-dev v2.102 — 2026-11-03
+### Radar — subagente de agenda: o Agente Ágil marca reunião, cria entrega e cobra (com confirmação) (PROD) — okr v2.103 — 2026-11-03
 
 - O Agente Ágil do Radar passa a orquestrar o calendário de gestão por conversa: "marca um All Hands dia 20 às 10h", "cria a entrega Showroom de Inverno pra 15/05 com a Fulana", "muda o prazo do Plano Comercial", "marca o Plano de Mídia como entregue", "cobra os atrasados", "o que está atrasado na gestão do Digital?".
 - Regra de ouro: ele NUNCA grava no calendário. Prepara uma proposta (kanban/okr/agenda_propostas) e a pessoa confirma com ✅ no cartão sob a resposta dele (ou descarta). Só quem pediu (ou ADM) confirma; a confirmação aplica pelos mesmos caminhos e permissões da tela, com os mesmos avisos no sino. Proposta de edição com base velha (o evento mudou depois) não grava.
@@ -47,7 +47,7 @@ Dica: não — é proteção que atua sozinha; a Ajuda (Indicador de conexão) f
 - Regras: nó agenda_propostas (qualquer @ciahering escreve, como o resto do Radar); propostas com mais de 30 dias são limpas.
 - Exige: firebase deploy --only database + functions:okrAgenteChat. Dica: não (o chip "📦 O que está atrasado na gestão?" já apresenta). Testes: functions/okr/__tests__/agendaAgente.test.js (10), docs/arezzo/testes/test_radar_agenda_agente.js.
 
-### Radar — cobrança automática das entregas do calendário de gestão (SÓ DEV) — okr-dev v2.100 — 2026-11-03
+### Radar — cobrança automática das entregas do calendário de gestão (PROD) — okr v2.103 — 2026-11-03
 
 - Toda manhã (7h, só dia útil) o okrDailyScan cobra os responsáveis das entregas: 2–3 dias antes (preventivo), 1–2 dias depois do prazo (atrasada) e, com 3+ dias de atraso, também escala pros gestores (lista configurável em kanban/okr/cobranca_config/gestores; sem lista, os ADMs — Caio e Rafael) e pra quem criou a entrega; segue cobrando toda segunda enquanto atrasar.
 - 1 notificação por pessoa por dia (várias entregas = 1 resumo); entregue encerra; plano pai não é cobrado (as filhas são); entrega sem responsável aparece no resumo.
@@ -56,7 +56,7 @@ Dica: não — é proteção que atua sozinha; a Ajuda (Indicador de conexão) f
 - Tipo novo okr_cobranca (sino + push; liga/desliga na Central de Notificações): PUSH_TYPES, mare-notif-dev.js ?v=38. Regras: cobranca_config só ADM, cobrancas_log só servidor.
 - Dica: não (aviso automático, a pessoa descobre pelo sino). Exige: firebase deploy --only database + functions:okrDailyScan,sendPushOnNotification. Testes: functions/okr/__tests__/cobranca.test.js, okrRules.test.js.
 
-### Radar — calendário de gestão do Digital: 📦 Entrega, macros PLAN/CHECK/DO/ENGAJAMENTO e 📋 Cadência do Digital (SÓ DEV) — okr-dev v2.99 — 2026-11-03
+### Radar — calendário de gestão do Digital: 📦 Entrega, macros PLAN/CHECK/DO/ENGAJAMENTO e 📋 Cadência do Digital (PROD) — okr v2.103 — 2026-11-03
 
 - Novo tipo 📦 Entrega no 📅 Calendário do Radar: prazo, responsáveis (recebem véspera e dia), situação (A fazer · Em andamento · Entregue) e plano maior opcional ("Faz parte de": o Plano Tático mostra 3/7). O responsável marca a própria entrega; entregue não lembra mais; passou do prazo aparece Atrasada. Entrega não repete.
 - Macro opcional em qualquer item (PLAN · CHECK · DO · ENGAJAMENTO), com selo e filtro na barra.
