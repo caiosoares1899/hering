@@ -79,6 +79,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-04 · Maré — botões ↕ Ordenação e 🔍 Fonte não faziam nada no Safari/Mac (Safari e web app) (DEV v8.30.902-dev)
+
+Sintoma (Caio e André, Mac — Safari e web app instalado; Windows funcionava): clicar em Ordenação ou Fonte na toolbar do board não abria menu nenhum.
+Causa provável (não reproduzível no Chromium, só o WebKit): os 2 menus ficavam DENTRO de .toolbar (overflow-x:auto → overflow-y também auto, -webkit-overflow-scrolling:touch) e eram position:fixed. No Chrome/Edge um fixed escapa da rolagem do ancestral; no WebKit o menu é recortado/atrelado à barra e abre invisível. Eram os únicos menus da barra montados assim — os outros popups (Funções de card, Links…) já são anexados ao <body>, por isso só estes dois falhavam.
+Correção: ao abrir, toggleSortMenu() e toggleFontSizeMenu() movem o menu para o <body> (_menuToolbarNoBody), fora de qualquer contêiner de rolagem; o clique dentro do menu não o fecha mais por engano. Teste: docs/arezzo/testes/test_menus_toolbar.js (13 verificações: menu = filho do body, sem ancestral com overflow, visível e descoberto, logo abaixo do botão, fecha ao clicar de novo/fora, ordena de verdade, Fonte aplica, celular). O Chromium não reproduz o recorte — o teste guarda a invariante que o evita; a validação real é no Mac.
+Lição: position:fixed dentro de contêiner com overflow/-webkit-overflow-scrolling não é portável — monte menus/popups no body.
+
 ### 2026-11-03 · Maré — card sumia sem rastro e sem socorro (midiacriativa, REGATAS LIVIA [Engajamento]) (PROD kanban v8.30.900 · functions novas)
 
 Sintoma: o card c1793384127157_bzg (Google App REGATAS LIVIA [Engajamento] - PRF/ECM, duplicado do [Instalação] 25 s depois por Bruna, em 30/10) não existe em /cards, cards_index, arquivados nem exclusões de propósito, e não está nos backups das 04:00. A 1ª pista (alarme da Marina, 31/10 10:52, com o título '[ChatGPT]…') estava ERRADA: o alarme achava o título pela POSIÇÃO (_cardsByKey), e as posições deslocam — mostrou o título de outro card.
