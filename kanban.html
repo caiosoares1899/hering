@@ -724,6 +724,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 [data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble{
   animation-play-state:paused;
 }
+/* ⚡ DESEMPENHO (04/11/2026) — medido no Chromium com 900 cards, repouso, quadro aberto: ~100% de um núcleo (CPU+GPU) só pelos peixes/bolhas animados ATRÁS de superfícies com
+   backdrop-filter (cada quadro refaz o desfoque do que está atrás). Parando as animações: ~3%. Duas medidas, sem mudar a identidade visual:
+   (1) peixes/bolhas também pausam com um modal/tela aberta por cima (ninguém os vê e o desfoque de tela cheia é o mais caro de todos) — além da pausa por aba oculta, janela
+       sem foco e 60 s sem uso (JS "ANIMAÇÃO AMBIENTE" mais abaixo);
+   (2) as superfícies REPETIDAS e grandes (as colunas do board, as gavetas, os botões) perdem o desfoque — o fundo tem peixes a 22% de opacidade, o desfoque ali é imperceptível e
+       as superfícies já têm fundo translúcido próprio (var(--glass)). O desfoque fica nos modais, no cabeçalho e nas telas de entrada (poucas e grandes, só aparecem de vez em quando). */
+html:has(.ov.open) .fish-ltr,html:has(.ov.open) .fish-rtl,html:has(.ov.open) .bubble,
+html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.login-ov.open) .bubble{animation-play-state:paused;}
+.col,.lem-drawer,.lem-tab,.btn,.btn-sm,.btn-p,.btn-teal{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
 /* prefers-reduced-motion: desliga as animações contínuas e "ambiente"
    (peixinhos, bolhas, pulsos de alerta) — não mexe em animações curtas/
    pontuais (popup de notificação, toast, abrir modal), que não são o tipo
@@ -2031,7 +2040,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .minicard-body{flex:1;min-width:0;}
 .minicard-title{font-size:12.5px;color:var(--txt);font-weight:500;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.minicard-meta{display:flex;gap:6px;align-items:center;margin-top:3px;}
+.minicard-meta{display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap;}
+.minicard-sm{display:inline-flex;align-items:center;}
+.minicard-sm .card-tag{margin:0;}
+.minicard-sm-none{font-size:10px;color:var(--txt3);font-style:italic;}
 .minicard-col{font-size:10.5px;color:var(--txt2);}
 .minicard-owner{font-size:10.5px;color:var(--txt2);}
 .minicard-rm{
@@ -2475,6 +2487,12 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-dismiss:hover{color:var(--danger,#ef4444);opacity:1!important;}
 /* 🌅 Meu Dia (Fase 5.1) */
 .meudia-sec{margin-bottom:18px;}
+/* Meu Dia: cabeçalho recolhível dos blocos de humor (04/11/2026) — alvo de toque ≥ 44 px no celular */
+.md-tg{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;padding:2px 0;margin:0;font:inherit;font-size:12px;font-weight:700;color:var(--txt);cursor:pointer;text-align:left;border-radius:6px;}
+.md-tg:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.md-chev{color:var(--txt2);font-size:11px;width:12px;flex-shrink:0;}
+.md-res{margin-left:auto;font-weight:600;color:var(--txt2);font-size:12px;}
+@media (hover:none) and (pointer:coarse){ .md-tg{min-height:44px;} }
 .meudia-sec-hd{font-size:12.5px;font-weight:700;color:var(--txt);border-left:3px solid;padding-left:8px;margin-bottom:7px;display:flex;align-items:center;gap:6px;}
 .meudia-sec-n{font-size:10.5px;font-weight:600;color:var(--txt2);background:rgba(var(--surface2-rgb),.6);border-radius:999px;padding:1px 7px;}
 .meudia-row{padding:10px 12px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:5px;background:rgba(var(--surface2-rgb),.4);}
@@ -6113,14 +6131,16 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     <div class="panel-title">🌅 Meu Dia</div>
     <button class="x-btn" onclick="closeOv('meudia-ov')">✕</button>
   </div>
-  <div style="padding:10px 18px 0;flex-shrink:0;">
+  <div id="meudia-scroll" style="flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;">
+  <div style="padding:10px 18px 0;">
     <div id="meudia-humor" style="margin-bottom:10px;"></div>
     <button class="btn btn-sm" onclick="_pedirResumoMeuDia()" id="meudia-resumo-btn" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Resumo do Agente Ágil</button>
     <div id="meudia-resumo-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>
     <button class="btn btn-sm" onclick="_pedirAnalisePO()" id="meudia-po-btn" style="display:none;margin-top:8px;color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Análise do board (PO)</button>
     <div id="meudia-po-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>
   </div>
-  <div id="meudia-body" style="padding:14px 18px 20px;overflow-y:auto;flex:1;"></div>
+  <div id="meudia-body" style="padding:14px 18px 20px;"></div>
+  </div>
 </div>
 </div>
 
@@ -6636,7 +6656,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.900</div>
+<div class="version">v8.30.904</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14874,18 +14894,23 @@ function toggleSortMenu(){
   if(willShow){
     const btn = document.getElementById('btn-sort');
     const r = btn.getBoundingClientRect();
+    _menuToolbarNoBody(menu);   // fora da barra: o Safari (Mac e web app) não mostrava um menu fixed DENTRO da barra rolável
     menu.style.position = 'fixed';
     menu.style.top = (r.bottom+6)+'px';
     menu.style.left = r.left+'px';
   }
   menu.style.display = willShow ? 'block' : 'none';
 }
+// 🍎 Safari/Mac (04/11/2026): os menus ↕ Ordenação e 🔍 Fonte ficavam DENTRO de `.toolbar` (overflow-x:auto → overflow-y também vira auto; -webkit-overflow-scrolling:touch). No Chrome/Edge um
+// `position:fixed` escapa dessa rolagem; no WebKit ele é recortado/atrelado à barra e o menu abre "invisível" — o clique parecia não fazer nada (relato do Caio e do André, Mac: Safari e web app;
+// Windows funcionava). Solução que não depende do navegador: ao abrir, o menu vai para o <body>, fora de qualquer contêiner de rolagem.
+function _menuToolbarNoBody(menu){ if(menu && menu.parentNode!==document.body) document.body.appendChild(menu); }
 function closeSortMenu(){
   const menu = document.getElementById('sort-menu');
   if(menu) menu.style.display = 'none';
 }
 document.addEventListener('click', e=>{
-  if(!e.target.closest('#sort-menu-wrap')) closeSortMenu();
+  if(!e.target.closest('#sort-menu-wrap, #sort-menu')) closeSortMenu();
 });
 // Tamanho de fonte do board — pedido direto (relato de dificuldade de
 // leitura). Preferência pessoal, sincronizada por conta desde a rodada 2
@@ -14944,6 +14969,7 @@ function toggleFontSizeMenu(){
   if(willShow){
     const btn = document.getElementById('btn-fontsize');
     const r = btn.getBoundingClientRect();
+    _menuToolbarNoBody(menu);   // ver o comentário em toggleSortMenu()
     menu.style.position = 'fixed';
     menu.style.top = (r.bottom+6)+'px';
     menu.style.left = r.left+'px';
@@ -14955,7 +14981,7 @@ function closeFontSizeMenu(){
   if(menu) menu.style.display = 'none';
 }
 document.addEventListener('click', e=>{
-  if(!e.target.closest('#fontsize-menu-wrap')) closeFontSizeMenu();
+  if(!e.target.closest('#fontsize-menu-wrap, #fontsize-menu')) closeFontSizeMenu();
 });
 
 function _applyColSortBtnUI(){
@@ -24109,6 +24135,7 @@ async function openMeuDia(){
   const body=document.getElementById('meudia-body');
   if(body) body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--txt3);font-size:12px;">⏳ Carregando seus cards de todos os squads...</div>';
   _meuDiaDiaN=undefined; _meuDiaDiaTxt=null;
+  { const hb=document.getElementById('meudia-humor'); if(hb) hb.innerHTML=''; const sc=document.getElementById('meudia-scroll'); if(sc) sc.scrollTop=0; }   // reabrir aplica a preferência salva e volta ao topo
   _meuDiaHumorRender();
   await _loadMeuDiaCrossSquads();
   renderMeuDia();
@@ -24128,17 +24155,32 @@ async function _meuDiaHumorRender(){
   }catch(e){ box.innerHTML=''; return; }
   if(_meuDiaDiaN===undefined) _meuDiaDiaN = dia&&dia.n ? dia.n : null;   // o que a pessoa já escolheu/digitou e ainda não salvou sobrevive ao redesenho do bloco
   const diaTxt = _meuDiaDiaTxt!==null ? _meuDiaDiaTxt : ((dia&&dia.texto)||'');
+  // Recolher (04/11/2026): os dois blocos juntos ocupavam metade da tela e espremiam a lista de cards. Cada um tem seu botão ▾/▸; a escolha fica salva neste aparelho. Padrão: "Como você está hoje?"
+  // aberto até a pessoa responder (depois recolhe); "Fechamento do dia" recolhido. O recolher NÃO redesenha: o texto digitado no fechamento não se perde.
+  // Redesenhos (escolher uma carinha, salvar o dia) MANTÊM o que a pessoa está vendo; só a abertura do painel aplica a preferência salva / o padrão (openMeuDia limpa o bloco antes).
+  const _sv=_meuDiaCol(), _vH=document.getElementById('meudia-humor-c'), _vD=document.getElementById('meudia-dia-c');
+  const _colH = _vH ? _vH.hidden : (_sv.humor!==undefined ? !!_sv.humor : !!atual), _colD = _vD ? _vD.hidden : (_sv.dia!==undefined ? !!_sv.dia : true);
+  const _hdMd=(k,col,tit,resumo)=>`<button type="button" id="meudia-${k}-tg" class="md-tg" aria-expanded="${!col}" aria-controls="meudia-${k}-c" onclick="_meuDiaToggle('${k}')"><span class="md-chev" aria-hidden="true">${col?'▸':'▾'}</span><span>${tit}</span>${resumo?`<span class="md-res">${resumo}</span>`:''}</button>`;
   box.innerHTML=`<div style="padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;">
-    <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🌤️ Como você está hoje?</div>
+    ${_hdMd('humor',_colH,'🌤️ Como você está hoje?', atual&&atual.n ? _MEUDIA_FACES[atual.n-1][0] : '')}
+    <div id="meudia-humor-c" ${_colH?'hidden':''} style="margin-top:8px;">
     <div role="group" aria-label="Humor de hoje" style="display:flex;gap:6px;flex-wrap:wrap;">${_MEUDIA_FACES.map((f,i)=>`<button type="button" class="btn btn-sm" onclick="_meuDiaHumorSet(${i+1})" aria-pressed="${!!atual&&atual.n===i+1}" aria-label="${f[1]}" title="${f[1]}" style="font-size:20px;padding:4px 10px;${atual&&atual.n===i+1?'border-color:var(--accent);background:rgba(56,182,255,.2);':''}">${f[0]}</button>`).join('')}</div>
-    <p style="font-size:11.5px;color:var(--txt2);line-height:1.45;margin:8px 0 0;">👁 Seu líder direto vê o seu humor: a média do time no termômetro dele e, se você marcar que não está bem, um aviso para ele poder te apoiar. Ninguém, nem o sistema, analisa. O fechamento do dia (abaixo) continua só seu.</p></div>
+    <p style="font-size:11.5px;color:var(--txt2);line-height:1.45;margin:8px 0 0;">👁 Seu líder direto vê o seu humor: a média do time no termômetro dele e, se você marcar que não está bem, um aviso para ele poder te apoiar. Ninguém, nem o sistema, analisa. O fechamento do dia (abaixo) continua só seu.</p></div></div>
   <div style="margin-top:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;">
-    <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🌙 Fechamento do dia${dia?' <span style="font-weight:600;color:var(--txt2);">· ✔ salvo hoje</span>':''}</div>
+    ${_hdMd('dia',_colD,'🌙 Fechamento do dia', dia?'✔ salvo hoje':'')}
+    <div id="meudia-dia-c" ${_colD?'hidden':''} style="margin-top:8px;">
     <div role="group" aria-label="Humor do fim do dia" style="display:flex;gap:6px;flex-wrap:wrap;">${_MEUDIA_FACES.map((f,i)=>`<button type="button" class="btn btn-sm" data-dia-n="${i+1}" onclick="_meuDiaDiaSel(${i+1})" aria-pressed="${_meuDiaDiaN===i+1}" aria-label="${f[1]}" title="${f[1]}" style="font-size:20px;padding:4px 10px;${_meuDiaDiaN===i+1?'border-color:var(--accent);background:rgba(56,182,255,.2);':''}">${f[0]}</button>`).join('')}</div>
     <label for="meudia-dia-txt" style="position:absolute;left:-9999px;">Como foi o seu dia</label>
     <textarea id="meudia-dia-txt" maxlength="1500" oninput="_meuDiaDiaTxt=this.value" placeholder="Como foi o seu dia? O que rolou de bom, o que pesou, o que você aprendeu…" style="width:100%;min-height:72px;margin-top:8px;resize:vertical;background:rgba(var(--surface2-rgb),.85);border:1px solid rgba(56,182,255,.3);border-radius:8px;color:var(--txt);padding:8px 10px;font:inherit;font-size:13px;">${esc(diaTxt)}</textarea>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;"><button type="button" class="btn btn-sm" onclick="_meuDiaDiaSalvar()" style="color:var(--accent);border-color:rgba(56,182,255,.3);">💾 Salvar o dia</button>
-      <span style="font-size:11px;color:var(--txt2);line-height:1.4;">🔒 Fica salvo só pra você, no 📓 Diário da Travessia, pra você se lembrar depois — nem seu líder lê. <a href="${_travessiaPagina()}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Abrir o diário ↗</a></span></div></div>`;
+      <span style="font-size:11px;color:var(--txt2);line-height:1.4;">🔒 Fica salvo só pra você, no 📓 Diário da Travessia, pra você se lembrar depois — nem seu líder lê. <a href="${_travessiaPagina()}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Abrir o diário ↗</a></span></div></div></div>`;
+}
+function _meuDiaCol(){ try{ return JSON.parse(localStorage.getItem('mare_meudia_col')||'{}')||{}; }catch(e){ return {}; } }
+function _meuDiaToggle(k){
+  const c=document.getElementById('meudia-'+k+'-c'), b=document.getElementById('meudia-'+k+'-tg'); if(!c||!b) return;
+  const fechar=!c.hidden; c.hidden=fechar; b.setAttribute('aria-expanded',String(!fechar));
+  const ch=b.querySelector('.md-chev'); if(ch) ch.textContent=fechar?'▸':'▾';
+  try{ const sv=_meuDiaCol(); sv[k]=fechar; localStorage.setItem('mare_meudia_col',JSON.stringify(sv)); }catch(e){}
 }
 let _meuDiaDiaN = undefined, _meuDiaDiaTxt = null;
 function _travessiaPagina(){ return (location.pathname.split('/').pop()||'kanban.html').replace(/^kanban/,'travessia').replace(/[^a-zA-Z0-9_.\-]/g,''); }
@@ -28636,7 +28678,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Dicas (mini popups)', text:'De vez em quando aparece um <b>mini aviso no canto da tela</b> com um truque ou um lugar útil que muita gente demora a descobrir (um atalho, o Meu Dia, o menu de produtos…). Aparece <b>no máximo uma por dia</b> em cada produto (Maré, Radar e Oceano contam separado) e <b>uma única vez cada</b> — depois de vista não volta. O <b>Saiba mais</b> abre esta Central de Ajuda direto no assunto; o ✕ fecha.\n\n<b>Desligar ou religar</b>: no topo desta Central de Ajuda há o interruptor <b>💡 Dicas do Maré</b> — vale só pro Maré, e o Radar e o Oceano têm o interruptor deles (cada um na própria Ajuda). <b>Rever dicas</b> zera o que você já viu pra elas aparecerem de novo. A escolha fica salva na sua conta (vale em qualquer aparelho). O Painel e o A Bordo não mostram dicas; o Painel só <b>lista todas</b> em ⚙ Configurações → 💡 Dicas.' },
     { icon:'🐟', title:'Metas e desafios (O mar tá pra peixe)', text:'Na aba lateral <b>📊 Dados → 🐠 sua squad</b> você acompanha, num relance, a <b>meta da squad</b> (anel grande com o %, quanto falta, quantos dias restam e quanto precisa entrar por dia) e os <b>desafios extras</b> — por exemplo "no dia 27, vender 500 camisetas Hering Kids", "meta do Mercado Livre" ou "conversão do App", por submarca, canal de venda ou dia. As cores seguem o Radar: 🟢 no ritmo, 🟡 atenção, 🔴 atrasada, 🏆 batida; o <b>tracinho branco</b> no anel/na barra é onde deveria estar hoje.\n\n📈 <b>Gráfico de evolução (Acumulado, Por dia e ⛶ Expandir)</b>: o bloco <b>📈 Evolução</b> tem um seletor no topo para alternar entre <b>Acumulado</b> (curva acumulada real contra o ritmo ideal e a linha da meta) e <b>Por dia</b> (quanto entrou em cada dia comparado à <b>linha tracejada do esperado do dia</b>, com tooltip detalhando o realizado e o esperado do dia vs. o acumulado). Ao lado do seletor, o botão <b>⛶ Expandir</b> abre o gráfico em <b>tela cheia</b> com resumo dos indicadores e uma <b>tabela dia a dia</b> comparando <b>Realizado do dia</b>, <b>Esperado do dia</b> e <b>∆ diferença</b> (em valor e status).\n\n🐟 <b>O mar tá pra peixe!</b> A cada <b>20 %</b> da meta (20, 40, 60, 80 e 100) aparece um popup com peixinhos pulando e uma <b>buzina de navio</b> 🚢 (toca inteira, ~10 s, e o popup fecha logo depois que ela acaba) — uma vez por pessoa. A buzina respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s. Corrigir o valor pra baixo não tira o peixe já conquistado. No cadastro da meta, a seção <b>🎉 Popups de marco (20% a 100%)</b> permite personalizar <b>título, mensagem e emoji</b> de cada marco (20%, 40%, 60%, 80% e 100% — campos em branco usam o padrão).\n\n✏️ <b>Atualizar valor</b>: qualquer pessoa da squad informa o valor — escolha <i>Definir o total</i> ou <i>Somar ao atual</i>; a prévia mostra o novo % e se vem peixe novo. Dá pra mudar a <b>data e a hora da entrada</b> (horário de Brasília) pra lançar um valor <b>retroativo</b>, de duas formas: <i>+ Somar ao atual</i> lança aquele dia como uma <b>parte</b> — ela entra no total e o gráfico é recalculado a partir da data (ex.: os 12 dias de setembro, um por vez; o todo é a soma, na ordem que quiser e dá pra corrigir com valor negativo) — ou <i>Definir o total</i>, informando o acumulado daquele momento (só vira o valor atual se for o mais recente; um retroativo mais antigo não derruba o que já está lá). Cartões com ⏰ "atualize!" estão sem atualização há mais que o dobro do lembrete.\n\n📅 <b>Ritmo não linear (diarização)</b>: no cadastro, em <i>Ritmo ao longo do período</i>, escolha <b>Por dia</b> quando o time define antes quanto a meta pede de cada dia (ex.: a venda pesa mais nos últimos dias). Preencha um valor por dia — ou use <b>Colar da planilha</b> (uma coluna na ordem dos dias, ou linhas como 12/11 1500) e <b>Distribuir igual</b>. Se o período ainda estiver em branco, o <i>Colar</i> ajusta sozinho: com linhas "dd/mm valor" ele monta o período pelas datas; com só valores, preencha o início e o fim é calculado. Vale a <i>proporção</i> entre os dias, não precisa fechar a soma. Daí o <b>esperado agora</b> (tracinho do anel e da barra — acompanha também a hora do dia, pra um dia pesado não deixar o farol vermelho de madrugada), os <b>faróis</b> 🟢🟡🔴 (no ritmo/atenção/atrasada), o gráfico e o KPI <b>Meta de hoje</b> seguem a curva. Precisa de período com pelo menos 2 dias.\n\n🗂 <b>Entradas</b>: o botão 🗂 do cartão lista tudo o que foi lançado (mais novo primeiro, com quem lançou, quando e a nota) e deixa <b>✏️ editar</b> (data/hora, valor e nota) ou <b>🗑 excluir</b>. Quando a entrada é uma <i>parte</i> (lançada com + Somar), editar ou excluir ajusta o total e recalcula o gráfico a partir daquela data — o todo continua sendo a soma das partes; um <i>total</i> mexe só naquele ponto. O valor atual passa a ser o do último ponto; sem nenhuma entrada, a meta volta a "sem valor ainda". Quem pode atualizar o valor pode gerir as entradas.\n\n⚙ <b>Quem cria/edita</b>: PO, Organizador e ADM, em <b>⚙ Configurações → 🐟 Metas</b> (nome, ícone, R$/quantidade/%, alvo, período, diarização Por dia, submarca, canal, <b>🌊 Mostrar na visão global</b>, <b>⏰ lembrete de preenchimento</b> a cada 1 h/2 h, 1× por dia ou em horários exatos — horário de Brasília — e <b>🎉 Popups de marco (20% a 100%)</b> para personalizar título, mensagem e emoji de cada marco). A meta global do Digital e os desafios do Digital são cadastrados no <b>Painel → 📊 Dados</b>; aparecem na aba <b>🌊 Digital</b> junto com um ranking das squads.' },
     { icon:'📊', title:'Central de Dados (aba lateral 📊 Dados)', text:'A aba azul <b>📊 Dados</b>, na lateral direita (junto de 📌 Lembretes, ⭐ Estrelas, 🎧 Spotify e 📝 Notas), abre os <b>Dados</b> em <b>duas abas</b>: <b>🐠 da sua squad</b> (metas e desafios — veja o tópico "Metas e desafios") e <b>🌊 Digital</b> (a meta global, as metas das squads que marcaram "mostrar na visão global" e, logo abaixo, a <b>Central de Dados — Digital</b>: os resultados diários de captação digital publicados pelo time — somente leitura aqui no board; quem publica é o ADM no <b>Painel → 📊 Dados</b>).\n\nNa Central de captação, mostra o <b>dia mais recente</b> em destaque, botões <b>🖥️</b> pra abrir as apresentações cadastradas ali mesmo (embutidas) e a lista <b>Dias anteriores</b> — os <b>14 dias anteriores</b> ao mais recente, em formato compacto. Dias mais antigos não aparecem aqui nem são baixados (o board só carrega os últimos 15 dias, o que deixa a abertura mais leve); o histórico completo continua no Painel.\n\nSe aparecer \"Nenhum resultado publicado ainda\", é porque ninguém publicou dados — a configuração é no Painel. Não confunda com <b>📊 Dados do Board</b> (botão da toolbar), que são as métricas do <i>seu quadro</i> (WIP, Insights, CFD…).' },
-    { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.\n\n🤖 Resumo do Agente Ágil: botão dentro do painel Meu Dia (squads dev/dados) que pede pro agente ler seus cards ativos (atrasado, bloqueado, sem descrição, checklist pendente) e devolver um resumo priorizado, sugerindo uma ordem de ataque pro dia. Só lê — não mexe em nada no board. Limite de 1 pedido a cada 2 minutos por pessoa; o resumo reseta toda vez que o painel é reaberto (não guarda o de uma sessão anterior).\n\n🤖 Análise do board (PO): botão extra, visível só pra PO/Organizador/ADM, que pede uma leitura do board inteiro do squad atual (não só os seus cards) — WIP, gargalo, atrasados, bloqueados, cards incompletos — e, quando fizer sentido pelos dados, uma sugestão de campanha/coleção nova, sempre comparando com as Campanhas & Coleções já ativas/em planejamento pra nunca sugerir algo que já esteja em execução. Mesmo limite de 2 minutos entre pedidos, mesmo "só lê".' },
+    { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.\n\n🤖 Resumo do Agente Ágil: botão dentro do painel Meu Dia (squads dev/dados) que pede pro agente ler seus cards ativos (atrasado, bloqueado, sem descrição, checklist pendente) e devolver um resumo priorizado, sugerindo uma ordem de ataque pro dia. Só lê — não mexe em nada no board. Limite de 1 pedido a cada 2 minutos por pessoa; o resumo reseta toda vez que o painel é reaberto (não guarda o de uma sessão anterior).\n\n🤖 Análise do board (PO): botão extra, visível só pra PO/Organizador/ADM, que pede uma leitura do board inteiro do squad atual (não só os seus cards) — WIP, gargalo, atrasados, bloqueados, cards incompletos — e, quando fizer sentido pelos dados, uma sugestão de campanha/coleção nova, sempre comparando com as Campanhas & Coleções já ativas/em planejamento pra nunca sugerir algo que já esteja em execução. Mesmo limite de 2 minutos entre pedidos, mesmo "só lê".\n\n↕ Espaço pros cards: os blocos "🌤️ Como você está hoje?" e "🌙 Fechamento do dia" têm uma setinha ▾/▸ pra recolher (o que você escolheu fica salvo neste aparelho; o de hoje abre recolhido depois que você responde, e o fechamento do dia vem recolhido). O painel inteiro rola junto — dá pra descer até os cards mesmo numa janela baixa ou no celular.' },
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
@@ -28675,7 +28717,7 @@ const HELP_CONTENT = {
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.\n\n🏷️ Submarca de cada filho: na lista de cards filhos, cada linha mostra a submarca do card (a mesma pílula colorida do board) ao lado do responsável — dá pra ver de qual marca é cada filho sem abri-lo. Nos squads que usam o campo Submarca, o filho que ainda não tem aparece como "🏷️ sem submarca".' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
@@ -29556,12 +29598,18 @@ function renderSuperChildrenList(){
       const relCard=cards.find(c=>c.id===lc.id);
       const colColor=col?.color||'var(--glass-b)';
       const ownerTxt=relCard?.owner?'👤 '+relCard.owner:'';
+      // 🏷️ Submarca do filho (04/11/2026, pedido do Caio): um supercard de campanha costuma ter 1 filho por submarca (Adulto, Kids, Sports…) e a lista só dizia a coluna e o responsável —
+      // dava pra ver QUEM estava atrasado, não DE QUAL MARCA. Mesma pílula colorida do board (tagHtml). Sem submarca: só avisa quando o squad usa o campo (submarcaAtivo).
+      const _smIds=SUBMARCA_TAGS.map(t=>t.id);
+      const _smId=relCard ? (getCardTags(relCard).find(id=>_smIds.includes(id))||'') : '';
+      const smHtml = _smId ? '<span class="minicard-sm" title="Submarca">'+tagHtml(_smId)+'</span>'
+        : ((relCard && submarcaAtivo) ? '<span class="minicard-sm minicard-sm-none" title="Este card ainda não tem submarca">🏷️ sem submarca</span>' : '');
       return '<div class="minicard">'
         +'<div class="minicard-left" style="background:'+colColor+';"></div>'
         +'<div class="minicard-body" onclick="_navigateToCard(\''+esc(lc.id)+'\')">'
           +'<div class="minicard-title">'+esc(lc.title)+'</div>'
           +'<div class="minicard-meta"><span class="minicard-col">'+esc(col?.name||lc.col)+'</span>'
-          +(ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>':'')+'</div>'
+          +(ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>':'')+smHtml+'</div>'
         +'</div>'
         +'<button class="minicard-rm" title="Remover do supercard" onclick="event.stopPropagation();removeSuperChild(\''+esc(lc.id)+'\')">✕</button>'
       +'</div>';
@@ -36446,9 +36494,23 @@ _applyThemeAutoButtonState(); // idem pro botão 🕐, com o estado ligado/desli
 // Pausa a animação de peixes/bolhas quando a aba vai pro background — não
 // tem sentido gastar CPU/bateria animando algo que ninguém está vendo.
 // Ver regra [data-anim-paused] .fish-ltr/.fish-rtl/.bubble no CSS.
-document.addEventListener('visibilitychange', ()=>{
-  document.documentElement.toggleAttribute('data-anim-paused', document.hidden);
-});
+// ANIMAÇÃO AMBIENTE (04/11/2026): além da aba oculta, pausa com a JANELA SEM FOCO (outro programa na frente / outro monitor) e depois de 60 s SEM USO (mouse, teclado, rolagem, toque);
+// volta sozinha no primeiro movimento. Mesma lógica do Oceano (oceano-dev.html › atualizarAnimacao). Peixes e bolhas são só enfeite — rodar o dia inteiro atrás do quadro custava
+// ~um núcleo de CPU/GPU nos PCs (ver o comentário de DESEMPENHO no CSS). `window._animOciosoMs` existe só para o teste encurtar o tempo.
+(function(){
+  let ocioso=false, ultimo=0, timer=null;
+  function atualizar(){ document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || ocioso); }
+  function atividade(){
+    const agora=Date.now(); if(!ocioso && agora-ultimo<1000) return; ultimo=agora;
+    if(ocioso){ ocioso=false; atualizar(); }
+    clearTimeout(timer); timer=setTimeout(()=>{ ocioso=true; atualizar(); }, window._animOciosoMs||60000);
+  }
+  ['pointermove','pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev, atividade, {passive:true, capture:true}));
+  document.addEventListener('visibilitychange', atualizar);
+  window.addEventListener('focus', ()=>{ atividade(); atualizar(); });
+  window.addEventListener('blur', atualizar);
+  atividade(); atualizar();
+})();
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });

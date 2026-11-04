@@ -79,7 +79,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-04 · Maré — botões ↕ Ordenação e 🔍 Fonte não faziam nada no Safari/Mac (Safari e web app) (DEV v8.30.902-dev)
+### 2026-11-04 · Maré — botões ↕ Ordenação e 🔍 Fonte não faziam nada no Safari/Mac (Safari e web app) (DEV v8.30.903-dev · PROD kanban v8.30.904)
 
 Sintoma (Caio e André, Mac — Safari e web app instalado; Windows funcionava): clicar em Ordenação ou Fonte na toolbar do board não abria menu nenhum.
 Causa provável (não reproduzível no Chromium, só o WebKit): os 2 menus ficavam DENTRO de .toolbar (overflow-x:auto → overflow-y também auto, -webkit-overflow-scrolling:touch) e eram position:fixed. No Chrome/Edge um fixed escapa da rolagem do ancestral; no WebKit o menu é recortado/atrelado à barra e abre invisível. Eram os únicos menus da barra montados assim — os outros popups (Funções de card, Links…) já são anexados ao <body>, por isso só estes dois falhavam.
