@@ -69,6 +69,14 @@ backdrop-filter: blur(8px);                /* botão, chip */
 ### 2.4 Fundo, peixinhos e movimento
 Fundo é sempre camadas (radial + base escura), nunca sólido. Peixinhos/bolhas ficam **atrás** do conteúdo, `pointer-events:none`, e a pessoa pode desligar (preferência). Movimento serve a **significado** (algo mudou, algo chegou) e é curto; respeite `@media (prefers-reduced-motion: reduce)` (já existe em kanban e Oceano) — qualquer animação nova entra nesse bloco.
 
+### 2.5 Acabamento: cinco regras que separam "feito com cuidado" de "gerado por IA"
+Adaptadas do catálogo de sinais do projeto **unslop** (Damir Sokolovsky, `@heydamir`, CC-BY-4.0), **só as que combinam com o Marine Glass**. O que **não** entra: tirar emoji semântico, tirar o vidro/desfoque ou trocar `var(--…)` por cor fixa — isso é a nossa identidade e os 3 temas (2.2).
+1. **Raios aninhados:** um bloco **dentro** de um card encostado na borda tem `border-radius: max(0, R − P)` (R = raio do card, P = o `padding` dele). Card de 16 px com 8 px de padding pede filho de 8 px, nunca 16.
+2. **Moldura quieta, um elemento brilhante:** abas inativas, bordas estruturais e contadores secundários ficam discretos (`--txt2`, `--surface2-rgb`); a cor forte fica em **um protagonista por seção** (o anel de projeção das Metas, o farol da Travessia, o card em risco).
+3. **Ritmo de espaço:** o espaço **entre** partes do mesmo grupo (título, número, legenda de um KPI) < o `padding` do card ≤ o `gap` entre cards vizinhos. Se tudo tem o mesmo espaçamento, nada parece agrupado.
+4. **Sem pulso em elemento parado:** animação contínua (`pulse`, brilho "respirando") é só para estado **ao vivo** de verdade (sala ao vivo do Radar, timer rodando). Enfeite animado sem significado custa CPU/GPU (04/11/2026: peixes e bolhas atrás de superfícies com desfoque gastavam ~1 núcleo — ver 10) e pausa quando ninguém usa.
+5. **Variação sempre com referência:** nunca `+12%` solto; diga **contra o quê** ("+12% vs semana passada", "vs meta até ontem").
+
 ---
 
 ## 3. Cor: como escolho

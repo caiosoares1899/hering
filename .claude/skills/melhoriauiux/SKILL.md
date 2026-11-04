@@ -46,6 +46,7 @@ Não opine por leitura de código. Boot real + Firebase falso (`docs/arezzo/test
 - Tire **screenshot** de cada combinação relevante e **olhe** (Read na imagem). Rode o **harness de medição** do guia (seção 12.3): rolagem lateral (falha objetiva), alvos de toque, onde olhar o contraste. Se não consegue ver imagem, meça por DOM (caixas, overflow, cores computadas).
 
 ## Passo 4 — Avaliar com a rubrica (guia 12.2) e classificar
+> Inclua o **acabamento (guia 2.5)**: raios aninhados, moldura quieta + um elemento brilhante, ritmo de espaço, sem pulso em elemento parado, variação sempre com referência. **Nunca** rode um removedor genérico de "cara de IA" nas páginas: ele tira os emojis semânticos, o vidro e os tokens dos 3 temas.
 Para cada falha: **regra violada**, **cenário concreto** (dado/papel/tamanho), **quem sofre e quanto**, e a classe:
 - 🐞 **bug** (comportamento errado) → corrige e registra em `BUGS_E_CORRECOES.md`;
 - 🎨 **design** (confuso, repetido, desalinhado, ilegível, só-hover, sem estado vazio…) → corrige;

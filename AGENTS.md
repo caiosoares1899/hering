@@ -7,6 +7,7 @@
 > Este arquivo só guarda o que é específico do Antigravity; **não copie regras do `CLAUDE.md` para cá** (já divergiram uma vez).
 > Resumo do seu papel: monitoramento diário, pequenas features e correções localizadas (1 página), docs (`/atualizardocumentacoes`) e promoções rotineiras. Funções (`functions/`), regras do banco, módulos compartilhados e features grandes são do Claude — **escale pelo quadro**.
 > Todo commit leva o trailer `Agent: antigravity`; branches `antigravity/<assunto>`.
+> **Regras por área:** além do `CLAUDE.md`, detalhes de cada área ficam em `.claude/rules/*.md` (Radar/OKR; Oceano, login, Escala e Mini painel). O Claude Code as carrega sozinho ao tocar nos arquivos; **você, Antigravity, leia o arquivo da área (frontmatter `paths:` diz quais arquivos ela cobre) antes de editar** — o `CLAUDE.md` aponta para elas.
 > **Onde está cada coisa:** `docs/BIBLIOTECA.md`. Arquivo novo na **raiz** precisa de uma linha lá (a CI falha se faltar); capturas/saídas de teste vão para `docs/capturas/`, nunca para a raiz.
 
 - **Repositório local:** `C:\Users\caio.soares\.gemini\antigravity\scratch\hering` (remote: `https://github.com/caiosoares1899/hering.git`). Mesmo se nenhuma workspace estiver aberta na sessão, opere diretamente neste diretório.
