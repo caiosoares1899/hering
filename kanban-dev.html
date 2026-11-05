@@ -6656,7 +6656,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.905-dev</div>
+<div class="version">v8.30.906-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9905,6 +9905,12 @@ function _carimboDeEscrita(origem, pilha, info){
     veioDoCacheIdb:!!window._bootDoCacheIdb,
   }, info||{});
 }
+// O carimbo entra no update DEPOIS da limpeza de campos (_stripUndefinedMultiPath): ela descarta toda chave com ponto, e o marcador de horário do servidor se chama `.sv` — passando pela limpeza,
+// `servidorEm` virava `{}` e nunca era gravado (achado no teste B de console em 05/11/2026) e o servidor não conseguia ligar a remoção ao autor.
+function _carimboParaBanco(carimbo){
+  const resto = Object.assign({}, carimbo); delete resto.servidorEm;
+  return Object.assign(_stripUndefinedDeep(resto), { servidorEm:{'.sv':'timestamp'} });
+}
 async function fbSaveAll(extra, touchedIds, opts){
   { const _r = _recusaSeDesatualizado(); if(_r) return _r; }
   const _pilhaChamada = _pilhaCurta(1);   // capturada ANTES do 1º await: depois dele a pilha perde quem chamou
@@ -10096,7 +10102,7 @@ async function fbSaveAll(extra, touchedIds, opts){
     Object.values(_plano.ri).forEach(k=>{ if(!_novas.has(String(k))) _cardsPayload['cards/'+k] = null; });
   } else _cardsPayload = { cards: cardsToSave };
   return _trackFbWrite(Promise.all([
-    window._update(fb(FB), _stripUndefinedMultiPath({ ..._cardsPayload, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, 'cards_write_meta/ultimo': _carimbo, ...(extra||{}) })),
+    window._update(fb(FB), { ..._stripUndefinedMultiPath({ ..._cardsPayload, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }), 'cards_write_meta/ultimo': _carimboParaBanco(_carimbo) }),
   ]).then(r=>{
     cardsToSave.forEach(c=>{ if(c && c.id && !_plano.pular.has(c.id)) _marcaBaseCard(c, true); });   // a base de cada card passa a ser o que acabou de ir pro banco
     if(_plano.mesclados.length){
