@@ -79,7 +79,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 |---|---|---|
 | `README.md` | Porta de entrada pública do repositório | todos |
 | `CLAUDE.md` | **Fonte da verdade** das regras do projeto (release, dev→prod, deploy de `functions/`) | Claude e Antigravity |
-| `AGENTS.md` | Só o que é específico do Antigravity (linhas vermelhas, aprovações) | Antigravity |
+| `AGENTS.md` | Entrada de Codex e Antigravity: núcleo comum, seção do Codex e as linhas vermelhas | Codex, Antigravity |
 | `CHANGELOG.md` | **Features** e entregas estruturais (histórico jul–set em `docs/changelog-archive-2026-07-a-09.md`) | `scripts/mare-cli.js log`, skills |
 | `BUGS_E_CORRECOES.md` | Bugs, correções, achados do `/monitorarbugs` e 🛡️ Armadilhas Conhecidas | idem |
 | `CODE_MAP.md` · `CODE_MAP_FAST.md` | Índice de âncoras por área (curado / gerado por `node scripts/mare-cli.js map`) | todos antes de mexer em código |
@@ -103,7 +103,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `scripts/` | `checar.js` (checagens que a CI roda), `mare-cli.js` (`status`/`bump`/`log`/`map`/`ship`…) e `mapa.js` (gera o bloco automático do mapa) |
 | `vendor/firebase-10.14.1/` | SDK do Firebase servido localmente (o FortiGate da Hering bloqueia o CDN) |
 | `.claude/skills/` | Skills do Claude/Antigravity (`/subirproprod`, `/monitorarbugs`, `/seatualizar`, `/auditoriaseguranca`, `/plantaobug`…) |
-| `.agents/` | Regras e lista de skills do Antigravity |
+| `.agents/` | Regras e lista de skills do Antigravity (`rules/antigravity.md` = o que era só dele no `AGENTS.md`) |
 | `.github/workflows/` | `pages.yml` (publica a raiz no Pages) e `checks.yml` (CI: `checar.js` + testes de `functions/`) |
 
 ### Índice de `docs/`
