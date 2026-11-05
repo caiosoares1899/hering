@@ -9876,6 +9876,16 @@ function _recusaSaveSemConferir(motivo){
   const e = new Error('Não deu pra conferir os cards no servidor antes de gravar — o card não foi salvo. ('+motivo+')'); e.name = 'VersaoDesatualizada';
   return Promise.reject(e);
 }
+// Nome da função que chamou fbSaveAll: 1º frame da pilha que NÃO é o próprio fbSaveAll, sem "async " e sem " arquivo:linha" (Chrome) nem "@url" (Firefox). Anônima → 'anonima'.
+function _origemDaPilha(pilha){
+  const frames = String(pilha||'').split(' < ').map(f=>f.trim().replace(/^async\s+/,'')).filter(Boolean);
+  for(const f of frames){
+    const nome = f.split('@')[0].split(/\s+/)[0];
+    if(!nome || nome==='fbSaveAll') continue;
+    return /[:/]/.test(nome) ? 'anonima' : nome.slice(0,80);
+  }
+  return 'anonima';
+}
 // 🔎 Carimbo de autoria da última gravação estrutural (cards_write_meta/ultimo, no MESMO update atômico de fbSaveAll). O servidor (functions/cards/guardiao.js) só enxerga que um card
 // saiu do índice, não QUEM gravou (o evento do banco v2 não traz o autor): casa a remoção com este carimbo pelo horário do SERVIDOR (`servidorEm`) + a lista `idsRemovidos`.
 function _carimboDeEscrita(origem, pilha, info){
@@ -10009,7 +10019,7 @@ async function fbSaveAll(extra, touchedIds, opts){
   // Vai (a) no anel cards_auditoria e (b) em cards_write_meta/ultimo, no MESMO update atômico — o servidor casa pelo horário e pela lista (ver functions/cards/guardiao.js).
   const _excl = new Set(Object.keys(extra||{}).filter(k=>k.startsWith('cards_deleted_intentionally/')).map(k=>k.slice('cards_deleted_intentionally/'.length)));
   const _idsRemovidos = _plano.ok ? Object.keys(_plano.ri).filter(id=>!(id in cardsIndex) && !_excl.has(id) && !_intentionalDeleteIds.has(id)) : [];
-  const _origem = (_pilhaChamada.split(' < ')[0]||'').replace(/@.*$/,'').slice(0,80);
+  const _origem = _origemDaPilha(_pilhaChamada);
   const _resumoResgate = { status:'ok', resgatados:_resgatados.length, erro:null, cardsLocal:cards.length, cardsIndice:_plano.ok?Object.keys(_plano.ri).length:null };
   const _carimbo = _carimboDeEscrita(_origem, _pilhaChamada, { resgate:_resumoResgate, tocados:(touchedIds?touchedIds.length:'todos'), substituirTudo:!!(opts&&opts.substituirTudo), idsRemovidos:_idsRemovidos.slice(0,30), nRemovidos:_idsRemovidos.length });
   _auditarEscritaDeCards('fbSaveAll', { resgatados:_resgatados.length, tocados:(touchedIds?touchedIds.length:'todos'), extra:Object.keys(extra||{}).slice(0,3).join(','), substituirTudo:!!(opts&&opts.substituirTudo),

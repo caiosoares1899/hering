@@ -60,9 +60,9 @@ const montaSeed = () => { const cards = {}, idx = {}, upd = {}, arq = {};
     await ctx.close(); }
 
   { const { ctx, p } = await abre();       // E3: carimbo de autoria atômico (cards_write_meta/ultimo) + ids removidos sem marca
-    await p.evaluate(() => { cards = cards.filter(c => c.id !== 'c5'); return fbSaveAll({ 'cards_deleted_intentionally/c5': true }, []); });
+    await p.evaluate(() => { async function salvarDeTeste() { return fbSaveAll({ 'cards_deleted_intentionally/c5': true }, []); } cards = cards.filter(c => c.id !== 'c5'); return salvarDeTeste(); });
     const m = await p.evaluate(sq => (window.__store.kanban.squads[sq].dados.cards_write_meta || {}).ultimo || null, SQ);
-    t('E3. fbSaveAll grava cards_write_meta/ultimo (uid, versão, origem, sinais); exclusão intencional NÃO entra em idsRemovidos', !!m && m.uid === 'eve' && !!m.ver && !!m.clienteEm && 'abaAbertaMin' in m && m.resgate && m.resgate.status === 'ok' && !(m.idsRemovidos || []).includes('c5'), m); await ctx.close(); }
+    t('E3. fbSaveAll grava cards_write_meta/ultimo (uid, versão, origem = função que chamou, sinais); exclusão intencional NÃO entra em idsRemovidos', !!m && m.uid === 'eve' && !!m.ver && !!m.clienteEm && 'abaAbertaMin' in m && m.resgate && m.resgate.status === 'ok' && !(m.idsRemovidos || []).includes('c5') && m.origem === 'salvarDeTeste', m); await ctx.close(); }
 
   { const { ctx, p } = await abre();       // E4: evento ao vivo dentro da janela de 2 s é REAGENDADO, não perdido
     const r = await p.evaluate(async () => { _hasLocalSession = true; _lastLocalSave = Date.now(); window._cardsByKey['11'] = { id: 'cLive', title: 'Ao vivo', col: 'doing', updatedAt: 'x' }; _applyCardsSync();

@@ -81,7 +81,8 @@ const SYNC_DEFASADO_SEG = 120;
 const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
 
 function classificar(meta, sinais) {
-  if (!meta) return { causaCodigo: 'aba_antiga_ou_fora_do_fluxo', causaTexto: 'Sem carimbo de fbSaveAll desta remoção (aba com código antigo em cache ou escrita fora do fluxo normal)' };
+  if (!meta) return { causaCodigo: 'sem_carimbo', causaTexto: 'Nenhum carimbo de gravação encontrado (gravação de uma versão que ainda não carimba, ou fora do fluxo normal de salvar)' };
+  if (meta === 'outra') return { causaCodigo: 'carimbo_de_outra_gravacao', causaTexto: 'Há carimbo de uma gravação recente, mas não é desta remoção — autor não identificado' };
   if (sinais.delayFilaSeg != null && sinais.delayFilaSeg >= FILA_OFFLINE_SEG) return { causaCodigo: 'fila_offline', causaTexto: `Save ficou retido ~${sinais.delayFilaSeg}s na fila offline do navegador antes de chegar ao banco` };
   if (sinais.resgateStatus === 'erro') return { causaCodigo: 'falha_resgate', causaTexto: 'Falha de rede ao ler cards_index durante o resgate do fbSaveAll' };
   if ((sinais.cardsLocal != null && sinais.cardsIndice != null && sinais.cardsLocal < sinais.cardsIndice) || (sinais.ultimoSyncSeg != null && sinais.ultimoSyncSeg > SYNC_DEFASADO_SEG)) {
@@ -91,16 +92,23 @@ function classificar(meta, sinais) {
 }
 
 // Devolve { causaCodigo, causaTexto, causadoPor?, sinais?, contexto? } — nunca lança.
-async function diagnosticar(db, squadId, cardId, opts) {
+// `lerCarimbo` é chamado ANTES da espera do guardião (6 s): outro save na squad durante a espera sobrescreve `ultimo` e a atribuição falharia.
+async function lerCarimbo(db, squadId) {
+  try { return (await db.ref(`${base(squadId)}/cards_write_meta/ultimo`).get()).val() || null; } catch (e) { return null; }
+}
+async function diagnosticar(db, squadId, cardId, opts, metaPre) {
   try {
-    const meta = (await db.ref(`${base(squadId)}/cards_write_meta/ultimo`).get()).val();
+    const meta = metaPre !== undefined ? metaPre : await lerCarimbo(db, squadId);
     const evento = opts && opts.eventoEm ? Date.parse(opts.eventoEm) : NaN;
     const servidorEm = meta ? num(meta.servidorEm) : null;
     const lista = meta && Array.isArray(meta.idsRemovidos) ? meta.idsRemovidos : (meta && meta.idsRemovidos ? Object.values(meta.idsRemovidos) : []);
     const casa = !!meta && servidorEm != null && isFinite(evento) && lista.includes(cardId) && Math.abs(evento - servidorEm) <= ATRIBUICAO_MS;
     if (!casa) {
-      const out = classificar(null, {});
-      if (meta) out.contexto = { ultimaEscritaEstrutural: { por: cortar(meta.por, 80) || null, ver: cortar(meta.ver, 40) || null, origem: cortar(meta.origem, 80) || null, haSeg: servidorEm != null && isFinite(evento) ? Math.round((evento - servidorEm) / 1000) : null } };
+      const out = classificar(meta ? 'outra' : null, {});
+      if (meta) {
+        const ha = servidorEm != null && isFinite(evento) ? Math.round((evento - servidorEm) / 1000) : null;
+        out.contexto = { ultimaEscritaEstrutural: { por: cortar(meta.por, 80) || null, ver: cortar(meta.ver, 40) || null, origem: cortar(meta.origem, 80) || null, haSeg: ha != null && ha >= 0 ? ha : null } };
+      }
       return out;
     }
     const clienteMs = Date.parse(meta.clienteEm);
@@ -122,6 +130,7 @@ async function verificarRemocao(db, squadId, cardId, opts) {
   opts = opts || {};
   const agora = opts.agora || new Date();
   const esperar = opts.esperar == null ? ESPERA_MS : opts.esperar;
+  const carimbo = await lerCarimbo(db, squadId);   // antes da espera (ver diagnosticar)
   if (esperar > 0) await dormir(esperar);
   const b = base(squadId);
 
@@ -134,7 +143,7 @@ async function verificarRemocao(db, squadId, cardId, opts) {
   if (!indice || !Object.keys(indice).length) return { acao: 'ignorado', motivo: 'índice vazio (squad zerada/apagada)' };
 
   // 2. há o que restaurar?
-  const diag = await diagnosticar(db, squadId, cardId, opts);
+  const diag = await diagnosticar(db, squadId, cardId, opts, carimbo);
   const espelho = (await db.ref(`kanban/cards_espelho/${squadId}/${cardId}`).get()).val();
   const titulo = espelho && espelho.card ? espelho.card.title : null;
   const registrar = async (acao, extra) => {

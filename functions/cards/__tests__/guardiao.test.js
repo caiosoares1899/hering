@@ -144,9 +144,9 @@ test('dedo-duro: falha_resgate e cache_ou_sync_defasado', async () => {
   assert.equal(incidente((await comMeta(meta({ ultimoSyncSeg: 300 }))).d).causaCodigo, 'cache_ou_sync_defasado');
 });
 
-test('dedo-duro: SEM carimbo → aba_antiga_ou_fora_do_fluxo e ninguém é nomeado', async () => {
+test('dedo-duro: SEM carimbo → sem_carimbo e ninguém é nomeado', async () => {
   const { d } = await comMeta(null); const g = incidente(d);
-  assert.equal(g.causaCodigo, 'aba_antiga_ou_fora_do_fluxo'); assert.equal(g.causadoPor, undefined);
+  assert.equal(g.causaCodigo, 'sem_carimbo'); assert.equal(g.causadoPor, undefined);
   assert.doesNotMatch(Object.values(d._data().kanban.usuarios.adm1.notificacoes)[0].sub, /Origem:/);
 });
 
@@ -154,7 +154,7 @@ test('dedo-duro: gravação alheia recente (id fora da lista OU horário longe) 
   const outroId = await comMeta(meta({ idsRemovidos: ['cOutro'] })); assert.equal(incidente(outroId.d).causadoPor, undefined);
   assert.equal(incidente(outroId.d).contexto.ultimaEscritaEstrutural.por, 'Juliana');
   assert.doesNotMatch(Object.values(outroId.d._data().kanban.usuarios.adm1.notificacoes)[0].sub, /Juliana/);
-  const longe = await comMeta(meta({ servidorEm: T - 30000 })); assert.equal(incidente(longe.d).causadoPor, undefined); assert.equal(incidente(longe.d).causaCodigo, 'aba_antiga_ou_fora_do_fluxo');
+  const longe = await comMeta(meta({ servidorEm: T - 30000 })); assert.equal(incidente(longe.d).causadoPor, undefined); assert.equal(incidente(longe.d).causaCodigo, 'carimbo_de_outra_gravacao');
   const semEvento = await comMeta(meta(), { eventoEm: undefined }); assert.equal(incidente(semEvento.d).causadoPor, undefined);
 });
 
@@ -162,10 +162,23 @@ test('dedo-duro: se a leitura do carimbo quebrar, o card É restaurado do mesmo 
   const d = mk(); await espelharCard(d, SQ, 'c1', AGORA); apagaDoIndice(d, 'c1');
   const orig = d.ref.bind(d); d.ref = (p) => { if (String(p).includes('cards_write_meta')) throw new Error('boom'); return orig(p); };
   const r = await rodar(d, 'c1', { eventoEm: AGORA.toISOString() }); assert.equal(r.acao, 'restaurado');
-  assert.equal(dados(d).cards[dados(d).cards_index.c1].title, 'Card c1'); assert.equal(incidente(d).causaCodigo, 'diagnostico_falhou');
+  assert.equal(dados(d).cards[dados(d).cards_index.c1].title, 'Card c1'); assert.equal(incidente(d).causadoPor, undefined); assert.match(incidente(d).causaCodigo, /sem_carimbo|diagnostico_falhou/);
 });
 
 test('dedo-duro: diagnosticar nunca lança, mesmo com carimbo lixo', async () => {
   const d = mk(); dados(d).cards_write_meta = { ultimo: { idsRemovidos: 'c1', servidorEm: 'x', clienteEm: 5 } };
   const r = await diagnosticar(d, SQ, 'c1', { eventoEm: AGORA.toISOString() }); assert.ok(r.causaCodigo);
+});
+
+test('dedo-duro: o carimbo é lido ANTES da espera — outro save durante os 6 s não apaga a atribuição', async () => {
+  const d = mk(); await espelharCard(d, SQ, 'c1', AGORA); apagaDoIndice(d, 'c1'); dados(d).cards_write_meta = { ultimo: meta() };
+  setTimeout(() => { dados(d).cards_write_meta = { ultimo: meta({ por: 'Outro', servidorEm: T + 3000, idsRemovidos: [] }) }; }, 5);
+  const r = await verificarRemocao(d, SQ, 'c1', { agora: AGORA, esperar: 40, eventoEm: new Date(T + 500).toISOString() });
+  assert.equal(r.acao, 'restaurado'); assert.equal(incidente(d).causadoPor.por, 'Juliana');
+});
+
+test('dedo-duro: carimbo POSTERIOR ao evento não nomeia ninguém, não usa o texto de "aba antiga" e não mostra "há -Ns"', async () => {
+  const { d } = await comMeta(meta({ servidorEm: T + 10000 })); const g = incidente(d);
+  assert.equal(g.causadoPor, undefined); assert.equal(g.causaCodigo, 'carimbo_de_outra_gravacao'); assert.doesNotMatch(g.causaTexto, /antiga|cache/i);
+  assert.equal(g.contexto.ultimaEscritaEstrutural.haSeg, null);
 });
