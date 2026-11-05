@@ -280,6 +280,14 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 /* ═══ MODAIS ═══ */
 /* ── 📌 Mural de avisos e 🎯 Meta Global (Painel › Pessoas › Comunicados + Painel › Dados › Metas, com 🌊 Oceano) ── */
 .inicio-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 22px;align-items:start;}
+/* (05/11/2026) Reserva a composição final antes da primeira resposta do Firebase. Sem animação contínua. */
+.inicio-esqueleto{padding:18px;border:1px solid var(--glass-b);border-radius:var(--r2);background:var(--glass);color:var(--txt2);}
+.inicio-esqueleto .esqueleto-linha{display:block;height:12px;margin-top:14px;border-radius:6px;background:var(--glass-b);}
+.inicio-esqueleto .esqueleto-linha.curta{width:60%;}
+.meta-esqueleto,.meta-indisponivel{min-height:420px;}
+.meta-esqueleto .esqueleto-anel{display:block;width:108px;height:108px;border:12px solid var(--glass-b);border-radius:50%;margin-bottom:16px;}
+.mural-esqueleto{min-height:124px;}
+@media(max-width:420px){.meta-esqueleto,.meta-indisponivel{min-height:618px;}}
 .inicio-grid .tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
 .col-meta .meta-hd{display:flex;align-items:center;gap:8px;width:100%;margin:6px 0 14px;padding:6px 2px 10px;font:inherit;font-size:12px;font-weight:600;color:var(--txt);border-bottom:1px solid var(--glass-b);}
 .col-meta .meta-hd .mural-seta{margin-left:auto;font-size:11px;font-weight:500;color:var(--txt3);}
@@ -574,21 +582,21 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
       <button type="button" class="btn pri sm" id="continuar-ir">Continuar</button><button type="button" class="x" id="continuar-x" aria-label="Dispensar">✕</button>
     </div>
     <div id="ferias-caio-host"></div>
-    <div class="inicio-grid" id="inicio-grid">
+    <div class="inicio-grid tem-meta tem-mural" id="inicio-grid">
       <div class="col-apps">
         <div class="abertos" id="abertos"></div>
         <div class="tiles" id="tiles"></div>
       </div>
-      <section class="col-meta" id="col-meta" aria-label="Meta global do Digital" style="display:none;">
+      <section class="col-meta" id="col-meta" aria-label="Meta global do Digital" aria-busy="true">
         <div class="meta-hd"><span class="mural-tit">🎯 Meta Global · Digital</span><span class="mural-n" id="meta-oceano-tag">🐟 O mar tá pra peixe</span><span class="mural-seta">Tempo real</span></div>
-        <div id="meta-oceano-body"></div>
+        <div id="meta-oceano-body"><div class="inicio-esqueleto meta-esqueleto" role="status"><span class="sr">Carregando Meta Global do Digital…</span><div aria-hidden="true"><span class="esqueleto-anel"></span><span class="esqueleto-linha"></span><span class="esqueleto-linha curta"></span><span class="esqueleto-linha"></span></div></div></div>
       </section>
       <aside class="col-mural" id="col-mural" aria-label="Mural de avisos">
-        <div id="mural-wrap" style="display:none;">
+        <div id="mural-wrap" aria-busy="true">
           <button type="button" class="mural-hd" id="mural-hd" aria-expanded="false" aria-controls="mural-corpo" title="Mostrar ou recolher o Mural">
             <span class="mural-tit">📌 Mural</span><span class="mural-n" id="mural-n"></span><span class="mural-novos" id="mural-novos" hidden></span><span class="mural-seta" aria-hidden="true">▾</span>
           </button>
-          <div id="mural-corpo" hidden><div class="mural" id="mural"></div><div class="mural-rod"><button type="button" class="mural-mais" id="mural-mais" style="display:none;"></button></div></div>
+          <div id="mural-corpo"><div class="mural" id="mural"><div class="inicio-esqueleto mural-esqueleto" role="status"><span class="sr">Carregando avisos…</span><div aria-hidden="true"><span class="esqueleto-linha curta"></span><span class="esqueleto-linha"></span><span class="esqueleto-linha"></span><span class="esqueleto-linha curta"></span></div></div></div><div class="mural-rod"><button type="button" class="mural-mais" id="mural-mais" style="display:none;"></button></div></div>
         </div>
       </aside>
     </div>
@@ -768,7 +776,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.59 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.60 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -926,9 +934,14 @@ async function iniciarSessao(){
 }
 
 // ── 🎯 Meta Global no Oceano (mare-metas-dev.js: metas do Digital marcadas com oceano:true) ──
-let podeDadosGlobal = false;
+let podeDadosGlobal = false, metaEspera = null;
 async function iniciarMetasOceano(){
-  if(!window.MareMetas) return;
+  // O módulo só avisa pelo onChange ao receber as metas; não confundir lista inicial vazia com resposta vazia.
+  const encerrarEspera = ()=>{ clearTimeout(metaEspera); $('#col-meta').removeAttribute('aria-busy'); };
+  const indisponivel = ()=>{ encerrarEspera(); $('#meta-oceano-body').innerHTML = '<div class="inicio-esqueleto meta-indisponivel" role="status">Não foi possível carregar a Meta Global agora. Atualize a página para tentar de novo.</div>'; };
+  if(!window.MareMetas){ indisponivel(); return; }
+  // O módulo engole erros do listener: encerra o esqueleto se a leitura não responder; uma resposta tardia ainda desenha normalmente.
+  metaEspera = setTimeout(indisponivel, 15000);
   try{
     const sn = await window._get(window._ref(window._db,'kanban/config/dados_editors'));
     const l = sn && sn.exists() ? sn.val() : [];
@@ -937,8 +950,8 @@ async function iniciarMetasOceano(){
   }catch(e){}
   const el = $('#meta-oceano-body');
   if(el) MareMetas.ligar(el, { user: ()=>U });
-  MareMetas.iniciar({ todasSquads: false, onChange: metaOceanoRender });
-  metaOceanoRender();
+  try{ MareMetas.iniciar({ todasSquads: false, onChange: ()=>{ encerrarEspera(); metaOceanoRender(); } }); }
+  catch(e){ indisponivel(); }
 }
 function metaPodeAtualizar(m){
   if(ehAdm || podeDadosGlobal) return true;
@@ -976,10 +989,11 @@ const AV_TIPOS = {novidade:{ic:'🎉',n:'Novidade',c:'#1de9b6'}, aviso:{ic:'⚠�
 const AV_LIMITE = 4;   // no estreito (empilhado); no desktop o Mural é uma coluna com rolagem própria e mostra todos
 const avLargo = window.matchMedia('(min-width:980px)');
 function avLimite(){ return avLargo.matches ? 9999 : AV_LIMITE; }
-let avisos = [], avisosTodos = false, avisosUnsub = null, squadsRoles = {}, avVistoT = null;
+let avisos = [], avisosTodos = false, avisosUnsub = null, squadsRoles = {}, avVistoT = null, muralCarregando = true;
 // Padrão: ABERTO no desktop (coluna do lado dos apps — não empurra nada) e RECOLHIDO no estreito (empilhado, empurraria os produtos). A escolha da pessoa, quando existe, fica lembrada neste navegador.
 let muralEscolha = null; try{ const v = localStorage.getItem('oceano_mural_aberto'); muralEscolha = v==='1' ? true : v==='0' ? false : null; }catch(e){}
 let muralAberto = muralEscolha!==null ? muralEscolha : avLargo.matches;
+muralRender();
 function avHttp(u){ try{ const x = new URL(String(u||''), location.href); return (x.protocol==='https:'||x.protocol==='http:') ? x.href : ''; }catch(e){ return ''; } }
 function avPodeVer(c){
   if(c.ativo!==true || c.oceano!==true) return false;
@@ -1031,6 +1045,9 @@ function avHtml(c, novo){
 }
 function muralRender(){
   const wrap = $('#mural-wrap'); if(!wrap) return;
+  $('#mural-hd').setAttribute('aria-expanded', String(muralAberto)); $('#mural-corpo').hidden = !muralAberto;
+  if(muralCarregando) return;
+  wrap.removeAttribute('aria-busy');
   const lista = avisos.slice().sort(avCmp);
   if(!lista.length){ wrap.style.display = 'none'; $('#inicio-grid').classList.remove('tem-mural'); return; }
   wrap.style.display = 'block';
@@ -1109,11 +1126,12 @@ function iniciarMural(){
   try{
     const q = window._query(window._ref(window._db,'kanban/comunicados'), window._orderByChild('ativo'), window._equalTo(true));   // só os ativos, filtrado no servidor
     avisosUnsub = window._onValue(q, snap=>{
+      muralCarregando = false;
       const v = snap.val() || {};
       avisos = Object.entries(v).map(([id,c])=>Object.assign({}, c, {id})).filter(avPodeVer);
       muralRender();
-    }, ()=>{ avisos = []; muralRender(); });
-  }catch(e){}
+    }, ()=>{ muralCarregando = false; avisos = []; muralRender(); });
+  }catch(e){ muralCarregando = false; avisos = []; muralRender(); }
 }
 $('#mural').addEventListener('click', e=>{
   const bt = e.target.closest('[data-av-bt]'); if(bt){ e.stopPropagation(); const c = avisos.find(x=>x.id===bt.dataset.avBt); if(c) avAbreBotao(c); return; }

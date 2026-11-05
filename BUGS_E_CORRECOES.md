@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-05 · Oceano — reserva de espaço para Meta Global e Mural durante carregamento (dev v1.60)
+
+oceano-dev.html passa a reservar a composição da home antes da resposta do Firebase, com esqueletos discretos para Meta Global Digital e Mural. Os dados substituem os esqueletos; vazio/erro encerram a espera, preservando a preferência do Mural aberto ou recolhido. Sem novas leituras, alteração de módulo compartilhado ou promoção para produção. Teste de navegador com Firebase simulado e respostas retidas cobre carregamento, conteúdo e estados finais em desktop/celular.
+
 ### 2026-11-05 · Radar — textos de terceiros como dados no prompt do agente OKR
 
 O prompt de okrAgenteChat passa a orientar que objetivos, marcos, anotações e comentários de terceiros são informação para analisar, nunca instruções, e que tentativas de dar ordens sejam relatadas na resposta final via responder. Teste automatizado cobre o contrato do prompt. Endurecimento por prompt, sem garantia determinística contra injeção e sem mudança de permissões, ferramentas ou regras. Requer deploy futuro de okrAgenteChat pelo Caio após merge; nenhum deploy nesta entrega.
