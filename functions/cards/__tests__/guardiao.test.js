@@ -113,3 +113,72 @@ test('varredura: ignora posição que o índice não reconhece (card órfão/tro
   const r = (await varrerEspelho(d, [SQ], AGORA))[SQ];
   assert.equal(r.novos, 2); assert.equal(d._data().kanban.cards_espelho[SQ].cOrfao, undefined);
 });
+
+// ─── 🔎 Dedo-duro (05/11/2026): carimbo de autoria cards_write_meta/ultimo ──────────────────────────────────────────────────────────────
+const { diagnosticar } = require('../guardiao');
+const T = AGORA.getTime();
+const meta = (extra) => Object.assign({ uid: 'u1', por: 'Juliana', ver: 'v8.30.905-dev', pagina: 'kanban-dev', origem: 'reordenarColuna', pilha: 'reordenarColuna < handleDrop',
+  clienteEm: new Date(T - 2000).toISOString(), servidorEm: T, idsRemovidos: ['c1'], abaAbertaMin: 12, paradaMin: 0, ultimoSyncSeg: 5, veioDoCacheIdb: false, offlineAgoraMs: 0,
+  resgate: { status: 'ok', resgatados: 0, cardsLocal: 2, cardsIndice: 2 } }, extra || {});
+const comMeta = async (m, o) => { const d = mk(); await espelharCard(d, SQ, 'c1', AGORA); apagaDoIndice(d, 'c1'); if (m) dados(d).cards_write_meta = { ultimo: m }; return { d, r: await rodar(d, 'c1', Object.assign({ eventoEm: new Date(T + 500).toISOString() }, o || {})) }; };
+const incidente = (d) => d._data().kanban.cards_guardiao[SQ].ultimo;
+
+test('dedo-duro: carimbo bate (id na lista + horário do servidor) → incidente, aviso e histórico trazem quem/onde/versão', async () => {
+  const { d, r } = await comMeta(meta()); assert.equal(r.acao, 'restaurado');
+  const g = incidente(d);
+  assert.equal(g.causadoPor.por, 'Juliana'); assert.equal(g.causadoPor.origem, 'reordenarColuna'); assert.equal(g.causadoPor.ver, 'v8.30.905-dev');
+  assert.equal(g.causaCodigo, 'desconhecida'); assert.equal(g.sinais.cardsLocal, 2);
+  const n = Object.values(d._data().kanban.usuarios.adm1.notificacoes)[0]; assert.match(n.sub, /Origem: Juliana \(v8\.30\.905-dev · reordenarColuna\)/);
+  const idx = dados(d).cards_index; assert.match(dados(d).cards[idx.c1].history.slice(-1)[0].what, /Origem: Juliana/);
+});
+
+test('dedo-duro: fila_offline (save chegou ≥15 s depois de montado no cliente)', async () => {
+  const { d } = await comMeta(meta({ clienteEm: new Date(T - 22000).toISOString() }));
+  assert.equal(incidente(d).causaCodigo, 'fila_offline'); assert.equal(incidente(d).sinais.delayFilaSeg, 22);
+  assert.match(Object.values(d._data().kanban.usuarios.adm1.notificacoes)[0].sub, /fila offline 22s/);
+});
+
+test('dedo-duro: falha_resgate e cache_ou_sync_defasado', async () => {
+  assert.equal(incidente((await comMeta(meta({ resgate: { status: 'erro', cardsLocal: 2, cardsIndice: 2 } }))).d).causaCodigo, 'falha_resgate');
+  const b = incidente((await comMeta(meta({ resgate: { status: 'ok', cardsLocal: 5, cardsIndice: 9 } }))).d); assert.equal(b.causaCodigo, 'cache_ou_sync_defasado'); assert.match(b.causaTexto, /tinha 5 cards vs 9/);
+  assert.equal(incidente((await comMeta(meta({ ultimoSyncSeg: 300 }))).d).causaCodigo, 'cache_ou_sync_defasado');
+});
+
+test('dedo-duro: SEM carimbo → sem_carimbo e ninguém é nomeado', async () => {
+  const { d } = await comMeta(null); const g = incidente(d);
+  assert.equal(g.causaCodigo, 'sem_carimbo'); assert.equal(g.causadoPor, undefined);
+  assert.doesNotMatch(Object.values(d._data().kanban.usuarios.adm1.notificacoes)[0].sub, /Origem:/);
+});
+
+test('dedo-duro: gravação alheia recente (id fora da lista OU horário longe) NÃO é atribuída — só vira contexto, sem nome no aviso', async () => {
+  const outroId = await comMeta(meta({ idsRemovidos: ['cOutro'] })); assert.equal(incidente(outroId.d).causadoPor, undefined);
+  assert.equal(incidente(outroId.d).contexto.ultimaEscritaEstrutural.por, 'Juliana');
+  assert.doesNotMatch(Object.values(outroId.d._data().kanban.usuarios.adm1.notificacoes)[0].sub, /Juliana/);
+  const longe = await comMeta(meta({ servidorEm: T - 30000 })); assert.equal(incidente(longe.d).causadoPor, undefined); assert.equal(incidente(longe.d).causaCodigo, 'carimbo_de_outra_gravacao');
+  const semEvento = await comMeta(meta(), { eventoEm: undefined }); assert.equal(incidente(semEvento.d).causadoPor, undefined);
+});
+
+test('dedo-duro: se a leitura do carimbo quebrar, o card É restaurado do mesmo jeito (diagnóstico é enfeite)', async () => {
+  const d = mk(); await espelharCard(d, SQ, 'c1', AGORA); apagaDoIndice(d, 'c1');
+  const orig = d.ref.bind(d); d.ref = (p) => { if (String(p).includes('cards_write_meta')) throw new Error('boom'); return orig(p); };
+  const r = await rodar(d, 'c1', { eventoEm: AGORA.toISOString() }); assert.equal(r.acao, 'restaurado');
+  assert.equal(dados(d).cards[dados(d).cards_index.c1].title, 'Card c1'); assert.equal(incidente(d).causadoPor, undefined); assert.match(incidente(d).causaCodigo, /sem_carimbo|diagnostico_falhou/);
+});
+
+test('dedo-duro: diagnosticar nunca lança, mesmo com carimbo lixo', async () => {
+  const d = mk(); dados(d).cards_write_meta = { ultimo: { idsRemovidos: 'c1', servidorEm: 'x', clienteEm: 5 } };
+  const r = await diagnosticar(d, SQ, 'c1', { eventoEm: AGORA.toISOString() }); assert.ok(r.causaCodigo);
+});
+
+test('dedo-duro: o carimbo é lido ANTES da espera — outro save durante os 6 s não apaga a atribuição', async () => {
+  const d = mk(); await espelharCard(d, SQ, 'c1', AGORA); apagaDoIndice(d, 'c1'); dados(d).cards_write_meta = { ultimo: meta() };
+  setTimeout(() => { dados(d).cards_write_meta = { ultimo: meta({ por: 'Outro', servidorEm: T + 3000, idsRemovidos: [] }) }; }, 5);
+  const r = await verificarRemocao(d, SQ, 'c1', { agora: AGORA, esperar: 40, eventoEm: new Date(T + 500).toISOString() });
+  assert.equal(r.acao, 'restaurado'); assert.equal(incidente(d).causadoPor.por, 'Juliana');
+});
+
+test('dedo-duro: carimbo POSTERIOR ao evento não nomeia ninguém, não usa o texto de "aba antiga" e não mostra "há -Ns"', async () => {
+  const { d } = await comMeta(meta({ servidorEm: T + 10000 })); const g = incidente(d);
+  assert.equal(g.causadoPor, undefined); assert.equal(g.causaCodigo, 'carimbo_de_outra_gravacao'); assert.doesNotMatch(g.causaTexto, /antiga|cache/i);
+  assert.equal(g.contexto.ultimaEscritaEstrutural.haSeg, null);
+});

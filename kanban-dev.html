@@ -6656,7 +6656,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.904-dev</div>
+<div class="version">v8.30.905-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9162,6 +9162,7 @@ window.debugBytesExportCSV=function(daysBack){
 function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>{ const v=s.val(); _dbgTrack(path,v); cb(v); }); }
 
 let _lastLocalSave = 0;
+window._bootTs = Date.now();   // 🔎 carimbo de autoria de fbSaveAll (abaAbertaMin)
 let _hasLocalSession = false; // true só depois do primeiro save desta sessão
 // Contador de escritas em voo (fbSaveAll/fbSaveCard) + aviso ao sair da
 // página enquanto alguma ainda não confirmou. ACHADO REAL (2026-08-04,
@@ -9804,7 +9805,7 @@ async function _planejarEscritaDeCards(lista, opts){
       }));
     }
     plano.ok = true;
-  }catch(err){ console.warn('[fbSaveAll] não deu pra conferir o conteúdo no banco antes de gravar (segue como antes):', err); plano.ok = false; plano.pular = new Set(); plano.mesclados = []; }
+  }catch(err){ console.warn('[fbSaveAll] não deu pra conferir o conteúdo no banco antes de gravar:', err); plano.erro = String((err && err.message) || err).slice(0, 160); plano.ok = false; plano.pular = new Set(); plano.mesclados = []; }
   return plano;
 }
 // 🛟 Rede de segurança do save estrutural (relato de produção 2026-10-28, squad midiacriativa: "cards sumindo e voltando sem conteúdo", crítico na
@@ -9814,11 +9815,12 @@ async function _planejarEscritaDeCards(lista, opts){
 // por cards_deleted_intentionally. Diagnóstico real: 12 episódios desde 27/08, sempre em horário de uso (11h–18h) com ~10 aparelhos conectados.
 // Aqui, antes de gravar, relê o cards_index (leve) e traz de volta qualquer card que (1) existe no índice, (2) ainda existe em /cards e (3) NÃO está
 // sendo excluído de propósito — nem agora (marca em `extra`), nem antes (_intentionalDeleteIds). Só ADICIONA cards ao array; nunca troca o conteúdo
-// de um card que o aparelho já tem (isso é outro problema: conflito de edição). Falha de leitura NÃO bloqueia o save (segue como antes + aviso).
+// de um card que o aparelho já tem (isso é outro problema: conflito de edição). 🔒 Falha de leitura BLOQUEIA o save estrutural (05/11/2026): o resultado vem com `.falhou`
+// e fbSaveAll recusa — antes seguia e gravava `null` nos cards que o aparelho não tinha em memória (ver _recusaSaveSemConferir).
 // `soConferir` = só devolve o que seria resgatado, sem mexer em `cards` (usado pelo script de teste de console).
 async function _resgatarCardsAusentes(extra, soConferir){
   try{
-    if(!window._fbReady) return [];
+    if(!window._fbReady){ const f = []; f.falhou = true; f.erro = 'firebase não estava pronto'; return f; }
     const remoteIdx = (await fbGet(FB+'/cards_index')).val() || {};
     const have = new Set(cards.map(c=>c && c.id).filter(Boolean));
     const PFX = 'cards_deleted_intentionally/';
@@ -9843,8 +9845,9 @@ async function _resgatarCardsAusentes(extra, soConferir){
     }catch(_){}
     return achados;
   }catch(err){
-    console.warn('[fbSaveAll] não deu pra conferir cards ausentes antes de gravar (segue como antes):', err);
-    return [];
+    console.warn('[fbSaveAll] não deu pra conferir cards ausentes antes de gravar:', err);
+    const falha = []; falha.falhou = true; falha.erro = String((err && err.message) || err).slice(0, 160);   // fbSaveAll (não-substituirTudo) RECUSA o save: sem ler o índice não dá pra saber o que apagaria
+    return falha;
   }
 }
 // opts.substituirTudo: o chamador SUBSTITUI o conjunto de cards de propósito (restaurar backup, importar do Trello sem mesclar) — aí não há o que resgatar.
@@ -9863,6 +9866,45 @@ function _recusaSeDesatualizado(){
   const e = new Error('Esta aba está desatualizada — recarregue a página para continuar salvando.'); e.name = 'VersaoDesatualizada';
   return Promise.reject(e);
 }
+// 🔒 Save estrutural SEM conferir o banco = save às cegas (05/11/2026). fbSaveAll regrava /cards, /cards_index e /cards_updated_at a partir do array LOCAL; as duas leituras que
+// protegem o que os colegas gravaram (o índice, para o resgate, e o plano de merge) são a rede de segurança — se uma falhar (rede oscilando, permissão) ou o Firebase ainda não
+// estiver pronto, o save antigo seguia mesmo assim e gravava `null` em tudo que o aparelho não tinha em memória. Agora recusa, com o mesmo formato de erro de _recusaSeDesatualizado
+// (os chamadores já tratam como falha de save e o handler global não mostra erro cru). A pessoa tenta de novo; nada foi apagado.
+function _recusaSaveSemConferir(motivo){
+  console.warn('[fbSaveAll] 🔒 save recusado — não deu pra conferir o banco antes de gravar:', motivo);
+  if(!window._svRecusaAvisoTs || Date.now()-window._svRecusaAvisoTs > 15000){ window._svRecusaAvisoTs = Date.now(); try{ showToast('⚠️ Não consegui conferir os cards no servidor — esta alteração NÃO foi salva (nada foi apagado). Confira a conexão e tente de novo.', 8000); }catch(_){} }
+  const e = new Error('Não deu pra conferir os cards no servidor antes de gravar — o card não foi salvo. ('+motivo+')'); e.name = 'VersaoDesatualizada';
+  return Promise.reject(e);
+}
+// Nome da função que chamou fbSaveAll: 1º frame da pilha que NÃO é o próprio fbSaveAll, sem "async " e sem " arquivo:linha" (Chrome) nem "@url" (Firefox). Anônima → 'anonima'.
+function _origemDaPilha(pilha){
+  const frames = String(pilha||'').split(' < ').map(f=>f.trim().replace(/^async\s+/,'')).filter(Boolean);
+  for(const f of frames){
+    const nome = f.split('@')[0].split(/\s+/)[0];
+    if(!nome || nome==='fbSaveAll') continue;
+    return /[:/]/.test(nome) ? 'anonima' : nome.slice(0,80);
+  }
+  return 'anonima';
+}
+// 🔎 Carimbo de autoria da última gravação estrutural (cards_write_meta/ultimo, no MESMO update atômico de fbSaveAll). O servidor (functions/cards/guardiao.js) só enxerga que um card
+// saiu do índice, não QUEM gravou (o evento do banco v2 não traz o autor): casa a remoção com este carimbo pelo horário do SERVIDOR (`servidorEm`) + a lista `idsRemovidos`.
+function _carimboDeEscrita(origem, pilha, info){
+  const off = Number(window._svOffset)||0, agora = Date.now();
+  const u = window._currentUser || {};
+  const sync = window._ultimoEventoCardsTs;
+  return Object.assign({
+    uid:u.uid||null, por:(u.displayName||u.email||'').slice(0,80)||null, ver:((document.querySelector('.version')||{}).textContent||'').trim().slice(0,40),
+    pagina:/-dev\.html/.test(location.pathname)?'kanban-dev':'kanban', origem:String(origem||'').slice(0,80), pilha:String(pilha||'').slice(0,240),
+    clienteEm:new Date(agora+off).toISOString(),                      // relógio daqui corrigido pelo offset do servidor (se ainda não chegou, off=0)
+    servidorEm:{'.sv':'timestamp'},                                  // preenchido pelo servidor na gravação
+    abaAbertaMin:Math.round((agora-(window._bootTs||agora))/60000),
+    paradaMin:window._auBatimentoTs?Math.round((agora-window._auBatimentoTs)/60000):null,   // minutos desde o último "batimento" (aba viva, visível e conectada)
+    ultimoSyncSeg:sync?Math.round((agora-sync)/1000):null,           // segundos desde o último evento ao vivo de cards
+    offlineAgoraMs:window._auOfflineDesde?agora-window._auOfflineDesde:0,
+    offlineUltimo:window._auOfflineUltimo?{haSeg:Math.round((agora-window._auOfflineUltimo.fim)/1000), durMs:window._auOfflineUltimo.durMs}:null,
+    veioDoCacheIdb:!!window._bootDoCacheIdb,
+  }, info||{});
+}
 async function fbSaveAll(extra, touchedIds, opts){
   { const _r = _recusaSeDesatualizado(); if(_r) return _r; }
   const _pilhaChamada = _pilhaCurta(1);   // capturada ANTES do 1º await: depois dele a pilha perde quem chamou
@@ -9880,11 +9922,15 @@ async function fbSaveAll(extra, touchedIds, opts){
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   // 🛟 nunca apagar o que existe no banco só porque este aparelho ainda não o recebeu (ver _resgatarCardsAusentes)
   let _resgatados = [];
-  if(!(opts && opts.substituirTudo)) _resgatados = await _resgatarCardsAusentes(extra);
+  // 🔒 Firebase pronto ANTES do resgate e do plano (os dois saem em silêncio quando ainda não está — e o save gravava o array inteiro, às cegas; caminho dos saves do boot: recorrentes, arquivamento automático)
+  if(!(opts && opts.substituirTudo) && !window._fbReady){ try{ await _waitForFirebaseReady(); }catch(err){ return _recusaSaveSemConferir('firebase não ficou pronto'); } }
+  if(!(opts && opts.substituirTudo)){
+    _resgatados = await _resgatarCardsAusentes(extra);
+    if(_resgatados.falhou) return _recusaSaveSemConferir(_resgatados.erro);
+  }
   // 🛡️ O guardião do servidor restaura o card que some do índice sem marca de exclusão — ao SUBSTITUIR o conjunto de propósito (restaurar backup/importar sem mesclar) ele precisa
   // saber, senão desfaria a operação: pausa de 5 min, escrita ANTES do save (functions/cards/guardiao.js, `cards_guardiao_pausa_ate`).
   if(opts && opts.substituirTudo && window._fbReady){ try{ await window._set(window._ref(window._db, FB+'/cards_guardiao_pausa_ate'), Date.now()+5*60*1000); }catch(_){} }
-  _auditarEscritaDeCards('fbSaveAll', { resgatados:_resgatados.length, tocados:(touchedIds?touchedIds.length:'todos'), extra:Object.keys(extra||{}).slice(0,3).join(','), substituirTudo:!!(opts&&opts.substituirTudo) }, _pilhaChamada);
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
@@ -9925,6 +9971,7 @@ async function fbSaveAll(extra, touchedIds, opts){
   const _touched = touchedIds ? new Set(touchedIds) : null;
   // 🧬 conteúdo velho por cima do novo: só vai pro banco o que este aparelho realmente mexeu (ver _planejarEscritaDeCards)
   const _plano = await _planejarEscritaDeCards(cardsToSave, opts);
+  if(!_plano.ok && !(opts && opts.substituirTudo)) return _recusaSaveSemConferir(_plano.erro || 'leitura do índice/carimbos falhou');
   cardsToSave.forEach((c,i)=>{
     if(!c || !c.id) return;
     const _pular = _plano.pular.has(c.id);
@@ -9968,6 +10015,16 @@ async function fbSaveAll(extra, touchedIds, opts){
     // cards_updated_at) porque fbSaveAll já reescreve o array inteiro mesmo.
     if(c.archived) cardsArchived[c.id] = true;
   });
+  // 🔎 Caixa-preta: quem gravou, de onde, com que estado, e quais ids saíram do índice SEM marca de exclusão (o que o guardião do servidor vai enxergar como "sumiço").
+  // Vai (a) no anel cards_auditoria e (b) em cards_write_meta/ultimo, no MESMO update atômico — o servidor casa pelo horário e pela lista (ver functions/cards/guardiao.js).
+  const _excl = new Set(Object.keys(extra||{}).filter(k=>k.startsWith('cards_deleted_intentionally/')).map(k=>k.slice('cards_deleted_intentionally/'.length)));
+  const _idsRemovidos = _plano.ok ? Object.keys(_plano.ri).filter(id=>!(id in cardsIndex) && !_excl.has(id) && !_intentionalDeleteIds.has(id)) : [];
+  const _origem = _origemDaPilha(_pilhaChamada);
+  const _resumoResgate = { status:'ok', resgatados:_resgatados.length, erro:null, cardsLocal:cards.length, cardsIndice:_plano.ok?Object.keys(_plano.ri).length:null };
+  const _carimbo = _carimboDeEscrita(_origem, _pilhaChamada, { resgate:_resumoResgate, tocados:(touchedIds?touchedIds.length:'todos'), substituirTudo:!!(opts&&opts.substituirTudo), idsRemovidos:_idsRemovidos.slice(0,30), nRemovidos:_idsRemovidos.length });
+  _auditarEscritaDeCards('fbSaveAll', { resgatados:_resgatados.length, tocados:(touchedIds?touchedIds.length:'todos'), extra:Object.keys(extra||{}).slice(0,3).join(','), substituirTudo:!!(opts&&opts.substituirTudo),
+    resgate:_resumoResgate.status, abaAbertaMin:_carimbo.abaAbertaMin, ultimoSyncSeg:_carimbo.ultimoSyncSeg, idsRemovidos:_idsRemovidos.slice(0,10) }, _pilhaChamada);
+  if(_idsRemovidos.length) console.warn('[fbSaveAll] '+_idsRemovidos.length+' id(s) saem do índice sem marca de exclusão (o guardião do servidor vai tratar):', _idsRemovidos.slice(0,10));
   // BUG CRÍTICO DE PRODUÇÃO (2026-08-04, import Trello em massa — vários
   // cards "sumiam" depois de importar): fbSaveAll reescreve /cards_index e
   // /cards_updated_at por completo, e QUEM ESCREVEU também está OUVINDO
@@ -10039,7 +10096,7 @@ async function fbSaveAll(extra, touchedIds, opts){
     Object.values(_plano.ri).forEach(k=>{ if(!_novas.has(String(k))) _cardsPayload['cards/'+k] = null; });
   } else _cardsPayload = { cards: cardsToSave };
   return _trackFbWrite(Promise.all([
-    window._update(fb(FB), _stripUndefinedMultiPath({ ..._cardsPayload, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) })),
+    window._update(fb(FB), _stripUndefinedMultiPath({ ..._cardsPayload, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, 'cards_write_meta/ultimo': _carimbo, ...(extra||{}) })),
   ]).then(r=>{
     cardsToSave.forEach(c=>{ if(c && c.id && !_plano.pular.has(c.id)) _marcaBaseCard(c, true); });   // a base de cada card passa a ser o que acabou de ir pro banco
     if(_plano.mesclados.length){
@@ -10553,7 +10610,13 @@ let _cardsByKey = {};
 window._cardsByKey = _cardsByKey;
 let _cardsSyncDebounce = null;
   function _applyCardsSync(){
-    if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
+    // 🕑 Janela de 2 s depois de um save local: o evento ao vivo que chega aqui NÃO é descartado — é reagendado (no mesmo timer do debounce, então nunca rodam dois) para o
+    // instante em que a janela fecha. Antes ele sumia e a aba só o via no poll de 4 min (_reconcileCardsUpdatedAtPeriodic): card criado/editado por um colega nesses 2 s ficava invisível.
+    if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){
+      clearTimeout(_cardsSyncDebounce);
+      _cardsSyncDebounce = setTimeout(_applyCardsSync, Math.max(50, 2000 - (Date.now() - _lastLocalSave) + 50));
+      return;
+    }
     const keys = Object.keys(_cardsByKey).sort((a,b)=>Number(a)-Number(b));
     const incoming = keys.map(k=>_cardsByKey[k]).filter(Boolean);
     if(JSON.stringify(incoming) !== JSON.stringify(cards)){
@@ -10593,9 +10656,11 @@ let _cardsSyncDebounce = null;
     }
   }
   function _scheduleCardsSync(){
+    window._ultimoEventoCardsTs = Date.now();   // 🔎 carimbo de autoria de fbSaveAll: há quanto tempo este aparelho não recebe nada ao vivo
     clearTimeout(_cardsSyncDebounce);
     _cardsSyncDebounce = setTimeout(_applyCardsSync, 150);
   }
+  window._applyCardsSync = _applyCardsSync; window._scheduleCardsSync = _scheduleCardsSync;   // só para o teste de navegador (o Firebase falso não emite eventos ao vivo): ver test_cards_resgate.js E4
   // ── Carregamento em duas etapas (índice pequeno primeiro) ──────────────
   // Mesmo com listeners granulares, onChildAdded ainda dispara uma vez por
   // card JÁ EXISTENTE toda vez que o board é aberto — baixando o objeto
@@ -10771,6 +10836,7 @@ let _cardsSyncDebounce = null;
     // sempre foi), só que agora, mesmo aqui, arquivado nunca entra em
     // toFetch (ver _planCardsDelta) -- é isso que evita o fallback caro.
     const cache = await _loadCardsCache();
+    window._bootDoCacheIdb = !!(cache && cache.cardsById && Object.keys(cache.cardsById).length);   // 🔎 carimbo de autoria de fbSaveAll (veioDoCacheIdb)
     const cachedUpdatedAtById = cache ? cache.updatedAtById : {};
     const cachedCardsById = cache ? cache.cardsById : {};
     const [idxSnap, uaSnap, archSnap] = await Promise.all([
@@ -11399,6 +11465,7 @@ let _cardsSyncDebounce = null;
   if(window._fbReady){
     window._onValue(window._ref(window._db,'.info/connected'), snap=>{
       _isOnline = snap.val()===true;
+      if(!window._svOffsetLigado){ window._svOffsetLigado = true; try{ window._onValue(window._ref(window._db,'.info/serverTimeOffset'), s=>{ window._svOffset = Number(s.val())||0; }); }catch(_){} }   // relógio do servidor − relógio daqui (ms): o carimbo de fbSaveAll usa
       if(window._auConexaoMudou) window._auConexaoMudou(_isOnline);   // trava de sessão velha (ver AUTO-UPDATE)
       const badge=document.getElementById('conn-badge');
       if(badge) badge.style.display = _isOnline ? 'none' : 'flex';
@@ -36048,13 +36115,14 @@ if(window.visualViewport){
     const gap = Date.now() - _batimento;
     if(gap > PARADA_MAX_MS) _auSessaoVelha('Ela ficou sem uso por cerca de '+Math.round(gap/60000)+' min e pode estar com cards antigos. Pra não sobrescrever o trabalho dos colegas, atualize antes de continuar — leva 1 segundo.');
   }
-  setInterval(()=>{ _auConferirParada(); if(!document.hidden && window._auOfflineDesde==null) _batimento = Date.now(); }, 30000);
+  setInterval(()=>{ _auConferirParada(); if(!document.hidden && window._auOfflineDesde==null) _batimento = Date.now(); window._auBatimentoTs = _batimento; }, 30000);
   document.addEventListener('visibilitychange', _auConferirParada);
   window.addEventListener('pageshow', _auConferirParada);
   // chamado pelo monitor de conexão (.info/connected): guarda desde quando está offline; ao voltar depois de 3 min, bloqueia
   window._auConexaoMudou = function(online){
     if(!online){ if(window._auOfflineDesde==null) window._auOfflineDesde = Date.now(); return; }
     const off = window._auOfflineDesde; window._auOfflineDesde = null;
+    if(off) window._auOfflineUltimo = { fim: Date.now(), durMs: Date.now()-off };   // 🔎 carimbo de autoria de fbSaveAll: quedas recentes de conexão
     if(off && Date.now()-off > OFFLINE_MAX_MS) _auSessaoVelha('Ela ficou sem internet por cerca de '+Math.round((Date.now()-off)/60000)+' min e pode estar com cards antigos. Atualize antes de continuar — leva 1 segundo.');
     else if(off) _batimento = Date.now();
   };

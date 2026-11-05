@@ -7,7 +7,7 @@ const ago = h => new Date(Date.now() - h * 3600000).toISOString();
 const seed = (comIncidentes) => ({ kanban: { usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: 'ana@ciahering.com.br', inscrito: true, init: 'AA', role: 'adm', squads: { dados: true, midiacriativa: true } } },
   usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana ADM', init: 'AA', role: 'adm', squads: { dados: true, midiacriativa: true } } }, config: { adm_emails: ['ana@ciahering.com.br'] },
   cards_guardiao: comIncidentes ? { midiacriativa: { incidentes: {
-    g1: { cardId: 'c1', titulo: '[Google] Pmax <img src=x onerror=alert(1)> REGATAS', acao: 'restaurado', detectadoEm: ago(3) },
+    g1: { cardId: 'c1', titulo: '[Google] Pmax <img src=x onerror=alert(1)> REGATAS', acao: 'restaurado', detectadoEm: ago(3), causaCodigo: 'fila_offline', causaTexto: 'Save ficou retido ~22s <b>x</b>', causadoPor: { por: 'Juliana <img src=y onerror=alert(2)>', ver: 'v8.30.905-dev', origem: 'reordenarColuna' } },
     g2: { cardId: 'c2', titulo: 'Card sem cópia', acao: 'sem_espelho', detectadoEm: ago(30) },
     g3: { cardId: 'c3', titulo: '', acao: 'em_massa', detectadoEm: ago(24 * 5) },
     g4: { cardId: 'c4', titulo: 'Card que some sempre', acao: 'reincidente', detectadoEm: ago(24 * 10) },
@@ -34,6 +34,7 @@ const seed = (comIncidentes) => ({ kanban: { usuarios: { ana: { uid: 'ana', nome
     t('F. resumo (7 dias): 2 restaurados (c1 e d1), 2 sem socorro (sem cópia + alarme) — o em massa de 5 dias também conta = 3', /2\s*restaurados \(7 dias\)/.test(resumo.replace(/\n/g, ' ')) && /3\s*sem socorro \(7 dias\)/.test(resumo.replace(/\n/g, ' ')), resumo);
     t('G. selo vermelho "N sem socorro" e aviso pra buscar no backup antes de recriar', /sem socorro/.test(badge) && /antes de recriar/.test(lista), badge);
     t('H. texto do card vai ESCAPADO (HTML no título aparece como texto, sem <img> nem alert)', await p.evaluate(() => !document.querySelector('#sc-lista img')) && /<img src=x/.test(lista) && errs.filter(e => /DIALOG/.test(e)).length === 0, errs);
+    t('H2. dedo-duro: mostra "Causado por" e a causa, tudo ESCAPADO', /Causado por: Juliana/.test(lista) && /v8\.30\.905-dev · reordenarColuna/.test(lista) && /Causa: Save ficou retido/.test(lista) && await p.evaluate(() => !document.querySelector('#sc-lista img, #sc-lista b b')), lista.slice(0, 400));
     t('I. título de 300 caracteres não estoura a largura (sem rolagem lateral)', await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), '');
     t('J. sem erro de JS', errs.filter(e => !/DIALOG/.test(e)).length === 0, errs);
     for (const th of ['light', 'vice']) { await p.evaluate(x => document.documentElement.setAttribute('data-theme', x), th); await p.waitForTimeout(200);
