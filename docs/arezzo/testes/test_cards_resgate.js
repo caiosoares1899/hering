@@ -49,10 +49,25 @@ const montaSeed = () => { const cards = {}, idx = {}, upd = {}, arq = {};
     await p.evaluate(() => { cards = cards.filter(c => c.id === 'c0'); return fbSaveAll(undefined, undefined, { substituirTudo: true }); }); const r = await banco(p);
     t('D. com substituirTudo (restaurar backup / importar sem mesclar) o conjunto é substituído, sem resgate', r.ids.includes('c0') && !r.ids.includes('c5') && r.resgates === 0, r); await ctx.close(); }
 
-  { const { ctx, p } = await abre();       // E: sem o resgate o save normal continua igual; falha de leitura do índice não impede de salvar
+  { const { ctx, p } = await abre();       // E: 🔒 se a leitura do índice falhar, o save estrutural é RECUSADO e nada é apagado (05/11/2026; antes seguia e gravava null nos cards ausentes)
     await p.evaluate(() => { window.__denyGet = path => /cards_index$/.test(path); });
-    await p.evaluate(() => { const c = cards.find(x => x.id === 'c2'); c.title = 'Card 2 editado'; return fbSaveAll(undefined, ['c2']); }); const r = await p.evaluate(sq => { const dd = window.__store.kanban.squads[sq].dados; return (Array.isArray(dd.cards) ? dd.cards : Object.values(dd.cards)).filter(Boolean).find(c => c.id === 'c2').title; }, SQ);
-    t('E. se a leitura do índice falhar, o save segue (e grava a edição) em vez de travar', r === 'Card 2 editado', r); await ctx.close(); }
+    const antes = await banco(p);
+    const rec = await p.evaluate(async () => { const c = cards.find(x => x.id === 'c2'); c.title = 'Card 2 editado'; try { await fbSaveAll(undefined, ['c2']); return 'gravou'; } catch (e) { return e.name; } });
+    const r = await banco(p);
+    t('E. leitura do índice falhou → save recusado (VersaoDesatualizada) e NENHUM card/índice saiu do banco', rec === 'VersaoDesatualizada' && r.ids.length === antes.ids.length && r.index.length === antes.index.length, [rec, antes.ids.length, r.ids.length]);
+    await p.evaluate(() => { window.__denyGet = null; });
+    t('E2. o mesmo save, com a leitura de volta, passa', await p.evaluate(async () => { try { await fbSaveAll(undefined, ['c2']); return true; } catch (e) { return String(e); } }) === true, '');
+    await ctx.close(); }
+
+  { const { ctx, p } = await abre();       // E3: carimbo de autoria atômico (cards_write_meta/ultimo) + ids removidos sem marca
+    await p.evaluate(() => { cards = cards.filter(c => c.id !== 'c5'); return fbSaveAll({ 'cards_deleted_intentionally/c5': true }, []); });
+    const m = await p.evaluate(sq => (window.__store.kanban.squads[sq].dados.cards_write_meta || {}).ultimo || null, SQ);
+    t('E3. fbSaveAll grava cards_write_meta/ultimo (uid, versão, origem, sinais); exclusão intencional NÃO entra em idsRemovidos', !!m && m.uid === 'eve' && !!m.ver && !!m.clienteEm && 'abaAbertaMin' in m && m.resgate && m.resgate.status === 'ok' && !(m.idsRemovidos || []).includes('c5'), m); await ctx.close(); }
+
+  { const { ctx, p } = await abre();       // E4: evento ao vivo dentro da janela de 2 s é REAGENDADO, não perdido
+    const r = await p.evaluate(async () => { _hasLocalSession = true; _lastLocalSave = Date.now(); window._cardsByKey['11'] = { id: 'cLive', title: 'Ao vivo', col: 'doing', updatedAt: 'x' }; _applyCardsSync();
+      const logo = cards.some(c => c && c.id === 'cLive'); await new Promise(res => setTimeout(res, 2400)); return { logo, depois: cards.some(c => c && c.id === 'cLive') }; });
+    t('E4. _applyCardsSync dentro dos 2 s não aplica na hora, mas aplica sozinho quando a janela fecha', r.logo === false && r.depois === true, r); await ctx.close(); }
 
   { const { ctx, p } = await abre(); await outraPessoaCria(p);   // F: o helper de conferência (usado no script de console) não mexe em nada
     const ach = await p.evaluate(async () => (await _resgatarCardsAusentes(undefined, true)).map(c => c.id)); const tem = await p.evaluate(() => cards.some(c => c && c.id === 'cNovo'));

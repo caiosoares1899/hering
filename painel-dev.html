@@ -3070,7 +3070,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.87 · painel-dev</div>
+<div class="version">v5.88 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7568,6 +7568,21 @@ const _SC_ACAO = {
   alarme:      { ico:'👻', txt:'Alarme do navegador, sem restauração registrada', cor:'var(--warn,#ffd166)', bom:false }
 };
 function _scQuando(iso){ try{ return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso||'').slice(0,16); } }
+// 🔎 Dedo-duro (05/11/2026): quem/onde/versão e a causa gravadas pelo servidor no incidente. Tudo vem de gravação de cliente → sempre passa por esc() na hora de desenhar.
+function _scCausa(x){
+  const cp = x.causadoPor || null, ctx = x.contexto && x.contexto.ultimaEscritaEstrutural;
+  if(!x.causaTexto && !cp && !ctx) return null;
+  return { texto:String(x.causaTexto||''), por:cp?String(cp.por||''):'', ver:cp?String(cp.ver||''):'', origem:cp?String(cp.origem||''):'', codigo:String(x.causaCodigo||''),
+    ctxPor:ctx?String(ctx.por||''):'', ctxVer:ctx?String(ctx.ver||''):'', ctxOrigem:ctx?String(ctx.origem||''):'', ctxHa:ctx&&ctx.haSeg!=null?Number(ctx.haSeg):null };
+}
+function _scCausaHtml(c){
+  if(!c) return '';
+  let h = '';
+  if(c.por || c.ver || c.origem) h += '<div style="color:var(--txt2);margin-top:2px;overflow-wrap:anywhere;">👤 Causado por: <b>'+esc(c.por||'(sem nome)')+'</b>'+((c.ver||c.origem)?' ('+esc([c.ver,c.origem].filter(Boolean).join(' · '))+')':'')+'</div>';
+  if(c.texto) h += '<div style="color:var(--txt3);margin-top:2px;overflow-wrap:anywhere;">Causa: '+esc(c.texto)+'</div>';
+  if(!c.por && (c.ctxPor || c.ctxOrigem)) h += '<div style="color:var(--txt3);margin-top:2px;overflow-wrap:anywhere;">ℹ️ Última gravação estrutural na squad (só contexto, não é culpa comprovada): '+esc(c.ctxPor||'?')+' · '+esc([c.ctxVer,c.ctxOrigem].filter(Boolean).join(' · '))+(c.ctxHa!=null?' · há '+esc(c.ctxHa)+'s':'')+'</div>';
+  return h;
+}
 function _scPagina(){ return /-dev\.html/.test(location.pathname) ? 'kanban-dev.html' : 'kanban.html'; }
 async function _scLer(path){ try{ const sn = await window._get(window._ref(window._db, path)); return sn.val() || {}; }catch(e){ return {}; } }
 let _scCarregando = false;
@@ -7585,7 +7600,7 @@ async function loadSaudeCards(force){
       const restaurados = {};   // cardId → horário do último restaurado
       Object.values(g).forEach(x=>{ if(!x || !x.cardId || !(x.detectadoEm>=corte)) return;
         if(x.acao==='restaurado') restaurados[x.cardId] = x.detectadoEm > (restaurados[x.cardId]||'') ? x.detectadoEm : restaurados[x.cardId];
-        eventos.push({ sq:id, cardId:x.cardId, titulo:x.titulo||'', em:x.detectadoEm, acao:_SC_ACAO[x.acao]?x.acao:'sem_espelho' });
+        eventos.push({ sq:id, cardId:x.cardId, titulo:x.titulo||'', em:x.detectadoEm, acao:_SC_ACAO[x.acao]?x.acao:'sem_espelho', causa:_scCausa(x) });
       });
       Object.values(a).forEach(x=>{ if(!x || !x.cardId || !(x.detectadoEm>=corte)) return;
         const r = restaurados[x.cardId]; if(r && Date.parse(r) >= Date.parse(x.detectadoEm) - _SC_TOLERANCIA_MS) return;   // o guardião já socorreu: não duplica
@@ -7610,7 +7625,7 @@ async function loadSaudeCards(force){
         return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;background:rgba(var(--surface-rgb),.45);border:1px solid var(--glass-b);border-left:3px solid '+a.cor+';">'
           + '<span style="font-size:15px;line-height:1.2;">'+a.ico+'</span>'
           + '<div style="min-width:0;flex:1;"><div style="color:var(--txt);font-weight:600;overflow-wrap:anywhere;">'+(e.titulo ? esc(e.titulo) : '<i style="color:var(--txt3);font-weight:400;">título desconhecido</i> · '+esc(e.cardId))+'</div>'
-          + '<div style="color:var(--txt3);margin-top:2px;">'+_scQuando(e.em)+' · '+esc(e.sq)+' · <span style="color:'+a.cor+';">'+a.txt+'</span>'+link+'</div></div></div>';
+          + '<div style="color:var(--txt3);margin-top:2px;">'+_scQuando(e.em)+' · '+esc(e.sq)+' · <span style="color:'+a.cor+';">'+a.txt+'</span>'+link+'</div>'+_scCausaHtml(e.causa)+'</div></div>';
       }).join('') + '</div>' + (eventos.length>40 ? '<div style="margin-top:6px;color:var(--txt3);">…e mais '+(eventos.length-40)+' episódio(s) mais antigos.</div>' : '');
   }catch(e){
     console.warn('[saúde dos cards]', e); lista.innerHTML = '<div style="color:var(--danger);">Não consegui ler os registros agora. Tente atualizar.</div>';
