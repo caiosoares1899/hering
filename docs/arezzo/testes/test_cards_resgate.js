@@ -65,9 +65,10 @@ const montaSeed = () => { const cards = {}, idx = {}, upd = {}, arq = {};
     t('E3. fbSaveAll grava cards_write_meta/ultimo (uid, versão, origem = função que chamou, sinais); exclusão intencional NÃO entra em idsRemovidos', !!m && m.uid === 'eve' && !!m.ver && !!m.clienteEm && 'abaAbertaMin' in m && m.resgate && m.resgate.status === 'ok' && !(m.idsRemovidos || []).includes('c5') && m.origem === 'salvarDeTeste', m); await ctx.close(); }
 
   { const { ctx, p } = await abre();       // E4: evento ao vivo dentro da janela de 2 s é REAGENDADO, não perdido
-    const r = await p.evaluate(async () => { _hasLocalSession = true; _lastLocalSave = Date.now(); window._cardsByKey['11'] = { id: 'cLive', title: 'Ao vivo', col: 'doing', updatedAt: 'x' }; _applyCardsSync();
+    const r = await p.evaluate(async () => { _hasLocalSession = true; _lastLocalSave = Date.now(); window._cardsByKey['11'] = { id: 'cLive', title: 'Ao vivo', col: 'doing', updatedAt: 'x' }; window._scheduleCardsSync();   // o caminho real de um evento ao vivo (debounce 150 ms → guarda dos 2 s)
+      await new Promise(res => setTimeout(res, 400));
       const logo = cards.some(c => c && c.id === 'cLive'); await new Promise(res => setTimeout(res, 2400)); return { logo, depois: cards.some(c => c && c.id === 'cLive') }; });
-    t('E4. _applyCardsSync dentro dos 2 s não aplica na hora, mas aplica sozinho quando a janela fecha', r.logo === false && r.depois === true, r); await ctx.close(); }
+    t('E4. evento ao vivo recebido dentro dos 2 s após um save local não é aplicado na hora, mas é reagendado e aplicado sozinho quando a janela fecha', r.logo === false && r.depois === true, r); await ctx.close(); }
 
   { const { ctx, p } = await abre(); await outraPessoaCria(p);   // F: o helper de conferência (usado no script de console) não mexe em nada
     const ach = await p.evaluate(async () => (await _resgatarCardsAusentes(undefined, true)).map(c => c.id)); const tem = await p.evaluate(() => cards.some(c => c && c.id === 'cNovo'));

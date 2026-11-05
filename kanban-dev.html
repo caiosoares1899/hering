@@ -10660,6 +10660,7 @@ let _cardsSyncDebounce = null;
     clearTimeout(_cardsSyncDebounce);
     _cardsSyncDebounce = setTimeout(_applyCardsSync, 150);
   }
+  window._applyCardsSync = _applyCardsSync; window._scheduleCardsSync = _scheduleCardsSync;   // só para o teste de navegador (o Firebase falso não emite eventos ao vivo): ver test_cards_resgate.js E4
   // ── Carregamento em duas etapas (índice pequeno primeiro) ──────────────
   // Mesmo com listeners granulares, onChildAdded ainda dispara uma vez por
   // card JÁ EXISTENTE toda vez que o board é aberto — baixando o objeto
