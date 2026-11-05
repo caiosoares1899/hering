@@ -8,6 +8,8 @@ description: >-
 
 > **Escopo (2026-10-17): o ecossistema todo.** Os exemplos usam o `kanban-dev.html` (onde a skill nasceu), mas qualquer rodada pode cair em: `kanban-dev`, `painel-dev`, `okr-dev` (Radar), `okr-apresentacao.slide.html`, `oceano-dev`, `escala-dev`, `intake-dev`, `mare-notif|dicas|metas|login|plantao-dev.js`, `functions/` e `database.rules.json`. Mapa de onde está cada coisa: `docs/BIBLIOTECA.md`.
 
+> **Segurança (05/11/2026):** em área sensível (auth, regras do banco, `functions/`, Agente Ágil, Intake, backup, `innerHTML` com dado externo) use também o método de `docs/SEGURANCA_FRONTEIRAS.md` — regra de entrada por fronteira, 3 veredictos (`confirmado` / `precisa_validar` / `rejeitado`) e verificador que tenta refutar. Para uma rodada só de segurança, use `/auditoriaseguranca`.
+
 Nasceu de uma revisão pedida direto pelo usuário na área de Supercards (2
 níveis: campanha → criativo → versão) logo depois dela ir ao ar — usando o
 `CODE_MAP.md` pra pular direto pras funções certas e lendo cada uma por

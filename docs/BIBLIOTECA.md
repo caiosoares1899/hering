@@ -102,7 +102,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `windows/` | **Ícone na bandeja do Windows** do mini painel (`oceano-bandeja.ps1` + `iniciar-oceano.cmd`): bolinha 🟢🟡🔴, menu com o resumo e aviso quando o estado piora. Roda pelo `cmd` (sem abrir o PowerShell); lê a chave de `%USERPROFILE%\chave-oceano.txt`. Passo a passo em `windows/README.md`. **Nunca rodou no Windows** (escrito sem ele). |
 | `scripts/` | `checar.js` (checagens que a CI roda), `mare-cli.js` (`status`/`bump`/`log`/`map`/`ship`…) e `mapa.js` (gera o bloco automático do mapa) |
 | `vendor/firebase-10.14.1/` | SDK do Firebase servido localmente (o FortiGate da Hering bloqueia o CDN) |
-| `.claude/skills/` | Skills do Claude/Antigravity (`/subirproprod`, `/monitorarbugs`, `/seatualizar`, `/plantaobug`…) |
+| `.claude/skills/` | Skills do Claude/Antigravity (`/subirproprod`, `/monitorarbugs`, `/seatualizar`, `/auditoriaseguranca`, `/plantaobug`…) |
 | `.agents/` | Regras e lista de skills do Antigravity |
 | `.github/workflows/` | `pages.yml` (publica a raiz no Pages) e `checks.yml` (CI: `checar.js` + testes de `functions/`) |
 
@@ -124,6 +124,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `ideias/travessia-2026-10-22.md` | Desenho do Travessia (pessoas/PDI/1:1): concorrência, princípios, modelo de dados, fases, decisões do Caio e triagem do dossiê do Antigravity |
 | `ideias/tema-claro-painel-radar-2026-10-17.md` | Auditoria do tema claro/Vice no Painel e no Radar + plano de correção (18/10) |
 | `MIGRACAO_DOMINIO.md` | Internalização (30/10/2026): inventário de tudo que depende do endereço atual (código, CORS das funções, login Google, PWA, dados do navegador, links gravados) + checklist da virada |
+| `SEGURANCA_FRONTEIRAS.md` | Método de segurança por fronteira de confiança (adaptado do `cloudflare/security-audit-skill`, MIT): regra de entrada, quem é quem, 4 mapas do Oceano, 3 veredictos, severidade, antipadrões — usado por `/auditoriaseguranca` e pela regra 8 do Release process |
 | `AUDITORIA_SEGURANCA_2026-10-18.md` | Pente fino de segurança: achados, o que foi corrigido, riscos aceitos, o que o Caio vê no console do Google |
 | `ideias/amanha-18-10-mapa-repo-e-push-antigravity.md` | Mapa do repositório, resumo no Ecossistema e push dos pedidos do Antigravity (18/10) |
 

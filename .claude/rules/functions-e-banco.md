@@ -38,3 +38,11 @@ git reset --hard origin/<branch-name>
 - Quase tudo exige `auth.token.email` terminando em `@ciahering.com.br`, com checagem de squad por `kanban/usuarios/{uid}/squads/{squadId}`. Vários nós têm irmão `_dev` (`dados_diarios_dev`, `campanhas_log_dev`, …) para as páginas `-dev`.
 - Nó novo ou regra nova = **regras primeiro** no deploy (sem elas o navegador recebe `PERMISSION_DENIED`) e linha em "Pendente de deploy".
 - Modo "só Hering": `functions/common/mareModo.js` e regras sem a alternativa Arezzo; testes de torres rodam com `MARE_MODO_TESTE=varias-torres`. Leia `docs/arezzo/MARE_SO_HERING.md` antes de mexer em login, torres ou domínios.
+
+## Fronteiras de confiança (método em `docs/SEGURANCA_FRONTEIRAS.md`)
+
+- **check-then-act = `.transaction()`**: `get()` + `set()` separados em contador, limite, idempotência ou posição de card é corrida (já deu bug em `intake/submit.js` e `agente-agil/http.js`).
+- **A função roda como admin e ignora as regras do banco**: todo handler (`onRequest`, gatilho, ferramenta do Agente Ágil/`okrAgenteChat`) reconfere **no código** quem pediu e o squad/recurso — o prompt do LLM não é fronteira, e texto de card/comentário/Intake é entrada não confiável.
+- **Guard de tela sem regra no banco é só conveniência**: se a mudança protege algo importante (papel, acesso de externo, squad), a regra correspondente entra no `database.rules.json` com teste no `functions/rules/rulesSim.js`.
+- **`onRequest` novo declara a autenticação** num comentário `// AUTH: …` (idToken `@ciahering`, chave compartilhada em tempo constante, HMAC, ou público com limite) — o `scripts/checar.js` reprova sem ele.
+
