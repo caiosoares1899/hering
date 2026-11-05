@@ -139,3 +139,21 @@ test('cobertura: todo nó de kanban/okr usado no código tem regra de escrita (s
   assert.deepEqual(faltam, [], 'nó(s) de kanban/okr sem regra em database.rules.json (adicione "' + (faltam[0] || [''])[0] + '": { ".write": … }): ' + JSON.stringify(faltam));
   for (const n of declarados) assert.ok(okr[n]['.write'] !== undefined || n === 'marco_comments', `okr/${n} sem .write`);
 });
+
+// 🔐 Auditoria de regras (05/11/2026): o visualizador externo (painel_viewers) lia, por cascata do `.read` do nó pai, o Data Studio e a configuração/log de cobrança — mas a tela do Radar já esconde o Data Studio dele.
+// Agora `kanban/okr/.read` é só da empresa e cada filho que o visualizador realmente usa declara a leitura dele.
+test('visualizador externo lê só os filhos do Radar que a tela dele usa — não Data Studio, cobrança nem a raiz', () => {
+  const le = (a, p) => check(RULES, DB, 'read', p, A[a]);
+  const COMUNS = ['objetivos', 'marcos', 'tags', 'gerencias', 'calendario', 'agenda_propostas', 'agente_chat', 'agente_chat_processed', 'reuniao_notas', 'reuniao_agenda', 'snapshots', 'obj_locks', 'mural', 'apresentacao_live', 'marco_comments'];
+  const SO_EMPRESA = ['datastudio', 'cobranca_config', 'cobrancas_log'];
+  for (const n of COMUNS) { assert.equal(le('visualizador', 'kanban/okr/' + n), true, `visualizador lê okr/${n}`); assert.equal(le('membro', 'kanban/okr/' + n), true, `empresa lê okr/${n}`); assert.equal(le('forasteiro', 'kanban/okr/' + n), false, `de fora NÃO lê okr/${n}`); assert.equal(le('arezzo', 'kanban/okr/' + n), false, `Microsoft NÃO lê okr/${n}`); }
+  for (const n of SO_EMPRESA) { assert.equal(le('visualizador', 'kanban/okr/' + n), false, `visualizador NÃO lê okr/${n}`); assert.equal(le('membro', 'kanban/okr/' + n), true, `empresa continua lendo okr/${n}`); }
+  assert.equal(le('visualizador', 'kanban/okr/datastudio/r1'), false, 'nem o painel dentro do Data Studio');
+  assert.equal(le('visualizador', 'kanban/okr/marco_comments/m1'), true, 'comentários do Marco: ele lê');
+  assert.equal(le('visualizador', 'kanban/okr'), false, 'a raiz do Radar não é lida pelo visualizador');
+  assert.equal(le('membro', 'kanban/okr'), true, 'a empresa ainda lê a raiz');
+  // todo filho novo decide: ou entra na lista do visualizador (com .read) ou fica só da empresa
+  const okr = RULES.rules.kanban.okr;
+  const comRead = Object.keys(okr).filter(k => !k.startsWith('.') && okr[k]['.read'] !== undefined).sort();
+  assert.deepEqual(comRead, [...COMUNS].sort(), 'os filhos com .read próprio são exatamente os que o visualizador usa — nó novo em okr/: decida e atualize este teste');
+});
