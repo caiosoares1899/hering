@@ -79,6 +79,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-05 · Dedo-duro: servidorEm nunca chegava ao banco (limpeza de chaves apagava o marcador .sv)
+
+• Sintoma: no teste de console B (05/11/2026) o carimbo `cards_write_meta/ultimo` era gravado sem o campo `servidorEm`. Sem ele o Guardião do servidor (`diagnosticar()`) nunca consegue ligar uma remoção ao autor, e o "dedo-duro" não nomearia ninguém.
+• Causa: `fbSaveAll` passava o carimbo por `_stripUndefinedMultiPath`/`_stripUndefinedDeep`, que descarta toda chave que casa `INVALID_FB_KEY_RE` (contém `.`); o marcador de horário do servidor `{'.sv':'timestamp'}` tem exatamente essa chave e virava `{}`, que o banco não grava. O teste Playwright E3 não conferia o campo.
+• Correção (kanban-dev v8.30.906-dev): `_carimboParaBanco()` monta o carimbo DEPOIS da limpeza de campos, com o marcador `.sv` intacto; E3 agora exige `servidorEm['.sv'] === 'timestamp'` no que vai ao banco. Lição: valor especial do Realtime Database (`.sv`) nunca pode passar por limpeza de chaves.
+
 ### 2026-11-05 · Guardião dos cards: dedo-duro (quem/onde/versão/causa), save recusado sem conferir o banco e evento ao vivo reagendado
 
 • Sintoma: quando um card some e o Guardião atua, o incidente não dizia QUEM gravou, de qual função, em qual versão, nem se veio de cache/fila offline; e ainda restavam caminhos pelos quais o save estrutural gravava `null` em cards que o aparelho não conhecia.
