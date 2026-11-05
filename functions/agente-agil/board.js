@@ -204,6 +204,8 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
     cardId: extra.cardId,
     squadId,
     dryRun: !!extra.dryRun,
+    // 🔐 undefined = qualquer @menção do texto notifica; array = só estas iniciais (card de origem externa — ver orquestrador/tools/origemExterna.js)
+    mencoesPermitidas: extra.mencoesPermitidas,
     db,
     uploadAndSign: extra.uploadAndSign || storage.uploadAndSign,
     reportBasePath: extra.reportBasePath || storage.reportBasePath,

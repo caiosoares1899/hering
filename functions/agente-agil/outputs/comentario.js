@@ -40,7 +40,9 @@ async function build(out, ctx) {
   };
   const steps = [commentStep];
   if (/@[a-zA-Z]/.test(texto)) {
-    const members = await ctx.readMembers();
+    let members = await ctx.readMembers();
+    // 🔐 card de origem externa: só as iniciais permitidas podem ser mencionadas (ctx.mencoesPermitidas; undefined = todas)
+    if (Array.isArray(ctx.mencoesPermitidas)) members = members.filter((m) => m && ctx.mencoesPermitidas.includes(String(m.init).toUpperCase()));
     const mentionSteps = await notify.buildMentionSteps(ctx.db, {
       squadId: ctx.squadId,
       text: texto,

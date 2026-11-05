@@ -38,6 +38,7 @@
 // manda o campo (sobrescreve com o mesmo valor, no-op).
 const { resolveCardKey, buildWritePlan, applyWritePlan, cardsPath } = require('../../agente-agil/board');
 const { enqueuePendingAutoFromDiff } = require('../pendingAuto');
+const { origemExternaDoCard, bloqueioDeSaida } = require('./origemExterna');
 
 // Compartilhado por makeRealHandler (1 output = a própria tool call) e
 // makeRealPerguntarHumanoHandler (2 outputs compostos, ver abaixo) — resolve
@@ -45,13 +46,24 @@ const { enqueuePendingAutoFromDiff } = require('../pendingAuto');
 // de http.js: cardMeta faz applyWritePlan carimbar updatedAt do card +
 // cards_updated_at no mesmo write, senão o delta-sync do cliente nunca
 // percebe que o card mudou.
-async function runWritePlan({ db, squadId, cardId, outputs, dryRun, toolName }) {
+// `mencoesDoSistema`: iniciais que um texto do SISTEMA (não do modelo) pode mencionar mesmo em card de origem externa — hoje só o dono do card, em perguntar_humano.
+async function runWritePlan({ db, squadId, cardId, outputs, dryRun, toolName, mencoesDoSistema }) {
   const cardKey = await resolveCardKey(db, cardId, { squadId });
   if (!cardKey) return { ok: false, error: 'card_not_found', cardId, squadId };
 
+  // 🔐 Card de origem externa (veio do Intake): lê o card AGORA (o botão "Liberar" vale sem redeploy). Falha de leitura = trata como externo (só afeta o que é bloqueado abaixo).
+  let externa = false;
+  try { externa = await origemExternaDoCard(db, cardsPath(squadId).replace(/\/cards$/, ''), (await db.ref(`${cardsPath(squadId)}/${cardKey}`).get()).val()); } catch (e) { externa = true; }
+  let mencoesPermitidas;   // undefined = sem restrição
+  if (externa) {
+    const bloqueio = toolName === 'perguntar_humano' ? null : bloqueioDeSaida(outputs);
+    if (bloqueio) return Object.assign({ cardId, squadId, tool: toolName }, bloqueio);
+    mencoesPermitidas = Array.isArray(mencoesDoSistema) ? mencoesDoSistema : [];
+  }
+
   let plan;
   try {
-    plan = await buildWritePlan(cardKey, outputs, { cardId, squadId, db, dryRun });
+    plan = await buildWritePlan(cardKey, outputs, { cardId, squadId, db, dryRun, mencoesPermitidas });
   } catch (err) {
     return { ok: false, error: err.code || 'write_plan_failed', message: err.message };
   }
@@ -146,7 +158,7 @@ function makeRealPerguntarHumanoHandler({ db, squadId, cardId, dryRun = true }) 
       { type: 'comentario', texto: `❓ Agente Ágil precisa de uma resposta${destinatario}:\n\n${input.pergunta}` },
       { type: 'agent_status', status: 'awaiting_validation' },
     ];
-    return runWritePlan({ db, squadId, cardId, outputs, dryRun, toolName: 'perguntar_humano' });
+    return runWritePlan({ db, squadId, cardId, outputs, dryRun, toolName: 'perguntar_humano', mencoesDoSistema: ownerInit ? [String(ownerInit).toUpperCase()] : [] });
   };
 }
 
