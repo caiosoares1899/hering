@@ -274,6 +274,24 @@ test('editar_campos atualiza desc/priority e registra histórico dos dois', asyn
   assert.equal(card.history.length, 2);
 });
 
+// 🔐 Auditoria de segurança de 05/11/2026: a descrição pode ter texto de fora (Intake anônimo) e o agente a sobrescreve; o rótulo do histórico trunca em 40 caracteres, então a entrada guarda o texto anterior INTEIRO em `antes`.
+test('editar_campos: o histórico guarda a descrição anterior inteira (recuperável), não só o rótulo de 40 caracteres', async () => {
+  const longa = 'Pedido do formulário público. ' + 'detalhe '.repeat(80);
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', desc: longa });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', desc: 'texto novo' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan);
+  const h = db._data().kanban.squads.dev.dados.cards['5'].history.slice(-1)[0];
+  assert.match(h.what, /alterou descrição/); assert.ok(h.what.length < 140, 'o rótulo continua curto');
+  assert.equal(h.antes, longa.slice(0, 4000), 'o texto anterior inteiro (até 4000) está na entrada');
+});
+test('editar_campos: descrição vazia antes → sem campo `antes`', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress' });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', desc: 'primeira' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan);
+  const h = db._data().kanban.squads.dev.dados.cards['5'].history.slice(-1)[0];
+  assert.equal(h.antes, undefined);
+});
+
 // Achado real (canário do htmlAnexo, 2026-09-28) — mesmo class de bug de
 // comentario.js/risco.js: sanitizeAgentText() também se aplica a desc.
 test('editar_campos remove fragmento de tag alucinado no fim de desc', async () => {

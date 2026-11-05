@@ -114,6 +114,9 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   const db = getDatabase();
   const squad = clean(req.query.squad || req.body?.squad, 40);
   if (!squad) { res.status(400).json({ error: 'missing_squad' }); return; }
+  // 🔐 Auditoria de 05/11/2026: o id do squad entra direto em db.ref(`kanban/squads/${squad}/dados`). Com "/" ele vira SUBCAMINHO (e com . $ # [ ] o SDK lança e a função devolve 500 sem JSON).
+  // Mesma regex que as páginas usam para ids de squad (_SQ_ID_OK em kanban/painel).
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(squad)) { res.status(400).json({ error: 'invalid_squad' }); return; }
 
   // Existência de verdade do squad: kanban/squads/{squad}/dados é o path
   // base usado por TODO o board (const FB em kanban-dev.html) — se ele
