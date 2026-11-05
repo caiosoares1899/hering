@@ -64,7 +64,8 @@ async function build(out, ctx) {
       });
     }
     if (/@[a-zA-Z]/.test(desc)) {
-      const members = await ctx.readMembers();
+      let members = await ctx.readMembers();
+      if (Array.isArray(ctx.mencoesPermitidas)) members = members.filter((m) => m && ctx.mencoesPermitidas.includes(String(m.init).toUpperCase()));
       const mentionSteps = await notify.buildMentionSteps(ctx.db, {
         squadId: ctx.squadId,
         text: desc,
