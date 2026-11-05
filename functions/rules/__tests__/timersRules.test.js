@@ -66,3 +66,18 @@ test('validação: tipo, status, tamanho da atividade, duração e id', () => {
   assert.equal(grava(P('ana', 't_ok1234'), A.forasteiro, reg()), false, 'fora da empresa');
   assert.equal(grava(P('az1', 't_ok1234'), A.arezzo, reg()), false, 'conta Microsoft/Arezzo não grava (modo só Hering)');
 });
+
+// 🔐 Auditoria de regras (05/11/2026): terceiro NÃO cria timer já "rodando"/"pausado" em nome de outra pessoa, nem promove o "novo" dele (forjaria tempo na conta da Ana).
+test('terceiro só cria e mantém timer em "novo" — nunca rodando/pausado no nome de outra pessoa', () => {
+  reset();
+  const novo = reg({ status: 'novo', porUid: 'pau', porNome: 'Pau' }); delete novo.startedAt;
+  assert.equal(grava(P('ana', 't_forja1'), A.pau, reg({ status: 'rodando', porUid: 'pau' })), false, 'criar já rodando');
+  assert.equal(grava(P('ana', 't_forja2'), A.pau, reg({ status: 'pausado', porUid: 'pau', accMs: 9999999 })), false, 'criar já pausado com tempo acumulado');
+  assert.equal(grava(P('ana', 't_forja3'), A.pau, novo), true, 'criar "novo" continua valendo');
+  DB.kanban.timers_ativos = { ana: { t_forja3: novo } };
+  assert.equal(grava(P('ana', 't_forja3'), A.pau, reg({ status: 'rodando', porUid: 'pau' })), false, 'o criador não promove o "novo" para rodando');
+  assert.equal(grava(P('ana', 't_forja3'), A.pau, reg({ status: 'pausado', porUid: 'pau' })), false, 'nem para pausado');
+  assert.equal(grava(P('ana', 't_forja3'), A.pau, Object.assign({}, novo, { atividade: 'Outra atividade' })), true, 'ajustar o "novo" (continua novo) segue permitido');
+  assert.equal(grava(P('ana', 't_forja3'), A.pau, null), true, 'desfazer segue permitido');
+  assert.equal(grava(P('ana', 't_forja3'), A.ana, reg({ status: 'rodando', porUid: 'pau' })), true, 'quem recebeu (o dono) inicia normalmente');
+});

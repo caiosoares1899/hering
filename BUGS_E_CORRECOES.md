@@ -79,6 +79,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-05 · Regras do banco: timer forjado por terceiro, encontro da Travessia sobrescrito pela pessoa avaliada e leitura do visualizador externo no Data Studio/cobrança
+
+• Origem: primeira rodada real do `/auditoriaseguranca` (escopo `regras`: `database.rules.json` × guards de tela), com verificador independente no simulador `functions/rules/rulesSim.js`. 3 achados, os 3 reproduzidos nos testes antes do fix (os testes novos falham nas regras antigas).
+• 1) `timers_ativos/{uid}/{tid}` (média): terceiro com `porUid: auth.uid` criava timer já `rodando`/`pausado` (e o criador promovia o `novo`) — dava para forjar tempo na conta de outra pessoa. Fix: na criação e na mudança por terceiros o `status` tem que ser `novo` (apagar segue valendo).
+• 2) `travessia/encontros/{uid}/{id}` (média): o 1º ramo do `.write` não olhava o autor atual — a pessoa avaliada trocava o `por` do encontro do líder para o dela e depois o apagava (2 gravações). Fix: sobrescrever exige `!data.exists() || data.por === auth.uid`.
+• 3) `okr/.read` (baixa/média): o visualizador externo (`painel_viewers`) lia por cascata `datastudio`, `cobranca_config` e `cobrancas_log`, embora a tela do Radar já escondesse o Data Studio dele. Fix: `okr/.read` só da empresa; os 15 filhos que o visualizador usa (incluindo `reuniao_agenda` e `agente_chat_processed`, que a lista inicial da auditoria não tinha) declaram a leitura deles. Nó novo em `okr/` nasce fechado ao visualizador (teste enumera os filhos com `.read`).
+• Não cobertos nesta rodada: outras regras além dessas três áreas, Intake, Agente Ágil e backup. Nenhum código de página/função mudou.
+• Deploy: `firebase deploy --only database` (só regras; sem função).
+
 ### 2026-11-05 · Dedo-duro: servidorEm nunca chegava ao banco (limpeza de chaves apagava o marcador .sv)
 
 • Sintoma: no teste de console B (05/11/2026) o carimbo `cards_write_meta/ultimo` era gravado sem o campo `servidorEm`. Sem ele o Guardião do servidor (`diagnosticar()`) nunca consegue ligar uma remoção ao autor, e o "dedo-duro" não nomearia ninguém.

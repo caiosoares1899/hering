@@ -99,6 +99,11 @@ test('faróis: série definida pelo líder; encontros registrados pela pessoa ou
   assert.equal(grava(T + 'encontros/ana/e1', A.ana, null), false, 'a pessoa não apaga o registro do líder');
   assert.equal(grava(T + 'encontros/ana/e1', A.pau, null), true);
   assert.equal(grava(T + 'encontros/ana/e2', A.ana, null), true);
+  // 🔐 Auditoria de regras (05/11/2026): a pessoa avaliada não "assume" o registro do líder trocando o `por` — e depois o apaga.
+  assert.equal(grava(T + 'encontros/ana/e1', A.ana, enc('ana')), false, 'a Ana NÃO sobrescreve o encontro do Pau trocando o autor');
+  assert.equal(grava(T + 'encontros/ana/e2', A.pau, enc('pau')), false, 'nem o líder sobrescreve o registro que a Ana fez');
+  assert.equal(grava(T + 'encontros/ana/e1', A.pau, Object.assign(enc('pau'), { nota: 'ajuste' })), true, 'quem registrou segue podendo editar o próprio');
+  assert.equal(grava(T + 'encontros/ana/e9', A.ana, enc('ana')), true, 'e registrar um novo continua valendo');
   ['ana', 'pau', 'gil'].forEach(k => assert.equal(lê(T + 'encontros/ana', A[k]), true, k));
   ['bia', 'dani', 'adm', 'forasteiro'].forEach(k => assert.equal(lê(T + 'encontros/ana', A[k]), false, k));
 });

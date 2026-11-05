@@ -109,7 +109,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Claude | `claude/seguranca-fronteiras` | `docs/SEGURANCA_FRONTEIRAS.md`, `.claude/`, `CLAUDE.md`, `scripts/checar.js` (só docs + CI, sem código de produção) | 05/11/2026 |
+| Claude | `claude/regras-auditoria-seg` | `database.rules.json` + testes de regras (só regras, sem páginas/funções) | 05/11/2026 |
 
 ### Para amanhã (18/10/2026) — combinado com o Caio
 | O quê | Dono | Onde está o desenho |
@@ -149,6 +149,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | **🔐 Regras do banco endurecidas — auditoria de 05/11/2026:** `timers_ativos` (terceiro só cria/mantém `novo`), `travessia/encontros` (não sobrescreve o registro de outro autor) e `okr/.read` (visualizador externo não lê Data Studio/cobrança; filhos que ele usa ganharam `.read` próprio). Só regras — nenhuma função. **Antes: resync.** | `firebase deploy --only database --project hering-onboarding` | 05/11/2026 |
 | Claude | **🕵️ Guardião dedo-duro (05/11/2026, só dev no front):** `cardsGuardiao` passa a ler `cards_write_meta/ultimo` (carimbo do `fbSaveAll`) e grava `causadoPor`/`sinais`/`causaCodigo`/`causaTexto` no incidente e "Origem: …" no aviso/histórico; só nomeia alguém se o id estiver em `idsRemovidos` e o horário do evento bater com `servidorEm` (±4 s). Diagnóstico em try/catch: nunca impede a restauração. Sem regra nova de banco. **Antes do deploy: resync.** | `firebase deploy --only functions:cardsGuardiao --project hering-onboarding` | 05/11/2026 |
 | Claude | **🛡️ Guardião dos cards (03/11/2026):** funções novas `cardsEspelhar` + `cardsGuardiao` (`functions/cards/guardiao.js`), tipo `card_resgatado` em `PUSH_TYPES` e regras de `kanban/cards_guardiao`. **Ordem:** resync → `firebase deploy --only database` → `firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao,functions:cardsEspelhoVarredura,functions:sendPushOnNotification`. Depois do deploy o espelho só enche com as edições novas (card nunca editado desde o deploy ainda não tem cópia). | `firebase deploy --only database` e `firebase deploy --only functions:cardsEspelhar,functions:cardsGuardiao,functions:sendPushOnNotification` | 03/11/2026 |
 | Claude | **Mini painel** (`functions/oceano/resumo.js` + `minipainel.html`): índice `owner` em `dados/cards` (regras) e a função `oceanoResumo` com a chave `OCEANO_RESUMO_KEY`. **Ordem:** regras primeiro (sem o índice cada consulta baixaria os cards inteiros). Runbook em `docs/MINIPAINEL.md`. | `firebase deploy --only database` · `firebase functions:secrets:set OCEANO_RESUMO_KEY` · `firebase deploy --only functions:oceanoResumo` (antes, o resync da `main`) | 30/10/2026 |
