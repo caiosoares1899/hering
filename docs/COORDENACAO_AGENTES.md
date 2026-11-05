@@ -111,7 +111,9 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Claude | `claude/origem-externa-intake` | `kanban-dev.html`, `functions/agente-agil-orquestrador/tools/` + `functions/agente-agil/` (board, outputs) | 05/11/2026 |
+| Claude | `claude/sino-modulo-feed` | `mare-notif-dev.js`, `mare-plantao-dev.js`, `okr-dev.html` (+ `?v=` nas 4 páginas `-dev`) | 05/11/2026 |
+| Codex (delegado pelo Claude) | `codex/sino-kanban` | `kanban-dev.html` (sino: ✕ no feed, "Limpar antigas", `dismissNotif`, `loadNotifs`) | 05/11/2026 |
+| Antigravity (delegado pelo Claude) | `antigravity/sino-painel-oceano` | `painel-dev.html`, `oceano-dev.html` (sino: "Limpar lidas") | 05/11/2026 |
 
 ### Para amanhã (18/10/2026) — combinado com o Caio
 | O quê | Dono | Onde está o desenho |

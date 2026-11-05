@@ -2066,7 +2066,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.103 · okr-dev</div>
+<div class="version">v2.104 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2117,7 +2117,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=40"></script>
+<script src="mare-notif-dev.js?v=41"></script>
 <script src="mare-dicas-dev.js?v=10"></script>
 
 <script>
@@ -3537,7 +3537,7 @@ function loadOkrFeed(){
   window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
     // TODOS os tipos (card, Kudos, reunião, intake…), não só os okr_* — o sino é o mesmo em qualquer página; só 'rascunho' é exclusivo do painel
     _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))   // mesmo TTL do sino do kanban
-      .map(([id,n])=>({id:n.id||id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
+      .map(([id,n])=>({id, noTTLDelete:!!n.noTTLDelete, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
     _okrBellRender();
   });
 }
@@ -3565,11 +3565,15 @@ function _okrBellRender(){
 // "Limpar antigas": remove as notificações PESSOAIS já lidas, numa escrita só (o feed da torre é compartilhado e não se apaga — o que foi lido já fica sem destaque).
 function _okrBellLimpar(){
   const u = window._currentUser; if(!u || window._isPainelViewer) return;
-  const up = {}; _okrNotifPessoais.filter(n=>n.read).forEach(n=>{ up[n.id] = null; });
-  const q = Object.keys(up).length;
+  // noTTLDelete (id determinístico): apagar a chave deixaria o createNotif recriá-la como NÃO lida — marca read+dismissed e mantém o nó (viva() esconde). As demais saem como sempre.
+  const up = {}; _okrNotifPessoais.filter(n=>n.read).forEach(n=>{ if(n.noTTLDelete){ up[n.id+'/read'] = true; up[n.id+'/dismissed'] = true; } else up[n.id] = null; });
+  const qP = _okrNotifPessoais.filter(n=>n.read).length;
+  const nFeed = (window.MareNotif && MareNotif.clearRead) ? MareNotif.clearRead() : 0;   // eventos do Feed da Torre (já lidos) também saem
+  const q = qP + nFeed;
   if(!q){ showToast('Nenhuma notificação lida para remover.'); return; }
-  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), up)
-    .then(()=>showToast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.'))
+  const ok = ()=>showToast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.');
+  if(!qP){ ok(); return; }
+  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), up).then(ok)
     .catch(()=>showToast('⚠ Não consegui remover as notificações. Tente de novo.'));
 }
 function _okrBellToggle(e){
