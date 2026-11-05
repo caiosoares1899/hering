@@ -44,5 +44,5 @@ git reset --hard origin/<branch-name>
 - **check-then-act = `.transaction()`**: `get()` + `set()` separados em contador, limite, idempotência ou posição de card é corrida (já deu bug em `intake/submit.js` e `agente-agil/http.js`).
 - **A função roda como admin e ignora as regras do banco**: todo handler (`onRequest`, gatilho, ferramenta do Agente Ágil/`okrAgenteChat`) reconfere **no código** quem pediu e o squad/recurso — o prompt do LLM não é fronteira, e texto de card/comentário/Intake é entrada não confiável.
 - **Guard de tela sem regra no banco é só conveniência**: se a mudança protege algo importante (papel, acesso de externo, squad), a regra correspondente entra no `database.rules.json` com teste no `functions/rules/rulesSim.js`.
-- **`onRequest` novo declara a autenticação** num comentário `// AUTH: …` (idToken `@ciahering`, chave compartilhada em tempo constante, HMAC, ou público com limite) — o `scripts/checar.js` reprova sem ele.
+- **`onRequest`/`onCall` novo declara a autenticação** num comentário `// AUTH: …` (idToken `@ciahering`, chave compartilhada em tempo constante, HMAC, ou público com limite) — o `scripts/checar.js` reprova **arquivo** novo sem ele (endpoint novo dentro de arquivo já existente passa: declare mesmo assim).
 
