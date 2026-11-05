@@ -56,9 +56,12 @@ async function build(out, ctx) {
     const before = card.desc || '';
     if (before !== desc) {
       steps.push({ kind: 'update', path: ctx.cardPath, data: { desc } });
-      historyEntries.push(
-        before === '' ? `definiu descrição: ${truncateForHistory(desc)}` : `alterou descrição: ${truncateForHistory(before)} → ${truncateForHistory(desc)}`
-      );
+      // 🔐 Auditoria de 05/11/2026: a descrição pode conter texto de fora (Intake anônimo) e o agente a SOBRESCREVE; o rótulo do histórico trunca em 40 caracteres, então o original
+      // se perdia. `antes` guarda o texto anterior inteiro (até 4000 caracteres) na própria entrada — recuperável sem depender do backup do dia. A interface ignora o campo extra.
+      historyEntries.push({
+        what: before === '' ? `definiu descrição: ${truncateForHistory(desc)}` : `alterou descrição: ${truncateForHistory(before)} → ${truncateForHistory(desc)}`,
+        antes: before === '' ? null : before.slice(0, 4000),
+      });
     }
     if (/@[a-zA-Z]/.test(desc)) {
       const members = await ctx.readMembers();
@@ -131,7 +134,10 @@ async function build(out, ctx) {
       path: `${ctx.cardPath}/history`,
       transform(current) {
         const history = Array.isArray(current) ? current.slice() : [];
-        historyEntries.forEach((what) => history.push({ who: ctx.actor.who, what, at: nowISO, init: ctx.actor.init }));
+        historyEntries.forEach((e) => {
+          const o = typeof e === 'string' ? { what: e } : e;
+          history.push(Object.assign({ who: ctx.actor.who, what: o.what, at: nowISO, init: ctx.actor.init }, o.antes ? { antes: o.antes } : {}));
+        });
         return history.length > HIST_CAP ? history.slice(-HIST_CAP) : history;
       },
     });

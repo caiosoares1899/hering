@@ -94,3 +94,18 @@ test('teto por squad: muitos IPs reais diferentes não passam de 40 envios/hora'
   assert.equal(ok, 40);
   assert.equal(limited, 20);
 });
+
+// 🔐 Auditoria de 05/11/2026: id de squad com "/" (subcaminho) ou caracteres que o Firebase rejeita é recusado ANTES de tocar no banco.
+test('squad com caracteres inválidos ou "/" é recusado com 400 (nada é gravado)', async () => {
+  const db = baseDb(); const handler = loadHandler(db);
+  for (const bad of ['dados/dados', '../dados', 'dados.x', 'da$dos', 'a'.repeat(41), 'da dos']) {
+    const r = await new Promise((resolve) => {
+      const res = { set() {}, status(c) { this.code = c; return this; }, json(b) { resolve({ code: this.code, body: b }); }, send() { resolve({ code: this.code }); } };
+      handler({ method: 'POST', query: { squad: bad }, headers: {}, body: { titulo: 'x', demandante: 'y', descricao: 'z', squadDemandante: 'w' }, ip: '203.0.113.9' }, res);
+    });
+    // 40+ caracteres é cortado em 40 (clean) e aí vira um id válido que não existe → 404; os demais são 400
+    assert.ok(r.code === 400 || r.code === 404, `${bad} → ${r.code}`);
+    if (bad !== 'a'.repeat(41)) assert.equal(r.code, 400, `${bad} deveria ser 400`);
+  }
+  assert.equal(JSON.stringify(db.data).includes('intake_pending'), false, 'nada gravado em intake_pending');
+});
