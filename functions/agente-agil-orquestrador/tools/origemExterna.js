@@ -13,9 +13,20 @@
 
 const MSG_BLOQUEIO =
   'Este card veio de um pedido de Intake (texto de fora do time), então o Agente Ágil não publica relatório, não reescreve a descrição e não menciona pessoas aqui. ' +
-  'Conte isso no seu comentário final; se alguém do time quiser liberar, é só abrir o card e clicar em "Liberar para o Agente Ágil" (ou fazer essa parte à mão).';
+  'Conte isso no seu comentário final: peça para alguém do time liberar o card depois de revisar o texto (botão "Liberar para o Agente Ágil", disponível na versão nova do Maré) ou faça essa parte à mão.';
 
 const origemExterna = (card) => !!(card && card.intakeId && !card.intakeLiberado && card.intakeOrigem !== 'agente-agil');
+
+// Cards criados ANTES de `intakeOrigem` existir (rascunhos do próprio agente já virados card) não têm o campo: o pedido original continua em intake_pending/{intakeId} (o cliente só marca
+// status:'done'), com `origem`. Consulta ali; qualquer falha de leitura = externo (fail-closed).
+async function origemExternaDoCard(db, basePath, card) {
+  if (!origemExterna(card)) return false;
+  if (card.intakeOrigem != null) return true;          // tem a marca nova e não é do agente: externo
+  try {
+    const o = (await db.ref(`${basePath}/intake_pending/${card.intakeId}/origem`).get()).val();
+    return o !== 'agente-agil';
+  } catch (e) { return true; }
+}
 
 // Devolve null (pode seguir) ou { ok:false, error:'origem_externa', message } para o modelo repassar.
 function bloqueioDeSaida(outputs) {
@@ -26,4 +37,4 @@ function bloqueioDeSaida(outputs) {
   return null;
 }
 
-module.exports = { origemExterna, bloqueioDeSaida, MSG_BLOQUEIO };
+module.exports = { origemExterna, origemExternaDoCard, bloqueioDeSaida, MSG_BLOQUEIO };

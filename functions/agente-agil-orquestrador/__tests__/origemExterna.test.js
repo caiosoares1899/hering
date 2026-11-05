@@ -88,3 +88,17 @@ test('falha ao ler o card = trata como externo para o que é bloqueado (fail-clo
   const r = await tool(db, 'relatorio_html').handler({ html: '<p>x</p>', titulo: 'R' });
   assert.equal(r.ok, false); assert.equal(r.error, 'origem_externa');
 });
+
+// Cards criados antes de `intakeOrigem` existir: a origem do pedido continua em intake_pending/{intakeId}.
+function seedComPendente(card, pendente) {
+  membersLib._resetCacheForTests();
+  return makeFakeDb({ kanban: { usuarios_publicos: USERS, squads: { dev: { dados: { cards: { 9: card }, cards_index: { [card.id]: '9' }, tags: [], ...(pendente ? { intake_pending: { p1: pendente } } : {}) } } } } });
+}
+test('card antigo (sem intakeOrigem): rascunho do agente em intake_pending/{id} NÃO é externo; pedido do formulário é; pendente sumido = externo', async () => {
+  const antigoAgente = seedComPendente({ ...base, intakeId: 'p1' }, { id: 'p1', origem: 'agente-agil', status: 'done' });
+  assert.equal((await tool(antigoAgente, 'editar_campos').handler({ desc: 'nova' })).ok, true);
+  const antigoForm = seedComPendente({ ...base, intakeId: 'p1' }, { id: 'p1', status: 'done' });
+  assert.equal((await tool(antigoForm, 'editar_campos').handler({ desc: 'nova' })).error, 'origem_externa');
+  const semPendente = seedComPendente({ ...base, intakeId: 'p1' }, null);
+  assert.equal((await tool(semPendente, 'relatorio_html').handler({ html: '<p>x</p>', titulo: 'R' })).error, 'origem_externa');
+});

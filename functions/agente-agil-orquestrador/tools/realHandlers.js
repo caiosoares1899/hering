@@ -38,7 +38,7 @@
 // manda o campo (sobrescreve com o mesmo valor, no-op).
 const { resolveCardKey, buildWritePlan, applyWritePlan, cardsPath } = require('../../agente-agil/board');
 const { enqueuePendingAutoFromDiff } = require('../pendingAuto');
-const { origemExterna, bloqueioDeSaida } = require('./origemExterna');
+const { origemExternaDoCard, bloqueioDeSaida } = require('./origemExterna');
 
 // Compartilhado por makeRealHandler (1 output = a própria tool call) e
 // makeRealPerguntarHumanoHandler (2 outputs compostos, ver abaixo) — resolve
@@ -53,7 +53,7 @@ async function runWritePlan({ db, squadId, cardId, outputs, dryRun, toolName, me
 
   // 🔐 Card de origem externa (veio do Intake): lê o card AGORA (o botão "Liberar" vale sem redeploy). Falha de leitura = trata como externo (só afeta o que é bloqueado abaixo).
   let externa = false;
-  try { externa = origemExterna((await db.ref(`${cardsPath(squadId)}/${cardKey}`).get()).val()); } catch (e) { externa = true; }
+  try { externa = await origemExternaDoCard(db, cardsPath(squadId).replace(/\/cards$/, ''), (await db.ref(`${cardsPath(squadId)}/${cardKey}`).get()).val()); } catch (e) { externa = true; }
   let mencoesPermitidas;   // undefined = sem restrição
   if (externa) {
     const bloqueio = toolName === 'perguntar_humano' ? null : bloqueioDeSaida(outputs);
