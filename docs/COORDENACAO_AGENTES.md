@@ -109,7 +109,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Claude | `claude/guardiao-dedo-duro` | `kanban-dev.html`, `painel-dev.html`, `functions/cards/guardiao.js` (+ testes) | 05/11/2026 |
+| Claude | `claude/seguranca-fronteiras` | `docs/SEGURANCA_FRONTEIRAS.md`, `.claude/`, `CLAUDE.md`, `scripts/checar.js` (só docs + CI, sem código de produção) | 05/11/2026 |
 
 ### Para amanhã (18/10/2026) — combinado com o Caio
 | O quê | Dono | Onde está o desenho |

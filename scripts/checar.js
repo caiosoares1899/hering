@@ -211,6 +211,28 @@ function seguranca() {
   ok.push(`Segurança das páginas: ${n} arquivo(s) sem href cru e com markdown protegido`);
 }
 
+// 🔐 Funções HTTP novas declaram como autenticam (docs/SEGURANCA_FRONTEIRAS.md). As que já existiam (auditoria de 18/10) ficam na linha de base; arquivo novo com `onRequest(`/`onCall(` precisa de um
+// comentário `// AUTH: …` (idToken @ciahering · chave compartilhada em tempo constante · HMAC · público com limite). Só reprova ARQUIVO novo: endpoint novo dentro de um dos arquivos da linha de base
+// passa em silêncio (revisão humana). Não obriga a mexer no que já foi auditado.
+const HTTP_LINHA_DE_BASE = new Set(['agente-agil/http.js', 'spotify/radioSearch.js', 'spotify/syncNow.js', 'spotify/radioSuggest.js', 'spotify/playback.js', 'spotify/oauth.js', 'spotify/disconnect.js',
+  'spotify/radioOwnerCallback.js', 'plantao/webhook.js', 'plantao/agente.js', 'intake/submit.js', 'oceano/resumo.js', 'agente-agil-orquestrador/resumoMeuDia.js', 'agente-agil-orquestrador/analiseDados.js',
+  'agente-agil-orquestrador/analisePO.js', 'backup/restaurarApi.js']);
+function funcoesHttp() {
+  const raiz = path.join(ROOT, 'functions'); let n = 0;
+  const anda = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((d) => {
+    if (d.name === 'node_modules' || d.name === '__tests__' || d.name === 'scripts') return;
+    const p = path.join(dir, d.name);
+    if (d.isDirectory()) return anda(p);
+    if (!d.name.endsWith('.js')) return;
+    const rel = path.relative(raiz, p).split(path.sep).join('/');
+    if (!/\b(onRequest|onCall)\(/.test(fs.readFileSync(p, 'utf8'))) return;
+    n++;
+    if (!HTTP_LINHA_DE_BASE.has(rel) && !/\/\/\s*AUTH:/.test(fs.readFileSync(p, 'utf8'))) falha('Segurança', `functions/${rel} tem onRequest/onCall novo sem comentário "// AUTH: …" declarando a autenticação (ver docs/SEGURANCA_FRONTEIRAS.md)`, `functions/${rel}`);
+  });
+  anda(raiz);
+  ok.push(`Funções HTTP: ${n} arquivo(s) com onRequest/onCall — os novos declaram "// AUTH:"`);
+}
+
 jsonValidos();
 versoes();
 sintaxe();
@@ -220,6 +242,7 @@ biblioteca();
 mapa();
 identidadeProd();
 seguranca();
+funcoesHttp();
 
 for (const l of ok) console.log('✅', l);
 if (erros.length) {
