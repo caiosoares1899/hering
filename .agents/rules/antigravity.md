@@ -7,15 +7,7 @@ description: Regras específicas do Antigravity neste repositório (Windows, sem
 
 > Movido do `AGENTS.md` em 05/11/2026 (o Codex também lê o `AGENTS.md` e não deve herdar o que é só do Antigravity). **Regras do projeto = `CLAUDE.md`; divisão entre os 3 agentes = `docs/COORDENACAO_AGENTES.md` §7.** Linhas vermelhas e o núcleo comum continuam no `AGENTS.md`.
 
-> **Regras do projeto = `CLAUDE.md` (fonte única — leia inteiro antes de começar).**
-> **Divisão de trabalho com o Claude, branches, trailer de commit e quadro compartilhado = `docs/COORDENACAO_AGENTES.md` — leia antes de cada tarefa.**
-> **Revisão do Claude nas suas PRs — ⏸ automática PAUSADA desde 03/11/2026** (tarefa agendada desabilitada; o Claude revisa à mão quando o Caio o chama e há PR sua aberta — religar: `docs/COORDENACAO_AGENTES.md` §4.1). Como era: o Claude revisava automaticamente toda PR `antigravity/*` (seg–sex, de 2 em 2 h, 8h–20h) e comentava na própria PR (`🔍 Revisão do Claude`). Leia o comentário e corrija no mesmo branch; "ESCALAR AO CLAUDE" é parada, não sugestão. Detalhes: `docs/COORDENACAO_AGENTES.md` §4.1.
-> **Regra permanente — Sempre se manter atualizado (`/seatualizar`):** antes de começar qualquer novo pedido (ou após um resync/merge), execute o protocolo `.claude/skills/seatualizar/SKILL.md` (`docs/COORDENACAO_AGENTES.md`, `version.json`, topo do `CHANGELOG.md` e `BUGS_E_CORRECOES.md`, `docs/GUIA_DE_CODIGO.md`) para ver tudo o que o Claude mudou e nunca mexer num arquivo reservado por ele.
-> Este arquivo só guarda o que é específico do Antigravity; **não copie regras do `CLAUDE.md` para cá** (já divergiram uma vez).
-> Resumo do seu papel: monitoramento diário, pequenas features e correções localizadas (1 página), docs (`/atualizardocumentacoes`) e promoções rotineiras. Funções (`functions/`), regras do banco, módulos compartilhados e features grandes são do Claude — **escale pelo quadro**.
-> Todo commit leva o trailer `Agent: antigravity`; branches `antigravity/<assunto>`.
-> **Regras por área:** além do `CLAUDE.md`, detalhes de cada área ficam em `.claude/rules/*.md` (Radar/OKR; Oceano, login, Escala e Mini painel). O Claude Code as carrega sozinho ao tocar nos arquivos; **você, Antigravity, leia o arquivo da área (frontmatter `paths:` diz quais arquivos ela cobre) antes de editar** — o `CLAUDE.md` aponta para elas.
-> **Onde está cada coisa:** `docs/BIBLIOTECA.md`. Arquivo novo na **raiz** precisa de uma linha lá (a CI falha se faltar); capturas/saídas de teste vão para `docs/capturas/`, nunca para a raiz.
+> O núcleo comum (regras do projeto, `/seatualizar`, branch e trailer, regras por área, BIBLIOTECA) está no `AGENTS.md`. **Seu papel e o que escalar: `docs/COORDENACAO_AGENTES.md` §1 (tabela) e §7.2.** Revisão dos seus PRs: o Caio e o Claude (a revisão automática do Claude segue ⏸ pausada desde 03/11/2026; o Claude revisa à mão quando o Caio chama — `docs/COORDENACAO_AGENTES.md` §4.1). Leia o comentário `🔍 Revisão do Claude` e corrija no mesmo branch; "ESCALAR AO CLAUDE" é parada, não sugestão.
 
 - **Repositório local:** `C:\Users\caio.soares\.gemini\antigravity\scratch\hering` (remote: `https://github.com/caiosoares1899/hering.git`). Mesmo se nenhuma workspace estiver aberta na sessão, opere diretamente neste diretório.
 - **Execução Rápida sem Prompts Desnecessários (Política Corporativa):**
