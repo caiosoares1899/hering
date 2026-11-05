@@ -6658,7 +6658,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.907-dev</div>
+<div class="version">v8.30.908-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30836,7 +30836,7 @@ function loadNotifs(){
     const PAINEL_ONLY_TYPES = new Set(['rascunho']);
     // Remove expiradas (não lidas ganham prazo bem maior — evita sumir antes de ver) e filtra tipos só do painel
     const active = Object.entries(val)
-      .filter(([id,n])=> now - new Date(n.ts).getTime() < (n.read?TTL:TTL_UNREAD) && !PAINEL_ONLY_TYPES.has(n.type))
+      .filter(([id,n])=> !n.dismissed && now - new Date(n.ts).getTime() < (n.read?TTL:TTL_UNREAD) && !PAINEL_ONLY_TYPES.has(n.type))
       .map(([id,n])=>({...n,id}))
       .sort((a,b)=>b.ts.localeCompare(a.ts));
     // Limpa expiradas do Firebase — TUDO numa escrita só (update multi-path),
@@ -30914,7 +30914,7 @@ function renderNotifs(notifs){
   // 🔔 Central de Notificações do Painel: tipo desligado pelo ADM (kanban/notif_config/{tipo}.sino=false) some do sino — também ao vivo, quando o ADM muda (onChange do MareNotif)
   if(window.MareNotif) notifs = notifs.filter(n=>MareNotif.sinoLigado(n.type));
   const badge = document.getElementById('notif-badge');
-  // Feed da torre (sino único): itens do módulo entram na mesma lista, ordenados por data; `_feed` os distingue (sem ✕, abrem por URL)
+  // Feed da torre (sino único): itens do módulo entram na mesma lista, ordenados por data; `_feed` os distingue (abrem por URL)
   const feed = window.MareNotif ? MareNotif.items().map(i=>({...i, _feed:true, read:!i.unread, type:i.tipo})) : [];
   notifs = notifs.concat(feed).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
   const unread = notifs.filter(n=>!n.read).length;
@@ -30943,6 +30943,7 @@ function renderNotifs(notifs){
         ${n.sub?`<div class="notif-sub">${esc(n.sub)}</div>`:''}
         <div class="notif-time">${timeAgo(n.ts)}${n.autor?' · '+esc(n.autor):''}</div>
       </div>
+      <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissFeedNotif(${jsq(n.id)})">✕</button>
     </div>` : `
     <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
@@ -30956,6 +30957,7 @@ function renderNotifs(notifs){
 }
 
 // Item do feed da torre: abre pela URL do módulo (aviso do Mural → okr(-dev).html?mural=<id>; Objetivo → ?okr=<id>) e marca como lido.
+function dismissFeedNotif(id){ if(window.MareNotif) MareNotif.dismiss(id); }
 function openFeedNotif(id){
   notifOpen=false; document.getElementById('notif-panel')?.classList.remove('open');
   if(window.MareNotif) MareNotif.abrirFeed(id);
@@ -31145,16 +31147,32 @@ function clearOldNotifs(){
   // — mais útil do que filtrar por tempo. Uma escrita só (update multi-path), não um set(null) por item: cada delete
   // individual re-disparava o onValue do sino com a lista inteira de novo.
   const ups = {};
-  document.querySelectorAll('.notif-item:not(.unread)').forEach(el=>{ const nid = el.dataset.notifId; if(nid) ups[nid] = null; });
-  const count = Object.keys(ups).length;
+  let nPessoais = 0;
+  document.querySelectorAll('.notif-item[data-notif-id]:not(.unread)').forEach(el=>{
+    const nid = el.dataset.notifId; if(!nid) return;
+    const notif = _activeNotifsCache.find(n=>n.id===nid);
+    // Preserva a chave determinística para createNotif não recriar o item como não lido.
+    if(notif && notif.noTTLDelete){ ups[nid+'/read'] = true; ups[nid+'/dismissed'] = true; }
+    else ups[nid] = null;
+    nPessoais++;
+  });
+  const nFeed = window.MareNotif && MareNotif.clearRead ? MareNotif.clearRead() : 0;
+  const count = nPessoais + nFeed;
   if(!count){ showToast('Nenhuma notificação lida para remover.'); return; }
+  const sucesso = ()=>showToast('🧹 '+count+' notificaç'+(count>1?'ões lidas removidas':'ão lida removida')+'.');
+  if(!nPessoais){ sucesso(); return; }
   window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), ups)
-    .then(()=>showToast('🧹 '+count+' notificaç'+(count>1?'ões lidas removidas':'ão lida removida')+'.'))
+    .then(sucesso)
     .catch(()=>showToast('⚠ Não consegui remover as notificações. Tente de novo.'));
 }
 
 function dismissNotif(notifId){
   const user=window._currentUser; if(!user||!notifId) return;
+  const notif = _activeNotifsCache.find(n=>n.id===notifId);
+  if(notif && notif.noTTLDelete){
+    window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), {[notifId+'/read']:true, [notifId+'/dismissed']:true}).catch(()=>{});
+    return;
+  }
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
 }
 
