@@ -79,6 +79,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-05 · agenteAgil (HTTP): segredo vazio autenticava sem header; demais candidatos de agente OKR e backup rejeitados
+
+• Origem: 3ª rodada do `/auditoriaseguranca` (escopo `agente` externo, `okrAgenteChat` e `backup`), com 1 verificador independente de contexto limpo para os 7 candidatos.
+• A1 — PRECISA_VALIDAR → corrigido por ser barato: `agenteAgil` (HTTP, segredo compartilhado `x-agent-key`) comparava com `timingSafeEqualStr`, e `timingSafeEqualStr('', '')` é `true`: com `AGENTE_AGIL_KEY` vazio/ausente no Secret Manager, quem não mandasse o header autenticaria (limitado só pelo rate limit de 20/h por IP). Agora segredo vazio → 500 `server_misconfigured` (nunca "aberto"), header ausente/vazio/errado → 401. Teste novo (`agente-agil/__tests__/httpAuth.test.js`) falha no código antigo. Fato que só o Caio vê: se o valor do segredo hoje é vazio (`firebase functions:secrets:access AGENTE_AGIL_KEY`) — se for, o endpoint estava aberto até este deploy.
+• REJEITADOS (modelo interno aceito ou defesa em profundidade): A2 `requestId`/`especialista` sem charset (só 500 ou subcaminho dentro de `agente_agil_processed`, e só para quem tem a chave; `especialista` já passa por `isValidFirebaseKey`); B1 backup — um PO global que se auto-inscreve em outro squad (a regra permite auto-inscrição) restaura ali, mas a restauração só recria o que sumiu, grava arquivo de desfazer e registro com uid; B2 `verifyIdToken` sem `checkRevoked` (janela padrão ≤ 1 h); C1 `okrAgenteChat` confia no `uid` da mensagem (a regra de `agente_chat` não o amarra a `auth.uid`) — nenhuma ferramenta grava em nó mais restrito que "qualquer @ciahering" (`datastudio`, `cobranca_config`, `marco_comments`, `role`, `travessia` e backup ficam de fora) nem lê o que a regra esconde, então o `uid` forjado não destrava nada novo; C2 texto de OKR escrito por um funcionário chegando ao agente de outro — sem escalada de papel.
+• Hardening NÃO feito (decisão): (1) `.validate` em `okr/agente_chat/$msg` amarrando `uid` a `auth.uid` — passa a ser necessário SE um dia as regras de `objetivos`/`marcos` forem apertadas (hoje o agente não é caminho de escalada); (2) parágrafo "texto de OKR de terceiros é dado" em `functions/okr/agentePrompt.js` (o do Intake foi feito no card); (3) `squads_roles[squad]` explícito no `exigirPermissao` do backup; (4) `checkRevoked` no `verifyIdToken`.
+• Deploy: `firebase deploy --only functions:agenteAgil` (sem regra de banco).
+
 ### 2026-11-05 · Intake e Agente Ágil: texto anônimo no card é dado (prompt), descrição anterior preservada inteira no histórico e squad do formulário validado
 
 • Origem: 2ª rodada do `/auditoriaseguranca` (escopo `intake`: formulário público → `intake_pending` → card → Agente Ágil), com 1 verificador independente de contexto limpo que tentou refutar cada candidato.
