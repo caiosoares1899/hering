@@ -132,7 +132,16 @@ const agenteAgil = onRequest(
       return;
     }
 
-    if (!timingSafeEqualStr(req.get('x-agent-key'), AGENTE_AGIL_KEY.value())) {
+    // 🔐 Auditoria de 05/11/2026: timingSafeEqualStr('' , '') é true — com o segredo vazio/ausente no Secret Manager, quem não manda o header autenticaria. Segredo vazio = erro de
+    // configuração (500, nunca "aberto"); e o header ausente/vazio nunca autentica, nem por coincidência.
+    const chave = AGENTE_AGIL_KEY.value();
+    if (!chave) {
+      console.error('[agenteAgil] AGENTE_AGIL_KEY vazio/ausente — endpoint recusando tudo até o segredo ser configurado.');
+      res.status(500).json({ error: 'server_misconfigured' });
+      return;
+    }
+    const enviada = req.get('x-agent-key');
+    if (!enviada || !timingSafeEqualStr(enviada, chave)) {
       res.status(401).json({ error: 'unauthorized' });
       return;
     }

@@ -48,6 +48,11 @@ const RADIO_OWNER_CONNECT_TOKEN = defineSecret('RADIO_OWNER_CONNECT_TOKEN');
 const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 const REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyRadioOwnerCallback';
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
+const crypto = require('crypto');
+function stateOk(recebido, esperado) {
+  const a = Buffer.from(typeof recebido === 'string' ? recebido : '', 'utf8'), b = Buffer.from(String(esperado), 'utf8');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 const STATE_PREFIX = 'radio-owner-connect-v1:';
 
 exports.spotifyRadioOwnerCallback = onRequest(
@@ -59,7 +64,15 @@ exports.spotifyRadioOwnerCallback = onRequest(
       res.status(400).send('Autorização negada no Spotify: ' + error);
       return;
     }
-    if (state !== STATE_PREFIX + RADIO_OWNER_CONNECT_TOKEN.value()) {
+    // 🔐 Auditoria de 05/11/2026: com RADIO_OWNER_CONNECT_TOKEN vazio/ausente o `state` esperado vira o prefixo constante (a mesma fraqueza de 17/09 que o token veio fechar) e qualquer
+    // pessoa sequestraria a conta dona da Rádio. Segredo vazio = erro de configuração (500, nunca aberto); comparação em tempo constante.
+    const token = RADIO_OWNER_CONNECT_TOKEN.value();
+    if (!token) {
+      console.error('[spotifyRadioOwnerCallback] RADIO_OWNER_CONNECT_TOKEN vazio/ausente — recusando tudo até o segredo ser configurado.');
+      res.status(500).send('Configuração incompleta no servidor.');
+      return;
+    }
+    if (!stateOk(state, STATE_PREFIX + token)) {
       res.status(400).send('state inválido — use a URL de autorização gerada especificamente pra isso.');
       return;
     }
