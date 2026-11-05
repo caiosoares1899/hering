@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-05 · Radar — textos de terceiros como dados no prompt do agente OKR
+
+O prompt de okrAgenteChat passa a orientar que objetivos, marcos, anotações e comentários de terceiros são informação para analisar, nunca instruções, e que tentativas de dar ordens sejam relatadas na resposta final via responder. Teste automatizado cobre o contrato do prompt. Endurecimento por prompt, sem garantia determinística contra injeção e sem mudança de permissões, ferramentas ou regras. Requer deploy futuro de okrAgenteChat pelo Caio após merge; nenhum deploy nesta entrega.
+
 ### 2026-11-05 · agenteAgil (HTTP): segredo vazio autenticava sem header; demais candidatos de agente OKR e backup rejeitados
 
 • Origem: 3ª rodada do `/auditoriaseguranca` (escopo `agente` externo, `okrAgenteChat` e `backup`), com 1 verificador independente de contexto limpo para os 7 candidatos.
