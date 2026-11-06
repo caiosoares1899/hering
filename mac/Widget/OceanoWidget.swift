@@ -69,6 +69,7 @@ struct OceanoWidgetView: View {
                 bolinha("GitHub", r.status?.github)
                 bolinha("Firebase", r.status?.firebase)
                 bolinha("Backup", r.backup)
+                if familia == .systemMedium { bolinha("Guardião", Resumo.Peca(estado: r.guardiao?.estado, texto: r.guardiao?.texto)) }
             }
             if let mc = r.meusCards {
                 Text("\(mc.atrasados ?? 0) atrasados · \(mc.venceHoje ?? 0) hoje · \(mc.bloqueados ?? 0) bloq.")

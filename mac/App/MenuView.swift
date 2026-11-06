@@ -101,10 +101,13 @@ struct MenuView: View {
             if let esc = pl?.escalados, esc > 0 { plTexto += " · \(esc) escalado(s)" }
         }
         let plantaoPeca = Resumo.Peca(estado: plEstado, texto: plTexto)
+        let guardiaoPeca = Resumo.Peca(estado: r.guardiao?.estado, texto: r.guardiao?.texto)
         return VStack(alignment: .leading, spacing: 4) {
             titulo("Dados e rotina")
             linhaPeca("Backup", "💾", r.backup)
             detalhe(r.backup)
+            linhaPeca("Guardião dos cards", "🛡️", guardiaoPeca)
+            detalhe(guardiaoPeca)
             linhaPeca("Cards sumindo (24 h)", "👻", alarmePeca)
             detalhe(alarmePeca)
             linhaPeca("Plantão de bugs", "🐛", plantaoPeca)

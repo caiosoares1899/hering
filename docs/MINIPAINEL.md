@@ -8,6 +8,7 @@ Criado em 30/10/2026. É a base para o item da barra de menu e o widget do Mac (
 |---|---|---|
 | `oceanoResumo` | `functions/oceano/resumo.js` | Função HTTP (GET com chave) que devolve UM JSON pequeno. Reaproveita o que já existe: nós `vtex_saude`/`github_saude`/`firebase_saude` (aba 🔋 Status do Painel), o vigia de backup (`backup/vigia.js`), as fichas do plantão e os sinais de card de `resumoMeuDia.js` (sem IA). |
 | `minipainel.html` | raiz | Página estática (sem login, sem Firebase): lê o JSON a cada minuto e mostra 🟢🟡🔴 com texto. `?demo=1` mostra dados de exemplo sem chave. |
+| bloco `guardiao` | `oceanoResumo` → `functions/cards/status.js` | 🛡️ Saúde do Guardião dos cards (06/11/2026): `estado`/`texto`/`pulsoMin`/`atrasoMin`/`abertos`. Lê o pulso que a função agendada `guardiaoStatus` grava a cada 5 min em `kanban/cards_guardiao/_status`. Pulso com mais de 15 min ou espelho atrasado mais de 5 min = atenção e puxa o semáforo geral; sem o nó = sem leitura (não pinta). Aparece como linha em "Dados e rotina" na página, no menu do Mac (e no widget médio) e na janela do Windows; o aviso de mudança usa texto fixo ("Guardião: sem pulso"/"espelho atrasado"), nunca os minutos. |
 | índice por responsável | `database.rules.json` (`dados/cards/.indexOn: ["owner"]`) | Faz a consulta "meus cards" trazer só o resultado. **Sem o índice o Firebase baixa o nó inteiro de cada squad a cada consulta.** |
 
 ## Deploy (só o Caio; nesta ordem)

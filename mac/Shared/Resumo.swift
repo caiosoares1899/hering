@@ -11,6 +11,7 @@ struct Resumo: Decodable {
     let backup: Peca?
     let plantao: Plantao?
     let alarmesSumico: Alarmes?
+    let guardiao: Guardiao?
     let meusCards: MeusCards?
 
     struct Dono: Decodable {
@@ -27,6 +28,15 @@ struct Resumo: Decodable {
     struct Peca: Decodable {
         let estado: String?
         let texto: String?
+    }
+
+    /// Pulso de saúde do 🛡️ Guardião dos cards (functions/cards/status.js → oceanoResumo, 06/11/2026). `estado`/`texto` têm o mesmo formato das outras peças.
+    struct Guardiao: Decodable {
+        let estado: String?
+        let texto: String?
+        let pulsoMin: Int?
+        let atrasoMin: Int?
+        let abertos: Int?
     }
 
     struct Plantao: Decodable {
