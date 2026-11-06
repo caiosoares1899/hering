@@ -107,6 +107,7 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 - **2026-10-16 · Oceano:** plantão separado por audiência (usuário no Oceano, ADM no Painel); cartão da Meta alinhado pelo topo (oceano v1.48–v1.50). **Metas:** projeção como "volta fantasma" no anel e linha no gráfico (mare-metas v16).
 - **2026-10-23 · Travessia (inteira):** "cara de checkbox, tudo quadradão" → cantos grandes, pílulas, interruptor, hero, anel do farol, medidor do termômetro, Baú em cartões, Diário em linha do tempo, barra inferior no celular (travessia-dev, PR desta rodada; teste `test_travessia_ui.js`).
 - **2026-11-06 · Painel › Saúde dos cards:** lista plana sem hierarquia → fila de ação em 3 abas (precisam de você · restaurados · resolvidos), acordeão com causa/autor só se provado, Resolver / Resolver os antigos (marcador, nunca apaga) e bolinha de saúde do guardião (painel-dev v5.90).
+- **2026-11-06 · Radar › Apresentação (`okr-apresentacao.slide.html`):** queda de fps (pulso infinito + `backdrop-filter` sobre fundo estático → 60 quadros/s parado; agora ~1, inclusive com a sessão ao vivo ligada) e leitura em Full HD (texto de 12–15 px em ~65% da largura → unidade `--u`), capa com protagonista, cartões sem faixa lateral. Medição: `perf_apresentacao.js` (tracing, não rAF); teste `test_apresentacao_ui.js`.
 - **2026-10-16 · Maré › Atalhos:** foco do botão "Definir" (bug) + combinações reservadas do navegador (v8.30.875-dev).
 
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).

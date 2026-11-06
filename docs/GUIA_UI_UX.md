@@ -64,10 +64,13 @@ border-radius: var(--r) /* 10 */ ou var(--r2) /* 14 */;
 backdrop-filter: blur(8px);                /* botão, chip */
 /* card/painel 12–14px · modal/overlay 16–18px */
 ```
+**Desfoque só onde há o que desfocar:** sobre fundo **estático** (o gradiente do `.ocean`, o fundo opaco do detalhe) o `backdrop-filter` não muda a imagem e só custa GPU — vale no **painel** de gaveta/modal que abre **por cima do conteúdo**; o véu de tela inteira atrás dele só escurece (blur de tela cheia custa caro). Cartão, barra e painel fixos usam o vidro translúcido **sem** blur. Na apresentação do Radar (06/11/2026) isso, mais um pulso infinito na topbar, fazia a página desenhar 60 quadros/s parada (~190 ms de GPU/s); sem eles, ~2 ms/s.
 `backdrop-filter` custa GPU no celular: **não** empilhe vidro dentro de vidro dentro de vidro (card dentro de painel dentro de modal): o de dentro usa fundo translúcido **sem** blur.
 
 ### 2.4 Fundo, peixinhos e movimento
 Fundo é sempre camadas (radial + base escura), nunca sólido. Peixinhos/bolhas ficam **atrás** do conteúdo, `pointer-events:none`, e a pessoa pode desligar (preferência). Movimento serve a **significado** (algo mudou, algo chegou) e é curto; respeite `@media (prefers-reduced-motion: reduce)` (já existe em kanban e Oceano) — qualquer animação nova entra nesse bloco.
+
+**Tela de projeção (apresentação, slides):** texto de leitura **cresce com a tela** — use uma unidade (`--u: clamp(1px,.0732vw,1.5px)`; `font-size:calc(16*var(--u))`) em vez de px fixo; deck em Full HD com letra de 12–15 px some no projetor. Faixa colorida na borda lateral de todo cartão é sinal de "gerado": a cor do status fica no selo (cor + texto) e na barra, a moldura fica quieta.
 
 ### 2.5 Acabamento: cinco regras que separam "feito com cuidado" de "gerado por IA"
 Adaptadas do catálogo de sinais do projeto **unslop** (Damir Sokolovsky, `@heydamir`, CC-BY-4.0), **só as que combinam com o Marine Glass**. O que **não** entra: tirar emoji semântico, tirar o vidro/desfoque ou trocar `var(--…)` por cor fixa — isso é a nossa identidade e os 3 temas (2.2).
