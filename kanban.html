@@ -4405,6 +4405,8 @@ window.MARE_LOGIN_PELO_OCEANO = true;
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
     </div>
     <div id="req-hint" style="display:none;font-size:11px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:7px 11px;margin-bottom:10px;line-height:1.5;"></div>
+    <!-- 📥 Origem externa (05/11/2026): card que nasceu de um pedido de Intake — o Agente Ágil fica limitado até alguém liberar -->
+    <div id="m-intake-origem" style="display:none;font-size:11px;color:var(--txt2);background:rgba(var(--surface-rgb),.55);border:1px solid var(--glass-b);border-left:3px solid var(--warn);border-radius:8px;padding:8px 11px;line-height:1.5;"></div>
 
     <!-- Grid 2 colunas: atributos | lado direito -->
     <div class="modal-grid">
@@ -6656,7 +6658,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.906</div>
+<div class="version">v8.30.908</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7007,7 +7009,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=40"></script>
+<script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=17"></script>
 <script src="mare-dicas.js?v=10"></script>
 
@@ -8777,6 +8779,8 @@ let _intakeLinkSel={};
 // por ter sido aberto). Resetado no início de openNewCard()/openCard() pra
 // nunca vazar pro card errado numa sessão de edição não relacionada.
 let _intakeOrigemPendingId=null;
+// 🔐 De onde veio o pedido que virou card ("agente-agil" = rascunho do próprio agente; vazio = formulário público). Gravado em card.intakeOrigem junto com intakeId; o servidor só trata como "origem externa" o que NÃO é do agente.
+let _intakeOrigemTipo=null;
 // Mesmo padrão do intake acima, só que pra "🏢 Enviar pra outro squad" (ver
 // _confirmarEnviarOutroSquad()/_consumirTransferSquad()): links não têm
 // como entrar no formulário de card novo (attachSave() exige um id real —
@@ -16622,6 +16626,36 @@ function toggleAgenteHotlineInfo(){
   body.style.display=open?'none':'flex';
   if(caret) caret.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
 }
+// 📥 Origem externa (auditoria de segurança de 05/11/2026): o card que nasceu de um pedido do formulário público de Intake traz texto de gente de FORA. Enquanto não for liberado, o Agente Ágil
+// NÃO publica relatório HTML, NÃO reescreve a descrição e NÃO @menciona pessoas neste card (functions/agente-agil-orquestrador/tools/origemExterna.js — barreira no servidor, não só aviso).
+// "Liberar" (card.intakeLiberado) vale na hora, sem redeploy. Rascunho criado pelo próprio agente (intakeOrigem 'agente-agil') não entra.
+function _renderIntakeOrigem(c){
+  const el=document.getElementById('m-intake-origem'); if(!el) return;
+  if(!c || !c.intakeId || c.intakeOrigem==='agente-agil'){ el.style.display='none'; el.textContent=''; return; }
+  el.style.display='';
+  el.textContent='';
+  const t=document.createElement('span');
+  if(c.intakeLiberado){
+    t.textContent='📥 Veio de um pedido de Intake · liberado: o Agente Ágil age normalmente neste card.';
+    el.appendChild(t); return;
+  }
+  t.textContent='📥 Veio de um pedido de Intake (texto de fora do time). O Agente Ágil não publica relatório, não reescreve a descrição e não menciona pessoas aqui. ';
+  const b=document.createElement('button');
+  b.type='button'; b.className='btn btn-sm'; b.textContent='Liberar para o Agente Ágil';
+  b.title='Depois de revisar o texto do pedido, libera o Agente Ágil para agir normalmente neste card';
+  b.onclick=intakeLiberarParaAgente;
+  el.appendChild(t); el.appendChild(b);
+}
+function intakeLiberarParaAgente(){
+  if(!checkEditPermission()) return;
+  const c=cards.find(x=>x.id===editingId); if(!c||!c.intakeId||c.intakeLiberado) return;
+  c.intakeLiberado=true;
+  recordHistory(c,'liberou o card do Intake para o Agente Ágil (relatório, descrição e menções)');
+  fbSaveCard(c);
+  _renderIntakeOrigem(c);
+  showToast('✅ Liberado: o Agente Ágil volta a agir normalmente neste card.');
+}
+
 function openCard(id){
   _closeCoverMenu();   // o menu de capa mora no cabeçalho do modal reaproveitado: nunca herda o estado aberto do card anterior
   try{ window.MareDicas && id && MareDicas.gatilho('card-open'); }catch(e){}   // 💡 dica do card (só abre se houver uma não vista)
@@ -16631,10 +16665,11 @@ function openCard(id){
   // menção) dentro da janela de 800ms do debounce perdia a edição do card
   // anterior em silêncio.
   _flushAutoSave();
-  _intakeOrigemPendingId=null; // ver comentário na declaração
+  _intakeOrigemPendingId=null; _intakeOrigemTipo=null; // ver comentário na declaração
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
   _updateCardBackBtn();
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
+  _renderIntakeOrigem(c);
   _registrarSinalAtrasado(c); // personalização baseada em rotina, caso #5
   // Marca card automático (recorrente/agendado) como visto — para de relembrar
   // Achado real (/monitorarbugs, 2026-09-14): escrevia via fbSet() direto
@@ -17063,6 +17098,7 @@ function _quickAddApplyIfNew(){
 // não tem um único membro "certo" pra pré-selecionar sem chutar.
 function openNewCard(col, prefillOwner, prefillTagId){
   _closeCoverMenu();
+  _renderIntakeOrigem(null);
   if(!checkEditPermission()) return;
   // Achado real (/monitorarbugs 2026-09-22, mesma classe do fix de
   // openCard() em _flushAutoSave() — ver comentário completo lá):
@@ -17076,7 +17112,7 @@ function openNewCard(col, prefillOwner, prefillTagId){
   // 800ms do debounce) tinha a edição perdida em silêncio, exatamente
   // como openCard() tinha antes do fix de ontem.
   _flushAutoSave();
-  _intakeOrigemPendingId=null; // ver comentário na declaração — _intakeCriarCard() re-seta logo depois se for o caso
+  _intakeOrigemPendingId=null; _intakeOrigemTipo=null; // ver comentário na declaração — _intakeCriarCard() re-seta logo depois se for o caso
   _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem p/ "Enviar pra outro squad" — _consumirTransferSquad() re-seta logo depois se for o caso
   _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
   _pendingQLSource=null; // idem p/ o trigger "Modelo usado"/"Card recorrente criado" — usarQLItem re-seta depois
@@ -17430,6 +17466,7 @@ function saveCard(){
       // Intake — ver renderBoardDataGrid()), mesmo depois que intake_pending
       // some da lista de pendentes.
       intakeId:_intakeOrigemPendingId||null,
+      intakeOrigem:(_intakeOrigemPendingId && _intakeOrigemTipo) ? _intakeOrigemTipo : null,
       // Card veio de "🏢 Enviar pra outro squad"? Mesmo padrão do intakeId
       // acima — links só entram aqui (attachSave() não funciona sem um id
       // real, ver comentário na declaração de _pendingTransferLinks) e
@@ -17513,7 +17550,7 @@ function saveCard(){
     if(_savedIntakePendingId && window._fbReady){
       window._update(fb(FB+'/intake_pending/'+_savedIntakePendingId), {status:'done', cardId:_savedNewCardId||null, doneAt:new Date().toISOString()});
     }
-    _intakeOrigemPendingId=null;
+    _intakeOrigemPendingId=null; _intakeOrigemTipo=null;
     _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem, ver comentário na declaração
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     _newCardGuardOff = true; // idem pra _newCardHasContent() — editingId pode continuar null aqui (ver comentário acima)
@@ -24731,6 +24768,7 @@ function _intakeCriarCard(id){
   // mesmo campo no início (ver comentário na declaração), então só marcar
   // aqui garante que sobreviva até o saveCard() de verdade.
   _intakeOrigemPendingId = id;
+  _intakeOrigemTipo = item.origem || null;
   showToast('📥 Pedido carregado no card — revise e clique em Salvar.');
 }
 function _intakeDescartar(id){
@@ -28785,7 +28823,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\n📍 Colunas na conta: o popup 📊 Dados do Board é grande (usa a tela) e tem, logo abaixo das abas, uma barra única com um botãozinho por coluna — clique numa pra tirá-la da conta (ou trazê-la de volta) e todos os números das <b>3 abas</b> (Visão Geral, Insights e CFD) recalculam juntos. Os gráficos preenchem a largura disponível e, no celular, os blocos empilham.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor. Passado 1 minuto sem conexão o Maré para de gravar cards e avisa "esta alteração NÃO foi salva" (um save guardado de uma tela desatualizada, despejado depois, poderia apagar o que os colegas fizeram nesse meio-tempo). Se a rede ficar fora por mais de 3 minutos — ou a tela ficar parada por mais de 30 minutos (notebook que dormiu, aba esquecida) — ao voltar aparece uma tela pedindo pra atualizar: é rápido, e evita sobrescrever o trabalho de outras pessoas. Se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu.\n\n🛡️ Guardião dos cards: se um card sair do quadro sem ninguém ter excluído, o servidor o restaura sozinho em segundos a partir de uma cópia de segurança, avisa todo mundo com a squad aberta e notifica os ADMs e POs.' },
-    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; de lá dá pra Criar card, Vincular ou Descartar a qualquer momento) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🏢 <b>Pedido interno (quem é da Hering)</b>: o MESMO link tem dois modos. Sem login, é o formulário de sempre. Quem entra com a conta Google da Hering (botão "🔐 Entrar com Google" no topo — ou já logado no Maré) vê um formulário de toques: nome, contato e time vêm do login, e dá pra marcar prioridade (sugerida), prazo (com atalhos Hoje/Amanhã/Sexta), submarca (as 11 opções fixas, incluindo a transversal "Geral" para demandas que valem para todas as submarcas), canal de venda, tags e um link (Drive, Figma…). Dá pra escolher outro squad em "Pedir para". O pedido chega na caixa de entrada com 🏢 e chips; ao clicar "✅ Criar card", prioridade, tags, submarca, canal, prazo e link já vêm no modal. A prioridade é só uma sugestão — quem cria o card confirma.\n\n⚙ <b>Quais campos perguntar</b>: em ⚙ Config → Ágil → "🏢 Pedido interno — campos do formulário", o PO liga/desliga e marca como obrigatório cada campo (Prioridade, Prazo, Submarca e Canal — só se o squad usa —, Tags, Link). Em Tags dá pra escolher quais tags aparecem. Sem mexer em nada vale o padrão: Prioridade, Prazo e Link opcionais; Submarca/Canal obrigatórios só se já são obrigatórios no card. Quanto menos campos, mais rápido de preencher.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; de lá dá pra Criar card, Vincular ou Descartar a qualquer momento) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🏢 <b>Pedido interno (quem é da Hering)</b>: o MESMO link tem dois modos. Sem login, é o formulário de sempre. Quem entra com a conta Google da Hering (botão "🔐 Entrar com Google" no topo — ou já logado no Maré) vê um formulário de toques: nome, contato e time vêm do login, e dá pra marcar prioridade (sugerida), prazo (com atalhos Hoje/Amanhã/Sexta), submarca (as 11 opções fixas, incluindo a transversal "Geral" para demandas que valem para todas as submarcas), canal de venda, tags e um link (Drive, Figma…). Dá pra escolher outro squad em "Pedir para". O pedido chega na caixa de entrada com 🏢 e chips; ao clicar "✅ Criar card", prioridade, tags, submarca, canal, prazo e link já vêm no modal. A prioridade é só uma sugestão — quem cria o card confirma.\n\n⚙ <b>Quais campos perguntar</b>: em ⚙ Config → Ágil → "🏢 Pedido interno — campos do formulário", o PO liga/desliga e marca como obrigatório cada campo (Prioridade, Prazo, Submarca e Canal — só se o squad usa —, Tags, Link). Em Tags dá pra escolher quais tags aparecem. Sem mexer em nada vale o padrão: Prioridade, Prazo e Link opcionais; Submarca/Canal obrigatórios só se já são obrigatórios no card. Quanto menos campos, mais rápido de preencher.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão. Card criado a partir de um pedido de Intake traz texto de gente de fora do time: enquanto mostrar o aviso \"Veio de um pedido de Intake\", o Agente Ágil não publica relatório HTML, não reescreve a descrição e não menciona pessoas nele (comentar, mover, checklist, prioridade e tags continuam). Depois de revisar o texto, clique em \"Liberar para o Agente Ágil\" no card.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
@@ -30798,7 +30836,7 @@ function loadNotifs(){
     const PAINEL_ONLY_TYPES = new Set(['rascunho']);
     // Remove expiradas (não lidas ganham prazo bem maior — evita sumir antes de ver) e filtra tipos só do painel
     const active = Object.entries(val)
-      .filter(([id,n])=> now - new Date(n.ts).getTime() < (n.read?TTL:TTL_UNREAD) && !PAINEL_ONLY_TYPES.has(n.type))
+      .filter(([id,n])=> !n.dismissed && now - new Date(n.ts).getTime() < (n.read?TTL:TTL_UNREAD) && !PAINEL_ONLY_TYPES.has(n.type))
       .map(([id,n])=>({...n,id}))
       .sort((a,b)=>b.ts.localeCompare(a.ts));
     // Limpa expiradas do Firebase — TUDO numa escrita só (update multi-path),
@@ -30876,7 +30914,7 @@ function renderNotifs(notifs){
   // 🔔 Central de Notificações do Painel: tipo desligado pelo ADM (kanban/notif_config/{tipo}.sino=false) some do sino — também ao vivo, quando o ADM muda (onChange do MareNotif)
   if(window.MareNotif) notifs = notifs.filter(n=>MareNotif.sinoLigado(n.type));
   const badge = document.getElementById('notif-badge');
-  // Feed da torre (sino único): itens do módulo entram na mesma lista, ordenados por data; `_feed` os distingue (sem ✕, abrem por URL)
+  // Feed da torre (sino único): itens do módulo entram na mesma lista, ordenados por data; `_feed` os distingue (abrem por URL)
   const feed = window.MareNotif ? MareNotif.items().map(i=>({...i, _feed:true, read:!i.unread, type:i.tipo})) : [];
   notifs = notifs.concat(feed).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
   const unread = notifs.filter(n=>!n.read).length;
@@ -30905,6 +30943,7 @@ function renderNotifs(notifs){
         ${n.sub?`<div class="notif-sub">${esc(n.sub)}</div>`:''}
         <div class="notif-time">${timeAgo(n.ts)}${n.autor?' · '+esc(n.autor):''}</div>
       </div>
+      <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissFeedNotif(${jsq(n.id)})">✕</button>
     </div>` : `
     <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
@@ -30918,6 +30957,7 @@ function renderNotifs(notifs){
 }
 
 // Item do feed da torre: abre pela URL do módulo (aviso do Mural → okr(-dev).html?mural=<id>; Objetivo → ?okr=<id>) e marca como lido.
+function dismissFeedNotif(id){ if(window.MareNotif) MareNotif.dismiss(id); }
 function openFeedNotif(id){
   notifOpen=false; document.getElementById('notif-panel')?.classList.remove('open');
   if(window.MareNotif) MareNotif.abrirFeed(id);
@@ -31107,16 +31147,32 @@ function clearOldNotifs(){
   // — mais útil do que filtrar por tempo. Uma escrita só (update multi-path), não um set(null) por item: cada delete
   // individual re-disparava o onValue do sino com a lista inteira de novo.
   const ups = {};
-  document.querySelectorAll('.notif-item:not(.unread)').forEach(el=>{ const nid = el.dataset.notifId; if(nid) ups[nid] = null; });
-  const count = Object.keys(ups).length;
+  let nPessoais = 0;
+  document.querySelectorAll('.notif-item[data-notif-id]:not(.unread)').forEach(el=>{
+    const nid = el.dataset.notifId; if(!nid) return;
+    const notif = _activeNotifsCache.find(n=>n.id===nid);
+    // Preserva a chave determinística para createNotif não recriar o item como não lido.
+    if(notif && notif.noTTLDelete){ ups[nid+'/read'] = true; ups[nid+'/dismissed'] = true; }
+    else ups[nid] = null;
+    nPessoais++;
+  });
+  const nFeed = window.MareNotif && MareNotif.clearRead ? MareNotif.clearRead() : 0;
+  const count = nPessoais + nFeed;
   if(!count){ showToast('Nenhuma notificação lida para remover.'); return; }
+  const sucesso = ()=>showToast('🧹 '+count+' notificaç'+(count>1?'ões lidas removidas':'ão lida removida')+'.');
+  if(!nPessoais){ sucesso(); return; }
   window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), ups)
-    .then(()=>showToast('🧹 '+count+' notificaç'+(count>1?'ões lidas removidas':'ão lida removida')+'.'))
+    .then(sucesso)
     .catch(()=>showToast('⚠ Não consegui remover as notificações. Tente de novo.'));
 }
 
 function dismissNotif(notifId){
   const user=window._currentUser; if(!user||!notifId) return;
+  const notif = _activeNotifsCache.find(n=>n.id===notifId);
+  if(notif && notif.noTTLDelete){
+    window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), {[notifId+'/read']:true, [notifId+'/dismissed']:true}).catch(()=>{});
+    return;
+  }
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
 }
 

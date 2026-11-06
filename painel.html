@@ -3110,7 +3110,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.88 · painel</div>
+<div class="version">v5.89 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3213,9 +3213,9 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=40"></script>
+<script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=17"></script>
-<script src="mare-plantao.js?v=4"></script>
+<script src="mare-plantao.js?v=5"></script>
 <script src="mare-dicas.js?v=10"></script>
 
 <script>
@@ -7886,7 +7886,7 @@ function loadPainelNotifs(){
     // kanban-dev.html já resolve isso certo (Object.entries + spread com a
     // chave por cima) -- mesmo padrão aqui: chave real sempre vence.
     const notifs = Object.entries(val).filter(([,n])=>n && (!window.MareNotif || MareNotif.viva(n))).map(([nid,n])=>({   // mesmo TTL do sino do kanban/OKR
-      _kind:'notif', id:n.id||nid, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
+      _kind:'notif', id:nid, noTTLDelete:!!n.noTTLDelete, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
       ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'',
     }));
     _mergePainelNotifs('notif', notifs);
@@ -7964,24 +7964,33 @@ async function markAllPainelNotifsRead(){
   }
 }
 
-// Remove do Firebase as notificações (tipo 'notif') já lidas.
+// Remove do Firebase as notificações (tipo 'notif') já lidas e oculta os itens lidos do Feed da Torre.
 async function clearReadPainelNotifs(){
   const user = window._currentUser; if(!user) return;
   const lidas = _painelNotifs.filter(n=>n._kind==='notif' && n.read);
-  if(!lidas.length){ showToast('Nenhuma notificação lida para remover.'); return; }
-  const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
-  const idsLidas = new Set(lidas.map(n=>n.id));
-  try {
-    // runTransaction() — mesmo achado/fix de markAllPainelNotifsRead() acima.
-    await window._runTransaction(ref, current=>{
-      if(!current) return current;
-      idsLidas.forEach(id=>{ delete current[id]; });
-      return current;
-    });
-    showToast('🧹 '+lidas.length+' notificação'+(lidas.length>1?'ões':'')+' lida'+(lidas.length>1?'s':'')+' removida'+(lidas.length>1?'s':'')+'.');
-  } catch(e) {
-    showToast('❌ Erro ao limpar notificações.');
+  const nFeed = (window.MareNotif && MareNotif.clearRead) ? MareNotif.clearRead() : 0;
+  const total = lidas.length + nFeed;
+  if(!total){ showToast('Nenhuma notificação lida para remover.'); return; }
+  if(lidas.length){
+    const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+    const idsLidas = new Set(lidas.map(n=>n.id));
+    try {
+      // runTransaction() — mesmo achado/fix de markAllPainelNotifsRead() acima.
+      // noTTLDelete (id determinístico): apagar a chave deixaria o createNotif recriá-la como NÃO lida — marca read+dismissed e mantém o nó (viva() esconde).
+      await window._runTransaction(ref, current=>{
+        if(!current) return current;
+        idsLidas.forEach(id=>{
+          if(current[id] && current[id].noTTLDelete){ current[id].read = true; current[id].dismissed = true; }
+          else delete current[id];
+        });
+        return current;
+      });
+    } catch(e) {
+      showToast('❌ Erro ao limpar notificações.');
+      return;
+    }
   }
+  showToast('🧹 '+total+' notificaç'+(total>1?'ões lidas removidas':'ão lida removida')+'.');
 }
 
 function renderPainelNotifs(){
