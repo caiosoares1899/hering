@@ -79,6 +79,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-06 · Apresentação ao vivo: test_apresentacao_live.js falha na main (achado da rodada UI/UX de 06/11/2026)
+
+Achado de passagem, NÃO corrigido (fora do escopo da rodada; confirmado idêntico na main e na branch claude/apresentacao-radar-ui). Caso: 'fora da sincronização, o slide do apresentador NÃO puxa a pessoa' — depois de o acompanhante mexer nos slides (Eve em _okrGoTo(0)) e o apresentador ir ao slide 3, a página da Eve foi para o slide 3 (esperado: continuar no 0 com 'Voltar a seguir'). Pode ser o teste (chamar _okrGoTo por evaluate não conta como gesto da pessoa) ou regressão real do liveAposNavegar/liveAplicar — a investigar antes de a próxima rodada mexer na área ao vivo. Arquivo: okr-apresentacao.slide.html (liveAplicar/liveAposNavegar), docs/arezzo/testes/test_apresentacao_live.js.
+
 ### 2026-11-06 · Menção de card: a regex da busca por palavras (\\s+) não separava por espaço; buscar as palavras em outra ordem não achava
 
 • Origem: revisão do PR #1625 (Antigravity, "menção de cards com espaço e seleção por teclado"), já mergeado quando eu li. O diagnóstico dele estava certo e as duas correções funcionam (o `@card:` aceita espaço e Enter/Tab seleciona o card); sobrou uma regex.

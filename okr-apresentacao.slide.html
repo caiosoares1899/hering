@@ -15,6 +15,7 @@
   --blue:#2563c9; --accent:#38b6ff; --cyan:#7ec8e3; --teal:#1de9b6;
   --txt:#e8f4fd; --txt2:rgba(200,230,255,0.65); --txt3:rgba(150,200,240,0.4);
   --warn:#ffd166; --danger:#ff6b6b;
+  --ud:clamp(1px,.0625vw,1.2px);   /* mesma ideia, mais contida: o detalhe do Objetivo é denso (raia + marcos + 4 colunas) e precisa caber SEM rolagem */
   --u:clamp(1px,.0732vw,1.5px);   /* unidade de tela: 1px em notebook, ~1,4px em Full HD, teto 1,5px — todo tamanho de leitura usa calc(N*var(--u)) */
 }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -216,6 +217,15 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .obj-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:calc(14*var(--u));}
 .tag-chip{font-size:calc(13.5*var(--u));border-radius:999px;padding:3px 14px;border:1px solid;}
 .obj-bottom{display:flex;justify-content:flex-end;margin-top:auto;padding-top:calc(6*var(--u));}
+/* Gerência cheia (6+ Objetivos): 4 colunas e cartão enxuto — sem isso a página encolhe tudo para caber e o texto fica menor que antes. */
+.obj-grid.denso{grid-template-columns:repeat(auto-fill,minmax(calc(270*var(--u)),1fr));gap:calc(14*var(--u));}
+.obj-grid.denso .obj-card{padding:calc(12*var(--u)) calc(16*var(--u));border-radius:calc(16*var(--u));}
+.obj-grid.denso .obj-top{margin-bottom:calc(7*var(--u));}
+.obj-grid.denso .obj-title{font-size:calc(21*var(--u));}
+.obj-grid.denso .prog-row{margin:calc(6*var(--u)) 0 calc(5*var(--u));gap:calc(12*var(--u));}
+.obj-grid.denso .prog-pct{font-size:calc(30*var(--u));min-width:calc(68*var(--u));}
+.obj-grid.denso .obj-tags{margin-bottom:calc(6*var(--u));}
+.obj-grid.denso .avatar{width:calc(30*var(--u));height:calc(30*var(--u));font-size:calc(11.5*var(--u));}
 .avatar{width:calc(36*var(--u));height:calc(36*var(--u));border-radius:50%;border:1px solid var(--glass-b);background:var(--blue);
   display:flex;align-items:center;justify-content:center;font-size:calc(12.5*var(--u));font-weight:700;color:#fff;margin-left:-9px;overflow:hidden;}
 .avatar:first-child{margin-left:0;}
@@ -266,13 +276,13 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 /* Header em grid real (não position:fixed) — título, trimestre e marca/fechar
    nunca se sobrepõem porque cada um tem sua própria coluna garantida. */
 .d2-header{display:grid;grid-template-columns:1fr auto auto;align-items:start;gap:20px;flex-shrink:0;}
-.d2-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.4rem,2.5vw,2.7rem);line-height:1.22;
+.d2-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.4rem,2.2vw,2.05rem);line-height:1.22;
   min-width:0;overflow-wrap:break-word;}
-.d2-trim{display:flex;gap:7px;flex-wrap:wrap;align-content:flex-start;justify-content:flex-end;padding-top:5px;max-width:calc(210*var(--u));}
+.d2-trim{display:flex;gap:7px;flex-wrap:wrap;align-content:flex-start;justify-content:flex-end;padding-top:5px;max-width:calc(210*var(--ud));}
 .d2-brand-row{display:flex;align-items:center;gap:13px;padding-top:5px;}
-.d2-brand{font-family:'Syne',sans-serif;font-weight:800;font-size:calc(16*var(--u));color:var(--txt2);white-space:nowrap;
+.d2-brand{font-family:'Syne',sans-serif;font-weight:800;font-size:calc(16*var(--ud));color:var(--txt2);white-space:nowrap;
   display:flex;align-items:center;gap:8px;}
-.detail-close{background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;width:calc(36*var(--u));height:calc(36*var(--u));
+.detail-close{background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;width:calc(36*var(--ud));height:calc(36*var(--ud));
   color:var(--txt2);font-size:16px;cursor:pointer;flex-shrink:0;}
 .detail-close:hover{background:var(--glass-hover);}
 /* Botão de avançar pro próximo Objetivo DENTRO da mesma gerência (pedido
@@ -280,14 +290,14 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    gerencia" — nunca cruza pra outra gerência sozinho). Fica desabilitado no
    último Objetivo da gerência em vez de sumir, pra deixar claro que acabou
    (em vez de parecer que travou). */
-.detail-next{background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;height:calc(36*var(--u));padding:0 calc(16*var(--u));
-  color:var(--txt2);font-size:calc(13.5*var(--u));font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;
+.detail-next{background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;height:calc(36*var(--ud));padding:0 calc(16*var(--ud));
+  color:var(--txt2);font-size:calc(13.5*var(--ud));font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;
   display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;}
 .detail-next:hover{background:var(--glass-hover);}
 .detail-next:disabled{opacity:.35;cursor:default;}
 .detail-next:disabled:hover{background:var(--glass);}
 
-.d2-legend{display:flex;gap:26px;flex-wrap:wrap;font-size:calc(15*var(--u));color:var(--txt2);flex-shrink:0;}
+.d2-legend{display:flex;gap:26px;flex-wrap:wrap;font-size:calc(15*var(--ud));color:var(--txt2);flex-shrink:0;}
 .d2-legend span{display:flex;align-items:center;gap:8px;}
 
 /* Corpo: rail (Objetivo/Responsável/Indicadores) + tabela de Marcos. Altura
@@ -310,7 +320,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    em vez de silenciar o corte (que era o bug original, antes de existir
    qualquer mecanismo de fit), cada seção internamente comprimida se
    ajusta sozinha via _okrFitDetailSections(). */
-.d2-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:calc(380*var(--u)) 1.5fr;gap:calc(22*var(--u));}
+.d2-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:calc(380*var(--ud)) 1.5fr;gap:calc(22*var(--ud));}
 .d2-left{display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;}
 /* 2026-10-06 (pedido direto: "se o texto passar da área, em vez de diminuir a letra, prefiro que tenha scroll"): Marcos, rodapé e raia da
    esquerda NÃO encolhem mais a fonte — mantêm o tamanho e rolam quando não cabem. Itens da raia não podem ser espremidos (flex-shrink:0);
@@ -328,26 +338,26 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    mínimo real na conta do layout, e _okrFitDetailSections() consegue medir e
    encolher a fonte certinho quando precisa. */
 .d2-panel.grow{flex:1 0 auto;display:flex;flex-direction:column;}
-.d2-panel-label{font-size:calc(13*var(--u));text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:7px;flex-shrink:0;}
-.d2-panel-body{font-size:calc(15*var(--u));color:var(--txt2);line-height:1.55;}
+.d2-panel-label{font-size:calc(13*var(--ud));text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:7px;flex-shrink:0;}
+.d2-panel-body{font-size:calc(15*var(--ud));color:var(--txt2);line-height:1.55;}
 
 /* Mesmo motivo do .d2-panel.grow acima. */
 .d2-right{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:16px 22px;
   display:flex;flex-direction:column;min-height:0;}
-.d2-table-header{display:flex;font-size:calc(13*var(--u));text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);
+.d2-table-header{display:flex;font-size:calc(13*var(--ud));text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);
   font-weight:700;padding-bottom:10px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .d2-table-header .c-nome{flex:1;}
-.d2-table-header .c-status{width:calc(190*var(--u));}
-.d2-table-header .c-prazo{width:calc(100*var(--u));text-align:right;}
+.d2-table-header .c-status{width:calc(190*var(--ud));}
+.d2-table-header .c-prazo{width:calc(100*var(--ud));text-align:right;}
 /* Rola quando não cabe. Centralizar com `justify-content:center` cortaria o topo de um conteúdo mais alto que a área (não dá pra rolar pra cima do
    início); as margens automáticas nas pontas centralizam só quando SOBRA espaço. */
 .d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;}
 .d2-table-rows > :first-child{margin-top:auto;}
 .d2-table-rows > :last-child{margin-bottom:auto;}
-.d2-marco-row{display:flex;align-items:flex-start;padding:calc(9*var(--u)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:calc(16.5*var(--u));cursor:pointer;border-radius:8px;transition:background .15s;}
+.d2-marco-row{display:flex;align-items:flex-start;padding:calc(5*var(--ud)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:calc(15*var(--ud));cursor:pointer;border-radius:8px;transition:background .15s;}
 .d2-marco-row:last-child{border-bottom:none;}
 .d2-marco-row:hover{background:rgba(255,255,255,.05);}
-.d2-marco-num{width:calc(28*var(--u));color:var(--txt2);font-size:calc(13.5*var(--u));flex-shrink:0;}
+.d2-marco-num{width:calc(28*var(--ud));color:var(--txt2);font-size:calc(12.5*var(--ud));flex-shrink:0;}
 /* Nome do marco agora QUEBRA em várias linhas em vez de cortar (pedido direto
    do usuário, 2026-09-10: "a parte de marcos nao ta respeitando o limite
    lateral! vale quebrar o texto se ultrapassar a linha" — troca deliberada
@@ -362,9 +372,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    conteúdo nesta tela. */
 .d2-marco-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding-right:10px;}
 .d2-marco-nome{color:var(--txt);white-space:normal;overflow-wrap:break-word;}
-.d2-marco-desc{color:var(--txt2);font-size:calc(13.5*var(--u));line-height:1.4;white-space:normal;overflow-wrap:break-word;}
-.d2-marco-status{width:calc(190*var(--u));display:flex;align-items:center;gap:7px;font-size:calc(14.5*var(--u));color:var(--txt2);flex-shrink:0;}
-.d2-marco-prazo{width:calc(100*var(--u));text-align:right;font-size:calc(14.5*var(--u));color:var(--txt2);flex-shrink:0;}
+.d2-marco-desc{color:var(--txt2);font-size:calc(12.5*var(--ud));line-height:1.4;white-space:normal;overflow-wrap:break-word;}
+.d2-marco-status{width:calc(190*var(--ud));display:flex;align-items:center;gap:7px;font-size:calc(13.5*var(--ud));color:var(--txt2);flex-shrink:0;}
+.d2-marco-prazo{width:calc(100*var(--ud));text-align:right;font-size:calc(13.5*var(--ud));color:var(--txt2);flex-shrink:0;}
 
 /* Tira de 4 colunas — Progressos/Próximos Passos/Riscos/Planos de Ação, na
    MESMA tela do Objetivo (nunca uma 2ª tela — pedido direto: "é importante
@@ -394,7 +404,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    _okrFitDetailSections() ter a chance de medir/reagir. */
 .d2-fcol{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:16px 18px;
   display:flex;flex-direction:column;}
-.d2-fcol h4{font-size:calc(13.5*var(--u));text-transform:uppercase;letter-spacing:.04em;color:var(--cyan);margin-bottom:8px;
+.d2-fcol h4{font-size:calc(13.5*var(--ud));text-transform:uppercase;letter-spacing:.04em;color:var(--cyan);margin-bottom:8px;
   display:flex;align-items:center;gap:7px;flex-shrink:0;}
 /* min-height:0 é o que permite _okrFitDetailSections() medir o espaço de
    verdade disponível pra essa lista: sem ele, o item de flex nunca é
@@ -405,13 +415,13 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    real, print do usuário: "Indicadores de Entrega" com 6 itens perdendo o
    último item, escondido fora da borda do card, sem nenhum overflow:hidden
    pra sequer escondê-lo — só ficava fora de vista). */
-.d2-flist{list-style:none;font-size:calc(15.5*var(--u));color:var(--txt2);line-height:1.65;margin:0;padding:0;
+.d2-flist{list-style:none;font-size:calc(15.5*var(--ud));color:var(--txt2);line-height:1.65;margin:0;padding:0;
   flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overscroll-behavior:contain;}
 .d2-flist > :first-child{margin-top:auto;}
 .d2-flist > :last-child{margin-bottom:auto;}
 .d2-flist li{padding-left:13px;position:relative;}
 .d2-flist li::before{content:'•';position:absolute;left:0;color:var(--txt3);}
-.d2-empty{font-size:calc(14.5*var(--u));color:var(--txt2);font-style:italic;}
+.d2-empty{font-size:calc(14.5*var(--ud));color:var(--txt2);font-style:italic;}
 
 ::-webkit-scrollbar{width:8px;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:8px;}
@@ -542,7 +552,7 @@ body.live-ativa .tb-live,body.live-host .tb-live{display:none;}   /* com a apres
 .tb-mid{min-width:0;}
 .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;background:rgba(255,77,77,.14);border:1px solid rgba(255,77,77,.45);color:#ff8a8a;white-space:nowrap;}
 .live-pill i{position:relative;width:7px;height:7px;border-radius:50%;background:#ff4d4d;}
-.live-pill i::after{content:'';position:absolute;inset:0;border-radius:50%;background:#ff4d4d;opacity:0;animation:liveAnel 1.8s ease-out infinite;will-change:transform,opacity;}
+.live-pill i::after{content:'';position:absolute;inset:0;border-radius:50%;background:#ff4d4d;opacity:0;animation:liveAnel 1.8s ease-out 3;}   /* 3 pulsos ao entrar na sala e para: animação infinita mantém 60 quadros/s com a página parada */
 @keyframes liveAnel{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.8);opacity:0}}
 @media (prefers-reduced-motion:reduce){.live-pill i::after{animation:none;}.slide{transition:none !important;}}
 .live-btn.on{border-color:var(--accent);background:rgba(56,182,255,.2);}
@@ -1279,7 +1289,7 @@ function buildSlides(){
         list.push({key:'ger:'+gr.key, title:gr.rotulo, torre:t.id, html:`
           <div class="slide-inner t-${t.id}">
             <div class="ger-header com-torre"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="torre-chip">${t.icon?t.icon+' ':''}${esc(t.label)}</span><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
-            <div class="obj-grid">${lista.map(o=>objCardHtml(o)).join('')}</div>
+            <div class="obj-grid${lista.length>=6?' denso':''}">${lista.map(o=>objCardHtml(o)).join('')}</div>
           </div>`});
       });
     });
@@ -1632,10 +1642,10 @@ window._okrOpenDetail = id => {
         <div class="d2-trim">${_okrTrimestresOf(o).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
         <div class="d2-brand-row">
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}</div>
-          ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:calc(30*var(--u));padding:0 calc(12*var(--u));font-size:calc(12.5*var(--u));" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
+          ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:calc(30*var(--ud));padding:0 calc(12*var(--ud));font-size:calc(12.5*var(--ud));" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
           <button class="detail-next" ${prevObj?`onclick="window._okrOpenDetail(${jsq(prevObj.id)})" title="Objetivo anterior de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`:`disabled title="Primeiro objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`}>← Anterior</button>
           <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
-          ${_okrAtingPctObj(o)!==null?`<button class="detail-next" style="height:calc(30*var(--u));padding:0 calc(12*var(--u));font-size:calc(12.5*var(--u));" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
+          ${_okrAtingPctObj(o)!==null?`<button class="detail-next" style="height:calc(30*var(--ud));padding:0 calc(12*var(--ud));font-size:calc(12.5*var(--ud));" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
       </div>

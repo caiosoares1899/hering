@@ -64,7 +64,7 @@ border-radius: var(--r) /* 10 */ ou var(--r2) /* 14 */;
 backdrop-filter: blur(8px);                /* botão, chip */
 /* card/painel 12–14px · modal/overlay 16–18px */
 ```
-**Desfoque só onde há o que desfocar:** sobre fundo **estático** (o gradiente do `.ocean`, o fundo opaco do detalhe) o `backdrop-filter` não muda a imagem e só custa GPU — vale em gaveta/modal que abre **por cima do conteúdo**. Cartão, barra e painel fixos usam o vidro translúcido **sem** blur. Na apresentação do Radar (06/11/2026) isso, mais um pulso infinito na topbar, fazia a página desenhar 60 quadros/s parada (~190 ms de GPU/s); sem eles, ~2 ms/s.
+**Desfoque só onde há o que desfocar:** sobre fundo **estático** (o gradiente do `.ocean`, o fundo opaco do detalhe) o `backdrop-filter` não muda a imagem e só custa GPU — vale no **painel** de gaveta/modal que abre **por cima do conteúdo**; o véu de tela inteira atrás dele só escurece (blur de tela cheia custa caro). Cartão, barra e painel fixos usam o vidro translúcido **sem** blur. Na apresentação do Radar (06/11/2026) isso, mais um pulso infinito na topbar, fazia a página desenhar 60 quadros/s parada (~190 ms de GPU/s); sem eles, ~2 ms/s.
 `backdrop-filter` custa GPU no celular: **não** empilhe vidro dentro de vidro dentro de vidro (card dentro de painel dentro de modal): o de dentro usa fundo translúcido **sem** blur.
 
 ### 2.4 Fundo, peixinhos e movimento

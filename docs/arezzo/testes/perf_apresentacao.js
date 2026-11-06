@@ -5,6 +5,7 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
 const DPR = Number(process.argv[3] || 2);
 (async () => { const b = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: DPR }); await fake.install(ctx, seed()); const p = await ctx.newPage();
+  if (process.env.PAGINA_ALT) { const corpo = require('fs').readFileSync(process.env.PAGINA_ALT, 'utf8'); await p.route('**/okr-apresentacao.slide.html*', r => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: corpo })); }   // compara com outra versão da página sem trocar arquivo
   await p.goto('http://localhost:8941/okr-apresentacao.slide.html'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana', photoURL: '', providerData: [{ providerId: 'google.com' }] }); await p.waitForTimeout(2000);
   const medir = (ms, acao) => p.evaluate(async ([ms, acao]) => { const dts = []; let ult = performance.now(), fim = ult + ms, k = 0; const f = window.eval(acao);
     await new Promise(res => { const tick = (t) => { dts.push(t - ult); ult = t; if (f && (k++ % 40 === 0)) f(); if (t < fim) requestAnimationFrame(tick); else res(); }; requestAnimationFrame(tick); });
@@ -23,4 +24,11 @@ const DPR = Number(process.argv[3] || 2);
   R['trocando de slide'] = await janela(4000, '(()=>{ let i=1; return ()=>{ window._okrGoTo(i=(i+1)%8); }; })()');
   await p.evaluate(() => { window._okrGoTo(2); window._okrOpenDetail('o0'); }); await p.waitForTimeout(1200);
   R['detalhe aberto'] = await janela(3000, 'null');
+  // Cenário real de quem apresenta: sessão "Apresentar ao vivo" ligada (apresentador), parado e com o laser seguindo o mouse.
+  await p.evaluate(() => { window._okrCloseDetail(); window._okrGoTo(2); }); await p.waitForTimeout(500);
+  p.on('dialog', d => d.accept()); await p.click('#live-box button'); await p.waitForTimeout(6500);   // espera os 3 pulsos de entrada acabarem
+  R['AO VIVO ligado, parado'] = await janela(3000, 'null');
+  await p.keyboard.press('l'); await p.mouse.move(400, 400);
+  const mexe = (async () => { for (let i = 0; i < 60; i++) { await p.mouse.move(400 + (i % 30) * 20, 400 + Math.sin(i) * 120); await p.waitForTimeout(50); } })();
+  R['AO VIVO + laser em movimento'] = await janela(3000, 'null'); await mexe;
   console.log(process.argv[2] || 'medida', 'dpr', DPR); console.table(R); await b.close(); })();
