@@ -6658,7 +6658,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.908-dev</div>
+<div class="version">v8.30.909-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -31650,7 +31650,7 @@ function handleMentionInput(ta, dd){
     // grafo normal de cards (sem dono, sem prazo, invisível no board) —
     // sem essa exclusão, dava pra @mencionar ele num comentário/descrição
     // como se fosse um card de trabalho qualquer.
-    const queryTerms = cardQuery.split(/\\s+/).filter(Boolean);
+    const queryTerms = cardQuery.split(/\s+/).filter(Boolean);   // cada palavra separada (em qualquer ordem); `/\\s+/` NÃO separava: casava um "\s" literal
     const cardMatches = cards.filter(c=> {
       if (c.archived || c.agenteHotline || c.id === editingId) return false;
       const t = c.title.toLowerCase();
