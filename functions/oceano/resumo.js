@@ -94,12 +94,14 @@ async function resumirAlarmes({ db, squads, agora }) {
     sq,
     v: (await db.ref(`kanban/squads/${sq}/dados/cards_incidentes_sumico`).get()).val() || {},
     g: (await db.ref(`kanban/cards_guardiao/${sq}/incidentes`).get()).val() || {},
+    r: (await db.ref(`kanban/cards_guardiao/${sq}/resolvidos`).get()).val() || {},   // incidentes que um ADM/PO marcou como resolvidos (histórico fica; só deixam de pintar o semáforo)
   })));
   const itens = [], restauradosPorCard = new Map(), naoRestaurados = new Set(), restaurados = new Set();
-  lidos.forEach(({ sq, v, g }) => {
+  lidos.forEach(({ sq, v, g, r }) => {
     Object.values(v).forEach((x) => { if (x && x.detectadoEm >= corte) itens.push({ sq, cardId: x.cardId, em: x.detectadoEm }); });
-    Object.values(g).forEach((x) => {
+    Object.entries(g).forEach(([chave, x]) => {
       if (!x || !x.cardId || !(x.detectadoEm >= corte)) return;
+      if (x.acao !== 'restaurado' && r[chave]) return;        // resolvido por gente: não conta mais como "sem socorro"
       if (x.acao === 'restaurado') { restaurados.add(sq + ':' + x.cardId); restauradosPorCard.set(sq + ':' + x.cardId, x.detectadoEm); }
       else naoRestaurados.add(sq + ':' + x.cardId);          // sem_espelho / em_massa / reincidente: ninguém restaurou
     });
@@ -110,6 +112,18 @@ async function resumirAlarmes({ db, squads, agora }) {
   itens.filter((i) => !socorrido(i)).forEach((i) => semSocorro.add(i.sq + ':' + i.cardId));
   const ultimo = itens.sort((a, b) => b.em.localeCompare(a.em))[0];
   return { ultimas24h: semSocorro.size, restaurados24h: restaurados.size, alarmes24h: distintos.size, ultimoEm: ultimo ? ultimo.em : null, squadUltimo: ultimo ? ultimo.sq : null };
+}
+
+// ── saúde do Guardião (pulso escrito por functions/cards/status.js a cada 5 min em kanban/cards_guardiao/_status) ─────────────────────────────────────────────────────
+// ok = pulso com menos de 15 min E o espelho acompanhando os cards (atraso ≤ 5 min). Sem o nó (função ainda não publicada) = 'desconhecido' — NÃO pinta o semáforo geral.
+const LIMITE_PULSO_MS = 15 * 60 * 1000;
+function statusGuardiao(s, agora) {
+  if (!s || !s.ts) return { estado: 'desconhecido', texto: 'sem pulso ainda', pulsoMin: null, atrasoMin: null, abertos: null };
+  const pulsoMs = agora - Date.parse(s.ts), pulsoMin = Math.max(0, Math.round(pulsoMs / 60000));
+  const atrasoMin = Number(s.atrasoMaxMin) || 0, abertos = Number(s.abertosTotal) || 0;
+  if (!(pulsoMs <= LIMITE_PULSO_MS)) return { estado: 'atencao', texto: `sem pulso há ${pulsoMin} min`, pulsoMin, atrasoMin, abertos };
+  if (s.ok === false) return { estado: 'atencao', texto: `espelho atrasado ${atrasoMin} min`, pulsoMin, atrasoMin, abertos };
+  return { estado: 'ok', texto: abertos ? `ativo · ${abertos} incidente(s) em aberto` : 'ativo', pulsoMin, atrasoMin, abertos };
 }
 
 // ── meus cards (responsável) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -155,7 +169,7 @@ async function dadosDoDono({ db, resolverUid }) {
 async function montarResumo({ db, bucket, agora = Date.now(), resolverUid, memo = memoGlobal }) {
   const seguro = async (fn, padrao) => { try { return await fn(); } catch (e) { console.error('[oceanoResumo]', e && e.message); return padrao; } };
   const dono = await seguro(() => memo('dono', TTL.cards, agora, () => dadosDoDono({ db, resolverUid })), { uid: null, init: null, squads: [] });
-  const [vtex, github, firebase, backup, plantao, alarmes, cards] = await Promise.all([
+  const [vtex, github, firebase, backup, plantao, alarmes, cards, guardiao] = await Promise.all([
     seguro(async () => statusVtex((await db.ref('kanban/vtex_saude').get()).val(), agora), { estado: 'desconhecido', texto: 'erro ao ler' }),
     seguro(async () => statusGithub((await db.ref('kanban/github_saude').get()).val(), agora), { estado: 'desconhecido', texto: 'erro ao ler' }),
     seguro(async () => statusFirebase((await db.ref('kanban/firebase_saude').get()).val(), agora), { estado: 'desconhecido', texto: 'erro ao ler' }),
@@ -163,12 +177,13 @@ async function montarResumo({ db, bucket, agora = Date.now(), resolverUid, memo 
     seguro(() => resumirPlantao({ db }), null),
     seguro(() => resumirAlarmes({ db, squads: dono.squads, agora }), null),
     seguro(() => (dono.init && dono.squads.length ? memo('cards', TTL.cards, agora, () => resumirCards({ db, squads: dono.squads, init: dono.init, agora })) : Promise.resolve(null)), null),
+    seguro(async () => statusGuardiao((await db.ref('kanban/cards_guardiao/_status').get()).val(), agora), { estado: 'desconhecido', texto: 'erro ao ler', pulsoMin: null, atrasoMin: null, abertos: null }),
   ]);
   const alarmeEstado = alarmes && alarmes.ultimas24h > 0 ? 'atencao' : 'ok';
-  const geral = pior(vtex.estado, github.estado, firebase.estado, backup.estado, alarmeEstado, plantao && plantao.escalados > 0 ? 'atencao' : 'ok');
+  const geral = pior(vtex.estado, github.estado, firebase.estado, backup.estado, alarmeEstado, plantao && plantao.escalados > 0 ? 'atencao' : 'ok', guardiao.estado === 'atencao' ? 'atencao' : 'ok');
   return {
     geral, geradoEm: new Date(agora).toISOString(), dono: { iniciais: dono.init, squads: dono.squads.length },
-    status: { vtex, github, firebase }, backup, plantao, alarmesSumico: alarmes, meusCards: cards,
+    status: { vtex, github, firebase }, backup, plantao, alarmesSumico: alarmes, guardiao, meusCards: cards,
   };
 }
 
@@ -197,4 +212,4 @@ exports.oceanoResumo = onRequest(
     } catch (e) { console.error('[oceanoResumo]', e); res.status(500).json({ erro: 'erro no servidor' }); }
   }
 );
-Object.assign(exports, { montarResumo, statusVtex, statusGithub, statusFirebase, resumirCards, resumirAlarmes, resumirPlantao, criarMemo, dentroDoLimite, DONO_EMAIL, LIMITE_POR_HORA, TTL });
+Object.assign(exports, { montarResumo, statusVtex, statusGithub, statusFirebase, resumirCards, resumirAlarmes, statusGuardiao, resumirPlantao, criarMemo, dentroDoLimite, DONO_EMAIL, LIMITE_POR_HORA, TTL });

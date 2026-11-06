@@ -268,6 +268,9 @@ exports.timersVigia = require('./timers/vigia').timersVigia;
 exports.cardsEspelhar = require('./cards/guardiao').cardsEspelhar;
 exports.cardsGuardiao = require('./cards/guardiao').cardsGuardiao;
 exports.cardsEspelhoVarredura = require('./cards/guardiao').cardsEspelhoVarredura;   // 05:30 diário: preenche/atualiza o espelho do que ninguém editou
+// 🛡️ Pulso de saúde do Guardião (a cada 5 min): grava kanban/cards_guardiao/_status (carimbo de vida + atraso do espelho + incidentes em aberto) — lido pelo Painel e pelo mini painel (oceanoResumo).
+// Deploy: firebase deploy --only functions:guardiaoStatus
+exports.guardiaoStatus = require('./cards/status').guardiaoStatus;
 
 // 🚨 Alerta de incidente da VTEX (functions/vtex/statusVtex.js): a cada 5 min lê https://status.vtex.com/feed.rss e, com incidente/manutenção em
 // andamento, publica sozinho um Comunicado 🚨 (popup insistente, todos) + notificação `vtex_incidente` (sino + push, PUSH_TYPES acima) pra todo mundo;

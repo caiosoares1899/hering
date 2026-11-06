@@ -131,3 +131,20 @@ test('limite por hora: acima do teto devolve false (e conta na hora certa)', asy
   for (let i = 0; i < R.LIMITE_POR_HORA; i++) ok = ok && (await R.dentroDoLimite(db, AGORA));
   assert.equal(ok, true); assert.equal(await R.dentroDoLimite(db, AGORA), false); assert.equal(await R.dentroDoLimite(db, AGORA + 3600000), true);
 });
+
+test('incidente do guardião que um ADM/PO marcou como resolvido deixa de pintar o semáforo (o histórico fica)', async () => {
+  const d = seed(); d.kanban.cards_guardiao = { dados: { incidentes: { a: { cardId: 'x1', acao: 'sem_espelho', detectadoEm: iso(30) }, b: { cardId: 'x2', acao: 'reincidente', detectadoEm: iso(20) } }, resolvidos: { a: { por: 'Ana', uid: 'adm1', em: iso(5) } } } };
+  const r = await monta(d).run();
+  assert.equal(r.alarmesSumico.ultimas24h, 1, 'só o b segue sem socorro'); assert.equal(r.geral, 'atencao');
+  d.kanban.cards_guardiao.dados.resolvidos.b = { por: 'Ana', uid: 'adm1', em: iso(4) };
+  const r2 = await monta(d).run(); assert.equal(r2.alarmesSumico.ultimas24h, 0); assert.notEqual(r2.geral, 'atencao');
+  assert.ok(d.kanban.cards_guardiao.dados.incidentes.a, 'o incidente em si não some');
+});
+
+test('bloco `guardiao` do resumo: sem pulso = desconhecido (não pinta); com pulso velho = atenção e puxa o semáforo geral', async () => {
+  const sem = await monta().run(); assert.equal(sem.guardiao.estado, 'desconhecido'); assert.notEqual(sem.geral, 'atencao');
+  const d = seed(); d.kanban.cards_guardiao = { _status: { ts: iso(5), ok: true, atrasoMaxMin: 0, abertosTotal: 0, squads: {} } };
+  const ok = await monta(d).run(); assert.equal(ok.guardiao.estado, 'ok'); assert.equal(ok.guardiao.pulsoMin, 5);
+  d.kanban.cards_guardiao._status.ts = iso(40); const velho = await monta(d).run();
+  assert.equal(velho.guardiao.estado, 'atencao'); assert.equal(velho.geral, 'atencao');
+});
