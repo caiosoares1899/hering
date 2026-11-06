@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › Descrição adicional: campo maior por padrão e que lembra o tamanho (kanban-dev v8.30.910-dev) — SÓ DEV — 2026-11-06
+
+O campo de texto da descrição adicional abria com ~3 linhas e voltava a esse tamanho a cada abertura. Agora abre grande (240 px no computador, 190 px no celular) e, quando a pessoa arrasta o cantinho para aumentar ou diminuir, o navegador guarda a altura (localStorage mare_xdesc_altura, entre 120 e 1000 px) e usa como padrão nas próximas vezes, inclusive após recarregar. Valor guardado inválido volta ao padrão. Teste: docs/arezzo/testes/test_descricao_adicional_altura.js (arrasto real do cantinho). Dica: não — o redimensionamento nativo já é conhecido; o ganho é o campo vir maior.
+
 ### Mini painel (Mac, Windows e página): linha do Guardião dos cards (SÓ DEV — apps nativos; depende do deploy do guardiaoStatus) — 2026-11-06
 
 O mini painel (página, app do Mac e janela do Windows) ganhou a linha **🛡️ Guardião dos cards**, lida do novo bloco `guardiao` do `oceanoResumo` (pulso de `guardiaoStatus`): verde "ativo · pulso há N min", amarela quando o pulso passa de 15 min ou o espelho atrasa mais de 5 min — nesse caso o semáforo geral e o ícone da barra/bandeja também mudam, e o aviso de mudança nasce com texto fixo ("Guardião: sem pulso" / "espelho atrasado", sem os minutos, para não avisar a cada leitura). Mac: `Resumo.swift` (struct `Guardiao`), `Apresentacao.swift` (lista de problemas), `MenuView.swift` e widget médio — **compila no typecheck do Swift** (app e widget); Windows: `ProblemasDe` e a linha do menu — **não executado** (sem Windows aqui; os testes de contrato garantem que os nomes existem no JSON e que o BOM foi preservado). Depende do deploy do #1621 (`guardiaoStatus` e `oceanoResumo`); sem o pulso o campo vem "sem leitura" e nada pinta. Ferramenta pessoal do Caio (SÓ DEV para os apps; a página entra com o merge). Dica: não.
