@@ -48,9 +48,9 @@ t('pista (contexto) NUNCA é apresentada como culpado', () => {
   const A = carregar(), e = { chave: 'z', sq: 'dados', cardId: 'c', titulo: 'T', em: ago(1), acao: 'sem_espelho', res: null, causa: A._scCausa({ causaTexto: 'x', contexto: { ultimaEscritaEstrutural: { por: 'Vinicius', ver: 'v1', origem: 'reordenar', haSeg: 4 } } }) };
   const h = A._scItemHtml(e, true); assert.match(h, /Pista \(não é culpa comprovada\)/); assert.ok(!/Causado por/.test(h));
 });
-t('resolvido: mostra quem e quando, sem botão; restaurado: link para abrir o card e sem botão de resolver', () => {
+t('resolvido: mostra quem na linha E quem/quando no corpo, sem botão; restaurado: link para abrir o card e sem botão de resolver', () => {
   const A = carregar(), ev = A._scMontarEventos(lidos, AGORA), res = A._scItemHtml(ev.find((x) => x.chave === 'g4'), true), rest = A._scItemHtml(ev.find((x) => x.chave === 'g1'), true);
-  assert.match(res, /Resolvido por Caio/); assert.ok(!/data-sc-acao="resolver"/.test(res));
+  assert.match(res, /<span class="sc-meta">[^<]*✅ Caio<\/span>/, 'quem resolveu aparece na linha do resumo'); assert.match(res, /Resolvido por Caio/); assert.ok(!/data-sc-acao="resolver"/.test(res));
   assert.match(rest, /opencard=c1/); assert.ok(!/data-sc-acao="resolver"/.test(rest));
 });
 t('permissão de tela: ADM e PO/Organizador veem o botão; membro não (a regra do banco decide de verdade)', () => {

@@ -409,8 +409,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .sc-btn{min-height:32px;padding:5px 12px;border-radius:8px;border:1px solid rgba(29,233,182,.35);background:rgba(29,233,182,.1);color:var(--teal);font:inherit;font-size:11px;font-weight:600;cursor:pointer;}
 .sc-btn.sec{border-color:var(--glass-b);background:transparent;color:var(--txt2);}
 .sc-vazio{padding:14px;text-align:center;color:var(--txt3);}
+.sc-meta-corpo{display:none;}
 @media (hover:none) and (pointer:coarse){.sc-chip{min-height:44px;}.sc-btn{min-height:44px;padding:8px 14px;}.sc-item summary{min-height:48px;}}
-@media (max-width:520px){.sc-item .sc-meta{display:none;}.sc-corpo{padding-left:14px;}}
+@media (max-width:520px){.sc-item summary .sc-meta{display:none;}.sc-item .sc-meta-corpo{display:block;}.sc-corpo{padding-left:14px;}}
 @media (prefers-reduced-motion:reduce){.sc-item .sc-seta{transition:none;}}
 .pt-bucket summary{list-style:none;cursor:pointer;}
 .pt-bucket summary::-webkit-details-marker{display:none;}
@@ -3094,7 +3095,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.90 · painel-dev</div>
+<div class="version">v5.91 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7651,8 +7652,8 @@ function _scItemHtml(e, podeResolver){
   const botao = (!e.res && !_SC_ACAO[e.acao].bom && podeResolver) ? '<button type="button" class="sc-btn" data-sc-acao="resolver" data-sc-sq="'+esc(e.sq)+'" data-sc-chave="'+esc(e.chave)+'">✅ Resolver</button>' : '';
   return '<details class="sc-item" style="--sc-cor:'+a.cor+';"'+(aberto?' open':'')+' data-sc-id="'+esc(e.sq+'|'+e.chave)+'">'
     + '<summary><span aria-hidden="true">'+a.ico+'</span><span class="sc-tit">'+(e.titulo ? esc(e.titulo) : '<i style="color:var(--txt3);font-weight:400;">título desconhecido</i> · '+esc(e.cardId))+'</span>'
-    + '<span class="sc-meta">'+esc(e.sq)+' · '+esc(_scQuando(e.em))+'</span><span class="sc-seta" aria-hidden="true">▶</span></summary>'
-    + '<div class="sc-corpo"><div style="color:'+a.cor+';font-weight:600;">'+esc(a.txt)+'</div><div class="sc-meta" style="white-space:normal;">'+esc(e.sq)+' · '+esc(_scQuando(e.em))+'</div>'+causa+autor+resolvido
+    + '<span class="sc-meta">'+esc(e.sq)+' · '+esc(_scQuando(e.em))+(e.res ? ' · ✅ '+esc(e.res.por||'?') : '')+'</span><span class="sc-seta" aria-hidden="true">▶</span></summary>'   // quem resolveu já aparece na linha (o corpo repete com a data)
+    + '<div class="sc-corpo"><div style="color:'+a.cor+';font-weight:600;">'+esc(a.txt)+'</div><div class="sc-meta sc-meta-corpo" style="white-space:normal;">'+esc(e.sq)+' · '+esc(_scQuando(e.em))+'</div>'+causa+autor+resolvido
     + ((botao||link) ? '<div class="sc-acoes">'+botao+link+'</div>' : '') + '</div></details>';
 }
 function _scRender(){
@@ -7674,7 +7675,7 @@ function _scRender(){
   if(_scAba==='abertos'){
     const velhos = abertos.filter(e=>Date.parse(e.em) < agora - _SC_ANTIGO_DIAS*86400000);
     if(velhos.length && podeRes) h += '<div class="sc-aviso"><span>'+velhos.length+' episódio'+(velhos.length>1?'s':'')+' com mais de '+_SC_ANTIGO_DIAS+' dias esperando — provavelmente já tratado'+(velhos.length>1?'s':'')+'.</span><button type="button" class="sc-btn" data-sc-acao="resolver-antigos">✅ Resolver os antigos</button></div>';
-    if(abertos.length) h += '<div class="sc-aviso" style="border-color:rgba(255,107,107,.25);">⚠️ <span><b>Antes de recriar um card</b>, procure no backup do dia: o guardião não tinha cópia (ou parou de restaurar) nestes casos.</span></div>';
+    if(abertos.some(e=>['sem_espelho','em_massa','reincidente'].includes(e.acao))) h += '<div class="sc-aviso" style="border-color:rgba(255,107,107,.25);justify-content:flex-start;"><span>⚠️ <b>Antes de recriar um card</b>, procure no backup do dia: nos episódios sem cópia, em massa ou reincidentes o guardião não conseguiu restaurar.</span></div>';
   }
   if(!ev.length){
     h += '<div class="sc-vazio">'+(_scAba==='abertos' ? '🌊 Nada esperando por você. O guardião segue de olho.' : _scAba==='restaurados' ? 'Nenhum card precisou ser restaurado nos últimos '+_SC_DIAS+' dias.' : 'Nada foi marcado como resolvido ainda.')+'</div>';
