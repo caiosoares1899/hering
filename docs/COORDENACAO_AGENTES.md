@@ -111,8 +111,6 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Claude | `claude/painel-saude-cards-ui` | `painel-dev.html` (Saúde dos cards), `functions/oceano/resumo.js` | 06/11/2026 |
-| Claude | `claude/minipainel-guardiao` | `mac/` (Resumo, Apresentacao, MenuView, Widget), `windows/oceano-bandeja.ps1`, `minipainel.html`, `docs/MINIPAINEL.md` | 06/11/2026 |
 
 ### Para amanhã (18/10/2026) — combinado com o Caio
 | O quê | Dono | Onde está o desenho |
