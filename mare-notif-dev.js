@@ -41,7 +41,8 @@
   // SÓ o prazo (TTL). O interruptor do tipo (Central de Notificações) NÃO entra aqui: as páginas montam a lista pessoal com viva() quando o snapshot chega e
   // refiltram por sinoLigado() a cada desenho — com o filtro dentro de viva(), a config chegando DEPOIS do snapshot (ou o ADM religando o tipo ao vivo)
   // deixava a notificação descartada da lista até o próximo snapshot.
-  function viva(n){ const t = new Date(n && n.ts).getTime(); return !isNaN(t) && (Date.now()-t) < (n.read ? TTL_LIDA_MS : TTL_NAO_LIDA_MS); }
+  // `dismissed` (grava-se { read:true, dismissed:true } em vez de apagar a chave quando a notificação tem noTTLDelete: apagar deixaria o createNotif com idOverride recriá-la como NÃO lida): nunca volta ao sino.
+  function viva(n){ if(n && n.dismissed) return false; const t = new Date(n && n.ts).getTime(); return !isNaN(t) && (Date.now()-t) < (n.read ? TTL_LIDA_MS : TTL_NAO_LIDA_MS); }
   // O ícone do evento vem do banco (qualquer pessoa da empresa grava no feed): só texto curto, sem nada que vire HTML.
   function iconeSeguro(x){ return String(x||'').replace(/[<>&"'`\\]/g,'').slice(0,16); }
 
@@ -258,15 +259,15 @@
       err=>console.warn('[MareNotif] feed indisponível (sem permissão?):', err && err.message));
     if(st.viewer){
       let v = null; try{ v = JSON.parse(localStorage.getItem(seenLocalKey())||'null'); }catch(e){}
-      st.seen = (v && v.ts) ? {ts:v.ts, lidos:v.lidos||{}} : {ts:new Date().toISOString(), lidos:{}};   // 1ª visita: só o que vier depois conta como novo
+      st.seen = (v && v.ts) ? {ts:v.ts, lidos:v.lidos||{}, ocultos:v.ocultos||{}} : {ts:new Date().toISOString(), lidos:{}, ocultos:{}};   // 1ª visita: só o que vier depois conta como novo
       seenLocalSalvar(); st.seenReady = true; emitir();
       return;
     }
     W._onValue(W._ref(W._db, 'kanban/usuarios/'+user.uid+'/torre'), snap=>{ st.torre = snap.val() || 'digital'; emitir(); }, ()=>{});
     W._onValue(W._ref(W._db, SEEN+'/'+user.uid), snap=>{
       const v = snap.val();
-      if(!v || !v.ts){ const ts = new Date().toISOString(); W._update(W._ref(W._db, SEEN+'/'+user.uid), {ts}).catch(()=>{}); st.seen = {ts, lidos:(v&&v.lidos)||{}}; }
-      else st.seen = {ts:v.ts, lidos:v.lidos||{}};
+      if(!v || !v.ts){ const ts = new Date().toISOString(); W._update(W._ref(W._db, SEEN+'/'+user.uid), {ts}).catch(()=>{}); st.seen = {ts, lidos:(v&&v.lidos)||{}, ocultos:(v&&v.ocultos)||{}}; }
+      else st.seen = {ts:v.ts, lidos:v.lidos||{}, ocultos:v.ocultos||{}};
       st.seenReady = true; emitir();
     }, ()=>{ st.seenReady = true; emitir(); });
     prefsStart(); insRender();   // Não Perturbe + modo insistente da pessoa (kanban/usuarios/{uid}/notif_prefs) já carregados antes do 1º aviso
@@ -278,7 +279,14 @@
     Object.entries(st.feed).forEach(([id,f0])=>{
       if(!f0) return; const f = {...f0, id};
       if(f.autorUid===eu || !paraMim(alvoTorres(f)) || !sinoLigado(f.tipo)) return;   // tipo desligado pelo ADM some do sino
-      out.push({k:'feed', id, tipo:f.tipo||'', ts:f.ts||'', icon:iconeSeguro(f.icone) || ICONS[f.tipo] || '🔔', title:f.titulo||'', sub:f.sub||'', autor:f.autor||'',
+      if((st.seen.ocultos||{})[id]) return;                                          // dispensado pela pessoa (✕ / "Limpar lidas")
+      // Evento endereçado a UMA pessoa não aparece no sino das outras (o feed é global): destUid, ou destEmail quando não há uid. Filtro de TELA — o nó segue legível por toda a empresa.
+      if(f.destUid && f.destUid!==eu) return;
+      if(!f.destUid && f.destEmail && String(f.destEmail).toLowerCase() !== String((st.opts && st.opts.user && st.opts.user.email) || '').toLowerCase()) return;
+      if(!viva({ts:f.ts, read: st.seenReady && lido(f)})) return;                    // mesmo TTL do sino pessoal: lido some em 3 dias, não lido em 30
+      const icon = iconeSeguro(f.icone) || ICONS[f.tipo] || '🔔';
+      let titulo = String(f.titulo||''); if(icon && titulo.indexOf(icon+' ')===0) titulo = titulo.slice(icon.length+1);   // o título já começa com o ícone ("✅ ✅ …")
+      out.push({k:'feed', id, tipo:f.tipo||'', ts:f.ts||'', icon, title:titulo, sub:f.sub||'', autor:f.autor||'',
         objId:f.objId||'', muralId:f.muralId||'', eventoId:f.eventoId||'', evData:f.evData||'', unread: st.seenReady && !lido(f)});
     });
     return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
@@ -286,7 +294,7 @@
   function unread(){ return items().filter(i=>i.unread).length; }
 
   function markOne(id){
-    st.seen = {ts:st.seen.ts, lidos:{...(st.seen.lidos||{}), [id]:true}};
+    st.seen = {ts:st.seen.ts, lidos:{...(st.seen.lidos||{}), [id]:true}, ocultos:st.seen.ocultos||{}};
     let w = Promise.resolve();
     if(st.viewer) seenLocalSalvar();
     else w = window._update(window._ref(window._db, SEEN+'/'+st.uid), {['lidos/'+id]:true}).catch(()=>{});
@@ -298,11 +306,35 @@
   // de um relógio atrasado — marcado como lido sem nunca ter sido visto. A lista de ids fica limitada à janela de 60 eventos lida do banco.
   function markAll(){
     const lidos = {}; Object.keys(st.feed).forEach(id=>{ lidos[id] = true; });
-    const ts = st.seen.ts || new Date().toISOString();
-    st.seen = {ts, lidos};
+    const ts = st.seen.ts || new Date().toISOString(), ocultos = st.seen.ocultos||{};
+    st.seen = {ts, lidos, ocultos};
     if(st.viewer) seenLocalSalvar();
-    else window._set(window._ref(window._db, SEEN+'/'+st.uid), {ts, lidos}).catch(()=>{});
+    else window._set(window._ref(window._db, SEEN+'/'+st.uid), {ts, lidos, ocultos}).catch(()=>{});   // _set substitui o nó inteiro: `ocultos` TEM de ir junto
     emitir();
+  }
+  // ✕ num evento do feed: marca como lido E oculto (some de vez, mesmo antes do TTL). Mesma escrita para viewer (localStorage) e logado (kanban/notif_feed_seen/{uid}).
+  function dismiss(id){
+    if(!id) return Promise.resolve();
+    st.seen = {ts:st.seen.ts, lidos:{...(st.seen.lidos||{}), [id]:true}, ocultos:{...(st.seen.ocultos||{}), [id]:true}};
+    let w = Promise.resolve();
+    if(st.viewer) seenLocalSalvar();
+    else w = window._update(window._ref(window._db, SEEN+'/'+st.uid), {['lidos/'+id]:true, ['ocultos/'+id]:true}).catch(()=>{});
+    emitir();
+    return w;
+  }
+  // "Limpar lidas": oculta TODO evento do feed já lido (de uma vez, numa escrita só) e devolve quantos saíram. Sem `seenReady` não dá para saber o que é lido — não faz nada.
+  // Poda `ocultos` aos ids ainda presentes na janela do feed (senão o mapa cresce para sempre) — só quando o feed já chegou.
+  function clearRead(){
+    if(!st.seenReady) return 0;
+    const alvo = items().filter(i=>!i.unread).map(i=>i.id);
+    if(!alvo.length) return 0;
+    const ocultos = {...(st.seen.ocultos||{})}; alvo.forEach(id=>{ ocultos[id] = true; });
+    if(Object.keys(st.feed).length){ Object.keys(ocultos).forEach(id=>{ if(!st.feed[id]) delete ocultos[id]; }); }
+    st.seen = {ts:st.seen.ts, lidos:st.seen.lidos||{}, ocultos};
+    if(st.viewer) seenLocalSalvar();
+    else window._update(window._ref(window._db, SEEN+'/'+st.uid), {ocultos}).catch(()=>{});
+    emitir();
+    return alvo.length;
   }
 
   // Grava 1 evento no feed (qualquer página pode publicar). `torres` = ['digital',…] ou ['*'].
@@ -897,7 +929,7 @@
     (document.head || document.documentElement).appendChild(el);
   })();
 
-  window.MareNotif = {TIPOS, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
+  window.MareNotif = {TIPOS, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, dismiss, clearRead, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
     appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, avisoSistema, insistente, insistenteMenu, insistenteSet, insistenteParar, insistenteTestar, insRender, insEstado: ()=>Object.assign({}, ins), dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};

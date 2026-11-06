@@ -420,7 +420,7 @@
       detalhe: respostaStatus,
       autor: autorFmt,
       autorNome: autorFmt,
-      autorUid: 'assistente_ferias',
+      autorUid: (cfg.user && cfg.user() && cfg.user().uid) || 'assistente_ferias',   // quem clicou não recebe a notificação da própria ação
       destUid: b.uid || '',
       destEmail: b.email || '',
       torres: ['digital', '*'],

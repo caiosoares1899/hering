@@ -79,6 +79,16 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-05 · Sino de notificações: Feed da Torre não limpava, evento endereçado vazava para outros, emoji duplicado e noTTLDelete recriando lidas
+
+• Origem: achado do Antigravity (sino de notificações: "Limpar antigas / Limpar lidas" e Feed da Torre), conferido no código antes de delegar — números de linha e diagnóstico batiam. Dividido pelo §1 do `docs/COORDENACAO_AGENTES.md`: módulo compartilhado e privacidade do feed ficaram com o Claude; a ligação em cada página foi delegada (kanban-dev → Codex; painel-dev e oceano-dev → Antigravity) e entra em PRs próprios.
+• 1) Itens do Feed da Torre (`kanban/notif_feed`) nunca saíam no "Limpar lidas", não tinham ✕ no Maré e não tinham TTL (o contador de lidas incluía os itens do feed, que o `null` no nó pessoal não apagava). Fix no módulo: `kanban/notif_feed_seen/{uid}` ganha `ocultos`; `MareNotif.dismiss(id)` e `MareNotif.clearRead()` (numa escrita só, poda `ocultos` aos ids ainda na janela do feed, não faz nada antes de `seenReady`); `items()` ignora ocultos e aplica o mesmo TTL do sino pessoal (lido 3 dias, não lido 30); `markOne`/`markAll` preservam `ocultos` (o `_set` do `markAll` substitui o nó inteiro). Teste novo: `docs/arezzo/testes/test_mare_notif_feed.js` (11 casos, todos falham no módulo antigo).
+• 2) Evento do feed endereçado a uma pessoa (`destUid`/`destEmail`, ex.: `nf_bug_*` do Assistente Férias) aparecia no sino das outras: agora `items()` o esconde de quem não é o destino. É filtro de TELA — `kanban/notif_feed` segue legível por toda a empresa (o Assistente Férias está desligado desde 03/11; o conserto de verdade seria não gravar evento individual no feed global). `mare-plantao-dev.js`: `autorUid` é quem clicou, para ele não receber a notificação da própria ação.
+• 3) Emoji duplicado no título do feed ("✅ ✅ …"): `items()` tira o ícone do começo do título quando ele já vem lá.
+• 4) `noTTLDelete: true` × limpar/dispensar: `null` na chave deixava o `createNotif` com `idOverride` recriá-la como NÃO lida. `viva()` passa a recusar `dismissed:true`; as limpezas gravam `read` + `dismissed` por campo (multi-path, preservando `noTTLDelete`) em vez de apagar. Aqui: `okr-dev` (+ módulo); `kanban-dev` e as duas páginas restantes via delegação.
+• 5) `okr-dev.html` (`id:n.id||id` → `id`): a chave do Firebase vence o `id` guardado dentro da notificação. `painel-dev.html` (`id:n.id||nid` → `id:nid`) vai na delegação.
+• Módulo: `mare-notif-dev.js?v=41` e `mare-plantao-dev.js?v=5` nas 4 páginas `-dev`; para ir a produção, promover módulo + páginas juntos.
+
 ### 2026-11-05 · Oceano — reserva de espaço para Meta Global e Mural durante carregamento (dev v1.60)
 
 oceano-dev.html passa a reservar a composição da home antes da resposta do Firebase, com esqueletos discretos para Meta Global Digital e Mural. Os dados substituem os esqueletos; vazio/erro encerram a espera, preservando a preferência do Mural aberto ou recolhido. Sem novas leituras, alteração de módulo compartilhado ou promoção para produção. Teste de navegador com Firebase simulado e respostas retidas cobre carregamento, conteúdo e estados finais em desktop/celular.
