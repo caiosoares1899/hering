@@ -31629,8 +31629,14 @@ function handleMentionInput(ta, dd){
   // Acha o @ mais próximo antes do cursor
   let atPos = -1;
   for(let i=pos-1; i>=0; i--){
-    if(val[i]==='@'){ atPos=i; break; }
-    if(/\s/.test(val[i])) break;
+    if(val[i]==='\n') break;
+    if(val[i]==='@'){
+      const querySoFar = val.slice(i, pos).toLowerCase();
+      if(querySoFar.startsWith('@card:') || !/\s/.test(val.slice(i+1, pos))){
+        atPos = i;
+      }
+      break;
+    }
   }
   if(atPos < 0){ dd.classList.remove('open'); _mentionActive=null; return; }
   _positionMentionDropdown(ta, dd, atPos);
@@ -31638,16 +31644,18 @@ function handleMentionInput(ta, dd){
 
   // @card: → busca cards
   if(query.toLowerCase().startsWith('card:')){
-    const cardQuery = query.slice(5).toLowerCase();
+    const cardQuery = query.slice(5).toLowerCase().trim();
     // Achado real (skill /monitorarbugs, 2026-08-26): o card hotline
     // ("🤖 Converse com o Agente Ágil") foi desenhado pra ficar fora do
     // grafo normal de cards (sem dono, sem prazo, invisível no board) —
     // sem essa exclusão, dava pra @mencionar ele num comentário/descrição
     // como se fosse um card de trabalho qualquer.
-    const cardMatches = cards.filter(c=>
-      !c.archived && !c.agenteHotline && c.id !== editingId &&
-      c.title.toLowerCase().includes(cardQuery)
-    ).slice(0,8);
+    const queryTerms = cardQuery.split(/\\s+/).filter(Boolean);
+    const cardMatches = cards.filter(c=> {
+      if (c.archived || c.agenteHotline || c.id === editingId) return false;
+      const t = c.title.toLowerCase();
+      return queryTerms.every(term => t.includes(term));
+    }).slice(0,8);
     if(!cardMatches.length){ dd.classList.remove('open'); _mentionActive=null; return; }
     _mentionActive = { el:ta, dd, atPos, mode:'card' };
     renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos);
@@ -31743,7 +31751,11 @@ function handleMentionKey(e, ta, dd){
       // então reparsear quebrava a seleção por teclado dessa entrada
       // especificamente (mouse já funcionava, por passar m.init direto).
       const pos = ta.selectionStart;
-      insertMention(ta, _mentionActive?.atPos??0, pos, activeOpt.dataset.mentionInit);
+      if(_mentionActive?.mode === 'card') {
+        activeOpt.click();
+      } else {
+        insertMention(ta, _mentionActive?.atPos??0, pos, activeOpt.dataset.mentionInit);
+      }
     }
   } else if(e.key==='Escape'){
     e.stopPropagation(); // só fecha o dropdown de @menção, não o modal do card por trás
