@@ -79,6 +79,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-06 · Menção de card: a regex da busca por palavras (\\s+) não separava por espaço; buscar as palavras em outra ordem não achava
+
+• Origem: revisão do PR #1625 (Antigravity, "menção de cards com espaço e seleção por teclado"), já mergeado quando eu li. O diagnóstico dele estava certo e as duas correções funcionam (o `@card:` aceita espaço e Enter/Tab seleciona o card); sobrou uma regex.
+• Causa: `cardQuery.split(/\\s+/)` em `handleMentionInput` — com a barra dupla, a regex casa um `\s` LITERAL, não um espaço. Efeito: a busca nunca era dividida em palavras, então só achava a frase exata e contígua (o mesmo que antes do PR); a busca por palavras em qualquer ordem, que o PR queria entregar, não existia (`@card:semanal reunião` não achava "Reunião semanal…"; espaços duplos também quebravam).
+• Correção (kanban-dev v8.30.909-dev): `/\s+/`. Teste novo `docs/arezzo/testes/test_mencao_card.js` (Playwright, chama a `handleMentionInput` real): frase contígua, palavras em outra ordem, prefixo, espaços repetidos, sem resultado, menção de pessoa (fecha depois de espaço, abre sem espaço), quebra de linha e erro de JS — **as buscas B e D falham no código mergeado e passam com a correção**.
+• Processo (para o Antigravity, registrado no comentário do #1625): o PR não trazia bump de versão do `kanban-dev`, entrada em `BUGS_E_CORRECOES.md` nem script de teste de console — a linha vermelha nº 4 do `AGENTS.md` exige o script, e sem o bump as abas abertas do dev não são avisadas de que há versão nova. O commit de correção trouxe o trailer `Agent: antigravity`; o segundo (limpeza de um arquivo temporário) não.
+
 ### 2026-11-05 · Sino de notificações: Feed da Torre não limpava, evento endereçado vazava para outros, emoji duplicado e noTTLDelete recriando lidas
 
 • Origem: achado do Antigravity (sino de notificações: "Limpar antigas / Limpar lidas" e Feed da Torre), conferido no código antes de delegar — números de linha e diagnóstico batiam. Dividido pelo §1 do `docs/COORDENACAO_AGENTES.md`: módulo compartilhado e privacidade do feed ficaram com o Claude; a ligação em cada página foi delegada (kanban-dev → Codex; painel-dev e oceano-dev → Antigravity) e entra em PRs próprios.
