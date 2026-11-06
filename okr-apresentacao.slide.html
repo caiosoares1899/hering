@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="favicon-radar.png?v=2">
 <title>Radar · Apresentação</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root{
   --deep:#030d1a; --deep-rgb:3,13,26;
@@ -15,12 +15,13 @@
   --blue:#2563c9; --accent:#38b6ff; --cyan:#7ec8e3; --teal:#1de9b6;
   --txt:#e8f4fd; --txt2:rgba(200,230,255,0.65); --txt3:rgba(150,200,240,0.4);
   --warn:#ffd166; --danger:#ff6b6b;
-  --ud:clamp(1px,.0625vw,1.2px);   /* mesma ideia, mais contida: o detalhe do Objetivo é denso (raia + marcos + 4 colunas) e precisa caber SEM rolagem */
+  --ud:clamp(1px,.0585vw,1.1px);   /* mesma ideia, mais contida: o detalhe do Objetivo é denso (raia + marcos + 4 colunas) e precisa caber SEM rolagem */
+  --ff-d:'Bricolage Grotesque','DM Sans',sans-serif;   /* fonte de título/número (antes Syne 800, largo e pesado demais) */
   --u:clamp(1px,.0732vw,1.5px);   /* unidade de tela: 1px em notebook, ~1,4px em Full HD, teto 1,5px — todo tamanho de leitura usa calc(N*var(--u)) */
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
-h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
+h1,h2,h3,.syne{font-family:var(--ff-d);font-weight:700;letter-spacing:-.01em;}
 
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),
@@ -50,7 +51,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .tb-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:.02em;flex-shrink:0;}
 .tb-live{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--teal);letter-spacing:.06em;text-transform:uppercase;font-weight:700;flex-shrink:0;}
 .tb-live-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px rgba(29,233,182,.18);}
-.tb-clock{font-family:'Syne',sans-serif;font-weight:700;font-size:calc(15*var(--u));color:var(--txt2);letter-spacing:.05em;flex-shrink:0;}
+.tb-clock{font-family:var(--ff-d);font-variant-numeric:tabular-nums;font-weight:700;font-size:calc(15*var(--u));color:var(--txt2);letter-spacing:.05em;flex-shrink:0;}
 /* ⏳ Contagem regressiva da agenda — pedido direto do usuário: "quero um
    cronometro mostrando quanto tempo falta pra agenda acabar", configurável
    (início + término previsto). Clicável (o próprio relógio) abre o
@@ -127,16 +128,16 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 /* Um protagonista (o total) + a distribuição numa barra só; os números por status vêm sem caixa, em fileira. */
 .cover-kpis{display:grid;grid-template-columns:auto 1fr;gap:calc(44*var(--u));align-items:center;text-align:left;padding:calc(28*var(--u)) calc(38*var(--u));
   background:var(--glass);border:1px solid var(--glass-b);border-radius:calc(22*var(--u));}
-.ck-hero b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:calc(92*var(--u));line-height:.95;letter-spacing:-.02em;}
+.ck-hero b{display:block;font-family:var(--ff-d);font-weight:700;font-size:calc(92*var(--u));line-height:.95;letter-spacing:0;}
 .ck-hero span{display:block;margin-top:calc(8*var(--u));font-size:calc(17*var(--u));color:var(--txt2);}
 .ck-main .sbar{height:calc(14*var(--u));border-radius:calc(8*var(--u));}
 .ck-nums{display:flex;gap:calc(34*var(--u));margin-top:calc(18*var(--u));flex-wrap:wrap;}
 .ck-nums div{min-width:0;}
-.ck-nums b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:calc(38*var(--u));line-height:1;}
+.ck-nums b{display:block;font-family:var(--ff-d);font-weight:700;font-size:calc(38*var(--u));line-height:1;}
 .ck-nums span{display:inline-flex;align-items:center;gap:calc(7*var(--u));margin-top:calc(6*var(--u));font-size:calc(15*var(--u));color:var(--txt2);}
 .stat-chip{padding:0 calc(22*var(--u));min-width:0;border-left:1px solid var(--glass-b);}
 .stat-chip:first-child{border-left:none;padding-left:0;}
-.stat-chip b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:calc(34*var(--u));line-height:1;margin-bottom:calc(6*var(--u));}
+.stat-chip b{display:block;font-family:var(--ff-d);font-weight:700;font-size:calc(34*var(--u));line-height:1;margin-bottom:calc(6*var(--u));}
 .stat-chip span{font-size:calc(14*var(--u));color:var(--txt2);}
 .cover-updated{margin-top:calc(34*var(--u));font-size:calc(14*var(--u));color:var(--txt3);}
 
@@ -149,10 +150,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   background:linear-gradient(160deg,rgba(var(--torre),.16),var(--glass) 62%);
   transition:transform .15s,background .15s;}
 .torre-tile:hover{transform:translateY(-3px);}
-.tt-head{display:flex;align-items:center;gap:12px;font-family:'Syne',sans-serif;font-weight:800;font-size:calc(23*var(--u));}
+.tt-head{display:flex;align-items:center;gap:12px;font-family:var(--ff-d);font-weight:700;font-size:calc(23*var(--u));}
 .tt-head .tt-ico{font-size:32px;}
 .tt-nums{display:flex;gap:22px;margin:14px 0 12px;}
-.tt-nums b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:calc(30*var(--u));line-height:1.1;}
+.tt-nums b{display:block;font-family:var(--ff-d);font-weight:700;font-size:calc(30*var(--u));line-height:1.1;}
 .tt-nums span{font-size:calc(14*var(--u));color:var(--txt2);}
 .tt-sub{font-size:calc(14*var(--u));color:var(--txt2);margin-top:8px;}
 .torre-hd{display:flex;align-items:center;gap:20px;margin-bottom:26px;padding:22px 30px;border-radius:22px;border:1px solid rgba(var(--torre),.4);
@@ -173,9 +174,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .ger-row:hover{transform:translateY(-2px);background:var(--glass-hover);}
 .ger-row .gr-ico{width:calc(54*var(--u));height:calc(54*var(--u));border-radius:calc(14*var(--u));display:grid;place-items:center;flex-shrink:0;font-size:calc(28*var(--u));background:rgba(var(--torre),.14);border:1px solid rgba(var(--torre),.28);}
 .ger-row .gr-main{flex:1;min-width:0;}
-.ger-row .gr-name{font-family:'Syne',sans-serif;font-weight:700;font-size:calc(21*var(--u));line-height:1.25;margin-bottom:10px;overflow-wrap:break-word;}
+.ger-row .gr-name{font-family:var(--ff-d);font-weight:700;font-size:calc(21*var(--u));line-height:1.25;margin-bottom:10px;overflow-wrap:break-word;}
 .ger-row .gr-num{text-align:right;flex-shrink:0;}
-.ger-row .gr-num b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:calc(30*var(--u));line-height:1;}
+.ger-row .gr-num b{display:block;font-family:var(--ff-d);font-weight:700;font-size:calc(30*var(--u));line-height:1;}
 .ger-row .gr-num span{font-size:calc(13.5*var(--u));color:var(--txt2);}
 .torre-chip{display:inline-flex;align-items:center;gap:7px;font-size:calc(15*var(--u));font-weight:700;border-radius:999px;padding:5px 16px;
   color:rgb(var(--torre));background:rgba(var(--torre),.14);border:1px solid rgba(var(--torre),.4);}
@@ -200,15 +201,15 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   cursor:pointer;transition:transform .15s,background .15s,border-color .15s;}
 .obj-card:hover{transform:translateY(-3px);background:var(--glass-hover);border-color:rgba(56,182,255,.38);}
 .obj-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px;margin-bottom:calc(16*var(--u));}
-.status-chip{display:inline-flex;align-items:center;gap:calc(8*var(--u));font-size:calc(12.5*var(--u));font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--txt);white-space:nowrap;
+.status-chip{display:inline-flex;align-items:center;gap:calc(8*var(--u));font-size:calc(12*var(--u));font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--txt);white-space:nowrap;
   padding:calc(5*var(--u)) calc(13*var(--u));border-radius:999px;background:color-mix(in srgb,var(--st) 16%,transparent);border:1px solid color-mix(in srgb,var(--st) 42%,transparent);}
 .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .obj-trims{display:flex;gap:6px;flex-wrap:nowrap;}
 .pill{font-size:calc(12.5*var(--u));white-space:nowrap;background:rgba(255,255,255,.06);border:1px solid var(--glass-b);border-radius:999px;padding:3px 12px;color:var(--txt2);}
-.obj-title{font-family:'Syne',sans-serif;font-weight:700;font-size:calc(24*var(--u));line-height:1.28;margin-bottom:6px;overflow-wrap:break-word;}
+.obj-title{font-family:var(--ff-d);font-weight:700;font-size:calc(24*var(--u));line-height:1.28;margin-bottom:6px;overflow-wrap:break-word;}
 .obj-pilar{font-size:calc(15*var(--u));color:var(--txt2);font-style:italic;margin-bottom:6px;}
 .prog-row{display:flex;align-items:center;gap:calc(18*var(--u));margin:calc(16*var(--u)) 0 calc(14*var(--u));}
-.prog-pct{font-family:'Syne',sans-serif;font-weight:800;font-size:calc(42*var(--u));line-height:1;letter-spacing:-.02em;flex-shrink:0;min-width:calc(92*var(--u));}
+.prog-pct{font-family:var(--ff-d);font-weight:700;font-size:calc(42*var(--u));line-height:1;letter-spacing:0;flex-shrink:0;min-width:calc(92*var(--u));}
 .prog-pct small{font-size:.5em;font-weight:700;color:var(--txt2);margin-left:2px;}
 .prog-main{flex:1;min-width:0;}
 .prog-bar{height:calc(9*var(--u));border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:calc(8*var(--u));}
@@ -238,7 +239,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .sum-bar-label{width:calc(230*var(--u));font-size:calc(18*var(--u));color:var(--txt2);flex-shrink:0;display:flex;align-items:center;gap:9px;}
 .sum-bar-track{flex:1;height:calc(24*var(--u));border-radius:10px;background:rgba(255,255,255,.06);overflow:hidden;}
 .sum-bar-fill{height:100%;border-radius:10px;transition:width .4s ease;}
-.sum-bar-count{width:46px;text-align:right;font-family:'Syne',sans-serif;font-weight:700;font-size:calc(22*var(--u));flex-shrink:0;}
+.sum-bar-count{width:46px;text-align:right;font-family:var(--ff-d);font-weight:700;font-size:calc(22*var(--u));flex-shrink:0;}
 .sum-table{width:100%;max-width:min(1400px,100%);border-collapse:collapse;font-size:calc(17.5*var(--u));}
 .sum-table th{text-align:left;color:var(--txt2);font-weight:700;font-size:calc(13*var(--u));text-transform:uppercase;
   letter-spacing:.04em;padding:calc(10*var(--u)) calc(14*var(--u));border-bottom:1px solid var(--glass-b);}
@@ -276,11 +277,11 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 /* Header em grid real (não position:fixed) — título, trimestre e marca/fechar
    nunca se sobrepõem porque cada um tem sua própria coluna garantida. */
 .d2-header{display:grid;grid-template-columns:1fr auto auto;align-items:start;gap:20px;flex-shrink:0;}
-.d2-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.4rem,2.2vw,2.05rem);line-height:1.22;
+.d2-title{font-family:var(--ff-d);font-weight:700;font-size:clamp(1.4rem,2.2vw,2.05rem);line-height:1.22;
   min-width:0;overflow-wrap:break-word;}
 .d2-trim{display:flex;gap:7px;flex-wrap:wrap;align-content:flex-start;justify-content:flex-end;padding-top:5px;max-width:calc(210*var(--ud));}
 .d2-brand-row{display:flex;align-items:center;gap:13px;padding-top:5px;}
-.d2-brand{font-family:'Syne',sans-serif;font-weight:800;font-size:calc(16*var(--ud));color:var(--txt2);white-space:nowrap;
+.d2-brand{font-family:var(--ff-d);font-weight:700;font-size:calc(16*var(--ud));color:var(--txt2);white-space:nowrap;
   display:flex;align-items:center;gap:8px;}
 .detail-close{background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;width:calc(36*var(--ud));height:calc(36*var(--ud));
   color:var(--txt2);font-size:16px;cursor:pointer;flex-shrink:0;}
@@ -340,6 +341,8 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-panel.grow{flex:1 0 auto;display:flex;flex-direction:column;}
 .d2-panel-label{font-size:calc(13*var(--ud));text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:7px;flex-shrink:0;}
 .d2-panel-body{font-size:calc(15*var(--ud));color:var(--txt2);line-height:1.55;}
+/* A raia da esquerda divide a altura com 4 painéis: texto um degrau abaixo do resto do detalhe para não rolar (ninguém rola projetor). */
+.d2-left .d2-panel-body,.d2-left .d2-flist{font-size:calc(14*var(--ud));}
 
 /* Mesmo motivo do .d2-panel.grow acima. */
 .d2-right{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:16px 22px;
@@ -451,7 +454,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   backdrop-filter:blur(20px);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.4);}
 .notes-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;
   border-bottom:1px solid var(--glass-b);flex-shrink:0;}
-.notes-hd h3{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;}
+.notes-hd h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;font-family:var(--ff-d);}
 .notes-close{background:none;border:1px solid var(--glass-b);border-radius:8px;width:30px;height:30px;color:var(--txt2);
   font-size:15px;cursor:pointer;font-family:inherit;}
 .notes-close:hover{background:var(--glass-hover);}
@@ -509,7 +512,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 #ating-ov.open{display:flex;}
 .ating-panel{width:min(760px,94vw);max-height:92vh;display:flex;flex-direction:column;background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;backdrop-filter:blur(18px);box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;}
 .ating-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--glass-b);}
-.ating-hd h3{font-size:15px;font-weight:800;font-family:'Syne',sans-serif;line-height:1.35;}
+.ating-hd h3{font-size:15px;font-weight:700;font-family:var(--ff-d);line-height:1.35;}
 .ating-close{background:none;border:1px solid var(--glass-b);border-radius:8px;width:30px;height:30px;color:var(--txt2);cursor:pointer;font-size:14px;flex-shrink:0;}
 .ating-close:hover{background:var(--glass-hover);}
 .ating-body{padding:16px 20px 20px;overflow-y:auto;}
@@ -538,7 +541,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   backdrop-filter:blur(20px);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.4);}
 .mc-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:18px 20px;
   border-bottom:1px solid var(--glass-b);flex-shrink:0;}
-.mc-hd h3{font-size:14.5px;font-weight:800;display:flex;align-items:flex-start;gap:8px;font-family:'Syne',sans-serif;
+.mc-hd h3{font-size:14.5px;font-weight:700;display:flex;align-items:flex-start;gap:8px;font-family:var(--ff-d);
   min-width:0;line-height:1.3;overflow-wrap:break-word;}
 .mc-close{background:none;border:1px solid var(--glass-b);border-radius:8px;width:30px;height:30px;color:var(--txt2);
   font-size:15px;cursor:pointer;font-family:inherit;flex-shrink:0;}
@@ -1534,7 +1537,7 @@ window.addEventListener('resize', () => {
 });
 
 // Achado real (print do usuário, conteúdo cortado mesmo com fitSlideContent no
-// lugar): a 1ª medição roda ANTES da webfont (Syne/DM Sans, carregada via
+// lugar): a 1ª medição roda ANTES da webfont (Bricolage Grotesque/DM Sans, carregada via
 // Google Fonts com display=swap) terminar de carregar — o texto reflui pro
 // tamanho real da fonte um instante depois, ficando maior que o medido, e por
 // aí passa a cortar sem ninguém ter reencolhido. document.fonts.ready garante

@@ -296,6 +296,8 @@ seção 2.
 | **DM Sans** (400–700) | Corpo de texto, legendas, botões, rótulos — a fonte "de leitura" (`--ff`) |
 | **JetBrains Mono / Space Mono** | Só código, ids, contadores técnicos |
 
+> **Exceção em teste (06/11/2026):** a apresentação do Radar (`okr-apresentacao.slide.html`) usa **Bricolage Grotesque 700** nos títulos e números (`--ff-d`), no lugar do Syne 800 — pedido do Caio: "cara de IA", queria mais profissional. Comparativo: `docs/capturas/apresentacao-radar-2026-11-06/comparativo-de-fontes.png`. Se a validação for boa, a troca vira regra do Oceano inteiro (17 arquivos usam Syne) e esta seção é reescrita.
+
 Vale pra qualquer formato: um slide de apresentação deve usar Syne no título
 do slide e DM Sans no corpo, exatamente como uma tela de produto usa Syne no
 header e DM Sans no resto.
