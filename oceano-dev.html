@@ -776,7 +776,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.60 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.61 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1198,9 +1198,15 @@ function sinoTudoLido(){
   sinoPessoais = sinoPessoais.map(n=>({...n, read:true})); sinoRender();
 }
 function sinoLimpar(){
-  const up = {}; sinoPessoais.filter(n=>n.read).forEach(n=>{ up[n.id] = null; }); const q = Object.keys(up).length;
+  // noTTLDelete (id determinístico): apagar a chave deixaria o createNotif recriá-la como NÃO lida — marca read+dismissed e mantém o nó (viva() esconde). As demais saem como sempre.
+  const up = {}; sinoPessoais.filter(n=>n.read).forEach(n=>{ if(n.noTTLDelete){ up[n.id+'/read'] = true; up[n.id+'/dismissed'] = true; } else up[n.id] = null; });
+  const qP = sinoPessoais.filter(n=>n.read).length;
+  const nFeed = (window.MareNotif && MareNotif.clearRead) ? MareNotif.clearRead() : 0;
+  const q = qP + nFeed;
   if(!q){ toast('Nenhuma notificação lida para remover.'); return; }
-  window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), up).then(()=>toast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.')).catch(()=>toast('⚠️ Não consegui remover as notificações. Tente de novo.'));
+  const ok = ()=>toast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.');
+  if(!qP){ ok(); return; }
+  window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), up).then(ok).catch(()=>toast('⚠️ Não consegui remover as notificações. Tente de novo.'));
 }
 function sinoClique(k, id){
   sinoFecha();
@@ -1231,7 +1237,7 @@ function iniciarSino(){
   window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
     // TODOS os tipos (card, Kudos, reunião, intake, OKR…) — só 'rascunho' é exclusivo do painel; mesmo TTL do sino do kanban
     sinoPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))
-      .map(([id,n])=>({id, type:n.type||n.tipo||'', icon:n.icone||'', title:n.title||n.titulo||'', sub:n.sub||n.msg||n.text||'', ts:n.ts||'', read:!!n.read, raw:n}));
+      .map(([id,n])=>({id, noTTLDelete:!!n.noTTLDelete, type:n.type||n.tipo||'', icon:n.icone||'', title:n.title||n.titulo||'', sub:n.sub||n.msg||n.text||'', ts:n.ts||'', read:!!n.read, raw:n}));
     sinoRender();
   }, ()=>{});
   sinoRender();
