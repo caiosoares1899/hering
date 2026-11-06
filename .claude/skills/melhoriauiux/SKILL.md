@@ -85,6 +85,15 @@ Priorize por **impacto × esforço**: primeiro o que confunde a ação principal
 5. **Como validar** (passos curtos, no `-dev`, em celular e no tema claro) + o script de console.
 6. **Dica:** sim/não + versões e PR.
 
+## Como conduzir a rodada sem demorar nem errar (lições de 06/11/2026, apresentação do Radar)
+1. **Divida antes de começar** (`docs/COORDENACAO_AGENTES.md` §7.7): correção localizada com teste → Codex; docs, capturas, CHANGELOG → Antigravity; diagnóstico, design e revisão → você. Rodada que mistura **correção** (fps) e **redesenho** vira **2 PRs**; a correção sobe primeiro.
+2. **Se o pedido cita lentidão/fps, meça primeiro e no cenário real** (tracing, não `requestAnimationFrame`; sessão ao vivo ligada, não só tela parada): `docs/arezzo/testes/perf_apresentacao.js`. Procure **animação infinita** e `backdrop-filter` sobre fundo estático (guia 2.3 e 2.5 regra 4).
+3. **Baseline honesto:** compare com a `main` por `page.route` (`PAGINA_ALT`), nunca trocando o arquivo no disco; número antes = depois é erro de método (BUGS Armadilha 16).
+4. **Redesenho muda o tamanho do conteúdo:** meça **o que piorou** contra a `main` (texto renderizado, conteúdo atrás de rolagem, caso cheio de itens) antes do PR; o ajuste automático de escala (`fitSlideContent`) devolve texto menor se o cartão ficou mais alto.
+5. **Consulte o advisor antes de abrir o PR** (não só no fim): ele pegou três regressões que três suítes verdes não pegaram.
+6. **Bateria da CI inteira antes do PR:** `checar.js` + `cd functions && npm test`; entrada do CHANGELOG nasce "SÓ DEV" (página sem par `-dev` também) — BUGS Armadilha 15.
+7. **Comando longo = `timeout` + segundo plano**; nada que troque arquivo do repo sem `timeout`.
+
 ## Armadilhas desta rotina (aprendidas)
 - **Dado de exemplo mente:** renderize com poucos **e** muitos itens; a 3ª squad que "nunca aparecia" só aparecia assim.
 - **Cor repetida ≠ identidade:** cor de coluna usada como identidade de squad virou "tudo a mesma cor".

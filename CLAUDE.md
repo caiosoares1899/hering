@@ -56,6 +56,7 @@ Regras que valem **fora de qualquer arquivo** (resync, release dev→prod, tags,
 - **Resposta curta, sem repetição:** vá direto ao diagnóstico e ao diff; não repita regra do `CLAUDE.md` nem decisão já fechada na sessão.
 - **Busca cirúrgica, mas função inteira:** `CODE_MAP_FAST.md` → `grep -na` → leia a função alvo **de ponta a ponta** e todos os escritores do mesmo nó antes de editar (`docs/GUIA_DE_CODIGO.md` §2). Subagente só para área grande ou vários arquivos (§6); bug pequeno, faça direto.
 - **Consulte o advisor (`/advisor opus`) em 3 momentos:** antes de fechar um plano não trivial; depois que o mesmo erro/teste falhar 2 vezes seguidas; e antes de dar por concluída qualquer tarefa em `functions/` ou nas regras do banco.
+- **Pedido com 2+ partes independentes ou > ~1 h: divida e delegue antes de começar** (`docs/COORDENACAO_AGENTES.md` §7.7); correção e redesenho viram PRs separados. **Antes de abrir PR rode a bateria da CI inteira:** `checar.js` **e** `cd functions && npm test` se tocou CHANGELOG/Ajuda/páginas (Armadilhas 15–16 em `BUGS_E_CORRECOES.md`).
 - **Mudou de assunto = contexto novo:** ao fechar um PR ou trocar de produto, sugira `/compact` ou sessão nova (começando por `/seatualizar`).
 
 ## Release process

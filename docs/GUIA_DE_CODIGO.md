@@ -58,6 +58,9 @@
 
 - Rode `node scripts/checar.js` (JSON, versões, sintaxe, linhas vermelhas, referências) — a CI roda o mesmo. Em `functions/`: `npm test` (e **confira que a contagem subiu** se você criou testes).
 - **Script de console** (o ADM roda antes de validar): português; **só leitura**; chama as **funções reais** da página; um caso do bug + pelo menos um **vizinho que não pode quebrar**; termina com `console.table` ✅/❌. **Rode você mesmo antes de entregar** (extraia a função e execute em Node): script que quebra no console não valida nada.
+- **Antes de abrir o PR, a mesma bateria da CI:** `node scripts/checar.js` **e** `cd functions && npm test` sempre que o diff tocar `CHANGELOG.md`, Ajuda (`HELP_CONTENT`) ou `kanban`/`okr`/`oceano` (o conhecimento do Agente Ágil testa o CHANGELOG — ver Armadilha 15 em `BUGS_E_CORRECOES.md`). Entrada nova do CHANGELOG nasce **"SÓ DEV"**; não remova o marcador à mão.
+- **Medir antes de concluir "melhorou" (performance/UI):** (1) **linha de base de verdade** — compare com a `main` servindo a versão alternativa por `page.route`, não trocando arquivo no disco nem com `git stash` de arquivo já commitado (Armadilha 16); número "antes" = "depois" é sinal de erro de método. (2) Fluidez não se mede com `requestAnimationFrame` no Chromium sem tela (fica em 60 mesmo pesado): use **tracing** (soma de Raster/GPU e **quadros desenhados por segundo parado** — `docs/arezzo/testes/perf_apresentacao.js`); o objetivo é ~0 quadro/s numa tela parada. Meça o **cenário real de quem usa** (ex.: sessão "Apresentar ao vivo" ligada, laser), não só a tela estática. (3) Em redesenho, meça também **o que piorou** (texto renderizado, conteúdo atrás de rolagem, caso cheio) contra a `main` — e diga no PR o que ficou pior.
+- **Comando longo de teste:** sempre com `timeout` e, se passar de ~2 min, em segundo plano; nunca deixe um comando que troca arquivo do repo rodando sem `timeout` (se travar, a branch fica com a versão errada).
 - Dado antigo importa: teste com o formato **antigo** (campo ausente, string no lugar de número), não só com o que a tela acabou de criar.
 
 ## 6. Subagentes: como usar bem (orquestrador × especialistas)
@@ -82,6 +85,6 @@ Os especialistas definidos no `AGENTS.md` (um por área: Maré, Radar, Painel/Oc
 5. Botão que grava tem trava de clique duplo; função async tem "só a última resposta vale"?
 6. Mesmo comportamento nas páginas irmãs/cópias — conferi com `grep`?
 7. Versão do `-dev` + `version.json` (+ `?v=` se módulo) + entrada no `BUGS_E_CORRECOES.md` (só arquivos que existem)?
-8. `node scripts/checar.js` passa? (`npm test` se mexeu em `functions/`)
+8. `node scripts/checar.js` passa? (`npm test` em `functions/` se mexeu em `functions/` **ou** em `CHANGELOG.md`/Ajuda/`kanban`/`okr`/`oceano`)
 9. O script de teste é só leitura, cobre o caso e um vizinho, e **eu o rodei**?
 10. Nada de dado pessoal, segredo, produção, `functions/` ou regras do banco no diff? (senão: ESCALAR AO CLAUDE)

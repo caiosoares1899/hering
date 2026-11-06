@@ -225,6 +225,16 @@ git worktree add ~/hering-agy    -b antigravity/<assunto> origin/main   # Antigr
 ```
 Depois do merge: `git worktree remove <pasta>` e uma branch nova para a próxima tarefa. Reserva de arquivo no Quadro continua valendo (um arquivo, um dono por vez).
 
+### 7.7 Quando o maestro delega (regra, desde 06/11/2026)
+Lição da rodada de UI/UX da apresentação do Radar (PR #1629): foi feita **inteira por uma janela só**, em série, e demorou muito (medição, redesenho, revisão do advisor, três regressões corrigidas, CI quebrada por uma convenção do CHANGELOG). Boa parte era delegável. **Regra:** ao receber um pedido com **2+ partes independentes** ou que passe de ~1 h, o maestro **primeiro divide** (contrato do §7.3) e só então começa; fazer tudo sozinho exige uma linha explicando por quê.
+- **Divida assim (modelo da rodada de UI/UX):**
+  - **Maestro (Claude):** diagnóstico da causa, decisões de design (o que muda de propósito), contrato, **revisão do diff**, rodar a bateria final, abrir o PR e escrever a seção "o que ficou pior".
+  - **Codex (autor, tarefa com verificação objetiva):** a **correção localizada com teste que falha antes/passa depois** — ex.: tirar a animação infinita/`backdrop-filter` e o teste `test_<tela>_ui.js`; ferramentas de medição (`perf_*.js`, `medir_*.js`).
+  - **Antigravity (volume/rotina, plano enterprise):** CHANGELOG/BUGS/GUIA/skill, capturas antes × depois em `docs/capturas/`, Ajuda e dica, script de console, rascunho do texto do PR.
+- **PRs pequenos:** uma rodada vira **dois PRs** quando mistura **correção** (ex.: fps — rápida, validável, sobe na hora) com **redesenho** (entra no lote do dia). A correção não espera o redesenho.
+- **Antes de abrir qualquer PR** o maestro roda a bateria da CI inteira (`checar.js` + `cd functions && npm test` quando tocar CHANGELOG/Ajuda/páginas) — CI vermelha por algo que a máquina local já mostraria é retrabalho de todo mundo.
+- **Não delegue** o que é mais rápido direto (um ajuste de CSS, uma linha) — o custo de contrato + revisão passa o ganho (§7.4).
+
 ### 7.6 Piloto do Codex (um mês) e métricas
 - **Semana 1:** identidades novas (`codex/…`, `Agent: codex`), worktrees, revisão cruzada (Caio + Claude revisam; Codex não).
 - **Semanas 2–3:** delegação por CLI pelo maestro, uma tarefa por dia no máximo, sempre com contrato (§7.3).
