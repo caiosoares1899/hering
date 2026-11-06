@@ -56,6 +56,8 @@ extension Resumo {
             if e == .atencao || e == .fora { p.append("\(nome): \(e.rotulo)") }
         }
         if (alarmesSumico?.ultimas24h ?? 0) > 0 { p.append("cards sumindo") }
+        // Texto FIXO (sem minutos): o aviso compara as listas entre leituras, e um número que muda a cada minuto avisaria sem parar.
+        if Estado(guardiao?.estado) == .atencao { p.append((guardiao?.atrasoMin ?? 0) > 5 ? "Guardião: espelho atrasado" : "Guardião: sem pulso") }
         if (plantao?.escalados ?? 0) > 0 { p.append("bug escalado") }
         return p
     }

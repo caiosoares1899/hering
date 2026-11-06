@@ -78,6 +78,8 @@ function ProblemasDe($r) {
     $e = [string](Campo (Campo $r $par[1]) 'estado'); if ($e -eq 'atencao' -or $e -eq 'fora') { $m += ($par[0] + ': ' + (Rotulo $e)) }
   }
   if ((Numero (Campo $r 'alarmesSumico.ultimas24h')) -gt 0) { $m += 'cards sumindo' }
+  # Texto FIXO (sem minutos): o aviso compara as listas entre leituras; número que muda a cada minuto avisaria sem parar.
+  if ([string](Campo $r 'guardiao.estado') -eq 'atencao') { $m += $(if ((Numero (Campo $r 'guardiao.atrasoMin')) -gt 5) { 'Guardião: espelho atrasado' } else { 'Guardião: sem pulso' }) }
   if ((Numero (Campo $r 'plantao.escalados')) -gt 0) { $m += 'bug escalado' }
   return , $m
 }
@@ -342,6 +344,7 @@ function MostrarPainel {
     $script:py += 4
     SecaoPainel $f 'Dados e rotina'
     LinhaPeca $f 'Backup' (Campo $r 'backup')
+    LinhaPeca $f 'Guardião dos cards' (Campo $r 'guardiao')
     $al = Numero (Campo $r 'alarmesSumico.ultimas24h')
     LinhaPeca $f 'Cards sumindo' @{ estado = $(if ($al -gt 0) { 'atencao' } else { 'ok' }); texto = $(if ($al -gt 0) { "$al card(s) sumiram sem exclusão nas últimas 24 h" } else { 'nenhum em 24 h' }) }
     $ab = Numero (Campo $r 'plantao.abertos'); $val = Numero (Campo $r 'plantao.aguardandoValidacao'); $esc = Numero (Campo $r 'plantao.escalados')
