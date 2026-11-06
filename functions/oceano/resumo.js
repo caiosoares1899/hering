@@ -98,7 +98,7 @@ async function resumirAlarmes({ db, squads, agora }) {
   })));
   const itens = [], restauradosPorCard = new Map(), naoRestaurados = new Set(), restaurados = new Set();
   lidos.forEach(({ sq, v, g, r }) => {
-    Object.values(v).forEach((x) => { if (x && x.detectadoEm >= corte) itens.push({ sq, cardId: x.cardId, em: x.detectadoEm }); });
+    Object.entries(v).forEach(([k, x]) => { if (x && x.detectadoEm >= corte && !r['alarme_' + k]) itens.push({ sq, cardId: x.cardId, em: x.detectadoEm }); });   // alarme que um ADM/PO resolveu (resolvidos/alarme_<chave>) sai da conta
     Object.entries(g).forEach(([chave, x]) => {
       if (!x || !x.cardId || !(x.detectadoEm >= corte)) return;
       if (x.acao !== 'restaurado' && r[chave]) return;        // resolvido por gente: não conta mais como "sem socorro"

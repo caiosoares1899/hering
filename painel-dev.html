@@ -388,6 +388,30 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    colapse logo em cima". Marcador nativo do <summary> escondido, chevron
    próprio (gira 90° quando aberto) — mais confiável entre navegadores que
    o marcador default (que em alguns fica quase invisível). */
+/* 🛡️ Saúde dos cards (06/11/2026): saúde do guardião, abas, acordeão de episódios. Só tokens (3 temas). */
+.sc-saude{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--txt2);margin-bottom:10px;}
+.sc-dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--txt3);}
+.sc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.sc-chip{min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.45);color:var(--txt2);font:inherit;font-size:11px;font-weight:600;cursor:pointer;}
+.sc-chip[aria-selected="true"]{border-color:rgba(29,233,182,.45);background:rgba(29,233,182,.12);color:var(--teal);}
+.sc-chip:focus-visible,.sc-item summary:focus-visible,.sc-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+.sc-aviso{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 10px;border-radius:8px;background:rgba(var(--surface-rgb),.45);border:1px solid var(--glass-b);color:var(--txt2);line-height:1.5;}
+.sc-lista{display:flex;flex-direction:column;gap:6px;}
+.sc-item{border:1px solid var(--glass-b);border-left:3px solid var(--sc-cor,var(--glass-b));border-radius:8px;background:rgba(var(--surface-rgb),.45);}
+.sc-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 10px;min-height:40px;}
+.sc-item summary::-webkit-details-marker{display:none;}
+.sc-item .sc-tit{min-width:0;flex:1;color:var(--txt);font-weight:600;overflow-wrap:anywhere;}
+.sc-item .sc-meta{color:var(--txt3);font-size:10px;white-space:nowrap;}
+.sc-item .sc-seta{color:var(--txt3);font-size:10px;transition:transform .15s;}
+.sc-item[open] .sc-seta{transform:rotate(90deg);}
+.sc-corpo{padding:2px 12px 10px 28px;color:var(--txt2);line-height:1.55;display:flex;flex-direction:column;gap:4px;}
+.sc-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;}
+.sc-btn{min-height:32px;padding:5px 12px;border-radius:8px;border:1px solid rgba(29,233,182,.35);background:rgba(29,233,182,.1);color:var(--teal);font:inherit;font-size:11px;font-weight:600;cursor:pointer;}
+.sc-btn.sec{border-color:var(--glass-b);background:transparent;color:var(--txt2);}
+.sc-vazio{padding:14px;text-align:center;color:var(--txt3);}
+@media (hover:none) and (pointer:coarse){.sc-chip{min-height:44px;}.sc-btn{min-height:44px;padding:8px 14px;}.sc-item summary{min-height:48px;}}
+@media (max-width:520px){.sc-item .sc-meta{display:none;}.sc-corpo{padding-left:14px;}}
+@media (prefers-reduced-motion:reduce){.sc-item .sc-seta{transition:none;}}
 .pt-bucket summary{list-style:none;cursor:pointer;}
 .pt-bucket summary::-webkit-details-marker{display:none;}
 .pt-chevron{display:inline-block;font-size:10px;color:var(--txt3);transition:transform .15s;}
@@ -2184,19 +2208,19 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       ⚠️ O Firebase não expõe a quota oficial (leituras/downloads/limite do plano) pelo navegador — esses números só existem no Console. Aqui mostramos <b>proxies mensuráveis</b>: peso dos dados, contagens, latência e presença. Servem para acompanhar o crescimento e detectar squads inflando o banco.
     </div>
 
-    <!-- 🛡️ Saúde dos cards (guardião) -->
+    <!-- 🛡️ Saúde dos cards (guardião) — fila de ação: o que precisa de você · o que ele restaurou sozinho · o que já foi resolvido (06/11/2026) -->
     <div class="status-card" id="st-cards-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-        <div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div style="min-width:0;flex:1 1 260px;">
           <div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span>🛡️ Saúde dos cards</span>
             <span id="sc-badge" style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);font-weight:600;">Verificando…</span>
           </div>
-          <div style="font-size:11px;color:var(--txt3);margin-top:2px;line-height:1.5;">O guardião do servidor restaura sozinho o card que some sem exclusão. Aqui ficam os episódios dos últimos 30 dias, de todas as squads.</div>
+          <div style="font-size:11px;color:var(--txt3);margin-top:2px;line-height:1.5;">O guardião do servidor restaura sozinho o card que some sem exclusão. Aqui ficam os episódios dos últimos 30 dias, de todas as squads. <b style="color:var(--txt2);font-weight:600;">Resolvido</b> tira da fila, mas o registro continua no histórico.</div>
         </div>
-        <button class="btn btn-sm" onclick="loadSaudeCards(true)" style="color:var(--teal);border-color:rgba(29,233,182,.3);font-size:10px;">🔄 Atualizar</button>
+        <button class="btn btn-sm" onclick="loadSaudeCards(true)" style="color:var(--teal);border-color:rgba(29,233,182,.3);font-size:10px;min-height:32px;">🔄 Atualizar</button>
       </div>
-      <div id="sc-resumo" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px;"></div>
+      <div id="sc-resumo" class="sc-saude" role="status"></div>
       <div id="sc-lista" style="font-size:11px;color:var(--txt3);">Abra esta aba para carregar.</div>
     </div>
 
@@ -3070,7 +3094,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.89 · painel-dev</div>
+<div class="version">v5.90 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7559,7 +7583,7 @@ function renderFirebaseStatusUI(){
 //   • kanban/cards_guardiao/{squad}/incidentes — o servidor: restaurado · sem_espelho · em_massa · reincidente;
 //   • kanban/squads/{squad}/dados/cards_incidentes_sumico — o alarme do navegador ("um card sumiu"): só entra na lista se o guardião NÃO restaurou depois dele.
 // O espelho (cópia de segurança) não é legível pelo navegador de propósito — aqui só se vê o resultado.
-const _SC_DIAS = 30, _SC_TOLERANCIA_MS = 60000;
+const _SC_DIAS = 30, _SC_TOLERANCIA_MS = 60000, _SC_ANTIGO_DIAS = 7, _SC_LIMITE = 25;
 const _SC_ACAO = {
   restaurado:  { ico:'🛡️', txt:'Restaurado sozinho',            cor:'var(--teal)',   bom:true  },
   sem_espelho: { ico:'⚠️', txt:'Sem cópia — buscar no backup',  cor:'var(--danger)', bom:false },
@@ -7568,6 +7592,8 @@ const _SC_ACAO = {
   alarme:      { ico:'👻', txt:'Alarme do navegador, sem restauração registrada', cor:'var(--warn,#ffd166)', bom:false }
 };
 function _scQuando(iso){ try{ return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return String(iso||'').slice(0,16); } }
+function _scPagina(){ return /-dev\.html/.test(location.pathname) ? 'kanban-dev.html' : 'kanban.html'; }
+async function _scLer(path){ try{ const sn = await window._get(window._ref(window._db, path)); return sn.val() || {}; }catch(e){ return {}; } }
 // 🔎 Dedo-duro (05/11/2026): quem/onde/versão e a causa gravadas pelo servidor no incidente. Tudo vem de gravação de cliente → sempre passa por esc() na hora de desenhar.
 function _scCausa(x){
   const cp = x.causadoPor || null, ctx = x.contexto && x.contexto.ultimaEscritaEstrutural;
@@ -7575,58 +7601,139 @@ function _scCausa(x){
   return { texto:String(x.causaTexto||''), por:cp?String(cp.por||''):'', ver:cp?String(cp.ver||''):'', origem:cp?String(cp.origem||''):'', codigo:String(x.causaCodigo||''),
     ctxPor:ctx?String(ctx.por||''):'', ctxVer:ctx?String(ctx.ver||''):'', ctxOrigem:ctx?String(ctx.origem||''):'', ctxHa:ctx&&ctx.haSeg!=null?Number(ctx.haSeg):null };
 }
-function _scCausaHtml(c){
-  if(!c) return '';
-  let h = '';
-  if(c.por || c.ver || c.origem) h += '<div style="color:var(--txt2);margin-top:2px;overflow-wrap:anywhere;">👤 Causado por: <b>'+esc(c.por||'(sem nome)')+'</b>'+((c.ver||c.origem)?' ('+esc([c.ver,c.origem].filter(Boolean).join(' · '))+')':'')+'</div>';
-  if(c.texto) h += '<div style="color:var(--txt3);margin-top:2px;overflow-wrap:anywhere;">Causa: '+esc(c.texto)+'</div>';
-  if(!c.por && (c.ctxPor || c.ctxOrigem)) h += '<div style="color:var(--txt3);margin-top:2px;overflow-wrap:anywhere;">ℹ️ Última gravação estrutural na squad (só contexto, não é culpa comprovada): '+esc(c.ctxPor||'?')+' · '+esc([c.ctxVer,c.ctxOrigem].filter(Boolean).join(' · '))+(c.ctxHa!=null?' · há '+esc(c.ctxHa)+'s':'')+'</div>';
-  return h;
-}
-function _scPagina(){ return /-dev\.html/.test(location.pathname) ? 'kanban-dev.html' : 'kanban.html'; }
-async function _scLer(path){ try{ const sn = await window._get(window._ref(window._db, path)); return sn.val() || {}; }catch(e){ return {}; } }
-let _scCarregando = false;
-async function loadSaudeCards(force){
-  const lista = document.getElementById('sc-lista'), resumo = document.getElementById('sc-resumo'), badge = document.getElementById('sc-badge');
-  if(!lista || !window._fbReady || _scCarregando) return;
-  _scCarregando = true;
-  if(force===true) lista.innerHTML = '<div style="color:var(--txt3);">Lendo os registros…</div>';
-  try{
-    const agora = Date.now(), corte = new Date(agora - _SC_DIAS*86400000).toISOString(), corte7 = new Date(agora - 7*86400000).toISOString();
-    const ids = Array.from(new Set(['dados','prf','midiacriativa'].concat(SQUADS.map(x=>x.id)))).filter(id=>_SQ_ID_OK.test(id));
-    const lidos = await Promise.all(ids.map(async id=>({ id, g: await _scLer('kanban/cards_guardiao/'+id+'/incidentes'), a: await _scLer('kanban/squads/'+id+'/dados/cards_incidentes_sumico') })));
-    const eventos = [];
-    lidos.forEach(({id,g,a})=>{
-      const restaurados = {};   // cardId → horário do último restaurado
-      Object.values(g).forEach(x=>{ if(!x || !x.cardId || !(x.detectadoEm>=corte)) return;
-        if(x.acao==='restaurado') restaurados[x.cardId] = x.detectadoEm > (restaurados[x.cardId]||'') ? x.detectadoEm : restaurados[x.cardId];
-        eventos.push({ sq:id, cardId:x.cardId, titulo:x.titulo||'', em:x.detectadoEm, acao:_SC_ACAO[x.acao]?x.acao:'sem_espelho', causa:_scCausa(x) });
-      });
-      Object.values(a).forEach(x=>{ if(!x || !x.cardId || !(x.detectadoEm>=corte)) return;
-        const r = restaurados[x.cardId]; if(r && Date.parse(r) >= Date.parse(x.detectadoEm) - _SC_TOLERANCIA_MS) return;   // o guardião já socorreu: não duplica
-        eventos.push({ sq:id, cardId:x.cardId, titulo:x.cardTitle||'', em:x.detectadoEm, acao:'alarme' });
-      });
+// ── estado (a tela redesenha sem reler o banco: trocar de aba, abrir/fechar, resolver) ──
+let _scCarregando = false, _scDados = null, _scAba = 'abertos', _scMais = {}, _scAbertos = new Set();
+// Quem pode resolver: ADM ou PO/Organizador (a REGRA do banco decide de verdade, por squad — aqui só esconde o botão de quem nunca poderia).
+function _scPodeResolver(){ try{ return _isAdmPainel() || ['po','organizador','adm'].includes(window._currentUserRole); }catch(e){ return false; } }
+
+// Pura: transforma o que veio do banco em eventos classificados. dados = { lidos:[{id,g,a,r}], status } ; agora em ms.
+function _scMontarEventos(lidos, agora){
+  const corte = new Date(agora - _SC_DIAS*86400000).toISOString(), eventos = [];
+  lidos.forEach(({id,g,a,r})=>{
+    const restaurados = {};   // cardId → horário do último restaurado
+    Object.entries(g||{}).forEach(([k,x])=>{
+      if(!x || !x.cardId || !(x.detectadoEm>=corte)) return;
+      if(x.acao==='restaurado') restaurados[x.cardId] = x.detectadoEm > (restaurados[x.cardId]||'') ? x.detectadoEm : restaurados[x.cardId];
+      const acao = _SC_ACAO[x.acao] ? x.acao : 'sem_espelho', res = (r||{})[k] || null;
+      eventos.push({ chave:k, sq:id, cardId:x.cardId, titulo:x.titulo||'', em:x.detectadoEm, acao, causa:_scCausa(x), res });
     });
-    eventos.sort((x,y)=>String(y.em).localeCompare(String(x.em)));
-    const n7 = (f)=>eventos.filter(e=>e.em>=corte7 && f(e)).length;
-    const restaurados7 = n7(e=>e.acao==='restaurado'), semSocorro7 = n7(e=>!_SC_ACAO[e.acao].bom), semSocorro30 = eventos.filter(e=>!_SC_ACAO[e.acao].bom).length;
-    const tile = (n,l,cor)=>'<div style="background:rgba(var(--surface-rgb),.55);border:1px solid var(--glass-b);border-radius:9px;padding:9px 10px;text-align:center;"><div style="font-size:20px;font-weight:700;color:'+cor+';">'+n+'</div><div style="font-size:10px;color:var(--txt3);margin-top:2px;">'+l+'</div></div>';
-    resumo.innerHTML = tile(restaurados7,'restaurados (7 dias)', 'var(--teal)') + tile(semSocorro7,'sem socorro (7 dias)', semSocorro7?'var(--danger)':'var(--txt2)') + tile(eventos.length,'episódios (30 dias)','var(--txt2)') + tile(ids.length,'squads vigiadas','var(--txt2)');
-    if(badge){
-      const ruim = semSocorro7>0;
-      badge.textContent = ruim ? semSocorro7+' sem socorro' : (restaurados7 ? restaurados7+' restaurado'+(restaurados7>1?'s':'')+' · tudo certo' : 'Tudo certo');
-      badge.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;'+(ruim?'background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.35);color:var(--danger);':'background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);');
-    }
-    if(!eventos.length){ lista.innerHTML = '<div style="padding:14px;text-align:center;color:var(--txt3);">🌊 Nenhum card sumiu nos últimos '+_SC_DIAS+' dias. O guardião segue de olho.</div>'; return; }
-    lista.innerHTML = (semSocorro30 ? '<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);color:var(--txt2);line-height:1.5;">⚠️ <b>'+semSocorro30+' episódio(s) sem socorro.</b> Procure o card no backup do dia (Config › Backup no Maré) <b>antes de recriar</b> — recriar à mão perde o briefing e o histórico.</div>' : '')
-      + '<div style="display:flex;flex-direction:column;gap:6px;">' + eventos.slice(0,40).map(e=>{
-        const a = _SC_ACAO[e.acao];
-        const link = e.acao==='restaurado' ? ' <a href="'+_scPagina()+'?squad='+encodeURIComponent(e.sq)+'&opencard='+encodeURIComponent(e.cardId)+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;white-space:nowrap;">abrir ↗</a>' : '';
-        return '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:8px;background:rgba(var(--surface-rgb),.45);border:1px solid var(--glass-b);border-left:3px solid '+a.cor+';">'
-          + '<span style="font-size:15px;line-height:1.2;">'+a.ico+'</span>'
-          + '<div style="min-width:0;flex:1;"><div style="color:var(--txt);font-weight:600;overflow-wrap:anywhere;">'+(e.titulo ? esc(e.titulo) : '<i style="color:var(--txt3);font-weight:400;">título desconhecido</i> · '+esc(e.cardId))+'</div>'
-          + '<div style="color:var(--txt3);margin-top:2px;">'+_scQuando(e.em)+' · '+esc(e.sq)+' · <span style="color:'+a.cor+';">'+a.txt+'</span>'+link+'</div>'+_scCausaHtml(e.causa)+'</div></div>';
-      }).join('') + '</div>' + (eventos.length>40 ? '<div style="margin-top:6px;color:var(--txt3);">…e mais '+(eventos.length-40)+' episódio(s) mais antigos.</div>' : '');
+    Object.entries(a||{}).forEach(([k,x])=>{
+      if(!x || !x.cardId || !(x.detectadoEm>=corte)) return;
+      const rt = restaurados[x.cardId]; if(rt && Date.parse(rt) >= Date.parse(x.detectadoEm) - _SC_TOLERANCIA_MS) return;   // o guardião já socorreu: não duplica
+      const chave = 'alarme_'+k;
+      eventos.push({ chave, sq:id, cardId:x.cardId, titulo:x.cardTitle||'', em:x.detectadoEm, acao:'alarme', causa:null, res:(r||{})[chave]||null });
+    });
+  });
+  eventos.sort((x,y)=>String(y.em).localeCompare(String(x.em)));
+  return eventos;
+}
+const _scEhAbertoEv = e=>!_SC_ACAO[e.acao].bom && !e.res;
+const _scEhRestEv = e=>_SC_ACAO[e.acao].bom;
+const _scEhResolvidoEv = e=>!_SC_ACAO[e.acao].bom && !!e.res;
+
+// Bolinha de saúde do guardião: cor + texto (nunca só cor). st = kanban/cards_guardiao/_status (functions/cards/status.js).
+function _scSaude(st, agora){
+  if(!st || !st.ts) return { cor:'var(--txt3)', texto:'Guardião: aguardando o primeiro pulso', ok:null };
+  const min = Math.max(0, Math.round((agora - Date.parse(st.ts))/60000));
+  if(min >= 15) return { cor:'var(--danger)', texto:'Guardião sem pulso há '+min+' min', ok:false };
+  if(st.ok === false) return { cor:'var(--danger)', texto:'Guardião: espelho atrasado '+(Number(st.atrasoMaxMin)||0)+' min', ok:false };
+  return { cor:'var(--teal)', texto:'Guardião ativo · pulso há '+min+' min', ok:true };
+}
+function _scItemHtml(e, podeResolver){
+  const a = _SC_ACAO[e.acao], aberto = _scAbertos.has(e.sq+'|'+e.chave), c = e.causa;
+  let autor;
+  if(c && (c.por || c.ver || c.origem)) autor = '<div>👤 Causado por: <b>'+esc(c.por||'(sem nome)')+'</b>'+((c.ver||c.origem)?' ('+esc([c.ver,c.origem].filter(Boolean).join(' · '))+')':'')+'</div>';
+  else if(c && (c.ctxPor || c.ctxOrigem)) autor = '<div style="color:var(--txt3);">ℹ️ Pista (não é culpa comprovada): última gravação estrutural na squad foi de '+esc(c.ctxPor||'?')+' · '+esc([c.ctxVer,c.ctxOrigem].filter(Boolean).join(' · '))+(c.ctxHa!=null?' · há '+esc(c.ctxHa)+'s':'')+'</div>';
+  else autor = '<div style="color:var(--txt3);">Autor não identificado.</div>';
+  const causa = c && c.texto ? '<div>Causa: '+esc(c.texto)+'</div>' : '';
+  const link = e.cardId && e.acao==='restaurado' ? '<a class="sc-btn sec" style="text-decoration:none;display:inline-flex;align-items:center;" href="'+_scPagina()+'?squad='+encodeURIComponent(e.sq)+'&opencard='+encodeURIComponent(e.cardId)+'" target="_blank" rel="noopener">Abrir o card ↗</a>' : '';
+  const resolvido = e.res ? '<div style="color:var(--teal);">✅ Resolvido por '+esc(e.res.por||'?')+' em '+esc(_scQuando(e.res.em))+'</div>' : '';
+  const botao = (!e.res && !_SC_ACAO[e.acao].bom && podeResolver) ? '<button type="button" class="sc-btn" data-sc-acao="resolver" data-sc-sq="'+esc(e.sq)+'" data-sc-chave="'+esc(e.chave)+'">✅ Resolver</button>' : '';
+  return '<details class="sc-item" style="--sc-cor:'+a.cor+';"'+(aberto?' open':'')+' data-sc-id="'+esc(e.sq+'|'+e.chave)+'">'
+    + '<summary><span aria-hidden="true">'+a.ico+'</span><span class="sc-tit">'+(e.titulo ? esc(e.titulo) : '<i style="color:var(--txt3);font-weight:400;">título desconhecido</i> · '+esc(e.cardId))+'</span>'
+    + '<span class="sc-meta">'+esc(e.sq)+' · '+esc(_scQuando(e.em))+'</span><span class="sc-seta" aria-hidden="true">▶</span></summary>'
+    + '<div class="sc-corpo"><div style="color:'+a.cor+';font-weight:600;">'+esc(a.txt)+'</div><div class="sc-meta" style="white-space:normal;">'+esc(e.sq)+' · '+esc(_scQuando(e.em))+'</div>'+causa+autor+resolvido
+    + ((botao||link) ? '<div class="sc-acoes">'+botao+link+'</div>' : '') + '</div></details>';
+}
+function _scRender(){
+  const lista = document.getElementById('sc-lista'), saude = document.getElementById('sc-resumo'), badge = document.getElementById('sc-badge');
+  if(!lista || !_scDados) return;
+  const { eventos, status, agora } = _scDados, podeRes = _scPodeResolver();
+  const abertos = eventos.filter(_scEhAbertoEv), rest = eventos.filter(_scEhRestEv), resolvidos = eventos.filter(_scEhResolvidoEv);
+  const sd = _scSaude(status, agora);
+  if(saude) saude.innerHTML = '<span class="sc-dot" style="background:'+sd.cor+';" aria-hidden="true"></span><span>'+esc(sd.texto)+'</span>'
+    + (status && Number(status.abertosTotal) ? '<span style="color:var(--txt3);">· '+esc(Number(status.abertosTotal))+' em aberto nos últimos 7 dias</span>' : '');
+  if(badge){
+    const ruim = abertos.length>0 || sd.ok===false;
+    badge.textContent = abertos.length ? abertos.length+' precisa'+(abertos.length>1?'m':'')+' de você' : (sd.ok===false ? 'Guardião com problema' : (rest.length ? rest.length+' restaurado'+(rest.length>1?'s':'')+' · tudo certo' : 'Tudo certo'));
+    badge.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;'+(ruim?'background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.35);color:var(--danger);':'background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);');
+  }
+  const abas = [ ['abertos','Precisam de você',abertos], ['restaurados','Restaurados sozinhos',rest], ['resolvidos','Resolvidos',resolvidos] ];
+  const ev = (abas.find(x=>x[0]===_scAba)||abas[0])[2];
+  let h = '<div class="sc-chips" role="tablist" aria-label="Episódios do guardião">'+abas.map(([id,nome,l])=>'<button type="button" role="tab" class="sc-chip" aria-selected="'+(id===_scAba)+'" data-sc-acao="aba" data-sc-aba="'+id+'">'+esc(nome)+' ('+l.length+')</button>').join('')+'</div>';
+  if(_scAba==='abertos'){
+    const velhos = abertos.filter(e=>Date.parse(e.em) < agora - _SC_ANTIGO_DIAS*86400000);
+    if(velhos.length && podeRes) h += '<div class="sc-aviso"><span>'+velhos.length+' episódio'+(velhos.length>1?'s':'')+' com mais de '+_SC_ANTIGO_DIAS+' dias esperando — provavelmente já tratado'+(velhos.length>1?'s':'')+'.</span><button type="button" class="sc-btn" data-sc-acao="resolver-antigos">✅ Resolver os antigos</button></div>';
+    if(abertos.length) h += '<div class="sc-aviso" style="border-color:rgba(255,107,107,.25);">⚠️ <span><b>Antes de recriar um card</b>, procure no backup do dia: o guardião não tinha cópia (ou parou de restaurar) nestes casos.</span></div>';
+  }
+  if(!ev.length){
+    h += '<div class="sc-vazio">'+(_scAba==='abertos' ? '🌊 Nada esperando por você. O guardião segue de olho.' : _scAba==='restaurados' ? 'Nenhum card precisou ser restaurado nos últimos '+_SC_DIAS+' dias.' : 'Nada foi marcado como resolvido ainda.')+'</div>';
+  } else {
+    const limite = _SC_LIMITE + (_scMais[_scAba]||0)*_SC_LIMITE, vis = ev.slice(0, limite);
+    h += '<div class="sc-lista">'+vis.map(e=>_scItemHtml(e, podeRes)).join('')+'</div>';
+    if(ev.length > vis.length) h += '<div style="margin-top:8px;"><button type="button" class="sc-btn sec" data-sc-acao="mais">Mostrar mais ('+(ev.length-vis.length)+')</button></div>';
+  }
+  lista.innerHTML = h;
+}
+// Grava o marcador (a regra do banco só aceita ADM ou PO/Organizador do squad, uma vez, com o uid de quem clicou). NUNCA apaga o incidente.
+async function _scResolver(itens){
+  const u = window._currentUser; if(!u || !itens.length) return false;
+  const por = String(u.displayName || u.email || 'ADM').slice(0,80), em = new Date().toISOString(), porSquad = {};
+  itens.forEach(({sq,chave})=>{ (porSquad[sq] = porSquad[sq] || {})[chave] = { por, uid:u.uid, em }; });
+  try{
+    await Promise.all(Object.entries(porSquad).map(([sq,m])=>window._update(window._ref(window._db,'kanban/cards_guardiao/'+sq+'/resolvidos'), m)));
+  }catch(err){
+    const negado = /permission/i.test(String((err&&err.code)||'')+String((err&&err.message)||''));
+    showToast(negado ? '⚠ Sem permissão: só ADM ou PO/Organizador do squad marca como resolvido (ou as regras novas ainda não foram publicadas).' : '⚠ Não consegui marcar como resolvido. Tente de novo.');
+    return false;
+  }
+  _scDados.eventos.forEach(e=>{ if(porSquad[e.sq] && porSquad[e.sq][e.chave]) e.res = porSquad[e.sq][e.chave]; });
+  return true;
+}
+function _scCliqueLista(ev){
+  const el = ev.target.closest('[data-sc-acao]'); if(!el || !_scDados) return;
+  const acao = el.dataset.scAcao;
+  if(acao==='aba'){ _scAba = el.dataset.scAba; _scRender(); return; }
+  if(acao==='mais'){ _scMais[_scAba] = (_scMais[_scAba]||0)+1; _scRender(); return; }
+  if(acao==='resolver'){ const sq = el.dataset.scSq, chave = el.dataset.scChave; el.disabled = true;
+    _scResolver([{sq,chave}]).then(ok=>{ if(ok) showToast('✅ Marcado como resolvido — fica no histórico.'); _scRender(); }); return; }
+  if(acao==='resolver-antigos'){
+    const velhos = _scDados.eventos.filter(e=>_scEhAbertoEv(e) && Date.parse(e.em) < _scDados.agora - _SC_ANTIGO_DIAS*86400000);
+    if(!velhos.length) return;
+    uiConfirm('Marcar '+velhos.length+' episódio'+(velhos.length>1?'s':'')+' com mais de '+_SC_ANTIGO_DIAS+' dias como resolvido'+(velhos.length>1?'s':'')+'? Eles saem da fila, mas continuam no histórico (aba "Resolvidos").', {okText:'Resolver os antigos'}).then(sim=>{
+      if(!sim) return;
+      _scResolver(velhos.map(e=>({sq:e.sq,chave:e.chave}))).then(ok=>{ if(ok) showToast('✅ '+velhos.length+' marcado'+(velhos.length>1?'s':'')+' como resolvido'+(velhos.length>1?'s':'')+'.'); _scRender(); });
+    });
+  }
+}
+async function loadSaudeCards(force){
+  const lista = document.getElementById('sc-lista');
+  if(!lista || !window._fbReady || _scCarregando) return;
+  if(!lista.dataset.scLigado){   // 1× por página: cliques por data-* (sem inline com texto escapado) e memória de quais episódios estão abertos
+    lista.dataset.scLigado = '1'; lista.addEventListener('click', _scCliqueLista);
+    lista.addEventListener('toggle', e=>{ const d = e.target; if(d && d.dataset && d.dataset.scId){ d.open ? _scAbertos.add(d.dataset.scId) : _scAbertos.delete(d.dataset.scId); } }, true);
+  }
+  _scCarregando = true;
+  if(force===true || !_scDados) lista.innerHTML = '<div style="color:var(--txt3);">Lendo os registros…</div>';
+  try{
+    const agora = Date.now();
+    const ids = Array.from(new Set(['dados','prf','midiacriativa'].concat(SQUADS.map(x=>x.id)))).filter(id=>_SQ_ID_OK.test(id));
+    const [lidos, status] = await Promise.all([
+      Promise.all(ids.map(async id=>({ id, g: await _scLer('kanban/cards_guardiao/'+id+'/incidentes'), r: await _scLer('kanban/cards_guardiao/'+id+'/resolvidos'), a: await _scLer('kanban/squads/'+id+'/dados/cards_incidentes_sumico') }))),
+      _scLer('kanban/cards_guardiao/_status'),
+    ]);
+    _scDados = { eventos:_scMontarEventos(lidos, agora), status:(status && status.ts) ? status : null, agora };
+    _scRender();
   }catch(e){
     console.warn('[saúde dos cards]', e); lista.innerHTML = '<div style="color:var(--danger);">Não consegui ler os registros agora. Tente atualizar.</div>';
   }finally{ _scCarregando = false; }

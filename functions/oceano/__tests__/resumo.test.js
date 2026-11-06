@@ -148,3 +148,13 @@ test('bloco `guardiao` do resumo: sem pulso = desconhecido (não pinta); com pul
   d.kanban.cards_guardiao._status.ts = iso(40); const velho = await monta(d).run();
   assert.equal(velho.guardiao.estado, 'atencao'); assert.equal(velho.geral, 'atencao');
 });
+
+test('alarme do navegador que um ADM/PO resolveu (resolvidos/alarme_<chave>) deixa de contar; o registro do alarme continua lá', async () => {
+  const d = seed(); d.kanban.squads.dados.dados.cards_incidentes_sumico = { i1: { cardId: 'c1', detectadoEm: iso(60) }, i2: { cardId: 'c2', detectadoEm: iso(30) } };
+  assert.equal((await monta(d).run()).alarmesSumico.ultimas24h, 2);
+  d.kanban.cards_guardiao = { dados: { resolvidos: { alarme_i1: { por: 'Ana', uid: 'adm1', em: iso(5) } } } };
+  const r = await monta(d).run(); assert.equal(r.alarmesSumico.ultimas24h, 1, 'só o c2 segue pendente');
+  d.kanban.cards_guardiao.dados.resolvidos.alarme_i2 = { por: 'Ana', uid: 'adm1', em: iso(4) };
+  assert.equal((await monta(d).run()).alarmesSumico.ultimas24h, 0);
+  assert.ok(d.kanban.squads.dados.dados.cards_incidentes_sumico.i1, 'o alarme em si não é apagado');
+});
