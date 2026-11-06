@@ -18,15 +18,18 @@ const JANELA_ATRASO_MS = 24 * 3600 * 1000;
 const JANELA_INCIDENTES_MS = 7 * 24 * 3600 * 1000;
 const base = (sq) => `kanban/squads/${sq}/dados`;
 
-// Lê só o que precisa de UM squad.
+// Lê só o que precisa de UM squad — barato de propósito (roda a cada 5 min = 288×/dia): os 3 cards mais recentes por `orderByValue().limitToLast(3)` em cards_updated_at (índice `.value` nas regras,
+// senão o SDK baixaria o mapa inteiro e filtraria aqui) + 1 leitura de cards_index POR id candidato, em vez de baixar os dois mapas de ~900 cards de cada squad.
 async function coletarSquad(db, sq) {
-  const [updV, idxV, incV, resV] = await Promise.all([
-    db.ref(`${base(sq)}/cards_updated_at`).get(), db.ref(`${base(sq)}/cards_index`).get(),
+  const [topV, incV, resV] = await Promise.all([
+    db.ref(`${base(sq)}/cards_updated_at`).orderByValue().limitToLast(3).get(),
     db.ref(`kanban/cards_guardiao/${sq}/incidentes`).get(), db.ref(`kanban/cards_guardiao/${sq}/resolvidos`).get(),
   ]);
-  const upd = updV.val() || {}, idx = idxV.val() || {};
+  const top = Object.entries(topV.val() || {}).filter(([, ts]) => typeof ts === 'string').sort((a, b) => b[1].localeCompare(a[1]));
   let novoId = null, novoEm = '';
-  for (const [id, ts] of Object.entries(upd)) { if (idx[id] != null && typeof ts === 'string' && ts > novoEm) { novoEm = ts; novoId = id; } }
+  for (const [id, ts] of top) {   // o mais novo que ainda está no índice (card excluído de propósito deixa resíduo em cards_updated_at e não pode virar falso atraso)
+    if ((await db.ref(`${base(sq)}/cards_index/${id}`).get()).val() != null) { novoId = id; novoEm = ts; break; }
+  }
   const espelhoEm = novoId ? ((await db.ref(`kanban/cards_espelho/${sq}/${novoId}/card/updatedAt`).get()).val() || null) : null;
   return { novoId, novoEm, espelhoEm, incidentes: incV.val() || {}, resolvidos: resV.val() || {} };
 }

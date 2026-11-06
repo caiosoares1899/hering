@@ -32,12 +32,31 @@ test('montarStatus soma e pega o pior atraso; ok vira false acima de 5 min', () 
   assert.equal(s.ok, false); assert.equal(s.atrasoMaxMin, 30); assert.equal(s.abertosTotal, 1); assert.equal(s.ts, new Date(AGORA).toISOString());
   assert.equal(montarStatus({}, AGORA).ok, true);
 });
-test('atualizarStatus lê o banco (só cards no índice contam), grava em cards_guardiao/_status e não quebra se um squad falhar', async () => {
-  const d = makeFakeDb({ kanban: { squads: { dados: { dados: { cards_updated_at: { c1: iso(H), fantasma: iso(10 * MIN) }, cards_index: { c1: '0' } } } },
-    cards_espelho: { dados: { c1: { card: { updatedAt: iso(H) } } } }, cards_guardiao: { dados: { incidentes: { k: { acao: 'sem_espelho', detectadoEm: iso(H) } }, resolvidos: {} } } } });
+// O fake não tem consulta: acrescenta orderByValue().limitToLast(n) em cards_updated_at e PROÍBE a leitura completa desse mapa (roda a cada 5 min: baixar ~900 ids por squad × 288/dia seria o maior leitor do projeto).
+function comConsulta(d) {
+  const usos = []; const ref = d.ref.bind(d);
+  d.ref = (p) => {
+    const r = ref(p);
+    if (!/\/cards_updated_at$/.test(p) && !/\/cards_index$/.test(p)) return r;
+    return Object.assign(Object.create(r), {
+      async get() { throw new Error('leitura completa de ' + p + ' — use a consulta/leitura por id'); },
+      orderByValue: () => ({ limitToLast: (n) => ({ async get() { usos.push('orderByValue|limitToLast=' + n); const all = (await r.get()).val() || {};
+        const top = Object.entries(all).sort((a, b) => String(a[1]).localeCompare(String(b[1]))).slice(-n); return { val: () => Object.fromEntries(top) }; } }) }),
+    });
+  };
+  d.usos = usos; return d;
+}
+test('atualizarStatus usa a consulta indexada (nunca baixa cards_updated_at/cards_index inteiros), ignora card fora do índice e grava cards_guardiao/_status', async () => {
+  const d = comConsulta(makeFakeDb({ kanban: { squads: { dados: { dados: { cards_updated_at: { c1: iso(H), c0: iso(5 * H), fantasma: iso(10 * MIN) }, cards_index: { c1: '0', c0: '1' } } } },
+    cards_espelho: { dados: { c1: { card: { updatedAt: iso(H) } } } }, cards_guardiao: { dados: { incidentes: { k: { acao: 'sem_espelho', detectadoEm: iso(H) } }, resolvidos: {} } } } }));
   const s = await atualizarStatus(d, ['dados', 'inexistente'], AGORA);
-  assert.equal(s.squads.dados.atrasoMin, 0, 'o card "fantasma" (fora do índice) não gera falso atraso'); assert.equal(s.squads.dados.abertos, 1);
+  assert.equal(s.squads.dados.atrasoMin, 0, 'o card "fantasma" (fora do índice) é pulado e o mais novo de verdade (c1) está com espelho em dia'); assert.equal(s.squads.dados.abertos, 1);
+  assert.ok(d.usos.length >= 1 && d.usos.every((u) => u === 'orderByValue|limitToLast=3'), 'só consulta indexada: ' + d.usos.join(', '));
   assert.deepEqual(Object.keys(d._data().kanban.cards_guardiao._status).sort(), ['abertosTotal', 'atrasoMaxMin', 'ok', 'squads', 'ts']);
+});
+test('o pulso grava o atraso quando o card mais novo (no índice) ainda não tem espelho', async () => {
+  const d = comConsulta(makeFakeDb({ kanban: { squads: { dados: { dados: { cards_updated_at: { c1: iso(30 * MIN) }, cards_index: { c1: '0' } } } } } }));
+  const s = await atualizarStatus(d, ['dados'], AGORA); assert.equal(s.squads.dados.atrasoMin, 30); assert.equal(s.ok, false);
 });
 test('statusGuardiao (oceanoResumo): sem nó = desconhecido; pulso velho ou espelho atrasado = atenção; senão ok', () => {
   assert.equal(statusGuardiao(null, AGORA).estado, 'desconhecido');
