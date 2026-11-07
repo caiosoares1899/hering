@@ -250,9 +250,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="pills">
     <span class="pill pb">6 aplicações em produção</span>
     <span class="pill pt">33 Cloud Functions · Node 22</span>
-    <span class="pill pw">1033 testes automatizados</span>
+    <span class="pill pw">1190 testes automatizados</span>
     <span class="pill pp">Claude + Antigravity</span>
-    <span class="pill po">Retrato de 03/11/2026</span>
+    <span class="pill po">Retrato de 07/11/2026</span>
   </div>
   <div class="ctas">
     <a class="cta pri" href="https://github.com/caiosoares1899/hering" target="_blank" rel="noopener">🐙 Abrir o repositório no GitHub ↗</a>
@@ -272,20 +272,20 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
   <div class="kpis">
     <div class="kpi"><div class="kv">6</div><div class="kl">aplicações web em produção<br><span>Maré Digital · Painel · Radar · Oceano · Escala · Intake</span></div></div>
-    <div class="kpi"><div class="kv">33</div><div class="kl">Cloud Functions (gen2)<br><span>Node 22 · us-central1 · 119 arquivos de código</span></div></div>
-    <div class="kpi"><div class="kv">1033</div><div class="kl">testes automatizados<br><span>1032 passam · 1 pulado · ~4 s</span></div></div>
-    <div class="kpi"><div class="kv">347</div><div class="kl">tags de release no GitHub<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
-    <div class="kpi"><div class="kv">11</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
-    <div class="kpi"><div class="kv">1570</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
+    <div class="kpi"><div class="kv">39</div><div class="kl">Cloud Functions (gen2)<br><span>Node 22 · us-central1 · 129 arquivos de código</span></div></div>
+    <div class="kpi"><div class="kv">1190</div><div class="kl">testes automatizados<br><span>1189 passam · 1 pulado</span></div></div>
+    <div class="kpi"><div class="kv">350</div><div class="kl">tags de release no GitHub<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
+    <div class="kpi"><div class="kv">12</div><div class="kl">skills compartilhadas<br><span>os agentes leem a mesma pasta</span></div></div>
+    <div class="kpi"><div class="kv">1640</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
   </div>
 
   <div class="grid g3">
     <div class="card"><div class="ci">🗄️</div><div class="ct">Onde estão os dados</div><div class="cd">Firebase Realtime Database do projeto Google <code class="hl">hering-onboarding</code> (conta corporativa). Acesso só com login Google <code class="hl">@ciahering.com.br</code>; a regra é verificada <strong>no servidor</strong> (<code class="hl">database.rules.json</code>), não na tela. Backups completos em Cloud Storage privado.</div></div>
     <div class="card"><div class="ci">📤</div><div class="ct">O que sai da empresa</div><div class="cd">Hoje, uma única integração de IA em produção: a <strong>API da Anthropic (Claude)</strong>, chamada só por Cloud Functions, para o Agente Ágil e o chat do Radar; no board, apenas nos squads <code class="hl">dev</code> e <code class="hl">dados</code>. A chave fica no Secret Manager. O código vive no GitHub; dados de pessoas não vão para lá (regra e teste, ver seção 04).</div></div>
-    <div class="card"><div class="ci">🧑‍⚖️</div><div class="ct">Quem muda o quê</div><div class="cd">Mudança = Pull Request com CI. Dois agentes de IA propõem, <strong>uma pessoa aprova e faz o merge</strong> (ninguém aprova o próprio PR). Deploy de backend só pelo dono, com a conta corporativa: o Claude roda sem credencial de deploy; o Antigravity só executa deploy com confirmação explícita no chat.</div></div>
+    <div class="card"><div class="ci">🧑‍⚖️</div><div class="ct">Quem muda o quê</div><div class="cd">Mudança = Pull Request com CI. Três agentes de IA propõem, <strong>uma pessoa aprova e faz o merge</strong> (ninguém aprova o próprio PR). Deploy de backend só pelo dono, com a conta corporativa: o Claude roda sem credencial de deploy; o Antigravity só executa deploy com confirmação explícita no chat.</div></div>
   </div>
 
-  <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 03/11/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
+  <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 07/11/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
 </section>
 
 <!-- ★ EM DESTAQUE -->
@@ -333,7 +333,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="si ok"><span class="bdg ok-b">Humano</span><div class="si-t">Ninguém aprova a si mesmo</div><div class="si-d">O agente não faz merge, não aprova e não promove a produção. A CI reprova workflow que reaja a issue ou comentário de terceiros. Cada passo fica no Git com o trailer <code class="hl">Agent:</code>.</div></div>
   </div>
 
-  <div class="cl">Situação de cada peça (retrato de 03/11/2026)</div>
+  <div class="cl">Situação de cada peça (retrato de 07/11/2026)</div>
   <div class="tbl-wrap"><table class="tbl prose">
     <thead><tr><th>Peça</th><th>Situação</th></tr></thead>
     <tbody>
@@ -438,7 +438,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
     <rect x="460" y="52" width="150" height="62" rx="9" fill="rgba(29,233,182,.1)" stroke="rgba(29,233,182,.34)"/>
     <text x="535" y="78" text-anchor="middle" fill="#1de9b6" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Realtime Database</text>
-    <text x="535" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">794 linhas de regras</text>
+    <text x="535" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">867 linhas de regras</text>
 
     <rect x="290" y="130" width="150" height="62" rx="9" fill="rgba(56,182,255,.09)" stroke="rgba(56,182,255,.3)"/>
     <text x="365" y="156" text-anchor="middle" fill="#38b6ff" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Cloud Storage</text>
@@ -644,6 +644,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Limite por pessoa</td><td>Um pedido a cada 2 minutos; o horário é gravado <i>antes</i> da chamada, para barrar o clique duplo enquanto a primeira ainda roda.</td><td><code class="hl">resumoMeuDia.js</code> (<code class="hl">RATE_LIMIT_MS</code>)</td></tr>
       <tr><td>Escopo por squad</td><td>Menção, varredura de prazos, resumo e análises só funcionam nos squads <code class="hl">dev</code> e <code class="hl">dados</code>; outro squad entra por decisão explícita num único arquivo, com aviso de divergência no log.</td><td><code class="hl">squadScope.js</code></td></tr>
       <tr><td>Payload grande fora do modelo</td><td>Relatórios HTML (o exemplo real tem ~940 KB) são hospedados por código; o modelo recebe só o link. Pedir ao modelo para "ecoar" 940 KB seria caro, lento e arriscado.</td><td>README do orquestrador (seção de 28/09)</td></tr>
+      <tr><td>Agente no Painel (só dev, canário)</td><td>Gaveta 🤖 no Painel que <b>só lê</b> os dados que a tela já mostra (visão, fluxo, status) e responde com a fonte; conversa privada por pessoa; servidor recalcula os números e marca o que não bateu. Nasce desligado (<code class="hl">painel_enabled</code>), só ADM nesta fase, cota de 30 perguntas/dia por pessoa; os interruptores só ADM grava.</td><td><code class="hl">functions/agente-agil-orquestrador/painel/</code> · <code class="hl">docs/AGENTE_AGIL_PAINEL.md</code> · regras <code class="hl">kanban/agente_painel*</code></td></tr>
       <tr><td>Aviso ao usuário</td><td>O card de conversa com o agente avisa que cada mensagem consome tokens pagos e deve ser usada com economia.</td><td>entrada v8.30.480 do changelog arquivado</td></tr>
     </tbody>
   </table></div>
@@ -666,22 +667,22 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 <section class="section" id="agentes-dev">
   <div class="sh"><div class="sn">07</div><div>
     <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>Inteligência</div>
-    <h2>Claude e Antigravity</h2>
-    <p class="slead">Dois agentes de código com papéis diferentes no mesmo repositório, coordenados por um quadro em arquivo e supervisionados por uma pessoa. Não confundir com o Agente Ágil, que roda em produção.</p>
+    <h2>Claude, Antigravity e Codex</h2>
+    <p class="slead">Três agentes de código com papéis diferentes no mesmo repositório (desde 05/11/2026; o Claude é o maestro que divide e revisa), coordenados por um quadro em arquivo e supervisionados por uma pessoa. Não confundir com o Agente Ágil, que roda em produção.</p>
   </div></div>
 
   <div class="tbl-wrap"><table class="tbl prose">
-    <thead><tr><th></th><th>Claude (Claude Code · Anthropic)</th><th>Antigravity (Google, instalação corporativa)</th></tr></thead>
+    <thead><tr><th></th><th>Claude (Claude Code · Anthropic)</th><th>Antigravity (Google, instalação corporativa)</th><th>Codex (OpenAI · piloto até ~05/12/2026)</th></tr></thead>
     <tbody>
-      <tr><td>Onde roda</td><td>Sessão em contêiner na nuvem com o repositório clonado; sem credencial de deploy.</td><td>Na máquina corporativa do dono, sob a política de aprovação da empresa (comando de terminal pede aprovação; a regra não é contornada).</td></tr>
-      <tr><td>Papel</td><td>Funcionalidades e correções grandes; <code class="hl">functions/</code>; regras do banco; módulos compartilhados (<code class="hl">mare-*.js</code>); segurança, migração, custo do Firebase; auditoria de área inteira.</td><td>Monitoramento diário; correções localizadas (1 página); textos, ajuda, dicas, documentação; promoções rotineiras via <code class="hl">promover.js</code>.</td></tr>
-      <tr><td>Quando escala</td><td>—</td><td>Achou algo grande durante tarefa pequena: para, registra no quadro com como reproduzir e segue com o resto. "Na dúvida, pergunta ou escala — nunca tenta e vê."</td></tr>
-      <tr><td>Rotina</td><td>Revisa o que o outro fez (auditoria de 16/10).</td><td>Checklist diário: testes, sintaxe das 13 páginas, <code class="hl">promover.js --status</code>, coerência de versões.</td></tr>
+      <tr><td>Onde roda</td><td>Extensão do VS Code no Mac do dono (clone próprio); sem credencial de deploy.</td><td>Na máquina corporativa do dono, sob a política de aprovação da empresa (comando de terminal pede aprovação; a regra não é contornada). Acionado por mensagem do dono com o contrato escrito pelo Claude.</td><td>Chamado pelo Claude por linha de comando (<code class="hl">scripts/delegar.sh</code>), num worktree próprio, com sandbox que só grava ali; plano pessoal do dono. O código que ele lê vai para a OpenAI.</td></tr>
+      <tr><td>Papel</td><td>Funcionalidades e correções grandes; <code class="hl">functions/</code>; regras do banco; módulos compartilhados (<code class="hl">mare-*.js</code>); segurança, migração, custo do Firebase; auditoria de área inteira.</td><td>Monitoramento diário; correções localizadas (1 página); textos, ajuda, dicas, documentação; promoções rotineiras via <code class="hl">promover.js</code>.</td><td>Autor de correções e funções <b>localizadas</b>, sempre com teste; não revisa, não faz merge, deploy nem promoção.</td></tr>
+      <tr><td>Quando escala</td><td>—</td><td>Achou algo grande durante tarefa pequena: para, registra no quadro com como reproduzir e segue com o resto. "Na dúvida, pergunta ou escala — nunca tenta e vê."</td><td>Igual ao Antigravity; o contrato de tarefa diz o que não tocar.</td></tr>
+      <tr><td>Rotina</td><td>Revisa o que o outro fez (auditoria de 16/10).</td><td>Checklist diário: testes, sintaxe das 13 páginas, <code class="hl">promover.js --status</code>, coerência de versões.</td><td>Sem rotina própria: só trabalha por contrato do Claude (§7.3 do quadro).</td></tr>
     </tbody>
   </table></div>
 
   <div class="grid g2">
-    <div class="wc"><div class="wch"><div class="wci">📋</div><div class="wct">Como não pisam um no outro</div></div><div class="wcb"><b>Quadro</b> em <code class="hl">docs/COORDENACAO_AGENTES.md</code> (em andamento · escalado · pendente de deploy). <b>Regra de ouro permanente</b>: antes de qualquer tarefa, rodar <code class="hl">/seatualizar</code> — ler quadro, <code class="hl">version.json</code>, topo do changelog e dos bugs, últimos commits. <b>Autoria</b>: todo commit leva o trailer <code class="hl">Agent: claude</code> ou <code class="hl">Agent: antigravity</code> (os dois usam a mesma identidade git; hoje a <code class="hl">main</code> tem 93 commits com trailer do Claude e 20 do Antigravity). Branches <code class="hl">claude/…</code> e <code class="hl">antigravity/…</code>. Arquivo declarado no quadro não é editado pelo outro até o PR sair.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">📋</div><div class="wct">Como não pisam um no outro</div></div><div class="wcb"><b>Quadro</b> em <code class="hl">docs/COORDENACAO_AGENTES.md</code> (em andamento · escalado · pendente de deploy). <b>Regra de ouro permanente</b>: antes de qualquer tarefa, rodar <code class="hl">/seatualizar</code> — ler quadro, <code class="hl">version.json</code>, topo do changelog e dos bugs, últimos commits. <b>Autoria</b>: todo commit leva o trailer <code class="hl">Agent: claude</code>, <code class="hl">Agent: antigravity</code> ou <code class="hl">Agent: codex</code> (os dois usam a mesma identidade git; hoje a <code class="hl">main</code> tem 93 commits com trailer do Claude e 20 do Antigravity). Branches <code class="hl">claude/…</code> e <code class="hl">antigravity/…</code>. Arquivo declarado no quadro não é editado pelo outro até o PR sair.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🧑‍✈️</div><div class="wct">O humano no circuito</div></div><div class="wcb">O dono decide prioridade, valida em dev, <b>faz o merge de todo PR</b> e roda todo deploy de backend. Pela regra, os agentes nunca fazem merge, nunca dão <code class="hl">push --force</code> em branch alheia e têm seis "linhas vermelhas" (<code class="hl">AGENTS.md</code>): não contornar controle corporativo, não criar automação que reage a texto de terceiros, não mover dado de pessoa para fora do Firebase, não entregar bug sem script de teste, não ir a produção sem validação do ADM, não expor segredo.</div></div>
   </div>
 
@@ -730,7 +731,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wc"><div class="wch"><div class="wci">⚙️</div><div class="wct">functions/ — o backend</div></div><div class="wcb">33 Cloud Functions em 16 pastas por assunto (agente, backup, plantão, timers, Radar, Spotify, monitores…), mais os testes — inclusive os das regras do banco (<code class="hl">functions/rules/</code>). Único projeto Node do repositório; deploy manual.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🔐</div><div class="wct">Regras e dados</div></div><div class="wcb"><code class="hl">database.rules.json</code> e <code class="hl">storage.rules</code> na raiz; 38 nós de primeiro nível em <code class="hl">kanban/</code>, cada um com regra e teste. Nó novo exige regra e entra no backup (<code class="hl">NOS_GLOBAIS</code>).</div></div>
     <div class="wc"><div class="wch"><div class="wci">📚</div><div class="wct">docs/ e a Biblioteca</div></div><div class="wcb">Guias, plantão de bugs, família Oceano, coordenação dos agentes, testes de navegador e o histórico arquivado. <code class="hl">docs/BIBLIOTECA.md</code> é o "bibliotecário": a CI reprova arquivo novo na raiz que não esteja descrito.</div></div>
-    <div class="wc"><div class="wch"><div class="wci">🤖</div><div class="wct">Agentes e CI</div></div><div class="wcb"><code class="hl">.claude/skills/</code> (11 skills, lidas também pelo Antigravity), <code class="hl">.agents/</code> e <code class="hl">.github/workflows/</code> (CI + publicação). <code class="hl">scripts/</code> reúne <code class="hl">checar.js</code>, <code class="hl">mare-cli.js</code> e <code class="hl">mapa.js</code>.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🤖</div><div class="wct">Agentes e CI</div></div><div class="wcb"><code class="hl">.claude/skills/</code> (12 skills, lidas também pelo Antigravity), <code class="hl">.agents/</code> e <code class="hl">.github/workflows/</code> (CI + publicação). <code class="hl">scripts/</code> reúne <code class="hl">checar.js</code>, <code class="hl">mare-cli.js</code> e <code class="hl">mapa.js</code>.</div></div>
   </div>
   <p class="wcb" style="margin:.2rem 0 .8rem"><b>Onde usamos Node.</b> Só <b>fora do navegador</b> — nenhuma página precisa de Node para funcionar (são HTML estático). Quatro usos: <b>(1) o backend</b> — as 33 Cloud Functions rodam em Node 22 (<code class="hl">functions/</code>); quem publica precisa de <b>Node 22 e do Firebase CLI</b> (<code class="hl">firebase-tools</code>) na própria máquina (hoje, o Mac do Caio). <b>(2) as verificações</b> — <code class="hl">scripts/checar.js</code> (na CI e local) e <code class="hl">npm test</code> em <code class="hl">functions/</code> (1033 testes). <b>(3) as ferramentas do repositório</b> — <code class="hl">scripts/mare-cli.js</code> (versão, cache-buster, log de mudanças, índice de código), <code class="hl">scripts/mapa.js</code> (mapa do repositório), <code class="hl">.claude/skills/subirproprod/promover.js</code> (promoção dev → produção) e o gerador do conhecimento do Agente Ágil (<code class="hl">npm run conhecimento</code>). <b>(4) os testes de navegador</b> (<code class="hl">docs/arezzo/testes/</code>) — Playwright com Firebase falso. Nada disso é dependência de produção das páginas: se o Node sumisse de todas as máquinas, o que está no ar continuaria funcionando; só não seria possível publicar funções nem rodar as verificações.</p>
   <div class="ctas" style="margin:.8rem 0 1.2rem">
@@ -761,7 +762,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <p class="slead">Uma skill é um procedimento escrito, versionado e reutilizável. Elas guardam o método e a memória do projeto fora da cabeça de qualquer pessoa — ou agente.</p>
   </div></div>
 
-  <p class="wcb" style="margin-bottom:.6rem">As 11 skills vivem em <code class="hl">.claude/skills/</code>. O Antigravity aponta para a <b>mesma pasta</b> (<code class="hl">.agents/skills.json</code>), então os dois agentes seguem o mesmo procedimento — uma fonte, não duas cópias que divergem.</p>
+  <p class="wcb" style="margin-bottom:.6rem">As 12 skills vivem em <code class="hl">.claude/skills/</code>. O Antigravity aponta para a <b>mesma pasta</b> (<code class="hl">.agents/skills.json</code>), então os os agentes seguem o mesmo procedimento — uma fonte, não duas cópias que divergem.</p>
   <div class="tbl-wrap"><table class="tbl prose">
     <thead><tr><th>Skill</th><th>O que faz</th><th>Trava / saída</th></tr></thead>
     <tbody>
@@ -773,6 +774,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>/atualizarcodemap</td><td>Revalida cada âncora do mapa de código e acha áreas novas sem seção.</td><td>Rodapé com o commit; histórico de 15+ rodadas; cobre todas as seções do mapa (páginas, módulos e functions).</td></tr>
       <tr><td>/atualizarhelpcontent</td><td>Mantém a ajuda in-app igual ao comportamento real nas 4 frentes: Maré, Radar, Oceano (FAQ) e Dicas.</td><td>Checa também o texto inline da tela.</td></tr>
       <tr><td>/otimizaçãoderotina</td><td>Bytes de página, performance mobile e — o que mais pesa — leitura do Firebase (query filtrada de verdade ou baixa a árvore?).</td><td>Cobre o ecossistema todo e os listeners duplicados entre página e módulo. Nunca minifica nem quebra a arquitetura sem aprovação.</td></tr>
+      <tr><td>/auditoriaseguranca</td><td>Auditoria de uma área por fronteira de confiança (quem escreve, quem lê, o que o servidor confia), com três veredictos e severidade; método em <code class="hl">docs/SEGURANCA_FRONTEIRAS.md</code>.</td><td>Só lê e relata; correção vira PR à parte, e mudança de regra do banco só vai ao ar com o deploy do dono.</td></tr>
       <tr><td>/melhoriauiux</td><td>Rodada de melhoria de UI/UX de uma tela (ou geral): audita renderizando a tela real em 2 tamanhos e 3 temas, classifica achados (bug × design × decisão de produto), corrige no <code class="hl">-dev</code> reaproveitando os componentes da casa. Acompanha o guia <code class="hl">docs/GUIA_UI_UX.md</code> ("como o Claude pensa fluxos, páginas e cores").</td><td>Só no <code class="hl">-dev</code>; mudança de métrica é decisão de produto; redesenho grande escala ao Claude.</td></tr>
       <tr><td>/resumosemanal · /gerarokr</td><td>Resumo da semana para a reunião da squad; prompt dos slides de planejamento estratégico.</td><td>Leem changelog <b>e</b> bugs; o prompt dos slides conta Oceano, Radar, Metas, Escala e Plantão como entregas do objetivo Maré Digital.</td></tr>
     </tbody>
@@ -911,7 +913,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Hospedagem das páginas</td><td>GitHub Pages</td><td>Qualquer servidor web ou CDN interno: a raiz do repositório é o site. Sem build, sem runtime.</td><td>Baixo</td></tr>
       <tr><td>Identidade</td><td>Google Workspace da empresa</td><td>Já corporativa. Definir papéis IAM por função e revisão periódica de acessos.</td><td>Baixo</td></tr>
       <tr><td>Projeto Google Cloud</td><td>Titularidade na conta de uma pessoa</td><td>Mover para a organização/pasta da empresa, faturamento corporativo, segundo administrador.</td><td>Baixo–médio</td></tr>
-      <tr><td>Banco e regras</td><td>Realtime Database + 794 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
+      <tr><td>Banco e regras</td><td>Realtime Database + 867 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
       <tr><td>Backend</td><td>33 funções Node 22, deploy manual</td><td>Pipeline de deploy da TI (com aprovação humana), contas de serviço, logs no padrão da casa. O código é Node padrão; só os gatilhos de banco são específicos do Firebase.</td><td>Médio</td></tr>
       <tr><td>CI/CD</td><td>GitHub Actions</td><td>Manter, ou espelhar <code class="hl">checar.js</code> + <code class="hl">npm test</code> na ferramenta da TI — ambos rodam em qualquer shell com Node 22.</td><td>Baixo</td></tr>
       <tr><td>IA em produção</td><td>Chave Anthropic no Secret Manager</td><td>Contrato e termos de dados sob gestão da TI; opção de passar por gateway/proxy interno; painel de consumo.</td><td>Médio</td></tr>
@@ -945,7 +947,7 @@ grep -n "^exports\." functions/index.js    <span class="cm"># 33 funções expor
 node --test functions/plantao/__tests__/*.test.js   <span class="cm"># Plantão de Bugs: 46 testes</span>
 
 <span class="cm"># 3 · segurança: regras e quem não pode o quê</span>
-less database.rules.json                   <span class="cm"># 794 linhas</span>
+less database.rules.json                   <span class="cm"># 867 linhas</span>
 ls functions/rules/__tests__               <span class="cm"># testes das regras</span>
 
 <span class="cm"># 4 · processo e trilha de auditoria</span>
@@ -981,7 +983,7 @@ less docs/COORDENACAO_AGENTES.md AGENTS.md CLAUDE.md   <span class="cm"># quadro
 <div class="div"></div>
 <footer class="footer">
   <span>🌊 Oceano · Ecossistema de gestão · Digital Hering · Grupo Azzas 2154</span>
-  <span>Retrato de 03/11/2026 · mantido por <code class="hl">/atualizardocumentacoes</code></span>
+  <span>Retrato de 07/11/2026 · mantido por <code class="hl">/atualizardocumentacoes</code></span>
 </footer>
 
 </main>
