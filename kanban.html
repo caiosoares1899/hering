@@ -2205,7 +2205,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .xdesc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;flex-shrink:0;}
 .xdesc-del:hover{color:var(--danger);background:rgba(255,107,107,.1);}
 .xdesc-del:disabled{opacity:.3;cursor:not-allowed;}
-.xdesc-text{width:100%;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:6px;padding:7px 9px;color:var(--txt);font-size:12.5px;line-height:1.5;font-family:"DM Sans",sans-serif;resize:vertical;}
+.xdesc-text{width:100%;box-sizing:border-box;min-height:120px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:6px;padding:7px 9px;color:var(--txt);font-size:12.5px;line-height:1.5;font-family:"DM Sans",sans-serif;resize:vertical;}   /* a altura REAL vem de _xdescAltura() (padrão grande ou o que a pessoa arrastou e o navegador lembrou) */
 .xdesc-meta{font-size:9px;color:var(--txt3);margin-top:5px;}
 .xdesc-meta b{color:var(--txt2);}
 .xdesc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;}
@@ -6658,7 +6658,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.908</div>
+<div class="version">v8.30.910</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -16134,6 +16134,26 @@ function _modalSyncCol(){
 }
 let _modalOpenOwner=null, _modalOpenTags=null; // linha de base de Responsável/Tags (ver _modalSyncCol)
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
+// 📏 Altura do campo da descrição adicional (pedido do time, 06/11/2026): já vem GRANDE por padrão e, se a pessoa arrasta o cantinho para mudar, este navegador lembra e usa como
+// padrão nas próximas vezes (localStorage). Só grava quando a pessoa realmente arrasta (pointerdown → pointerup com a altura diferente) — nunca por relayout/render.
+const _XDESC_ALTURA_KEY = 'mare_xdesc_altura', _XDESC_MIN = 120, _XDESC_MAX = 1000;
+function _xdescAltura(){
+  try{ const v = parseInt(localStorage.getItem(_XDESC_ALTURA_KEY),10); if(v >= _XDESC_MIN && v <= _XDESC_MAX) return v; }catch(e){}
+  return window.innerWidth <= 640 ? 190 : 240;
+}
+function _xdescLigarAltura(ta){
+  if(!ta) return;
+  ta.style.height = _xdescAltura()+'px';
+  ta.addEventListener('pointerdown', ()=>{
+    const antes = ta.offsetHeight;
+    window.addEventListener('pointerup', ()=>{
+      const h = Math.round(ta.offsetHeight);
+      if(Math.abs(h-antes) < 4) return;                       // só clicou/selecionou texto: não é redimensionar
+      const v = Math.min(_XDESC_MAX, Math.max(_XDESC_MIN, h));
+      try{ localStorage.setItem(_XDESC_ALTURA_KEY, String(v)); }catch(e){}
+    }, {once:true});
+  });
+}
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
   const canEdit = !!window._currentUserRole; // Convidado tem as mesmas permissões de edição que Membro
@@ -16181,7 +16201,7 @@ function renderExtraDescs(){
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'link')" title="Link">🔗</button>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted(${jsq(taId)})" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
           </div>
-          <textarea class="xdesc-text" id="${taId}" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
+          <textarea class="xdesc-text" id="${taId}" rows="8" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
             oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})" onpaste="_eocPasteHandler(event)"
             onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
           <div class="xdesc-foot">
@@ -16210,7 +16230,7 @@ function renderExtraDescs(){
   // innerHTML acima recria os <textarea>, então reinicia a cada render.
   editingDescs.forEach((d,i)=>{
     const isEditing = _editingDescIdx.has(i) || (!d.text||!d.text.trim());
-    if(isEditing && canEdit) initMentionDropdown('xdesc-ta-'+i);
+    if(isEditing && canEdit){ initMentionDropdown('xdesc-ta-'+i); _xdescLigarAltura(document.getElementById('xdesc-ta-'+i)); }
   });
 }
 function editExtraDesc(i){ _editingDescIdx.add(i); renderExtraDescs(); }
@@ -31629,8 +31649,14 @@ function handleMentionInput(ta, dd){
   // Acha o @ mais próximo antes do cursor
   let atPos = -1;
   for(let i=pos-1; i>=0; i--){
-    if(val[i]==='@'){ atPos=i; break; }
-    if(/\s/.test(val[i])) break;
+    if(val[i]==='\n') break;
+    if(val[i]==='@'){
+      const querySoFar = val.slice(i, pos).toLowerCase();
+      if(querySoFar.startsWith('@card:') || !/\s/.test(val.slice(i+1, pos))){
+        atPos = i;
+      }
+      break;
+    }
   }
   if(atPos < 0){ dd.classList.remove('open'); _mentionActive=null; return; }
   _positionMentionDropdown(ta, dd, atPos);
@@ -31638,16 +31664,18 @@ function handleMentionInput(ta, dd){
 
   // @card: → busca cards
   if(query.toLowerCase().startsWith('card:')){
-    const cardQuery = query.slice(5).toLowerCase();
+    const cardQuery = query.slice(5).toLowerCase().trim();
     // Achado real (skill /monitorarbugs, 2026-08-26): o card hotline
     // ("🤖 Converse com o Agente Ágil") foi desenhado pra ficar fora do
     // grafo normal de cards (sem dono, sem prazo, invisível no board) —
     // sem essa exclusão, dava pra @mencionar ele num comentário/descrição
     // como se fosse um card de trabalho qualquer.
-    const cardMatches = cards.filter(c=>
-      !c.archived && !c.agenteHotline && c.id !== editingId &&
-      c.title.toLowerCase().includes(cardQuery)
-    ).slice(0,8);
+    const queryTerms = cardQuery.split(/\s+/).filter(Boolean);   // cada palavra separada (em qualquer ordem); `/\\s+/` NÃO separava: casava um "\s" literal
+    const cardMatches = cards.filter(c=> {
+      if (c.archived || c.agenteHotline || c.id === editingId) return false;
+      const t = c.title.toLowerCase();
+      return queryTerms.every(term => t.includes(term));
+    }).slice(0,8);
     if(!cardMatches.length){ dd.classList.remove('open'); _mentionActive=null; return; }
     _mentionActive = { el:ta, dd, atPos, mode:'card' };
     renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos);
@@ -31743,7 +31771,11 @@ function handleMentionKey(e, ta, dd){
       // então reparsear quebrava a seleção por teclado dessa entrada
       // especificamente (mouse já funcionava, por passar m.init direto).
       const pos = ta.selectionStart;
-      insertMention(ta, _mentionActive?.atPos??0, pos, activeOpt.dataset.mentionInit);
+      if(_mentionActive?.mode === 'card') {
+        activeOpt.click();
+      } else {
+        insertMention(ta, _mentionActive?.atPos??0, pos, activeOpt.dataset.mentionInit);
+      }
     }
   } else if(e.key==='Escape'){
     e.stopPropagation(); // só fecha o dropdown de @menção, não o modal do card por trás
