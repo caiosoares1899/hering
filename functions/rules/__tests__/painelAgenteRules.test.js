@@ -104,3 +104,37 @@ test('regressão: kanban/painel continua como era (visualizador lê, interno esc
   assert.equal(check(RULES, DB, 'write', 'kanban/painel/qualquer', A.outro, { x: 1 }), true);
   assert.equal(check(RULES, DB, 'write', 'kanban/painel/qualquer', A.forasteiro, { x: 1 }), false);
 });
+
+// ── Interruptores do agente (kanban/config/agente_agil_orquestrador) ──
+// kanban/config/$outro tinha `.write` para QUALQUER conta @ciahering: qualquer interno ligava o agente, abria o acesso para "todos" ou subia a cota (e isso valia também para o
+// kill switch geral, que só o Console escrevia na prática). Agora só ADM escreve esse nó, e o nó foi tirado do curinga para a regra frouxa não se somar à do ADM.
+const CFG = 'kanban/config/agente_agil_orquestrador';
+const DBC = { kanban: { usuarios: { int1: { role: 'membro' }, int2: { role: 'membro' }, po1: { role: 'po' }, adm1: { role: 'adm' }, caio: { role: 'membro' } }, painel_viewers: { 'viewer@gmail,com': true }, config: { agente_agil_orquestrador: { enabled: true } } } };
+const AC = Object.assign({}, A, { po: mk('po1', 'p@ciahering.com.br', 'google.com') });
+const gc = (ator, p, val) => check(RULES, DBC, 'write', p, AC[ator], val) && validate(RULES, DBC, p, AC[ator], val);
+
+test('INTERRUPTORES: só ADM liga/desliga o agente, muda o acesso e a cota — membro, PO, visualizador, conta de fora e sem login NÃO', () => {
+  for (const campo of ['painel_enabled', 'painel_acesso', 'painel_limite_dia', 'enabled', 'model_tier_override']) {
+    const val = campo === 'painel_enabled' || campo === 'enabled' ? true : campo === 'painel_acesso' ? 'todos' : campo === 'painel_limite_dia' ? 500 : 'opus';
+    for (const ator of ['dono', 'outro', 'po', 'forasteiro', 'arezzo', 'visualizador', 'semLogin']) assert.equal(gc(ator, `${CFG}/${campo}`, val), false, `${ator} NÃO deve escrever ${campo}`);
+    for (const ator of ['adm', 'caio']) assert.equal(gc(ator, `${CFG}/${campo}`, val), true, `${ator} deve escrever ${campo}`);
+  }
+  assert.equal(gc('dono', CFG, { enabled: true, painel_enabled: true }), false, 'nem o nó inteiro de uma vez');
+});
+
+test('INTERRUPTORES: valores inválidos são recusados até para o ADM (booleano, lista fechada, cota de 1 a 500)', () => {
+  assert.equal(gc('adm', `${CFG}/painel_enabled`, 'true'), false, 'string "true" não liga');
+  assert.equal(gc('adm', `${CFG}/painel_acesso`, 'qualquer'), false);
+  assert.equal(gc('adm', `${CFG}/painel_acesso`, 'gestores'), true);
+  assert.equal(gc('adm', `${CFG}/painel_limite_dia`, 0), false);
+  assert.equal(gc('adm', `${CFG}/painel_limite_dia`, 501), false);
+  assert.equal(gc('adm', `${CFG}/painel_limite_dia`, 30), true);
+});
+
+test('INTERRUPTORES: leitura continua como era e os OUTROS nós de config continuam abertos a qualquer interno (regressão)', () => {
+  for (const ator of ['dono', 'adm', 'visualizador']) assert.equal(check(RULES, DBC, 'read', `${CFG}/painel_enabled`, AC[ator]), true, `${ator} lê (a gaveta precisa ler)`);
+  for (const ator of ['forasteiro', 'arezzo', 'semLogin']) assert.equal(check(RULES, DBC, 'read', `${CFG}/painel_enabled`, AC[ator]), false);
+  assert.equal(gc('dono', 'kanban/config/qualquer_outro', { x: 1 }), true, 'config comum segue aberto a internos');
+  assert.equal(gc('forasteiro', 'kanban/config/qualquer_outro', { x: 1 }), false);
+  assert.equal(gc('dono', 'kanban/config/adm_emails', ['x']), false, 'adm_emails continua só ADM');
+});

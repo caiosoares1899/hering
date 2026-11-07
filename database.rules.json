@@ -787,7 +787,13 @@
       "config": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         "adm_emails": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')" },
-        "$outro": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && $outro !== 'adm_emails'" }
+        "agente_agil_orquestrador": {
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
+          "painel_enabled": { ".validate": "newData.isBoolean()" },
+          "painel_acesso": { ".validate": "newData.isString() && (newData.val() === 'adm' || newData.val() === 'gestores' || newData.val() === 'todos')" },
+          "painel_limite_dia": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 500" }
+        },
+        "$outro": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && $outro !== 'adm_emails' && $outro !== 'agente_agil_orquestrador'" }
       },
       "spotify_secrets": {
         ".read": false,
