@@ -1,7 +1,7 @@
 # 🤖 Agente Ágil no Painel — desenho (rascunho de 06/11/2026)
 
 > **Status:** só desenho — **nada implementado**. Pedido do Caio: "agente ágil no painel também! me ajudar a gerir, ler os dados, fazer análises" e "esse agente precisa ler os dados do painel em si".
-> **Para quem:** o Caio (decide as 4 perguntas da §11) e, depois, quem implementar (Codex/Antigravity, pelo contrato do `docs/COORDENACAO_AGENTES.md` §7.3).
+> **Para quem:** o Caio (as 4 decisões da §11 já foram tomadas) e, depois, quem implementar (Codex/Antigravity, pelo contrato do `docs/COORDENACAO_AGENTES.md` §7.3).
 > **Mockup:** `docs/capturas/agente-agil-painel/mockup-gaveta.png` (fonte: `mockup-gaveta.html`; números fictícios).
 
 ## 1. O que é, em uma frase
@@ -113,8 +113,10 @@ O agente nunca escreve sozinho no Painel. Quando a ação faz sentido ("avisa o 
 ## 10. O que **não** vai nesta rodada
 Agente decidindo sozinho e escrevendo; ler `feedback`/dado pessoal; gerar relatório HTML; acesso de visualizadores externos; histórico compartilhado; qualquer coisa fora do que o Painel já mostra.
 
-## 11. Decisões que dependem do Caio
-1. **Escrita:** fase 1 só leitura (recomendado) e propostas na fase 3 — ou já quer ação com confirmação na primeira versão?
-2. **Conversa:** privada por pessoa (recomendado) — ou compartilhada como a do Radar?
-3. **Quem usa e o que enxerga:** só você (ADM) por uma semana e depois gestores/POs, vendo **o mesmo que o Painel já mostra** (recomendado) — ou já abrir para o time? E a **carga individual por pessoa** (quem está sobrecarregado) fica só para ADM/PO ou todos veem?
-4. **ADM lê conversa de outras pessoas?** (recomendado: **não**; só o dono. Se algum dia precisar, vira auditoria explícita.)
+## 11. Decisões do Caio (tomadas em 06/11/2026)
+1. **Escrita:** fase 1 **só leitura**; propostas com confirmação só na fase 3.
+2. **Conversa:** **privada por pessoa**, no nó `kanban/agente_painel[_dev]/{uid}` (fora de `kanban/painel`).
+3. **Quem usa:** **só o Caio (ADM) por 1 semana** (canário medindo custo e erros) e depois gestores/POs, vendo **o mesmo que o Painel já mostra**; a **carga individual por pessoa** ("quem está sobrecarregado") fica **só para ADM/PO**.
+4. **ADM lê conversa de outra pessoa?** **Não** — só o dono. Se um dia precisar, vira auditoria explícita e registrada.
+
+> Consequências para a implementação: `painel_pessoas` precisa de checagem de papel **no servidor** (ADM/PO) para a carga individual; as provas de regras da §6 incluem "ADM **não** lê o nó de outra pessoa"; o interruptor `painel_enabled` nasce **desligado** e o Caio o liga para o canário.
