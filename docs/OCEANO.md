@@ -10,7 +10,7 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 | **A Bordo** | onboarding | `onboarding.html` | a renomear (não mexido ainda) |
 | **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | `travessia.html` | **em produção desde 31/10/2026** (entrada discreta: Baú 💼 no Maré/Radar e humor no Meu Dia; o card no Oceano segue "em breve" até decidirmos abrir a porta) |
 
-**Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v37 · `mare-metas.js` v17 · `mare-dicas.js` v10 · `mare-login.js` v3 · `mare-plantao.js` v4 (desativado, guardado). Versões do dia 03/11/2026: Maré v8.30.894 · Painel v5.86 · Radar v2.96 · Oceano v1.59 · Escala v1.10.
+**Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v41 · `mare-metas.js` v17 · `mare-dicas.js` v10 · `mare-login.js` v3 · `mare-plantao.js` v5 (conferido em 07/11/2026) (desativado, guardado). Versões do dia 03/11/2026: Maré v8.30.894 · Painel v5.86 · Radar v2.96 · Oceano v1.59 · Escala v1.10.
 
 ## Regras do que renomear (e do que NÃO)
 - **Renomeia** onde "OKR" é o **nome da página/produto**: título da aba do navegador, cabeçalho, "Ajuda do Radar", "Mural do Radar", "Notificações do Radar", "Online no Radar", "Guia do Radar", links/abas nas outras páginas, textos de ajuda/inscrição, notificação "te mencionou nas anotações do Radar".
@@ -32,7 +32,7 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 ## Logos
 - **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
 
-## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.59; dev: `oceano-dev.html` v1.59)
+## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.61; dev: `oceano-dev.html` v1.61)
 `oceano.html` é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `ecossistema.html` — visão do ecossistema para a TI — e `maredigital.html`, referência detalhada do Maré), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
 - **Host dos produtos:** com o app instalado (ou preferência "sempre aqui dentro"), os produtos abrem em **iframes de nome `oceano-frame`** dentro do Oceano. O menu de 9 pontinhos (`mare-notif(-dev).js` v12+) detecta esse nome e troca de produto via `postMessage({oceano:'abrir'|'lobby'})` em vez de abrir aba nova. Páginas não precisam mudar.
 - **PWA próprio:** `oceano(-dev).webmanifest` (id e escopo só da página). **Não mexe no aplicativo do Maré Digital**, que continua com o manifesto dele.
@@ -48,6 +48,9 @@ Limitações conhecidas: a restrição "só ADM edita os links da Hering" é só
 
 ## Sino no Oceano (2026-10-09, em produção desde `oceano.html` v1.5)
 Botão 🔔 no topo, ao lado de ❓ Ajuda, com o módulo compartilhado `mare-notif(-dev).js`. Pessoais (`kanban/usuarios/{uid}/notificacoes`, TTL do sino do kanban) + feed da torre; rodapé de som/push/Não Perturbe registra o aparelho em `fcm_tokens` (FCM por `import()` dinâmico). Clique roteia por `rotearUrl()` → `abrirApp()` (host/aba nova conforme a preferência). O push continua emitido pela Cloud Function; o clique na notificação de push (service worker) ainda abre `kanban`/`okr` numa aba do navegador, não o Oceano instalado.
+
+- **Limpar lidas (em produção desde a promoção de 05/11/2026, `oceano.html` v1.61):** o "Limpar lidas" do sino do Oceano (e do Painel) também esconde o que já foi lido no **Feed da Torre** (`MareNotif.clearRead()`, `kanban/notif_feed_seen/{uid}/ocultos`) e **não apaga** notificação com `noTTLDelete` (ela fica marcada como lida/dispensada, senão o servidor a recriaria como não lida). Evento endereçado a uma pessoa não vaza no feed dos outros.
+- **Carregamento sem pulo (mesma promoção):** a página reserva o espaço da Meta Global e do Mural enquanto carrega, para o conteúdo não empurrar a tela.
 
 ## Login único pelo Oceano (2026-10-11, em produção: kanban.html v8.30.856 · painel.html v5.65 · oceano.html v1.34)
 O Oceano é a **porta de entrada**: quem não está logado no Maré ou no Painel é mandado pra `oceano(-dev).html?next=<página>`, entra com o Google da Hering (o cadastro básico em `kanban/usuarios/{uid}` é feito lá, sem sobrescrever) e **FICA no Oceano** — vê o Mural e a vitrine — com um atalho **"↩ Continuar para o Maré"** no topo (`#continuar`, `mostrarContinuar()`) que leva à página de origem (squad/card/hash incluídos). Ela **não** é devolvida sozinha: o objetivo é todo mundo passar pela página inicial (v1.19; a v1.15 devolvia sozinho e pulava o Mural).
