@@ -281,12 +281,18 @@ test('sem conclusões: lista alerta aos 14 dias, KPI não inventa limite', async
   assert.equal(res.wip.parado_ha_mais_tempo.alerta, false);
   assert.equal(res.wip.itens[0].alerta, true);
 });
+// A pasta painel/ tem DUAS camadas: as FERRAMENTAS (só leitura — este teste) e o CHAT (chat.js grava a resposta no nó do próprio chat; tem teste próprio em painelChat.test.js
+// que prova que só escreve em kanban/agente_painel*). Arquivo novo na pasta precisa ser classificado aqui de propósito: sem isso uma ferramenta com escrita poderia entrar sem teste.
+const CAMADA_FERRAMENTAS = ['ferramentas.js', 'nodeFor.js'];
+const CAMADA_CHAT = ['chat.js', 'conferirNumeros.js', 'prompt.js'];
 test('código de ferramentas não contém métodos de escrita nem rede/LLM', () => {
   const dir = path.join(__dirname, '../painel');
-  for (const nome of fs.readdirSync(dir)) {
+  const arquivos = fs.readdirSync(dir).sort();
+  assert.deepEqual(arquivos.filter((n) => !CAMADA_FERRAMENTAS.includes(n) && !CAMADA_CHAT.includes(n)), [], 'arquivo novo em painel/ sem classificação (ferramenta de leitura ou camada do chat)');
+  for (const nome of CAMADA_FERRAMENTAS) {
     const src = fs.readFileSync(path.join(dir, nome), 'utf8');
-    assert.doesNotMatch(src, /\.(?:set|update|push|remove|transaction)\s*\(/);
-    assert.doesNotMatch(src, /\b(?:fetch|axios|https|anthropic|openai)\s*\(/i);
+    assert.doesNotMatch(src, /\.(?:set|update|push|remove|transaction)\s*\(/, nome);
+    assert.doesNotMatch(src, /\b(?:fetch|axios|https|anthropic|openai)\s*\(/i, nome);
   }
 });
 test('arrays vazios são diferentes de coluna ausente; objetos Firebase são normalizados', async () => {

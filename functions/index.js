@@ -405,3 +405,12 @@ exports.agenteAgilAnaliseDados = require('./agente-agil-orquestrador/analiseDado
 // como o resto de "Meu Dia"), NÃO escreve nada no board.
 // Deploy isolado: firebase deploy --only functions:agenteAgilAnalisePO
 exports.agenteAgilAnalisePO = require('./agente-agil-orquestrador/analisePO').agenteAgilAnalisePO;
+
+// 🤖 Agente Ágil no Painel — chat privado, SÓ LEITURA (docs/AGENTE_AGIL_PAINEL.md; functions/agente-agil-orquestrador/painel/). Gatilho do banco em
+// kanban/agente_painel[_dev]/{uid}/{msgId}; responde no mesmo nó. Nasce DESLIGADO (kanban/config/agente_agil_orquestrador/painel_enabled) e com acesso só de ADM
+// (painel_acesso). DEPLOY: as regras do banco vêm ANTES (`firebase deploy --only database`), senão a gaveta recebe PERMISSION_DENIED. A versão -dev lê os nós _dev.
+// Deploy isolado: firebase deploy --only functions:agenteAgilPainelChat   (prod)  /  functions:agenteAgilPainelChatDev   (dev)
+// AUTH: gatilho do banco (não é endpoint). Identidade = uid do CAMINHO (a regra só deixa o dono gravar); a função reconfere perfil interno em kanban/usuarios e o interruptor.
+const _painelChat = require('./agente-agil-orquestrador/painel/chat');
+exports.agenteAgilPainelChat = _painelChat.criarGatilho('prod');
+exports.agenteAgilPainelChatDev = _painelChat.criarGatilho('dev');
