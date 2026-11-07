@@ -111,6 +111,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
+| Codex | `codex/painel-agente-ferramentas` | `functions/agente-agil-orquestrador/painel/**`, `__tests__/painelFerramentas.test.js`, `__tests__/nodeFor.test.js`, `docs/AGENTE_AGIL_PAINEL_PARIDADE.md` (contrato `~/hering-logs/delegacoes/2026-11-06-codex-painel-ferramentas.md`) | 06/11/2026 |
+| Claude | `claude/painel-agente-regras` | `database.rules.json` (`agente_painel*`), `functions/rules/__tests__/painelAgenteRules.test.js`; depois função `agenteAgilPainelChat` e a gaveta no `painel-dev.html` | 06/11/2026 |
 
 ### Para amanhã (18/10/2026) — combinado com o Caio
 | O quê | Dono | Onde está o desenho |
@@ -141,6 +143,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Script de teste do bug `getDue` (16/10) usava `fmtDate`, que não existe | O script entregue na ficha quebrou no console do ADM (`ReferenceError: fmtDate is not defined`); o Claude refez o script. Daqui para frente: conferir por `grep` que todo nome usado existe no arquivo `-dev` e partir do código/scripts já existentes (regra no `AGENTS.md`, linha vermelha 4, e em `.claude/skills/plantaobug/SKILL.md`; vale para o subagente `agente-logs-testes`). | ✅ Concluído (`AGENTS.md` Linha Vermelha #4 + validador `mare-cli.js check-script`) |
 
 ### Pendente de deploy (só o Caio roda)
+
+> 🟡 **Agente Ágil no Painel — regras do banco** (`kanban/agente_painel[_dev]`, `…_processed[_dev]`; PR `claude/painel-agente-regras`): `firebase deploy --only database`, **depois** de mergeado. Sem função ainda — as regras sozinhas não expõem nada (nós novos, só o dono acessa). A função `agenteAgilPainelChat[Dev]` vem em PR seguinte e **só deploya depois destas regras**.
 
 > ✅ Deploys acumulados até 21/10/2026 (`vtexStatus`, `weeklyBackup`, as 5 funções do Agente Ágil/`okrAgenteChat`, funções gerais em Node 22 e `database.rules.json`) publicados pelo Caio em 21/10/2026.
 >
