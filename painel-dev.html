@@ -3146,14 +3146,14 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.93 · painel-dev</div>
+<div class="version">v5.94 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
 // Fase 1: SÓ LEITURA. A pergunta é gravada em kanban/agente_painel_dev/{uid}/{id} (regra do banco: só o dono lê/cria; role 'user'); a função responde no mesmo nó
 // (role 'agente') com texto, atalhos e fonte. O navegador manda só uma DICA de contexto (aba/filtro/período — valores de lista fechada); os números vêm do servidor.
 // Tudo que chega do banco passa por esc(); atalhos só trocam de aba/filtro (nunca URL). Promoção para prod: o nó vira kanban/agente_painel (sem _dev).
-const AG_NO = 'kanban/agente_painel_dev';
+const AG_NO = /-dev\.html/.test(location.pathname) ? 'kanban/agente_painel_dev' : 'kanban/agente_painel';   // prod grava no nó de prod (função agenteAgilPainelChat); dev no _dev
 const AG_CFG = 'kanban/config/agente_agil_orquestrador';
 const AG_ABAS = ['visao','fluxo','timeline','pessoas','notifs','monitor','status','dados','agentes'];
 const AG_PERIODOS = [7,14,15,30,60,90];
