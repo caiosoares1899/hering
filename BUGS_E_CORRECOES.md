@@ -86,6 +86,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-07 · Painel › Agente Ágil: resposta com ** e * à mostra
+
+- A gaveta do agente fazia só esc() no texto da resposta, então o markdown do modelo (**negrito**, listas com -) aparecia cru.
+- Agora agMd() escapa tudo antes e só acrescenta strong/em/code sem atributo (mesma ordem do _renderMd do Radar); '- ' vira '•'. painel-dev v5.93.
+- Teste: docs/arezzo/testes/test_painel_agente_gaveta.js (markdown + HTML dentro do negrito segue texto).
+
 ### 2026-11-06 · Apresentação ao vivo: test_apresentacao_live.js falha na main (achado da rodada UI/UX de 06/11/2026)
 
 Achado de passagem, NÃO corrigido (fora do escopo da rodada; confirmado idêntico na main e na branch claude/apresentacao-radar-ui). Caso: 'fora da sincronização, o slide do apresentador NÃO puxa a pessoa' — depois de o acompanhante mexer nos slides (Eve em _okrGoTo(0)) e o apresentador ir ao slide 3, a página da Eve foi para o slide 3 (esperado: continuar no 0 com 'Voltar a seguir'). Pode ser o teste (chamar _okrGoTo por evaluate não conta como gesto da pessoa) ou regressão real do liveAposNavegar/liveAplicar — a investigar antes de a próxima rodada mexer na área ao vivo. Arquivo: okr-apresentacao.slide.html (liveAplicar/liveAposNavegar), docs/arezzo/testes/test_apresentacao_live.js.
