@@ -101,6 +101,15 @@ const atalhosValidos = (lista) => (Array.isArray(lista) ? lista : []).slice(0, 3
   .map((a) => ({ rotulo: String((a && a.rotulo) || '').slice(0, 40), aba: a && a.aba, filtro: a && typeof a.filtro === 'string' && FILTRO_RE.test(a.filtro) ? a.filtro : null }))
   .filter((a) => a.rotulo && ABAS.includes(a.aba));
 
+// O loop não captura exceção de ferramenta (um erro derrubaria a conversa inteira). Um argumento errado do modelo (ex.: esqueceu `dias`, passou o NOME do squad em vez do id) vira
+// resultado {ok:false} para ELE se corrigir na iteração seguinte — e a mensagem vai só para o modelo, nunca para a pessoa.
+const envolverErros = (tool) => Object.assign({}, tool, {
+  handler: async (input) => {
+    try { return await tool.handler(input); }
+    catch (err) { return { ok: false, erro: 'falha_na_ferramenta', detalhe: String((err && err.message) || err).replace(/\s+/g, ' ').slice(0, 300) }; }
+  },
+});
+
 const AVISOS = {
   pausado: 'O Agente Ágil do Painel está pausado pelo ADM no momento.',
   semAcesso: 'O Agente Ágil do Painel ainda está em teste com um grupo pequeno. Quando abrir para você, esta gaveta passa a responder.',
@@ -128,7 +137,7 @@ async function processarMensagem(db, { env, uid, msgId, message, llmClient, buil
 
   try {
     const coletor = [];
-    const tools = [...builderDeFerramentas({ db, env, papel: pessoa.papel }), ferramentaResponder(coletor)];
+    const tools = [...builderDeFerramentas({ db, env, papel: pessoa.papel }).map(envolverErros), ferramentaResponder(coletor)];
     const ctx = contextoValido(message.ctx);                                                             // 5. dica de contexto
     const pergunta = message.text.trim().slice(0, 2000);
     const result = await runLoop({ llmClient, tools, system: SYSTEM_PROMPT_PAINEL_V1, task: `${linhaDeContexto(ctx)}\n\nPergunta: ${pergunta}`, enabled: true });

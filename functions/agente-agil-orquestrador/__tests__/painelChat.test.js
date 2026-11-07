@@ -138,3 +138,20 @@ test('dev × prod: env "dev" lê/grava só os nós _dev e nunca toca os de produ
   assert.ok(resposta(db, 'caio', 'm1', 'dev')); assert.equal(db._data().kanban.agente_painel, undefined);
   for (const p of db.escritas) assert.match(p, /_dev\//);
 });
+
+test('ferramenta que lança exceção NÃO derruba a conversa: o erro volta ao modelo, que se corrige e responde', async () => {
+  const db = bancoFalso(SEMENTE());
+  let chamadas = 0;
+  const flaky = () => [{ name: 'painel_fluxo', description: 'fluxo', input_schema: { type: 'object', properties: {} }, handler: async () => { chamadas++; if (chamadas === 1) throw new Error('Invalid input: dias é obrigatório'); return { cycle: 4.3 }; } }];
+  const l = llm([
+    { toolCalls: [{ id: '1', name: 'painel_fluxo', input: {} }], text: null },
+    { toolCalls: [{ id: '2', name: 'painel_fluxo', input: { dias: 14 } }], text: null },
+    { toolCalls: [{ id: '3', name: 'responder', input: { texto: 'O tempo de ciclo é 4,3 dias.', fonte: 'Fluxo' } }], text: null },
+    { toolCalls: [], text: 'ok' },
+  ]);
+  const out = await rodar(db, { llmClient: l, builderDeFerramentas: flaky });
+  assert.equal(out.processed, true); assert.equal(chamadas, 2);
+  const r = resposta(db); assert.equal(r.text, 'O tempo de ciclo é 4,3 dias.'); assert.equal(r.conferido, true);
+  const vistoPeloModelo = JSON.stringify(l.vistos[1].history); assert.match(vistoPeloModelo, /falha_na_ferramenta/); assert.match(vistoPeloModelo, /dias é obrigatório/);
+  assert.ok(!/falha_na_ferramenta|obrigatório/.test(r.text), 'o erro interno não vai para a pessoa');
+});
