@@ -19,6 +19,8 @@ flowchart TB
     OCEANO["🌊 Oceano\noceano.html"]
     ESCALA["📅 Escala"]
     INTAKE["📥 Intake"]
+    TRAV["⛵ Travessia\ntravessia.html"]
+    MINI["🖥️ Mini painel\nminipainel.html + mac/ · windows/"]
   end
   MODS["🧩 Módulos compartilhados\nmare-notif · mare-dicas · mare-metas\nmare-login · mare-plantao\n+ firebase-messaging-sw.js"]
   subgraph FB["☁️ Firebase — projeto Google corporativo"]
@@ -29,7 +31,7 @@ flowchart TB
     STG["Cloud Storage\n(backups, anexos)"]
   end
   CF["⚙️ Cloud Functions (Node 22)\nfunctions/ — deploy manual"]
-  EXT["🌐 Serviços externos\nAPI da Anthropic (Agente Ágil)\nGoogle Calendar · Looker Studio\nstatus: VTEX · GitHub · Firebase"]
+  EXT["🌐 Serviços externos\nAPI da Anthropic (Agente Ágil:\nMaré, Radar e Painel)\nGoogle Calendar · Looker Studio\nstatus: VTEX · GitHub · Firebase"]
 
   P --> Pages
   Pages --> MODS
@@ -49,18 +51,18 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-  A["Pedido / bug / ideia"] --> B["Branch\nclaude/… ou antigravity/…"]
+  A["Pedido / bug / ideia"] --> B["Branch\nclaude/… · antigravity/… · codex/…"]
   B --> C["Muda só o arquivo -dev\n(+ version.json, registro em\nCHANGELOG ou BUGS)"]
   C --> D["Pull Request\n+ CI: checar.js + testes de functions/"]
   D --> E{{"Merge humano\n(ninguém aprova o próprio PR)"}}
   E --> F["GitHub Pages publica\n*-dev.html"]
   F --> G["Validação explícita\nde quem pediu"]
-  G --> H["/subirproprod\npromover.js: 11 pares"]
+  G --> H["/subirproprod\npromover.js: 12 pares"]
   H --> I["PR de promoção → merge\n→ prod + tag de release"]
   C -. "mudou functions/ ou regras?" .-> J["Deploy manual do Caio\nfirebase deploy --only …"]
 ```
 
-Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras de ouro: [`docs/COORDENACAO_AGENTES.md`](COORDENACAO_AGENTES.md), `CLAUDE.md` e `AGENTS.md`.
+Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em andamento" e as regras de ouro: [`docs/COORDENACAO_AGENTES.md`](COORDENACAO_AGENTES.md), `CLAUDE.md` e `AGENTS.md`.
 
 ## 3. Por pasta (conferido pela CI: todo caminho existe)
 
@@ -71,7 +73,9 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 | `painel.html` · `painel-dev.html` | 🧭 Painel de administração (diverge do dev de propósito) |
 | `okr.html` · `okr-dev.html` | 📡 Radar (OKR) |
 | `okr-apresentacao.slide.html` | 🎙️ Apresentação ao vivo do Radar (sem `-dev`) |
-| `oceano.html` · `oceano-dev.html` | 🌊 Lobby da família: login único, Mural, plantão de bugs |
+| `oceano.html` · `oceano-dev.html` | 🌊 Lobby da família: login único, Mural, Meta Global, sino |
+| `travessia.html` · `travessia-dev.html` | ⛵ Travessia: Baú, faróis do 1:1, humor, avaliação |
+| `minipainel.html` · `mac/` · `windows/` | 🖥️ Mini painel (página + apps da barra do Mac e da bandeja do Windows), lê `oceanoResumo` |
 | `escala.html` · `intake.html` | 📅 Escala · 📥 Pedidos (cada um com `-dev`) |
 | `ecossistema.html` · `maredigital.html` | Documentação técnica navegável (para a TI · funcional) |
 | `mare-notif.js` | Sino único, menu de produtos, tipos de notificação (há um `-dev`) |
@@ -80,15 +84,19 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 | `version.json` | Versão de cada página (auto-atualização) |
 | `functions/` | ⚙️ Cloud Functions + testes (o único projeto Node) |
 | `functions/agente-agil-orquestrador/` | O Agente Ágil (Claude) e seu conhecimento gerado |
-| `functions/plantao/` | Plantão de bugs (ficha, webhook da PR, vigia) |
+| `functions/agente-agil-orquestrador/painel/` | 🤖 Agente Ágil no Painel: chat privado, só leitura, ferramentas que espelham as abas |
+| `functions/cards/` | 🛡️ Guardião dos cards (espelho, restauração, pulso de saúde) |
+| `functions/oceano/` | Resumo do ecossistema para o Mini painel (`oceanoResumo`) |
+| `functions/plantao/` | Plantão de bugs — **desligado desde 02/11/2026** (exports comentados; código e testes guardados) |
 | `functions/rules/` | Testes das regras do banco |
 | `database.rules.json` | Regras de segurança do Realtime Database |
 | `storage.rules` | Regras do Cloud Storage |
-| `scripts/` | `checar.js` (CI), `mare-cli.js` (versão/log/mapa), `mapa.js` (este mapa) |
+| `scripts/` | `checar.js` (CI), `mare-cli.js` (versão/log/mapa), `mapa.js` (este mapa), `delegar.sh` (o maestro entrega um contrato ao Codex) |
 | `docs/` | Documentação de apoio — ver a Biblioteca |
 | `docs/arezzo/testes/` | Testes de navegador (Playwright + Firebase falso) |
 | `.claude/skills/` | Skills dos agentes (promoção, auditorias, documentação…) |
 | `.agents/` | Regras do Antigravity |
+| `AGENTS.md` | Ponto de entrada do Codex e do Antigravity |
 | `.github/workflows/` | CI (`checks.yml`) e publicação (`pages.yml`) |
 | `vendor/firebase-10.14.1/` | SDK do Firebase servido localmente (firewall corporativo) |
 <!-- mapa:caminhos:fim -->
@@ -96,7 +104,9 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 ## 4. Como os dados fluem (exemplos reais)
 
 - **Uma notificação vira push:** a página grava em `kanban/usuarios/{uid}/notificacoes/{id}` → a função `sendPushOnNotification` confere o tipo (`PUSH_TYPES`), o interruptor do tipo (🔔 Painel) e o Não Perturbe → manda pelo FCM → o service worker mostra no celular.
-- **Um bug vira correção:** pessoa reporta no Oceano → ficha em `kanban/plantao/{id}` (só dado anônimo vai ao agente) → o Antigravity busca por URL e abre PR de **dev** → ADM valida → promoção.
+- **Um card que some volta sozinho:** cada card gravado é espelhado por `cardsEspelhar` em `kanban/cards_espelho/{squad}/{id}` (nó só do servidor) → se o card desaparece sem ninguém excluir, `cardsGuardiao` restaura do espelho em segundos e registra o episódio em `kanban/cards_guardiao/{squad}/incidentes` (sino + push aos ADMs/POs) → o ADM vê em Painel › Status › Saúde dos cards e marca como resolvido; `guardiaoStatus` grava um pulso a cada 5 min.
+- **O Painel responde uma pergunta:** a pessoa escreve na gaveta 🤖 → mensagem em `kanban/agente_painel_dev/{uid}/{id}` (só o dono lê/grava) → `agenteAgilPainelChatDev` confere interruptor, acesso e cota, lê os mesmos dados das abas e grava a resposta em `{id}_r` com fonte, hora e o que não bateu.
+- **Um bug vira correção (plantão, desligado desde 02–03/11/2026):** era ficha em `kanban/plantao/{id}` → PR de dev pelo Antigravity → validação do ADM; o código está guardado em `functions/plantao/`.
 - **O Agente Ágil responde:** @menção num card → função do orquestrador → ferramentas do board (ler, mover, comentar…) + biblioteca de ajuda gerada do código → a resposta volta como comentário no card.
 - **Um backup existe:** funções agendadas copiam o banco (completo semanal + global diário) para o Cloud Storage privado; um vigia avisa os ADMs se falhar.
 
@@ -115,6 +125,7 @@ Quem faz o quê (Claude × Antigravity), o quadro de "em andamento" e as regras 
 | Oceano | `oceano.html` v1.61 · oceano | `oceano-dev.html` v1.61 · oceano-dev | `mare-login` v3 · `mare-notif` v41 · `mare-plantao` v5 · `mare-dicas` v10 · `mare-metas` v17 |
 | Escala | `escala.html` v1.10 · escala | `escala-dev.html` v1.10 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
+| Travessia | `travessia.html` — | `travessia-dev.html` — | `mare-login` v3 |
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
@@ -122,16 +133,16 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
-| `agente-agil-orquestrador/` | `agenteAgilMencao` · `agenteAgilMencaoDados` · `agenteAgilDueOverdueScan` · `agenteAgilResumoMeuDia` · `agenteAgilIntake` · `agenteAgilAnaliseDados` · `agenteAgilAnalisePO` |
+| `agente-agil-orquestrador/` | `agenteAgilMencao` · `agenteAgilMencaoDados` · `agenteAgilDueOverdueScan` · `agenteAgilResumoMeuDia` · `agenteAgilIntake` · `agenteAgilAnaliseDados` · `agenteAgilAnalisePO` · `agenteAgilPainelChat` · `agenteAgilPainelChatDev` |
 | `spotify/` | `spotifyOauthCallback` · `spotifyDisconnect` · `spotifySyncNow` · `spotifyPlayback` · `spotifyRadioOwnerCallback` · `spotifyRadioSearch` · `spotifyRadioSuggest` |
 | `backup/` | `weeklyBackup` · `backupCompletoSemanal` · `backupGlobalDiario` · `backupVigia` · `backupCompletoApi` |
 | `cards/` | `cardsEspelhar` · `cardsGuardiao` · `cardsEspelhoVarredura` · `guardiaoStatus` |
 | `okr/` | `sendPushOnMural` · `okrDailyScan` · `okrWeeklySnapshot` · `okrAgenteChat` |
-| `index.js (definidas no próprio arquivo)` | `sendPushOnNotification` · `agenteAgilPainelChat` · `agenteAgilPainelChatDev` |
 | `agente-agil/` | `agenteAgil` |
 | `comentarios/` | `contarComentarios` |
 | `firebase/` | `firebaseStatus` |
 | `github/` | `githubStatus` |
+| `index.js (definidas no próprio arquivo)` | `sendPushOnNotification` |
 | `intake/` | `intakeSubmit` |
 | `metas/` | `metasLembretes` |
 | `oceano/` | `oceanoResumo` |
