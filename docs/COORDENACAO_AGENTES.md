@@ -131,7 +131,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | **Agente Ágil no Painel — função do chat (canário, só dev):** `agenteAgilPainelChatDev`, que só chegou à `main` no #1638 (o #1636 ficou preso na branch do #1635). **Depois:** no Console, `kanban/config/agente_agil_orquestrador/painel_enabled: true`. A de prod (`agenteAgilPainelChat`) espera o `painel.html`. | resync → `firebase deploy --only functions:agenteAgilPainelChatDev --project hering-onboarding --account caio.soares@ciahering.com.br` | 07/11/2026 |
+| Claude | **Agente Ágil no Painel — memória do chat:** `agenteAgilPainelChat` estourava 256 MiB em prod e não respondia; o gatilho (prod e dev) passa a rodar com 1 GiB e 120 s. | resync → `firebase deploy --only functions:agenteAgilPainelChat,functions:agenteAgilPainelChatDev --project hering-onboarding --account caio.soares@ciahering.com.br` | 07/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
