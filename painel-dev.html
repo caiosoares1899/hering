@@ -586,7 +586,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ag-msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;overscroll-behavior:contain;}
 .ag-me{align-self:flex-end;max-width:86%;background:rgba(56,182,255,.16);border:1px solid rgba(56,182,255,.34);border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:14px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;}
 .ag-ag{max-width:96%;background:var(--glass);border:1px solid var(--glass-b);border-radius:14px 14px 14px 4px;padding:13px 15px;font-size:14px;line-height:1.55;overflow-wrap:anywhere;}
-.ag-ag .ag-tx{white-space:pre-wrap;}
+.ag-ag .ag-tx{white-space:pre-wrap;}.ag-tx strong{font-weight:700;color:var(--txt);}.ag-code{background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 5px;border-radius:4px;font-size:.92em;}
 .ag-go{display:inline-flex;gap:6px;align-items:center;font:600 12px 'DM Sans',sans-serif;color:var(--accent);border:1px solid var(--glass-b);background:rgba(56,182,255,.08);border-radius:8px;padding:5px 11px;margin:8px 6px 0 0;cursor:pointer;}
 .ag-go:hover{background:rgba(56,182,255,.2);}
 .ag-src{margin-top:9px;font-size:11px;color:var(--txt3);border-top:1px dashed var(--glass-b);padding-top:7px;}
@@ -3146,7 +3146,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.92 · painel-dev</div>
+<div class="version">v5.93 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3220,6 +3220,16 @@ function agEscutar(){
   _agUnsub = window._onValue(q, snap => { _agMsgs = snap.val() || {}; agRender(); }, err => { console.error('[agente-painel]', err); _agMsgs = {}; agRender(); });
 }
 function agHora(iso){ const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+// Markdown leve da resposta (mesma ordem do _renderMd do Radar: escapa TUDO antes, depois só
+// acrescenta tags sem atributo). Sem link: o servidor já tira URL da resposta (ferramentas.js).
+function agMd(t){
+  return esc(t)
+    .replace(/^[ \t]*#{1,4}[ \t]+(.+)$/gm,'<strong>$1</strong>')
+    .replace(/^[ \t]*[-*][ \t]+/gm,'• ')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*([^*\n]+?)\*(?!\*)/g,'$1<em>$2</em>')
+    .replace(/`([^`\n]+?)`/g,'<code class="ag-code">$1</code>');
+}
 function agMsgHtml(m){
   if(!m || typeof m.text !== 'string') return '';
   if(m.role === 'user') return '<div class="ag-me">'+esc(m.text)+'</div>';
@@ -3228,7 +3238,7 @@ function agMsgHtml(m){
     .map(a => '<button type="button" class="ag-go" data-aba="'+esc(a.aba)+'" data-filtro="'+esc(a.filtro && AG_FILTRO_RE.test(a.filtro) ? a.filtro : '')+'" onclick="agIr(this)">↗ '+esc(a.rotulo)+'</button>').join('');
   const fonte = m.fonte ? '<div class="ag-src">Fonte: '+esc(m.fonte)+(m.lidoEm ? ' · lido às '+esc(agHora(m.lidoEm)) : '')+'</div>' : '';
   const aviso = m.conferido === false ? '<div class="ag-warn">⚠️ Alguns valores'+(Array.isArray(m.naoConferidos) && m.naoConferidos.length ? ' ('+esc(m.naoConferidos.slice(0,5).join(', '))+')' : '')+' não bateram com os dados que li. Confira na aba antes de usar.</div>' : '';
-  return '<div class="ag-ag"><div class="ag-tx">'+esc(m.text)+'</div>'+atalhos+aviso+fonte+'</div>';
+  return '<div class="ag-ag"><div class="ag-tx">'+agMd(m.text)+'</div>'+atalhos+aviso+fonte+'</div>';
 }
 function agRender(){
   const el = document.getElementById('ag-msgs'); if(!el) return;

@@ -59,6 +59,12 @@ const seed = ({ role = 'adm', cfg } = {}) => ({ kanban: { usuarios: { ana: { uid
   t('HTML na resposta/atalho/fonte aparece como texto (nada executa, nenhum <img>/<b> injetado)', x.xss === 0 && x.imgs === 0 && x.bold === 0, x);
   t('número não conferido mostra o aviso amarelo com o valor', x.aviso, x);
   t('filtro malicioso no atalho vira vazio (não chega ao atributo)', x.btnFiltro === '', x);
+  // markdown leve (como o Radar): **negrito**, *itálico*, `código`, "- " vira "•"; HTML dentro do negrito segue texto
+  await p.evaluate(() => { document.getElementById('ag-send').disabled = false; }); await p.fill('#ag-ta', 'md'); await p.click('#ag-send'); await p.waitForTimeout(300);
+  const id3 = await p.evaluate(() => Object.keys(window.__store.kanban.agente_painel_dev.ana).filter(k => !k.endsWith('_r')).sort().pop());
+  await responde(p, id3, { text: 'Pelo Painel:\n- **WIP estourado:** 16 em *Em Progresso* (P85 `5,3 d`)\n* **<img src=x onerror="window.__xss=5">**', conferido: true }); await p.waitForTimeout(400);
+  const md = await p.evaluate(() => { const el = [...document.querySelectorAll('#ag-msgs .ag-tx')].pop(); return { txt: el.innerText, strong: el.querySelectorAll('strong').length, em: el.querySelectorAll('em').length, code: el.querySelectorAll('code').length, imgs: el.querySelectorAll('img').length, xss: window.__xss || 0 }; });
+  t('markdown da resposta vira formatação (sem ** nem * à mostra, lista com •) e HTML no negrito segue texto', md.strong === 2 && md.em === 1 && md.code === 1 && !/\*/.test(md.txt) && (md.txt.match(/•/g) || []).length === 2 && md.imgs === 0 && md.xss === 0, md);
   // teclado / foco / fechar
   await p.keyboard.press('Escape'); await p.waitForTimeout(300);
   t('Esc fecha a gaveta e devolve o foco ao botão 🤖', await p.evaluate(() => document.getElementById('ag-drawer').hidden && document.activeElement.id === 'ag-fab'));
