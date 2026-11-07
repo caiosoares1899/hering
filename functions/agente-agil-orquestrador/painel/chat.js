@@ -174,7 +174,8 @@ function criarGatilho(env) {
   const { escolheClienteParaTarefa } = require('../escolheClienteParaTarefa');
   const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
   const { chat } = caminhos(env);
-  return onValueCreated({ ref: `/${chat}/{uid}/{msgId}`, region: 'us-central1', secrets: [ANTHROPIC_API_KEY] }, async (event) => {
+  // 1GiB/120s: em prod, 256MiB estourou (258–269MiB) ao ler os boards de todos os squads — a instância morria sem gravar resposta.
+  return onValueCreated({ ref: `/${chat}/{uid}/{msgId}`, region: 'us-central1', memory: '1GiB', timeoutSeconds: 120, secrets: [ANTHROPIC_API_KEY] }, async (event) => {
     const { uid, msgId } = event.params;
     const message = event.data.val();
     if (!message || message.role !== 'user') return;                                                     // não paga LLM/cliente para a própria resposta

@@ -86,6 +86,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-07 · Painel › Agente Ágil (prod): gaveta não respondia — função estourava 256 MiB
+
+- No primeiro uso em prod (07/11), a agenteAgilPainelChat morreu por falta de memória (log: 'Memory limit of 256 MiB exceeded with 258/269 MiB used') ao ler os boards de todos os squads; a instância caía antes de gravar resposta, e a gaveta ficava em 'Lendo os dados do Painel…' para sempre. No dev os dados são menores e cabia.
+- Agora o gatilho (prod e dev) roda com memory: '1GiB' e timeoutSeconds: 120 (functions/agente-agil-orquestrador/painel/chat.js, criarGatilho). Pede deploy de agenteAgilPainelChat e agenteAgilPainelChatDev.
+- Perguntas feitas antes do deploy não são reprocessadas (o gatilho só roda na criação): mandar uma pergunta nova.
+
 ### 2026-11-07 · Painel › Agente Ágil: resposta com ** e * à mostra
 
 - A gaveta do agente fazia só esc() no texto da resposta, então o markdown do modelo (**negrito**, listas com -) aparecia cru.
