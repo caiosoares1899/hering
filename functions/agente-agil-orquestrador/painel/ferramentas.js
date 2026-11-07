@@ -17,7 +17,8 @@ const indisponivel = motivo => ({ disponivel: false, motivo });
 // Não repassar texto que contenha possíveis dados pessoais/segredos, nem URLs.
 function texto(v) {
   const s = String(v == null ? '' : v);
-  if (/@|uid|token|https?:|\+?\d[\d\s().-]{7,}\d/i.test(s)) return '[conteúdo omitido]';
+  // Fronteira de palavra: `uid`/`token` como SUBSTRING escondia títulos legítimos ("Cuidados com a pele", "Fluidez do checkout", "Squid").
+  if (/@|\buid\b|\btoken\b|https?:|\+?\d[\d\s().-]{7,}\d/i.test(s)) return '[conteúdo omitido]';
   return s.replace(/[\x00-\x1f]/g, ' ').slice(0, 80);
 }
 function data(v) {
@@ -214,4 +215,4 @@ function buildPainelTools({ db, env, papel }) {
   ];
 }
 
-module.exports = { buildPainelTools };
+module.exports = { buildPainelTools, _texto: texto };
