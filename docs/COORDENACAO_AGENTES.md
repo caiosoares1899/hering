@@ -114,33 +114,18 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Codex | `codex/painel-agente-ferramentas` | `functions/agente-agil-orquestrador/painel/**`, `__tests__/painelFerramentas.test.js`, `__tests__/nodeFor.test.js`, `docs/AGENTE_AGIL_PAINEL_PARIDADE.md` (contrato `~/hering-logs/delegacoes/2026-11-06-codex-painel-ferramentas.md`) | 06/11/2026 |
 | Claude | `claude/painel-agente-regras` | `database.rules.json` (`agente_painel*`), `functions/rules/__tests__/painelAgenteRules.test.js`; depois função `agenteAgilPainelChat` e a gaveta no `painel-dev.html` | 06/11/2026 |
 
-### Para amanhã (18/10/2026) — combinado com o Caio
-| O quê | Dono | Onde está o desenho |
-|---|---|---|
-| 🎨 **Corrigir o tema claro do Painel e do Radar** (toast invisível, abas/botões com cor fixa, status como texto, aba ativa, dia de hoje do calendário) + ajustes menores no Vice City; só nos `-dev` | Claude | `docs/ideias/tema-claro-painel-radar-2026-10-17.md` — script de auditoria: `docs/arezzo/testes/auditoria_temas.js` |
-| ✅ (17→18/10, PR aberto) 🗺️ **Mapa do repositório no GitHub** (`docs/MAPA_DO_REPOSITORIO.md`: árvore + relações, Mermaid) | Claude | `docs/ideias/amanha-18-10-mapa-repo-e-push-antigravity.md` §1 |
-| ✅ (PR aberto) 🌊 **Resumo do mapa no `ecossistema.html` + botão que leva direto ao repositório** (e atualizar as tags: agora publicadas) | Claude | idem §2 |
-| ✅ (PR aberto) 📲 **Push no celular do Caio quando o Antigravity fica esperando aprovação** — o Antigravity avisa antes do comando (`plantaoProximo…&aguardando=<id>&etapa=ship`) + vigia `plantaoTravado` (20 min sem PR). O push avisa; a aprovação continua dentro do app do Antigravity | Claude (deploy: Caio) | `docs/PLANTAO_BUGS.md` › "Aviso de aprovação" |
-
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
 |---|---|---|
 | 👕 Camiseta Brasil que "ganha forma" conforme a meta da Black Friday (Oceano, enchimento + peças nos marcos de 20 %, modo telão) | Claude | `docs/ideias/camiseta-brasil-black-friday.md` — depende da arte oficial; Black Friday = 27/11 |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias): triagem em 4 levas — Radar (🧊 deriva, notas→Próximo Passo), Escala→Kanban, Digest do Painel, fluxo do Maré; Meus Pedidos e sino com adiar ficam com o Claude | Caio escolhe a ordem; Claude/Antigravity conforme a triagem | `docs/ideias/dossie-concorrencia-2026-10.md` — **nada roda antes de 04/11** |
+| 🎨 Tema claro do Painel e do Radar (toast invisível, abas/botões com cor fixa, aba ativa, dia de hoje do calendário) — combinado para 18/10, **sem PR que prove que foi feito** | Claude (ou Antigravity: 1 página por vez) | `docs/ideias/tema-claro-painel-radar-2026-10-17.md` · `docs/arezzo/testes/auditoria_temas.js` |
 | 🔧 Atualizar `firebase-functions` (^5 → atual): o deploy de 18/10 avisou que a versão nova traz breaking changes — fazer com calma e com testes, sem prazo | Claude | aviso do `firebase deploy` de 18/10/2026 |
 
 ### Escalado para o Claude
 | Quem achou | O que | Como reproduzir | Data |
 |---|---|---|---|
 | — | — | — | — |
-
-### Pendências do Antigravity (achadas pelo Claude em 16/10)
-| O que | Detalhe | Status |
-|---|---|---|
-| Nomes/versões inventados no `BUGS_E_CORRECOES.md` | As entradas de 15/10 citam `radar.html`, `radar-dev.html` (v2.0.90–v2.0.95) e `maredigital-dev.html`, que **não existem**. O Radar é `okr.html`/`okr-dev.html` (v2.89) e o portal é `maredigital.html`. Corrigir as 4 ocorrências e conferir os nomes reais com `ls` antes de escrever. | ✅ Corrigido em 16/10 (`antigravity/pendencias-coordenacao-16-10`) |
-| `mare-cli.js log --type bug` insere no lugar errado | A entrada entra no topo do arquivo, **antes** da seção "Armadilhas", e sem data no título. Deve entrar logo abaixo de "## 🐛 Histórico de Bugs e Correções", com `AAAA-MM-DD · <área> — <título>`. | ✅ Corrigido em 16/10 (`antigravity/pendencias-coordenacao-16-10`) |
-| Papéis de `mare-cli.js` × `promover.js` + 5 skills lendo `BUGS_E_CORRECOES.md` | Documentar em 1 parágrafo a divisão sem sobreposição (`mare-cli.js`: status/bump/log/map; `promover.js`: promoção dev→prod) e atualizar `gerarokr`, `resumosemanal`, `atualizarcodemap`, `atualizarhelpcontent`, `otimizaçãoderotina`. | ✅ Concluído em 16/10 (`antigravity/pendencias-coordenacao-16-10`) |
-| Script de teste do bug `getDue` (16/10) usava `fmtDate`, que não existe | O script entregue na ficha quebrou no console do ADM (`ReferenceError: fmtDate is not defined`); o Claude refez o script. Daqui para frente: conferir por `grep` que todo nome usado existe no arquivo `-dev` e partir do código/scripts já existentes (regra no `AGENTS.md`, linha vermelha 4, e em `.claude/skills/plantaobug/SKILL.md`; vale para o subagente `agente-logs-testes`). | ✅ Concluído (`AGENTS.md` Linha Vermelha #4 + validador `mare-cli.js check-script`) |
 
 ### Pendente de deploy (só o Caio roda)
 
@@ -190,7 +175,7 @@ O que existe de verdade — **não há "sala de chat" compartilhada**; cada jane
   - Claude: `claude -p` e, entre sessões do Claude, `SendMessage`/`ListAgents`.
   - Os dois canais (`codex exec` e `agy -p`) foram testados sem interface em 05/11/2026 e respondem.
 - **Invocações seguras (flags obrigatórias; testadas em 05/11/2026 num worktree descartável):**
-  - **Codex:** `codex exec -s workspace-write -C ~/hering-codex --ephemeral -o <arquivo-da-resposta> "<contrato>"`. Nunca `-s danger-full-access`. Verificado: edita e **faz commit** no worktree. **Push e PR: o maestro faz** depois de ler o diff (não verificado dentro do sandbox).
+  - **Codex:** `codex exec -s workspace-write -C ~/hering-codex --ephemeral -o <arquivo-da-resposta> "<contrato>"`. Nunca `-s danger-full-access`. Verificado: edita e faz commit — **no worktree o commit só funciona com o `.git` do clone principal gravável** (`-c 'sandbox_workspace_write.writable_roots=["~/hering/.git"]'`, testado em 07/11/2026); sem isso ele edita e o maestro commita. **Atalho: `scripts/delegar.sh <assunto> <contrato.md>`** (worktree, flags, log e resposta em `~/hering-logs/delegacoes/`, em segundo plano). **Push e PR: o maestro faz** depois de ler o diff (não verificado dentro do sandbox).
   - **Antigravity:** dentro do worktree dele, `agy -p "<contrato>" --sandbox --mode accept-edits --output-format text`. Nunca `--dangerously-skip-permissions`. Verificado: **edita arquivos, mas comando de shell (commit, `npm test`, `checar.js`) é negado em modo sem interface**; então, nas delegações ao `agy`, o maestro roda os testes, faz o commit e abre o PR. (Regra `permissions.allow` do `settings.json` sugerida pela mensagem de erro: sintaxe não verificada.)
   - Em qualquer delegação o maestro **relê o diff e roda os testes ele mesmo** antes de abrir o PR; a saída do executor é relato, não prova.
 - **Não usar como base** (só aparecem em fontes de terceiros ou estão vazios): `codex mcp-server`, `claude mcp serve`, o `mcp_config.json` do Antigravity (arquivo vazio hoje).
@@ -237,6 +222,7 @@ Lição da rodada de UI/UX da apresentação do Radar (PR #1629): foi feita **in
   - **Antigravity (volume/rotina, plano enterprise):** CHANGELOG/BUGS/GUIA/skill, capturas antes × depois em `docs/capturas/`, Ajuda e dica, script de console, rascunho do texto do PR.
 - **PRs pequenos:** uma rodada vira **dois PRs** quando mistura **correção** (ex.: fps — rápida, validável, sobe na hora) com **redesenho** (entra no lote do dia). A correção não espera o redesenho.
 - **Antes de abrir qualquer PR** o maestro roda a bateria da CI inteira (`checar.js` + `cd functions && npm test` quando tocar CHANGELOG/Ajuda/páginas) — CI vermelha por algo que a máquina local já mostraria é retrabalho de todo mundo.
+- **Medido (07/11/2026, Agente Ágil no Painel):** 40 min, 96 chamadas; **só 7 min foram comando, 32 min foram eu gerando arquivo grande em série** (função, regras, gaveta, 5 testes) — delegar uma parte de quatro não encurta nada se o resto continua numa fila só. **Regra de tempo:** (1) pedido com 3+ arquivos grandes independentes → no **mesmo turno** disparo em paralelo (Codex via `codex exec` em background, `Agent` fork em worktree) e escrevo só a parte que depende de decisão minha; (2) teste grande é do Codex/fork, não meu; (3) mais de ~15 min sem resposta ao Caio → status de uma linha e **entrego o que já está pronto** (um PR por camada) em vez de segurar tudo; (4) advisor 1× no fim, não a cada camada.
 - **Não delegue** o que é mais rápido direto (um ajuste de CSS, uma linha) — o custo de contrato + revisão passa o ganho (§7.4).
 
 ### 7.6 Piloto do Codex (um mês) e métricas
