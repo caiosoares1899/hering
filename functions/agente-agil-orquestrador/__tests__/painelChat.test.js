@@ -155,3 +155,19 @@ test('ferramenta que lança exceção NÃO derruba a conversa: o erro volta ao m
   const vistoPeloModelo = JSON.stringify(l.vistos[1].history); assert.match(vistoPeloModelo, /falha_na_ferramenta/); assert.match(vistoPeloModelo, /dias é obrigatório/);
   assert.ok(!/falha_na_ferramenta|obrigatório/.test(r.text), 'o erro interno não vai para a pessoa');
 });
+
+test('e-mail autoritativo do Auth: o registro em kanban/usuarios (que o dono escreve) não vale — e a consulta ao Auth falha FECHADA', async () => {
+  const authEmail = (mapa) => async (uid) => { if (!(uid in mapa)) throw new Error('auth/user-not-found'); return mapa[uid]; };
+  // registro DIZ que é da empresa (e adm), mas o Auth diz que é gmail → barrado, sem resposta e sem LLM
+  let db = bancoFalso(SEMENTE()); let l = feliz('x');
+  let out = await rodar(db, { llmClient: l, uid: 'ext', authEmail: authEmail({ ext: 'fora@gmail.com' }) });
+  assert.equal(out.reason, 'unknown_user'); assert.equal(l.chamadas(), 0); assert.deepEqual(db.escritas, []);
+  // registro SEM e-mail, mas o Auth confirma o e-mail da empresa → usa (o registro não precisa ter o campo)
+  const sem = SEMENTE(); delete sem.kanban.usuarios.caio.email; db = bancoFalso(sem); l = feliz('9 cards.');
+  out = await rodar(db, { llmClient: l, uid: 'caio', authEmail: authEmail({ caio: 'caio.soares@ciahering.com.br' }) });
+  assert.equal(out.processed, true, 'Caio é reconhecido como ADM pelo e-mail do Auth');
+  // Auth indisponível / usuário inexistente → ninguém passa (falha fechado), mesmo com registro "válido"
+  db = bancoFalso(SEMENTE()); l = feliz('x');
+  out = await rodar(db, { llmClient: l, uid: 'caio', authEmail: authEmail({}) });
+  assert.equal(out.reason, 'unknown_user'); assert.equal(l.chamadas(), 0);
+});

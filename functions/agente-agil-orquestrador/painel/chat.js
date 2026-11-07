@@ -54,11 +54,16 @@ async function lerConfig(db) {
   };
 }
 
-async function resolverPessoa(db, uid) {
+// O e-mail vem do AUTH (Admin SDK), não do registro em kanban/usuarios: o dono pode escrever o próprio registro (inclusive o campo `email`), então ele não é prova de nada.
+// Com `authEmail` injetado (produção) a consulta falha FECHADO (erro ou sem e-mail = ninguém); sem ele (só testes) cai no registro. O PAPEL continua vindo do registro.
+async function resolverPessoa(db, uid, authEmail) {
   const u = (await db.ref(`kanban/usuarios/${uid}`).get()).val();
-  if (!u || typeof u !== 'object' || !emailDaEmpresa(u.email)) return null;
+  if (!u || typeof u !== 'object') return null;
+  let email = u.email;
+  if (authEmail) { try { email = await authEmail(uid); } catch (e) { email = null; } }
+  if (!emailDaEmpresa(email)) return null;
   const papeis = Object.values(u.squads_roles || {});
-  const adm = u.role === 'adm' || String(u.email).toLowerCase() === 'caio.soares@ciahering.com.br';
+  const adm = u.role === 'adm' || String(email).toLowerCase() === 'caio.soares@ciahering.com.br';
   const po = u.role === 'po' || u.role === 'organizador' || papeis.includes('po') || papeis.includes('organizador');
   return { uid, nome: String(u.nome || '').slice(0, 60), papel: adm ? 'adm' : po ? 'po' : 'membro' };
 }
@@ -118,11 +123,11 @@ const AVISOS = {
 };
 
 // builderDeFerramentas({db, env, papel}) → array de tools de LEITURA (painel/ferramentas.js). Injetado para testar sem o resto.
-async function processarMensagem(db, { env, uid, msgId, message, llmClient, builderDeFerramentas, agora = new Date() }) {
+async function processarMensagem(db, { env, uid, msgId, message, llmClient, builderDeFerramentas, authEmail, agora = new Date() }) {
   if (!message || message.role !== 'user') return { processed: false, reason: 'not_user' };             // 1. a resposta do próprio agente também dispara o gatilho
   if (typeof message.text !== 'string' || !message.text.trim()) return { processed: false, reason: 'empty' };
 
-  const pessoa = await resolverPessoa(db, uid);                                                          // 2. identidade = uid do caminho
+  const pessoa = await resolverPessoa(db, uid, authEmail);                                                          // 2. identidade = uid do caminho
   if (!pessoa) return { processed: false, reason: 'unknown_user' };                                      //    (sem resposta: nem confirma que o caminho existe)
   const cfg = await lerConfig(db);                                                                       // 3. interruptores
   if (!cfg.geral || !cfg.painel) { await gravarResposta(db, env, uid, msgId, { text: AVISOS.pausado }, agora); return { processed: false, reason: 'disabled' }; }
@@ -165,6 +170,7 @@ function criarGatilho(env) {
   const { onValueCreated } = require('firebase-functions/v2/database');
   const { defineSecret } = require('firebase-functions/params');
   const { getDatabase } = require('firebase-admin/database');
+  const { getAuth } = require('firebase-admin/auth');
   const { escolheClienteParaTarefa } = require('../escolheClienteParaTarefa');
   const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
   const { chat } = caminhos(env);
@@ -176,7 +182,7 @@ function criarGatilho(env) {
     try {
       const { buildPainelTools } = require('./ferramentas');
       const { llmClient, tier } = await escolheClienteParaTarefa({ apiKey: ANTHROPIC_API_KEY.value(), taskText: message.text, db });
-      const out = await processarMensagem(db, { env, uid, msgId, message, llmClient, builderDeFerramentas: buildPainelTools });
+      const out = await processarMensagem(db, { env, uid, msgId, message, llmClient, builderDeFerramentas: buildPainelTools, authEmail: async (u) => (await getAuth().getUser(u)).email });
       console.log('[agente-painel]', env, msgId, out.processed ? `ok tier=${tier} conferido=${out.conferido}` : `ignorado (${out.reason})`);
     } catch (err) {
       console.error('[agente-painel] falha no gatilho:', env, msgId, err && err.message);
