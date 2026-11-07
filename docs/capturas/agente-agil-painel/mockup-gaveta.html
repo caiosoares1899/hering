@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Mockup · Agente Ágil no Painel</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--glass:rgba(10,37,64,.62);--gb:rgba(56,182,255,.18);--accent:#38b6ff;--teal:#1de9b6;--warn:#ffd166;--danger:#ff6b6b;--txt:#e8f4fd;--txt2:rgba(200,230,255,.68);--txt3:rgba(150,200,240,.45)}
+*{box-sizing:border-box;margin:0}body{width:1440px;height:900px;background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25),transparent 55%),#010810;color:var(--txt);font-family:'DM Sans',sans-serif;overflow:hidden;position:relative}
+.top{height:54px;border-bottom:1px solid var(--gb);display:flex;align-items:center;gap:22px;padding:0 24px;background:rgba(3,13,26,.9)}
+.top b{font-family:Syne;font-size:16px}.tabs{display:flex;gap:6px;margin-left:10px}.tab{padding:7px 13px;border-radius:9px;font-size:13px;color:var(--txt2)}.tab.on{background:rgba(56,182,255,.14);border:1px solid var(--gb);color:var(--txt)}
+.page{padding:22px 24px;width:calc(1440px - 460px)}
+.h{font-family:Syne;font-size:20px;font-weight:700;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.k{background:var(--glass);border:1px solid var(--gb);border-radius:16px;padding:16px 18px}.k b{display:block;font-family:Syne;font-size:30px}.k span{font-size:12.5px;color:var(--txt2)}
+.row{margin-top:16px;background:var(--glass);border:1px solid var(--gb);border-radius:16px;padding:16px 18px;height:300px}.bar{height:12px;border-radius:7px;background:rgba(255,255,255,.07);margin:12px 0;position:relative;overflow:hidden}.bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#2563c9,#38b6ff);border-radius:7px}
+.fab{position:absolute;right:480px;bottom:26px;width:54px;height:54px;border-radius:50%;background:var(--glass);border:1px solid var(--accent);display:grid;place-items:center;font-size:22px}
+.drawer{position:absolute;top:54px;right:0;bottom:0;width:450px;background:rgba(3,13,26,.97);border-left:1px solid var(--gb);display:flex;flex-direction:column;box-shadow:-14px 0 44px rgba(0,0,0,.45)}
+.dh{padding:14px 18px;border-bottom:1px solid var(--gb)}.dh .t{display:flex;align-items:center;gap:10px;font-family:Syne;font-weight:700;font-size:16px}.dh .t em{margin-left:auto;font-style:normal;font-family:'DM Sans';font-size:12px;color:var(--txt3)}
+.ctx{margin-top:9px;display:flex;gap:6px;flex-wrap:wrap}.ctx span{font-size:11.5px;padding:3px 10px;border-radius:99px;background:rgba(56,182,255,.1);border:1px solid var(--gb);color:var(--txt2)}
+.msgs{flex:1;overflow:hidden;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.me{align-self:flex-end;max-width:84%;background:rgba(56,182,255,.16);border:1px solid rgba(56,182,255,.34);border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:14px}
+.ag{max-width:96%;background:var(--glass);border:1px solid var(--gb);border-radius:14px 14px 14px 4px;padding:13px 15px;font-size:14px;line-height:1.5}
+.ag p{margin-bottom:8px}.ag table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0 10px}.ag th{color:var(--txt3);font-weight:600;text-align:left;padding:5px 6px;border-bottom:1px solid var(--gb);font-size:11px;text-transform:uppercase;letter-spacing:.04em}.ag td{padding:6px;border-bottom:1px solid rgba(255,255,255,.05)}
+.d{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.go{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--accent);border:1px solid var(--gb);background:rgba(56,182,255,.08);border-radius:8px;padding:4px 10px;margin:2px 4px 0 0}
+.src{margin-top:9px;font-size:11px;color:var(--txt3);border-top:1px dashed var(--gb);padding-top:7px}
+.prop{margin-top:6px;background:rgba(255,209,102,.07);border:1px solid rgba(255,209,102,.35);border-radius:12px;padding:10px 12px;font-size:13px}.prop .b{display:flex;gap:8px;margin-top:8px}.prop button{font:600 12px 'DM Sans';border-radius:8px;padding:6px 12px;border:1px solid var(--gb);background:var(--glass);color:var(--txt)}.prop button.ok{border-color:var(--teal);color:var(--teal)}
+.chips{padding:0 18px 10px;display:flex;gap:7px;flex-wrap:wrap}.chips span{font-size:12.5px;padding:6px 12px;border-radius:99px;border:1px solid var(--gb);background:var(--glass);color:var(--txt2)}
+.inp{margin:0 18px 16px;display:flex;gap:8px}.inp div{flex:1;border:1px solid var(--gb);background:var(--glass);border-radius:12px;padding:11px 14px;color:var(--txt3);font-size:14px}.inp button{border-radius:12px;border:1px solid var(--accent);background:rgba(56,182,255,.18);color:var(--txt);padding:0 16px;font:600 13px 'DM Sans'}
+.tag{position:absolute;left:24px;bottom:18px;font-size:12px;color:var(--txt3)}
+</style></head><body>
+<div class="top"><b>🌊 Painel</b><div class="tabs"><div class="tab on">👁 Visão</div><div class="tab">🌊 Fluxo</div><div class="tab">🛤️ Timeline</div><div class="tab">🧑‍🤝‍🧑 Pessoas</div><div class="tab">🔋 Status</div><div class="tab">📊 Dados</div><div class="tab">🤖 Agentes</div></div></div>
+<div class="page"><div class="h">👁 Visão geral · Digital</div>
+<div class="grid"><div class="k"><b>63</b><span>cards ativos</span></div><div class="k"><b style="color:var(--warn)">9</b><span>com prazo vencendo</span></div><div class="k"><b style="color:var(--danger)">4</b><span>bloqueados</span></div><div class="k"><b style="color:var(--teal)">12</b><span>entregues na semana</span></div></div>
+<div class="row"><div style="font-size:13px;color:var(--txt2)">WIP por coluna</div><div class="bar"><i style="width:72%"></i></div><div class="bar"><i style="width:48%"></i></div><div class="bar"><i style="width:91%;background:linear-gradient(90deg,#c9662b,#ffd166)"></i></div><div class="bar"><i style="width:30%"></i></div></div></div>
+<div class="fab">🤖</div>
+<div class="drawer">
+ <div class="dh"><div class="t">🤖 Agente Ágil <em>privado · só você vê</em></div><div class="ctx"><span>👁 Visão</span><span>Digital · 6 squads</span><span>últimos 15 dias</span><span>lido às 14:02</span></div></div>
+ <div class="msgs">
+  <div class="me">onde está o gargalo do Digital essa semana?</div>
+  <div class="ag"><p><b>Em "Revisão"</b>: 11 cards (limite 7) e o tempo médio parado subiu de 2,1 para 4,3 dias.</p>
+   <table><tr><th>Squad</th><th>Em revisão</th><th>Parado há</th></tr><tr><td><span class="d" style="background:var(--danger)"></span>Mídia Criativa</td><td>6</td><td>5,2 d</td></tr><tr><td><span class="d" style="background:var(--warn)"></span>Dados</td><td>3</td><td>3,8 d</td></tr></table>
+   <span class="go">↗ Ver no Fluxo · Mídia Criativa</span>
+   <div class="src">Fonte: Fluxo + Visão · Digital · 15 dias · cálculo feito pelo sistema, números conferidos</div></div>
+  <div class="me">avisa o PO da Mídia Criativa</div>
+  <div class="ag"><p>Posso fazer isso. Confirme o que será enviado:</p><div class="prop">✉️ <b>Notificar</b> Ana (PO · Mídia Criativa)<br><span style="color:var(--txt2)">"Revisão está com 6 cards parados há mais de 5 dias; vale olhar antes da entrega de Natal."</span><div class="b"><button class="ok">Enviar</button><button>Editar texto</button><button>Cancelar</button></div></div></div>
+ </div>
+ <div class="chips"><span>O que merece atenção hoje?</span><span>Resumo para a reunião de gestão</span><span>Quem está sobrecarregado?</span></div>
+ <div class="inp"><div>Pergunte sobre o que você está vendo…</div><button>Enviar</button></div>
+</div>
+<div class="tag">MOCKUP · números fictícios · não é a tela final</div>
+</body></html>
