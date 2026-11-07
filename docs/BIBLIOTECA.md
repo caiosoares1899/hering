@@ -100,7 +100,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `functions/` | **Cloud Functions** (Node 22). `index.js` registra todas; cada subpasta é uma área (`agente-agil-orquestrador/`, `backup/`, `plantao/`, `okr/`, `metas/`, `spotify/`, `rules/` = testes das regras…). Único projeto Node do repo |
 | `mac/` | **App do Mac** (barra de menu + widget, Swift/SwiftUI) do mini painel: lê a função `oceanoResumo`. Projeto gerado com XcodeGen (`project.yml`); a chave fica em `Local.xcconfig`, fora do Git. Passo a passo em `mac/README.md`. **Nunca foi compilado** (escrito sem Xcode). |
 | `windows/` | **Ícone na bandeja do Windows** do mini painel (`oceano-bandeja.ps1` + `iniciar-oceano.cmd`): bolinha 🟢🟡🔴, menu com o resumo e aviso quando o estado piora. Roda pelo `cmd` (sem abrir o PowerShell); lê a chave de `%USERPROFILE%\chave-oceano.txt`. Passo a passo em `windows/README.md`. **Nunca rodou no Windows** (escrito sem ele). |
-| `scripts/` | `checar.js` (checagens que a CI roda), `mare-cli.js` (`status`/`bump`/`log`/`map`/`ship`…) e `mapa.js` (gera o bloco automático do mapa) |
+| `scripts/` | `checar.js` (checagens que a CI roda), `mare-cli.js` (`status`/`bump`/`log`/`map`/`ship`…) `mapa.js` (gera o bloco automático do mapa) e `delegar.sh` (o maestro entrega um contrato ao Codex em worktree próprio, em segundo plano) |
 | `vendor/firebase-10.14.1/` | SDK do Firebase servido localmente (o FortiGate da Hering bloqueia o CDN) |
 | `.claude/skills/` | Skills do Claude/Antigravity (`/subirproprod`, `/monitorarbugs`, `/seatualizar`, `/auditoriaseguranca`, `/plantaobug`…) |
 | `.agents/` | Regras e lista de skills do Antigravity (`rules/antigravity.md` = o que era só dele no `AGENTS.md`) |
