@@ -22,7 +22,7 @@ const FIM = '<!-- mapa:auto:fim -->';
 const lê = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
 const PAGINAS = [
-  ['Maré Digital', 'kanban'], ['Painel', 'painel'], ['Radar', 'okr'], ['Oceano', 'oceano'], ['Escala', 'escala'], ['Intake', 'intake'],
+  ['Maré Digital', 'kanban'], ['Painel', 'painel'], ['Radar', 'okr'], ['Oceano', 'oceano'], ['Escala', 'escala'], ['Intake', 'intake'], ['Travessia', 'travessia'],
 ];
 
 function modulosDe(arq) {
@@ -57,6 +57,13 @@ function gera() {
   for (const m of idx.matchAll(/^exports\.([A-Za-z0-9_]+)\s*=\s*require\('\.\/([^']+)'\)/gm)) {
     const pasta = m[2].split('/')[0];
     (porPasta[pasta] = porPasta[pasta] || []).push(m[1]);
+  }
+  // exports por apelido: `const _x = require('./pasta/arq')` e depois `exports.N = _x.algo(...)` (ex.: agenteAgilPainelChat)
+  const apelidos = {};
+  for (const m of idx.matchAll(/^const\s+([A-Za-z0-9_$]+)\s*=\s*require\('\.\/([^']+)'\)/gm)) apelidos[m[1]] = m[2].split('/')[0];
+  for (const m of idx.matchAll(/^exports\.([A-Za-z0-9_]+)\s*=\s*([A-Za-z0-9_$]+)\./gm)) {
+    const pasta = apelidos[m[2]];
+    if (pasta) (porPasta[pasta] = porPasta[pasta] || []).push(m[1]);
   }
   // exports definidos no próprio index.js (ex.: sendPushOnNotification) não têm require — entram numa linha à parte
   const todos = [...idx.matchAll(/^exports\.([A-Za-z0-9_]+)\s*=/gm)].map((m) => m[1]);
