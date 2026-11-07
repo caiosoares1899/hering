@@ -90,8 +90,8 @@ test('NÃO reescreve o que já existe (inclusive a resposta do agente) e o dono 
   assert.equal(check(RULES, DB, 'write', 'kanban/agente_painel/int1/m1', A.adm, null), false, 'o ADM não apaga a conversa alheia');
 });
 
-test('*_processed: ninguém lê nem escreve pelo cliente (só o Admin SDK do gatilho)', () => {
-  for (const n of ['agente_painel_processed', 'agente_painel_processed_dev']) {
+test('*_processed e *_uso (cota diária): ninguém lê nem escreve pelo cliente (só o Admin SDK do gatilho)', () => {
+  for (const n of ['agente_painel_processed', 'agente_painel_processed_dev', 'agente_painel_uso', 'agente_painel_uso_dev']) {
     for (const ator of ['dono', 'outro', 'adm', 'caio', 'visualizador', 'forasteiro', 'semLogin']) {
       assert.equal(le(ator, `kanban/${n}/int1/m1`), false, `${ator} NÃO lê ${n}`);
       assert.equal(grava(ator, `kanban/${n}/int1/m1`, true), false, `${ator} NÃO escreve ${n}`);
