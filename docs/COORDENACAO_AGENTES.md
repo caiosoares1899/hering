@@ -112,7 +112,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
 | Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
-| Claude | `claude/supercard-em-supercard` (PR #1655) | `kanban-dev.html`, `version.json` | 09/11/2026 |
+| Claude | `claude/submarca-multipla` (PR #1656: supercard dentro de supercard) | `kanban-dev.html`, `version.json` | 09/11/2026 |
+| Claude | `claude/apresentacao-movimento` (PR #1658) | `okr-apresentacao.slide.html` | 09/11/2026 |
 | Claude | `claude/guia-movimento` | `docs/GUIA_UI_UX.md`, `MARINE_GLASS.md`, skill `/melhoriauiux` | 09/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
@@ -127,14 +128,14 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Quem achou | O que | Como reproduzir | Data |
 |---|---|---|---|
 | Claude | `okr-dev.html` não tem bloco `@media (prefers-reduced-motion: reduce)`: o `okrPulse` infinito do "digitando…" do Agente (`.okr-agente-typing`) roda mesmo com movimento reduzido. Entra na rodada `codex/radar-uiux` (o arquivo está reservado). | `grep -c prefers-reduced-motion okr-dev.html` → 0 | 09/11/2026 |
+| Claude | `docs/arezzo/testes/test_apresentacao_live.js` falha também na `main`: "fora da sincronização, o slide do apresentador NÃO puxa a pessoa" (a pessoa fica "Acompanhando ✓" e vai junto para `ger:digital:tech`). Pode ser o teste (ordem de eventos do Firebase falso) ou o código do `liveSeguindo`: investigar antes de mexer no ao vivo. | rodar a suíte na `main` (2/2 vezes falha) | 09/11/2026 |
 
 ### Pendente de deploy (só o Caio roda)
 
-> ✅ **Tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
+> ✅ **Tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | **Regra do Guardião (auditoria 09/11):** `resolvidos/{chave}/por` tem de ser o nome ou o e-mail do login de quem grava (não dá mais para registrar 'Resolvido por' em nome de outra pessoa). A tela atual já grava assim. | resync → `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 09/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 

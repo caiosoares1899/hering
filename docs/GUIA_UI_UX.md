@@ -81,9 +81,9 @@ Fundo é sempre camadas (radial + base escura), nunca sólido. Peixinhos/bolhas 
 | Toast `#056` | `toast()` | se animar: ≤ .2 s em `opacity`/`translateY` e some sozinho; `role="status"` | ferramenta |
 | Badge `#071` · Stepper `#063` · Pop-in `#001` / Overshoot `#010` | contador do sino (`notif-pop`), número que muda, check de etapa concluída | ≤ .35 s `cubic-bezier(.34,1.56,.64,1)`, **uma vez** quando o valor muda | ferramenta |
 | (barra/anel que muda de valor) | barras do Painel (`.cfd-seg`), anéis de meta | `width`/`stroke-dashoffset` .3–.5 s `cubic-bezier(.4,0,.2,1)` | ferramenta |
-| Stagger `#002` · Count-up `#007` | entrada de slide do Radar, vitrine, onboarding | 30 ms por item, até 6 itens; contagem ≤ .8 s | **só experiência** |
+| Stagger `#002` · Count-up `#007` | blocos e números do slide do Radar (`_okrEntrada`), vitrine, onboarding | bloco .28 s `cubic-bezier(.32,.72,0,1)` + 30 ms por item, até 6; barras `scaleX` .5 s `cubic-bezier(.4,0,.2,1)`; contagem .7 s só no número protagonista; **só ao navegar**, nunca em atualização de dado | **só experiência** |
 
-Microinteração comum fica em **.12–.2 s** (é o que domina no código). Curva solta que não está na tabela **não** é motivo para criar outra: use a mais próxima. Trocar as curvas espalhadas por variáveis (`--ease-*`) é outra rodada, página por página.
+**Nunca anime `opacity`/`transform` de uma camada de tela cheia** (o slide inteiro, um véu opaco): na apresentação do Radar isso custava ~520 ms/s de GPU a mais durante a troca (`perf_apresentacao.js`, 09/11/2026) — anime os blocos de dentro. Microinteração comum fica em **.12–.2 s** (é o que domina no código). Curva solta que não está na tabela **não** é motivo para criar outra: use a mais próxima. Trocar as curvas espalhadas por variáveis (`--ease-*`) é outra rodada, página por página.
 
 **Fica de fora (e por quê):** Skeleton screen `#069` com brilho correndo (loop infinito — o esqueleto **parado** pode); Stagger e Count-up em ferramenta diária (repetem a cada filtro e re-render); laços de landing (Marquee, Animated gradient, Floating, Parallax, Cursor follower, Magnetic button, 3D tilt); efeitos de vitrine (Glitch, Particles, Shatter, Page curl, Kinetic typography); os pacotes Camera e Photo (são para vídeo); instalar a skill do motion-prompt (190 nomes no contexto para usar uns 10).
 
