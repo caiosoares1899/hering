@@ -46,7 +46,7 @@ const seed=()=>({kanban:{
      dest:[...document.querySelectorAll('#s-dest option')].map(o=>o.textContent.trim()) }));
    t('identidade vem do login (sem digitar nome/contato)', !f.nome && /Eve Souza/.test(f.who||''), f);
    t('prioridade em 4 chips com Média já marcada', f.prio.join()==='🟢 Baixa,🟡 Média*,🔴 Alta,🔥 Crítica', f.prio);
-   t('Submarca: chips vêm das tags do squad de destino (respeita "submarcas visíveis")', f.sm.join()==='Hering Adulto Comercial', f.sm);
+   t('Submarca: chips vêm das tags do squad de destino (respeita "submarcas visíveis")', f.sm.join()==='Hering Adulto Comercial,Geral', f.sm);   // + a 11ª submarca fixa "Geral" (15/10/2026), sempre oferecida quando o squad usa Submarca
    t('Canal desligado no squad = sem campo de canal', !f.cv, f);
    t('Tags: só as que o PO liberou (Campanha), nunca as de submarca/canal', f.tags.join()==='Campanha', f.tags);
    t('Link e prazo presentes; seletor "Pedir para" lista os squads', f.link && f.prazo && f.dest.some(x=>/Marketplace/.test(x)) && f.dest.some(x=>/Dev/.test(x)), f);
@@ -71,6 +71,14 @@ const seed=()=>({kanban:{
    await p.selectOption('#s-dest','mkt'); await p.waitForTimeout(600);
    t('"Pedir para" um squad com intake desligado mostra o aviso', await vis(p,'#disabled'), 0);
    await p.selectOption('#s-dest','dev'); await p.waitForTimeout(600); t('voltando pro squad liga o formulário de novo', await vis(p,'#intake-int'), 0);
+   // Submarca MÚLTIPLA (09/11/2026): 2 chips marcados viram uma LISTA no item (1 só continua texto — o Maré de produção ainda lê assim)
+   await p.fill('#i-titulo','Pedido em duas marcas'); await p.fill('#i-descricao','Vale para Adulto e Geral'); await p.click('[data-prazo="1"]');
+   await p.click('[data-sm="tag_sm_a"]'); await p.click('[data-sm="tag_sm_geral"]');
+   const pressed=await p.evaluate(()=>[...document.querySelectorAll('#g-sm .chip')].filter(c=>c.getAttribute('aria-pressed')==='true').map(c=>c.dataset.sm));
+   t('Submarca: dá pra marcar mais de um chip (nenhum desmarca o outro)', pressed.join()==='tag_sm_a,tag_sm_geral', pressed);
+   await p.selectOption('#i-sqdem-sel','Omni'); await p.fill('#i-link','https://figma.com/file/abc'); await p.click('#i-submit'); await p.waitForTimeout(600);
+   const dois=await p.evaluate(()=>Object.values(window.__store.kanban.squads.dev.dados.intake_pending||{}).find(x=>x.titulo==='Pedido em duas marcas'));
+   t('grava a lista de submarcas quando são 2 ou mais', Array.isArray(dois?.submarca) && dois.submarca.join()==='Hering Adulto Comercial,Geral', dois);
    t('sem erro de JS (interno)', !errs.length, errs); await ctx.close(); }
  // falha de gravação
  { const {ctx,p}=await open(U,'?squad=dev'); await p.evaluate(()=>{ window.__denySet=path=>/intake_pending/.test(path); });

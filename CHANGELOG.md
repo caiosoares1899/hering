@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Mais de uma Submarca por card (SÓ DEV · kanban-dev v8.30.912-dev, painel-dev v5.95) — 2026-11-09
+
+- No card aberto, o campo Submarcas virou uma lista de chips: escolha em "+ Adicionar submarca…" quantas precisar e tire com o ✕. Continua obrigatório (ao menos uma) nos squads que usam o campo.
+- Contagem: um card com 2 submarcas conta em CADA uma (donut "Por submarca" do Maré e do Painel, Dados do Board, pills do Supercard); o filtro de Submarca já era múltiplo e acha o card em qualquer uma.
+- Ações em massa e a Automação "Adicionar submarca" (id `set_submarca` mantido, regras salvas valem) SOMAM à lista, sem tirar as que já existem. Tamanho e Canal de venda seguem exclusivos.
+- Intake (intake-dev): o formulário aceita mais de uma submarca; 1 vira texto como antes, 2+ vira lista; o Maré aplica todas ao criar o card.
+- Agente Ágil: `criar_card` aceita uma submarca ou uma lista (`functions/agente-agil-orquestrador/tools/criarCard.js`, validação por nome). Depende de deploy das funções do agente.
+- Testes: `docs/arezzo/testes/test_submarca_multipla.js`, `test_intake_interno.js`, `criarCard.test.js`.
+
 ### Painel › 🤖 Agente Ágil: gaveta de conversa que lê os dados do Painel (PROD · painel v5.94) — atrás de interruptor, só ADM — 2026-11-07
 
 Fase 1 do Agente Ágil no Painel (docs/AGENTE_AGIL_PAINEL.md): botão 🤖 e gaveta à direita em todas as abas, com chips de contexto (aba · escopo · período), sugestões por aba, pergunta/resposta com fonte e hora da leitura, atalhos que levam à aba/filtro certos e aviso amarelo quando um número da resposta não bate com os dados lidos. Conversa privada por pessoa em kanban/agente_painel_dev/{uid} (as regras do banco e a função vêm nos PRs seguintes). Só leitura: o agente não escreve em nada. Fica escondida até o ADM ligar kanban/config/agente_agil_orquestrador/painel_enabled (nasce desligado) e respeita painel_acesso (adm | gestores | todos; padrão adm = canário só do Caio); visualizador externo nunca vê. Teste: docs/arezzo/testes/test_painel_agente_gaveta.js (Playwright, valida a mensagem gravada contra as regras reais). Dica: não por enquanto (canário só ADM) — reavaliar ao abrir para gestores. Fronteira: nó novo, campo novo no DOM e sink novo checados (tudo por esc(), atalhos só abas/filtros de lista fechada); exige validação do Caio: deploy das regras antes da função e do interruptor.

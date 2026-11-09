@@ -119,8 +119,8 @@ Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em anda
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.910 | `kanban-dev.html` v8.30.911-dev | `mare-login` v3 · `mare-notif` v41 · `mare-metas` v18 · `mare-dicas` v10 |
-| Painel | `painel.html` v5.94 · painel | `painel-dev.html` v5.94 · painel-dev | `mare-notif` v41 · `mare-metas` v18 · `mare-plantao` v5 · `mare-dicas` v10 |
+| Maré Digital | `kanban.html` v8.30.910 | `kanban-dev.html` v8.30.912-dev | `mare-login` v3 · `mare-notif` v41 · `mare-metas` v18 · `mare-dicas` v10 |
+| Painel | `painel.html` v5.94 · painel | `painel-dev.html` v5.95 · painel-dev | `mare-notif` v41 · `mare-metas` v18 · `mare-plantao` v5 · `mare-dicas` v10 |
 | Radar | `okr.html` v2.104 · okr | `okr-dev.html` v2.104 · okr-dev | `mare-notif` v41 · `mare-dicas` v10 |
 | Oceano | `oceano.html` v1.61 · oceano | `oceano-dev.html` v1.61 · oceano-dev | `mare-login` v3 · `mare-notif` v41 · `mare-plantao` v5 · `mare-dicas` v10 · `mare-metas` v18 |
 | Escala | `escala.html` v1.10 · escala | `escala-dev.html` v1.10 · escala-dev | `mare-login` v3 |

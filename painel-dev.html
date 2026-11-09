@@ -3146,7 +3146,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.94 · painel-dev</div>
+<div class="version">v5.95 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -5595,15 +5595,15 @@ function renderPainelInsights(){
     const porSubmarca={};
     activeCards.filter(c=>squadsComSubmarca.some(sq=>sq.id===c._squad.id)).forEach(c=>{
       const tagsDoCard=_cardTagIds(c);
-      const sm=SUBMARCA_TAGS.find(st=>tagsDoCard.includes(st.id));
-      const k=sm?sm.id:'__sem__';
-      porSubmarca[k]=(porSubmarca[k]||0)+1;
+      const dele=SUBMARCA_TAGS.filter(st=>tagsDoCard.includes(st.id));   // submarca múltipla (09/11/2026): o card conta em CADA submarca
+      if(!dele.length) porSubmarca.__sem__=(porSubmarca.__sem__||0)+1;
+      dele.forEach(st=>{ porSubmarca[st.id]=(porSubmarca[st.id]||0)+1; });
     });
     const smSegs=SUBMARCA_TAGS.map((st,i)=>({label:st.label,count:porSubmarca[st.id]||0,color:SUBMARCA_COLORS[i%SUBMARCA_COLORS.length]}))
       .filter(s=>s.count>0)
       .sort((a,b)=>b.count-a.count);
     if(porSubmarca.__sem__) smSegs.push({label:'Sem submarca definida',count:porSubmarca.__sem__,color:'#5b6472'});
-    html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca (card com 2 conta nas duas)',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
   }
 
   // ── Por canal de venda (só entra se pelo menos uma squad visível usa o campo) ──

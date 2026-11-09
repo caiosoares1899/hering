@@ -41,11 +41,21 @@
 
 const { z } = require('zod');
 
+// Aceita 'Hering Kids', ['Hering Kids','Hering Teen'] ou 'Hering Kids; Hering Teen' → lista de nomes sem repetição.
+function listaDeSubmarcas(v) {
+  const bruto = Array.isArray(v) ? v : String(v == null ? '' : v).split(/[;,]/);
+  const out = [];
+  bruto.map((x) => String(x).trim()).filter(Boolean).forEach((x) => { if (!out.some((o) => o.toLowerCase() === x.toLowerCase())) out.push(x); });
+  return out;
+}
+function submarcaParaRascunho(v) { const l = listaDeSubmarcas(v); return l.length > 1 ? l : (l[0] || ''); }
+
 const criarCardSchema = z.object({
   titulo: z.string().min(1),
   descricao: z.string().optional(),
   prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'prazo deve estar no formato YYYY-MM-DD').optional(),
-  submarca: z.string().min(1).optional(),
+  // Submarca MÚLTIPLA (09/11/2026): um nome OU uma lista de nomes (o card pode ter várias submarcas).
+  submarca: z.union([z.string().min(1), z.array(z.string().min(1)).min(1).max(12)]).optional(),
   squad_solicitante: z.string().min(1).optional(),
   // Achado real, testando na prática (2026-09-01): o agente recebeu um
   // processo em várias etapas e não tinha onde colocar isso a não ser
@@ -104,12 +114,15 @@ function makeRealCriarCardHandler({ db, squadId, especialista, dryRun = true }) 
 
     if (submarcaSnap.val()) {
       const opcoes = SUBMARCA_LABELS.join(', ');
-      if (!input.submarca) {
+      const pedidas = listaDeSubmarcas(input.submarca);
+      if (!pedidas.length) {
         return { ok: false, error: 'submarca_obrigatoria', message: `Este squad exige Submarca pra criar um card. Opções: ${opcoes}` };
       }
-      const match = SUBMARCA_LABELS.find((l) => l.toLowerCase() === String(input.submarca).toLowerCase());
-      if (!match) {
-        return { ok: false, error: 'submarca_invalida', message: `Submarca "${input.submarca}" não é uma opção válida. Opções: ${opcoes}` };
+      for (const nome of pedidas) {
+        const match = SUBMARCA_LABELS.find((l) => l.toLowerCase() === nome.toLowerCase());
+        if (!match) {
+          return { ok: false, error: 'submarca_invalida', message: `Submarca "${nome}" não é uma opção válida. Opções: ${opcoes}` };
+        }
       }
     }
 
@@ -128,7 +141,8 @@ function makeRealCriarCardHandler({ db, squadId, especialista, dryRun = true }) 
       squadDemandante: input.squad_solicitante || demandante,
       contato: '',
       prazo: input.prazo || '',
-      submarca: input.submarca || '',
+      // uma submarca fica como TEXTO (igual a antes: o Maré de produção ainda lê assim); duas ou mais, como lista de nomes
+      submarca: submarcaParaRascunho(input.submarca),
       // Checklist opcional (2026-09-01) — array de textos simples, aplicado
       // pelo humano ao confirmar (ver _intakeCriarCard() no cliente); os
       // itens nascem sempre desmarcados, mesma regra que qualquer outro

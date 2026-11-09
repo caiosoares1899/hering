@@ -179,3 +179,35 @@ test('tags/riscos: ausentes viram array vazio, não undefined', async () => {
   assert.deepEqual(entry.val().tags, []);
   assert.deepEqual(entry.val().riscos, []);
 });
+
+// ── Submarca MÚLTIPLA (09/11/2026) ──────────────────────────────────────────────────────────────────────────────────────────────────────
+test('submarca múltipla: lista de nomes válidos cria o rascunho com a lista (1 só continua texto)', async () => {
+  const db = seedDb({ submarcaAtivo: true });
+  const handler = makeRealCriarCardHandler({ db, squadId: 'dev', dryRun: false });
+  const dois = await handler({ titulo: 'Card em duas submarcas', submarca: ['Hering Kids Comercial', 'hering teen cadastro'] });
+  assert.equal(dois.ok, true);
+  assert.deepEqual((await db.ref(`kanban/squads/dev/dados/intake_pending/${dois.pendingId}`).get()).val().submarca, ['Hering Kids Comercial', 'hering teen cadastro']);
+  const um = await handler({ titulo: 'Card numa submarca', submarca: ['Hering Kids Comercial'] });
+  assert.equal((await db.ref(`kanban/squads/dev/dados/intake_pending/${um.pendingId}`).get()).val().submarca, 'Hering Kids Comercial');
+});
+
+test('submarca múltipla: texto com ponto e vírgula vale como lista; repetida entra uma vez só', async () => {
+  const db = seedDb({ submarcaAtivo: true });
+  const handler = makeRealCriarCardHandler({ db, squadId: 'dev', dryRun: false });
+  const r = await handler({ titulo: 'Texto com ;', submarca: 'Hering Kids Comercial; hering kids comercial; Hering Teen Cadastro' });
+  assert.equal(r.ok, true);
+  assert.deepEqual((await db.ref(`kanban/squads/dev/dados/intake_pending/${r.pendingId}`).get()).val().submarca, ['Hering Kids Comercial', 'Hering Teen Cadastro']);
+});
+
+test('submarca múltipla: uma opção inválida na lista recusa o pedido inteiro e diz qual', async () => {
+  const db = seedDb({ submarcaAtivo: true });
+  const handler = makeRealCriarCardHandler({ db, squadId: 'dev', dryRun: false });
+  const r = await handler({ titulo: 'Uma ruim', submarca: ['Hering Kids Comercial', 'Marca Que Não Existe'] });
+  assert.equal(r.ok, false); assert.equal(r.error, 'submarca_invalida'); assert.match(r.message, /Marca Que Não Existe/);
+});
+
+test('submarca múltipla: o schema aceita texto ou lista (1 a 12), mas não lista vazia', () => {
+  assert.equal(criarCardSchema.safeParse({ titulo: 'X', submarca: 'Hering Kids Comercial' }).success, true);
+  assert.equal(criarCardSchema.safeParse({ titulo: 'X', submarca: ['A', 'B'] }).success, true);
+  assert.equal(criarCardSchema.safeParse({ titulo: 'X', submarca: [] }).success, false);
+});
