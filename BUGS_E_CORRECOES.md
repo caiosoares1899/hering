@@ -86,6 +86,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-09 · Auditoria de segurança (4ª rodada, área: Agente Ágil no Painel + Saúde dos cards): 'Resolvido por' forjável fechado na regra; custo de invocação registrado
+
+• Origem: /auditoriaseguranca de 09/11/2026, com 1 verificador independente de contexto limpo para os 3 candidatos.
+• Coberto: gatilho agenteAgilPainelChat (functions/agente-agil-orquestrador/painel/chat.js — identidade pelo uid do caminho + e-mail do Auth, interruptores, acesso, cota, idempotência), ferramentas de leitura (painel/ferramentas.js e nodeFor.js — todo nó lido já é legível por qualquer @ciahering nas regras, então a credencial de admin não amplia leitura), escolha de modelo antes do acesso (sem chamada de LLM), regra kanban/agente_painel[_dev], renderização da gaveta no painel-dev.html (esc em texto/fonte/rótulos, atalhos só de lista fechada) e a trilha 'resolvidos' do Guardião.
+• K2 — CONFIRMADO (baixa): em kanban/cards_guardiao/{squad}/resolvidos, o uid era amarrado a auth.uid mas 'por' (o nome mostrado em 'Resolvido por' no Painel) era texto livre: um PO/ADM gravava a resolução em nome de outra pessoa. Correção em database.rules.json: 'por' tem de ser auth.token.name ou auth.token.email (é o que a tela já grava). Teste: functions/rules/__tests__/guardiaoRules.test.js (falha sem a correção). Nome do Google com mais de 80 caracteres deixaria de gravar (a tela corta em 80) — caso teórico.
+• K1 — SOBREVIVE como endurecimento (baixa, não corrigido): quem não tem acesso ao agente do Painel ainda cria mensagens sem limite; cada uma é uma invocação da função (sem LLM: acesso e cota vêm antes do modelo). Fica perto do modelo aceito (qualquer @ciahering já dispara outros gatilhos sem limite). Se quiser fechar: a regra de kanban/agente_painel só aceitar mensagem com painel_enabled ligado e acesso compatível.
+• K3 — REJEITADO: campos extras na mensagem já barrados ('$other': false em ctx e na mensagem).
+• NÃO coberto nesta rodada: okrAgenteChat, Intake, backup/restauração e as funções HTTP (já auditados em 18/10 e 05/11); criarCard com várias submarcas só foi lido (nomes passam por lista fechada).
+
 ### 2026-11-09 · Maré: nome e cor de coluna vindos do banco entravam em innerHTML sem tratamento (XSS armazenado) — cor normalizada na leitura + esc() nos 4 nomes que faltavam (PROD · kanban v8.30.912)
 
 • Sintoma / achado: o nome e a cor de uma coluna chegam do banco (`kanban/squads/{id}/dados/columns`, que qualquer membro do squad consegue gravar — a interface é que limita ao PO) e entravam em `innerHTML` sem tratamento em vários pontos. A cor (`style="background:${col.color}"`) estava crua em ~20 lugares, inclusive no cabeçalho de TODA coluna do board (`renderNormal`/raias) — uma cor com aspas fechava o atributo e rodava JS pra quem abrisse o board (XSS armazenado). O nome estava cru em 4 lugares (dropdown de `@card:`, busca de card vinculado, mapa de dependências e mini-mapa), enquanto os outros 25 pontos já usavam `esc()`.
