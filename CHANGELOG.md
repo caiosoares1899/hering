@@ -24,6 +24,26 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar › Apresentação: blocos entram em cascata, barras crescem e números da capa contam (SÓ DEV — okr-apresentacao.slide.html) — 2026-11-09
+
+Rodada /melhoriauiux com o vocabulário de movimento do GUIA_UI_UX §2.4 (regime experiência). **Antes:** trocar de slide era um corte seco. O CSS tinha uma transição de .35 s que nunca rodava, porque `render()` recria os slides, e as barras já nasciam cheias. **Agora**, ao navegar (quem apresenta e quem acompanha ao vivo, pelo mesmo `_okrGoTo`):
+- os blocos entram em cascata (Stagger: 30 ms por bloco, até 6, .28 s `cubic-bezier(.32,.72,0,1)`);
+- as barras de status, de progresso e do Panorama crescem da esquerda (`scaleX`, .5 s);
+- os números protagonistas da capa e da capa de torre contam até o valor (Count-up, .7 s, terminando no texto exato).
+
+Garantias:
+- Atualização de dado no meio da reunião (`rebuild`) redesenha **sem** animar de novo.
+- Nada fica animando depois da entrada: GPU com a tela parada continua ~1 ms/s.
+- O `:hover` dos cartões continua valendo (`fill: backwards`).
+- "Reduzir movimento" desliga tudo.
+
+Ficou de fora de propósito:
+- O slide inteiro deslizando ou com fade, e o fade do detalhe do Objetivo: camada de tela cheia com opacidade, ~520 ms/s de GPU a mais, medido.
+- Contagem nos cartões de cada Objetivo: números demais ao mesmo tempo.
+- "Pop" sem significado.
+
+Custo medido (`perf_apresentacao.js`, dpr 2, trocando de slide a cada ~0,7 s sem parar, 3 rodadas): main 66–95 → completo 443–449 ms/s de GPU durante a troca (só cascata 351–375; só barras + contagem 213–305), abaixo do laser ao vivo (~450–560). Parado: 1 → 1. Peça ao André para conferir na máquina dele. Teste: `docs/arezzo/testes/test_apresentacao_movimento.js`. Dica: não (é movimento, não recurso). Fronteira: sem mudança.
+
 ### Supercard dentro de supercard: vincular um supercard existente como filho (SÓ DEV · kanban-dev v8.30.914-dev) — 2026-11-09
 
 - Na vinculação do modal ("+ Adicionar"), um supercard que já existe passa a aparecer na busca e pode virar filho de outro (ex.: campanha pronta, com seus criativos, dentro de uma campanha maior). Antes a busca escondia qualquer card que já tivesse filhos.
