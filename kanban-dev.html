@@ -6662,7 +6662,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.912-dev</div>
+<div class="version">v8.30.913-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7014,7 +7014,7 @@ getRedirectResult(auth).then(r=>{
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif-dev.js?v=41"></script>
-<script src="mare-metas-dev.js?v=18"></script>
+<script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-dicas-dev.js?v=10"></script>
 
 <script>
@@ -36198,7 +36198,8 @@ if(window.visualViewport){
     }catch(e){ /* offline ou erro de rede — ignora silenciosamente */ }
   }
   setTimeout(_auCheckVersion, FIRST_CHECK_DELAY_MS);
-  _auPollTimer = setInterval(_auCheckVersion, CHECK_INTERVAL_MS);
+  _auPollTimer = setInterval(()=>{ if(!document.hidden) _auCheckVersion(); }, CHECK_INTERVAL_MS);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _auCheckVersion(); });
   // Checa na hora ao VOLTAR pra aba/app (aba esquecida, PWA retomado, rede que voltou) — antes a pessoa rodava a versão velha até o próximo tick de 5 min, justamente
   // quando ela "entra" e grava. No máx. 1 consulta a cada 10 s (visibilitychange + pageshow + online podem disparar juntos).
   function _auAoVoltar(){
@@ -36594,7 +36595,7 @@ function _bfUpdateCountdown(){
   el.textContent=d+'d '+String(h).padStart(2,'0')+'h';
 }
 _bfUpdateCountdown();
-setInterval(_bfUpdateCountdown, 60000);
+setInterval(() => { if (!document.hidden) _bfUpdateCountdown(); }, 60000);
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
