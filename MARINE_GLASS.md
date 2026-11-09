@@ -456,6 +456,8 @@ dado ou erro.
 - **Reduzir movimento:** `@media (prefers-reduced-motion: reduce)` desliga peixes,
   bolhas e animações decorativas (e os peixes começam desligados). Animação de
   *feedback* (um toast, um foco) pode ficar, curta.
+- **Que movimento usar e com que nome:** a tabela "Vocabulário de movimento" em
+  `docs/GUIA_UI_UX.md` §2.4 (nome comum, duração e curva da casa, ferramenta × experiência).
 - **Aba escondida:** pause as animações (`data-anim-paused`) — bateria do celular.
 - **Contraste:** texto `--txt` sobre `--glass` sempre legível *com o peixe passando
   por trás*; se um tema novo deixa o texto no limite, escureça o vidro, não o texto.

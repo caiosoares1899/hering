@@ -70,6 +70,23 @@ backdrop-filter: blur(8px);                /* botão, chip */
 ### 2.4 Fundo, peixinhos e movimento
 Fundo é sempre camadas (radial + base escura), nunca sólido. Peixinhos/bolhas ficam **atrás** do conteúdo, `pointer-events:none`, e a pessoa pode desligar (preferência). Movimento serve a **significado** (algo mudou, algo chegou) e é curto; respeite `@media (prefers-reduced-motion: reduce)` (já existe em kanban e Oceano) — qualquer animação nova entra nesse bloco.
 
+**Vocabulário de movimento (nome comum → receita da casa).** Para os três agentes e o Caio pedirem a mesma coisa com o mesmo nome. Os nomes e números `#NNN` são os do dicionário **motion-prompt** (Shohei Ohtaki, MIT, [galeria](https://showheyohtaki.github.io/motion-prompt/)) — abra o número para ver o movimento. **Só o nome vem de lá:** os tempos dele são de landing page (modal 0,3 s, gaveta 0,4 s) e o código de referência é demo em canvas; a duração e a curva são as **nossas**, tiradas do que já está no código. Tudo é *one-shot* (`transform`/`opacity`), entra no bloco de `prefers-reduced-motion` e não custa nada com a tela parada.
+
+| Nome (motion-prompt) | Onde aqui | Duração · curva | Regime |
+|---|---|---|---|
+| Modal dialog `#049` | `.ov` / `.ui-modal-ov` + `.panel` | véu .18 s `ease`; painel .2 s, `scale(.92→1)` com leve overshoot `cubic-bezier(.2,.8,.3,1.2)` | ferramenta |
+| Drawer `#050` | gavetas laterais (`.lem-drawer`, Agente Ágil) | .28–.32 s `cubic-bezier(.4,0,.2,1)` | ferramenta |
+| Bottom sheet `#051` | card aberto no celular (`#card-ov .card-panel`) | .28 s `cubic-bezier(.32,.72,0,1)` | ferramenta |
+| Accordion `#052` · Tabs `#057` · Segmented control `#060` | `details.pt-bucket`, `ptab`, `ag-tab` | ≤ .15 s, só a seta/sublinhado e `opacity`; conteúdo **não** anima altura | ferramenta |
+| Toast `#056` | `toast()` | se animar: ≤ .2 s em `opacity`/`translateY` e some sozinho; `role="status"` | ferramenta |
+| Badge `#071` · Stepper `#063` · Pop-in `#001` / Overshoot `#010` | contador do sino (`notif-pop`), número que muda, check de etapa concluída | ≤ .35 s `cubic-bezier(.34,1.56,.64,1)`, **uma vez** quando o valor muda | ferramenta |
+| (barra/anel que muda de valor) | barras do Painel (`.cfd-seg`), anéis de meta | `width`/`stroke-dashoffset` .3–.5 s `cubic-bezier(.4,0,.2,1)` | ferramenta |
+| Stagger `#002` · Count-up `#007` | entrada de slide do Radar, vitrine, onboarding | 30 ms por item, até 6 itens; contagem ≤ .8 s | **só experiência** |
+
+Microinteração comum fica em **.12–.2 s** (é o que domina no código). Curva solta que não está na tabela **não** é motivo para criar outra: use a mais próxima. Trocar as curvas espalhadas por variáveis (`--ease-*`) é outra rodada, página por página.
+
+**Fica de fora (e por quê):** Skeleton screen `#069` com brilho correndo (loop infinito — o esqueleto **parado** pode); Stagger e Count-up em ferramenta diária (repetem a cada filtro e re-render); laços de landing (Marquee, Animated gradient, Floating, Parallax, Cursor follower, Magnetic button, 3D tilt); efeitos de vitrine (Glitch, Particles, Shatter, Page curl, Kinetic typography); os pacotes Camera e Photo (são para vídeo); instalar a skill do motion-prompt (190 nomes no contexto para usar uns 10).
+
 **Tela de projeção (apresentação, slides):** texto de leitura **cresce com a tela** — use uma unidade (`--u: clamp(1px,.0732vw,1.5px)`; `font-size:calc(16*var(--u))`) em vez de px fixo; deck em Full HD com letra de 12–15 px some no projetor. Faixa colorida na borda lateral de todo cartão é sinal de "gerado": a cor do status fica no selo (cor + texto) e na barra, a moldura fica quieta.
 
 ### 2.5 Acabamento: cinco regras que separam "feito com cuidado" de "gerado por IA"
@@ -175,6 +192,7 @@ Desenhe a **versão da pessoa comum** primeiro. O controle de administração vi
 
 ### 6.2 Densidade: ferramenta de trabalho ≠ landing page
 O Maré é denso de propósito (12 px, colunas, chips) — quem trabalha 6 h por dia quer ver mais. Mas densidade **sem agrupamento** vira ruído. Regra prática: **no máximo ~5 KPIs** numa linha; cada um com unidade e amostra; se um KPI repete o que a tabela já mostra, **corta**.
+**O movimento segue a mesma divisão** (tabela em 2.4). *Ferramenta diária* (`kanban`, `painel`, `okr`, `escala`, `intake`): movimento só em foco, modal/gaveta, toast, selo que muda e barra/anel que muda de valor. Nada entra em cascata e nada conta número a cada filtro. *Experiência* (`okr-apresentacao.slide.html`, `travessia-dev.html`, `oceano-dev.html`, `maredigital.html`, `ecossistema.html`): pode usar Stagger, Count-up e um pop ao desbloquear algo, sempre uma vez só e com a tela parada sem GPU (2.5.4).
 > Exemplo real (Radar › Dashboard, 09/10): 6 cartões de KPI repetiam a tabela, o gráfico misturava barra de contagem e linha de % no mesmo eixo (eixo duplo disfarçado) e as cores de status apareciam 3 vezes. Virou: **um número grande** (atingimento médio + variação) + a linha da evolução no **mesmo desenho** do gráfico de atingimento; situação = uma barra única + lista clicável; tabela ordenada por **pior situação primeiro**.
 
 ### 6.3 Composição e escaneabilidade
