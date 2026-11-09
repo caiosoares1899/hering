@@ -86,6 +86,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-09 · Radar › Apresentação: legenda da torre aparecia sozinha antes do cabeçalho na entrada do slide — `okr-apresentacao.slide.html`
+- **Como foi achado:** contact sheet dos quadros da transição (`docs/arezzo/testes/contact_transicao_apresentacao.js`, animações pausadas em 0–700 ms). No quadro 0 do slide da torre, a legenda ("• 1 no prazo • 1 atrasado") já estava visível, enquanto o cabeçalho e a barra ainda iam entrar. Os testes de DOM só olhavam o começo e o fim, por isso não pegaram.
+- **Correção:** `.sleg` entra na lista da cascata (CSS e `_okrEntrada`), logo depois da barra da torre.
+
 ### 2026-11-09 · Radar › Apresentação: transição de slide de .35 s nunca rodava (corte seco) — `okr-apresentacao.slide.html`
 - **Causa:** `render()` recria todos os `.slide` por `innerHTML` a cada navegação; o novo slide já nasce com `.active`, então a `transition: opacity .35s, transform .35s` do `.slide` não tem de onde partir. As barras (`.sum-bar-fill` com `transition: width .4s`) também nasciam cheias. Medido: logo após `_okrGoTo`, `document.getAnimations()` só tinha a barrinha de progresso do topo.
 - **Correção:** entrada explícita só ao navegar (`_okrEntrada`, chamada por `_okrGoTo`, nunca por `rebuild`): cascata dos blocos, barras crescendo e contagem dos números da capa e da torre. O slide inteiro **não** anima: a camada de tela cheia com opacidade custava ~520 ms/s de GPU. A transição antiga ficou no CSS (inofensiva; o `.prev` é usado pelo `docs/arezzo/testes/test_apresentacao_nav.js`).

@@ -114,7 +114,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 /* Entrada do slide (GUIA_UI_UX §2.4, regime experiência): só quando alguém navega, uma vez; nunca em atualização de dado.
    fill backwards: depois de entrar não prende o transform (o :hover dos cartões continua valendo). Nada anima o .slide-inner (é onde mora o zoom do ajuste).
    O slide inteiro NÃO desliza/funde: camada de tela cheia com opacidade custava ~520 ms/s de GPU trocando de slide (perf_apresentacao.js, dpr 2) — só os blocos entram. */
-.slide.entra :is(.cover-kpis,.torre-tile,.torre-hd,.torre-sbar,.ger-row,.obj-card,.sum-bar-row,.sum-table){animation:slItem .28s cubic-bezier(.32,.72,0,1) backwards;animation-delay:calc(var(--i,0) * 30ms + 60ms);}
+.slide.entra :is(.cover-kpis,.torre-tile,.torre-hd,.torre-sbar,.sleg,.ger-row,.obj-card,.sum-bar-row,.sum-table){animation:slItem .28s cubic-bezier(.32,.72,0,1) backwards;animation-delay:calc(var(--i,0) * 30ms + 60ms);}
 .slide.entra :is(.sbar,.prog-fill,.sum-bar-fill){transform-origin:left center;animation:slBarra .5s cubic-bezier(.4,0,.2,1) backwards;animation-delay:calc(var(--i,0) * 30ms + 120ms);}
 .slide .conta{font-variant-numeric:tabular-nums;}
 @keyframes slItem{from{opacity:0;transform:translateY(10px);}}
@@ -1574,7 +1574,7 @@ function _okrEntrada(dir){
   cancelAnimationFrame(_okrContaRaf);
   const sl = document.querySelector('#slides .slide.active');
   if(!sl || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-  sl.querySelectorAll(':is(.cover-kpis,.torre-tile,.torre-hd,.torre-sbar,.ger-row,.obj-card,.sum-bar-row,.sum-table)').forEach((el,i)=>el.style.setProperty('--i', Math.min(i,5)));
+  sl.querySelectorAll(':is(.cover-kpis,.torre-tile,.torre-hd,.torre-sbar,.sleg,.ger-row,.obj-card,.sum-bar-row,.sum-table)').forEach((el,i)=>el.style.setProperty('--i', Math.min(i,5)));
   sl.classList.add('entra');
   const nums = [...sl.querySelectorAll('.ck-hero b, .ck-nums b, .tt-nums b, .torre-kpis .stat-chip b')].map(el=>{
     const final = el.textContent, m = /^(\d+)(%?)$/.exec(final.trim());
