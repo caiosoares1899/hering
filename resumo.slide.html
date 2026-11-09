@@ -308,7 +308,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v5.3</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v5.4</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -338,19 +338,23 @@ let DATA = {
     fonteCal: 15
   },
   squads:[
-    {name:"SITE & APP · SEMANA PASSADA",impedimentos:[
-      "<strong>KV Hering Tech:</strong> chegou na segunda no fim do dia, deixando tempo muito curto de preparo. Na quarta às 15h veio uma mudança no KV, prejudicando ainda mais o fluxo de subida.",
-      "<strong>Impacto ampliado pela Black Friday:</strong> o time precisou montar e ajustar as páginas de Black em paralelo à subida e aos ajustes posteriores do conteúdo Hering Tech."
+    {pg:1,name:"SITE & APP · FOTOS PENDENTES",impedimentos:[
+      "<strong>Verão 26:</strong> 15 produtos pendentes — 10 possuem still e 5 não possuem nenhuma imagem.",
+      "<strong>Alto Verão 27:</strong> 59 produtos pendentes — 14 já com venda liberada."
     ]},
-    {name:"SITE & APP · PRÓXIMAS SUBIDAS",impedimentos:[
-      "<strong>KV Livia Regatas:</strong> chegou na sexta (30/10) no fim da tarde, com subida em 05/11. Time terá 2 dias para construir a página da campanha, conciliando com a virada de ação de Black Friday em 04/11. KV havia sido solicitado ao marketing até quinta (29/10).",
-      "<strong>Drop 90:</strong> subida prevista para 10/11 e, por enquanto, recebemos imagens de apenas 7 produtos."
+    {pg:1,name:"MARKETPLACE",impedimentos:[
+      "<strong>Mercado Livre (conta ME1):</strong> impedimentos comerciais nos produtos 1P estão impactando a conversão da conta — 0,8% (−2,1 p.p. vs LY)."
+    ]},
+    {pg:2,name:"SITE & APP · COMBOS E LISTAS",impedimentos:[
+      "<strong>Muitas mudanças de combo e listas em sequência:</strong> chegou o combo de AV; 2 dias depois foi preciso revisar porque entraram produtos em saldos; 1 dia depois, voltar ao tema porque entraram mais combos.",
+      "<strong>A cada mudança o time precisa:</strong> retirar produtos da lista de combo (uma coleção por combo) · atualizar os cards da página de combo · atualizar tags de produtos · revisar promoção · ativar gatilhos (minicart, PDP).",
+      "Se o produto entra em saldos, todos esses pontos precisam ser revisados de novo para evitar SAC.",
+      "<strong>'Novas peças':</strong> a informação precisou ser retirada do material da nova entrada de saldos depois de já programada, gerando sobrecarga no time."
     ]}
   ],
   insights:[
-    {tipo:"event",tag:"CHECK-IN OKR",texto:"OKR da semana: Tech, CRM e CX."},
-    {tipo:"alert",tag:"OCEANO",texto:"Internalização do Oceano + papo com Infra + Arezzo."},
-    {tipo:"event",tag:"CALENDÁRIO DE GESTÃO",texto:"Criação do protótipo de Calendário de Gestão."}
+    {tipo:"event",tag:"CHECK-IN OKR",texto:"OKR da semana: Geral, Comercial, Performance e Dados."},
+    {tipo:"alert",tag:"OCEANO",texto:"Entramos no GitLab da Cia para a TI analisar os códigos e planejar a internalização."}
   ],
   calDigital:[
     {day:"11",mon:"NOV",name:"Estratégia Natal",type:"Evento"},
@@ -420,7 +424,6 @@ function render(){
   // SQUADS
   const sc=document.getElementById('squads-container');
   const sc2=document.getElementById('squads-container-2');
-  const half=1;
   const renderSquad=s=>`
     <div class="squad-card">
       <div class="squad-name">${s.name}</div>
@@ -428,8 +431,8 @@ function render(){
         <div class="imp-item"><div class="imp-dot">!</div><span>${i}</span></div>
       `).join('')}
     </div>`;
-  if(sc) sc.innerHTML=DATA.squads.slice(0,half).map(renderSquad).join('');
-  if(sc2) sc2.innerHTML=DATA.squads.slice(half).map(renderSquad).join('');
+  if(sc) sc.innerHTML=DATA.squads.filter(q=>(q.pg||1)===1).map(renderSquad).join('');
+  if(sc2) sc2.innerHTML=DATA.squads.filter(q=>(q.pg||1)===2).map(renderSquad).join('');
 
   // INSIGHTS
   const ic=document.getElementById('insights-container');
