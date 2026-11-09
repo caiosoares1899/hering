@@ -9,7 +9,7 @@ const path = require('path');
 const { check, validate } = require('../rulesSim');
 
 const RULES = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', 'database.rules.json'), 'utf8'));
-const mk = (uid, email, prov) => ({ uid, token: { email, firebase: { sign_in_provider: prov || 'google.com' } } });
+const mk = (uid, email, prov) => ({ uid, token: { email, name: 'Fulano', firebase: { sign_in_provider: prov || 'google.com' } } });   // name = displayName do login Google (o que a tela grava em `por`)
 const A = { adm: mk('adm1', 'adm@ciahering.com.br'), caio: mk('caio', 'caio.soares@ciahering.com.br'), poDados: mk('po1', 'po1@ciahering.com.br'), poPrf: mk('po2', 'po2@ciahering.com.br'),
   orgDados: mk('org1', 'org1@ciahering.com.br'), poRoleSquad: mk('po3', 'po3@ciahering.com.br'), membro: mk('m1', 'm1@ciahering.com.br'), poSemInscricao: mk('po4', 'po4@ciahering.com.br'),
   forasteiro: mk('out1', 'qualquer@gmail.com'), arezzo: mk('az1', 'x@arezzo.com.br', 'microsoft.com') };
@@ -43,6 +43,13 @@ test('trilha de auditoria: grava uma vez; não sobrescreve, não apaga, uid é o
   assert.equal(grava(P('dados', 'k2'), A.adm, reg('adm1', { extra: 1 })), false, 'campo extra');
   assert.equal(grava(P('dados', 'k2'), A.adm, reg('adm1', { por: 'x'.repeat(81) })), false, 'nome grande demais');
   assert.equal(grava(P('dados', 'k2'), A.adm, reg('adm1', { em: 123 })), false, '"em" tem de ser texto');
+});
+
+test('"Resolvido por" não se forja: `por` tem de ser o nome ou o e-mail do login de quem grava (auditoria 09/11/2026, K2)', () => {
+  assert.equal(grava(P('dados', 'k3'), A.poDados, reg('po1', { por: 'Caio Soares' })), false, 'PO não atribui a resolução a outra pessoa');
+  assert.equal(grava(P('dados', 'k3'), A.adm, reg('adm1', { por: 'Outra Pessoa' })), false, 'nem o ADM');
+  assert.equal(grava(P('dados', 'k3'), A.poDados, reg('po1', { por: A.poDados.token.email })), true, 'sem nome no login, a tela grava o e-mail');
+  assert.equal(grava(P('dados', 'k3'), A.poDados, reg('po1')), true, 'o próprio nome do login');
 });
 
 test('o resto de cards_guardiao continua só do servidor (incidentes, ultimo, restauracoes, janela, o pulso _status)', () => {

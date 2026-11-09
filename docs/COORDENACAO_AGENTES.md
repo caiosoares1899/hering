@@ -111,6 +111,9 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
+| Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
+| Antigravity | `antigravity/otimizacao-rotina-0911` | `kanban-dev.html`, `painel-dev.html`, `oceano-dev.html`, `escala-dev.html`, `intake-dev.html`, `mare-*-dev.js` (/otimizaçãoderotina) | 09/11/2026 |
+| Claude | `claude/seguranca-guardiao-por` | `database.rules.json`, `functions/**` (/auditoriaseguranca) | 09/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
@@ -131,7 +134,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| — | — | — | — |
+| Claude | **Regra do Guardião (auditoria 09/11):** `resolvidos/{chave}/por` tem de ser o nome ou o e-mail do login de quem grava (não dá mais para registrar 'Resolvido por' em nome de outra pessoa). A tela atual já grava assim. | resync → `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 09/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
