@@ -46,6 +46,9 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
     // 8) detalhe do Objetivo abre sem animação (véu de tela cheia com opacidade = o custo de GPU que saiu do slide)
     const d1 = await p.evaluate(() => { window._okrOpenDetail('o0'); return document.getAnimations().map(x => x.animationName).filter(Boolean); }); await p.waitForTimeout(300); await p.evaluate(() => window._okrCloseDetail());
     t('detalhe abre sem animar o véu de tela cheia', !d1.length, d1);
+    // 10) medidor de fps no canto inferior direito: mostra o número e não cobre o 📋 nem as bolinhas
+    const fm = await p.evaluate(() => { const b = s => { const e = document.querySelector(s); const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; }; document.getElementById('notes-fab').hidden = false; const m = b('#fps-meter'), f = b('#notes-fab'); const ov = (a, c) => a.l < c.r && c.l < a.r && a.t < c.b && c.t < a.b; return { txt: document.getElementById('fps-meter').textContent, canto: m.r > innerWidth - 40 && m.b > innerHeight - 30, cobre: ov(m, f) || [...document.querySelectorAll('#bottombar .dot')].some(d => ov(m, b('#bottombar .dot[title="' + d.title + '"]'))) }; });
+    t('medidor de fps no canto inferior direito, sem cobrir botão nem bolinhas', /^\d+ fps · (bom|alerta|péssimo)$/.test(fm.txt) && fm.canto && !fm.cobre, fm);
     t('sem erro de JS', !errs.length, errs); await ctx.close(); }
   // 9) movimento reduzido: nada anima e o número já nasce final
   { const { ctx, p, errs } = await abre(true);

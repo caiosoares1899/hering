@@ -445,6 +445,14 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    do topbar). Estrutura de dado deliberadamente simples (texto+autor+
    data) — pensada pra uma evolução futura (análise estratégica da lista,
    gerar atividades) sem precisar remodelar nada agora. */
+/* Medidor de fps: textinho no canto inferior direito, como o de versão das outras páginas (dentro da altura da barra das bolinhas, abaixo do 📋). */
+#fps-meter{position:fixed;right:12px;bottom:13px;z-index:460;font:600 10px/1 'DM Sans',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;color:var(--txt3);opacity:.75;pointer-events:none;user-select:none;}
+#fps-meter{display:flex;align-items:center;gap:5px;}
+#fps-meter i{width:7px;height:7px;border-radius:50%;background:var(--teal);flex-shrink:0;}
+#fps-meter.lento i{background:var(--warn);}
+#fps-meter.ruim i{background:var(--danger);}
+#fps-meter.lento{color:var(--warn);opacity:1;}
+#fps-meter.ruim{color:var(--danger);opacity:1;}
 #notes-fab{position:fixed;right:28px;bottom:28px;z-index:450;width:54px;height:54px;border-radius:50%;
   background:var(--glass);border:1px solid var(--glass-b);color:var(--txt);
   font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -696,6 +704,7 @@ body.live-pen #live-capture{display:block;}
      de login tratada por JS (hidden toggled em window._okrHandleAuth()),
      não mais herdando de #app[hidden]. -->
 <button id="notes-fab" onclick="window._okrToggleNotes()" title="Anotações da reunião" hidden>📋</button>
+<div id="fps-meter" aria-hidden="true"><i></i><span>— fps</span></div>
 <div id="notes-ov" onclick="if(event.target===this) window._okrCloseNotes()">
   <div class="notes-panel">
     <div class="notes-hd">
@@ -2496,6 +2505,29 @@ window._okrHandleAuth = user => {
   });
   check(1);
 };
+</script>
+<script>
+// Medidor de fps com farol: quadros que o navegador entregou no último ~0,5 s (≥ 50 bom/verde · 30–49 alerta/amarelo · < 30 péssimo/vermelho).
+// Só troca um texto 2×/s: não faz a página animar parada. Aba escondida pausa o requestAnimationFrame; na volta, descarta a janela longa.
+(function(){
+  const el = document.getElementById('fps-meter'); if(!el) return; const txt = el.querySelector('span');
+  let n = 0, t0 = performance.now();
+  const tick = t => {
+    n++;
+    const dt = t - t0;
+    if(dt > 2000){ n = 0; t0 = t; }
+    else if(dt >= 500){
+      const fps = Math.round(n * 1000 / dt);
+      const nivel = fps >= 50 ? 'bom' : fps >= 30 ? 'alerta' : 'péssimo';   // farol: cor + palavra (estado nunca só pela cor)
+      txt.textContent = fps + ' fps · ' + nivel;
+      el.classList.toggle('lento', nivel === 'alerta');
+      el.classList.toggle('ruim', nivel === 'péssimo');
+      n = 0; t0 = t;
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();
 </script>
 </body>
 </html>
