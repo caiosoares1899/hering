@@ -826,22 +826,49 @@
   //  • `atualizadoEm/Por/Nome` seguem sendo QUANDO/QUEM atualizou de verdade (é o que o selo ⏰ e os lembretes olham).
   //  • `opc.parte` = o `valor` é uma PARTE (quanto entrou naquele momento), não o total: soma ao total de hoje e o histórico é recalculado — o ponto novo
   //    fica em (acumulado até ali + parte) e todos os pontos DEPOIS dele sobem a mesma parte. Serve pra lançar, dia a dia, o que já passou (o todo = soma das partes).
+  // 🧮 O total ("atual") tem que ser o ÚLTIMO PONTO do histórico (05/11/2026): em Novembro/2026 o Oceano mostrou 8.885.744 com o histórico em 9.023.296 (diferença de 137.552 que ninguém lançou
+  // nem apagou). O `atual` é um número guardado à parte e mexido por SOMA em cima de uma cópia que a tela pode ter desatualizada; já o histórico guarda o acumulado de cada ponto calculado a
+  // partir do próprio histórico. Quando o histórico é uma cadeia só de PARTES (cada ponto = anterior + parte, a partir do `inicial`), o último ponto É o total — então ele passa a mandar.
+  // Metas com totais avulsos / sem histórico (legado, valor inicial digitado na ficha) seguem na soma de antes, só que sobre o valor LIDO FRESCO do banco.
+  function cadeiaPura(lista, ini) {
+    if (!lista || !lista.length) return false;
+    let ant = isNum(ini) ? Number(ini) : 0;
+    for (const e of lista) { if (!isNum(e.d) || !isNum(e.v)) return false; if (Math.abs(ant + Number(e.d) - Number(e.v)) > 0.5) return false; ant = Number(e.v); }
+    return true;
+  }
+  // Total esperado pelo histórico quando ele é cadeia pura; null quando não dá pra afirmar (aí não há o que comparar).
+  function totalDoHistorico(f, lista) { return cadeiaPura(lista, f && f.inicial) ? lista[lista.length - 1].v : null; }
+  // Total pela cadeia, mantendo o que a ficha tinha digitado ANTES de existir histórico (valor-base: o `atual` fica ACIMA do último ponto e esse excesso não faz parte da cadeia).
+  // Já o `atual` ABAIXO do último ponto é o desvio que não pode existir — esse a cadeia corrige. `ultAntes` = último ponto do histórico antes da mudança (ou o inicial, se não havia).
+  function totalPelaCadeia(f, ultAntes, listaNova) {
+    const hist = totalDoHistorico(f, listaNova); if (hist == null) return null;
+    const base = isNum(f.atual) ? Math.max(0, Number(f.atual) - Number(ultAntes)) : 0;
+    return hist + base;
+  }
+  // A meta como está AGORA no banco (a cópia da tela pode ter ficado pra trás: outra aba, outra pessoa, evento ainda não recebido).
+  async function metaFresca(m) {
+    const local = achar(m.id, m.escopo, m.squad) || m;
+    try { const v = (await root._get(refDe(pathMeta(m)))).val(); return v ? Object.assign({}, local, v) : local; } catch (e) { return local; }
+  }
   async function registrar(m, valor, user, nota, quando, opc) {
     if (!isNum(valor)) return { ok: false, erro: 'Informe um número.' };
     const agora = Date.now(), t = isNum(quando) ? Number(quando) : agora, parte = !!(opc && opc.parte);
     if (t > agora + 5 * 60e3) return { ok: false, erro: 'A data e hora da entrada não podem estar no futuro.' };
-    const f = achar(m.id, m.escopo, m.squad) || m;   // marco/valor comparados com o MAIS NOVO do banco (o `m` da tela pode estar velho: o marco já conquistado nunca desce)
+    const f = await metaFresca(m);   // marco/valor comparados com o MAIS NOVO do banco, lido AGORA (o `m` da tela pode estar velho: o marco já conquistado nunca desce)
     const atualT = Number(f.atualT) || Number(f.atualizadoEm) || 0;   // instante do valor que está em `atual` (metas antigas, sem atualT: a última atualização)
     const upd = {}, base = isNum(f.atual) ? Number(f.atual) : (isNum(f.inicial) ? Number(f.inicial) : 0);
     let patch, vira, lgv = Number(valor), lgd;
     if (parte) {
       const d = Number(valor); lgd = d; vira = !isNum(f.atual) || t >= atualT;
-      // o total sempre recebe a parte; `atualT` só avança se esta for a entrada mais recente
-      patch = Object.assign(patchDeRegistro(f, base + d, user, agora), { atualT: Math.max(t, atualT) });
       let v = {}; try { v = (await root._get(refDe(PATHS.log + '/' + m.id))).val() || {}; } catch (e) { v = {}; }
       let antes = isNum(f.inicial) ? Number(f.inicial) : 0;
       Object.keys(v).sort().forEach(k => { const e = v[k] || {}, et = Number(e.t), ev = Number(e.v); if (!isFinite(et) || !isFinite(ev)) return; if (et <= t) antes = ev; else upd[PATHS.log + '/' + m.id + '/' + k + '/v'] = ev + d; });
       lgv = antes + d;
+      // o total sempre recebe a parte; `atualT` só avança se esta for a entrada mais recente. Cadeia pura → o total é o ÚLTIMO PONTO do histórico já com esta parte (não depende do `atual` guardado).
+      const nova = entradasDeLog(v).map(e => { const sh = upd[PATHS.log + '/' + m.id + '/' + e.k + '/v']; return sh != null ? Object.assign({}, e, { v: sh }) : e; }).concat([{ k: '~novo', t, v: lgv, d }]).sort(ordEnt);
+      const velhaUlt = entradasDeLog(v), ultAntes = velhaUlt.length ? velhaUlt[velhaUlt.length - 1].v : (isNum(f.inicial) ? Number(f.inicial) : 0);
+      const doHist = totalPelaCadeia(f, ultAntes, nova);
+      patch = Object.assign(patchDeRegistro(f, doHist != null ? doHist : base + d, user, agora), { atualT: Math.max(t, atualT) });
     } else {
       vira = !isNum(f.atual) || t >= atualT;
       // não vira o atual: só histórico + "quem/quando atualizou"; fixa o atualT (senão o recuo pro atualizadoEm passaria a apontar pra AGORA)
@@ -892,13 +919,14 @@
       depois = entInsere(depois, novo, base); editK = k;
     }
     const ult = l => (l.length ? l[l.length - 1] : null), a0 = ult(lista), a1 = ult(depois);
-    const atual = !a1 ? null : (isNum(f.atual) && a0 ? Number(f.atual) + (a1.v - a0.v) : a1.v);
+    const doHist = a1 && a0 ? totalPelaCadeia(f, a0.v, depois) : null;   // cadeia só de partes: o total é o último ponto (cura desvio para BAIXO; preserva valor-base da ficha); senão, a soma de antes
+    const atual = !a1 ? null : (doHist != null ? doHist : (isNum(f.atual) && a0 ? Number(f.atual) + (a1.v - a0.v) : a1.v));
     return { lista: depois, atual, atualT: a1 ? a1.t : null, editK };
   }
   // Aplica o plano: grava só os pontos que mudaram (ou sumiram) + o valor atual, num update só.
   async function mexerEntrada(m, op, user) {
     const agora = Date.now(); if (op.tipo === 'edit' && isNum(op.t) && op.t > agora + 5 * 60e3) return { ok: false, erro: 'A data e hora da entrada não podem estar no futuro.' };
-    const f = achar(m.id, m.escopo, m.squad) || m;
+    const f = await metaFresca(m);   // lida AGORA do banco, não a cópia da tela
     let v = {}; try { v = (await root._get(refDe(PATHS.log + '/' + m.id))).val() || {}; } catch (e) { return { ok: false, erro: 'Não deu pra ler o histórico agora. Tente de novo.' }; }
     const antes = entradasDeLog(v), pl = entPlano(f, antes, op); if (pl.erro) return { ok: false, erro: pl.erro };
     const upd = {}, lp = PATHS.log + '/' + m.id + '/', porK = {}; antes.forEach(e => { porK[e.k] = e; });
@@ -913,6 +941,25 @@
     await root._update(refDe('kanban'), Object.fromEntries(Object.entries(upd).map(([k, x]) => [k.replace(/^kanban\//, ''), x])));
     delete S.logCache[m.id];
     return { ok: true, atual: pl.atual };
+  }
+  // Divergência entre o total guardado e o histórico — só afirma quando o histórico é cadeia pura de partes (senão não há o que comparar). → { esperado, atual, falta } ou null.
+  function divergenciaDoTotal(f, lista) {
+    const esperado = totalDoHistorico(f, lista); if (esperado == null || !isNum(f.atual)) return null;
+    return esperado - Number(f.atual) > 0.5 ? { esperado, atual: Number(f.atual), falta: esperado - Number(f.atual) } : null;   // só quando FALTA: total acima do histórico pode ser valor-base da ficha
+  }
+  // Põe o total igual ao último ponto do histórico (só se for cadeia pura). Não cria entrada nova: o histórico já está certo.
+  async function reconciliar(m, user) {
+    const f = await metaFresca(m);
+    let v = {}; try { v = (await root._get(refDe(PATHS.log + '/' + m.id))).val() || {}; } catch (e) { return { ok: false, erro: 'Não deu pra ler o histórico agora. Tente de novo.' }; }
+    const lista = entradasDeLog(v), dv = divergenciaDoTotal(f, lista);
+    if (!lista.length || totalDoHistorico(f, lista) == null) return { ok: false, erro: 'O histórico desta meta mistura totais avulsos: não dá pra conferir sozinho. Lance o valor certo em ✏️ Atualizar valor.' };
+    if (!dv) return { ok: true, igual: true, atual: Number(f.atual) };
+    const agora = Date.now(), ult = lista[lista.length - 1];
+    const patch = Object.assign(patchDeRegistro(f, ult.v, user, agora), { atualT: ult.t });
+    const upd = {}; Object.keys(patch).forEach(k => { upd[pathMeta(m) + '/' + k] = patch[k]; });
+    await root._update(refDe('kanban'), Object.fromEntries(Object.entries(upd).map(([k, x]) => [k.replace(/^kanban\//, ''), x])));
+    delete S.logCache[m.id];
+    return { ok: true, de: dv.atual, para: ult.v, atual: ult.v };
   }
   async function lerEntradas(id) { let v = {}; try { v = (await root._get(refDe(PATHS.log + '/' + id))).val() || {}; } catch (e) { return null; } return entradasDeLog(v); }
   function achar(id, esc_, sq) { return (esc_ === 'squad' ? lista(S.squads[sq]).map(m => Object.assign({ squad: sq, escopo: 'squad' }, m)) : lista(S.digital).map(m => Object.assign({ escopo: 'digital' }, m))).find(m => m.id === id) || null; }
@@ -1118,7 +1165,7 @@
   // 🗂 Entradas: lista tudo que foi lançado (mais novo primeiro) e deixa editar (data/hora, valor, nota) ou excluir. Quem vê o botão é quem pode atualizar o valor.
   function abrirEntradas(m, opts) {
     injetaCss(); opts = opts || {};
-    const ov = abreOv(`<h3>🗂 Entradas</h3><p class="sub" id="mm-e-sub"></p><div class="mm-ent-l" id="mm-e-l">Carregando…</div><div class="mm-msg" id="mm-e-e" hidden></div><div class="mm-acts"><span class="g"></span><button type="button" class="mm-btn" id="mm-e-x">Fechar</button></div>`);
+    const ov = abreOv(`<h3>🗂 Entradas</h3><p class="sub" id="mm-e-sub"></p><div class="mm-msg" id="mm-e-div" hidden></div><div class="mm-ent-l" id="mm-e-l">Carregando…</div><div class="mm-msg" id="mm-e-e" hidden></div><div class="mm-acts"><span class="g"></span><button type="button" class="mm-btn" id="mm-e-x">Fechar</button></div>`);
     if (!ov) return;
     const $ = id => ov.querySelector('#' + id), fresco = () => achar(m.id, m.escopo, m.squad) || m;
     let lista = [], edK = null, busy = false, atualTxt = null;
@@ -1134,7 +1181,13 @@
         <div class="mm-chips"><button type="button" class="mm-btn p s" data-a="ok">Salvar</button><button type="button" class="mm-btn s" data-a="cn">Cancelar</button></div></div></div>`; }
       return `<div class="mm-ent-r" data-k="${esc(e.k)}"><div class="t"><span>${val}</span><span class="a"><button type="button" class="mm-btn s" data-a="ed" title="Editar">✏️</button><button type="button" class="mm-btn s" data-a="del" title="Excluir">🗑</button></span></div><small>${meta}</small></div>`;
     };
-    const desenha = () => { sub(); $('mm-e-l').innerHTML = lista.length ? lista.slice().reverse().map(linha).join('') : '<div class="mm-chart-vazio">Nenhuma entrada lançada ainda.</div>'; };
+    // ⚠️ Total ≠ histórico (cadeia só de partes): mostra o aviso com o botão que acerta o total pelo último ponto do histórico.
+    const aviso = () => { const dv = divergenciaDoTotal(fresco(), lista), el = $('mm-e-div'); if (!dv) { el.hidden = true; el.innerHTML = ''; return; }
+      el.hidden = false; el.innerHTML = `⚠️ O total mostrado (<b>${esc(fmtVal(m, dv.atual))}</b>) não bate com a soma dos lançamentos (<b>${esc(fmtVal(m, dv.esperado))}</b>) — faltam <b>${esc(fmtVal(m, Math.abs(dv.falta)))}</b>. <button type="button" class="mm-btn p s" id="mm-e-fix">Corrigir o total</button>`;
+      $('mm-e-fix').onclick = async () => { if (busy) return; busy = true; erro('');
+        try { const r = await reconciliar(m, opts.user); if (r.ok === false) erro(r.erro); else { atualTxt = fmtVal(m, r.atual); await carrega(); } } catch (e) { erro('Não deu pra corrigir agora. Tente de novo.'); }
+        busy = false; }; };
+    const desenha = () => { sub(); aviso(); $('mm-e-l').innerHTML = lista.length ? lista.slice().reverse().map(linha).join('') : '<div class="mm-chart-vazio">Nenhuma entrada lançada ainda.</div>'; };
     const carrega = async () => { const l = await lerEntradas(m.id); if (l == null) { $('mm-e-l').textContent = 'Não deu pra ler as entradas agora. Feche e abra de novo.'; return; } lista = l; desenha(); };
     const rodar = async op => { if (busy) return; busy = true; erro('');
       try { const r = await mexerEntrada(m, op, opts.user); if (r.ok === false) { erro(r.erro); } else { atualTxt = r.atual == null ? 'sem valor' : fmtVal(m, r.atual); edK = null; await carrega(); } }
@@ -1411,7 +1464,7 @@
     // dados
     iniciar, ouvirTodasSquads, salvar, remover, arquivar, definirOceano, registrar, lerLog, lerEntradas, mexerEntrada, entPlano, entradasDeLog, metasDigital, metasOceano, metasSquad, todasDaSquad, todasDigital, squadsGlobais, achar,
     // modais
-    abrirForm, abrirRegistrar, abrirEntradas, abrirGraficoModal, mostrarPeixes, vigiaMarcos,
+    abrirForm, abrirRegistrar, abrirEntradas, abrirGraficoModal, mostrarPeixes, vigiaMarcos, reconciliar, divergenciaDoTotal, cadeiaPura,
   };
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.MareMetas = api;
