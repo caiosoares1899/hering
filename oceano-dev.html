@@ -1119,6 +1119,7 @@ function iniciarVtex(){
   if(iniciarVtex._on) return; iniciarVtex._on = true;
   try{ window._onValue(window._ref(window._db,'kanban/vtex_saude'), sn=>{ vtexSaude = sn.exists() ? sn.val() : null; vtexRender(); }, ()=>{ vtexSaude = null; vtexRender(); }); }catch(e){}
   setInterval(()=>{ if(!document.hidden) vtexRender(); }, 60*1000);   // o "há quanto tempo" e o cinza por falta de batimento andam sozinhos
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) vtexRender(); });
 }
 window.vtexEstado = vtexEstado;
 function iniciarMural(){

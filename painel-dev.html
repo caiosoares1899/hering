@@ -9247,7 +9247,7 @@ function addAdmEmail(emailArg){
   ADM_EMAILS.push(email);
   saveAdmEmails();
   // Atualiza role no Firebase do usuário se existir
-  _getUsuariosMap().then(val=>{
+  _getUsuariosMap(true).then(val=>{
     const entry=Object.entries(val).find(([uid,u])=>u.email===email);
     if(entry){
         window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'adm')
@@ -9269,7 +9269,7 @@ function removeAdmEmail(email){
   // pessoa "removida dos ADMs" continuava com papel 'adm' no board
   // (bulk delete etc.) via esse resquício. Rebaixa pra 'membro' se o
   // registro existir e ainda estiver marcado como 'adm'.
-  _getUsuariosMap().then(val=>{
+  _getUsuariosMap(true).then(val=>{
     const entry=Object.entries(val).find(([uid,u])=>u.email===email);
     if(entry && entry[1].role==='adm'){
       window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'membro')
@@ -10166,7 +10166,7 @@ function updateUserRole(uid, role){
 function addGuestByEmail(){
   const email=document.getElementById('pcfg-guest-email')?.value?.trim(); if(!email) return;
   // Busca usuário pelo email no Firebase
-  _getUsuariosMap().then(val=>{
+  _getUsuariosMap(true).then(val=>{
     const entry=Object.entries(val).find(([uid,u])=>u.email===email);
     if(entry){
       const [uid,u]=entry;
@@ -10800,8 +10800,8 @@ function _guWrapWrites(){
 }
 // Visualizador externo (painel_viewers) NÃO lê kanban/usuarios (e-mails, notificações e tokens de push de todo mundo — as regras fecham, 2026-10-07): lê o diretório magro usuarios_publicos (nome/foto/sigla/papel).
 function _usuariosNode(){ return window._isPainelViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'; }
-function _getUsuariosMap(){
-  if(_guLoadedAt && (Date.now()-_guLoadedAt < _GU_TTL_MS) && _globalUsersCache && Object.keys(_globalUsersCache).length) return Promise.resolve(_globalUsersCache);
+function _getUsuariosMap(forcar){
+  if(!forcar && _guLoadedAt && (Date.now()-_guLoadedAt < _GU_TTL_MS) && _globalUsersCache && Object.keys(_globalUsersCache).length) return Promise.resolve(_globalUsersCache);
   return window._get(window._ref(window._db,_usuariosNode())).then(snap=>{
     const val = snap.val() || {};
     _globalUsersCache = val;

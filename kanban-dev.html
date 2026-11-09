@@ -36199,6 +36199,7 @@ if(window.visualViewport){
   }
   setTimeout(_auCheckVersion, FIRST_CHECK_DELAY_MS);
   _auPollTimer = setInterval(()=>{ if(!document.hidden) _auCheckVersion(); }, CHECK_INTERVAL_MS);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _auCheckVersion(); });
   // Checa na hora ao VOLTAR pra aba/app (aba esquecida, PWA retomado, rede que voltou) — antes a pessoa rodava a versão velha até o próximo tick de 5 min, justamente
   // quando ela "entra" e grava. No máx. 1 consulta a cada 10 s (visibilitychange + pageshow + online podem disparar juntos).
   function _auAoVoltar(){
