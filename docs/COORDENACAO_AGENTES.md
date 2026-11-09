@@ -112,8 +112,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
 | Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
-| Claude | `claude/supercard-em-supercard` (PR #1655) | `kanban-dev.html`, `version.json` | 09/11/2026 |
-| Claude | `claude/guia-movimento` | `docs/GUIA_UI_UX.md`, `MARINE_GLASS.md`, skill `/melhoriauiux` | 09/11/2026 |
+| Claude | `claude/fps-farol-e-guia` | `okr-apresentacao.slide.html` (medidor de fps), `docs/GUIA_UI_UX.md`, skill `/melhoriauiux` | 09/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
@@ -121,20 +120,22 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | 👕 Camiseta Brasil que "ganha forma" conforme a meta da Black Friday (Oceano, enchimento + peças nos marcos de 20 %, modo telão) | Claude | `docs/ideias/camiseta-brasil-black-friday.md` — depende da arte oficial; Black Friday = 27/11 |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias): triagem em 4 levas — Radar (🧊 deriva, notas→Próximo Passo), Escala→Kanban, Digest do Painel, fluxo do Maré; Meus Pedidos e sino com adiar ficam com o Claude | Caio escolhe a ordem; Claude/Antigravity conforme a triagem | `docs/ideias/dossie-concorrencia-2026-10.md` — **nada roda antes de 04/11** |
 | 🎨 Tema claro do Painel e do Radar (toast invisível, abas/botões com cor fixa, aba ativa, dia de hoje do calendário) — combinado para 18/10, **sem PR que prove que foi feito** | Claude (ou Antigravity: 1 página por vez) | `docs/ideias/tema-claro-painel-radar-2026-10-17.md` · `docs/arezzo/testes/auditoria_temas.js` |
+| 🧪 Ferramentas de teste visual: `perf_apresentacao.js` com `CENARIO=` (medir só um cenário; hoje cada rodada mede 5) e variantes em paralelo; caminho do Chrome de `~/hering-tools` como padrão nas suítes da apresentação (as antigas têm caminho de Linux fixo); **contact sheet** 3×2 (3 temas × desktop/celular numa imagem só) no harness do GUIA §12.3 | Claude | sessão de 09/11/2026 (rodada de movimento da apresentação levou ~30 min, 2/3 em medição) |
+| 🎬 Gerador de vídeo/GIF de release em Marine Glass: um HTML local em `scripts/` com `window.seek(t)` (cada quadro é função do tempo) + JSON `{titulo, entregas, metricas}` + Playwright/FFmpeg → 9:16 (WhatsApp) e 16:9 (Mural/OKR). Fora das páginas publicadas | Caio decide se vale | dossiê do Antigravity de 09/11 (artigo de @e1genqq) |
 | 🔧 Atualizar `firebase-functions` (^5 → atual): o deploy de 18/10 avisou que a versão nova traz breaking changes — fazer com calma e com testes, sem prazo | Claude | aviso do `firebase deploy` de 18/10/2026 |
 
 ### Escalado para o Claude
 | Quem achou | O que | Como reproduzir | Data |
 |---|---|---|---|
 | Claude | `okr-dev.html` não tem bloco `@media (prefers-reduced-motion: reduce)`: o `okrPulse` infinito do "digitando…" do Agente (`.okr-agente-typing`) roda mesmo com movimento reduzido. Entra na rodada `codex/radar-uiux` (o arquivo está reservado). | `grep -c prefers-reduced-motion okr-dev.html` → 0 | 09/11/2026 |
+| Claude | `docs/arezzo/testes/test_apresentacao_live.js` falha também na `main`: "fora da sincronização, o slide do apresentador NÃO puxa a pessoa" (a pessoa fica "Acompanhando ✓" e vai junto para `ger:digital:tech`). Pode ser o teste (ordem de eventos do Firebase falso) ou o código do `liveSeguindo`: investigar antes de mexer no ao vivo. | rodar a suíte na `main` (2/2 vezes falha) | 09/11/2026 |
 
 ### Pendente de deploy (só o Caio roda)
 
-> ✅ **Tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
+> ✅ **Tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | **Regra do Guardião (auditoria 09/11):** `resolvidos/{chave}/por` tem de ser o nome ou o e-mail do login de quem grava (não dá mais para registrar 'Resolvido por' em nome de outra pessoa). A tela atual já grava assim. | resync → `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 09/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
