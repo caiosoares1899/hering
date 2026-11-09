@@ -111,6 +111,14 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
 .slide.prev{transform:translateX(-50px);}
 .slide-inner{max-width:min(1740px,100%);margin:0 auto;width:100%;transform-origin:top center;}
+/* Entrada do slide (GUIA_UI_UX §2.4, regime experiência): só quando alguém navega, uma vez; nunca em atualização de dado.
+   fill backwards: depois de entrar não prende o transform (o :hover dos cartões continua valendo). Nada anima o .slide-inner (é onde mora o zoom do ajuste).
+   O slide inteiro NÃO desliza/funde: camada de tela cheia com opacidade custava ~520 ms/s de GPU trocando de slide (perf_apresentacao.js, dpr 2) — só os blocos entram. */
+.slide.entra :is(.cover-kpis,.torre-tile,.torre-hd,.torre-sbar,.ger-row,.obj-card,.sum-bar-row,.sum-table){animation:slItem .28s cubic-bezier(.32,.72,0,1) backwards;animation-delay:calc(var(--i,0) * 30ms + 60ms);}
+.slide.entra :is(.sbar,.prog-fill,.sum-bar-fill){transform-origin:left center;animation:slBarra .5s cubic-bezier(.4,0,.2,1) backwards;animation-delay:calc(var(--i,0) * 30ms + 120ms);}
+.slide .conta{font-variant-numeric:tabular-nums;}
+@keyframes slItem{from{opacity:0;transform:translateY(10px);}}
+@keyframes slBarra{from{transform:scaleX(0);}}
 
 #bottombar{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;height:40px;flex-shrink:0;
   background:rgba(3,13,26,.92);border-top:1px solid var(--glass-b);}
@@ -554,7 +562,7 @@ body.live-ativa .tb-live,body.live-host .tb-live{display:none;}   /* com a apres
 .live-pill i{position:relative;width:7px;height:7px;border-radius:50%;background:#ff4d4d;}
 .live-pill i::after{content:'';position:absolute;inset:0;border-radius:50%;background:#ff4d4d;opacity:0;animation:liveAnel 1.8s ease-out 3;}   /* 3 pulsos ao entrar na sala e para: animação infinita mantém 60 quadros/s com a página parada */
 @keyframes liveAnel{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.8);opacity:0}}
-@media (prefers-reduced-motion:reduce){.live-pill i::after{animation:none;}.slide{transition:none !important;}}
+@media (prefers-reduced-motion:reduce){.live-pill i::after{animation:none;}.slide{transition:none !important;}.slide.entra *{animation:none !important;}}
 .live-btn.on{border-color:var(--accent);background:rgba(56,182,255,.2);}
 .live-cor{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.35);cursor:pointer;padding:0;}
 .live-cor.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25);}
@@ -1340,6 +1348,7 @@ function rebuild(porFiltro){
   // Atualização ao vivo que faz o slide atual sumir (ex.: alguém desliga o último Objetivo da gerência no painel): fica na mesma posição (= o próximo slide) em vez de jogar a apresentação pra capa no meio da fala; troca de filtro continua voltando pra capa.
   currentIdx = idx>=0 ? idx : (porFiltro ? 0 : Math.max(0, Math.min(currentIdx, slides.length-1)));
   render();
+  if(!rebuild._entrou){ rebuild._entrou = true; _okrEntrada(1); }   // 1ª abertura: o slide entra uma vez; as próximas atualizações de dado não animam
   if(document.getElementById('detail-ov')?.classList.contains('open') && _okrDetailCurrentId){
     const ativos = new Set(_okrObjetivosAtivos().map(o=>o.id));
     if(!ativos.has(_okrDetailCurrentId)){
@@ -1546,7 +1555,34 @@ document.fonts?.ready?.then(() => {
   }
 });
 
-window._okrGoTo = i => { if(i>=0 && i<slides.length){ currentIdx=i; render(); } };
+window._okrGoTo = i => { if(i>=0 && i<slides.length){ const dir = Math.sign(i-currentIdx); currentIdx=i; render(); if(dir) _okrEntrada(dir); } };
+// Entrada do slide que acabou de abrir por navegação (de quem apresenta e de quem acompanha ao vivo, pelo mesmo _okrGoTo).
+// rebuild() (dado mudou no meio da reunião) chama render() direto e não passa por aqui: a sala não vê tudo entrar de novo.
+// Roda depois do render(), ou seja, depois do fitSlideContent() já ter medido o slide parado.
+// Stagger (30 ms por bloco, até 6), barras crescendo e Count-up (≤ .7 s) só nos números protagonistas da capa e da torre.
+let _okrContaRaf = 0;
+function _okrEntrada(dir){
+  cancelAnimationFrame(_okrContaRaf);
+  const sl = document.querySelector('#slides .slide.active');
+  if(!sl || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  sl.querySelectorAll(':is(.cover-kpis,.torre-tile,.torre-hd,.torre-sbar,.ger-row,.obj-card,.sum-bar-row,.sum-table)').forEach((el,i)=>el.style.setProperty('--i', Math.min(i,5)));
+  sl.classList.add('entra');
+  const nums = [...sl.querySelectorAll('.ck-hero b, .ck-nums b, .tt-nums b, .torre-kpis .stat-chip b')].map(el=>{
+    const final = el.textContent, m = /^(\d+)(%?)$/.exec(final.trim());
+    return m && +m[1] > 0 ? {el, final, n:+m[1], suf:m[2]} : null;
+  }).filter(Boolean);
+  if(!nums.length) return;
+  // Reserva a largura do número final: a contagem não mexe no layout já medido.
+  nums.forEach(x=>{ x.el.classList.add('conta'); x.el.style.minWidth = x.el.getBoundingClientRect().width+'px'; });
+  const t0 = performance.now(), dur = 700;
+  const passo = now => {
+    const k = Math.min(1, (now-t0)/dur), e = 1 - Math.pow(1-k, 3);
+    let vivos = 0;
+    nums.forEach(x=>{ if(!x.el.isConnected) return; vivos++; x.el.textContent = k>=1 ? x.final : Math.round(x.n*e)+x.suf; if(k>=1) x.el.style.minWidth = ''; });   // no fim solta a largura reservada (sair da tela cheia não deixa a linha presa larga)
+    if(k<1 && vivos) _okrContaRaf = requestAnimationFrame(passo);
+  };
+  _okrContaRaf = requestAnimationFrame(passo);
+}
 // Objetivo vizinho DENTRO da mesma gerência (mesma lista e ordem dos botões "← Anterior"/"Próximo →" do detalhe). Nas pontas não faz nada (o botão fica desabilitado).
 window._okrDetailVizinho = dir => {
   const o = okrObjetivos[_okrDetailCurrentId]; if(!o) return;
