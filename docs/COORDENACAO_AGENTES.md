@@ -127,11 +127,11 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 ### Pendente de deploy (só o Caio roda)
 
-> ✅ **Tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
+> ✅ **Tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | **Promoção kanban v8.30.912 / painel v5.95 (#1649 + conhecimento):** `criarCard` aceita várias submarcas (usado por `agenteAgilMencao`/`…Dados`/`agenteAgilIntake`) e o conhecimento foi regenerado. **Só depois do merge da promoção** (o kanban de prod precisa ler a lista de submarcas). | resync → `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 09/11/2026 |
+| — | — | — | — |
 
 ## 7. Três agentes (desde 05/11/2026)
 
