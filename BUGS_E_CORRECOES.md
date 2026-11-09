@@ -86,6 +86,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-09 · Maré: nome e cor de coluna vindos do banco entravam em innerHTML sem tratamento (XSS armazenado) — cor normalizada na leitura + esc() nos 4 nomes que faltavam
+
+• Sintoma / achado: o nome e a cor de uma coluna chegam do banco (`kanban/squads/{id}/dados/columns`, que qualquer membro do squad consegue gravar — a interface é que limita ao PO) e entravam em `innerHTML` sem tratamento em vários pontos. A cor (`style="background:${col.color}"`) estava crua em ~20 lugares, inclusive no cabeçalho de TODA coluna do board (`renderNormal`/raias) — uma cor com aspas fechava o atributo e rodava JS pra quem abrisse o board (XSS armazenado). O nome estava cru em 4 lugares (dropdown de `@card:`, busca de card vinculado, mapa de dependências e mini-mapa), enquanto os outros 25 pontos já usavam `esc()`.
+• Causa: o sink de `esc()` por ponto nunca foi aplicado de forma uniforme (técnica 2: o dropdown de `@card:` e o mapa de dependências nasceram depois da varredura de XSS de 05/10) e as regras do banco não validam o conteúdo de `columns`.
+• Correção (kanban-dev v8.30.911-dev): (1) `_colunasSeguras()` normaliza a cor em TODA leitura de `columns` do banco (listener ao vivo, leitura inicial, as 2 mesclas e a restauração de backup): só hexadecimal, rgb()/hsl() ou `var(--x)` passa; o resto volta ao padrão `#38b6ff`; (2) `esc()` nos 4 pontos de nome que faltavam. Teste novo `docs/arezzo/testes/test_colunas_hostis.js` (falha na `main`: 4 atributos injetados; passa com o fix). Suítes de cards/guardião/menu/supercard/checklist sem regressão.
+• Não resolvido (decisão do Caio): as regras do banco continuam sem `.validate` em `columns` — validar nome/cor no servidor impediria o dado hostil de ser gravado. Outros pontos de nome de coluna em rótulos de gráficos (`label:col.name`) não foram conferidos nesta rodada.
+
 ### 2026-11-09 · Metas: total (atual) ficava abaixo do histórico (Oceano 8,89 mi × histórico 9,02 mi) — conta passa a vir do histórico + aviso e botão Corrigir o total
 
 • Sintoma (09/11/2026): o Oceano/Painel mostrava a meta global de Novembro em R$ 8.885.744 enquanto o histórico de lançamentos e a planilha do time davam R$ 9.023.296 — 137.552 a menos que ninguém lançou nem apagou. Percentual, gráfico e ritmo usam o mesmo número, então também ficaram baixos.
