@@ -112,8 +112,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
 | Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
-| Antigravity | `antigravity/otimizacao-rotina-0911` | `kanban-dev.html`, `painel-dev.html`, `oceano-dev.html`, `escala-dev.html`, `intake-dev.html`, `mare-*-dev.js` (/otimizaçãoderotina) | 09/11/2026 |
-| Claude | `claude/seguranca-guardiao-por` | `database.rules.json`, `functions/**` (/auditoriaseguranca) | 09/11/2026 |
+| Claude | `claude/supercard-em-supercard` (PR #1655) | `kanban-dev.html`, `version.json` | 09/11/2026 |
+| Claude | `claude/guia-movimento` | `docs/GUIA_UI_UX.md`, `MARINE_GLASS.md`, skill `/melhoriauiux` | 09/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
@@ -126,7 +126,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Escalado para o Claude
 | Quem achou | O que | Como reproduzir | Data |
 |---|---|---|---|
-| — | — | — | — |
+| Claude | `okr-dev.html` não tem bloco `@media (prefers-reduced-motion: reduce)`: o `okrPulse` infinito do "digitando…" do Agente (`.okr-agente-typing`) roda mesmo com movimento reduzido. Entra na rodada `codex/radar-uiux` (o arquivo está reservado). | `grep -c prefers-reduced-motion okr-dev.html` → 0 | 09/11/2026 |
 
 ### Pendente de deploy (só o Caio roda)
 

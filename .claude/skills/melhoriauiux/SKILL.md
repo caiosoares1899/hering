@@ -7,7 +7,7 @@ description: Rodada de melhoria de UI/UX e design de uma tela (ou de várias) do
 
 Nasceu do padrão de pedido que se repete: *"quero que você faça uma análise de UI/UX e melhore o design"* — a tela está confusa, é "tudo a mesma cor", os números repetem, o celular aperta, o tema claro some o texto. Esta skill transforma o método que funcionou (Painel › Visão e Fluxo, Radar › Dashboard, modal do card no celular, Escala, Oceano) em procedimento repetível.
 
-**Antes de tudo, leia `docs/GUIA_UI_UX.md`** (a "aula": como se pensam fluxos, páginas e cores aqui) e `MARINE_GLASS.md` (identidade). Esta skill é o **procedimento**; o guia é o **raciocínio**. Não os duplique: se achar uma regra nova, ela entra no guia.
+**Antes de tudo, leia `docs/GUIA_UI_UX.md`** (a "aula": como se pensam fluxos, páginas e cores aqui) e `MARINE_GLASS.md` (identidade). Esta skill é o **procedimento**; o guia é o **raciocínio**. Não os duplique: se achar uma regra nova, ela entra no guia. Achado de transição ou animação: use o nome e a receita da tabela "Vocabulário de movimento" (guia §2.4), sem inventar um `@keyframes` novo.
 
 ## O que esta rotina NÃO é
 - **Não é `/monitorarbugs`.** Aquela caça comportamento errado/inconsistente. Aqui o foco é **clareza, hierarquia, cor, fluxo, consistência, mobile, acessibilidade e copy**. Bug achado **de passagem** é corrigido e registrado em `BUGS_E_CORRECOES.md` (como o `renderFilterBar()` que nunca gerava o filtro de squad), mas não é o objetivo.
