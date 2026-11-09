@@ -68,6 +68,7 @@ Priorize por **impacto × esforço**: primeiro o que confunde a ação principal
 - **Teste novo** em `docs/arezzo/testes/test_<tela>_ui.js` (boot real + Firebase falso): o que foi corrigido **e** os casos extremos (vazio, N squads, texto longo), em **1280 e 390 px**, nos **3 temas**; assert de **sem rolagem lateral**. Mantenha as suítes vizinhas sem regressão.
 - `node --check` nos `<script>` (ou `node scripts/checar.js`, que já faz) e `cd functions && npm test` se tocou em `functions/`.
 - Compare **antes × depois** (screenshots) — guarde o que for útil para a descrição do PR.
+- **Mexeu em movimento? Olhe os quadros do meio, não só o fim.** Pause as animações e posicione instantes fixos (`document.getAnimations().forEach(a => { a.pause(); a.currentTime = t; })`, a ideia do `seek(t)`) em 0/60/120/180/260/360/480/700 ms e junte tudo numa imagem só (modelo: `docs/arezzo/testes/contact_transicao_apresentacao.js`). Procure texto sobreposto, bloco que aparece antes do título e salto de layout. Na resposta, diga quais instantes olhou, o que achou e o que corrigiu. Sem isso, não diga que "a animação ficou boa" (lição de 09/11: a legenda da torre aparecia sozinha no quadro 0 e nenhum teste de DOM pegou).
 
 ## Passo 7 — Registrar e entregar (guia 15)
 1. **Versão** do `-dev` + `version.json` (`node scripts/mare-cli.js bump <alvo>`); `?v=` se mexeu em módulo (aí é Claude).
