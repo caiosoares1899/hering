@@ -86,6 +86,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-09 · Metas: total (atual) ficava abaixo do histórico (Oceano 8,89 mi × histórico 9,02 mi) — conta passa a vir do histórico + aviso e botão Corrigir o total
+
+• Sintoma (09/11/2026): o Oceano/Painel mostrava a meta global de Novembro em R$ 8.885.744 enquanto o histórico de lançamentos e a planilha do time davam R$ 9.023.296 — 137.552 a menos que ninguém lançou nem apagou. Percentual, gráfico e ritmo usam o mesmo número, então também ficaram baixos.
+• Causa: o "atual" é um número guardado à parte e mexido por SOMA (`atual + parte`) em cima da cópia que a tela tinha na memória; o histórico guarda o acumulado de cada ponto calculado a partir do próprio histórico. Qualquer gravação feita sobre uma cópia desatualizada (outra aba, outra pessoa, evento ainda não recebido) desvia o total sem aviso, e a edição/exclusão de entradas carrega o desvio adiante (testado: a conta de editar/excluir em si está correta; 4.000 cenários aleatórios sem divergência). Entradas excluídas não deixam rastro, então a origem exata do 137.552 não foi provada.
+• Correção (mare-metas-dev.js ?v=18): (1) `registrar`/`mexerEntrada` leem a meta FRESCA do banco antes de somar (`metaFresca`); (2) quando o histórico é cadeia só de partes (`cadeiaPura`), o total vira o último ponto do histórico (`totalPelaCadeia`), preservando um valor-base digitado na ficha (atual ACIMA do histórico) — cura desvio para baixo a cada lançamento ou edição; (3) o modal 🗂 Entradas avisa quando o total está abaixo da soma dos lançamentos e traz "Corrigir o total" (`MareMetas.reconciliar`, sem criar entrada nova); histórico com totais avulsos não é corrigido sozinho. Teste novo: `test_metas_atual_confere.js`.
+• Conferir antes de promover: `test_metas_calc` já falha na main (projeção 👻, regex de `stroke-opacity`), sem relação com esta mudança.
+
 ### 2026-11-07 · Painel › Agente Ágil (prod): gaveta não respondia — função estourava 256 MiB
 
 - No primeiro uso em prod (07/11), a agenteAgilPainelChat morreu por falta de memória (log: 'Memory limit of 256 MiB exceeded with 258/269 MiB used') ao ler os boards de todos os squads; a instância caía antes de gravar resposta, e a gaveta ficava em 'Lendo os dados do Painel…' para sempre. No dev os dados são menores e cabia.
