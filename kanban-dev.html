@@ -6662,7 +6662,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.912-dev</div>
+<div class="version">v8.30.913-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14283,6 +14283,43 @@ function _cardIsSupercard(card){
 // pai (mesmo padrão de reverse-scan usado na nota "filho de" do modal).
 function _cardIsSuperChild(card, allCards){
   return (allCards||cards).some(p=>p.id!==card.id && !p.archived && (p.childCardIds||[]).includes(card.id));
+}
+// Altura da árvore de supercards abaixo de um card: 0 = sem filhos ativos,
+// 1 = tem filhos (que não têm filhos), 2 = tem filhos que têm filhos. Usada
+// pra vincular um SUPERCARD já existente como filho de outro (09/11/2026,
+// pedido de uma PO) sem passar do teto de 3 camadas (campanha → criativo →
+// versão). `vistos` protege contra ciclo corrompido no banco.
+function _superAltura(card, vistos){
+  vistos = vistos || new Set();
+  if(!card || vistos.has(card.id)) return 0;
+  vistos.add(card.id);
+  let h=0;
+  (card.childCardIds||[]).forEach(id=>{
+    const f=cards.find(x=>x.id===id);
+    if(f && !f.archived) h=Math.max(h, 1+_superAltura(f, vistos));
+  });
+  return h;
+}
+// true se `alvoId` está em algum nível abaixo de `card` (usado contra ciclo).
+function _superTemDescendente(card, alvoId, vistos){
+  vistos = vistos || new Set();
+  if(!card || vistos.has(card.id)) return false;
+  vistos.add(card.id);
+  return (card.childCardIds||[]).some(id=>{
+    if(id===alvoId) return true;
+    const f=cards.find(x=>x.id===id);
+    return !!f && _superTemDescendente(f, alvoId, vistos);
+  });
+}
+// O card aberto (editingId) pode receber `c` como filho? Teto de 3 camadas:
+// o card aberto é campanha (sem pai) → `c` pode trazer filhos (altura ≤ 1);
+// é criativo (já tem pai) → `c` entra como versão, sem filhos (altura 0);
+// é versão → já bloqueado por editingSuperParentIsChild antes de chegar aqui.
+function _superPodeVincular(c){
+  if(!c || c.archived || c.agenteHotline || c.id===editingId) return false;
+  if(_cardIsSuperChild(c, cards)) return false;                 // um card não tem dois pais
+  if(editingId && _superTemDescendente(c, editingId)) return false; // ciclo
+  return _superAltura(c) <= (editingSuperParent ? 0 : 1);
 }
 // Total/Cards/Supercards: supercards são só a junção dos filhos (não têm
 // "vida própria" como demanda independente — pedido direto), então card
@@ -28865,7 +28902,7 @@ const HELP_CONTENT = {
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.\n\n🏷️ Submarca de cada filho: na lista de cards filhos, cada linha mostra a submarca do card (a mesma pílula colorida do board) ao lado do responsável — dá pra ver de qual marca é cada filho sem abri-lo. Nos squads que usam o campo Submarca, o filho que ainda não tem aparece como "🏷️ sem submarca".' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. Dá para <b>vincular um supercard que já existe</b> como filho de outro (ex.: uma campanha pronta, com seus criativos, dentro de uma campanha maior) pela busca "+ Adicionar" do modal: ele aparece na lista enquanto a árvore couber no teto — o card em que você está vinculando precisa ser uma campanha (sem pai) e o que entra pode ter filhos, mas esses filhos não podem ter filhos. O teto é fixo em 3 camadas — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.\n\n🏷️ Submarca de cada filho: na lista de cards filhos, cada linha mostra a submarca do card (a mesma pílula colorida do board) ao lado do responsável — dá pra ver de qual marca é cada filho sem abri-lo. Nos squads que usam o campo Submarca, o filho que ainda não tem aparece como "🏷️ sem submarca".' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
@@ -29795,14 +29832,15 @@ function searchSuperChildren(q){
   if(q.trim().length<2){ dd.classList.remove('show'); return; }
   const lower=q.toLowerCase();
   const excludeIds=new Set([editingId, ...editingSuperChildren.map(l=>l.id)]);
-  // Teto de 2 níveis (campanha → criativo → versão), não infinito — exclui
-  // quem já tem filhos próprios (viraria um 3º nível a partir daqui) e
-  // quem já é filho de outro card (um card não pode ter dois pais).
+  // Teto de 3 camadas (campanha → criativo → versão), não infinito — ver
+  // _superPodeVincular(): aceita um SUPERCARD existente como filho (09/11/2026)
+  // desde que a árvore dele caiba no teto, e exclui quem já é filho de outro
+  // card (um card não pode ter dois pais) e ciclos.
   // Achado real (skill /monitorarbugs, 2026-08-26): sem essa exclusão, dava
   // pra transformar o card hotline em filho de outro card — quebra a
   // premissa de que ele é um card fixo, único por squad (ver
   // _findAgenteHotlineCard()).
-  const results=cards.filter(c=>!c.archived && !c.agenteHotline && !excludeIds.has(c.id) && !(c.childCardIds&&c.childCardIds.length) && !_cardIsSuperChild(c, cards) && c.title.toLowerCase().includes(lower)).slice(0,8);
+  const results=cards.filter(c=>!excludeIds.has(c.id) && _superPodeVincular(c) && c.title.toLowerCase().includes(lower)).slice(0,8);
   dd.innerHTML='';
   if(!results.length){
     dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado — aperte Enter pra criar "'+esc(q.trim())+'" como novo card filho.</div>';
@@ -29822,6 +29860,7 @@ function addSuperChild(card){
   if(card.id===editingId) return;
   if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   if(editingSuperChildren.find(l=>l.id===card.id)) return;
+  if(!_superPodeVincular(card)){ showToast('⚠ Esse card não pode virar filho aqui — passaria de 3 camadas (campanha → criativo → versão) ou já é filho de outro card.'); return; }
   editingSuperChildren.push({id:card.id, title:card.title, col:card.col});
   renderSuperChildrenList();
   persistSuperChildren('vinculou o card filho "'+card.title+'"'); // no-op se for card novo (ver função abaixo) — entra no childCardIds só ao Salvar
