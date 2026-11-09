@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Supercard dentro de supercard: vincular um supercard existente como filho (SÓ DEV · kanban-dev v8.30.914-dev) — 2026-11-09
+
+- Na vinculação do modal ("+ Adicionar"), um supercard que já existe passa a aparecer na busca e pode virar filho de outro (ex.: campanha pronta, com seus criativos, dentro de uma campanha maior). Antes a busca escondia qualquer card que já tivesse filhos.
+- O teto continua em 3 camadas (campanha → criativo → versão): o card em que se vincula precisa ser campanha (sem pai) e o que entra pode ter filhos, mas esses não podem ter filhos; criativo só recebe card sem filhos; versão não vincula nada. Um card segue com um pai só e ciclos são recusados (`_superAltura`, `_superTemDescendente`, `_superPodeVincular`).
+- Efeito a saber: os criativos do supercard que entrou viram "versões" (Ficha Técnica herdada do pai).
+- Testes: `docs/arezzo/testes/test_supercard_em_supercard.js`.
+
 ### Mais de uma Submarca por card (PROD · kanban v8.30.912, painel v5.95) — 2026-11-09
 
 - No card aberto, o campo Submarcas virou uma lista de chips: escolha em "+ Adicionar submarca…" quantas precisar e tire com o ✕. Continua obrigatório (ao menos uma) nos squads que usam o campo.
