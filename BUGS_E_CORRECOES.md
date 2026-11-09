@@ -88,7 +88,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ### 2026-11-09 · Radar › Apresentação: transição de slide de .35 s nunca rodava (corte seco) — `okr-apresentacao.slide.html`
 - **Causa:** `render()` recria todos os `.slide` por `innerHTML` a cada navegação; o novo slide já nasce com `.active`, então a `transition: opacity .35s, transform .35s` do `.slide` não tem de onde partir. As barras (`.sum-bar-fill` com `transition: width .4s`) também nasciam cheias. Medido: logo após `_okrGoTo`, `document.getAnimations()` só tinha a barrinha de progresso do topo.
-- **Correção:** entrada explícita só ao navegar (`_okrEntrada`, chamada por `_okrGoTo`, nunca por `rebuild`): cascata dos blocos, barras crescendo e contagem dos números da capa e da torre. O slide inteiro **não** anima: a camada de tela cheia com opacidade custava ~520 ms/s de GPU. A transição antiga ficou no CSS (inofensiva; o `.prev` é usado pelo `test_apresentacao_nav.js`).
+- **Correção:** entrada explícita só ao navegar (`_okrEntrada`, chamada por `_okrGoTo`, nunca por `rebuild`): cascata dos blocos, barras crescendo e contagem dos números da capa e da torre. O slide inteiro **não** anima: a camada de tela cheia com opacidade custava ~520 ms/s de GPU. A transição antiga ficou no CSS (inofensiva; o `.prev` é usado pelo `docs/arezzo/testes/test_apresentacao_nav.js`).
 - **Teste:** `docs/arezzo/testes/test_apresentacao_movimento.js`.
 
 ### 2026-11-09 · Otimização de Rotina do Ecossistema — Reuso de `_globalUsersCache` (~1,1 MB), Probe Leve de Latência e Polls em Segundo Plano (`kanban-dev.html`, `painel-dev.html`, `oceano-dev.html`, `escala-dev.html`, `mare-metas-dev.js`)
