@@ -37,6 +37,8 @@ Garantias:
 - O `:hover` dos cartões continua valendo (`fill: backwards`).
 - "Reduzir movimento" desliga tudo.
 
+Medidor de fps com farol no canto inferior direito (como o texto de versão das outras páginas): "60 fps · bom" com bolinha verde (≥ 50), amarela "alerta" (30–49) e vermelha "péssimo" (< 30), cor e palavra juntas. Mede os quadros entregues no último ~0,5 s e só troca o texto 2×/s, então não faz a página animar parada (medido: parado 1–2 ms/s de GPU). Serve para o André conferir o fps na máquina dele.
+
 Ficou de fora de propósito:
 - O slide inteiro deslizando ou com fade, e o fade do detalhe do Objetivo: camada de tela cheia com opacidade, ~520 ms/s de GPU a mais, medido.
 - Contagem nos cartões de cada Objetivo: números demais ao mesmo tempo.
