@@ -112,9 +112,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
 | Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
-| Claude | `claude/submarca-multipla` (PR #1656: supercard dentro de supercard) | `kanban-dev.html`, `version.json` | 09/11/2026 |
-| Claude | `claude/apresentacao-movimento` (PR #1658) | `okr-apresentacao.slide.html` | 09/11/2026 |
-| Claude | `claude/guia-movimento` | `docs/GUIA_UI_UX.md`, `MARINE_GLASS.md`, skill `/melhoriauiux` | 09/11/2026 |
+| Claude | `claude/fps-farol-e-guia` | `okr-apresentacao.slide.html` (medidor de fps), `docs/GUIA_UI_UX.md`, skill `/melhoriauiux` | 09/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
