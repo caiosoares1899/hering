@@ -6658,7 +6658,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.910-dev</div>
+<div class="version">v8.30.911-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7644,6 +7644,13 @@ const DEFAULT_COLUMNS=[
   {id:'done',name:'Concluído',color:'#639922',collapsible:true},
 ];
 let columns=[...DEFAULT_COLUMNS];
+// 🛡️ Cor de coluna vem do banco (qualquer membro do squad consegue gravar `columns`, a interface é que limita ao PO) e entra em dezenas de `style="…"` montados com innerHTML:
+// um valor com aspas fechava o atributo e virava XSS armazenado pra todo mundo que abrisse o board (achado /monitorarbugs 09/11/2026, 20 pontos). Em vez de escapar ponto a ponto,
+// toda leitura de `columns` do banco passa por aqui: só cor hexadecimal, rgb()/hsl() ou var(--x) segue; qualquer outra coisa volta pro padrão.
+const _COR_COLUNA_OK = /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\([0-9.,%\s\/]+\)|var\(--[a-z0-9-]+\))$/i;
+function _colunasSeguras(lista){
+  return (lista||[]).map(c=>{ if(!c || typeof c!=='object') return c; const cor = typeof c.color==='string' && _COR_COLUNA_OK.test(c.color.trim()) ? c.color.trim() : '#38b6ff'; return c.color===cor ? c : Object.assign({}, c, {color:cor}); });
+}
 let tags=[
   {id:'data',label:'Data',pi:0},{id:'ml',label:'ML',pi:4},
   {id:'feat',label:'Feature',pi:1},{id:'infra',label:'Infra',pi:2},{id:'bug',label:'Bloqueio',pi:3},
@@ -10430,7 +10437,7 @@ function fbLoadAll(){
       scheduleRender();
       return;
     }
-    const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
+    const cleaned = _colunasSeguras((Array.isArray(val) ? val : Object.values(val)).filter(Boolean));
     if(!cleaned.length){
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
       scheduleRender();
@@ -11350,7 +11357,7 @@ let _cardsSyncDebounce = null;
   window._colTagPoll = setInterval(()=>{
     fbGet(FB+'/columns').then(snap=>{
       const val=snap.val(); if(!val) return;
-      const incoming=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
+      const incoming=_colunasSeguras((Array.isArray(val)?val:Object.values(val)).filter(Boolean));
       if(!incoming.length) return;
       // Firebase é a fonte da verdade quando já tem colunas configuradas.
       // Só re-adiciona DEFAULT_COLUMNS que NÃO foram excluídas de propósito.
@@ -16995,7 +17002,7 @@ async function saveColCfg(){
 function _persistColumns(){
   return fbGet(FB+'/columns').then(snap=>{
     const remoteVal = snap.val();
-    const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
+    const remote = remoteVal ? _colunasSeguras((Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean)) : [];
     const localIds = new Set(columns.map(c=>c.id));
     const extraRemote = remote.filter(c=>c && !localIds.has(c.id) && !_deletedColIds.has(c.id));
     const merged = extraRemote.length ? [...columns, ...extraRemote] : columns;
@@ -26595,7 +26602,7 @@ function saveAgilCfg(){
   // evita sobrescrever colunas criadas por outro usuário desde o último load.
   fbGet(FB+'/columns').then(snap=>{
     const remoteVal = snap.val();
-    const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
+    const remote = remoteVal ? _colunasSeguras((Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean)) : [];
     const localIds = new Set(columns.map(c=>c.id));
     // extraRemote = colunas remotas que não estão localmente E que não foram excluídas de propósito
     const extraRemote = remote.filter(c=>c && !localIds.has(c.id) && !_deletedColIds.has(c.id));
@@ -29435,7 +29442,7 @@ function searchLinkedCards(q){
     const opt = document.createElement('div');
     opt.className = 'link-option';
     opt.innerHTML =
-      '<span class="link-option-col">'+(col?.name||card.col)+'</span>'+
+      '<span class="link-option-col">'+esc(col?.name||card.col)+'</span>'+
       '<span style="flex:1;color:var(--txt);">'+esc(card.title)+'</span>';
     opt.onclick = ()=>addLinkedCard(card);
     dd.appendChild(opt);
@@ -31706,7 +31713,7 @@ function renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos){
     opt.innerHTML=
       '<span style="font-size:9px;padding:1px 6px;border-radius:999px;background:'+(col?.color||'var(--glass)')+
       '22;border:1px solid '+(col?.color||'var(--glass-b)')+';color:'+(col?.color||'var(--txt3)')+
-      ';margin-right:6px;">'+(col?.name||card.col)+'</span>'+
+      ';margin-right:6px;">'+esc(col?.name||card.col)+'</span>'+
       '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(card.title)+'</span>';
     opt.onclick=()=>insertCardMentionInline(ta, atPos, pos, card.id, card.title, dd);
     dd.appendChild(opt);
@@ -38057,7 +38064,7 @@ function renderDepNode(container, node, depth, selfId){
     '<div class="dep-node-col" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
     '<span class="dep-node-title">'+esc(c.title)+'</span>'+
     (c.owner?'<span class="dep-node-meta">👤 '+esc(c.owner)+'</span>':'')+
-    '<span class="dep-node-col-lbl">'+(col?.name||c.col)+'</span>';
+    '<span class="dep-node-col-lbl">'+esc(col?.name||c.col)+'</span>';
   cardDiv.onclick=()=>{ closeOv('dep-map-ov'); openCard(c.id); };
   row.appendChild(cardDiv);
   container.appendChild(row);
@@ -38136,7 +38143,7 @@ function renderMiniNode(container, node, selfId){
   div.innerHTML=
     '<div class="card-dep-mini-node-dot" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
     '<span class="card-dep-mini-node-title">'+(isSelf?'<strong>':'')+esc(c.title)+(isSelf?'</strong>':'')+'</span>'+
-    '<span class="card-dep-mini-node-col">'+(col?.name||c.col)+'</span>';
+    '<span class="card-dep-mini-node-col">'+esc(col?.name||c.col)+'</span>';
   if(!isSelf) div.onclick=()=>{ closeOv('card-ov', ()=>openCard(c.id)); };
   container.appendChild(div);
 
@@ -39549,7 +39556,7 @@ async function _applyRestorePayload(payload){
     // Storage, weeklyBackup.js) podem ter esse formato.
     const _asArr = v => v ? (Array.isArray(v)?v:Object.values(v)).filter(Boolean) : [];
     cards = _asArr(payload.board.cards).map(c=>({...c}));
-    columns = _asArr(payload.board.columns);
+    columns = _colunasSeguras(_asArr(payload.board.columns));
     tags = _asArr(payload.board.tags);
     agilCfg = payload.board.agilCfg||{};
     qlItems = payload.board.qlItems||{recorrentes:[],modelos:[],agendamentos:[]};
