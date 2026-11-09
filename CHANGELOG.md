@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Mais de uma Submarca por card (SÓ DEV · kanban-dev v8.30.912-dev, painel-dev v5.95) — 2026-11-09
+### Mais de uma Submarca por card (PROD · kanban v8.30.912, painel v5.95) — 2026-11-09
 
 - No card aberto, o campo Submarcas virou uma lista de chips: escolha em "+ Adicionar submarca…" quantas precisar e tire com o ✕. Continua obrigatório (ao menos uma) nos squads que usam o campo.
 - Contagem: um card com 2 submarcas conta em CADA uma (donut "Por submarca" do Maré e do Painel, Dados do Board, pills do Supercard); o filtro de Submarca já era múltiplo e acha o card em qualquer uma.

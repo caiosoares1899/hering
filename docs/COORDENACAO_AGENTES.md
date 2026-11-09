@@ -131,7 +131,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| — | — | — | — |
+| Claude | **Promoção kanban v8.30.912 / painel v5.95 (#1649 + conhecimento):** `criarCard` aceita várias submarcas (usado por `agenteAgilMencao`/`…Dados`/`agenteAgilIntake`) e o conhecimento foi regenerado. **Só depois do merge da promoção** (o kanban de prod precisa ler a lista de submarcas). | resync → `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 09/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
