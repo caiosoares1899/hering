@@ -2044,6 +2044,12 @@ input[type="date"]{-moz-appearance:textfield;}
 .minicard-sm{display:inline-flex;align-items:center;}
 .minicard-sm .card-tag{margin:0;}
 .minicard-sm-none{font-size:10px;color:var(--txt3);font-style:italic;}
+.sm-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:32px;}
+.sm-chip{display:inline-flex;align-items:center;gap:2px;}
+.sm-chip .card-tag{margin:0;}
+.sm-chip-x{background:none;border:0;color:var(--txt3);cursor:pointer;font-size:11px;line-height:1;padding:4px 5px;border-radius:6px;min-width:22px;min-height:22px;}
+.sm-chip-x:hover,.sm-chip-x:focus-visible{background:rgba(var(--surface-rgb),.7);color:var(--txt);outline:none;}
+.sm-chips .sm-add{width:auto;min-width:150px;max-width:100%;}
 .minicard-col{font-size:10.5px;color:var(--txt2);}
 .minicard-owner{font-size:10.5px;color:var(--txt2);}
 .minicard-rm{
@@ -4482,10 +4488,8 @@ window.MARE_LOGIN_PELO_OCEANO = true;
              (display:none na maioria dos cards) cai pra 2ª linha só quando visível —
              sem precisar de JS extra pra reorganizar. -->
         <div class="card-attr-row">
-          <div class="field" id="m-submarca-field" style="display:none;"><label class="fl">🏷️ Submarca</label>
-            <select class="fi" id="m-submarca" onchange="setCardSubmarca(this.value)">
-              <option value="">— sem submarca —</option>
-            </select>
+          <div class="field" id="m-submarca-field" style="display:none;"><label class="fl">🏷️ Submarcas <span style="font-weight:400;color:var(--txt3);">(pode mais de uma)</span></label>
+            <div id="m-submarca" class="sm-chips"></div>
           </div>
           <div class="field" id="m-canalvenda-field" style="display:none;"><label class="fl">🛒 Canal</label>
             <select class="fi" id="m-canalvenda" onchange="setCardCanalVenda(this.value)">
@@ -6658,7 +6662,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.910</div>
+<div class="version">v8.30.912</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7010,7 +7014,7 @@ getRedirectResult(auth).then(r=>{
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif.js?v=41"></script>
-<script src="mare-metas.js?v=17"></script>
+<script src="mare-metas.js?v=18"></script>
 <script src="mare-dicas.js?v=10"></script>
 
 <script>
@@ -7644,6 +7648,13 @@ const DEFAULT_COLUMNS=[
   {id:'done',name:'Concluído',color:'#639922',collapsible:true},
 ];
 let columns=[...DEFAULT_COLUMNS];
+// 🛡️ Cor de coluna vem do banco (qualquer membro do squad consegue gravar `columns`, a interface é que limita ao PO) e entra em dezenas de `style="…"` montados com innerHTML:
+// um valor com aspas fechava o atributo e virava XSS armazenado pra todo mundo que abrisse o board (achado /monitorarbugs 09/11/2026, 20 pontos). Em vez de escapar ponto a ponto,
+// toda leitura de `columns` do banco passa por aqui: só cor hexadecimal, rgb()/hsl() ou var(--x) segue; qualquer outra coisa volta pro padrão.
+const _COR_COLUNA_OK = /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\([0-9.,%\s\/]+\)|var\(--[a-z0-9-]+\))$/i;
+function _colunasSeguras(lista){
+  return (lista||[]).map(c=>{ if(!c || typeof c!=='object') return c; const cor = typeof c.color==='string' && _COR_COLUNA_OK.test(c.color.trim()) ? c.color.trim() : '#38b6ff'; return c.color===cor ? c : Object.assign({}, c, {color:cor}); });
+}
 let tags=[
   {id:'data',label:'Data',pi:0},{id:'ml',label:'ML',pi:4},
   {id:'feat',label:'Feature',pi:1},{id:'infra',label:'Infra',pi:2},{id:'bug',label:'Bloqueio',pi:3},
@@ -8471,7 +8482,7 @@ function _renderBulkTagPicker(){
       // (achado via /monitorarbugs: sem isso dava pra marcar "👕 P" + "👕 G"
       // e clicar Adicionar, deixando os cards com 2 tamanhos ao mesmo tempo —
       // estado impossível de alcançar pela tela do card).
-      [SIZE_TAGS, SUBMARCA_TAGS, CANAL_VENDA_TAGS].forEach(group=>{
+      [SIZE_TAGS, CANAL_VENDA_TAGS].forEach(group=>{   // Submarca NÃO é mais exclusiva (09/11/2026: o card pode ter várias)
         const groupIds=group.map(t=>t.id);
         if(groupIds.includes(id)) window._bulkSelectedTags=window._bulkSelectedTags.filter(t=>!groupIds.includes(t));
       });
@@ -8506,7 +8517,7 @@ function _doBulkTagMulti(mode){
     // grupo de ANTES + "Adicionar" uma nova do mesmo grupo ainda somava as
     // duas em vez de substituir — checagem própria aqui, mantendo a última
     // (a recém-aplicada), mesmo critério das duas funções citadas.
-    [SIZE_TAGS, SUBMARCA_TAGS, CANAL_VENDA_TAGS].forEach(group=>{
+    [SIZE_TAGS, CANAL_VENDA_TAGS].forEach(group=>{   // Submarca NÃO é mais exclusiva (09/11/2026)
       const groupIds=group.map(t=>t.id);
       const chosen=current.filter(id=>groupIds.includes(id));
       if(chosen.length>1) current=current.filter(id=>!groupIds.includes(id)||id===chosen[chosen.length-1]);
@@ -10430,7 +10441,7 @@ function fbLoadAll(){
       scheduleRender();
       return;
     }
-    const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
+    const cleaned = _colunasSeguras((Array.isArray(val) ? val : Object.values(val)).filter(Boolean));
     if(!cleaned.length){
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
       scheduleRender();
@@ -11350,7 +11361,7 @@ let _cardsSyncDebounce = null;
   window._colTagPoll = setInterval(()=>{
     fbGet(FB+'/columns').then(snap=>{
       const val=snap.val(); if(!val) return;
-      const incoming=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
+      const incoming=_colunasSeguras((Array.isArray(val)?val:Object.values(val)).filter(Boolean));
       if(!incoming.length) return;
       // Firebase é a fonte da verdade quando já tem colunas configuradas.
       // Só re-adiciona DEFAULT_COLUMNS que NÃO foram excluídas de propósito.
@@ -13067,12 +13078,12 @@ function togglePinCard(cardId){
     // estiver ativo no squad como chave de agrupamento (nunca os dois ao
     // mesmo tempo na prática, cada squad liga só o que usa).
     const _pinSmIds = submarcaAtivo ? SUBMARCA_TAGS.map(t=>t.id) : (canalVendaAtivo ? CANAL_VENDA_TAGS.map(t=>t.id) : null);
-    const _cSubmarca = _pinSmIds ? (getCardTags(c).find(id=>_pinSmIds.includes(id))||'') : null;
+    const _cSubmarca = _pinSmIds ? getCardTags(c).filter(id=>_pinSmIds.includes(id)) : null;   // submarca múltipla (09/11/2026): lista, não só a 1ª
     cards.filter(x=>{
       if(x.archived || x.col!==c.col || !x.pinned || x.id===c.id) return false;
       if(!_pinSmIds) return true; // squad sem submarca: comportamento de sempre, 1 por coluna
-      const _xSubmarca=getCardTags(x).find(id=>_pinSmIds.includes(id))||'';
-      return _xSubmarca===_cSubmarca; // só desafixa quem é da MESMA submarca (ou também sem submarca)
+      const _xSubmarca=getCardTags(x).filter(id=>_pinSmIds.includes(id));
+      return (!_xSubmarca.length && !_cSubmarca.length) || _xSubmarca.some(id=>_cSubmarca.includes(id)); // só desafixa quem é da MESMA submarca (ou também sem submarca)
     }).forEach(x=>{
       x.pinned=false; delete x.pinnedAt;
       recordHistory(x,'desafixou o card do topo da coluna (outro card foi fixado no lugar)');
@@ -16319,6 +16330,7 @@ function saveExtraDesc(i){
 }
 function populateTagSelect(){
   renderEditingTags();
+  _populateSubmarcaSelect();   // submarca é tag do card: chips do campo dedicado sempre em dia com editingTags
   // Só reconstrói o dropdown de "+ Adicionar tag…" se ele já estiver
   // aberto (usuário digitando/acabou de clicar num item) — populateTagSelect()
   // é chamado por bem mais coisa do que só isso (abrir card, trocar coluna,
@@ -16995,7 +17007,7 @@ async function saveColCfg(){
 function _persistColumns(){
   return fbGet(FB+'/columns').then(snap=>{
     const remoteVal = snap.val();
-    const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
+    const remote = remoteVal ? _colunasSeguras((Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean)) : [];
     const localIds = new Set(columns.map(c=>c.id));
     const extraRemote = remote.filter(c=>c && !localIds.has(c.id) && !_deletedColIds.has(c.id));
     const merged = extraRemote.length ? [...columns, ...extraRemote] : columns;
@@ -17269,7 +17281,7 @@ function saveCard(){
   const alwaysMissing=[];
   if(!title) alwaysMissing.push('title');
   if(!document.getElementById('m-due').value && !_mNoDue) alwaysMissing.push('due');
-  if(submarcaAtivo && !document.getElementById('m-submarca')?.value) alwaysMissing.push('submarca');
+  if(submarcaAtivo && !_modalSubmarcas().length) alwaysMissing.push('submarca');
   // Canal só vira obrigatório se o squad ligar os DOIS toggles (campo ativo
   // + "obrigatório" — pedido direto do usuário: opcional por padrão, mesmo
   // quando o squad já usa o campo, diferente de Submarca que é sempre
@@ -19074,26 +19086,30 @@ function _applySubmarcaUIVisibility(){
   renderSubmarcaQuickFilters();
   renderSubmarcaCfgList();
 }
-// Troca a tag de submarca do card sendo editado — exclusivo (nunca 2
-// submarcas ao mesmo tempo, mesmo padrão de setCardTamanho).
-function setCardSubmarca(tagId){
-  const smIds = SUBMARCA_TAGS.map(t=>t.id);
-  editingTags = editingTags.filter(id=>!smIds.includes(id));
-  if(tagId) editingTags.push(tagId);
+// Submarca MÚLTIPLA (09/11/2026, pedido do time): o card pode ter várias submarcas (cada uma é uma tag do grupo SUBMARCA_TAGS em `card.tags`). Adicionar/remover mexe só na tag
+// escolhida; as outras do card ficam como estão. (Tamanho e Canal continuam exclusivos — ver setCardTamanho()/setCardCanalVenda().)
+function addCardSubmarca(tagId){
+  if(!tagId) return;
+  if(!editingTags.includes(tagId)) editingTags.push(tagId);
   populateTagSelect();
   scheduleAutoSave();
 }
-// Opções do <select> do modal: submarcas visíveis + a submarca ATUAL do
-// card mesmo se tiver sido desativada depois (senão o campo "esconderia"
-// silenciosamente qual submarca o card já tinha).
+function removeCardSubmarca(tagId){
+  editingTags = editingTags.filter(id=>id!==tagId);
+  populateTagSelect();
+  scheduleAutoSave();
+}
+// Submarcas do card em edição (ids), na ordem em que estão em editingTags.
+function _modalSubmarcas(){ const smIds=SUBMARCA_TAGS.map(t=>t.id); return editingTags.filter(id=>smIds.includes(id)); }
+// Campo do modal: chips das submarcas do card (inclusive uma que o PO desativou depois — senão o campo "esconderia" em silêncio que o card a tinha) + um seletor pra
+// adicionar outra (só as visíveis que ainda não estão no card). Lê de editingTags (a cópia de trabalho), então vale também pra card novo, modelo e Automação ao vivo.
 function _populateSubmarcaSelect(){
-  const sel=document.getElementById('m-submarca'); if(!sel) return;
-  const smIds=SUBMARCA_TAGS.map(t=>t.id);
-  const c=editingId?cards.find(x=>x.id===editingId):null;
-  const currentTagId=c?getCardTags(c).find(id=>smIds.includes(id))||'':'';
-  const opts=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id)||st.id===currentTagId);
-  sel.innerHTML='<option value="">— sem submarca —</option>'+opts.map(st=>`<option value="${st.id}">${esc(st.label)}</option>`).join('');
-  sel.value=currentTagId;
+  const box=document.getElementById('m-submarca'); if(!box) return;
+  const sel=_modalSubmarcas();
+  const chips=sel.map(id=>`<span class="sm-chip">${tagHtml(id)}<button type="button" class="sm-chip-x" aria-label="Remover submarca ${esc((SUBMARCA_TAGS.find(st=>st.id===id)||{}).label||id)}" onclick="removeCardSubmarca(${jsq(id)})">✕</button></span>`).join('');
+  const livres=SUBMARCA_TAGS.filter(st=>!sel.includes(st.id) && _submarcaIsVisivel(st.id));
+  const add=livres.length ? `<select class="fi sm-add" aria-label="Adicionar submarca" onchange="addCardSubmarca(this.value)"><option value="">${sel.length?'+ outra submarca…':'— sem submarca —'}</option>${livres.map(st=>`<option value="${esc(st.id)}">${esc(st.label)}</option>`).join('')}</select>` : '';
+  box.innerHTML=chips+add;
 }
 // Opções do <select> do drawer de Filtros — só submarcas visíveis (filtrar
 // por uma marca desativada não faz sentido pra descoberta de card novo).
@@ -22910,15 +22926,15 @@ function renderBoardDataInsights(){
     const porSubmarca={};
     activeCards.forEach(c=>{
       const tagsDoCard=getCardTags(c);
-      const sm=SUBMARCA_TAGS.find(st=>tagsDoCard.includes(st.id));
-      const k=sm?sm.id:'__sem__';
-      porSubmarca[k]=(porSubmarca[k]||0)+1;
+      const dele=SUBMARCA_TAGS.filter(st=>tagsDoCard.includes(st.id));   // submarca múltipla: o card conta em CADA submarca (a soma pode passar do total de cards)
+      if(!dele.length) porSubmarca.__sem__=(porSubmarca.__sem__||0)+1;
+      dele.forEach(st=>{ porSubmarca[st.id]=(porSubmarca[st.id]||0)+1; });
     });
     const smSegs=SUBMARCA_TAGS.map((st,i)=>({label:st.label,count:porSubmarca[st.id]||0,color:SUBMARCA_COLORS[i%SUBMARCA_COLORS.length]}))
       .filter(s=>s.count>0)
       .sort((a,b)=>b.count-a.count);
     if(porSubmarca.__sem__) smSegs.push({label:'Sem submarca definida',count:porSubmarca.__sem__,color:'#5b6472'});
-    html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca (card com 2 conta nas duas)',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
     window._bdInsightsResumoCache.porSubmarca = smSegs.map(s=>({submarca:s.label,qtd:s.count}));
   }
 
@@ -23033,8 +23049,8 @@ function _boardDataSmCvPorColuna(){
     activeCards.forEach(c=>{
       if(!colsVisiveis.some(col=>col.id===c.col)) return;
       const tagsDoCard=getCardTags(c);
-      const tMatch=TAGS.find(t=>tagsDoCard.includes(t.id));
-      if(tMatch) porColPorTag[tMatch.id][c.col]++;
+      const tMatches=TAGS.filter(t=>tagsDoCard.includes(t.id));   // submarca múltipla: conta em cada uma
+      if(tMatches.length) tMatches.forEach(t=>{ porColPorTag[t.id][c.col]++; });
       else semTagPorCol[c.col]++;
     });
     const linhasComDado=TAGS.filter(t=>colsVisiveis.some(col=>porColPorTag[t.id][col.id]>0));
@@ -24641,7 +24657,7 @@ function _intakeDetalhesLinhas(item){
   const out=[];
   if(item.prioridade&&_INTAKE_PRIO_LBL[item.prioridade]) out.push('Prioridade pedida: '+_INTAKE_PRIO_LBL[item.prioridade]);
   if(item.prazo) out.push('Prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR'));
-  if(item.submarca) out.push('Submarca: '+item.submarca);
+  if(item.submarca) out.push('Submarca: '+(Array.isArray(item.submarca)?item.submarca.join(', '):item.submarca));
   if(item.canal) out.push('Canal: '+item.canal);
   const tg=(Array.isArray(item.tags)?item.tags:[]).filter(Boolean); if(tg.length) out.push('Tags: '+tg.join(', '));
   (Array.isArray(item.links)?item.links:[]).filter(l=>l&&/^https?:\/\//i.test(l.url||'')).forEach(l=>out.push('Link: '+l.url));
@@ -24662,7 +24678,7 @@ function _intakeItemHtml(item, opts){
       <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${item.origem==='interno'?'🏢 ':''}${esc(item.titulo)}</div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
       ${item.status==='saved' && item.savedAt ? `<div style="font-size:10px;color:var(--txt3);margin-bottom:6px;">🗂 Guardado em ${new Date(item.savedAt).toLocaleDateString('pt-BR')}</div>` : ''}
-      ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca sugerida: ${esc(item.submarca)}</div>` : ''}
+      ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca${Array.isArray(item.submarca)&&item.submarca.length>1?'s sugeridas':' sugerida'}: ${esc(Array.isArray(item.submarca)?item.submarca.join(', '):item.submarca)}</div>` : ''}
       ${_intakeChipsHtml(item)}
       ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap;">${botoes.join('')}</div>
@@ -24749,14 +24765,12 @@ function _intakeCriarCard(id){
   // campo vir preenchido mesmo com a feature desligada; sem essa checagem
   // aqui, um squad sem Submarca podia ganhar uma tag de submarca via
   // coincidência de texto.
+  // Submarca MÚLTIPLA (09/11/2026): `item.submarca` pode vir como um texto ("Hering Kids"), uma lista (["Hering Kids","Hering Comercial"]) ou texto com vírgula/ponto e vírgula —
+  // cada nome que casar com uma submarca do squad entra como tag; o campo do modal redesenha os chips a partir de editingTags.
   if(item.submarca && submarcaAtivo && typeof SUBMARCA_TAGS!=='undefined'){
-    const alvoSm=_norm(item.submarca);
-    const smMatch=SUBMARCA_TAGS.find(st=>_norm(st.label)===alvoSm);
-    if(smMatch){
-      addCardTag(smMatch.id);
-      const smSel=document.getElementById('m-submarca');
-      if(smSel) smSel.value=smMatch.id;
-    }
+    const alvos=(Array.isArray(item.submarca)?item.submarca:String(item.submarca).split(/[;,]/)).map(x=>_norm(String(x))).filter(Boolean);
+    alvos.forEach(alvoSm=>{ const smMatch=SUBMARCA_TAGS.find(st=>_norm(st.label)===alvoSm); if(smMatch) addCardTag(smMatch.id); });
+    _populateSubmarcaSelect();
   }
   // Mesmo mecanismo pra Canal — hoje não há um `item.canal` vindo do backend
   // (a ferramenta criar_card do Agente Ágil ainda não sugere Canal, só
@@ -26595,7 +26609,7 @@ function saveAgilCfg(){
   // evita sobrescrever colunas criadas por outro usuário desde o último load.
   fbGet(FB+'/columns').then(snap=>{
     const remoteVal = snap.val();
-    const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
+    const remote = remoteVal ? _colunasSeguras((Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean)) : [];
     const localIds = new Set(columns.map(c=>c.id));
     // extraRemote = colunas remotas que não estão localmente E que não foram excluídas de propósito
     const extraRemote = remote.filter(c=>c && !localIds.has(c.id) && !_deletedColIds.has(c.id));
@@ -27545,13 +27559,16 @@ function executeTool(name,input){
       if(criativosAtivo){
         return{ok:false,msg:'Este squad exige Ficha Técnica preenchida pra salvar um card (Config → Criativos) — o Agente Ágil ainda não sabe preencher esses campos. Crie o card manualmente, ou crie por aqui mesmo assim e peça pra alguém completar a ficha depois.'};
       }
-      let submarcaTagId='';
+      let submarcaTagIds=[];   // submarca MÚLTIPLA (09/11/2026): `input.submarca` aceita um nome, uma lista ou nomes separados por vírgula/ponto e vírgula
       if(submarcaAtivo){
         const opcoes=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id)).map(st=>st.label).join(', ');
-        if(!input.submarca) return{ok:false,msg:`Este squad exige Submarca pra salvar um card. Opções: ${opcoes}`};
-        const match=SUBMARCA_TAGS.find(st=>st.label.toLowerCase()===String(input.submarca).toLowerCase());
-        if(!match) return{ok:false,msg:`Submarca "${input.submarca}" não é uma opção válida. Opções: ${opcoes}`};
-        submarcaTagId=match.id;
+        const pedidas=(Array.isArray(input.submarca)?input.submarca:String(input.submarca||'').split(/[;,]/)).map(x=>String(x).trim()).filter(Boolean);
+        if(!pedidas.length) return{ok:false,msg:`Este squad exige Submarca pra salvar um card. Opções: ${opcoes}`};
+        for(const nome of pedidas){
+          const match=SUBMARCA_TAGS.find(st=>st.label.toLowerCase()===nome.toLowerCase());
+          if(!match) return{ok:false,msg:`Submarca "${nome}" não é uma opção válida. Opções: ${opcoes}`};
+          if(!submarcaTagIds.includes(match.id)) submarcaTagIds.push(match.id);
+        }
       }
       // Mesma regra pra Canal — só EXIGE (bloqueia sem input.canal) quando o
       // squad ligou o 2º interruptor "obrigatório" (ver toggleCanalVendaObrigatorio);
@@ -27569,7 +27586,7 @@ function executeTool(name,input){
           canalVendaTagId=matchCv.id;
         }
       }
-      const tagsIniciais=[input.tag||'', submarcaTagId, canalVendaTagId].filter(Boolean);
+      const tagsIniciais=[input.tag||'', ...submarcaTagIds, canalVendaTagId].filter(Boolean);
       const novo={id:'c'+Date.now(),col:input.coluna,tag:tagsIniciais[0]||'',tags:tagsIniciais,title:input.titulo,
         desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',noDue:!input.prazo,po:input.po||'',
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
@@ -28883,7 +28900,7 @@ const HELP_CONTENT = {
     { icon:'♾️', title:'Contínuo (demanda sem data de finalização)', text:'No rodapé do card, o botão "♾️ Contínuo" marca um card como demanda que nunca fecha de propósito — ex.: "Melhorias Maré Digital" ou "Ajuste recorrentes de IA" na squad dados, que sempre voltam a ter trabalho e nunca teriam uma data de finalização real.\n\nUm card assim, se contasse normal nas métricas de fluxo, distorceria elas pra sempre: parado eternamente numa coluna, ele infla o 📈 CFD indefinidamente, nunca deixa o 📉 Burndown chegar perto de zero, e puxa a média de cycle time/lead time/gargalo por coluna pra cima sem representar trabalho de verdade parado. Marcar como Contínuo tira o card dessas contas (CFD, Burndown, ⏱ Relatório de Tempo) e também do alarme visual de "card parado" (esmaecimento no board, badge "⏳ parado nesta coluna") — mesma suspensão que o ⏸ Pausar já tem, mesmo motivo: intencionalmente sem se mexer não é abandono.\n\nContinua contando normal no WIP (ocupa capacidade real de alguém) e no Throughput, se algum dia chegar numa coluna de Concluído.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "Marcar como Contínuo"/"Remover Contínuo" — sem precisar abrir o modal primeiro. O card ganha uma fita diagonal "♾️ CONTÍNUO" no canto, mesmo estilo da fita "🔥 OFERTA" do tema Black Friday.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um — no Controle de Criativos, a lista de bloqueados também mostra o motivo do impedimento embaixo do título, quando a pessoa preencheu um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
-    { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (as 11 opções fixas — Adulto, Kids, Sports, Intimates e Teen em Comercial/Cadastro, mais a transversal "Geral" para demandas que valem para todas as submarcas; ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
+    { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (as 11 opções fixas — Adulto, Kids, Sports, Intimates e Teen em Comercial/Cadastro, mais a transversal "Geral" para demandas que valem para todas as submarcas; ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. <b>Um card pode ter mais de uma submarca</b> (ex.: um pedido que vale para Adulto e Kids): no card aberto, escolha uma na lista "+ Adicionar submarca…" e repita para as outras; o ✕ no chip tira. Nos gráficos e contagens por submarca o card conta <b>em cada uma</b> das que ele tem; no filtro de Submarca ele aparece em qualquer uma delas. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
   ],
   agente: [
     { icon:'🤖', title:'O que é o Agente Ágil', text:'Uma IA que lê e age sobre um card específico quando alguém o menciona. Pra chamar: mencione "@Agente Ágil" (ou selecione ele no autocomplete de @) num comentário do card — só disponível nos squads dev e dados por enquanto. A resposta chega como um novo comentário no mesmo card, geralmente em menos de 1 minuto, com notificação 🔔 pra quem perguntou.\n\nEnquanto a resposta não chega, um aviso "🤖 pensando..." aparece no card (dentro do modal e como um chip no board) — a resposta some sozinha assim que ela chega, sem precisar fechar e reabrir o card.\n\nAtalhos que fazem a mesma coisa sem precisar digitar a menção: o botão "🤖 Insights" no rodapé do card, ou "Insights" no menu de contexto (botão direito) de um card no board.\n\nAntes de responder, ele sempre lê o card de verdade (descrição, checklist, comentários, coluna, tags, responsável) — nunca responde só com base no que foi perguntado, sem olhar o estado real.\n\n📡 No Radar: o Agente Ágil tem uma central própria na página do Radar (aba 💬 Agente Ágil) — lá não precisa de @menção. Ele preenche Objetivos e Marcos, registra atingimento e lê o calendário de reuniões, respeitando a torre e quem pode editar (e esperando se alguém estiver editando aquele Objetivo).' },
@@ -29001,7 +29018,7 @@ Onde configurar: ⚡ Automações → "+ Nova regra" — liberado pra qualquer p
 <div>🏷 <b>Adicionar tag</b></div>
 <div>🏷 <b>Remover tag</b></div>
 <div>👤 <b>Atribuir responsável</b></div>
-<div>🏷️ <b>Definir submarca</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Submarca</span></div>
+<div>🏷️ <b>Adicionar submarca</b> <span style="font-size:10px;color:var(--txt3);">— soma a submarca às que o card já tem (não tira nenhuma); só aparece se o squad usa o campo Submarca</span></div>
 <div>👕 <b>Definir tamanho</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Tamanho</span></div>
 <div>📢 <b>Definir demandante</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Demandante</span></div>
 <div>📐 <b>Definir padrão de card</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se existir algum Padrão criado</span></div>
@@ -29102,7 +29119,7 @@ Regras que você já tinha criado antes continuam funcionando sem precisar recri
 
 <div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Por que "Notificar Agente Ágil" não aparece no dropdown de ações?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Porque o squad atual ainda não tem o Agente Ágil disponível de verdade (hoje: dev e dados). A opção aparece sozinha, sem precisar recriar nada, quando o squad ganhar suporte.</div></div>
 
-<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Por que não vejo "Definir submarca/tamanho/demandante" na lista de ações?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Essas ações só aparecem se o squad tiver ativado aquele campo em Configurações. Ative o recurso primeiro e a ação aparece sozinha, sem precisar recriar regras.</div></div>
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Por que não vejo "Adicionar submarca/Definir tamanho/demandante" na lista de ações?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Essas ações só aparecem se o squad tiver ativado aquele campo em Configurações. Ative o recurso primeiro e a ação aparece sozinha, sem precisar recriar regras.</div></div>
 
 <div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Posso ter mais de uma ação na mesma regra?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Sim. Escolha a ação, clique "+ Ação" (vira um chip), escolha a próxima e repita. Se esquecer de clicar "+ Ação" e for direto em "Adicionar regra", a ação selecionada na hora vira a única da regra — nada trava.</div></div>
 
@@ -29435,7 +29452,7 @@ function searchLinkedCards(q){
     const opt = document.createElement('div');
     opt.className = 'link-option';
     opt.innerHTML =
-      '<span class="link-option-col">'+(col?.name||card.col)+'</span>'+
+      '<span class="link-option-col">'+esc(col?.name||card.col)+'</span>'+
       '<span style="flex:1;color:var(--txt);">'+esc(card.title)+'</span>';
     opt.onclick = ()=>addLinkedCard(card);
     dd.appendChild(opt);
@@ -29732,8 +29749,8 @@ function renderSuperChildrenList(){
       // 🏷️ Submarca do filho (04/11/2026, pedido do Caio): um supercard de campanha costuma ter 1 filho por submarca (Adulto, Kids, Sports…) e a lista só dizia a coluna e o responsável —
       // dava pra ver QUEM estava atrasado, não DE QUAL MARCA. Mesma pílula colorida do board (tagHtml). Sem submarca: só avisa quando o squad usa o campo (submarcaAtivo).
       const _smIds=SUBMARCA_TAGS.map(t=>t.id);
-      const _smId=relCard ? (getCardTags(relCard).find(id=>_smIds.includes(id))||'') : '';
-      const smHtml = _smId ? '<span class="minicard-sm" title="Submarca">'+tagHtml(_smId)+'</span>'
+      const _smLista=relCard ? getCardTags(relCard).filter(id=>_smIds.includes(id)) : [];   // submarca múltipla (09/11/2026): mostra todas
+      const smHtml = _smLista.length ? _smLista.map(id=>'<span class="minicard-sm" title="Submarca">'+tagHtml(id)+'</span>').join('')
         : ((relCard && submarcaAtivo) ? '<span class="minicard-sm minicard-sm-none" title="Este card ainda não tem submarca">🏷️ sem submarca</span>' : '');
       return '<div class="minicard">'
         +'<div class="minicard-left" style="background:'+colColor+';"></div>'
@@ -31706,7 +31723,7 @@ function renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos){
     opt.innerHTML=
       '<span style="font-size:9px;padding:1px 6px;border-radius:999px;background:'+(col?.color||'var(--glass)')+
       '22;border:1px solid '+(col?.color||'var(--glass-b)')+';color:'+(col?.color||'var(--txt3)')+
-      ';margin-right:6px;">'+(col?.name||card.col)+'</span>'+
+      ';margin-right:6px;">'+esc(col?.name||card.col)+'</span>'+
       '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(card.title)+'</span>';
     opt.onclick=()=>insertCardMentionInline(ta, atPos, pos, card.id, card.title, dd);
     dd.appendChild(opt);
@@ -34137,7 +34154,7 @@ const AUTO_ACTIONS = [
     // silêncio até alguém notar num relatório. Mesma exclusividade de
     // _doBulkTagMulti()/set_tamanho/set_submarca/set_canal_venda.
     run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(ct.includes(rule.actionVal)) return false;
-      [SIZE_TAGS,SUBMARCA_TAGS,CANAL_VENDA_TAGS].forEach(group=>{
+      [SIZE_TAGS,CANAL_VENDA_TAGS].forEach(group=>{   // Submarca NÃO é mais exclusiva (09/11/2026)
         const groupIds=group.map(t=>t.id);
         if(groupIds.includes(rule.actionVal)) for(let i=ct.length-1;i>=0;i--) if(groupIds.includes(ct[i])) ct.splice(i,1);
       });
@@ -34254,13 +34271,13 @@ const AUTO_ACTIONS = [
       return false; // não altera o card em si, só notifica
     } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
-  { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
+  { key:'set_submarca', label:'Adicionar submarca', valueType:'submarca', visible:()=>submarcaAtivo,   // (id `set_submarca` mantido: regras já salvas continuam valendo; desde 09/11/2026 ADICIONA, sem tirar as que o card já tem)
     // Achado real (/monitorarbugs, 2026-10-01, escopo Automações — mesma
     // classe já corrigida em assign_owner/add_tag/toggle_okr, estendida
     // aqui pros 5 "set_*" que ainda faltavam): sem o guard de no-op, a
     // regra gravava histórico + salvava + mostrava "Automação aplicada" à
     // toa toda vez que disparasse de novo com o card já no valor-alvo.
-    run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card).slice(); if(ct.includes(rule.actionVal)) return false; ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'adicionou submarca (automação)','⚙ Automação'); return true; } },
   { key:'set_canal_venda', label:'Definir canal', valueType:'canal_venda', visible:()=>canalVendaAtivo,
     run:(rule,card)=>{ const ids=CANAL_VENDA_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu canal (automação)','⚙ Automação'); return true; } },
   { key:'set_tamanho', label:'Definir tamanho', valueType:'tamanho', visible:()=>tamanhoAtivo,
@@ -35837,12 +35854,7 @@ function aplicarModeloNoCard(idx){
     // então mesmo com a tag aplicada, salvar continuava bloqueado como se a
     // submarca estivesse vazia. Bug reportado: "n pegou... submarcas" +
     // (na prática) "deu erro, cancelei o card".
-    if(typeof SUBMARCA_TAGS!=='undefined'){
-      const smIds=SUBMARCA_TAGS.map(st=>st.id);
-      const smTag=estado.tags.find(t=>smIds.includes(t));
-      const smSel=document.getElementById('m-submarca');
-      if(smTag && smSel) smSel.value=smTag;
-    }
+    _populateSubmarcaSelect();   // submarca múltipla: chips redesenhados a partir de editingTags (não há mais <select> pra preencher)
     // Mesmo bug/mesmo fix, pro <select id="m-canalvenda"> dedicado.
     if(typeof CANAL_VENDA_TAGS!=='undefined'){
       const cvIds=CANAL_VENDA_TAGS.map(cv=>cv.id);
@@ -38057,7 +38069,7 @@ function renderDepNode(container, node, depth, selfId){
     '<div class="dep-node-col" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
     '<span class="dep-node-title">'+esc(c.title)+'</span>'+
     (c.owner?'<span class="dep-node-meta">👤 '+esc(c.owner)+'</span>':'')+
-    '<span class="dep-node-col-lbl">'+(col?.name||c.col)+'</span>';
+    '<span class="dep-node-col-lbl">'+esc(col?.name||c.col)+'</span>';
   cardDiv.onclick=()=>{ closeOv('dep-map-ov'); openCard(c.id); };
   row.appendChild(cardDiv);
   container.appendChild(row);
@@ -38136,7 +38148,7 @@ function renderMiniNode(container, node, selfId){
   div.innerHTML=
     '<div class="card-dep-mini-node-dot" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
     '<span class="card-dep-mini-node-title">'+(isSelf?'<strong>':'')+esc(c.title)+(isSelf?'</strong>':'')+'</span>'+
-    '<span class="card-dep-mini-node-col">'+(col?.name||c.col)+'</span>';
+    '<span class="card-dep-mini-node-col">'+esc(col?.name||c.col)+'</span>';
   if(!isSelf) div.onclick=()=>{ closeOv('card-ov', ()=>openCard(c.id)); };
   container.appendChild(div);
 
@@ -39549,7 +39561,7 @@ async function _applyRestorePayload(payload){
     // Storage, weeklyBackup.js) podem ter esse formato.
     const _asArr = v => v ? (Array.isArray(v)?v:Object.values(v)).filter(Boolean) : [];
     cards = _asArr(payload.board.cards).map(c=>({...c}));
-    columns = _asArr(payload.board.columns);
+    columns = _colunasSeguras(_asArr(payload.board.columns));
     tags = _asArr(payload.board.tags);
     agilCfg = payload.board.agilCfg||{};
     qlItems = payload.board.qlItems||{recorrentes:[],modelos:[],agendamentos:[]};

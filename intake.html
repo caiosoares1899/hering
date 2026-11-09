@@ -283,7 +283,7 @@ function renderSquadSlot() {
 }
 function renderInterno() {
   const c = camposEfetivos(sq);
-  sel = { prio: c.prioridade.on ? 'medium' : '', tags: new Set(), submarca: '', canal: '' };
+  sel = { prio: c.prioridade.on ? 'medium' : '', tags: new Set(), submarca: new Set(), canal: '' };   // submarca MÚLTIPLA (09/11/2026): conjunto de ids
   const partes = [];
   const lbl = (txt, cfg) => '<div class="lbl">' + txt + (cfg.req ? ' <span class="req">*</span>' : ' <span class="opt">(opcional)</span>') + '</div>';
   if (c.prioridade.on) {
@@ -298,7 +298,7 @@ function renderInterno() {
       '<button type="button" class="chip" data-prazo="sex">Sexta</button><button type="button" class="chip" data-prazo="7">+1 semana</button></div>');
   }
   if (c.submarca.on && sq.submarcas.length) {
-    partes.push(lbl('Submarca', c.submarca) + '<div class="chips" id="g-sm">' +
+    partes.push(lbl('Submarca (pode escolher mais de uma)', c.submarca) + '<div class="chips" id="g-sm">' +
       sq.submarcas.map(t => '<button type="button" class="chip" data-sm="' + esc(t.id) + '" aria-pressed="false">' + esc(t.label) + '</button>').join('') + '</div>');
   }
   if (c.canal.on && sq.canais.length) {
@@ -323,7 +323,7 @@ function renderInterno() {
   // Eventos (delegação por grupo)
   const g = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) fn(b); }); };
   g('g-prio', b => { sel.prio = b.dataset.prio; document.querySelectorAll('#g-prio .chip').forEach(x => x.setAttribute('aria-pressed', x === b)); });
-  g('g-sm', b => { const on = b.getAttribute('aria-pressed') !== 'true'; document.querySelectorAll('#g-sm .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', on); sel.submarca = on ? b.dataset.sm : ''; });
+  g('g-sm', b => { const id = b.dataset.sm; if (sel.submarca.has(id)) sel.submarca.delete(id); else sel.submarca.add(id); b.setAttribute('aria-pressed', sel.submarca.has(id)); });
   g('g-cv', b => { const on = b.getAttribute('aria-pressed') !== 'true'; document.querySelectorAll('#g-cv .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', on); sel.canal = on ? b.dataset.cv : ''; });
   g('g-tags', b => { const id = b.dataset.tag; if (sel.tags.has(id)) sel.tags.delete(id); else sel.tags.add(id); b.setAttribute('aria-pressed', sel.tags.has(id)); });
   document.querySelectorAll('[data-prazo]').forEach(b => b.addEventListener('click', () => {
@@ -420,7 +420,7 @@ function validarInterno() {
   if (c.prioridade.on && c.prioridade.req && !sel.prio) return 'Escolha a prioridade.';
   if (c.prazo.on && c.prazo.req && !$('i-prazo').value) return 'Informe o prazo desejado.';
   if (c.prazo.on && $('i-prazo').value && $('i-prazo').value < hojeISO(0)) return 'O prazo desejado já passou — escolha hoje ou uma data futura.';   // o formulário é novalidate: o `min` do campo não barra data digitada
-  if (c.submarca.on && c.submarca.req && sq.submarcas.length && !sel.submarca) return 'Escolha a submarca.';
+  if (c.submarca.on && c.submarca.req && sq.submarcas.length && !sel.submarca.size) return 'Escolha ao menos uma submarca.';
   if (c.canal.on && c.canal.req && sq.canais.length && !sel.canal) return 'Escolha o canal de venda.';
   if (c.tags.on && c.tags.req && !sel.tags.size) return 'Escolha ao menos uma tag.';
   const link = $('i-link') ? $('i-link').value.trim() : '';
@@ -461,7 +461,8 @@ $('intake-int').addEventListener('submit', async function (e) {
   const prazo = $('i-prazo') ? $('i-prazo').value : '';
   if (c.prazo.on && /^\d{4}-\d{2}-\d{2}$/.test(prazo)) item.prazo = prazo;
   if (c.prioridade.on && sel.prio) item.prioridade = sel.prio;
-  if (c.submarca.on && sel.submarca && porId(sel.submarca)) item.submarca = porId(sel.submarca).label;
+  // uma submarca vai como TEXTO (igual a antes: o Maré de produção ainda lê assim); duas ou mais, como lista de nomes
+  if (c.submarca.on && sel.submarca.size) { const nomes = [...sel.submarca].map(id => porId(id) && porId(id).label).filter(Boolean); if (nomes.length) item.submarca = nomes.length > 1 ? nomes : nomes[0]; }
   if (c.canal.on && sel.canal && porId(sel.canal)) item.canal = porId(sel.canal).label;
   if (c.tags.on && sel.tags.size) item.tags = [...sel.tags].map(id => porId(id) && porId(id).label).filter(Boolean);
   const link = $('i-link') ? $('i-link').value.trim() : '';
