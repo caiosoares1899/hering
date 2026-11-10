@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Ilha Dinâmica: notificações com o sino completo (SÓ DEV)
+
+A Ilha escondia o sino mas só mostrava os oito primeiros avisos e um atalho para o painel antigo. Agora a aba Notificações hospeda o próprio nó do sino: lista completa, marcar todas, remover individualmente, Limpar antigas (incluindo feed e noTTLDelete), som, gerenciar push, Não Perturbe e Modo insistente. O nó volta ao lugar original ao trocar aba/fechar/desligar, sem IDs ou listeners duplicados. Submenus escapam do transform da Ilha; Esc fecha o submenu primeiro. Gerenciar push consulta só o registro deste aparelho ao clicar, para permitir reativá-lo quando a permissão do navegador já foi concedida. Testes: docs/arezzo/testes/test_ilha_notificacoes.js e docs/arezzo/testes/test_ilha_mare.js; roteiro read-only docs/arezzo/testes/console_ilha_notificacoes.js. Dica: não — restaura funcionalidades do sino existente.
+
 ### 2026-11-10 · Maré dev: Ilha Dinâmica empurrava os botões do cabeçalho ao expandir + pílula com cara de emoji
 
 - Ao chegar notificação, a pílula crescia até 560 px dentro do cabeçalho e jogava os botões (.hd-btns) para a 2ª linha (cabeçalho 30→74 px) ou cobria o nome do squad.
