@@ -32,7 +32,10 @@
   const paginaOk = u => /^(kanban|okr|painel|oceano)(-dev)?\.html(\?[^#\s"'<>]*)?$|^onboarding\.html$/.test(String(u||''));
   const norm = x => String(x==null?'':x).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
   const MAC = /Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||'');
-  const TTL_RADAR = 3*3600*1000, MAX_REC = 5;
+  const TTL_RADAR = 3*3600*1000, MAX_REC = 5, LIMITE = 30, CACHE_RADAR_V = 2;   // v2 (10/11/2026): Marco guarda o responsável (r), para "meus" valer como no Radar
+  // "meus/minhas …": ativa o filtro de responsável e sai dos termos (as quatro formas, sempre juntas)
+  const MEUS = new Set(['meu','meus','minha','minhas']);
+  const separaMeus = toks => ({meus: toks.some(k=>MEUS.has(k)), toks: toks.filter(k=>!MEUS.has(k))});
 
   function umaLetra(a,b){   // distância de edição ≤ 1
     if(Math.abs(a.length-b.length)>1) return false;
@@ -43,18 +46,20 @@
   // Todas as palavras precisam casar; 0 = fora.
   function pontua(texto, toks){
     if(!toks.length) return 1;
+    toks = toks.flatMap(k=>norm(k).split(/[^a-z0-9]+/)).filter(Boolean);   // termo com pontuação ("conversão?", "a/b") vira as mesmas palavras do texto
+    if(!toks.length) return 0;                                              // busca só de símbolos ("???") não acha nada
     const t = norm(texto), pal = t.split(/[^a-z0-9]+/).filter(Boolean); let p = 0;
     for(const k of toks){
       if(pal.includes(k)) p += 4;
       else if(pal.some(w=>w.startsWith(k))) p += 3;
       else if(t.includes(k)) p += 2;
-      else if(k.length>=4 && pal.some(w=>umaLetra(w,k) || umaLetra(w.slice(0,k.length),k))) p += 1;
+      else if(k.length>=4 && !/\d/.test(k) && pal.some(w=>umaLetra(w,k) || umaLetra(w.slice(0,k.length),k))) p += 1;   // código com número (T426, S127) não aceita erro: T426 ≠ T126
       else return 0;
     }
     return p + (t.startsWith(toks.join(' ')) ? 2 : 0);
   }
 
-  const st = {opts:null, esc:'tudo', sel:0, itens:[], gatilho:null, montado:false,
+  const st = {opts:null, esc:'tudo', sel:0, selK:null, limite:30, total:0, mostrados:0, itens:[], gatilho:null, montado:false, radarT:0,
               radar:null, carregando:false, erro:false, tScan:null, tStatus:null};
   const $ = id => document.getElementById(id);
 
@@ -62,16 +67,20 @@
   const radarChave = () => 'oceano_sonar_radar'+(st.opts && st.opts.dev ? '_dev' : '');
   function radarDoCache(){
     try{ const c = JSON.parse(localStorage.getItem(radarChave())||'null');
-      if(!c || typeof c.t!=='number' || Date.now()-c.t > TTL_RADAR || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;
+      if(!c || c.s!==CACHE_RADAR_V || typeof c.t!=='number' || Date.now()-c.t > TTL_RADAR || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;   // versão antiga (sem o responsável do Marco) é descartada
       const objs = {};
       Object.values(c.v.objs).forEach(o=>{ if(o && typeof o.id==='string' && typeof o.t==='string') objs[o.id] = {id:o.id, t:o.t.slice(0,200), per:(Array.isArray(o.per)?o.per:[]).map(x=>String(x).slice(0,20)).slice(0,6), resp:(Array.isArray(o.resp)?o.resp:[]).map(String).slice(0,30)}; });
-      return {objs, marcos:c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj}))};
+      return {t:c.t, v:{objs, marcos:c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj, r:typeof m.r==='string' ? m.r.slice(0,64) : ''}))}};
     }catch(e){ return null; }
   }
+  // A cópia em memória também vence em 3 h (a aba pode ficar aberta o dia todo): vencida, some e é lida de novo na próxima busca que pedir o Radar.
+  function radarValido(){ if(st.radar && Date.now()-st.radarT > TTL_RADAR){ st.radar = null; } return !!st.radar; }
+  // "Atualizar o Radar": descarta a cópia (memória e aparelho) e lê agora. Só por pedido explícito — nada de leitura periódica.
+  function radarAtualizar(){ st.radar = null; st.erro = false; try{ localStorage.removeItem(radarChave()); }catch(e){} radarCarregar(); render(); }
   async function radarCarregar(){
     const u = st.opts && st.opts.user && st.opts.user();
-    if(st.radar || st.carregando || st.erro || !u || !window._get || !window._ref || !window._db) return;
-    const c = radarDoCache(); if(c){ st.radar = c; return; }
+    if((st.opts.radar && st.opts.radar.dados) || radarValido() || st.carregando || st.erro || !u || !window._get || !window._ref || !window._db) return;   // dados já na página (Radar): nunca lê
+    const c = radarDoCache(); if(c){ st.radar = c.v; st.radarT = c.t; return; }
     st.carregando = true; scan(true);
     try{
       const [so, sm] = await Promise.all(['objetivos','marcos'].map(n=>window._get(window._ref(window._db,'kanban/okr/'+n))));
@@ -82,26 +91,33 @@
         const per = Array.isArray(o.trimestres) && o.trimestres.length ? o.trimestres : (o.trimestre ? [o.trimestre] : []);
         objs[id] = {id, t:String(o.titulo||'Objetivo sem título').slice(0,200), per:per.slice(0,6).map(x=>String(x).slice(0,20)), resp:Array.isArray(o.responsaveis) ? o.responsaveis.slice(0,30).map(String) : []}; });
       const marcos = [];
-      Object.entries((sm && sm.val()) || {}).forEach(([id,m])=>{ if(m && !m.arquivado && objs[m.objetivoId]) marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId}); });
-      st.radar = {objs, marcos};
-      try{ localStorage.setItem(radarChave(), JSON.stringify({t:Date.now(), v:st.radar})); }catch(e){}
+      Object.entries((sm && sm.val()) || {}).forEach(([id,m])=>{ if(m && !m.arquivado && objs[m.objetivoId]) marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId, r:typeof m.responsavel==='string' ? m.responsavel.slice(0,64) : ''}); });
+      st.radar = {objs, marcos}; st.radarT = Date.now();
+      try{ localStorage.setItem(radarChave(), JSON.stringify({s:CACHE_RADAR_V, t:st.radarT, v:st.radar})); }catch(e){}
     }catch(e){ st.erro = true; console.warn('[sonar] Radar', e); }
     st.carregando = false;
-    if(aberto()) render(); else scan(false);
+    if(aberto()) render();
+    scan(false);   // o disco para quando a leitura termina (antes ficava girando se o Radar demorava mais que ~0,5 s — achado do Antigravity)
   }
   function fonteRadar(q, toks){
     const r = st.opts.radar; if(!r) return [];
     const okr = r.icone || '🎯';
     const at = (r.atalhos || []).map(a=>Object.assign({tipo:'atalho', ic:okr}, a));
     const g = [{g:'Radar', esc:r.esc||'radar', itens:at, noVazio:true}];
-    if(!st.radar) return g;
+    // radar.dados(): a página já tem Objetivos e Marcos em memória (o próprio Radar) — usa direto, sem cópia nem leitura
+    if(r.dados){ const d = r.dados(); st.radar = (d && d.objs && Array.isArray(d.marcos)) ? d : {objs:{}, marcos:[]}; st.radarT = Date.now(); }
+    else if(!radarValido()) return g;
+    const min = Math.max(0, Math.round((Date.now()-st.radarT)/60000));
+    if(!r.dados) g.push({g:'Dados do Radar', esc:r.esc||'radar', itens:[{k:'acao:radar-atualizar', ic:'↻', t:'Atualizar o Radar', sub:'Cópia de '+(min<1 ? 'agora há pouco' : 'há '+min+' min')+' neste aparelho · busca de novo no banco', tipo:'acao', busca:'atualizar recarregar dados radar objetivos marcos', manter:true, go:radarAtualizar}]});
     const u = st.opts.user && st.opts.user(), uid = u && u.uid;
-    const meus = toks.some(k=>k==='meus' || k==='meu' || k==='minhas'), tk = toks.filter(k=>!['meus','meu','minhas','minha'].includes(k));
-    const objs = Object.values(st.radar.objs).filter(o=>!meus || o.resp.includes(uid));
-    const abre = id => { const url = r.url(id); return {url, go:()=>r.abrir(url)}; };
+    const {meus, toks:tk} = separaMeus(toks);
+    // "meus" = a mesma régua do filtro de pessoa do Radar (_okrObjTemPessoa): responsável pelo Objetivo OU por algum Marco dele
+    const meuMarco = new Set(st.radar.marcos.filter(m=>uid && m.r===uid).map(m=>m.obj));
+    const objs = Object.values(st.radar.objs).filter(o=>!meus || o.resp.includes(uid) || meuMarco.has(o.id));
+    const abre = id => { const url = r.url(id); return {url, go: r.ir ? ()=>r.ir(id) : ()=>r.abrir(url)}; };
     g.push({g:'Objetivos', esc:r.esc||'radar', itens:objs.map(o=>Object.assign({k:'obj:'+o.id, ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), tipo:'objetivo', busca:o.t+' '+o.per.join(' '), toks:tk, app:'okr'}, abre(o.id)))});
     const ids = new Set(objs.map(o=>o.id));
-    g.push({g:'Marcos', esc:r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj)).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, app:'okr'}, abre(m.obj)))});
+    g.push({g:'Marcos', esc:r.escMarcos||r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj) && (!meus || m.r===uid || st.radar.objs[m.obj].resp.includes(uid))).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, app:'okr'}, abre(m.obj)))});
     return g;
   }
 
@@ -186,25 +202,30 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
       + '<button class="msn-x" type="button" id="msn-x" aria-label="Fechar">✕</button></div>'
       + '<div class="msn-esc" id="msn-esc" role="tablist" aria-label="Onde buscar"></div>'
       + '<div class="msn-lista" id="msn-lista" role="listbox" aria-label="Resultados"></div>'
-      + '<div class="msn-pe">↑↓ navegar · Enter abre · '+(MAC?'⌘':'Ctrl')+'+Enter abre em aba nova · Tab troca onde buscar · Esc fecha</div></div>';
+      + '<div class="msn-pe" id="msn-pe"></div></div>';
     document.body.appendChild(ov);
     ov.addEventListener('mousedown', e=>{ if(e.target===ov) fechar(); });
     $('msn-x').addEventListener('click', ()=>fechar());
     const inp = $('msn-in');
-    inp.addEventListener('input', ()=>{ st.sel = 0; scan(true); render(); });
+    // Prefixo ("r: meta") vira a ABA: o escopo passa a ser o da aba (destacada como chip) e o texto fica só com a busca.
+    // Assim não existe "prefixo diz Radar, aba diz Maré": quem manda é sempre a aba, e trocar de aba troca o escopo.
+    inp.addEventListener('input', ()=>{
+      const m = inp.value.match(/^([a-z]):\s*/i), alvo = m && st.opts.prefixos && st.opts.prefixos[m[1].toLowerCase()];
+      if(alvo && st.opts.escopos.some(e=>e.id===alvo)){ st.esc = alvo; inp.value = inp.value.slice(m[0].length); }
+      novaBusca(); scan(true); render(); });
     // Teclas da janela: tratadas aqui e paradas, para os atalhos globais da página (Tab entre cards, Enter abre card, Esc fecha modais…) não reagirem.
     inp.addEventListener('keydown', e=>{
       const k = e.key; let usou = true;
       if(k==='ArrowDown') marca(st.sel+1);
       else if(k==='ArrowUp') marca(st.sel-1);
       else if(k==='Enter') abrirItem(st.sel, e.ctrlKey||e.metaKey);
-      else if(k==='Tab'){ const es = st.opts.escopos, i = es.findIndex(x=>x.id===st.esc); st.esc = es[(i + (e.shiftKey?-1:1) + es.length) % es.length].id; st.sel = 0; render(); }
+      else if(k==='Tab'){ const es = st.opts.escopos, i = es.findIndex(x=>x.id===st.esc); st.esc = es[(i + (e.shiftKey?-1:1) + es.length) % es.length].id; novaBusca(); render(); }
       else if(k==='Escape') fechar();
-      else if(/^[1-9]$/.test(k) && !inp.value && !e.ctrlKey && !e.metaKey && !e.altKey && st.opts.escopos[Number(k)]){ st.esc = st.opts.escopos[Number(k)].id; st.sel = 0; render(); }
+      else if(/^[1-9]$/.test(k) && !inp.value && !e.ctrlKey && !e.metaKey && !e.altKey && st.opts.escopos[Number(k)]){ st.esc = st.opts.escopos[Number(k)].id; novaBusca(); render(); }
       else usou = false;
       if(usou){ e.preventDefault(); e.stopPropagation(); }
     });
-    $('msn-esc').addEventListener('click', e=>{ const b = e.target.closest('[data-esc]'); if(!b) return; st.esc = b.dataset.esc; st.sel = 0; render(); inp.focus(); });
+    $('msn-esc').addEventListener('click', e=>{ const b = e.target.closest('[data-esc]'); if(!b) return; st.esc = b.dataset.esc; novaBusca(); render(); inp.focus(); });
     $('msn-lista').addEventListener('click', e=>{
       if(e.target.closest('[data-retry]')){ st.erro = false; render(); inp.focus(); return; }
       const it = e.target.closest('[data-i]'); if(it) abrirItem(Number(it.dataset.i), e.ctrlKey||e.metaKey);
@@ -217,8 +238,9 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
   function scan(on){
     const box = document.querySelector('#msn-ov .msn-box'); if(!box) return;
     clearTimeout(st.tScan);
-    if(on) box.classList.add('scan');
-    st.tScan = setTimeout(()=>{ if(!st.carregando) box.classList.remove('scan'); }, on ? 550 : 0);
+    if(on){ box.classList.add('scan'); st.scanAte = Date.now() + 550; }   // cada tecla garante ~0,5 s de varredura
+    const para = ()=>{ if(st.carregando){ st.tScan = setTimeout(para, 200); return; } box.classList.remove('scan'); };   // com o Radar carregando, segue até a leitura terminar
+    st.tScan = setTimeout(para, Math.max(0, (st.scanAte||0) - Date.now()));
     status();
   }
   // Texto ao lado do título: anunciado sem pressa (não a cada tecla).
@@ -228,14 +250,13 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     const q = ($('msn-in').value||'').trim();
     if(!q){ el.textContent = st.opts.subtitulo || 'busca em todo o Oceano'; return; }
     el.textContent = 'escaneando…';
-    st.tStatus = setTimeout(()=>{ if(st.carregando){ status(); return; } const n = st.itens.length; el.textContent = n ? (n===1 ? '1 resultado' : n+' resultados') : 'nada por aqui'; }, 600);
+    st.tStatus = setTimeout(()=>{ if(st.carregando){ status(); return; } const n = st.total;
+      el.textContent = !n ? 'nada por aqui' : st.mostrados < n ? 'mostrando '+st.mostrados+' de '+n : (n===1 ? '1 resultado' : n+' resultados'); }, 600);
   }
   function grupos(){
     const o = st.opts, inp = $('msn-in');
-    let q = inp.value.trim(), esc0 = st.esc;
-    const mp = q.match(/^([a-z]):\s*/i);
-    if(mp && o.prefixos && o.prefixos[mp[1].toLowerCase()]){ esc0 = o.prefixos[mp[1].toLowerCase()]; q = q.slice(mp[0].length).trim(); }
-    const toks = norm(q).split(/\s+/).filter(Boolean);
+    const q = inp.value.trim(), esc0 = st.esc;
+    const toks = norm(q).split(/[^a-z0-9]+/).filter(Boolean);   // mesma régua do texto indexado: "conversao?", "a/b", "(okr)" casam (achado do Antigravity)
     const precisaRadar = !!o.radar && (esc0===(o.radar.esc||'radar') || (esc0==='tudo' && q.length>=2));
     if(precisaRadar && !st.radar && !st.carregando && !st.erro) radarCarregar();
     const ctx = {esc:esc0, vazio:!q};
@@ -245,11 +266,23 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
       const rec = esc0==='tudo' ? recentes().map(doRecente).filter(Boolean) : [];
       gs = gs.filter(g=>esc0!=='tudo' || g.noVazio).map(g=>({g:g.g, itens:g.itens.slice(0, esc0==='tudo'?6:12)})).filter(g=>g.itens.length);
       if(rec.length) gs.unshift({g:'Recentes', itens:rec});
+      st.total = st.mostrados = gs.reduce((n,g)=>n+g.itens.length, 0);
     } else {
+      let total = 0, mostrados = 0;
       gs = gs.map(g=>{
         const its = g.itens.map(it=>({it, p: it.sempre ? 1 : pontua(it.t+' '+(it.busca||''), it.toks||toks)})).filter(y=>y.p>0).sort((a,b)=>b.p-a.p).map(y=>y.it);
-        return {g:g.g, itens:its.slice(0, esc0==='tudo' ? (g.max || 5) : 30), fim:!!g.fim};
+        const lim = esc0==='tudo' ? (g.max || 5) : st.limite, vis = its.slice(0, lim);
+        const conta = its.filter(it=>it.tipo!=='acao').length; total += conta; mostrados += vis.filter(it=>it.tipo!=='acao').length;
+        // Mais resultados do que cabem: diz quantos (nunca finge que é o total) e oferece o caminho para ver o resto.
+        if(its.length > lim){
+          const aba = o.escopos.find(e=>e.id===g.esc);
+          if(esc0==='tudo' && aba && aba.id!=='tudo') vis.push({k:'mais:'+g.g, ic:'⋯', t:'Ver os '+its.length+' de '+g.g, sub:'Exibindo '+lim+' de '+its.length+' · abre a aba '+aba.l, tipo:'acao', manter:true, go:()=>{ st.esc = aba.id; novaBusca(); render(); }});
+          else if(esc0!=='tudo') vis.push({k:'mais:'+g.g, ic:'⋯', t:'Mostrar mais', sub:'Exibindo '+lim+' de '+its.length+' em '+g.g, tipo:'acao', manter:true, go:()=>{ st.limite += LIMITE; render(); }});
+          else vis.push({k:'mais:'+g.g, ic:'⋯', t:'Exibindo '+lim+' de '+its.length, sub:'Refine a busca para achar o resto', tipo:'acao', manter:true, go:()=>{}});
+        }
+        return {g:g.g, itens:vis, fim:!!g.fim};
       }).filter(g=>g.itens.length);
+      st.total = total; st.mostrados = mostrados;
       gs.sort((a,b)=>a.fim-b.fim);   // grupos "plano B" (ex.: buscar nos cards de outro squad) vão para o fim
     }
     return {gs, q, esc0, precisaRadar};
@@ -261,7 +294,10 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     const {gs, q, esc0, precisaRadar} = grupos();
     $('msn-esc').innerHTML = st.opts.escopos.map((e,i)=>'<button type="button" role="tab" tabindex="-1" data-esc="'+esc(e.id)+'" aria-selected="'+(e.id===esc0)+'">'+(i?'<span class="msn-k">'+i+'</span>':'')+esc(e.l)+'</button>').join('');
     st.itens = gs.flatMap(g=>g.itens);
-    if(st.sel >= st.itens.length) st.sel = 0;
+    // Seleção pela IDENTIDADE do item (não pela posição): o Radar chegando depois insere grupos acima e não pode mudar o que está marcado.
+    const iK = st.selK ? st.itens.findIndex(it=>it.k===st.selK) : -1;
+    st.sel = iK>=0 ? iK : (st.sel < st.itens.length ? st.sel : 0);
+    st.selK = st.itens[st.sel] ? st.itens[st.sel].k : null;
     let i = -1;
     let html = gs.map(g=>'<div class="msn-g" role="presentation">'+esc(g.g)+'</div>'+g.itens.map(it=>{ i++;
       const ich = icHtml(it.ic), icc = /class="dot"/.test(ich) ? ' dotc' : (ich.charAt(0)==='<' ? ' logo' : '');
@@ -274,7 +310,7 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     }
     $('msn-lista').innerHTML = html;
     $('msn-in').setAttribute('aria-activedescendant', st.itens.length ? 'msn-o-'+st.sel : '');
-    status();
+    rodape(); status();
   }
   function marca(n){
     if(!st.itens.length) return;
@@ -282,9 +318,20 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     document.querySelectorAll('#msn-lista .msn-it').forEach(el=>el.setAttribute('aria-selected', String(Number(el.dataset.i)===st.sel)));
     const el = $('msn-o-'+st.sel); if(el) el.scrollIntoView({block:'nearest'});
     $('msn-in').setAttribute('aria-activedescendant', 'msn-o-'+st.sel);
+    st.selK = st.itens[st.sel] ? st.itens[st.sel].k : null;
+    rodape();
+  }
+  // Busca nova (texto, aba): volta para o 1º item e para o limite padrão.
+  function novaBusca(){ st.sel = 0; st.selK = null; st.limite = LIMITE; }
+  // O rodapé só promete "aba nova" quando o item marcado tem um endereço para abrir.
+  function rodape(){
+    const pe = $('msn-pe'); if(!pe) return;
+    const it = st.itens[st.sel], tecla = MAC ? '⌘' : 'Ctrl';
+    pe.textContent = '↑↓ navegar · Enter abre' + (it && it.url ? ' · '+tecla+'+Enter abre em aba nova' : '') + ' · Tab troca onde buscar · Esc fecha';
   }
   function abrirItem(n, novaAba){
     const it = st.itens[n]; if(!it) return;
+    if(it.manter){ if(it.go) it.go(); $('msn-in').focus(); return; }   // ação de dentro do Sonar (ver mais, atualizar): não fecha nem vira recente
     lembrar(it); st.gatilho = null; fechar();
     if(novaAba && it.url){ window.open(it.link ? linkOk(it.url) : it.url, '_blank', 'noopener'); return; }
     if(it.go) it.go();
@@ -296,7 +343,7 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     montar();
     if(st.opts.aoAbrir) try{ st.opts.aoAbrir(); }catch(e){}
     o = o || {};
-    st.gatilho = document.activeElement; st.esc = (o.esc && st.opts.escopos.some(e=>e.id===o.esc)) ? o.esc : 'tudo'; st.sel = 0; st.erro = false;
+    st.gatilho = document.activeElement; st.esc = (o.esc && st.opts.escopos.some(e=>e.id===o.esc)) ? o.esc : 'tudo'; novaBusca(); st.erro = false;
     const inp = $('msn-in'); inp.placeholder = st.opts.placeholder || 'Buscar no Oceano…'; inp.value = String(o.q||'').slice(0,120);
     $('msn-ov').classList.add('open');
     render(); if(inp.value) scan(true);
@@ -320,5 +367,5 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
       });
     }
   }
-  window.MareSonar = {iniciar, abrir, fechar, aberto, tecla: MAC ? '⌘K' : 'Ctrl K', _pontua:pontua, _norm:norm, _paginaOk:paginaOk, _linkOk:linkOk};
+  window.MareSonar = {iniciar, abrir, fechar, aberto, tecla: MAC ? '⌘K' : 'Ctrl K', _pontua:pontua, _norm:norm, _paginaOk:paginaOk, _linkOk:linkOk, _separaMeus:separaMeus};
 })();

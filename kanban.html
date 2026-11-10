@@ -89,7 +89,7 @@
 .search-box{
   width:min(600px,90vw);background:rgba(var(--glass-rgb),.97);
   border:1px solid var(--glass-b);border-radius:var(--r2);
-  box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;
+  box-shadow:var(--specular),0 24px 64px rgba(0,0,0,.6);overflow:hidden;
 }
 .search-inp-wrap{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--glass-b);}
 .search-icon{font-size:16px;color:var(--txt3);flex-shrink:0;}
@@ -155,6 +155,8 @@
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:255,209,102;
   --deep-rgb:3,13,26;
+  --specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --ease-out:cubic-bezier(.32,.72,0,1);--ease-in-out:cubic-bezier(.4,0,.2,1);--ease-overshoot:cubic-bezier(.34,1.56,.64,1);
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
    Pedido direto: alternar entre o visual escuro atual (padrão) e um modo
@@ -226,6 +228,7 @@
   --warn:#F6B73C;--danger:#F15B6C;
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:10,77,120;
+  --specular:inset 0 1px 0 rgba(255,255,255,.7);
 }
 [data-theme="light"] .ocean{
   background:
@@ -487,6 +490,7 @@
   --warn:#C9743F;--danger:#C5615F;
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:229,159,124;
+  --specular:inset 0 1px 0 rgba(255,255,255,.08);
 }
 [data-theme="vice"] .ocean{
   background:
@@ -772,6 +776,81 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .sm-dd-row-sub{padding-left:26px;}
 .sm-dd-sep{border-top:1px solid var(--glass-b);margin:5px 4px 4px;}
 .hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0;}
+/* 🏝️ Ilha Dinâmica (10/11/2026, teste no Maré dev; plano em docs/ideias/ilha-dinamica.md). Desligada por padrão; liga no ⏲ Timers. */
+#ilha{flex:1 1 auto;display:flex;justify-content:center;position:relative;min-width:0;}
+/* desktop: a ilha FLUTUA no vão livre do cabeçalho (não empurra os botões); --ilha-x e --ilha-max vêm de _ilhaLugar() */
+@media (min-width:769px){ #ilha{position:absolute;top:50%;left:var(--ilha-x,50%);transform:translate(-50%,-50%);flex:none;z-index:25;} }
+#ilha[hidden]{display:none;}
+/* pílula (referência Vorssaint): cápsula de largura mínima, ícone pequeno, texto numa linha só */
+#ilha-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;min-width:150px;padding:0 16px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.97);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 22px rgba(0,0,0,.25);cursor:pointer;max-width:min(var(--ilha-max,420px),560px);font-size:12px;font-weight:600;color:var(--txt);font-family:inherit;white-space:nowrap;overflow:hidden;transition:max-width .25s var(--ease-out,ease);}
+#ilha-btn:hover{border-color:var(--accent);}
+#ilha-btn:focus-visible,#ilha-fio:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-ico{font-size:11.5px;line-height:1;flex:none;}
+#ilha.ilha-repouso #ilha-titulo{color:var(--txt3);font-weight:500;}
+#ilha-titulo,#ilha-aviso-t,#ilha-aviso-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#ilha-titulo{max-width:200px;min-width:0;}
+#ilha-aviso,#ilha-aviso-t,#ilha-aviso-s{min-width:0;}
+#ilha-titulo:empty,#ilha-tempo:empty,#ilha-mais:empty,#ilha-aviso-s:empty{display:none;}
+#ilha-tempo{font-variant-numeric:tabular-nums;color:var(--teal,#1de9b6);font-weight:700;}
+#ilha.ilha-pausa #ilha-tempo{color:var(--txt2);}
+#ilha.ilha-esg #ilha-tempo{color:var(--danger,#ff6b6b);}
+#ilha-mais{font-size:10.5px;color:var(--txt2);}
+.ilha-sep{width:1px;height:15px;background:var(--glass-b);}
+#ilha-n{display:inline-flex;align-items:center;gap:3px;}
+#ilha-n[hidden]{display:none;}
+#ilha-n{flex:none;font-size:11px;}
+#ilha-n b{min-width:16px;height:16px;padding:0 5px;border-radius:999px;background:var(--danger,#ff6b6b);color:#fff;font-size:9.5px;display:grid;place-items:center;}
+#ilha-tempo,#ilha-mais,.ilha-sep{flex:none;}
+/* aviso (estilo Vorssaint): a pílula se alarga e mostra quem/o quê + onde, por alguns segundos */
+#ilha-aviso{display:none;align-items:baseline;gap:7px;min-width:0;}
+#ilha[data-estado="aviso"] #ilha-aviso{display:inline-flex;}
+#ilha[data-estado="aviso"] #ilha-titulo,#ilha[data-estado="aviso"] #ilha-mais{display:none;}
+#ilha[data-estado="aviso"] #ilha-btn{max-width:min(var(--ilha-max,560px),560px);}
+#ilha-aviso-t{font-weight:700;flex:0 1 auto;}
+#ilha-aviso-s{color:var(--txt3);font-weight:500;flex:0 2 auto;}
+#ilha-fio{display:none;width:150px;height:30px;border:none;background:none;padding:0;cursor:pointer;opacity:0;}
+#ilha-fio:focus-visible{opacity:1;}
+#ilha[data-estado="oculta"] #ilha-btn,#ilha[data-estado="fio"] #ilha-btn{display:none;}
+#ilha[data-estado="fio"] #ilha-fio{display:block;}
+#ilha-painel{position:absolute;top:44px;left:50%;transform:translateX(-50%);width:min(390px,calc(100vw - 20px));padding:10px;border-radius:18px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 18px 50px rgba(0,0,0,.4);z-index:400;display:none;max-height:min(72vh,580px);overflow:auto;color:var(--txt);}
+#ilha[data-estado="aberta"] #ilha-painel{display:block;animation:ilhaAbre .2s var(--ease-out,ease);}
+@keyframes ilhaAbre{from{opacity:0;transform:translateX(-50%) translateY(-4px);}to{opacity:1;transform:translateX(-50%);}}
+.ilha-abas{display:flex;gap:4px;margin-bottom:8px;align-items:center;}
+.ilha-aba{flex:1;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.ilha-aba.on{border-color:var(--accent);color:var(--txt);}
+#ilha-fixar{min-width:34px;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);cursor:pointer;color:var(--txt2);}
+#ilha-fixar[aria-pressed="true"]{border-color:var(--accent);color:var(--txt);}
+.ilha-timer{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:9px 10px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.5);margin-bottom:6px;}
+.ilha-timer-t{font-weight:600;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.ilha-timer-s{font-size:10.5px;color:var(--txt3);}
+.ilha-timer-tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--teal,#1de9b6);font-size:14px;}
+.ilha-timer.pausado .ilha-timer-tempo,.ilha-timer.novo .ilha-timer-tempo{color:var(--txt2);}
+.ilha-timer.esg .ilha-timer-tempo{color:var(--danger,#ff6b6b);}
+.ilha-acoes{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap;}
+.ilha-acoes button,.ilha-rod button,#ilha-desligar{min-height:34px;padding:5px 11px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;}
+.ilha-acoes button:hover,.ilha-rod button:hover{border-color:var(--accent);}
+.ilha-acoes [data-acao="confirmar-encerrar"]{border-color:var(--danger,#ff6b6b);color:var(--danger,#ff6b6b);}
+.ilha-notif{display:flex;gap:8px;padding:7px 6px;border-radius:10px;font-size:12px;cursor:pointer;align-items:flex-start;}
+.ilha-notif:hover{background:rgba(var(--surface2-rgb),.6);}
+.ilha-notif b{display:block;font-weight:600;}
+.ilha-notif small{color:var(--txt3);}
+.ilha-notif.lida{opacity:.6;}
+.ilha-vazio{font-size:12px;color:var(--txt2);padding:8px 6px;}
+.ilha-rod{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.ilha-cfg label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;padding:6px 4px;color:var(--txt2);}
+.ilha-cfg select{background:rgba(var(--surface2-rgb),.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:8px;padding:4px 6px;font:inherit;font-size:12px;}
+.ilha-cfg p{font-size:11px;color:var(--txt3);padding:4px;line-height:1.45;}
+#ilha-anuncio{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+@media (max-width:768px){
+  #ilha{order:3;flex-basis:100%;}
+  #ilha-btn{max-width:calc(100vw - 32px);height:42px;}
+  #ilha[data-estado="aviso"] #ilha-btn{max-width:calc(100vw - 32px);}
+  #ilha-titulo{max-width:110px;} #ilha-aviso-t{max-width:150px;} #ilha-aviso-s{display:none;}
+  #ilha-painel{position:fixed;top:auto;left:8px;right:8px;width:auto;transform:none;max-height:calc(100vh - 140px);}
+  @keyframes ilhaAbre{from{opacity:0;}to{opacity:1;}}
+  .ilha-acoes button,.ilha-rod button,.ilha-aba,#ilha-fixar,#ilha-desligar{min-height:44px;}
+}
+@media (prefers-reduced-motion:reduce){ #ilha-btn{transition:none;} #ilha[data-estado="aberta"] #ilha-painel{animation:none;} }
 /* Menu "⋯" (ver HTML/JS toggleHdMore) — só aparece no mobile, ver @media(max-width:768px) */
 .hd-more-wrap{display:none;position:relative;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
@@ -806,7 +885,7 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
    .goal-bar acima (fundo translúcido + blur + borda) em vez de inventar
    um estilo novo. .fb-group separa "campos de filtro" de "opções rápidas"
    e "ações" (usa o .tb-sep já existente do toolbar como divisor). */
-.filter-bar-panel{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-b);border-radius:var(--r);padding:9px 12px;}
+.filter-bar-panel{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-b);border-radius:var(--r);padding:9px 12px;box-shadow:var(--specular);}
 .fb-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
 /* sprint goal bar — fundo opaco (era 12% de opacidade e deixava as bolhas/peixes
    do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
@@ -885,7 +964,7 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
   overflow-y:auto;
 }
 /* column */
-.col{display:flex;flex-direction:column;max-height:100%;width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
+.col{display:flex;flex-direction:column;max-height:100%;width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);box-shadow:var(--specular);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
 .col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);border-left:3px solid var(--col-accent,transparent);border-top:3px solid var(--col-accent,transparent);border-top-left-radius:var(--r2);cursor:default;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
@@ -1145,7 +1224,7 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
    cadastro) e o Esc/fechar-tudo global ('.ov.open') não pode fechá-la sem resolver a pergunta que o login está aguardando. */
 .cad-ov{position:fixed;inset:0;z-index:205;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .cad-ov.open{display:flex;}
-.panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
+.panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;box-shadow:var(--specular);}
 /* Alça de arrastar do bottom-sheet do card (Fase 3.1) — só existe visualmente
    no mobile, ver @media(max-width:768px) .card-sheet-handle. */
 .card-sheet-handle{display:none;}
@@ -1177,7 +1256,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .dp-foot button{background:none;border:none;color:var(--teal);font-size:10.5px;cursor:pointer;padding:3px 4px;}
 .dp-foot button:hover{text-decoration:underline;}
 
-.panel-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(var(--surface-rgb),.97);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
+.panel-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(var(--surface-rgb),.97);border-radius:var(--r2) var(--r2) 0 0;box-shadow:var(--specular);z-index:1;}
 .panel-title{font-family:"Syne",sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
 .x-btn{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:18px;padding:3px;line-height:1;}
 .x-btn:hover{color:var(--danger);}
@@ -1379,7 +1458,7 @@ input[type="date"]{-moz-appearance:textfield;}
 /* Modais bonitos (alert/confirm/prompt) */
 .ui-modal-ov{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(2,8,18,.72);backdrop-filter:blur(6px);opacity:0;transition:opacity .18s ease;padding:20px;}
 .ui-modal-ov.open{opacity:1;}
-.ui-modal{background:linear-gradient(160deg,rgba(var(--surface-rgb),.99),rgba(var(--surface2-rgb),.99));border:1px solid var(--accent);border-radius:18px;padding:24px 24px 20px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);text-align:center;transform:scale(.92) translateY(10px);transition:transform .2s cubic-bezier(.2,.8,.3,1.2);}
+.ui-modal{background:linear-gradient(160deg,rgba(var(--surface-rgb),.99),rgba(var(--surface2-rgb),.99));border:1px solid var(--accent);border-radius:18px;padding:24px 24px 20px;max-width:380px;width:100%;box-shadow:var(--specular),0 20px 60px rgba(0,0,0,.6);text-align:center;transform:scale(.92) translateY(10px);transition:transform .2s var(--ease-overshoot);}
 .ui-modal-ov.open .ui-modal{transform:scale(1) translateY(0);}
 .ui-modal-icon{font-size:30px;margin-bottom:10px;line-height:1;}
 .ui-modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:800;color:var(--txt);margin-bottom:8px;}
@@ -1504,9 +1583,9 @@ input[type="date"]{-moz-appearance:textfield;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
   border-left:1px solid rgba(56,182,255,.25);
-  backdrop-filter:blur(18px);transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
+  backdrop-filter:blur(18px);transform:translateX(100%);transition:transform .32s var(--ease-in-out);
   display:flex;flex-direction:column;}
-.lem-drawer.open{transform:translateX(0);box-shadow:-12px 0 48px rgba(0,0,0,.55);}
+.lem-drawer.open{transform:translateX(0);box-shadow:var(--specular),-12px 0 48px rgba(0,0,0,.55);}
 .lem-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;
   border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .lem-hd-title{font-family:"Syne",sans-serif;font-weight:800;font-size:18px;color:var(--txt);display:flex;align-items:center;gap:8px;}
@@ -1580,7 +1659,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .lem-add-btn:disabled{opacity:.4;cursor:not-allowed;}
 /* ═══ ESTRELAS DO MAR (Kudos) ═══ */
 .kudos-drawer{left:0;right:auto;border-left:none;border-right:1px solid rgba(255,209,102,.25);
-  transform:translateX(-100%);box-shadow:12px 0 48px rgba(0,0,0,.55);}
+  transform:translateX(-100%);box-shadow:var(--specular),12px 0 48px rgba(0,0,0,.55);}
 .kudos-drawer.open{transform:translateX(0);}
 .kudos-drawer .lem-hd-title{color:#ffd166;}
 .kudos-scope-tabs{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
@@ -1779,7 +1858,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .cal-ov #cal-escala{display:none;flex:1;min-height:0;flex-direction:column;}
 .cal-ov.cal-esc #cal-escala{display:flex;}
 .cal-ov.cal-esc #cal-nav,.cal-ov.cal-esc #cal-filtros-row,.cal-ov.cal-esc #cal-body,.cal-ov.cal-esc #gcal-token-warn{display:none !important;}
-.cal-panel{background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:var(--r2);width:96vw;max-width:1600px;height:calc(100vh - 2rem);max-height:calc(100vh - 2rem);display:flex;flex-direction:column;}.cal-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.cal-panel{background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:var(--r2);width:96vw;max-width:1600px;height:calc(100vh - 2rem);max-height:calc(100vh - 2rem);display:flex;flex-direction:column;box-shadow:var(--specular);}.cal-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .cal-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
   display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;background:rgba(var(--surface-rgb),.98);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
@@ -1858,7 +1937,7 @@ input[type="date"]{-moz-appearance:textfield;}
   backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ev-modal-ov.open{display:flex;}
 .ev-modal{background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);
-  border-radius:var(--r2);width:100%;max-width:400px;}
+  border-radius:var(--r2);width:100%;max-width:400px;box-shadow:var(--specular);}
 .ev-modal-hd{padding:11px 14px;border-bottom:1px solid var(--glass-b);
   display:flex;align-items:center;justify-content:space-between;}
 .ev-modal-body{padding:13px 14px;display:flex;flex-direction:column;gap:9px;}
@@ -1961,7 +2040,7 @@ input[type="date"]{-moz-appearance:textfield;}
   backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto;}
 .dep-map-ov.open{display:flex;}
 .dep-map-panel{background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.18);
-  border-radius:16px;width:min(900px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
+  border-radius:16px;width:min(900px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--specular);}
 .dep-map-hd{display:flex;align-items:center;gap:10px;padding:14px 18px;
   border-bottom:1px solid rgba(56,182,255,.1);flex-shrink:0;}
 .dep-map-title{font-family:"Syne",sans-serif;font-size:15px;font-weight:700;color:var(--txt);flex:1;}
@@ -2463,7 +2542,7 @@ input[type="date"]{-moz-appearance:textfield;}
 }
 .notif-badge.show{
   display:flex;
-  animation:notif-pop .35s cubic-bezier(.34,1.56,.64,1);
+  animation:notif-pop .35s var(--ease-overshoot);
 }
 @keyframes notif-pop{
   0%{transform:scale(0);}
@@ -2471,7 +2550,7 @@ input[type="date"]{-moz-appearance:textfield;}
 }
 .notif-panel{position:fixed;top:56px;right:12px;z-index:90;width:320px;
   background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:14px;
-  box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;flex-direction:column;
+  box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);display:none;flex-direction:column;
   max-height:480px;overflow:hidden;}
 .notif-panel.open{display:flex;}
 .notif-hd{padding:10px 14px;border-bottom:1px solid var(--glass-b);
@@ -2992,7 +3071,7 @@ input[type="date"]{-moz-appearance:textfield;}
   #card-ov .card-panel{
     max-height:92vh;
     border-radius:20px 20px 0 0;
-    animation:cardSheetUp .28s cubic-bezier(.32,.72,0,1);
+    animation:cardSheetUp .28s var(--ease-out);
     /* .card-sheet-handle (a alça) é o único gatilho do swipe-down — de
        propósito, não o header inteiro, pra não brigar com os botões/abas que
        moram lá (✕, tabs do modal etc.). Ver JS _initCardSheetDrag. */
@@ -3292,7 +3371,7 @@ input[type="date"]{-moz-appearance:textfield;}
   background:rgba(var(--surface-rgb),.98); border:1px solid var(--ct-border,var(--glass-b));
   border-radius:16px; width:min(1240px,97vw); height:92vh;
   display:flex; flex-direction:column; overflow:hidden;
-  box-shadow:0 24px 64px rgba(0,0,0,.7);
+  box-shadow:var(--specular),0 24px 64px rgba(0,0,0,.7);
   transition:border-color .3s;
 }
 .camp-hd {
@@ -3376,7 +3455,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .camp-cards-folder-arrow{ font-size:11px; color:var(--txt3); }
 #camp-cards-ov { z-index:200; }
 .camp-cards-grid-panel { background:rgba(var(--surface-rgb),.99); border:1px solid var(--glass-b); border-radius:16px;
-  width:min(960px,95vw); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.7); }
+  width:min(960px,95vw); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:var(--specular),0 24px 64px rgba(0,0,0,.7); }
 .camp-cards-grid-hd { padding:16px 20px; border-bottom:1px solid var(--glass-b); display:flex; align-items:center; gap:12px; flex-shrink:0; }
 .camp-cards-grid-hd-title { font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; flex:1; }
 .camp-cards-grid-filters { display:flex; gap:6px; padding:12px 20px; border-bottom:1px solid var(--glass-b); flex-wrap:wrap; flex-shrink:0; }
@@ -3570,7 +3649,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .camp-edit-modal {
   background:rgba(var(--surface-rgb),.98); border:1px solid var(--glass-b); border-radius:14px;
   width:min(520px,95vw); max-height:90vh; overflow-y:auto; padding:0;
-  display:flex; flex-direction:column;
+  display:flex; flex-direction:column; box-shadow:var(--specular);
 }
 .camp-edit-hd  { padding:16px 20px; border-bottom:1px solid var(--glass-b); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
 .camp-edit-body{ padding:20px; display:flex; flex-direction:column; gap:14px; flex:1; overflow-y:auto; }
@@ -3692,6 +3771,22 @@ input[type="date"]{-moz-appearance:textfield;}
   #card-ov .cl-it{padding-top:10px;line-height:1.5;}
   #card-ov .cl-ai{font-size:16px;}
 }
+
+
+/* Mesmo sino dentro da Ilha: só muda a moldura, nunca duplica IDs/listeners. */
+.app.ilha-no-topo{z-index:56;}
+.hd.ilha-no-topo{z-index:95;}
+#ilha-painel .ilha-sino{position:static;display:flex;width:100%;max-height:none;border:0;box-shadow:none;background:none;overflow:visible;}
+#ilha-painel .notif-list{overflow:visible;flex:none;}
+#ilha-painel .notif-hd{gap:8px;flex-wrap:wrap;padding:8px 0;}
+#ilha-painel .notif-ft{padding:8px 0;background:none;}
+#ilha-painel .notif-ft>div:first-child{flex-wrap:wrap;}
+#ilha-painel .notif-ft>div:first-child>div{flex-wrap:wrap;min-width:0;}
+#ilha-painel #notif-perm-row{white-space:normal!important;}
+#ilha-painel .notif-body{min-width:0;overflow-wrap:anywhere;}
+#ilha-painel .notif-item{padding:10px 4px;}
+#ilha-painel button:focus-visible,#ilha-painel .notif-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+@media(pointer:coarse){#ilha-painel .notif-ft button,#ilha-painel .notif-mark-all,#ilha-painel .notif-dismiss{min-width:44px;min-height:44px;}#ilha-painel #notif-perm-row{min-height:44px;display:inline-flex;align-items:center;}}
 
 </style>
 <script>
@@ -3835,6 +3930,18 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <div id="squad-switcher-dd" class="squad-switcher-dd"></div>
     </span>
 
+  </div>
+  <div id="ilha" data-estado="oculta" hidden>
+    <button type="button" id="ilha-fio" aria-label="Mostrar a Ilha Dinâmica"></button>
+    <button type="button" id="ilha-btn" aria-expanded="false" aria-controls="ilha-painel" aria-label="Ilha Dinâmica">
+      <span class="ilha-ico" id="ilha-ico" aria-hidden="true">🌊</span>
+      <span id="ilha-aviso"><span id="ilha-aviso-t"></span><span id="ilha-aviso-s"></span></span>
+      <span id="ilha-titulo"></span><span id="ilha-tempo"></span><span id="ilha-mais"></span>
+      <span class="ilha-sep" id="ilha-sep" aria-hidden="true"></span>
+      <span id="ilha-n" hidden><span aria-hidden="true">🔔</span><b></b></span>
+    </button>
+    <div id="ilha-painel" role="dialog" aria-label="Ilha Dinâmica" tabindex="-1"></div>
+    <div id="ilha-anuncio" aria-live="polite"></div>
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
@@ -4117,7 +4224,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
 <!-- NOTIFICAÇÕES -->
 <div class="notif-panel tm-pop" id="tm-pop" role="dialog" aria-label="Timers em andamento">
-  <div class="notif-hd"><span>⏲ Meus timers</span></div>
+  <div class="notif-hd"><span>⏲ Meus timers</span><button type="button" class="notif-mark-all" id="ilha-ligar" onclick="_ilhaLigarDoPop()">🏝️ Ilha Dinâmica</button></div>
   <div class="notif-list" id="tm-pop-list"><div class="notif-empty">Nenhum timer ativo</div></div>
 </div>
 <div class="notif-panel" id="notif-panel">
@@ -4133,7 +4240,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
       <div style="display:flex;align-items:center;gap:10px;">
         <button id="notif-sound-toggle" onclick="toggleNotifSound()" title="Ligar/desligar som de notificação" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--txt3);padding:0;line-height:1;"></button>
-        <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+        <button type="button" id="notif-perm-row" onclick="notifPermRowClick()" style="font:inherit;font-size:10px;color:var(--txt2);cursor:pointer;white-space:nowrap;background:none;border:0;text-align:left;"></button>
       </div>
     </div>
     <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;box-sizing:border-box;">
@@ -6702,7 +6809,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.923</div>
+<div class="version">v8.30.932</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7055,8 +7162,9 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 </script>
 <script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=19"></script>
-<script src="mare-dicas.js?v=10"></script>
-<script src="mare-sonar.js?v=4"></script>
+<script src="mare-dicas.js?v=12"></script>
+<script src="mare-sonar.js?v=8"></script>
+<script src="mare-timer.js?v=1"></script>
 
 <script>
 
@@ -15014,15 +15122,15 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false, ignoreSubteam=fa
   if(!ignoreSubteam&&activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.supercard&&!_cardIsSupercard(card)) return false;
   if(activeFilters.texto){
-    // Mesmos campos que a busca geral (Ctrl+K/🔍) já usa em renderSearchResults()
-    // — "ver esses cards no board" precisa achar exatamente os mesmos cards.
+    // Mesmos campos E a mesma régua do Sonar (sem acento, várias palavras, 1 erro de digitação — MareSonar._pontua):
+    // "Ver N cards no board" precisa achar exatamente os N cards que o Sonar contou (achado do /monitorarbugs do Antigravity, 10/11/2026:
+    // "conversao" ou "checkout conversao" contavam 2 no Sonar e mostravam 0 no quadro). Sem o módulo, cai no "contém" antigo.
     const q=activeFilters.texto;
     const owner=members.find(m=>m.init===card.owner);
-    const matched = (card.title||'').toLowerCase().includes(q)
-      || cardDescText(card).toLowerCase().includes(q)
-      || (card.po||'').toLowerCase().includes(q)
-      || (card.owner||'').toLowerCase().includes(q)
-      || (owner?.name||'').toLowerCase().includes(q);
+    const txt=(card.title||'')+' '+(card.po||'')+' '+(owner?.name||'')+' '+(card.owner||'')+' '+String(cardDescText(card)||'').replace(/<[^>]+>/g,' ').slice(0,600);
+    const matched = window.MareSonar
+      ? MareSonar._pontua(txt, MareSonar._norm(q).split(/[^a-z0-9]+/).filter(Boolean)) > 0
+      : txt.toLowerCase().includes(String(q).toLowerCase());
     if(!matched) return false;
   }
   if(activeFilters.due){
@@ -28910,7 +29018,7 @@ const HELP_CONTENT = {
     { icon:'🐟', title:'Metas e desafios (O mar tá pra peixe)', text:'Na aba lateral <b>📊 Dados → 🐠 sua squad</b> você acompanha, num relance, a <b>meta da squad</b> (anel grande com o %, quanto falta, quantos dias restam e quanto precisa entrar por dia) e os <b>desafios extras</b> — por exemplo "no dia 27, vender 500 camisetas Hering Kids", "meta do Mercado Livre" ou "conversão do App", por submarca, canal de venda ou dia. As cores seguem o Radar: 🟢 no ritmo, 🟡 atenção, 🔴 atrasada, 🏆 batida; o <b>tracinho branco</b> no anel/na barra é onde deveria estar hoje.\n\n📈 <b>Gráfico de evolução (Acumulado, Por dia e ⛶ Expandir)</b>: o bloco <b>📈 Evolução</b> tem um seletor no topo para alternar entre <b>Acumulado</b> (curva acumulada real contra o ritmo ideal e a linha da meta) e <b>Por dia</b> (quanto entrou em cada dia comparado à <b>linha tracejada do esperado do dia</b>, com tooltip detalhando o realizado e o esperado do dia vs. o acumulado). Ao lado do seletor, o botão <b>⛶ Expandir</b> abre o gráfico em <b>tela cheia</b> com resumo dos indicadores e uma <b>tabela dia a dia</b> comparando <b>Realizado do dia</b>, <b>Esperado do dia</b> e <b>∆ diferença</b> (em valor e status).\n\n🐟 <b>O mar tá pra peixe!</b> A cada <b>20 %</b> da meta (20, 40, 60, 80 e 100) aparece um popup com peixinhos pulando e uma <b>buzina de navio</b> 🚢 (toca inteira, ~10 s, e o popup fecha logo depois que ela acaba) — uma vez por pessoa. A buzina respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s. Corrigir o valor pra baixo não tira o peixe já conquistado. No cadastro da meta, a seção <b>🎉 Popups de marco (20% a 100%)</b> permite personalizar <b>título, mensagem e emoji</b> de cada marco (20%, 40%, 60%, 80% e 100% — campos em branco usam o padrão).\n\n✏️ <b>Atualizar valor</b>: qualquer pessoa da squad informa o valor — escolha <i>Definir o total</i> ou <i>Somar ao atual</i>; a prévia mostra o novo % e se vem peixe novo. Dá pra mudar a <b>data e a hora da entrada</b> (horário de Brasília) pra lançar um valor <b>retroativo</b>, de duas formas: <i>+ Somar ao atual</i> lança aquele dia como uma <b>parte</b> — ela entra no total e o gráfico é recalculado a partir da data (ex.: os 12 dias de setembro, um por vez; o todo é a soma, na ordem que quiser e dá pra corrigir com valor negativo) — ou <i>Definir o total</i>, informando o acumulado daquele momento (só vira o valor atual se for o mais recente; um retroativo mais antigo não derruba o que já está lá). Cartões com ⏰ "atualize!" estão sem atualização há mais que o dobro do lembrete.\n\n📅 <b>Ritmo não linear (diarização)</b>: no cadastro, em <i>Ritmo ao longo do período</i>, escolha <b>Por dia</b> quando o time define antes quanto a meta pede de cada dia (ex.: a venda pesa mais nos últimos dias). Preencha um valor por dia — ou use <b>Colar da planilha</b> (uma coluna na ordem dos dias, ou linhas como 12/11 1500) e <b>Distribuir igual</b>. Se o período ainda estiver em branco, o <i>Colar</i> ajusta sozinho: com linhas "dd/mm valor" ele monta o período pelas datas; com só valores, preencha o início e o fim é calculado. Vale a <i>proporção</i> entre os dias, não precisa fechar a soma. Daí o <b>esperado agora</b> (tracinho do anel e da barra — acompanha também a hora do dia, pra um dia pesado não deixar o farol vermelho de madrugada), os <b>faróis</b> 🟢🟡🔴 (no ritmo/atenção/atrasada), o gráfico e o KPI <b>Meta de hoje</b> seguem a curva. Precisa de período com pelo menos 2 dias.\n\n🗂 <b>Entradas</b>: o botão 🗂 do cartão lista tudo o que foi lançado (mais novo primeiro, com quem lançou, quando e a nota) e deixa <b>✏️ editar</b> (data/hora, valor e nota) ou <b>🗑 excluir</b>. Quando a entrada é uma <i>parte</i> (lançada com + Somar), editar ou excluir ajusta o total e recalcula o gráfico a partir daquela data — o todo continua sendo a soma das partes; um <i>total</i> mexe só naquele ponto. O valor atual passa a ser o do último ponto; sem nenhuma entrada, a meta volta a "sem valor ainda". Se o total da meta ficar abaixo da soma dos lançamentos do histórico, o modal mostra um aviso e oferece o botão <b>Corrigir o total</b> para igualar o valor com 1 clique. Quem pode atualizar o valor pode gerir as entradas.\n\n⚙ <b>Quem cria/edita</b>: PO, Organizador e ADM, em <b>⚙ Configurações → 🐟 Metas</b> (nome, ícone, R$/quantidade/%, alvo, período, diarização Por dia, submarca, canal, <b>🌊 Mostrar na visão global</b>, <b>⏰ lembrete de preenchimento</b> a cada 1 h/2 h, 1× por dia ou em horários exatos — horário de Brasília — e <b>🎉 Popups de marco (20% a 100%)</b> para personalizar título, mensagem e emoji de cada marco). A meta global do Digital e os desafios do Digital são cadastrados no <b>Painel → 📊 Dados</b>; aparecem na aba <b>🌊 Digital</b> junto com um ranking das squads.' },
     { icon:'📊', title:'Central de Dados (aba lateral 📊 Dados)', text:'A aba azul <b>📊 Dados</b>, na lateral direita (junto de 📌 Lembretes, ⭐ Estrelas, 🎧 Spotify e 📝 Notas), abre os <b>Dados</b> em <b>duas abas</b>: <b>🐠 da sua squad</b> (metas e desafios — veja o tópico "Metas e desafios") e <b>🌊 Digital</b> (a meta global, as metas das squads que marcaram "mostrar na visão global" e, logo abaixo, a <b>Central de Dados — Digital</b>: os resultados diários de captação digital publicados pelo time — somente leitura aqui no board; quem publica é o ADM no <b>Painel → 📊 Dados</b>).\n\nNa Central de captação, mostra o <b>dia mais recente</b> em destaque, botões <b>🖥️</b> pra abrir as apresentações cadastradas ali mesmo (embutidas) e a lista <b>Dias anteriores</b> — os <b>14 dias anteriores</b> ao mais recente, em formato compacto. Dias mais antigos não aparecem aqui nem são baixados (o board só carrega os últimos 15 dias, o que deixa a abertura mais leve); o histórico completo continua no Painel.\n\nSe aparecer \"Nenhum resultado publicado ainda\", é porque ninguém publicou dados — a configuração é no Painel. Não confunda com <b>📊 Dados do Board</b> (botão da toolbar), que são as métricas do <i>seu quadro</i> (WIP, Insights, CFD…).' },
     { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.\n\n🤖 Resumo do Agente Ágil: botão dentro do painel Meu Dia (squads dev/dados) que pede pro agente ler seus cards ativos (atrasado, bloqueado, sem descrição, checklist pendente) e devolver um resumo priorizado, sugerindo uma ordem de ataque pro dia. Só lê — não mexe em nada no board. Limite de 1 pedido a cada 2 minutos por pessoa; o resumo reseta toda vez que o painel é reaberto (não guarda o de uma sessão anterior).\n\n🤖 Análise do board (PO): botão extra, visível só pra PO/Organizador/ADM, que pede uma leitura do board inteiro do squad atual (não só os seus cards) — WIP, gargalo, atrasados, bloqueados, cards incompletos — e, quando fizer sentido pelos dados, uma sugestão de campanha/coleção nova, sempre comparando com as Campanhas & Coleções já ativas/em planejamento pra nunca sugerir algo que já esteja em execução. Mesmo limite de 2 minutos entre pedidos, mesmo "só lê".\n\n↕ Espaço pros cards: os blocos "🌤️ Como você está hoje?" e "🌙 Fechamento do dia" têm uma setinha ▾/▸ pra recolher (o que você escolheu fica salvo neste aparelho; o de hoje abre recolhido depois que você responde, e o fechamento do dia vem recolhido). O painel inteiro rola junto — dá pra descer até os cards mesmo numa janela baixa ou no celular.' },
-    { icon:'🔍', title:'Sonar (Ctrl+K)', text:'O <b>Sonar</b> é a busca do Oceano. Pressione <b>Ctrl+K</b> (ou <b>Cmd+K</b> no Mac) ou clique em 🔍 no header. Primeiro vêm os <b>cards deste board</b> (título, descrição, Insights do PO e responsável, sem se importar com acento), com o botão <b>Ver N cards no board</b> para filtrar o quadro. Embaixo, o resto do Oceano: <b>Objetivos e Marcos do Radar</b> (abrem no Radar), <b>Buscar nos cards de outro squad</b> (abre aquele board com a busca já preenchida) e os tópicos da <b>Ajuda</b>. Use as setas ↑↓ e Enter para abrir; Esc fecha. Com um card aberto, Ctrl+K busca nos comentários do card. No lobby do Oceano, o mesmo Sonar também acha produtos e links.' },
+    { icon:'🔍', title:'Sonar (Ctrl+K)', text:'O <b>Sonar</b> é a busca do Oceano. Pressione <b>Ctrl+K</b> (ou <b>Cmd+K</b> no Mac) ou clique em 🔍 no header. Primeiro vêm os <b>cards deste board</b> (título, descrição, Insights do PO e responsável, sem se importar com acento), com o botão <b>Ver N cards no board</b> para filtrar o quadro. Embaixo, o resto do Oceano: <b>Objetivos e Marcos do Radar</b> (abrem no Radar), <b>Buscar nos cards de outro squad</b> (abre aquele board com a busca já preenchida) e os tópicos da <b>Ajuda</b>. Use as setas ↑↓ e Enter para abrir; Ctrl+Enter abre o card em aba nova; Esc fecha. Começar com <b>r:</b> (Radar), <b>s:</b> (squads) ou <b>a:</b> (Ajuda) troca a aba. Os Objetivos do Radar ficam guardados no aparelho por até 3 h; para buscar de novo, digite <b>atualizar</b> e escolha <b>Atualizar o Radar</b>. Com um card aberto, Ctrl+K busca nos comentários do card. No lobby do Oceano, o mesmo Sonar também acha produtos e links.\n\n🗂️ <b>Abas e prefixos:</b> navegue entre <b>Tudo · 1 Este board · 2 Radar · 3 Squads · 4 Ajuda</b> (com a caixa vazia, as teclas <b>1–4</b> trocam de aba e <b>Tab</b> avança) ou digite os prefixos <b>b:</b>, <b>r:</b>, <b>s:</b> e <b>a:</b> para ir direto à aba correspondente. <b>Ctrl+Enter</b> (ou <b>⌘+Enter</b>) abre o item selecionado em uma nova aba.\n\n🙋 <b>Filtro "meus" / "minhas":</b> digite <b>meus</b> (ou <b>minhas</b>, <b>meu</b>, <b>minha</b>) sozinho ou junto com outro termo para filtrar apenas os cards deste board em que você é responsável ou participante — oferecendo <b>Destacar meus N cards no board</b> (quando digitado sozinho) ou <b>Ver N cards no board</b> (combinado com texto). Na aba/seção do <b>Radar</b>, traz os Objetivos e Marcos em que você é responsável.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.' },
@@ -28952,7 +29060,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre o Sonar, a busca do Oceano (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
-    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.' },
+    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>⏲ Timers → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, você navega entre as abas <b>Timers</b> (pausar, continuar, iniciar, encerrar ou abrir o card), <b>Notificações</b> (as mesmas do sino; enquanto a ilha estiver ligada, ela substitui o 🔔 do topo) e <b>⚙ Ajustes</b> (quando aparecer, atividade principal, aba ao reabrir, módulos ativos e modo de compartilhar tela; o 📌 mantém aberta). Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
@@ -29013,7 +29121,7 @@ const HELP_CONTENT = {
     { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é o próprio Demandante, ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca ou Canal: se o squad usa o campo Submarca ou o campo Canal (ver dicas em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial" ou label "Shopee") ela vincula direto na tag fixa correspondente — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca ou um canal por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n🛟 <b>Backup completo do banco</b> (feito pela squad de desenvolvimento, fora do board): além do quadro, guarda comentários dos cards, as configurações do squad, intake, Radar, Metas, Escala e os cadastros das pessoas — toda semana (tudo) e todo dia (o que é mais sensível a perda). Esse backup <b>não aparece na tela 🧯 Restaurar backup</b> (que é só do quadro). Pra trazer de volta o que sumiu das outras áreas, use, logo abaixo, <b>🛟 Backup completo (nuvem)</b> (só ADM, PO e Organizador): <b>☁️ Ver backups disponíveis</b> → escolha a data → <b>🔍 Comparar com hoje</b> mostra, por área (💬 comentários dos cards, ⚙️ configurações do squad, 📥 pedidos de intake, 👥 subtimes, ⭐ estrelas), quantos itens sumiram → marque o que quer e <b>🧯 Restaurar as áreas marcadas</b>. Só volta <b>o que sumiu</b>: o que existe hoje nunca é sobrescrito, e a lista do que foi criado fica guardada pra desfazer. Se um backup falhar, os ADMs recebem um aviso 🛟 no sino.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
-    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.\n\n🗓️🐟 <b>Escala e Metas</b>: quando PO, Organizador ou ADM cadastra ou limpa a <b>sua escala</b>, chega o aviso "🗓️ Sua escala foi cadastrada/removida" (clicar abre a Escala na semana certa). E, se a sua squad tem uma meta com <b>⏰ lembrete de preenchimento</b>, chega o aviso "🐟 Atualize a meta" nos horários combinados (clicar abre a aba Dados). Os dois tipos também estão no 🔔 Notificações do Painel e respeitam o seu Não Perturbe.\n\n⏲ <b>Timer e Produtividade</b>: chegam 4 avisos — "alguém criou uma atividade pra você" (só quando é outra pessoa que cria), "atividade encerrada" com o tempo registrado (vai pra quem criou a atividade), "o tempo do seu Timer acabou" (em até 1 minuto, mesmo com a aba fechada) e "segue em andamento" quando uma atividade fica rodando sem pausa por 4 horas (repete aos 8 e 12). Clicar abre o card. O ADM liga/desliga cada um no Painel → 🔔 Notificações.\n\n🚨 <b>Incidente na VTEX</b>: o Maré acompanha sozinho a página de status da VTEX (status.vtex.com). Quando há um incidente ou uma manutenção <b>em andamento</b>, aparece um <b>popup 🚨</b> para todo mundo (reaparece até o incidente acabar) e chega uma notificação 🚨 no sino e no celular. Quando a VTEX marca como resolvido, o aviso some sozinho. Manutenção só agendada aparece como aviso comum, sem push. No Oceano há também um selinho <b>VTEX</b> no topo (azul = normal, vermelho = incidente, cinza = sem leitura). O ADM pode desligar esse tipo no Painel → 🔔 Notificações.\n\n🫨 <b>Modo insistente</b> (opcional, desligado por padrão): se você nem sempre ouve o "ding", abra o 🔔 e use o botão <b>🫨 Modo insistente</b> no rodapé. Ligado, quando chega um aviso <b>importante</b> (os mesmos que viram push) a <b>tela treme</b> (como o zumbido do MSN) e, se você não estiver olhando a janela, o <b>som se repete a cada 30 s</b> (até 5 vezes) e o <b>título da aba pisca</b> — tudo para assim que você volta à janela ou mexe em algo. Dá para escolher cada item e usar <b>▶ Testar agora</b>. Respeita o 🔇 e o 🔕 Não Perturbe, e não treme se o seu sistema pede "reduzir movimento". A escolha acompanha a sua conta em todos os aparelhos.' },
+    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.\n\n🏝️ <b>Ilha Dinâmica (opcional no dev)</b>: ao ligar as notificações na Ilha, a aba Notificações traz o mesmo sino completo: lista, marcar todas, remover um aviso, Limpar antigas, som, push neste aparelho, Não Perturbe e Modo insistente. Para gerenciar push já permitido pelo navegador, clique em Gerenciar push neste aparelho (se estiver desligado, reativa; se estiver ligado, pede confirmação para desligar).\n\n🗓️🐟 <b>Escala e Metas</b>: quando PO, Organizador ou ADM cadastra ou limpa a <b>sua escala</b>, chega o aviso "🗓️ Sua escala foi cadastrada/removida" (clicar abre a Escala na semana certa). E, se a sua squad tem uma meta com <b>⏰ lembrete de preenchimento</b>, chega o aviso "🐟 Atualize a meta" nos horários combinados (clicar abre a aba Dados). Os dois tipos também estão no 🔔 Notificações do Painel e respeitam o seu Não Perturbe.\n\n⏲ <b>Timer e Produtividade</b>: chegam 4 avisos — "alguém criou uma atividade pra você" (só quando é outra pessoa que cria), "atividade encerrada" com o tempo registrado (vai pra quem criou a atividade), "o tempo do seu Timer acabou" (em até 1 minuto, mesmo com a aba fechada) e "segue em andamento" quando uma atividade fica rodando sem pausa por 4 horas (repete aos 8 e 12). Clicar abre o card. O ADM liga/desliga cada um no Painel → 🔔 Notificações.\n\n🚨 <b>Incidente na VTEX</b>: o Maré acompanha sozinho a página de status da VTEX (status.vtex.com). Quando há um incidente ou uma manutenção <b>em andamento</b>, aparece um <b>popup 🚨</b> para todo mundo (reaparece até o incidente acabar) e chega uma notificação 🚨 no sino e no celular. Quando a VTEX marca como resolvido, o aviso some sozinho. Manutenção só agendada aparece como aviso comum, sem push. No Oceano há também um selinho <b>VTEX</b> no topo (azul = normal, vermelho = incidente, cinza = sem leitura). O ADM pode desligar esse tipo no Painel → 🔔 Notificações.\n\n🫨 <b>Modo insistente</b> (opcional, desligado por padrão): se você nem sempre ouve o "ding", abra o 🔔 e use o botão <b>🫨 Modo insistente</b> no rodapé. Ligado, quando chega um aviso <b>importante</b> (os mesmos que viram push) a <b>tela treme</b> (como o zumbido do MSN) e, se você não estiver olhando a janela, o <b>som se repete a cada 30 s</b> (até 5 vezes) e o <b>título da aba pisca</b> — tudo para assim que você volta à janela ou mexe em algo. Dá para escolher cada item e usar <b>▶ Testar agora</b>. Respeita o 🔇 e o 🔕 Não Perturbe, e não treme se o seu sistema pede "reduzir movimento". A escolha acompanha a sua conta em todos os aparelhos.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
     { icon:'🔧', title:'Worker e Firebase', text:'O Firebase armazena todos os dados em tempo real e raramente precisa ser alterado após o setup inicial.\n\n⚠️ A aba Worker é resquício do painel de chat antigo do Agente Ágil (desativado — ver dica "Ações que o agente pode executar"), que dependia de um proxy Cloudflare externo pra falar com a API da Anthropic. O Agente Ágil atual (por @menção) não usa Worker nenhum — roda direto em Cloud Functions.' },
   ],
@@ -29259,7 +29367,7 @@ function renderHelp(){
   if(searching){
     // Busca em todas as seções
     if(tabs) tabs.style.opacity = '.45';
-    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil','automacoes'];
+    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','agil','automacoes'];   // Spotify pausado desde 04/08/2026: fora da busca da Ajuda (o conteúdo fica no código)
     ALL_TABS.forEach(t => { (HELP_CONTENT[t]||[]).forEach(item => items.push({...item, _tab:t})); });
     items = items.filter(item =>
       item.title.toLowerCase().includes(query) ||
@@ -30806,11 +30914,15 @@ function toggleDndMenu(e){
     // não cabia espaço suficiente acima do botão dentro do painel.
     const r = btn.getBoundingClientRect();
     m.style.position = 'fixed';
-    m.style.left = r.left+'px';
-    m.style.width = r.width+'px';
-    m.style.top = (r.bottom + 6)+'px';
+    const largura=Math.min(Math.max(r.width,260),innerWidth-16);
+    m.style.left = Math.max(8,Math.min(r.left,innerWidth-largura-8))+'px';
+    m.style.width = largura+'px';
+    m.style.maxHeight = Math.max(80,innerHeight-16)+'px';
+    m.style.overflowY = 'auto';
     m.style.bottom = 'auto';
     m.style.display = 'block';
+    const altura=m.getBoundingClientRect().height;
+    m.style.top = Math.max(8,Math.min(r.bottom+6+altura<=innerHeight-8 ? r.bottom+6 : r.top-altura-6,innerHeight-altura-8))+'px';
   } else {
     m.style.display = 'none';
   }
@@ -30839,14 +30951,27 @@ function notifPermissionState(){
   if(!window.Notification) return 'unsupported';
   return Notification.permission; // 'default' | 'granted' | 'denied'
 }
-function notifPermRowClick(){
+async function notifPermRowClick(){
   const state=notifPermissionState();
-  if(state==='default') requestNotifPermission();
-  else if(state==='granted'){
-    if(confirm('Desativar notificações push neste aparelho?\n\n(A permissão do navegador continua concedida — é só o registro deste aparelho pra receber avisos que é removido.)')){
-      unregisterPushToken().then(()=>showToast('🔕 Push desativado neste aparelho.'));
+  if(state==='default'){ requestNotifPermission(); return; }
+  const user=window._currentUser;
+  if(state!=='granted' || !user) return;
+  const el=document.getElementById('notif-perm-row');
+  if(el?.getAttribute('aria-busy')==='true') return;
+  el?.setAttribute('aria-busy','true');
+  try{
+    const snap=await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+PUSH_DEVICE_ID));
+    if(window._currentUser?.uid!==user.uid) return;
+    if(snap.exists()){
+      if(confirm('Desativar notificações push neste aparelho?\n\nA permissão do navegador continua concedida.')){
+        await unregisterPushToken(); showToast('🔕 Push desativado neste aparelho. Clique novamente para reativar.');
+      }
+    } else {
+      const token=await registerPushToken();
+      showToast(token?'🔔 Push ativado neste aparelho.':'⚠ Não consegui ativar o push neste aparelho. Tente novamente.');
     }
-  }
+  }catch(e){ showToast('⚠ Não consegui conferir o push deste aparelho. Tente novamente.'); }
+  finally{ el?.removeAttribute('aria-busy'); }
 }
 // Gerado UMA VEZ, síncrono, no carregamento da página — não dentro da função
 // async registerPushToken(). Gerar lá dentro criava uma corrida: se a página
@@ -30898,7 +31023,7 @@ function requestNotifPermission(){
 function renderNotifPermUI(){
   const el=document.getElementById('notif-perm-row'); if(!el) return;
   const state=notifPermissionState();
-  const labels={ granted:'✅ Permitidas neste aparelho', denied:'🚫 Bloqueadas (ajuste nas config. do navegador)', default:'🔔 Ativar notificações neste aparelho', unsupported:'⚠ Não suportado neste navegador' };
+  const labels={ granted:'📲 Gerenciar push neste aparelho', denied:'🚫 Bloqueadas (ajuste nas config. do navegador)', default:'🔔 Ativar notificações neste aparelho', unsupported:'⚠ Não suportado neste navegador' };
   el.textContent = labels[state] || labels.default;
   el.style.cursor = (state==='default'||state==='granted') ? 'pointer' : 'default';
   el.style.opacity = state==='denied' ? '.6' : '1';
@@ -31040,6 +31165,7 @@ function renderNotifs(notifs){
   const feed = window.MareNotif ? MareNotif.items().map(i=>({...i, _feed:true, read:!i.unread, type:i.tipo})) : [];
   notifs = notifs.concat(feed).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
   const unread = notifs.filter(n=>!n.read).length;
+  _ilhaNotifs(notifs);   // 🏝️ Ilha Dinâmica: mesma lista e mesma contagem do sino
   const btn = document.getElementById('notif-btn');
   if(badge){
     const wasShowing = badge.classList.contains('show');
@@ -31058,7 +31184,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>n._feed ? `
-    <div class="notif-item ${n.read?'':'unread'}" data-feed-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openFeedNotif(${jsq(n.id)})">
+    <div role="button" tabindex="0" class="notif-item ${n.read?'':'unread'}" data-feed-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openFeedNotif(${jsq(n.id)})">
       <div class="notif-icon">${esc(n.icon)}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -31067,7 +31193,7 @@ function renderNotifs(notifs){
       </div>
       <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissFeedNotif(${jsq(n.id)})">✕</button>
     </div>` : `
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
+    <div role="button" tabindex="0" class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -37085,38 +37211,52 @@ function _sonarMareIniciar(){
     vazio:'Tente outra palavra, ou comece com <b>r:</b> para o Radar e <b>s:</b> para outros squads.',
     inicio:'Digite para buscar nos cards deste board e em todo o Oceano: Objetivos e Marcos do Radar, outros squads e a Ajuda. Com a caixa vazia, <b>1</b>–<b>4</b> escolhem onde buscar.',
     aoAbrir: ()=>{ document.getElementById('search-overlay')?.classList.remove('open'); },
-    fontes: (q, toks)=>{
-      const ativos = cards.filter(c=>c && !c.archived);
+    fontes: (q, toks0)=>{
+      // "meus/minhas …" = cards em que estou (responsável ou participante — a mesma regra do 💡 Meus cards); a palavra sai da busca
+      const {meus, toks} = MareSonar._separaMeus(toks0);
+      const qSem = meus ? q.split(/\s+/).filter(w=>!MareSonar._separaMeus([MareSonar._norm(w)]).meus).join(' ') : q;
+      const ativos = cards.filter(c=>c && !c.archived && (!meus || _euEstouNoCard(c)));
       const itens = ativos.map(c=>{ const col = columns.find(x=>x.id===c.col) || {name:c.col||'', color:''};
         return {k:'card:'+c.id, ic:'<span class="dot" style="background:'+esc(corOk(col.color))+'"></span>', t:c.title||'(sem título)', sub:[col.name, nomeDe(c), c.due||''].filter(Boolean).join(' · '), tipo:'card',
-          busca:(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), go:()=>openCard(c.id), rec:{card:c.id}}; });
-      const g = [{g:'Neste board', esc:'board', max:8, itens}];
-      if(q && toks.length){
-        const n = ativos.filter(c=>MareSonar._pontua((c.title||'')+' '+(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), toks)>0).length;
-        if(n>1) g.push({g:'No quadro', esc:'board', itens:[{k:'acao:verboard', ic:'🔍', t:'Ver '+n+' cards no board', sub:'Filtra o quadro por “'+q+'”', tipo:'acao', sempre:true, go:()=>_sonarVerNoBoard(q)}]});
+          busca:(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), go:()=>_sonarAbrirCard(c.id), rec:{card:c.id},
+          url:pag+'?squad='+encodeURIComponent(ACTIVE_SQUAD)+'&card='+encodeURIComponent(c.id), toks}; });   // deep link: Ctrl/⌘+Enter abre o card em aba nova
+      const g = [{g:meus ? 'Meus cards neste board' : 'Neste board', esc:'board', max:8, itens}];
+      if(q && (toks.length || meus)){
+        const n = toks.length ? ativos.filter(c=>MareSonar._pontua((c.title||'')+' '+(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), toks)>0).length : ativos.length;
+        // "Ver N cards no board": com texto, filtra o quadro pelo texto (sem a palavra "meus"); só "meus", destaca os meus cards (💡 Meus cards)
+        if(n>1) g.push({g:'No quadro', esc:'board', itens:[toks.length
+          ? {k:'acao:verboard', ic:'🔍', t:'Ver '+n+' cards no board', sub:'Filtra o quadro por “'+qSem+'”', tipo:'acao', sempre:true, go:()=>_sonarVerNoBoard(qSem)}
+          : {k:'acao:meusboard', ic:'💡', t:'Destacar meus '+n+' cards no board', sub:'Mesmo botão “💡 Meus cards” dos Filtros', tipo:'acao', sempre:true, go:()=>highlightMyCards()}]});
       }
       return g;
     },
     radar: { esc:'radar', url: id=>okr+'?okr='+encodeURIComponent(id), abrir: url=>window.open(url, '_blank', 'noopener') },
     depois: (q)=>{
       const g = [];
-      if(q.length>=2) g.push({g:'Outros squads', esc:'squads', fim:true, max:4, itens:Object.keys(SQUAD_META_LIVE||{}).filter(sq=>sq!==ACTIVE_SQUAD).map(sq=>{
+      const outros = Object.keys(SQUAD_META_LIVE||{}).filter(sq=>sq!==ACTIVE_SQUAD);
+      // aba "Squads" com a caixa vazia: lista os outros squads para abrir direto (antes ficava vazia — achado do Antigravity)
+      if(!q && outros.length) g.push({g:'Outros squads', esc:'squads', itens:outros.map(sq=>{ const nome = (SQUAD_META_LIVE[sq] && SQUAD_META_LIVE[sq].label) || ('Squad '+sq), url = pag+'?squad='+encodeURIComponent(sq);
+        return {k:'sq:'+sq, ic:'🌊', t:nome, sub:'Abrir o board deste squad', tipo:'squad', url, go:()=>{ location.href = url; }}; })});
+      if(q.length>=2) g.push({g:'Outros squads', esc:'squads', fim:true, max:4, itens:outros.map(sq=>{
         const nome = (SQUAD_META_LIVE[sq] && SQUAD_META_LIVE[sq].label) || ('Squad '+sq), url = pag+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120));
-        return {k:'sqb:'+sq, ic:'🔎', t:'Buscar “'+q+'” em '+nome, sub:'Abre esse board com a busca preenchida', tipo:'busca', busca:nome+' '+sq, sempre:true, go:()=>{ location.href = url; }}; })});
+        return {k:'sqb:'+sq, ic:'🔎', t:'Buscar “'+q+'” em '+nome, sub:'Abre esse board com a busca preenchida', tipo:'busca', busca:nome+' '+sq, sempre:true, url, go:()=>{ location.href = url; }}; })});
       const hs = [];
-      Object.entries(HELP_CONTENT).forEach(([tab, its])=>(its||[]).forEach(it=>hs.push({k:'help:'+tab+':'+it.title, ic:it.icon||'❓', t:it.title, sub:'Ajuda do Maré', tipo:'ajuda', busca:semTag(it.text).slice(0,500), go:()=>openHelp(tab, it.title)})));
+      Object.entries(HELP_CONTENT).filter(([tab])=>tab!=='spotify').forEach(([tab, its])=>(its||[]).forEach(it=>hs.push({k:'help:'+tab+':'+it.title, ic:it.icon||'❓', t:it.title, sub:'Ajuda do Maré', tipo:'ajuda', busca:semTag(it.text).slice(0,500), go:()=>openHelp(tab, it.title)})));
       g.push({g:'Ajuda do Maré', esc:'ajuda', max:4, itens:hs});
       return g;
     },
     deRecente: (r, base)=>{
-      if(r.card){ const c = cards.find(x=>x.id===r.card && !x.archived); if(c) return Object.assign(base, {ic:'🃏', t:c.title||base.t, go:()=>openCard(c.id), rec:{card:c.id}}); return null; }
+      if(r.card){ const c = cards.find(x=>x.id===r.card && !x.archived); if(c) return Object.assign(base, {ic:'🃏', t:c.title||base.t, url:pag+'?squad='+encodeURIComponent(ACTIVE_SQUAD)+'&card='+encodeURIComponent(c.id), go:()=>_sonarAbrirCard(c.id), rec:{card:c.id}}); return null; }
       if(r.app==='okr' && MareSonar._paginaOk(r.url)) return Object.assign(base, {ic:'🎯', url:r.url, go:()=>window.open(r.url, '_blank', 'noopener')});
       return null;
     },
   });
   return true;
 }
+// Abrir um card (ou ver no board) pelo Sonar fecha os modais que ficariam por cima dele (Ajuda, Atalhos… — achado do Antigravity)
+function _sonarAbrirCard(id){ document.querySelectorAll('.ov.open').forEach(el=>{ if(el.id!=='card-ov' && typeof closeOv==='function') closeOv(el.id); }); openCard(id); }
 function _sonarVerNoBoard(q){
+  document.querySelectorAll('.ov.open').forEach(el=>{ if(typeof closeOv==='function') closeOv(el.id); });
   const bar=document.getElementById('filter-bar');
   if(bar.style.display==='none'||bar.style.display==='') toggleFilters();
   const fTx=document.getElementById('f-texto');
@@ -37431,48 +37571,32 @@ function _migrateLegacyComments(cardObj){
 const TM_RAIZ='kanban/timers_ativos';
 let _tmCardId=null, _tmOff=null, _tmRecs={}, _tmAberto=new Set(), _tmIntervalo=null, _tmIdxOff=null, _tmMeus={};
 let _tmAvisouZero=new Set(), _tmFormAberto=false, _tmPendente=false, _tmPopAberto=false;
-function _tmDecorrido(t,agora){ return Math.max(0,(+t.accMs||0)+((t.status==='rodando'&&t.startedAt)?(agora-t.startedAt):0)); }
-function _tmFmt(ms){ const s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600), m=Math.floor(s%3600/60), p=n=>String(n).padStart(2,'0'); return h? h+':'+p(m)+':'+p(s%60) : p(m)+':'+p(s%60); }
+// ⏲ contas e gravação do timer moram em mare-timer.js (10/11/2026) — a Ilha Dinâmica do Oceano usa as mesmas funções
+function _tmDecorrido(t,agora){ return MareTimer.decorrido(t,agora); }
+function _tmFmt(ms){ return MareTimer.fmt(ms); }
 // Cronômetro mostra o decorrido; timer mostra o que falta e, passando de zero, o excedente com "+".
-function _tmMostra(t,agora){ const d=_tmDecorrido(t,agora); if(t.tipo==='timer' && t.durMs){ const r=t.durMs-d; return r>=0 ? {txt:_tmFmt(r),esg:false} : {txt:'+'+_tmFmt(-r),esg:true}; } return {txt:_tmFmt(d),esg:false}; }
+function _tmMostra(t,agora){ return MareTimer.mostra(t,agora); }
 function _tmMembro(uid){ return members.find(m=>m.uid===uid)||null; }
 function _tmNome(uid){ const m=_tmMembro(uid); return m ? (m.name||m.email||'?') : '?'; }
-function _tmEstado(t){ return {novo:'aguardando início',rodando:'em andamento',pausado:'pausado',encerrado:'encerrado'}[t.status]||t.status; }
-function _tmIdx(t){ return {sq:t.sq,cardId:t.cardId,cardTitle:t.cardTitle||'',atividade:t.atividade,tipo:t.tipo,status:t.status,startedAt:t.startedAt||null,accMs:t.accMs||0,durMs:t.durMs||null,porUid:t.porUid||''}; }
+function _tmEstado(t){ return MareTimer.estadoTxt(t); }
+function _tmIdx(t){ return MareTimer.idx(t); }
 const _TM_SVG={ play:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1v10l8.5-5z"/></svg>', pause:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10" rx=".6"/><rect x="7" y="1" width="3" height="10" rx=".6"/></svg>', stop:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1"/></svg>' };
 function _tmBtn(t,ac,rotulo){ return `<button type="button" class="tm-b${ac==='stop'?' stop':''}" data-tm-ac="${ac}" aria-label="${rotulo}" title="${rotulo}" onclick="event.stopPropagation();tmAcao(${jsq(t.sq)},${jsq(t.cardId)},${jsq(t.id)},'${ac}')">${_TM_SVG[ac]}</button>`; }
 function _tmCtl(t,meu){ if(!meu||t.status==='encerrado') return ''; return '<span class="tm-ctl">'+(t.status==='rodando'?_tmBtn(t,'pause','Pausar'):_tmBtn(t,'play',t.status==='novo'?'Iniciar':'Retomar'))+_tmBtn(t,'stop','Encerrar')+'</span>'; }
 
 // ── escrita: registro (por campo, não sobrescreve descrição editada por outro) + índice do dono, num update só ──
-function _tmEscrever(t, patch, opts){
-  const base='kanban/squads/'+t.sq+'/dados/card_timers/'+t.cardId+'/'+t.id, idx=TM_RAIZ+'/'+t.uid+'/'+t.id, upd={};
-  Object.keys(patch).forEach(k=>{ if(patch[k]!==undefined) upd[base+'/'+k]=patch[k]; });
-  const novo=Object.assign({},t,patch);
-  if(novo.status==='encerrado') upd[idx]=null;
-  else if(opts&&opts.criar) upd[idx]=_tmIdx(novo);
-  else ['status','startedAt','accMs','atividade','durMs','tipo'].forEach(k=>{ if(k in patch) upd[idx+'/'+k]=patch[k]; });
-  return window._update(window._ref(window._db), upd);
-}
-function _tmPatch(t,acao,agora){
-  const dec=_tmDecorrido(t,agora);
-  if(acao==='play' && (t.status==='novo'||t.status==='pausado')){ const p={status:'rodando',startedAt:agora,accMs:t.accMs||0}; if(!t.iniciadoEm) p.iniciadoEm=new Date(agora).toISOString(); return p; }
-  if(acao==='pause' && t.status==='rodando') return {status:'pausado',startedAt:null,accMs:dec};
-  if(acao==='stop' && t.status!=='encerrado') return {status:'encerrado',startedAt:null,accMs:dec,encerradoEm:new Date(agora).toISOString()};
-  return null;
-}
+function _tmEscrever(t, patch, opts){ return MareTimer.escrever(t, patch, opts); }
+function _tmPatch(t,acao,agora){ return MareTimer.patch(t,acao,agora); }   // iniciadoEm só no 1º play (ver mare-timer.js)
 function _tmBuscar(sq,cardId,tid){
   const r=_tmRecs[tid]; if(r && r.cardId===cardId) return r;
   const m=_tmMeus[tid]; return (m && m.cardId===cardId && m.sq===sq) ? m : null;
 }
 async function tmAcao(sq,cardId,tid,acao){
   const me=window._currentUser, t=_tmBuscar(sq,cardId,tid); if(!me||!t) return;
-  if(t.uid!==me.uid){ showToast('Só quem recebeu a atividade controla o timer.'); return; }
-  const patch=_tmPatch(t,acao,Date.now()); if(!patch) return;
-  try{ await _tmEscrever(t,patch); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível atualizar o timer.'); return; }
-  if(acao==='stop'){
-    showToast('Atividade encerrada — '+_tmFmt(patch.accMs));
-    if(t.porUid && t.porUid!==t.uid) createNotif(t.porUid,'timer_encerrado',(me.displayName||'Alguém')+' encerrou "'+t.atividade+'"','Tempo registrado: '+_tmFmt(patch.accMs),t.cardId,null,null,{squad:t.sq},t.id);
-  }
+  const r=await MareTimer.acao(t,acao,{uid:me.uid, nome:me.displayName,
+    notificar:n=>createNotif(n.uid,n.tipo,n.titulo,n.texto,n.cardId,null,null,{squad:n.squad},n.tid)});
+  if(!r.ok){ if(r.msg) showToast((r.erro==='gravacao'?'⚠ ':'')+r.msg); return; }
+  if(acao==='stop') showToast('Atividade encerrada — '+_tmFmt(r.patch.accMs));
 }
 async function tmSalvarCampo(sq,cardId,tid,campo,valor){
   const me=window._currentUser, t=_tmBuscar(sq,cardId,tid); if(!me||!t||!_tmPodeEditar(t)) return;
@@ -37557,7 +37681,7 @@ function tmIniciarIndice(){
       const v=snap.val()||{}; _tmMeus={};
       // só entradas completas: uma corrida pode deixar só `avisos` depois do encerrar (o servidor limpa; aqui nunca vira linha "undefined")
       Object.keys(v).forEach(id=>{ const e=v[id]; if(e&&typeof e==='object'&&e.sq&&e.cardId&&e.atividade&&e.status) _tmMeus[id]=Object.assign({},e,{id,uid:u.uid}); });
-      _tmAtualizarBadge(); if(_tmPopAberto) _tmRenderPop(); _tmLigarRelogio();
+      _tmAtualizarBadge(); if(_tmPopAberto) _tmRenderPop(); _tmLigarRelogio(); _ilhaRender();
     }, err=>console.warn('[timer] índice:',err));
   }catch(e){ console.warn('[timer]',e); }
 }
@@ -37680,6 +37804,230 @@ function tmAbrirCard(sq,cardId){
   if(sq && sq!==ACTIVE_SQUAD){ window.location.href=window.location.pathname+'?squad='+encodeURIComponent(sq)+'&card='+encodeURIComponent(cardId); return; }
   if(cards.find(c=>c.id===cardId)) openCard(cardId); else showToast('Esse card não está mais neste quadro.');
 }
+
+// ═══ 🏝️ ILHA DINÂMICA (teste no Maré dev, 10/11/2026 — plano: docs/ideias/ilha-dinamica.md) ═══════════════
+// Desligada por padrão; liga no ⏲ Timers ("🏝️ Ilha Dinâmica"); ajustes na aba "Ajustes" da própria ilha (prévia ao vivo, ideia do Vorssaint).
+// NÃO lê nada a mais: os timers vêm do índice que o ⏲ Timers já escuta (_tmMeus) e as notificações da mesma lista do sino (renderNotifs).
+// Pausar/continuar/encerrar = tmAcao() (mesma função do card → MareTimer). Preferências por aparelho e por pessoa (localStorage).
+// Módulo desligado não gasta: sem timer na ilha = nenhum relógio da ilha rodando (window.__ilhaTicks).
+const _ILHA_PAD = {on:false, modo:'acao', principal:'timer', reabrir:'ultima', timer:true, notif:true, privado:false, aba:'timers'};
+const _ilha = {p:null, aberta:false, fixada:false, hover:false, notifs:[], conhecidas:null, aviso:null, tAviso:null, tSai:null, tick:null, confirmar:null};
+window.__ilhaTicks = 0;
+const _ilhaChave = () => 'mare_ilha_'+((window._currentUser&&window._currentUser.uid)||'anon')+(/-dev\.html/.test(location.pathname)?'_dev':'');
+function _ilhaPrefs(){ const k = _ilhaChave(); if(_ilha.p && _ilha.k===k) return _ilha.p; _ilha.k = k; let o=null;   // chave por pessoa: trocar de conta no mesmo aparelho não carrega a preferência de outra
+  try{ o=JSON.parse(localStorage.getItem(_ilhaChave())||'null'); }catch(e){} _ilha.p = Object.assign({}, _ILHA_PAD, (o&&typeof o==='object')?o:{}); return _ilha.p; }
+function _ilhaSalvar(){ try{ localStorage.setItem(_ilhaChave(), JSON.stringify(_ilha.p)); }catch(e){} }
+const _ilhaCelular = () => matchMedia('(max-width:768px)').matches || matchMedia('(pointer:coarse)').matches;
+// timers da pessoa, rodando primeiro (o principal é o rodando mais recente)
+function _ilhaTimers(){ const ord={rodando:0,novo:1,pausado:2}; return Object.values(_tmMeus||{}).filter(t=>t&&t.status!=='encerrado').sort((a,b)=>(ord[a.status]-ord[b.status])||((b.startedAt||0)-(a.startedAt||0))); }
+const _ilhaNaoLidas = () => _ilha.notifs.filter(n=>!n.read).length;
+// Notificações (chamado por renderNotifs com a lista já mesclada do sino): aviso só para as que chegaram AGORA (nunca na 1ª carga)
+function _ilhaNotifs(lista){
+  _ilha.notifs = Array.isArray(lista) ? lista : [];
+  const ids = new Set(_ilha.notifs.map(n=>String(n.id)));
+  if(_ilha.conhecidas){
+    const nova = _ilha.notifs.find(n=>!n.read && !_ilha.conhecidas.has(String(n.id)));
+    const p = _ilhaPrefs();
+    if(nova && p.on && p.notif && !(typeof isDndActive==='function' && isDndActive())) _ilhaAvisar(nova);
+  }
+  _ilha.conhecidas = ids;
+  _ilhaRender();
+}
+function _ilhaAvisar(n){
+  const p = _ilhaPrefs();
+  _ilha.aviso = p.privado ? {t:'Nova notificação', s:''} : {t:String(n.title||'Nova notificação').slice(0,120), s:String(n.sub||'').slice(0,80)};
+  const an = document.getElementById('ilha-anuncio'); if(an) an.textContent = 'Nova notificação: '+_ilha.aviso.t;
+  clearTimeout(_ilha.tAviso); _ilha.tAviso = setTimeout(()=>{ _ilha.aviso = null; _ilhaRender(); }, 6000);
+}
+function _ilhaEstado(){
+  const p = _ilhaPrefs();
+  if(!p.on) return 'off';
+  if(_ilha.aberta) return 'aberta';
+  if(_ilha.aviso) return 'aviso';
+  const tem = (p.timer && _ilhaTimers().length) || (p.notif && p.principal==='notif' && _ilhaNaoLidas());
+  const modo = (p.modo==='mouse' && _ilhaCelular()) ? 'acao' : p.modo;   // no toque não existe "passar o mouse"
+  if(modo==='sempre') return tem || (p.notif && _ilhaNaoLidas()) ? 'atividade' : 'repouso';
+  if(modo==='mouse') return _ilha.hover ? ((tem || (p.notif && _ilhaNaoLidas())) ? 'atividade' : 'repouso') : 'fio';
+  return tem ? 'atividade' : 'oculta';
+}
+function _ilhaPilula(){
+  const p = _ilhaPrefs(), agora = Date.now(), ts = p.timer ? _ilhaTimers() : [], a = ts[0] || null, n = p.notif ? _ilhaNaoLidas() : 0;
+  const ilha = document.getElementById('ilha'), mostra = a ? MareTimer.mostra(a, agora) : null;
+  const notifPrincipal = p.principal==='notif' && n && !a;
+  ilha.classList.toggle('ilha-pausa', !!a && a.status!=='rodando'); ilha.classList.toggle('ilha-esg', !!(mostra && mostra.esg));
+  document.getElementById('ilha-ico').textContent = _ilha.aviso ? '🔔' : a ? (a.status==='rodando' ? '⏲' : a.status==='novo' ? '⏳' : '⏸') : (notifPrincipal ? '🔔' : '🌊');
+  const repouso = !a && !notifPrincipal && !_ilha.aviso; ilha.classList.toggle('ilha-repouso', repouso);
+  document.getElementById('ilha-titulo').textContent = repouso ? (n ? 'Oceano' : 'Tudo em dia') : p.privado ? '' : a ? a.atividade : (n===1 ? '1 notificação' : n+' notificações');
+  document.getElementById('ilha-tempo').textContent = a ? (a.status==='novo' ? 'iniciar' : mostra.txt) : '';
+  document.getElementById('ilha-mais').textContent = ts.length>1 ? '+'+(ts.length-1) : '';
+  const nb = document.getElementById('ilha-n'); nb.hidden = !n || notifPrincipal; nb.querySelector('b').textContent = n>9 ? '9+' : String(n);
+  document.getElementById('ilha-sep').hidden = !(n && !notifPrincipal && (a || _ilha.aviso));
+  document.getElementById('ilha-aviso-t').textContent = _ilha.aviso ? _ilha.aviso.t : '';
+  document.getElementById('ilha-aviso-s').textContent = _ilha.aviso ? _ilha.aviso.s : '';
+  const rot = [_ilha.aviso ? 'Nova notificação: '+_ilha.aviso.t : a ? ((p.privado?'Timer':a.atividade)+', '+MareTimer.estadoTxt(a)+', '+(a.status==='novo'?'':mostra.txt)) : 'Ilha Dinâmica', n ? n+' não lida'+(n>1?'s':'') : ''].filter(Boolean).join(' · ');
+  document.getElementById('ilha-btn').setAttribute('aria-label', rot);
+}
+// 10/11/2026 — a Ilha substitui a entrada do sino, não suas funcionalidades.
+function _ilhaSinoLugar(dentro){
+  const sino=document.getElementById('notif-panel'); if(!sino) return;
+  if(!sino._ilhaCasa){ sino._ilhaCasa=document.createComment('posição original do sino'); sino.before(sino._ilhaCasa); }
+  const menu=document.getElementById('dnd-menu');
+  if(menu && !menu._ilhaCasa){ menu._ilhaCasa=document.createComment('posição original do Não Perturbe'); menu.before(menu._ilhaCasa); }
+  const slot=dentro && document.getElementById('ilha-sino-slot');
+  if(slot){
+    notifOpen=false; sino.classList.remove('open'); sino.classList.add('ilha-sino'); slot.appendChild(sino);
+    // O painel da Ilha tem transform: menus fixed precisam ficar no body para
+    // usar coordenadas da janela, como os handlers originais calculam.
+    if(menu) document.body.appendChild(menu);
+  } else {
+    if(menu){ menu.style.display='none'; if(menu._ilhaCasa?.isConnected) menu._ilhaCasa.after(menu); }
+    if(window.MareNotif?.menusFechar) MareNotif.menusFechar();
+    sino.classList.remove('ilha-sino');
+    if(sino._ilhaCasa.isConnected) sino._ilhaCasa.after(sino);
+  }
+}
+function _ilhaPainel(){
+  const p = _ilhaPrefs(), agora = Date.now(), aba = _ilha.abaAtual || 'timers';
+  const abaBtn = (id, rot) => `<button type="button" class="ilha-aba${aba===id?' on':''}" data-aba="${id}" role="tab" aria-selected="${aba===id}">${rot}</button>`;
+  let h = '<div class="ilha-abas" role="tablist">'+(p.timer?abaBtn('timers','⏲ Timers'):'')+(p.notif?abaBtn('notif','🔔 Notificações'):'')+abaBtn('ajustes','⚙ Ajustes')
+    + `<button type="button" id="ilha-fixar" aria-pressed="${_ilha.fixada}" title="${_ilha.fixada?'Desafixar':'Manter aberta'}" aria-label="Manter aberta">📌</button></div>`;
+  if(aba==='timers'){
+    const ts = _ilhaTimers();
+    h += ts.length ? ts.map(t=>{ const m = MareTimer.mostra(t, agora), conf = _ilha.confirmar===t.id;
+      return `<div class="ilha-timer ${t.status}${m.esg?' esg':''}" data-id="${esc(t.id)}"><div><div class="ilha-timer-t">${esc(p.privado?'Timer':t.atividade)}</div><div class="ilha-timer-s">${esc(p.privado?'':(t.cardTitle||''))}${p.privado?'':' · '}${esc(MareTimer.estadoTxt(t))}</div></div>`
+        + `<div class="ilha-timer-tempo">${t.status==='novo'?'—':esc(m.txt)}</div><div class="ilha-acoes">`
+        + (t.status==='rodando' ? '<button type="button" data-acao="pausar">⏸ Pausar</button>' : `<button type="button" data-acao="${t.status==='novo'?'iniciar':'continuar'}">▶ ${t.status==='novo'?'Iniciar':'Continuar'}</button>`)
+        + (conf ? '<button type="button" data-acao="confirmar-encerrar">Encerrar mesmo?</button>' : '<button type="button" data-acao="encerrar">⏹ Encerrar</button>')
+        + '<button type="button" data-acao="abrir-card">Abrir o card</button></div></div>'; }).join('')
+      : '<div class="ilha-vazio">Nenhum timer ativo. Crie um num card, em "Timer e Produtividade".</div>';
+  } else if(aba==='notif'){
+    h += '<div id="ilha-sino-slot"></div>';
+  } else {
+    const sel = (id, val, ops) => `<select id="${id}">`+ops.map(([v,r])=>`<option value="${v}"${val===v?' selected':''}>${r}</option>`).join('')+'</select>';
+    const chk = (id, v) => `<input type="checkbox" id="${id}"${v?' checked':''}>`;
+    h += '<div class="ilha-cfg">'
+      + `<label>Quando aparecer ${sel('ilha-cfg-modo', p.modo, [['acao','Só quando houver ação'],['mouse','Ao passar o mouse'],['sempre','Sempre visível']])}</label>`
+      + `<label>Atividade principal ${sel('ilha-cfg-principal', p.principal, [['timer','Timer'],['notif','Notificações']])}</label>`
+      + `<label>Ao reabrir, mostrar ${sel('ilha-cfg-reabrir', p.reabrir, [['ultima','A última aba'],['timers','Timers'],['notif','Notificações']])}</label>`
+      + `<label>Timers na ilha ${chk('ilha-cfg-timer', p.timer)}</label>`
+      + `<label>Notificações na ilha (tira o 🔔 do topo) ${chk('ilha-cfg-notif', p.notif)}</label>`
+      + `<label>Compartilhar tela (sem títulos) ${chk('ilha-cfg-privado', p.privado)}</label>`
+      + '<p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
+      + '<button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div>';
+  }
+  // O sino é um único nó: mover preserva handlers, preferências e a lista completa.
+  // Retire-o antes de trocar o HTML, para não destruir os controles originais.
+  _ilhaSinoLugar(false);
+  document.getElementById('ilha-painel').innerHTML = h;
+  if(aba==='notif') _ilhaSinoLugar(true);
+}
+// Lugar da ilha no desktop: centro do vão livre entre o nome do squad (.hd-l) e os botões (.hd-btns) — ou, com os botões
+// quebrados para a linha de baixo, o resto da 1ª linha. A pílula nunca passa desse vão (não empurra nem cobre botão).
+function _ilhaLugar(){
+  const ilha = document.getElementById('ilha'), hd = ilha && ilha.parentElement, l = hd && hd.querySelector('.hd-l'), bt = hd && hd.querySelector('.hd-btns');
+  if(!ilha || !l || !bt || matchMedia('(max-width:768px)').matches){ if(ilha){ ilha.style.removeProperty('--ilha-x'); ilha.style.removeProperty('--ilha-max'); } return; }
+  const H = hd.getBoundingClientRect(), L = l.getBoundingClientRect(), B = bt.getBoundingClientRect();
+  const mesmaLinha = B.top < L.bottom - 4, fim = mesmaLinha ? B.left : H.right;
+  const vao = Math.max(0, fim - L.right - 32);
+  ilha.style.setProperty('--ilha-x', Math.round(L.right - H.left + 16 + vao/2)+'px');
+  ilha.style.setProperty('--ilha-max', Math.max(150, Math.round(vao))+'px');
+}
+function _ilhaRender(){
+  const ilha = document.getElementById('ilha'); if(!ilha) return;
+  const p = _ilhaPrefs(), e = _ilhaEstado();
+  ilha.hidden = e==='off';
+  ilha.closest('.hd')?.classList.toggle('ilha-no-topo',e==='aberta');
+  ilha.closest('.app')?.classList.toggle('ilha-no-topo',e==='aberta');
+  const sino = document.getElementById('notif-btn'); if(sino) sino.style.display = (p.on && p.notif) ? 'none' : '';
+  if(e==='off'){ _ilhaSinoLugar(false); _ilhaRelogio(); return; }
+  ilha.dataset.estado = e;
+  document.getElementById('ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
+  _ilhaPilula(); _ilhaLugar();
+  if(e==='aberta' && !ilha.contains(document.activeElement) || (e==='aberta' && !document.querySelector('#ilha-painel .ilha-abas'))) _ilhaPainel();
+  _ilhaRelogio();
+}
+// relógio só com timer rodando na ilha, ilha visível e aba visível; o texto sai sempre do horário (MareTimer.mostra), nunca de contagem de ticks
+function _ilhaRelogio(){
+  const p = _ilhaPrefs(), e = document.getElementById('ilha') && document.getElementById('ilha').dataset.estado;
+  const precisa = p.on && p.timer && !document.hidden && ['atividade','aberta','aviso'].includes(e) && _ilhaTimers().some(t=>t.status==='rodando');
+  if(precisa && !_ilha.tick){ _ilha.tick = setInterval(()=>{ _ilhaPilula(); if(_ilha.aberta) document.querySelectorAll('#ilha-painel .ilha-timer').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.id]; if(t && t.status!=='novo') el.querySelector('.ilha-timer-tempo').textContent = MareTimer.mostra(t, Date.now()).txt; }); }, 1000); window.__ilhaTicks = 1; }
+  if(!precisa && _ilha.tick){ clearInterval(_ilha.tick); _ilha.tick = null; window.__ilhaTicks = 0; }
+}
+function _ilhaAbrir(){
+  const p = _ilhaPrefs();
+  _ilha.abaAtual = p.reabrir==='ultima' ? (p.aba || 'timers') : p.reabrir;
+  if(_ilha.abaAtual==='timers' && !p.timer) _ilha.abaAtual = p.notif ? 'notif' : 'ajustes';
+  if(_ilha.abaAtual==='notif' && !p.notif) _ilha.abaAtual = p.timer ? 'timers' : 'ajustes';
+  _ilha.aberta = true; _ilha.confirmar = null; _ilha.aviso = null; clearTimeout(_ilha.tAviso);
+  _ilhaRender(); _ilhaPainel();
+  setTimeout(()=>{ const f = document.querySelector('#ilha-painel .ilha-aba.on') || document.getElementById('ilha-painel'); f.focus({preventScroll:true}); }, 10);
+}
+function _ilhaFechar(foco){
+  if(!_ilha.aberta) return;
+  _ilhaSinoLugar(false);
+  _ilha.aberta = false; _ilha.fixada = false; const fx = document.getElementById('ilha-fixar'); if(fx) fx.setAttribute('aria-pressed','false');
+  // modo "ao passar o mouse" com o ponteiro fora: fechar recolhe de vez (senão o foco devolvido à pílula a manteria à mostra)
+  const recolhe = _ilhaPrefs().modo==='mouse' && !_ilhaCelular() && !_ilha.dentro;
+  if(recolhe){ _ilha.hover = false; if(document.getElementById('ilha').contains(document.activeElement)) document.activeElement.blur(); }
+  _ilhaRender();
+  if(foco!==false && !recolhe){ const b = document.getElementById('ilha-btn'); if(b && getComputedStyle(b).display!=='none') b.focus({preventScroll:true}); }
+}
+function _ilhaLigarDoPop(){
+  const p = _ilhaPrefs();
+  _tmFecharPop();
+  if(p.on){ _ilhaRender(); _ilhaAbrir(); _ilha.abaAtual = 'ajustes'; _ilhaPainel(); return; }   // já ligada: o botão leva aos ajustes
+  p.on = true; _ilhaSalvar(); _ilhaRender();
+  showToast('🏝️ Ilha Dinâmica ligada neste aparelho. Clique nela → ⚙ Ajustes para escolher como ela aparece.');
+}
+window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(); }, desligar:()=>{ _ilhaPrefs().on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); }, estado:()=>_ilhaEstado()};
+(function _ilhaEventos(){
+  const ilha = document.getElementById('ilha'); if(!ilha) return;
+  document.getElementById('ilha-btn').addEventListener('click', ()=> _ilha.aberta ? _ilhaFechar() : _ilhaAbrir());
+  const entra = ()=>{ clearTimeout(_ilha.tSai); if(!_ilha.hover){ _ilha.hover = true; _ilhaRender(); } };
+  const sai = (porFoco)=>{ clearTimeout(_ilha.tSai); _ilha.tSai = setTimeout(()=>{ if(_ilha.aberta) return; if(porFoco!==true && _ilha.dentro) return; if(porFoco===true && ilha.contains(document.activeElement)) return; _ilha.hover = false; _ilhaRender(); }, 900); };
+  // mouse saiu → recolhe (mesmo com foco dentro: quem usa teclado não dispara "mouse saiu"); foco saiu → recolhe se o mouse não estiver em cima
+  ilha.addEventListener('mouseenter', ()=>{ _ilha.dentro = true; entra(); }); ilha.addEventListener('mouseleave', ()=>{ _ilha.dentro = false; sai(); });
+  document.getElementById('ilha-fio').addEventListener('focus', ()=>{ entra(); setTimeout(()=>document.getElementById('ilha-btn').focus({preventScroll:true}), 0); });
+  document.getElementById('ilha-fio').addEventListener('click', ()=>{ entra(); _ilhaAbrir(); });
+  ilha.addEventListener('focusout', e=>{ if(!ilha.contains(e.relatedTarget) && !_ilha.dentro) sai(true); });
+  // Esc fecha (e desfixa) — o 📌 só impede o clique fora de fechar; nunca chega aos atalhos do board
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ilha.aberta){
+    e.preventDefault(); e.stopImmediatePropagation();
+    const dnd=document.getElementById('dnd-menu'), ins=document.getElementById('mn-ins-menu');
+    if(dnd?.style.display==='block'){ dnd.style.display='none'; document.getElementById('dnd-toggle-btn')?.focus(); }
+    else if(ins?.style.display==='block'){ MareNotif.menusFechar(); document.getElementById('ins-toggle-btn')?.focus(); }
+    else _ilhaFechar();
+  } }, true);
+  document.addEventListener('mousedown', e=>{ if(_ilha.aberta && !_ilha.fixada && !ilha.contains(e.target) && !e.target.closest('#dnd-menu,#mn-ins-menu')) _ilhaFechar(false); });
+  document.addEventListener('visibilitychange', ()=>_ilhaRender());
+  const painel = document.getElementById('ilha-painel');
+  painel.addEventListener('click', async e=>{
+    const p = _ilhaPrefs();
+    const ab = e.target.closest('.ilha-aba'); if(ab){ _ilha.abaAtual = ab.dataset.aba; if(ab.dataset.aba!=='ajustes'){ p.aba = ab.dataset.aba; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
+    if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
+    if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
+    if(e.target.closest('.notif-item') && !e.target.closest('.notif-dismiss')){ _ilhaFechar(false); return; }
+    const b = e.target.closest('button[data-acao]'); if(!b) return;
+    const el = b.closest('.ilha-timer'), t = el && (_tmMeus||{})[el.dataset.id]; if(!t) return;
+    const ac = b.dataset.acao;
+    if(ac==='encerrar'){ _ilha.confirmar = t.id; _ilhaPainel(); const c = painel.querySelector('[data-acao="confirmar-encerrar"]'); if(c) c.focus(); return; }
+    if(ac==='abrir-card'){ _ilhaFechar(false); tmAbrirCard(t.sq, t.cardId); return; }
+    const mapa = {pausar:'pause', continuar:'play', iniciar:'play', 'confirmar-encerrar':'stop'};
+    _ilha.confirmar = null;
+    await tmAcao(t.sq, t.cardId, t.id, mapa[ac]);   // o índice atualiza e chama _ilhaRender
+    _ilhaPainel();
+  });
+  document.getElementById('notif-panel').addEventListener('keydown', e=>{ const ni = e.target.closest('.notif-item'); if(ni && e.target===ni && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); ni.click(); } });
+  painel.addEventListener('change', e=>{
+    const p = _ilhaPrefs(), id = e.target.id;
+    if(id==='ilha-cfg-modo') p.modo = e.target.value; else if(id==='ilha-cfg-principal') p.principal = e.target.value; else if(id==='ilha-cfg-reabrir') p.reabrir = e.target.value;
+    else if(id==='ilha-cfg-timer') p.timer = e.target.checked; else if(id==='ilha-cfg-notif') p.notif = e.target.checked; else if(id==='ilha-cfg-privado') p.privado = e.target.checked; else return;
+    _ilhaSalvar(); _ilhaPilula(); _ilhaRender(); _ilhaRelogio();   // prévia ao vivo: a pílula muda enquanto ajusta
+  });
+  window.addEventListener('resize', ()=>{ if(_ilhaPrefs().on) _ilhaRender(); });
+  // o cabeçalho muda de largura sem resize da janela (nome do squad, botões que aparecem): reposiciona a ilha
+  try{ const hdb = document.querySelector('.hd-btns'), hdl = document.querySelector('.hd-l'); if(window.ResizeObserver && hdb){ const ro = new ResizeObserver(()=>{ if(_ilhaPrefs().on) _ilhaLugar(); }); ro.observe(hdb); if(hdl) ro.observe(hdl); } }catch(e){}
+})();
 
 async function loadComments(cardId){
   _commentCardId = cardId;
@@ -40213,7 +40561,7 @@ renderBoard();
   let tentativas = 0;
   const tentar = () => {
     tentativas++;
-    if(!(Array.isArray(cards) && cards.length) && tentativas < 15){ setTimeout(tentar, 400); return; }
+    if((!window._currentUser || !(Array.isArray(cards) && cards.length)) && tentativas < 15){ setTimeout(tentar, 400); return; }
     if(_sonarMareIniciar()){ MareSonar.abrir({q, esc:'board'}); return; }
     openSearch();
     const inp = document.getElementById('search-inp'); if(!inp) return;

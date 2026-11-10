@@ -33,20 +33,22 @@ html{scroll-behavior:smooth;scroll-padding-top:76px;}
   --ink-rgb:3,13,26;--slate-rgb:10,30,55;
   --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;
   --shadow:0 10px 34px rgba(0,0,0,.35);
+  --specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --ease-out:cubic-bezier(.32,.72,0,1);--ease-in-out:cubic-bezier(.4,0,.2,1);--ease-overshoot:cubic-bezier(.34,1.56,.64,1);
   --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;
 }
 :root[data-theme="light"]{
   --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
   --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#0a8f86;
   --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
-  --warn:#c98a10;--danger:#F15B6C;--ok:#1f9d55;--ink-rgb:251,253,255;--slate-rgb:235,245,250;--shadow:0 10px 30px rgba(7,70,110,.22);
+  --warn:#c98a10;--danger:#F15B6C;--ok:#1f9d55;--ink-rgb:251,253,255;--slate-rgb:235,245,250;--shadow:0 10px 30px rgba(7,70,110,.22);--specular:inset 0 1px 0 rgba(255,255,255,.7);
   --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
 }
 :root[data-theme="sunset"]{
   --deep:#1a1530;--deep-rgb:26,21,48;--glass:rgba(38,28,58,0.62);--glass-b:rgba(255,176,110,0.26);
   --blue:#c4642f;--accent:#ffb36b;--cyan:#ffd2a1;--teal:#ffcf6e;
   --txt:#fdf1e4;--txt2:rgba(253,241,228,0.72);--txt3:rgba(253,241,228,0.46);
-  --ink-rgb:26,21,48;--slate-rgb:48,34,66;
+  --ink-rgb:26,21,48;--slate-rgb:48,34,66;--specular:inset 0 1px 0 rgba(255,255,255,.08);
   --ocean:radial-gradient(ellipse 80% 45% at 50% 38%,rgba(255,160,70,.5) 0%,rgba(255,120,60,.16) 45%,transparent 70%),linear-gradient(180deg,#141d3f 0%,#2a2a55 22%,#7a4a56 38%,#d98a58 47%,#1b4a63 48.4%,#0d2f4b 62%,#071c33 100%);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
@@ -106,7 +108,7 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .sec h2{font-family:var(--ff-d);font-weight:800;font-size:clamp(25px,3.6vw,38px);line-height:1.12;letter-spacing:-.01em;margin-bottom:12px;}
 .sec .lead{font-size:16px;line-height:1.6;color:var(--txt2);max-width:760px;margin-bottom:26px;}
 .linha{height:1px;border:0;background:var(--glass-b);margin:46px 0 0;}
-.vidro{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.vidro{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--specular);}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;font-size:13px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;text-decoration:none;}
 .btn:hover{border-color:var(--accent);}
 .btn.pri{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
@@ -129,7 +131,7 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 @media (prefers-reduced-motion:reduce){.vtex-pill.alerta::before{animation:none;}}
 .sino{position:relative;}
 .sino-n{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;border-radius:999px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box;font-family:var(--ff-b,inherit);}
-.sino-drop{display:none;position:fixed;z-index:100;flex-direction:column;max-height:min(70vh,540px);background:rgba(var(--deep-rgb),.97);border:1px solid var(--glass-b);border-radius:14px;box-shadow:0 14px 44px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.sino-drop{display:none;position:fixed;z-index:100;flex-direction:column;max-height:min(70vh,540px);background:rgba(var(--deep-rgb),.97);border:1px solid var(--glass-b);border-radius:14px;box-shadow:var(--specular),0 14px 44px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
 .sino-hd{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--glass-b);font-size:13px;font-weight:700;color:var(--txt);}
 .sino-list{overflow-y:auto;padding:8px;}
 .sino-it{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-bottom:5px;background:rgba(var(--slate-rgb,10,37,64),.4);border:1px solid var(--glass-b);cursor:pointer;}
@@ -156,8 +158,8 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .ola span{font-size:12px;color:var(--txt3);}
 .sec-title{display:flex;align-items:center;font-size:12px;font-weight:600;color:var(--txt);border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin:26px 0 14px;}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
-.tile{position:relative;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:border-color .2s,transform .15s,box-shadow .2s;}
-.tile:hover,.tile:focus-within{border-color:var(--accent);box-shadow:0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);}
+.tile{position:relative;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--specular);transition:border-color .2s,transform .15s,box-shadow .2s;}
+.tile:hover,.tile:focus-within{border-color:var(--accent);box-shadow:var(--specular),0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);}
 .tile-main{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:26px 16px 16px;background:none;border:none;color:inherit;cursor:pointer;text-align:left;border-radius:var(--r2);min-height:150px;}
 .tile-logo{width:56px;height:56px;border-radius:14px;overflow:hidden;flex:none;display:block;box-shadow:0 2px 10px rgba(0,0,0,.3);}
 .tile-logo img,.tile-logo svg{width:100%;height:100%;display:block;object-fit:cover;}
@@ -328,9 +330,9 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .mural-mais{margin-top:8px;background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 4px;}
 .mural-mais:hover{text-decoration:underline;}
 .mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
-.av{position:relative;display:flex;flex-direction:column;overflow:hidden;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);cursor:pointer;text-align:left;transition:border-color .2s,transform .15s,box-shadow .2s;}
+.av{position:relative;display:flex;flex-direction:column;overflow:hidden;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);cursor:pointer;text-align:left;box-shadow:var(--specular);transition:border-color .2s,transform .15s,box-shadow .2s;}
 .av::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mc,var(--accent));z-index:1;}
-.av:hover,.av:focus-visible{border-color:var(--mc,var(--accent));box-shadow:0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);outline:none;}
+.av:hover,.av:focus-visible{border-color:var(--mc,var(--accent));box-shadow:var(--specular),0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);outline:none;}
 .av-capa{height:118px;background:rgba(var(--slate-rgb),.6);overflow:hidden;}
 .av-capa img{width:100%;height:100%;object-fit:cover;display:block;}
 .av-c{display:flex;flex-direction:column;gap:7px;padding:14px 16px 13px 20px;flex:1;min-width:0;}
@@ -363,7 +365,7 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .aviso-corpo details[open] summary{margin-bottom:.4em;}
 .ov{position:fixed;inset:0;z-index:120;background:rgba(1,8,16,.78);backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto;}
 .ov.open{display:flex;}
-.modal{width:min(720px,100%);padding:0;overflow:hidden;background:rgba(var(--deep-rgb),.94);backdrop-filter:none;-webkit-backdrop-filter:none;}
+.modal{width:min(720px,100%);padding:0;overflow:hidden;background:rgba(var(--deep-rgb),.94);box-shadow:var(--specular),var(--shadow);backdrop-filter:none;-webkit-backdrop-filter:none;}
 [data-theme="light"] .modal{background:rgba(248,253,255,.97);}
 .modal-hd{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--glass-b);}
 .modal-hd h3{font-family:var(--ff-d);font-size:19px;flex:1;}
@@ -425,8 +427,8 @@ input.in[readonly]{opacity:.7;}
 .versao-aviso button{margin-left:10px;border:1px solid #fff;background:transparent;color:inherit;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer;}
 
 /* ═══ 🏖️ ASSISTENTE FÉRIAS DO CAIO (ATÉ 03/11) ═══ */
-.ferias-banner{position:relative;margin:0 0 12px;padding:10px 14px;border-radius:var(--r2);border:1px solid rgba(29,233,182,.38);background:linear-gradient(135deg,rgba(29,233,182,.13) 0%,rgba(56,182,255,.12) 52%,var(--glass) 100%);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.24);overflow:hidden;}
-:root[data-theme="light"] .ferias-banner,:root[data-tema="claro"] .ferias-banner{background:linear-gradient(135deg,rgba(255,255,255,.88) 0%,rgba(224,247,255,.82) 100%);border-color:rgba(0,124,168,.38);box-shadow:0 8px 24px rgba(7,70,110,.15);}
+.ferias-banner{position:relative;margin:0 0 12px;padding:10px 14px;border-radius:var(--r2);border:1px solid rgba(29,233,182,.38);background:linear-gradient(135deg,rgba(29,233,182,.13) 0%,rgba(56,182,255,.12) 52%,var(--glass) 100%);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--specular),0 10px 30px rgba(0,0,0,.24);overflow:hidden;}
+:root[data-theme="light"] .ferias-banner,:root[data-tema="claro"] .ferias-banner{background:linear-gradient(135deg,rgba(255,255,255,.88) 0%,rgba(224,247,255,.82) 100%);border-color:rgba(0,124,168,.38);box-shadow:var(--specular),0 8px 24px rgba(7,70,110,.15);}
 .ferias-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
 .ferias-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:999px;background:rgba(29,233,182,.16);color:var(--teal);border:1px solid rgba(29,233,182,.4);}
 :root[data-theme="light"] .ferias-badge,:root[data-tema="claro"] .ferias-badge{background:rgba(10,143,134,.12);color:#066962;border-color:rgba(10,143,134,.35);}
@@ -772,14 +774,14 @@ window.dispatchEvent(new Event('fb-ready'));
 
 <script src="mare-notif.js?v=41"></script>
 <script src="mare-plantao.js?v=5"></script>
-<script src="mare-dicas.js?v=10"></script>
+<script src="mare-dicas.js?v=12"></script>
 <script src="mare-metas.js?v=19"></script>
-<script src="mare-sonar.js?v=4"></script>
+<script src="mare-sonar.js?v=8"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.69 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.75 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1228,7 +1230,7 @@ function sinoClique(k, id){
 //    gatilhos: 'boot' (ao entrar, 1 por visita), 'sino' em sinoToggle(), 'perfil' em abrirPerfil(). "Saiba mais" abre a pergunta da Ajuda (faq-<id>).
 // as dicas de ENTRADA falam do lobby: com um produto aberto aqui dentro (app instalado abrindo no último produto, ou clique rápido) elas cobririam o produto
 const _lobbyVisivel = ()=>!document.getElementById('host').classList.contains('on');
-const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone() && _lobbyVisivel(), menu:_lobbyVisivel, aqui:_lobbyVisivel};
+const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone() && _lobbyVisivel(), menu:_lobbyVisivel, aqui:_lobbyVisivel, sonar:_lobbyVisivel};
 function iniciarDicas(){
   if(!window.MareDicas || !U) return;
   MareDicas.init({app:'oceano', user:U, isViewer:false, quando:OCEANO_DICAS_QUANDO, abrirAjuda:id=>abrirAjuda(id)});
@@ -1419,7 +1421,7 @@ function mostrarHost(id, url){
     fr.addEventListener('load', ()=>{ if(host.atual===id) $('#host-load').style.display = 'none'; fr.dataset.ok = '1'; });
     $('#host-frames').appendChild(fr); host.abertos.push(id);
   }
-  if(url && fr.dataset.ok && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }
+  else if(url && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }   // aba já criada (mesmo ainda carregando): vai para o endereço pedido — achado do Antigravity
   host.atual = id; $$('#host-frames iframe').forEach(f=>f.classList.toggle('on', f.dataset.app===id));
   $('#host-load').style.display = fr.dataset.ok ? 'none' : 'flex'; $('#host-load-tx').textContent = 'Abrindo '+a.nome+'…';
   $('#host').classList.add('on'); document.body.style.overflow = 'hidden'; atualizarAnimacao();
@@ -1534,8 +1536,8 @@ $('#perfil-bd').addEventListener('change', e=>{
 
 // ── Ajuda ──
 const FAQ = [
-  {id:'sonar', q:'O que é o Sonar 🔍 (Ctrl+K / ⌘K)?', a:'<p>É a <b>busca de todo o Oceano</b>. Aperte <b>Ctrl+K</b> (no Mac, <b>⌘K</b>) ou clique em <b>🔍 Sonar</b> no topo e digite: aparecem os produtos, os seus squads do Maré, os <b>Objetivos e Marcos do Radar</b>, os links e a ajuda, e Enter abre já no lugar certo.</p><p><b>Onde buscar:</b> com a caixa vazia, as teclas <b>1</b> (Maré), <b>2</b> (Radar), <b>3</b> (Links) e <b>4</b> (Ajuda) trocam o escopo, e <b>Tab</b> passa de um para o outro. Também dá para começar com <b>m:</b> ou <b>r:</b> (ex.: <b>r: meus</b> mostra os seus Objetivos). Para achar um card, use "Buscar … nos cards", que abre a busca do Maré já preenchida no squad escolhido.</p><p>Erro de digitação de uma letra e falta de acento não atrapalham. Ctrl+Enter abre em aba nova. Com um produto aberto aqui dentro, use o 🔍 da barra de cima.</p>'},
-  {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado).</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p><p>Se nem sempre você ouve o “ding”, use o <b>🫨 Modo insistente</b> (também no rodapé, desligado por padrão): quando chega um aviso importante a tela treme e, se você não estiver olhando a janela, o som se repete e o título da aba pisca — até você voltar ou mexer em algo. Dá para escolher cada item e testar na hora.</p>'},
+  {id:'sonar', q:'O que é o Sonar 🔍 (Ctrl+K / ⌘K)?', a:'<p>É a <b>busca de todo o Oceano</b> (com o disco de sonar que varre enquanto procura). Aperte <b>Ctrl+K</b> (no Mac, <b>⌘K</b>) ou clique em <b>🔍 Sonar</b> no topo e digite: aparecem os produtos, os seus squads do Maré, os <b>Objetivos e Marcos do Radar</b>, os links e a ajuda, e Enter abre já no lugar certo.</p><p><b>Onde buscar:</b> com a caixa vazia, as teclas <b>1</b> (Maré), <b>2</b> (Radar), <b>3</b> (Links) e <b>4</b> (Ajuda) trocam o escopo, e <b>Tab</b> passa de um para o outro. Também dá para começar com os prefixos <b>m:</b>, <b>r:</b>, <b>l:</b> ou <b>a:</b> (ex.: <b>r: meus</b> ou <b>meus</b> mostra os Objetivos e Marcos em que você é responsável). Para achar um card, use "Buscar … nos cards", que abre o Sonar do Maré já preenchido no squad escolhido.</p><p>Erro de digitação de uma letra e falta de acento não atrapalham (códigos com número, como <b>T426</b>, exigem escrita exata). <b>Ctrl+Enter</b> (ou <b>⌘+Enter</b>) abre em aba nova (quando o resultado tem endereço; o rodapé avisa). Quando há mais resultados do que cabem, o Sonar mostra “Exibindo X de Y” e o caminho para ver o resto.</p><p>Os Objetivos e Marcos do Radar ficam guardados neste aparelho por até 3 horas, para a busca ser instantânea. Para buscar de novo agora, digite <b>atualizar</b> e escolha <b>Atualizar o Radar</b>. Com um produto aberto aqui dentro, use o 🔍 da barra de cima.</p>'},
+  {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, entrega/cobrança do Radar, timer, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado). No topo do sino, <b>✓ Marcar tudo como lido</b> zera as não lidas; no rodapé, <b>Limpar antigas</b> remove da lista o que já foi lido.</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p><p>Se nem sempre você ouve o “ding”, use o <b>🫨 Modo insistente</b> (também no rodapé, desligado por padrão): quando chega um aviso importante a tela treme e, se você não estiver olhando a janela, o som se repete e o título da aba pisca — até você voltar ou mexer em algo. Dá para escolher cada item e testar na hora.</p>'},
   {id:'vtex', q:'O selinho de status no topo ("VTEX" / Status dos Serviços): o que ele mostra?', a:'<p>É o <b>monitor de status dos serviços críticos do ecossistema</b> (<b>VTEX, Shopify, Cloudflare, GitHub, OpenAI e Claude</b>), lido automaticamente das páginas oficiais de status a cada poucos minutos. O selo exibe o <b>status consolidado</b> e permite consultar os <b>detalhes por serviço</b>. <b>Azul ("normal")</b>: nenhum incidente relevante em andamento. <b>Vermelho ("incidente")</b>: há instabilidade em algum serviço monitorado — passe o mouse para ver o resumo e clique para abrir os detalhes por serviço. <b>Cinza ("sem leitura")</b>: o monitor não conseguiu atualizar a leitura agora, então não dá para afirmar que está tudo normal.</p><p>Quando há incidente crítico você também recebe um <b>popup 🚨</b> e uma notificação (sino e celular); quando o serviço normaliza, o aviso some sozinho.</p>'},
   {id:'oque', q:'O que é o Oceano?', a:'<p>É o nome da família de produtos do time Digital Hering: <b>Maré Digital</b> (o board dos squads), <b>Painel</b> (gestão e pessoas), <b>Radar</b> (OKRs e reuniões), <b>A Bordo</b> (boas-vindas) e, no futuro, <b>Travessia</b> (performance e gente). Esta página é o lobby: apresenta tudo, serve de atalho e guarda o seu perfil.</p>'},
   {id:'login', q:'Quem consegue entrar? Por que só Google?', a:'<p>Só quem tem conta <b>@ciahering.com.br</b> entrando pelo Google. É a mesma regra do servidor (as regras do banco exigem isso), então não depende só desta tela. Visualizadores externos do Radar entram direto pelo Radar, não pelo Oceano.</p>'},
@@ -1547,11 +1549,11 @@ const FAQ = [
   {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam sozinhos quando a aba fica em segundo plano, a janela perde o foco (numa reunião, por exemplo), um produto está aberto por cima ou você fica 1 minuto sem mexer — e voltam assim que você mexe no mouse ou no teclado. Começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
   {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
-  {id:'mural', q:'O que é o Mural na página inicial?', a:'<p>É onde a squad publica os <b>avisos</b> pra todo mundo: novidades, avisos, dicas e alertas urgentes. Quem publica é o administrador, no <b>Painel → Pessoas → Comunicados</b> (a opção "🌊 Mostrar no mural do Oceano" vem marcada; existe também "Só no Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro, e no botão dele, quando houver, pra ir direto ao assunto.</p><p>No computador o Mural fica <b>ao lado dos produtos</b> (produtos à esquerda, avisos à direita), tudo na primeira tela — se há muitos avisos, a lista rola dentro da coluna. No celular ele vem <b>recolhido</b> embaixo dos produtos. O cabeçalho mostra quantos avisos há e um selo <b>● N novos</b> (vermelho se tiver um urgente); clique nele pra abrir ou recolher — o Oceano lembra a sua escolha. Os avisos só contam como \"vistos\" depois de alguns segundos com o Mural aberto e à vista.</p><p>Você só vê o que é pra você: avisos de um squad específico aparecem pra quem é desse squad, e os "só PO" pra PO, Organizador e ADM. Aviso com data de validade some sozinho.</p>'},
+  {id:'mural', q:'O que são a Meta Global · Digital e o Mural na página inicial?', a:'<p>Na página inicial, ao lado de <b>Meus produtos</b>, ficam duas colunas de acompanhamento do time:</p><p><b>🎯 Meta Global · Digital (🐟 O mar tá pra peixe):</b> mostra a meta global do Digital com o anel de atingimento, quanto falta, ritmo por dia e o gráfico de evolução (alterne entre <b>Acumulado</b> e <b>Por dia</b>, ou clique em <b>⛶ Expandir</b> para abrir em tela cheia com a tabela dia a dia de Realizado × Esperado × ∆ diferença). Quem tem permissão pode atualizar o realizado ali mesmo.</p><p><b>📌 Mural:</b> é onde a squad publica os <b>avisos</b> pra todo mundo (novidades, dicas e alertas urgentes, publicados no <b>Painel → Pessoas → Comunicados</b> com "🌊 Mostrar no mural do Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro (alertas automáticos de incidente da VTEX vêm traduzidos para português e trazem <b>🇬🇧 Ver original em inglês</b> ao abrir). No celular o Mural vem recolhido embaixo dos produtos, e os avisos só contam como "vistos" depois de alguns segundos abertos à vista.</p>'},
   {id:'entrada', q:'Abri o Maré (ou o Painel) e fui parar no Oceano. Por quê?', a:'<p>O Oceano é a <b>porta de entrada</b>: quem ainda não está logado no Maré ou no Painel é mandado pra cá, entra com o Google da Hering (e o cadastro básico é feito aqui) e <b>fica no Oceano</b>, onde vê o Mural e os produtos. Um aviso <b>"↩ Continuar para o Maré"</b> no topo leva de volta pro que você tinha aberto (o mesmo card ou link). Com a sessão ativa, nada disso aparece — você entra direto.</p><p>Convidado externo (visualizador)? Na tela de login há links <b>"Entre direto"</b>; eles abrem o Maré, o Painel ou o Radar com a tela de login própria.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
   {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
-  {id:'notif', q:'E as notificações?', a:'<p>O sino é o mesmo em Maré, Painel e Radar (um sino só), com push no celular e Não Perturbe. Abra o produto para ver e configurar — o Oceano não duplica o sino.</p>'},
+  {id:'notif', q:'Como escolho quais notificações quero receber?', a:'<p>O <b>🔔 sininho no topo do Oceano</b> é o mesmo sino unificado do Maré Digital, do Painel e do Radar (veja a pergunta sobre o 🔔 acima). Para escolher em detalhe <b>quais tipos de aviso</b> você quer receber no sino e no celular (cards, menções, prazos, Timer, Radar/cobrança de entregas, Travessia, Escala…), use a <b>Central de Notificações</b> no <b>Painel → 🔔 Notificações</b> (ou nas configurações do Maré e do Radar): a sua escolha vale em todos os produtos.</p>'},
   {id:'contato', q:'Como falo com a squad que constrói?', a:'<p>Use <b>✉️ Falar com a squad</b> na seção "Por que o Oceano", ou comente no card "Melhorias Maré Digital" do Maré.</p>'},
 ];
 function renderFaq(q){
