@@ -134,13 +134,12 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 ### Pendente de deploy (só o Caio roda)
 
-> ✅ **Tudo o que estava listado até 10/11/2026 foi publicado pelo Caio** (em 10/11: as 5 funções do Agente Ágil com o conhecimento regenerado na promoção #1662).
+> ✅ **Tudo o que estava listado até 10/11/2026 foi publicado pelo Caio** (em 10/11: as 5 funções do Agente Ágil com o conhecimento regenerado na promoção #1662; e o `okrAgenteChat` com o período padronizado do #1667).
 >
 > Antes disso: **tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | **Agente do Radar só grava período no padrão** (T426/S127/A27): `criar_objetivo` e `editar_campos_okr` recusam "4T-2026" e afins (`functions/okr/agenteTools.js` + `agentePrompt.js`). Combina com o PR do seletor no `okr-dev.html`. | resync → `firebase deploy --only functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 10/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
