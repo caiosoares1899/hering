@@ -86,6 +86,17 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Sonar: 6 correções (cópia do Radar vencida em memória, prefixo × aba, "minha", Ctrl+Enter sem destino, seleção pulando, contagem parcial) — mare-sonar ?v=5 (SÓ DEV · oceano-dev v1.70, kanban-dev v8.30.923-dev)
+
+Seis correções do Sonar, achadas na pesquisa do Codex sobre o Spotlight do macOS e confirmadas no código (`mare-sonar-dev.js` ?v=5, adaptador do Maré):
+1. **Cópia do Radar vencia só no aparelho, não na memória.** Com a aba aberta o dia todo, o Sonar usava Objetivos de horas atrás. Agora a cópia em memória também vence em 3 h e é relida na próxima busca que pedir o Radar. Nova ação **"Atualizar o Radar"** (digite "atualizar") relê na hora, sem nenhuma leitura periódica.
+2. **Prefixo vencia a aba.** Com "r: meta" digitado, clicar em "Maré" continuava buscando no Radar. Agora o prefixo vira a aba (o campo fica só com "meta") e quem manda é sempre a aba.
+3. **"minha" saía da busca sem ativar o filtro de responsável** (só "meu/meus/minhas" ativavam). Agora as quatro formas fazem as duas coisas (`separaMeus`).
+4. **Ctrl+Enter prometido sem destino.** Card do Maré não tinha endereço, e Ctrl+Enter fazia o mesmo que Enter. Agora o card tem link direto (`?squad=…&card=…`), e o rodapé só mostra "Ctrl+Enter abre em aba nova" quando o item marcado tem endereço.
+5. **Seleção pulava quando o Radar chegava depois** (reproduzido com resposta atrasada: de "Buscar meta nos cards" para "Meta de vendas 2"). Agora a seleção segue a identidade do item, não a posição.
+6. **Contagem parcial parecia total.** Com mais resultados do que cabem, o grupo mostra "Exibindo X de Y": em Tudo, "Ver os Y de …" leva à aba; na aba, "Mostrar mais" (de 30 em 30). O status diz "mostrando X de Y".
+- Testes: `docs/arezzo/testes/test_sonar_etapa1.js` (falhava em 16 checagens antes, passa inteiro depois; inclui Radar com 1,5 s de atraso e janela de 3 h com o relógio adiantado) e `docs/arezzo/testes/test_sonar_logica.js` (Node puro, 43 verificações das funções do módulo, escrito pelo Codex por contrato). Script de console só de leitura: `docs/arezzo/testes/console_sonar.js`.
+
 ### 2026-11-10 · Sonar: abas cortadas em janela baixa (o flex espremia a faixa) — mare-sonar ?v=4 (PROD · oceano v1.69, kanban v8.30.922)
 
 - **Sintoma (Caio, 10/11):** no Sonar do lobby, as abas (Tudo, Maré, Radar…) apareciam cortadas embaixo pela linha da faixa.
