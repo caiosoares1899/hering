@@ -91,7 +91,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Sintoma (Caio, 10/11):** no Sonar do lobby, as abas (Tudo, Maré, Radar…) apareciam cortadas embaixo pela linha da faixa.
 - **Causa:** a janela é uma coluna flex com altura máxima (88vh). A faixa das abas tem `overflow-x:auto`, e com isso o `min-height` automático dela vira 0. Quando a lista é maior que a tela, o flex espremia a faixa (38–42 px para botões de 32 px + 16 px de folga) e cortava os botões. Nas capturas de teste a tela era alta e não aparecia.
 - **Correção:** `mare-sonar-dev.js` (?v=4) — cabeçalho, abas e rodapé com `flex:none`; só a lista rola. oceano-dev v1.69, kanban-dev v8.30.922-dev.
-- **Teste:** `test_oceano_sonar.js` ganhou "janela de 560/640 px: abas inteiras" (falha sem a correção: faixa 38 px com rolagem vertical; passa com ela).
+- **Teste:** `docs/arezzo/testes/test_oceano_sonar.js` ganhou "janela de 560/640 px: abas inteiras" (falha sem a correção: faixa 38 px com rolagem vertical; passa com ela).
 
 ### 2026-11-09 · Maré › Modal do card: rolagem lateral em celular/tablet e foco perdido ao recolher checklist (SÓ DEV)
 
