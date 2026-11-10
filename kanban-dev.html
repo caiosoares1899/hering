@@ -3653,6 +3653,46 @@ input[type="date"]{-moz-appearance:textfield;}
 /* Versão vermelha (impedimento) */
 .help-tip.danger .help-tip-btn{background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.3);color:rgba(255,107,107,.8);width:14px;height:14px;font-size:8px;}
 .help-tip.danger .help-tip-balloon{border-color:rgba(255,107,107,.35);}
+
+/* 09/11/2026 — modal do card: o tamanho mínimo de selects/inputs e dos
+   grupos não pode alargar a folha no celular; não esconda o overflow. */
+#card-ov .modal-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+#card-ov .modal-col,#card-ov .field,#card-ov .card-attr-row,#card-ov .fi,
+#card-ov .cl-ai,#card-ov .cl-sec{min-width:0;max-width:100%;}
+#card-ov .card-attr-row{grid-template-columns:repeat(2,minmax(0,1fr));}
+#card-ov .fi{box-sizing:border-box;}
+#card-ov .cl-group+.cl-group{box-shadow:0 -1px 0 var(--glass-b);}
+#card-ov .cl-group-title{color:var(--txt);}
+#card-ov .cl-group-hd{min-width:0;}
+#card-ov .cl-del,#card-ov .cl-collapse-btn,#card-ov .cl-copy-all{color:var(--txt2);}
+#card-ov .panel-hd .x-btn:focus-visible,#card-ov #m-checklist :focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;
+}
+@media(max-width:768px){
+  #card-ov .card-attr-row{grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:1000px){
+  #card-ov .modal-ft-row{flex-wrap:wrap;}
+  #card-ov .modal-ft-spacer{display:none;}
+  #card-ov #modal-ft-primary{margin-left:auto;}
+}
+@media(hover:none) and (pointer:coarse){
+  #card-ov .panel-hd{flex-wrap:wrap;}
+  #card-ov #m-title-disp{order:99;flex:1 1 100%!important;overflow-wrap:anywhere;}
+  #card-ov #m-share-label{display:none;}
+  #card-ov .panel-hd .x-btn{min-width:44px;min-height:44px;flex-shrink:0;}
+  #card-ov .cl-group-hd{flex-wrap:wrap;gap:4px!important;}
+  #card-ov .cl-group-title{order:-1;flex:1 0 100%!important;box-sizing:border-box;min-height:44px;font-size:16px!important;}
+  #card-ov .cl-group-hd>span:not(.cl-group-handle){margin-left:auto;}
+  #card-ov #m-checklist button,#card-ov .cl-copy-all,#card-ov .cl-group-handle{
+    min-width:44px;min-height:44px;flex-shrink:0;
+  }
+  #card-ov .cl-item{align-items:flex-start;gap:4px;}
+  #card-ov .cl-item input[type=checkbox]{width:24px;height:24px;margin:10px 4px;flex-shrink:0;}
+  #card-ov .cl-it{padding-top:10px;line-height:1.5;}
+  #card-ov .cl-ai{font-size:16px;}
+}
+
 </style>
 <script>
 // 🏢 MODO "SÓ HERING" (2026-10-08) — o Maré atende só a Hering: login só pelo Google (@ciahering.com.br), OKR de uma torre só (Digital),
@@ -4339,7 +4379,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       title="Padrão de card — define quais seções opcionais aparecem no modal"
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
     <div id="m-cover-wrap" style="position:relative;display:inline-block;margin-right:6px;">
-      <button class="x-btn" id="m-cover-btn" onclick="toggleCoverMenu()" title="Capa de cor ou imagem">🎨</button>
+      <button class="x-btn" id="m-cover-btn" aria-label="Capa de cor ou imagem" onclick="toggleCoverMenu()" title="Capa de cor ou imagem">🎨</button>
       <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
         <div class="cover-swatches cover-swatches-target"></div>
         <div style="border-top:1px solid var(--glass-b);margin:9px 0 7px;padding-top:8px;">
@@ -4354,13 +4394,13 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       </div>
     </div>
     <span id="m-share-label" style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
-    <button class="x-btn" id="m-share-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
+    <button class="x-btn" id="m-share-btn" aria-label="Copiar link deste card" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     </button>
     <button class="x-btn" id="m-travessia-btn" onclick="guardarNaTravessia()" title="Guardar este card no seu Baú da Travessia (suas conquistas do ciclo, pra lembrar na hora da avaliação)" aria-label="Guardar na Travessia" style="margin-right:6px;">💼</button>
-    <button class="x-btn" id="m-toggle-all-secs" onclick="toggleAllModalSecs()" title="Expandir/recolher seções" style="margin-right:6px;">⇕</button>
-    <button class="x-btn" id="m-scrolldesc-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
-    <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
+    <button class="x-btn" id="m-toggle-all-secs" aria-label="Expandir ou recolher seções" onclick="toggleAllModalSecs()" title="Expandir/recolher seções" style="margin-right:6px;">⇕</button>
+    <button class="x-btn" id="m-scrolldesc-btn" aria-label="Ir para a Descrição" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
+    <button class="x-btn" aria-label="Fechar card" onclick="closeOv('card-ov')">✕</button>
   </div>
 
   <div id="m-lock-row" style="display:none;align-items:center;gap:8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;font-size:12.5px;color:var(--accent);">
@@ -4529,7 +4569,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <!-- Coluna direita: checklist + riscos + links -->
       <div class="modal-col">
         <div class="cl-sec" id="m-checklist-sec">
-          <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div><button type="button" class="cl-copy-all" onclick="copyAllChecklist()" title="Copiar todos os itens do checklist">📋</button></div>
+          <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div><button type="button" class="cl-copy-all" aria-label="Copiar todos os itens do checklist" onclick="copyAllChecklist()" title="Copiar todos os itens do checklist">📋</button></div>
           <div id="m-agent-sim" style="display:none;margin-bottom:8px;padding:8px 10px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.28);border-radius:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
               <span id="m-agent-sim-progress" style="font-size:11px;color:#c4b5fd;font-weight:600;"></span>
@@ -6662,7 +6702,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.914-dev</div>
+<div class="version">v8.30.915-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18208,8 +18248,11 @@ function addChecklistGroup(){
 }
 function toggleChecklistGroupCollapse(gid){
   const g=_mCurrentGroups.find(x=>x.id===gid); if(!g) return;
+  // renderCL recria o botão: preserve o foco de teclado no mesmo grupo.
+  const refocar=document.activeElement?.classList.contains('cl-collapse-btn');
   g.colapsado=!g.colapsado;
   renderCL(getCL());
+  if(refocar) document.querySelector('#m-checklist .cl-group[data-gid="'+CSS.escape(gid)+'"] .cl-collapse-btn')?.focus();
   scheduleAutoSave();
 }
 function delChecklistGroup(gid){
@@ -18266,7 +18309,7 @@ function renderCL(cl){
     const pct = total? Math.round(done/total*100) : 0;
 
     const sec=document.createElement('div'); sec.className='cl-group'; sec.style.cssText='margin-bottom:14px;'; sec.dataset.gid=g.id;
-    const hd=document.createElement('div'); hd.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    const hd=document.createElement('div'); hd.className='cl-group-hd'; hd.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;';
     const _gi = _mCurrentGroups.indexOf(g), _varios = _mCurrentGroups.length>1;
     // só arrasta o checklist pela alça (o resto do bloco continua com seleção de texto/itens); o item tem o drag próprio e não dispara este (e.target!==sec)
     sec.addEventListener('dragstart',e=>{ if(e.target!==sec) return; _clDragGid=g.id; e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain','checklist:'+g.id); }catch(_){} sec.classList.add('dragging'); });
@@ -18279,8 +18322,10 @@ function renderCL(cl){
     collapseBtn.style.cssText='background:none;border:none;color:var(--txt3);cursor:pointer;padding:2px 4px;font-size:11px;flex-shrink:0;line-height:1;';
     collapseBtn.textContent = g.colapsado ? '▸' : '▾';
     collapseBtn.title = g.colapsado ? 'Expandir checklist' : 'Recolher checklist';
+    collapseBtn.setAttribute('aria-label',collapseBtn.title+': '+g.title);
+    collapseBtn.setAttribute('aria-expanded',String(!g.colapsado));
     collapseBtn.onclick=()=>toggleChecklistGroupCollapse(g.id);
-    const titleEl=document.createElement('input'); titleEl.value=g.title; titleEl.className='cl-group-title';
+    const titleEl=document.createElement('input'); titleEl.value=g.title; titleEl.className='cl-group-title'; titleEl.setAttribute('aria-label','Nome do checklist');
     titleEl.style.cssText='background:none;border:none;color:var(--txt1);font-size:12px;font-weight:700;flex:1;min-width:0;padding:3px 5px;border-radius:5px;';
     titleEl.addEventListener('focus',()=>titleEl.style.background='rgba(56,182,255,.08)');
     titleEl.addEventListener('blur',()=>{
@@ -18291,7 +18336,7 @@ function renderCL(cl){
     titleEl.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); titleEl.blur(); } });
     const pctEl=document.createElement('span'); pctEl.style.cssText='font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;';
     pctEl.textContent = total? `${done}/${total} · ${pct}%` : '';
-    const delGrpBtn=document.createElement('button'); delGrpBtn.className='cl-del'; delGrpBtn.textContent='✕'; delGrpBtn.title='Excluir este checklist';
+    const delGrpBtn=document.createElement('button'); delGrpBtn.className='cl-del'; delGrpBtn.textContent='✕'; delGrpBtn.title='Excluir este checklist'; delGrpBtn.setAttribute('aria-label','Excluir checklist: '+g.title);
     delGrpBtn.onclick=()=>delChecklistGroup(g.id);
     if(_varios){
       const gh=document.createElement('span'); gh.setAttribute('role','button'); gh.tabIndex=0; gh.className='cl-drag-handle cl-group-handle'; gh.textContent='⠿';
@@ -18338,7 +18383,7 @@ function renderCL(cl){
         const rebuilt=_mCurrentGroups.flatMap(gg=> gg.id===g.id ? gi : cl.filter(it=>it.grp===gg.id));
         renderCL(rebuilt); scheduleAutoSave();
       });
-      const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done; cb.setAttribute('aria-label','Concluir item: '+(item.t||''));
       const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
       handle.addEventListener('mousedown',()=>d.draggable=true);
       handle.addEventListener('touchstart',()=>d.draggable=true,{passive:true});
@@ -18384,7 +18429,7 @@ function renderCL(cl){
           else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); if(dd) dd.classList.remove('open'); finishEdit(false); }
         });
       });
-      const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
+      const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕'; del.setAttribute('aria-label','Excluir item: '+(item.t||''));
       del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
       d.append(handle,cb,span,del);
       itemsWrap.appendChild(d);
@@ -18393,7 +18438,7 @@ function renderCL(cl){
 
     const addRow=document.createElement('div'); addRow.className='cl-add-r'; addRow.style.cssText='margin-top:4px;';
     const addInpId='cl-add-inp-'+g.id;
-    const inp=document.createElement('input'); inp.className='cl-ai'; inp.id=addInpId; inp.placeholder='Novo item...';
+    const inp=document.createElement('input'); inp.className='cl-ai'; inp.id=addInpId; inp.placeholder='Novo item...'; inp.setAttribute('aria-label','Novo item em '+g.title);
     inp.addEventListener('keydown',e=>{
       const dd=document.getElementById(addInpId+'-mention-dd');
       if(e.key==='Enter' && !(dd && dd.classList.contains('open'))){ e.preventDefault(); addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); }
@@ -18404,7 +18449,7 @@ function renderCL(cl){
       e.preventDefault();
       addCIsToGroup(g.id, itens);
     });
-    const addBtn=document.createElement('button'); addBtn.className='cl-ab'; addBtn.textContent='+ Add';
+    const addBtn=document.createElement('button'); addBtn.className='cl-ab'; addBtn.textContent='+ Add'; addBtn.setAttribute('aria-label','Adicionar item em '+g.title);
     addBtn.onclick=()=>{ addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); };
     addRow.append(inp,addBtn);
     sec.appendChild(addRow);

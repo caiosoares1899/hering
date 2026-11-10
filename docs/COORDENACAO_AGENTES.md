@@ -111,6 +111,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
+| Codex | `codex/card-modal-uiux` | `kanban-dev.html` (modal do card), teste, versão e registros — PR #1661, aguardando revisão do Claude | 09/11/2026 |
 | Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
 | Claude | `claude/apresentacao-qc` | `okr-apresentacao.slide.html` (legenda da torre na cascata) | 09/11/2026 |
 

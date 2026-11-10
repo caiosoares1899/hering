@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › Modal do card: checklists legíveis e controles acessíveis no toque (SÓ DEV · kanban-dev v8.30.915-dev · PR #1661) — 2026-11-09
+
+Antes, campos e ações apertavam no celular/tablet; os controles dos checklists eram pequenos e o título disputava espaço com as setas. Agora, campos respeitam a largura do modal, grupos têm separação discreta e o nome ocupa uma linha própria no toque; ações do checklist e do cabeçalho têm alvo de 44 px e nomes acessíveis. Rodapé quebra linha no tablet. Teste: docs/arezzo/testes/test_card_modal_ui.js (boot real, três temas, desktop/celular/tablet, zero/2/50 itens e ADM/membro/PO). Dica: não — ajuste de uma tela já usada.
+
 ### Radar › Apresentação: blocos entram em cascata, barras crescem e números da capa contam (PROD · okr-apresentacao.slide.html) — 2026-11-09
 
 Rodada /melhoriauiux com o vocabulário de movimento do GUIA_UI_UX §2.4 (regime experiência). **Antes:** trocar de slide era um corte seco. O CSS tinha uma transição de .35 s que nunca rodava, porque `render()` recria os slides, e as barras já nasciam cheias. **Agora**, ao navegar (quem apresenta e quem acompanha ao vivo, pelo mesmo `_okrGoTo`):
