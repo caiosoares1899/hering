@@ -108,6 +108,14 @@ const seed = ()=>({kanban:{
     console.log('   cache enxuto no teste:', tam, 'bytes');
     await ctx.close(); }
 
+  // janela baixa (lista maior que a tela): as abas não podem ser espremidas pelo flex
+  for(const h of [560, 640]){ const {ctx,p,errs} = await open({width:1280,height:h});
+    await p.click('#btn-sonar'); await p.waitForTimeout(300);
+    const r = await p.evaluate(()=>{ const e = document.getElementById('msn-esc'), b = e.querySelector('button'); const re = e.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      return {faixa:Math.round(re.height), botao:Math.round(rb.height), dentro: rb.bottom <= re.bottom - 4 + 0.5, rolaVertical: e.scrollHeight > e.clientHeight + 1}; });
+    t(`janela de ${h}px: abas inteiras (botão dentro da faixa, sem rolagem vertical na faixa)`, r.dentro && !r.rolaVertical && r.faixa >= r.botao + 12, r);
+    await ctx.close(); }
+
   // 3 temas do lobby × 1280/390
   for(const vp of [{width:1280,height:800},{width:390,height:800}]) for(const tema of ['abrolhos','lencois','entardecer']){
     const {ctx,p,errs} = await open(vp, tema);
