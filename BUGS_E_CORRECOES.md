@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Ajuda in-app (/atualizarhelpcontent): sincronização de Sonar, Ilha Dinâmica, Período padronizado, Baú no Marco, FAQ do Oceano e #hlp-faq18 do Agente
+
+- **Maré (`kanban-dev.html` · `HELP_CONTENT`)**: verbete `Sonar (Ctrl+K)` detalhado com abas/prefixos (`b:`, `r:`, `s:`, `a:`, `Ctrl+Enter`) e filtro `meus`/`minhas` (`Destacar meus N cards no board` / `Ver N cards no board` + Objetivos/Marcos no Radar); verbete `Timer e Produtividade` acrescido da seção `🏝️ Ilha Dinâmica` (`⏲ Timers → 🏝️ Ilha Dinâmica`, abas Timers/Notificações/Ajustes e alargamento por ~6 s).
+- **Radar (`okr-dev.html` · `#okr-help-ov`)**: corrigida contradição em `#hlp-faq18` (que ainda dizia que o Agente Ágil não marcava/editava reunião, alinhando com as propostas confirmáveis `✅` da v2.103); documentado o botão `💼` do Baú da Travessia em `#hlp-marcos`; detalhado o seletor de período padronizado (`T426`, `S127`, `A27`, `♾️ Perene` e cruzamento no filtro) em `#hlp-editar`, `#hlp-filtros` e `#hlp-agente`; completado `#hlp-sonar` e `#hlp-cabecalho` (`o:/k:/m:/a:`, `meus` com Marcos e código numérico exato) e conclusão automática do plano pai em `#hlp-calendario`.
+- **Oceano (`oceano-dev.html` · `const FAQ`)**: corrigido texto defasado em `id:'notif'` (que dizia que o Oceano não tinha sino próprio); completados `id:'sonar'` (prefixos `m:/r:/l:/a:`, disco de sonar, `meus` e cache de 3 h para Objetivos e Marcos), `id:'sino'` (`✓ Marcar tudo como lido` e `Limpar antigas`) e `id:'mural'` (coluna `🎯 Meta Global · Digital` e `🇬🇧 Ver original em inglês` nos alertas traduzidos da VTEX).
+- **Skill (`.claude/skills/atualizarhelpcontent/SKILL.md`)**: histórico de rodadas atualizado até `2026-11-10`.
+
 ### 2026-11-10 · Maré dev: Ilha Dinâmica empurrava os botões do cabeçalho ao expandir + pílula com cara de emoji
 
 - Ao chegar notificação, a pílula crescia até 560 px dentro do cabeçalho e jogava os botões (.hd-btns) para a 2ª linha (cabeçalho 30→74 px) ou cobria o nome do squad.
