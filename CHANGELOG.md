@@ -24,13 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Oceano › 🔍 Sonar: busca em todo o Oceano com Ctrl+K / ⌘K (SÓ DEV · oceano-dev v1.64 · kanban-dev v8.30.917-dev) — 2026-11-10
+### Oceano › 🔍 Sonar: busca em todo o Oceano com Ctrl+K / ⌘K (SÓ DEV · oceano-dev v1.65 · kanban-dev v8.30.917-dev) — 2026-11-10
 
 Busca de todo o Oceano. **Ctrl+K** (no Mac **⌘K**) ou o botão **🔍 Sonar** no topo abre uma caixa só que acha produtos, os seus squads do Maré, **Objetivos e Marcos do Radar**, links da Hering e os seus, a Ajuda e comandos (perfil, ajuda). Enter abre já no lugar certo (o Objetivo pelo `?okr=`, o squad pelo `?squad=`); Ctrl+Enter abre em aba nova.
 - **Onde buscar:** abas Tudo · 1 Maré · 2 Radar · 3 Links · 4 Ajuda. Com a caixa vazia, as teclas 1–4 trocam de aba; Tab passa de uma para a outra; prefixos `m:`, `r:`, `l:` e `a:`. `r: meus` mostra só os Objetivos em que a pessoa é responsável.
 - **Inteligente sem IA:** ignora acento e maiúscula, aceita um erro de digitação de uma letra (palavras com 4+ letras) e todas as palavras precisam casar.
 - **Cards do Maré:** "Buscar “…” nos cards" abre o Maré no squad escolhido com a busca (Ctrl+K do Maré) já preenchida (`kanban-dev.html?busca=`, v8.30.917-dev). A busca direta nos cards de todos os squads é a fase 3 (precisa de índice no servidor).
-- **Custo:** abrir o Sonar não lê nada. O Radar é lido **uma vez por sessão** (`kanban/okr/objetivos` + `marcos`), só quando a busca pede o Radar (aba Radar ou 2+ letras em Tudo); guarda só id, título, período e responsáveis. Arquivado e torre escondida no modo só Hering ficam de fora.
+- **Custo:** abrir o Sonar não lê nada. A leitura completa do Radar pesa **~393 KB** (170 KB objetivos + 223 KB marcos, medido em prod em 10/11) e só acontece quando a busca pede o Radar (aba Radar ou 2+ letras em Tudo). O Sonar guarda só id, título, período e responsáveis **no aparelho por 3 h** (oceano-dev v1.65): dentro disso, nenhuma leitura nova, nem recarregando a página. Arquivado e torre escondida no modo só Hering ficam de fora.
 - **Recentes:** os 5 últimos escolhidos aparecem com a caixa vazia (só neste aparelho).
 - Com um produto aberto dentro do Oceano, use o 🔍 da barra de cima (o teclado está dentro do produto). No celular abre em tela cheia.
 - Teste: `docs/arezzo/testes/test_oceano_sonar.js` (boot real, Firebase falso, 3 temas do lobby, 1280 e 390 px, XSS em título e link, `?busca=` do Maré). Capturas em `docs/capturas/oceano-sonar/`.

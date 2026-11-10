@@ -811,7 +811,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.64 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.65 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -2540,8 +2540,21 @@ function sonarPontua(texto, toks){
   }
   return p + (t.startsWith(toks.join(' ')) ? 2 : 0);
 }
+// Cache do Radar no aparelho (10/11/2026): a leitura completa pesa ~393 KB (170 KB objetivos + 223 KB marcos, medido em prod).
+// Guarda só a versão enxuta (id, título, período, responsáveis) por 3 h; dentro disso o Sonar não lê o banco. Tudo que entra aqui é legível por qualquer @ciahering.
+const SONAR_RADAR_LS = 'oceano_sonar_radar'+(IS_DEV?'_dev':''), SONAR_RADAR_TTL = 3*3600*1000;
+function sonarRadarDoCache(){
+  try{ const c = JSON.parse(localStorage.getItem(SONAR_RADAR_LS)||'null');
+    if(!c || typeof c.t!=='number' || Date.now()-c.t > SONAR_RADAR_TTL || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;
+    const objs = {};
+    Object.values(c.v.objs).forEach(o=>{ if(o && typeof o.id==='string' && typeof o.t==='string') objs[o.id] = {id:o.id, t:o.t.slice(0,200), per:(Array.isArray(o.per)?o.per:[]).map(x=>String(x).slice(0,20)).slice(0,6), resp:(Array.isArray(o.resp)?o.resp:[]).map(String).slice(0,30)}; });
+    const marcos = c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj}));
+    return {objs, marcos};
+  }catch(e){ return null; }
+}
 async function sonarCarregarRadar(){
   if(sonar.radar || sonar.carregando || !U) return;
+  const doCache = sonarRadarDoCache(); if(doCache){ sonar.radar = doCache; return; }
   sonar.carregando = true; sonar.erro = false;
   try{
     const [so, sm] = await Promise.all(['objetivos','marcos'].map(n=>window._get(window._ref(window._db,'kanban/okr/'+n))));
@@ -2553,6 +2566,7 @@ async function sonarCarregarRadar(){
     const marcos = [];
     Object.entries((sm && sm.val()) || {}).forEach(([id,m])=>{ if(!m || m.arquivado || !objs[m.objetivoId]) return; marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId}); });
     sonar.radar = {objs, marcos};
+    try{ localStorage.setItem(SONAR_RADAR_LS, JSON.stringify({t:Date.now(), v:sonar.radar})); }catch(e){}
   }catch(e){ sonar.erro = true; console.warn('[sonar] Radar', e); }
   sonar.carregando = false;
   if(modalTopo==='ov-sonar') sonarRender();

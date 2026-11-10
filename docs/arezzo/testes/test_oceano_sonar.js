@@ -84,6 +84,21 @@ const seed = ()=>({kanban:{
     await p.keyboard.press('Escape'); await p.waitForTimeout(200);
     t('Esc fecha e o foco volta ao botão 🔍', await p.evaluate(()=>!document.getElementById('ov-sonar').classList.contains('open') && document.activeElement.id==='btn-sonar'), await p.evaluate(()=>document.activeElement.id));
     t('sem erro de JS', !errs.length, errs);
+    // cache do Radar no aparelho: recarregar e buscar de novo NÃO lê o banco; cache vencido (> 3 h) lê
+    const antes = leituras();
+    await p.reload(); await p.waitForFunction(()=>!!window.__authCb);
+    await p.evaluate(()=>{ const r0 = window._ref; window._ref = (db, path)=>{ if(/^kanban\/okr\//.test(String(path||''))) window.__contaOkr(); return r0(db, path); }; });
+    await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(1500);
+    await p.click('#btn-sonar'); await p.waitForTimeout(200); await digita(p,'conversao'); await p.waitForTimeout(400);
+    t('depois de recarregar, o Radar vem do aparelho (0 leituras) e acha o Objetivo', leituras()===antes && (await itens(p)).includes('Aumentar conversão do app'), [leituras(), antes, await itens(p)]);
+    await p.evaluate(()=>{ const k = 'oceano_sonar_radar_dev', c = JSON.parse(localStorage.getItem(k)); c.t = Date.now() - 4*3600*1000; localStorage.setItem(k, JSON.stringify(c)); });
+    await p.reload(); await p.waitForFunction(()=>!!window.__authCb);
+    await p.evaluate(()=>{ const r0 = window._ref; window._ref = (db, path)=>{ if(/^kanban\/okr\//.test(String(path||''))) window.__contaOkr(); return r0(db, path); }; });
+    await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(1500);
+    await p.click('#btn-sonar'); await p.waitForTimeout(200); await digita(p,'conversao'); await p.waitForTimeout(500);
+    t('cache vencido (4 h): lê o Radar de novo', leituras()===antes+2, [leituras(), antes]);
+    const tam = await p.evaluate(()=>localStorage.getItem('oceano_sonar_radar_dev').length);
+    console.log('   cache enxuto no teste:', tam, 'bytes');
     await ctx.close(); }
 
   // 3 temas do lobby × 1280/390
