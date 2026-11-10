@@ -158,8 +158,9 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
 .msn-ic{width:32px;height:32px;flex:none;display:grid;place-items:center;font-size:16px;line-height:1;border-radius:9px;overflow:hidden;background:rgba(56,182,255,.08);border:1px solid var(--glass-b,rgba(56,182,255,.22));}
 [data-theme="light"] .msn-ic{background:rgba(0,119,173,.06);}
 /* logo de produto (a página manda o "quadradinho" dela, que tem outro tamanho): ocupa a caixa inteira, sem sombra */
-.msn-ic.logo,.msn-ic.dotc{background:none;border:none;}
-.msn-ic.logo > *{width:32px !important;height:32px !important;border-radius:9px !important;box-shadow:none !important;margin:0 !important;overflow:hidden;display:block;}
+.msn-ic.dotc{background:none;border:none;}
+/* a logo fica com respiro dentro da moldura (26 px em 32): os emblemas redondos encostam na borda da imagem e pareciam cortados sem folga */
+.msn-ic.logo > *{width:26px !important;height:26px !important;border-radius:6px !important;box-shadow:none !important;margin:0 !important;overflow:hidden;display:block;}
 .msn-ic.logo img,.msn-ic.logo svg{width:100%;height:100%;display:block;object-fit:cover;}
 .msn-ic .dot{display:block;width:10px;height:10px;border-radius:50%;}
 .msn-tx{flex:1;min-width:0;display:flex;flex-direction:column;}
