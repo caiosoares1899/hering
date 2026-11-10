@@ -20,8 +20,8 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3 classes de
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.923 e dev
-em v8.30.930-dev (Sonar com cache de 3 h do Radar, vidro lapidado `--specular`, curvas `--ease-*`, `mare-timer-dev.js` e Ilha Dinâmica);
+DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.914 e dev
+em v8.30.916-dev (modal do card no celular/tablet e ajuda atualizada);
 o estado NORMAL na maior parte do tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
@@ -531,7 +531,7 @@ detalhe dos 4 call sites.
   beleza, mas some ao atualizar a página" (3ª causa achada na mesma
   investigação, depois de `_saveCardWithRetry()`/`_flushAutoSave()`
   também terem sido corrigidos sem resolver o sintoma por completo):
-  `_applyCardsSync()` (L10766) reconstrói TODO o array `cards` a partir
+  `_applyCardsSync()` (L10782) reconstrói TODO o array `cards` a partir
   de `window._cardsByKey` sempre que o listener de QUALQUER OUTRO card
   dispara, protegido só por uma janela fixa de 2s desde `_lastLocalSave`
   (carimbado no INÍCIO da tentativa, não na confirmação) — sem o
@@ -565,7 +565,7 @@ detalhe dos 4 call sites.
   persistir), afetando qualquer pessoa/squad, não só quem reportou.
   Fix: `_stripUndefinedMultiPath()` aplica `_stripUndefinedDeep()` em
   cada VALOR do update, preservando as chaves de nível superior —
-  mesmo padrão que `_notasUpdate()` (L21425) já usava certo. Trocada
+  mesmo padrão que `_notasUpdate()` (L21441) já usava certo. Trocada
   nos 3 pontos de escrita (`fbSaveAll()`/`fbCreateCard()`/
   `fbSaveCard()`). **Lição**: `_stripUndefinedDeep(val)` só deve
   receber um VALOR a ser escrito (um card, um bloco de Nota) — nunca o
@@ -573,7 +573,7 @@ detalhe dos 4 call sites.
 - `_saveCardWithRetry(card, label)` — L10373 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
   usada por `scheduleAutoSave()`/`_performAutoSave()` (L15508/L15566),
-  `saveExtraDesc()` (L16460) e a simulação de agente (re-grep `_saveCardWithRetry`).
+  `saveExtraDesc()` (L16476) e a simulação de agente (re-grep `_saveCardWithRetry`).
   **Retorna a promise de verdade desde 2026-09-21** (`/monitorarbugs`,
   relato direto de usuária — "salvo beleza, mas some ao atualizar"):
   antes era fire-and-forget, e os 3 call sites mostravam feedback de
@@ -592,7 +592,7 @@ detalhe dos 4 call sites.
   (`editingId` já aponta pro card novo). `_flushAutoSave()` cancela o
   timer e roda a escrita na hora, chamada no topo dos dois pontos acima
   — antes de qualquer um mexer em `editingId`/DOM. **Achado 2026-09-22,
-  3º ponto**: `openNewCard()` (L17301) tinha o MESMO gap — chamada por
+  3º ponto**: `openNewCard()` (L17317) tinha o MESMO gap — chamada por
   `usarQLItem()`/`_intakeCriarCard()` sem fechar `#card-ov` primeiro
   (só fecham `ql-ov`/`intake-ov`, overlays que ficam empilhados por
   cima de um card já aberto — comportamento já documentado no próprio
@@ -613,8 +613,8 @@ detalhe dos 4 call sites.
   Realtime Database (vazia ou com `.#$/[]`) de qualquer objeto aninhado
   — Firebase rejeita a escrita MULTI-PATH INTEIRA se qualquer um dos
   dois aparecer em qualquer lugar da árvore, não só no campo tocado.
-  Causa raiz do achado de chave inválida: `backfillFlow()` (L9508) e
-  `recordMove()` (L9382) usam `card.col`/`toCol` como chave de
+  Causa raiz do achado de chave inválida: `backfillFlow()` (L9524) e
+  `recordMove()` (L9398) usam `card.col`/`toCol` como chave de
   `flow.enteredAt` — as duas agora só gravam quando o valor não é vazio
   (card criado fora do fluxo normal, sem coluna, é o único jeito
   observado de chegar nesse estado). `_stripUndefinedDeep()` continua
@@ -1209,9 +1209,8 @@ se `_timelineFeedState.deStr!==_timelineFeedState.ateStr`, a hora vira
 `DD/MM HH:mm`; período de 1 dia (o caso mais comum) continua só com a
 hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
 
-### Busca (🔍 Sonar `Ctrl+K` + `openSearch` + Busca nos Comentários do Card)
-- **`_sonarMareIniciar()` (`kanban-dev.html` v8.30.920+ · prod `kanban.html` v8.30.923, módulo compartilhado `mare-sonar-dev.js` `?v=8` / `mare-sonar.js` `?v=4`)** — configura `MareSonar.iniciar()` no Maré: escopos `tudo`/`mare`/`radar`/`oceano`/`links`/`ajuda`, prefixos `{m:'mare', r:'radar', o:'oceano', l:'links', a:'ajuda'}`, fonte local dos cards ativos de `cards` (título, descrição, responsável, tags, submarca, canal, bloqueio, palavra mágica `meus`), filtros rápidos do board e integração com o Radar (leitura sob demanda de `kanban/okr/{objetivos,marcos}` com cópia enxuta por 3 h em `localStorage.oceano_sonar_radar[_dev]`, esquema `s:2`). No `keydown` global, `Ctrl+K`/`⌘K` com modal fechado abre `MareSonar.abrir()`; `Shift+Ctrl+K` preserva a busca clássica.
-- `openSearch()` — L36968 — busca clássica do board (`Shift+Ctrl+K` ou fallback quando `MareSonar` não está ativo)
+### Busca (Ctrl+K + "Ver no board" + Busca nos Comentários do Card)
+- `openSearch()` — L36968 — busca global do board (`Ctrl+K` quando o modal de card não está aberto)
 - `renderSearchResults()` — L36980 — **achado real (`/monitorarbugs`
   2026-09-22, fechando um achado de passagem registrado em 2026-09-02
   como "fora de escopo, mesmo padrão aqui")**: o selo de tag do
@@ -1963,9 +1962,9 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   `TODOS_MENTION_ENTRY` (sempre 1ª opção) e `AGENTE_AGIL_MENTION_ENTRY`
   (só em squads com Cloud Function ouvindo).
 
-### ⏲ Timer e Produtividade (2026-11-01; promovido em 02/11; lógica extraída para `mare-timer-dev.js` `?v=1` + 🏝️ Ilha Dinâmica em 2026-11-10)
+### ⏲ Timer e Produtividade (2026-11-01; promovido em 02/11)
 Atividades medidas dentro do modal do card (seção `#m-timers-sec`, abaixo do Checklist; entrada `timers` em `CARD_SECTIONS`) + atalho `#tb-timers` no
-cabeçalho, ao lado do tema (popover `#tm-pop`) + **🏝️ Ilha Dinâmica** no topo (`kanban-dev.html` v8.30.929–930-dev e `oceano-dev.html` v1.73–1.74-dev). Lógica pura e gravação compartilhadas em **`mare-timer-dev.js`** (`window.MareTimer`: `RAIZ`, `decorrido`, `fmt`, `mostra`, `estadoTxt`, `idx`, `doIndice`, `patch`, `caminhos`, `escrever`, `acao` — grava `iniciadoEm` apenas no 1º play ao sair de `'novo'`). Código de UI no Maré antes de `loadComments()` (prefixo `tm`/`_tm`), em `kanban-dev.html`:
+cabeçalho, ao lado do tema (popover `#tm-pop`). Código em bloco único, antes de `loadComments()` (prefixo `tm`/`_tm`), em `kanban-dev.html`:
 - **Dados**: registro completo `FB/card_timers/{cardId}/{tid}` (entra no backup do squad) + índice pessoal `kanban/timers_ativos/{uid}/{tid}` (só o dono
   lê; regras em `database.rules.json`; `timers_ativos` está em `EXCLUIDOS` de `functions/backup/completo.js`). Status: `novo → rodando ⇄ pausado → encerrado`;
   tempo = `accMs` + (agora − `startedAt`) enquanto `rodando` (`_tmDecorrido()`).
@@ -2468,7 +2467,7 @@ derivado do card mudando).
 - `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L34911/L34919/L17640 — total "efetivo até agora" (fechado + episódio aberto).
 - `_renderCardTimeInfo(c)` — L34995 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L16861).
+  bloco de Impedimento), chamado no `openCard()` (L16877).
 - Dashboards: `renderBoardDataInsights()` (L22721, seção "Tempo em
   atraso/bloqueado") e `renderCriativosDashboard()` (L19643, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
@@ -3522,8 +3521,6 @@ se este gap se repetir).
 
 ### 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; promovido como `okr.html` v1.0 · okr)
 
-- **🔍 Sonar no Radar (`okr-dev.html` v2.106+ · prod `okr.html` v2.105, `mare-sonar-dev.js` `?v=8` / `mare-sonar.js` `?v=4`)**: `_okrSonarIniciar()` inicializa `MareSonar` com `radar.dados()` apontando direto para `okrObjetivos` e `okrMarcos` já em memória (zero leitura extra) e `radar.ir(id)` abrindo o modal do Objetivo na própria página; botão `#okr-sonar-btn` no cabeçalho e atalho `Ctrl+K` / `⌘K`.
-- **📅 Período padronizado (`okr-dev.html` v2.105 · prod `okr.html` v2.105)**: `_okrPerNorm(s)` / `_okrPerValido(s)` / `_okrPerChipsToggle()` — formato único **Trimestre · Semestre · Ano** (`T126..T426`, `S126..S226`, `A26`, `A27`…), migrando códigos legados (`2026-Q4` → `T426`) na leitura e salvamento; `mare-sonar(-dev).js` não aplica tolerância de 1 letra em tokens com dígito (`T426 ≠ T126`).
 - **📈 Aba "Data Studio" (v2.81–v2.86 · okr-dev; em prod `okr.html` v2.87 desde 2026-10-15)**: `#okr-ds-btn`, `_okrSetView('datastudio')` (`renderOkrDataStudio()`), wrapper `#okr-ds-wrap` (`#okr-ds-top` + `#okr-ds-stage`). Dados sob demanda em `kanban/okr/datastudio` (`_okrDsEnsureLoaded(force)` com deduplicação `_okrDsLoadingPromise` — zero leitura no boot do Radar). Funções: `_okrDsListSorted()`, `_okrDsNormalizeUrl()` / `_okrDsViewUrl()` (aceitam apenas `https://lookerstudio.google.com/` ou `datastudio.google.com/`), `renderOkrDataStudio()` (preserva o `<iframe id="okr-ds-iframe">` já carregado ao alternar abas/tela cheia/configuração), `_okrDsSelect(id)`, `_okrDsReloadFrame()`, `_okrDsAuthPopup(id)` (`🔑 Conectar conta (1ª vez)` com `authuser=<email@ciahering.com.br>` e auto-reload do iframe ao fechar), `_okrDsToggleFs()` (`body.okr-ds-fullscreen`), modal `#okr-ds-ov` (`_okrDsOpenCfg`/`_okrDsCloseCfg`/`_okrDsRenderCfgModal(preserveForm)`/`_okrDsSaveForm`/`_okrDsEdit`/`_okrDsCancelEdit`/`_okrDsMove`/`_okrDsDelete`, restrito a `_okrCanCreate()`). Ajuda: `#hlp-datastudio` e `#hlp-cabecalho`.
 - **🔗 Aba "Cards" (v2.57; fix `o.arquivado` na v2.79)**: `renderOkrCards()`/`_okrCardsCarregar(refresh)`/`_okrCardsVinculos()`/`_okrCardsSet()`; reaproveita `_okrSquadOkrCards()` (que agora guarda também coluna/responsável/prazo + `_okrSqCols`). `_okrSetView('cards')`, wrapper `#okr-cards-wrap`. Só baixa os cards de cada squad ao clicar em "Carregar cards". `_okrCardsVinculos()` ignora Objetivos com `o.arquivado`.
 > 🪟 **Links entre páginas (okr-dev v2.36 / painel-dev v5.20 / kanban-dev v8.30.801)** — todo redirecionamento OKR ↔ painel ↔ kanban (botão "🐟 Painel", aba "OKR ↗", cliques do sino/`openNotif`) abre **aba nova** via `MareNotif.abrirPagina(url)` (`mare-notif-dev.js`; cai pra `location.href` só se o popup for bloqueado). Link novo entre páginas: usar esse helper (ou `<a target="_blank" rel="noopener">`), nunca `location.href=`. Exceção proposital: o encaminhamento de link antigo `painel?okr=` → OKR (`location.replace` no topo do painel).
@@ -3829,8 +3826,6 @@ Gaveta de `painel-dev.html`, atrás de `enabled` + `painel_enabled` + `painel_ac
 - `initHiddenCols()` — L10198
 
 ## oceano-dev.html / oceano.html (lobby da família Oceano — âncoras de dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
-- **🔍 Sonar (`oceano-dev.html` v1.65+ · prod `oceano.html` v1.69, `mare-sonar-dev.js` `?v=8` / `mare-sonar.js` `?v=4`)**: `iniciarSonar()` configura `MareSonar.iniciar()` no lobby com escopos `tudo`/`mare`/`radar`/`links`/`ajuda`, barra `#sonar-bar` no topo e atalho `Ctrl+K` / `⌘K`.
-- **🏝️ Ilha Dinâmica (`oceano-dev.html` v1.73–1.74-dev · `kanban-dev.html` v8.30.929–930-dev, `mare-timer-dev.js` `?v=1`)**: pílula viva recolhível no topo do host (`#ilha` / `#mare-ilha`) que acompanha timers ativos (`MareTimer`), notificações não lidas (`MareNotif`), busca (`MareSonar`) e troca de produto sem sair da tela; comunicação iframe ↔ host via `postMessage`.
 - **🔔 Sino (v1.5, só dev)**: `iniciarSino()`/`sinoRender()`/`sinoToggle()`/`sinoClique()`/`sinoTudoLido()`/`sinoLimpar()` + `rotearUrl()` (notificação → `abrirApp()`); usa `MareNotif.start()/items()/urlPessoal()/urlFeed()/rodapeHtml()`; FCM por `import()` dinâmico no módulo Firebase.
 Re-grep o nome antes de confiar em linha.
 - `APPS` / `PROD` / `FAQ` — os produtos (id, href, logo, visibilidade), o texto de cada aba e a ajuda; `visivel(a)` = mesma regra do menu de 9 pontinhos (Painel só ADM/quem usa).
@@ -4654,9 +4649,9 @@ Popup `#boarddata-ov` até 1500px; barra única `#boarddata-colbar-chips` (`_bdR
 - **Busca**: `busca.js` — `buscar(candidatos, texto)` (palavra-chave sem acento, radical, título 4×, `peso` por grupo); usada por `tools/bibliotecaAgil.js` (`biblioteca_agil` com parâmetro `busca`, curados `ECOSSISTEMA_OCEANO` = família Oceano + cisão com a Arezzo + Radar/Painel/Notificações/Dicas) e por `consultar_ajuda` em `okr/agenteTools.js` (chat do Radar).
 - **Anti-drift**: `__tests__/conhecimento.test.js` falha se os JSON ficarem diferentes das páginas. Prompt: `systemPrompt.js` (nota 11, seção "Contexto do produto") e `okr/agentePrompt.js`. **Exige deploy manual** das funções do agente depois de regenerar (ver README da pasta).
 
-### 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=12`; em prod `mare-dicas.js?v=10`: kanban v8.30.923, okr v2.105, oceano v1.69, painel v5.96)
+### 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
 **Ritmo (dev, 2026-10-10): 1 dica por DIA por app** — `hoje()` (dia local), `jaMostrouHoje()`, `prefs.ultima[app]` (`kanban/usuarios/{uid}/dicas/ultima/{app}`; junta aparelho × Firebase pelo dia mais recente); `reiniciar()` limpa. Substituiu o limite por visita (`MAX_SESSAO`/`ESPERA_ENTRE_MS`).
 Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,nome,user,isViewer,dicas,abrirAjuda})`, `gatilho(nome)`, `controle(elemento)` (interruptor + "Rever dicas"), `definir(bool)`, `reiniciar()`, `fechar()`, `_estado()`. Internos: `proxima(g, checaQuando)` (o `quando` só vale na hora de MOSTRAR), `mostra(d)` (marca vista ao aparecer), prefs em `kanban/usuarios/{uid}/dicas` + localStorage `mare_dicas_{uid}`.
 **Marcador `edita`** (v2.60): dica que manda editar/criar (6 no Radar) é filtrada em `init()` quando `isViewer` (externo só acompanha). **`controle(el)`** desenha UMA vez e só sincroniza o `checked` (foco do teclado), 1 ouvinte por elemento (`el._mdicaOuv`), `avisa()` poda ouvinte que devolve `false`. Oceano: dicas de entrada com `_lobbyVisivel()`. `renderHelp()` (kanban) ordena título-antes-de-texto na busca. **Catálogo centralizado (painel-dev v5.34):** `CATALOGO` no módulo (dados puros por app: `dicas[{id,gatilho,texto,saiba,ajuda}]`, `gatilhos` = rótulos legíveis); `MareDicas.catalogo()` + `MareDicas.minhasPrefs(user)` alimentam a aba **💡 Dicas** do Painel (`renderPcfgDicas()`, `setPcfgTab('dicas')`, `#painel-cfg-dicas`). Ganchos por página (só o que depende do estado): `OKR_DICAS_QUANDO`/`_okrDicasIniciar()` (okr-dev; gatilhos em `_okrSetView()` `view:<aba>`, `openOkrObjetivo` `obj-modal`; controle em `#okr-help-dicas`); `MARE_DICAS_QUANDO`/`_mareDicasIniciar()` (kanban-dev, antes de `loadNotifs()`; gatilhos em `openCard()`/`openCfg()`; controle em `#help-dicas-ctl`); `OCEANO_DICAS_QUANDO`/`iniciarDicas()` (oceano-dev; gatilhos `sino` em `sinoToggle()`, `perfil` em `abrirPerfil()`; controle em `#pf-dicas`). Painel e A Bordo não mostram dicas. Teste: `docs/arezzo/testes/test_dicas.js`.
 
-*Retrato do commit `df1dff0d` (2026-11-10).*
+*Retrato do commit `7b4362b0` (2026-11-10).*
