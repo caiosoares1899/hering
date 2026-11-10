@@ -778,13 +778,18 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0;}
 /* 🏝️ Ilha Dinâmica (10/11/2026, teste no Maré dev; plano em docs/ideias/ilha-dinamica.md). Desligada por padrão; liga no ⏲ Timers. */
 #ilha{flex:1 1 auto;display:flex;justify-content:center;position:relative;min-width:0;}
+/* desktop: a ilha FLUTUA no vão livre do cabeçalho (não empurra os botões); --ilha-x e --ilha-max vêm de _ilhaLugar() */
+@media (min-width:769px){ #ilha{position:absolute;top:50%;left:var(--ilha-x,50%);transform:translate(-50%,-50%);flex:none;z-index:25;} }
 #ilha[hidden]{display:none;}
-#ilha-btn{display:inline-flex;align-items:center;gap:9px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.96);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 22px rgba(0,0,0,.22);cursor:pointer;max-width:min(460px,44vw);font-size:12.5px;font-weight:600;color:var(--txt);font-family:inherit;transition:max-width .25s var(--ease-out,ease);}
+/* pílula (referência Vorssaint): cápsula de largura mínima, ícone pequeno, texto numa linha só */
+#ilha-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;min-width:150px;padding:0 16px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.97);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 22px rgba(0,0,0,.25);cursor:pointer;max-width:min(var(--ilha-max,420px),560px);font-size:12px;font-weight:600;color:var(--txt);font-family:inherit;white-space:nowrap;overflow:hidden;transition:max-width .25s var(--ease-out,ease);}
 #ilha-btn:hover{border-color:var(--accent);}
 #ilha-btn:focus-visible,#ilha-fio:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-.ilha-ico{font-size:14px;line-height:1;}
+.ilha-ico{font-size:11.5px;line-height:1;flex:none;}
+#ilha.ilha-repouso #ilha-titulo{color:var(--txt3);font-weight:500;}
 #ilha-titulo,#ilha-aviso-t,#ilha-aviso-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#ilha-titulo{max-width:180px;}
+#ilha-titulo{max-width:200px;min-width:0;}
+#ilha-aviso,#ilha-aviso-t,#ilha-aviso-s{min-width:0;}
 #ilha-titulo:empty,#ilha-tempo:empty,#ilha-mais:empty,#ilha-aviso-s:empty{display:none;}
 #ilha-tempo{font-variant-numeric:tabular-nums;color:var(--teal,#1de9b6);font-weight:700;}
 #ilha.ilha-pausa #ilha-tempo{color:var(--txt2);}
@@ -793,14 +798,16 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .ilha-sep{width:1px;height:15px;background:var(--glass-b);}
 #ilha-n{display:inline-flex;align-items:center;gap:3px;}
 #ilha-n[hidden]{display:none;}
-#ilha-n b{min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--danger,#ff6b6b);color:#fff;font-size:10px;display:grid;place-items:center;}
+#ilha-n{flex:none;font-size:11px;}
+#ilha-n b{min-width:16px;height:16px;padding:0 5px;border-radius:999px;background:var(--danger,#ff6b6b);color:#fff;font-size:9.5px;display:grid;place-items:center;}
+#ilha-tempo,#ilha-mais,.ilha-sep{flex:none;}
 /* aviso (estilo Vorssaint): a pílula se alarga e mostra quem/o quê + onde, por alguns segundos */
 #ilha-aviso{display:none;align-items:baseline;gap:7px;min-width:0;}
 #ilha[data-estado="aviso"] #ilha-aviso{display:inline-flex;}
 #ilha[data-estado="aviso"] #ilha-titulo,#ilha[data-estado="aviso"] #ilha-mais{display:none;}
-#ilha[data-estado="aviso"] #ilha-btn{max-width:min(560px,60vw);}
-#ilha-aviso-t{font-weight:700;max-width:240px;}
-#ilha-aviso-s{color:var(--txt3);font-weight:500;max-width:200px;}
+#ilha[data-estado="aviso"] #ilha-btn{max-width:min(var(--ilha-max,560px),560px);}
+#ilha-aviso-t{font-weight:700;flex:0 1 auto;}
+#ilha-aviso-s{color:var(--txt3);font-weight:500;flex:0 2 auto;}
 #ilha-fio{display:none;width:150px;height:30px;border:none;background:none;padding:0;cursor:pointer;opacity:0;}
 #ilha-fio:focus-visible{opacity:1;}
 #ilha[data-estado="oculta"] #ilha-btn,#ilha[data-estado="fio"] #ilha-btn{display:none;}
@@ -6786,7 +6793,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.929-dev</div>
+<div class="version">v8.30.930-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -37816,7 +37823,8 @@ function _ilhaPilula(){
   const notifPrincipal = p.principal==='notif' && n && !a;
   ilha.classList.toggle('ilha-pausa', !!a && a.status!=='rodando'); ilha.classList.toggle('ilha-esg', !!(mostra && mostra.esg));
   document.getElementById('ilha-ico').textContent = _ilha.aviso ? '🔔' : a ? (a.status==='rodando' ? '⏲' : a.status==='novo' ? '⏳' : '⏸') : (notifPrincipal ? '🔔' : '🌊');
-  document.getElementById('ilha-titulo').textContent = p.privado ? '' : a ? a.atividade : (notifPrincipal ? (n===1 ? '1 notificação' : n+' notificações') : '');
+  const repouso = !a && !notifPrincipal && !_ilha.aviso; ilha.classList.toggle('ilha-repouso', repouso);
+  document.getElementById('ilha-titulo').textContent = repouso ? (n ? 'Oceano' : 'Tudo em dia') : p.privado ? '' : a ? a.atividade : (n===1 ? '1 notificação' : n+' notificações');
   document.getElementById('ilha-tempo').textContent = a ? (a.status==='novo' ? 'iniciar' : mostra.txt) : '';
   document.getElementById('ilha-mais').textContent = ts.length>1 ? '+'+(ts.length-1) : '';
   const nb = document.getElementById('ilha-n'); nb.hidden = !n || notifPrincipal; nb.querySelector('b').textContent = n>9 ? '9+' : String(n);
@@ -37859,6 +37867,17 @@ function _ilhaPainel(){
   }
   document.getElementById('ilha-painel').innerHTML = h;
 }
+// Lugar da ilha no desktop: centro do vão livre entre o nome do squad (.hd-l) e os botões (.hd-btns) — ou, com os botões
+// quebrados para a linha de baixo, o resto da 1ª linha. A pílula nunca passa desse vão (não empurra nem cobre botão).
+function _ilhaLugar(){
+  const ilha = document.getElementById('ilha'), hd = ilha && ilha.parentElement, l = hd && hd.querySelector('.hd-l'), bt = hd && hd.querySelector('.hd-btns');
+  if(!ilha || !l || !bt || matchMedia('(max-width:768px)').matches){ if(ilha){ ilha.style.removeProperty('--ilha-x'); ilha.style.removeProperty('--ilha-max'); } return; }
+  const H = hd.getBoundingClientRect(), L = l.getBoundingClientRect(), B = bt.getBoundingClientRect();
+  const mesmaLinha = B.top < L.bottom - 4, fim = mesmaLinha ? B.left : H.right;
+  const vao = Math.max(0, fim - L.right - 32);
+  ilha.style.setProperty('--ilha-x', Math.round(L.right - H.left + 16 + vao/2)+'px');
+  ilha.style.setProperty('--ilha-max', Math.max(150, Math.round(vao))+'px');
+}
 function _ilhaRender(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
   const p = _ilhaPrefs(), e = _ilhaEstado();
@@ -37867,7 +37886,7 @@ function _ilhaRender(){
   if(e==='off'){ _ilhaRelogio(); return; }
   ilha.dataset.estado = e;
   document.getElementById('ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
-  _ilhaPilula();
+  _ilhaPilula(); _ilhaLugar();
   if(e==='aberta' && !ilha.contains(document.activeElement) || (e==='aberta' && !document.querySelector('#ilha-painel .ilha-abas'))) _ilhaPainel();
   _ilhaRelogio();
 }
@@ -37946,6 +37965,8 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
     _ilhaSalvar(); _ilhaPilula(); _ilhaRender(); _ilhaRelogio();   // prévia ao vivo: a pílula muda enquanto ajusta
   });
   window.addEventListener('resize', ()=>{ if(_ilhaPrefs().on) _ilhaRender(); });
+  // o cabeçalho muda de largura sem resize da janela (nome do squad, botões que aparecem): reposiciona a ilha
+  try{ const hdb = document.querySelector('.hd-btns'), hdl = document.querySelector('.hd-l'); if(window.ResizeObserver && hdb){ const ro = new ResizeObserver(()=>{ if(_ilhaPrefs().on) _ilhaLugar(); }); ro.observe(hdb); if(hdl) ro.observe(hdl); } }catch(e){}
 })();
 
 async function loadComments(cardId){
