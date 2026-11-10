@@ -55,6 +55,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `mare-notif(-dev).js` | **Sino único** (feed da torre), menu de produtos ⋮⋮⋮, catálogo `TIPOS` de notificações | kanban, painel, okr, oceano |
 | `mare-dicas(-dev).js` | 💡 Dicas (mini popups) e `CATALOGO` | kanban, okr, oceano |
 | `mare-metas(-dev).js` | 🐟 Metas e desafios ("O mar tá pra peixe") | kanban, painel |
+| `mare-timer(-dev).js` | ⏲ Timer: contas e gravação de play/pausa/encerrar (o Maré e, depois, a Ilha Dinâmica usam as mesmas funções) | kanban |
 | `mare-sonar(-dev).js` | 🔍 Sonar: a busca do Oceano (Ctrl/⌘+K), um layout para todas as páginas | oceano, kanban, okr |
 | `mare-login(-dev).js` | Login Google direto (iPhone/iPad) | oceano, kanban (+ escala/intake via Oceano) |
 | `mare-plantao(-dev).js` | 🐛 Plantão de Bugs (relato, validação) | oceano, painel |

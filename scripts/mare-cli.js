@@ -43,6 +43,7 @@ const SHARED_MODULES = [
   'mare-login-dev',
   'mare-plantao-dev',
   'mare-sonar-dev',
+  'mare-timer-dev',
 ];
 
 const PAGE_TARGET_MAP = {
@@ -88,6 +89,10 @@ const MODULE_TARGET_MAP = {
   'mare-sonar-dev.js':   'mare-sonar-dev',
   'mare-sonar':          'mare-sonar-dev',
   'sonar':               'mare-sonar-dev',
+  'mare-timer-dev':      'mare-timer-dev',
+  'mare-timer-dev.js':   'mare-timer-dev',
+  'mare-timer':          'mare-timer-dev',
+  'timer':               'mare-timer-dev',
 };
 
 // ---------------------------------------------------------------------------

@@ -6706,7 +6706,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.927-dev</div>
+<div class="version">v8.30.928-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7061,6 +7061,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-dicas-dev.js?v=12"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
+<script src="mare-timer-dev.js?v=1"></script>
 
 <script>
 
@@ -37449,48 +37450,32 @@ function _migrateLegacyComments(cardObj){
 const TM_RAIZ='kanban/timers_ativos';
 let _tmCardId=null, _tmOff=null, _tmRecs={}, _tmAberto=new Set(), _tmIntervalo=null, _tmIdxOff=null, _tmMeus={};
 let _tmAvisouZero=new Set(), _tmFormAberto=false, _tmPendente=false, _tmPopAberto=false;
-function _tmDecorrido(t,agora){ return Math.max(0,(+t.accMs||0)+((t.status==='rodando'&&t.startedAt)?(agora-t.startedAt):0)); }
-function _tmFmt(ms){ const s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600), m=Math.floor(s%3600/60), p=n=>String(n).padStart(2,'0'); return h? h+':'+p(m)+':'+p(s%60) : p(m)+':'+p(s%60); }
+// ⏲ contas e gravação do timer moram em mare-timer-dev.js (10/11/2026) — a Ilha Dinâmica do Oceano usa as mesmas funções
+function _tmDecorrido(t,agora){ return MareTimer.decorrido(t,agora); }
+function _tmFmt(ms){ return MareTimer.fmt(ms); }
 // Cronômetro mostra o decorrido; timer mostra o que falta e, passando de zero, o excedente com "+".
-function _tmMostra(t,agora){ const d=_tmDecorrido(t,agora); if(t.tipo==='timer' && t.durMs){ const r=t.durMs-d; return r>=0 ? {txt:_tmFmt(r),esg:false} : {txt:'+'+_tmFmt(-r),esg:true}; } return {txt:_tmFmt(d),esg:false}; }
+function _tmMostra(t,agora){ return MareTimer.mostra(t,agora); }
 function _tmMembro(uid){ return members.find(m=>m.uid===uid)||null; }
 function _tmNome(uid){ const m=_tmMembro(uid); return m ? (m.name||m.email||'?') : '?'; }
-function _tmEstado(t){ return {novo:'aguardando início',rodando:'em andamento',pausado:'pausado',encerrado:'encerrado'}[t.status]||t.status; }
-function _tmIdx(t){ return {sq:t.sq,cardId:t.cardId,cardTitle:t.cardTitle||'',atividade:t.atividade,tipo:t.tipo,status:t.status,startedAt:t.startedAt||null,accMs:t.accMs||0,durMs:t.durMs||null,porUid:t.porUid||''}; }
+function _tmEstado(t){ return MareTimer.estadoTxt(t); }
+function _tmIdx(t){ return MareTimer.idx(t); }
 const _TM_SVG={ play:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1v10l8.5-5z"/></svg>', pause:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10" rx=".6"/><rect x="7" y="1" width="3" height="10" rx=".6"/></svg>', stop:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1"/></svg>' };
 function _tmBtn(t,ac,rotulo){ return `<button type="button" class="tm-b${ac==='stop'?' stop':''}" data-tm-ac="${ac}" aria-label="${rotulo}" title="${rotulo}" onclick="event.stopPropagation();tmAcao(${jsq(t.sq)},${jsq(t.cardId)},${jsq(t.id)},'${ac}')">${_TM_SVG[ac]}</button>`; }
 function _tmCtl(t,meu){ if(!meu||t.status==='encerrado') return ''; return '<span class="tm-ctl">'+(t.status==='rodando'?_tmBtn(t,'pause','Pausar'):_tmBtn(t,'play',t.status==='novo'?'Iniciar':'Retomar'))+_tmBtn(t,'stop','Encerrar')+'</span>'; }
 
 // ── escrita: registro (por campo, não sobrescreve descrição editada por outro) + índice do dono, num update só ──
-function _tmEscrever(t, patch, opts){
-  const base='kanban/squads/'+t.sq+'/dados/card_timers/'+t.cardId+'/'+t.id, idx=TM_RAIZ+'/'+t.uid+'/'+t.id, upd={};
-  Object.keys(patch).forEach(k=>{ if(patch[k]!==undefined) upd[base+'/'+k]=patch[k]; });
-  const novo=Object.assign({},t,patch);
-  if(novo.status==='encerrado') upd[idx]=null;
-  else if(opts&&opts.criar) upd[idx]=_tmIdx(novo);
-  else ['status','startedAt','accMs','atividade','durMs','tipo'].forEach(k=>{ if(k in patch) upd[idx+'/'+k]=patch[k]; });
-  return window._update(window._ref(window._db), upd);
-}
-function _tmPatch(t,acao,agora){
-  const dec=_tmDecorrido(t,agora);
-  if(acao==='play' && (t.status==='novo'||t.status==='pausado')){ const p={status:'rodando',startedAt:agora,accMs:t.accMs||0}; if(!t.iniciadoEm) p.iniciadoEm=new Date(agora).toISOString(); return p; }
-  if(acao==='pause' && t.status==='rodando') return {status:'pausado',startedAt:null,accMs:dec};
-  if(acao==='stop' && t.status!=='encerrado') return {status:'encerrado',startedAt:null,accMs:dec,encerradoEm:new Date(agora).toISOString()};
-  return null;
-}
+function _tmEscrever(t, patch, opts){ return MareTimer.escrever(t, patch, opts); }
+function _tmPatch(t,acao,agora){ return MareTimer.patch(t,acao,agora); }   // iniciadoEm só no 1º play (ver mare-timer-dev.js)
 function _tmBuscar(sq,cardId,tid){
   const r=_tmRecs[tid]; if(r && r.cardId===cardId) return r;
   const m=_tmMeus[tid]; return (m && m.cardId===cardId && m.sq===sq) ? m : null;
 }
 async function tmAcao(sq,cardId,tid,acao){
   const me=window._currentUser, t=_tmBuscar(sq,cardId,tid); if(!me||!t) return;
-  if(t.uid!==me.uid){ showToast('Só quem recebeu a atividade controla o timer.'); return; }
-  const patch=_tmPatch(t,acao,Date.now()); if(!patch) return;
-  try{ await _tmEscrever(t,patch); }catch(e){ console.warn('[timer]',e); showToast('⚠ Não foi possível atualizar o timer.'); return; }
-  if(acao==='stop'){
-    showToast('Atividade encerrada — '+_tmFmt(patch.accMs));
-    if(t.porUid && t.porUid!==t.uid) createNotif(t.porUid,'timer_encerrado',(me.displayName||'Alguém')+' encerrou "'+t.atividade+'"','Tempo registrado: '+_tmFmt(patch.accMs),t.cardId,null,null,{squad:t.sq},t.id);
-  }
+  const r=await MareTimer.acao(t,acao,{uid:me.uid, nome:me.displayName,
+    notificar:n=>createNotif(n.uid,n.tipo,n.titulo,n.texto,n.cardId,null,null,{squad:n.squad},n.tid)});
+  if(!r.ok){ if(r.msg) showToast((r.erro==='gravacao'?'⚠ ':'')+r.msg); return; }
+  if(acao==='stop') showToast('Atividade encerrada — '+_tmFmt(r.patch.accMs));
 }
 async function tmSalvarCampo(sq,cardId,tid,campo,valor){
   const me=window._currentUser, t=_tmBuscar(sq,cardId,tid); if(!me||!t||!_tmPodeEditar(t)) return;
