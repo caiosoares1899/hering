@@ -113,8 +113,6 @@
 .sr-meta{font-size:10px;color:var(--txt3);white-space:nowrap;}
 .sr-tag{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid;margin-left:6px;}
 .search-empty{padding:24px;text-align:center;color:var(--txt3);font-size:13px;}
-.sonar-mg{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);padding:10px 16px 4px;}
-.sonar-mic{width:16px;text-align:center;flex-shrink:0;font-size:13px;}
 .search-viewall-btn{width:100%;padding:9px 16px;background:none;border:none;border-top:1px solid var(--glass-b);
   color:var(--accent);font-size:11.5px;font-family:DM Sans,sans-serif;font-weight:600;cursor:pointer;text-align:left;}
 .search-viewall-btn:hover{background:rgba(56,182,255,.08);}
@@ -6704,7 +6702,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.918-dev</div>
+<div class="version">v8.30.919-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7058,6 +7056,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-notif-dev.js?v=41"></script>
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-dicas-dev.js?v=10"></script>
+<script src="mare-sonar-dev.js?v=1"></script>
 
 <script>
 
@@ -35560,6 +35559,7 @@ document.addEventListener('keydown', e=>{
   if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){
     e.preventDefault();
     if(document.getElementById('card-ov')?.classList.contains('open')) toggleCommentSearch(true);
+    else if(window.MareSonar && MareSonar.aberto()) MareSonar.fechar();
     else openSearch();
   }
   if((e.ctrlKey||e.metaKey)&&e.key==='d'){ e.preventDefault(); openMeuDia(); } // 🌅 Meu Dia (Fase 5.1)
@@ -37064,7 +37064,68 @@ _onFbReady(()=>{
 // ═══════════════════════════════════════════════════════
 let _searchIdx = 0;
 
-function openSearch(){
+// 🔍 Sonar (módulo mare-sonar-dev.js): o mesmo layout do lobby; o foco do Maré são os cards DESTE board.
+// O Maré continua dono do Ctrl+K (com um card aberto, ele busca nos comentários). Sem o módulo, cai na busca antiga abaixo.
+let _sonarMareOk = false;
+function _sonarMareIniciar(){
+  if(_sonarMareOk) return true;
+  if(!window.MareSonar) return false;
+  _sonarMareOk = true;
+  const dev = /-dev\.html/.test(location.pathname), pag = location.pathname.split('/').pop() || (dev?'kanban-dev.html':'kanban.html');
+  const okr = dev ? 'okr-dev.html' : 'okr.html';
+  const corOk = c => /^#[0-9a-f]{3,8}$|^(rgb|hsl)a?\([\d\s.,%]+\)$|^var\(--[a-z0-9-]+\)$/i.test(String(c||'')) ? c : '#38b6ff';
+  const nomeDe = c => { const o = members.find(m=>m.init===c.owner); return o ? o.name : (c.owner||''); };
+  const semTag = h => String(h||'').replace(/<[^>]+>/g,' ');
+  MareSonar.iniciar({
+    dev, pagina:'mare', user: ()=>window._currentUser, atalho:false,
+    escopos:[{id:'tudo',l:'Tudo'},{id:'board',l:'Este board'},{id:'radar',l:'Radar'},{id:'squads',l:'Squads'},{id:'ajuda',l:'Ajuda'}],
+    prefixos:{b:'board', r:'radar', s:'squads', a:'ajuda'},
+    placeholder:'Buscar cards deste board, Objetivos do Radar, outros squads, ajuda…',
+    subtitulo:'neste board e em todo o Oceano',
+    vazio:'Tente outra palavra, ou comece com <b>r:</b> para o Radar e <b>s:</b> para outros squads.',
+    inicio:'Digite para buscar nos cards deste board e em todo o Oceano: Objetivos e Marcos do Radar, outros squads e a Ajuda. Com a caixa vazia, <b>1</b>–<b>4</b> escolhem onde buscar.',
+    aoAbrir: ()=>{ document.getElementById('search-overlay')?.classList.remove('open'); },
+    fontes: (q, toks)=>{
+      const ativos = cards.filter(c=>c && !c.archived);
+      const itens = ativos.map(c=>{ const col = columns.find(x=>x.id===c.col) || {name:c.col||'', color:''};
+        return {k:'card:'+c.id, ic:'<span class="dot" style="background:'+esc(corOk(col.color))+'"></span>', t:c.title||'(sem título)', sub:[col.name, nomeDe(c), c.due||''].filter(Boolean).join(' · '), tipo:'card',
+          busca:(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), go:()=>openCard(c.id), rec:{card:c.id}}; });
+      const g = [{g:'Neste board', esc:'board', max:8, itens}];
+      if(q && toks.length){
+        const n = ativos.filter(c=>MareSonar._pontua((c.title||'')+' '+(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), toks)>0).length;
+        if(n>1) g.push({g:'No quadro', esc:'board', itens:[{k:'acao:verboard', ic:'🔍', t:'Ver '+n+' cards no board', sub:'Filtra o quadro por “'+q+'”', tipo:'acao', sempre:true, go:()=>_sonarVerNoBoard(q)}]});
+      }
+      return g;
+    },
+    radar: { esc:'radar', url: id=>okr+'?okr='+encodeURIComponent(id), abrir: url=>window.open(url, '_blank', 'noopener') },
+    depois: (q)=>{
+      const g = [];
+      if(q.length>=2) g.push({g:'Outros squads', esc:'squads', fim:true, max:4, itens:Object.keys(SQUAD_META_LIVE||{}).filter(sq=>sq!==ACTIVE_SQUAD).map(sq=>{
+        const nome = (SQUAD_META_LIVE[sq] && SQUAD_META_LIVE[sq].label) || ('Squad '+sq), url = pag+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120));
+        return {k:'sqb:'+sq, ic:'🔎', t:'Buscar “'+q+'” em '+nome, sub:'Abre esse board com a busca preenchida', tipo:'busca', busca:nome+' '+sq, sempre:true, go:()=>{ location.href = url; }}; })});
+      const hs = [];
+      Object.entries(HELP_CONTENT).forEach(([tab, its])=>(its||[]).forEach(it=>hs.push({k:'help:'+tab+':'+it.title, ic:it.icon||'❓', t:it.title, sub:'Ajuda do Maré', tipo:'ajuda', busca:semTag(it.text).slice(0,500), go:()=>openHelp(tab, it.title)})));
+      g.push({g:'Ajuda do Maré', esc:'ajuda', max:4, itens:hs});
+      return g;
+    },
+    deRecente: (r, base)=>{
+      if(r.card){ const c = cards.find(x=>x.id===r.card && !x.archived); if(c) return Object.assign(base, {ic:'🃏', t:c.title||base.t, go:()=>openCard(c.id), rec:{card:c.id}}); return null; }
+      if(r.app==='okr' && MareSonar._paginaOk(r.url)) return Object.assign(base, {ic:'🎯', url:r.url, go:()=>window.open(r.url, '_blank', 'noopener')});
+      return null;
+    },
+  });
+  return true;
+}
+function _sonarVerNoBoard(q){
+  const bar=document.getElementById('filter-bar');
+  if(bar.style.display==='none'||bar.style.display==='') toggleFilters();
+  const fTx=document.getElementById('f-texto');
+  if(fTx) fTx.value=q;
+  applyFilters();
+  fTx?.focus();
+}
+function openSearch(q){
+  if(_sonarMareIniciar()){ MareSonar.abrir({q:q||''}); return; }
   document.getElementById('search-overlay').classList.add('open');
   const inp = document.getElementById('search-inp');
   inp.value = '';
@@ -37073,108 +37134,50 @@ function openSearch(){
 }
 
 function closeSearch(){
+  if(window.MareSonar) MareSonar.fechar();
   document.getElementById('search-overlay').classList.remove('open');
 }
 
-// Sonar no Maré (10/11/2026): os cards DESTE board primeiro (mesma busca de antes, agora sem se importar com acento);
-// embaixo, o resto do Oceano. Radar: a mesma cópia enxuta que o lobby guarda no aparelho por 3 h (chave oceano_sonar_radar[_dev]);
-// sem cópia, 1 leitura de kanban/okr/objetivos + marcos (~393 KB em prod) só a partir de 2 letras. Texto do banco sempre por esc().
-const _SONAR_DEV = /-dev\.html/.test(location.pathname);
-const _SONAR_RADAR_LS = 'oceano_sonar_radar'+(_SONAR_DEV?'_dev':''), _SONAR_RADAR_TTL = 3*3600*1000;
-const _sonarNorm = x => String(x==null?'':x).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-function _sonarUmaLetra(a,b){ if(Math.abs(a.length-b.length)>1) return false; let i=0,j=0,d=0;
-  while(i<a.length&&j<b.length){ if(a[i]===b[j]){i++;j++;continue;} if(++d>1) return false; if(a.length>b.length) i++; else if(b.length>a.length) j++; else {i++;j++;} }
-  return d+(a.length-i)+(b.length-j)<=1; }
-function _sonarPontua(texto, toks){ if(!toks.length) return 0; const t=_sonarNorm(texto), pal=t.split(/[^a-z0-9]+/).filter(Boolean); let p=0;
-  for(const k of toks){ if(pal.includes(k)) p+=4; else if(pal.some(w=>w.startsWith(k))) p+=3; else if(t.includes(k)) p+=2;
-    else if(k.length>=4 && pal.some(w=>_sonarUmaLetra(w,k)||_sonarUmaLetra(w.slice(0,k.length),k))) p+=1; else return 0; }
-  return p; }
-let _sonarRadar = null, _sonarRadarCarregando = false, _sonarRadarErro = false, _sonarExtras = [];
-function _sonarRadarDoCache(){
-  try{ const c = JSON.parse(localStorage.getItem(_SONAR_RADAR_LS)||'null');
-    if(!c || typeof c.t!=='number' || Date.now()-c.t>_SONAR_RADAR_TTL || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;
-    const objs = {}; Object.values(c.v.objs).forEach(o=>{ if(o && typeof o.id==='string' && typeof o.t==='string') objs[o.id] = {id:o.id, t:o.t.slice(0,200), per:(Array.isArray(o.per)?o.per:[]).map(x=>String(x).slice(0,20)).slice(0,6), resp:(Array.isArray(o.resp)?o.resp:[]).map(String).slice(0,30)}; });
-    return {objs, marcos:c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj}))};
-  }catch(e){ return null; } }
-async function _sonarCarregarRadar(){
-  if(_sonarRadar || _sonarRadarCarregando || _sonarRadarErro || !window._currentUser) return;
-  const c = _sonarRadarDoCache(); if(c){ _sonarRadar = c; return; }
-  _sonarRadarCarregando = true;
-  try{
-    const [so, sm] = await Promise.all(['objetivos','marcos'].map(n=>window._get(window._ref(window._db,'kanban/okr/'+n))));
-    const soH = window.MARE_SO_HERING !== false;
-    const vis = o => o && !o.arquivado && (!soH || !o.torre || o.torre==='digital' || !['digital','comercial','corporativa'].includes(o.torre));
-    const objs = {}; Object.entries((so&&so.val())||{}).forEach(([id,o])=>{ if(!vis(o)) return; const per = Array.isArray(o.trimestres)&&o.trimestres.length ? o.trimestres : (o.trimestre?[o.trimestre]:[]);
-      objs[id] = {id, t:String(o.titulo||'Objetivo sem título').slice(0,200), per:per.slice(0,6).map(x=>String(x).slice(0,20)), resp:Array.isArray(o.responsaveis)?o.responsaveis.slice(0,30).map(String):[]}; });
-    const marcos = []; Object.entries((sm&&sm.val())||{}).forEach(([id,m])=>{ if(m && !m.arquivado && objs[m.objetivoId]) marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId}); });
-    _sonarRadar = {objs, marcos};
-    try{ localStorage.setItem(_SONAR_RADAR_LS, JSON.stringify({t:Date.now(), v:_sonarRadar})); }catch(e){}
-  }catch(e){ _sonarRadarErro = true; console.warn('[sonar] Radar', e); }
-  _sonarRadarCarregando = false;
-  if(document.getElementById('search-overlay')?.classList.contains('open')) renderSearchResults();
-}
-// Itens "fora deste board": [{g, ic, t, sub, go}]
-function _sonarFora(q){
-  const toks = _sonarNorm(q).split(/\s+/).filter(Boolean), out = [];
-  if(q.length>=2){ _sonarCarregarRadar(); }
-  if(_sonarRadar){
-    const okr = _SONAR_DEV ? 'okr-dev.html' : 'okr.html', uid = window._currentUser && window._currentUser.uid;
-    const meus = toks.some(k=>k==='meus'||k==='meu'), tk = toks.filter(k=>!['meus','meu','minhas','minha'].includes(k));
-    const objs = Object.values(_sonarRadar.objs).filter(o=>!meus || o.resp.includes(uid));
-    const ab = id => ()=>window.open(okr+'?okr='+encodeURIComponent(id), '_blank', 'noopener');
-    objs.map(o=>({o, p:_sonarPontua(o.t+' '+o.per.join(' '), tk.length?tk:(meus?['']:[]))||(meus&&!tk.length?1:0)})).filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,5)
-      .forEach(({o})=>out.push({g:'No Radar', ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), go:ab(o.id)}));
-    const ids = new Set(objs.map(o=>o.id));
-    _sonarRadar.marcos.filter(m=>ids.has(m.obj)).map(m=>({m, p:_sonarPontua(m.t, tk)})).filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,4)
-      .forEach(({m})=>out.push({g:'No Radar', ic:'🏁', t:m.t, sub:'Marco de “'+_sonarRadar.objs[m.obj].t+'”', go:ab(m.obj)}));
-  }
-  if(q.length>=2){
-    const pag = location.pathname.split('/').pop() || 'kanban.html';
-    Object.keys(SQUAD_META_LIVE||{}).filter(sq=>sq!==ACTIVE_SQUAD).slice(0,6).forEach(sq=>{
-      const nome = (SQUAD_META_LIVE[sq] && SQUAD_META_LIVE[sq].label) || ('Squad '+sq);
-      out.push({g:'Outros squads', ic:'🔎', t:'Buscar “'+q+'” em '+nome, sub:'Abre esse board com a busca preenchida', go:()=>{ location.href = pag+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120)); }});
-    });
-  }
-  if(toks.length){
-    const semTag = h => String(h||'').replace(/<[^>]+>/g,' ');
-    const hs = [];
-    Object.entries(HELP_CONTENT).forEach(([tab, its])=>(its||[]).forEach(it=>{ const p = _sonarPontua(it.title+' '+semTag(it.text).slice(0,500), toks); if(p) hs.push({p, tab, it}); }));
-    hs.sort((a,b)=>b.p-a.p).slice(0,4).forEach(({tab,it})=>out.push({g:'Ajuda do Maré', ic:it.icon||'❓', t:it.title, sub:'Ajuda', go:()=>openHelp(tab, it.title)}));
-  }
-  return out;
-}
-function _sonarExtraAbrir(n){ const it = _sonarExtras[n]; if(!it) return; closeSearch(); it.go(); }
 function renderSearchResults(){
-  const raw = (document.getElementById('search-inp').value||'').trim();
-  const q = _sonarNorm(raw);
+  const q = (document.getElementById('search-inp').value||'').toLowerCase().trim();
   const container = document.getElementById('search-results');
   const viewAll = document.getElementById('search-viewall');
-  _searchIdx = 0; _sonarExtras = [];
+  _searchIdx = 0;
   if(!q){
-    container.innerHTML = '<div class="search-empty">Digite para buscar nos cards deste board e no resto do Oceano: Radar, outros squads e Ajuda.</div>';
+    container.innerHTML = '<div class="search-empty">Digite para buscar entre os cards do board…</div>';
     if(viewAll) viewAll.innerHTML='';
     return;
   }
   const matches = cards.filter(c=>{
     if(c.archived) return false;
-    return _sonarNorm(c.title).includes(q)
-      || _sonarNorm(cardDescText(c)).includes(q)
-      || _sonarNorm(c.po).includes(q)
-      || _sonarNorm(c.owner).includes(q)
-      || _sonarNorm(members.find(m=>m.init===c.owner)?.name).includes(q);
+    return (c.title||'').toLowerCase().includes(q)
+      || cardDescText(c).toLowerCase().includes(q)
+      || (c.po||'').toLowerCase().includes(q)
+      || (c.owner||'').toLowerCase().includes(q)
+      || (members.find(m=>m.init===c.owner)?.name||'').toLowerCase().includes(q);
   });
+  if(!matches.length){
+    container.innerHTML = '<div class="search-empty">Nenhum card encontrado para "<strong>'+esc(q)+'</strong>"</div>';
+    if(viewAll) viewAll.innerHTML='';
+    return;
+  }
   // Pedido do time: a lista é ótima pra achar UM card específico, mas às
   // vezes a pessoa quer é ver TODOS os cards que batem, arrumados no board
   // (colunas, drag, etc.) em vez de escolher um da lista. Aplica a mesma
   // busca como filtro de texto do board (#f-texto/activeFilters.texto) em
   // vez de abrir um card.
   if(viewAll){
-    viewAll.innerHTML = matches.length ? `<button type="button" class="search-viewall-btn" onclick="verNoBoardFromSearch()">🔍 Ver ${matches.length} card${matches.length===1?'':'s'} no board</button>` : '';
+    viewAll.innerHTML = `<button type="button" class="search-viewall-btn" onclick="verNoBoardFromSearch()">🔍 Ver ${matches.length} card${matches.length===1?'':'s'} no board</button>`;
   }
-  let html = matches.length ? '<div class="sonar-mg">Neste board</div>' : '<div class="search-empty" style="padding:12px 16px;text-align:left;">Nenhum card deste board para "<strong>'+esc(raw)+'</strong>".</div>';
-  html += matches.slice(0,20).map((c,i)=>{
+  container.innerHTML = matches.slice(0,20).map((c,i)=>{
     const col = columns.find(x=>x.id===c.col)||{name:c.col,color:'#888'};
-    // Achado real (/monitorarbugs 2026-09-02): getCardTags(c) (array-aware), nunca c.tag (campo legado).
+    // Achado real (/monitorarbugs 2026-09-02, achado de passagem — "mesmo
+    // padrão em openSearch()", nunca corrigido até agora): lia c.tag (campo
+    // legado, só a 1ª tag do array, sem sincronia garantida com tags[]) em
+    // vez de getCardTags(c) (array-aware, mesma fonte que tagsHtml()/
+    // cardHasTag() já usam). Card com a tag original removida e outra
+    // adicionada depois mostrava o selo da tag ERRADA (ou nenhum selo, se
+    // c.tag tivesse ficado vazio) na busca.
     const tag = getTag(getCardTags(c)[0]);
     const tagHtml = tag ? `<span class="sr-tag" style="color:${getPal(tag).c};border-color:${getPal(tag).c};background:${getPal(tag).bg};">${esc(tag.label)}</span>` : '';
     const owner = members.find(m=>m.init===c.owner);
@@ -37186,21 +37189,6 @@ function renderSearchResults(){
       <span class="sr-meta">${esc(ownerTxt)}${c.due?' · '+c.due:''}</span>
     </div>`;
   }).join('');
-  _sonarExtras = _sonarFora(raw);
-  const base = Math.min(matches.length, 20);
-  let grupo = '';
-  _sonarExtras.forEach((it, n)=>{
-    if(it.g!==grupo){ grupo = it.g; html += '<div class="sonar-mg">'+esc(grupo)+'</div>'; }
-    const i = base + n;
-    html += `<div class="search-result${i===0?' active':''}" data-sx="${n}" onclick="_sonarExtraAbrir(${n})" onmouseover="setSearchIdx(${i})">
-      <span class="sonar-mic" aria-hidden="true">${esc(it.ic)}</span>
-      <span class="sr-title">${esc(it.t)}</span>
-      <span class="sr-meta">${esc(it.sub)}</span>
-    </div>`;
-  });
-  if(raw.length>=2 && _sonarRadarCarregando) html += '<div class="search-empty" style="padding:10px 16px;text-align:left;" role="status">⏳ Procurando no Radar…</div>';
-  if(!matches.length && !_sonarExtras.length && !_sonarRadarCarregando) html = '<div class="search-empty">Nada encontrado para "<strong>'+esc(raw)+'</strong>" neste board nem no resto do Oceano.</div>';
-  container.innerHTML = html;
 }
 
 function setSearchIdx(i){
@@ -37212,7 +37200,7 @@ function handleSearchKey(e){
   const items = document.querySelectorAll('#search-results .search-result');
   if(e.key==='ArrowDown'){ e.preventDefault(); setSearchIdx(Math.min(_searchIdx+1, items.length-1)); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); setSearchIdx(Math.max(_searchIdx-1, 0)); }
-  else if(e.key==='Enter'){ e.preventDefault(); const active=document.querySelector('#search-results .search-result.active'); if(active){ if(active.dataset.id) openSearchCard(active.dataset.id); else if(active.dataset.sx!=null) _sonarExtraAbrir(Number(active.dataset.sx)); } }
+  else if(e.key==='Enter'){ e.preventDefault(); const active=document.querySelector('#search-results .search-result.active'); if(active) openSearchCard(active.dataset.id); }
   else if(e.key==='Escape'){ closeSearch(); }
 }
 
@@ -40226,6 +40214,7 @@ renderBoard();
   const tentar = () => {
     tentativas++;
     if(!(Array.isArray(cards) && cards.length) && tentativas < 15){ setTimeout(tentar, 400); return; }
+    if(_sonarMareIniciar()){ MareSonar.abrir({q, esc:'board'}); return; }
     openSearch();
     const inp = document.getElementById('search-inp'); if(!inp) return;
     inp.value = q; renderSearchResults();

@@ -19,13 +19,13 @@ const seed = { kanban: { usuarios: { eve: { uid: 'eve', nome: 'Eve', email: 'eve
   const estado = () => p.evaluate(() => ({ barra: getComputedStyle(document.getElementById('m-comment-search-bar')).display, cont: document.getElementById('m-comment-search-count').textContent, itens: document.querySelectorAll('#m-comment-list .comment-text').length, marcas: [...document.querySelectorAll('#m-comment-list mark')].map(m => m.textContent), foco: document.activeElement && document.activeElement.id, vazio: /Nenhum coment/.test(document.getElementById('m-comment-list').innerText) }));
   // Ctrl+K SEM card aberto continua abrindo a busca global
   await p.keyboard.press('Control+k'); await p.waitForTimeout(300);
-  t('Sem card aberto, Ctrl+K abre a busca global', await p.evaluate(() => document.getElementById('search-overlay')?.classList.contains('open')), 1);
+  t('Sem card aberto, Ctrl+K abre o Sonar (busca do Oceano; antes #search-overlay)', await p.evaluate(() => document.getElementById('msn-ov')?.classList.contains('open') || document.getElementById('search-overlay')?.classList.contains('open')), 1);
   await p.keyboard.press('Escape'); await p.evaluate(() => { try { closeSearch(); } catch (e) { } });
   await p.evaluate(() => openCard('c1')); await p.waitForTimeout(900);
   let s = await estado(); t('Card abre com 3 comentários e a busca fechada', s.itens === 3 && s.barra === 'none', s);
   await p.keyboard.press('Control+k'); await p.waitForTimeout(250);
   s = await estado(); t('Com o card aberto, Ctrl+K abre a barra de busca nos comentários e foca o campo', s.barra === 'flex' && s.foco === 'm-comment-search-inp', s);
-  t('…e NÃO abre a busca global por cima', !(await p.evaluate(() => document.getElementById('search-overlay')?.classList.contains('open'))), 1);
+  t('…e NÃO abre o Sonar por cima', !(await p.evaluate(() => document.getElementById('msn-ov')?.classList.contains('open') || document.getElementById('search-overlay')?.classList.contains('open'))), 1);
   await p.keyboard.type('atencao'); await p.waitForTimeout(250); s = await estado();
   t('"atencao" (sem acento) acha "atenção": 1 de 3, contador 1/3, trecho destacado', s.itens === 1 && s.cont === '1/3' && s.marcas.join('').toLowerCase().startsWith('aten'), s);
   await p.fill('#m-comment-search-inp', '@joão'); await p.waitForTimeout(250); s = await estado(); t('"@joão" filtra pelo autor', s.itens === 1, s);

@@ -111,7 +111,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Claude | `claude/sonar-mare` | `kanban-dev.html` (Ctrl+K vira o 🔍 Sonar); depois Sonar no Radar e na Travessia | 10/11/2026 |
+| Claude | `claude/sonar-modulo` + `claude/sonar-mare-modulo` | `mare-sonar-dev.js` (novo), `oceano-dev.html`, `kanban-dev.html`; depois Radar e Travessia | 10/11/2026 |
 | Claude | `claude/<item>` (um por vez) | Plano da consultoria (`docs/ideias/consultoria-oceano-2026-11-09.md`): `travessia-dev.html`, `okr-dev.html`, `oceano-dev.html` conforme o item do sprint | 10/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)

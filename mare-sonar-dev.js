@@ -19,7 +19,7 @@
        fontes:(q, toks, ctx)=>[{g:'Grupo', esc:'mare', itens:[{k, ic, t, sub, tipo, busca, go, url, app, sempre, toks}]}],   // da página, ANTES do Radar
        depois:(q, toks, ctx)=>[…],                              // da página, DEPOIS do Radar
        radar:{esc:'radar', url:id=>'okr-dev.html?okr='+id, abrir:(url)=>…},   // ou false
-       vazio:'…', placeholder:'…', recentesChave:'…', deRecente:r=>item|null, aoAbrir:()=>{}, atalho:true (Ctrl/⌘+K global)
+       vazio:'…' (HTML fixo da página, nunca dado), inicio:'…' (caixa vazia sem nada para mostrar), placeholder:'…', recentesChave:'…', deRecente:r=>item|null, aoAbrir:()=>{}, atalho:true (Ctrl/⌘+K global)
      });
      MareSonar.abrir({esc, q}) · MareSonar.fechar() · MareSonar.aberto()
    ══════════════════════════════════════════════════════════════════════════ */
@@ -236,7 +236,7 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     gs = gs.filter(g=>g && Array.isArray(g.itens) && (esc0==='tudo' || g.esc===esc0));
     if(!q){
       const rec = esc0==='tudo' ? recentes().map(doRecente).filter(Boolean) : [];
-      gs = gs.filter(g=>esc0!=='tudo' || g.noVazio).map(g=>({g:g.g, itens:g.itens.slice(0, esc0==='tudo'?6:12)}));
+      gs = gs.filter(g=>esc0!=='tudo' || g.noVazio).map(g=>({g:g.g, itens:g.itens.slice(0, esc0==='tudo'?6:12)})).filter(g=>g.itens.length);
       if(rec.length) gs.unshift({g:'Recentes', itens:rec});
     } else {
       gs = gs.map(g=>{
@@ -262,7 +262,7 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     else if(precisaRadar && st.erro) html += '<div class="msn-vazio" role="status">Não deu para buscar no Radar agora.<button type="button" data-retry>Tentar de novo</button></div>';
     if(!st.itens.length && !(precisaRadar && st.carregando)){
       const dica = st.opts.vazio || 'Tente outra palavra.';
-      html = (q ? '<div class="msn-vazio" role="status">Nada encontrado para “'+esc(q)+'”. '+dica+'</div>' : '<div class="msn-vazio" role="status">'+dica+'</div>') + (precisaRadar && st.erro ? html : '');
+      html = (q ? '<div class="msn-vazio" role="status">Nada encontrado para “'+esc(q)+'”. '+dica+'</div>' : '<div class="msn-vazio" role="status">'+(st.opts.inicio || dica)+'</div>') + (precisaRadar && st.erro ? html : '');
     }
     $('msn-lista').innerHTML = html;
     $('msn-in').setAttribute('aria-activedescendant', st.itens.length ? 'msn-o-'+st.sel : '');
