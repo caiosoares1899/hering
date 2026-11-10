@@ -560,6 +560,7 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
     <div class="topo-dir">
       <a class="vtex-pill" id="vtex-pill" href="https://status.vtex.com/" target="_blank" rel="noopener noreferrer" style="display:none;"><span class="vtex-tx" id="vtex-tx"></span></a>
       <button class="ibtn" id="btn-instalar" type="button" style="display:none;" title="Instala o Oceano como aplicativo — um só pra todos os produtos">📲 <span>Instalar</span></button>
+      <button class="ibtn" id="btn-sonar" type="button" aria-haspopup="dialog" title="Sonar: busca em todo o Oceano (Ctrl+K)" aria-label="Sonar: buscar em todo o Oceano">🔍 <span class="eu-nome" style="max-width:none;">Sonar</span><span class="kbd sonar-kbd" id="sonar-kbd">Ctrl K</span></button>
       <button class="ibtn" id="btn-ajuda" type="button" title="Ajuda e perguntas frequentes">❓ <span class="eu-nome" style="max-width:none;">Ajuda</span></button>
       <button class="ibtn sino" id="btn-sino" type="button" aria-haspopup="true" aria-expanded="false" title="Notificações" aria-label="Notificações">🔔<span class="sino-n" id="sino-n" aria-hidden="true"></span></button>
       <button class="eu" id="btn-eu" type="button" aria-haspopup="dialog" title="Meu perfil e preferências"><span id="eu-av"></span><span class="eu-nome" id="eu-nome"></span><span aria-hidden="true">⚙</span></button>
@@ -682,6 +683,7 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
 <div id="host" role="region" aria-label="Produto aberto">
   <div class="host-barra">
     <button class="ibtn" id="host-lobby" type="button" title="Voltar ao lobby (os produtos abertos continuam rodando)">🌊 Lobby</button>
+    <button class="ibtn" id="host-sonar" type="button" aria-haspopup="dialog" title="Sonar: busca em todo o Oceano" aria-label="Sonar: buscar em todo o Oceano">🔍</button>
     <div class="host-tabs" id="host-tabs" role="tablist"></div>
     <button class="ibtn" id="host-recarregar" type="button" title="Recarregar este produto">↻</button>
     <button class="ibtn" id="host-aba" type="button" title="Abrir este produto numa aba nova">↗</button>
@@ -772,11 +774,12 @@ window.dispatchEvent(new Event('fb-ready'));
 <script src="mare-plantao.js?v=5"></script>
 <script src="mare-dicas.js?v=10"></script>
 <script src="mare-metas.js?v=19"></script>
+<script src="mare-sonar.js?v=4"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.63 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.69 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1287,7 +1290,7 @@ a=>{
   at.push({app:'okr', url:P('okr')+'?okr=notas', txt:'Radar · Anotações da reunião'}, {app:'okr', url:P('okr')+'?okr=chat', txt:'Radar · Perguntar ao Agente Ágil'});
   $('#atalhos').innerHTML = at.map(x=>'<button type="button" data-app="'+x.app+'" data-url="'+esc(x.url)+'">'+logoQuad(APP(x.app),'-s').replace('class="tile-logo"','class="tile-logo" style="width:16px;height:16px;border-radius:4px;box-shadow:none"')+esc(x.txt)+'</button>').join('');
   $('#atalhos-wrap').style.display = at.length ? 'block' : 'none';
-  $('#dica-teclas').innerHTML = meus.length ? 'Dica: tecle <span class="kbd">1</span> a <span class="kbd">'+Math.min(meus.length,9)+'</span> pra abrir um produto, ou <span class="kbd">?</span> pra ajuda.' : '';
+  $('#dica-teclas').innerHTML = meus.length ? 'Dica: tecle <span class="kbd">1</span> a <span class="kbd">'+Math.min(meus.length,9)+'</span> pra abrir um produto, <span class="kbd">'+(/Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||'')?'⌘K':'Ctrl K')+'</span> pra buscar em tudo (🔍 Sonar), ou <span class="kbd">?</span> pra ajuda.' : '';
   $('#btn-contato').href = 'mailto:'+CONTATO.email+'?subject='+encodeURIComponent('Quero o Oceano no meu time')+'&body='+encodeURIComponent('Oi! Vi o Oceano e queria conversar sobre usar no meu time.');
   feriasRenderBanner(); renderAbertos(); renderAbas(); renderVersoes();
   $('#rodape-versao').textContent = VERSION+(standalone() ? ' · aplicativo' : '');
@@ -1531,6 +1534,7 @@ $('#perfil-bd').addEventListener('change', e=>{
 
 // ── Ajuda ──
 const FAQ = [
+  {id:'sonar', q:'O que é o Sonar 🔍 (Ctrl+K / ⌘K)?', a:'<p>É a <b>busca de todo o Oceano</b>. Aperte <b>Ctrl+K</b> (no Mac, <b>⌘K</b>) ou clique em <b>🔍 Sonar</b> no topo e digite: aparecem os produtos, os seus squads do Maré, os <b>Objetivos e Marcos do Radar</b>, os links e a ajuda, e Enter abre já no lugar certo.</p><p><b>Onde buscar:</b> com a caixa vazia, as teclas <b>1</b> (Maré), <b>2</b> (Radar), <b>3</b> (Links) e <b>4</b> (Ajuda) trocam o escopo, e <b>Tab</b> passa de um para o outro. Também dá para começar com <b>m:</b> ou <b>r:</b> (ex.: <b>r: meus</b> mostra os seus Objetivos). Para achar um card, use "Buscar … nos cards", que abre a busca do Maré já preenchida no squad escolhido.</p><p>Erro de digitação de uma letra e falta de acento não atrapalham. Ctrl+Enter abre em aba nova. Com um produto aberto aqui dentro, use o 🔍 da barra de cima.</p>'},
   {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado).</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p><p>Se nem sempre você ouve o “ding”, use o <b>🫨 Modo insistente</b> (também no rodapé, desligado por padrão): quando chega um aviso importante a tela treme e, se você não estiver olhando a janela, o som se repete e o título da aba pisca — até você voltar ou mexer em algo. Dá para escolher cada item e testar na hora.</p>'},
   {id:'vtex', q:'O selinho de status no topo ("VTEX" / Status dos Serviços): o que ele mostra?', a:'<p>É o <b>monitor de status dos serviços críticos do ecossistema</b> (<b>VTEX, Shopify, Cloudflare, GitHub, OpenAI e Claude</b>), lido automaticamente das páginas oficiais de status a cada poucos minutos. O selo exibe o <b>status consolidado</b> e permite consultar os <b>detalhes por serviço</b>. <b>Azul ("normal")</b>: nenhum incidente relevante em andamento. <b>Vermelho ("incidente")</b>: há instabilidade em algum serviço monitorado — passe o mouse para ver o resumo e clique para abrir os detalhes por serviço. <b>Cinza ("sem leitura")</b>: o monitor não conseguiu atualizar a leitura agora, então não dá para afirmar que está tudo normal.</p><p>Quando há incidente crítico você também recebe um <b>popup 🚨</b> e uma notificação (sino e celular); quando o serviço normaliza, o aviso some sozinho.</p>'},
   {id:'oque', q:'O que é o Oceano?', a:'<p>É o nome da família de produtos do time Digital Hering: <b>Maré Digital</b> (o board dos squads), <b>Painel</b> (gestão e pessoas), <b>Radar</b> (OKRs e reuniões), <b>A Bordo</b> (boas-vindas) e, no futuro, <b>Travessia</b> (performance e gente). Esta página é o lobby: apresenta tudo, serve de atalho e guarda o seu perfil.</p>'},
@@ -2475,6 +2479,61 @@ function mostrarDocumento(h){
 $('#host-lobby').addEventListener('click', voltarLobby);
 $('#host-recarregar').addEventListener('click', ()=>{ const fr = $('#host-frames iframe.on'); if(fr){ fr.dataset.ok=''; $('#host-load').style.display='flex'; fr.src = fr.src; } });
 $('#host-aba').addEventListener('click', ()=>{ const a = APP(host.atual); if(a) window.open(a.href,'_blank','noopener'); });
+// ── 🔍 Sonar (módulo mare-sonar.js, 10/11/2026): a busca do Oceano. Aqui o lobby só diz o que é dele (produtos, comandos, squads, links, ajuda);
+// a janela, o teclado, o Radar (com a cópia de 3 h no aparelho) e os recentes vêm do módulo, iguais em todas as páginas.
+function iniciarSonar(){
+  if(!window.MareSonar) return;
+  const ic = a => logoQuad(a, '-sn');
+  const app = (id, url) => ()=>abrirApp(id, false, url);
+  MareSonar.iniciar({
+    dev: IS_DEV, pagina:'oceano', user: ()=>U, atalho:true, recentesChave:'oceano_sonar_recentes',
+    escopos:[{id:'tudo',l:'Tudo'},{id:'mare',l:'Maré'},{id:'radar',l:'Radar'},{id:'links',l:'Links'},{id:'ajuda',l:'Ajuda'}],
+    prefixos:{m:'mare', r:'radar', l:'links', a:'ajuda'},
+    placeholder:'Buscar produtos, Objetivos, Marcos, links, ajuda…',
+    vazio:'Tente outra palavra, ou comece com <b>m:</b> para o Maré e <b>r:</b> para o Radar.',
+    aoAbrir: ()=>{ if(modalTopo) fecharModal(modalTopo); },
+    abrirApp: (id, url)=>abrirApp(id, false, url),
+    fontes: (q)=>{
+      const g = [];
+      g.push({g:'Produtos', esc:'produtos', noVazio:true, itens:appsDoDia().map(a=>({k:'app:'+a.id, ic:ic(a), t:a.nome, sub:a.sub, tipo:'produto', busca:a.nome+' '+a.sub+' '+(a.pt||''), go:app(a.id), url:a.href, app:a.id}))});
+      g.push({g:'Comandos', esc:'cmd', noVazio:true, itens:[
+        {k:'cmd:perfil', ic:'⚙️', t:'Meu perfil e preferências', sub:'Tema, peixinhos, como abrir os produtos', tipo:'comando', busca:'perfil preferencias tema configuracoes peixinhos', go:()=>abrirPerfil(), rec:{cmd:'perfil'}},
+        {k:'cmd:ajuda', ic:'❓', t:'Ajuda do Oceano', sub:'Perguntas frequentes', tipo:'comando', busca:'ajuda faq duvidas', go:()=>abrirAjuda(), rec:{cmd:'ajuda'}}]});
+      const mare = APP('kanban');
+      if(mare && visivel(mare)){
+        const sqs = perfilFb.squads||[];
+        g.push({g:'Maré', esc:'mare', noVazio:true, itens:sqs.map(sq=>{ const url = P('kanban')+'?squad='+encodeURIComponent(sq); return {k:'sq:'+sq, ic:ic(mare), t:'Squad '+sq, sub:'Abrir o board no Maré', tipo:'squad', busca:'mare squad board '+sq, go:app('kanban', url), url, app:'kanban'}; })});
+        if(q.length>=2) g.push({g:'Buscar nos cards', esc:'mare', fim:true, max:3, itens:sqs.slice(0,8).map(sq=>{ const url = P('kanban')+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120));
+          return {k:'busca:'+sq, ic:'🔎', t:'Buscar “'+q+'” nos cards', sub:'Squad '+sq+' · abre a busca do Maré', tipo:'busca', sempre:true, go:app('kanban', url), url, app:'kanban'}; })});
+      }
+      return g;
+    },
+    radar: { esc:'radar', icone: ic(APP('okr')), url: id=>P('okr')+'?okr='+encodeURIComponent(id), abrir: url=>abrirApp('okr', false, url),
+      atalhos:[{k:'okr:notas', t:'Anotações da reunião', sub:'Radar', busca:'radar anotacoes notas reuniao ata', url:P('okr')+'?okr=notas', go:app('okr', P('okr')+'?okr=notas'), app:'okr'},
+               {k:'okr:chat', t:'Perguntar ao Agente Ágil', sub:'Radar', busca:'radar agente agil perguntar chat ia', url:P('okr')+'?okr=chat', go:app('okr', P('okr')+'?okr=chat'), app:'okr'}] },
+    depois: ()=>{
+      const ls = [...linksOrd(linksHering||{}).map(l=>[l,'Link da Hering']), ...linksOrd(linksMeus||{}).map(l=>[l,'Meu link'])];
+      const semTag = h => String(h||'').replace(/<[^>]+>/g,' ').slice(0,400);
+      return [
+        {g:'Links', esc:'links', itens:ls.map(([l,o],i)=>({k:'link:'+i+':'+String(l.url||''), ic:'🔗', t:String(l.titulo||l.url||'Link'), sub:o+(l.desc?' · '+l.desc:''), tipo:'link', busca:(l.titulo||'')+' '+(l.desc||'')+' '+(l.url||''), go:()=>window.open(_hrefOk(l.url), '_blank', 'noopener,noreferrer'), url:_hrefOk(l.url), link:true}))},
+        {g:'Ajuda', esc:'ajuda', itens:FAQ.map(f=>({k:'faq:'+f.id, ic:'❓', t:f.q, sub:'Ajuda do Oceano', tipo:'ajuda', busca:f.q+' '+semTag(f.a), go:()=>abrirAjuda(f.id), rec:{faq:f.id}}))},
+      ];
+    },
+    deRecente: (r, base)=>{
+      if(r.faq && FAQ.some(f=>f.id===r.faq)) return Object.assign(base, {ic:'❓', go:()=>abrirAjuda(r.faq), rec:{faq:r.faq}});
+      if(r.cmd==='perfil' || String(r.k)==='cmd:perfil') return Object.assign(base, {ic:'⚙️', go:()=>abrirPerfil(), rec:{cmd:'perfil'}});
+      if(r.cmd==='ajuda' || String(r.k)==='cmd:ajuda') return Object.assign(base, {ic:'❓', go:()=>abrirAjuda(), rec:{cmd:'ajuda'}});
+      if(r.app && APP(r.app) && visivel(APP(r.app)) && MareSonar._paginaOk(r.url)) return Object.assign(base, {ic:ic(APP(r.app)), app:r.app, url:r.url, go:app(r.app, r.url)});
+      return null;
+    },
+  });
+}
+iniciarSonar();
+$('#sonar-kbd').textContent = window.MareSonar ? MareSonar.tecla : 'Ctrl K';
+$('#btn-sonar').title = 'Sonar: busca em todo o Oceano ('+(window.MareSonar && MareSonar.tecla==='⌘K' ? '⌘K' : 'Ctrl+K')+')';
+$('#btn-sonar').addEventListener('click', ()=>window.MareSonar && MareSonar.abrir());
+$('#host-sonar').addEventListener('click', ()=>window.MareSonar && MareSonar.abrir());
+
 // atalhos de teclado: 1..9 abrem os produtos da tela inicial, ? abre a ajuda
 document.addEventListener('keydown', e=>{
   if(e.ctrlKey||e.metaKey||e.altKey||modalTopo||!U) return;

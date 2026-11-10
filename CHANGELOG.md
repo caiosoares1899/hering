@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Maré › 🔍 Sonar com o mesmo layout do lobby (módulo mare-sonar), foco nos cards do board (SÓ DEV · kanban-dev v8.30.920-dev · oceano-dev v1.67 · mare-sonar-dev.js ?v=2) — 2026-11-10
+### Maré › 🔍 Sonar com o mesmo layout do lobby (módulo mare-sonar), foco nos cards do board (PROD · kanban v8.30.921 · oceano v1.68 · mare-sonar.js ?v=3) — 2026-11-10
 
 O Ctrl+K do Maré passa a abrir o **mesmo Sonar do lobby** (módulo `mare-sonar-dev.js`): o mesmo título com o disco que varre, as mesmas abas, o mesmo teclado. O que muda é o foco:
 - **Abas:** Tudo · 1 Este board · 2 Radar · 3 Squads · 4 Ajuda (prefixos `b:`, `r:`, `s:`, `a:`).
@@ -37,14 +37,14 @@ O Ctrl+K do Maré passa a abrir o **mesmo Sonar do lobby** (módulo `mare-sonar-
 - Substitui a versão do #1672, que reaproveitava a janela antiga. Teste: `docs/arezzo/testes/test_mare_sonar.js` (4 temas, incluindo Black Friday). Sem regressão em `test_busca_comentarios.js` (as 2 checagens de "Ctrl+K sem card" passam a olhar o Sonar), `test_card_modal_ui.js` e `test_oceano_sonar.js`.
 - Dica: sim, no PR do CATALOGO. Fronteira: texto do card e do Radar por `esc()`; a cor da coluna passa por uma lista fechada antes de virar estilo; id na URL por `encodeURIComponent()`.
 
-### Oceano › 🔍 Sonar vira módulo compartilhado (mare-sonar-dev.js) com título e disco de sonar (SÓ DEV · oceano-dev v1.66) — 2026-11-10
+### Oceano › 🔍 Sonar vira módulo compartilhado (mare-sonar-dev.js) com título e disco de sonar (PROD · oceano v1.68 · mare-sonar.js ?v=3) — 2026-11-10
 
 O Sonar sai do lobby e vira o módulo compartilhado **`mare-sonar-dev.js`** (`?v=1`): um layout e um comportamento só para todas as páginas, e cada página entrega apenas o próprio foco. O lobby é o primeiro a usar (o Maré entra no PR seguinte, trocando a busca antiga pelo mesmo visual).
 - **Título "Sonar" com disco de sonar:** no lugar da lupa, um disco com anéis; ele **varre só enquanto procura** (ao digitar, até ~0,5 s depois da última tecla, e enquanto o Radar carrega). Ao lado do título: "busca em todo o Oceano", "escaneando…" e depois "N resultados" (anunciado sem pressa para o leitor de tela). Parado, nada anima; "reduzir movimento" desliga a varredura.
 - Por fora, o resto fica igual: abas, teclado, recentes e a cópia do Radar de 3 h no aparelho (mesma chave, então quem já tinha a cópia continua sem ler o banco).
 - Teste: `docs/arezzo/testes/test_oceano_sonar.js` (agora com o título, a varredura ao digitar e o disco parado depois que os resultados assentam). Fronteira: sem mudança (a mesma lógica, mudou de arquivo). Dica: sim, no PR do `CATALOGO`.
 
-### Maré › 🔍 Ctrl+K vira o Sonar: cards do board + Radar, outros squads e Ajuda (SÓ DEV · kanban-dev v8.30.918-dev) — 2026-11-10
+### Maré › 🔍 Ctrl+K vira o Sonar: cards do board + Radar, outros squads e Ajuda (PROD · kanban v8.30.921) — 2026-11-10
 
 O **Ctrl+K** do Maré deixa de ser a "busca global" e vira o **🔍 Sonar**, o mesmo nome e a mesma ideia do lobby do Oceano. A lista agora tem quatro grupos:
 - **Neste board:** os cards, como antes (título, descrição, Insights do PO e responsável), agora sem se importar com acento, e com o botão "Ver N cards no board".
@@ -55,7 +55,7 @@ O **Ctrl+K** do Maré deixa de ser a "busca global" e vira o **🔍 Sonar**, o m
 - Teste: `docs/arezzo/testes/test_mare_sonar.js` (boot real, Firebase falso, 3 temas, 1280 e 390 px, título hostil, cópia do lobby = 0 leituras). Sem regressão em `test_busca_comentarios.js` e `test_card_modal_ui.js`. Capturas em `docs/capturas/mare-sonar/`.
 - Dica: sim (junto com a do lobby, num PR do `CATALOGO`). Fronteira: campo novo no DOM com texto de outras pessoas (títulos de Objetivo e Marco), sempre por `esc()`; id do Objetivo vai na URL por `encodeURIComponent()`; nenhuma leitura que a pessoa já não pudesse fazer.
 
-### Oceano › 🔍 Sonar: busca em todo o Oceano com Ctrl+K / ⌘K (SÓ DEV · oceano-dev v1.65 · kanban-dev v8.30.917-dev) — 2026-11-10
+### Oceano › 🔍 Sonar: busca em todo o Oceano com Ctrl+K / ⌘K (PROD · oceano v1.68 · kanban v8.30.921) — 2026-11-10
 
 Busca de todo o Oceano. **Ctrl+K** (no Mac **⌘K**) ou o botão **🔍 Sonar** no topo abre uma caixa só que acha produtos, os seus squads do Maré, **Objetivos e Marcos do Radar**, links da Hering e os seus, a Ajuda e comandos (perfil, ajuda). Enter abre já no lugar certo (o Objetivo pelo `?okr=`, o squad pelo `?squad=`); Ctrl+Enter abre em aba nova.
 - **Onde buscar:** abas Tudo · 1 Maré · 2 Radar · 3 Links · 4 Ajuda. Com a caixa vazia, as teclas 1–4 trocam de aba; Tab passa de uma para a outra; prefixos `m:`, `r:`, `l:` e `a:`. `r: meus` mostra só os Objetivos em que a pessoa é responsável.
@@ -67,11 +67,11 @@ Busca de todo o Oceano. **Ctrl+K** (no Mac **⌘K**) ou o botão **🔍 Sonar** 
 - Teste: `docs/arezzo/testes/test_oceano_sonar.js` (boot real, Firebase falso, 3 temas do lobby, 1280 e 390 px, XSS em título e link, `?busca=` do Maré). Capturas em `docs/capturas/oceano-sonar/`.
 - Dica: sim, a dica de teclas da tela inicial e o título do botão já falam do ⌘K; o popup no `CATALOGO` vem num PR pequeno separado (mexe no módulo compartilhado e no `?v=` de todas as páginas). Fronteira: campo novo no DOM com texto de outras pessoas (títulos de Objetivo e Marco, links), sempre por `esc()`; URL de link por `_hrefOk()`; `?busca=` no Maré só vira valor do campo e é escapado ao ecoar.
 
-### Radar › Agente do Radar só grava período no padrão (SÓ DEV · functions/okr · PR #1667 · okrAgenteChat no ar em 10/11) — 2026-11-10
+### Radar › Agente do Radar só grava período no padrão (PROD · functions/okr · PR #1667 · okrAgenteChat no ar em 10/11) — 2026-11-10
 
 `criar_objetivo` e `editar_campos_okr` só aceitam período no padrão (T426, S127, A27). "4T-2026", "Q4" e afins voltam como `periodo_fora_do_padrao`, com uma mensagem que ensina o formato. Assim o agente segue a mesma regra do seletor do `okr-dev.html` (#1666). Testes: 2 novos em `functions/okr/__tests__/agenteTools.test.js`. O `okrAgenteChat` foi publicado em 10/11. Dica: não. Fronteira: schema do agente checado (entrada do LLM agora passa por regex fechada).
 
-### Radar › Período padronizado do Objetivo: T126, S226, A27 (SÓ DEV · okr-dev v2.105) — 2026-11-10
+### Radar › Período padronizado do Objetivo: T126, S226, A27 (PROD · okr v2.105) — 2026-11-10
 
 O período do Objetivo deixa de ser texto livre ("2T", "4T-2026", "1S27"…, cada um escrevia de um jeito). Agora é um seletor com código fixo: **T** = trimestre, **S** = semestre e **A** = ano todo, seguidos do ano (**T426** = 4º trimestre de 2026, **S127** = 1º semestre de 2027, **A27** = 2027 inteiro). O seletor mostra o ano corrente e o próximo, e dá para marcar mais de um.
 - **Salvar exige o padrão.** Sem período, ou com rótulo antigo, o Salvar do Objetivo avisa, abre as Configurações e põe o foco no seletor. Rótulo antigo que dá para converter ganha o botão "Trocar por T426" (sem ano, "4T", usa o ano em que o Objetivo foi criado); o que não converte só pode ser tirado. Lançamento rápido, status de Marco e arquivar não passam pela trava.
@@ -81,7 +81,7 @@ O período do Objetivo deixa de ser texto livre ("2T", "4T-2026", "1S27"…, cad
 - Teste: `docs/arezzo/testes/test_okr_periodo.js` (boot real, Firebase falso, 3 temas, 1280 e 390 px). Capturas em `docs/capturas/okr-periodo/`.
 - Dica: não (o próprio Salvar explica na hora). Fronteira: sem mudança (só a tela; nenhum nó, regra ou sink novo).
 
-### Maré › Modal do card: checklists legíveis e controles acessíveis no toque (SÓ DEV · kanban-dev v8.30.915-dev · PR #1661) — 2026-11-09
+### Maré › Modal do card: checklists legíveis e controles acessíveis no toque (PROD · kanban v8.30.921 · PR #1661) — 2026-11-09
 
 Antes, campos e ações apertavam no celular/tablet; os controles dos checklists eram pequenos e o título disputava espaço com as setas. Agora, campos respeitam a largura do modal, grupos têm separação discreta e o nome ocupa uma linha própria no toque; ações do checklist e do cabeçalho têm alvo de 44 px e nomes acessíveis. Rodapé quebra linha no tablet. Teste: docs/arezzo/testes/test_card_modal_ui.js (boot real, três temas, desktop/celular/tablet, zero/2/50 itens e ADM/membro/PO). Dica: não — ajuste de uma tela já usada.
 
