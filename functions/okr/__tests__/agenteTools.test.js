@@ -495,3 +495,35 @@ test('promover_item_okr: move próximo passo para progresso e promove progresso 
 
 
 
+
+// ── 📅 Período padronizado (10/11/2026): o agente só grava T426 / S127 / A27 ──
+test('criar_objetivo e editar_campos_okr: período fora do padrão é recusado, no padrão grava', async () => {
+  const db = seedDb();
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: ADM_UID, dryRun: false });
+  const criar = toolByName(tools, 'criar_objetivo'), editar = toolByName(tools, 'editar_campos_okr');
+
+  const rFora = await criar.handler({ titulo: 'Com período velho', area_id: 'tech', trimestres: ['4T-2026'] });
+  assert.equal(rFora.ok, false);
+  assert.equal(rFora.error, 'periodo_fora_do_padrao');
+  assert.match(rFora.message, /4T-2026/);
+
+  const rOk = await criar.handler({ titulo: 'Com período novo', area_id: 'tech', trimestres: ['T426', 'S127', 'A27'] });
+  assert.equal(rOk.ok, true);
+  assert.deepEqual((await db.ref('kanban/okr/objetivos/' + rOk.objetivo_id).get()).val().trimestres, ['T426', 'S127', 'A27']);
+
+  for (const ruim of ['Q4', '2026-Q4', 'T5 26', 'S326', 'T4260', '']) {
+    const r = await editar.handler({ objetivo_id: 'o1', trimestres_adicionar: [ruim] });
+    assert.equal(r.error, 'periodo_fora_do_padrao', 'deveria recusar "' + ruim + '"');
+  }
+  const antes = (await db.ref('kanban/okr/objetivos/o1').get()).val().trimestres;
+  const rEd = await editar.handler({ objetivo_id: 'o1', trimestres_adicionar: ['T127'] });
+  assert.equal(rEd.ok, true);
+  assert.deepEqual((await db.ref('kanban/okr/objetivos/o1').get()).val().trimestres, [...antes, 'T127']);
+});
+
+test('schema do agente: trimestres só aceita o padrão (o modelo vê a regra na descrição)', () => {
+  const tools = buildOkrTools({ mode: 'real', db: seedDb(), requestingUid: ADM_UID, dryRun: true });
+  const prop = toolByName(tools, 'criar_objetivo').input_schema.properties.trimestres;
+  assert.match(JSON.stringify(prop), /T426/);
+  assert.ok(JSON.stringify(prop).includes('pattern'));
+});

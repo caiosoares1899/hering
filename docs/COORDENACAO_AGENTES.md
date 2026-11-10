@@ -138,6 +138,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | **Agente do Radar só grava período no padrão** (T426/S127/A27): `criar_objetivo` e `editar_campos_okr` recusam "4T-2026" e afins (`functions/okr/agenteTools.js` + `agentePrompt.js`). Combina com o PR do seletor no `okr-dev.html`. | resync → `firebase deploy --only functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 10/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
