@@ -24,6 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Acabamento vidro lapidado (`--specular`) e curvas com nome (`--ease-*`) no Maré, Painel, Radar e Oceano (dev) — 2026-11-10
+
+- **Vidro lapidado (`--specular`) por tema**: definido `--specular: inset 0 1px 0 rgba(255,255,255,.08)` no escuro/Vice/Entardecer e `--specular: inset 0 1px 0 rgba(255,255,255,.7)` no claro (`[data-theme="light"]`), somado às superfícies `.vidro`, `.panel`, `.card`, `.col` e modais das 4 páginas (`kanban-dev.html`, `painel-dev.html`, `okr-dev.html` e `oceano-dev.html`) conforme o `docs/GUIA_UI_UX.md` (§2.5 regra 6), sem adicionar `backdrop-filter` nem alterar a GPU com a tela parada.
+- **Curvas com nome (`--ease-*`) no `:root`**: adicionados `--ease-out: cubic-bezier(.32,.72,0,1)`, `--ease-in-out: cubic-bezier(.4,0,.2,1)` e `--ease-overshoot: cubic-bezier(.34,1.56,.64,1)` no `:root` das 4 páginas, substituindo todos os `cubic-bezier(...)` soltos por `var(--ease-*)` (§2.4).
+
 ### Maré e Oceano › 💡 Dica do Sonar (SÓ DEV · mare-dicas ?v=11 · kanban-dev v8.30.923-dev · oceano-dev v1.70 · okr-dev v2.106 · painel-dev v5.97) — 2026-11-10
 
 Popup de dica do Sonar no Maré e no lobby (`mare-dicas-dev.js`, `?v=11` em kanban-dev, okr-dev, oceano-dev e painel-dev).
