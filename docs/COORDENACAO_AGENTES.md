@@ -111,7 +111,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
+| Claude | `claude/radar-periodo-padrao` | `okr-dev.html` (período padronizado do Objetivo); depois `functions/okr/agenteTools.js` em PR próprio | 10/11/2026 |
 | Claude | `claude/<item>` (um por vez) | Plano da consultoria (`docs/ideias/consultoria-oceano-2026-11-09.md`): `travessia-dev.html`, `okr-dev.html`, `oceano-dev.html` conforme o item do sprint | 10/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
@@ -123,6 +123,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | 🧪 Ferramentas de teste visual: `perf_apresentacao.js` com `CENARIO=` (medir só um cenário; hoje cada rodada mede 5) e variantes em paralelo; caminho do Chrome de `~/hering-tools` como padrão nas suítes da apresentação (as antigas têm caminho de Linux fixo); **contact sheet** 3×2 (3 temas × desktop/celular numa imagem só) no harness do GUIA §12.3 | Claude | sessão de 09/11/2026 (rodada de movimento da apresentação levou ~30 min, 2/3 em medição) |
 | 🎬 Gerador de vídeo/GIF de release em Marine Glass: um HTML local em `scripts/` com `window.seek(t)` (cada quadro é função do tempo) + JSON `{titulo, entregas, metricas}` + Playwright/FFmpeg → 9:16 (WhatsApp) e 16:9 (Mural/OKR). Fora das páginas publicadas. **Sem Remotion:** a licença gratuita é só para indivíduos e equipes de até 3 pessoas, então empresa precisa de licença paga; o `seek(t)` próprio + Playwright + FFmpeg basta. Números e entregas vêm do `CHANGELOG.md`/dados, nunca inventados, e passam por validação antes de renderizar. Revisão por contact sheet antes de enviar | Caio decide se vale | dossiê do Antigravity de 09/11 + artigo de @e1genqq lido na íntegra |
 | 🔧 Atualizar `firebase-functions` (^5 → atual): o deploy de 18/10 avisou que a versão nova traz breaking changes — fazer com calma e com testes, sem prazo | Claude | aviso do `firebase deploy` de 18/10/2026 |
+
+> Rodada `codex/radar-uiux` (09/11) encerrada em 10/11: o Codex parou sem entregar (sem navegador nem git no sandbox, ~86 mil tokens; log em `~/hering-logs/delegacoes/2026-11-09-codex-radar-uiux.*`). O `prefers-reduced-motion` do Radar (linha abaixo) entra nos itens do Radar do plano da consultoria. Lição: não delegar ao Codex o que precisa de navegador.
 
 ### Escalado para o Claude
 | Quem achou | O que | Como reproduzir | Data |

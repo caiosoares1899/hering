@@ -24,6 +24,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar › Período padronizado do Objetivo: T126, S226, A27 (SÓ DEV · okr-dev v2.105) — 2026-11-10
+
+O período do Objetivo deixa de ser texto livre ("2T", "4T-2026", "1S27"…, cada um escrevia de um jeito). Agora é um seletor com código fixo: **T** = trimestre, **S** = semestre e **A** = ano todo, seguidos do ano (**T426** = 4º trimestre de 2026, **S127** = 1º semestre de 2027, **A27** = 2027 inteiro). O seletor mostra o ano corrente e o próximo, e dá para marcar mais de um.
+- **Salvar exige o padrão.** Sem período, ou com rótulo antigo, o Salvar do Objetivo avisa, abre as Configurações e põe o foco no seletor. Rótulo antigo que dá para converter ganha o botão "Trocar por T426" (sem ano, "4T", usa o ano em que o Objetivo foi criado); o que não converte só pode ser tirado. Lançamento rápido, status de Marco e arquivar não passam pela trava.
+- **Perene** não precisa de período e aparece sempre no período atual do filtro.
+- **Filtro de período** cruza períodos: escolher S226 mostra também quem está em T326, T426 ou A26. Rótulos antigos já entram convertidos.
+- O Agente do Radar passa a recusar período fora do padrão no PR #1667 (`functions/okr/agenteTools.js`), que precisa do deploy do `okrAgenteChat`. Aceito: lançamento rápido, status de Marco e o agente editando outros campos não exigem padronizar o período.
+- Teste: `docs/arezzo/testes/test_okr_periodo.js` (boot real, Firebase falso, 3 temas, 1280 e 390 px). Capturas em `docs/capturas/okr-periodo/`.
+- Dica: não (o próprio Salvar explica na hora). Fronteira: sem mudança (só a tela; nenhum nó, regra ou sink novo).
+
 ### Maré › Modal do card: checklists legíveis e controles acessíveis no toque (SÓ DEV · kanban-dev v8.30.915-dev · PR #1661) — 2026-11-09
 
 Antes, campos e ações apertavam no celular/tablet; os controles dos checklists eram pequenos e o título disputava espaço com as setas. Agora, campos respeitam a largura do modal, grupos têm separação discreta e o nome ocupa uma linha própria no toque; ações do checklist e do cabeçalho têm alvo de 44 px e nomes acessíveis. Rodapé quebra linha no tablet. Teste: docs/arezzo/testes/test_card_modal_ui.js (boot real, três temas, desktop/celular/tablet, zero/2/50 itens e ADM/membro/PO). Dica: não — ajuste de uma tela já usada.
