@@ -6702,7 +6702,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.916-dev</div>
+<div class="version">v8.30.917-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -40136,6 +40136,23 @@ renderBoard();
     // Histórico do Agente Ágil, no painel). Antes desistia em silêncio —
     // achado via /monitorarbugs, 2026-09-01.
     showToast('⚠ Esse card não foi encontrado — pode ter sido excluído ou arquivado.');
+  };
+  setTimeout(tentar, 600);
+})();
+
+// 🔍 Sonar do Oceano (10/11/2026): ?busca=<texto> abre a busca (Ctrl+K) já preenchida depois que os cards chegam.
+// O texto só entra como valor do campo; renderSearchResults() escapa a consulta com esc() antes de ecoar. O parâmetro sai da URL depois de usado.
+(function _openSearchFromUrl(){
+  const q = String(_urlParams.get('busca')||'').slice(0,120).trim();
+  if(!q || _urlParams.get('card')) return;
+  try{ const u = new URL(location.href); u.searchParams.delete('busca'); history.replaceState(history.state, '', u.pathname+u.search+u.hash); }catch(e){}
+  let tentativas = 0;
+  const tentar = () => {
+    tentativas++;
+    if(!(Array.isArray(cards) && cards.length) && tentativas < 15){ setTimeout(tentar, 400); return; }
+    openSearch();
+    const inp = document.getElementById('search-inp'); if(!inp) return;
+    inp.value = q; renderSearchResults();
   };
   setTimeout(tentar, 600);
 })();

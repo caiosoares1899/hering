@@ -52,7 +52,7 @@ A coluna "Sua decisão" diz o que o prompt da seção 8 executa: só o que estiv
 | T7 | Travessia: avaliação com rascunho e progresso | Médio | P | Não | Fazer | sim |
 | T8 | Travessia: humor com aviso antes e desfazer | Médio | P | Não | Fazer | sim |
 | O1 | Oceano: faixa "Hoje" com o meu dia | Alto | P + G | Função e regra (fase 2) | Fazer a fase 1 | sim |
-| O2 | Oceano: paleta de comando | Médio | M | Não | Depois | sim |
+| O2 | Oceano: paleta de comando | Médio | M | Não | Depois | sim — virou o **🔍 Sonar** (fase 1 adiantada em 10/11/2026: produtos, Maré, Radar, links e ajuda; fase 3 = índice dos cards no servidor) |
 | O3 | Oceano: abrir a porta da Travessia por vínculo | Médio | P | Não | Decisão sua | sim |
 | O4 | Oceano: abas de "venda" fora da navegação diária | Baixo | P | Não | Fazer | sim |
 | O5 | Família: um vocabulário de estado só | Médio | P | Não | Fazer | sim |
