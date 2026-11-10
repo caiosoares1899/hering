@@ -62,6 +62,10 @@ const seed = ()=>({kanban:{
     t('não lê o Radar de novo na mesma sessão', leituras()===2, leituras());
     await digita(p,'r: meus'); const r3 = await itens(p);
     t('"r: meus" = só os Objetivos em que sou responsável', r3.includes('Aumentar conversão do app') && !r3.includes('Reduzir custo de mídia'), r3);
+    await digita(p,'r: minha'); const r3m = await itens(p);
+    t('"r: minha" também filtra só os Objetivos em que sou responsável', r3m.includes('Aumentar conversão do app') && !r3m.includes('Reduzir custo de mídia'), r3m);
+    await digita(p,'conversao?'); const r3p = await itens(p);
+    t('pontuação na busca ("conversao?") não derruba o match', r3p.includes('Aumentar conversão do app'), r3p);
     await digita(p,'hostil'); await p.waitForTimeout(200);
     t('título hostil do banco aparece como texto (sem XSS)', !(await p.evaluate(()=>window.__xss)) && (await itens(p)).some(x=>x.includes('<img')), await itens(p));
     await digita(p,'l: ruim'); const iR = await p.$$eval('#msn-lista .msn-it', xs=>xs.findIndex(x=>x.textContent.includes('Ruim')));

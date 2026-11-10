@@ -53,6 +53,13 @@ const seed = ()=>({kanban:{
     t('mesmo layout do lobby: título Sonar, abas e disco', await p.evaluate(()=>!!document.querySelector('#msn-ov .msn-disc') && document.querySelectorAll('#msn-esc button').length===5), '');
     await digita(p,'meu dia'); const l2 = await lista(p);
     t('Ajuda do Maré aparece', (await grupos(p)).includes('Ajuda do Maré') && l2.some(x=>/Meu Dia/.test(x)), l2);
+    await digita(p,'spotify'); const lSp = await lista(p);
+    t('Ajuda do Spotify (pausado) não aparece no Sonar', !lSp.some(x=>/Ouvindo agora|Rádio do Maré|Conectar Spotify/i.test(x)), lSp);
+    await digita(p,''); await p.keyboard.press('3'); await p.waitForTimeout(150);
+    t('aba 3 (Squads) com caixa vazia lista os outros squads para abrir', (await lista(p)).includes('Squad Dados'), await lista(p));
+    await p.keyboard.press('Tab'); await p.keyboard.press('Tab'); await p.waitForTimeout(150);
+    const visSemAcento = await p.evaluate(()=>{ _sonarVerNoBoard('conversao'); const ok = [...document.querySelectorAll('#board .card-title')].map(e=>e.textContent); clearFilters(); return ok; });
+    t('_sonarVerNoBoard("conversao") sem acento acha "Conversão do checkout" no board', visSemAcento.includes('Conversão do checkout') && !visSemAcento.includes('Outro card'), visSemAcento);
     await digita(p,'hostil'); t('título hostil vira texto (sem XSS)', !(await p.evaluate(()=>window.__xss)) && (await lista(p)).some(x=>x.includes('<img')), await lista(p));
     // Enter no Objetivo
     await digita(p,'aumentar'); const idx = (await lista(p)).indexOf('Aumentar conversão do app');

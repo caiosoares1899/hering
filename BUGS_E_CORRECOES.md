@@ -86,6 +86,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Sonar (/monitorarbugs — filtro 'minha' no Radar, pontuação em _pontua, disco em leitura > 550ms, 'Ver N cards no board' sem acento, Spotify pausado fora da Ajuda e aba Squads vazia)
+
+- **Causa raiz e correções:** (1) Em `mare-sonar-dev.js` (`?v=5`), `fonteRadar()` removia `'minha'` de `tk` mas não a incluía na flag `meus`, fazendo `r: minha` zerar os tokens com `meus = false` e listar todos os Objetivos da empresa em vez de filtrar pelos da pessoa; unificada a lista `MEU` e usado `sempre: meus && !tk.length`. (2) `pontua()` e `grupos()` agora tokenizam a busca pela mesma régua alfanumérica (`/[^a-z0-9]+/`) de `pal`, evitando que pontuação colada (`"conversao?"`, `"a/b"`, `"(okr)"`) derrube o match para 0. (3) `radarCarregar()` agora chama `scan(false)` ao terminar mesmo com a janela aberta (evitando que o disco continuasse girando se a leitura do Firebase passasse de 550ms), e `status()` considera a query pós-prefixo `st.q`. (4) Em `kanban-dev.html`, `cardMatchesFilters()` (`activeFilters.texto`) passou a usar `MareSonar._pontua()` para que a ação **"Ver N cards no board"** do Sonar encontre no quadro exatamente os mesmos cards achados sem acento ou multi-palavra; a aba **"3 Squads"** com caixa vazia agora lista os outros squads para abrir (e inclui `url` para `Ctrl+Enter` em aba nova); tópicos da aba pausada `spotify` deixaram de aparecer na busca do Sonar e da Central de Ajuda; abrir card ou filtrar o quadro pelo Sonar fecha outros `.ov.open` que cobririam o resultado; e `_openSearchFromUrl()` aguarda `window._currentUser`. (5) Em `oceano-dev.html`, `mostrarHost(id, url)` atualiza o `src` do iframe já existente mesmo se o carregamento inicial ainda não tiver terminado.
+
 ### 2026-11-10 · Sonar: abas cortadas em janela baixa (o flex espremia a faixa) — mare-sonar ?v=4 (PROD · oceano v1.69, kanban v8.30.922)
 
 - **Sintoma (Caio, 10/11):** no Sonar do lobby, as abas (Tudo, Maré, Radar…) apareciam cortadas embaixo pela linha da faixa.

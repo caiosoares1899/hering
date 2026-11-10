@@ -40,18 +40,19 @@
     while(i<a.length && j<b.length){ if(a[i]===b[j]){ i++; j++; continue; } if(++d>1) return false; if(a.length>b.length) i++; else if(b.length>a.length) j++; else { i++; j++; } }
     return d + (a.length-i) + (b.length-j) <= 1;
   }
-  // Todas as palavras precisam casar; 0 = fora.
+  // Todas as palavras precisam casar; 0 = fora. Tokeniza com a mesma régua alfanumérica de pal (pontuação como "?", "/", "-" não derruba o match).
   function pontua(texto, toks){
-    if(!toks.length) return 1;
+    const ks = (toks||[]).flatMap(k=>norm(k).split(/[^a-z0-9]+/)).filter(Boolean);
+    if(!ks.length) return 0;
     const t = norm(texto), pal = t.split(/[^a-z0-9]+/).filter(Boolean); let p = 0;
-    for(const k of toks){
+    for(const k of ks){
       if(pal.includes(k)) p += 4;
       else if(pal.some(w=>w.startsWith(k))) p += 3;
       else if(t.includes(k)) p += 2;
       else if(k.length>=4 && pal.some(w=>umaLetra(w,k) || umaLetra(w.slice(0,k.length),k))) p += 1;
       else return 0;
     }
-    return p + (t.startsWith(toks.join(' ')) ? 2 : 0);
+    return p + (t.startsWith(ks.join(' ')) ? 2 : 0);
   }
 
   const st = {opts:null, esc:'tudo', sel:0, itens:[], gatilho:null, montado:false,
@@ -96,12 +97,13 @@
     const g = [{g:'Radar', esc:r.esc||'radar', itens:at, noVazio:true}];
     if(!st.radar) return g;
     const u = st.opts.user && st.opts.user(), uid = u && u.uid;
-    const meus = toks.some(k=>k==='meus' || k==='meu' || k==='minhas'), tk = toks.filter(k=>!['meus','meu','minhas','minha'].includes(k));
+    const MEU = ['meus','meu','minhas','minha'];
+    const meus = Boolean(uid) && toks.some(k=>MEU.includes(k)), tk = meus ? toks.filter(k=>!MEU.includes(k)) : toks, smp = meus && !tk.length;
     const objs = Object.values(st.radar.objs).filter(o=>!meus || o.resp.includes(uid));
     const abre = id => { const url = r.url(id); return {url, go:()=>r.abrir(url)}; };
-    g.push({g:'Objetivos', esc:r.esc||'radar', itens:objs.map(o=>Object.assign({k:'obj:'+o.id, ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), tipo:'objetivo', busca:o.t+' '+o.per.join(' '), toks:tk, app:'okr'}, abre(o.id)))});
+    g.push({g:'Objetivos', esc:r.esc||'radar', itens:objs.map(o=>Object.assign({k:'obj:'+o.id, ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), tipo:'objetivo', busca:o.t+' '+o.per.join(' '), toks:tk, sempre:smp, app:'okr'}, abre(o.id)))});
     const ids = new Set(objs.map(o=>o.id));
-    g.push({g:'Marcos', esc:r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj)).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, app:'okr'}, abre(m.obj)))});
+    g.push({g:'Marcos', esc:r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj)).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, sempre:smp, app:'okr'}, abre(m.obj)))});
     return g;
   }
 
@@ -191,7 +193,7 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     ov.addEventListener('mousedown', e=>{ if(e.target===ov) fechar(); });
     $('msn-x').addEventListener('click', ()=>fechar());
     const inp = $('msn-in');
-    inp.addEventListener('input', ()=>{ st.sel = 0; scan(true); render(); });
+    inp.addEventListener('input', ()=>{ st.sel = 0; render(); scan(true); });
     // Teclas da janela: tratadas aqui e paradas, para os atalhos globais da página (Tab entre cards, Enter abre card, Esc fecha modais…) não reagirem.
     inp.addEventListener('keydown', e=>{
       const k = e.key; let usou = true;
@@ -218,15 +220,16 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     const box = document.querySelector('#msn-ov .msn-box'); if(!box) return;
     clearTimeout(st.tScan);
     if(on) box.classList.add('scan');
-    st.tScan = setTimeout(()=>{ if(!st.carregando) box.classList.remove('scan'); }, on ? 550 : 0);
+    const fim = ()=>{ if(on && st.carregando) st.tScan = setTimeout(fim, 200); else box.classList.remove('scan'); };
+    st.tScan = setTimeout(fim, on ? 550 : 0);
     status();
   }
   // Texto ao lado do título: anunciado sem pressa (não a cada tecla).
   function status(){
     clearTimeout(st.tStatus);
     const el = $('msn-st'); if(!el) return;
-    const q = ($('msn-in').value||'').trim();
-    if(!q){ el.textContent = st.opts.subtitulo || 'busca em todo o Oceano'; return; }
+    const q = (st.q!=null ? st.q : ($('msn-in').value||'')).trim();
+    if(!q && !st.carregando){ el.textContent = st.opts.subtitulo || 'busca em todo o Oceano'; return; }
     el.textContent = 'escaneando…';
     st.tStatus = setTimeout(()=>{ if(st.carregando){ status(); return; } const n = st.itens.length; el.textContent = n ? (n===1 ? '1 resultado' : n+' resultados') : 'nada por aqui'; }, 600);
   }
@@ -235,7 +238,8 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     let q = inp.value.trim(), esc0 = st.esc;
     const mp = q.match(/^([a-z]):\s*/i);
     if(mp && o.prefixos && o.prefixos[mp[1].toLowerCase()]){ esc0 = o.prefixos[mp[1].toLowerCase()]; q = q.slice(mp[0].length).trim(); }
-    const toks = norm(q).split(/\s+/).filter(Boolean);
+    st.q = q;
+    const toks = norm(q).split(/[^a-z0-9]+/).filter(Boolean);
     const precisaRadar = !!o.radar && (esc0===(o.radar.esc||'radar') || (esc0==='tudo' && q.length>=2));
     if(precisaRadar && !st.radar && !st.carregando && !st.erro) radarCarregar();
     const ctx = {esc:esc0, vazio:!q};
