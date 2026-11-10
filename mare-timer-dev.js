@@ -44,7 +44,7 @@
     const novo = Object.assign({}, t, p);
     if(novo.status==='encerrado') upd[ix] = null;
     else if(opts && opts.criar) upd[ix] = idx(novo);
-    else ['status','startedAt','accMs','atividade','durMs','tipo'].forEach(k=>{ if(k in p) upd[ix+'/'+k] = p[k]; });
+    else ['status','startedAt','accMs','atividade','durMs','tipo'].forEach(k=>{ if(k in p && p[k]!==undefined) upd[ix+'/'+k] = p[k]; });   // undefined faz o Firebase recusar o update inteiro (achado do teste do Codex)
     return upd;
   }
   const escrever = (t, p, opts) => window._update(window._ref(window._db), caminhos(t, p, opts));

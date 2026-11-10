@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Timer: continuar pelo popup sobrescrevia a hora de início; campo vazio derrubava a gravação do índice — mare-timer ?v=1 (SÓ DEV · kanban-dev v8.30.928-dev)
+
+Achados ao tirar a lógica do timer do Maré para o módulo compartilhado `mare-timer-dev.js` (base da Ilha Dinâmica):
+1. **Continuar um timer pausado pelo popup "⏲ Timers" (com o card fechado) regravava a hora de início real** (`iniciadoEm`) com a hora atual. O play gravava `iniciadoEm` sempre que o objeto não o trazia, e o índice pessoal (`kanban/timers_ativos/{uid}`), que alimenta o popup, nunca guarda `iniciadoEm`. Agora `iniciadoEm` só é gravado no 1º play (saindo de "aguardando início").
+2. **Campo `undefined` ia para o índice** (o registro do card já pulava): o Firebase recusa o update inteiro com um `undefined`. Agora o índice também pula (achado pelo teste do Codex).
+- Testes: `docs/arezzo/testes/test_mare_timer_logica.js` (Node puro, 44 verificações, escrito pelo Codex por contrato — reproduz os dois casos); `docs/arezzo/testes/test_timers_card.js` e `docs/arezzo/testes/test_monitorarbugs_timer.js` passam com o Maré usando o módulo.
+
 ### 2026-11-10 · Sonar: "meus" agora traz tudo da pessoa (cards em que estou; Objetivos e Marcos em que sou responsável) + 5 achados do /monitorarbugs do Antigravity — mare-sonar ?v=6 (SÓ DEV · oceano-dev v1.72, kanban-dev v8.30.925-dev)
 
 **"meus" não trazia tudo da pessoa (relato do Caio):**
