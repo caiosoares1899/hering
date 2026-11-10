@@ -124,6 +124,8 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `ideias/dossie-concorrencia-2026-10.md` | Dossiê de concorrência do Antigravity, já triado — backlog pós-férias |
 | `ideias/cronograma-oceano.html` | Cronograma visual do plano da consultoria (8 sprints, gates, prompts para copiar); publicado em `…/hering/docs/ideias/cronograma-oceano.html`. O que se marca nele fica só no navegador; o registro oficial é o card do squad dados |
 | `ideias/consultoria-oceano-2026-11-09.md` | Consultoria de produto de Radar, Travessia e lobby (09/11/2026): 21 propostas, decisões do Caio, desenho das partes difíceis e o prompt-base do plano em sprints |
+| `ideias/ilha-dinamica.md` | 🏝️ Ilha Dinâmica (10/11/2026): conceito, decisões do Caio, modos de exibição, fases (protótipo → `mare-timer` → ilha no Oceano), custo e fronteira |
+| `demo/ilha-dinamica-prototipo.html` | Protótipo isolado da Ilha Dinâmica (dados fictícios, 3 temas, desktop/celular; teste `arezzo/testes/test_ilha_prototipo.js`) — não é carregado por nenhuma página publicada |
 | `ideias/travessia-2026-10-22.md` | Desenho do Travessia (pessoas/PDI/1:1): concorrência, princípios, modelo de dados, fases, decisões do Caio e triagem do dossiê do Antigravity |
 | `ideias/tema-claro-painel-radar-2026-10-17.md` | Auditoria do tema claro/Vice no Painel e no Radar + plano de correção (18/10) |
 | `MIGRACAO_DOMINIO.md` | Internalização (30/10/2026): inventário de tudo que depende do endereço atual (código, CORS das funções, login Google, PWA, dados do navegador, links gravados) + checklist da virada |

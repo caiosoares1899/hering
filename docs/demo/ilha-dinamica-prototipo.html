@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ilha Dinâmica · protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* 🏝️ Ilha Dinâmica — PROTÓTIPO ISOLADO (10/11/2026). Dados fictícios, sem Firebase, sem login. Não é carregado por nenhuma página publicada.
+   Tokens copiados de oceano-dev.html: Abrolhos (escuro, sem data-theme), Lençóis (data-theme="light"), Entardecer (data-theme="sunset"). Plano: docs/ideias/ilha-dinamica.md */
+:root{
+  --deep:#030d1a;--deep-rgb:3,13,26;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
+  --accent:#38b6ff;--teal:#1de9b6;--txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
+  --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:10px;--r2:14px;
+  --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;
+  --shadow:0 10px 34px rgba(0,0,0,.35);--specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --ease-out:cubic-bezier(.32,.72,0,1);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;
+  --ilha-bg:rgba(8,28,50,.97);
+}
+[data-theme="light"]{
+  --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
+  --accent:#0077AD;--teal:#0a8f86;--txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
+  --warn:#c98a10;--danger:#F15B6C;--ok:#1f9d55;--shadow:0 10px 30px rgba(7,70,110,.22);--specular:inset 0 1px 0 rgba(255,255,255,.7);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+  --ilha-bg:rgba(244,251,255,.97);
+}
+[data-theme="sunset"]{
+  --deep:#1a1530;--deep-rgb:26,21,48;--glass:rgba(38,28,58,0.62);--glass-b:rgba(255,176,110,0.26);
+  --accent:#ffb36b;--teal:#ffcf6e;--txt:#fdf1e4;--txt2:rgba(253,241,228,0.72);--txt3:rgba(253,241,228,0.46);
+  --specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --ocean:radial-gradient(ellipse 80% 45% at 50% 38%,rgba(255,160,70,.5) 0%,rgba(255,120,60,.16) 45%,transparent 70%),linear-gradient(180deg,#141d3f 0%,#2a2a55 22%,#7a4a56 38%,#d98a58 47%,#1b4a63 48.4%,#0d2f4b 62%,#071c33 100%);
+  --ilha-bg:rgba(34,24,52,.97);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{background:var(--deep);}
+body{font-family:var(--ff);color:var(--txt);background:var(--ocean);background-attachment:fixed;min-height:100vh;-webkit-font-smoothing:antialiased;}
+button,input,select{font:inherit;color:inherit;}
+.vidro{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);box-shadow:var(--specular);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.ibtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;min-height:36px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);box-shadow:var(--specular);cursor:pointer;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* topo do lobby (ou barra do host): 3 colunas — a do meio é o lugar da ilha */
+.topo{position:sticky;top:0;z-index:20;border-bottom:1px solid var(--glass-b);background:rgba(var(--deep-rgb),.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.topo-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;min-height:58px;}
+.marca{display:flex;align-items:center;gap:9px;font-family:var(--ff-d);font-weight:800;font-size:17px;}
+.marca i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;background:var(--glass);border:1px solid var(--glass-b);}
+.topo-dir{display:flex;justify-content:flex-end;gap:8px;}
+.eu{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--accent);color:#02131f;}
+.host-abas{display:flex;gap:6px;}
+.host-abas[hidden]{display:none;}
+.host-abas span{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--glass-b);background:var(--glass);}
+.host-abas span.on{border-color:var(--accent);}
+
+/* ── 🏝️ a ilha ── */
+#ilha{position:relative;display:flex;justify-content:center;min-width:0;}
+#ilha-btn{display:inline-flex;align-items:center;gap:10px;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--glass-b);background:var(--ilha-bg);box-shadow:var(--specular),0 6px 22px rgba(0,0,0,.22);cursor:pointer;max-width:min(420px,46vw);font-size:13px;font-weight:600;transition:opacity .15s ease,transform .15s ease;}
+#ilha-btn:hover{border-color:var(--accent);}
+.ilha-ico{font-size:15px;line-height:1;}
+#ilha-titulo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;color:var(--txt);}
+#ilha-titulo:empty{display:none;}
+#ilha-tempo{font-variant-numeric:tabular-nums;color:var(--teal);font-weight:700;}
+#ilha-tempo:empty{display:none;}
+.ilha-sep{width:1px;height:16px;background:var(--glass-b);}
+#ilha-mais{font-size:11px;color:var(--txt2);}
+#ilha-mais:empty{display:none;}
+#ilha-n{display:inline-flex;align-items:center;gap:4px;color:var(--txt);}
+#ilha-n[hidden]{display:none;}
+#ilha-n b{min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;font-size:10.5px;display:grid;place-items:center;}
+.ilha-pausa #ilha-tempo{color:var(--txt2);}
+.ilha-erro #ilha-tempo{color:var(--warn);}
+#ilha-fio{display:none;width:120px;height:14px;border:none;background:none;cursor:pointer;padding:0;position:relative;}
+#ilha-fio::before{content:'';position:absolute;left:30px;right:30px;top:5px;height:4px;border-radius:999px;background:var(--glass-b);box-shadow:var(--specular);}
+#ilha-fio:hover::before,#ilha-fio:focus-visible::before{background:var(--accent);}
+#ilha[data-estado="oculta"] #ilha-btn{display:none;}
+#ilha[data-estado="fio"] #ilha-btn{display:none;}
+#ilha[data-estado="fio"] #ilha-fio{display:block;}
+#ilha-painel{position:absolute;top:46px;left:50%;transform:translateX(-50%);width:min(380px,calc(100vw - 24px));padding:12px;border-radius:18px;background:var(--ilha-bg);border:1px solid var(--glass-b);box-shadow:var(--specular),var(--shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:30;display:none;max-height:min(70vh,560px);overflow:auto;}
+#ilha[data-estado="aberta"] #ilha-painel{display:block;animation:ilha-abre .2s var(--ease-out);}
+@keyframes ilha-abre{from{opacity:0;transform:translateX(-50%) translateY(-4px) scale(.98);}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}}
+.ilha-sec{margin-top:10px;}
+.ilha-sec:first-child{margin-top:0;}
+.ilha-h{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin:2px 4px 6px;}
+.ilha-timer{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px;border-radius:12px;background:rgba(var(--deep-rgb),.25);border:1px solid var(--glass-b);margin-bottom:6px;}
+[data-theme="light"] .ilha-timer{background:rgba(255,255,255,.55);}
+.ilha-timer-t{font-weight:600;font-size:13px;min-width:0;}
+.ilha-timer-s{font-size:11px;color:var(--txt3);}
+.ilha-timer-tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--teal);font-size:15px;text-align:right;}
+.ilha-timer.pausado .ilha-timer-tempo{color:var(--txt2);}
+.ilha-acoes{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;}
+.ilha-acoes button,.ilha-rod button{min-height:36px;padding:6px 12px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);font-size:12px;font-weight:600;cursor:pointer;box-shadow:var(--specular);}
+.ilha-acoes button:hover,.ilha-rod button:hover{border-color:var(--accent);}
+.ilha-acoes [data-acao="confirmar-encerrar"]{border-color:var(--danger);color:var(--danger);}
+.ilha-notif{display:flex;gap:9px;padding:8px 6px;border-radius:10px;font-size:12.5px;align-items:flex-start;}
+.ilha-notif b{display:block;font-weight:600;}
+.ilha-notif small{color:var(--txt3);}
+.ilha-notif:not(.lida)::before{content:'';flex:none;width:7px;height:7px;margin-top:5px;border-radius:50%;background:var(--accent);}
+.ilha-notif.lida{opacity:.62;}
+.ilha-notif.lida::before{content:'';flex:none;width:7px;}
+.ilha-rod{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.ilha-vazio{font-size:12.5px;color:var(--txt2);padding:8px 6px;}
+#ilha-erro{padding:10px;border-radius:12px;border:1px solid var(--warn);color:var(--txt);font-size:12.5px;line-height:1.5;}
+#ilha-erro button{margin-top:6px;}
+#ilha-sonar-in{width:100%;height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--deep-rgb),.25);outline:none;}
+[data-theme="light"] #ilha-sonar-in{background:#fff;}
+#ilha-sonar-in:focus{border-color:var(--accent);}
+#ilha-toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);padding:9px 16px;border-radius:999px;background:var(--ilha-bg);border:1px solid var(--accent);font-size:12.5px;font-weight:600;box-shadow:var(--shadow);z-index:50;}
+#ilha-toast:empty{display:none;}
+
+/* conteúdo fictício do lobby, para ver a ilha no contexto */
+main{max-width:1180px;margin:0 auto;padding:22px 16px 40px;}
+.ola{font-family:var(--ff-d);font-weight:800;font-size:22px;margin-bottom:14px;}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:22px;}
+.tile{padding:16px;min-height:110px;font-weight:700;}
+.tile small{display:block;font-weight:500;color:var(--txt2);margin-top:4px;}
+
+/* painel de controle do protótipo (não faz parte da ilha) */
+.ctl{padding:14px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:12.5px;}
+.ctl h2{width:100%;font-family:var(--ff-d);font-size:14px;}
+.ctl label{display:inline-flex;align-items:center;gap:6px;color:var(--txt2);}
+.ctl select{padding:6px 8px;border-radius:8px;border:1px solid var(--glass-b);background:var(--glass);}
+[data-theme="light"] .ctl select{background:#fff;}
+.cmp{padding:16px;font-size:13px;line-height:1.55;}
+.cmp h2{font-family:var(--ff-d);font-size:15px;margin-bottom:8px;}
+.cmp table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px;}
+.cmp th,.cmp td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--glass-b);vertical-align:top;}
+.cmp th{color:var(--txt3);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em;}
+#ilha-medida{color:var(--txt2);font-size:12px;margin-top:8px;}
+
+@media (max-width:560px){
+  .topo-in{grid-template-columns:auto minmax(0,1fr) auto;gap:8px;padding:8px 12px;}
+  .marca span,#btn-sonar span{display:none;}
+  #ilha{justify-content:center;}
+  #ilha-btn{max-width:100%;padding:0 12px;gap:8px;}
+  #ilha-titulo{max-width:84px;}
+  /* no celular o painel vira uma folha presa às bordas da tela, logo abaixo do topo */
+  #ilha-painel{position:fixed;top:64px;left:8px;right:8px;width:auto;transform:none;max-height:calc(100vh - 80px);}
+  @keyframes ilha-abre{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+  .host-abas{display:none;}
+  .ilha-acoes button,.ilha-rod button,#ilha-fio,.ibtn{min-height:44px;min-width:44px;}
+  #ilha-btn{height:44px;}
+}
+@media (prefers-reduced-motion:reduce){ #ilha-btn{transition:none;} #ilha[data-estado="aberta"] #ilha-painel{animation:none;} }
+</style>
+</head>
+<body>
+<header class="topo" id="topo">
+  <div class="topo-in">
+    <div class="marca"><i aria-hidden="true">🌊</i><span>Oceano</span><span class="host-abas" id="host-abas" hidden><span class="on">Maré Digital</span><span>Radar</span></span></div>
+    <div id="ilha" data-estado="oculta" data-modo="acao">
+      <button type="button" id="ilha-fio" aria-label="Mostrar a Ilha Dinâmica"></button>
+      <button type="button" id="ilha-btn" aria-expanded="false" aria-controls="ilha-painel" aria-label="Ilha Dinâmica">
+        <span class="ilha-ico" id="ilha-ico" aria-hidden="true">🌊</span>
+        <span id="ilha-titulo"></span><span id="ilha-tempo"></span><span id="ilha-mais"></span>
+        <span class="ilha-sep" id="ilha-sep" aria-hidden="true"></span>
+        <span id="ilha-n" hidden><span aria-hidden="true">🔔</span><b></b></span>
+      </button>
+      <div id="ilha-painel" role="dialog" aria-label="Ilha Dinâmica: atividade e notificações" tabindex="-1"></div>
+    </div>
+    <div class="topo-dir" id="topo-dir">
+      <button type="button" class="ibtn" id="btn-sonar">🔍 <span>Sonar</span></button>
+      <button type="button" class="ibtn" id="btn-ajuda">❓</button>
+      <span class="eu" aria-label="Meu perfil">EV</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="vidro ctl" aria-label="Controles do protótipo">
+    <h2>🏝️ Ilha Dinâmica · protótipo (dados fictícios)</h2>
+    <label>Tema <select id="ctl-tema"><option value="abrolhos">🌙 Abrolhos</option><option value="lencois">☀️ Lençóis</option><option value="entardecer">🌅 Entardecer</option></select></label>
+    <label>Modo <select id="ctl-modo"><option value="acao">Só quando houver ação</option><option value="mouse">Ao passar o mouse</option><option value="sempre">Sempre visível</option></select></label>
+    <label>Cenário <select id="ctl-cenario"><option value="vazio">Sem atividade</option><option value="timer">1 timer rodando</option><option value="pausado">Timer pausado</option><option value="varios">3 timers</option><option value="notif">Notificações não lidas</option><option value="erro">Erro ao carregar</option></select></label>
+    <label><input type="checkbox" id="ctl-privado"> Compartilhar tela (sem títulos)</label>
+    <label><input type="checkbox" id="ctl-host"> Produto aberto no Oceano</label>
+    <label><input type="checkbox" id="ctl-sonar"> Variante B: Sonar dentro da ilha</label>
+    <button type="button" class="ibtn" id="ctl-notif">🔔 Simular notificação</button>
+  </section>
+
+  <p class="ola" id="ola">Boa tarde, Eve</p>
+  <div class="tiles"><div class="vidro tile">Maré Digital<small>O quadro dos squads</small></div><div class="vidro tile">Painel<small>Gestão e pessoas</small></div><div class="vidro tile">Radar<small>Objetivos e OKRs</small></div><div class="vidro tile">A Bordo<small>Boas-vindas</small></div></div>
+
+  <section class="vidro cmp" aria-labelledby="cmp-t">
+    <h2 id="cmp-t">Topo atual × com a Ilha</h2>
+    <table>
+      <tr><th></th><th>Hoje</th><th>Com a Ilha</th></tr>
+      <tr><td>Botões no topo (lado direito)</td><td>Sonar, Ajuda, 🔔, perfil</td><td>Sonar, Ajuda, perfil (o 🔔 vai para a ilha). Variante B: Ajuda, perfil</td></tr>
+      <tr><td>Espaço no meio do topo</td><td>vazio</td><td>a ilha (só ocupa quando aparece, conforme o modo)</td></tr>
+      <tr><td>Ver o timer</td><td>abrir o Maré → card ou “⏲ Timers”</td><td>de relance, em qualquer produto aberto no Oceano</td></tr>
+      <tr><td>Pausar/continuar</td><td>abrir o card no Maré (2–3 cliques)</td><td>clique na ilha → ⏸ (2 cliques)</td></tr>
+      <tr><td>Notificações</td><td>clique no 🔔</td><td>clique na ilha (mesma lista, mesmo lido/som/Não Perturbe)</td></tr>
+      <tr><td>Distração</td><td>selo do 🔔</td><td>conforme o modo; notificação nunca abre a ilha sozinha; sem animação parada</td></tr>
+    </table>
+    <p id="ilha-medida"></p>
+  </section>
+</main>
+<div id="ilha-toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const P = new URLSearchParams(location.search);
+const TEMAS = {abrolhos:null, lencois:'light', entardecer:'sunset'};
+const st = {tema:'abrolhos', modo:'acao', cenario:'vazio', privado:false, host:false, sonar:false,
+            timers:[], notifs:[], erro:false, aberta:false, hover:false, notifAte:0, tick:null, tNotif:null, tSai:null, confirmar:null};
+
+// ── dados fictícios (tempo SEMPRE por horário: accMs + agora − startedAt) ──
+function cenario(c){
+  const agora = Date.now(), min = 60000;
+  const T = (id, t, sq, acc, rodando) => ({id, t, sq, accMs:acc, status: rodando ? 'rodando' : 'pausado', startedAt: rodando ? agora : 0});
+  st.erro = c==='erro';
+  st.timers = c==='timer' ? [T('t1','Revisar campanha de Natal','dados',18*min+42000,true)]
+    : c==='pausado' ? [T('t1','Revisar campanha de Natal','dados',18*min+42000,false)]
+    : c==='varios' ? [T('t1','Revisar campanha de Natal','dados',18*min+42000,true), T('t2','Banner da home','site',52*min,false), T('t3','Relatório semanal','dados',5*min+10000,true)]
+    : [];
+  st.timers.forEach((t,i)=>{ if(t.status==='rodando') t.startedAt = agora - i*1000; });
+  st.notifs = (c==='notif' || c==='varios') ? [
+    {id:'n1', t:'Ana mencionou você em “Banner da home”', s:'Maré · site · agora', lida:false},
+    {id:'n2', t:'Prazo do Marco “Lançar campanha” é amanhã', s:'Radar · há 1 h', lida:false},
+    {id:'n3', t:'Você recebeu uma ⭐ Estrela do Mar', s:'há 3 h', lida:true}] : [];
+}
+const decorrido = (t, agora) => Math.max(0, (+t.accMs||0) + (t.status==='rodando' && t.startedAt ? (agora - t.startedAt) : 0));
+const fmt = ms => { const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor(s%3600/60), p = n => String(n).padStart(2,'0'); return h ? h+':'+p(m)+':'+p(s%60) : p(m)+':'+p(s%60); };
+const naoLidas = () => st.notifs.filter(n=>!n.lida).length;
+// a atividade principal: o timer rodando mais recente; senão, o pausado mais recente
+function principal(){ const r = st.timers.filter(t=>t.status==='rodando'); return (r.length ? r : st.timers).slice(-1)[0] || null; }
+const celular = () => matchMedia('(max-width:560px)').matches || matchMedia('(pointer:coarse)').matches;
+
+// ── estado visível (a regra dos modos) ──
+function estado(){
+  if(st.aberta) return 'aberta';
+  const temAtividade = st.timers.length>0 || st.erro || Date.now() < st.notifAte;
+  const modo = (st.modo==='mouse' && celular()) ? 'acao' : st.modo;   // no toque não existe "passar o mouse"
+  if(modo==='sempre') return temAtividade || naoLidas() ? 'atividade' : 'repouso';
+  if(modo==='mouse') return st.hover ? (temAtividade || naoLidas() ? 'atividade' : 'repouso') : 'fio';
+  return temAtividade ? 'atividade' : 'oculta';   // "só quando houver ação"
+}
+
+function pintaPilula(){
+  const a = principal(), agora = Date.now(), n = naoLidas();
+  const ilha = $('#ilha'); ilha.classList.toggle('ilha-pausa', !!a && a.status==='pausado'); ilha.classList.toggle('ilha-erro', st.erro);
+  $('#ilha-ico').textContent = st.erro ? '⚠️' : a ? (a.status==='rodando' ? '⏲' : '⏸') : (Date.now() < st.notifAte ? '🔔' : '🌊');
+  $('#ilha-titulo').textContent = st.privado ? '' : (st.erro ? 'Timers indisponíveis' : a ? a.t : (Date.now() < st.notifAte ? 'Nova notificação' : ''));
+  $('#ilha-tempo').textContent = a && !st.erro ? fmt(decorrido(a, agora)) : '';
+  $('#ilha-mais').textContent = st.timers.length>1 ? '+'+(st.timers.length-1) : '';
+  $('#ilha-n').hidden = !n; $('#ilha-n b').textContent = n ? String(n) : '';
+  $('#ilha-sep').hidden = !(n && (a || st.erro));
+  const partes = [st.erro ? 'Timers indisponíveis' : a ? ((st.privado ? 'Timer' : a.t)+' '+(a.status==='rodando'?'rodando':'pausado')+', '+fmt(decorrido(a, agora))) : 'Ilha Dinâmica', n ? n+' notificação'+(n>1?'ões':'')+' não lida'+(n>1?'s':'') : ''].filter(Boolean);
+  $('#ilha-btn').setAttribute('aria-label', partes.join(' · '));
+}
+function pintaPainel(){
+  const p = $('#ilha-painel'), agora = Date.now();
+  let h = '';
+  if(st.sonar) h += '<div class="ilha-sec"><input id="ilha-sonar-in" type="search" placeholder="🔍 Buscar com o Sonar…" aria-label="Buscar com o Sonar"></div>';
+  h += '<div class="ilha-sec"><div class="ilha-h"><span>⏲ Timers</span></div>';
+  if(st.erro) h += '<div id="ilha-erro" role="alert">Não deu para carregar seus timers agora. Os timers continuam contando no Maré.<br><button type="button" id="ilha-tentar" class="ibtn">Tentar de novo</button></div>';
+  else if(!st.timers.length) h += '<div class="ilha-vazio">Nenhum timer rodando. Comece um num card do Maré (⏲ Timer).</div>';
+  else h += st.timers.map(t=>{ const conf = st.confirmar===t.id;
+    return '<div class="ilha-timer'+(t.status==='pausado'?' pausado':'')+'" data-id="'+esc(t.id)+'"><div><div class="ilha-timer-t">'+esc(st.privado ? 'Timer' : t.t)+'</div><div class="ilha-timer-s">Maré · '+esc(t.sq)+' · '+(t.status==='rodando'?'rodando':'pausado')+'</div></div>'
+      + '<div class="ilha-timer-tempo">'+fmt(decorrido(t, agora))+'</div><div class="ilha-acoes">'
+      + (t.status==='rodando' ? '<button type="button" data-acao="pausar">⏸ Pausar</button>' : '<button type="button" data-acao="continuar">▶ Continuar</button>')
+      + (conf ? '<button type="button" data-acao="confirmar-encerrar">Encerrar mesmo?</button>' : '<button type="button" data-acao="encerrar">⏹ Encerrar</button>')
+      + '<button type="button" data-acao="abrir-card">Abrir o card</button></div></div>'; }).join('');
+  h += '</div><div class="ilha-sec"><div class="ilha-h"><span>🔔 Notificações</span></div>';
+  h += st.notifs.length ? st.notifs.map(n=>'<div class="ilha-notif'+(n.lida?' lida':'')+'" data-id="'+esc(n.id)+'"><div><b>'+esc(n.t)+'</b><small>'+esc(n.s)+'</small></div></div>').join('') : '<div class="ilha-vazio">Nada novo por aqui.</div>';
+  h += '<div class="ilha-rod">'+(naoLidas() ? '<button type="button" id="ilha-ler-tudo">Marcar tudo como lido</button>' : '')+'<button type="button" id="ilha-abrir-sino">Abrir o sino completo</button></div></div>';
+  p.innerHTML = h;
+}
+function render(){
+  const e = estado(), ilha = $('#ilha');
+  ilha.dataset.estado = e; ilha.dataset.modo = st.modo;
+  $('#ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
+  pintaPilula();
+  if(e==='aberta') pintaPainel();
+  relogio();
+  const r = $('#ilha-btn').getBoundingClientRect();
+  $('#ilha-medida').textContent = 'Agora a ilha ocupa '+(e==='oculta' ? '0' : e==='fio' ? '120 × 14' : Math.round(r.width)+' × '+Math.round(r.height))+' px no topo (estado: '+e+').';
+}
+// O relógio só roda com timer rodando, a ilha visível e a aba visível; o texto é recalculado pelo horário (nunca somando ticks).
+function relogio(){
+  const precisa = st.timers.some(t=>t.status==='rodando') && !document.hidden && ['atividade','aberta'].includes($('#ilha').dataset.estado);
+  if(precisa && !st.tick) st.tick = setInterval(()=>{ pintaPilula(); if(st.aberta) document.querySelectorAll('.ilha-timer').forEach(el=>{ const t = st.timers.find(x=>x.id===el.dataset.id); if(t) el.querySelector('.ilha-timer-tempo').textContent = fmt(decorrido(t, Date.now())); }); }, 1000);
+  if(!precisa && st.tick){ clearInterval(st.tick); st.tick = null; }
+}
+document.addEventListener('visibilitychange', ()=>{ render(); });
+function toast(m){ const t = $('#ilha-toast'); t.textContent = m; clearTimeout(toast.t); toast.t = setTimeout(()=>{ t.textContent = ''; }, 2600); }
+
+function abrir(){ st.aberta = true; st.confirmar = null; render(); setTimeout(()=>{ const f = $('#ilha-painel').querySelector('input,button') || $('#ilha-painel'); f.focus({preventScroll:true}); }, 10); }
+function fechar(){ if(!st.aberta) return; st.aberta = false; render(); const b = $('#ilha-btn'); if(getComputedStyle(b).display!=='none') b.focus({preventScroll:true}); else if(getComputedStyle($('#ilha-fio')).display!=='none') $('#ilha-fio').focus({preventScroll:true}); }
+
+// ── eventos da ilha ──
+$('#ilha-btn').addEventListener('click', ()=> st.aberta ? fechar() : abrir());
+const entra = ()=>{ clearTimeout(st.tSai); if(!st.hover){ st.hover = true; render(); } };
+const sai = ()=>{ clearTimeout(st.tSai); st.tSai = setTimeout(()=>{ if(st.aberta || $('#ilha').contains(document.activeElement)) return; st.hover = false; render(); }, 1000); };
+$('#ilha').addEventListener('mouseenter', entra); $('#ilha').addEventListener('mouseleave', sai);
+$('#ilha-fio').addEventListener('focus', ()=>{ entra(); setTimeout(()=>$('#ilha-btn').focus({preventScroll:true}), 0); });
+$('#ilha').addEventListener('focusout', e=>{ if(!$('#ilha').contains(e.relatedTarget)) sai(); });
+$('#ilha-fio').addEventListener('click', ()=>{ entra(); abrir(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && st.aberta){ e.preventDefault(); fechar(); } });
+document.addEventListener('mousedown', e=>{ if(st.aberta && !$('#ilha').contains(e.target)) { st.aberta = false; render(); } });
+$('#ilha-painel').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.id==='ilha-tentar'){ st.erro = false; st.timers = []; cenario('timer'); toast('Timers carregados de novo.'); render(); return; }
+  if(b.id==='ilha-ler-tudo'){ st.notifs.forEach(n=>n.lida = true); toast('Tudo marcado como lido (no protótipo; no real, o mesmo do sino).'); render(); return; }
+  if(b.id==='ilha-abrir-sino'){ toast('Abriria o sino completo (mesma lista, som e Não Perturbe).'); return; }
+  const el = b.closest('.ilha-timer'), t = el && st.timers.find(x=>x.id===el.dataset.id); if(!t) return;
+  const agora = Date.now(), ac = b.dataset.acao;
+  if(ac==='pausar'){ t.accMs = decorrido(t, agora); t.status = 'pausado'; t.startedAt = 0; toast('⏸ Pausado: '+(st.privado?'timer':t.t)); }
+  else if(ac==='continuar'){ t.status = 'rodando'; t.startedAt = agora; toast('▶ Continuando: '+(st.privado?'timer':t.t)); }
+  else if(ac==='encerrar'){ st.confirmar = t.id; }
+  else if(ac==='confirmar-encerrar'){ st.timers = st.timers.filter(x=>x!==t); st.confirmar = null; toast('⏹ Encerrado e registrado no card.'); }
+  else if(ac==='abrir-card'){ toast('Abriria o card “'+(st.privado?'…':t.t)+'” no Maré, dentro do Oceano.'); return; }
+  render(); const foco = $('#ilha-painel').querySelector('.ilha-timer[data-id="'+t.id+'"] button') || $('#ilha-painel').querySelector('button'); if(foco) foco.focus({preventScroll:true});
+});
+$('#ilha-painel').addEventListener('input', e=>{ if(e.target.id==='ilha-sonar-in' && e.target.value.length===1) toast('Na versão real, o Sonar abre aqui com “'+e.target.value+'”.'); });
+
+// ── notificação simulada: no modo "só com ação" a ilha aparece compacta por ~6 s; nunca abre o painel sozinha ──
+function chegaNotif(){
+  st.notifs.unshift({id:'n'+Date.now(), t:'Bia comentou em “Relatório semanal”', s:'Maré · dados · agora', lida:false});
+  st.notifAte = Date.now() + 6000; clearTimeout(st.tNotif); st.tNotif = setTimeout(()=>{ st.notifAte = 0; render(); }, 6000);
+  render();
+}
+
+// ── controles do protótipo ──
+function aplica(){
+  const t = TEMAS[st.tema]; if(t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+  $('#btn-sonar').hidden = st.sonar; if(st.sonar) $('#btn-sonar').remove();
+  $('#host-abas').hidden = !st.host; $('#ola').textContent = st.host ? 'Maré Digital (produto aberto dentro do Oceano)' : 'Boa tarde, Eve';
+  render();
+}
+function lerControles(){
+  st.tema = $('#ctl-tema').value; st.modo = $('#ctl-modo').value; st.privado = $('#ctl-privado').checked; st.host = $('#ctl-host').checked;
+  if($('#ctl-sonar').checked && !st.sonar){ st.sonar = true; }
+}
+['#ctl-tema','#ctl-modo','#ctl-privado','#ctl-host','#ctl-sonar'].forEach(s=>$(s).addEventListener('change', ()=>{ lerControles(); if(!$('#ctl-sonar').checked && st.sonar){ location.search = new URLSearchParams(Object.assign(Object.fromEntries(P), {sonar:''})).toString(); return; } aplica(); }));
+$('#ctl-cenario').addEventListener('change', ()=>{ st.cenario = $('#ctl-cenario').value; st.aberta = false; cenario(st.cenario); render(); });
+$('#ctl-notif').addEventListener('click', chegaNotif);
+window.addEventListener('resize', ()=>render());
+
+// estado inicial pela URL (os testes usam isto)
+st.tema = TEMAS.hasOwnProperty(P.get('tema')) ? P.get('tema') : 'abrolhos';
+st.modo = ['sempre','mouse','acao'].includes(P.get('modo')) ? P.get('modo') : 'acao';
+st.cenario = ['vazio','timer','pausado','varios','notif','erro'].includes(P.get('cenario')) ? P.get('cenario') : 'vazio';
+st.privado = P.get('privado')==='1'; st.host = P.get('host')==='1'; st.sonar = P.get('sonar')==='dentro';
+$('#ctl-tema').value = st.tema; $('#ctl-modo').value = st.modo; $('#ctl-cenario').value = st.cenario;
+$('#ctl-privado').checked = st.privado; $('#ctl-host').checked = st.host; $('#ctl-sonar').checked = st.sonar;
+cenario(st.cenario); aplica();
+})();
+</script>
+</body>
+</html>
