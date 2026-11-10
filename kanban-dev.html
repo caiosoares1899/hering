@@ -37089,7 +37089,8 @@ function _sonarMareIniciar(){
       const ativos = cards.filter(c=>c && !c.archived);
       const itens = ativos.map(c=>{ const col = columns.find(x=>x.id===c.col) || {name:c.col||'', color:''};
         return {k:'card:'+c.id, ic:'<span class="dot" style="background:'+esc(corOk(col.color))+'"></span>', t:c.title||'(sem título)', sub:[col.name, nomeDe(c), c.due||''].filter(Boolean).join(' · '), tipo:'card',
-          busca:(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), go:()=>openCard(c.id), rec:{card:c.id}}; });
+          busca:(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), go:()=>openCard(c.id), rec:{card:c.id},
+          url:pag+'?squad='+encodeURIComponent(ACTIVE_SQUAD)+'&card='+encodeURIComponent(c.id)}; });   // deep link: Ctrl/⌘+Enter abre o card em aba nova
       const g = [{g:'Neste board', esc:'board', max:8, itens}];
       if(q && toks.length){
         const n = ativos.filter(c=>MareSonar._pontua((c.title||'')+' '+(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), toks)>0).length;
