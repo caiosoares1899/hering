@@ -53,6 +53,7 @@ const abrir = async p => { await p.locator('#ilha-btn').click(); await estado(p,
         const resposta = await p.goto(base+'/docs/demo/ilha-dinamica-prototipo.html?'+new URLSearchParams(params));
         if(!resposta || !resposta.ok()) throw new Error('Página indisponível: HTTP '+resposta?.status());
         await p.locator('#ilha').waitFor({state:'attached'});
+        t(nome+' — Sonar externo sempre existe',await p.locator('#btn-sonar').count()===1);
         await fn(p);
       } catch(e) { t(nome+' — execução do cenário',false,e.message); }
       finally {
@@ -91,6 +92,8 @@ const abrir = async p => { await p.locator('#ilha-btn').click(); await estado(p,
     // 4. Hover real e navegação por Tab (não apenas element.focus()).
     await caso('mouse desktop',{modo:'mouse',cenario:'vazio'},async p=>{
       await verificar('mouse vazio → fio',async()=>{await estado(p,'fio'); return true;});
+      t('fio recolhido transparente',await p.locator('#ilha-fio').evaluate(e=>Number(getComputedStyle(e).opacity)===0));
+      t('mouse recolhido: pílula invisível',!await p.locator('#ilha-btn').isVisible());
       { const bx = await p.locator('#ilha-fio').boundingBox(); await p.mouse.move(bx.x+bx.width/2, bx.y+bx.height/2); }   // a ilha aparece e o fio some no mesmo instante: o hover() do Playwright trataria isso como interceptação
       await verificar('hover no fio → repouso',async()=>{await estado(p,'repouso'); return true;});
       await p.mouse.move(0,899);
@@ -154,21 +157,70 @@ const abrir = async p => { await p.locator('#ilha-btn').click(); await estado(p,
       t('segundo clique remove o timer certo',!ids.includes(id) && ids.length===quantidade-1,ids);
     },{clock:true});
 
-    // 9–13. Vários timers, notificação passageira, privacidade, erro e Sonar interno.
+    // 9–13. Vários timers, aviso expansível, privacidade e erro.
     await caso('vários timers',{modo:'sempre',cenario:'varios'},async p=>{
       t('pílula mostra +2',(await texto(p,'#ilha-mais')).trim()==='+2');
       await abrir(p);
       t('painel lista três timers',await p.locator('.ilha-timer[data-id]').count()===3);
     });
-    await caso('notificação passageira',{modo:'acao',cenario:'vazio'},async p=>{
-      await estado(p,'oculta');
+    for(const cenario of ['vazio','timer']) await caso('aviso '+cenario,{modo:'acao',cenario},async p=>{
+      const anterior = cenario==='timer'?'atividade':'oculta';
+      await estado(p,anterior);
+      // Mesmo oculta, a caixa CSS fornece a largura de base sem fabricar visibilidade.
+      // Oculta (modo "só com ação", sem atividade) não tem caixa: aí a largura de base é 0 e basta a pílula aparecer larga.
+      const antes = (await p.locator('#ilha-btn').boundingBox()) || {width:0};
+      await p.evaluate(()=>{
+        window.__ilhaAnuncios = [];
+        const el = document.querySelector('#ilha-anuncio');
+        new MutationObserver(registros=>{
+          // oldValue + valor seguinte preservam escritas repetidas no mesmo lote.
+          for(let i=0;i<registros.length;i++) {
+            const r = registros[i];
+            const seguinte = registros.slice(i+1).find(n=>n.target===r.target && n.type===r.type);
+            const valor = r.type==='characterData'
+              ? (seguinte ? seguinte.oldValue : r.target.data)
+              : [...r.addedNodes].map(n=>n.textContent).join('');
+            if(valor.trim()) window.__ilhaAnuncios.push(valor.trim());
+          }
+        }).observe(el,{childList:true,subtree:true,characterData:true,characterDataOldValue:true});
+      });
+      t('anúncio tem aria-live polite',await p.locator('#ilha-anuncio').getAttribute('aria-live')==='polite');
       await p.locator('#ctl-notif').click();
-      await verificar('notificação faz aparecer em atividade',async()=>{await estado(p,'atividade'); return true;});
-      t('notificação não expande',await p.locator('#ilha-btn').getAttribute('aria-expanded')==='false');
-      t('notificação não abre painel',!await p.locator('#ilha-painel').isVisible());
+      await verificar('notificação → aviso',async()=>{await estado(p,'aviso'); return true;});
+      t('aviso mantém aria-expanded=false',await p.locator('#ilha-btn').getAttribute('aria-expanded')==='false');
+      t('aviso não abre painel',!await p.locator('#ilha-painel').isVisible());
+      t('aviso mostra título com Bia',(await texto(p,'#ilha-aviso-t')).includes('Bia'));
+      t('aviso mostra contexto',!!(await texto(p,'#ilha-aviso-s')).trim());
+      // Deixa a transição de largura terminar com o relógio controlado.
+      await p.clock.runFor(1000);
+      const depois = await p.locator('#ilha-btn').boundingBox();
+      t('aviso alarga a pílula',!!depois && depois.width>antes.width,{antes:antes.width,depois:depois?.width});
+      await p.clock.runFor(6000);
+      await verificar('7 s: restaura '+anterior,async()=>{await estado(p,anterior); return true;});
+      t('7 s: visibilidade restaurada',await p.locator('#ilha-btn').isVisible()===(cenario==='timer'));
+      const anuncios = await p.evaluate(()=>window.__ilhaAnuncios);
+      t('anúncio recebe texto uma única vez',anuncios.length===1 && anuncios[0].includes('Bia'),anuncios);
+    },{clock:true});
+    await caso('aviso privado',{modo:'acao',cenario:'vazio',privado:'1'},async p=>{
+      await p.locator('#ctl-notif').click();
+      await estado(p,'aviso');
+      t('aviso privado tem título genérico',(await texto(p,'#ilha-aviso-t')).trim()==='Nova notificação');
+      t('aviso privado não tem contexto',(await p.locator('#ilha-aviso-s').textContent()).trim()==='');
+    },{clock:true});
+    await caso('não perturbe',{modo:'acao',cenario:'timer',dnd:'1'},async p=>{
+      await estado(p,'atividade');
+      const antes = await p.locator('#ilha-n').textContent();
+      await p.evaluate(()=>{
+        window.__ilhaEstados = [];
+        new MutationObserver(rs=>{for(const r of rs) window.__ilhaEstados.push(r.oldValue);})
+          .observe(document.querySelector('#ilha'),{attributes:true,attributeFilter:['data-estado'],attributeOldValue:true});
+      });
+      await p.locator('#ctl-notif').click();
+      t('DND atualiza contador',await p.locator('#ilha-n').textContent()!==antes);
       await p.clock.runFor(7000);
-      await verificar('depois de 7 s volta a oculta',async()=>{await estado(p,'oculta'); return true;});
-      t('depois de 7 s pílula invisível',!await p.locator('#ilha-btn').isVisible());
+      const estados = await p.evaluate(()=>[...window.__ilhaEstados,document.querySelector('#ilha').dataset.estado]);
+      t('DND nunca entra em aviso',!estados.includes('aviso'),estados);
+      t('DND mantém atividade e painel fechado',await p.locator('#ilha').getAttribute('data-estado')==='atividade' && !await p.locator('#ilha-painel').isVisible());
     },{clock:true});
     await caso('privado',{cenario:'timer',privado:'1'},async p=>{
       t('privado esvazia título',(await p.locator('#ilha-titulo').textContent()).trim()==='');
@@ -181,11 +233,52 @@ const abrir = async p => { await p.locator('#ilha-btn').click(); await estado(p,
       await verificar('tentar novamente remove o erro',async()=>{await p.locator('#ilha-erro').waitFor({state:'hidden'}); return true;});
       t('tentar novamente também some',!await p.locator('#ilha-tentar').isVisible());
     });
-    await caso('Sonar dentro',{modo:'sempre',sonar:'dentro'},async p=>{
-      t('Sonar externo não existe',await p.locator('#btn-sonar').count()===0);
+    // Preferências de conteúdo e reabertura, operadas pelos controles públicos.
+    await caso('conteúdo principal',{modo:'sempre',cenario:'timer'},async p=>{
+      const opcoes = await p.locator('#ctl-principal option').evaluateAll(xs=>xs.map(x=>x.value));
+      t('principal oferece timer, notif e evento',['timer','notif','evento'].every(v=>opcoes.includes(v)),opcoes);
+      await p.locator('#ctl-principal').selectOption('evento');
+      t('evento mostra Reunião do Radar',(await texto(p,'#ilha-titulo')).includes('Reunião do Radar'));
+      const antes = segundos(await texto(p,'#ilha-tempo'));
+      await p.clock.runFor(60000);
+      const depois = segundos(await texto(p,'#ilha-tempo'));
+      t('evento: 60 s diminuem 1 min (±1 s)',Math.abs(antes-depois-60)<=1,{antes,depois});
+    },{clock:true});
+    for(const aba of ['timers','notif','ultima']) await caso('reabrir '+aba,{modo:'sempre',cenario:'timer'},async p=>{
+      await p.locator('#ctl-reabrir').selectOption(aba);
+      if(aba==='ultima') {
+        await abrir(p);
+        await p.locator('.ilha-aba[data-aba="notif"]').click();
+        await p.keyboard.press('Escape');
+        await estado(p,'atividade');
+      }
       await abrir(p);
-      t('input Sonar interno visível',await p.locator('input#ilha-sonar-in').isVisible());
+      const ativas = await p.locator('.ilha-aba.on').evaluateAll(xs=>xs.map(x=>x.dataset.aba));
+      t('reabrir '+aba+' seleciona a aba correta',ativas.length===1 && ativas[0]===(aba==='ultima'?'notif':aba),ativas);
     });
+    await caso('fixar painel',{modo:'sempre',cenario:'timer'},async p=>{
+      await abrir(p);
+      t('painel começa desfixado',await p.locator('#ilha-fixar').getAttribute('aria-pressed')==='false');
+      await p.locator('#ilha-fixar').click();
+      t('fixar: aria-pressed=true',await p.locator('#ilha-fixar').getAttribute('aria-pressed')==='true');
+      await p.mouse.click(5,895);
+      t('fixado: clique fora mantém aberto',await p.locator('#ilha').getAttribute('data-estado')==='aberta' && await p.locator('#ilha-painel').isVisible());
+      await p.keyboard.press('Escape');
+      await estado(p,'atividade');
+      t('Esc desfixa',await p.locator('#ilha-fixar').getAttribute('aria-pressed')==='false');
+      t('Esc fecha painel fixado',!await p.locator('#ilha-painel').isVisible());
+      await abrir(p);
+      await p.mouse.click(5,895);
+      await verificar('desfixado: clique fora fecha',async()=>{await estado(p,'atividade'); return true;});
+    });
+    await caso('módulo timer desligado',{modo:'sempre',cenario:'timer'},async p=>{
+      t('timer ligado tem intervalo ativo',await p.evaluate(()=>typeof window.__ilhaTicks==='number' && window.__ilhaTicks>0));
+      await p.locator('#ctl-mod-timer').uncheck();
+      t('timer desligado: zero intervalos',await p.evaluate(()=>window.__ilhaTicks===0));
+      t('timer desligado: pílula sem tempo',!await p.locator('#ilha-tempo').isVisible() || !(await p.locator('#ilha-tempo').textContent()).trim());
+      await p.clock.runFor(60000);
+      t('timer desligado continua sem intervalos após 60 s',await p.evaluate(()=>window.__ilhaTicks===0));
+    },{clock:true});
 
     // 14. Parado não anima; movimento reduzido não deve sequer iniciar animação ao abrir/fechar.
     await caso('movimento parado',{modo:'sempre',cenario:'timer'},async p=>{
