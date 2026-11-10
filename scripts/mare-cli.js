@@ -1180,11 +1180,14 @@ function cmdShip(args) {
 
   if (manifest.map) {
     cmdMap();
+    if (fs.existsSync(path.join(ROOT, 'scripts/mapa.js'))) {
+      runCmdOrThrow(process.execPath, [path.join(ROOT, 'scripts/mapa.js')]);
+    }
   }
 
   if (manifest.conhecimento) {
-    console.log('[ship] Gerando functions/conhecimento.json...');
-    runCmdOrThrow(process.execPath, [path.join(ROOT, 'scripts/gerar-conhecimento.js')]);
+    console.log('[ship] Gerando functions/agente-agil-orquestrador/conhecimento/*.json...');
+    runCmdOrThrow(process.execPath, [path.join(ROOT, 'functions/agente-agil-orquestrador/conhecimento/gerar.js')]);
   }
 
   if (Array.isArray(manifest.tests)) {

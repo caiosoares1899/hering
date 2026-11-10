@@ -1,6 +1,16 @@
 [
  {
   "data": "2026-11-09",
+  "titulo": "Radar › Apresentação: blocos entram em cascata, barras crescem e números da capa contam (PROD · okr-apresentacao.slide.html) — 2026-11-09",
+  "texto": "Rodada /melhoriauiux com o vocabulário de movimento do GUIA_UI_UX §2.4 (regime experiência). Antes: trocar de slide era um corte seco. O CSS tinha uma transição de .35 s que nunca rodava, porque render() recria os slides, e as barras já nasciam cheias. Agora, ao navegar (quem apresenta e quem acompanha ao vivo, pelo mesmo _okrGoTo):\n- os blocos entram em cascata (Stagger: 30 ms por bloco, até 6, .28 s cubic-bezier(.32,.72,0,1));\n- as barras de status, de progresso e do Panorama crescem da esquerda (scaleX, .5 s);\n- os números protagonistas da capa e da capa de torre contam até o valor (Count-up, .7 s, terminando no texto exato).\nGarantias:\n- Atualização de dado no meio da reunião (rebuild) redesenha sem animar de novo.\n- Nada fica animando depois da entrada: GPU com a tela parada continua ~1 ms/s.\n- O :hover dos cartões continua valendo (fill: backwards).\n- \"Reduzir movimento\" desliga tudo.\nMedidor de fps com farol no canto inferior direito (como o texto de versão das outras páginas): \"60 fps · bom\" com bolinha verde (≥ 50), amarela \"alerta\" (30–49) e vermelha \"péssimo\" (< 30), cor e palavra juntas. Mede os quadros entregues no último ~0,5 s e só troca o texto 2×/s, então não faz a página animar parada (medido: parado 1–2 ms/s de GPU). Serve para o André conferir o fps na máquina dele.\nFicou de fora de propósito:\n- O slide inteiro deslizando ou com fade, e o fade do detalhe do "
+ },
+ {
+  "data": "2026-11-09",
+  "titulo": "Supercard dentro de supercard: vincular um supercard existente como filho (PROD · kanban v8.30.914) — 2026-11-09",
+  "texto": "- Na vinculação do modal (\"+ Adicionar\"), um supercard que já existe passa a aparecer na busca e pode virar filho de outro (ex.: campanha pronta, com seus criativos, dentro de uma campanha maior). Antes a busca escondia qualquer card que já tivesse filhos.\n- O teto continua em 3 camadas (campanha → criativo → versão): o card em que se vincula precisa ser campanha (sem pai) e o que entra pode ter filhos, mas esses não podem ter filhos; criativo só recebe card sem filhos; versão não vincula nada. Um card segue com um pai só e ciclos são recusados (_superAltura, _superTemDescendente, _superPodeVincular).\n- Efeito a saber: os criativos do supercard que entrou viram \"versões\" (Ficha Técnica herdada do pai).\n- Testes: docs/arezzo/testes/test_supercard_em_supercard.js."
+ },
+ {
+  "data": "2026-11-09",
   "titulo": "Mais de uma Submarca por card (PROD · kanban v8.30.912, painel v5.95) — 2026-11-09",
   "texto": "- No card aberto, o campo Submarcas virou uma lista de chips: escolha em \"+ Adicionar submarca…\" quantas precisar e tire com o ✕. Continua obrigatório (ao menos uma) nos squads que usam o campo.\n- Contagem: um card com 2 submarcas conta em CADA uma (donut \"Por submarca\" do Maré e do Painel, Dados do Board, pills do Supercard); o filtro de Submarca já era múltiplo e acha o card em qualquer uma.\n- Ações em massa e a Automação \"Adicionar submarca\" (id set_submarca mantido, regras salvas valem) SOMAM à lista, sem tirar as que já existem. Tamanho e Canal de venda seguem exclusivos.\n- Intake (intake-dev): o formulário aceita mais de uma submarca; 1 vira texto como antes, 2+ vira lista; o Maré aplica todas ao criar o card.\n- Agente Ágil: criar_card aceita uma submarca ou uma lista (functions/agente-agil-orquestrador/tools/criarCard.js, validação por nome). Depende de deploy das funções do agente.\n- Testes: docs/arezzo/testes/test_submarca_multipla.js, test_intake_interno.js, criarCard.test.js."
  },
@@ -138,15 +148,5 @@
   "data": "2026-10-20",
   "titulo": "2026-10-20 — Radar: 🧊 Objetivo parado — selo e filtro (PROD · okr v2.93 · mare-dicas.js v7)",
   "texto": "O Objetivo que passa 14 dias sem nenhuma atualização ganha o selo '🧊 Nd sem atualização' no cartão, e a faixa de resumo da aba ganha o botão '🧊 N parados' que filtra só eles (clicar de novo volta; ✕ Limpar também zera). Conta como atualização: editar o Objetivo, mexer em um Marco (mesmo arquivado), qualquer linha nova do Histórico ou registrar atingimento (vale a data em que foi lançado, não a data do valor). Não conta: reordenar nem mostrar/ocultar na apresentação. Ficam de fora: arquivados, concluídos (Marcos todos feitos ou meta batida) e os de atingimento Perene, Manter acima e Manter abaixo. Só cliente: nenhuma leitura nova no Firebase, nenhuma regra, nenhuma função. Limite em OKR_PARADO_DIAS (14). Ideia O1 do dossiê de concorrência do Antigravity. Dica: sim (parados, no Radar; mare-dicas-dev.js ?v=7). Ajuda do Radar: item 'Filtros e resumo da aba'. Teste: docs/arezzo/testes/test_okr_parados.js."
- },
- {
-  "data": "2026-10-16",
-  "titulo": "2026-10-16 — Plantão: comentário no card com o resumo da correção ao validar (PROD · painel v5.79 · oceano v1.52 · mare-plantao.js v2)",
-  "texto": "Quando o ADM clica em \"Rodei o script e validei\" (Painel › Monitor › Plantão), o card do bug na squad Dados ganha um comentário com o resumo da correção: PR (número e título), o que mudou (seção \"## Resumo\" da PR), quem validou, a nota do ADM e o resultado do teste. O servidor (plantaoGithubWebhook) passa a guardar prTitulo e prResumo na ficha ao receber a PR; sem eles o comentário sai só com PR, validador e nota. Dev: mare-plantao-dev.js ?v=2, painel-dev v5.79, oceano-dev v1.52. Exige firebase deploy --only database (campos novos da ficha) e --only functions:plantaoGithubWebhook."
- },
- {
-  "data": "2026-10-16",
-  "titulo": "2026-10-16 — Ecossistema de gestão (ecossistema.html): documentação técnica do Oceano para a TI (PROD · oceano v1.52 com o botão)",
-  "texto": "Nova página ecossistema.html (sem versão própria; entra no ar no merge), escrita para a reunião com a TI de 30/10: arquitetura, uso do Google Cloud e da conta corporativa, segurança e inventário de dados, ambientes dev × prod, Agente Ágil e consumo de tokens (mecanismos com a evidência no código), Claude × Antigravity, skills e subagentes, política de PR/CI/auditoria no GitHub, personalização por squad, dependências, riscos e caminho de internalização. Números medidos no repositório (comandos na seção 14). maredigital.html passa a ser a referência detalhada do Maré Digital e aponta para ela; o botão \"Ecossistema de gestão\" no Oceano (oceano v1.52) abre a página."
  }
 ]
