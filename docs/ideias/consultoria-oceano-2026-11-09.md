@@ -2,7 +2,7 @@
 
 9 de nov. de 2026 · @caio
 
-> Original: [artifact da consultoria](https://claude.ai/artifact/P4AH1hEuDkdW2dPpDaAvhC). Cronograma de execução: [linha do tempo](https://claude.ai/artifact/1ToXAwyibMPL4sVNLkkAnD) e card "Oceano · Radar, Travessia e lobby em 8 sprints" (squad dados).
+> Original: [artifact da consultoria](https://claude.ai/artifact/P4AH1hEuDkdW2dPpDaAvhC). Cronograma de execução: [linha do tempo](https://caiosoares1899.github.io/hering/docs/ideias/cronograma-oceano.html) (arquivo `docs/ideias/cronograma-oceano.html`) e card "Oceano · Radar, Travessia e lobby em 8 sprints" (squad dados).
 > Decisão do Caio (10/11/2026): todos os itens aprovados, menos **R7** e **R8** (backlog). O cronograma em sprints é **sugestão**, não ordem fixa: a execução se ajusta no caminho.
 
 ## 1. Como eu li o ecossistema
