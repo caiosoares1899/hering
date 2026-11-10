@@ -113,6 +113,8 @@
 .sr-meta{font-size:10px;color:var(--txt3);white-space:nowrap;}
 .sr-tag{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid;margin-left:6px;}
 .search-empty{padding:24px;text-align:center;color:var(--txt3);font-size:13px;}
+.sonar-mg{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);padding:10px 16px 4px;}
+.sonar-mic{width:16px;text-align:center;flex-shrink:0;font-size:13px;}
 .search-viewall-btn{width:100%;padding:9px 16px;background:none;border:none;border-top:1px solid var(--glass-b);
   color:var(--accent);font-size:11.5px;font-family:DM Sans,sans-serif;font-weight:600;cursor:pointer;text-align:left;}
 .search-viewall-btn:hover{background:rgba(56,182,255,.08);}
@@ -3868,7 +3870,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   <button class="notif-btn kudos-hdr-btn" id="kudos-hdr-btn" onclick="openKudos()" title="Estrelas do Mar — reconhecimento do time">
     🎉<span class="notif-badge" id="kudos-badge" style="background:#ffd166;color:#1a1208;display:none;">0</span>
   </button>
-  <button id="header-search-btn" class="btn btn-sm" onclick="openSearch()" title="Buscar cards (Ctrl+K)" style="background:var(--glass);border:1px solid var(--glass-b);">🔍</button>
+  <button id="header-search-btn" class="btn btn-sm" onclick="openSearch()" title="Sonar: buscar em tudo (Ctrl+K)" aria-label="Sonar: buscar em tudo" style="background:var(--glass);border:1px solid var(--glass-b);">🔍</button>
   <button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
   <!-- Menu "⋯" — só existe visualmente no mobile (≤768px, ver @media). Agrupa ali
        tudo que no mobile some da fileira de ícones do topo pra não estourar a tela
@@ -6702,7 +6704,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.917-dev</div>
+<div class="version">v8.30.918-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7450,7 +7452,7 @@ function renderHdMoreDD(){
       <span style="font-size:10px;color:var(--txt3);">status ›</span>
     </div>
     <div class="sm-dd-sep"></div>
-    <div class="squad-switcher-item" onclick="closeHdMore();openSearch();">🔍 Buscar cards</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();openSearch();">🔍 Sonar (buscar)</div>
     <div class="squad-switcher-item" onclick="closeHdMore();openTeamList();">👥 Equipe do quadro</div>
     ${showHybrid?`
     <div class="sm-dd-sep"></div>
@@ -27805,7 +27807,7 @@ REGRAS CRÍTICAS:
 
 CAPACIDADES DO SISTEMA (Maré Digital v8.0):
 - Multi-squad: boards independentes por squad (dados, mídia, e outros criados via painel); cada board tem seu próprio Firebase path
-- Busca global Ctrl+K: busca em tempo real por título, descrição, PO e responsável em todos os cards ativos
+- Sonar (Ctrl+K): busca em tempo real por título, descrição, PO e responsável em todos os cards ativos, mais Objetivos e Marcos do Radar, outros squads e a Ajuda
 - WIP visível no header da coluna Em Progresso (ex: 4/3 em vermelho quando excedido)
 - Semáforo de prazo: verde=no prazo, amarelo=hoje, vermelho=atrasado; congelado em Concluído
 - Modo Raia: reorganiza o board por responsável ou por tag
@@ -28909,7 +28911,7 @@ const HELP_CONTENT = {
     { icon:'🐟', title:'Metas e desafios (O mar tá pra peixe)', text:'Na aba lateral <b>📊 Dados → 🐠 sua squad</b> você acompanha, num relance, a <b>meta da squad</b> (anel grande com o %, quanto falta, quantos dias restam e quanto precisa entrar por dia) e os <b>desafios extras</b> — por exemplo "no dia 27, vender 500 camisetas Hering Kids", "meta do Mercado Livre" ou "conversão do App", por submarca, canal de venda ou dia. As cores seguem o Radar: 🟢 no ritmo, 🟡 atenção, 🔴 atrasada, 🏆 batida; o <b>tracinho branco</b> no anel/na barra é onde deveria estar hoje.\n\n📈 <b>Gráfico de evolução (Acumulado, Por dia e ⛶ Expandir)</b>: o bloco <b>📈 Evolução</b> tem um seletor no topo para alternar entre <b>Acumulado</b> (curva acumulada real contra o ritmo ideal e a linha da meta) e <b>Por dia</b> (quanto entrou em cada dia comparado à <b>linha tracejada do esperado do dia</b>, com tooltip detalhando o realizado e o esperado do dia vs. o acumulado). Ao lado do seletor, o botão <b>⛶ Expandir</b> abre o gráfico em <b>tela cheia</b> com resumo dos indicadores e uma <b>tabela dia a dia</b> comparando <b>Realizado do dia</b>, <b>Esperado do dia</b> e <b>∆ diferença</b> (em valor e status).\n\n🐟 <b>O mar tá pra peixe!</b> A cada <b>20 %</b> da meta (20, 40, 60, 80 e 100) aparece um popup com peixinhos pulando e uma <b>buzina de navio</b> 🚢 (toca inteira, ~10 s, e o popup fecha logo depois que ela acaba) — uma vez por pessoa. A buzina respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s. Corrigir o valor pra baixo não tira o peixe já conquistado. No cadastro da meta, a seção <b>🎉 Popups de marco (20% a 100%)</b> permite personalizar <b>título, mensagem e emoji</b> de cada marco (20%, 40%, 60%, 80% e 100% — campos em branco usam o padrão).\n\n✏️ <b>Atualizar valor</b>: qualquer pessoa da squad informa o valor — escolha <i>Definir o total</i> ou <i>Somar ao atual</i>; a prévia mostra o novo % e se vem peixe novo. Dá pra mudar a <b>data e a hora da entrada</b> (horário de Brasília) pra lançar um valor <b>retroativo</b>, de duas formas: <i>+ Somar ao atual</i> lança aquele dia como uma <b>parte</b> — ela entra no total e o gráfico é recalculado a partir da data (ex.: os 12 dias de setembro, um por vez; o todo é a soma, na ordem que quiser e dá pra corrigir com valor negativo) — ou <i>Definir o total</i>, informando o acumulado daquele momento (só vira o valor atual se for o mais recente; um retroativo mais antigo não derruba o que já está lá). Cartões com ⏰ "atualize!" estão sem atualização há mais que o dobro do lembrete.\n\n📅 <b>Ritmo não linear (diarização)</b>: no cadastro, em <i>Ritmo ao longo do período</i>, escolha <b>Por dia</b> quando o time define antes quanto a meta pede de cada dia (ex.: a venda pesa mais nos últimos dias). Preencha um valor por dia — ou use <b>Colar da planilha</b> (uma coluna na ordem dos dias, ou linhas como 12/11 1500) e <b>Distribuir igual</b>. Se o período ainda estiver em branco, o <i>Colar</i> ajusta sozinho: com linhas "dd/mm valor" ele monta o período pelas datas; com só valores, preencha o início e o fim é calculado. Vale a <i>proporção</i> entre os dias, não precisa fechar a soma. Daí o <b>esperado agora</b> (tracinho do anel e da barra — acompanha também a hora do dia, pra um dia pesado não deixar o farol vermelho de madrugada), os <b>faróis</b> 🟢🟡🔴 (no ritmo/atenção/atrasada), o gráfico e o KPI <b>Meta de hoje</b> seguem a curva. Precisa de período com pelo menos 2 dias.\n\n🗂 <b>Entradas</b>: o botão 🗂 do cartão lista tudo o que foi lançado (mais novo primeiro, com quem lançou, quando e a nota) e deixa <b>✏️ editar</b> (data/hora, valor e nota) ou <b>🗑 excluir</b>. Quando a entrada é uma <i>parte</i> (lançada com + Somar), editar ou excluir ajusta o total e recalcula o gráfico a partir daquela data — o todo continua sendo a soma das partes; um <i>total</i> mexe só naquele ponto. O valor atual passa a ser o do último ponto; sem nenhuma entrada, a meta volta a "sem valor ainda". Se o total da meta ficar abaixo da soma dos lançamentos do histórico, o modal mostra um aviso e oferece o botão <b>Corrigir o total</b> para igualar o valor com 1 clique. Quem pode atualizar o valor pode gerir as entradas.\n\n⚙ <b>Quem cria/edita</b>: PO, Organizador e ADM, em <b>⚙ Configurações → 🐟 Metas</b> (nome, ícone, R$/quantidade/%, alvo, período, diarização Por dia, submarca, canal, <b>🌊 Mostrar na visão global</b>, <b>⏰ lembrete de preenchimento</b> a cada 1 h/2 h, 1× por dia ou em horários exatos — horário de Brasília — e <b>🎉 Popups de marco (20% a 100%)</b> para personalizar título, mensagem e emoji de cada marco). A meta global do Digital e os desafios do Digital são cadastrados no <b>Painel → 📊 Dados</b>; aparecem na aba <b>🌊 Digital</b> junto com um ranking das squads.' },
     { icon:'📊', title:'Central de Dados (aba lateral 📊 Dados)', text:'A aba azul <b>📊 Dados</b>, na lateral direita (junto de 📌 Lembretes, ⭐ Estrelas, 🎧 Spotify e 📝 Notas), abre os <b>Dados</b> em <b>duas abas</b>: <b>🐠 da sua squad</b> (metas e desafios — veja o tópico "Metas e desafios") e <b>🌊 Digital</b> (a meta global, as metas das squads que marcaram "mostrar na visão global" e, logo abaixo, a <b>Central de Dados — Digital</b>: os resultados diários de captação digital publicados pelo time — somente leitura aqui no board; quem publica é o ADM no <b>Painel → 📊 Dados</b>).\n\nNa Central de captação, mostra o <b>dia mais recente</b> em destaque, botões <b>🖥️</b> pra abrir as apresentações cadastradas ali mesmo (embutidas) e a lista <b>Dias anteriores</b> — os <b>14 dias anteriores</b> ao mais recente, em formato compacto. Dias mais antigos não aparecem aqui nem são baixados (o board só carrega os últimos 15 dias, o que deixa a abertura mais leve); o histórico completo continua no Painel.\n\nSe aparecer \"Nenhum resultado publicado ainda\", é porque ninguém publicou dados — a configuração é no Painel. Não confunda com <b>📊 Dados do Board</b> (botão da toolbar), que são as métricas do <i>seu quadro</i> (WIP, Insights, CFD…).' },
     { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.\n\n🤖 Resumo do Agente Ágil: botão dentro do painel Meu Dia (squads dev/dados) que pede pro agente ler seus cards ativos (atrasado, bloqueado, sem descrição, checklist pendente) e devolver um resumo priorizado, sugerindo uma ordem de ataque pro dia. Só lê — não mexe em nada no board. Limite de 1 pedido a cada 2 minutos por pessoa; o resumo reseta toda vez que o painel é reaberto (não guarda o de uma sessão anterior).\n\n🤖 Análise do board (PO): botão extra, visível só pra PO/Organizador/ADM, que pede uma leitura do board inteiro do squad atual (não só os seus cards) — WIP, gargalo, atrasados, bloqueados, cards incompletos — e, quando fizer sentido pelos dados, uma sugestão de campanha/coleção nova, sempre comparando com as Campanhas & Coleções já ativas/em planejamento pra nunca sugerir algo que já esteja em execução. Mesmo limite de 2 minutos entre pedidos, mesmo "só lê".\n\n↕ Espaço pros cards: os blocos "🌤️ Como você está hoje?" e "🌙 Fechamento do dia" têm uma setinha ▾/▸ pra recolher (o que você escolheu fica salvo neste aparelho; o de hoje abre recolhido depois que você responde, e o fechamento do dia vem recolhido). O painel inteiro rola junto — dá pra descer até os cards mesmo numa janela baixa ou no celular.' },
-    { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
+    { icon:'🔍', title:'Sonar (Ctrl+K)', text:'O <b>Sonar</b> é a busca do Oceano. Pressione <b>Ctrl+K</b> (ou <b>Cmd+K</b> no Mac) ou clique em 🔍 no header. Primeiro vêm os <b>cards deste board</b> (título, descrição, Insights do PO e responsável, sem se importar com acento), com o botão <b>Ver N cards no board</b> para filtrar o quadro. Embaixo, o resto do Oceano: <b>Objetivos e Marcos do Radar</b> (abrem no Radar), <b>Buscar nos cards de outro squad</b> (abre aquele board com a busca já preenchida) e os tópicos da <b>Ajuda</b>. Use as setas ↑↓ e Enter para abrir; Esc fecha. Com um card aberto, Ctrl+K busca nos comentários do card. No lobby do Oceano, o mesmo Sonar também acha produtos e links.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.' },
@@ -28948,7 +28950,7 @@ const HELP_CONTENT = {
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
     { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. Dá para <b>vincular um supercard que já existe</b> como filho de outro (ex.: uma campanha pronta, com seus criativos, dentro de uma campanha maior) pela busca "+ Adicionar" do modal: ele aparece na lista enquanto a árvore couber no teto — o card em que você está vinculando precisa ser uma campanha (sem pai) e o que entra pode ter filhos, mas esses filhos não podem ter filhos. O teto é fixo em 3 camadas — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha: os criativos do supercard que entrou passam a se comportar como versões e herdam a Ficha Técnica do pai (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.\n\n🏷️ Submarca de cada filho: na lista de cards filhos, cada linha mostra as submarcas do card (as mesmas pílulas coloridas do board) ao lado do responsável — dá pra ver de qual marca é cada filho sem abri-lo. Nos squads que usam o campo Submarca, o filho que ainda não tem nenhuma aparece como "🏷️ sem submarca".' },
-    { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
+    { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre o Sonar, a busca do Oceano (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
     { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.' },
@@ -37058,7 +37060,7 @@ _onFbReady(()=>{
 });
 
 // ═══════════════════════════════════════════════════════
-// BUSCA GLOBAL (Ctrl+K)
+// 🔍 SONAR (Ctrl+K) — a busca do Oceano dentro do Maré (antes "busca global"; 10/11/2026)
 // ═══════════════════════════════════════════════════════
 let _searchIdx = 0;
 
@@ -37074,46 +37076,105 @@ function closeSearch(){
   document.getElementById('search-overlay').classList.remove('open');
 }
 
+// Sonar no Maré (10/11/2026): os cards DESTE board primeiro (mesma busca de antes, agora sem se importar com acento);
+// embaixo, o resto do Oceano. Radar: a mesma cópia enxuta que o lobby guarda no aparelho por 3 h (chave oceano_sonar_radar[_dev]);
+// sem cópia, 1 leitura de kanban/okr/objetivos + marcos (~393 KB em prod) só a partir de 2 letras. Texto do banco sempre por esc().
+const _SONAR_DEV = /-dev\.html/.test(location.pathname);
+const _SONAR_RADAR_LS = 'oceano_sonar_radar'+(_SONAR_DEV?'_dev':''), _SONAR_RADAR_TTL = 3*3600*1000;
+const _sonarNorm = x => String(x==null?'':x).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function _sonarUmaLetra(a,b){ if(Math.abs(a.length-b.length)>1) return false; let i=0,j=0,d=0;
+  while(i<a.length&&j<b.length){ if(a[i]===b[j]){i++;j++;continue;} if(++d>1) return false; if(a.length>b.length) i++; else if(b.length>a.length) j++; else {i++;j++;} }
+  return d+(a.length-i)+(b.length-j)<=1; }
+function _sonarPontua(texto, toks){ if(!toks.length) return 0; const t=_sonarNorm(texto), pal=t.split(/[^a-z0-9]+/).filter(Boolean); let p=0;
+  for(const k of toks){ if(pal.includes(k)) p+=4; else if(pal.some(w=>w.startsWith(k))) p+=3; else if(t.includes(k)) p+=2;
+    else if(k.length>=4 && pal.some(w=>_sonarUmaLetra(w,k)||_sonarUmaLetra(w.slice(0,k.length),k))) p+=1; else return 0; }
+  return p; }
+let _sonarRadar = null, _sonarRadarCarregando = false, _sonarRadarErro = false, _sonarExtras = [];
+function _sonarRadarDoCache(){
+  try{ const c = JSON.parse(localStorage.getItem(_SONAR_RADAR_LS)||'null');
+    if(!c || typeof c.t!=='number' || Date.now()-c.t>_SONAR_RADAR_TTL || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;
+    const objs = {}; Object.values(c.v.objs).forEach(o=>{ if(o && typeof o.id==='string' && typeof o.t==='string') objs[o.id] = {id:o.id, t:o.t.slice(0,200), per:(Array.isArray(o.per)?o.per:[]).map(x=>String(x).slice(0,20)).slice(0,6), resp:(Array.isArray(o.resp)?o.resp:[]).map(String).slice(0,30)}; });
+    return {objs, marcos:c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj}))};
+  }catch(e){ return null; } }
+async function _sonarCarregarRadar(){
+  if(_sonarRadar || _sonarRadarCarregando || _sonarRadarErro || !window._currentUser) return;
+  const c = _sonarRadarDoCache(); if(c){ _sonarRadar = c; return; }
+  _sonarRadarCarregando = true;
+  try{
+    const [so, sm] = await Promise.all(['objetivos','marcos'].map(n=>window._get(window._ref(window._db,'kanban/okr/'+n))));
+    const soH = window.MARE_SO_HERING !== false;
+    const vis = o => o && !o.arquivado && (!soH || !o.torre || o.torre==='digital' || !['digital','comercial','corporativa'].includes(o.torre));
+    const objs = {}; Object.entries((so&&so.val())||{}).forEach(([id,o])=>{ if(!vis(o)) return; const per = Array.isArray(o.trimestres)&&o.trimestres.length ? o.trimestres : (o.trimestre?[o.trimestre]:[]);
+      objs[id] = {id, t:String(o.titulo||'Objetivo sem título').slice(0,200), per:per.slice(0,6).map(x=>String(x).slice(0,20)), resp:Array.isArray(o.responsaveis)?o.responsaveis.slice(0,30).map(String):[]}; });
+    const marcos = []; Object.entries((sm&&sm.val())||{}).forEach(([id,m])=>{ if(m && !m.arquivado && objs[m.objetivoId]) marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId}); });
+    _sonarRadar = {objs, marcos};
+    try{ localStorage.setItem(_SONAR_RADAR_LS, JSON.stringify({t:Date.now(), v:_sonarRadar})); }catch(e){}
+  }catch(e){ _sonarRadarErro = true; console.warn('[sonar] Radar', e); }
+  _sonarRadarCarregando = false;
+  if(document.getElementById('search-overlay')?.classList.contains('open')) renderSearchResults();
+}
+// Itens "fora deste board": [{g, ic, t, sub, go}]
+function _sonarFora(q){
+  const toks = _sonarNorm(q).split(/\s+/).filter(Boolean), out = [];
+  if(q.length>=2){ _sonarCarregarRadar(); }
+  if(_sonarRadar){
+    const okr = _SONAR_DEV ? 'okr-dev.html' : 'okr.html', uid = window._currentUser && window._currentUser.uid;
+    const meus = toks.some(k=>k==='meus'||k==='meu'), tk = toks.filter(k=>!['meus','meu','minhas','minha'].includes(k));
+    const objs = Object.values(_sonarRadar.objs).filter(o=>!meus || o.resp.includes(uid));
+    const ab = id => ()=>window.open(okr+'?okr='+encodeURIComponent(id), '_blank', 'noopener');
+    objs.map(o=>({o, p:_sonarPontua(o.t+' '+o.per.join(' '), tk.length?tk:(meus?['']:[]))||(meus&&!tk.length?1:0)})).filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,5)
+      .forEach(({o})=>out.push({g:'No Radar', ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), go:ab(o.id)}));
+    const ids = new Set(objs.map(o=>o.id));
+    _sonarRadar.marcos.filter(m=>ids.has(m.obj)).map(m=>({m, p:_sonarPontua(m.t, tk)})).filter(x=>x.p>0).sort((a,b)=>b.p-a.p).slice(0,4)
+      .forEach(({m})=>out.push({g:'No Radar', ic:'🏁', t:m.t, sub:'Marco de “'+_sonarRadar.objs[m.obj].t+'”', go:ab(m.obj)}));
+  }
+  if(q.length>=2){
+    const pag = location.pathname.split('/').pop() || 'kanban.html';
+    Object.keys(SQUAD_META_LIVE||{}).filter(sq=>sq!==ACTIVE_SQUAD).slice(0,6).forEach(sq=>{
+      const nome = (SQUAD_META_LIVE[sq] && SQUAD_META_LIVE[sq].label) || ('Squad '+sq);
+      out.push({g:'Outros squads', ic:'🔎', t:'Buscar “'+q+'” em '+nome, sub:'Abre esse board com a busca preenchida', go:()=>{ location.href = pag+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120)); }});
+    });
+  }
+  if(toks.length){
+    const semTag = h => String(h||'').replace(/<[^>]+>/g,' ');
+    const hs = [];
+    Object.entries(HELP_CONTENT).forEach(([tab, its])=>(its||[]).forEach(it=>{ const p = _sonarPontua(it.title+' '+semTag(it.text).slice(0,500), toks); if(p) hs.push({p, tab, it}); }));
+    hs.sort((a,b)=>b.p-a.p).slice(0,4).forEach(({tab,it})=>out.push({g:'Ajuda do Maré', ic:it.icon||'❓', t:it.title, sub:'Ajuda', go:()=>openHelp(tab, it.title)}));
+  }
+  return out;
+}
+function _sonarExtraAbrir(n){ const it = _sonarExtras[n]; if(!it) return; closeSearch(); it.go(); }
 function renderSearchResults(){
-  const q = (document.getElementById('search-inp').value||'').toLowerCase().trim();
+  const raw = (document.getElementById('search-inp').value||'').trim();
+  const q = _sonarNorm(raw);
   const container = document.getElementById('search-results');
   const viewAll = document.getElementById('search-viewall');
-  _searchIdx = 0;
+  _searchIdx = 0; _sonarExtras = [];
   if(!q){
-    container.innerHTML = '<div class="search-empty">Digite para buscar entre os cards do board…</div>';
+    container.innerHTML = '<div class="search-empty">Digite para buscar nos cards deste board e no resto do Oceano: Radar, outros squads e Ajuda.</div>';
     if(viewAll) viewAll.innerHTML='';
     return;
   }
   const matches = cards.filter(c=>{
     if(c.archived) return false;
-    return (c.title||'').toLowerCase().includes(q)
-      || cardDescText(c).toLowerCase().includes(q)
-      || (c.po||'').toLowerCase().includes(q)
-      || (c.owner||'').toLowerCase().includes(q)
-      || (members.find(m=>m.init===c.owner)?.name||'').toLowerCase().includes(q);
+    return _sonarNorm(c.title).includes(q)
+      || _sonarNorm(cardDescText(c)).includes(q)
+      || _sonarNorm(c.po).includes(q)
+      || _sonarNorm(c.owner).includes(q)
+      || _sonarNorm(members.find(m=>m.init===c.owner)?.name).includes(q);
   });
-  if(!matches.length){
-    container.innerHTML = '<div class="search-empty">Nenhum card encontrado para "<strong>'+esc(q)+'</strong>"</div>';
-    if(viewAll) viewAll.innerHTML='';
-    return;
-  }
   // Pedido do time: a lista é ótima pra achar UM card específico, mas às
   // vezes a pessoa quer é ver TODOS os cards que batem, arrumados no board
   // (colunas, drag, etc.) em vez de escolher um da lista. Aplica a mesma
   // busca como filtro de texto do board (#f-texto/activeFilters.texto) em
   // vez de abrir um card.
   if(viewAll){
-    viewAll.innerHTML = `<button type="button" class="search-viewall-btn" onclick="verNoBoardFromSearch()">🔍 Ver ${matches.length} card${matches.length===1?'':'s'} no board</button>`;
+    viewAll.innerHTML = matches.length ? `<button type="button" class="search-viewall-btn" onclick="verNoBoardFromSearch()">🔍 Ver ${matches.length} card${matches.length===1?'':'s'} no board</button>` : '';
   }
-  container.innerHTML = matches.slice(0,20).map((c,i)=>{
+  let html = matches.length ? '<div class="sonar-mg">Neste board</div>' : '<div class="search-empty" style="padding:12px 16px;text-align:left;">Nenhum card deste board para "<strong>'+esc(raw)+'</strong>".</div>';
+  html += matches.slice(0,20).map((c,i)=>{
     const col = columns.find(x=>x.id===c.col)||{name:c.col,color:'#888'};
-    // Achado real (/monitorarbugs 2026-09-02, achado de passagem — "mesmo
-    // padrão em openSearch()", nunca corrigido até agora): lia c.tag (campo
-    // legado, só a 1ª tag do array, sem sincronia garantida com tags[]) em
-    // vez de getCardTags(c) (array-aware, mesma fonte que tagsHtml()/
-    // cardHasTag() já usam). Card com a tag original removida e outra
-    // adicionada depois mostrava o selo da tag ERRADA (ou nenhum selo, se
-    // c.tag tivesse ficado vazio) na busca.
+    // Achado real (/monitorarbugs 2026-09-02): getCardTags(c) (array-aware), nunca c.tag (campo legado).
     const tag = getTag(getCardTags(c)[0]);
     const tagHtml = tag ? `<span class="sr-tag" style="color:${getPal(tag).c};border-color:${getPal(tag).c};background:${getPal(tag).bg};">${esc(tag.label)}</span>` : '';
     const owner = members.find(m=>m.init===c.owner);
@@ -37125,6 +37186,21 @@ function renderSearchResults(){
       <span class="sr-meta">${esc(ownerTxt)}${c.due?' · '+c.due:''}</span>
     </div>`;
   }).join('');
+  _sonarExtras = _sonarFora(raw);
+  const base = Math.min(matches.length, 20);
+  let grupo = '';
+  _sonarExtras.forEach((it, n)=>{
+    if(it.g!==grupo){ grupo = it.g; html += '<div class="sonar-mg">'+esc(grupo)+'</div>'; }
+    const i = base + n;
+    html += `<div class="search-result${i===0?' active':''}" data-sx="${n}" onclick="_sonarExtraAbrir(${n})" onmouseover="setSearchIdx(${i})">
+      <span class="sonar-mic" aria-hidden="true">${esc(it.ic)}</span>
+      <span class="sr-title">${esc(it.t)}</span>
+      <span class="sr-meta">${esc(it.sub)}</span>
+    </div>`;
+  });
+  if(raw.length>=2 && _sonarRadarCarregando) html += '<div class="search-empty" style="padding:10px 16px;text-align:left;" role="status">⏳ Procurando no Radar…</div>';
+  if(!matches.length && !_sonarExtras.length && !_sonarRadarCarregando) html = '<div class="search-empty">Nada encontrado para "<strong>'+esc(raw)+'</strong>" neste board nem no resto do Oceano.</div>';
+  container.innerHTML = html;
 }
 
 function setSearchIdx(i){
@@ -37136,7 +37212,7 @@ function handleSearchKey(e){
   const items = document.querySelectorAll('#search-results .search-result');
   if(e.key==='ArrowDown'){ e.preventDefault(); setSearchIdx(Math.min(_searchIdx+1, items.length-1)); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); setSearchIdx(Math.max(_searchIdx-1, 0)); }
-  else if(e.key==='Enter'){ e.preventDefault(); const active=document.querySelector('#search-results .search-result.active'); if(active) openSearchCard(active.dataset.id); }
+  else if(e.key==='Enter'){ e.preventDefault(); const active=document.querySelector('#search-results .search-result.active'); if(active){ if(active.dataset.id) openSearchCard(active.dataset.id); else if(active.dataset.sx!=null) _sonarExtraAbrir(Number(active.dataset.sx)); } }
   else if(e.key==='Escape'){ closeSearch(); }
 }
 
@@ -40258,10 +40334,10 @@ renderBoard();
 
 <!-- BUSCA GLOBAL Ctrl+K -->
 <div id="search-overlay" onclick="if(event.target===this) closeSearch();">
-  <div class="search-box" role="dialog" aria-label="Buscar cards">
+  <div class="search-box" role="dialog" aria-label="Sonar: buscar no Oceano">
     <div class="search-inp-wrap">
       <span class="search-icon">🔍</span>
-      <input id="search-inp" type="text" placeholder="Buscar cards por título, descrição, PO ou responsável…"
+      <input id="search-inp" type="text" placeholder="Sonar: cards deste board, Objetivos do Radar, outros squads, Ajuda…" aria-label="Sonar: o que você procura?"
         oninput="renderSearchResults()" onkeydown="handleSearchKey(event)"
         autocomplete="off" spellcheck="false">
       <span class="search-kbd">Esc</span>
@@ -40270,7 +40346,8 @@ renderBoard();
     <div id="search-viewall"></div>
     <div class="search-hint">
       <span><kbd>↑↓</kbd> navegar</span>
-      <span><kbd>Enter</kbd> abrir card</span>
+      <span><kbd>Enter</kbd> abrir</span>
+      <span>🔍 Sonar do Oceano</span>
       <span><kbd>Esc</kbd> fechar</span>
     </div>
   </div>
