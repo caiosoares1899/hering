@@ -32,7 +32,7 @@
   const paginaOk = u => /^(kanban|okr|painel|oceano)(-dev)?\.html(\?[^#\s"'<>]*)?$|^onboarding\.html$/.test(String(u||''));
   const norm = x => String(x==null?'':x).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
   const MAC = /Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||'');
-  const TTL_RADAR = 3*3600*1000, MAX_REC = 5, LIMITE = 30;
+  const TTL_RADAR = 3*3600*1000, MAX_REC = 5, LIMITE = 30, CACHE_RADAR_V = 2;   // v2 (10/11/2026): Marco guarda o responsável (r), para "meus" valer como no Radar
   // "meus/minhas …": ativa o filtro de responsável e sai dos termos (as quatro formas, sempre juntas)
   const MEUS = new Set(['meu','meus','minha','minhas']);
   const separaMeus = toks => ({meus: toks.some(k=>MEUS.has(k)), toks: toks.filter(k=>!MEUS.has(k))});
@@ -46,6 +46,8 @@
   // Todas as palavras precisam casar; 0 = fora.
   function pontua(texto, toks){
     if(!toks.length) return 1;
+    toks = toks.flatMap(k=>norm(k).split(/[^a-z0-9]+/)).filter(Boolean);   // termo com pontuação ("conversão?", "a/b") vira as mesmas palavras do texto
+    if(!toks.length) return 0;                                              // busca só de símbolos ("???") não acha nada
     const t = norm(texto), pal = t.split(/[^a-z0-9]+/).filter(Boolean); let p = 0;
     for(const k of toks){
       if(pal.includes(k)) p += 4;
@@ -65,10 +67,10 @@
   const radarChave = () => 'oceano_sonar_radar'+(st.opts && st.opts.dev ? '_dev' : '');
   function radarDoCache(){
     try{ const c = JSON.parse(localStorage.getItem(radarChave())||'null');
-      if(!c || typeof c.t!=='number' || Date.now()-c.t > TTL_RADAR || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;
+      if(!c || c.s!==CACHE_RADAR_V || typeof c.t!=='number' || Date.now()-c.t > TTL_RADAR || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;   // versão antiga (sem o responsável do Marco) é descartada
       const objs = {};
       Object.values(c.v.objs).forEach(o=>{ if(o && typeof o.id==='string' && typeof o.t==='string') objs[o.id] = {id:o.id, t:o.t.slice(0,200), per:(Array.isArray(o.per)?o.per:[]).map(x=>String(x).slice(0,20)).slice(0,6), resp:(Array.isArray(o.resp)?o.resp:[]).map(String).slice(0,30)}; });
-      return {t:c.t, v:{objs, marcos:c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj}))}};
+      return {t:c.t, v:{objs, marcos:c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj, r:typeof m.r==='string' ? m.r.slice(0,64) : ''}))}};
     }catch(e){ return null; }
   }
   // A cópia em memória também vence em 3 h (a aba pode ficar aberta o dia todo): vencida, some e é lida de novo na próxima busca que pedir o Radar.
@@ -89,12 +91,13 @@
         const per = Array.isArray(o.trimestres) && o.trimestres.length ? o.trimestres : (o.trimestre ? [o.trimestre] : []);
         objs[id] = {id, t:String(o.titulo||'Objetivo sem título').slice(0,200), per:per.slice(0,6).map(x=>String(x).slice(0,20)), resp:Array.isArray(o.responsaveis) ? o.responsaveis.slice(0,30).map(String) : []}; });
       const marcos = [];
-      Object.entries((sm && sm.val()) || {}).forEach(([id,m])=>{ if(m && !m.arquivado && objs[m.objetivoId]) marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId}); });
+      Object.entries((sm && sm.val()) || {}).forEach(([id,m])=>{ if(m && !m.arquivado && objs[m.objetivoId]) marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId, r:typeof m.responsavel==='string' ? m.responsavel.slice(0,64) : ''}); });
       st.radar = {objs, marcos}; st.radarT = Date.now();
-      try{ localStorage.setItem(radarChave(), JSON.stringify({t:st.radarT, v:st.radar})); }catch(e){}
+      try{ localStorage.setItem(radarChave(), JSON.stringify({s:CACHE_RADAR_V, t:st.radarT, v:st.radar})); }catch(e){}
     }catch(e){ st.erro = true; console.warn('[sonar] Radar', e); }
     st.carregando = false;
-    if(aberto()) render(); else scan(false);
+    if(aberto()) render();
+    scan(false);   // o disco para quando a leitura termina (antes ficava girando se o Radar demorava mais que ~0,5 s — achado do Antigravity)
   }
   function fonteRadar(q, toks){
     const r = st.opts.radar; if(!r) return [];
@@ -106,11 +109,13 @@
     g.push({g:'Dados do Radar', esc:r.esc||'radar', itens:[{k:'acao:radar-atualizar', ic:'↻', t:'Atualizar o Radar', sub:'Cópia de '+(min<1 ? 'agora há pouco' : 'há '+min+' min')+' neste aparelho · busca de novo no banco', tipo:'acao', busca:'atualizar recarregar dados radar objetivos marcos', manter:true, go:radarAtualizar}]});
     const u = st.opts.user && st.opts.user(), uid = u && u.uid;
     const {meus, toks:tk} = separaMeus(toks);
-    const objs = Object.values(st.radar.objs).filter(o=>!meus || o.resp.includes(uid));
+    // "meus" = a mesma régua do filtro de pessoa do Radar (_okrObjTemPessoa): responsável pelo Objetivo OU por algum Marco dele
+    const meuMarco = new Set(st.radar.marcos.filter(m=>uid && m.r===uid).map(m=>m.obj));
+    const objs = Object.values(st.radar.objs).filter(o=>!meus || o.resp.includes(uid) || meuMarco.has(o.id));
     const abre = id => { const url = r.url(id); return {url, go:()=>r.abrir(url)}; };
     g.push({g:'Objetivos', esc:r.esc||'radar', itens:objs.map(o=>Object.assign({k:'obj:'+o.id, ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), tipo:'objetivo', busca:o.t+' '+o.per.join(' '), toks:tk, app:'okr'}, abre(o.id)))});
     const ids = new Set(objs.map(o=>o.id));
-    g.push({g:'Marcos', esc:r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj)).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, app:'okr'}, abre(m.obj)))});
+    g.push({g:'Marcos', esc:r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj) && (!meus || m.r===uid || st.radar.objs[m.obj].resp.includes(uid))).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, app:'okr'}, abre(m.obj)))});
     return g;
   }
 
@@ -231,8 +236,9 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
   function scan(on){
     const box = document.querySelector('#msn-ov .msn-box'); if(!box) return;
     clearTimeout(st.tScan);
-    if(on) box.classList.add('scan');
-    st.tScan = setTimeout(()=>{ if(!st.carregando) box.classList.remove('scan'); }, on ? 550 : 0);
+    if(on){ box.classList.add('scan'); st.scanAte = Date.now() + 550; }   // cada tecla garante ~0,5 s de varredura
+    const para = ()=>{ if(st.carregando){ st.tScan = setTimeout(para, 200); return; } box.classList.remove('scan'); };   // com o Radar carregando, segue até a leitura terminar
+    st.tScan = setTimeout(para, Math.max(0, (st.scanAte||0) - Date.now()));
     status();
   }
   // Texto ao lado do título: anunciado sem pressa (não a cada tecla).
@@ -248,7 +254,7 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
   function grupos(){
     const o = st.opts, inp = $('msn-in');
     const q = inp.value.trim(), esc0 = st.esc;
-    const toks = norm(q).split(/\s+/).filter(Boolean);
+    const toks = norm(q).split(/[^a-z0-9]+/).filter(Boolean);   // mesma régua do texto indexado: "conversao?", "a/b", "(okr)" casam (achado do Antigravity)
     const precisaRadar = !!o.radar && (esc0===(o.radar.esc||'radar') || (esc0==='tudo' && q.length>=2));
     if(precisaRadar && !st.radar && !st.carregando && !st.erro) radarCarregar();
     const ctx = {esc:esc0, vazio:!q};

@@ -72,7 +72,7 @@ const seed = ()=>({kanban:{
     await ctx.close(); }
 
   // com a cópia do lobby no aparelho: 0 leituras
-  { const cache = {t:Date.now(), v:{objs:{o1:{id:'o1',t:'Aumentar conversão do app',per:['T426'],resp:['eve']}}, marcos:[]}};
+  { const cache = {s:2, t:Date.now(), v:{objs:{o1:{id:'o1',t:'Aumentar conversão do app',per:['T426'],resp:['eve']}}, marcos:[]}};   // formato v2 da cópia (s:2)
     const {ctx,p,errs,leit} = await open(null, null, cache);
     await p.keyboard.press('Control+k'); await p.waitForTimeout(200); await digita(p,'conversao');
     t('com a cópia do lobby: acha o Objetivo sem ler o banco', leit()===0 && (await lista(p)).includes('Aumentar conversão do app'), [leit(), await lista(p)]);
