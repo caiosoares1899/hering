@@ -86,6 +86,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Sonar: abas cortadas em janela baixa (o flex espremia a faixa) — mare-sonar ?v=4 (SÓ DEV · oceano-dev v1.69, kanban-dev v8.30.922-dev)
+
+- **Sintoma (Caio, 10/11):** no Sonar do lobby, as abas (Tudo, Maré, Radar…) apareciam cortadas embaixo pela linha da faixa.
+- **Causa:** a janela é uma coluna flex com altura máxima (88vh). A faixa das abas tem `overflow-x:auto`, e com isso o `min-height` automático dela vira 0. Quando a lista é maior que a tela, o flex espremia a faixa (38–42 px para botões de 32 px + 16 px de folga) e cortava os botões. Nas capturas de teste a tela era alta e não aparecia.
+- **Correção:** `mare-sonar-dev.js` (?v=4) — cabeçalho, abas e rodapé com `flex:none`; só a lista rola. oceano-dev v1.69, kanban-dev v8.30.922-dev.
+- **Teste:** `docs/arezzo/testes/test_oceano_sonar.js` ganhou "janela de 560/640 px: abas inteiras" (falha sem a correção: faixa 38 px com rolagem vertical; passa com ela).
+
 ### 2026-11-09 · Maré › Modal do card: rolagem lateral em celular/tablet e foco perdido ao recolher checklist (SÓ DEV)
 
 Reprodução com Firebase falso: modal excedia a largura em 54 px no celular de 390 px e o rodapé ultrapassava o tablet. Campos com tamanho mínimo automático alargavam a grade; rodapé não quebrava linha acima de 768 px. Correção em kanban-dev.html: minmax(0,1fr), min-width:0 nos campos e quebra do rodapé até 1000 px, sem esconder overflow. Recolher checklist recriava o botão e perdia o foco, impedindo expandir de novo com Enter; toggleChecklistGroupCollapse agora restaura o foco no mesmo grupo. Teste docs/arezzo/testes/test_card_modal_ui.js falha antes e passa depois; validação read-only em docs/arezzo/testes/console_card_modal_ui.js.

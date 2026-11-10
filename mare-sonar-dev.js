@@ -151,6 +151,8 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
 [data-theme="light"] .msn-esc button[aria-selected="true"]{background:rgba(0,119,173,.12);}
 .msn-k{display:inline-block;border:1px solid var(--glass-b,rgba(56,182,255,.22));border-radius:5px;padding:0 5px;font-size:10.5px;font-weight:600;color:var(--txt2,rgba(200,230,255,.75));}
 .msn-lista{overflow:auto;padding:6px;flex:1;min-height:0;}
+/* cabeçalho, abas e rodapé nunca encolhem (a faixa das abas tem overflow, então o flex podia espremê-la e cortar os botões em janela baixa): só a lista rola */
+.msn-hd,.msn-esc,.msn-pe{flex:none;}
 .msn-g{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3,rgba(150,200,240,.6));padding:10px 10px 4px;}
 .msn-it{display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:12px;cursor:pointer;min-height:48px;}
 .msn-it[aria-selected="true"]{background:rgba(56,182,255,.14);box-shadow:inset 0 0 0 1px rgba(56,182,255,.45);}
