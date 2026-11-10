@@ -368,32 +368,6 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .modal-hd{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--glass-b);}
 .modal-hd h3{font-family:var(--ff-d);font-size:19px;flex:1;}
 .modal-bd{padding:20px;max-height:74vh;overflow:auto;}
-/* 🔍 Sonar (10/11/2026): busca em todo o Oceano, Ctrl/⌘+K */
-.sonar{width:min(640px,100%);display:flex;flex-direction:column;}
-.sonar-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--glass-b);}
-.sonar-ic{font-size:18px;line-height:1;}
-.sonar-in{flex:1;min-width:0;font:inherit;font-size:16px;background:transparent;border:none;outline:none;color:var(--txt);padding:6px 2px;}
-.sonar-in::placeholder{color:var(--txt3);}
-.sonar-esc{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--glass-b);overflow-x:auto;}
-.sonar-esc button{font:inherit;font-size:12px;font-weight:600;padding:5px 11px;min-height:32px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;}
-.sonar-esc button[aria-selected="true"]{border-color:var(--accent);color:var(--txt);background:rgba(56,182,255,.16);}
-.sonar-esc button:focus-visible,.sonar-it:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-.sonar-lista{max-height:min(60vh,520px);overflow:auto;padding:6px;}
-.sonar-g{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);padding:10px 10px 4px;}
-.sonar-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;min-height:44px;}
-.sonar-it[aria-selected="true"]{background:rgba(56,182,255,.14);box-shadow:inset 0 0 0 1px rgba(56,182,255,.45);}
-[data-theme="light"] .sonar-it[aria-selected="true"]{background:rgba(0,119,173,.10);box-shadow:inset 0 0 0 1px rgba(0,119,173,.45);}
-[data-theme="light"] .sonar-esc button[aria-selected="true"]{background:rgba(0,119,173,.12);}
-.sonar-it-ic{width:26px;height:26px;flex:none;display:grid;place-items:center;font-size:16px;}
-.sonar-it-ic .tile-logo{width:24px;height:24px;border-radius:6px;}
-.sonar-it-tx{flex:1;min-width:0;display:flex;flex-direction:column;}
-.sonar-it-t{font-size:13.5px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sonar-it-s{font-size:11.5px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sonar-it-k{font-size:10.5px;color:var(--txt3);flex:none;}
-.sonar-vazio{padding:18px 12px;font-size:13px;color:var(--txt2);line-height:1.55;}
-.sonar-pe{padding:8px 14px;border-top:1px solid var(--glass-b);font-size:11px;color:var(--txt3);}
-.sonar-kbd{margin-left:2px;}
-@media (max-width:560px){ #ov-sonar{padding:0;} #ov-sonar .sonar{width:100%;min-height:100%;border-radius:0;} .sonar-lista{max-height:none;flex:1;} .sonar-pe,.sonar-kbd{display:none;} }
 .x{background:none;border:none;color:var(--txt3);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:17px;}
 .x:hover{background:rgba(255,255,255,.08);color:var(--txt);}
 .gr{margin-bottom:22px;}
@@ -729,13 +703,6 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
   <div class="modal-bd"><input class="in busca" id="ajuda-busca" type="search" placeholder="🔎 Buscar na ajuda (ex.: instalar, Painel, peixinhos)…" aria-label="Buscar na ajuda"><div class="faq" id="faq"></div></div>
 </div></div>
 
-<div class="ov" id="ov-sonar"><div class="vidro modal sonar" role="dialog" aria-modal="true" aria-label="Sonar: busca em todo o Oceano">
-  <div class="sonar-hd"><span class="sonar-ic" aria-hidden="true">🔍</span><input id="sonar-in" class="sonar-in" type="text" role="combobox" aria-expanded="true" aria-controls="sonar-lista" aria-autocomplete="list" autocomplete="off" spellcheck="false" maxlength="120" placeholder="Buscar produtos, Objetivos, Marcos, links, ajuda…" aria-label="O que você procura?"><button class="x" type="button" data-fecha="ov-sonar" aria-label="Fechar">✕</button></div>
-  <div class="sonar-esc" id="sonar-esc" role="tablist" aria-label="Onde buscar"></div>
-  <div class="sonar-lista" id="sonar-lista" role="listbox" aria-label="Resultados"></div>
-  <div class="sonar-pe">↑↓ navegar · Enter abre · Ctrl+Enter abre em aba nova · Tab troca onde buscar · Esc fecha</div>
-</div></div>
-
 <div class="ov" id="ov-aviso"><div class="vidro modal" role="dialog" aria-modal="true" aria-labelledby="aviso-t">
   <div class="modal-hd"><h3 id="aviso-t"></h3><button class="x" type="button" data-fecha="ov-aviso" aria-label="Fechar">✕</button></div>
   <div class="modal-bd" id="aviso-bd"></div>
@@ -807,11 +774,12 @@ window.dispatchEvent(new Event('fb-ready'));
 <script src="mare-plantao-dev.js?v=5"></script>
 <script src="mare-dicas-dev.js?v=10"></script>
 <script src="mare-metas-dev.js?v=19"></script>
+<script src="mare-sonar-dev.js?v=1"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.65 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.66 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -2511,205 +2479,60 @@ function mostrarDocumento(h){
 $('#host-lobby').addEventListener('click', voltarLobby);
 $('#host-recarregar').addEventListener('click', ()=>{ const fr = $('#host-frames iframe.on'); if(fr){ fr.dataset.ok=''; $('#host-load').style.display='flex'; fr.src = fr.src; } });
 $('#host-aba').addEventListener('click', ()=>{ const a = APP(host.atual); if(a) window.open(a.href,'_blank','noopener'); });
-// ── 🔍 Sonar (10/11/2026): busca em todo o Oceano — Ctrl/⌘+K ou o botão 🔍. Fase 1, só no lobby (com um app aberto no host, o 🔍 da barra). ──
-// Fontes: produtos e atalhos (memória), squads do Maré (+ "buscar nos cards" via ?busca=), Objetivos e Marcos do Radar (1 leitura de
-// kanban/okr/objetivos + marcos, só quando a busca pede o Radar, 1x por sessão, guardando só id/título/período/responsáveis), links e Ajuda.
-// Texto vindo do banco (títulos, links) entra sempre por esc(); URL de link só por _hrefOk(); id vai na URL por encodeURIComponent().
-const SONAR_ESC = [{id:'tudo',l:'Tudo'},{id:'mare',l:'Maré'},{id:'radar',l:'Radar'},{id:'links',l:'Links'},{id:'ajuda',l:'Ajuda'}];
-const SONAR_PREFIXO = {m:'mare',r:'radar',l:'links',a:'ajuda'};
-const SONAR_REC = 'oceano_sonar_recentes'+(IS_DEV?'_dev':'');
-const SONAR_MAC = /Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||'');
-const sonar = {esc:'tudo', sel:0, itens:[], radar:null, carregando:false, erro:false, gatilho:null};
-const sonarNorm = x => String(x==null?'':x).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-function sonarUmaLetra(a,b){   // distância de edição ≤ 1 (um erro de digitação)
-  if(Math.abs(a.length-b.length)>1) return false;
-  let i=0, j=0, d=0;
-  while(i<a.length && j<b.length){ if(a[i]===b[j]){ i++; j++; continue; } if(++d>1) return false; if(a.length>b.length) i++; else if(b.length>a.length) j++; else { i++; j++; } }
-  return d + (a.length-i) + (b.length-j) <= 1;
-}
-// Pontua o texto contra as palavras da busca (todas precisam casar). 0 = fora.
-function sonarPontua(texto, toks){
-  if(!toks.length) return 1;
-  const t = sonarNorm(texto), pal = t.split(/[^a-z0-9]+/).filter(Boolean); let p = 0;
-  for(const k of toks){
-    if(pal.includes(k)) p += 4;
-    else if(pal.some(w=>w.startsWith(k))) p += 3;
-    else if(t.includes(k)) p += 2;
-    else if(k.length>=4 && pal.some(w=>sonarUmaLetra(w,k) || sonarUmaLetra(w.slice(0,k.length),k))) p += 1;
-    else return 0;
-  }
-  return p + (t.startsWith(toks.join(' ')) ? 2 : 0);
-}
-// Cache do Radar no aparelho (10/11/2026): a leitura completa pesa ~393 KB (170 KB objetivos + 223 KB marcos, medido em prod).
-// Guarda só a versão enxuta (id, título, período, responsáveis) por 3 h; dentro disso o Sonar não lê o banco. Tudo que entra aqui é legível por qualquer @ciahering.
-const SONAR_RADAR_LS = 'oceano_sonar_radar'+(IS_DEV?'_dev':''), SONAR_RADAR_TTL = 3*3600*1000;
-function sonarRadarDoCache(){
-  try{ const c = JSON.parse(localStorage.getItem(SONAR_RADAR_LS)||'null');
-    if(!c || typeof c.t!=='number' || Date.now()-c.t > SONAR_RADAR_TTL || !c.v || typeof c.v.objs!=='object' || !Array.isArray(c.v.marcos)) return null;
-    const objs = {};
-    Object.values(c.v.objs).forEach(o=>{ if(o && typeof o.id==='string' && typeof o.t==='string') objs[o.id] = {id:o.id, t:o.t.slice(0,200), per:(Array.isArray(o.per)?o.per:[]).map(x=>String(x).slice(0,20)).slice(0,6), resp:(Array.isArray(o.resp)?o.resp:[]).map(String).slice(0,30)}; });
-    const marcos = c.v.marcos.filter(m=>m && typeof m.id==='string' && typeof m.t==='string' && objs[m.obj]).map(m=>({id:m.id, t:m.t.slice(0,200), obj:m.obj}));
-    return {objs, marcos};
-  }catch(e){ return null; }
-}
-async function sonarCarregarRadar(){
-  if(sonar.radar || sonar.carregando || !U) return;
-  const doCache = sonarRadarDoCache(); if(doCache){ sonar.radar = doCache; return; }
-  sonar.carregando = true; sonar.erro = false;
-  try{
-    const [so, sm] = await Promise.all(['objetivos','marcos'].map(n=>window._get(window._ref(window._db,'kanban/okr/'+n))));
-    const visivelRadar = o => o && !o.arquivado && (!SO_HERING || !o.torre || o.torre==='digital' || !['digital','comercial','corporativa'].includes(o.torre));   // mesma régua do _okrSoAtivo() do Radar
-    const objs = {};
-    Object.entries((so && so.val()) || {}).forEach(([id,o])=>{ if(!visivelRadar(o)) return;
-      const per = Array.isArray(o.trimestres) && o.trimestres.length ? o.trimestres : (o.trimestre ? [o.trimestre] : []);
-      objs[id] = {id, t:String(o.titulo||'Objetivo sem título').slice(0,200), per:per.slice(0,6).map(x=>String(x).slice(0,20)), resp:Array.isArray(o.responsaveis) ? o.responsaveis.slice(0,30).map(String) : []}; });
-    const marcos = [];
-    Object.entries((sm && sm.val()) || {}).forEach(([id,m])=>{ if(!m || m.arquivado || !objs[m.objetivoId]) return; marcos.push({id, t:String(m.nome||'Marco').slice(0,200), obj:m.objetivoId}); });
-    sonar.radar = {objs, marcos};
-    try{ localStorage.setItem(SONAR_RADAR_LS, JSON.stringify({t:Date.now(), v:sonar.radar})); }catch(e){}
-  }catch(e){ sonar.erro = true; console.warn('[sonar] Radar', e); }
-  sonar.carregando = false;
-  if(modalTopo==='ov-sonar') sonarRender();
-}
-const sonarAbreApp = (app, url) => ()=> abrirApp(app, false, url);
-const sonarAbreLink = url => ()=> window.open(_hrefOk(url), '_blank', 'noopener,noreferrer');
-function sonarFontes(esc0, q, toks){
-  const g = [];   // [{g:'Grupo', itens:[{k,ic,t,sub,tipo,busca,go,url}]}]
-  const add = (nome, itens) => { if(itens.length) g.push({g:nome, itens}); };
+// ── 🔍 Sonar (módulo mare-sonar-dev.js, 10/11/2026): a busca do Oceano. Aqui o lobby só diz o que é dele (produtos, comandos, squads, links, ajuda);
+// a janela, o teclado, o Radar (com a cópia de 3 h no aparelho) e os recentes vêm do módulo, iguais em todas as páginas.
+function iniciarSonar(){
+  if(!window.MareSonar) return;
   const ic = a => logoQuad(a, '-sn');
-  if(esc0==='tudo'){
-    add('Produtos', appsDoDia().map(a=>({k:'app:'+a.id, ic:ic(a), t:a.nome, sub:a.sub, tipo:'produto', busca:a.nome+' '+a.sub+' '+(a.pt||''), go:sonarAbreApp(a.id), url:a.href, app:a.id})));
-    add('Comandos', [
-      {k:'cmd:perfil', ic:'⚙️', t:'Meu perfil e preferências', sub:'Tema, peixinhos, como abrir os produtos', tipo:'comando', busca:'perfil preferencias tema configuracoes peixinhos', go:()=>abrirPerfil()},
-      {k:'cmd:ajuda', ic:'❓', t:'Ajuda do Oceano', sub:'Perguntas frequentes', tipo:'comando', busca:'ajuda faq duvidas', go:()=>abrirAjuda()},
-    ]);
-  }
-  if(esc0==='tudo' || esc0==='mare'){
-    const mare = APP('kanban');
-    if(mare && visivel(mare)){
-      const sqs = perfilFb.squads||[];
-      add('Maré', sqs.map(sq=>({k:'sq:'+sq, ic:ic(mare), t:'Squad '+sq, sub:'Abrir o board no Maré', tipo:'squad', busca:'mare squad board '+sq, go:sonarAbreApp('kanban', P('kanban')+'?squad='+encodeURIComponent(sq)), url:P('kanban')+'?squad='+encodeURIComponent(sq), app:'kanban'})));
-      if(q.length>=2) add('Buscar nos cards', sqs.slice(0,8).map(sq=>{ const url = P('kanban')+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120));
-        return {k:'busca:'+sq, ic:'🔎', t:'Buscar “'+q+'” nos cards', sub:'Squad '+sq+' · abre a busca do Maré', tipo:'busca', busca:'', sempre:true, go:sonarAbreApp('kanban', url), url, app:'kanban'}; }));
-    }
-  }
-  if(esc0==='tudo' || esc0==='radar'){
-    const okr = APP('okr');
-    const at = [{k:'okr:notas', ic:ic(okr), t:'Anotações da reunião', sub:'Radar', tipo:'atalho', busca:'radar anotacoes notas reuniao ata', go:sonarAbreApp('okr', P('okr')+'?okr=notas'), url:P('okr')+'?okr=notas', app:'okr'},
-                {k:'okr:chat', ic:ic(okr), t:'Perguntar ao Agente Ágil', sub:'Radar', tipo:'atalho', busca:'radar agente agil perguntar chat ia', go:sonarAbreApp('okr', P('okr')+'?okr=chat'), url:P('okr')+'?okr=chat', app:'okr'}];
-    add('Radar', at);
-    if(sonar.radar){
-      const meus = toks.some(k=>k==='meus' || k==='meu' || k==='minhas'), tk = toks.filter(k=>!['meus','meu','minhas','minha'].includes(k));
-      const objs = Object.values(sonar.radar.objs).filter(o=>!meus || o.resp.includes(U.uid));
-      add('Objetivos', objs.map(o=>({k:'obj:'+o.id, ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), tipo:'objetivo', busca:o.t+' '+o.per.join(' '), toks:tk, go:sonarAbreApp('okr', P('okr')+'?okr='+encodeURIComponent(o.id)), url:P('okr')+'?okr='+encodeURIComponent(o.id), app:'okr'})));
-      const ids = new Set(objs.map(o=>o.id));
-      add('Marcos', sonar.radar.marcos.filter(m=>ids.has(m.obj)).map(m=>{ const o = sonar.radar.objs[m.obj];
-        return {k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+o.t+'”', tipo:'marco', busca:m.t, toks:tk, go:sonarAbreApp('okr', P('okr')+'?okr='+encodeURIComponent(o.id)), url:P('okr')+'?okr='+encodeURIComponent(o.id), app:'okr'}; }));
-    }
-  }
-  if(esc0==='tudo' || esc0==='links'){
-    const ls = [...linksOrd(linksHering||{}).map(l=>[l,'Link da Hering']), ...linksOrd(linksMeus||{}).map(l=>[l,'Meu link'])];
-    add('Links', ls.map(([l,o],i)=>({k:'link:'+i+':'+String(l.url||''), ic:'🔗', t:String(l.titulo||l.url||'Link'), sub:o+(l.desc?' · '+l.desc:''), tipo:'link', busca:(l.titulo||'')+' '+(l.desc||'')+' '+(l.url||''), go:sonarAbreLink(l.url), url:_hrefOk(l.url), link:true})));
-  }
-  if(esc0==='tudo' || esc0==='ajuda'){
-    const semTag = h => String(h||'').replace(/<[^>]+>/g,' ').slice(0,400);
-    add('Ajuda', FAQ.map(f=>({k:'faq:'+f.id, ic:'❓', t:f.q, sub:'Ajuda do Oceano', tipo:'ajuda', busca:f.q+' '+semTag(f.a), go:()=>abrirAjuda(f.id), faq:f.id})));
-  }
-  return g;
+  const app = (id, url) => ()=>abrirApp(id, false, url);
+  MareSonar.iniciar({
+    dev: IS_DEV, pagina:'oceano', user: ()=>U, atalho:true, recentesChave:'oceano_sonar_recentes',
+    escopos:[{id:'tudo',l:'Tudo'},{id:'mare',l:'Maré'},{id:'radar',l:'Radar'},{id:'links',l:'Links'},{id:'ajuda',l:'Ajuda'}],
+    prefixos:{m:'mare', r:'radar', l:'links', a:'ajuda'},
+    placeholder:'Buscar produtos, Objetivos, Marcos, links, ajuda…',
+    vazio:'Tente outra palavra, ou comece com <b>m:</b> para o Maré e <b>r:</b> para o Radar.',
+    aoAbrir: ()=>{ if(modalTopo) fecharModal(modalTopo); },
+    abrirApp: (id, url)=>abrirApp(id, false, url),
+    fontes: (q)=>{
+      const g = [];
+      g.push({g:'Produtos', esc:'produtos', noVazio:true, itens:appsDoDia().map(a=>({k:'app:'+a.id, ic:ic(a), t:a.nome, sub:a.sub, tipo:'produto', busca:a.nome+' '+a.sub+' '+(a.pt||''), go:app(a.id), url:a.href, app:a.id}))});
+      g.push({g:'Comandos', esc:'cmd', noVazio:true, itens:[
+        {k:'cmd:perfil', ic:'⚙️', t:'Meu perfil e preferências', sub:'Tema, peixinhos, como abrir os produtos', tipo:'comando', busca:'perfil preferencias tema configuracoes peixinhos', go:()=>abrirPerfil(), rec:{cmd:'perfil'}},
+        {k:'cmd:ajuda', ic:'❓', t:'Ajuda do Oceano', sub:'Perguntas frequentes', tipo:'comando', busca:'ajuda faq duvidas', go:()=>abrirAjuda(), rec:{cmd:'ajuda'}}]});
+      const mare = APP('kanban');
+      if(mare && visivel(mare)){
+        const sqs = perfilFb.squads||[];
+        g.push({g:'Maré', esc:'mare', noVazio:true, itens:sqs.map(sq=>{ const url = P('kanban')+'?squad='+encodeURIComponent(sq); return {k:'sq:'+sq, ic:ic(mare), t:'Squad '+sq, sub:'Abrir o board no Maré', tipo:'squad', busca:'mare squad board '+sq, go:app('kanban', url), url, app:'kanban'}; })});
+        if(q.length>=2) g.push({g:'Buscar nos cards', esc:'mare', fim:true, max:3, itens:sqs.slice(0,8).map(sq=>{ const url = P('kanban')+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120));
+          return {k:'busca:'+sq, ic:'🔎', t:'Buscar “'+q+'” nos cards', sub:'Squad '+sq+' · abre a busca do Maré', tipo:'busca', sempre:true, go:app('kanban', url), url, app:'kanban'}; })});
+      }
+      return g;
+    },
+    radar: { esc:'radar', icone: ic(APP('okr')), url: id=>P('okr')+'?okr='+encodeURIComponent(id), abrir: url=>abrirApp('okr', false, url),
+      atalhos:[{k:'okr:notas', t:'Anotações da reunião', sub:'Radar', busca:'radar anotacoes notas reuniao ata', url:P('okr')+'?okr=notas', go:app('okr', P('okr')+'?okr=notas'), app:'okr'},
+               {k:'okr:chat', t:'Perguntar ao Agente Ágil', sub:'Radar', busca:'radar agente agil perguntar chat ia', url:P('okr')+'?okr=chat', go:app('okr', P('okr')+'?okr=chat'), app:'okr'}] },
+    depois: ()=>{
+      const ls = [...linksOrd(linksHering||{}).map(l=>[l,'Link da Hering']), ...linksOrd(linksMeus||{}).map(l=>[l,'Meu link'])];
+      const semTag = h => String(h||'').replace(/<[^>]+>/g,' ').slice(0,400);
+      return [
+        {g:'Links', esc:'links', itens:ls.map(([l,o],i)=>({k:'link:'+i+':'+String(l.url||''), ic:'🔗', t:String(l.titulo||l.url||'Link'), sub:o+(l.desc?' · '+l.desc:''), tipo:'link', busca:(l.titulo||'')+' '+(l.desc||'')+' '+(l.url||''), go:()=>window.open(_hrefOk(l.url), '_blank', 'noopener,noreferrer'), url:_hrefOk(l.url), link:true}))},
+        {g:'Ajuda', esc:'ajuda', itens:FAQ.map(f=>({k:'faq:'+f.id, ic:'❓', t:f.q, sub:'Ajuda do Oceano', tipo:'ajuda', busca:f.q+' '+semTag(f.a), go:()=>abrirAjuda(f.id), rec:{faq:f.id}}))},
+      ];
+    },
+    deRecente: (r, base)=>{
+      if(r.faq && FAQ.some(f=>f.id===r.faq)) return Object.assign(base, {ic:'❓', go:()=>abrirAjuda(r.faq), rec:{faq:r.faq}});
+      if(r.cmd==='perfil' || String(r.k)==='cmd:perfil') return Object.assign(base, {ic:'⚙️', go:()=>abrirPerfil(), rec:{cmd:'perfil'}});
+      if(r.cmd==='ajuda' || String(r.k)==='cmd:ajuda') return Object.assign(base, {ic:'❓', go:()=>abrirAjuda(), rec:{cmd:'ajuda'}});
+      if(r.app && APP(r.app) && visivel(APP(r.app)) && MareSonar._paginaOk(r.url)) return Object.assign(base, {ic:ic(APP(r.app)), app:r.app, url:r.url, go:app(r.app, r.url)});
+      return null;
+    },
+  });
 }
-function sonarRecentes(){ try{ const r = JSON.parse(localStorage.getItem(SONAR_REC)||'[]'); return Array.isArray(r) ? r.slice(0,5) : []; }catch(e){ return []; } }
-function sonarLembrar(it){
-  const r = {k:it.k, t:it.t, sub:it.sub, tipo:it.tipo, app:it.app||'', url:it.url||'', faq:it.faq||'', link:!!it.link};
-  try{ localStorage.setItem(SONAR_REC, JSON.stringify([r, ...sonarRecentes().filter(x=>x.k!==r.k)].slice(0,5))); }catch(e){}
-}
-// Recente guardado no aparelho → item de novo (o endereço é conferido: só página da família ou link http(s)).
-function sonarDoRecente(r){
-  const ok = r && typeof r==='object' && r.k && r.t;
-  if(!ok) return null;
-  const base = {k:String(r.k), ic:r.link?'🔗':r.faq?'❓':'🕘', t:String(r.t).slice(0,200), sub:String(r.sub||'').slice(0,200), tipo:String(r.tipo||'')};
-  if(r.faq && FAQ.some(f=>f.id===r.faq)) return {...base, faq:r.faq, go:()=>abrirAjuda(r.faq)};
-  if(r.link && _hrefOk(r.url)!=='#') return {...base, link:true, url:_hrefOk(r.url), go:sonarAbreLink(r.url)};
-  if(r.app && APP(r.app) && visivel(APP(r.app)) && /^(kanban|okr|painel)(-dev)?\.html(\?[^#\s]*)?$|^onboarding\.html$/.test(String(r.url||''))) return {...base, app:r.app, url:r.url, ic:logoQuad(APP(r.app),'-sn'), go:sonarAbreApp(r.app, r.url)};
-  if(String(r.k).startsWith('cmd:perfil')) return {...base, ic:'⚙️', go:()=>abrirPerfil()};
-  if(String(r.k).startsWith('cmd:ajuda')) return {...base, ic:'❓', go:()=>abrirAjuda()};
-  return null;
-}
-const SONAR_TIPO = {produto:'Produto', comando:'Comando', squad:'Maré', busca:'Maré', atalho:'Radar', objetivo:'Objetivo', marco:'Marco', link:'Link', ajuda:'Ajuda'};
-function sonarRender(){
-  const inp = $('#sonar-in'); let q = inp.value.trim(), esc0 = sonar.esc;
-  const mp = q.match(/^([mrla]):\s*/i); if(mp){ esc0 = SONAR_PREFIXO[mp[1].toLowerCase()]; q = q.slice(mp[0].length).trim(); }
-  $('#sonar-esc').innerHTML = SONAR_ESC.map((e,i)=>'<button type="button" role="tab" tabindex="-1" data-sesc="'+e.id+'" aria-selected="'+(e.id===esc0)+'">'+(i?'<span class="kbd">'+i+'</span>':'')+esc(e.l)+'</button>').join('');
-  const toks = sonarNorm(q).split(/\s+/).filter(Boolean);
-  if((esc0==='radar' || (esc0==='tudo' && q.length>=2)) && !sonar.radar && !sonar.carregando && !sonar.erro) sonarCarregarRadar();
-  let grupos;
-  if(!q){
-    const rec = esc0==='tudo' ? sonarRecentes().map(sonarDoRecente).filter(Boolean) : [];
-    grupos = (rec.length ? [{g:'Recentes', itens:rec}] : []).concat(sonarFontes(esc0, '', []).filter(x=>!['Objetivos','Marcos','Links','Ajuda'].includes(x.g) || esc0!=='tudo').map(x=>({g:x.g, itens:x.itens.slice(0, esc0==='tudo'?6:12)})));
-  } else {
-    grupos = sonarFontes(esc0, q, toks).map(x=>{
-      const its = x.itens.map(it=>({it, p: it.sempre ? 1 : sonarPontua(it.t+' '+(it.busca||''), it.toks||toks)})).filter(y=>y.p>0).sort((a,b)=>b.p-a.p).map(y=>y.it);
-      return {g:x.g, itens:its.slice(0, esc0==='tudo' ? (x.g==='Buscar nos cards'?3:5) : 30)};
-    }).filter(x=>x.itens.length);
-    // "Buscar nos cards" vai para o fim: é o plano B quando o nome não aparece acima
-    grupos.sort((a,b)=>(a.g==='Buscar nos cards')-(b.g==='Buscar nos cards'));
-  }
-  sonar.itens = grupos.flatMap(x=>x.itens);
-  if(sonar.sel >= sonar.itens.length) sonar.sel = 0;
-  let i = -1;
-  let html = grupos.map(x=>'<div class="sonar-g" role="presentation">'+esc(x.g)+'</div>'+x.itens.map(it=>{ i++;
-    return '<div class="sonar-it" role="option" id="sonar-o-'+i+'" data-si="'+i+'" aria-selected="'+(i===sonar.sel)+'"><span class="sonar-it-ic" aria-hidden="true">'+(String(it.ic).charAt(0)==='<' ? it.ic : esc(it.ic))+'</span><span class="sonar-it-tx"><span class="sonar-it-t">'+esc(it.t)+'</span>'+(it.sub?'<span class="sonar-it-s">'+esc(it.sub)+'</span>':'')+'</span><span class="sonar-it-k">'+esc(SONAR_TIPO[it.tipo]||'')+'</span></div>'; }).join('')).join('');
-  const precisaRadar = esc0==='radar' || (esc0==='tudo' && q.length>=2);
-  if(precisaRadar && sonar.carregando) html += '<div class="sonar-vazio" role="status">⏳ Procurando no Radar…</div>';
-  else if(precisaRadar && sonar.erro) html += '<div class="sonar-vazio" role="status">Não deu para buscar no Radar agora. <button type="button" class="ibtn" data-sretry>Tentar de novo</button></div>';
-  if(!sonar.itens.length && !(precisaRadar && sonar.carregando)) html = '<div class="sonar-vazio" role="status">Nada encontrado para “'+esc(q)+'”. Tente outra palavra, ou comece com <b>m:</b> para o Maré e <b>r:</b> para o Radar.</div>' + (precisaRadar && sonar.erro ? html : '');
-  $('#sonar-lista').innerHTML = html;
-  inp.setAttribute('aria-activedescendant', sonar.itens.length ? 'sonar-o-'+sonar.sel : '');
-}
-function sonarMarca(n){
-  if(!sonar.itens.length) return;
-  sonar.sel = (n + sonar.itens.length) % sonar.itens.length;
-  $$('#sonar-lista .sonar-it').forEach(el=>el.setAttribute('aria-selected', String(Number(el.dataset.si)===sonar.sel)));
-  const el = $('#sonar-o-'+sonar.sel); if(el) el.scrollIntoView({block:'nearest'});
-  $('#sonar-in').setAttribute('aria-activedescendant', 'sonar-o-'+sonar.sel);
-}
-function sonarAbrir(n, novaAba){
-  const it = sonar.itens[n]; if(!it) return;
-  sonarLembrar(it); sonar.gatilho = null; fecharModal('ov-sonar');
-  if(novaAba && it.url && !it.faq){ window.open(it.link ? _hrefOk(it.url) : it.url, '_blank', 'noopener'); return; }
-  it.go();
-}
-function abrirSonar(){
-  if(!U) return;
-  if(modalTopo && modalTopo!=='ov-sonar') fecharModal(modalTopo);
-  sonar.gatilho = document.activeElement; sonar.esc = 'tudo'; sonar.sel = 0; sonar.erro = false;
-  $('#sonar-in').value = ''; sonarRender(); abrirModal('ov-sonar');
-}
-$('#sonar-kbd').textContent = SONAR_MAC ? '⌘K' : 'Ctrl K';
-$('#btn-sonar').title = 'Sonar: busca em todo o Oceano ('+(SONAR_MAC?'⌘K':'Ctrl+K')+')';
-$('#btn-sonar').addEventListener('click', abrirSonar);
-$('#host-sonar').addEventListener('click', abrirSonar);
-$('#sonar-in').addEventListener('input', ()=>{ sonar.sel = 0; sonarRender(); });
-$('#sonar-in').addEventListener('keydown', e=>{
-  if(e.key==='ArrowDown'){ e.preventDefault(); sonarMarca(sonar.sel+1); }
-  else if(e.key==='ArrowUp'){ e.preventDefault(); sonarMarca(sonar.sel-1); }
-  else if(e.key==='Enter'){ e.preventDefault(); sonarAbrir(sonar.sel, e.ctrlKey||e.metaKey); }
-  else if(e.key==='Tab'){ e.preventDefault(); const i = SONAR_ESC.findIndex(x=>x.id===sonar.esc); sonar.esc = SONAR_ESC[(i + (e.shiftKey?-1:1) + SONAR_ESC.length) % SONAR_ESC.length].id; sonar.sel = 0; sonarRender(); }
-  else if(/^[1-4]$/.test(e.key) && !e.target.value && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); sonar.esc = SONAR_ESC[Number(e.key)].id; sonar.sel = 0; sonarRender(); }
-});
-$('#sonar-esc').addEventListener('click', e=>{ const b = e.target.closest('[data-sesc]'); if(!b) return; sonar.esc = b.dataset.sesc; sonar.sel = 0; sonarRender(); $('#sonar-in').focus(); });
-$('#sonar-lista').addEventListener('click', e=>{
-  if(e.target.closest('[data-sretry]')){ sonar.erro = false; sonarRender(); $('#sonar-in').focus(); return; }
-  const it = e.target.closest('[data-si]'); if(it) sonarAbrir(Number(it.dataset.si), e.ctrlKey||e.metaKey);
-});
-$('#sonar-lista').addEventListener('mousemove', e=>{ const it = e.target.closest('[data-si]'); if(it && Number(it.dataset.si)!==sonar.sel) sonarMarca(Number(it.dataset.si)); });
-// fechou sem escolher nada: o foco volta para quem abriu
-new MutationObserver(()=>{ if(!$('#ov-sonar').classList.contains('open') && sonar.gatilho){ const g = sonar.gatilho; sonar.gatilho = null; if(g && g.isConnected && g.focus) g.focus({preventScroll:true}); } }).observe($('#ov-sonar'), {attributes:true, attributeFilter:['class']});
-document.addEventListener('keydown', e=>{
-  if(!(e.ctrlKey||e.metaKey) || e.altKey || e.shiftKey || (e.key!=='k' && e.key!=='K')) return;
-  if(!U) return;
-  e.preventDefault();
-  if(modalTopo==='ov-sonar') fecharModal('ov-sonar'); else abrirSonar();
-});
+iniciarSonar();
+$('#sonar-kbd').textContent = window.MareSonar ? MareSonar.tecla : 'Ctrl K';
+$('#btn-sonar').title = 'Sonar: busca em todo o Oceano ('+(window.MareSonar && MareSonar.tecla==='⌘K' ? '⌘K' : 'Ctrl+K')+')';
+$('#btn-sonar').addEventListener('click', ()=>window.MareSonar && MareSonar.abrir());
+$('#host-sonar').addEventListener('click', ()=>window.MareSonar && MareSonar.abrir());
 
 // atalhos de teclado: 1..9 abrem os produtos da tela inicial, ? abre a ajuda
 document.addEventListener('keydown', e=>{
