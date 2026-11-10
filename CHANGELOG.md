@@ -24,6 +24,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar › 🔍 Sonar no Radar: achar Objetivo ou Marco na hora, sem leitura nova (SÓ DEV · okr-dev v2.107 · mare-sonar ?v=8 · mare-dicas ?v=12) — 2026-11-10
+
+O Radar ganha o **🔍 Sonar** (botão no topo e **Ctrl+K / ⌘K**), com o mesmo layout do lobby e do Maré. O foco aqui são Objetivos e Marcos:
+- **Abas:** Tudo · 1 Objetivos · 2 Marcos · 3 Maré · 4 Ajuda (prefixos `o:`, `k:`, `m:`, `a:`). Visualizador externo não vê a aba do Maré.
+- **Enter** abre o Objetivo aqui mesmo (no modal de sempre, já na torre dele); um Marco abre o Objetivo dele; Ctrl/⌘+Enter abre em aba nova.
+- **meus** = Objetivos em que a pessoa é responsável, ou responsável por algum Marco (a régua do filtro de pessoa do Radar). **Período** (T426, S127…) também é pesquisável, e código com número não aceita erro de digitação (T426 não acha T126).
+- **Sem custo de leitura:** a busca usa os Objetivos e Marcos que o Radar já carregou (opção nova `radar.dados` do módulo); nenhuma leitura nova, nem a cópia de 3 h do lobby.
+- Aba Maré: "Buscar “…” nos cards" nos squads da pessoa (abre o Maré em aba nova com a busca preenchida). Aba Ajuda: os tópicos da Ajuda do Radar; tópico novo "Sonar (Ctrl+K)" em Navegar.
+- **Dica:** sim — dica `sonar` no Radar (fim da fila de entrada; `mare-dicas ?v=12`). `mare-sonar ?v=8` nas 3 páginas.
+- Teste: `docs/arezzo/testes/test_okr_sonar.js` (53 asserções, **escrito pelo Codex por contrato**; rodado e ajustado aqui — pegou o T426 × T126). `test_sonar_logica.js` ganhou a regra do código com número; `test_dicas.js` atualizado.
+- Fronteira: sem mudança (dados que a página já tinha; títulos por `esc()`; endereços por `encodeURIComponent`/`paginaOk`).
+
 ### Maré e Oceano › 💡 Dica do Sonar (SÓ DEV · mare-dicas ?v=11 · kanban-dev v8.30.923-dev · oceano-dev v1.70 · okr-dev v2.106 · painel-dev v5.97) — 2026-11-10
 
 Popup de dica do Sonar no Maré e no lobby (`mare-dicas-dev.js`, `?v=11` em kanban-dev, okr-dev, oceano-dev e painel-dev).
