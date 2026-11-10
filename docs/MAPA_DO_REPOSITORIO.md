@@ -121,7 +121,7 @@ Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em anda
 |---|---|---|---|
 | Maré Digital | `kanban.html` v8.30.914 | `kanban-dev.html` v8.30.915-dev | `mare-login` v3 · `mare-notif` v41 · `mare-metas` v19 · `mare-dicas` v10 |
 | Painel | `painel.html` v5.96 · painel | `painel-dev.html` v5.96 · painel-dev | `mare-notif` v41 · `mare-metas` v19 · `mare-plantao` v5 · `mare-dicas` v10 |
-| Radar | `okr.html` v2.104 · okr | `okr-dev.html` v2.104 · okr-dev | `mare-notif` v41 · `mare-dicas` v10 |
+| Radar | `okr.html` v2.104 · okr | `okr-dev.html` v2.105 · okr-dev | `mare-notif` v41 · `mare-dicas` v10 |
 | Oceano | `oceano.html` v1.63 · oceano | `oceano-dev.html` v1.63 · oceano-dev | `mare-login` v3 · `mare-notif` v41 · `mare-plantao` v5 · `mare-dicas` v10 · `mare-metas` v19 |
 | Escala | `escala.html` v1.11 · escala | `escala-dev.html` v1.11 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
