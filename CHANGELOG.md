@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Maré › 🔍 Sonar com o mesmo layout do lobby (módulo mare-sonar), foco nos cards do board (SÓ DEV · kanban-dev v8.30.919-dev) — 2026-11-10
+### Maré › 🔍 Sonar com o mesmo layout do lobby (módulo mare-sonar), foco nos cards do board (SÓ DEV · kanban-dev v8.30.920-dev · oceano-dev v1.67 · mare-sonar-dev.js ?v=2) — 2026-11-10
 
 O Ctrl+K do Maré passa a abrir o **mesmo Sonar do lobby** (módulo `mare-sonar-dev.js`): o mesmo título com o disco que varre, as mesmas abas, o mesmo teclado. O que muda é o foco:
 - **Abas:** Tudo · 1 Este board · 2 Radar · 3 Squads · 4 Ajuda (prefixos `b:`, `r:`, `s:`, `a:`).
@@ -32,6 +32,7 @@ O Ctrl+K do Maré passa a abrir o **mesmo Sonar do lobby** (módulo `mare-sonar-
 - Depois: Objetivos e Marcos do Radar (cópia de 3 h compartilhada com o lobby), a Ajuda do Maré e, no fim, "Buscar “…” em Squad X".
 - Recentes do Maré (cards e Objetivos) aparecem com a caixa vazia. `?busca=` abre o Sonar já preenchido na aba "Este board".
 - Com um card aberto, Ctrl+K continua buscando nos comentários. Ctrl+K de novo fecha o Sonar. Se o módulo não carregar, volta a busca antiga.
+- **Ícones (mare-sonar ?v=2):** a logo dos produtos aparecia cortada no Sonar (o lobby manda o quadradinho de 56 px dele, e a caixa do ícone tinha 26 px). Agora todo ícone fica num quadrado de 32 px: a logo ocupa o quadrado inteiro e o emoji fica sobre fundo de vidro. Linhas um pouco mais altas (48 px).
 - Substitui a versão do #1672, que reaproveitava a janela antiga. Teste: `docs/arezzo/testes/test_mare_sonar.js` (4 temas, incluindo Black Friday). Sem regressão em `test_busca_comentarios.js` (as 2 checagens de "Ctrl+K sem card" passam a olhar o Sonar), `test_card_modal_ui.js` e `test_oceano_sonar.js`.
 - Dica: sim, no PR do CATALOGO. Fronteira: texto do card e do Radar por `esc()`; a cor da coluna passa por uma lista fechada antes de virar estilo; id na URL por `encodeURIComponent()`.
 

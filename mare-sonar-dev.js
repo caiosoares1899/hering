@@ -152,12 +152,16 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
 .msn-k{display:inline-block;border:1px solid var(--glass-b,rgba(56,182,255,.22));border-radius:5px;padding:0 5px;font-size:10.5px;font-weight:600;color:var(--txt2,rgba(200,230,255,.75));}
 .msn-lista{overflow:auto;padding:6px;flex:1;min-height:0;}
 .msn-g{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3,rgba(150,200,240,.6));padding:10px 10px 4px;}
-.msn-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;min-height:44px;}
+.msn-it{display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:12px;cursor:pointer;min-height:48px;}
 .msn-it[aria-selected="true"]{background:rgba(56,182,255,.14);box-shadow:inset 0 0 0 1px rgba(56,182,255,.45);}
 [data-theme="light"] .msn-it[aria-selected="true"]{background:rgba(0,119,173,.10);box-shadow:inset 0 0 0 1px rgba(0,119,173,.45);}
-.msn-ic{width:26px;height:26px;flex:none;display:grid;place-items:center;font-size:16px;}
-.msn-ic img{width:24px;height:24px;border-radius:6px;display:block;object-fit:cover;}
-.msn-ic .dot{width:10px;height:10px;border-radius:50%;}
+.msn-ic{width:32px;height:32px;flex:none;display:grid;place-items:center;font-size:16px;line-height:1;border-radius:9px;overflow:hidden;background:rgba(56,182,255,.08);border:1px solid var(--glass-b,rgba(56,182,255,.22));}
+[data-theme="light"] .msn-ic{background:rgba(0,119,173,.06);}
+/* logo de produto (a página manda o "quadradinho" dela, que tem outro tamanho): ocupa a caixa inteira, sem sombra */
+.msn-ic.logo,.msn-ic.dotc{background:none;border:none;}
+.msn-ic.logo > *{width:32px !important;height:32px !important;border-radius:9px !important;box-shadow:none !important;margin:0 !important;overflow:hidden;display:block;}
+.msn-ic.logo img,.msn-ic.logo svg{width:100%;height:100%;display:block;object-fit:cover;}
+.msn-ic .dot{display:block;width:10px;height:10px;border-radius:50%;}
 .msn-tx{flex:1;min-width:0;display:flex;flex-direction:column;}
 .msn-t{font-size:13.5px;font-weight:600;color:var(--txt,#e8f4fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .msn-s{font-size:11.5px;color:var(--txt3,rgba(150,200,240,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -257,7 +261,8 @@ html[data-anim-paused] .msn-box.scan .msn-disc i{animation-play-state:paused;}
     if(st.sel >= st.itens.length) st.sel = 0;
     let i = -1;
     let html = gs.map(g=>'<div class="msn-g" role="presentation">'+esc(g.g)+'</div>'+g.itens.map(it=>{ i++;
-      return '<div class="msn-it" role="option" id="msn-o-'+i+'" data-i="'+i+'" aria-selected="'+(i===st.sel)+'"><span class="msn-ic" aria-hidden="true">'+icHtml(it.ic)+'</span><span class="msn-tx"><span class="msn-t">'+esc(it.t)+'</span>'+(it.sub?'<span class="msn-s">'+esc(it.sub)+'</span>':'')+'</span><span class="msn-tp">'+esc(it.tipoTxt || TIPO[it.tipo] || '')+'</span></div>'; }).join('')).join('');
+      const ich = icHtml(it.ic), icc = /class="dot"/.test(ich) ? ' dotc' : (ich.charAt(0)==='<' ? ' logo' : '');
+      return '<div class="msn-it" role="option" id="msn-o-'+i+'" data-i="'+i+'" aria-selected="'+(i===st.sel)+'"><span class="msn-ic'+icc+'" aria-hidden="true">'+ich+'</span><span class="msn-tx"><span class="msn-t">'+esc(it.t)+'</span>'+(it.sub?'<span class="msn-s">'+esc(it.sub)+'</span>':'')+'</span><span class="msn-tp">'+esc(it.tipoTxt || TIPO[it.tipo] || '')+'</span></div>'; }).join('')).join('');
     if(precisaRadar && st.carregando) html += '<div class="msn-vazio" role="status">⏳ Procurando no Radar…</div>';
     else if(precisaRadar && st.erro) html += '<div class="msn-vazio" role="status">Não deu para buscar no Radar agora.<button type="button" data-retry>Tentar de novo</button></div>';
     if(!st.itens.length && !(precisaRadar && st.carregando)){
