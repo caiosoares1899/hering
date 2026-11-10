@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré e Oceano › 💡 Dica do Sonar (SÓ DEV · mare-dicas ?v=11 · kanban-dev v8.30.923-dev · oceano-dev v1.70 · okr-dev v2.106 · painel-dev v5.97) — 2026-11-10
+
+Popup de dica do Sonar no Maré e no lobby (`mare-dicas-dev.js`, `?v=11` em kanban-dev, okr-dev, oceano-dev e painel-dev).
+- **Maré:** a dica `busca` (Ctrl+K, "Busca global") vira `sonar`, com id novo, para quem já tinha visto a antiga também ver esta. O "Saiba mais" da antiga tinha ficado sem destino desde que o tópico da Ajuda virou "Sonar (Ctrl+K)" (#1672); a nova abre esse tópico.
+- **Lobby:** dica nova `sonar` (só com o lobby visível, como as outras do Oceano); o "Saiba mais" abre a pergunta "O que é o Sonar".
+- Teste: `docs/arezzo/testes/test_dicas.js` (contagens do Painel 12..13 + 13 + 7; "Saiba mais" de todas as dicas). Na `main`, a dica `busca` falhava no "Saiba mais"; passa agora.
+- Dica: é ela. Fronteira: sem mudança.
+
 ### Maré › 🔍 Sonar com o mesmo layout do lobby (módulo mare-sonar), foco nos cards do board (PROD · kanban v8.30.921 · oceano v1.68 · mare-sonar.js ?v=3) — 2026-11-10
 
 O Ctrl+K do Maré passa a abrir o **mesmo Sonar do lobby** (módulo `mare-sonar-dev.js`): o mesmo título com o disco que varre, as mesmas abas, o mesmo teclado. O que muda é o foco:
