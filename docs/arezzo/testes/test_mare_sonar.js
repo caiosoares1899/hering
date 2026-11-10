@@ -34,21 +34,23 @@ const seed = ()=>({kanban:{
     await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(3000);
     if(tema && tema!=='dark') await p.evaluate(th=>document.documentElement.setAttribute('data-theme',th), tema);
     return {ctx,p,errs,pedidos,leit:()=>leit}; };
-  const lista = p => p.$$eval('#search-results .search-result .sr-title', xs=>xs.map(x=>x.textContent));
-  const grupos = p => p.$$eval('#search-results .sonar-mg', xs=>xs.map(x=>x.textContent));
-  const digita = async(p,x)=>{ await p.fill('#search-inp', x); await p.waitForTimeout(500); };
+  const lista = p => p.$$eval('#msn-lista .msn-it .msn-t', xs=>xs.map(x=>x.textContent));
+  const grupos = p => p.$$eval('#msn-lista .msn-g', xs=>xs.map(x=>x.textContent));
+  const digita = async(p,x)=>{ await p.fill('#msn-in', x); await p.waitForTimeout(500); };
 
   { const {ctx,p,errs,pedidos,leit} = await open();
     await p.keyboard.press('Control+k'); await p.waitForTimeout(250);
-    const box = await p.evaluate(()=>({aberto:document.getElementById('search-overlay').classList.contains('open'), label:document.querySelector('#search-overlay .search-box').getAttribute('aria-label'), ph:document.getElementById('search-inp').placeholder}));
-    t('Ctrl+K abre o Sonar (nome visível)', box.aberto && /Sonar/.test(box.label) && /Sonar/.test(box.ph), box);
+    t('primeira vez, caixa vazia: frase inicial do Maré e nenhum grupo vazio', await p.evaluate(()=>/Digite para buscar nos cards deste board/.test(document.getElementById('msn-lista').textContent) && !document.querySelector('#msn-lista .msn-g')), await p.evaluate(()=>document.getElementById('msn-lista').textContent));
+    const box = await p.evaluate(()=>({aberto:document.getElementById('msn-ov').classList.contains('open'), label:document.getElementById('msn-ttl-b').textContent, ph:document.getElementById('msn-in').placeholder}));
+    t('Ctrl+K abre o Sonar (nome visível)', box.aberto && box.label==='Sonar' && /board/.test(box.ph), box);
     await digita(p,'c'); t('1 letra: não lê o Radar', leit()===0, leit());
     await digita(p,'conversao');
     const l1 = await lista(p), g1 = await grupos(p);
     t('card do board acha sem acento ("conversao" → "Conversão do checkout")', l1[0]==='Conversão do checkout' && g1[0]==='Neste board', [l1,g1]);
     t('Radar: Objetivo e Marco aparecem; arquivado não', l1.includes('Aumentar conversão do app') && l1.includes('Teste A/B da conversão') && !l1.includes('Conversão arquivada'), l1);
     t('Radar lido 1x sem cópia no aparelho (objetivos + marcos)', leit()===2, leit());
-    t('"Outros squads" oferece buscar no Squad Dados', g1.includes('Outros squads') && l1.some(x=>/Buscar “conversao” em Squad Dados/.test(x)), [g1,l1]);
+    t('"Outros squads" oferece buscar no Squad Dados (no fim da lista)', g1[g1.length-1]==='Outros squads' || g1.includes('Outros squads') && l1.some(x=>/Buscar “conversao” em Squad Dados/.test(x)), [g1,l1]);
+    t('mesmo layout do lobby: título Sonar, abas e disco', await p.evaluate(()=>!!document.querySelector('#msn-ov .msn-disc') && document.querySelectorAll('#msn-esc button').length===5), '');
     await digita(p,'meu dia'); const l2 = await lista(p);
     t('Ajuda do Maré aparece', (await grupos(p)).includes('Ajuda do Maré') && l2.some(x=>/Meu Dia/.test(x)), l2);
     await digita(p,'hostil'); t('título hostil vira texto (sem XSS)', !(await p.evaluate(()=>window.__xss)) && (await lista(p)).some(x=>x.includes('<img')), await lista(p));
@@ -56,10 +58,16 @@ const seed = ()=>({kanban:{
     await digita(p,'aumentar'); const idx = (await lista(p)).indexOf('Aumentar conversão do app');
     for(let k=0;k<idx;k++) await p.keyboard.press('ArrowDown');
     await p.keyboard.press('Enter'); await p.waitForTimeout(600);
-    t('Enter no Objetivo abre okr-dev.html?okr=o1 (aba nova) e fecha o Sonar', pedidos.some(u=>u==='okr-dev.html?okr=o1') && !(await p.evaluate(()=>document.getElementById('search-overlay').classList.contains('open'))), pedidos);
+    t('Enter no Objetivo abre okr-dev.html?okr=o1 (aba nova) e fecha o Sonar', pedidos.some(u=>u==='okr-dev.html?okr=o1') && !(await p.evaluate(()=>document.getElementById('msn-ov').classList.contains('open'))), pedidos);
     // Enter no card continua abrindo o card
-    await p.keyboard.press('Control+k'); await p.waitForTimeout(200); await digita(p,'checkout'); await p.keyboard.press('Enter'); await p.waitForTimeout(500);
+    await p.keyboard.press('Control+k'); await p.waitForTimeout(200);
+    t('caixa vazia no Maré: só "Recentes" (o Objetivo de antes), sem título de grupo sem itens', await p.evaluate(()=>{ const gs=[...document.querySelectorAll('#msn-lista .msn-g')]; return gs.length===1 && gs[0].textContent==='Recentes' && gs.every(g=>g.nextElementSibling && g.nextElementSibling.classList.contains('msn-it')); }), await p.evaluate(()=>document.getElementById('msn-lista').textContent));
+    await digita(p,'checkout'); await p.keyboard.press('Enter'); await p.waitForTimeout(500);
     t('Enter no card deste board abre o card (como antes)', await p.evaluate(()=>document.getElementById('card-ov').classList.contains('open')), '');
+    // ?busca= abre o Sonar já filtrado em "Este board"
+    await p.goto(base+'/kanban-dev.html?squad=site&busca=checkout'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(4000);
+    const bz = await p.evaluate(()=>({aberto:document.getElementById('msn-ov').classList.contains('open'), q:document.getElementById('msn-in').value, esc:(document.querySelector('#msn-esc [aria-selected="true"]')||{}).textContent, url:location.search}));
+    t('?busca= abre o Sonar preenchido em "Este board" e sai da URL', bz.aberto && bz.q==='checkout' && /Este board/.test(bz.esc||'') && !/busca=/.test(bz.url), bz);
     t('sem erro de JS', !errs.length, errs);
     await ctx.close(); }
 
@@ -70,10 +78,10 @@ const seed = ()=>({kanban:{
     t('com a cópia do lobby: acha o Objetivo sem ler o banco', leit()===0 && (await lista(p)).includes('Aumentar conversão do app'), [leit(), await lista(p)]);
     t('sem erro de JS (cópia)', !errs.length, errs); await ctx.close(); }
 
-  for(const vp of [{width:1280,height:800},{width:390,height:800}]) for(const tema of ['dark','light','vice']){
+  for(const vp of [{width:1280,height:800},{width:390,height:800}]) for(const tema of ['dark','light','vice','blackfriday']){
     const {ctx,p,errs} = await open(vp, tema);
     await p.keyboard.press('Control+k'); await p.waitForTimeout(200); await digita(p,'conversao');
-    const r = await p.evaluate(()=>({rolagem:document.documentElement.scrollWidth>innerWidth+1, n:document.querySelectorAll('#search-results .search-result').length}));
+    const r = await p.evaluate(()=>({rolagem:document.documentElement.scrollWidth>innerWidth+1, n:document.querySelectorAll('#msn-lista .msn-it').length}));
     await p.screenshot({path:path.join(out, `sonar_mare_${vp.width}_${tema}.png`)});
     t(`tema ${tema} ${vp.width}px: lista com resultados, sem rolagem lateral, sem erro`, r.n>=3 && !r.rolagem && !errs.length, [r,errs]);
     await ctx.close(); }
