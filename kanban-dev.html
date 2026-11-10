@@ -3772,6 +3772,22 @@ input[type="date"]{-moz-appearance:textfield;}
   #card-ov .cl-ai{font-size:16px;}
 }
 
+
+/* Mesmo sino dentro da Ilha: só muda a moldura, nunca duplica IDs/listeners. */
+.app.ilha-no-topo{z-index:56;}
+.hd.ilha-no-topo{z-index:95;}
+#ilha-painel .ilha-sino{position:static;display:flex;width:100%;max-height:none;border:0;box-shadow:none;background:none;overflow:visible;}
+#ilha-painel .notif-list{overflow:visible;flex:none;}
+#ilha-painel .notif-hd{gap:8px;flex-wrap:wrap;padding:8px 0;}
+#ilha-painel .notif-ft{padding:8px 0;background:none;}
+#ilha-painel .notif-ft>div:first-child{flex-wrap:wrap;}
+#ilha-painel .notif-ft>div:first-child>div{flex-wrap:wrap;min-width:0;}
+#ilha-painel #notif-perm-row{white-space:normal!important;}
+#ilha-painel .notif-body{min-width:0;overflow-wrap:anywhere;}
+#ilha-painel .notif-item{padding:10px 4px;}
+#ilha-painel button:focus-visible,#ilha-painel .notif-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+@media(pointer:coarse){#ilha-painel .notif-ft button,#ilha-painel .notif-mark-all,#ilha-painel .notif-dismiss{min-width:44px;min-height:44px;}#ilha-painel #notif-perm-row{min-height:44px;display:inline-flex;align-items:center;}}
+
 </style>
 <script>
 // 🏢 MODO "SÓ HERING" (2026-10-08) — o Maré atende só a Hering: login só pelo Google (@ciahering.com.br), OKR de uma torre só (Digital),
@@ -4224,7 +4240,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
       <div style="display:flex;align-items:center;gap:10px;">
         <button id="notif-sound-toggle" onclick="toggleNotifSound()" title="Ligar/desligar som de notificação" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--txt3);padding:0;line-height:1;"></button>
-        <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+        <button type="button" id="notif-perm-row" onclick="notifPermRowClick()" style="font:inherit;font-size:10px;color:var(--txt2);cursor:pointer;white-space:nowrap;background:none;border:0;text-align:left;"></button>
       </div>
     </div>
     <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;box-sizing:border-box;">
@@ -6793,7 +6809,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.930-dev</div>
+<div class="version">v8.30.931-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -29105,7 +29121,7 @@ const HELP_CONTENT = {
     { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é o próprio Demandante, ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca ou Canal: se o squad usa o campo Submarca ou o campo Canal (ver dicas em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial" ou label "Shopee") ela vincula direto na tag fixa correspondente — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca ou um canal por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n🛟 <b>Backup completo do banco</b> (feito pela squad de desenvolvimento, fora do board): além do quadro, guarda comentários dos cards, as configurações do squad, intake, Radar, Metas, Escala e os cadastros das pessoas — toda semana (tudo) e todo dia (o que é mais sensível a perda). Esse backup <b>não aparece na tela 🧯 Restaurar backup</b> (que é só do quadro). Pra trazer de volta o que sumiu das outras áreas, use, logo abaixo, <b>🛟 Backup completo (nuvem)</b> (só ADM, PO e Organizador): <b>☁️ Ver backups disponíveis</b> → escolha a data → <b>🔍 Comparar com hoje</b> mostra, por área (💬 comentários dos cards, ⚙️ configurações do squad, 📥 pedidos de intake, 👥 subtimes, ⭐ estrelas), quantos itens sumiram → marque o que quer e <b>🧯 Restaurar as áreas marcadas</b>. Só volta <b>o que sumiu</b>: o que existe hoje nunca é sobrescrito, e a lista do que foi criado fica guardada pra desfazer. Se um backup falhar, os ADMs recebem um aviso 🛟 no sino.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
-    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.\n\n🗓️🐟 <b>Escala e Metas</b>: quando PO, Organizador ou ADM cadastra ou limpa a <b>sua escala</b>, chega o aviso "🗓️ Sua escala foi cadastrada/removida" (clicar abre a Escala na semana certa). E, se a sua squad tem uma meta com <b>⏰ lembrete de preenchimento</b>, chega o aviso "🐟 Atualize a meta" nos horários combinados (clicar abre a aba Dados). Os dois tipos também estão no 🔔 Notificações do Painel e respeitam o seu Não Perturbe.\n\n⏲ <b>Timer e Produtividade</b>: chegam 4 avisos — "alguém criou uma atividade pra você" (só quando é outra pessoa que cria), "atividade encerrada" com o tempo registrado (vai pra quem criou a atividade), "o tempo do seu Timer acabou" (em até 1 minuto, mesmo com a aba fechada) e "segue em andamento" quando uma atividade fica rodando sem pausa por 4 horas (repete aos 8 e 12). Clicar abre o card. O ADM liga/desliga cada um no Painel → 🔔 Notificações.\n\n🚨 <b>Incidente na VTEX</b>: o Maré acompanha sozinho a página de status da VTEX (status.vtex.com). Quando há um incidente ou uma manutenção <b>em andamento</b>, aparece um <b>popup 🚨</b> para todo mundo (reaparece até o incidente acabar) e chega uma notificação 🚨 no sino e no celular. Quando a VTEX marca como resolvido, o aviso some sozinho. Manutenção só agendada aparece como aviso comum, sem push. No Oceano há também um selinho <b>VTEX</b> no topo (azul = normal, vermelho = incidente, cinza = sem leitura). O ADM pode desligar esse tipo no Painel → 🔔 Notificações.\n\n🫨 <b>Modo insistente</b> (opcional, desligado por padrão): se você nem sempre ouve o "ding", abra o 🔔 e use o botão <b>🫨 Modo insistente</b> no rodapé. Ligado, quando chega um aviso <b>importante</b> (os mesmos que viram push) a <b>tela treme</b> (como o zumbido do MSN) e, se você não estiver olhando a janela, o <b>som se repete a cada 30 s</b> (até 5 vezes) e o <b>título da aba pisca</b> — tudo para assim que você volta à janela ou mexe em algo. Dá para escolher cada item e usar <b>▶ Testar agora</b>. Respeita o 🔇 e o 🔕 Não Perturbe, e não treme se o seu sistema pede "reduzir movimento". A escolha acompanha a sua conta em todos os aparelhos.' },
+    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.\n\n🏝️ <b>Ilha Dinâmica (opcional no dev)</b>: ao ligar as notificações na Ilha, a aba Notificações traz o mesmo sino completo: lista, marcar todas, remover um aviso, Limpar antigas, som, push neste aparelho, Não Perturbe e Modo insistente. Para gerenciar push já permitido pelo navegador, clique em Gerenciar push neste aparelho (se estiver desligado, reativa; se estiver ligado, pede confirmação para desligar).\n\n🗓️🐟 <b>Escala e Metas</b>: quando PO, Organizador ou ADM cadastra ou limpa a <b>sua escala</b>, chega o aviso "🗓️ Sua escala foi cadastrada/removida" (clicar abre a Escala na semana certa). E, se a sua squad tem uma meta com <b>⏰ lembrete de preenchimento</b>, chega o aviso "🐟 Atualize a meta" nos horários combinados (clicar abre a aba Dados). Os dois tipos também estão no 🔔 Notificações do Painel e respeitam o seu Não Perturbe.\n\n⏲ <b>Timer e Produtividade</b>: chegam 4 avisos — "alguém criou uma atividade pra você" (só quando é outra pessoa que cria), "atividade encerrada" com o tempo registrado (vai pra quem criou a atividade), "o tempo do seu Timer acabou" (em até 1 minuto, mesmo com a aba fechada) e "segue em andamento" quando uma atividade fica rodando sem pausa por 4 horas (repete aos 8 e 12). Clicar abre o card. O ADM liga/desliga cada um no Painel → 🔔 Notificações.\n\n🚨 <b>Incidente na VTEX</b>: o Maré acompanha sozinho a página de status da VTEX (status.vtex.com). Quando há um incidente ou uma manutenção <b>em andamento</b>, aparece um <b>popup 🚨</b> para todo mundo (reaparece até o incidente acabar) e chega uma notificação 🚨 no sino e no celular. Quando a VTEX marca como resolvido, o aviso some sozinho. Manutenção só agendada aparece como aviso comum, sem push. No Oceano há também um selinho <b>VTEX</b> no topo (azul = normal, vermelho = incidente, cinza = sem leitura). O ADM pode desligar esse tipo no Painel → 🔔 Notificações.\n\n🫨 <b>Modo insistente</b> (opcional, desligado por padrão): se você nem sempre ouve o "ding", abra o 🔔 e use o botão <b>🫨 Modo insistente</b> no rodapé. Ligado, quando chega um aviso <b>importante</b> (os mesmos que viram push) a <b>tela treme</b> (como o zumbido do MSN) e, se você não estiver olhando a janela, o <b>som se repete a cada 30 s</b> (até 5 vezes) e o <b>título da aba pisca</b> — tudo para assim que você volta à janela ou mexe em algo. Dá para escolher cada item e usar <b>▶ Testar agora</b>. Respeita o 🔇 e o 🔕 Não Perturbe, e não treme se o seu sistema pede "reduzir movimento". A escolha acompanha a sua conta em todos os aparelhos.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
     { icon:'🔧', title:'Worker e Firebase', text:'O Firebase armazena todos os dados em tempo real e raramente precisa ser alterado após o setup inicial.\n\n⚠️ A aba Worker é resquício do painel de chat antigo do Agente Ágil (desativado — ver dica "Ações que o agente pode executar"), que dependia de um proxy Cloudflare externo pra falar com a API da Anthropic. O Agente Ágil atual (por @menção) não usa Worker nenhum — roda direto em Cloud Functions.' },
   ],
@@ -30898,11 +30914,15 @@ function toggleDndMenu(e){
     // não cabia espaço suficiente acima do botão dentro do painel.
     const r = btn.getBoundingClientRect();
     m.style.position = 'fixed';
-    m.style.left = r.left+'px';
-    m.style.width = r.width+'px';
-    m.style.top = (r.bottom + 6)+'px';
+    const largura=Math.min(Math.max(r.width,260),innerWidth-16);
+    m.style.left = Math.max(8,Math.min(r.left,innerWidth-largura-8))+'px';
+    m.style.width = largura+'px';
+    m.style.maxHeight = Math.max(80,innerHeight-16)+'px';
+    m.style.overflowY = 'auto';
     m.style.bottom = 'auto';
     m.style.display = 'block';
+    const altura=m.getBoundingClientRect().height;
+    m.style.top = Math.max(8,Math.min(r.bottom+6+altura<=innerHeight-8 ? r.bottom+6 : r.top-altura-6,innerHeight-altura-8))+'px';
   } else {
     m.style.display = 'none';
   }
@@ -30931,14 +30951,27 @@ function notifPermissionState(){
   if(!window.Notification) return 'unsupported';
   return Notification.permission; // 'default' | 'granted' | 'denied'
 }
-function notifPermRowClick(){
+async function notifPermRowClick(){
   const state=notifPermissionState();
-  if(state==='default') requestNotifPermission();
-  else if(state==='granted'){
-    if(confirm('Desativar notificações push neste aparelho?\n\n(A permissão do navegador continua concedida — é só o registro deste aparelho pra receber avisos que é removido.)')){
-      unregisterPushToken().then(()=>showToast('🔕 Push desativado neste aparelho.'));
+  if(state==='default'){ requestNotifPermission(); return; }
+  const user=window._currentUser;
+  if(state!=='granted' || !user) return;
+  const el=document.getElementById('notif-perm-row');
+  if(el?.getAttribute('aria-busy')==='true') return;
+  el?.setAttribute('aria-busy','true');
+  try{
+    const snap=await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+PUSH_DEVICE_ID));
+    if(window._currentUser?.uid!==user.uid) return;
+    if(snap.exists()){
+      if(confirm('Desativar notificações push neste aparelho?\n\nA permissão do navegador continua concedida.')){
+        await unregisterPushToken(); showToast('🔕 Push desativado neste aparelho. Clique novamente para reativar.');
+      }
+    } else {
+      const token=await registerPushToken();
+      showToast(token?'🔔 Push ativado neste aparelho.':'⚠ Não consegui ativar o push neste aparelho. Tente novamente.');
     }
-  }
+  }catch(e){ showToast('⚠ Não consegui conferir o push deste aparelho. Tente novamente.'); }
+  finally{ el?.removeAttribute('aria-busy'); }
 }
 // Gerado UMA VEZ, síncrono, no carregamento da página — não dentro da função
 // async registerPushToken(). Gerar lá dentro criava uma corrida: se a página
@@ -30990,7 +31023,7 @@ function requestNotifPermission(){
 function renderNotifPermUI(){
   const el=document.getElementById('notif-perm-row'); if(!el) return;
   const state=notifPermissionState();
-  const labels={ granted:'✅ Permitidas neste aparelho', denied:'🚫 Bloqueadas (ajuste nas config. do navegador)', default:'🔔 Ativar notificações neste aparelho', unsupported:'⚠ Não suportado neste navegador' };
+  const labels={ granted:'📲 Gerenciar push neste aparelho', denied:'🚫 Bloqueadas (ajuste nas config. do navegador)', default:'🔔 Ativar notificações neste aparelho', unsupported:'⚠ Não suportado neste navegador' };
   el.textContent = labels[state] || labels.default;
   el.style.cursor = (state==='default'||state==='granted') ? 'pointer' : 'default';
   el.style.opacity = state==='denied' ? '.6' : '1';
@@ -31151,7 +31184,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>n._feed ? `
-    <div class="notif-item ${n.read?'':'unread'}" data-feed-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openFeedNotif(${jsq(n.id)})">
+    <div role="button" tabindex="0" class="notif-item ${n.read?'':'unread'}" data-feed-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openFeedNotif(${jsq(n.id)})">
       <div class="notif-icon">${esc(n.icon)}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -31160,7 +31193,7 @@ function renderNotifs(notifs){
       </div>
       <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissFeedNotif(${jsq(n.id)})">✕</button>
     </div>` : `
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
+    <div role="button" tabindex="0" class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -37834,6 +37867,25 @@ function _ilhaPilula(){
   const rot = [_ilha.aviso ? 'Nova notificação: '+_ilha.aviso.t : a ? ((p.privado?'Timer':a.atividade)+', '+MareTimer.estadoTxt(a)+', '+(a.status==='novo'?'':mostra.txt)) : 'Ilha Dinâmica', n ? n+' não lida'+(n>1?'s':'') : ''].filter(Boolean).join(' · ');
   document.getElementById('ilha-btn').setAttribute('aria-label', rot);
 }
+// 10/11/2026 — a Ilha substitui a entrada do sino, não suas funcionalidades.
+function _ilhaSinoLugar(dentro){
+  const sino=document.getElementById('notif-panel'); if(!sino) return;
+  if(!sino._ilhaCasa){ sino._ilhaCasa=document.createComment('posição original do sino'); sino.before(sino._ilhaCasa); }
+  const menu=document.getElementById('dnd-menu');
+  if(menu && !menu._ilhaCasa){ menu._ilhaCasa=document.createComment('posição original do Não Perturbe'); menu.before(menu._ilhaCasa); }
+  const slot=dentro && document.getElementById('ilha-sino-slot');
+  if(slot){
+    notifOpen=false; sino.classList.remove('open'); sino.classList.add('ilha-sino'); slot.appendChild(sino);
+    // O painel da Ilha tem transform: menus fixed precisam ficar no body para
+    // usar coordenadas da janela, como os handlers originais calculam.
+    if(menu) document.body.appendChild(menu);
+  } else {
+    if(menu){ menu.style.display='none'; if(menu._ilhaCasa?.isConnected) menu._ilhaCasa.after(menu); }
+    if(window.MareNotif?.menusFechar) MareNotif.menusFechar();
+    sino.classList.remove('ilha-sino');
+    if(sino._ilhaCasa.isConnected) sino._ilhaCasa.after(sino);
+  }
+}
 function _ilhaPainel(){
   const p = _ilhaPrefs(), agora = Date.now(), aba = _ilha.abaAtual || 'timers';
   const abaBtn = (id, rot) => `<button type="button" class="ilha-aba${aba===id?' on':''}" data-aba="${id}" role="tab" aria-selected="${aba===id}">${rot}</button>`;
@@ -37849,9 +37901,7 @@ function _ilhaPainel(){
         + '<button type="button" data-acao="abrir-card">Abrir o card</button></div></div>'; }).join('')
       : '<div class="ilha-vazio">Nenhum timer ativo. Crie um num card, em "Timer e Produtividade".</div>';
   } else if(aba==='notif'){
-    const ns = _ilha.notifs.slice(0, 8);
-    h += ns.length ? ns.map((n,i)=>`<div class="ilha-notif${n.read?' lida':''}" role="button" tabindex="0" data-i="${i}"><div><b>${esc(n.title||'')}</b><small>${esc(n.sub||'')}${n.sub?' · ':''}${esc(timeAgo(n.ts))}</small></div></div>`).join('') : '<div class="ilha-vazio">Tudo em dia! 🎉</div>';
-    h += '<div class="ilha-rod">'+(_ilhaNaoLidas() ? '<button type="button" id="ilha-ler-tudo">Marcar tudo como lido</button>' : '')+'<button type="button" id="ilha-abrir-sino">Abrir o sino completo</button></div>';
+    h += '<div id="ilha-sino-slot"></div>';
   } else {
     const sel = (id, val, ops) => `<select id="${id}">`+ops.map(([v,r])=>`<option value="${v}"${val===v?' selected':''}>${r}</option>`).join('')+'</select>';
     const chk = (id, v) => `<input type="checkbox" id="${id}"${v?' checked':''}>`;
@@ -37865,7 +37915,11 @@ function _ilhaPainel(){
       + '<p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
       + '<button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div>';
   }
+  // O sino é um único nó: mover preserva handlers, preferências e a lista completa.
+  // Retire-o antes de trocar o HTML, para não destruir os controles originais.
+  _ilhaSinoLugar(false);
   document.getElementById('ilha-painel').innerHTML = h;
+  if(aba==='notif') _ilhaSinoLugar(true);
 }
 // Lugar da ilha no desktop: centro do vão livre entre o nome do squad (.hd-l) e os botões (.hd-btns) — ou, com os botões
 // quebrados para a linha de baixo, o resto da 1ª linha. A pílula nunca passa desse vão (não empurra nem cobre botão).
@@ -37882,8 +37936,10 @@ function _ilhaRender(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
   const p = _ilhaPrefs(), e = _ilhaEstado();
   ilha.hidden = e==='off';
+  ilha.closest('.hd')?.classList.toggle('ilha-no-topo',e==='aberta');
+  ilha.closest('.app')?.classList.toggle('ilha-no-topo',e==='aberta');
   const sino = document.getElementById('notif-btn'); if(sino) sino.style.display = (p.on && p.notif) ? 'none' : '';
-  if(e==='off'){ _ilhaRelogio(); return; }
+  if(e==='off'){ _ilhaSinoLugar(false); _ilhaRelogio(); return; }
   ilha.dataset.estado = e;
   document.getElementById('ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
   _ilhaPilula(); _ilhaLugar();
@@ -37908,6 +37964,7 @@ function _ilhaAbrir(){
 }
 function _ilhaFechar(foco){
   if(!_ilha.aberta) return;
+  _ilhaSinoLugar(false);
   _ilha.aberta = false; _ilha.fixada = false; const fx = document.getElementById('ilha-fixar'); if(fx) fx.setAttribute('aria-pressed','false');
   // modo "ao passar o mouse" com o ponteiro fora: fechar recolhe de vez (senão o foco devolvido à pílula a manteria à mostra)
   const recolhe = _ilhaPrefs().modo==='mouse' && !_ilhaCelular() && !_ilha.dentro;
@@ -37934,19 +37991,22 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
   document.getElementById('ilha-fio').addEventListener('click', ()=>{ entra(); _ilhaAbrir(); });
   ilha.addEventListener('focusout', e=>{ if(!ilha.contains(e.relatedTarget) && !_ilha.dentro) sai(true); });
   // Esc fecha (e desfixa) — o 📌 só impede o clique fora de fechar; nunca chega aos atalhos do board
-  window.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ilha.aberta){ e.preventDefault(); e.stopImmediatePropagation(); _ilhaFechar(); } }, true);
-  document.addEventListener('mousedown', e=>{ if(_ilha.aberta && !_ilha.fixada && !ilha.contains(e.target)) _ilhaFechar(false); });
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ilha.aberta){
+    e.preventDefault(); e.stopImmediatePropagation();
+    const dnd=document.getElementById('dnd-menu'), ins=document.getElementById('mn-ins-menu');
+    if(dnd?.style.display==='block'){ dnd.style.display='none'; document.getElementById('dnd-toggle-btn')?.focus(); }
+    else if(ins?.style.display==='block'){ MareNotif.menusFechar(); document.getElementById('ins-toggle-btn')?.focus(); }
+    else _ilhaFechar();
+  } }, true);
+  document.addEventListener('mousedown', e=>{ if(_ilha.aberta && !_ilha.fixada && !ilha.contains(e.target) && !e.target.closest('#dnd-menu,#mn-ins-menu')) _ilhaFechar(false); });
   document.addEventListener('visibilitychange', ()=>_ilhaRender());
   const painel = document.getElementById('ilha-painel');
   painel.addEventListener('click', async e=>{
     const p = _ilhaPrefs();
     const ab = e.target.closest('.ilha-aba'); if(ab){ _ilha.abaAtual = ab.dataset.aba; if(ab.dataset.aba!=='ajustes'){ p.aba = ab.dataset.aba; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
     if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
-    if(e.target.closest('#ilha-ler-tudo')){ if(typeof markAllRead==='function') markAllRead(); return; }
-    if(e.target.closest('#ilha-abrir-sino')){ _ilhaFechar(false); const b = document.getElementById('notif-btn'); if(b) b.style.display = ''; if(typeof toggleNotifPanel==='function') toggleNotifPanel(); return; }
     if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
-    const ni = e.target.closest('.ilha-notif'); if(ni){ const n = _ilha.notifs[+ni.dataset.i]; if(!n) return; _ilhaFechar(false);
-      if(n._feed) openFeedNotif(n.id); else openNotif(n.id, n.cardId||'', n.squad||ACTIVE_SQUAD, n.commentId||'', n.type||'', n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''), encodeURIComponent(n.meetingLink||'')); return; }
+    if(e.target.closest('.notif-item') && !e.target.closest('.notif-dismiss')){ _ilhaFechar(false); return; }
     const b = e.target.closest('button[data-acao]'); if(!b) return;
     const el = b.closest('.ilha-timer'), t = el && (_tmMeus||{})[el.dataset.id]; if(!t) return;
     const ac = b.dataset.acao;
@@ -37957,7 +38017,7 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
     await tmAcao(t.sq, t.cardId, t.id, mapa[ac]);   // o índice atualiza e chama _ilhaRender
     _ilhaPainel();
   });
-  painel.addEventListener('keydown', e=>{ const ni = e.target.closest('.ilha-notif'); if(ni && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); ni.click(); } });
+  document.getElementById('notif-panel').addEventListener('keydown', e=>{ const ni = e.target.closest('.notif-item'); if(ni && e.target===ni && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); ni.click(); } });
   painel.addEventListener('change', e=>{
     const p = _ilhaPrefs(), id = e.target.id;
     if(id==='ilha-cfg-modo') p.modo = e.target.value; else if(id==='ilha-cfg-principal') p.principal = e.target.value; else if(id==='ilha-cfg-reabrir') p.reabrir = e.target.value;
