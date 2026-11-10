@@ -774,12 +774,12 @@ window.dispatchEvent(new Event('fb-ready'));
 <script src="mare-plantao-dev.js?v=5"></script>
 <script src="mare-dicas-dev.js?v=11"></script>
 <script src="mare-metas-dev.js?v=19"></script>
-<script src="mare-sonar-dev.js?v=5"></script>
+<script src="mare-sonar-dev.js?v=6"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.71 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.72 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1419,7 +1419,7 @@ function mostrarHost(id, url){
     fr.addEventListener('load', ()=>{ if(host.atual===id) $('#host-load').style.display = 'none'; fr.dataset.ok = '1'; });
     $('#host-frames').appendChild(fr); host.abertos.push(id);
   }
-  if(url && fr.dataset.ok && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }
+  else if(url && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }   // aba já criada (mesmo ainda carregando): vai para o endereço pedido — achado do Antigravity
   host.atual = id; $$('#host-frames iframe').forEach(f=>f.classList.toggle('on', f.dataset.app===id));
   $('#host-load').style.display = fr.dataset.ok ? 'none' : 'flex'; $('#host-load-tx').textContent = 'Abrindo '+a.nome+'…';
   $('#host').classList.add('on'); document.body.style.overflow = 'hidden'; atualizarAnimacao();

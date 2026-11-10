@@ -87,6 +87,21 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Sonar: "meus" agora traz tudo da pessoa (cards em que estou; Objetivos e Marcos em que sou responsável) + 5 achados do /monitorarbugs do Antigravity — mare-sonar ?v=6 (SÓ DEV · oceano-dev v1.72, kanban-dev v8.30.925-dev)
+
+**"meus" não trazia tudo da pessoa (relato do Caio):**
+- **Maré:** "meus" não filtrava os cards; procurava a palavra "meus" no texto do card (aparecia só um card com "meu" no título). Agora "meus/minhas …" = cards em que a pessoa está (responsável ou participante, a mesma regra do 💡 Meus cards), e a palavra sai da busca. "meus" sozinho oferece "Destacar meus N cards no board"; com texto, "Ver N cards no board" conta e filtra só os meus.
+- **Radar (lobby e Maré):** "meus" olhava só o responsável do Objetivo. Agora vale a régua do próprio Radar (`_okrObjTemPessoa`): responsável pelo Objetivo OU por algum Marco dele; e os Marcos em que a pessoa é responsável aparecem. A cópia enxuta do Radar passa a guardar o responsável do Marco (formato `s:2`); a cópia antiga é descartada e relida 1× (~393 KB em prod).
+
+**Achados do `/monitorarbugs` do Antigravity (PR #1683, portados para o código atual — o #1683 partiu de uma `main` anterior ao #1682 e ficou em conflito):**
+1. "Ver N cards no board" mostrava 0 cards no quadro para buscas sem acento ou com 2+ palavras: o filtro do quadro (`activeFilters.texto`) usava "contém" literal, e o Sonar, a régua sem acento. Agora o quadro usa a mesma `MareSonar._pontua`.
+2. Pontuação colada no termo ("conversao?", "a/b"): o Sonar e o `_pontua` quebram a busca pela mesma régua do texto; busca só de símbolos não acha nada.
+3. Tópicos da aba Spotify (pausada desde 04/08) apareciam no Sonar e na busca da Ajuda do Maré; saíram das duas.
+4. Aba "Squads" com a caixa vazia ficava vazia; agora lista os squads (com endereço para Ctrl+Enter). Abrir card ou "Ver no board" pelo Sonar fecha modais que ficavam por cima (ex.: Ajuda). `?busca=` espera também o login.
+5. O disco do Sonar ficava girando depois que um Radar lento terminava; agora para ao terminar (respeitando o meio segundo mínimo de cada tecla). No lobby, abrir um resultado num app ainda carregando no host troca o endereço do iframe.
+- O achado "minha" do Antigravity já tinha sido corrigido no #1682.
+- **Testes:** `docs/arezzo/testes/test_sonar_meus.js` (falhava em 8 checagens antes) e `docs/arezzo/testes/test_sonar_achados_agy.js` (5 de 8 falham na `main`, passam todas aqui). Regressão: as suítes do Sonar, `docs/arezzo/testes/test_busca_comentarios.js` e `docs/arezzo/testes/test_sonar_logica.js` passam.
+
 ### 2026-11-10 · Sonar: 6 correções (cópia do Radar vencida em memória, prefixo × aba, "minha", Ctrl+Enter sem destino, seleção pulando, contagem parcial) — mare-sonar ?v=5 (SÓ DEV · oceano-dev v1.71, kanban-dev v8.30.924-dev)
 
 Seis correções do Sonar, achadas na pesquisa do Codex sobre o Spotlight do macOS e confirmadas no código (`mare-sonar-dev.js` ?v=5, adaptador do Maré):

@@ -6702,7 +6702,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.924-dev</div>
+<div class="version">v8.30.925-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7056,7 +7056,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-notif-dev.js?v=41"></script>
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-dicas-dev.js?v=11"></script>
-<script src="mare-sonar-dev.js?v=5"></script>
+<script src="mare-sonar-dev.js?v=6"></script>
 
 <script>
 
@@ -15014,15 +15014,15 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false, ignoreSubteam=fa
   if(!ignoreSubteam&&activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.supercard&&!_cardIsSupercard(card)) return false;
   if(activeFilters.texto){
-    // Mesmos campos que a busca geral (Ctrl+K/🔍) já usa em renderSearchResults()
-    // — "ver esses cards no board" precisa achar exatamente os mesmos cards.
+    // Mesmos campos E a mesma régua do Sonar (sem acento, várias palavras, 1 erro de digitação — MareSonar._pontua):
+    // "Ver N cards no board" precisa achar exatamente os N cards que o Sonar contou (achado do /monitorarbugs do Antigravity, 10/11/2026:
+    // "conversao" ou "checkout conversao" contavam 2 no Sonar e mostravam 0 no quadro). Sem o módulo, cai no "contém" antigo.
     const q=activeFilters.texto;
     const owner=members.find(m=>m.init===card.owner);
-    const matched = (card.title||'').toLowerCase().includes(q)
-      || cardDescText(card).toLowerCase().includes(q)
-      || (card.po||'').toLowerCase().includes(q)
-      || (card.owner||'').toLowerCase().includes(q)
-      || (owner?.name||'').toLowerCase().includes(q);
+    const txt=(card.title||'')+' '+(card.po||'')+' '+(owner?.name||'')+' '+(card.owner||'')+' '+String(cardDescText(card)||'').replace(/<[^>]+>/g,' ').slice(0,600);
+    const matched = window.MareSonar
+      ? MareSonar._pontua(txt, MareSonar._norm(q).split(/[^a-z0-9]+/).filter(Boolean)) > 0
+      : txt.toLowerCase().includes(String(q).toLowerCase());
     if(!matched) return false;
   }
   if(activeFilters.due){
@@ -29259,7 +29259,7 @@ function renderHelp(){
   if(searching){
     // Busca em todas as seções
     if(tabs) tabs.style.opacity = '.45';
-    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil','automacoes'];
+    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','agil','automacoes'];   // Spotify pausado desde 04/08/2026: fora da busca da Ajuda (o conteúdo fica no código)
     ALL_TABS.forEach(t => { (HELP_CONTENT[t]||[]).forEach(item => items.push({...item, _tab:t})); });
     items = items.filter(item =>
       item.title.toLowerCase().includes(query) ||
@@ -37085,39 +37085,52 @@ function _sonarMareIniciar(){
     vazio:'Tente outra palavra, ou comece com <b>r:</b> para o Radar e <b>s:</b> para outros squads.',
     inicio:'Digite para buscar nos cards deste board e em todo o Oceano: Objetivos e Marcos do Radar, outros squads e a Ajuda. Com a caixa vazia, <b>1</b>–<b>4</b> escolhem onde buscar.',
     aoAbrir: ()=>{ document.getElementById('search-overlay')?.classList.remove('open'); },
-    fontes: (q, toks)=>{
-      const ativos = cards.filter(c=>c && !c.archived);
+    fontes: (q, toks0)=>{
+      // "meus/minhas …" = cards em que estou (responsável ou participante — a mesma regra do 💡 Meus cards); a palavra sai da busca
+      const {meus, toks} = MareSonar._separaMeus(toks0);
+      const qSem = meus ? q.split(/\s+/).filter(w=>!MareSonar._separaMeus([MareSonar._norm(w)]).meus).join(' ') : q;
+      const ativos = cards.filter(c=>c && !c.archived && (!meus || _euEstouNoCard(c)));
       const itens = ativos.map(c=>{ const col = columns.find(x=>x.id===c.col) || {name:c.col||'', color:''};
         return {k:'card:'+c.id, ic:'<span class="dot" style="background:'+esc(corOk(col.color))+'"></span>', t:c.title||'(sem título)', sub:[col.name, nomeDe(c), c.due||''].filter(Boolean).join(' · '), tipo:'card',
-          busca:(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), go:()=>openCard(c.id), rec:{card:c.id},
-          url:pag+'?squad='+encodeURIComponent(ACTIVE_SQUAD)+'&card='+encodeURIComponent(c.id)}; });   // deep link: Ctrl/⌘+Enter abre o card em aba nova
-      const g = [{g:'Neste board', esc:'board', max:8, itens}];
-      if(q && toks.length){
-        const n = ativos.filter(c=>MareSonar._pontua((c.title||'')+' '+(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), toks)>0).length;
-        if(n>1) g.push({g:'No quadro', esc:'board', itens:[{k:'acao:verboard', ic:'🔍', t:'Ver '+n+' cards no board', sub:'Filtra o quadro por “'+q+'”', tipo:'acao', sempre:true, go:()=>_sonarVerNoBoard(q)}]});
+          busca:(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), go:()=>_sonarAbrirCard(c.id), rec:{card:c.id},
+          url:pag+'?squad='+encodeURIComponent(ACTIVE_SQUAD)+'&card='+encodeURIComponent(c.id), toks}; });   // deep link: Ctrl/⌘+Enter abre o card em aba nova
+      const g = [{g:meus ? 'Meus cards neste board' : 'Neste board', esc:'board', max:8, itens}];
+      if(q && (toks.length || meus)){
+        const n = toks.length ? ativos.filter(c=>MareSonar._pontua((c.title||'')+' '+(c.po||'')+' '+nomeDe(c)+' '+(c.owner||'')+' '+semTag(cardDescText(c)).slice(0,600), toks)>0).length : ativos.length;
+        // "Ver N cards no board": com texto, filtra o quadro pelo texto (sem a palavra "meus"); só "meus", destaca os meus cards (💡 Meus cards)
+        if(n>1) g.push({g:'No quadro', esc:'board', itens:[toks.length
+          ? {k:'acao:verboard', ic:'🔍', t:'Ver '+n+' cards no board', sub:'Filtra o quadro por “'+qSem+'”', tipo:'acao', sempre:true, go:()=>_sonarVerNoBoard(qSem)}
+          : {k:'acao:meusboard', ic:'💡', t:'Destacar meus '+n+' cards no board', sub:'Mesmo botão “💡 Meus cards” dos Filtros', tipo:'acao', sempre:true, go:()=>highlightMyCards()}]});
       }
       return g;
     },
     radar: { esc:'radar', url: id=>okr+'?okr='+encodeURIComponent(id), abrir: url=>window.open(url, '_blank', 'noopener') },
     depois: (q)=>{
       const g = [];
-      if(q.length>=2) g.push({g:'Outros squads', esc:'squads', fim:true, max:4, itens:Object.keys(SQUAD_META_LIVE||{}).filter(sq=>sq!==ACTIVE_SQUAD).map(sq=>{
+      const outros = Object.keys(SQUAD_META_LIVE||{}).filter(sq=>sq!==ACTIVE_SQUAD);
+      // aba "Squads" com a caixa vazia: lista os outros squads para abrir direto (antes ficava vazia — achado do Antigravity)
+      if(!q && outros.length) g.push({g:'Outros squads', esc:'squads', itens:outros.map(sq=>{ const nome = (SQUAD_META_LIVE[sq] && SQUAD_META_LIVE[sq].label) || ('Squad '+sq), url = pag+'?squad='+encodeURIComponent(sq);
+        return {k:'sq:'+sq, ic:'🌊', t:nome, sub:'Abrir o board deste squad', tipo:'squad', url, go:()=>{ location.href = url; }}; })});
+      if(q.length>=2) g.push({g:'Outros squads', esc:'squads', fim:true, max:4, itens:outros.map(sq=>{
         const nome = (SQUAD_META_LIVE[sq] && SQUAD_META_LIVE[sq].label) || ('Squad '+sq), url = pag+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120));
-        return {k:'sqb:'+sq, ic:'🔎', t:'Buscar “'+q+'” em '+nome, sub:'Abre esse board com a busca preenchida', tipo:'busca', busca:nome+' '+sq, sempre:true, go:()=>{ location.href = url; }}; })});
+        return {k:'sqb:'+sq, ic:'🔎', t:'Buscar “'+q+'” em '+nome, sub:'Abre esse board com a busca preenchida', tipo:'busca', busca:nome+' '+sq, sempre:true, url, go:()=>{ location.href = url; }}; })});
       const hs = [];
-      Object.entries(HELP_CONTENT).forEach(([tab, its])=>(its||[]).forEach(it=>hs.push({k:'help:'+tab+':'+it.title, ic:it.icon||'❓', t:it.title, sub:'Ajuda do Maré', tipo:'ajuda', busca:semTag(it.text).slice(0,500), go:()=>openHelp(tab, it.title)})));
+      Object.entries(HELP_CONTENT).filter(([tab])=>tab!=='spotify').forEach(([tab, its])=>(its||[]).forEach(it=>hs.push({k:'help:'+tab+':'+it.title, ic:it.icon||'❓', t:it.title, sub:'Ajuda do Maré', tipo:'ajuda', busca:semTag(it.text).slice(0,500), go:()=>openHelp(tab, it.title)})));
       g.push({g:'Ajuda do Maré', esc:'ajuda', max:4, itens:hs});
       return g;
     },
     deRecente: (r, base)=>{
-      if(r.card){ const c = cards.find(x=>x.id===r.card && !x.archived); if(c) return Object.assign(base, {ic:'🃏', t:c.title||base.t, go:()=>openCard(c.id), rec:{card:c.id}}); return null; }
+      if(r.card){ const c = cards.find(x=>x.id===r.card && !x.archived); if(c) return Object.assign(base, {ic:'🃏', t:c.title||base.t, url:pag+'?squad='+encodeURIComponent(ACTIVE_SQUAD)+'&card='+encodeURIComponent(c.id), go:()=>_sonarAbrirCard(c.id), rec:{card:c.id}}); return null; }
       if(r.app==='okr' && MareSonar._paginaOk(r.url)) return Object.assign(base, {ic:'🎯', url:r.url, go:()=>window.open(r.url, '_blank', 'noopener')});
       return null;
     },
   });
   return true;
 }
+// Abrir um card (ou ver no board) pelo Sonar fecha os modais que ficariam por cima dele (Ajuda, Atalhos… — achado do Antigravity)
+function _sonarAbrirCard(id){ document.querySelectorAll('.ov.open').forEach(el=>{ if(el.id!=='card-ov' && typeof closeOv==='function') closeOv(el.id); }); openCard(id); }
 function _sonarVerNoBoard(q){
+  document.querySelectorAll('.ov.open').forEach(el=>{ if(typeof closeOv==='function') closeOv(el.id); });
   const bar=document.getElementById('filter-bar');
   if(bar.style.display==='none'||bar.style.display==='') toggleFilters();
   const fTx=document.getElementById('f-texto');
@@ -40214,7 +40227,7 @@ renderBoard();
   let tentativas = 0;
   const tentar = () => {
     tentativas++;
-    if(!(Array.isArray(cards) && cards.length) && tentativas < 15){ setTimeout(tentar, 400); return; }
+    if((!window._currentUser || !(Array.isArray(cards) && cards.length)) && tentativas < 15){ setTimeout(tentar, 400); return; }
     if(_sonarMareIniciar()){ MareSonar.abrir({q, esc:'board'}); return; }
     openSearch();
     const inp = document.getElementById('search-inp'); if(!inp) return;
