@@ -94,11 +94,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Oceano (`oceano-dev.html` · `const FAQ`)**: corrigido texto defasado em `id:'notif'` (que dizia que o Oceano não tinha sino próprio); completados `id:'sonar'` (prefixos `m:/r:/l:/a:`, disco de sonar, `meus` e cache de 3 h para Objetivos e Marcos), `id:'sino'` (`✓ Marcar tudo como lido` e `Limpar antigas`) e `id:'mural'` (coluna `🎯 Meta Global · Digital` e `🇬🇧 Ver original em inglês` nos alertas traduzidos da VTEX).
 - **Skill (`.claude/skills/atualizarhelpcontent/SKILL.md`)**: histórico de rodadas atualizado até `2026-11-10`.
 
-### 2026-11-10 · Ilha Dinâmica: notificações com o sino completo (SÓ DEV)
+### 2026-11-10 · Ilha Dinâmica: notificações com o sino completo (PROD · kanban v8.30.932)
 
 A Ilha escondia o sino mas só mostrava os oito primeiros avisos e um atalho para o painel antigo. Agora a aba Notificações hospeda o próprio nó do sino: lista completa, marcar todas, remover individualmente, Limpar antigas (incluindo feed e noTTLDelete), som, gerenciar push, Não Perturbe e Modo insistente. O nó volta ao lugar original ao trocar aba/fechar/desligar, sem IDs ou listeners duplicados. Submenus escapam do transform da Ilha; Esc fecha o submenu primeiro. Gerenciar push consulta só o registro deste aparelho ao clicar, para permitir reativá-lo quando a permissão do navegador já foi concedida. Testes: docs/arezzo/testes/test_ilha_notificacoes.js e docs/arezzo/testes/test_ilha_mare.js; roteiro read-only docs/arezzo/testes/console_ilha_notificacoes.js. Dica: não — restaura funcionalidades do sino existente.
 
-### 2026-11-10 · Maré dev: Ilha Dinâmica empurrava os botões do cabeçalho ao expandir + pílula com cara de emoji
+### 2026-11-10 · Maré: Ilha Dinâmica empurrava os botões do cabeçalho ao expandir + pílula com cara de emoji (PROD · kanban v8.30.932)
 
 - Ao chegar notificação, a pílula crescia até 560 px dentro do cabeçalho e jogava os botões (.hd-btns) para a 2ª linha (cabeçalho 30→74 px) ou cobria o nome do squad.
 - Correção: no desktop a ilha flutua (absolute) no vão livre entre .hd-l e .hd-btns; _ilhaLugar() calcula o centro e o --ilha-max e reposiciona no resize e por ResizeObserver; a pílula nunca passa do vão. Celular segue no fluxo (3ª linha).
@@ -106,14 +106,14 @@ A Ilha escondia o sino mas só mostrava os oito primeiros avisos e um atalho par
 - Testes: docs/arezzo/testes/test_ilha_mare.js (56 ok), docs/arezzo/testes/test_ilha_prototipo.js (222 ok), medição do cabeçalho a 1100/1280/1440 px sem sobreposição.
 - kanban-dev v8.30.930-dev.
 
-### 2026-11-10 · Timer: continuar pelo popup sobrescrevia a hora de início; campo vazio derrubava a gravação do índice — mare-timer ?v=1 (SÓ DEV · kanban-dev v8.30.928-dev)
+### 2026-11-10 · Timer: continuar pelo popup sobrescrevia a hora de início; campo vazio derrubava a gravação do índice — mare-timer.js ?v=1 (PROD · kanban v8.30.932)
 
 Achados ao tirar a lógica do timer do Maré para o módulo compartilhado `mare-timer-dev.js` (base da Ilha Dinâmica):
 1. **Continuar um timer pausado pelo popup "⏲ Timers" (com o card fechado) regravava a hora de início real** (`iniciadoEm`) com a hora atual. O play gravava `iniciadoEm` sempre que o objeto não o trazia, e o índice pessoal (`kanban/timers_ativos/{uid}`), que alimenta o popup, nunca guarda `iniciadoEm`. Agora `iniciadoEm` só é gravado no 1º play (saindo de "aguardando início").
 2. **Campo `undefined` ia para o índice** (o registro do card já pulava): o Firebase recusa o update inteiro com um `undefined`. Agora o índice também pula (achado pelo teste do Codex).
 - Testes: `docs/arezzo/testes/test_mare_timer_logica.js` (Node puro, 44 verificações, escrito pelo Codex por contrato — reproduz os dois casos); `docs/arezzo/testes/test_timers_card.js` e `docs/arezzo/testes/test_monitorarbugs_timer.js` passam com o Maré usando o módulo.
 
-### 2026-11-10 · Sonar: "meus" agora traz tudo da pessoa (cards em que estou; Objetivos e Marcos em que sou responsável) + 5 achados do /monitorarbugs do Antigravity — mare-sonar ?v=6 (SÓ DEV · oceano-dev v1.72, kanban-dev v8.30.925-dev)
+### 2026-11-10 · Sonar: "meus" agora traz tudo da pessoa (cards em que estou; Objetivos e Marcos em que sou responsável) + 5 achados do /monitorarbugs do Antigravity — mare-sonar.js ?v=8 (PROD · oceano v1.75, kanban v8.30.932)
 
 **"meus" não trazia tudo da pessoa (relato do Caio):**
 - **Maré:** "meus" não filtrava os cards; procurava a palavra "meus" no texto do card (aparecia só um card com "meu" no título). Agora "meus/minhas …" = cards em que a pessoa está (responsável ou participante, a mesma regra do 💡 Meus cards), e a palavra sai da busca. "meus" sozinho oferece "Destacar meus N cards no board"; com texto, "Ver N cards no board" conta e filtra só os meus.
@@ -128,7 +128,7 @@ Achados ao tirar a lógica do timer do Maré para o módulo compartilhado `mare-
 - O achado "minha" do Antigravity já tinha sido corrigido no #1682.
 - **Testes:** `docs/arezzo/testes/test_sonar_meus.js` (falhava em 8 checagens antes) e `docs/arezzo/testes/test_sonar_achados_agy.js` (5 de 8 falham na `main`, passam todas aqui). Regressão: as suítes do Sonar, `docs/arezzo/testes/test_busca_comentarios.js` e `docs/arezzo/testes/test_sonar_logica.js` passam.
 
-### 2026-11-10 · Sonar: 6 correções (cópia do Radar vencida em memória, prefixo × aba, "minha", Ctrl+Enter sem destino, seleção pulando, contagem parcial) — mare-sonar ?v=5 (SÓ DEV · oceano-dev v1.71, kanban-dev v8.30.924-dev)
+### 2026-11-10 · Sonar: 6 correções (cópia do Radar vencida em memória, prefixo × aba, "minha", Ctrl+Enter sem destino, seleção pulando, contagem parcial) — mare-sonar.js ?v=8 (PROD · oceano v1.75, kanban v8.30.932)
 
 Seis correções do Sonar, achadas na pesquisa do Codex sobre o Spotlight do macOS e confirmadas no código (`mare-sonar-dev.js` ?v=5, adaptador do Maré):
 1. **Cópia do Radar vencia só no aparelho, não na memória.** Com a aba aberta o dia todo, o Sonar usava Objetivos de horas atrás. Agora a cópia em memória também vence em 3 h e é relida na próxima busca que pedir o Radar. Nova ação **"Atualizar o Radar"** (digite "atualizar") relê na hora, sem nenhuma leitura periódica.

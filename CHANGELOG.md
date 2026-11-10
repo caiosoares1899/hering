@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Maré › 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (SÓ DEV · kanban-dev v8.30.929-dev) — 2026-11-10
+### Maré › 🏝️ Ilha Dinâmica: 1º teste real no Maré (PROD · kanban v8.30.932) — 2026-11-10
 
 Primeiro teste real da **Ilha Dinâmica**, no Maré dev: uma pílula no centro do cabeçalho com o timer que está rodando (ou "+N" se houver mais) e as notificações. **Desligada por padrão**: liga em **⏲ Timers → 🏝️ Ilha Dinâmica** (por aparelho).
 - Clique na ilha: abas **Timers** (pausar/continuar/iniciar, encerrar com confirmação, abrir o card), **Notificações** (as mesmas do sino; com a ilha ligada o 🔔 do topo sai) e **⚙ Ajustes** (quando aparecer: só com ação / ao passar o mouse / sempre; atividade principal; aba ao reabrir; timers e notificações na ilha; compartilhar tela) — a pílula muda ao vivo enquanto ajusta. 📌 mantém aberta.
@@ -34,13 +34,13 @@ Primeiro teste real da **Ilha Dinâmica**, no Maré dev: uma pílula no centro d
 - Testes: `docs/arezzo/testes/test_ilha_mare.js` (56) e `docs/arezzo/testes/test_ilha_prototipo.js` (222), escritos pelo Codex por contrato e rodados aqui.
 - Dica: não por enquanto (é teste no dev, desligado por padrão). Fronteira: campo novo no DOM com texto de outras pessoas (título/assunto da notificação, atividade do timer) sempre por `esc()`; nenhuma escrita nova (as do timer são as do card).
 
-### SÓ DEV — Acabamento vidro lapidado (`--specular`) e curvas com nome (`--ease-*`) no Maré, Painel, Radar e Oceano (kanban-dev v8.30.927-dev · okr-dev v2.108 · oceano-dev v1.74 · painel-dev v5.99 · PR #1687) — 2026-11-10
+### Maré, Painel, Radar e Oceano › 🪟 Acabamento vidro lapidado (`--specular`) e curvas com nome (`--ease-*`) (PROD · kanban v8.30.932 · okr v2.109 · oceano v1.75 · painel v5.99 · PR #1687) — 2026-11-10
 
 - **Vidro lapidado (`--specular`) por tema**: definido `--specular: inset 0 1px 0 rgba(255,255,255,.08)` no escuro/Vice/Entardecer e `--specular: inset 0 1px 0 rgba(255,255,255,.7)` no claro (`[data-theme="light"]`), somado às superfícies `.vidro`, `.panel`, `.card`, `.col` e modais das 4 páginas (`kanban-dev.html`, `painel-dev.html`, `okr-dev.html` e `oceano-dev.html`) conforme o `docs/GUIA_UI_UX.md` (§2.5 regra 6), sem adicionar `backdrop-filter` nem alterar a GPU com a tela parada.
 - **Curvas com nome (`--ease-*`) no `:root`**: adicionados `--ease-out: cubic-bezier(.32,.72,0,1)`, `--ease-in-out: cubic-bezier(.4,0,.2,1)` e `--ease-overshoot: cubic-bezier(.34,1.56,.64,1)` no `:root` das 4 páginas, substituindo todos os `cubic-bezier(...)` soltos por `var(--ease-*)` (§2.4).
 - Capturas em `docs/capturas/vidro-lapidado/`: só as **depois** (24, 4 páginas × 3 temas × 1280/390); as "antes" saem da `main` anterior. Conflito de versão com o #1686 resolvido pelo Claude (versões +1).
 
-### Radar › 🔍 Sonar no Radar: achar Objetivo ou Marco na hora, sem leitura nova (SÓ DEV · okr-dev v2.107 · mare-sonar ?v=8 · mare-dicas ?v=12) — 2026-11-10
+### Radar › 🔍 Sonar no Radar: achar Objetivo ou Marco na hora, sem leitura nova (PROD · okr v2.109 · mare-sonar.js ?v=8 · mare-dicas.js ?v=12) — 2026-11-10
 
 O Radar ganha o **🔍 Sonar** (botão no topo e **Ctrl+K / ⌘K**), com o mesmo layout do lobby e do Maré. O foco aqui são Objetivos e Marcos:
 - **Abas:** Tudo · 1 Objetivos · 2 Marcos · 3 Maré · 4 Ajuda (prefixos `o:`, `k:`, `m:`, `a:`). Visualizador externo não vê a aba do Maré.
@@ -52,7 +52,7 @@ O Radar ganha o **🔍 Sonar** (botão no topo e **Ctrl+K / ⌘K**), com o mesmo
 - Teste: `docs/arezzo/testes/test_okr_sonar.js` (53 asserções, **escrito pelo Codex por contrato**; rodado e ajustado aqui — pegou o T426 × T126). `test_sonar_logica.js` ganhou a regra do código com número; `test_dicas.js` atualizado.
 - Fronteira: sem mudança (dados que a página já tinha; títulos por `esc()`; endereços por `encodeURIComponent`/`paginaOk`).
 
-### Maré e Oceano › 💡 Dica do Sonar (SÓ DEV · mare-dicas ?v=11 · kanban-dev v8.30.923-dev · oceano-dev v1.70 · okr-dev v2.106 · painel-dev v5.97) — 2026-11-10
+### Maré e Oceano › 💡 Dica do Sonar (PROD · mare-dicas.js ?v=12 · kanban v8.30.932 · oceano v1.75 · okr v2.109 · painel v5.99) — 2026-11-10
 
 Popup de dica do Sonar no Maré e no lobby (`mare-dicas-dev.js`, `?v=11` em kanban-dev, okr-dev, oceano-dev e painel-dev).
 - **Maré:** a dica `busca` (Ctrl+K, "Busca global") vira `sonar`, com id novo, para quem já tinha visto a antiga também ver esta. O "Saiba mais" da antiga tinha ficado sem destino desde que o tópico da Ajuda virou "Sonar (Ctrl+K)" (#1672); a nova abre esse tópico.
