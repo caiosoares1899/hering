@@ -24,6 +24,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (SÓ DEV · kanban-dev v8.30.929-dev) — 2026-11-10
+
+Primeiro teste real da **Ilha Dinâmica**, no Maré dev: uma pílula no centro do cabeçalho com o timer que está rodando (ou "+N" se houver mais) e as notificações. **Desligada por padrão**: liga em **⏲ Timers → 🏝️ Ilha Dinâmica** (por aparelho).
+- Clique na ilha: abas **Timers** (pausar/continuar/iniciar, encerrar com confirmação, abrir o card), **Notificações** (as mesmas do sino; com a ilha ligada o 🔔 do topo sai) e **⚙ Ajustes** (quando aparecer: só com ação / ao passar o mouse / sempre; atividade principal; aba ao reabrir; timers e notificações na ilha; compartilhar tela) — a pílula muda ao vivo enquanto ajusta. 📌 mantém aberta.
+- **Notificação nova alarga a pílula** e mostra quem/o quê + onde por ~6 s (estilo Vorssaint); nunca abre o painel; com **Não Perturbe** só muda o número.
+- **Sem leitura nova**: timers do índice que o ⏲ Timers já escuta; ações pela mesma `tmAcao` do card (módulo `mare-timer`). Relógio só com timer rodando e a aba visível; módulo de timer desligado = nenhum relógio.
+- Protótipo atualizado (`docs/demo/ilha-dinamica-prototipo.html`): sem nada visível no modo mouse, aviso que alarga, sem Sonar dentro, e opções do Vorssaint para comparar (principal, reabrir, fixar, contagem para evento, módulo desligado).
+- Testes: `docs/arezzo/testes/test_ilha_mare.js` (56) e `docs/arezzo/testes/test_ilha_prototipo.js` (222), escritos pelo Codex por contrato e rodados aqui.
+- Dica: não por enquanto (é teste no dev, desligado por padrão). Fronteira: campo novo no DOM com texto de outras pessoas (título/assunto da notificação, atividade do timer) sempre por `esc()`; nenhuma escrita nova (as do timer são as do card).
+
 ### SÓ DEV — Acabamento vidro lapidado (`--specular`) e curvas com nome (`--ease-*`) no Maré, Painel, Radar e Oceano (kanban-dev v8.30.927-dev · okr-dev v2.108 · oceano-dev v1.74 · painel-dev v5.99 · PR #1687) — 2026-11-10
 
 - **Vidro lapidado (`--specular`) por tema**: definido `--specular: inset 0 1px 0 rgba(255,255,255,.08)` no escuro/Vice/Entardecer e `--specular: inset 0 1px 0 rgba(255,255,255,.7)` no claro (`[data-theme="light"]`), somado às superfícies `.vidro`, `.panel`, `.card`, `.col` e modais das 4 páginas (`kanban-dev.html`, `painel-dev.html`, `okr-dev.html` e `oceano-dev.html`) conforme o `docs/GUIA_UI_UX.md` (§2.5 regra 6), sem adicionar `backdrop-filter` nem alterar a GPU com a tela parada.

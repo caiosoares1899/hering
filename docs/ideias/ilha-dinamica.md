@@ -4,11 +4,18 @@ Um controle **opcional** no topo central do Oceano (lobby e barra do host, ou se
 
 **Protótipo isolado (fase 0):** `docs/demo/ilha-dinamica-prototipo.html` — dados fictícios, sem Firebase, os 3 temas do lobby, desktop e celular, seletor de modo/cenário. Teste: `docs/arezzo/testes/test_ilha_prototipo.js` (137 asserções, escrito pelo Codex por contrato e rodado pelo Claude). Capturas: `docs/capturas/ilha-prototipo/`.
 
+## Fase 1 — primeiro teste real NO MARÉ DEV (10/11/2026, decisão do Caio)
+O primeiro teste com dados reais é no **Maré dev (`kanban-dev.html`)**, não no Oceano: a ilha fica no centro do cabeçalho, **sem leitura nova** (timers do índice que o ⏲ Timers já escuta; notificações da mesma lista do sino), pausar/continuar/encerrar pela mesma `tmAcao` do card (via `mare-timer`). Liga em **⏲ Timers → 🏝️ Ilha Dinâmica**; ajustes na aba **⚙ Ajustes** da própria ilha (a pílula muda ao vivo). Teste: `docs/arezzo/testes/test_ilha_mare.js`.
+
+**Mudanças pedidas pelo Caio:** modo "ao passar o mouse" **sem nada visível** (só uma área transparente que reage ao mouse/Tab); **notificação nova alarga a pílula** e mostra quem/o quê + onde por ~6 s, no estilo do Vorssaint (nunca abre o painel; com **Não Perturbe**, só o número muda; em "compartilhar tela", "Nova notificação"); **sem Sonar dentro da ilha** (os dois separados).
+
+**Do Vorssaint (referência de comportamento, implementação própria):** atividade principal escolhida (timer ou notificações), "ao reabrir" (última aba ou fixa), 📌 manter aberta (o clique fora não fecha; Esc fecha), módulo desligado sem custo (`window.__ilhaTicks` = 0), contagem regressiva para evento (**só no protótipo**, para comparar: no real exigiria ler a agenda do Radar).
+
 ## Decisões do Caio (10/11/2026)
 | # | Decisão |
 |---|---|
 | 1 | **Notificações entram na ilha**: ligada, o 🔔 do topo sai e a ilha mostra a contagem e a lista (mesmo `MareNotif`: lido, som, Não Perturbe) |
-| 2 | **Sonar fica com o botão próprio**. Variante B no protótipo: "Sonar dentro da ilha" (o botão some e a busca vai para o painel) — para comparar |
+| 2 | **Sonar fica com o botão próprio** — os dois separados (a variante "Sonar dentro da ilha" foi descartada) |
 | 3 | **Timer completo já na v1**: ver, pausar, continuar, encerrar, abrir o card |
 | 4 | **Sem favoritos** no MVP (os cartões, atalhos, links e o Sonar já levam a qualquer destino) |
 | 5 | **Preferência por aparelho** (localStorage), em ⚙ Meu perfil; desligada por padrão |
@@ -18,7 +25,7 @@ Um controle **opcional** no topo central do Oceano (lobby e barra do host, ou se
 ## Estados e regras
 - **Repouso** 🌊 · **Atividade** `⏲ Revisar campanha · 18:42 · +2 · 🔔 2` · **Aberta** (clique/toque/Enter; Esc recolhe e devolve o foco) · **Fio** (modo mouse: risco fino no topo, aparece no hover ou no Tab) · **Oculta**.
 - Vários timers: mostra o rodando mais recente e "+N". Compartilhar tela: some o título, fica o tempo.
-- **Notificação nunca abre a ilha** e não toma o lugar do timer; no modo "só com ação" aparece compacta por ~6 s.
+- **Notificação nova alarga a pílula** (quem/o quê + onde) por ~6 s e volta; nunca abre o painel; com Não Perturbe só muda o número.
 - Modo "ao passar o mouse" no toque vira "só com ação" (não existe hover).
 - Tempo **sempre por horário** (`accMs + agora − startedAt`); o relógio só roda com timer rodando, ilha visível e aba visível. Abrir/fechar: uma transição de ~200 ms; sem animação parada; "reduzir movimento" tira a transição.
 - Desligar a ilha não para timer nem notificação.

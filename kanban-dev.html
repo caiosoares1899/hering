@@ -776,6 +776,74 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .sm-dd-row-sub{padding-left:26px;}
 .sm-dd-sep{border-top:1px solid var(--glass-b);margin:5px 4px 4px;}
 .hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0;}
+/* 🏝️ Ilha Dinâmica (10/11/2026, teste no Maré dev; plano em docs/ideias/ilha-dinamica.md). Desligada por padrão; liga no ⏲ Timers. */
+#ilha{flex:1 1 auto;display:flex;justify-content:center;position:relative;min-width:0;}
+#ilha[hidden]{display:none;}
+#ilha-btn{display:inline-flex;align-items:center;gap:9px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.96);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 22px rgba(0,0,0,.22);cursor:pointer;max-width:min(460px,44vw);font-size:12.5px;font-weight:600;color:var(--txt);font-family:inherit;transition:max-width .25s var(--ease-out,ease);}
+#ilha-btn:hover{border-color:var(--accent);}
+#ilha-btn:focus-visible,#ilha-fio:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-ico{font-size:14px;line-height:1;}
+#ilha-titulo,#ilha-aviso-t,#ilha-aviso-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#ilha-titulo{max-width:180px;}
+#ilha-titulo:empty,#ilha-tempo:empty,#ilha-mais:empty,#ilha-aviso-s:empty{display:none;}
+#ilha-tempo{font-variant-numeric:tabular-nums;color:var(--teal,#1de9b6);font-weight:700;}
+#ilha.ilha-pausa #ilha-tempo{color:var(--txt2);}
+#ilha.ilha-esg #ilha-tempo{color:var(--danger,#ff6b6b);}
+#ilha-mais{font-size:10.5px;color:var(--txt2);}
+.ilha-sep{width:1px;height:15px;background:var(--glass-b);}
+#ilha-n{display:inline-flex;align-items:center;gap:3px;}
+#ilha-n[hidden]{display:none;}
+#ilha-n b{min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--danger,#ff6b6b);color:#fff;font-size:10px;display:grid;place-items:center;}
+/* aviso (estilo Vorssaint): a pílula se alarga e mostra quem/o quê + onde, por alguns segundos */
+#ilha-aviso{display:none;align-items:baseline;gap:7px;min-width:0;}
+#ilha[data-estado="aviso"] #ilha-aviso{display:inline-flex;}
+#ilha[data-estado="aviso"] #ilha-titulo,#ilha[data-estado="aviso"] #ilha-mais{display:none;}
+#ilha[data-estado="aviso"] #ilha-btn{max-width:min(560px,60vw);}
+#ilha-aviso-t{font-weight:700;max-width:240px;}
+#ilha-aviso-s{color:var(--txt3);font-weight:500;max-width:200px;}
+#ilha-fio{display:none;width:150px;height:30px;border:none;background:none;padding:0;cursor:pointer;opacity:0;}
+#ilha-fio:focus-visible{opacity:1;}
+#ilha[data-estado="oculta"] #ilha-btn,#ilha[data-estado="fio"] #ilha-btn{display:none;}
+#ilha[data-estado="fio"] #ilha-fio{display:block;}
+#ilha-painel{position:absolute;top:44px;left:50%;transform:translateX(-50%);width:min(390px,calc(100vw - 20px));padding:10px;border-radius:18px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 18px 50px rgba(0,0,0,.4);z-index:400;display:none;max-height:min(72vh,580px);overflow:auto;color:var(--txt);}
+#ilha[data-estado="aberta"] #ilha-painel{display:block;animation:ilhaAbre .2s var(--ease-out,ease);}
+@keyframes ilhaAbre{from{opacity:0;transform:translateX(-50%) translateY(-4px);}to{opacity:1;transform:translateX(-50%);}}
+.ilha-abas{display:flex;gap:4px;margin-bottom:8px;align-items:center;}
+.ilha-aba{flex:1;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.ilha-aba.on{border-color:var(--accent);color:var(--txt);}
+#ilha-fixar{min-width:34px;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);cursor:pointer;color:var(--txt2);}
+#ilha-fixar[aria-pressed="true"]{border-color:var(--accent);color:var(--txt);}
+.ilha-timer{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:9px 10px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.5);margin-bottom:6px;}
+.ilha-timer-t{font-weight:600;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.ilha-timer-s{font-size:10.5px;color:var(--txt3);}
+.ilha-timer-tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--teal,#1de9b6);font-size:14px;}
+.ilha-timer.pausado .ilha-timer-tempo,.ilha-timer.novo .ilha-timer-tempo{color:var(--txt2);}
+.ilha-timer.esg .ilha-timer-tempo{color:var(--danger,#ff6b6b);}
+.ilha-acoes{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap;}
+.ilha-acoes button,.ilha-rod button,#ilha-desligar{min-height:34px;padding:5px 11px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;}
+.ilha-acoes button:hover,.ilha-rod button:hover{border-color:var(--accent);}
+.ilha-acoes [data-acao="confirmar-encerrar"]{border-color:var(--danger,#ff6b6b);color:var(--danger,#ff6b6b);}
+.ilha-notif{display:flex;gap:8px;padding:7px 6px;border-radius:10px;font-size:12px;cursor:pointer;align-items:flex-start;}
+.ilha-notif:hover{background:rgba(var(--surface2-rgb),.6);}
+.ilha-notif b{display:block;font-weight:600;}
+.ilha-notif small{color:var(--txt3);}
+.ilha-notif.lida{opacity:.6;}
+.ilha-vazio{font-size:12px;color:var(--txt2);padding:8px 6px;}
+.ilha-rod{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.ilha-cfg label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;padding:6px 4px;color:var(--txt2);}
+.ilha-cfg select{background:rgba(var(--surface2-rgb),.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:8px;padding:4px 6px;font:inherit;font-size:12px;}
+.ilha-cfg p{font-size:11px;color:var(--txt3);padding:4px;line-height:1.45;}
+#ilha-anuncio{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+@media (max-width:768px){
+  #ilha{order:3;flex-basis:100%;}
+  #ilha-btn{max-width:calc(100vw - 32px);height:42px;}
+  #ilha[data-estado="aviso"] #ilha-btn{max-width:calc(100vw - 32px);}
+  #ilha-titulo{max-width:110px;} #ilha-aviso-t{max-width:150px;} #ilha-aviso-s{display:none;}
+  #ilha-painel{position:fixed;top:auto;left:8px;right:8px;width:auto;transform:none;max-height:calc(100vh - 140px);}
+  @keyframes ilhaAbre{from{opacity:0;}to{opacity:1;}}
+  .ilha-acoes button,.ilha-rod button,.ilha-aba,#ilha-fixar,#ilha-desligar{min-height:44px;}
+}
+@media (prefers-reduced-motion:reduce){ #ilha-btn{transition:none;} #ilha[data-estado="aberta"] #ilha-painel{animation:none;} }
 /* Menu "⋯" (ver HTML/JS toggleHdMore) — só aparece no mobile, ver @media(max-width:768px) */
 .hd-more-wrap{display:none;position:relative;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
@@ -3840,6 +3908,18 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     </span>
 
   </div>
+  <div id="ilha" data-estado="oculta" hidden>
+    <button type="button" id="ilha-fio" aria-label="Mostrar a Ilha Dinâmica"></button>
+    <button type="button" id="ilha-btn" aria-expanded="false" aria-controls="ilha-painel" aria-label="Ilha Dinâmica">
+      <span class="ilha-ico" id="ilha-ico" aria-hidden="true">🌊</span>
+      <span id="ilha-aviso"><span id="ilha-aviso-t"></span><span id="ilha-aviso-s"></span></span>
+      <span id="ilha-titulo"></span><span id="ilha-tempo"></span><span id="ilha-mais"></span>
+      <span class="ilha-sep" id="ilha-sep" aria-hidden="true"></span>
+      <span id="ilha-n" hidden><span aria-hidden="true">🔔</span><b></b></span>
+    </button>
+    <div id="ilha-painel" role="dialog" aria-label="Ilha Dinâmica" tabindex="-1"></div>
+    <div id="ilha-anuncio" aria-live="polite"></div>
+  </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
     <button id="tb-timers" class="btn btn-sm" onclick="tmAlternarPop(event)" aria-haspopup="true" aria-expanded="false" aria-label="Meus timers" title="Seus timers e cronômetros" style="padding:5px 9px;">⏲<span class="tm-badge" id="tb-timers-n" style="display:none"></span></button>
@@ -4121,7 +4201,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
 <!-- NOTIFICAÇÕES -->
 <div class="notif-panel tm-pop" id="tm-pop" role="dialog" aria-label="Timers em andamento">
-  <div class="notif-hd"><span>⏲ Meus timers</span></div>
+  <div class="notif-hd"><span>⏲ Meus timers</span><button type="button" class="notif-mark-all" id="ilha-ligar" onclick="_ilhaLigarDoPop()">🏝️ Ilha Dinâmica</button></div>
   <div class="notif-list" id="tm-pop-list"><div class="notif-empty">Nenhum timer ativo</div></div>
 </div>
 <div class="notif-panel" id="notif-panel">
@@ -6706,7 +6786,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.928-dev</div>
+<div class="version">v8.30.929-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -31045,6 +31125,7 @@ function renderNotifs(notifs){
   const feed = window.MareNotif ? MareNotif.items().map(i=>({...i, _feed:true, read:!i.unread, type:i.tipo})) : [];
   notifs = notifs.concat(feed).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
   const unread = notifs.filter(n=>!n.read).length;
+  _ilhaNotifs(notifs);   // 🏝️ Ilha Dinâmica: mesma lista e mesma contagem do sino
   const btn = document.getElementById('notif-btn');
   if(badge){
     const wasShowing = badge.classList.contains('show');
@@ -37560,7 +37641,7 @@ function tmIniciarIndice(){
       const v=snap.val()||{}; _tmMeus={};
       // só entradas completas: uma corrida pode deixar só `avisos` depois do encerrar (o servidor limpa; aqui nunca vira linha "undefined")
       Object.keys(v).forEach(id=>{ const e=v[id]; if(e&&typeof e==='object'&&e.sq&&e.cardId&&e.atividade&&e.status) _tmMeus[id]=Object.assign({},e,{id,uid:u.uid}); });
-      _tmAtualizarBadge(); if(_tmPopAberto) _tmRenderPop(); _tmLigarRelogio();
+      _tmAtualizarBadge(); if(_tmPopAberto) _tmRenderPop(); _tmLigarRelogio(); _ilhaRender();
     }, err=>console.warn('[timer] índice:',err));
   }catch(e){ console.warn('[timer]',e); }
 }
@@ -37683,6 +37764,189 @@ function tmAbrirCard(sq,cardId){
   if(sq && sq!==ACTIVE_SQUAD){ window.location.href=window.location.pathname+'?squad='+encodeURIComponent(sq)+'&card='+encodeURIComponent(cardId); return; }
   if(cards.find(c=>c.id===cardId)) openCard(cardId); else showToast('Esse card não está mais neste quadro.');
 }
+
+// ═══ 🏝️ ILHA DINÂMICA (teste no Maré dev, 10/11/2026 — plano: docs/ideias/ilha-dinamica.md) ═══════════════
+// Desligada por padrão; liga no ⏲ Timers ("🏝️ Ilha Dinâmica"); ajustes na aba "Ajustes" da própria ilha (prévia ao vivo, ideia do Vorssaint).
+// NÃO lê nada a mais: os timers vêm do índice que o ⏲ Timers já escuta (_tmMeus) e as notificações da mesma lista do sino (renderNotifs).
+// Pausar/continuar/encerrar = tmAcao() (mesma função do card → MareTimer). Preferências por aparelho e por pessoa (localStorage).
+// Módulo desligado não gasta: sem timer na ilha = nenhum relógio da ilha rodando (window.__ilhaTicks).
+const _ILHA_PAD = {on:false, modo:'acao', principal:'timer', reabrir:'ultima', timer:true, notif:true, privado:false, aba:'timers'};
+const _ilha = {p:null, aberta:false, fixada:false, hover:false, notifs:[], conhecidas:null, aviso:null, tAviso:null, tSai:null, tick:null, confirmar:null};
+window.__ilhaTicks = 0;
+const _ilhaChave = () => 'mare_ilha_'+((window._currentUser&&window._currentUser.uid)||'anon')+(/-dev\.html/.test(location.pathname)?'_dev':'');
+function _ilhaPrefs(){ const k = _ilhaChave(); if(_ilha.p && _ilha.k===k) return _ilha.p; _ilha.k = k; let o=null;   // chave por pessoa: trocar de conta no mesmo aparelho não carrega a preferência de outra
+  try{ o=JSON.parse(localStorage.getItem(_ilhaChave())||'null'); }catch(e){} _ilha.p = Object.assign({}, _ILHA_PAD, (o&&typeof o==='object')?o:{}); return _ilha.p; }
+function _ilhaSalvar(){ try{ localStorage.setItem(_ilhaChave(), JSON.stringify(_ilha.p)); }catch(e){} }
+const _ilhaCelular = () => matchMedia('(max-width:768px)').matches || matchMedia('(pointer:coarse)').matches;
+// timers da pessoa, rodando primeiro (o principal é o rodando mais recente)
+function _ilhaTimers(){ const ord={rodando:0,novo:1,pausado:2}; return Object.values(_tmMeus||{}).filter(t=>t&&t.status!=='encerrado').sort((a,b)=>(ord[a.status]-ord[b.status])||((b.startedAt||0)-(a.startedAt||0))); }
+const _ilhaNaoLidas = () => _ilha.notifs.filter(n=>!n.read).length;
+// Notificações (chamado por renderNotifs com a lista já mesclada do sino): aviso só para as que chegaram AGORA (nunca na 1ª carga)
+function _ilhaNotifs(lista){
+  _ilha.notifs = Array.isArray(lista) ? lista : [];
+  const ids = new Set(_ilha.notifs.map(n=>String(n.id)));
+  if(_ilha.conhecidas){
+    const nova = _ilha.notifs.find(n=>!n.read && !_ilha.conhecidas.has(String(n.id)));
+    const p = _ilhaPrefs();
+    if(nova && p.on && p.notif && !(typeof isDndActive==='function' && isDndActive())) _ilhaAvisar(nova);
+  }
+  _ilha.conhecidas = ids;
+  _ilhaRender();
+}
+function _ilhaAvisar(n){
+  const p = _ilhaPrefs();
+  _ilha.aviso = p.privado ? {t:'Nova notificação', s:''} : {t:String(n.title||'Nova notificação').slice(0,120), s:String(n.sub||'').slice(0,80)};
+  const an = document.getElementById('ilha-anuncio'); if(an) an.textContent = 'Nova notificação: '+_ilha.aviso.t;
+  clearTimeout(_ilha.tAviso); _ilha.tAviso = setTimeout(()=>{ _ilha.aviso = null; _ilhaRender(); }, 6000);
+}
+function _ilhaEstado(){
+  const p = _ilhaPrefs();
+  if(!p.on) return 'off';
+  if(_ilha.aberta) return 'aberta';
+  if(_ilha.aviso) return 'aviso';
+  const tem = (p.timer && _ilhaTimers().length) || (p.notif && p.principal==='notif' && _ilhaNaoLidas());
+  const modo = (p.modo==='mouse' && _ilhaCelular()) ? 'acao' : p.modo;   // no toque não existe "passar o mouse"
+  if(modo==='sempre') return tem || (p.notif && _ilhaNaoLidas()) ? 'atividade' : 'repouso';
+  if(modo==='mouse') return _ilha.hover ? ((tem || (p.notif && _ilhaNaoLidas())) ? 'atividade' : 'repouso') : 'fio';
+  return tem ? 'atividade' : 'oculta';
+}
+function _ilhaPilula(){
+  const p = _ilhaPrefs(), agora = Date.now(), ts = p.timer ? _ilhaTimers() : [], a = ts[0] || null, n = p.notif ? _ilhaNaoLidas() : 0;
+  const ilha = document.getElementById('ilha'), mostra = a ? MareTimer.mostra(a, agora) : null;
+  const notifPrincipal = p.principal==='notif' && n && !a;
+  ilha.classList.toggle('ilha-pausa', !!a && a.status!=='rodando'); ilha.classList.toggle('ilha-esg', !!(mostra && mostra.esg));
+  document.getElementById('ilha-ico').textContent = _ilha.aviso ? '🔔' : a ? (a.status==='rodando' ? '⏲' : a.status==='novo' ? '⏳' : '⏸') : (notifPrincipal ? '🔔' : '🌊');
+  document.getElementById('ilha-titulo').textContent = p.privado ? '' : a ? a.atividade : (notifPrincipal ? (n===1 ? '1 notificação' : n+' notificações') : '');
+  document.getElementById('ilha-tempo').textContent = a ? (a.status==='novo' ? 'iniciar' : mostra.txt) : '';
+  document.getElementById('ilha-mais').textContent = ts.length>1 ? '+'+(ts.length-1) : '';
+  const nb = document.getElementById('ilha-n'); nb.hidden = !n || notifPrincipal; nb.querySelector('b').textContent = n>9 ? '9+' : String(n);
+  document.getElementById('ilha-sep').hidden = !(n && !notifPrincipal && (a || _ilha.aviso));
+  document.getElementById('ilha-aviso-t').textContent = _ilha.aviso ? _ilha.aviso.t : '';
+  document.getElementById('ilha-aviso-s').textContent = _ilha.aviso ? _ilha.aviso.s : '';
+  const rot = [_ilha.aviso ? 'Nova notificação: '+_ilha.aviso.t : a ? ((p.privado?'Timer':a.atividade)+', '+MareTimer.estadoTxt(a)+', '+(a.status==='novo'?'':mostra.txt)) : 'Ilha Dinâmica', n ? n+' não lida'+(n>1?'s':'') : ''].filter(Boolean).join(' · ');
+  document.getElementById('ilha-btn').setAttribute('aria-label', rot);
+}
+function _ilhaPainel(){
+  const p = _ilhaPrefs(), agora = Date.now(), aba = _ilha.abaAtual || 'timers';
+  const abaBtn = (id, rot) => `<button type="button" class="ilha-aba${aba===id?' on':''}" data-aba="${id}" role="tab" aria-selected="${aba===id}">${rot}</button>`;
+  let h = '<div class="ilha-abas" role="tablist">'+(p.timer?abaBtn('timers','⏲ Timers'):'')+(p.notif?abaBtn('notif','🔔 Notificações'):'')+abaBtn('ajustes','⚙ Ajustes')
+    + `<button type="button" id="ilha-fixar" aria-pressed="${_ilha.fixada}" title="${_ilha.fixada?'Desafixar':'Manter aberta'}" aria-label="Manter aberta">📌</button></div>`;
+  if(aba==='timers'){
+    const ts = _ilhaTimers();
+    h += ts.length ? ts.map(t=>{ const m = MareTimer.mostra(t, agora), conf = _ilha.confirmar===t.id;
+      return `<div class="ilha-timer ${t.status}${m.esg?' esg':''}" data-id="${esc(t.id)}"><div><div class="ilha-timer-t">${esc(p.privado?'Timer':t.atividade)}</div><div class="ilha-timer-s">${esc(p.privado?'':(t.cardTitle||''))}${p.privado?'':' · '}${esc(MareTimer.estadoTxt(t))}</div></div>`
+        + `<div class="ilha-timer-tempo">${t.status==='novo'?'—':esc(m.txt)}</div><div class="ilha-acoes">`
+        + (t.status==='rodando' ? '<button type="button" data-acao="pausar">⏸ Pausar</button>' : `<button type="button" data-acao="${t.status==='novo'?'iniciar':'continuar'}">▶ ${t.status==='novo'?'Iniciar':'Continuar'}</button>`)
+        + (conf ? '<button type="button" data-acao="confirmar-encerrar">Encerrar mesmo?</button>' : '<button type="button" data-acao="encerrar">⏹ Encerrar</button>')
+        + '<button type="button" data-acao="abrir-card">Abrir o card</button></div></div>'; }).join('')
+      : '<div class="ilha-vazio">Nenhum timer ativo. Crie um num card, em "Timer e Produtividade".</div>';
+  } else if(aba==='notif'){
+    const ns = _ilha.notifs.slice(0, 8);
+    h += ns.length ? ns.map((n,i)=>`<div class="ilha-notif${n.read?' lida':''}" role="button" tabindex="0" data-i="${i}"><div><b>${esc(n.title||'')}</b><small>${esc(n.sub||'')}${n.sub?' · ':''}${esc(timeAgo(n.ts))}</small></div></div>`).join('') : '<div class="ilha-vazio">Tudo em dia! 🎉</div>';
+    h += '<div class="ilha-rod">'+(_ilhaNaoLidas() ? '<button type="button" id="ilha-ler-tudo">Marcar tudo como lido</button>' : '')+'<button type="button" id="ilha-abrir-sino">Abrir o sino completo</button></div>';
+  } else {
+    const sel = (id, val, ops) => `<select id="${id}">`+ops.map(([v,r])=>`<option value="${v}"${val===v?' selected':''}>${r}</option>`).join('')+'</select>';
+    const chk = (id, v) => `<input type="checkbox" id="${id}"${v?' checked':''}>`;
+    h += '<div class="ilha-cfg">'
+      + `<label>Quando aparecer ${sel('ilha-cfg-modo', p.modo, [['acao','Só quando houver ação'],['mouse','Ao passar o mouse'],['sempre','Sempre visível']])}</label>`
+      + `<label>Atividade principal ${sel('ilha-cfg-principal', p.principal, [['timer','Timer'],['notif','Notificações']])}</label>`
+      + `<label>Ao reabrir, mostrar ${sel('ilha-cfg-reabrir', p.reabrir, [['ultima','A última aba'],['timers','Timers'],['notif','Notificações']])}</label>`
+      + `<label>Timers na ilha ${chk('ilha-cfg-timer', p.timer)}</label>`
+      + `<label>Notificações na ilha (tira o 🔔 do topo) ${chk('ilha-cfg-notif', p.notif)}</label>`
+      + `<label>Compartilhar tela (sem títulos) ${chk('ilha-cfg-privado', p.privado)}</label>`
+      + '<p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
+      + '<button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div>';
+  }
+  document.getElementById('ilha-painel').innerHTML = h;
+}
+function _ilhaRender(){
+  const ilha = document.getElementById('ilha'); if(!ilha) return;
+  const p = _ilhaPrefs(), e = _ilhaEstado();
+  ilha.hidden = e==='off';
+  const sino = document.getElementById('notif-btn'); if(sino) sino.style.display = (p.on && p.notif) ? 'none' : '';
+  if(e==='off'){ _ilhaRelogio(); return; }
+  ilha.dataset.estado = e;
+  document.getElementById('ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
+  _ilhaPilula();
+  if(e==='aberta' && !ilha.contains(document.activeElement) || (e==='aberta' && !document.querySelector('#ilha-painel .ilha-abas'))) _ilhaPainel();
+  _ilhaRelogio();
+}
+// relógio só com timer rodando na ilha, ilha visível e aba visível; o texto sai sempre do horário (MareTimer.mostra), nunca de contagem de ticks
+function _ilhaRelogio(){
+  const p = _ilhaPrefs(), e = document.getElementById('ilha') && document.getElementById('ilha').dataset.estado;
+  const precisa = p.on && p.timer && !document.hidden && ['atividade','aberta','aviso'].includes(e) && _ilhaTimers().some(t=>t.status==='rodando');
+  if(precisa && !_ilha.tick){ _ilha.tick = setInterval(()=>{ _ilhaPilula(); if(_ilha.aberta) document.querySelectorAll('#ilha-painel .ilha-timer').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.id]; if(t && t.status!=='novo') el.querySelector('.ilha-timer-tempo').textContent = MareTimer.mostra(t, Date.now()).txt; }); }, 1000); window.__ilhaTicks = 1; }
+  if(!precisa && _ilha.tick){ clearInterval(_ilha.tick); _ilha.tick = null; window.__ilhaTicks = 0; }
+}
+function _ilhaAbrir(){
+  const p = _ilhaPrefs();
+  _ilha.abaAtual = p.reabrir==='ultima' ? (p.aba || 'timers') : p.reabrir;
+  if(_ilha.abaAtual==='timers' && !p.timer) _ilha.abaAtual = p.notif ? 'notif' : 'ajustes';
+  if(_ilha.abaAtual==='notif' && !p.notif) _ilha.abaAtual = p.timer ? 'timers' : 'ajustes';
+  _ilha.aberta = true; _ilha.confirmar = null; _ilha.aviso = null; clearTimeout(_ilha.tAviso);
+  _ilhaRender(); _ilhaPainel();
+  setTimeout(()=>{ const f = document.querySelector('#ilha-painel .ilha-aba.on') || document.getElementById('ilha-painel'); f.focus({preventScroll:true}); }, 10);
+}
+function _ilhaFechar(foco){
+  if(!_ilha.aberta) return;
+  _ilha.aberta = false; _ilha.fixada = false; const fx = document.getElementById('ilha-fixar'); if(fx) fx.setAttribute('aria-pressed','false');
+  // modo "ao passar o mouse" com o ponteiro fora: fechar recolhe de vez (senão o foco devolvido à pílula a manteria à mostra)
+  const recolhe = _ilhaPrefs().modo==='mouse' && !_ilhaCelular() && !_ilha.dentro;
+  if(recolhe){ _ilha.hover = false; if(document.getElementById('ilha').contains(document.activeElement)) document.activeElement.blur(); }
+  _ilhaRender();
+  if(foco!==false && !recolhe){ const b = document.getElementById('ilha-btn'); if(b && getComputedStyle(b).display!=='none') b.focus({preventScroll:true}); }
+}
+function _ilhaLigarDoPop(){
+  const p = _ilhaPrefs();
+  _tmFecharPop();
+  if(p.on){ _ilhaRender(); _ilhaAbrir(); _ilha.abaAtual = 'ajustes'; _ilhaPainel(); return; }   // já ligada: o botão leva aos ajustes
+  p.on = true; _ilhaSalvar(); _ilhaRender();
+  showToast('🏝️ Ilha Dinâmica ligada neste aparelho. Clique nela → ⚙ Ajustes para escolher como ela aparece.');
+}
+window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(); }, desligar:()=>{ _ilhaPrefs().on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); }, estado:()=>_ilhaEstado()};
+(function _ilhaEventos(){
+  const ilha = document.getElementById('ilha'); if(!ilha) return;
+  document.getElementById('ilha-btn').addEventListener('click', ()=> _ilha.aberta ? _ilhaFechar() : _ilhaAbrir());
+  const entra = ()=>{ clearTimeout(_ilha.tSai); if(!_ilha.hover){ _ilha.hover = true; _ilhaRender(); } };
+  const sai = (porFoco)=>{ clearTimeout(_ilha.tSai); _ilha.tSai = setTimeout(()=>{ if(_ilha.aberta) return; if(porFoco!==true && _ilha.dentro) return; if(porFoco===true && ilha.contains(document.activeElement)) return; _ilha.hover = false; _ilhaRender(); }, 900); };
+  // mouse saiu → recolhe (mesmo com foco dentro: quem usa teclado não dispara "mouse saiu"); foco saiu → recolhe se o mouse não estiver em cima
+  ilha.addEventListener('mouseenter', ()=>{ _ilha.dentro = true; entra(); }); ilha.addEventListener('mouseleave', ()=>{ _ilha.dentro = false; sai(); });
+  document.getElementById('ilha-fio').addEventListener('focus', ()=>{ entra(); setTimeout(()=>document.getElementById('ilha-btn').focus({preventScroll:true}), 0); });
+  document.getElementById('ilha-fio').addEventListener('click', ()=>{ entra(); _ilhaAbrir(); });
+  ilha.addEventListener('focusout', e=>{ if(!ilha.contains(e.relatedTarget) && !_ilha.dentro) sai(true); });
+  // Esc fecha (e desfixa) — o 📌 só impede o clique fora de fechar; nunca chega aos atalhos do board
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ilha.aberta){ e.preventDefault(); e.stopImmediatePropagation(); _ilhaFechar(); } }, true);
+  document.addEventListener('mousedown', e=>{ if(_ilha.aberta && !_ilha.fixada && !ilha.contains(e.target)) _ilhaFechar(false); });
+  document.addEventListener('visibilitychange', ()=>_ilhaRender());
+  const painel = document.getElementById('ilha-painel');
+  painel.addEventListener('click', async e=>{
+    const p = _ilhaPrefs();
+    const ab = e.target.closest('.ilha-aba'); if(ab){ _ilha.abaAtual = ab.dataset.aba; if(ab.dataset.aba!=='ajustes'){ p.aba = ab.dataset.aba; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
+    if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
+    if(e.target.closest('#ilha-ler-tudo')){ if(typeof markAllRead==='function') markAllRead(); return; }
+    if(e.target.closest('#ilha-abrir-sino')){ _ilhaFechar(false); const b = document.getElementById('notif-btn'); if(b) b.style.display = ''; if(typeof toggleNotifPanel==='function') toggleNotifPanel(); return; }
+    if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
+    const ni = e.target.closest('.ilha-notif'); if(ni){ const n = _ilha.notifs[+ni.dataset.i]; if(!n) return; _ilhaFechar(false);
+      if(n._feed) openFeedNotif(n.id); else openNotif(n.id, n.cardId||'', n.squad||ACTIVE_SQUAD, n.commentId||'', n.type||'', n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''), encodeURIComponent(n.meetingLink||'')); return; }
+    const b = e.target.closest('button[data-acao]'); if(!b) return;
+    const el = b.closest('.ilha-timer'), t = el && (_tmMeus||{})[el.dataset.id]; if(!t) return;
+    const ac = b.dataset.acao;
+    if(ac==='encerrar'){ _ilha.confirmar = t.id; _ilhaPainel(); const c = painel.querySelector('[data-acao="confirmar-encerrar"]'); if(c) c.focus(); return; }
+    if(ac==='abrir-card'){ _ilhaFechar(false); tmAbrirCard(t.sq, t.cardId); return; }
+    const mapa = {pausar:'pause', continuar:'play', iniciar:'play', 'confirmar-encerrar':'stop'};
+    _ilha.confirmar = null;
+    await tmAcao(t.sq, t.cardId, t.id, mapa[ac]);   // o índice atualiza e chama _ilhaRender
+    _ilhaPainel();
+  });
+  painel.addEventListener('keydown', e=>{ const ni = e.target.closest('.ilha-notif'); if(ni && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); ni.click(); } });
+  painel.addEventListener('change', e=>{
+    const p = _ilhaPrefs(), id = e.target.id;
+    if(id==='ilha-cfg-modo') p.modo = e.target.value; else if(id==='ilha-cfg-principal') p.principal = e.target.value; else if(id==='ilha-cfg-reabrir') p.reabrir = e.target.value;
+    else if(id==='ilha-cfg-timer') p.timer = e.target.checked; else if(id==='ilha-cfg-notif') p.notif = e.target.checked; else if(id==='ilha-cfg-privado') p.privado = e.target.checked; else return;
+    _ilhaSalvar(); _ilhaPilula(); _ilhaRender(); _ilhaRelogio();   // prévia ao vivo: a pílula muda enquanto ajusta
+  });
+  window.addEventListener('resize', ()=>{ if(_ilhaPrefs().on) _ilhaRender(); });
+})();
 
 async function loadComments(cardId){
   _commentCardId = cardId;
