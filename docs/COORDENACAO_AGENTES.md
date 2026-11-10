@@ -188,6 +188,7 @@ Janelas do VS Code abertas na **mesma pasta** colidem (troca de branch, `version
 ```bash
 git worktree add ~/hering-codex  -b codex/<assunto>       origin/main   # Codex
 git worktree add ~/hering-agy    -b antigravity/<assunto> origin/main   # Antigravity (no Mac; o clone do Windows segue como está)
+# 10/11/2026: ~/hering-agy já existe (fixa, em detached HEAD na main) — o Antigravity cria a branch dentro dela
 # ~/hering fica com o Claude
 ```
 Depois do merge: `git worktree remove <pasta>` e uma branch nova para a próxima tarefa. Reserva de arquivo no Quadro continua valendo (um arquivo, um dono por vez).
