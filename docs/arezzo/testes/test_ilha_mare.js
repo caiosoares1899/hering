@@ -64,7 +64,7 @@ const read = (p,key)=>p.evaluate(key=>key.split('/').reduce((o,k)=>o?.[k],window
       check('notificação antiga nunca provoca aviso',await p.evaluate(()=>!window.__ilhaStates.includes('aviso')));
       await openPanel(p);
       check('abrir expande e lista dois timers',await state(p)==='aberta' && await p.getAttribute('#ilha-btn','aria-expanded')==='true' && await p.locator('.ilha-timer').count()===2);
-      await tab(p,'notif'); check('aba notificações lista n1 e oferece ações do sino',await p.locator('.ilha-notif').count()===1 && await p.locator('#ilha-ler-tudo').isVisible() && await p.locator('#ilha-abrir-sino').isVisible());
+      await tab(p,'notif'); check('aba notificações lista n1 e oferece ações do sino',await p.locator('#ilha-sino-slot .notif-item').count()===1 && await p.locator('#ilha-sino-slot .notif-mark-all').first().isVisible() && await p.locator('#ilha-sino-slot #dnd-toggle-btn').isVisible());
       await tab(p,'timers'); await close(p);
       check('Esc recolhe e devolve foco',await state(p)!=='aberta' && await p.evaluate(()=>document.activeElement===document.getElementById('ilha-btn')));
       check('zero referências novas ao índice ao ligar e navegar',await p.evaluate(()=>window.__ilhaRefs.length)===refs,{antes:refs,depois:await p.evaluate(()=>window.__ilhaRefs.length)});
