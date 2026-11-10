@@ -20,8 +20,8 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3 classes de
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.908 e dev
-em v8.30.910-dev (menções de cards e descrição adicional pendentes);
+DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.914 e dev
+em v8.30.916-dev (modal do card no celular/tablet e ajuda atualizada);
 o estado NORMAL na maior parte do tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
@@ -1796,6 +1796,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   `applyFanoutToCurrentCard()` — L33977 — botão manual "🧩 Aplicar receita",
   recalcula `editingSuperChildren`/`editingSuperArchivedIds` via
   `_splitSuperChildIds()` depois de aplicar
+- **Supercard dentro de supercard (2026-11-09, kanban v8.30.914):** `_superAltura(card)` / `_superTemDescendente(card, alvoId)` / `_superPodeVincular(parentCard, candCard)` — permitem vincular um supercard existente como filho de outro na busca de `+ Adicionar` (`searchSuperChildren()`), mantendo o teto de 3 camadas (`campanha → criativo → versão`) e bloqueando ciclos.
 - Nesting de 2 níveis (campanha → criativo → versão): `editingSuperParentIsChild`
   (global, L29522) + `initSuperChildren()` — L29542 — calcula se o card
   aberto já seria uma "versão" (teto real do 2º nível). `editingSuperParent`
@@ -2105,7 +2106,7 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   dropdown da toolbar `renderSubmarcaQuickFilters()`/
   `toggleSubmarcaDropdown()` L19117/L19161 (`#submarca-dd-wrap`); sempre
   **obrigatória** pra salvar assim que ativada (ver `saveCard()` ~L17210,
-  HELP_CONTENT "Prazo, Submarca e Canal obrigatórios"). `getTag()` e o seletor de condições de Automação (`case 'submarca'`) caem em `SUBMARCA_TAGS` como fallback se `tags` remoto ainda não tiver o backfill, e `SUBMARCA_COLORS` inclui cor própria pra `'Geral'`. `intake.html`/`intake-dev.html` (`SUBMARCA_FALLBACK`) também trazem as 11 opções.
+  HELP_CONTENT "Prazo, Submarca e Canal obrigatórios"). **Múltiplas submarcas por card (2026-11-09, kanban v8.30.912 · painel v5.95):** no modal do card o campo virou lista de chips (`+ Adicionar submarca…`, remove com ✕); um card com 2+ submarcas conta em cada uma (donut "Por submarca" do Maré e do Painel, Dados do Board, pills do Supercard), e tanto ações em massa quanto a Automação `set_submarca` somam à lista sem apagar as existentes; `intake(-dev).html` e `criar_card` (`functions/agente-agil-orquestrador/tools/criarCard.js`) aceitam uma submarca ou lista. `getTag()` e o seletor de condições de Automação (`case 'submarca'`) caem em `SUBMARCA_TAGS` como fallback se `tags` remoto ainda não tiver o backfill, e `SUBMARCA_COLORS` inclui cor própria pra `'Geral'`. `intake.html`/`intake-dev.html` (`SUBMARCA_FALLBACK`) também trazem as 11 opções.
 - **Canal de venda** (squad Marketplace, 2026-09-10, pedido direto do
   usuário "cria na mesma pegada do submarcas") — `CANAL_VENDA_TAGS` L8910
   (14 tags fixas: Mercado Livre ME1/ME2/Full, Dafiti, Netshoes, Shopee/
@@ -2630,6 +2631,7 @@ pra trás de um comportamento que os outros já tinham.
   gate de papel próprio aqui.
 
 ### Externos / segurança
+- `_colunasSeguras(cols)` (2026-11-09, kanban v8.30.912) — normaliza a cor de cada coluna em toda leitura de `columns` do banco (listener ao vivo, leitura inicial, mesclas e restauração de backup: só aceita hexadecimal, `rgb()`/`hsl()` ou `var(--x)`, caindo para `#38b6ff` no resto) + `esc()` nos nomes de coluna.
 - `_extKey()` — L38893 — chave de e-mail sanitizada (`.` → `,`)
 - `salvarExterno()` — L38894
 - Whitelist `externos` (por squad) checada no listener `auth-change` —
@@ -3819,6 +3821,7 @@ Gaveta de `painel-dev.html`, atrás de `enabled` + `painel_enabled` + `painel_ac
 - `openBoardSetup()` — L12942
 
 ### Usuários
+- `_getUsuariosMap(forcar)` — `painel-dev.html` (2026-11-09, v5.96) — reaproveita `_globalUsersCache` (TTL 10 min) em `loadPcfgUsers()`/`loadSquadData()` ou força releitura hidratando o cache em `addAdmEmail()`/`removeAdmEmail()`/`addGuestByEmail()`; probe de latência de `loadFirebaseStatus()`/`loadStatusData()` lê a folha leve `kanban/config/adm_emails` (~150 B).
 - `openGlobalUsersModal()` — L10758
 - `initHiddenCols()` — L10198
 
@@ -3853,7 +3856,7 @@ detalhe aberto — ver nota abaixo).
   `titulo`). `startListeners()` — L2066 — os 4 listeners ao vivo, cada um
   chama `scheduleRebuild()` (debounce 150ms) → `rebuild()` — L1332
   (preserva o slide atual pela `key`, não pelo índice) → `render()` —
-  L1515. **`?preview=<objId>`** (2026-10-01, botão "👁" do painel-dev.html
+  L1515. **`_okrEntrada()`** (2026-11-09, chamada em `_okrGoTo`, nunca em `rebuild`): entrada em cascata dos blocos ao navegar (incluindo `.sleg`), crescimento das barras (`scaleX`, `.5s`) e contagem dos números da capa/torre (`.7s`), desligado sob `prefers-reduced-motion: reduce`, mais medidor de FPS com farol no canto inferior direito (`60 fps · bom` / `alerta` / `péssimo`). **`?preview=<objId>`** (2026-10-01, botão "👁" do painel-dev.html
   — ver seção OKR acima) — `_previewObjId` lê o parâmetro no boot;
   `rebuild()` consome ele UMA VEZ no 1º carregamento completo
   (`window._okrOpenDetail(id)`), nunca de novo depois — senão reabriria o
@@ -4651,4 +4654,4 @@ Popup `#boarddata-ov` até 1500px; barra única `#boarddata-colbar-chips` (`_bdR
 Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,nome,user,isViewer,dicas,abrirAjuda})`, `gatilho(nome)`, `controle(elemento)` (interruptor + "Rever dicas"), `definir(bool)`, `reiniciar()`, `fechar()`, `_estado()`. Internos: `proxima(g, checaQuando)` (o `quando` só vale na hora de MOSTRAR), `mostra(d)` (marca vista ao aparecer), prefs em `kanban/usuarios/{uid}/dicas` + localStorage `mare_dicas_{uid}`.
 **Marcador `edita`** (v2.60): dica que manda editar/criar (6 no Radar) é filtrada em `init()` quando `isViewer` (externo só acompanha). **`controle(el)`** desenha UMA vez e só sincroniza o `checked` (foco do teclado), 1 ouvinte por elemento (`el._mdicaOuv`), `avisa()` poda ouvinte que devolve `false`. Oceano: dicas de entrada com `_lobbyVisivel()`. `renderHelp()` (kanban) ordena título-antes-de-texto na busca. **Catálogo centralizado (painel-dev v5.34):** `CATALOGO` no módulo (dados puros por app: `dicas[{id,gatilho,texto,saiba,ajuda}]`, `gatilhos` = rótulos legíveis); `MareDicas.catalogo()` + `MareDicas.minhasPrefs(user)` alimentam a aba **💡 Dicas** do Painel (`renderPcfgDicas()`, `setPcfgTab('dicas')`, `#painel-cfg-dicas`). Ganchos por página (só o que depende do estado): `OKR_DICAS_QUANDO`/`_okrDicasIniciar()` (okr-dev; gatilhos em `_okrSetView()` `view:<aba>`, `openOkrObjetivo` `obj-modal`; controle em `#okr-help-dicas`); `MARE_DICAS_QUANDO`/`_mareDicasIniciar()` (kanban-dev, antes de `loadNotifs()`; gatilhos em `openCard()`/`openCfg()`; controle em `#help-dicas-ctl`); `OCEANO_DICAS_QUANDO`/`iniciarDicas()` (oceano-dev; gatilhos `sino` em `sinoToggle()`, `perfil` em `abrirPerfil()`; controle em `#pf-dicas`). Painel e A Bordo não mostram dicas. Teste: `docs/arezzo/testes/test_dicas.js`.
 
-*Retrato do commit `3e56aa84` (2026-11-07).*
+*Retrato do commit `7b4362b0` (2026-11-10).*
