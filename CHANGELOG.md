@@ -28,7 +28,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 Antes, campos e ações apertavam no celular/tablet; os controles dos checklists eram pequenos e o título disputava espaço com as setas. Agora, campos respeitam a largura do modal, grupos têm separação discreta e o nome ocupa uma linha própria no toque; ações do checklist e do cabeçalho têm alvo de 44 px e nomes acessíveis. Rodapé quebra linha no tablet. Teste: docs/arezzo/testes/test_card_modal_ui.js (boot real, três temas, desktop/celular/tablet, zero/2/50 itens e ADM/membro/PO). Dica: não — ajuste de uma tela já usada.
 
-### Radar › Apresentação: blocos entram em cascata, barras crescem e números da capa contam (SÓ DEV — okr-apresentacao.slide.html) — 2026-11-09
+### Radar › Apresentação: blocos entram em cascata, barras crescem e números da capa contam (PROD · okr-apresentacao.slide.html) — 2026-11-09
 
 Rodada /melhoriauiux com o vocabulário de movimento do GUIA_UI_UX §2.4 (regime experiência). **Antes:** trocar de slide era um corte seco. O CSS tinha uma transição de .35 s que nunca rodava, porque `render()` recria os slides, e as barras já nasciam cheias. **Agora**, ao navegar (quem apresenta e quem acompanha ao vivo, pelo mesmo `_okrGoTo`):
 - os blocos entram em cascata (Stagger: 30 ms por bloco, até 6, .28 s `cubic-bezier(.32,.72,0,1)`);
@@ -50,7 +50,7 @@ Ficou de fora de propósito:
 
 Custo medido (`perf_apresentacao.js`, dpr 2, trocando de slide a cada ~0,7 s sem parar, 3 rodadas): main 66–95 → completo 443–449 ms/s de GPU durante a troca (só cascata 351–375; só barras + contagem 213–305), abaixo do laser ao vivo (~450–560). Parado: 1 → 1. Peça ao André para conferir na máquina dele. Teste: `docs/arezzo/testes/test_apresentacao_movimento.js`. Dica: não (é movimento, não recurso). Fronteira: sem mudança.
 
-### Supercard dentro de supercard: vincular um supercard existente como filho (SÓ DEV · kanban-dev v8.30.914-dev) — 2026-11-09
+### Supercard dentro de supercard: vincular um supercard existente como filho (PROD · kanban v8.30.914) — 2026-11-09
 
 - Na vinculação do modal ("+ Adicionar"), um supercard que já existe passa a aparecer na busca e pode virar filho de outro (ex.: campanha pronta, com seus criativos, dentro de uma campanha maior). Antes a busca escondia qualquer card que já tivesse filhos.
 - O teto continua em 3 camadas (campanha → criativo → versão): o card em que se vincula precisa ser campanha (sem pai) e o que entra pode ter filhos, mas esses não podem ter filhos; criativo só recebe card sem filhos; versão não vincula nada. Um card segue com um pai só e ciclos são recusados (`_superAltura`, `_superTemDescendente`, `_superPodeVincular`).

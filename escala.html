@@ -235,7 +235,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.10 · escala', VERSION_KEY = 'escala';
+const VERSION = 'v1.11 · escala', VERSION_KEY = 'escala';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -1168,9 +1168,11 @@ onAuthStateChanged(auth, u => {
 // Atualização: avisa (sem recarregar sozinho) quando o version.json aponta uma versão nova.
 $('ver').textContent = VERSION;
 async function checarVersao() {
+  if (document.hidden) return;
   try { const v = await (await fetch('version.json?_=' + Date.now(), { cache: 'no-store' })).json(); if (v[VERSION_KEY] && v[VERSION_KEY] !== VERSION) $('versao-aviso').hidden = false; } catch (e) {}
 }
 setTimeout(checarVersao, 4000); setInterval(checarVersao, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checarVersao(); });
 
 // Gancho só pra testes automatizados (somente leitura).
 window.__escala = { get estado() { return { visao, squad, semana: iso(semana), gravando, erroLeitura, souAdm: souAdm() }; } };

@@ -3186,7 +3186,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.95 · painel</div>
+<div class="version">v5.96 · painel</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3418,7 +3418,7 @@ getRedirectResult(auth).then(result=>{
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif.js?v=41"></script>
-<script src="mare-metas.js?v=18"></script>
+<script src="mare-metas.js?v=19"></script>
 <script src="mare-plantao.js?v=5"></script>
 <script src="mare-dicas.js?v=10"></script>
 
@@ -7566,7 +7566,7 @@ async function loadFirebaseStatus(force){
   // 1) Mede a saúde ao vivo do Realtime Database na própria sessão (independente de CORS externo)
   try{
     const t0 = performance.now();
-    await window._get(window._ref(window._db, 'kanban/config'));
+    await window._get(window._ref(window._db, 'kanban/config/adm_emails'));
     _fbLastLatenciaMs = Math.round(performance.now() - t0);
     _fbProbeOk = true;
   }catch(e){
@@ -7984,7 +7984,7 @@ async function loadStatusData(force){
   let latencia = null;
   try{
     const t0 = performance.now();
-    await window._get(window._ref(window._db,'kanban/config'));
+    await window._get(window._ref(window._db,'kanban/config/adm_emails'));
     latencia = Math.round(performance.now()-t0);
     _fbLastLatenciaMs = latencia;
     _fbProbeOk = true;
@@ -8419,6 +8419,15 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_supercard_submarcas_2026_11_09',
+    titulo: '🧩 Supercard dentro de supercard, múltiplas submarcas e Maré ainda mais leve',
+    corpo: '<p>🔗 <b>Supercard dentro de supercard:</b> agora dá para vincular um supercard que já existe como filho de outro pelo botão <b>"+ Adicionar"</b> — perfeito para colocar uma campanha pronta (com seus criativos) dentro de uma campanha maior, mantendo o limite de até 3 camadas (campanha → criativo → versão).</p>'
+      + '<p>🏷️ <b>Mais de uma submarca por card:</b> no card aberto, o campo <b>Submarcas</b> virou uma lista de etiquetas — escolha quantas precisar em <b>"+ Adicionar submarca…"</b>. Nas ações em massa e nas automações, adicionar uma submarca agora <b>soma</b> às que já estão no card sem apagar as anteriores.</p>'
+      + '<p>⚡ <b>Mais leve em segundo plano:</b> quando a aba não está visível, o Maré, o Painel, o Oceano e a Escala pausam checagens periódicas e animações, economizando bateria e memória do computador.</p>',
+    tipo: 'novidade',
+    squad: '*'
+  },
   {
     id: 'seed_save_seguro_2026_11_05',
     titulo: '🔒 Mais uma trava contra card sumindo',
@@ -9728,8 +9737,7 @@ function addAdmEmail(emailArg){
   ADM_EMAILS.push(email);
   saveAdmEmails();
   // Atualiza role no Firebase do usuário se existir
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
+  _getUsuariosMap(true).then(val=>{
     const entry=Object.entries(val).find(([uid,u])=>u.email===email);
     if(entry){
         window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'adm')
@@ -9751,8 +9759,7 @@ function removeAdmEmail(email){
   // pessoa "removida dos ADMs" continuava com papel 'adm' no board
   // (bulk delete etc.) via esse resquício. Rebaixa pra 'membro' se o
   // registro existir e ainda estiver marcado como 'adm'.
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
+  _getUsuariosMap(true).then(val=>{
     const entry=Object.entries(val).find(([uid,u])=>u.email===email);
     if(entry && entry[1].role==='adm'){
       window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'membro')
@@ -10575,8 +10582,7 @@ function loadPcfgUsers(){
   if(!cfgSquadId) return;
   const list=document.getElementById('pcfg-users-list'); if(!list) return;
   list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
+  _getUsuariosMap().then(val=>{
     const membersArr=Object.entries(val).filter(([uid,u])=>{
       if(u.squads) return u.squads[cfgSquadId]===true;
       return u.inscrito===true||u.inscrito==='true';
@@ -10635,7 +10641,7 @@ function updateUserRole(uid, role){
   // mesmo arquivo) já aplicam.
   window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+cfgSquadId),role)
     .then(()=>window._set(window._ref(window._db,'kanban/usuarios_publicos/'+uid+'/squads_roles/'+cfgSquadId),role))
-    .then(()=>{ showToast('✅ Role atualizado'); loadPcfgUsers(); })
+    .then(()=>{ if(_globalUsersCache[uid]){ _globalUsersCache[uid].squads_roles = Object.assign({}, _globalUsersCache[uid].squads_roles, {[cfgSquadId]: role}); } showToast('✅ Role atualizado'); loadPcfgUsers(); })
     .catch(e=>{
       if(e.code==='PERMISSION_DENIED'||e.message?.includes('permission')){
         showToast('⚠ Firebase Rules bloqueou. Adicione a regra de ADM nas Database Rules.');
@@ -10650,8 +10656,7 @@ function updateUserRole(uid, role){
 function addGuestByEmail(){
   const email=document.getElementById('pcfg-guest-email')?.value?.trim(); if(!email) return;
   // Busca usuário pelo email no Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
+  _getUsuariosMap(true).then(val=>{
     const entry=Object.entries(val).find(([uid,u])=>u.email===email);
     if(entry){
       const [uid,u]=entry;
@@ -10662,7 +10667,7 @@ function addGuestByEmail(){
         // pessoa não aparecia na lista de membros (kanban.html lê
         // usuarios_publicos ao vivo pra montar `members`) até o próximo login.
         .then(()=>window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid),upd))
-        .then(()=>{ showToast('✅ '+email+' adicionado como convidado'); loadPcfgUsers(); document.getElementById('pcfg-guest-email').value=''; });
+        .then(()=>{ if(_globalUsersCache[uid]){ _globalUsersCache[uid].role = upd.role; _globalUsersCache[uid].squads = Object.assign({}, _globalUsersCache[uid].squads, {[cfgSquadId]: true}); } showToast('✅ '+email+' adicionado como convidado'); loadPcfgUsers(); document.getElementById('pcfg-guest-email').value=''; });
     } else {
       showToast('⚠ Usuário não encontrado — precisa ter feito login ao menos uma vez');
     }
@@ -11295,6 +11300,15 @@ function _guWrapWrites(){
 }
 // Visualizador externo (painel_viewers) NÃO lê kanban/usuarios (e-mails, notificações e tokens de push de todo mundo — as regras fecham, 2026-10-07): lê o diretório magro usuarios_publicos (nome/foto/sigla/papel).
 function _usuariosNode(){ return window._isPainelViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'; }
+function _getUsuariosMap(forcar){
+  if(!forcar && _guLoadedAt && (Date.now()-_guLoadedAt < _GU_TTL_MS) && _globalUsersCache && Object.keys(_globalUsersCache).length) return Promise.resolve(_globalUsersCache);
+  return window._get(window._ref(window._db,_usuariosNode())).then(snap=>{
+    const val = snap.val() || {};
+    _globalUsersCache = val;
+    _guLoadedAt = Date.now();
+    return val;
+  });
+}
 function loadGlobalUsers(force){
   _guWrapWrites();
   if(_guInflight){
@@ -13716,8 +13730,7 @@ function loadSquadData(sqId){
       members: squadData[sqId]?.members||[], // populated separately below
     };
     // Load members (usuarios inscritos neste squad) for owner name resolution
-    window._get(window._ref(window._db,_usuariosNode())).then(us=>{
-      const usVal=us.val()||{};
+    _getUsuariosMap().then(usVal=>{
       squadData[sqId].members=Object.values(usVal).filter(u=>
         u.inscrito||u.squads?.[sqId]||u.role==='adm'
       ).map(u=>({init:u.init||'',name:u.nome||u.email||'',email:u.email||'',foto:u.foto||''}));
@@ -14052,6 +14065,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
     }
   }
   async function _auCheckVersion(){
+    if(document.hidden) return;
     try{
       const res = await fetch('version.json?_='+Date.now(), {cache:'no-store'});
       if(!res.ok) return;
@@ -14066,6 +14080,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
   }
   setTimeout(_auCheckVersion, FIRST_CHECK_DELAY_MS);
   _auPollTimer = setInterval(_auCheckVersion, CHECK_INTERVAL_MS);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && _auPollTimer) _auCheckVersion(); });
 })();
 // ══ FIM AUTO-UPDATE ══
 

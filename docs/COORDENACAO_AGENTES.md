@@ -137,6 +137,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Antigravity (anotado pelo Claude na revisão) | **Conhecimento do Agente Ágil regenerado na promoção #1662** (kanban v8.30.914, painel v5.96: supercard dentro de supercard, otimizações em segundo plano). As funções embutem o JSON, então só ficam em dia depois de republicadas. | resync → `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 10/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 

@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-09.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-10.
 > Use este índice para localizar rapidamente a linha no `CODE_MAP.md` ou as âncoras `Lxxxx` diretas nos arquivos `-dev`.
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
@@ -94,5 +94,5 @@
 ## 2. Principais Âncoras por Arquivo (`-dev`)
 
 ### `kanban-dev.html` (7 símbolos mapeados)
-- `_applyCardsSync` (L10633) · `_notasUpdate` (L21287) · `saveExtraDesc` (L16327) · `openNewCard` (L17168) · `backfillFlow` (L9375) · `recordMove` (L9249)
-- `openCard` (L16728)
+- `_applyCardsSync` (L10673) · `_notasUpdate` (L21332) · `saveExtraDesc` (L16367) · `openNewCard` (L17208) · `backfillFlow` (L9415) · `recordMove` (L9289)
+- `openCard` (L16768)
