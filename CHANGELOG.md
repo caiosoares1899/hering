@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Oceano › 🔍 Sonar vira módulo compartilhado (mare-sonar-dev.js) com título e disco de sonar (SÓ DEV · oceano-dev v1.66) — 2026-11-10
+
+O Sonar sai do lobby e vira o módulo compartilhado **`mare-sonar-dev.js`** (`?v=1`): um layout e um comportamento só para todas as páginas, e cada página entrega apenas o próprio foco. O lobby é o primeiro a usar (o Maré entra no PR seguinte, trocando a busca antiga pelo mesmo visual).
+- **Título "Sonar" com disco de sonar:** no lugar da lupa, um disco com anéis; ele **varre só enquanto procura** (ao digitar, até ~0,5 s depois da última tecla, e enquanto o Radar carrega). Ao lado do título: "busca em todo o Oceano", "escaneando…" e depois "N resultados" (anunciado sem pressa para o leitor de tela). Parado, nada anima; "reduzir movimento" desliga a varredura.
+- Por fora, o resto fica igual: abas, teclado, recentes e a cópia do Radar de 3 h no aparelho (mesma chave, então quem já tinha a cópia continua sem ler o banco).
+- Teste: `docs/arezzo/testes/test_oceano_sonar.js` (agora com o título, a varredura ao digitar e o disco parado depois que os resultados assentam). Fronteira: sem mudança (a mesma lógica, mudou de arquivo). Dica: sim, no PR do `CATALOGO`.
+
 ### Maré › 🔍 Ctrl+K vira o Sonar: cards do board + Radar, outros squads e Ajuda (SÓ DEV · kanban-dev v8.30.918-dev) — 2026-11-10
 
 O **Ctrl+K** do Maré deixa de ser a "busca global" e vira o **🔍 Sonar**, o mesmo nome e a mesma ideia do lobby do Oceano. A lista agora tem quatro grupos:

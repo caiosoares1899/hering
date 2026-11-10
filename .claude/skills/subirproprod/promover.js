@@ -97,6 +97,13 @@ const TARGETS = {
     versionDevKey: null,
     mode: 'copy',
   },
+  'mare-sonar': {
+    dev: 'mare-sonar-dev.js',
+    prod: 'mare-sonar.js',
+    versionProdKey: null,
+    versionDevKey: null,
+    mode: 'copy',
+  },
   'mare-login': {
     dev: 'mare-login-dev.js',
     prod: 'mare-login.js',
