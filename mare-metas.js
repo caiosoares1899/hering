@@ -368,6 +368,7 @@
 .mm-mfish span em{display:block;font-style:normal;font-size:15px;filter:grayscale(1);opacity:.28;transition:all .3s;}
 .mm-mfish span.on{color:var(--txt2);font-weight:700;}
 .mm-mfish span.on em{filter:none;opacity:1;animation:mm-bob 2.6s ease-in-out infinite;}
+html[data-anim-paused] .mm-mfish span.on em{animation-play-state:paused!important;}
 .mm-mfish span.on:nth-child(2) em{animation-delay:.3s;} .mm-mfish span.on:nth-child(3) em{animation-delay:.6s;} .mm-mfish span.on:nth-child(4) em{animation-delay:.9s;} .mm-mfish span.on:nth-child(5) em{animation-delay:1.2s;}
 @keyframes mm-bob{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-3px) rotate(-8deg);}}
 .mm-next{font-size:11.5px;color:var(--txt2);margin-top:8px;line-height:1.45;position:relative;}
