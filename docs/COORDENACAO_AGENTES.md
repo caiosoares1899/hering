@@ -111,9 +111,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Codex | `codex/card-modal-uiux` | `kanban-dev.html` (modal do card), teste, versão e registros — PR #1661, aguardando revisão do Claude | 09/11/2026 |
 | Codex | `codex/radar-uiux` | `okr-dev.html` (/melhoriauiux no Radar) | 09/11/2026 |
-| Claude | `claude/apresentacao-qc` | `okr-apresentacao.slide.html` (legenda da torre na cascata) | 09/11/2026 |
+| Claude | `claude/<item>` (um por vez) | Plano da consultoria (`docs/ideias/consultoria-oceano-2026-11-09.md`): `travessia-dev.html`, `okr-dev.html`, `oceano-dev.html` conforme o item do sprint | 10/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
@@ -133,11 +132,12 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 ### Pendente de deploy (só o Caio roda)
 
-> ✅ **Tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
+> ✅ **Tudo o que estava listado até 10/11/2026 foi publicado pelo Caio** (em 10/11: as 5 funções do Agente Ágil com o conhecimento regenerado na promoção #1662).
+>
+> Antes disso: **tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Antigravity (anotado pelo Claude na revisão) | **Conhecimento do Agente Ágil regenerado na promoção #1662** (kanban v8.30.914, painel v5.96: supercard dentro de supercard, otimizações em segundo plano). As funções embutem o JSON, então só ficam em dia depois de republicadas. | resync → `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 10/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
