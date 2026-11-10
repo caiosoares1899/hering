@@ -30,7 +30,7 @@ O período do Objetivo deixa de ser texto livre ("2T", "4T-2026", "1S27"…, cad
 - **Salvar exige o padrão.** Sem período, ou com rótulo antigo, o Salvar do Objetivo avisa, abre as Configurações e põe o foco no seletor. Rótulo antigo que dá para converter ganha o botão "Trocar por T426" (sem ano, "4T", usa o ano em que o Objetivo foi criado); o que não converte só pode ser tirado. Lançamento rápido, status de Marco e arquivar não passam pela trava.
 - **Perene** não precisa de período e aparece sempre no período atual do filtro.
 - **Filtro de período** cruza períodos: escolher S226 mostra também quem está em T326, T426 ou A26. Rótulos antigos já entram convertidos.
-- O Agente do Radar ainda grava texto livre até o PR da função (`agenteTools.js`) ir ao ar.
+- O Agente do Radar passa a recusar período fora do padrão no PR #1667 (`functions/okr/agenteTools.js`), que precisa do deploy do `okrAgenteChat`. Aceito: lançamento rápido, status de Marco e o agente editando outros campos não exigem padronizar o período.
 - Teste: `docs/arezzo/testes/test_okr_periodo.js` (boot real, Firebase falso, 3 temas, 1280 e 390 px). Capturas em `docs/capturas/okr-periodo/`.
 - Dica: não (o próprio Salvar explica na hora). Fronteira: sem mudança (só a tela; nenhum nó, regra ou sink novo).
 

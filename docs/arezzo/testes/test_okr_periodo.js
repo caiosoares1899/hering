@@ -9,9 +9,11 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8948';
 const out = process.env.OUT || path.join(__dirname, '../../capturas/okr-periodo');
 const U = {uid:'ana',email:'ana@ciahering.com.br',displayName:'Ana ADM',photoURL:'',providerData:[{providerId:'google.com'}]};
 const mk = (id,t,o)=>({id,titulo:t,areaId:'geral',torre:'digital',responsaveis:['ana'],tagIds:[],history:[],ordem:0,indicadores:[],progressoPct:0,criadoEm:'2026-08-01T12:00:00.000Z',...o});
-const ano = new Date().getFullYear(), aa = String(ano).slice(2), prox = String(ano+1).slice(2);
+const HOJE = new Date('2026-11-10T12:00:00');   // data fixa: o teste não muda de resultado na virada do trimestre/ano
+const aa = '26', prox = '27';
 const seed = ()=>({kanban:{okr:{objetivos:{
   novo:mk('novo','Já no padrão',{trimestres:['T4'+aa]}),
+  dobia:mk('dobia','Da Bia (antigo)',{trimestres:['3T-2026'],responsaveis:['bia']}),
   velho:mk('velho','Rótulo antigo',{trimestres:['4T-2026','1S-2027']}),
   semano:mk('semano','Sem ano',{trimestres:['4T']}),
   vazio:mk('vazio','Sem período',{trimestres:[]}),
@@ -20,14 +22,14 @@ const seed = ()=>({kanban:{okr:{objetivos:{
   ano:mk('ano','Ano todo',{trimestres:['A'+aa]}),
   arq:mk('arq','Arquivado',{trimestres:['3T'],arquivado:true}),
  }, marcos:{}, tags:{}},
- usuarios:{ana:{uid:'ana',nome:'Ana ADM',email:U.email,inscrito:true}}, config:{adm_emails:[U.email]}}});
+ usuarios:{ana:{uid:'ana',nome:'Ana ADM',email:U.email,inscrito:true},bia:{uid:'bia',nome:'Bia',email:'bia@ciahering.com.br',inscrito:true}}, config:{adm_emails:[U.email]}}});
 
 (async()=>{
   fs.mkdirSync(out,{recursive:true});
   const b = await chromium.launch({executablePath:chrome}); let ok = true;
   const t = (n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,400))); };
-  const open = async(vp,theme)=>{ const ctx = await b.newContext({viewport:vp||{width:1280,height:800}}); await fake.install(ctx,seed()); const p = await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-    await p.goto(base+'/okr-dev.html?torre=digital'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(1500);
+  const open = async(vp,theme,user)=>{ const ctx = await b.newContext({viewport:vp||{width:1280,height:800}}); await fake.install(ctx,seed()); const p = await ctx.newPage(); await p.clock.setFixedTime(HOJE); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+    await p.goto(base+'/okr-dev.html?torre=digital'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),user||U); await p.waitForTimeout(1500);
     if(theme) await p.evaluate(th=>document.documentElement.setAttribute('data-theme',th),theme); return {ctx,p,errs}; };
   const banco = (p,id)=>p.evaluate(async id=>(await window._get(window._ref(window._db,'kanban/okr/objetivos/'+id))).val(),id);
 
@@ -105,6 +107,20 @@ const seed = ()=>({kanban:{okr:{objetivos:{
     t('status de Marco num Objetivo fora do padrão continua gravando (a trava é só do Salvar)', m1 && m1.progresso==='concluido', m1);
     t('sem erro de JS', !errs.length, errs);
     await ctx.close(); }
+
+  // Responsável que não é ADM: a trava abre as Configurações e ele consegue padronizar e salvar
+  { const BIA = {uid:'bia',email:'bia@ciahering.com.br',displayName:'Bia',photoURL:'',providerData:[{providerId:'google.com'}]};
+    const {ctx,p,errs} = await open(null,null,BIA);
+    const pode = await p.evaluate(()=>[isAdmUser(window._currentUser), _okrCanEdit(okrObjetivos.dobia)]);
+    t('Bia não é ADM e pode editar o Objetivo dela', pode[0]===false && pode[1]===true, pode);
+    await p.evaluate(()=>openOkrObjetivo('dobia')); await p.waitForTimeout(300);
+    await p.evaluate(()=>saveOkrObjetivo()); await p.waitForTimeout(400);
+    const cfg = await p.evaluate(()=>document.getElementById('okr-obj-config-ov').classList.contains('open') && !!document.querySelector('#okr-sec-obj-trimestres .okr-per-velho button'));
+    t('Responsável: Salvar barrado abre as Configurações com o "Trocar por"', cfg, cfg);
+    await p.click('.okr-per-velho button:has-text("Trocar por T326")'); await p.waitForTimeout(100);
+    await p.evaluate(()=>saveOkrObjetivo()); await p.waitForTimeout(500);
+    t('Responsável padroniza e salva', JSON.stringify((await banco(p,'dobia')).trimestres)==='["T326"]', (await banco(p,'dobia')).trimestres);
+    t('sem erro de JS (Responsável)', !errs.length, errs); await ctx.close(); }
 
   // 3 temas × desktop/celular
   for(const vp of [{width:1280,height:800},{width:390,height:800}]) for(const th of ['dark','light','vice']){
