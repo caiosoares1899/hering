@@ -24,6 +24,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🔍 Ctrl+K vira o Sonar: cards do board + Radar, outros squads e Ajuda (SÓ DEV · kanban-dev v8.30.918-dev) — 2026-11-10
+
+O **Ctrl+K** do Maré deixa de ser a "busca global" e vira o **🔍 Sonar**, o mesmo nome e a mesma ideia do lobby do Oceano. A lista agora tem quatro grupos:
+- **Neste board:** os cards, como antes (título, descrição, Insights do PO e responsável), agora sem se importar com acento, e com o botão "Ver N cards no board".
+- **No Radar:** Objetivos e Marcos ("meus" mostra só os Objetivos em que a pessoa é responsável). Abre no Radar, em aba nova. Usa a mesma cópia enxuta que o lobby guarda no aparelho por 3 h; sem cópia, lê o Radar 1x (~393 KB em prod) só a partir de 2 letras.
+- **Outros squads:** "Buscar “…” em Squad X" abre aquele board com a busca já preenchida (`?busca=`).
+- **Ajuda do Maré:** os tópicos da Central de Ajuda que batem com a busca.
+- Com um card aberto, Ctrl+K continua buscando nos comentários do card. O botão 🔍 do header e o item do menu ⋯ passam a dizer "Sonar"; a Ajuda ("Sonar (Ctrl+K)") e o texto dos atalhos também.
+- Teste: `docs/arezzo/testes/test_mare_sonar.js` (boot real, Firebase falso, 3 temas, 1280 e 390 px, título hostil, cópia do lobby = 0 leituras). Sem regressão em `test_busca_comentarios.js` e `test_card_modal_ui.js`. Capturas em `docs/capturas/mare-sonar/`.
+- Dica: sim (junto com a do lobby, num PR do `CATALOGO`). Fronteira: campo novo no DOM com texto de outras pessoas (títulos de Objetivo e Marco), sempre por `esc()`; id do Objetivo vai na URL por `encodeURIComponent()`; nenhuma leitura que a pessoa já não pudesse fazer.
+
 ### Oceano › 🔍 Sonar: busca em todo o Oceano com Ctrl+K / ⌘K (SÓ DEV · oceano-dev v1.65 · kanban-dev v8.30.917-dev) — 2026-11-10
 
 Busca de todo o Oceano. **Ctrl+K** (no Mac **⌘K**) ou o botão **🔍 Sonar** no topo abre uma caixa só que acha produtos, os seus squads do Maré, **Objetivos e Marcos do Radar**, links da Hering e os seus, a Ajuda e comandos (perfil, ajuda). Enter abre já no lugar certo (o Objetivo pelo `?okr=`, o squad pelo `?squad=`); Ctrl+Enter abre em aba nova.
