@@ -24,10 +24,23 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Acabamento vidro lapidado (`--specular`) e curvas com nome (`--ease-*`) no Maré, Painel, Radar e Oceano (dev) — 2026-11-10
+### SÓ DEV — Acabamento vidro lapidado (`--specular`) e curvas com nome (`--ease-*`) no Maré, Painel, Radar e Oceano (kanban-dev v8.30.927-dev · okr-dev v2.108 · oceano-dev v1.74 · painel-dev v5.99 · PR #1687) — 2026-11-10
 
 - **Vidro lapidado (`--specular`) por tema**: definido `--specular: inset 0 1px 0 rgba(255,255,255,.08)` no escuro/Vice/Entardecer e `--specular: inset 0 1px 0 rgba(255,255,255,.7)` no claro (`[data-theme="light"]`), somado às superfícies `.vidro`, `.panel`, `.card`, `.col` e modais das 4 páginas (`kanban-dev.html`, `painel-dev.html`, `okr-dev.html` e `oceano-dev.html`) conforme o `docs/GUIA_UI_UX.md` (§2.5 regra 6), sem adicionar `backdrop-filter` nem alterar a GPU com a tela parada.
 - **Curvas com nome (`--ease-*`) no `:root`**: adicionados `--ease-out: cubic-bezier(.32,.72,0,1)`, `--ease-in-out: cubic-bezier(.4,0,.2,1)` e `--ease-overshoot: cubic-bezier(.34,1.56,.64,1)` no `:root` das 4 páginas, substituindo todos os `cubic-bezier(...)` soltos por `var(--ease-*)` (§2.4).
+- Capturas em `docs/capturas/vidro-lapidado/`: só as **depois** (24, 4 páginas × 3 temas × 1280/390); as "antes" saem da `main` anterior. Conflito de versão com o #1686 resolvido pelo Claude (versões +1).
+
+### Radar › 🔍 Sonar no Radar: achar Objetivo ou Marco na hora, sem leitura nova (SÓ DEV · okr-dev v2.107 · mare-sonar ?v=8 · mare-dicas ?v=12) — 2026-11-10
+
+O Radar ganha o **🔍 Sonar** (botão no topo e **Ctrl+K / ⌘K**), com o mesmo layout do lobby e do Maré. O foco aqui são Objetivos e Marcos:
+- **Abas:** Tudo · 1 Objetivos · 2 Marcos · 3 Maré · 4 Ajuda (prefixos `o:`, `k:`, `m:`, `a:`). Visualizador externo não vê a aba do Maré.
+- **Enter** abre o Objetivo aqui mesmo (no modal de sempre, já na torre dele); um Marco abre o Objetivo dele; Ctrl/⌘+Enter abre em aba nova.
+- **meus** = Objetivos em que a pessoa é responsável, ou responsável por algum Marco (a régua do filtro de pessoa do Radar). **Período** (T426, S127…) também é pesquisável, e código com número não aceita erro de digitação (T426 não acha T126).
+- **Sem custo de leitura:** a busca usa os Objetivos e Marcos que o Radar já carregou (opção nova `radar.dados` do módulo); nenhuma leitura nova, nem a cópia de 3 h do lobby.
+- Aba Maré: "Buscar “…” nos cards" nos squads da pessoa (abre o Maré em aba nova com a busca preenchida). Aba Ajuda: os tópicos da Ajuda do Radar; tópico novo "Sonar (Ctrl+K)" em Navegar.
+- **Dica:** sim — dica `sonar` no Radar (fim da fila de entrada; `mare-dicas ?v=12`). `mare-sonar ?v=8` nas 3 páginas.
+- Teste: `docs/arezzo/testes/test_okr_sonar.js` (53 asserções, **escrito pelo Codex por contrato**; rodado e ajustado aqui — pegou o T426 × T126). `test_sonar_logica.js` ganhou a regra do código com número; `test_dicas.js` atualizado.
+- Fronteira: sem mudança (dados que a página já tinha; títulos por `esc()`; endereços por `encodeURIComponent`/`paginaOk`).
 
 ### Maré e Oceano › 💡 Dica do Sonar (SÓ DEV · mare-dicas ?v=11 · kanban-dev v8.30.923-dev · oceano-dev v1.70 · okr-dev v2.106 · painel-dev v5.97) — 2026-11-10
 

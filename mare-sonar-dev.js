@@ -18,7 +18,8 @@
        prefixos:{m:'mare', r:'radar'},                          // "m: banner"
        fontes:(q, toks, ctx)=>[{g:'Grupo', esc:'mare', itens:[{k, ic, t, sub, tipo, busca, go, url, app, sempre, toks}]}],   // da página, ANTES do Radar
        depois:(q, toks, ctx)=>[…],                              // da página, DEPOIS do Radar
-       radar:{esc:'radar', url:id=>'okr-dev.html?okr='+id, abrir:(url)=>…},   // ou false
+       radar:{esc:'radar', escMarcos?, url:id=>'okr-dev.html?okr='+id, abrir:(url)=>…, ir?:id=>…, dados?:()=>({objs,marcos})},   // ou false
+       //   dados(): a página já tem o Radar em memória (o próprio okr) — sem leitura; ir(id): abre o Objetivo na própria página
        vazio:'…' (HTML fixo da página, nunca dado), inicio:'…' (caixa vazia sem nada para mostrar), placeholder:'…', recentesChave:'…', deRecente:r=>item|null, aoAbrir:()=>{}, atalho:true (Ctrl/⌘+K global)
      });
      MareSonar.abrir({esc, q}) · MareSonar.fechar() · MareSonar.aberto()
@@ -53,7 +54,7 @@
       if(pal.includes(k)) p += 4;
       else if(pal.some(w=>w.startsWith(k))) p += 3;
       else if(t.includes(k)) p += 2;
-      else if(k.length>=4 && pal.some(w=>umaLetra(w,k) || umaLetra(w.slice(0,k.length),k))) p += 1;
+      else if(k.length>=4 && !/\d/.test(k) && pal.some(w=>umaLetra(w,k) || umaLetra(w.slice(0,k.length),k))) p += 1;   // código com número (T426, S127) não aceita erro: T426 ≠ T126
       else return 0;
     }
     return p + (t.startsWith(toks.join(' ')) ? 2 : 0);
@@ -79,7 +80,7 @@
   function radarAtualizar(){ st.radar = null; st.erro = false; try{ localStorage.removeItem(radarChave()); }catch(e){} radarCarregar(); render(); }
   async function radarCarregar(){
     const u = st.opts && st.opts.user && st.opts.user();
-    if(radarValido() || st.carregando || st.erro || !u || !window._get || !window._ref || !window._db) return;
+    if((st.opts.radar && st.opts.radar.dados) || radarValido() || st.carregando || st.erro || !u || !window._get || !window._ref || !window._db) return;   // dados já na página (Radar): nunca lê
     const c = radarDoCache(); if(c){ st.radar = c.v; st.radarT = c.t; return; }
     st.carregando = true; scan(true);
     try{
@@ -104,18 +105,20 @@
     const okr = r.icone || '🎯';
     const at = (r.atalhos || []).map(a=>Object.assign({tipo:'atalho', ic:okr}, a));
     const g = [{g:'Radar', esc:r.esc||'radar', itens:at, noVazio:true}];
-    if(!radarValido()) return g;
+    // radar.dados(): a página já tem Objetivos e Marcos em memória (o próprio Radar) — usa direto, sem cópia nem leitura
+    if(r.dados){ const d = r.dados(); st.radar = (d && d.objs && Array.isArray(d.marcos)) ? d : {objs:{}, marcos:[]}; st.radarT = Date.now(); }
+    else if(!radarValido()) return g;
     const min = Math.max(0, Math.round((Date.now()-st.radarT)/60000));
-    g.push({g:'Dados do Radar', esc:r.esc||'radar', itens:[{k:'acao:radar-atualizar', ic:'↻', t:'Atualizar o Radar', sub:'Cópia de '+(min<1 ? 'agora há pouco' : 'há '+min+' min')+' neste aparelho · busca de novo no banco', tipo:'acao', busca:'atualizar recarregar dados radar objetivos marcos', manter:true, go:radarAtualizar}]});
+    if(!r.dados) g.push({g:'Dados do Radar', esc:r.esc||'radar', itens:[{k:'acao:radar-atualizar', ic:'↻', t:'Atualizar o Radar', sub:'Cópia de '+(min<1 ? 'agora há pouco' : 'há '+min+' min')+' neste aparelho · busca de novo no banco', tipo:'acao', busca:'atualizar recarregar dados radar objetivos marcos', manter:true, go:radarAtualizar}]});
     const u = st.opts.user && st.opts.user(), uid = u && u.uid;
     const {meus, toks:tk} = separaMeus(toks);
     // "meus" = a mesma régua do filtro de pessoa do Radar (_okrObjTemPessoa): responsável pelo Objetivo OU por algum Marco dele
     const meuMarco = new Set(st.radar.marcos.filter(m=>uid && m.r===uid).map(m=>m.obj));
     const objs = Object.values(st.radar.objs).filter(o=>!meus || o.resp.includes(uid) || meuMarco.has(o.id));
-    const abre = id => { const url = r.url(id); return {url, go:()=>r.abrir(url)}; };
+    const abre = id => { const url = r.url(id); return {url, go: r.ir ? ()=>r.ir(id) : ()=>r.abrir(url)}; };
     g.push({g:'Objetivos', esc:r.esc||'radar', itens:objs.map(o=>Object.assign({k:'obj:'+o.id, ic:'🎯', t:o.t, sub:'Objetivo'+(o.per.length?' · '+o.per.join(', '):''), tipo:'objetivo', busca:o.t+' '+o.per.join(' '), toks:tk, app:'okr'}, abre(o.id)))});
     const ids = new Set(objs.map(o=>o.id));
-    g.push({g:'Marcos', esc:r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj) && (!meus || m.r===uid || st.radar.objs[m.obj].resp.includes(uid))).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, app:'okr'}, abre(m.obj)))});
+    g.push({g:'Marcos', esc:r.escMarcos||r.esc||'radar', itens:st.radar.marcos.filter(m=>ids.has(m.obj) && (!meus || m.r===uid || st.radar.objs[m.obj].resp.includes(uid))).map(m=>Object.assign({k:'marco:'+m.id, ic:'🏁', t:m.t, sub:'Marco de “'+st.radar.objs[m.obj].t+'”', tipo:'marco', busca:m.t, toks:tk, app:'okr'}, abre(m.obj)))});
     return g;
   }
 
