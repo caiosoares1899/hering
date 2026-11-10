@@ -26,6 +26,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 4. **Isolamento de `localStorage` do Firebase (`FB_OVERRIDE_NS`):**
    - Chaves de override de configuração do Firebase no `localStorage` devem obrigatoriamente incluir o sufixo de namespace da página (`_kanban_dev`, `_painel_dev`, etc.).
    - Sem esse isolamento, um override salvo em `-dev.html` vaza para a página de produção `.html` por compartilharem o mesmo domínio no GitHub Pages (`caiosoares1899.github.io`).
+   - O `checar.js` (Identidade de produção) reprova página de prod com `FB_OVERRIDE_NS` terminando em `_dev` — o `.claude/skills/subirproprod/promover.js` NÃO pega, porque trata `kanban_dev` ≡ `kanban` como ambiente (o `kanban.html` ficou assim de 30/09 a 10/11/2026).
 
 5. **Login Popup e `Cross-Origin-Opener-Policy` (COOP) / Safari iOS:**
    - **Chrome Desktop:** a página de login do Google ocasionalmente aplica headers COOP que fazem `signInWithPopup` perder a referência da janela e disparar `auth/popup-closed-by-user` falsamente, exigindo fallback automático para `signInWithRedirect` após 2 falhas consecutivas.
@@ -86,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-10 · Sonar: 6 correções (cópia do Radar vencida em memória, prefixo × aba, "minha", Ctrl+Enter sem destino, seleção pulando, contagem parcial) — mare-sonar ?v=5 (SÓ DEV · oceano-dev v1.70, kanban-dev v8.30.923-dev)
+### 2026-11-10 · Sonar: 6 correções (cópia do Radar vencida em memória, prefixo × aba, "minha", Ctrl+Enter sem destino, seleção pulando, contagem parcial) — mare-sonar ?v=5 (SÓ DEV · oceano-dev v1.71, kanban-dev v8.30.924-dev)
 
 Seis correções do Sonar, achadas na pesquisa do Codex sobre o Spotlight do macOS e confirmadas no código (`mare-sonar-dev.js` ?v=5, adaptador do Maré):
 1. **Cópia do Radar vencia só no aparelho, não na memória.** Com a aba aberta o dia todo, o Sonar usava Objetivos de horas atrás. Agora a cópia em memória também vence em 3 h e é relida na próxima busca que pedir o Radar. Nova ação **"Atualizar o Radar"** (digite "atualizar") relê na hora, sem nenhuma leitura periódica.
@@ -96,6 +97,12 @@ Seis correções do Sonar, achadas na pesquisa do Codex sobre o Spotlight do mac
 5. **Seleção pulava quando o Radar chegava depois** (reproduzido com resposta atrasada: de "Buscar meta nos cards" para "Meta de vendas 2"). Agora a seleção segue a identidade do item, não a posição.
 6. **Contagem parcial parecia total.** Com mais resultados do que cabem, o grupo mostra "Exibindo X de Y": em Tudo, "Ver os Y de …" leva à aba; na aba, "Mostrar mais" (de 30 em 30). O status diz "mostrando X de Y".
 - Testes: `docs/arezzo/testes/test_sonar_etapa1.js` (falhava em 16 checagens antes, passa inteiro depois; inclui Radar com 1,5 s de atraso e janela de 3 h com o relógio adiantado) e `docs/arezzo/testes/test_sonar_logica.js` (Node puro, 43 verificações das funções do módulo, escrito pelo Codex por contrato). Script de console só de leitura: `docs/arezzo/testes/console_sonar.js`.
+### 2026-11-10 · Maré (PROD): kanban.html usava o namespace de override do dev (FB_OVERRIDE_NS = 'kanban_dev') desde 30/09 — kanban v8.30.923
+
+- **Achado:** revisão da promoção #1678. Desde a promoção #1116 (30/09/2026), o `kanban.html` de **produção** usava `FB_OVERRIDE_NS = 'kanban_dev'`, o mesmo namespace do `kanban-dev.html`. Como as duas páginas dividem o domínio (`caiosoares1899.github.io`), um override de Firebase salvo no localStorage pelo dev (`fb_apiKey_kanban_dev`…) passaria a valer também no Maré de produção do mesmo navegador (Armadilha 4). Latente: ninguém usa override hoje.
+- **Por que ninguém viu:** o `.claude/skills/subirproprod/promover.js` normaliza `kanban_dev` ≡ `kanban` como diferença "só de ambiente", então a linha errada sempre pareceu EM DIA.
+- **Correção (PROD · kanban v8.30.923):** `kanban.html` volta a `FB_OVERRIDE_NS = 'kanban'` (as 2 ocorrências). `scripts/checar.js` (Identidade de produção) agora reprova qualquer página de prod com `FB_OVERRIDE_NS` terminando em `_dev`, então a CI pega se voltar.
+- **Validação:** fumaça do `kanban.html` de prod com Firebase falso (boot, Sonar, sem erro de JS); `checar.js` reprova antes e passa depois.
 
 ### 2026-11-10 · Sonar: abas cortadas em janela baixa (o flex espremia a faixa) — mare-sonar ?v=4 (PROD · oceano v1.69, kanban v8.30.922)
 

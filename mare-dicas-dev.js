@@ -48,7 +48,7 @@
       {id:'cards-carregar',gatilho:'view:cards',    texto:'Os cards só são baixados quando você clica em Carregar cards. Assim a tela abre leve.'}]},
     mare:{nome:'Maré', icone:'🌊', gatilhos:{boot:'Ao entrar', 'card-open':'Ao abrir um card', 'cfg-open':'Ao abrir as Configurações'}, dicas:[
       {id:'insistente',gatilho:'boot',     texto:'Não ouve o “ding” do sino? Ligue o modo insistente no rodapé do 🔔: a tela treme e o som se repete.', saiba:{tab:'config', q:'Notificações'}, ajuda:'Notificações'},
-      {id:'busca',    gatilho:'boot',      texto:'Aperte Ctrl+K pra achar um card pelo título, pela descrição ou pelo responsável.', saiba:{tab:'board', q:'Busca global'}, ajuda:'Busca global (Ctrl+K)'},
+      {id:'sonar',    gatilho:'boot',      texto:'Conheça o 🔍 Sonar: Ctrl+K (⌘K no Mac) acha cards deste board, Objetivos do Radar, outros squads e a Ajuda, sem se importar com acento.', saiba:{tab:'board', q:'Sonar'}, ajuda:'Sonar (Ctrl+K)'},
       {id:'meudia',   gatilho:'boot',      texto:'Ctrl+D abre o Meu Dia: o que é seu hoje, num lugar só.', saiba:{tab:'board', q:'Meu Dia'}, ajuda:'Meu Dia (Ctrl+D)'},
       {id:'menu-card',gatilho:'boot',      texto:'Clique com o botão direito num card pra ações rápidas: mover, impedir, duplicar…', saiba:{tab:'cards', q:'Funções de card'}, ajuda:'Funções de card'},
       {id:'desfazer', gatilho:'boot',      texto:'Mexeu sem querer? Ctrl+Z desfaz a última mudança no board.', saiba:{tab:'board', q:'Desfazer'}, ajuda:'Desfazer (Ctrl+Z)'},
@@ -61,6 +61,7 @@
       {id:'travado',  gatilho:'card-open', texto:'Duas pessoas no mesmo card? Quem abre primeiro edita; a outra vê em modo leitura.', saiba:{tab:'cards', q:'Card travado'}, ajuda:'Card travado (duas pessoas no mesmo card)'},
       {id:'automacao',gatilho:'cfg-open',  texto:'Em Automações, regras do tipo "quando acontecer X, faça Y" trabalham por você.', saiba:{tab:'automacoes', q:'O que é uma automação'}, ajuda:'O que é uma automação'}]},
     oceano:{nome:'Oceano', icone:'🌐', gatilhos:{boot:'Ao entrar', sino:'Ao abrir o 🔔', perfil:'Ao abrir ⚙ Meu perfil'}, dicas:[
+      {id:'sonar',    gatilho:'boot',   texto:'Conheça o 🔍 Sonar: Ctrl+K (⌘K no Mac) busca em todo o Oceano: produtos, Objetivos e Marcos do Radar, links e ajuda.', saiba:'sonar', ajuda:'O que é o Sonar 🔍 (Ctrl+K / ⌘K)?'},
       {id:'instalar', gatilho:'boot',   texto:'Instale o Oceano como aplicativo: os produtos abrem como abas dentro dele.', saiba:'instalar', ajuda:'Como instalo o Oceano como aplicativo?'},
       {id:'menu',     gatilho:'boot',   texto:'O botão ⋮⋮⋮ do topo leva a qualquer produto. Lá também ficam os links da Hering e os seus.', saiba:'links', ajuda:'Meus links e links da Hering'},
       {id:'aqui',     gatilho:'boot',   texto:'Prefere cada produto numa aba do navegador? Troque em ⚙ Meu perfil → Como abrir os produtos.', saiba:'aqui', ajuda:'Abrir aqui dentro x aba nova'},

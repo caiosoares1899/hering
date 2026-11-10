@@ -111,12 +111,12 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Claude | `claude/sonar-modulo` + `claude/sonar-mare-modulo` | `mare-sonar-dev.js` (novo), `oceano-dev.html`, `kanban-dev.html`; depois Radar e Travessia | 10/11/2026 |
-| Claude | `claude/<item>` (um por vez) | Plano da consultoria (`docs/ideias/consultoria-oceano-2026-11-09.md`): `travessia-dev.html`, `okr-dev.html`, `oceano-dev.html` conforme o item do sprint | 10/11/2026 |
+| Claude | `claude/sonar-*` (evolução do Sonar: correções, filtros, prévia, histórico) | **`mare-sonar-dev.js`** (módulo: só o Claude edita), adaptadores do Sonar em `kanban-dev.html` e `oceano-dev.html`. **Antigravity:** o `/monitorarbugs` do Sonar relata os achados em "Escalado para o Claude" (ou comentário no PR), sem editar esses arquivos | 10/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
 |---|---|---|
+| 🧭 **Plano da consultoria** (Radar, Travessia e lobby em sprints): **guardado em 10/11/2026** a pedido do Caio. Feito: E1–E3, período padronizado (R0) e o Sonar (que substituiu o O2). Próximo, quando voltar: T4 (cartão "próxima ação" da Travessia); em aberto a pergunta do T8 (aba fechada nos 8 s) | Claude | `docs/ideias/consultoria-oceano-2026-11-09.md` · `docs/ideias/cronograma-oceano.html` |
 | 👕 Camiseta Brasil que "ganha forma" conforme a meta da Black Friday (Oceano, enchimento + peças nos marcos de 20 %, modo telão) | Claude | `docs/ideias/camiseta-brasil-black-friday.md` — depende da arte oficial; Black Friday = 27/11 |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias): triagem em 4 levas — Radar (🧊 deriva, notas→Próximo Passo), Escala→Kanban, Digest do Painel, fluxo do Maré; Meus Pedidos e sino com adiar ficam com o Claude | Caio escolhe a ordem; Claude/Antigravity conforme a triagem | `docs/ideias/dossie-concorrencia-2026-10.md` — **nada roda antes de 04/11** |
 | 🎨 Tema claro do Painel e do Radar (toast invisível, abas/botões com cor fixa, aba ativa, dia de hoje do calendário) — combinado para 18/10, **sem PR que prove que foi feito** | Claude (ou Antigravity: 1 página por vez) | `docs/ideias/tema-claro-painel-radar-2026-10-17.md` · `docs/arezzo/testes/auditoria_temas.js` |
@@ -134,6 +134,10 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 ### Pendente de deploy (só o Caio roda)
 
+> ✅ **Promoção #1678 (10/11/2026):** o Caio publicou as 5 funções do Agente Ágil com o conhecimento regenerado (Sonar, período padronizado, modal do card).
+>
+> 📝 **Na próxima promoção (antes de `npm run conhecimento`):** os títulos do Sonar e do modal do card no `CHANGELOG.md` dizem `kanban v8.30.921 · oceano v1.68 · mare-sonar.js ?v=3`, mas o que foi ao ar no #1678 é **kanban v8.30.922 · oceano v1.69 · mare-sonar.js ?v=4**. Corrigir junto com a regeneração do conhecimento (mudar só o título agora exigiria outro deploy das funções).
+>
 > ✅ **Tudo o que estava listado até 10/11/2026 foi publicado pelo Caio** (em 10/11: as 5 funções do Agente Ágil com o conhecimento regenerado na promoção #1662; e o `okrAgenteChat` com o período padronizado do #1667).
 >
 > Antes disso: **tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
