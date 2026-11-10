@@ -86,6 +86,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-09 · Maré › Modal do card: rolagem lateral em celular/tablet e foco perdido ao recolher checklist (SÓ DEV)
+
+Reprodução com Firebase falso: modal excedia a largura em 54 px no celular de 390 px e o rodapé ultrapassava o tablet. Campos com tamanho mínimo automático alargavam a grade; rodapé não quebrava linha acima de 768 px. Correção em kanban-dev.html: minmax(0,1fr), min-width:0 nos campos e quebra do rodapé até 1000 px, sem esconder overflow. Recolher checklist recriava o botão e perdia o foco, impedindo expandir de novo com Enter; toggleChecklistGroupCollapse agora restaura o foco no mesmo grupo. Teste docs/arezzo/testes/test_card_modal_ui.js falha antes e passa depois; validação read-only em docs/arezzo/testes/console_card_modal_ui.js.
+
 ### 2026-11-09 · Radar › Apresentação: legenda da torre aparecia sozinha antes do cabeçalho na entrada do slide — `okr-apresentacao.slide.html`
 - **Como foi achado:** contact sheet dos quadros da transição (`docs/arezzo/testes/contact_transicao_apresentacao.js`, animações pausadas em 0–700 ms). No quadro 0 do slide da torre, a legenda ("• 1 no prazo • 1 atrasado") já estava visível, enquanto o cabeçalho e a barra ainda iam entrar. Os testes de DOM só olhavam o começo e o fim, por isso não pegaram.
 - **Correção:** `.sleg` entra na lista da cascata (CSS e `_okrEntrada`), logo depois da barra da torre.

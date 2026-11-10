@@ -121,4 +121,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 - **2026-11-09 · Radar › Apresentação (movimento):** troca de slide era corte seco (render() recria os slides; a transição nunca rodava) → cascata dos blocos, barras crescendo e contagem na capa/torre, só ao navegar; slide inteiro e véu do detalhe sem animação (camada de tela cheia = ~520 ms/s de GPU). Teste `test_apresentacao_movimento.js`, PR #1658.
 - **2026-10-16 · Maré › Atalhos:** foco do botão "Definir" (bug) + combinações reservadas do navegador (v8.30.875-dev).
 
+- **2026-11-09 · Maré › Modal do card:** campos sem rolagem lateral, rodapé quebrando no tablet, grupos de checklist separados, alvos de toque e nomes acessíveis; foco preservado ao recolher por teclado (kanban-dev v8.30.915-dev). Teste `test_card_modal_ui.js`.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
