@@ -124,10 +124,10 @@ const seed = ()=>({kanban:{
       squads:{site:{dados:{columns:[{id:'doing',name:'Fazendo'}],cards_index:{c1:'k0',c2:'k1'},cards:{k0:{id:'c1',title:'Banner de Natal',col:'doing'},k1:{id:'c2',title:'Outro card',col:'doing'}}}}}}});
     const p = await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.goto(base+'/kanban-dev.html?squad=site&busca=%3Cimg%20src%3Dx%20onerror%3D%22window.__xss%3D1%22%3E'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(4500);
-    const r = await p.evaluate(()=>({aberta:document.getElementById('search-overlay').classList.contains('open'), val:document.getElementById('search-inp').value, url:location.search, xss:!!window.__xss}));
-    t('Maré: ?busca= abre a busca preenchida, sem XSS, e sai da URL', r.aberta && r.val.startsWith('<img') && !r.xss && !/busca=/.test(r.url), r);
+    const r = await p.evaluate(()=>({aberta:document.getElementById('msn-ov').classList.contains('open'), val:document.getElementById('msn-in').value, url:location.search, xss:!!window.__xss}));
+    t('Maré: ?busca= abre o Sonar preenchido, sem XSS, e sai da URL', r.aberta && r.val.startsWith('<img') && !r.xss && !/busca=/.test(r.url), r);
     await p.goto(base+'/kanban-dev.html?squad=site&busca=banner'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(4500);
-    const n = await p.evaluate(()=>[...document.querySelectorAll('#search-results [onclick]')].map(x=>x.textContent).join(' | '));
+    const n = await p.evaluate(()=>[...document.querySelectorAll('#msn-lista .msn-t')].map(x=>x.textContent).join(' | '));
     t('Maré: ?busca=banner lista o card "Banner de Natal"', /Banner de Natal/.test(n), n);
     t('Maré: sem erro de JS', !errs.length, errs);
     await ctx.close(); }
