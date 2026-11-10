@@ -46,6 +46,7 @@ t('2: aceita uma letra extra em termo longo', () => assert.ok(M._pontua('convers
 t('2: recusa dois erros no termo', () => assert.equal(M._pontua('conversão', ['conxersxo']), 0));
 t('2: termo curto cnv não acha conversão', () => assert.equal(M._pontua('conversão', ['cnv']), 0));
 t('2: não tolera erro em termo de três letras', () => assert.equal(M._pontua('sol', ['sal']), 0));
+t('2: código com número não aceita erro (T426 não acha T126)', () => assert.equal(M._pontua('Objetivo T126', ['t426']), 0));
 t('2: busca sem termos devolve 1', () => assert.equal(M._pontua('qualquer título', []), 1));
 t('2: título começando pela busca ganha bônus', () => assert.ok(M._pontua('conversao do app', ['conversao']) > M._pontua('app de conversao', ['conversao'])));
 t('2: bônus considera a busca inteira', () => assert.ok(M._pontua('conversao do app', ['conversao', 'do']) > M._pontua('conversao app do', ['conversao', 'do'])));
