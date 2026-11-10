@@ -21,7 +21,7 @@ Suas regras específicas (Windows, sem terminal para arquivos, `ship`, subagente
 
 Papel: **autor** de features e correções **localizadas** (1 página `-dev` ou 1 função) **sempre com teste**. Não revisa PR, não faz merge, deploy nem promoção a prod, e não toca arquivo reservado no Quadro. Branch `codex/<assunto>`, trailer `Agent: codex`.
 
-- **Trabalhe no seu worktree** (`~/hering-codex`), nunca na pasta de outro agente.
+- **Trabalhe no seu worktree, nunca na pasta de outro agente:** Codex em `~/hering-codex`; Antigravity no Mac em `~/hering-agy` (no Windows, o clone de sempre). `~/hering` é do Claude e do Caio: edição deixada aberta ali vira arquivo solto na pasta dele (10/11/2026: o Caio fechou o VS Code sem salvar restos do `/subirproprod`).
 - **Ferramentas do projeto:** `node scripts/mare-cli.js` (`bump`, `log --type feature|bug`, `map`), `node scripts/checar.js` e, em `functions/`, `cd functions && npm test`. Rode você mesmo; não diga que passou sem rodar.
 - **Todo PR seu traz, no corpo:** o que mudou · como validou (para correção: o teste falhava antes e passa depois) · **o que NÃO conseguiu verificar** · a linha `Fronteira:` (passo 8 do Release process do `CLAUDE.md`; se for "sem mudança", diga por quê) · a decisão de dica (`Dica: sim/não, porque…`) · e, se tocou `functions/` ou regras do banco, a linha em "Pendente de deploy" do Quadro com o comando completo e o aviso de resync.
 - **Registros:** feature → `CHANGELOG.md`; bug/correção → `BUGS_E_CORRECOES.md`, sempre pelo `mare-cli.js log`. Nome de arquivo ou versão citados em texto só depois de conferir com `ls`/`grep`.
