@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-10 · Maré dev: Ilha Dinâmica empurrava os botões do cabeçalho ao expandir + pílula com cara de emoji
+
+- Ao chegar notificação, a pílula crescia até 560 px dentro do cabeçalho e jogava os botões (.hd-btns) para a 2ª linha (cabeçalho 30→74 px) ou cobria o nome do squad.
+- Correção: no desktop a ilha flutua (absolute) no vão livre entre .hd-l e .hd-btns; _ilhaLugar() calcula o centro e o --ilha-max e reposiciona no resize e por ResizeObserver; a pílula nunca passa do vão. Celular segue no fluxo (3ª linha).
+- Visual padrão virou pílula (referência Vorssaint): 32 px, largura mínima 150 px, ícone pequeno, 'Tudo em dia' esmaecido em repouso. Protótipo (docs/demo/ilha-dinamica-prototipo.html) com o mesmo visual.
+- Testes: docs/arezzo/testes/test_ilha_mare.js (56 ok), docs/arezzo/testes/test_ilha_prototipo.js (222 ok), medição do cabeçalho a 1100/1280/1440 px sem sobreposição.
+- kanban-dev v8.30.930-dev.
+
 ### 2026-11-10 · Timer: continuar pelo popup sobrescrevia a hora de início; campo vazio derrubava a gravação do índice — mare-timer ?v=1 (SÓ DEV · kanban-dev v8.30.928-dev)
 
 Achados ao tirar a lógica do timer do Maré para o módulo compartilhado `mare-timer-dev.js` (base da Ilha Dinâmica):
