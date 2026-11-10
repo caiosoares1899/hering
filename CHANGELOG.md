@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar › Agente do Radar só grava período no padrão (SÓ DEV · functions/okr · PR #1667 · falta deploy do okrAgenteChat) — 2026-11-10
+
+`criar_objetivo` e `editar_campos_okr` só aceitam período no padrão (T426, S127, A27). "4T-2026", "Q4" e afins voltam como `periodo_fora_do_padrao`, com uma mensagem que ensina o formato. Assim o agente segue a mesma regra do seletor do `okr-dev.html` (#1666). Testes: 2 novos em `functions/okr/__tests__/agenteTools.test.js`. **Precisa de deploy do `okrAgenteChat`.** Dica: não. Fronteira: schema do agente checado (entrada do LLM agora passa por regex fechada).
+
 ### Radar › Período padronizado do Objetivo: T126, S226, A27 (SÓ DEV · okr-dev v2.105) — 2026-11-10
 
 O período do Objetivo deixa de ser texto livre ("2T", "4T-2026", "1S27"…, cada um escrevia de um jeito). Agora é um seletor com código fixo: **T** = trimestre, **S** = semestre e **A** = ano todo, seguidos do ano (**T426** = 4º trimestre de 2026, **S127** = 1º semestre de 2027, **A27** = 2027 inteiro). O seletor mostra o ano corrente e o próximo, e dá para marcar mais de um.

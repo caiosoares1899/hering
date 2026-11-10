@@ -56,6 +56,15 @@ const OKR_CHAR_LIMITS = {
   marco_nome: 70,
 };
 
+// 📅 Período padronizado (10/11/2026, igual ao okr-dev.html): T{1-4}{aa} trimestre, S{1-2}{aa} semestre, A{aa} ano todo. Ex.: T426 = 4º tri de 2026.
+const PERIODO_RE = /^(?:T[1-4]|S[12]|A)\d{2}$/;
+const PERIODO_DESC = 'Período no padrão do Radar: T + trimestre + ano (T426 = 4º trimestre de 2026), S + semestre + ano (S127 = 1º semestre de 2027) ou A + ano (A27 = 2027 inteiro). Nunca "4T-2026", "Q4" ou "2º semestre": converta antes e confirme com a pessoa.';
+function validarPeriodos(lista, campo) {
+  const fora = (Array.isArray(lista) ? lista : []).filter((t) => !PERIODO_RE.test(String(t || '')));
+  if (!fora.length) return null;
+  return { ok: false, error: 'periodo_fora_do_padrao', campo, message: `Período fora do padrão: "${fora.join('", "')}". ${PERIODO_DESC}` };
+}
+
 function validarLimitesCaracteres(regras) {
   const violacoes = [];
   for (const r of regras) {
@@ -135,7 +144,7 @@ const criarObjetivoSchema = z.object({
   area_id: gerenciaId(),
   pilar: z.string().min(1).optional().describe(`Pilar estratégico — máx. ${OKR_CHAR_LIMITS.pilar} caracteres.`),
   descricao: z.string().min(1).optional().describe(`Descrição do Objetivo — máx. ${OKR_CHAR_LIMITS.descricao} caracteres na apresentação executiva. Se precisar resumir o texto da pessoa, valide com ela antes de gravar.`),
-  trimestres: z.array(z.string().min(1)).max(6).optional(),
+  trimestres: z.array(z.string().regex(PERIODO_RE)).max(6).optional().describe(PERIODO_DESC + ' Pergunte o período se a pessoa não disser.'),
   indicadores: listaDeTexto(`Lista de Indicadores de Entrega — máx. ${OKR_CHAR_LIMITS.indicadores} caracteres por item na apresentação.`),
 });
 
@@ -146,7 +155,7 @@ const editarCamposOkrSchema = z.object({
   area_id: gerenciaId().optional(),
   pilar: z.string().min(1).optional().describe(`Pilar estratégico — máx. ${OKR_CHAR_LIMITS.pilar} caracteres na apresentação executiva.`),
   descricao: z.string().min(1).optional().describe(`Descrição do Objetivo — máx. ${OKR_CHAR_LIMITS.descricao} caracteres na apresentação executiva. Se o texto pedido passar disso, resuma e valide com a pessoa antes de chamar esta ferramenta.`),
-  trimestres_adicionar: z.array(z.string().min(1)).max(6).optional(),
+  trimestres_adicionar: z.array(z.string().regex(PERIODO_RE)).max(6).optional().describe(PERIODO_DESC),
   indicadores_adicionar: listaDeTexto(`Itens a somar em Indicadores de Entrega — máx. ${OKR_CHAR_LIMITS.indicadores} caracteres por item na apresentação executiva.`),
   progressos_adicionar: listaDeTexto(`Itens a somar em Progressos — máx. ${OKR_CHAR_LIMITS.progressos} caracteres por item na apresentação executiva.`),
   proximos_passos_adicionar: listaDeTexto(`Itens a somar em Próximos Passos — máx. ${OKR_CHAR_LIMITS.proximos_passos} caracteres por item na apresentação executiva.`),
@@ -381,6 +390,8 @@ function makeCriarObjetivoHandler({ db, requestingUid, dryRun }) {
       { campo: 'indicadores', rotulo: 'Indicadores de Entrega', valor: input.indicadores, limite: OKR_CHAR_LIMITS.indicadores, isLista: true },
     ]);
     if (erroLimite) return erroLimite;
+    const erroPeriodo = validarPeriodos(input.trimestres, 'trimestres');
+    if (erroPeriodo) return erroPeriodo;
     if (dryRun) return { ok: true, dryRun: true, tool: 'criar_objetivo', wouldHaveExecuted: { ...input, torre } };
 
     const id = 'obj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -442,6 +453,8 @@ function makeEditarCamposOkrHandler({ db, requestingUid, dryRun }) {
       { campo: 'planos_acao_adicionar', rotulo: 'Planos de Ação', valor: input.planos_acao_adicionar, limite: OKR_CHAR_LIMITS.planos_acao, isLista: true },
     ]);
     if (erroLimite) return erroLimite;
+    const erroPeriodo = validarPeriodos(input.trimestres_adicionar, 'trimestres_adicionar');
+    if (erroPeriodo) return erroPeriodo;
     if (dryRun) return { ok: true, dryRun: true, tool: 'editar_campos_okr', objetivo_id: id, wouldHaveExecuted: input };
 
     const patch = {};
@@ -452,7 +465,7 @@ function makeEditarCamposOkrHandler({ db, requestingUid, dryRun }) {
     if (input.descricao) { patch.descricao = input.descricao; historicos.push({ what: 'alterou a descrição do objetivo', tipo: 'campo' }); }
 
     const listaCampos = [
-      ['trimestres_adicionar', 'trimestres', 'um trimestre/período'],
+      ['trimestres_adicionar', 'trimestres', 'um período'],
       ['indicadores_adicionar', 'indicadores', 'um indicador de entrega'],
       ['progressos_adicionar', 'progressos', 'um progresso'],
       ['proximos_passos_adicionar', 'proximosPassos', 'um próximo passo'],
