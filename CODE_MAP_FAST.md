@@ -30,66 +30,66 @@
   - **L1773**: Checklist (com grupos colapsáveis)
   - **L1779**: Campanhas (`openCamp()`, botão "📣 Campanhas")
   - **L1791**: Supercards / Ficha Técnica
-  - **L1891**: Card lock / "Pedir o card"
-  - **L1910**: Notificações in-app
-  - **L1964**: ⏲ Timer e Produtividade (2026-11-01; promovido em 02/11)
-  - **L1982**: 📅 Calendários (Google Calendar) — nunca teve seção própria até 2026-09-18
-  - **L2013**: Notas
-  - **L2021**: Automações (Butler-style)
-  - **L2095**: Campos dedicados por squad: Submarca / Canal de venda
-  - **L2153**: Botões exclusivos por squad na toolbar — 2 padrões diferentes, escolha proposital
-  - **L2171**: Impedimentos (modo coluna vs. tag)
-  - **L2387**: ⏸ Pausar card (tempo/métricas — 2026-09-03)
-  - **L2419**: ⏱️ Tempo em atraso/bloqueado (arquivado — 2026-09-06)
-  - **L2507**: Padrões de card (cardPatterns) — never indexado antes desta rodada
-  - **L2539**: Agente Ágil (client-side — atalhos que postam @menção real)
-  - **L2632**: Externos / segurança
-  - **L2644**: Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
-  - **L2681**: Backup
-  - **L2694**: 📊 Central de Dados (aba lateral `#dados-tab` → `#dados-drawer`) — captação digital, só leitura no board
-  - **L2698**: Links / Modelos-Recorrentes-Agendamentos (`qlItems`) — escrita concorrente
-  - **L2719**: Marcadores `// --- X ---` já existentes no código
-- **L2728**: painel-dev.html / painel.html (âncoras de dev; confira o `diff` antes de editar prod)
-  - **L2730**: Papel de usuário (2 mecanismos — `squads_roles` é o correto/atual)
-  - **L2760**: 👥 Online no board × 🖥️ Online no painel (aba Visão) — 2 presenças distintas, nunca indexadas antes
-  - **L2789**: 🔔 Central de Notificações (aba "Notificações" do painel-dev + catálogo em `mare-notif-dev.js`, 2026-10-10)
-  - **L2795**: 🔋 Aba Status — Monitores do GitHub Pages e do Firebase (`painel.html` v5.68 / `painel-dev.html` v5.71, 2026-10-14)
-  - **L2799**: Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
-  - **L2838**: Aba "🛤️ Timeline" (criada 2026-09-04, presente nos dois arquivos —
-- **L3005**: okr-dev.html / okr.html — Radar (Objetivos/Marcos; antiga aba do Painel)
-  - **L3520**: 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; promovido como `okr.html` v1.0 · okr)
-  - **L3565**: Calendário de gestão — entregas, agenda do agente e cobrança
-- **L3576**: painel-dev.html / painel.html — demais áreas
-  - **L3578**: Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
-  - **L3631**: Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
-  - **L3692**: Agentes Externos (2026-08-28/29, presente em painel.html e painel-dev.html;
-  - **L3744**: Aba "🤖 Agentes" (2026-09-01, presente em painel.html e painel-dev.html;
-  - **L3780**: Dashboard consolidado
-  - **L3799**: Saúde dos cards no Painel
-  - **L3807**: Agente Ágil no Painel — conversa só de leitura
-  - **L3818**: Board Setup
-  - **L3821**: Usuários
-- **L3825**: oceano-dev.html / oceano.html (lobby da família Oceano — âncoras de dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
-- **L3837**: okr-apresentacao.slide.html — 🎙️ Apresentação ao vivo (2026-10-09; controle ADM em 2026-10-15): `liveInit()` (idempotente: `_liveIniciado`) ouve `kanban/okr/apresentacao_live`; `_isAdmOkr()`/`liveSouAdm()`/`livePodeControlar()` (host ou ADM tem controle total de moderação: laser, caneta, limpar traços, passar/aceitar/recusar controle, assumir a qualquer momento, sincronizar slide e encerrar); `_liveComecar`/`_liveEncerrar`/`_livePassar`/`_livePedir`/`_liveAssumir`/`_livePuxarSlide`/`_liveFerr` (laser/caneta)/`liveAplicar(forcar)` (acompanhar; `forcar` = apresentador que recarregou retoma a posição, 1x — `_liveRetomar`)/`liveAposNavegar()` (envolve `_okrGoTo`/`_okrOpenDetail`/`_okrCloseDetail`)/`liveRender()`/`liveDesenhar()` (canvas dos traços + ponto do laser).
-- **L3839**: okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
-- **L3990**: travessia-dev.html / travessia.html — desenvolvimento de pessoas
-  - **L3992**: Travessia — Baú, Diário, faróis, Frota e avaliação
-- **L4004**: minipainel.html — resumo operacional
-  - **L4006**: Mini painel — página e endpoint oceanoResumo
-- **L4015**: functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
-  - **L4017**: index.js — registro de exports
-  - **L4085**: cards/ — Guardião dos cards
-  - **L4094**: Intake no Agente Ágil — origem externa do card
-  - **L4099**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
-  - **L4409**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
-  - **L4471**: intake/ e backup/ — online
-  - **L4496**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
-  - **L4598**: spotify/ — PAUSADO (2026-08-04)
-  - **L4617**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
-  - **L4627**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
-  - **L4633**: 💬 Indicador de comentários na face do card (2026-10-05)
-  - **L4644**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
-  - **L4649**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
+  - **L1892**: Card lock / "Pedir o card"
+  - **L1911**: Notificações in-app
+  - **L1965**: ⏲ Timer e Produtividade (2026-11-01; promovido em 02/11)
+  - **L1983**: 📅 Calendários (Google Calendar) — nunca teve seção própria até 2026-09-18
+  - **L2014**: Notas
+  - **L2022**: Automações (Butler-style)
+  - **L2096**: Campos dedicados por squad: Submarca / Canal de venda
+  - **L2154**: Botões exclusivos por squad na toolbar — 2 padrões diferentes, escolha proposital
+  - **L2172**: Impedimentos (modo coluna vs. tag)
+  - **L2388**: ⏸ Pausar card (tempo/métricas — 2026-09-03)
+  - **L2420**: ⏱️ Tempo em atraso/bloqueado (arquivado — 2026-09-06)
+  - **L2508**: Padrões de card (cardPatterns) — never indexado antes desta rodada
+  - **L2540**: Agente Ágil (client-side — atalhos que postam @menção real)
+  - **L2633**: Externos / segurança
+  - **L2646**: Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
+  - **L2683**: Backup
+  - **L2696**: 📊 Central de Dados (aba lateral `#dados-tab` → `#dados-drawer`) — captação digital, só leitura no board
+  - **L2700**: Links / Modelos-Recorrentes-Agendamentos (`qlItems`) — escrita concorrente
+  - **L2721**: Marcadores `// --- X ---` já existentes no código
+- **L2730**: painel-dev.html / painel.html (âncoras de dev; confira o `diff` antes de editar prod)
+  - **L2732**: Papel de usuário (2 mecanismos — `squads_roles` é o correto/atual)
+  - **L2762**: 👥 Online no board × 🖥️ Online no painel (aba Visão) — 2 presenças distintas, nunca indexadas antes
+  - **L2791**: 🔔 Central de Notificações (aba "Notificações" do painel-dev + catálogo em `mare-notif-dev.js`, 2026-10-10)
+  - **L2797**: 🔋 Aba Status — Monitores do GitHub Pages e do Firebase (`painel.html` v5.68 / `painel-dev.html` v5.71, 2026-10-14)
+  - **L2801**: Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
+  - **L2840**: Aba "🛤️ Timeline" (criada 2026-09-04, presente nos dois arquivos —
+- **L3007**: okr-dev.html / okr.html — Radar (Objetivos/Marcos; antiga aba do Painel)
+  - **L3522**: 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; promovido como `okr.html` v1.0 · okr)
+  - **L3567**: Calendário de gestão — entregas, agenda do agente e cobrança
+- **L3578**: painel-dev.html / painel.html — demais áreas
+  - **L3580**: Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
+  - **L3633**: Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
+  - **L3694**: Agentes Externos (2026-08-28/29, presente em painel.html e painel-dev.html;
+  - **L3746**: Aba "🤖 Agentes" (2026-09-01, presente em painel.html e painel-dev.html;
+  - **L3782**: Dashboard consolidado
+  - **L3801**: Saúde dos cards no Painel
+  - **L3809**: Agente Ágil no Painel — conversa só de leitura
+  - **L3820**: Board Setup
+  - **L3823**: Usuários
+- **L3828**: oceano-dev.html / oceano.html (lobby da família Oceano — âncoras de dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
+- **L3840**: okr-apresentacao.slide.html — 🎙️ Apresentação ao vivo (2026-10-09; controle ADM em 2026-10-15): `liveInit()` (idempotente: `_liveIniciado`) ouve `kanban/okr/apresentacao_live`; `_isAdmOkr()`/`liveSouAdm()`/`livePodeControlar()` (host ou ADM tem controle total de moderação: laser, caneta, limpar traços, passar/aceitar/recusar controle, assumir a qualquer momento, sincronizar slide e encerrar); `_liveComecar`/`_liveEncerrar`/`_livePassar`/`_livePedir`/`_liveAssumir`/`_livePuxarSlide`/`_liveFerr` (laser/caneta)/`liveAplicar(forcar)` (acompanhar; `forcar` = apresentador que recarregou retoma a posição, 1x — `_liveRetomar`)/`liveAposNavegar()` (envolve `_okrGoTo`/`_okrOpenDetail`/`_okrCloseDetail`)/`liveRender()`/`liveDesenhar()` (canvas dos traços + ponto do laser).
+- **L3842**: okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
+- **L3993**: travessia-dev.html / travessia.html — desenvolvimento de pessoas
+  - **L3995**: Travessia — Baú, Diário, faróis, Frota e avaliação
+- **L4007**: minipainel.html — resumo operacional
+  - **L4009**: Mini painel — página e endpoint oceanoResumo
+- **L4018**: functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
+  - **L4020**: index.js — registro de exports
+  - **L4088**: cards/ — Guardião dos cards
+  - **L4097**: Intake no Agente Ágil — origem externa do card
+  - **L4102**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
+  - **L4412**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
+  - **L4474**: intake/ e backup/ — online
+  - **L4499**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
+  - **L4601**: spotify/ — PAUSADO (2026-08-04)
+  - **L4620**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
+  - **L4630**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
+  - **L4636**: 💬 Indicador de comentários na face do card (2026-10-05)
+  - **L4647**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
+  - **L4652**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
 
 ## 2. Principais Âncoras por Arquivo (`-dev`)
 
