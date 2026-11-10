@@ -134,6 +134,10 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 ### Pendente de deploy (só o Caio roda)
 
+> ✅ **Promoção #1678 (10/11/2026):** o Caio publicou as 5 funções do Agente Ágil com o conhecimento regenerado (Sonar, período padronizado, modal do card).
+>
+> 📝 **Na próxima promoção (antes de `npm run conhecimento`):** os títulos do Sonar e do modal do card no `CHANGELOG.md` dizem `kanban v8.30.921 · oceano v1.68 · mare-sonar.js ?v=3`, mas o que foi ao ar no #1678 é **kanban v8.30.922 · oceano v1.69 · mare-sonar.js ?v=4**. Corrigir junto com a regeneração do conhecimento (mudar só o título agora exigiria outro deploy das funções).
+>
 > ✅ **Tudo o que estava listado até 10/11/2026 foi publicado pelo Caio** (em 10/11: as 5 funções do Agente Ágil com o conhecimento regenerado na promoção #1662; e o `okrAgenteChat` com o período padronizado do #1667).
 >
 > Antes disso: **tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.

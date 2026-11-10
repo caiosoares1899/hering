@@ -190,6 +190,9 @@ function identidadeProd() {
     if (t && /(·\s*dev\b|🧪)/i.test(t[1])) falha('Identidade de produção', `${arq}: o <title> diz "${t[1]}" (marca de dev em página de produção)`, arq);
     const head = html.split('</head>')[0];
     for (const m of head.matchAll(/<(?:link|script)[^>]*(?:href|src)="([^"]*-dev[^"]*)"/g)) falha('Identidade de produção', `${arq}: o <head> aponta para "${m[1]}" (arquivo de dev em página de produção)`, arq);
+    // Armadilha 4: o namespace do override de Firebase no localStorage não pode ser o do dev (mesmo domínio: override salvo no -dev vazaria para o prod).
+    // kanban.html ficou com 'kanban_dev' de 30/09 (#1116) a 10/11/2026 sem ninguém ver: o promover.js trata kanban_dev ≡ kanban como "só ambiente".
+    for (const m of html.matchAll(/FB_OVERRIDE_NS\s*=\s*['"]([^'"]*)['"]/g)) if (/_dev$/.test(m[1])) falha('Identidade de produção', `${arq}: FB_OVERRIDE_NS = '${m[1]}' (namespace de dev em página de produção — Armadilha 4)`, arq);
   }
   ok.push(`Identidade de produção: ${prods.length} página(s) de prod sem título/favicon/módulo de dev`);
 }
