@@ -15,7 +15,7 @@ Pedido do Caio (11/11/2026): o onboarding do Maré hoje é feito ao vivo (via A 
 ## Divisão (§7.7)
 | Parte | Quem | Arquivos |
 |---|---|---|
-| Página do guia (telas simuladas, textos, modos, progresso local) | **Antigravity** (contrato abaixo) | `guia-mare.html` (novo), linha em `docs/BIBLIOTECA.md` |
+| Página do guia (telas simuladas, textos, modos, progresso local) | **Codex** (11/11: o Antigravity estava num `/monitorarbugs`; contrato em `~/hering-logs/delegacoes/2026-11-11-codex-guia-mare.md`; revisão visual do Claude) | `guia-mare.html` (novo), linha em `docs/BIBLIOTECA.md` |
 | Entrada no 1º cadastro, tour no board, `?hotline=1`, sincronizar progresso, Ajuda, dica, versão | **Claude** | `kanban-dev.html`, `version.json`, `mare-dicas-dev.js`, `CHANGELOG.md` |
 
 ## Interface entre as duas partes (fixa — não mudar sem combinar)

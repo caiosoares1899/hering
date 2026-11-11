@@ -112,7 +112,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
 | Claude | `claude/onboarding-mare` | `kanban-dev.html`, `version.json`, `mare-dicas-dev.js`, `CHANGELOG.md`, `docs/ideias/onboarding-mare.md` | 11/11/2026 |
-| Antigravity | `antigravity/guia-mare` | `guia-mare.html` (novo), `docs/BIBLIOTECA.md`, `docs/capturas/guia-mare/` — contrato em `docs/ideias/onboarding-mare.md` | 11/11/2026 |
+| Codex | `codex/guia-mare` | `guia-mare.html` (novo), `docs/BIBLIOTECA.md`, `docs/arezzo/testes/test_guia_mare_pagina.js` — contrato em `docs/ideias/onboarding-mare.md` (Antigravity ocupado com `/monitorarbugs`) | 11/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
