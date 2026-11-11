@@ -66,7 +66,7 @@ function telaReal(id,titulo){
   sr.adoptedStyleSheets=[mgFolha];
   const tema=document.documentElement.dataset.theme==='light'?'light':'';
   const raiz=document.createElement('div');raiz.className='mg-html';if(tema)raiz.setAttribute('data-theme',tema);
-  const vp=document.createElement('div');vp.className='mg-vp';vp.style.width=TELAS.w+'px';vp.style.height=TELAS.h+'px';
+  const vp=document.createElement('div');vp.className='mg-vp';vp.style.width=TELAS.w+'px';vp.style.height=TELAS.h+'px';vp.style.transform='scale(.01)';vp.style.visibility='hidden';host.style.height='0px';
   const tpl=document.createElement('template');tpl.innerHTML=html;vp.append(tpl.content);
   raiz.append(vp);sr.append(raiz);
   let inteira=false;
@@ -83,7 +83,7 @@ function telaReal(id,titulo){
     vp.style.transform='scale('+s+') translate('+tx+'px,'+ty+'px)';host.style.height=Math.round(vh*s)+'px';raiz.style.height=host.style.height;
   }
   zoom.onclick=()=>{inteira=!inteira;desenhar();};
-  requestAnimationFrame(desenhar);if(window.ResizeObserver)new ResizeObserver(()=>desenhar()).observe(host);
+  requestAnimationFrame(()=>{desenhar();vp.style.visibility='';});if(window.ResizeObserver)new ResizeObserver(()=>desenhar()).observe(host);
   return fig;
 }
 function start(m){modo=m;idx=0;render();}
