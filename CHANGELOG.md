@@ -24,6 +24,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Travessia — rodada de UI/UX: mais Marine Glass, menos "cara de IA" (SÓ DEV · travessia-dev.html) — 2026-11-11
+
+Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O que estava ruim → o que ficou:
+- Fundo sem vida (só o degradê) → **peixinhos e bolhas iguais aos do Oceano** (8/16 no computador, 4/8 no celular). O botão 🐟 no topo desliga e lembra neste navegador. Eles pausam com a aba escondida, sem foco ou 60 s parada, e param com "reduzir movimento".
+- Tudo numa caixa, uma embaixo da outra → **saudação direto sobre o mar** (sem caixa, ondas e barquinho balançando). **Avaliação, Mural de Estrelas e Meu Baú** no Início e o cabeçalho da Frota viraram **seções abertas** (título + linha fina, como Atalhos/Meus links do Oceano); no tema claro elas ganham um fundo leve para o texto continuar legível.
+- Caixa dentro de caixa → dentro de um cartão (ciclo da Avaliação, detalhe da pessoa), as partes são seções separadas por linha fina.
+- Gradiente azul→verde em todo botão, aba, avatar, barra e interruptor (sinal clássico de "gerado") → botão principal em cor sólida; aba/filtro selecionados com fundo azul suave e borda; avatar neutro.
+- Bolinha em volta de todo emoji de título → emoji como ícone, sem moldura.
+- Vários elementos coloridos competindo → **um protagonista por bloco**: a cor do estado fica só no anel do farol (sem caixa verde/vermelha em volta e sem o anel no avatar da Frota).
+- Faixa colorida na lateral dos cartões do Baú → removida (o tipo segue no ícone e no filtro).
+- "Devolutiva trancada" em amarelo de alerta → neutra com 🔒 (trancado não é aviso). O "🫶 Pra ficar de olho" do líder continua amarelo.
+- Mural de Estrelas com moldura dourada → vidro com ⭐.
+- Desfoque (`backdrop-filter`) nos cartões, na barra do topo e na barra de abas → vidro lapidado (linha de luz no topo, guia §2.5 regra 6), sem desfoque nenhum na página: com os peixes nadando atrás, ele seria refeito a cada quadro. Cantos 22 → 18 px.
+- No tema claro e no Entardecer, a saudação e as seções abertas ganham um fundo leve de vidro (texto direto sobre o azul ou o brilho laranja ficava < 4,5:1).
+- Cartões vizinhos esticando até a altura do maior (vazio embaixo do humor e no Baú) → alinhados pelo topo.
+- Folga grande embaixo da barra do modo demonstração → removida.
+- Testes: `test_travessia_marine.js` (64/64, 3 temas × 1280/390 px). `test_travessia_ui.js` foi atualizado para o desenho novo; ele também caía na `main` por procurar o interruptor de compartilhar humor, removido em 31/10.
+
 ### Radar — faixa "⭐ Pra você" no topo da lista (R3 da consultoria) (SÓ DEV · okr-dev v2.113) — 2026-11-11
 
 - Até 4 números da pessoa logada, acima do resumo, cada um clicável (clicar de novo desfaz): 🎯 Objetivos meus (responsável pelo Objetivo ou por algum Marco ativo), 🧊 parados, ⚠️ em risco ou atrasados, 📅 Marcos meus com prazo em até 14 dias (inclui os vencidos, com a contagem).

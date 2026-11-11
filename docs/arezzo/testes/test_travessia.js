@@ -149,7 +149,7 @@ const seed = () => ({ kanban: {
     const tx = await p.locator('#painel').innerText();
     t('Frota: Termômetro do time com média 3,5 de 5 e a contagem de respostas e de pessoas', /Termômetro do time/.test(tx) && /3,5/.test(tx) && /4\s*respostas de\s*2\s*de 2 pessoas/.test(tx.replace(/\n/g, ' ')), tx.slice(0, 400));
     t('Frota: compara com a semana anterior (caiu)', /caiu em relação à semana anterior/.test(tx), '');
-    t('Frota: "Pra ficar de olho" lista a Ana (marcou mal ontem), com texto e botão de abrir, e não a Bia', /Pra ficar de olho/.test(tx) && (await p.locator('.trava li', { hasText: 'Ana Lima' }).count()) === 1 && (await p.locator('.trava li', { hasText: 'Bia Souza' }).count()) === 0, '');
+    t('Frota: "Pra ficar de olho" lista a Ana (marcou mal ontem), com texto e botão de abrir, e não a Bia', /Pra ficar de olho/.test(tx) && (await p.locator('.apoio li', { hasText: 'Ana Lima' }).count()) === 1 && (await p.locator('.apoio li', { hasText: 'Bia Souza' }).count()) === 0, '');
     t('cartão da Ana ganha o selo 🫶 "vale um oi"; o da Bia não', /vale um oi/.test(await p.locator('.pcard', { hasText: 'Ana Lima' }).innerText()) && !/vale um oi/.test(await p.locator('.pcard', { hasText: 'Bia Souza' }).innerText()), '');
     t('a nota de privacidade aparece quando alguém não compartilha (aqui todos compartilham, então não)', !/não compartilh/.test(tx), '');
     t('Pau: sem erro de JS', !errs.length, errs); await ctx.close(); }
