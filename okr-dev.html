@@ -2101,7 +2101,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.115 · okr-dev</div>
+<div class="version">v2.116 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2846,6 +2846,7 @@ let _okrShowArquivados = false;
 
 function _okrToggleArquivados(){
   _okrShowArquivados = !_okrShowArquivados;
+  if(_okrShowArquivados) _okrFilter.pv = '';
   renderOkrObjetivos();
 }
 
@@ -3628,7 +3629,7 @@ function _okrSonarIniciar(){
     radar: { esc:'obj', escMarcos:'marcos', icone:'🎯',
       url: id=>pag+'?okr='+encodeURIComponent(id),
       abrir: url=>window.open(url, '_blank', 'noopener'),
-      ir: id=>{ if(okrObjetivos[id]){ _okrEntrarTorre(_okrTorreDe(okrObjetivos[id]), false); openOkrObjetivo(id); } },
+      ir: id=>{ _okrNavegarParaObjetivo(id, false); },
       dados: ()=>{
         const objs = {};
         Object.values(okrObjetivos||{}).forEach(o=>{ if(!o || !o.id || o.arquivado) return;
@@ -3645,7 +3646,7 @@ function _okrSonarIniciar(){
         g.push({g:'Buscar nos cards do Maré', esc:'mare', fim:true, max:3, itens:sqs.map(sq=>{ const url = mare+'?squad='+encodeURIComponent(sq)+'&busca='+encodeURIComponent(q.slice(0,120));
           return {k:'mare:'+sq, ic:'🔎', t:'Buscar “'+q+'” nos cards', sub:'Squad '+sq+' · abre a busca do Maré', tipo:'busca', sempre:true, url, go:()=>window.open(url, '_blank', 'noopener')}; })});
       }
-      const hs = [...document.querySelectorAll('#okr-help-body details.hlp-it[id^="hlp-"]')].map(d=>{ const id = d.id.slice(4), tt = d.querySelector('.hlp-tt b');
+      const hs = [...document.querySelectorAll('#okr-help-body details.hlp-it[id^="hlp-"]')].filter(d=>!(OKR_SO_DIGITAL && d.closest('.okr-so-hering-esconde'))).map(d=>{ const id = d.id.slice(4), tt = d.querySelector('.hlp-tt b');
         return {k:'help:'+id, ic:'❓', t:tt ? tt.textContent : id, sub:'Ajuda do Radar', tipo:'ajuda', busca:semTag(d.textContent).slice(0,500), go:()=>openOkrHelp(id), rec:{help:id}}; });
       g.push({g:'Ajuda do Radar', esc:'ajuda', max:4, itens:hs});
       return g;
@@ -3653,7 +3654,7 @@ function _okrSonarIniciar(){
     deRecente: (r, base)=>{
       if(r.help && document.getElementById('hlp-'+r.help)) return Object.assign(base, {ic:'❓', go:()=>openOkrHelp(r.help), rec:{help:r.help}});
       const m = String(r.url||'').match(/[?&]okr=([^&#]+)/); const id = m && decodeURIComponent(m[1]);
-      if(id && okrObjetivos[id] && !okrObjetivos[id].arquivado) return Object.assign(base, {ic:'🎯', url:pag+'?okr='+encodeURIComponent(id), go:()=>{ _okrEntrarTorre(_okrTorreDe(okrObjetivos[id]), false); openOkrObjetivo(id); }});
+      if(id && okrObjetivos[id] && !okrObjetivos[id].arquivado) return Object.assign(base, {ic:'🎯', url:pag+'?okr='+encodeURIComponent(id), go:()=>{ _okrNavegarParaObjetivo(id, false); }});
       return null;
     },
   });
@@ -3769,11 +3770,28 @@ function _okrFeedMarcoConcluido(m){
   const torre = _okrTorreDe(obj);
   return _okrFeedPush('marco_concluido', [torre], `✅ Marco concluído: "${m.nome||'?'}"`, `Objetivo: ${obj.titulo||'?'} · ${okrTorreTitulo(torre)}`, {objId:m.objetivoId, marcoId:m.id||''});
 }
-function _okrIrParaObjetivo(objId){
+async function _okrNavegarParaObjetivo(objId, pushTorre){
   const o = okrObjetivos[objId];
   if(!o){ showToast('⚠ Esse Objetivo não foi encontrado — pode ter sido excluído ou arquivado.'); return; }
-  _okrEntrarTorre(_okrTorreDe(o)); openOkrObjetivo(objId);
+  if(document.getElementById('okr-aq-ov')?.classList.contains('open')) _okrAtingQuickClose();
+  if(document.getElementById('okr-ating-chart-ov')?.classList.contains('open')) closeOkrAtingChart();
+  if(document.getElementById('okr-marco-ov')?.classList.contains('open')){
+    await _okrTryCloseMarco();
+    if(document.getElementById('okr-marco-ov')?.classList.contains('open')) return;
+  }
+  const objAberto = document.getElementById('okr-obj-ov')?.classList.contains('open') || document.getElementById('okr-obj-config-ov')?.classList.contains('open');
+  if(objAberto && _okrEditingObjId === objId){
+    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) closeOkrConfigBack();
+    return;
+  }
+  if(objAberto){
+    await _okrTryCloseObjetivo();
+    if(document.getElementById('okr-obj-ov')?.classList.contains('open') || document.getElementById('okr-obj-config-ov')?.classList.contains('open')) return;
+  }
+  _okrEntrarTorre(_okrTorreDe(o), pushTorre);
+  openOkrObjetivo(objId);
 }
+function _okrIrParaObjetivo(objId){ return _okrNavegarParaObjetivo(objId); }
 function _okrTorreInicial(){ return _okrTorreValida(_okrTorreAtual) || _okrTorreAtual==='global' ? _okrTorreAtual : (_okrMinhaEhGeral() ? 'global' : _okrMinhaTorre()); }
 function _okrIrParaChat(){ if(!_okrTorreAtual) _okrEntrarTorre(_okrTorreInicial()); _okrAbrirAgente(); }
 function _okrIrParaNotas(data){
@@ -3875,7 +3893,7 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'notas' | 'calendario
   const dsWrap = document.getElementById('okr-ds-wrap'); if(dsWrap) dsWrap.style.display = _okrShowDataStudio ? '' : 'none';
   const cardsBtn = document.getElementById('okr-cards-btn'); if(cardsBtn) cardsBtn.style.display = window._isPainelViewer ? 'none' : '';   // visualizador externo não lê os cards dos squads
   const dsBtn = document.getElementById('okr-ds-btn'); if(dsBtn) dsBtn.style.display = window._isPainelViewer ? 'none' : '';   // visualizador externo não acessa relatórios internos
-  ['okr-toolbar','okr-stats-strip','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
+  ['okr-toolbar','okr-pravoce','okr-stats-strip','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.style.display = view==='objetivos' ? '' : 'none';
   });
   const arqBtn = document.getElementById('okr-arquivados-btn'); if(arqBtn) arqBtn.style.display = view==='objetivos' ? '' : 'none';
@@ -5188,6 +5206,8 @@ const _okrDiasEntre = (a,b) => Math.round((Date.parse(b+'T12:00:00')-Date.parse(
 function _okrRitmo(o, hoje){
   const at = o && o.atingimento;
   if(!_okrAtingConfigurado(at) || !OKR_RITMO_TIPOS.includes(at.tipo)) return null;
+  const ini = Number(at.inicial)||0, meta = Number(at.meta);
+  if(!isFinite(meta) || meta===ini) return null;
   const p = _okrObjPeriodo(o); if(!p) return null;
   hoje = hoje || _okrIsoDia(new Date());
   const total = _okrDiasEntre(p.ini, p.fim) + 1, passado = Math.max(0, Math.min(total, _okrDiasEntre(p.ini, hoje) + 1));
@@ -5195,14 +5215,16 @@ function _okrRitmo(o, hoje){
   if(real >= 100) return null;
   const esperado = Math.round(passado / total * 100);
   if(esperado < 10) return null;                                   // primeiros ~10% do período: cedo demais pra julgar
+  const encerrado = hoje > p.fim;
   const delta = real - esperado;                                   // pontos percentuais
-  const faixa = delta >= 5 ? 'adiantado' : delta >= -10 ? 'no_ritmo' : delta >= -25 ? 'atras' : 'muito_atras';
+  const faixa = delta >= 5 ? 'adiantado' : (!encerrado && delta >= -10) ? 'no_ritmo' : delta >= -25 ? 'atras' : 'muito_atras';
   const projecao = Math.min(200, Math.round(real / passado * total));   // onde fecha mantendo o ritmo médio até aqui
-  return { esperado, real, delta, faixa, projecao, diasRestantes: total - passado, ini: p.ini, fim: p.fim, encerrado: hoje > p.fim };
+  return { esperado, real, delta, faixa, projecao, diasRestantes: total - passado, ini: p.ini, fim: p.fim, encerrado };
 }
 function _okrRitmoMotivo(o, hoje){   // por que não há ritmo (só para o detalhe; o cartão fica quieto)
   const at = o && o.atingimento;
   if(!_okrAtingConfigurado(at) || !OKR_RITMO_TIPOS.includes(at.tipo)) return '';
+  if(!isFinite(Number(at.meta)) || Number(at.meta)===(Number(at.inicial)||0)) return 'Defina um valor de meta diferente do valor inicial para ver o ritmo.';
   const p = _okrObjPeriodo(o); if(!p) return 'Defina um período padrão (trimestre, semestre ou ano) para ver o ritmo.';
   if((_okrAtingPctObj(o)||0) >= 100) return 'Meta atingida. 🎯';
   hoje = hoje || _okrIsoDia(new Date());
@@ -5223,7 +5245,12 @@ function _okrRitmoResumoHtml(o){
 
 
 // ── Render: grid de Objetivos, agrupado por Gerência ─────────────────
-function _okrSetFilter(campo, valor){ _okrFilter[campo] = valor; renderOkrObjetivos(); }
+function _okrSetFilter(campo, valor){
+  _okrFilter[campo] = valor;
+  if(campo==='pessoa' && valor!=='__eu') _okrFilter.pv = '';
+  if(campo==='status' && valor && _okrFilter.pv==='atencao' && !['risco','atrasado'].includes(valor)) _okrFilter.pv = '';
+  renderOkrObjetivos();
+}
 
 
 
@@ -5412,6 +5439,7 @@ function _okrPraVoce(k){
   const liga = !_okrPvAtivo(k);
   Object.assign(_okrFilter, {status:'', parado:false, pv:'', pessoa: liga ? '__eu' : ''});
   if(liga){ if(k==='parados') _okrFilter.parado = true; else if(k!=='meus') _okrFilter.pv = k; }
+  if(_okrShowCal || _okrShowHistorico || _okrShowNotas || _okrShowCards || _okrShowDataStudio) _okrSetView('objetivos');
   renderOkrObjetivos();
 }
 function _okrPraVoceHtml(){
