@@ -4,8 +4,9 @@
 // Regra: kanban/squads/{sq}/dados/card_comments/{cardId}/{commentId}/.validate. Sem ela, qualquer pessoa com acesso ao squad
 // gravava comentário com o uid de OUTRA pessoa — e a função da @menção (mentionTrigger.js) usa esse uid para notificar e para o
 // marcador "analisando" da Ilha. Continua valendo: editar/reagir sem trocar o autor; ids de sistema ('system', 'automacao',
-// 'assistente_ferias'); cópia FIEL ao duplicar card (`copiadoDe` + mesmo id, autor e texto na origem — nó novo ou campo legado);
-// migração do campo legado do próprio card. Apagar não é validado (regra geral de `dados`).
+// 'assistente_ferias'); cópia FIEL ao duplicar card (`copiadoDe` = id simples + mesmo id, autor e texto em card_comments da origem).
+// O campo legado `cards/{key}/comments` NÃO serve de prova (qualquer membro escreve nele): comentário legado de outra pessoa se migra
+// pelo script de console ANTES do deploy das regras. Apagar não é validado (regra geral de `dados`).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -56,20 +57,23 @@ test('ids de sistema continuam aceitos (comentário automático, Automação, As
     assert.equal(grava(P('c2', 's' + i), A.pau, cm({ id: 's' + i, uid: u })), true, u));
 });
 
-test('duplicar card: cópia FIEL (copiadoDe + mesmo id, autor e texto) passa; cópia adulterada não', () => {
+test('duplicar card: cópia FIEL (copiadoDe + mesmo id, autor e texto) passa; cópia adulterada, legado ou caminho plantado não', () => {
   reset();
   assert.equal(grava(P('c9', 'cm1'), A.pau, cm({ copiadoDe: 'c1' })), true, 'cópia do nó novo');
   assert.equal(grava(`${BASE}/card_comments/c9`, A.pau, { cm1: cm({ copiadoDe: 'c1' }) }), true, 'cópia em lote (update no card novo)');
-  assert.equal(grava(P('c9', 'cmL'), A.pau, cm({ id: 'cmL', uid: 'ana', text: 'legado', copiadoDe: 'c3' })), true, 'cópia do campo legado');
   assert.equal(grava(P('c9', 'cm1'), A.pau, cm({ copiadoDe: 'c1', text: 'texto inventado' })), false, 'mesmo id/autor, texto trocado');
   assert.equal(grava(P('c9', 'cmX'), A.pau, cm({ id: 'cmX', copiadoDe: 'c1' })), false, 'id que não existe na origem');
   assert.equal(grava(P('c9', 'cm1'), A.pau, cm({ copiadoDe: 'c2' })), false, 'origem errada');
+  assert.equal(grava(P('c9', 'cmL'), A.pau, cm({ id: 'cmL', uid: 'ana', text: 'legado', copiadoDe: 'c3' })), false, 'origem só no campo legado não prova (qualquer um escreve lá)');
+  DB.kanban.squads.dados.dados.card_comments.cX = { cmY: { zzz: { cmF: cm({ id: 'cmF', uid: 'ana', text: 'T' }) } } };   // dado plantado num subnó
+  assert.equal(grava(P('c9', 'cmF'), A.pau, cm({ id: 'cmF', uid: 'ana', text: 'T', copiadoDe: 'cX/cmY/zzz' })), false, 'copiadoDe com "/" apontando para dado plantado');
   assert.equal(grava(P('c9', 'cm1'), A.pau, cm({ uid: 'pau', copiadoDe: 'c1' })), true, 'cópia "minha" é só um comentário meu');
 });
 
-test('migração do campo legado do PRÓPRIO card passa; inventar comentário legado não', () => {
+test('campo legado não serve de prova: migrar comentário legado de OUTRA pessoa é recusado; o meu passa', () => {
   reset();
-  assert.equal(grava(P('c3', 'cmL'), A.pau, cm({ id: 'cmL', uid: 'ana', text: 'legado' })), true, 'migra fiel');
-  assert.equal(grava(P('c3', 'cmL'), A.pau, cm({ id: 'cmL', uid: 'ana', text: 'outro' })), false, 'texto diferente do legado');
-  assert.equal(grava(P('c2', 'cmL'), A.pau, cm({ id: 'cmL', uid: 'ana', text: 'legado' })), false, 'legado de outro card sem copiadoDe');
+  assert.equal(grava(P('c3', 'cmL'), A.pau, cm({ id: 'cmL', uid: 'ana', text: 'legado' })), false, 'legado da Ana migrado pelo Pau');
+  DB.kanban.squads.dados.dados.cards[1].comments = { cmF: cm({ id: 'cmF', uid: 'ana', text: '@Agente Ágil faz X' }) };   // plantado no legado
+  assert.equal(grava(P('c2', 'cmF'), A.pau, cm({ id: 'cmF', uid: 'ana', text: '@Agente Ágil faz X' })), false, 'plantar no legado e "migrar"');
+  assert.equal(grava(P('c3', 'cmL'), A.ana, cm({ id: 'cmL', uid: 'ana', text: 'legado' })), true, 'a própria autora migra o dela');
 });

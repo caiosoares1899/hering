@@ -149,7 +149,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 💬 Autor do comentário preso a quem está logado: `.validate` em `squads/$squadId/dados/card_comments/$cardId/$commentId/uid`. ⚠️ **SÓ DEPOIS** que o `kanban.html` de prod tiver o `copiadoDe` ao duplicar card (promoção do kanban-dev ≥ v8.30.937) — antes disso, duplicar card em prod perderia os comentários de outras pessoas sem aviso. | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 11/11/2026 |
+| Claude | 💬 Autor do comentário preso a quem está logado: `.validate` em `squads/$squadId/dados/card_comments/$cardId/$commentId/uid`. ⚠️ **Ordem obrigatória:** (1) promover o kanban com `copiadoDe` ao duplicar (≥ v8.30.937); (2) esperar 10 min depois do Pages publicar (abas velhas recarregam); (3) rodar `docs/arezzo/testes/console_comentarios_pre_regra.js` no kanban.html de prod (migra comentários legados); (4) resync + deploy; (5) rodar `docs/arezzo/testes/console_comentarios_pos_regra.js` no kanban-dev?squad=dev. | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 11/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
