@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Ilha Dinâmica (/monitorarbugs): 📌 com véu travava o quadro, Esc fechava a ilha atrás do card, 1ª entrega do agente perdida, principal desligada (SÓ DEV · kanban-dev v8.30.942-dev)
+
+- **A — 📌 travava o quadro (regressão do véu, #1707):** com a ilha fixada (o 📌 promete continuar usando o quadro com ela aberta), o véu de vidro seguia cobrindo a tela e engolia todo clique. Agora o véu sai com o 📌 e volta ao desafixar.
+- **B — Esc na camada errada:** ilha fixada + card (ou Minhas preferências) aberto por cima: o Esc fechava a ilha escondida atrás em vez da janela de cima. Agora, com uma janela .ov aberta, o Esc é dela.
+- **C — 1ª entrega da escuta do 🤖 Agente perdida:** a marca de "ligado" só existia DEPOIS do onValue; o Firebase real entrega na hora (dentro da chamada) quando o dado já está em cache (ex.: desligar e religar o módulo) e essa 1ª entrega era descartada — "Analisando…" sumia até o marcador mudar. Agora a marca vem antes.
+- **D — Ajustes:** desligar o módulo escolhido como atividade principal deixava o seletor mostrando "Timer" e a preferência apontando para o módulo desligado. Agora a principal volta para Timer.
+- Testes: docs/arezzo/testes/test_ilha_monitorarbugs_1111.js (7; 4 falhavam antes), 9 baterias da ilha e do timer, functions 1212/0. Validação no console: docs/arezzo/testes/console_ilha_monitorarbugs_1111.js.
+
 ### 2026-11-11 · Ilha Dinâmica: texto sem nitidez no painel aberto + botões misturados com o quadro (SÓ DEV · kanban-dev v8.30.940-dev)
 
 - **Texto sem nitidez (relato do Caio):** a pílula é centralizada com translate(-50%); com largura ímpar o painel aberto caía em meio pixel e o navegador borrava o texto dos botões e do cartão. _ilhaPainelLugar() agora arredonda a posição para pixel inteiro (--ilha-dx/--ilha-dy).
