@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Radar: recorte Pra você preso ao trocar de torre (SÓ DEV)
+
+Sintoma: selecionar Marcos em até 14 dias e trocar para uma torre sem esses Marcos mantinha a lista vazia e o chip de origem desaparecia. Causa: _okrEntrarTorre limpava gerência e período, mas preservava o novo filtro pv. Correção: limpar pv na mudança de torre; navegar na mesma torre preserva a escolha. Cenário: digital com pv=marcos → comercial sem Marcos pessoais. Teste: docs/arezzo/testes/test_monitorarbugs_1112.js (Playwright preparado, execução pelo maestro).
+
 ### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (SÓ DEV)
 
 A correção anterior cobriu os peixes de fundo; os oito stakeholders e o cardume central ainda tinham desenhos próprios com cauda invertida no site. Corrigida a geometria em onboarding.html e onboarding.slide.html, preservando cores, rótulos e abertura de modais. Raio da órbita dos slides limitado à largura do celular para não cortar os peixes. Teste docs/arezzo/testes/test_onboarding_bordo.js falha antes na geometria antiga e verifica os oito SVGs e os cliques de cada stakeholder nas duas páginas a 1280/390 px. Capturas em docs/capturas/a-bordo-aquario/. Fronteira: sem mudança, SVGs estáticos e CSS. Dica: não, correção visual.

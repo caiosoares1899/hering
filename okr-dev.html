@@ -2101,7 +2101,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.114 · okr-dev</div>
+<div class="version">v2.115 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5672,7 +5672,7 @@ function _okrEntrarTorre(id, push){
   if(OKR_SO_DIGITAL) id = OKR_TORRE_PADRAO;   // modo só Hering: não existe home de torres nem visão global
   if(id!=='global' && !_okrTorreValida(id)) id = '';
   const veioDaHome = !_okrTorreAtual;
-  if(id!==_okrTorreAtual){ _okrTorreAtual = id; _okrFilter.area = ''; _okrFilter.trimestre = ''; _okrHistFiltro.area = ''; _okrHistFiltro.torre = ''; _okrHistMArea = ''; _okrShowArquivados = false; }   // gerências e períodos são da torre: o filtro da anterior deixava a lista vazia com o select mostrando "Todos"
+  if(id!==_okrTorreAtual){ _okrTorreAtual = id; _okrFilter.area = ''; _okrFilter.trimestre = ''; _okrFilter.pv = ''; _okrHistFiltro.area = ''; _okrHistFiltro.torre = ''; _okrHistMArea = ''; _okrShowArquivados = false; }   // gerências e períodos são da torre: o filtro da anterior deixava a lista vazia com o select mostrando "Todos"
   if(push!==false){
     try{ const u = new URL(location.href); u.searchParams.delete('okr'); if(id) u.searchParams.set('torre', id); else u.searchParams.delete('torre'); history.pushState({torre:id}, '', u); }catch(e){}
   }
