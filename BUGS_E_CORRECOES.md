@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · A Bordo: atalhos Marine Glass e cauda dos peixes alinhada ao Maré/Oceano (SÓ DEV)
+
+Os atalhos de consulta estavam como links sublinhados, sem o acabamento Marine Glass; o peixe de fundo do site tinha cauda invertida e olho oposto ao movimento. onboarding.html ganha botões com vidro, borda, brilho specular, hover, foco e alvo de toque de 48 px; os links dos cards recebem o mesmo acabamento. Site e onboarding.slide.html passam a usar exatamente as três silhuetas SVG de oceano.html, também usadas pelo Maré, com olho e cauda coerentes com a direção. Teste docs/arezzo/testes/test_onboarding_bordo.js reproduz a falha na main e valida os SVGs, os 12 atalhos, foco, navegação e responsividade a 1280/390 px. Capturas: docs/capturas/a-bordo-marine-glass/. Páginas sem par -dev: revisão pelo Claude antes do merge. Fronteira: sem mudança, apenas CSS e SVG estático. Dica: não, correção visual de recursos existentes.
+
 ### 2026-11-11 · Ilha Dinâmica: texto sem nitidez no painel aberto + botões misturados com o quadro (SÓ DEV · kanban-dev v8.30.940-dev)
 
 - **Texto sem nitidez (relato do Caio):** a pílula é centralizada com translate(-50%); com largura ímpar o painel aberto caía em meio pixel e o navegador borrava o texto dos botões e do cartão. _ilhaPainelLugar() agora arredonda a posição para pixel inteiro (--ilha-dx/--ilha-dy).

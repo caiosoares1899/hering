@@ -26,6 +26,23 @@ const root=process.cwd();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/onboarding.html');
   await page.locator('#comece').waitFor({timeout:3000});
+  const shortcuts=page.locator('.bordo-atalhos a');
+  assert.equal(await shortcuts.count(),12);
+  const style=await shortcuts.first().evaluate(el=>{const s=getComputedStyle(el);return {height:el.getBoundingClientRect().height,border:s.borderTopStyle,radius:parseFloat(s.borderRadius),decoration:s.textDecorationLine};});
+  assert.ok(style.height>=44 && style.border==='solid' && style.radius>=10 && style.decoration==='none','atalhos são botões Marine Glass com área de toque');
+  const fishRef=fs.readFileSync(path.join(root,'oceano.html'),'utf8').match(/const FISH_SVGS = (\[[\s\S]*?\]);/)[1];
+  const expectedFish=require('node:vm').runInNewContext(fishRef);
+  const backgrounds=await page.locator('.fish-float svg').evaluateAll(els=>els.map(el=>el.outerHTML));
+  const normalizedExpected=await page.evaluate(items=>items.map(svg=>{const el=document.createElement('div');el.innerHTML=svg;return el.firstElementChild.outerHTML;}),Array.from(expectedFish));
+  assert.ok(backgrounds.length>0 && backgrounds.every(svg=>normalizedExpected.includes(svg)),'peixes de fundo usam exatamente os SVGs do Oceano');
+  await shortcuts.first().focus();
+  assert.equal(await shortcuts.first().evaluate(el=>getComputedStyle(el).outlineStyle),'solid','foco de teclado visível');
+  if(!process.env.BORDO_BASE){
+   fs.mkdirSync('docs/capturas/a-bordo-marine-glass',{recursive:true});
+   await page.locator('.bordo-atalhos').evaluate(el=>el.parentElement.scrollIntoView({block:'center'}));
+   await page.locator('.bordo-atalhos').locator('..').screenshot({path:`docs/capturas/a-bordo-marine-glass/atalhos-${width}.png`});
+  }
+
   assert.equal(await page.locator('#cultura .cultura-item').count(),5,'cinco comportamentos oficiais');
   assert.equal(await page.locator('#oceano .bordo-card').count(),6,'produtos explicados');
   const defects=await page.evaluate(()=>[...document.querySelectorAll('a[href^="#"]')].filter(a=>a.hash.length>1&&!document.getElementById(decodeURIComponent(a.hash.slice(1)))).map(a=>a.hash));
@@ -41,8 +58,10 @@ const root=process.cwd();
   await page.locator('#quiz').scrollIntoViewIfNeeded();
   assert.ok((await page.locator('#quizOptions button').count())>0,'quiz continua disponível');
   assert.deepEqual(errors,[],'sem erros de execução');
-  if(!process.env.BORDO_BASE){fs.mkdirSync('docs/capturas/a-bordo',{recursive:true});for(const id of ['comece','cultura','oceano','squads']){await page.locator('#'+id).evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-90));await page.screenshot({path:`docs/capturas/a-bordo/${id}-${width}.png`});}}
+  if(!process.env.BORDO_BASE && !process.env.BORDO_SEM_CAPTURAS){fs.mkdirSync('docs/capturas/a-bordo',{recursive:true});for(const id of ['comece','cultura','oceano','squads']){await page.locator('#'+id).evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-90));await page.screenshot({path:`docs/capturas/a-bordo/${id}-${width}.png`});}}
   await page.goto(base+'/onboarding.slide.html');
+  const slideFish=await page.locator('.bg-fish svg').evaluateAll(els=>els.map(el=>el.outerHTML));
+  assert.ok(slideFish.length>0 && slideFish.every(svg=>normalizedExpected.includes(svg)),'slides usam os mesmos peixes do Oceano');
   await page.evaluate(()=>goTo(slides.findIndex(s=>s.id==='s11')));
   assert.equal(await page.locator('#s11 .cu-item').count(),5);
   await page.keyboard.press('ArrowDown');
@@ -57,11 +76,11 @@ const root=process.cwd();
    assert.ok(readable,'último comportamento alcançável acima dos controles');
    await page.locator('#s11').evaluate(el=>el.scrollTop=0);
   }
-  if(!process.env.BORDO_BASE) await page.screenshot({path:`docs/capturas/a-bordo/slide-cultura-${width}.png`});
+  if(!process.env.BORDO_BASE && !process.env.BORDO_SEM_CAPTURAS) await page.screenshot({path:`docs/capturas/a-bordo/slide-cultura-${width}.png`});
   assert.ok(await page.locator('#s11').evaluate(el=>el.scrollHeight<=el.clientHeight+2 || ['auto','scroll'].includes(getComputedStyle(el).overflowY)),'cultura cabe no slide ou área de rolagem');
   await page.evaluate(()=>goTo(slides.findIndex(s=>s.id==='s-oceano')));
   assert.equal(await page.locator('#s-oceano .cu-item').count(),6);
-  if(!process.env.BORDO_BASE) await page.screenshot({path:`docs/capturas/a-bordo/slide-oceano-${width}.png`});
+  if(!process.env.BORDO_BASE && !process.env.BORDO_SEM_CAPTURAS) await page.screenshot({path:`docs/capturas/a-bordo/slide-oceano-${width}.png`});
   await page.evaluate(()=>goTo(slides.length-1));
   assert.equal(await page.locator('#btnNext').isDisabled(),true);
   assert.equal(await page.locator('#slideCounter').innerText(),'16 / 16');
