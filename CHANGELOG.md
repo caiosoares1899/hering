@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica V2: 🚨 Status dos serviços (SÓ DEV · kanban-dev v8.30.935-dev) — 2026-11-11
+
+- Módulo 🚨 Status dos serviços (desligado por padrão; Ilha → ⚙ Ajustes): lê os monitores que já existem (kanban/vtex_saude, github_saude, firebase_saude — os mesmos do selinho do Oceano). Incidente vira atividade 🚨 (GitHub Pages instável tem prioridade maior: é o Pages que serve o Maré); monitor sem leitura há mais de 20 min fica cinza e nunca vira alerta.
+- Aba 🚨 Serviços: estado de cada serviço, "verificado há N min", até 3 títulos de incidente e "Ver status oficial".
+- Custo: 3 escutas só com o módulo ligado; desligar fecha as 3.
+- Fronteira: título de incidente (texto de terceiro) sempre como texto (esc); link só se for da página oficial do serviço, senão a raiz oficial.
+- Implementação e teste pelo Codex (docs/arezzo/testes/test_ilha_status.js, 27); regressões docs/arezzo/testes/test_ilha_favoritos.js (24), docs/arezzo/testes/test_ilha_v2_base.js (33), docs/arezzo/testes/test_ilha_mare.js (56), docs/arezzo/testes/test_ilha_notificacoes.js (51).
+
 ### Maré › 🏝️ Ilha Dinâmica V2: ⭐ Favoritos (SÓ DEV · kanban-dev v8.30.934-dev) — 2026-11-11
 
 - Módulo ⭐ Favoritos (desligado por padrão; liga em Ilha → ⚙ Ajustes): até 3 atalhos para produtos (Radar, Painel, Oceano…), squads ou um card, numa aba ⭐ Favoritos da ilha. Não muda a pílula (favorito não é atividade).

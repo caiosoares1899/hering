@@ -802,6 +802,9 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha.ilha-alerta #ilha-btn{border-color:var(--danger,#ff6b6b);}
 .ilha-op{display:flex;flex-direction:column;gap:6px;padding:10px 4px;border-bottom:1px solid var(--glass-b);}
 .ilha-op b{font-size:12.5px;} .ilha-op small{color:var(--txt3);font-size:11px;}
+.ilha-st-ok{color:var(--teal);} .ilha-st-inc{color:var(--danger);} .ilha-st-mudo{color:var(--txt3);}
+.ilha-status-link{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);align-self:flex-start;}
+#ilha-painel [data-status]{overflow-wrap:anywhere;}
 .ilha-op-h{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-top:8px;}
 #ilha-n{display:inline-flex;align-items:center;gap:3px;}
 #ilha-n[hidden]{display:none;}
@@ -6821,7 +6824,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.934-dev</div>
+<div class="version">v8.30.935-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -38075,6 +38078,62 @@ _ilhaRegistrar({
     }
   }
 });
+// ── Módulo 🚨 Serviços: escutas existem somente enquanto o módulo está ligado ──
+const _ilhaStatus = {dados:{}, offs:[], geracao:0};
+const _ILHA_SERVICOS = [
+  {id:'vtex', nome:'VTEX', raiz:'https://status.vtex.com/', oficial:/^https:\/\/status\.vtex\.com\//},
+  {id:'github', nome:'GitHub', raiz:'https://www.githubstatus.com/', oficial:/^https:\/\/(www\.)?githubstatus\.com\//},
+  {id:'firebase', nome:'Firebase', raiz:'https://status.firebase.google.com/', oficial:/^https:\/\/status\.firebase\.google\.com\//}
+];
+function _ilhaStatusEstados(){
+  const agora = Date.now();
+  return _ILHA_SERVICOS.map(s=>{
+    const d = _ilhaStatus.dados[s.id]; if(!d || typeof d!=='object' || d.desligado) return null;
+    const ult = Date.parse(d.ultimoOkEm||''), valido = Number.isFinite(ult);
+    const inc = Array.isArray(d.incidentes) ? d.incidentes : Object.values(d.incidentes||{});
+    const mudo = !valido || agora-ult>20*60000, pages = !mudo && s.id==='github' && !!d.pagesAfetado;
+    const incidente = !mudo && (pages || d.abertos>0 || inc.length>0);
+    const link = inc[0] && inc[0].link;
+    return Object.assign({}, s, {inc, incidente, pages, nivel:mudo?'mudo':incidente?'inc':'ok',
+      texto:mudo?'sem leitura':pages?'Pages instável':incidente?'incidente':'normal',
+      minutos:valido?Math.max(1,Math.round((agora-ult)/60000)):null,
+      href:typeof link==='string' && s.oficial.test(link) ? link : s.raiz});
+  }).filter(Boolean);
+}
+_ilhaRegistrar({
+  id:'status', ico:'🚨', nome:'Status dos serviços', padrao:false,
+  ligar(){
+    if(_ilhaStatus.offs.length) return;
+    const geracao = ++_ilhaStatus.geracao;
+    _ILHA_SERVICOS.forEach(s=>{
+      const off = window._onValue(window._ref(window._db, 'kanban/'+s.id+'_saude'), snap=>{
+        if(geracao!==_ilhaStatus.geracao) return; // ignora entrega já enfileirada depois de desligar
+        _ilhaStatus.dados[s.id] = snap.val();
+        _ilhaRender(); // também atualiza o painel aberto, preservando o foco dentro da ilha
+      });
+      _ilhaStatus.offs.push(off);
+    });
+  },
+  desligar(){ ++_ilhaStatus.geracao; _ilhaStatus.offs.forEach(off=>off()); _ilhaStatus.offs=[]; _ilhaStatus.dados={}; },
+  candidatos(){
+    const inc = _ilhaStatusEstados().filter(s=>s.incidente); if(!inc.length) return [];
+    const nomes = inc.map(s=>s.nome), pages = inc.some(s=>s.pages);
+    return [{prio:pages?95:80, ico:'🚨', alerta:true, curto:nomes[0]+(nomes.length>1?' +'+(nomes.length-1):''),
+      txt:pages?'GitHub Pages instável'+(nomes.some(n=>n!=='GitHub')?' · Incidente: '+nomes.filter(n=>n!=='GitHub').join(', '):''):'Incidente: '+nomes.join(', ')}];
+  },
+  aba:{
+    rot:'🚨 Serviços',
+    html(){
+      const ss = _ilhaStatusEstados();
+      return ss.length ? ss.map(s=>`<div class="ilha-op" data-status="${s.id}"><b>${s.nome} · <span class="ilha-st-${s.nivel}">● ${s.texto}</span></b>`
+        + `<small>${s.minutos===null?'Sem verificação válida':'verificado há '+s.minutos+' min'}</small>`
+        + s.inc.slice(0,3).map(i=>`<div>${esc(String(i&&i.titulo||'').slice(0,140))}</div>`).join('')
+        + `<a class="ilha-status-link" href="${esc(_hrefOk(s.href))}" target="_blank" rel="noopener noreferrer">Ver status oficial</a></div>`).join('')
+        : '<div class="ilha-vazio">Sem leitura dos monitores agora.</div>';
+    }
+  }
+});
+
 // ── Módulo ⭐ Favoritos: só neste aparelho; destinos sempre reconstruídos, nunca URLs salvas ──
 function _ilhaFavs(){
   const p = _ilhaPrefs(), vistos = new Set(), r = [];
