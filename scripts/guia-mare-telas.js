@@ -12,6 +12,8 @@ const fake = require('../docs/arezzo/testes/fakefb.js');
 const chromeRoot = path.join(home, 'hering-tools/chrome');
 const chrome = process.env.CHROME || path.join(chromeRoot, fs.readdirSync(chromeRoot).find(n => n.startsWith('mac_arm-')), 'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');
 const base = process.env.BASE_URL || 'http://127.0.0.1:8991';
+// PAGINA=kanban.html captura a produção (o guia serve quem usa o prod; use o -dev só para ver antes uma mudança ainda não promovida)
+const PAGINA = /^kanban(-dev)?\.html$/.test(process.env.PAGINA || '') ? process.env.PAGINA : 'kanban-dev.html';
 const GUIA = path.join(__dirname, '..', 'guia-mare.html');
 const W = 1280, H = 760;
 
@@ -127,11 +129,17 @@ function snapshotNaPagina({ alvoSel, overlay }) {
   };
   return { html: root.outerHTML, casaTexto: null, _els: els.length, seletores: (function () {
     const out = new Set();
+    // casa nos 3 temas do Maré: as regras do claro/Vice só batem com data-theme no <html>
+    const temaOrig = document.documentElement.getAttribute('data-theme');
     const walk = (rules) => { for (const r of rules) {
       if (r.selectorText) { r.selectorText.split(',').forEach(s => { if (casa(s)) out.add(s.trim()); }); }
       else if (r.cssRules) walk(r.cssRules);
     } };
-    for (const sh of document.styleSheets) { try { walk(sh.cssRules); } catch (e) { } }
+    for (const t of [temaOrig, 'light', 'vice']) {
+      if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+      for (const sh of document.styleSheets) { try { walk(sh.cssRules); } catch (e) { } }
+    }
+    if (temaOrig) document.documentElement.setAttribute('data-theme', temaOrig); else document.documentElement.removeAttribute('data-theme');
     return [...out];
   })() };
 }
@@ -163,13 +171,14 @@ function cssFinal(sel) {
   return out.join('\n');
 }
 
-(async () => {
+module.exports = { seed, U, W, H };
+if (require.main === module) (async () => {
   const browser = await chromium.launch({ executablePath: chrome, headless: true });
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   await fake.install(ctx, seed());
   await ctx.addInitScript(() => { try { localStorage.setItem('bvmd_ana', '1'); localStorage.setItem('mare_dicas_off', '1'); } catch (e) { } });
   const p = await ctx.newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message));
-  await p.goto(base + '/kanban-dev.html?squad=dados');
+  await p.goto(base + '/' + PAGINA + '?squad=dados');
   await p.waitForFunction(() => !!window.__authCb); await p.evaluate(u => window.__authCb(u), U);
   await p.waitForFunction(() => document.querySelectorAll('#board .card-title').length >= 5, null, { timeout: 15000 });
   await p.waitForTimeout(2500);
