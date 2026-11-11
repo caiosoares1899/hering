@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica V2 completa: 📅 Agenda com todas as agendas da pessoa + Ajuda e dica (SÓ DEV · kanban-dev v8.30.938-dev · mare-dicas-dev ?v=13) — 2026-11-11
+
+- 📅 Agenda: passa a trazer TODAS as agendas em que a pessoa está (decisão do Caio, 11/11/2026) — convidado/responsável OU responsável de um Objetivo ativo que o evento abrange (mesmo critério de abrange/alvosDoEvento do Radar em functions/okr/calendario.js: reunião sem recorte = a torre toda; evento/lembrete só se vinculado). Lê kanban/okr/objetivos junto com o calendário no mesmo ciclo de 3 h (2 leituras, nenhuma escuta); cópia local v2.
+- 📖 Ajuda: o verbete Timer e Produtividade (seção 🏝️ Ilha Dinâmica) descreve os módulos (secundária, ⭐, 🚨, 📅 ⏳, 🤖, 🛡️).
+- 💡 Dica ilha_v2 no Maré (mare-dicas-dev.js ?v=13 em kanban-dev, oceano-dev, okr-dev, painel-dev).
+- Código pelo Codex; revisão e testes pelo Claude: docs/arezzo/testes/test_ilha_agenda.js (29), docs/arezzo/testes/test_dicas.js (TUDO OK), test_dicas_dia.js, e as 6 baterias da ilha (217).
+
 ### Maré › 🏝️ Ilha Dinâmica V2: 📅 Agenda do Radar e 🤖 Agente Ágil (SÓ DEV · kanban-dev v8.30.936-dev + functions agenteAgilMencao/agenteAgilMencaoDados) — 2026-11-11
 
 - 📅 Agenda do Radar (módulo desligado por padrão): só os MEUS compromissos (sou convidado/responsável) dos próximos 14 dias, com recorrência e exceções; cópia pessoal de 3 h (1 leitura de kanban/okr/calendario/eventos a cada 3 h, sem escuta aberta). Reunião em ≤ 15 min / acontecendo vira atividade; ⏳ contagem regressiva para um evento escolhido; aba com Abrir no Radar e Entrar (só https).

@@ -50,6 +50,7 @@
     mare:{nome:'Maré', icone:'🌊', gatilhos:{boot:'Ao entrar', 'card-open':'Ao abrir um card', 'cfg-open':'Ao abrir as Configurações'}, dicas:[
       {id:'insistente',gatilho:'boot',     texto:'Não ouve o “ding” do sino? Ligue o modo insistente no rodapé do 🔔: a tela treme e o som se repete.', saiba:{tab:'config', q:'Notificações'}, ajuda:'Notificações'},
       {id:'sonar',    gatilho:'boot',      texto:'Conheça o 🔍 Sonar: Ctrl+K (⌘K no Mac) acha cards deste board, Objetivos do Radar, outros squads e a Ajuda, sem se importar com acento.', saiba:{tab:'board', q:'Sonar'}, ajuda:'Sonar (Ctrl+K)'},
+      {id:'ilha_v2',  gatilho:'boot',      texto:'🏝️ Agenda com contagem regressiva, favoritos, status e agente na Ilha! Ligue em ⏲ Timers → 🏝️ Ilha Dinâmica → ⚙ Ajustes.', saiba:{tab:'cards', q:'Timer e Produtividade'}, ajuda:'Timer e Produtividade'},
       {id:'meudia',   gatilho:'boot',      texto:'Ctrl+D abre o Meu Dia: o que é seu hoje, num lugar só.', saiba:{tab:'board', q:'Meu Dia'}, ajuda:'Meu Dia (Ctrl+D)'},
       {id:'menu-card',gatilho:'boot',      texto:'Clique com o botão direito num card pra ações rápidas: mover, impedir, duplicar…', saiba:{tab:'cards', q:'Funções de card'}, ajuda:'Funções de card'},
       {id:'desfazer', gatilho:'boot',      texto:'Mexeu sem querer? Ctrl+Z desfaz a última mudança no board.', saiba:{tab:'board', q:'Desfazer'}, ajuda:'Desfazer (Ctrl+Z)'},
