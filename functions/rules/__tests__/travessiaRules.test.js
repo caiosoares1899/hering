@@ -255,3 +255,67 @@ test('ninguém de fora (Gmail, Arezzo) lê nem grava nada em kanban/travessia; o
   assert.equal(grava(T + 'vinculos/bia', A.adm, { liderUid: 'pau' }), true);
   assert.equal(grava(T + 'ciclos/x', A.dani, { nome: 'x', status: 'preparacao', ts: 1 }), true);
 });
+
+// 🧭 Cultura da Hering na Travessia (11/11/2026, pedido do Caio): as 5 atitudes (facilita · cardume · bemfeito · acessivel · legado) entram
+// no 1:1 (`encontros/{uid}/{id}/at`, uma) e na avaliação, num nó IRMÃO (`avaliacoes/{cid}/{avaliado}/atitudes/{auto|lider|par/{par}}`) — o prod
+// regrava auto/lider/resp_pares inteiros com `set`, então campos novos lá dentro seriam apagados. Cada nó copia a leitura e a escrita do seu par.
+test('cultura · 1:1: atitude em foco opcional, só os 5 ids', () => {
+  reset();
+  const e = (o) => Object.assign({ data: '2026-11-10', tipo: 'acomp', por: 'pau', ts: 1 }, o);
+  assert.equal(grava(T + 'encontros/ana/e1', A.pau, e({ at: 'cardume' })), true, 'líder registra com atitude');
+  assert.equal(grava(T + 'encontros/ana/e2', A.ana, e({ por: 'ana', at: 'legado' })), true, 'a pessoa registra com atitude');
+  assert.equal(grava(T + 'encontros/ana/e3', A.pau, e()), true, 'sem atitude continua valendo');
+  ['x', 'facilita,cardume', 'facilita/x', 'FACILITA', ''].forEach(v => assert.equal(grava(T + 'encontros/ana/e4', A.pau, e({ at: v })), false, 'inválido: ' + v));
+  assert.equal(grava(T + 'encontros/ana/e5', A.pau, e({ at: 3 })), false, 'não-texto');
+});
+
+test('cultura · avaliação: atitudes da autoavaliação, do par e do líder com as MESMAS regras de leitura/escrita do nó de cada um', () => {
+  reset();
+  const AT = T + 'avaliacoes/' + CID + '/ana/atitudes/';
+  // autoavaliação: só a Ana grava (em coleta); Ana, líder e gerente leem; o par não
+  assert.equal(grava(AT + 'auto', A.ana, { at: 'cardume,bemfeito', atx: 'liderei a migração junto com o time', ts: 1 }), true);
+  assert.equal(grava(AT + 'auto', A.ana, { at: 'facilita', ts: 1 }), true, 'uma atitude');
+  assert.equal(grava(AT + 'auto', A.ana, { at: 'facilita,cardume,legado', ts: 1 }), false, 'no máximo 2');
+  assert.equal(grava(AT + 'auto', A.ana, { at: 'facilita,x', ts: 1 }), false, 'id desconhecido');
+  assert.equal(grava(AT + 'auto', A.ana, { atx: 'x'.repeat(1201), ts: 1 }), false, 'exemplo > 1200');
+  assert.equal(grava(AT + 'auto', A.ana, { at: 'facilita' }), false, 'sem ts');
+  assert.equal(grava(AT + 'auto', A.ana, { at: 'facilita', outro: 1, ts: 1 }), false, 'campo fora da lista');
+  assert.equal(grava(AT + 'auto', A.pau, { at: 'facilita', ts: 1 }), false, 'o líder não escreve a autoavaliação');
+  ['ana', 'pau', 'gil'].forEach(k => assert.equal(lê(AT + 'auto', A[k]), true, k + ' lê a auto'));
+  ['bia', 'dani', 'adm'].forEach(k => assert.equal(lê(AT + 'auto', A[k]), false, k + ' não lê a auto'));
+  // par: só o par APROVADO grava, em coleta; o AVALIADO NÃO lê o que o par marcou
+  assert.equal(grava(AT + 'par/bia', A.bia, { at: 'acessivel', atx: 'escuta o atendimento toda semana', ts: 1 }), true, 'par aprovado');
+  assert.equal(grava(AT + 'par/cae', A.cae, { at: 'acessivel', ts: 1 }), false, 'par não aprovado');
+  assert.equal(grava(AT + 'par/bia', A.cae, { at: 'acessivel', ts: 1 }), false, 'outro no lugar do par');
+  assert.equal(lê(AT + 'par/bia', A.ana), false, 'a avaliada NÃO lê a atitude que o par marcou');
+  assert.equal(lê(AT + 'par', A.ana), false, 'nem a lista');
+  ['pau', 'gil'].forEach(k => assert.equal(lê(AT + 'par', A[k]), true, k + ' lê a lista dos pares (como em resp_pares)'));
+  assert.equal(lê(AT + 'par', A.bia), false, 'o par não lê a lista dos outros pares');
+  ['bia', 'pau', 'gil'].forEach(k => assert.equal(lê(AT + 'par/bia', A[k]), true, k + ' lê a do par'));
+  // líder: só o líder direto grava; a avaliada NÃO lê (nem a atitude a desenvolver)
+  assert.equal(grava(AT + 'lider', A.pau, { at: 'cardume', atd: 'facilita', atx: 'precisa dizer mais não', ts: 1 }), true);
+  assert.equal(grava(AT + 'lider', A.pau, { atd: 'facilita,legado,cardume', ts: 1 }), false, 'a desenvolver: no máximo 2');
+  assert.equal(grava(AT + 'lider', A.gil, { at: 'cardume', ts: 1 }), false, 'o gerente lê mas não escreve');
+  assert.equal(lê(AT + 'lider', A.ana), false, 'a avaliada não lê a avaliação de atitudes do líder');
+  ['pau', 'gil'].forEach(k => assert.equal(lê(AT + 'lider', A[k]), true, k + ' lê a do líder'));
+  assert.equal(grava(AT + 'outra', A.ana, { at: 'facilita', ts: 1 }), false, 'nó desconhecido em atitudes');
+  ['forasteiro', 'arezzo', 'adm', 'caio', 'dani'].forEach(k => ['auto', 'lider', 'par/bia', ''].forEach(n => assert.equal(lê(AT + n, A[k]), false, k + ' não lê atitudes/' + n)));
+  ['forasteiro', 'arezzo'].forEach(k => assert.equal(grava(AT + 'auto', A[k], { at: 'facilita', ts: 1 }), false, k + ' não grava'));
+  // fases: fora da coleta, auto e par não gravam; encerrado, o líder também não
+  DB.kanban.travessia.ciclos[CID].status = 'devolutiva';
+  assert.equal(grava(AT + 'auto', A.ana, { at: 'facilita', ts: 2 }), false, 'auto fora da coleta');
+  assert.equal(grava(AT + 'par/bia', A.bia, { at: 'facilita', ts: 2 }), false, 'par fora da coleta');
+  assert.equal(grava(AT + 'lider', A.pau, { at: 'facilita', ts: 2 }), true, 'líder na devolutiva');
+  DB.kanban.travessia.ciclos[CID].status = 'encerrado';
+  assert.equal(grava(AT + 'lider', A.pau, { at: 'facilita', ts: 3 }), false, 'líder com ciclo encerrado');
+});
+
+test('cultura · ciclo: marcador "cultura" (booleano), só ADM/RH', () => {
+  reset();
+  const c = (o) => Object.assign({ nome: 'Ciclo 2027/1', status: 'preparacao', ts: 1 }, o);
+  assert.equal(grava(T + 'ciclos/c27', A.dani, c({ cultura: true })), true, 'RH cria com atitudes');
+  assert.equal(grava(T + 'ciclos/' + CID + '/cultura', A.dani, true), true, 'RH liga no ciclo em andamento');
+  assert.equal(grava(T + 'ciclos/' + CID + '/cultura', A.adm, false), true, 'ADM desliga');
+  assert.equal(grava(T + 'ciclos/' + CID + '/cultura', A.dani, 'sim'), false, 'não-booleano');
+  assert.equal(grava(T + 'ciclos/' + CID + '/cultura', A.pau, true), false, 'líder não mexe no ciclo');
+});
