@@ -843,6 +843,41 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 /* véu de vidro (11/11/2026, pedido do Caio): com a ilha aberta o quadro desfoca e escurece — os botões e o cartão não se misturam mais com os cards */
 #ilha-veu{position:fixed;inset:0;z-index:90;background:rgba(var(--surface-rgb),.45);-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);opacity:0;pointer-events:none;transition:opacity .2s var(--ease-out,ease);}
 #ilha-veu.on{opacity:1;pointer-events:auto;}
+/* 📖 Introdução da Ilha (1ª vez que liga; "Como funciona" revê) */
+#ilha-intro{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(var(--surface-rgb),.55);-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);}
+#ilha-intro.open{display:flex;animation:iiEntra .22s var(--ease-out,ease);}
+@keyframes iiEntra{from{opacity:0;}to{opacity:1;}}
+.ii-caixa{position:relative;width:min(560px,100%);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow:auto;padding:26px 26px 20px;border-radius:24px;background:rgba(var(--surface-rgb),.985);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 24px 70px rgba(0,0,0,.5);color:var(--txt);}
+.ii-pular{position:absolute;top:14px;right:14px;min-height:34px;padding:4px 12px;border-radius:999px;border:1px solid var(--glass-b);background:none;color:var(--txt2);font:inherit;font-size:12px;cursor:pointer;}
+.ii-pular:hover{color:var(--txt);border-color:var(--accent);}
+.ii-passo{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt3);}
+.ii-caixa h2{margin:6px 0 14px;font-size:20px;line-height:1.25;}
+.ii-corpo p{font-size:13.5px;line-height:1.55;color:var(--txt2);margin:0 0 10px;} .ii-corpo b{color:var(--txt);}
+.ii-leve{font-size:12px!important;color:var(--txt3)!important;}
+.ii-lista{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.5;color:var(--txt2);}
+.ii-pilula{display:flex;align-items:center;justify-content:center;gap:9px;margin:4px auto 16px;width:max-content;max-width:100%;height:36px;padding:0 18px;border-radius:999px;background:rgba(var(--surface2-rgb),.9);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 20px rgba(0,0,0,.3);font-size:12.5px;white-space:nowrap;overflow:hidden;}
+.ii-pilula em{font-style:normal;font-weight:700;color:var(--ilha-vivo,var(--teal));font-variant-numeric:tabular-nums;}
+.ii-pilula i{width:1px;height:14px;background:var(--glass-b);} .ii-pilula span{color:var(--txt2);} .ii-pilula .ii-n{color:var(--txt);}
+:root[data-theme="vice"] .ii-pilula em{color:var(--accent);} :root[data-theme="light"] .ii-pilula em{color:color-mix(in srgb,var(--teal,#1de9b6) 55%,#000);}
+.ii-estudio{display:grid;grid-template-columns:34px 1fr 34px;gap:8px;margin:0 0 14px;align-items:start;}
+.ii-trilho{display:flex;flex-direction:column;gap:6px;align-items:center;} .ii-trilho span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:rgba(var(--surface2-rgb),.9);border:1px solid var(--glass-b);}
+.ii-trilho span.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb,56,182,255),.25);}
+.ii-centro{border-radius:14px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.45);padding:8px;} .ii-cab{font-size:11.5px;font-weight:700;padding:0 2px 6px;}
+.ii-blocos{display:grid;grid-template-columns:1fr 1fr;gap:6px;} .ii-blocos span{font-size:11px;padding:8px;border-radius:10px;background:rgba(var(--surface-rgb),.8);border:1px solid var(--glass-b);color:var(--txt2);}
+.ii-mods{display:flex;flex-direction:column;border-radius:14px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.45);padding:2px 12px;margin-top:4px;}
+.ii-mod{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;font-size:13px;min-height:44px;} .ii-mod+.ii-mod{border-top:1px solid var(--glass-b);}
+.ii-mod small{display:block;font-size:11.5px;color:var(--txt3);margin-top:2px;}
+.ii-mod input{appearance:none;-webkit-appearance:none;flex:none;width:40px;height:23px;border-radius:999px;background:rgba(var(--surface2-rgb),1);border:1px solid var(--glass-b);position:relative;cursor:pointer;transition:background .15s;}
+.ii-mod input::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--txt2);transition:transform .15s var(--ease-out,ease),background .15s;}
+.ii-mod input:checked{background:var(--accent);border-color:var(--accent);} .ii-mod input:checked::after{transform:translateX(17px);background:#fff;}
+.ii-mod input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ii-pe{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap;}
+.ii-pontos{display:flex;gap:6px;} .ii-ponto{width:8px;height:8px;padding:0;border-radius:999px;border:0;background:var(--glass-b);cursor:pointer;transition:width .2s var(--ease-out,ease);}
+.ii-ponto.on{width:22px;background:var(--accent);} .ii-ponto:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+.ii-acoes{display:flex;gap:8px;margin-left:auto;} .ii-acoes .btn{min-height:38px;padding:0 16px;border-radius:999px;}
+.ii-prim{background:var(--accent)!important;border-color:var(--accent)!important;color:#02131f!important;font-weight:700;}
+@media (max-width:560px){ #ilha-intro{padding:0;align-items:flex-end;} .ii-caixa{width:100%;max-height:92vh;max-height:92dvh;border-radius:22px 22px 0 0;padding:22px 18px 18px;} .ii-pilula{font-size:11.5px;padding:0 12px;gap:7px;} .ii-acoes .btn,.ii-pular{min-height:44px;} .ii-ponto{width:12px;height:12px;} .ii-ponto.on{width:26px;} }
+@media (prefers-reduced-motion:reduce){ #ilha-intro.open{animation:none;} .ii-ponto,.ii-mod input,.ii-mod input::after{transition:none;} }
 @media (prefers-reduced-motion:reduce){ #ilha-veu{transition:none;} }
 :root[data-theme="vice"] #ilha{--ilha-vivo:var(--accent);}
 :root[data-theme="light"] #ilha{--ilha-vivo:color-mix(in srgb,var(--teal,#1de9b6) 55%,#000);}   /* verde-água puro some no branco */
@@ -4315,7 +4350,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
 <!-- NOTIFICAÇÕES -->
 <div class="notif-panel tm-pop" id="tm-pop" role="dialog" aria-label="Timers em andamento">
-  <div class="notif-hd"><span>⏲ Meus timers</span><button type="button" class="notif-mark-all" id="ilha-ligar" onclick="_ilhaLigarDoPop()">🏝️ Ilha Dinâmica</button></div>
+  <div class="notif-hd"><span>⏲ Meus timers</span></div>
   <div class="notif-list" id="tm-pop-list"><div class="notif-empty">Nenhum timer ativo</div></div>
 </div>
 <div class="notif-panel" id="notif-panel">
@@ -6900,7 +6935,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.942-dev</div>
+<div class="version">v8.30.943-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7253,7 +7288,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 </script>
 <script src="mare-notif-dev.js?v=41"></script>
 <script src="mare-metas-dev.js?v=19"></script>
-<script src="mare-dicas-dev.js?v=13"></script>
+<script src="mare-dicas-dev.js?v=14"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
 
@@ -15108,6 +15143,16 @@ function renderMinhasPrefsBody(){
       <button class="btn btn-sm" onclick="setDnd(true,480,'8 horas');renderMinhasPrefsBody();">Por 8 horas</button>
       <button class="btn btn-sm" onclick="setDndUntilTomorrowMorning();renderMinhasPrefsBody();">Até amanhã de manhã</button>
     </div>` : '<div style="padding-bottom:12px;"></div>'}
+
+    <div class="cfg-sec-title">🏝️ Ilha Dinâmica</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;">
+      <div style="font-size:12px;color:var(--txt2);max-width:340px;line-height:1.45;">${_ilhaPrefs().on ? '<b style="color:var(--txt);">Ligada neste aparelho.</b> A pílula no topo mostra timer, notificações e o que mais você escolher.' : 'Uma pílula no topo do quadro com o que está acontecendo agora: timer, notificações, próxima reunião e mais.'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-sm" id="ilha-ligar" style="${_ilhaPrefs().on?'':'color:var(--teal);border-color:rgba(29,233,182,.35);'}" onclick="_ilhaPrefsLigar()">${_ilhaPrefs().on ? 'Desligar' : '🏝️ Ligar a Ilha'}</button>
+        ${_ilhaPrefs().on ? `<button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');_ilhaAbrirAjustes();">⚙ Ajustes da ilha</button>` : ''}
+        <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');_ilhaIntroAbrir();">📖 Como funciona</button>
+      </div>
+    </div>
 
     <div class="cfg-sec-title">⌨️ Atalhos de teclado</div>
     <div style="padding:4px 0 12px;">
@@ -29155,7 +29200,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre o Sonar, a busca do Oceano (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
-    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>⏲ Timers → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, a ilha abre no <b>🏝️ Resumo</b>: um bloco por módulo com o que importa agora (tempo do timer, com ⏸/▶ no próprio bloco, notificações não lidas, próximo compromisso, serviços, agente…). Clique num bloco para abrir o módulo. Nas <b>laterais</b> ficam botões redondos com contador: à esquerda o que acontece agora (Resumo, Timers, Avisos, Agenda, Agente), à direita atalhos e controle (Favoritos, Serviços, Operação, 🎛️ Preferências — abre a mesma janela "Minhas preferências" do menu do seu nome — e ⚙ Ajustes). No celular, esses botões ficam numa faixa embaixo. Em <b>Timers</b> você pausa, continua, inicia, encerra ou abre o card; <b>Notificações</b> são as mesmas do sino (com a ilha ligada, ela substitui o 🔔 do topo); <b>⚙ Ajustes</b> tem quando aparecer, atividade principal, o que mostrar ao abrir, compartilhar tela e os módulos, com interruptores. O 📌 mantém aberta. Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).\n\n<b>Módulos</b> (Ilha → ⚙ Ajustes; todos desligados por padrão, por aparelho): 🔀 Combine atividade principal + secundária. ⭐ <b>Favoritos:</b> até 3 atalhos para produto, squad ou card aberto. 🚨 <b>Status dos serviços:</b> VTEX, GitHub e Firebase; incidente vira alerta, com prioridade para GitHub Pages instável. 📅 <b>Agenda do Radar:</b> seus compromissos dos próximos 14 dias, inclusive reuniões da torre dos seus Objetivos ativos; escolha um para ⏳ contagem regressiva. Atualiza a cada 3 h ou no botão "Atualizar". 🤖 <b>Agente Ágil:</b> mostra "analisando" enquanto ele responde sua @menção e avisa "resposta pronta". 🛡️ <b>Operação:</b> só ADM, com Guardião e falhas de backup.' },
+    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>seu nome → Minhas preferências → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão; na 1ª vez aparece uma introdução, que dá para rever em 📖 Como funciona) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, a ilha abre no <b>🏝️ Resumo</b>: um bloco por módulo com o que importa agora (tempo do timer, com ⏸/▶ no próprio bloco, notificações não lidas, próximo compromisso, serviços, agente…). Clique num bloco para abrir o módulo. Nas <b>laterais</b> ficam botões redondos com contador: à esquerda o que acontece agora (Resumo, Timers, Avisos, Agenda, Agente), à direita atalhos e controle (Favoritos, Serviços, Operação, 🎛️ Preferências — abre a mesma janela "Minhas preferências" do menu do seu nome — e ⚙ Ajustes). No celular, esses botões ficam numa faixa embaixo. Em <b>Timers</b> você pausa, continua, inicia, encerra ou abre o card; <b>Notificações</b> são as mesmas do sino (com a ilha ligada, ela substitui o 🔔 do topo); <b>⚙ Ajustes</b> tem quando aparecer, atividade principal, o que mostrar ao abrir, compartilhar tela e os módulos, com interruptores. O 📌 mantém aberta. Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).\n\n<b>Módulos</b> (Ilha → ⚙ Ajustes; todos desligados por padrão, por aparelho): 🔀 Combine atividade principal + secundária. ⭐ <b>Favoritos:</b> até 3 atalhos para produto, squad ou card aberto. 🚨 <b>Status dos serviços:</b> VTEX, GitHub e Firebase; incidente vira alerta, com prioridade para GitHub Pages instável. 📅 <b>Agenda do Radar:</b> seus compromissos dos próximos 14 dias, inclusive reuniões da torre dos seus Objetivos ativos; escolha um para ⏳ contagem regressiva. Atualiza a cada 3 h ou no botão "Atualizar". 🤖 <b>Agente Ágil:</b> mostra "analisando" enquanto ele responde sua @menção e avisa "resposta pronta". 🛡️ <b>Operação:</b> só ADM, com Guardião e falhas de backup.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
@@ -38057,7 +38102,7 @@ function _ilhaAjustesHtml(){
     + lin('🔔 Notificações', 'tira o 🔔 do topo', chk('ilha-cfg-notif', p.notif))
     + _ILHA_MODS.filter(_ilhaModPode).map(m=>lin(m.ico+' '+esc(m.nome), m.desc ? esc(m.desc) : '', chk('ilha-cfg-mod-'+m.id, _ilhaModOn(m)))).join('')
     + '</div><p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
-    + '<button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div>';
+    + '<div class="ilha-acoes"><button type="button" data-ii-abrir>📖 Como funciona</button><button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div></div>';
 }
 function _ilhaPainel(){
   const p = _ilhaPrefs(), agora = Date.now(), abas = _ilhaAbas();
@@ -38162,12 +38207,79 @@ function _ilhaFechar(foco){
   _ilhaRender();
   if(foco!==false && !recolhe){ const b = document.getElementById('ilha-btn'); if(b && getComputedStyle(b).display!=='none') b.focus({preventScroll:true}); }
 }
-function _ilhaLigarDoPop(){
+// Ligar/desligar mora em 👤 Minhas preferências (11/11/2026, pedido do Caio — antes ficava no popup ⏲ Timers).
+// Na 1ª vez que liga, abre a introdução; depois, só liga.
+function _ilhaPrefsLigar(){
   const p = _ilhaPrefs();
-  _tmFecharPop();
-  if(p.on){ _ilhaRender(); _ilhaAbrir(); _ilha.abaAtual = 'ajustes'; _ilhaPainel(); return; }   // já ligada: o botão leva aos ajustes
-  p.on = true; _ilhaSalvar(); _ilhaRender();
-  showToast('🏝️ Ilha Dinâmica ligada neste aparelho. Clique nela → ⚙ Ajustes para escolher como ela aparece.');
+  if(p.on){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); renderMinhasPrefsBody(); showToast('Ilha Dinâmica desligada. Para religar: seu nome → Minhas preferências → 🏝️ Ilha Dinâmica.'); return; }
+  p.on = true; _ilhaSalvar(); _ilhaRender(); renderMinhasPrefsBody();
+  if(!p.introVista){ closeOv('minhasprefs-ov'); _ilhaIntroAbrir(); }
+  else showToast('🏝️ Ilha Dinâmica ligada neste aparelho. Clique na pílula do topo para abrir.');
+}
+function _ilhaAbrirAjustes(){ const p = _ilhaPrefs(); if(!p.on) return; _ilhaRender(); _ilhaAbrir(); _ilha.abaAtual = 'ajustes'; _ilhaPainel(); }
+
+// ── Introdução (1ª vez que liga; revê por 📖 Como funciona em Minhas preferências ou em ⚙ Ajustes da ilha) ──
+// 5 passos: o que é · a pílula · o painel aberto · escolher módulos (interruptores reais, já valem) · onde mudar depois.
+const _ilhaIntro = {passo:0, foco:null};
+function _ilhaIntroPassos(){
+  const p = _ilhaPrefs(), mods = _ILHA_MODS.filter(_ilhaModPode);
+  const pilula = (conteudo) => `<div class="ii-pilula" aria-hidden="true">${conteudo}</div>`;
+  return [
+    {t:'Conheça a Ilha Dinâmica', h:`${pilula('<span>⏲</span><b>Revisar campanha</b><em>25:04</em><i></i><span>📅 em 12 min</span><i></i><span class="ii-n">🔔 3</span>')}
+      <p>Uma pílula no centro do topo do quadro que mostra <b>o que está acontecendo agora</b>, sem você precisar procurar: o timer que está rodando, as notificações e, se quiser, a próxima reunião, os serviços e o Agente Ágil.</p>
+      <p class="ii-leve">Vale só neste aparelho e não muda nada para as outras pessoas.</p>`},
+    {t:'A pílula', h:`${pilula('<span>⏲</span><b>Revisar campanha</b><em>25:04</em><i></i><span>📅 em 12 min</span>')}
+      <ul class="ii-lista"><li><b>À esquerda, a atividade principal</b> (você escolhe qual): timer, agenda, agente…</li><li><b>Ao lado, uma 2ª atividade</b> em letra menor, quando houver.</li><li><b>🔔 com número</b>: notificações não lidas. Quando chega uma nova, a pílula alarga por uns segundos mostrando de quem e onde.</li><li><b>Quando aparece</b>: só quando há algo acontecendo (padrão), sempre, ou ao passar o mouse no topo.</li></ul>`},
+    {t:'Um clique abre o painel', h:`<div class="ii-estudio" aria-hidden="true"><div class="ii-trilho"><span class="on">🏝️</span><span>⏲</span><span>🔔</span><span>📅</span></div><div class="ii-centro"><div class="ii-cab">🏝️ Resumo</div><div class="ii-blocos"><span>⏲ 25:04</span><span>🔔 3 não lidas</span><span>📅 em 12 min</span><span>🤖 nada agora</span></div></div><div class="ii-trilho"><span>⭐</span><span>🚨</span><span>🎛️</span><span>⚙</span></div></div>
+      <ul class="ii-lista"><li><b>No centro, o Resumo</b>: um bloco por módulo. Clique num bloco para abrir o módulo; dá para pausar o timer ali mesmo.</li><li><b>Nas laterais, botões</b>: à esquerda o que acontece agora (Timers, Notificações, Agenda, Agente); à direita atalhos e controle (Favoritos, Serviços, Preferências, ⚙ Ajustes). No celular, ficam numa faixa embaixo.</li><li><b>📌</b> mantém aberta enquanto você usa o quadro. <b>Esc</b> ou clicar fora fecha.</li></ul>`},
+    {t:'Escolha o que aparece', h:`<p>Ligue só o que faz sentido para você. Dá para mudar quando quiser em ⚙ Ajustes da ilha.</p>
+      <div class="ii-mods">
+        <label class="ii-mod"><span><b>⏲ Timers</b><small>o que está rodando, pausar e continuar</small></span><input type="checkbox" data-ii-base="timer"${p.timer?' checked':''}></label>
+        <label class="ii-mod"><span><b>🔔 Notificações</b><small>as mesmas do sino (o 🔔 do topo sai)</small></span><input type="checkbox" data-ii-base="notif"${p.notif?' checked':''}></label>
+        ${mods.map(m=>`<label class="ii-mod"><span><b>${m.ico} ${esc(m.nome)}</b><small>${esc(m.desc||'')}</small></span><input type="checkbox" data-ii-mod="${esc(m.id)}"${_ilhaModOn(m)?' checked':''}></label>`).join('')}
+      </div>`},
+    {t:'Pronto!', h:`${pilula('<span>🌊</span><b>Tudo em dia</b>')}
+      <ul class="ii-lista"><li><b>⚙ Ajustes da ilha</b> (botão na lateral do painel): quando aparecer, atividade principal, módulos e <b>Compartilhar tela</b>, que esconde os títulos numa reunião.</li><li><b>Desligar ou rever esta introdução</b>: seu nome → <b>Minhas preferências</b> → 🏝️ Ilha Dinâmica.</li></ul>`}
+  ];
+}
+function _ilhaIntroAbrir(){
+  let ov = document.getElementById('ilha-intro');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'ilha-intro'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','ii-titulo'); document.body.appendChild(ov);
+    ov.addEventListener('click', e=>{
+      if(e.target===ov || e.target.closest('[data-ii="pular"]')) return _ilhaIntroFechar(false);
+      if(e.target.closest('[data-ii="voltar"]')) return _ilhaIntroIr(_ilhaIntro.passo-1);
+      if(e.target.closest('[data-ii="proximo"]')) return _ilhaIntroIr(_ilhaIntro.passo+1);
+      if(e.target.closest('[data-ii="comecar"]')) return _ilhaIntroFechar(true);
+      const d = e.target.closest('[data-ii-ponto]'); if(d) return _ilhaIntroIr(+d.dataset.iiPonto);
+    });
+    ov.addEventListener('change', e=>{ const p = _ilhaPrefs(), b = e.target.dataset.iiBase, m = e.target.dataset.iiMod;
+      if(b){ p[b] = e.target.checked; } else if(m){ p.mods[m] = e.target.checked; if(!e.target.checked && p.principal===m) p.principal = 'timer'; } else return;
+      _ilhaSalvar(); _ilhaRender(); });
+    ov.addEventListener('keydown', e=>{
+      if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); _ilhaIntroFechar(false); }
+      else if(e.key==='ArrowRight' && !e.target.matches('input')){ e.preventDefault(); _ilhaIntroIr(_ilhaIntro.passo+1); }
+      else if(e.key==='ArrowLeft' && !e.target.matches('input')){ e.preventDefault(); _ilhaIntroIr(_ilhaIntro.passo-1); }
+      else if(e.key==='Tab'){ const f = [...ov.querySelectorAll('button,input')].filter(x=>!x.disabled && x.offsetParent); if(!f.length) return;   // foco não sai da introdução
+        const i = f.indexOf(document.activeElement); if(e.shiftKey && i<=0){ e.preventDefault(); f[f.length-1].focus(); } else if(!e.shiftKey && i===f.length-1){ e.preventDefault(); f[0].focus(); } }
+    });
+  }
+  _ilhaIntro.foco = document.activeElement; _ilhaIntro.passo = 0; ov.classList.add('open'); _ilhaIntroIr(0);
+}
+function _ilhaIntroIr(n){
+  const ov = document.getElementById('ilha-intro'); if(!ov) return; const ps = _ilhaIntroPassos();
+  n = Math.max(0, Math.min(ps.length-1, n)); _ilhaIntro.passo = n; const ps1 = ps[n], ult = n===ps.length-1;
+  ov.innerHTML = `<div class="ii-caixa"><button type="button" class="ii-pular" data-ii="pular" aria-label="Fechar a introdução">Pular</button>
+    <div class="ii-passo">Passo ${n+1} de ${ps.length}</div><h2 id="ii-titulo">${ps1.t}</h2><div class="ii-corpo">${ps1.h}</div>
+    <div class="ii-pe"><div class="ii-pontos" role="tablist" aria-label="Passos">${ps.map((_,i)=>`<button type="button" class="ii-ponto${i===n?' on':''}" data-ii-ponto="${i}" aria-label="Passo ${i+1}" aria-current="${i===n?'step':'false'}"></button>`).join('')}</div>
+    <div class="ii-acoes">${n>0?'<button type="button" class="btn btn-sm" data-ii="voltar">← Voltar</button>':''}${ult?'<button type="button" class="btn btn-sm ii-prim" data-ii="comecar">Começar a usar</button>':'<button type="button" class="btn btn-sm ii-prim" data-ii="proximo">Próximo →</button>'}</div></div></div>`;
+  const f = ov.querySelector('.ii-prim'); if(f) f.focus({preventScroll:true});
+}
+function _ilhaIntroFechar(abrirIlha){
+  const ov = document.getElementById('ilha-intro'); if(!ov || !ov.classList.contains('open')) return;
+  ov.classList.remove('open'); ov.innerHTML = '';
+  const p = _ilhaPrefs(); p.introVista = true; _ilhaSalvar(); _ilhaRender();
+  if(abrirIlha && p.on){ _ilhaPrefs().aba = 'resumo'; _ilhaAbrir(); }
+  else { const f = _ilhaIntro.foco; if(f && document.contains(f) && f.focus) f.focus({preventScroll:true}); }
 }
 // ── Módulo 🛡️ Operação (só ADM): último incidente do Guardião dos cards + backups que falharam ──
 // Leitura nova: NENHUMA. O Guardião vem da escuta que o board já tem em cards_guardiao/{squad}/ultimo (todo mundo com a squad
@@ -38632,10 +38744,11 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
   const painel = document.getElementById('ilha-painel');
   painel.addEventListener('click', async e=>{
     const p = _ilhaPrefs();
+    if(e.target.closest('[data-ii-abrir]')){ _ilhaFechar(false); _ilhaIntroAbrir(); return; }
     const at = e.target.closest('[data-atalho]'); if(at){ _ilhaFechar(false); if(at.dataset.atalho==='prefs' && typeof openMinhasPrefs==='function') openMinhasPrefs(); return; }
     const ab = e.target.closest('.ilha-aba[data-aba]'); if(ab){ _ilha.abaAtual = ab.dataset.aba; if(ab.dataset.aba!=='ajustes'){ p.aba = ab.dataset.aba; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
     if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; document.getElementById('ilha-veu')?.classList.toggle('on', !_ilha.fixada); _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
-    if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
+    if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: seu nome → Minhas preferências → 🏝️ Ilha Dinâmica.'); if(document.getElementById('minhasprefs-ov')?.classList.contains('open')) renderMinhasPrefsBody(); return; }
     if(e.target.closest('.notif-item') && !e.target.closest('.notif-dismiss')){ _ilhaFechar(false); return; }
     const ir = !e.target.closest('button[data-acao]') && e.target.closest('[data-ir]');
     if(ir){ _ilha.abaAtual = ir.dataset.ir; if(ir.dataset.ir!=='ajustes'){ p.aba = ir.dataset.ir; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
