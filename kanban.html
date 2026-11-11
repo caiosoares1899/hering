@@ -791,11 +791,32 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha-titulo{max-width:200px;min-width:0;}
 #ilha-aviso,#ilha-aviso-t,#ilha-aviso-s{min-width:0;}
 #ilha-titulo:empty,#ilha-tempo:empty,#ilha-mais:empty,#ilha-aviso-s:empty{display:none;}
-#ilha-tempo{font-variant-numeric:tabular-nums;color:var(--teal,#1de9b6);font-weight:700;}
+#ilha-tempo{font-variant-numeric:tabular-nums;color:var(--ilha-vivo);font-weight:700;}
 #ilha.ilha-pausa #ilha-tempo{color:var(--txt2);}
 #ilha.ilha-esg #ilha-tempo{color:var(--danger,#ff6b6b);}
 #ilha-mais{font-size:10.5px;color:var(--txt2);}
 .ilha-sep{width:1px;height:15px;background:var(--glass-b);}
+/* V2: atividade secundária (🔀 combinar) e alerta de módulo */
+#ilha-sec{flex:none;display:inline-flex;align-items:center;gap:4px;padding-left:8px;border-left:1px solid var(--glass-b);color:var(--txt2);font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;}
+#ilha-sec[hidden],#ilha[data-estado="aviso"] #ilha-sec{display:none;}
+#ilha.ilha-alerta #ilha-btn{border-color:var(--danger,#ff6b6b);}
+.ilha-op{display:flex;flex-direction:column;gap:6px;padding:10px 12px;margin-bottom:8px;border-radius:14px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);}
+/* Agenda: horário numa coluna à esquerda, título e ações à direita */
+.ilha-op.ilha-agenda{display:grid;grid-template-columns:76px minmax(0,1fr);column-gap:12px;row-gap:6px;align-items:start;}
+.ilha-op.ilha-agenda>small{grid-row:1/3;font-size:12px;font-weight:700;color:var(--txt);padding-top:1px;font-variant-numeric:tabular-nums;}
+.ilha-op.ilha-agenda>b,.ilha-op.ilha-agenda>.ilha-acoes{grid-column:2;}
+.ilha-agenda.ilha-acoes{align-items:center;justify-content:space-between;color:var(--txt3);font-size:11px;margin-top:4px;}
+.ilha-op b{font-size:12.5px;} .ilha-op small{color:var(--txt3);font-size:11px;}
+.ilha-st-ok{color:var(--teal);} .ilha-st-inc{color:var(--danger);} .ilha-st-mudo{color:var(--txt3);}
+.ilha-status-link{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);align-self:flex-start;}
+#ilha-painel [data-status]{overflow-wrap:anywhere;}
+/* Agenda: ações quebram linha e mantêm alvo de toque mesmo com títulos longos. */
+.ilha-agenda{min-width:0;overflow-wrap:anywhere;}
+.ilha-agenda .ilha-acoes{flex-wrap:wrap;}
+.ilha-agenda.ilha-acoes button,.ilha-agenda .ilha-acoes button,.ilha-agenda a{min-height:44px;max-width:100%;}
+.ilha-agenda a{display:inline-flex;align-items:center;color:var(--accent);padding:0 8px;}
+.ilha-op-h{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin:12px 2px 8px;}
+.ilha-op-h:first-child{margin-top:2px;}
 #ilha-n{display:inline-flex;align-items:center;gap:3px;}
 #ilha-n[hidden]{display:none;}
 #ilha-n{flex:none;font-size:11px;}
@@ -812,22 +833,105 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha-fio:focus-visible{opacity:1;}
 #ilha[data-estado="oculta"] #ilha-btn,#ilha[data-estado="fio"] #ilha-btn{display:none;}
 #ilha[data-estado="fio"] #ilha-fio{display:block;}
-#ilha-painel{position:absolute;top:44px;left:50%;transform:translateX(-50%);width:min(390px,calc(100vw - 20px));padding:10px;border-radius:18px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 18px 50px rgba(0,0,0,.4);z-index:400;display:none;max-height:min(72vh,580px);overflow:auto;color:var(--txt);}
+/* 🏝️ Painel aberto = "estúdio" (referência Vorssaint, 11/11/2026): botões redondos nas laterais, conteúdo escolhido no centro.
+   Esquerda: o que acontece agora (Resumo, Timers, Notificações, Agenda, Agente). Direita: atalhos e controle (Favoritos, Serviços, Operação, Ajustes). */
+#ilha-painel{position:absolute;top:46px;left:50%;transform:translate(calc(-50% + var(--ilha-dx,0px)),var(--ilha-dy,0px));width:min(680px,calc(100vw - 24px));display:none;z-index:60;outline:none;}
 #ilha[data-estado="aberta"] #ilha-painel{display:block;animation:ilhaAbre .2s var(--ease-out,ease);}
-@keyframes ilhaAbre{from{opacity:0;transform:translateX(-50%) translateY(-4px);}to{opacity:1;transform:translateX(-50%);}}
-.ilha-abas{display:flex;gap:4px;margin-bottom:8px;align-items:center;}
-.ilha-aba{flex:1;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
-.ilha-aba.on{border-color:var(--accent);color:var(--txt);}
-#ilha-fixar{min-width:34px;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);cursor:pointer;color:var(--txt2);}
-#ilha-fixar[aria-pressed="true"]{border-color:var(--accent);color:var(--txt);}
-.ilha-timer{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:9px 10px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.5);margin-bottom:6px;}
+@keyframes ilhaAbre{from{opacity:0;transform:translate(calc(-50% + var(--ilha-dx,0px)),calc(var(--ilha-dy,0px) - 6px)) scale(.985);}to{opacity:1;transform:translate(calc(-50% + var(--ilha-dx,0px)),var(--ilha-dy,0px));}}
+/* valor "ao vivo" (timer rodando, reunião chegando): no Vice o --teal é um roxo apagado — usa o pêssego do tema */
+#ilha{--ilha-vivo:var(--teal,#1de9b6);}
+/* véu de vidro (11/11/2026, pedido do Caio): com a ilha aberta o quadro desfoca e escurece — os botões e o cartão não se misturam mais com os cards */
+#ilha-veu{position:fixed;inset:0;z-index:90;background:rgba(var(--surface-rgb),.45);-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);opacity:0;pointer-events:none;transition:opacity .2s var(--ease-out,ease);}
+#ilha-veu.on{opacity:1;pointer-events:auto;}
+/* 📖 Introdução da Ilha (1ª vez que liga; "Como funciona" revê) */
+#ilha-intro{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(var(--surface-rgb),.55);-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);}
+#ilha-intro.open{display:flex;animation:iiEntra .22s var(--ease-out,ease);}
+@keyframes iiEntra{from{opacity:0;}to{opacity:1;}}
+.ii-caixa{position:relative;width:min(560px,100%);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow:auto;padding:26px 26px 20px;border-radius:24px;background:rgba(var(--surface-rgb),.985);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 24px 70px rgba(0,0,0,.5);color:var(--txt);}
+.ii-pular{position:absolute;top:14px;right:14px;min-height:34px;padding:4px 12px;border-radius:999px;border:1px solid var(--glass-b);background:none;color:var(--txt2);font:inherit;font-size:12px;cursor:pointer;}
+.ii-pular:hover{color:var(--txt);border-color:var(--accent);}
+.ii-passo{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt3);}
+.ii-caixa h2{margin:6px 0 14px;font-size:20px;line-height:1.25;}
+.ii-corpo p{font-size:13.5px;line-height:1.55;color:var(--txt2);margin:0 0 10px;} .ii-corpo b{color:var(--txt);}
+.ii-leve{font-size:12px!important;color:var(--txt3)!important;}
+.ii-lista{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.5;color:var(--txt2);}
+.ii-pilula{display:flex;align-items:center;justify-content:center;gap:9px;margin:4px auto 16px;width:max-content;max-width:100%;height:36px;padding:0 18px;border-radius:999px;background:rgba(var(--surface2-rgb),.9);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 20px rgba(0,0,0,.3);font-size:12.5px;white-space:nowrap;overflow:hidden;}
+.ii-pilula em{font-style:normal;font-weight:700;color:var(--ilha-vivo,var(--teal));font-variant-numeric:tabular-nums;}
+.ii-pilula i{width:1px;height:14px;background:var(--glass-b);} .ii-pilula span{color:var(--txt2);} .ii-pilula .ii-n{color:var(--txt);}
+:root[data-theme="vice"] .ii-pilula em{color:var(--accent);} :root[data-theme="light"] .ii-pilula em{color:color-mix(in srgb,var(--teal,#1de9b6) 55%,#000);}
+.ii-estudio{display:grid;grid-template-columns:34px 1fr 34px;gap:8px;margin:0 0 14px;align-items:start;}
+.ii-trilho{display:flex;flex-direction:column;gap:6px;align-items:center;} .ii-trilho span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:rgba(var(--surface2-rgb),.9);border:1px solid var(--glass-b);}
+.ii-trilho span.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb,56,182,255),.25);}
+.ii-centro{border-radius:14px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.45);padding:8px;} .ii-cab{font-size:11.5px;font-weight:700;padding:0 2px 6px;}
+.ii-blocos{display:grid;grid-template-columns:1fr 1fr;gap:6px;} .ii-blocos span{font-size:11px;padding:8px;border-radius:10px;background:rgba(var(--surface-rgb),.8);border:1px solid var(--glass-b);color:var(--txt2);}
+.ii-mods{display:flex;flex-direction:column;border-radius:14px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.45);padding:2px 12px;margin-top:4px;}
+.ii-mod{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;font-size:13px;min-height:44px;} .ii-mod+.ii-mod{border-top:1px solid var(--glass-b);}
+.ii-mod small{display:block;font-size:11.5px;color:var(--txt3);margin-top:2px;}
+.ii-mod input{appearance:none;-webkit-appearance:none;flex:none;width:40px;height:23px;border-radius:999px;background:rgba(var(--surface2-rgb),1);border:1px solid var(--glass-b);position:relative;cursor:pointer;transition:background .15s;}
+.ii-mod input::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--txt2);transition:transform .15s var(--ease-out,ease),background .15s;}
+.ii-mod input:checked{background:var(--accent);border-color:var(--accent);} .ii-mod input:checked::after{transform:translateX(17px);background:#fff;}
+.ii-mod input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ii-pe{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap;}
+.ii-pontos{display:flex;gap:6px;} .ii-ponto{width:8px;height:8px;padding:0;border-radius:999px;border:0;background:var(--glass-b);cursor:pointer;transition:width .2s var(--ease-out,ease);}
+.ii-ponto.on{width:22px;background:var(--accent);} .ii-ponto:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+.ii-acoes{display:flex;gap:8px;margin-left:auto;} .ii-acoes .btn{min-height:38px;padding:0 16px;border-radius:999px;}
+.ii-prim{background:var(--accent)!important;border-color:var(--accent)!important;color:#02131f!important;font-weight:700;}
+@media (max-width:560px){ #ilha-intro{padding:0;align-items:flex-end;} .ii-caixa{width:100%;max-height:92vh;max-height:92dvh;border-radius:22px 22px 0 0;padding:22px 18px 18px;} .ii-pilula{font-size:11.5px;padding:0 12px;gap:7px;} .ii-acoes .btn,.ii-pular{min-height:44px;} .ii-ponto{width:12px;height:12px;} .ii-ponto.on{width:26px;} }
+@media (prefers-reduced-motion:reduce){ #ilha-intro.open{animation:none;} .ii-ponto,.ii-mod input,.ii-mod input::after{transition:none;} }
+@media (prefers-reduced-motion:reduce){ #ilha-veu{transition:none;} }
+:root[data-theme="vice"] #ilha{--ilha-vivo:var(--accent);}
+:root[data-theme="light"] #ilha{--ilha-vivo:color-mix(in srgb,var(--teal,#1de9b6) 55%,#000);}   /* verde-água puro some no branco */
+/* aba Notificações: o cabeçalho da ilha já diz "Notificações" — some o título repetido do sino, fica o "Marcar todas" */
+#ilha-painel .notif-hd>span:first-child{display:none;}
+#ilha-painel .notif-hd{justify-content:flex-end;}
+.ilha-estudio{display:grid;grid-template-columns:80px minmax(0,1fr) 80px;gap:12px;align-items:start;}
+.ilha-trilho{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:6px;}
+.ilha-aba{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;width:80px;padding:0;border:0;background:none;color:var(--txt2);font:inherit;cursor:pointer;}
+.ilha-aba-ico{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;font-size:19px;line-height:1;background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 18px rgba(0,0,0,.28);transition:transform .15s var(--ease-out,ease),border-color .15s;}
+.ilha-aba-rot{font-size:10.5px;font-weight:600;line-height:1.2;text-align:center;max-width:80px;padding:1px 5px;box-sizing:border-box;border-radius:999px;background:rgba(var(--surface-rgb),.92);border:1px solid var(--glass-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ilha-aba:hover .ilha-aba-ico{transform:translateY(-1px);border-color:var(--accent);}
+.ilha-aba.on .ilha-aba-ico{border-color:var(--accent);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 0 0 3px rgba(var(--accent-rgb,56,182,255),.22),0 6px 18px rgba(0,0,0,.28);}
+.ilha-aba.on .ilha-aba-rot{color:var(--txt);}
+#ilha-painel .ilha-aba:focus,#ilha-painel .ilha-aba:focus-visible{outline:none;} #ilha-painel .ilha-aba:focus-visible .ilha-aba-ico{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-aba-sel{position:absolute;top:-2px;right:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:#02131f;font-size:10px;font-weight:800;display:grid;place-items:center;font-variant-numeric:tabular-nums;}
+.ilha-aba-sel.alerta{background:var(--danger,#ff6b6b);color:#fff;}
+.ilha-centro{min-width:0;display:flex;flex-direction:column;max-height:min(70vh,580px);border-radius:22px;background:rgba(var(--surface-rgb),.985);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 18px 50px rgba(0,0,0,.45);overflow:hidden;}
+.ilha-cab{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px;border-bottom:1px solid var(--glass-b);}
+.ilha-cab h2{margin:0;font-size:15px;font-weight:700;color:var(--txt);flex:1;min-width:0;}
+.ilha-cab small{color:var(--txt3);font-size:11.5px;font-weight:500;}
+#ilha-fixar{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.6);cursor:pointer;color:var(--txt2);font-size:14px;}
+#ilha-fixar[aria-pressed="true"]{border-color:var(--accent);background:rgba(var(--accent-rgb,56,182,255),.16);}
+.ilha-corpo{padding:12px 14px 14px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;}
+/* Resumo: um bloco por módulo; o bloco leva ao módulo */
+.ilha-resumo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.ilha-tile{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:92px;padding:12px 14px;border-radius:16px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.55);color:var(--txt);font:inherit;text-align:left;cursor:pointer;min-width:0;transition:border-color .15s,transform .15s var(--ease-out,ease);}
+.ilha-tile:hover{border-color:var(--accent);transform:translateY(-1px);}
+.ilha-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-tile-rot{font-size:11px;font-weight:600;color:var(--txt3);display:flex;align-items:center;gap:6px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ilha-tile-caixa .ilha-tile-rot,.ilha-tile-caixa .ilha-tile-sub{max-width:calc(100% - 42px);}
+.ilha-tile-val{font-size:22px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ilha-tile-val.menor{font-size:15px;}
+.ilha-tile-sub{font-size:11.5px;color:var(--txt2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ilha-tile.quente .ilha-tile-val{color:var(--ilha-vivo);}
+.ilha-tile.alerta{border-color:rgba(var(--danger-rgb,255,107,107),.55);}
+.ilha-tile.alerta .ilha-tile-val{color:var(--danger,#ff6b6b);}
+.ilha-tile.largo{grid-column:1/-1;}
+.ilha-tile-caixa{padding:0;cursor:default;}
+.ilha-tile-ir{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;min-height:92px;padding:12px 14px;border:0;border-radius:16px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;}
+.ilha-tile-ir:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.ilha-tile-caixa:hover{transform:none;}
+.ilha-tile-acao{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.9);color:var(--txt);cursor:pointer;font-size:13px;}
+.ilha-tile-acao:hover{border-color:var(--accent);}
+.ilha-timer{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:12px 14px;border-radius:14px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.5);margin-bottom:6px;}
 .ilha-timer-t{font-weight:600;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .ilha-timer-s{font-size:10.5px;color:var(--txt3);}
-.ilha-timer-tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--teal,#1de9b6);font-size:14px;}
+.ilha-timer-tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ilha-vivo);font-size:20px;}
 .ilha-timer.pausado .ilha-timer-tempo,.ilha-timer.novo .ilha-timer-tempo{color:var(--txt2);}
 .ilha-timer.esg .ilha-timer-tempo{color:var(--danger,#ff6b6b);}
 .ilha-acoes{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap;}
-.ilha-acoes button,.ilha-rod button,#ilha-desligar{min-height:34px;padding:5px 11px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;}
+.ilha-centro .ilha-acoes a{display:inline-flex;align-items:center;min-height:34px;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:11.5px;font-weight:600;text-decoration:none;}
+.ilha-centro .ilha-acoes a:hover{border-color:var(--accent);}
+.ilha-acoes button,.ilha-rod button,#ilha-desligar{min-height:34px;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;}
 .ilha-acoes button:hover,.ilha-rod button:hover{border-color:var(--accent);}
 .ilha-acoes [data-acao="confirmar-encerrar"]{border-color:var(--danger,#ff6b6b);color:var(--danger,#ff6b6b);}
 .ilha-notif{display:flex;gap:8px;padding:7px 6px;border-radius:10px;font-size:12px;cursor:pointer;align-items:flex-start;}
@@ -835,10 +939,23 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .ilha-notif b{display:block;font-weight:600;}
 .ilha-notif small{color:var(--txt3);}
 .ilha-notif.lida{opacity:.6;}
+.ilha-fav{display:flex;flex-wrap:nowrap;margin-bottom:8px;}
+.ilha-fav button{min-height:44px;overflow-wrap:anywhere;}
+.ilha-fav [data-fav],.ilha-fav [data-fav-card]{flex:1;min-width:0;text-align:left;}
+.ilha-fav [data-fav-rm]{flex:0 0 44px;}
+#ilha-fav-add{width:100%;min-width:0;min-height:44px;border:1px solid var(--glass-b);border-radius:10px;background:var(--glass);color:var(--txt);}
 .ilha-vazio{font-size:12px;color:var(--txt2);padding:8px 6px;}
 .ilha-rod{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
-.ilha-cfg label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;padding:6px 4px;color:var(--txt2);}
-.ilha-cfg select{background:rgba(var(--surface2-rgb),.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:8px;padding:4px 6px;font:inherit;font-size:12px;}
+.ilha-cfg-grupo{border-radius:14px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);padding:2px 12px;margin-bottom:10px;}
+.ilha-cfg label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12.5px;padding:9px 0;color:var(--txt);min-width:0;}
+.ilha-cfg-grupo label+label{border-top:1px solid var(--glass-b);}
+.ilha-cfg label span{min-width:0;} .ilha-cfg label small{display:block;color:var(--txt3);font-size:11px;margin-top:2px;}
+.ilha-cfg input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;width:38px;height:22px;border-radius:999px;background:rgba(var(--surface2-rgb),1);border:1px solid var(--glass-b);position:relative;cursor:pointer;transition:background .15s;}
+.ilha-cfg input[type=checkbox]::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--txt2);transition:transform .15s var(--ease-out,ease),background .15s;}
+.ilha-cfg input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent);}
+.ilha-cfg input[type=checkbox]:checked::after{transform:translateX(16px);background:#fff;}
+.ilha-cfg input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-cfg select{flex:none;max-width:52%;min-height:30px;background:rgba(var(--surface2-rgb),.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:8px;padding:4px 6px;font:inherit;font-size:12px;}
 .ilha-cfg p{font-size:11px;color:var(--txt3);padding:4px;line-height:1.45;}
 #ilha-anuncio{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
 @media (max-width:768px){
@@ -846,11 +963,20 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
   #ilha-btn{max-width:calc(100vw - 32px);height:42px;}
   #ilha[data-estado="aviso"] #ilha-btn{max-width:calc(100vw - 32px);}
   #ilha-titulo{max-width:110px;} #ilha-aviso-t{max-width:150px;} #ilha-aviso-s{display:none;}
-  #ilha-painel{position:fixed;top:auto;left:8px;right:8px;width:auto;transform:none;max-height:calc(100vh - 140px);}
-  @keyframes ilhaAbre{from{opacity:0;}to{opacity:1;}}
-  .ilha-acoes button,.ilha-rod button,.ilha-aba,#ilha-fixar,#ilha-desligar{min-height:44px;}
+  #ilha-painel{position:fixed;top:auto;bottom:10px;left:8px;right:8px;width:auto;transform:none;}
+  @keyframes ilhaAbre{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .ilha-estudio{display:flex;flex-direction:column;gap:10px;}
+  .ilha-centro{order:1;max-height:calc(100vh - 260px);max-height:calc(100dvh - 260px);}
+  .ilha-trilho{order:2;width:100%;box-sizing:border-box;flex-direction:row;flex-wrap:wrap;justify-content:space-around;gap:6px 0;padding:8px 4px 4px;border-radius:20px 20px 0 0;background:rgba(var(--surface-rgb),.985);border:1px solid var(--glass-b);border-bottom:0;}
+  .ilha-trilho.dir{order:3;margin-top:-10px;padding:4px 4px 8px;border-radius:0 0 20px 20px;border-top:0;border-bottom:1px solid var(--glass-b);}
+  .ilha-aba-rot{background:none;border:0;padding:0;}
+  .ilha-aba{width:62px;} .ilha-aba-ico{width:44px;height:44px;box-shadow:none;}
+  .ilha-resumo{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;} .ilha-tile{min-height:84px;padding:10px 12px;}
+  .ilha-acoes button,.ilha-rod button,.ilha-centro .ilha-acoes a,#ilha-fixar,#ilha-desligar,.ilha-tile-acao{min-height:44px;min-width:44px;}
+  .ilha-cfg label{min-height:44px;}
 }
-@media (prefers-reduced-motion:reduce){ #ilha-btn{transition:none;} #ilha[data-estado="aberta"] #ilha-painel{animation:none;} }
+@media (hover:none) and (pointer:coarse){ .ilha-acoes button,.ilha-rod button,.ilha-centro .ilha-acoes a,#ilha-fixar,#ilha-desligar,.ilha-tile-acao,.ilha-aba-ico{min-height:44px;min-width:44px;} .ilha-cfg label{min-height:44px;} }
+@media (prefers-reduced-motion:reduce){ #ilha-btn,.ilha-aba-ico,.ilha-tile,.ilha-cfg input[type=checkbox],.ilha-cfg input[type=checkbox]::after{transition:none;} #ilha[data-estado="aberta"] #ilha-painel{animation:none;} }
 /* Menu "⋯" (ver HTML/JS toggleHdMore) — só aparece no mobile, ver @media(max-width:768px) */
 .hd-more-wrap{display:none;position:relative;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
@@ -3936,7 +4062,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     <button type="button" id="ilha-btn" aria-expanded="false" aria-controls="ilha-painel" aria-label="Ilha Dinâmica">
       <span class="ilha-ico" id="ilha-ico" aria-hidden="true">🌊</span>
       <span id="ilha-aviso"><span id="ilha-aviso-t"></span><span id="ilha-aviso-s"></span></span>
-      <span id="ilha-titulo"></span><span id="ilha-tempo"></span><span id="ilha-mais"></span>
+      <span id="ilha-titulo"></span><span id="ilha-tempo"></span><span id="ilha-mais"></span><span id="ilha-sec" hidden></span>
       <span class="ilha-sep" id="ilha-sep" aria-hidden="true"></span>
       <span id="ilha-n" hidden><span aria-hidden="true">🔔</span><b></b></span>
     </button>
@@ -4224,7 +4350,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
 <!-- NOTIFICAÇÕES -->
 <div class="notif-panel tm-pop" id="tm-pop" role="dialog" aria-label="Timers em andamento">
-  <div class="notif-hd"><span>⏲ Meus timers</span><button type="button" class="notif-mark-all" id="ilha-ligar" onclick="_ilhaLigarDoPop()">🏝️ Ilha Dinâmica</button></div>
+  <div class="notif-hd"><span>⏲ Meus timers</span></div>
   <div class="notif-list" id="tm-pop-list"><div class="notif-empty">Nenhum timer ativo</div></div>
 </div>
 <div class="notif-panel" id="notif-panel">
@@ -6809,7 +6935,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.932</div>
+<div class="version">v8.30.943</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7162,7 +7288,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 </script>
 <script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=19"></script>
-<script src="mare-dicas.js?v=12"></script>
+<script src="mare-dicas.js?v=14"></script>
 <script src="mare-sonar.js?v=8"></script>
 <script src="mare-timer.js?v=1"></script>
 
@@ -11168,6 +11294,7 @@ let _cardsSyncDebounce = null;
     { let _guardiaoVisto = null, _guardiaoPrimeiro = true;
       window._onValue(window._ref(window._db,'kanban/cards_guardiao/'+ACTIVE_SQUAD+'/ultimo'), snap=>{
         const v = snap.val(); const chave = v ? (v.detectadoEm||'')+'|'+(v.cardId||'') : null;
+        if(typeof _ilhaOpGuardiao==='function') _ilhaOpGuardiao(v, chave);   // 🏝️ módulo 🛡️ Operação da Ilha (só exibição; reaproveita esta escuta)
         if(_guardiaoPrimeiro){ _guardiaoPrimeiro = false; _guardiaoVisto = chave; return; }
         if(!v || chave===_guardiaoVisto) return; _guardiaoVisto = chave;
         const t = v.titulo ? '"'+String(v.titulo).slice(0,80)+'"' : 'um card';
@@ -15017,6 +15144,16 @@ function renderMinhasPrefsBody(){
       <button class="btn btn-sm" onclick="setDndUntilTomorrowMorning();renderMinhasPrefsBody();">Até amanhã de manhã</button>
     </div>` : '<div style="padding-bottom:12px;"></div>'}
 
+    <div class="cfg-sec-title">🏝️ Ilha Dinâmica</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;">
+      <div style="font-size:12px;color:var(--txt2);max-width:340px;line-height:1.45;">${_ilhaPrefs().on ? '<b style="color:var(--txt);">Ligada neste aparelho.</b> A pílula no topo mostra timer, notificações e o que mais você escolher.' : 'Uma pílula no topo do quadro com o que está acontecendo agora: timer, notificações, próxima reunião e mais.'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-sm" id="ilha-ligar" style="${_ilhaPrefs().on?'':'color:var(--teal);border-color:rgba(29,233,182,.35);'}" onclick="_ilhaPrefsLigar()">${_ilhaPrefs().on ? 'Desligar' : '🏝️ Ligar a Ilha'}</button>
+        ${_ilhaPrefs().on ? `<button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');_ilhaAbrirAjustes();">⚙ Ajustes da ilha</button>` : ''}
+        <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');_ilhaIntroAbrir();">📖 Como funciona</button>
+      </div>
+    </div>
+
     <div class="cfg-sec-title">⌨️ Atalhos de teclado</div>
     <div style="padding:4px 0 12px;">
       <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');openAtalhos();">⌨️ Abrir Atalhos de teclado</button>
@@ -17998,13 +18135,16 @@ function _duplicarCardObj(card, opts){
   // não atrasa a duplicação em si).
   const _srcComments = novo.comments;
   delete novo.comments;
+  // Cada comentário copiado leva `copiadoDe` (id do card de origem): a regra do banco (11/11/2026) só aceita comentário com o uid de
+  // OUTRA pessoa se ele for cópia fiel (mesmo autor e texto) do comentário de mesmo id na origem — sem isso a cópia seria recusada.
+  const _comCopia = obj => { const o = {}; Object.keys(obj||{}).forEach(k=>{ if(obj[k] && typeof obj[k]==='object') o[k] = Object.assign({}, obj[k], {copiadoDe:card.id}); }); return o; };
   if(opts.comments!==false){
     if(_srcComments && Object.keys(_srcComments).length){
-      window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _srcComments).catch(()=>{});
+      window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _comCopia(_srcComments)).catch(e=>console.warn('[duplicar] comentários não copiados', e));
     } else {
       window._get(window._ref(window._db, FB+'/card_comments/'+card.id)).then(snap=>{
         const val=snap.val();
-        if(val && Object.keys(val).length) window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), val).catch(()=>{});
+        if(val && Object.keys(val).length) window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _comCopia(val)).catch(e=>console.warn('[duplicar] comentários não copiados', e));
       }).catch(()=>{});
     }
   }
@@ -29060,7 +29200,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre o Sonar, a busca do Oceano (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
-    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>⏲ Timers → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, você navega entre as abas <b>Timers</b> (pausar, continuar, iniciar, encerrar ou abrir o card), <b>Notificações</b> (as mesmas do sino; enquanto a ilha estiver ligada, ela substitui o 🔔 do topo) e <b>⚙ Ajustes</b> (quando aparecer, atividade principal, aba ao reabrir, módulos ativos e modo de compartilhar tela; o 📌 mantém aberta). Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).' },
+    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>seu nome → Minhas preferências → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão; na 1ª vez aparece uma introdução, que dá para rever em 📖 Como funciona) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, a ilha abre no <b>🏝️ Resumo</b>: um bloco por módulo com o que importa agora (tempo do timer, com ⏸/▶ no próprio bloco, notificações não lidas, próximo compromisso, serviços, agente…). Clique num bloco para abrir o módulo. Nas <b>laterais</b> ficam botões redondos com contador: à esquerda o que acontece agora (Resumo, Timers, Avisos, Agenda, Agente), à direita atalhos e controle (Favoritos, Serviços, Operação, 🎛️ Preferências — abre a mesma janela "Minhas preferências" do menu do seu nome — e ⚙ Ajustes). No celular, esses botões ficam numa faixa embaixo. Em <b>Timers</b> você pausa, continua, inicia, encerra ou abre o card; <b>Notificações</b> são as mesmas do sino (com a ilha ligada, ela substitui o 🔔 do topo); <b>⚙ Ajustes</b> tem quando aparecer, atividade principal, o que mostrar ao abrir, compartilhar tela e os módulos, com interruptores. O 📌 mantém aberta. Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).\n\n<b>Módulos</b> (Ilha → ⚙ Ajustes; todos desligados por padrão, por aparelho): 🔀 Combine atividade principal + secundária. ⭐ <b>Favoritos:</b> até 3 atalhos para produto, squad ou card aberto. 🚨 <b>Status dos serviços:</b> VTEX, GitHub e Firebase; incidente vira alerta, com prioridade para GitHub Pages instável. 📅 <b>Agenda do Radar:</b> seus compromissos dos próximos 14 dias, inclusive reuniões da torre dos seus Objetivos ativos; escolha um para ⏳ contagem regressiva. Atualiza a cada 3 h ou no botão "Atualizar". 🤖 <b>Agente Ágil:</b> mostra "analisando" enquanto ele responde sua @menção e avisa "resposta pronta". 🛡️ <b>Operação:</b> só ADM, com Guardião e falhas de backup.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
@@ -37810,12 +37950,14 @@ function tmAbrirCard(sq,cardId){
 // NÃO lê nada a mais: os timers vêm do índice que o ⏲ Timers já escuta (_tmMeus) e as notificações da mesma lista do sino (renderNotifs).
 // Pausar/continuar/encerrar = tmAcao() (mesma função do card → MareTimer). Preferências por aparelho e por pessoa (localStorage).
 // Módulo desligado não gasta: sem timer na ilha = nenhum relógio da ilha rodando (window.__ilhaTicks).
-const _ILHA_PAD = {on:false, modo:'acao', principal:'timer', reabrir:'ultima', timer:true, notif:true, privado:false, aba:'timers'};
+const _ILHA_PAD = {on:false, modo:'acao', principal:'timer', reabrir:'ultima', timer:true, notif:true, privado:false, aba:'resumo', secundaria:true, mods:{}};
 const _ilha = {p:null, aberta:false, fixada:false, hover:false, notifs:[], conhecidas:null, aviso:null, tAviso:null, tSai:null, tick:null, confirmar:null};
 window.__ilhaTicks = 0;
 const _ilhaChave = () => 'mare_ilha_'+((window._currentUser&&window._currentUser.uid)||'anon')+(/-dev\.html/.test(location.pathname)?'_dev':'');
 function _ilhaPrefs(){ const k = _ilhaChave(); if(_ilha.p && _ilha.k===k) return _ilha.p; _ilha.k = k; let o=null;   // chave por pessoa: trocar de conta no mesmo aparelho não carrega a preferência de outra
-  try{ o=JSON.parse(localStorage.getItem(_ilhaChave())||'null'); }catch(e){} _ilha.p = Object.assign({}, _ILHA_PAD, (o&&typeof o==='object')?o:{}); return _ilha.p; }
+  try{ o=JSON.parse(localStorage.getItem(_ilhaChave())||'null'); }catch(e){} _ilha.p = Object.assign({}, _ILHA_PAD, (o&&typeof o==='object')?o:{}); _ilha.p.mods = Object.assign({}, (_ilha.p.mods&&typeof _ilha.p.mods==='object')?_ilha.p.mods:{});
+  if(o && _ilha.p.ux!==2){ _ilha.p.ux = 2; _ilha.p.aba = 'resumo'; try{ localStorage.setItem(k, JSON.stringify(_ilha.p)); }catch(e){} }   // redesenho de 11/11/2026: apresenta o Resumo uma vez
+  return _ilha.p; }
 function _ilhaSalvar(){ try{ localStorage.setItem(_ilhaChave(), JSON.stringify(_ilha.p)); }catch(e){} }
 const _ilhaCelular = () => matchMedia('(max-width:768px)').matches || matchMedia('(pointer:coarse)').matches;
 // timers da pessoa, rodando primeiro (o principal é o rodando mais recente)
@@ -37839,32 +37981,60 @@ function _ilhaAvisar(n){
   const an = document.getElementById('ilha-anuncio'); if(an) an.textContent = 'Nova notificação: '+_ilha.aviso.t;
   clearTimeout(_ilha.tAviso); _ilha.tAviso = setTimeout(()=>{ _ilha.aviso = null; _ilhaRender(); }, 6000);
 }
+// ── V2 · módulos registrados (docs/ideias/ilha-dinamica.md § V2) ─────────────────────────────────────────
+// Módulo = {id, ico, nome, padrao, so?() (quem vê — só exibição), ligar?()/desligar?() (os ÚNICOS lugares onde um módulo abre ou
+// fecha escuta no Firebase), candidatos?() → [{prio, ico, txt, curto, tempo?, alerta?}], aba?: {rot, html(), clique?(e) → true se tratou}}.
+// Módulo desligado não custa nada: não liga escuta, não oferece atividade, não cria aba.
+const _ILHA_MODS = [];
+function _ilhaRegistrar(m){ if(!_ILHA_MODS.some(x=>x.id===m.id)) _ILHA_MODS.push(m); }
+function _ilhaModPode(m){ try{ return !m.so || !!m.so(); }catch(e){ return false; } }
+function _ilhaModOn(m){ const p = _ilhaPrefs(); return !!(p.on && _ilhaModPode(m) && ((m.id in p.mods) ? p.mods[m.id] : m.padrao)); }
+function _ilhaModsSinc(){ _ILHA_MODS.forEach(m=>{ const on = _ilhaModOn(m);
+  if(on && !m._ativo){ m._ativo = true; try{ m.ligar && m.ligar(); }catch(e){ console.warn('[ilha]', m.id, e); } }
+  else if(!on && m._ativo){ m._ativo = false; try{ m.desligar && m.desligar(); }catch(e){ console.warn('[ilha]', m.id, e); } } }); }
+function _ilhaModsCand(){ const r = []; _ILHA_MODS.forEach(m=>{ if(!m._ativo || !m.candidatos) return; let cs = []; try{ cs = m.candidatos() || []; }catch(e){} cs.forEach(c=>r.push(Object.assign({mod:m.id}, c))); }); return r.sort((a,b)=>b.prio-a.prio); }
+window.__ilhaMods = () => _ILHA_MODS.map(m=>({id:m.id, ativo:!!m._ativo}));
+// 🔀 Combinar atividades. Principal = a escolhida em ⚙ Ajustes, se ela tiver algo agora; senão a de maior prioridade (timer = 60).
+// Notificações só são principal quando escolhidas e sem timer (como na v1) e nunca viram secundária (já têm o contador 🔔).
+function _ilhaAtividades(){
+  const p = _ilhaPrefs(), ts = p.timer ? _ilhaTimers() : [], n = p.notif ? _ilhaNaoLidas() : 0;
+  const cand = (ts[0] ? [{mod:'timer', prio:60}] : []).concat(_ilhaModsCand()).sort((a,b)=>b.prio-a.prio);
+  let pri = (p.principal!=='notif' && cand.find(c=>c.mod===p.principal)) || null;
+  if(!pri) pri = (p.principal==='notif' && n && !ts[0]) ? {mod:'notif', prio:10} : (cand[0] || null);
+  const sec = p.secundaria ? (cand.find(c=>c!==pri) || null) : null;
+  return {pri, sec, ts, n};
+}
 function _ilhaEstado(){
   const p = _ilhaPrefs();
   if(!p.on) return 'off';
   if(_ilha.aberta) return 'aberta';
   if(_ilha.aviso) return 'aviso';
-  const tem = (p.timer && _ilhaTimers().length) || (p.notif && p.principal==='notif' && _ilhaNaoLidas());
+  const tem = (p.timer && _ilhaTimers().length) || (p.notif && p.principal==='notif' && _ilhaNaoLidas()) || _ilhaModsCand().length;
   const modo = (p.modo==='mouse' && _ilhaCelular()) ? 'acao' : p.modo;   // no toque não existe "passar o mouse"
   if(modo==='sempre') return tem || (p.notif && _ilhaNaoLidas()) ? 'atividade' : 'repouso';
   if(modo==='mouse') return _ilha.hover ? ((tem || (p.notif && _ilhaNaoLidas())) ? 'atividade' : 'repouso') : 'fio';
   return tem ? 'atividade' : 'oculta';
 }
 function _ilhaPilula(){
-  const p = _ilhaPrefs(), agora = Date.now(), ts = p.timer ? _ilhaTimers() : [], a = ts[0] || null, n = p.notif ? _ilhaNaoLidas() : 0;
+  const p = _ilhaPrefs(), agora = Date.now(), at = _ilhaAtividades(), ts = at.ts, n = at.n;
+  const a = at.pri && at.pri.mod==='timer' ? ts[0] : null, mp = at.pri && !['timer','notif'].includes(at.pri.mod) ? at.pri : null;
   const ilha = document.getElementById('ilha'), mostra = a ? MareTimer.mostra(a, agora) : null;
-  const notifPrincipal = p.principal==='notif' && n && !a;
-  ilha.classList.toggle('ilha-pausa', !!a && a.status!=='rodando'); ilha.classList.toggle('ilha-esg', !!(mostra && mostra.esg));
-  document.getElementById('ilha-ico').textContent = _ilha.aviso ? '🔔' : a ? (a.status==='rodando' ? '⏲' : a.status==='novo' ? '⏳' : '⏸') : (notifPrincipal ? '🔔' : '🌊');
-  const repouso = !a && !notifPrincipal && !_ilha.aviso; ilha.classList.toggle('ilha-repouso', repouso);
-  document.getElementById('ilha-titulo').textContent = repouso ? (n ? 'Oceano' : 'Tudo em dia') : p.privado ? '' : a ? a.atividade : (n===1 ? '1 notificação' : n+' notificações');
-  document.getElementById('ilha-tempo').textContent = a ? (a.status==='novo' ? 'iniciar' : mostra.txt) : '';
-  document.getElementById('ilha-mais').textContent = ts.length>1 ? '+'+(ts.length-1) : '';
+  const notifPrincipal = !!(at.pri && at.pri.mod==='notif');
+  ilha.classList.toggle('ilha-pausa', !!a && a.status!=='rodando'); ilha.classList.toggle('ilha-esg', !!(mostra && mostra.esg)); ilha.classList.toggle('ilha-alerta', !!(mp && mp.alerta) && !_ilha.aviso);
+  document.getElementById('ilha-ico').textContent = _ilha.aviso ? '🔔' : a ? (a.status==='rodando' ? '⏲' : a.status==='novo' ? '⏳' : '⏸') : mp ? mp.ico : (notifPrincipal ? '🔔' : '🌊');
+  const repouso = !a && !mp && !notifPrincipal && !_ilha.aviso; ilha.classList.toggle('ilha-repouso', repouso);
+  document.getElementById('ilha-titulo').textContent = repouso ? (n ? 'Oceano' : 'Tudo em dia') : p.privado ? '' : a ? a.atividade : mp ? mp.txt : (n===1 ? '1 notificação' : n+' notificações');
+  document.getElementById('ilha-tempo').textContent = a ? (a.status==='novo' ? 'iniciar' : mostra.txt) : mp ? (mp.tempo||'') : '';
+  document.getElementById('ilha-mais').textContent = a && ts.length>1 ? '+'+(ts.length-1) : '';
+  const sc = at.sec, se = document.getElementById('ilha-sec');
+  if(sc && sc.mod==='timer'){ const t = ts[0]; se.textContent = (t.status==='rodando' ? '⏲ ' : '⏸ ')+(t.status==='novo' ? 'iniciar' : MareTimer.mostra(t, agora).txt); }
+  else if(sc) se.textContent = sc.ico+(p.privado || !sc.curto ? '' : ' '+sc.curto);
+  se.hidden = !sc;
   const nb = document.getElementById('ilha-n'); nb.hidden = !n || notifPrincipal; nb.querySelector('b').textContent = n>9 ? '9+' : String(n);
-  document.getElementById('ilha-sep').hidden = !(n && !notifPrincipal && (a || _ilha.aviso));
+  document.getElementById('ilha-sep').hidden = !(n && !notifPrincipal && (a || mp || _ilha.aviso));
   document.getElementById('ilha-aviso-t').textContent = _ilha.aviso ? _ilha.aviso.t : '';
   document.getElementById('ilha-aviso-s').textContent = _ilha.aviso ? _ilha.aviso.s : '';
-  const rot = [_ilha.aviso ? 'Nova notificação: '+_ilha.aviso.t : a ? ((p.privado?'Timer':a.atividade)+', '+MareTimer.estadoTxt(a)+', '+(a.status==='novo'?'':mostra.txt)) : 'Ilha Dinâmica', n ? n+' não lida'+(n>1?'s':'') : ''].filter(Boolean).join(' · ');
+  const rot = [_ilha.aviso ? 'Nova notificação: '+_ilha.aviso.t : a ? ((p.privado?'Timer':a.atividade)+', '+MareTimer.estadoTxt(a)+', '+(a.status==='novo'?'':mostra.txt)) : mp ? (p.privado ? mp.nome||'Atividade' : mp.txt) : 'Ilha Dinâmica', sc && !_ilha.aviso ? 'também: '+se.textContent : '', n ? n+' não lida'+(n>1?'s':'') : ''].filter(Boolean).join(' · ');
   document.getElementById('ilha-btn').setAttribute('aria-label', rot);
 }
 // 10/11/2026 — a Ilha substitui a entrada do sino, não suas funcionalidades.
@@ -37886,40 +38056,89 @@ function _ilhaSinoLugar(dentro){
     if(sino._ilhaCasa.isConnected) sino._ilhaCasa.after(sino);
   }
 }
+// Painel aberto ("estúdio", 11/11/2026): botões redondos nas laterais, conteúdo no centro. O Resumo mostra um bloco por módulo
+// (o que importa agora) e cada bloco leva ao módulo. Esquerda = o que acontece agora; direita = atalhos e controle.
+const _ILHA_ESQ = ['resumo','timers','notif','agenda','agente'];
+function _ilhaAbas(){
+  const p = _ilhaPrefs(), l = [{id:'resumo', ico:'🏝️', rot:'Resumo'}];
+  if(p.timer) l.push({id:'timers', ico:'⏲', rot:'Timers', sel: _ilhaTimers().length || ''});
+  if(p.notif) l.push({id:'notif', ico:'🔔', rot:'Avisos', sel: _ilhaNaoLidas() || '', alerta:false});   // 'Avisos' só no rótulo curto do botão lateral; cabeçalho e bloco dizem 'Notificações'
+  _ILHA_MODS.filter(m=>m._ativo && m.aba).forEach(m=>{ let t = {}; try{ t = (m.tile && m.tile()) || {}; }catch(e){}
+    l.push({id:m.id, ico:m.ico, rot:m.curto || String(m.aba.rot).replace(/^\S+\s+/,''), sel: t.sel || '', alerta: !!t.alerta}); });
+  l.push({id:'ajustes', ico:'⚙', rot:'Ajustes'});
+  return l;
+}
+function _ilhaResumo(){
+  const p = _ilhaPrefs(), agora = Date.now(), tiles = [];
+  if(p.timer){ const ts = _ilhaTimers(), t = ts[0];
+    if(t){ const m = MareTimer.mostra(t, agora);
+      tiles.push(`<div class="ilha-tile ilha-tile-caixa${t.status==='rodando'?' quente':''}${m.esg?' alerta':''}" data-ir="timers" data-id="${esc(t.id)}"><button type="button" class="ilha-tile-ir" data-ir="timers"><span class="ilha-tile-rot">⏲ ${t.status==='rodando'?'Timer rodando':MareTimer.estadoTxt(t)}${ts.length>1?' · +'+(ts.length-1):''}</span><span class="ilha-tile-val" data-tm-tempo="${esc(t.id)}">${t.status==='novo'?'—':esc(m.txt)}</span><span class="ilha-tile-sub">${esc(p.privado?'':t.atividade)}</span></button>`
+        + (t.status==='rodando' ? '<button type="button" class="ilha-tile-acao" data-acao="pausar" aria-label="Pausar o timer">⏸</button>' : `<button type="button" class="ilha-tile-acao" data-acao="${t.status==='novo'?'iniciar':'continuar'}" aria-label="${t.status==='novo'?'Iniciar':'Continuar'} o timer">▶</button>`)+'</div>');
+    } else tiles.push('<button type="button" class="ilha-tile" data-ir="timers"><span class="ilha-tile-rot">⏲ Timers</span><span class="ilha-tile-val menor">Nenhum ativo</span><span class="ilha-tile-sub">Crie num card</span></button>');
+  }
+  if(p.notif){ const nl = _ilha.notifs.filter(n=>n && !n.read), n = nl.length;
+    tiles.push(`<button type="button" class="ilha-tile" data-ir="notif"><span class="ilha-tile-rot">🔔 Notificações</span><span class="ilha-tile-val${n?'':' menor'}">${n ? n+' não lida'+(n>1?'s':'') : 'Tudo em dia'}</span><span class="ilha-tile-sub">${esc(n && !p.privado ? String(nl[0].title||'') : '')}</span></button>`);
+  }
+  _ILHA_MODS.filter(m=>m._ativo && m.aba && m.tile).forEach(m=>{ let t = null; try{ t = m.tile(); }catch(e){} if(!t) return;
+    tiles.push(`<button type="button" class="ilha-tile${t.alerta?' alerta':''}${t.quente?' quente':''}" data-ir="${esc(m.id)}"><span class="ilha-tile-rot">${m.ico} ${esc(m.curto||m.nome)}</span><span class="ilha-tile-val${t.menor?' menor':''}"${t.vivo?' data-vivo="'+esc(t.vivo)+'"':''}>${esc(t.val)}</span><span class="ilha-tile-sub">${esc(p.privado?'':(t.sub||''))}</span></button>`); });
+  if(tiles.length % 2) tiles[tiles.length-1] = tiles[tiles.length-1].replace('class="ilha-tile', 'class="ilha-tile largo');
+  return '<div class="ilha-resumo">'+tiles.join('')+'</div>'
+    + (tiles.length<=2 ? '<p class="ilha-vazio">Ligue agenda, favoritos, serviços e agente em ⚙ Ajustes → Módulos.</p>' : '');
+}
+function _ilhaAjustesHtml(){
+  const p = _ilhaPrefs();
+  const sel = (id, val, ops) => `<select id="${id}">`+ops.map(([v,r])=>`<option value="${v}"${val===v?' selected':''}>${r}</option>`).join('')+'</select>';
+  const chk = (id, v) => `<input type="checkbox" id="${id}"${v?' checked':''}>`;
+  const lin = (txt, sub, ctl) => `<label><span>${txt}${sub?'<small>'+sub+'</small>':''}</span>${ctl}</label>`;
+  return '<div class="ilha-cfg">'
+    + '<div class="ilha-op-h">Como a ilha aparece</div><div class="ilha-cfg-grupo">'
+    + lin('Quando aparecer', '', sel('ilha-cfg-modo', p.modo, [['acao','Só com ação'],['mouse','Ao passar o mouse'],['sempre','Sempre visível']]))
+    + lin('Atividade principal', '', sel('ilha-cfg-principal', p.principal, [['timer','Timer'],['notif','Notificações']].concat(_ILHA_MODS.filter(m=>m._ativo && m.candidatos).map(m=>[m.id, m.nome]))))
+    + lin('Mostrar uma 2ª atividade', 'ao lado da principal, na pílula', chk('ilha-cfg-sec', p.secundaria))
+    + lin('Ao abrir, mostrar', '', sel('ilha-cfg-reabrir', p.reabrir, [['ultima','A última aba'],['resumo','O resumo'],['timers','Timers'],['notif','Notificações']]))
+    + lin('Compartilhar tela', 'esconde os títulos', chk('ilha-cfg-privado', p.privado))
+    + '</div><div class="ilha-op-h">Módulos</div><div class="ilha-cfg-grupo">'
+    + lin('⏲ Timers', '', chk('ilha-cfg-timer', p.timer))
+    + lin('🔔 Notificações', 'tira o 🔔 do topo', chk('ilha-cfg-notif', p.notif))
+    + _ILHA_MODS.filter(_ilhaModPode).map(m=>lin(m.ico+' '+esc(m.nome), m.desc ? esc(m.desc) : '', chk('ilha-cfg-mod-'+m.id, _ilhaModOn(m)))).join('')
+    + '</div><p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
+    + '<div class="ilha-acoes"><button type="button" data-ii-abrir>📖 Como funciona</button><button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div></div>';
+}
 function _ilhaPainel(){
-  const p = _ilhaPrefs(), agora = Date.now(), aba = _ilha.abaAtual || 'timers';
-  const abaBtn = (id, rot) => `<button type="button" class="ilha-aba${aba===id?' on':''}" data-aba="${id}" role="tab" aria-selected="${aba===id}">${rot}</button>`;
-  let h = '<div class="ilha-abas" role="tablist">'+(p.timer?abaBtn('timers','⏲ Timers'):'')+(p.notif?abaBtn('notif','🔔 Notificações'):'')+abaBtn('ajustes','⚙ Ajustes')
-    + `<button type="button" id="ilha-fixar" aria-pressed="${_ilha.fixada}" title="${_ilha.fixada?'Desafixar':'Manter aberta'}" aria-label="Manter aberta">📌</button></div>`;
-  if(aba==='timers'){
-    const ts = _ilhaTimers();
-    h += ts.length ? ts.map(t=>{ const m = MareTimer.mostra(t, agora), conf = _ilha.confirmar===t.id;
+  const p = _ilhaPrefs(), agora = Date.now(), abas = _ilhaAbas();
+  let aba = _ilha.abaAtual || 'resumo'; if(!abas.some(a=>a.id===aba)) aba = _ilha.abaAtual = 'resumo';
+  const info = abas.find(a=>a.id===aba), modAba = _ILHA_MODS.find(m=>m.id===aba && m._ativo && m.aba);
+  const abaBtn = a => `<button type="button" class="ilha-aba${aba===a.id?' on':''}" data-aba="${a.id}" role="tab" aria-selected="${aba===a.id}" aria-label="${esc(a.rot)}${a.sel?' ('+esc(a.sel)+')':''}"><span class="ilha-aba-ico" aria-hidden="true">${a.ico}</span><span class="ilha-aba-rot">${esc(a.rot)}</span>${a.sel!==''&&a.sel!=null?`<span class="ilha-aba-sel${a.alerta?' alerta':''}" aria-hidden="true">${esc(a.sel)}</span>`:''}</button>`;
+  const esq = abas.filter(a=>_ILHA_ESQ.includes(a.id)), dir = abas.filter(a=>!_ILHA_ESQ.includes(a.id));
+  let corpo = '', sub = '';
+  if(aba==='resumo'){ corpo = _ilhaResumo(); sub = 'o que importa agora'; }
+  else if(aba==='timers'){
+    const ts = _ilhaTimers(); sub = ts.length ? ts.length+' ativo'+(ts.length>1?'s':'') : '';
+    corpo = ts.length ? ts.map(t=>{ const m = MareTimer.mostra(t, agora), conf = _ilha.confirmar===t.id;
       return `<div class="ilha-timer ${t.status}${m.esg?' esg':''}" data-id="${esc(t.id)}"><div><div class="ilha-timer-t">${esc(p.privado?'Timer':t.atividade)}</div><div class="ilha-timer-s">${esc(p.privado?'':(t.cardTitle||''))}${p.privado?'':' · '}${esc(MareTimer.estadoTxt(t))}</div></div>`
         + `<div class="ilha-timer-tempo">${t.status==='novo'?'—':esc(m.txt)}</div><div class="ilha-acoes">`
         + (t.status==='rodando' ? '<button type="button" data-acao="pausar">⏸ Pausar</button>' : `<button type="button" data-acao="${t.status==='novo'?'iniciar':'continuar'}">▶ ${t.status==='novo'?'Iniciar':'Continuar'}</button>`)
         + (conf ? '<button type="button" data-acao="confirmar-encerrar">Encerrar mesmo?</button>' : '<button type="button" data-acao="encerrar">⏹ Encerrar</button>')
         + '<button type="button" data-acao="abrir-card">Abrir o card</button></div></div>'; }).join('')
       : '<div class="ilha-vazio">Nenhum timer ativo. Crie um num card, em "Timer e Produtividade".</div>';
-  } else if(aba==='notif'){
-    h += '<div id="ilha-sino-slot"></div>';
-  } else {
-    const sel = (id, val, ops) => `<select id="${id}">`+ops.map(([v,r])=>`<option value="${v}"${val===v?' selected':''}>${r}</option>`).join('')+'</select>';
-    const chk = (id, v) => `<input type="checkbox" id="${id}"${v?' checked':''}>`;
-    h += '<div class="ilha-cfg">'
-      + `<label>Quando aparecer ${sel('ilha-cfg-modo', p.modo, [['acao','Só quando houver ação'],['mouse','Ao passar o mouse'],['sempre','Sempre visível']])}</label>`
-      + `<label>Atividade principal ${sel('ilha-cfg-principal', p.principal, [['timer','Timer'],['notif','Notificações']])}</label>`
-      + `<label>Ao reabrir, mostrar ${sel('ilha-cfg-reabrir', p.reabrir, [['ultima','A última aba'],['timers','Timers'],['notif','Notificações']])}</label>`
-      + `<label>Timers na ilha ${chk('ilha-cfg-timer', p.timer)}</label>`
-      + `<label>Notificações na ilha (tira o 🔔 do topo) ${chk('ilha-cfg-notif', p.notif)}</label>`
-      + `<label>Compartilhar tela (sem títulos) ${chk('ilha-cfg-privado', p.privado)}</label>`
-      + '<p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
-      + '<button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div>';
-  }
+  } else if(aba==='notif'){ corpo = '<div id="ilha-sino-slot"></div>'; }
+  else if(modAba){ try{ corpo = modAba.aba.html(); }catch(e){ console.warn('[ilha]', modAba.id, e); corpo = '<div class="ilha-vazio">Não deu para mostrar esta aba agora.</div>'; } }
+  else { corpo = _ilhaAjustesHtml(); sub = 'neste aparelho'; }
+  const titulo = aba==='resumo' ? 'Ilha Dinâmica' : aba==='notif' ? 'Notificações' : (modAba ? modAba.nome : info ? info.rot : '');
+  const h = '<div class="ilha-estudio">'
+    + `<div class="ilha-abas ilha-trilho esq" role="tablist" aria-label="Agora">${esq.map(abaBtn).join('')}</div>`
+    + `<section class="ilha-centro" role="tabpanel" aria-label="${esc(titulo)}"><div class="ilha-cab"><h2>${info?info.ico+' ':''}${esc(titulo)}${sub?' <small>· '+esc(sub)+'</small>':''}</h2>`
+    + `<button type="button" id="ilha-fixar" aria-pressed="${_ilha.fixada}" title="${_ilha.fixada?'Desafixar':'Manter aberta'}" aria-label="Manter aberta">📌</button></div><div class="ilha-corpo">${corpo}</div></section>`
+    + `<div class="ilha-abas ilha-trilho dir" role="tablist" aria-label="Atalhos e ajustes">${dir.filter(a=>a.id!=='ajustes').map(abaBtn).join('')}`
+    // atalho (não é aba): abre a janela "Minhas preferências" — a mesma do menu do nome (pedido do Caio, 11/11/2026)
+    + '<button type="button" class="ilha-aba ilha-atalho" data-atalho="prefs" aria-label="Minhas preferências (abre a janela)" title="Minhas preferências"><span class="ilha-aba-ico" aria-hidden="true">🎛️</span><span class="ilha-aba-rot">Preferências</span></button>'
+    + `${dir.filter(a=>a.id==='ajustes').map(abaBtn).join('')}</div></div>`;
   // O sino é um único nó: mover preserva handlers, preferências e a lista completa.
   // Retire-o antes de trocar o HTML, para não destruir os controles originais.
   _ilhaSinoLugar(false);
   document.getElementById('ilha-painel').innerHTML = h;
   if(aba==='notif') _ilhaSinoLugar(true);
+  _ilhaPainelLugar();
 }
 // Lugar da ilha no desktop: centro do vão livre entre o nome do squad (.hd-l) e os botões (.hd-btns) — ou, com os botões
 // quebrados para a linha de baixo, o resto da 1ª linha. A pílula nunca passa desse vão (não empurra nem cobre botão).
@@ -37932,17 +38151,32 @@ function _ilhaLugar(){
   ilha.style.setProperty('--ilha-x', Math.round(L.right - H.left + 16 + vao/2)+'px');
   ilha.style.setProperty('--ilha-max', Math.max(150, Math.round(vao))+'px');
 }
+// O painel aberto (680 px) nasce centrado na pílula, que nem sempre está no meio da tela: prende dentro da janela (8 px de margem).
+// Conta pela posição da pílula e pela largura do painel (não pelo getBoundingClientRect do painel, que a animação de abertura distorce).
+function _ilhaPainelLugar(){
+  const pn = document.getElementById('ilha-painel'), il = document.getElementById('ilha'); if(!pn || !il) return;
+  if(!_ilha.aberta || matchMedia('(max-width:768px)').matches){ pn.style.removeProperty('--ilha-dx'); pn.style.removeProperty('--ilha-dy'); return; }
+  const r = il.getBoundingClientRect(), w = pn.offsetWidth, iw = document.documentElement.clientWidth, esq = r.left + r.width/2 - w/2;
+  let dx = esq < 8 ? 8 - esq : (esq + w > iw - 8 ? (iw - 8) - (esq + w) : 0);
+  // a pílula é centrada com translate(-50%): com largura ímpar o painel caía em meio pixel e o texto ficava borrado — arredonda
+  dx = Math.round(esq + dx) - esq; const topo = r.top + 46, dy = Math.round(topo) - topo;
+  pn.style.setProperty('--ilha-dx', dx.toFixed(2)+'px'); pn.style.setProperty('--ilha-dy', dy.toFixed(2)+'px');
+}
 function _ilhaRender(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
+  _ilhaModsSinc();   // antes do estado: módulo recém-ligado já conta neste render
   const p = _ilhaPrefs(), e = _ilhaEstado();
   ilha.hidden = e==='off';
   ilha.closest('.hd')?.classList.toggle('ilha-no-topo',e==='aberta');
   ilha.closest('.app')?.classList.toggle('ilha-no-topo',e==='aberta');
+  let veu = document.getElementById('ilha-veu'); const app = ilha.closest('.app');
+  if(!veu && app && e==='aberta'){ veu = document.createElement('div'); veu.id = 'ilha-veu'; veu.setAttribute('aria-hidden','true'); app.insertBefore(veu, app.firstChild); }
+  if(veu) veu.classList.toggle('on', e==='aberta' && !_ilha.fixada);   // com o 📌 a pessoa segue usando o quadro: sem véu (/monitorarbugs 11/11/2026)
   const sino = document.getElementById('notif-btn'); if(sino) sino.style.display = (p.on && p.notif) ? 'none' : '';
   if(e==='off'){ _ilhaSinoLugar(false); _ilhaRelogio(); return; }
   ilha.dataset.estado = e;
   document.getElementById('ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
-  _ilhaPilula(); _ilhaLugar();
+  _ilhaPilula(); _ilhaLugar(); _ilhaPainelLugar();
   if(e==='aberta' && !ilha.contains(document.activeElement) || (e==='aberta' && !document.querySelector('#ilha-painel .ilha-abas'))) _ilhaPainel();
   _ilhaRelogio();
 }
@@ -37950,14 +38184,15 @@ function _ilhaRender(){
 function _ilhaRelogio(){
   const p = _ilhaPrefs(), e = document.getElementById('ilha') && document.getElementById('ilha').dataset.estado;
   const precisa = p.on && p.timer && !document.hidden && ['atividade','aberta','aviso'].includes(e) && _ilhaTimers().some(t=>t.status==='rodando');
-  if(precisa && !_ilha.tick){ _ilha.tick = setInterval(()=>{ _ilhaPilula(); if(_ilha.aberta) document.querySelectorAll('#ilha-painel .ilha-timer').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.id]; if(t && t.status!=='novo') el.querySelector('.ilha-timer-tempo').textContent = MareTimer.mostra(t, Date.now()).txt; }); }, 1000); window.__ilhaTicks = 1; }
+  if(precisa && !_ilha.tick){ _ilha.tick = setInterval(()=>{ _ilhaPilula(); if(_ilha.aberta) document.querySelectorAll('#ilha-painel [data-tm-tempo]').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.tmTempo]; if(t && t.status!=='novo') el.textContent = MareTimer.mostra(t, Date.now()).txt; }); document.querySelectorAll('#ilha-painel .ilha-timer').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.id]; if(t && t.status!=='novo') el.querySelector('.ilha-timer-tempo').textContent = MareTimer.mostra(t, Date.now()).txt; }); }, 1000); window.__ilhaTicks = 1; }
   if(!precisa && _ilha.tick){ clearInterval(_ilha.tick); _ilha.tick = null; window.__ilhaTicks = 0; }
 }
 function _ilhaAbrir(){
   const p = _ilhaPrefs();
-  _ilha.abaAtual = p.reabrir==='ultima' ? (p.aba || 'timers') : p.reabrir;
-  if(_ilha.abaAtual==='timers' && !p.timer) _ilha.abaAtual = p.notif ? 'notif' : 'ajustes';
-  if(_ilha.abaAtual==='notif' && !p.notif) _ilha.abaAtual = p.timer ? 'timers' : 'ajustes';
+  _ilha.abaAtual = p.reabrir==='ultima' ? (p.aba || 'resumo') : p.reabrir;
+  if(_ilha.abaAtual==='timers' && !p.timer) _ilha.abaAtual = 'resumo';
+  if(_ilha.abaAtual==='notif' && !p.notif) _ilha.abaAtual = 'resumo';
+  if(!['resumo','timers','notif','ajustes'].includes(_ilha.abaAtual) && !_ILHA_MODS.some(m=>m.id===_ilha.abaAtual && m._ativo && m.aba)) _ilha.abaAtual = 'resumo';
   _ilha.aberta = true; _ilha.confirmar = null; _ilha.aviso = null; clearTimeout(_ilha.tAviso);
   _ilhaRender(); _ilhaPainel();
   setTimeout(()=>{ const f = document.querySelector('#ilha-painel .ilha-aba.on') || document.getElementById('ilha-painel'); f.focus({preventScroll:true}); }, 10);
@@ -37972,13 +38207,518 @@ function _ilhaFechar(foco){
   _ilhaRender();
   if(foco!==false && !recolhe){ const b = document.getElementById('ilha-btn'); if(b && getComputedStyle(b).display!=='none') b.focus({preventScroll:true}); }
 }
-function _ilhaLigarDoPop(){
+// Ligar/desligar mora em 👤 Minhas preferências (11/11/2026, pedido do Caio — antes ficava no popup ⏲ Timers).
+// Na 1ª vez que liga, abre a introdução; depois, só liga.
+function _ilhaPrefsLigar(){
   const p = _ilhaPrefs();
-  _tmFecharPop();
-  if(p.on){ _ilhaRender(); _ilhaAbrir(); _ilha.abaAtual = 'ajustes'; _ilhaPainel(); return; }   // já ligada: o botão leva aos ajustes
-  p.on = true; _ilhaSalvar(); _ilhaRender();
-  showToast('🏝️ Ilha Dinâmica ligada neste aparelho. Clique nela → ⚙ Ajustes para escolher como ela aparece.');
+  if(p.on){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); renderMinhasPrefsBody(); showToast('Ilha Dinâmica desligada. Para religar: seu nome → Minhas preferências → 🏝️ Ilha Dinâmica.'); return; }
+  p.on = true; _ilhaSalvar(); _ilhaRender(); renderMinhasPrefsBody();
+  if(!p.introVista){ closeOv('minhasprefs-ov'); _ilhaIntroAbrir(); }
+  else showToast('🏝️ Ilha Dinâmica ligada neste aparelho. Clique na pílula do topo para abrir.');
 }
+function _ilhaAbrirAjustes(){ const p = _ilhaPrefs(); if(!p.on) return; _ilhaRender(); _ilhaAbrir(); _ilha.abaAtual = 'ajustes'; _ilhaPainel(); }
+
+// ── Introdução (1ª vez que liga; revê por 📖 Como funciona em Minhas preferências ou em ⚙ Ajustes da ilha) ──
+// 5 passos: o que é · a pílula · o painel aberto · escolher módulos (interruptores reais, já valem) · onde mudar depois.
+const _ilhaIntro = {passo:0, foco:null};
+function _ilhaIntroPassos(){
+  const p = _ilhaPrefs(), mods = _ILHA_MODS.filter(_ilhaModPode);
+  const pilula = (conteudo) => `<div class="ii-pilula" aria-hidden="true">${conteudo}</div>`;
+  return [
+    {t:'Conheça a Ilha Dinâmica', h:`${pilula('<span>⏲</span><b>Revisar campanha</b><em>25:04</em><i></i><span>📅 em 12 min</span><i></i><span class="ii-n">🔔 3</span>')}
+      <p>Uma pílula no centro do topo do quadro que mostra <b>o que está acontecendo agora</b>, sem você precisar procurar: o timer que está rodando, as notificações e, se quiser, a próxima reunião, os serviços e o Agente Ágil.</p>
+      <p class="ii-leve">Vale só neste aparelho e não muda nada para as outras pessoas.</p>`},
+    {t:'A pílula', h:`${pilula('<span>⏲</span><b>Revisar campanha</b><em>25:04</em><i></i><span>📅 em 12 min</span>')}
+      <ul class="ii-lista"><li><b>À esquerda, a atividade principal</b> (você escolhe qual): timer, agenda, agente…</li><li><b>Ao lado, uma 2ª atividade</b> em letra menor, quando houver.</li><li><b>🔔 com número</b>: notificações não lidas. Quando chega uma nova, a pílula alarga por uns segundos mostrando de quem e onde.</li><li><b>Quando aparece</b>: só quando há algo acontecendo (padrão), sempre, ou ao passar o mouse no topo.</li></ul>`},
+    {t:'Um clique abre o painel', h:`<div class="ii-estudio" aria-hidden="true"><div class="ii-trilho"><span class="on">🏝️</span><span>⏲</span><span>🔔</span><span>📅</span></div><div class="ii-centro"><div class="ii-cab">🏝️ Resumo</div><div class="ii-blocos"><span>⏲ 25:04</span><span>🔔 3 não lidas</span><span>📅 em 12 min</span><span>🤖 nada agora</span></div></div><div class="ii-trilho"><span>⭐</span><span>🚨</span><span>🎛️</span><span>⚙</span></div></div>
+      <ul class="ii-lista"><li><b>No centro, o Resumo</b>: um bloco por módulo. Clique num bloco para abrir o módulo; dá para pausar o timer ali mesmo.</li><li><b>Nas laterais, botões</b>: à esquerda o que acontece agora (Timers, Notificações, Agenda, Agente); à direita atalhos e controle (Favoritos, Serviços, Preferências, ⚙ Ajustes). No celular, ficam numa faixa embaixo.</li><li><b>📌</b> mantém aberta enquanto você usa o quadro. <b>Esc</b> ou clicar fora fecha.</li></ul>`},
+    {t:'Escolha o que aparece', h:`<p>Ligue só o que faz sentido para você. Dá para mudar quando quiser em ⚙ Ajustes da ilha.</p>
+      <div class="ii-mods">
+        <label class="ii-mod"><span><b>⏲ Timers</b><small>o que está rodando, pausar e continuar</small></span><input type="checkbox" data-ii-base="timer"${p.timer?' checked':''}></label>
+        <label class="ii-mod"><span><b>🔔 Notificações</b><small>as mesmas do sino (o 🔔 do topo sai)</small></span><input type="checkbox" data-ii-base="notif"${p.notif?' checked':''}></label>
+        ${mods.map(m=>`<label class="ii-mod"><span><b>${m.ico} ${esc(m.nome)}</b><small>${esc(m.desc||'')}</small></span><input type="checkbox" data-ii-mod="${esc(m.id)}"${_ilhaModOn(m)?' checked':''}></label>`).join('')}
+      </div>`},
+    {t:'Pronto!', h:`${pilula('<span>🌊</span><b>Tudo em dia</b>')}
+      <ul class="ii-lista"><li><b>⚙ Ajustes da ilha</b> (botão na lateral do painel): quando aparecer, atividade principal, módulos e <b>Compartilhar tela</b>, que esconde os títulos numa reunião.</li><li><b>Desligar ou rever esta introdução</b>: seu nome → <b>Minhas preferências</b> → 🏝️ Ilha Dinâmica.</li></ul>`}
+  ];
+}
+function _ilhaIntroAbrir(){
+  let ov = document.getElementById('ilha-intro');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'ilha-intro'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','ii-titulo'); document.body.appendChild(ov);
+    ov.addEventListener('click', e=>{
+      if(e.target===ov || e.target.closest('[data-ii="pular"]')) return _ilhaIntroFechar(false);
+      if(e.target.closest('[data-ii="voltar"]')) return _ilhaIntroIr(_ilhaIntro.passo-1);
+      if(e.target.closest('[data-ii="proximo"]')) return _ilhaIntroIr(_ilhaIntro.passo+1);
+      if(e.target.closest('[data-ii="comecar"]')) return _ilhaIntroFechar(true);
+      const d = e.target.closest('[data-ii-ponto]'); if(d) return _ilhaIntroIr(+d.dataset.iiPonto);
+    });
+    ov.addEventListener('change', e=>{ const p = _ilhaPrefs(), b = e.target.dataset.iiBase, m = e.target.dataset.iiMod;
+      if(b){ p[b] = e.target.checked; } else if(m){ p.mods[m] = e.target.checked; if(!e.target.checked && p.principal===m) p.principal = 'timer'; } else return;
+      _ilhaSalvar(); _ilhaRender(); });
+    ov.addEventListener('keydown', e=>{
+      if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); _ilhaIntroFechar(false); }
+      else if(e.key==='ArrowRight' && !e.target.matches('input')){ e.preventDefault(); _ilhaIntroIr(_ilhaIntro.passo+1); }
+      else if(e.key==='ArrowLeft' && !e.target.matches('input')){ e.preventDefault(); _ilhaIntroIr(_ilhaIntro.passo-1); }
+      else if(e.key==='Tab'){ const f = [...ov.querySelectorAll('button,input')].filter(x=>!x.disabled && x.offsetParent); if(!f.length) return;   // foco não sai da introdução
+        const i = f.indexOf(document.activeElement); if(e.shiftKey && i<=0){ e.preventDefault(); f[f.length-1].focus(); } else if(!e.shiftKey && i===f.length-1){ e.preventDefault(); f[0].focus(); } }
+    });
+  }
+  _ilhaIntro.foco = document.activeElement; _ilhaIntro.passo = 0; ov.classList.add('open'); _ilhaIntroIr(0);
+}
+function _ilhaIntroIr(n){
+  const ov = document.getElementById('ilha-intro'); if(!ov) return; const ps = _ilhaIntroPassos();
+  n = Math.max(0, Math.min(ps.length-1, n)); _ilhaIntro.passo = n; const ps1 = ps[n], ult = n===ps.length-1;
+  ov.innerHTML = `<div class="ii-caixa"><button type="button" class="ii-pular" data-ii="pular" aria-label="Fechar a introdução">Pular</button>
+    <div class="ii-passo">Passo ${n+1} de ${ps.length}</div><h2 id="ii-titulo">${ps1.t}</h2><div class="ii-corpo">${ps1.h}</div>
+    <div class="ii-pe"><div class="ii-pontos" role="tablist" aria-label="Passos">${ps.map((_,i)=>`<button type="button" class="ii-ponto${i===n?' on':''}" data-ii-ponto="${i}" aria-label="Passo ${i+1}" aria-current="${i===n?'step':'false'}"></button>`).join('')}</div>
+    <div class="ii-acoes">${n>0?'<button type="button" class="btn btn-sm" data-ii="voltar">← Voltar</button>':''}${ult?'<button type="button" class="btn btn-sm ii-prim" data-ii="comecar">Começar a usar</button>':'<button type="button" class="btn btn-sm ii-prim" data-ii="proximo">Próximo →</button>'}</div></div></div>`;
+  const f = ov.querySelector('.ii-prim'); if(f) f.focus({preventScroll:true});
+}
+function _ilhaIntroFechar(abrirIlha){
+  const ov = document.getElementById('ilha-intro'); if(!ov || !ov.classList.contains('open')) return;
+  ov.classList.remove('open'); ov.innerHTML = '';
+  const p = _ilhaPrefs(); p.introVista = true; _ilhaSalvar(); _ilhaRender();
+  if(abrirIlha && p.on){ _ilhaPrefs().aba = 'resumo'; _ilhaAbrir(); }
+  else { const f = _ilhaIntro.foco; if(f && document.contains(f) && f.focus) f.focus({preventScroll:true}); }
+}
+// ── Módulo 🛡️ Operação (só ADM): último incidente do Guardião dos cards + backups que falharam ──
+// Leitura nova: NENHUMA. O Guardião vem da escuta que o board já tem em cards_guardiao/{squad}/ultimo (todo mundo com a squad
+// aberta recebe — a regra de leitura vale para qualquer @ciahering; o "só ADM" daqui é só de exibição) e o backup vem das
+// notificações 🛟 backup_falhou que já chegam ao sino dos ADMs. Incidente fica como atividade por 24 h ou até "Visto".
+const _ilhaOp = {g:null, chave:null};
+function _ilhaOpGuardiao(v, chave){ _ilhaOp.g = v || null; _ilhaOp.chave = chave; if(_ilhaPrefs().on) _ilhaRender(); }
+const _ilhaOpTs = v => { const t = typeof v==='number' ? v : Date.parse(v||''); return isFinite(t) ? t : 0; };
+function _ilhaOpBackups(){ return _ilha.notifs.filter(n=>n && n.type==='backup_falhou' && !n.read); }
+_ilhaRegistrar({
+  id:'op', ico:'🛡️', nome:'Operação (Guardião e backup)', padrao:false,
+  so: () => isAdmUser(window._currentUser),
+  candidatos(){
+    const r = [], g = _ilhaOp.g, p = _ilhaPrefs();
+    if(g && _ilhaOp.chave!==p.opVisto && Date.now()-_ilhaOpTs(g.detectadoEm) < 24*3600*1000){
+      const ok = g.acao==='restaurado', t = String(g.titulo||'um card').slice(0,60);
+      r.push({prio: ok ? 20 : 90, ico: ok ? '🛡️' : '🚨', alerta: !ok, curto: ok ? 'restaurado' : 'card sumiu', txt: ok ? 'Guardião restaurou "'+t+'"' : 'Card sumiu: "'+t+'"'});
+    }
+    const bk = _ilhaOpBackups().length;
+    if(bk) r.push({prio:85, ico:'🛟', alerta:true, curto:'backup', txt: bk===1 ? 'Um backup falhou' : bk+' backups falharam'});
+    return r;
+  },
+  aba: {
+    rot:'🛡️ Operação',
+    html(){
+      const g = _ilhaOp.g, p = _ilhaPrefs(), bks = _ilhaOpBackups();
+      let h = '<div class="ilha-op-h">Guardião dos cards</div>';
+      if(g){
+        const ok = g.acao==='restaurado', motivo = {restaurado:'restaurado sozinho', sem_espelho:'não restaurado: sem cópia de segurança', em_massa:'não restaurado: sumiço em massa'}[g.acao] || 'não restaurado: reincidente';
+        const noQuadro = g.cardId && (typeof cards!=='undefined') && cards.some(c=>c.id===g.cardId);
+        h += `<div class="ilha-op"><b>${ok?'🛡️':'🚨'} ${esc(String(g.titulo||'Card sem título').slice(0,120))}</b><small>${esc(motivo)} · ${esc(g.detectadoEm ? timeAgo(g.detectadoEm) : '')}</small><div class="ilha-acoes">`
+          + (noQuadro ? '<button type="button" data-op="abrir">Abrir o card</button>' : '')
+          + (_ilhaOp.chave!==p.opVisto ? '<button type="button" data-op="visto">Visto</button>' : '') + '</div></div>';
+      } else h += '<div class="ilha-vazio">Nenhum incidente registrado nesta squad.</div>';
+      h += '<div class="ilha-op-h">Backups</div>';
+      h += bks.length ? bks.slice(0,5).map(n=>`<div class="ilha-op"><b>🛟 ${esc(n.title||'Backup falhou')}</b><small>${esc(n.sub||'')}${n.sub?' · ':''}${esc(timeAgo(n.ts))}</small></div>`).join('') + '<div class="ilha-acoes"><button type="button" data-op="sino">Ver no sino</button></div>'
+        : '<div class="ilha-vazio">Nenhuma falha de backup não lida.</div>';
+      return h;
+    },
+    clique(e){
+      const b = e.target.closest('button[data-op]'); if(!b) return false;
+      const op = b.dataset.op, p = _ilhaPrefs();
+      if(op==='visto'){ p.opVisto = _ilhaOp.chave; _ilhaSalvar(); _ilhaRender(); _ilhaPainel(); }
+      else if(op==='abrir'){ const id = _ilhaOp.g && _ilhaOp.g.cardId; _ilhaFechar(false); if(id) openCard(id); }
+      else if(op==='sino'){ _ilha.abaAtual = p.notif ? 'notif' : 'ajustes'; _ilhaPainel(); }
+      return true;
+    }
+  }
+});
+// ── Módulo 📅 Agenda: cópia pessoal de 3 h, sem escuta aberta ──
+const _ILHA_AG_TTL = 3*3600*1000;
+const _ilhaAgd = {v:[], t:0, tentativa:0, tick:null, geracao:0, lendo:false, pronta:false, uid:''};
+window.__ilhaAgendaTick = 0;
+const _ilhaAgChave = () => 'mare_ilha_agenda_'+_ilhaAgd.uid+(/-dev\.html/.test(location.pathname)?'_dev':'');
+// Espelho puro de functions/okr/calendario.js: mensal/anual preservam o dia possível.
+const _ilhaAgFmt = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const _ilhaAgParse = (s) => { const p = String(s || '').slice(0, 10).split('-').map(Number); return new Date(p[0] || 1970, (p[1] || 1) - 1, p[2] || 1); };
+
+const _ilhaAgLista = (v) => (Array.isArray(v) ? v.filter(Boolean) : v && typeof v === 'object' ? Object.values(v).filter(Boolean) : []);
+
+// O evento diz respeito a este Objetivo? Vínculo explícito vence (vale em qualquer torre); senão, dentro da torre do evento (global = todas), vale o recorte:
+// TAGS (Objetivo com alguma das tags) ou GERÊNCIAS (Objetivo numa delas) — um OU o outro. Com algum recorte (Objetivos/tags/gerências) e nenhum acerto = fora.
+// Sem nenhum recorte: reunião = a torre toda; evento/lembrete só se vinculado.
+function _ilhaAgAbrange(ev, o) {
+  const ids = _ilhaAgLista(ev.objetivoIds), tags = _ilhaAgLista(ev.tagIds), areas = _ilhaAgLista(ev.areaIds);
+  if (ids.includes(o.id)) return 'vinculo';
+  const torre = o.torre || 'digital';
+  if (ev.torre && ev.torre !== torre) return '';
+  if (tags.length && _ilhaAgLista(o.tagIds).some((t) => tags.includes(t))) return 'tag';
+  if (areas.length && areas.includes(o.areaId || 'geral')) return 'gerencia';
+  if (ids.length || tags.length || areas.length) return '';
+  return ev.tipo === 'reuniao' ? 'torre' : '';
+}
+
+// Quem avisar: os responsáveis dos Objetivos ATIVOS que o evento abrange (mesmo critério da pauta). Devolve {uid: [títulos dos Objetivos]}.
+function _ilhaAgAlvosDoEvento(ev, objetivos) {
+  const out = {};
+  Object.entries(objetivos || {}).forEach(([id, o0]) => {
+    const o = o0 && { ...o0, id: o0.id || id };
+    if (!o || o.arquivado || !_ilhaAgAbrange(ev, o)) return;
+    _ilhaAgLista(o.responsaveis).forEach((uid) => { (out[uid] = out[uid] || []).push(o.titulo || ''); });
+  });
+  return out;
+}
+
+// k-ésima ocorrência (k=0 é a própria data). Mensal/anual mantêm o DIA e, se o mês não o tem (31, 29/fev), usam o último dia do mês.
+function _ilhaAgOcorrencia(data, rec, k) {
+  const base = _ilhaAgParse(data);
+  if (!k) return _ilhaAgFmt(base);
+  const n = rec.intervalo * k;
+  if (rec.unidade === 'dia') { base.setDate(base.getDate() + n); return _ilhaAgFmt(base); }
+  if (rec.unidade === 'semana') { base.setDate(base.getDate() + 7 * n); return _ilhaAgFmt(base); }
+  const meses = rec.unidade === 'ano' ? 12 * n : n;
+  const alvo = new Date(base.getFullYear(), base.getMonth() + meses, 1);
+  const ultimo = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
+  alvo.setDate(Math.min(base.getDate(), ultimo));
+  return _ilhaAgFmt(alvo);
+}
+
+function _ilhaAgRecNorm(ev) {
+  const r = ev && ev.rec;
+  if (!r || typeof r !== 'object') return null;
+  const n = Math.floor(Number(r.intervalo));
+  if (!['dia', 'semana', 'mes', 'ano'].includes(r.unidade) || !(n >= 1)) return null;
+  return { tipo: r.tipo || 'personalizada', unidade: r.unidade, intervalo: Math.min(n, 99), ate: /^\d{4}-\d{2}-\d{2}$/.test(r.ate || '') ? r.ate : '' };
+}
+
+// Datas 'YYYY-MM-DD' do evento dentro de [de, ate], sem as ocorrências canceladas (excecoes).
+function _ilhaAgOcorrencias(ev, de, ate) {
+  const out = [], ex = (ev && ev.excecoes) || {}, rec = _ilhaAgRecNorm(ev);
+  if (!ev || !/^\d{4}-\d{2}-\d{2}$/.test(ev.data || '')) return out;
+  if (!rec) { if (ev.data >= de && ev.data <= ate && !ex[ev.data]) out.push(ev.data); return out; }
+  const fim = rec.ate && rec.ate < ate ? rec.ate : ate;
+  for (let k = 0; k < 5000; k++) { const dt = _ilhaAgOcorrencia(ev.data, rec, k); if (dt > fim) break; if (dt >= de && !ex[dt]) out.push(dt); }
+  return out;
+}
+
+
+const _ilhaAgHora = h => /^([01]\d|2[0-3]):[0-5]\d$/.test(h||'') ? h : '';
+const _ilhaAgInicio = e => new Date(e.data+'T'+(e.diaInteiro?'00:00':e.hi||'00:00')+':00').getTime();
+const _ilhaAgFim = e => new Date(e.data+'T'+(e.diaInteiro?'23:59':e.hf||e.hi||'23:59')+':00').getTime();
+function _ilhaAgRender(){
+  if(document.hidden) return;
+  _ilhaRender();
+  if(_ilha.aberta && _ilha.abaAtual==='agenda') _ilhaPainel();
+}
+async function _ilhaAgLer(forcar){
+  const agora=Date.now();
+  if(!_ilhaAgd.uid || _ilhaAgd.lendo || (!forcar && _ilhaAgd.pronta && agora-_ilhaAgd.t<_ILHA_AG_TTL) || agora-_ilhaAgd.tentativa<60000) return;
+  const g=_ilhaAgd.geracao, uid=_ilhaAgd.uid, chave=_ilhaAgChave();
+  _ilhaAgd.lendo=true; _ilhaAgd.tentativa=agora;
+  // Também limita tentativas após desligar/religar ou recarregar em caso de erro.
+  try{ localStorage.setItem(chave+'_tentativa',String(agora)); }catch(e){}
+  try{
+    const [snap, objetivos]=await Promise.all([
+      window._get(window._ref(window._db,'kanban/okr/calendario/eventos')),
+      window._get(window._ref(window._db,'kanban/okr/objetivos'))
+    ]);
+    if(g!==_ilhaAgd.geracao || uid!==_ilhaAgd.uid) return;
+    const de=_ilhaAgFmt(new Date()), fim=new Date(); fim.setDate(fim.getDate()+14);
+    const v=[];
+    Object.entries(snap.val()||{}).forEach(([id,ev])=>{
+      if(!ev || (!_ilhaAgLista(ev.convidados).includes(uid) && !_ilhaAgAlvosDoEvento(ev,objetivos.val())[uid]) || (ev.tipo==='entrega' && ev.status==='entregue')) return;
+      _ilhaAgOcorrencias(ev,de,_ilhaAgFmt(fim)).forEach(data=>v.push({id,data,titulo:String(ev.titulo||'Sem título').slice(0,120),tipo:['reuniao','evento','lembrete','entrega'].includes(ev.tipo)?ev.tipo:'evento',hi:_ilhaAgHora(ev.hi),hf:_ilhaAgHora(ev.hf),diaInteiro:!!ev.diaInteiro,link:String(ev.link||'').slice(0,600)}));
+    });
+    v.sort((a,b)=>(a.data+(a.diaInteiro?'00:00':a.hi)).localeCompare(b.data+(b.diaInteiro?'00:00':b.hi)));
+    _ilhaAgd.v=v.slice(0,30); _ilhaAgd.t=Date.now(); _ilhaAgd.pronta=true;
+    try{ localStorage.setItem(chave,JSON.stringify({s:2,t:_ilhaAgd.t,v:_ilhaAgd.v})); }catch(e){}
+  }catch(e){ /* A cópia anterior continua útil sem rede. A tentativa tem intervalo mínimo. */ }
+  finally{ if(g===_ilhaAgd.geracao){ _ilhaAgd.lendo=false; _ilhaAgRender(); } }
+}
+function _ilhaAgContagem(){
+  const p=_ilhaPrefs(), c=p.agendaContagem;
+  if(!c) return null;
+  const ev=_ilhaAgd.v.find(e=>e.id===c.id && e.data===c.data);
+  if(ev && _ilhaAgInicio(ev)>Date.now()) return ev;
+  // Não apague a escolha antes da primeira cópia chegar.
+  if(_ilhaAgd.pronta){ delete p.agendaContagem; _ilhaSalvar(); }
+  return null;
+}
+function _ilhaAgDuracao(ms){
+  const min=Math.max(1,Math.ceil(ms/60000)), h=Math.floor(min/60), d=Math.floor(h/24);
+  return d ? d+'d '+h%24+'h' : h ? h+'h '+min%60+'min' : min+' min';
+}
+_ilhaRegistrar({
+  id:'agenda', ico:'📅', nome:'Agenda do Radar', padrao:false,
+  ligar(){
+    _ilhaAgd.geracao++; _ilhaAgd.uid=window._currentUser?.uid||'';
+    try{
+      const c=JSON.parse(localStorage.getItem(_ilhaAgChave())||'null');
+      if(c && c.s===2 && Number.isFinite(c.t) && Array.isArray(c.v)){
+        _ilhaAgd.v=c.v.filter(e=>e && typeof e.id==='string' && /^\d{4}-\d{2}-\d{2}$/.test(e.data||''));
+        _ilhaAgd.t=c.t; _ilhaAgd.pronta=true;
+      }
+      _ilhaAgd.tentativa=Number(localStorage.getItem(_ilhaAgChave()+'_tentativa'))||0;
+    }catch(e){}
+    _ilhaAgLer(false);
+    _ilhaAgd.tick=setInterval(()=>{ _ilhaAgLer(false); _ilhaAgRender(); },60000);
+    window.__ilhaAgendaTick=1;
+  },
+  desligar(){
+    clearInterval(_ilhaAgd.tick); _ilhaAgd.geracao++;
+    Object.assign(_ilhaAgd,{v:[],t:0,tentativa:0,tick:null,lendo:false,pronta:false,uid:''});
+    window.__ilhaAgendaTick=0;
+  },
+  candidatos(){
+    const agora=Date.now(), hoje=_ilhaAgFmt(new Date()), r=[];
+    let proximo=false;
+    _ilhaAgd.v.filter(e=>e.data===hoje && !e.diaInteiro && e.hi).forEach(e=>{
+      const inicio=_ilhaAgInicio(e), fim=_ilhaAgFim(e), n=Math.ceil((inicio-agora)/60000);
+      if(agora>=inicio && agora<=fim) r.push({prio:65,ico:'📅',txt:e.titulo,tempo:'agora',curto:'agora'});
+      else if(inicio>agora && !proximo){ proximo=true; if(n<=60) r.push({prio:n<=15?70:40,ico:'📅',txt:e.titulo,tempo:'em '+n+' min',curto:'em '+n+' min'}); }
+    });
+    const c=_ilhaAgContagem();
+    if(c){ const t=_ilhaAgDuracao(_ilhaAgInicio(c)-agora); r.push({prio:30,ico:'⏳',txt:c.titulo,tempo:t,curto:t}); }
+    return r;
+  },
+  aba:{
+    rot:'📅 Agenda',
+    html(){
+      const agora=Date.now(), hoje=_ilhaAgFmt(new Date()), amanha=new Date(); amanha.setDate(amanha.getDate()+1);
+      const c=_ilhaAgContagem(), app=(window.MareNotif?.APPS||[]).find(a=>a.id==='okr');
+      let h='', dia='';
+      _ilhaAgd.v.filter(e=>_ilhaAgFim(e)>=agora).slice(0,8).forEach(e=>{
+        if(dia!==e.data){ dia=e.data; const d=new Date(dia+'T00:00:00');
+          h+='<div class="ilha-op-h">'+esc(dia===hoje?'Hoje':dia===_ilhaAgFmt(amanha)?'Amanhã':d.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')+', '+dia.slice(8,10)+'/'+dia.slice(5,7))+'</div>'; }
+        const contando=!!c && c.id===e.id && c.data===e.data;
+        const radar=app ? app.href+'?evento='+encodeURIComponent(e.id)+'&data='+encodeURIComponent(e.data) : '';
+        const link=String(e.link||'');
+        h+=`<div class="ilha-op ilha-agenda" data-ag-id="${esc(e.id)}" data-ag-data="${esc(e.data)}"><small>${esc(e.diaInteiro?'Dia todo':e.hi+(e.hf?'–'+e.hf:''))}</small><b>${({reuniao:'🗓️',evento:'📌',lembrete:'🔔',entrega:'📦'})[e.tipo]||'📌'} ${esc(e.titulo)}</b><div class="ilha-acoes">`
+          + `<button type="button" data-ag-contar="${esc(e.id+'|'+e.data)}" aria-pressed="${contando}">${contando?'Parar contagem':'⏳ Contar'}</button>`
+          + (radar?`<a href="${esc(radar)}" target="_blank" rel="noopener">Abrir no Radar</a>`:'')
+          + (/^https:\/\/[^\s"'<>]+$/.test(link)?`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Entrar</a>`:'')+'</div></div>';
+      });
+      return (h||'<div class="ilha-vazio">Nenhum compromisso seu nos próximos 14 dias.</div>')
+        + `<div class="ilha-agenda ilha-acoes"><small>Atualizado há ${_ilhaAgd.t?Math.max(0,Math.floor((agora-_ilhaAgd.t)/60000)):0} min</small><button type="button" data-ag-atualizar>Atualizar</button></div>`;
+    },
+    clique(e){
+      const b=e.target.closest('button[data-ag-contar],button[data-ag-atualizar]'); if(!b) return false;
+      if(b.hasAttribute('data-ag-atualizar')) _ilhaAgLer(true);
+      else{
+        const ev=_ilhaAgd.v.find(v=>v.id+'|'+v.data===b.dataset.agContar), p=_ilhaPrefs(), c=p.agendaContagem;
+        if(ev){ if(c && c.id===ev.id && c.data===ev.data) delete p.agendaContagem; else p.agendaContagem={id:ev.id,data:ev.data}; _ilhaSalvar(); _ilhaAgRender(); }
+      }
+      return true;
+    }
+  }
+});
+// ── Módulo 🚨 Serviços: escutas existem somente enquanto o módulo está ligado ──
+const _ilhaStatus = {dados:{}, offs:[], geracao:0};
+const _ILHA_SERVICOS = [
+  {id:'vtex', nome:'VTEX', raiz:'https://status.vtex.com/', oficial:/^https:\/\/status\.vtex\.com\//},
+  {id:'github', nome:'GitHub', raiz:'https://www.githubstatus.com/', oficial:/^https:\/\/(www\.)?githubstatus\.com\//},
+  {id:'firebase', nome:'Firebase', raiz:'https://status.firebase.google.com/', oficial:/^https:\/\/status\.firebase\.google\.com\//}
+];
+function _ilhaStatusEstados(){
+  const agora = Date.now();
+  return _ILHA_SERVICOS.map(s=>{
+    const d = _ilhaStatus.dados[s.id]; if(!d || typeof d!=='object' || d.desligado) return null;
+    const ult = Date.parse(d.ultimoOkEm||''), valido = Number.isFinite(ult);
+    const inc = Array.isArray(d.incidentes) ? d.incidentes : Object.values(d.incidentes||{});
+    const mudo = !valido || agora-ult>20*60000, pages = !mudo && s.id==='github' && !!d.pagesAfetado;
+    const incidente = !mudo && (pages || d.abertos>0 || inc.length>0);
+    const link = inc[0] && inc[0].link;
+    return Object.assign({}, s, {inc, incidente, pages, nivel:mudo?'mudo':incidente?'inc':'ok',
+      texto:mudo?'sem leitura':pages?'Pages instável':incidente?'incidente':'normal',
+      minutos:valido?Math.max(1,Math.round((agora-ult)/60000)):null,
+      href:typeof link==='string' && s.oficial.test(link) ? link : s.raiz});
+  }).filter(Boolean);
+}
+_ilhaRegistrar({
+  id:'status', ico:'🚨', nome:'Status dos serviços', padrao:false,
+  ligar(){
+    if(_ilhaStatus.offs.length) return;
+    const geracao = ++_ilhaStatus.geracao;
+    _ILHA_SERVICOS.forEach(s=>{
+      const off = window._onValue(window._ref(window._db, 'kanban/'+s.id+'_saude'), snap=>{
+        if(geracao!==_ilhaStatus.geracao) return; // ignora entrega já enfileirada depois de desligar
+        _ilhaStatus.dados[s.id] = snap.val();
+        _ilhaRender(); // também atualiza o painel aberto, preservando o foco dentro da ilha
+      });
+      _ilhaStatus.offs.push(off);
+    });
+  },
+  desligar(){ ++_ilhaStatus.geracao; _ilhaStatus.offs.forEach(off=>off()); _ilhaStatus.offs=[]; _ilhaStatus.dados={}; },
+  candidatos(){
+    const inc = _ilhaStatusEstados().filter(s=>s.incidente); if(!inc.length) return [];
+    const nomes = inc.map(s=>s.nome), pages = inc.some(s=>s.pages);
+    return [{prio:pages?95:80, ico:'🚨', alerta:true, curto:nomes[0]+(nomes.length>1?' +'+(nomes.length-1):''),
+      txt:pages?'GitHub Pages instável'+(nomes.some(n=>n!=='GitHub')?' · Incidente: '+nomes.filter(n=>n!=='GitHub').join(', '):''):'Incidente: '+nomes.join(', ')}];
+  },
+  aba:{
+    rot:'🚨 Serviços',
+    html(){
+      const ss = _ilhaStatusEstados();
+      return ss.length ? ss.map(s=>`<div class="ilha-op" data-status="${s.id}"><b>${s.nome} · <span class="ilha-st-${s.nivel}">● ${s.texto}</span></b>`
+        + `<small>${s.minutos===null?'Sem verificação válida':'verificado há '+s.minutos+' min'}</small>`
+        + s.inc.slice(0,3).map(i=>`<div>${esc(String(i&&i.titulo||'').slice(0,140))}</div>`).join('')
+        + `<a class="ilha-status-link" href="${esc(_hrefOk(s.href))}" target="_blank" rel="noopener noreferrer">Ver status oficial</a></div>`).join('')
+        : '<div class="ilha-vazio">Sem leitura dos monitores agora.</div>';
+    }
+  }
+});
+
+// ── Módulo 🤖 Agente Ágil: "Analisando…" e "Resposta pronta" com estado REAL (nada de progresso inventado) ──
+// A função da @menção grava kanban/usuarios/{uid}/agente_analisando/{commentId} = {squad, cardId, desde} enquanto o agente trabalha
+// e apaga ao terminar (functions/agente-agil-orquestrador/mentionTrigger.js). Uma escuta nesse nó pessoal, só com o módulo ligado.
+// "Resposta pronta" = a notificação que a mesma função já manda ("🤖 Agente Ágil respondeu sua menção"), não lida, dos últimos 30 min.
+// Marcador com mais de 10 min é ignorado (função caiu antes do `finally`). O tempo mostrado é o decorrido desde `desde` — medida real.
+const _ilhaAg = {m:{}, off:null, tick:null, vis:null, vivo:false};
+window.__ilhaAgTick = 0;
+function _ilhaAgAnalisando(){ const agora = Date.now();
+  return Object.entries(_ilhaAg.m||{}).map(([id,v])=>Object.assign({id}, (v&&typeof v==='object')?v:{}))
+    .filter(v=>{ const t = Date.parse(v.desde||''); return isFinite(t) && agora-t < 10*60*1000 && agora-t > -60000 && typeof v.cardId==='string' && typeof v.squad==='string'; })
+    .sort((a,b)=>String(b.desde).localeCompare(String(a.desde))); }
+function _ilhaAgProntas(){ const agora = Date.now();
+  return _ilha.notifs.filter(n=>n && !n.read && /^mention_/.test(String(n.id||'')) && !/^mention_auto_/.test(String(n.id||'')) && /Agente Ágil/.test(String(n.title||'')) && agora-Date.parse(n.ts||'') < 30*60*1000); }
+function _ilhaAgCard(v){ const c = v.squad===ACTIVE_SQUAD && typeof cards!=='undefined' ? cards.find(c=>c.id===v.cardId) : null;
+  return c ? String(c.title||'Card').slice(0,80) : (SQUAD_META_LIVE[v.squad] && SQUAD_META_LIVE[v.squad].label ? 'card em '+SQUAD_META_LIVE[v.squad].label : 'um card'); }
+function _ilhaAgDecorrido(v){ const s = Math.max(0, Math.floor((Date.now()-Date.parse(v.desde))/1000)); return s<60 ? s+' s' : Math.floor(s/60)+' min'; }
+function _ilhaAgRelogio(){
+  const precisa = _ilhaAg.vivo && !document.hidden && _ilhaAgAnalisando().length>0;
+  if(precisa && !_ilhaAg.tick) _ilhaAg.tick = setInterval(()=>{ const an = _ilhaAgAnalisando(); if(!an.length){ _ilhaAgRelogio(); _ilhaRender(); return; } _ilhaPilula(); document.querySelectorAll('#ilha-painel [data-vivo="ag"]').forEach(el=>{ el.textContent = 'Analisando · '+_ilhaAgDecorrido(an[0]); }); }, 5000);
+  if(!precisa && _ilhaAg.tick){ clearInterval(_ilhaAg.tick); _ilhaAg.tick = null; }
+  window.__ilhaAgTick = _ilhaAg.tick ? 1 : 0;
+}
+_ilhaRegistrar({
+  id:'agente', ico:'🤖', nome:'Agente Ágil', padrao:false,
+  ligar(){
+    const u = window._currentUser; if(!u || _ilhaAg.vivo) return;
+    _ilhaAg.vivo = true;   // ANTES do onValue: o Firebase real entrega na hora (dentro da chamada) quando o dado já está em cache
+    _ilhaAg.off = window._onValue(window._ref(window._db, 'kanban/usuarios/'+u.uid+'/agente_analisando'), snap=>{
+      if(!_ilhaAg.vivo) return;
+      const v = snap.val(); _ilhaAg.m = (v && typeof v==='object') ? v : {};
+      _ilhaAgRelogio(); _ilhaRender();
+    }) || (()=>{});
+    _ilhaAg.vis = ()=>_ilhaAgRelogio(); document.addEventListener('visibilitychange', _ilhaAg.vis);
+  },
+  desligar(){
+    const off = _ilhaAg.off; _ilhaAg.vivo = false; _ilhaAg.off = null; if(off) off();
+    _ilhaAg.m = {}; if(_ilhaAg.vis){ document.removeEventListener('visibilitychange', _ilhaAg.vis); _ilhaAg.vis = null; }
+    _ilhaAgRelogio();
+  },
+  candidatos(){
+    const r = [], an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+    if(pr.length) r.push({prio:75, ico:'🤖', curto:'resposta pronta', txt: pr.length===1 ? 'Resposta do agente pronta' : pr.length+' respostas do agente prontas'});
+    if(an.length) r.push({prio:55, ico:'🤖', curto:'analisando', tempo:_ilhaAgDecorrido(an[0]), txt:'Agente analisando'+(an.length>1?' ('+an.length+')':'')+' · '+_ilhaAgCard(an[0])});
+    return r;
+  },
+  aba:{
+    rot:'🤖 Agente',
+    html(){
+      const an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+      let h = '<div class="ilha-op-h">Analisando agora</div>';
+      h += an.length ? an.map(v=>`<div class="ilha-op"><b>🤖 ${esc(_ilhaAgCard(v))}</b><small>começou há ${esc(_ilhaAgDecorrido(v))}</small><div class="ilha-acoes"><button type="button" data-ag-card="${esc(v.squad+'|'+v.cardId)}">Abrir o card</button></div></div>`).join('')
+        : '<div class="ilha-vazio">Nenhuma menção ao agente em andamento.</div>';
+      h += '<div class="ilha-op-h">Respostas prontas</div>';
+      h += pr.length ? pr.slice(0,5).map(n=>`<div class="ilha-op"><b>${esc(n.title||'')}</b><small>${esc(n.sub||'')}${n.sub?' · ':''}${esc(timeAgo(n.ts))}</small><div class="ilha-acoes"><button type="button" data-ag-resp="${esc(n.id)}">Ver resposta</button></div></div>`).join('')
+        : '<div class="ilha-vazio">Nenhuma resposta nova do agente.</div>';
+      return h + '<p class="ilha-vazio">Mostra só o que o agente está fazendo de verdade: o aviso some quando ele termina.</p>';
+    },
+    clique(e){
+      const a = e.target.closest('[data-ag-card]');
+      if(a){ const i = a.dataset.agCard.indexOf('|'), sq = a.dataset.agCard.slice(0,i), cid = a.dataset.agCard.slice(i+1); _ilhaFechar(false); tmAbrirCard(sq, cid); return true; }
+      const r = e.target.closest('[data-ag-resp]');
+      if(r){ const n = _ilha.notifs.find(x=>String(x.id)===r.dataset.agResp); if(n){ _ilhaFechar(false); openNotif(n.id, n.cardId||'', n.squad||ACTIVE_SQUAD, n.commentId||'', n.type||'', '', ''); } return true; }
+      return false;
+    }
+  }
+});
+// ── Módulo ⭐ Favoritos: só neste aparelho; destinos sempre reconstruídos, nunca URLs salvas ──
+function _ilhaFavs(){
+  const p = _ilhaPrefs(), vistos = new Set(), r = [];
+  const idOk = v => typeof v==='string' && !!v.trim();
+  (Array.isArray(p.favs) ? p.favs : []).forEach(f=>{
+    if(!f || typeof f!=='object') return;
+    let n;
+    if(f.tipo==='squad' && idOk(f.id)) n = {tipo:'squad', id:f.id};
+    else if(f.tipo==='produto' && idOk(f.id) && (window.MareNotif?.APPS||[]).some(a=>a.id===f.id)) n = {tipo:'produto', id:f.id};
+    else if(f.tipo==='card' && idOk(f.sq) && idOk(f.cardId) && typeof f.titulo==='string') n = {tipo:'card', sq:f.sq, cardId:f.cardId, titulo:f.titulo.slice(0,80)};
+    if(!n) return;
+    const k = JSON.stringify([n.tipo,n.id,n.sq,n.cardId]);
+    if(!vistos.has(k) && r.length<3){ vistos.add(k); r.push(n); }
+  });
+  p.favs = r; return r;
+}
+function _ilhaFavCard(){ return document.querySelector('#card-ov.open') ? cards.find(c=>c.id===editingId) : null; }
+function _ilhaFavAtualizar(){ _ilhaSalvar(); _ilhaPainel(); const f = (document.getElementById('ilha-fav-add') || document.querySelector('#ilha-painel [data-fav]')); if(f) f.focus(); }
+function _ilhaFavAdicionar(f){
+  const favs = _ilhaFavs();
+  if(favs.length<3){ _ilhaPrefs().favs = favs.concat(f); _ilhaFavs(); }
+  _ilhaFavAtualizar();
+}
+_ilhaRegistrar({
+  id:'fav', ico:'⭐', nome:'Favoritos', padrao:false,
+  aba:{
+    rot:'⭐ Favoritos',
+    html(){
+      const fs = _ilhaFavs(), apps = window.MareNotif?.APPS||[];
+      let h = fs.length ? fs.map((f,i)=>{
+        const nome = f.tipo==='squad' ? (SQUAD_META_LIVE[f.id]?.label||f.id) : f.tipo==='produto' ? apps.find(a=>a.id===f.id).nome : f.titulo;
+        return `<div class="ilha-acoes ilha-fav"><button type="button" data-fav="${i}">${esc(f.tipo==='squad'?'👥':f.tipo==='produto'?'🌊':'🗂')} ${esc(nome)}</button><button type="button" data-fav-rm="${i}" aria-label="Remover dos favoritos">✕</button></div>`;
+      }).join('') : '<div class="ilha-vazio">Adicione um produto ou squad abaixo, ou favorite um card enquanto ele estiver aberto.</div>';
+      if(fs.length===3) return h+'<div class="ilha-vazio">Máximo de 3 — remova um para trocar</div>';
+      const tem = (tipo,id)=>fs.some(f=>f.tipo===tipo && f.id===id);
+      h += '<select id="ilha-fav-add" aria-label="Adicionar favorito"><option value="">＋ Adicionar favorito…</option><optgroup label="Produtos">'
+        + apps.filter(a=>!tem('produto',a.id)).map(a=>`<option value="${esc('produto:'+a.id)}">${esc(a.nome)}</option>`).join('')
+        + '</optgroup><optgroup label="Squads">'+Object.keys(SQUAD_META_LIVE).filter(id=>!tem('squad',id)).map(id=>`<option value="${esc('squad:'+id)}">${esc(SQUAD_META_LIVE[id].label||id)}</option>`).join('')+'</optgroup></select>';
+      const c = _ilhaFavCard();
+      if(c && !fs.some(f=>f.tipo==='card' && f.sq===ACTIVE_SQUAD && f.cardId===c.id)) h += '<div class="ilha-acoes ilha-fav"><button type="button" data-fav-card>⭐ Favoritar o card aberto</button></div>';
+      return h;
+    },
+    clique(e){
+      const b = e.target.closest('[data-fav], [data-fav-rm], [data-fav-card]'); if(!b) return false;
+      const fs = _ilhaFavs();
+      if(b.hasAttribute('data-fav-rm')){ fs.splice(Number(b.dataset.favRm),1); _ilhaFavAtualizar(); }
+      else if(b.hasAttribute('data-fav-card')){ const c = _ilhaFavCard(); if(c) _ilhaFavAdicionar({tipo:'card', sq:ACTIVE_SQUAD, cardId:c.id, titulo:String(c.title||'Card sem título').slice(0,80)}); }
+      else {
+        const f = fs[Number(b.dataset.fav)]; if(!f) return true;
+        if(f.tipo==='squad') location.href = location.pathname+'?squad='+encodeURIComponent(f.id);
+        else if(f.tipo==='produto'){ const a = (window.MareNotif?.APPS||[]).find(a=>a.id===f.id); if(a) window.open(a.href, '_blank', 'noopener'); }
+        else { _ilhaFechar(false); tmAbrirCard(f.sq,f.cardId); }
+      }
+      return true;
+    }
+  }
+});
+// ── Blocos do Resumo (painel aberto) e nomes curtos dos botões laterais — um por módulo ──
+const _ilhaModExtra = (id, o) => { const m = _ILHA_MODS.find(x=>x.id===id); if(m) Object.assign(m, o); };
+_ilhaModExtra('agenda', {curto:'Agenda', desc:'seus compromissos e contagem regressiva', tile(){
+  const agora = Date.now(), prox = (_ilhaAgd.v||[]).find(e=>_ilhaAgFim(e) >= agora);
+  if(!prox) return {val:'Livre', menor:true, sub:'nada nos próximos 14 dias'};
+  const ini = _ilhaAgInicio(prox), hoje = _ilhaAgFmt(new Date()), n = Math.ceil((ini-agora)/60000);
+  const val = !prox.diaInteiro && prox.data===hoje ? (agora>=ini ? 'agora' : n<=90 ? 'em '+n+' min' : prox.hi) : (prox.data===hoje ? 'hoje' : new Date(prox.data+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'short', day:'2-digit', month:'2-digit'}).replace('.',''));
+  return {val, sub:prox.titulo, quente: prox.data===hoje && !prox.diaInteiro && n<=15, sel: prox.data===hoje && !prox.diaInteiro && n<=60 && n>0 ? n+'m' : ''};
+}});
+_ilhaModExtra('agente', {curto:'Agente', desc:'"analisando" real e resposta pronta', tile(){
+  const an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+  if(an.length) return {val:'Analisando · '+_ilhaAgDecorrido(an[0]), vivo:'ag', menor:true, sub:_ilhaAgCard(an[0]), quente:true, sel:'…'};
+  if(pr.length) return {val: pr.length===1 ? 'Resposta pronta' : pr.length+' respostas', menor:true, sub:String(pr[0].sub||''), quente:true, sel:pr.length};
+  return {val:'Nada agora', menor:true, sub:'chame com @Agente Ágil num card'};
+}});
+_ilhaModExtra('status', {curto:'Serviços', desc:'VTEX, GitHub e Firebase', tile(){
+  const ss = _ilhaStatusEstados(), inc = ss.filter(x=>x.incidente);
+  if(!ss.length) return {val:'Sem leitura', menor:true, sub:'monitores fora do ar'};
+  if(inc.length) return {val:'Incidente', sub:inc.map(x=>x.nome).join(', '), alerta:true, sel:'!'};
+  return {val:'Tudo normal', menor:true, sub:ss.map(x=>x.nome).join(' · ')};
+}});
+_ilhaModExtra('op', {curto:'Operação', desc:'Guardião dos cards e backups (só ADM)', tile(){
+  const bk = _ilhaOpBackups().length, g = _ilhaOp.g, novo = g && _ilhaOp.chave!==_ilhaPrefs().opVisto && Date.now()-_ilhaOpTs(g.detectadoEm) < 24*3600*1000;
+  if(bk) return {val:bk===1?'Backup falhou':bk+' backups falharam', menor:true, alerta:true, sel:'!'};
+  if(novo) return {val:g.acao==='restaurado'?'Card restaurado':'Card sumiu', menor:true, sub:String(g.titulo||''), alerta:g.acao!=='restaurado', sel:'!'};
+  return {val:'Tudo certo', menor:true, sub:'Guardião e backups'};
+}});
+_ilhaModExtra('fav', {curto:'Favoritos', desc:'até 3 atalhos: produto, squad ou card', tile(){
+  const fs = _ilhaFavs(); if(!fs.length) return {val:'Nenhum', menor:true, sub:'adicione até 3 atalhos'};
+  const apps = (window.MareNotif && MareNotif.APPS) || [];
+  return {val: fs.length+' atalho'+(fs.length>1?'s':''), menor:true, sub: fs.map(f=>f.tipo==='squad' ? ((SQUAD_META_LIVE[f.id]||{}).label||f.id) : f.tipo==='produto' ? ((apps.find(a=>a.id===f.id)||{}).nome||f.id) : f.titulo).join(' · ')};
+}});
 window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(); }, desligar:()=>{ _ilhaPrefs().on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); }, estado:()=>_ilhaEstado()};
 (function _ilhaEventos(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
@@ -37992,6 +38732,7 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
   ilha.addEventListener('focusout', e=>{ if(!ilha.contains(e.relatedTarget) && !_ilha.dentro) sai(true); });
   // Esc fecha (e desfixa) — o 📌 só impede o clique fora de fechar; nunca chega aos atalhos do board
   window.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ilha.aberta){
+    if(document.querySelector('.ov.open')) return;   // card/preferências abertos por cima (ilha fixada ou aberta por atalho): o Esc é deles
     e.preventDefault(); e.stopImmediatePropagation();
     const dnd=document.getElementById('dnd-menu'), ins=document.getElementById('mn-ins-menu');
     if(dnd?.style.display==='block'){ dnd.style.display='none'; document.getElementById('dnd-toggle-btn')?.focus(); }
@@ -38003,25 +38744,40 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
   const painel = document.getElementById('ilha-painel');
   painel.addEventListener('click', async e=>{
     const p = _ilhaPrefs();
-    const ab = e.target.closest('.ilha-aba'); if(ab){ _ilha.abaAtual = ab.dataset.aba; if(ab.dataset.aba!=='ajustes'){ p.aba = ab.dataset.aba; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
-    if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
-    if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
+    if(e.target.closest('[data-ii-abrir]')){ _ilhaFechar(false); _ilhaIntroAbrir(); return; }
+    const at = e.target.closest('[data-atalho]'); if(at){ _ilhaFechar(false); if(at.dataset.atalho==='prefs' && typeof openMinhasPrefs==='function') openMinhasPrefs(); return; }
+    const ab = e.target.closest('.ilha-aba[data-aba]'); if(ab){ _ilha.abaAtual = ab.dataset.aba; if(ab.dataset.aba!=='ajustes'){ p.aba = ab.dataset.aba; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
+    if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; document.getElementById('ilha-veu')?.classList.toggle('on', !_ilha.fixada); _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
+    if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: seu nome → Minhas preferências → 🏝️ Ilha Dinâmica.'); if(document.getElementById('minhasprefs-ov')?.classList.contains('open')) renderMinhasPrefsBody(); return; }
     if(e.target.closest('.notif-item') && !e.target.closest('.notif-dismiss')){ _ilhaFechar(false); return; }
+    const ir = !e.target.closest('button[data-acao]') && e.target.closest('[data-ir]');
+    if(ir){ _ilha.abaAtual = ir.dataset.ir; if(ir.dataset.ir!=='ajustes'){ p.aba = ir.dataset.ir; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
+    const mAba = _ILHA_MODS.find(m=>m.id===_ilha.abaAtual && m._ativo && m.aba && m.aba.clique); if(mAba){ try{ if(mAba.aba.clique(e)) return; }catch(err){ console.warn('[ilha]', mAba.id, err); } }
     const b = e.target.closest('button[data-acao]'); if(!b) return;
-    const el = b.closest('.ilha-timer'), t = el && (_tmMeus||{})[el.dataset.id]; if(!t) return;
+    const el = b.closest('.ilha-timer,[data-ir="timers"]'), t = el && (_tmMeus||{})[el.dataset.id]; if(!t) return;
     const ac = b.dataset.acao;
     if(ac==='encerrar'){ _ilha.confirmar = t.id; _ilhaPainel(); const c = painel.querySelector('[data-acao="confirmar-encerrar"]'); if(c) c.focus(); return; }
     if(ac==='abrir-card'){ _ilhaFechar(false); tmAbrirCard(t.sq, t.cardId); return; }
     const mapa = {pausar:'pause', continuar:'play', iniciar:'play', 'confirmar-encerrar':'stop'};
     _ilha.confirmar = null;
+    const doBloco = !!b.closest('.ilha-tile');
     await tmAcao(t.sq, t.cardId, t.id, mapa[ac]);   // o índice atualiza e chama _ilhaRender
     _ilhaPainel();
+    if(doBloco){ const f = painel.querySelector('.ilha-tile[data-ir="timers"] .ilha-tile-acao'); if(f) f.focus(); }
   });
   document.getElementById('notif-panel').addEventListener('keydown', e=>{ const ni = e.target.closest('.notif-item'); if(ni && e.target===ni && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); ni.click(); } });
   painel.addEventListener('change', e=>{
     const p = _ilhaPrefs(), id = e.target.id;
     if(id==='ilha-cfg-modo') p.modo = e.target.value; else if(id==='ilha-cfg-principal') p.principal = e.target.value; else if(id==='ilha-cfg-reabrir') p.reabrir = e.target.value;
-    else if(id==='ilha-cfg-timer') p.timer = e.target.checked; else if(id==='ilha-cfg-notif') p.notif = e.target.checked; else if(id==='ilha-cfg-privado') p.privado = e.target.checked; else return;
+    else if(id==='ilha-cfg-timer') p.timer = e.target.checked; else if(id==='ilha-cfg-notif') p.notif = e.target.checked; else if(id==='ilha-cfg-privado') p.privado = e.target.checked;
+    else if(id==='ilha-cfg-sec') p.secundaria = e.target.checked;
+    else if(id==='ilha-fav-add'){
+      const v = e.target.value, sep = v.indexOf(':'), tipo = v.slice(0,sep), favId = v.slice(sep+1);
+      if(sep>0 && ((tipo==='produto' && (window.MareNotif?.APPS||[]).some(a=>a.id===favId)) || (tipo==='squad' && Object.hasOwn(SQUAD_META_LIVE,favId)))) _ilhaFavAdicionar({tipo,id:favId});
+      return;
+    }
+    else if(id.indexOf('ilha-cfg-mod-')===0){ p.mods[id.slice(13)] = e.target.checked; if(!e.target.checked && p.principal===id.slice(13)) p.principal = 'timer'; _ilhaSalvar(); _ilhaRender(); _ilhaPainel(); const f = document.getElementById(id); if(f) f.focus(); return; }   // liga/desliga aba e escuta do módulo
+    else return;
     _ilhaSalvar(); _ilhaPilula(); _ilhaRender(); _ilhaRelogio();   // prévia ao vivo: a pílula muda enquanto ajusta
   });
   window.addEventListener('resize', ()=>{ if(_ilhaPrefs().on) _ilhaRender(); });
