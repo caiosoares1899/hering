@@ -95,7 +95,7 @@ Relato (12/11/2026): uma pessoa aplicou uma receita num card (campanha) e deu er
 - **Teste:** `docs/arezzo/testes/test_receita_cards_somem.js` (squad com chave 4 excluída + receita de 3 filhos numa campanha). Na versão anterior o "Card 7" é sobrescrito, inclusive com rede lenta (`LENTO=400`); corrigido, 5/5 no `kanban.html` e no `kanban-dev.html`. Suítes de supercard, duplicar e modal do card sem regressão.
 - **Exceção ao dev-first:** aplicado em dev E prod no mesmo PR, porque havia perda de dado acontecendo em produção.
 
-### 2026-11-11 · Travessia: /monitorarbugs das entregas do dia (SÓ DEV · travessia-dev.html)
+### 2026-11-11 · Travessia: /monitorarbugs das entregas do dia (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html)
 
 - **Rascunho perdido ao navegar:** o debounce de 600 ms ignorava o textarea já desconectado; editar e mudar de aba imediatamente perdia a resposta ou o exemplo das atitudes. Agora o input guarda antes da navegação. Apagar uma resposta também é uma edição: o filtro de vazio descartava esse rascunho e fazia o texto do banco reaparecer; agora preserva `''`. Readonly continua sem restauração.
 - **Troca de pessoa no demo:** `S.atSel` reutilizava `enc-inicio`, levando a atitude não salva de uma pessoa para outra. A troca limpa escolhas e último foco. O humor pendente também sobrevivia à troca (Desfazer podia alterar a nova pessoa; o aviso usava a identidade corrente). Agora encerra a janela ao trocar/sair e guarda pessoa, líder e dia originais; uma gravação que termina depois da troca não arma Desfazer na nova pessoa.
@@ -106,14 +106,14 @@ Relato (12/11/2026): uma pessoa aplicou uma receita num card (campanha) e deu er
 - **Fronteira:** sem mudança de permissões, nós ou sinks; correção da lista branca existente e isolamento do estado por pessoa. **Dica:** não, correções de comportamento existente.
 
 
-### 2026-11-11 · Oceano e Ilha: 3 achados do /monitorarbugs (SÓ DEV · oceano-dev v1.79 · kanban-dev v8.30.945)
+### 2026-11-11 · Oceano e Ilha: 3 achados do /monitorarbugs (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: oceano-dev v1.79 · kanban-dev v8.30.945)
 
 - **Oceano — contagem por pessoa (O4):** a marca de "já contei nesta aba" (`sessionStorage.oceano_contou`) era da aba, não da pessoa. Ana entrava, saía e Bia entrava na mesma aba: a abertura da Bia nunca contava, e as abas de apresentação só sumiam para ela depois de mais aberturas que o prometido. A chave agora leva o uid.
 - **Oceano — título preso:** com um produto aberto (Radar, Maré…), ir para `#conheca`/`#tecnica` fechava o produto, mas a aba do navegador continuava "Radar · Oceano". `rotearHash` agora devolve o título "Oceano", como os outros caminhos que fecham o produto.
 - **Ilha — introdução no celular:** preferência "ao passar o mouse" salva noutro aparelho deixava o passo "Quando a pílula aparece" sem nenhum rádio marcado (a opção do mouse some no toque). No toque essa preferência funciona como "Só com algo acontecendo"; agora esse rádio vem marcado.
 - Achados pela varredura do Codex (que não editou os dois arquivos porque o quadro ainda os listava como reservados por tarefas encerradas) e corrigidos pelo maestro. Teste: `docs/arezzo/testes/test_monitorarbugs_1112b.js` (os 3 falham na `main` e passam com a correção).
 
-### 2026-11-11 · Radar: recorte Pra você preso ao trocar de torre (SÓ DEV)
+### 2026-11-11 · Radar: recorte Pra você preso ao trocar de torre (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia)
 
 Sintoma: selecionar Marcos em até 14 dias e trocar para uma torre sem esses Marcos mantinha a lista vazia e o chip de origem desaparecia. Causa: _okrEntrarTorre limpava gerência e período, mas preservava o novo filtro pv. Correção: limpar pv na mudança de torre; navegar na mesma torre preserva a escolha. Cenário: digital com pv=marcos → comercial sem Marcos pessoais. Teste: docs/arezzo/testes/test_monitorarbugs_1112.js (Playwright preparado, execução pelo maestro).
 

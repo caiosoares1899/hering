@@ -3150,7 +3150,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.103 · painel-dev</div>
+<div class="version">v5.104 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -8366,6 +8366,25 @@ function loadComunicados(){
 // revisou/publicou ou descartou, ele nunca é recriado (checa se o ID já
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_radar_ritmo_pravoce_2026_11_12',
+    titulo: "🎯 Radar: veja seus números no topo e se cada Objetivo está no ritmo",
+    corpo: "<p>Duas novidades no <b>Radar</b> para você saber, de cara, onde precisa agir:</p>"
+      + "<p><b>⭐ Pra você</b> — no topo da lista de Objetivos aparece uma faixa só com os <b>seus</b> números: Objetivos em que você é responsável (ou por algum Marco), os <b>parados</b>, os <b>em risco ou atrasados</b> e os <b>Marcos com prazo nos próximos 14 dias</b>. Um clique filtra a lista; outro clique volta a mostrar tudo.</p>"
+      + "<p><b>📐 Ritmo</b> — para metas numéricas (💰 📊 🔢) com período definido, o cartão ganha um <b>traço na barra</b> marcando quanto deveria estar feito hoje. Quando o Objetivo sai do ritmo, aparece um aviso curto, como <i>\"12 pontos atrás · fecha em ~70%\"</i>. No <b>📈 Evolução</b> você vê o esperado, o realizado, a projeção e uma linha pontilhada com o caminho até a meta.</p>"
+      + "<p>Não apareceu o ritmo? Confira se o Objetivo tem meta numérica e período padrão (trimestre, semestre ou ano) — o 📈 Evolução explica o que falta.</p>",
+    tipo: 'novidade',
+    squad: '*'
+  },
+  {
+    id: 'seed_mare_ilha_sempre_receita_2026_11_12',
+    titulo: "🏝️ Ilha Dinâmica sempre à vista + correção nas receitas de supercard",
+    corpo: "<p>Ajustes no <b>Maré Digital</b> a partir do que vocês contaram:</p>"
+      + "<p><b>🏝️ Ilha Dinâmica sempre visível</b> — quem liga a Ilha agora a vê no topo o tempo todo (antes ela sumia quando não havia nada acontecendo, e parecia que não tinha ligado). Se preferir que ela só apareça com um timer rodando ou uma notificação nova, é só ir em <b>⚙ Ajustes da ilha → Quando aparecer</b>. O painel aberto também ficou mais alto: o Resumo cabe inteiro, sem rolagem.</p>"
+      + "<p><b>🧩 Receitas de supercard</b> — corrigimos um erro que, ao aplicar uma receita num card de campanha, podia sobrescrever outro card do quadro. Pode voltar a usar as receitas normalmente.</p>",
+    tipo: 'novidade',
+    squad: '*'
+  },
   {
     id: 'seed_ilha_dinamica_prod_2026_11_11',
     titulo: "🏝️ Ilha Dinâmica: acompanhe timers, avisos e sua agenda direto no topo do quadro",

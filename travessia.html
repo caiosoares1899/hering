@@ -17,7 +17,7 @@
   --line:rgba(120,200,255,.16);--line2:rgba(120,200,255,.26);--sheen:rgba(255,255,255,.06);
   --accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.78);--txt3:rgba(150,200,240,0.6);
-  --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:14px;--r2:22px;--r3:30px;
+  --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:12px;--r2:18px;--r3:24px;--accent-rgb:56,182,255;--specular:inset 0 1px 0 rgba(255,255,255,.08);
   --surface-rgb:10,30,55;--surface2-rgb:6,22,40;--ink-rgb:3,13,26;--on-accent:#04141f;
   --ok-bg:rgba(74,222,128,.16);--warn-bg:rgba(255,209,102,.16);--bad-bg:rgba(255,107,107,.18);--ag-bg:rgba(56,182,255,.16);
   --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;--shadow:0 10px 34px rgba(0,0,0,.35);--lift:0 8px 24px rgba(0,0,0,.28);
@@ -28,6 +28,7 @@
   --line:rgba(0,90,130,.16);--line2:rgba(0,90,130,.28);--sheen:rgba(255,255,255,.7);
   --accent:#006a9a;--cyan:#065670;--teal:#0a7d75;
   --txt:#0B2436;--txt2:rgba(11,36,54,0.84);--txt3:rgba(11,36,54,0.68);
+  --accent-rgb:0,106,154;--specular:inset 0 1px 0 rgba(255,255,255,.7);
   --warn:#8a5a00;--danger:#b3261e;--ok:#1a7a44;--surface-rgb:251,253,255;--surface2-rgb:235,245,250;--ink-rgb:251,253,255;--on-accent:#ffffff;
   --ok-bg:rgba(26,122,68,.14);--warn-bg:rgba(138,90,0,.14);--bad-bg:rgba(179,38,30,.12);--ag-bg:rgba(0,106,154,.12);--shadow:0 10px 30px rgba(7,70,110,.22);--lift:0 8px 22px rgba(7,70,110,.18);
   --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
@@ -37,6 +38,7 @@
   --line:rgba(255,190,130,.2);--line2:rgba(255,190,130,.32);--sheen:rgba(255,255,255,.08);
   --accent:#ffb36b;--cyan:#ffd2a1;--teal:#ffcf6e;
   --txt:#fdf1e4;--txt2:rgba(253,241,228,0.84);--txt3:rgba(253,241,228,0.66);
+  --accent-rgb:255,179,107;
   --surface-rgb:48,34,66;--surface2-rgb:34,24,50;--ink-rgb:26,21,48;--on-accent:#2a1405;
   --ok-bg:rgba(74,222,128,.17);--warn-bg:rgba(255,207,110,.18);--bad-bg:rgba(255,120,120,.2);--ag-bg:rgba(255,179,107,.18);
   --ocean:radial-gradient(ellipse 80% 45% at 50% 38%,rgba(255,160,70,.5) 0%,rgba(255,120,60,.16) 45%,transparent 70%),linear-gradient(180deg,#141d3f 0%,#2a2a55 22%,#7a4a56 38%,#d98a58 47%,#1b4a63 48.4%,#0d2f4b 62%,#071c33 100%);
@@ -51,13 +53,27 @@ button{cursor:pointer;}
 .wrap{max-width:1120px;margin:0 auto;padding:0 18px 56px;}
 [hidden]{display:none !important;}
 .ocean{position:fixed;inset:0;z-index:-3;pointer-events:none;background:var(--ocean);}
+/* 🐟 peixinhos e bolhas — os MESMOS do Oceano e do Maré (MARINE_GLASS.md §5); pausam com a aba escondida, sem foco ou 60 s parada; 🐟 no topo desliga */
+.bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-110vh);opacity:0}}
+.fish-wrap,.bubble-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;contain:strict;}
+.bubble-wrap{z-index:-2;}.fish-wrap{z-index:-1;}
+.fish-ltr{position:absolute;animation:swimLTR linear infinite;}
+@keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
+.fish-rtl{position:absolute;animation:swimRTL linear infinite;}
+@keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
+:root[data-theme="light"] .fish-wrap svg polygon,:root[data-theme="light"] .fish-wrap svg ellipse{fill:rgba(236,247,252,.5);stroke:rgba(0,35,55,.38);stroke-width:1;}
+:root[data-theme="light"] .fish-wrap svg circle{fill:rgba(0,35,55,.5);}
+:root[data-theme="light"] .bubble{border-color:rgba(0,35,55,.3);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.75),rgba(255,255,255,.18));}
+.fish-ltr,.fish-rtl,.bubble{will-change:transform;}
+[data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble{animation-play-state:paused!important;}
 
 /* topo: fino, só marca + conta + tema */
-.topo{position:sticky;top:0;z-index:30;background:rgba(var(--deep-rgb),.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);}
+.topo{position:sticky;top:0;z-index:30;background:rgba(var(--deep-rgb),.9);border-bottom:1px solid var(--line);}   /* sem desfoque: com peixes e bolhas atrás, o blur seria refeito a cada quadro (GUIA §2.3) */
 .topo-in{max-width:1120px;margin:0 auto;padding:9px 18px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;}
-:root[data-theme="light"] .topo{background:rgba(255,255,255,.82);}
+:root[data-theme="light"] .topo{background:rgba(255,255,255,.9);}
 .logo{font-family:var(--ff-d);font-weight:800;font-size:19px;letter-spacing:.01em;display:flex;align-items:center;gap:9px;}
-.logo .lg{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;background:linear-gradient(135deg,var(--accent),var(--teal));box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.logo .lg{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(var(--accent-rgb),.16);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.45);}
 .proto{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--warn-bg);color:var(--txt);}
 .lbl{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;}
 .topo .sp{flex:1;}
@@ -65,61 +81,65 @@ button{cursor:pointer;}
 .who img{width:28px;height:28px;border-radius:50%;object-fit:cover;}
 
 /* vidro: borda suave, brilho no topo, cantos grandes */
-.gl{background:linear-gradient(165deg,var(--sheen),transparent 45%),var(--glass);border:1px solid var(--line);border-radius:var(--r2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--lift);}
+.gl{background:var(--glass);border:1px solid var(--line);border-radius:var(--r2);box-shadow:var(--specular),var(--lift);}   /* vidro lapidado: linha de luz no topo, sem desfoque (cartão parado sobre fundo que se mexe: o blur refaria a cada quadro) */
+/* seção aberta (como Atalhos/Meus links do Oceano): título + linha fina, sem caixa — para o que é consulta, não ação */
+.sec>.h2{padding-bottom:10px;border-bottom:1px solid var(--line);}
+.sec{padding:4px 2px;}
+.sec>.row:first-child{padding-bottom:10px;border-bottom:1px solid var(--line);}
+.stack>.sec{margin-top:26px;}
+:root[data-theme="light"] .sec,:root[data-theme="sunset"] .sec,:root[data-theme="light"] .hero,:root[data-theme="sunset"] .hero{background:rgba(var(--surface-rgb),.62);border-radius:var(--r2);padding:14px 16px;}   /* no claro (azul) e no Entardecer (brilho laranja), texto direto sobre o fundo fica < 4,5:1 */
 .pad{padding:22px;}
 .h1{font-family:var(--ff-d);font-size:30px;font-weight:800;line-height:1.1;letter-spacing:-.01em;}
 .h2{font-family:var(--ff-d);font-size:16.5px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.h2 .ib{width:34px;height:34px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:17px;background:var(--ag-bg);box-shadow:inset 0 0 0 1px var(--line);}
-.foco .h2 .ib,.trava .h2 .ib{width:28px;height:28px;font-size:14px;}
+.h2 .ib{flex:none;font-size:1.05em;line-height:1;}   /* emoji como ícone, sem bolinha em volta (MARINE_GLASS §7) */
 .sub{color:var(--txt2);font-size:13.5px;}
 .small{font-size:12.5px;color:var(--txt2);}
 .grid{display:grid;gap:16px;}
-.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));align-items:start;}
 .g3{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));}
 .stack>*+*{margin-top:14px;}
 
 /* hero: saudação + mar */
-.hero{position:relative;overflow:hidden;margin:18px 0 14px;padding:26px 28px 44px;border-radius:var(--r3);border:1px solid var(--line);background:linear-gradient(125deg,var(--ag-bg),transparent 70%),linear-gradient(165deg,var(--sheen),transparent 50%),var(--glass);box-shadow:var(--shadow);}
+.hero{position:relative;margin:26px 0 18px;padding:0 2px;}   /* saudação direto sobre o mar, como no Oceano */
 .hero .eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
 .hero .sub{margin-top:6px;max-width:560px;}
 .hero .ondas{position:absolute;left:0;right:0;bottom:0;height:34px;width:100%;pointer-events:none;}
 .hero .ondas path{fill:var(--accent);opacity:.16;}
 .hero .ondas path+path{opacity:.1;}
-.hero .barco{position:absolute;right:30px;bottom:18px;font-size:44px;line-height:1;animation:bob 3.2s ease-in-out infinite;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3));}
-@keyframes bob{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-6px) rotate(-5deg);}}
+.hero .barco,.hero .ondas{display:none;}
 
 /* navegação: pílula no desktop, barra inferior no celular */
-.nav{position:sticky;top:62px;z-index:25;display:flex;gap:4px;margin:0 0 18px;padding:5px;border-radius:999px;background:rgba(var(--surface-rgb),.82);border:1px solid var(--line);box-shadow:var(--lift);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-x:auto;scrollbar-width:none;width:fit-content;max-width:100%;}
+.nav{position:sticky;top:62px;z-index:25;display:flex;gap:4px;margin:0 0 18px;padding:5px;border-radius:999px;background:rgba(var(--surface-rgb),.92);border:1px solid var(--line);box-shadow:var(--specular),var(--lift);overflow-x:auto;scrollbar-width:none;width:fit-content;max-width:100%;}
 .nav::-webkit-scrollbar{display:none;}
 .nav button{flex:none;display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:10px 18px;border-radius:999px;font-weight:700;font-size:13.5px;color:var(--txt2);min-height:42px;white-space:nowrap;transition:background .18s,color .18s,transform .18s;}
 .nav button:hover{background:var(--glass-h);color:var(--txt);}
-.nav button[aria-selected="true"]{background:linear-gradient(135deg,var(--accent),var(--teal));color:var(--on-accent);box-shadow:0 4px 14px rgba(0,0,0,.28);}
+.nav button[aria-selected="true"]{background:rgba(var(--accent-rgb),.18);color:var(--txt);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.55);}
 .nav .short{display:none;}
 .tabs{display:flex;gap:4px;margin:4px 0 2px;overflow-x:auto;padding:4px;border-radius:999px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--line);scrollbar-width:none;width:fit-content;max-width:100%;}
 .tabs button{flex:none;border:0;background:none;padding:8px 16px;border-radius:999px;font-weight:700;font-size:13px;color:var(--txt2);min-height:38px;white-space:nowrap;}
-.tabs button[aria-selected="true"]{background:var(--accent);color:var(--on-accent);}
+.tabs button[aria-selected="true"]{background:rgba(var(--accent-rgb),.18);color:var(--txt);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.55);}
 
 /* botões e chips: pílulas */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line2);background:rgba(var(--surface-rgb),.7);padding:9px 18px;border-radius:999px;font-weight:700;font-size:13.5px;min-height:42px;transition:transform .15s,border-color .15s,background .15s;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line2);background:var(--glass);padding:9px 18px;border-radius:999px;font-weight:700;font-size:13.5px;min-height:42px;transition:transform .15s,border-color .15s,background .15s;}
 .btn:hover{border-color:var(--accent);background:var(--glass-h);}
 .btn:active{transform:scale(.97);}
-.btn.p{background:linear-gradient(135deg,var(--accent),var(--teal));color:var(--on-accent);border:0;box-shadow:0 6px 16px rgba(0,0,0,.25);}
-.btn.p:hover{filter:brightness(1.07);}
+.btn.p{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);box-shadow:var(--specular);}
+.btn.p:hover{filter:brightness(1.08);background:var(--accent);}
 .btn.s{padding:5px 14px;min-height:34px;font-size:12.5px;}
 .btn:disabled{opacity:.55;cursor:default;}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:999px;background:rgba(var(--surface2-rgb),.7);box-shadow:inset 0 0 0 1px var(--line);color:var(--txt);white-space:nowrap;}
 .chip.ok{background:var(--ok-bg);box-shadow:inset 0 0 0 1px var(--ok);} .chip.warn{background:var(--warn-bg);box-shadow:inset 0 0 0 1px var(--warn);} .chip.bad{background:var(--bad-bg);box-shadow:inset 0 0 0 1px var(--danger);} .chip.ag{background:var(--ag-bg);box-shadow:inset 0 0 0 1px var(--accent);}
 .filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .filtros button{border:0;background:rgba(var(--surface2-rgb),.6);box-shadow:inset 0 0 0 1px var(--line);padding:7px 15px;border-radius:999px;font-size:13px;font-weight:700;min-height:38px;color:var(--txt);}
-.filtros button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);box-shadow:none;}
+.filtros button[aria-pressed="true"]{background:rgba(var(--accent-rgb),.18);color:var(--txt);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.55);}
 
 /* campos */
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .in{flex:1;min-width:160px;background:rgba(var(--surface2-rgb),.7);border:1px solid var(--line2);border-radius:999px;padding:10px 18px;min-height:44px;}
 .in:focus,.ta:focus,.sel2:focus{outline:2px solid var(--accent);outline-offset:1px;}
-.ta{width:100%;min-height:104px;resize:vertical;background:rgba(var(--surface2-rgb),.7);border:1px solid var(--line2);border-radius:20px;padding:13px 16px;line-height:1.5;}
+.ta{width:100%;min-height:104px;resize:vertical;background:rgba(var(--surface2-rgb),.7);border:1px solid var(--line2);border-radius:var(--r);padding:13px 16px;line-height:1.5;}
 .ta[readonly]{opacity:.92;background:rgba(var(--surface2-rgb),.4);}
-textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:20px;}
+textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:var(--r);}
 .sel2{background:rgba(var(--surface-rgb),.8);border:1px solid var(--line2);border-radius:999px;padding:7px 14px;min-height:40px;max-width:100%;}
 .camp label{display:block;font-weight:700;margin:14px 2px 6px;font-size:13px;}
 .cont{font-size:11.5px;color:var(--txt2);text-align:right;}
@@ -130,7 +150,7 @@ textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:20px;}
 .ck input{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:rgba(var(--ink-rgb),.35);box-shadow:inset 0 0 0 1px var(--line2);position:relative;cursor:pointer;transition:background .2s;}
 :root[data-theme="light"] .ck input{background:rgba(11,36,54,.16);}
 .ck input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--txt);box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform .2s;}
-.ck input:checked{background:linear-gradient(135deg,var(--accent),var(--teal));box-shadow:none;}
+.ck input:checked{background:var(--accent);box-shadow:none;}
 .ck input:checked::after{transform:translateX(18px);background:#fff;}
 /* escolha de squads: pílulas */
 .chips .ck{gap:0;position:relative;padding:8px 16px;border-radius:999px;background:rgba(var(--surface2-rgb),.6);box-shadow:inset 0 0 0 1px var(--line2);font-weight:700;min-height:40px;}
@@ -148,7 +168,39 @@ textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:20px;}
 .lst li:has(>.fase){flex-wrap:wrap;}
 .lst .feita{text-decoration:line-through;opacity:.85;}
 .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.in.nota{flex:1 1 100%;}
+.chip.prog.ok{color:var(--ok);}
+.rasc-st:empty{display:none;}
+.at-campo{flex:1 1 100%;display:flex;flex-direction:column;gap:6px;}
+.at-esc{display:flex;flex-wrap:wrap;gap:6px;}
+.at-op{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--glass);font-size:12.5px;font-weight:600;color:var(--txt2);}
+.at-op:hover{border-color:var(--accent);color:var(--txt);}
+.at-op[aria-pressed="true"]{background:rgba(var(--accent-rgb),.18);color:var(--txt);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.55);border-color:transparent;}
+.at-op[aria-pressed="true"]::after{content:"✓";font-weight:800;}
+.chip.at{font-weight:600;}
+.cult{margin-top:12px;}
+.cult>summary{font-weight:700;font-size:13px;color:var(--txt2);display:flex;align-items:center;gap:8px;min-height:36px;}
+.cult ul{list-style:none;display:grid;gap:10px;margin:8px 0;}
+.cult li{display:flex;flex-direction:column;gap:2px;font-size:13px;}
+.cult li span{color:var(--txt2);} .cult li em{font-style:normal;color:var(--txt3);font-size:12.5px;}
+.at-barras{list-style:none;display:grid;gap:8px;}
+.at-barras li{display:grid;grid-template-columns:minmax(150px,220px) 1fr 2.2em 9.5em;gap:10px;align-items:center;font-size:13px;}
+.at-barras li>b{text-align:right;}
+.at-barras .bar{height:8px;}
+@media (max-width:560px){ .at-barras li{grid-template-columns:1fr auto;} .at-barras .bar{grid-column:1 / -1;order:3;} .at-barras li>.small:empty{display:none;} }
+@media (hover:none) and (pointer:coarse){ .at-op{min-height:44px;} }
+.enc-nota{margin-top:4px;font-size:13.5px;color:var(--txt);white-space:pre-line;}
+.prox{display:flex;align-items:center;gap:14px;padding:16px 18px;border-color:var(--accent);}
+.prox .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt2);}
+.prox .px-ic{font-size:26px;line-height:1;flex:0 0 auto;}
+.prox .px-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;word-break:break-word;}
+.prox .px-tx b{font-size:15px;}
+.prox .btn{flex:0 0 auto;min-height:44px;}
+@media (max-width:560px){.prox{flex-wrap:wrap;}.prox .btn{flex:1 0 100%;}}
 .foco{padding:18px;border-radius:var(--r2);background:rgba(var(--surface2-rgb),.45);box-shadow:inset 0 0 0 1px var(--line);}
+/* dentro de um cartão, as partes viram seções abertas com uma linha fina (nada de caixa dentro de caixa) */
+.gl .foco,.gl .trava{background:none;box-shadow:none;border-radius:0;padding:16px 0 0;border-top:1px solid var(--line);}
+.gl .sbs>.foco,.gl .sbs>aside.foco{padding-top:16px;}
 .vazio{border:1.5px dashed var(--line2);border-radius:var(--r2);padding:22px 18px;text-align:center;color:var(--txt2);font-size:13.5px;}
 .divid{height:1px;background:var(--line);margin:14px 0;}
 details>summary{list-style:none;cursor:pointer;}
@@ -158,14 +210,11 @@ details[open]>summary::after{transform:rotate(-135deg) translateY(-2px);}
 details>summary.h2{width:100%;}
 
 /* avatar com anel */
-.av{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--teal));color:var(--on-accent);box-shadow:0 0 0 3px var(--ag-bg);}
-.av.a1{background:linear-gradient(135deg,var(--cyan),var(--accent));} .av.a2{background:linear-gradient(135deg,var(--teal),var(--warn));} .av.a3{background:linear-gradient(135deg,var(--warn),var(--accent));} .av.a4{background:linear-gradient(135deg,var(--cyan),var(--teal));}
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;background:rgba(var(--accent-rgb),.18);color:var(--txt);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.45);}
 
 /* farol: anel de tempo + texto */
-.farol{display:flex;gap:16px;align-items:center;padding:14px 18px;border-radius:var(--r2);background:rgba(var(--surface-rgb),.5);box-shadow:inset 0 0 0 1px var(--line);--c:var(--txt3);}
-.farol.verde{--c:var(--ok);background:linear-gradient(var(--ok-bg),var(--ok-bg)),rgba(var(--surface-rgb),.5);}
-.farol.amarelo{--c:var(--warn);background:linear-gradient(var(--warn-bg),var(--warn-bg)),rgba(var(--surface-rgb),.5);}
-.farol.vermelho{--c:var(--danger);background:linear-gradient(var(--bad-bg),var(--bad-bg)),rgba(var(--surface-rgb),.5);}
+.farol{display:flex;gap:16px;align-items:center;padding:4px 0;--c:var(--txt3);}   /* o anel é o protagonista (cor do estado); sem caixa colorida em volta */
+.farol.verde{--c:var(--ok);} .farol.amarelo{--c:var(--warn);} .farol.vermelho{--c:var(--danger);}
 .farol b{display:block;}
 .fring{position:relative;flex:none;width:68px;height:68px;}
 .fring svg{display:block;transform:rotate(-90deg);width:100%;height:100%;}
@@ -179,37 +228,40 @@ details>summary.h2{width:100%;}
 .faces{display:flex;gap:10px;flex-wrap:wrap;}
 .faces button{width:56px;height:56px;border-radius:50%;border:0;background:rgba(var(--surface2-rgb),.7);box-shadow:inset 0 0 0 1px var(--line2);font-size:28px;line-height:1;transition:transform .18s,box-shadow .18s,background .18s;}
 .faces button:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 2px var(--accent);}
-.faces button[aria-pressed="true"]{background:linear-gradient(var(--ag-bg),var(--ag-bg)),rgba(var(--surface-rgb),.95);box-shadow:0 0 0 3px var(--accent),0 8px 18px rgba(0,0,0,.3);transform:scale(1.12);}
+.faces button[aria-pressed="true"]{background:rgba(var(--accent-rgb),.2);box-shadow:0 0 0 2px var(--accent);transform:scale(1.08);}
+.quem-ve{margin:-4px 0 0;font-size:13px;font-weight:600;color:var(--txt2);}
+.mood-undo{font-weight:600;}
+.mood-undo .btn{margin-left:6px;vertical-align:middle;min-height:44px;}
 .mood-lbl{min-height:20px;font-size:13px;font-weight:700;color:var(--txt2);}
 .spark{display:flex;gap:4px;align-items:flex-end;height:44px;margin-top:6px;}
-.spark i{flex:1;max-width:18px;min-height:5px;border-radius:99px;background:linear-gradient(var(--teal),var(--accent));opacity:.95;}
+.spark i{flex:1;max-width:12px;min-height:4px;border-radius:99px;background:var(--accent);opacity:.85;}
 .spark i.v{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2);}
 
 /* estrelas: carrossel dourado */
 .carr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:thin;}
-.star{flex:0 0 min(300px,84%);scroll-snap-align:start;position:relative;padding:18px 18px 16px;border-radius:var(--r2);background:linear-gradient(150deg,var(--warn-bg),transparent 80%),rgba(var(--surface-rgb),.6);box-shadow:inset 0 0 0 1px var(--warn);}
-.star::before{content:"“";position:absolute;right:16px;top:-2px;font-family:var(--ff-d);font-size:64px;line-height:1;color:var(--warn);opacity:.4;}
+.star{flex:0 0 min(300px,84%);scroll-snap-align:start;position:relative;padding:16px 16px 14px;border-radius:var(--r2);background:var(--glass);border:1px solid var(--line);box-shadow:var(--specular);}
+.star::before{content:"⭐";position:absolute;right:14px;top:12px;font-size:15px;opacity:.85;}
 .star .de{font-weight:800;font-family:var(--ff-d);margin-bottom:4px;}
 
 /* fases do ciclo: trilha segmentada */
 .fase{display:flex;gap:8px;margin:2px 0;}
 .fase span{flex:1;min-width:0;text-align:center;font-size:12px;font-weight:700;color:var(--txt2);}
 .fase span::before{content:"";display:block;height:7px;border-radius:99px;background:var(--line2);margin-bottom:7px;}
-.fase span.ok::before{background:var(--ok);} .fase span.on::before{background:linear-gradient(90deg,var(--accent),var(--teal));box-shadow:0 0 10px var(--glass-h);}
+.fase span.ok::before{background:var(--ok);} .fase span.on::before{background:var(--accent);}
 .fase span.on{color:var(--txt);} .fase span.ok{color:var(--txt);}
 .sbs{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start;}
 .sbs .lado{position:sticky;top:130px;max-height:78vh;overflow:auto;}
-.trava{border-radius:var(--r2);padding:18px;background:linear-gradient(var(--warn-bg),var(--warn-bg)),rgba(var(--surface-rgb),.4);box-shadow:inset 0 0 0 1.5px var(--warn);}
+.trava{border-radius:var(--r2);padding:18px;background:rgba(var(--surface2-rgb),.45);box-shadow:inset 0 0 0 1px var(--line);}   /* trancado não é alerta: sem amarelo */
 .trava>p{margin-top:6px;}
+.apoio{border-radius:var(--r2);padding:16px 18px;background:var(--warn-bg);box-shadow:inset 0 0 0 1px var(--warn);}   /* pedido de atenção do líder: aqui o amarelo tem significado */
 .pill{display:inline-flex;gap:5px;align-items:center;background:rgba(var(--surface2-rgb),.7);padding:3px 11px;border-radius:999px;font-size:12px;font-weight:700;}
 
 /* Baú: cartões coloridos por tipo */
-.lst.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px;}
-.lst.cards li{align-items:flex-start;padding:16px;border:0;border-radius:var(--r2);background:rgba(var(--surface2-rgb),.5);box-shadow:inset 0 0 0 1px var(--line);position:relative;overflow:hidden;}
-.lst.cards li::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--tc);opacity:.85;}
+.lst.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px;align-items:start;}
+.lst.cards li{align-items:flex-start;padding:16px;border:0;border-radius:var(--r2);background:var(--glass);box-shadow:var(--specular),inset 0 0 0 1px var(--line);position:relative;overflow:hidden;}
 .bb{width:40px;height:40px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:19px;background:var(--ag-bg);box-shadow:inset 0 0 0 1px var(--line);}
 .b-card{--tc:var(--accent);} .b-marco{--tc:var(--teal);} .b-kudo{--tc:var(--warn);} .b-manual{--tc:var(--cyan);}
-.lst.cards li .bb{background:linear-gradient(var(--ag-bg),var(--ag-bg)),rgba(var(--surface-rgb),.6);}
+.lst.cards li .bb{background:rgba(var(--surface2-rgb),.6);box-shadow:inset 0 0 0 1px var(--tc);}
 .lst.cards li .btn.s{align-self:flex-start;}
 
 /* Diário: linha do tempo */
@@ -227,7 +279,7 @@ details>summary.h2{width:100%;}
 .pcard{padding:20px;cursor:default;--c:var(--txt3);}
 .pcard.verde{--c:var(--ok);} .pcard.amarelo{--c:var(--warn);} .pcard.vermelho{--c:var(--danger);}
 .pcard .top{display:flex;gap:14px;align-items:center;}
-.pcard .av{width:52px;height:52px;font-size:17px;box-shadow:0 0 0 3px var(--c);}
+.pcard .av{width:48px;height:48px;font-size:16px;}   /* a cor do estado fica só no anel do farol (um protagonista por cartão) */
 .pcard .acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 .termo{display:grid;grid-template-columns:minmax(220px,260px) 1fr;gap:22px;align-items:center;}
 .gauge{position:relative;width:100%;max-width:260px;margin:0 auto;}
@@ -240,12 +292,12 @@ details>summary.h2{width:100%;}
 .hist{display:flex;gap:10px;align-items:flex-end;height:112px;max-width:440px;}
 .btn.s[data-act$="-del"]{width:36px;min-height:36px;padding:0;border-radius:50%;flex:none;}
 .hist .hc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;}
-.hist .hc i{display:block;width:100%;max-width:38px;border-radius:12px 12px 6px 6px;background:linear-gradient(var(--teal),var(--accent));min-height:6px;}
+.hist .hc i{display:block;width:100%;max-width:34px;border-radius:8px 8px 4px 4px;background:var(--accent);opacity:.85;min-height:6px;}
 .hist .hc.z i{background:var(--line2);}
 .hist .hc span{font-size:11.5px;font-weight:700;color:var(--txt2);} .hist .hc em{font-style:normal;font-size:18px;}
 .bar{height:8px;border-radius:99px;background:rgba(var(--ink-rgb),.35);overflow:hidden;}
 :root[data-theme="light"] .bar{background:rgba(11,36,54,.14);}
-.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--teal));}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--accent);}
 
 /* tabela do organograma */
 .tbl{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:13.5px;}
@@ -255,6 +307,7 @@ details>summary.h2{width:100%;}
 .tbl select{width:100%;}
 
 /* demo, login, toast, confirmação */
+.demo-bar{padding-bottom:0;}
 .demo-bar .gl{border-radius:var(--r2);}
 .login{max-width:440px;margin:8vh auto 0;padding:32px;text-align:center;}
 .login p{color:var(--txt2);margin:12px 0 18px;}
@@ -272,7 +325,7 @@ details>summary.h2{width:100%;}
   .nav button{flex:1;flex-direction:column;gap:2px;padding:7px 2px;border-radius:22px;font-size:10.5px;min-height:52px;min-width:0;}
   .nav .ni{font-size:19px;line-height:1;} .nav .long{display:none;} .nav .short{display:inline;}
   .toast{bottom:100px;}
-  .hero{padding:20px 20px 40px;border-radius:26px;} .hero .barco{font-size:34px;right:18px;}
+  .hero{margin:18px 0 14px;}
   .pad{padding:18px;} .h1{font-size:25px;}
 }
 @media (max-width:560px){
@@ -285,16 +338,19 @@ details>summary.h2{width:100%;}
   .fase span{font-size:11px;}
 }
 @media (hover:none) and (pointer:coarse){ .btn,.nav button,.tabs button,.filtros button{min-height:44px;} input,select,textarea{font-size:16px;} .btn.s{min-height:40px;} }
-@media (prefers-reduced-motion:reduce){ .hero .barco{animation:none;} *{transition:none !important;} }
+@media (prefers-reduced-motion:reduce){ .fish-ltr,.fish-rtl,.bubble{animation:none!important;} *{transition:none !important;} }
 </style>
 </head>
 <body>
 <div class="ocean" aria-hidden="true"></div>
+<div class="bubble-wrap" id="bwrap" aria-hidden="true"></div>
+<div class="fish-wrap" id="fwrap" aria-hidden="true"></div>
 <header class="topo">
   <div class="topo-in">
     <div class="logo"><span class="lg" aria-hidden="true">⛵</span> Travessia</div>
     <div class="sp"></div>
     <div class="who" id="quem" hidden><img id="quem-foto" alt="" hidden><span id="quem-nome"></span><button class="btn s" id="btn-sair" type="button">Sair</button></div>
+    <button class="btn" id="btn-peixes" type="button" style="padding:5px 14px;min-height:40px;font-size:17px" aria-pressed="true" aria-label="Peixinhos no fundo: ligados" title="Peixinhos e bolhas no fundo: clique para ligar/desligar. Preferência salva só neste navegador.">🐟</button>
     <button class="btn" id="btn-tema" type="button" style="padding:5px 14px;min-height:40px;font-size:17px" aria-label="Trocar tema" title="Clique para alternar: 🌙 Abrolhos → ☀️ Lençóis Maranhenses → 🌅 Entardecer. Preferência salva só neste navegador.">🌙</button>
   </div>
 </header>
@@ -374,6 +430,19 @@ const PERGUNTAS_PADRAO = {
   lider: { q1: 'Entregas e impacto no ciclo.', q2: 'Comportamentos que a pessoa deve CONTINUAR fazendo.', q3: 'Comportamentos que deve COMEÇAR ou AJUSTAR para crescer.', q4: 'Próximos passos e oportunidades de desenvolvimento.' },
   par: { q1: 'O que essa pessoa deve CONTINUAR fazendo?', q2: 'O que ela deve COMEÇAR ou AJUSTAR para crescer?', q3: 'Um exemplo concreto de colaboração com ela (opcional).' },
 };
+// 🧭 Cultura Hering (11/11/2026, pedido do Caio: "o Travessia precisa conversar com os pilares culturais e ajudar a internalizar"):
+// as 5 atitudes, com o MESMO texto do A Bordo (onboarding.html, seção "Esta é a nossa cultura" — 3ª cópia, depois do onboarding.slide.html;
+// mudou lá, muda aqui). Os ids são os aceitos pelas regras (database.rules.json: encontros/{uid}/{id}/at e avaliacoes/{cid}/{avaliado}/atitudes).
+const CULTURA = [
+  { id: 'facilita', ic: '🧭', nome: 'A gente facilita', desc: 'Simplificar. Ter coragem e responsabilidade para priorizar, dizer não e focar no que realmente gera valor para o negócio.', dig: 'No Digital: explicite a prioridade e simplifique o caminho antes de acrescentar etapas.' },
+  { id: 'cardume', ic: '🐟', nome: 'Juntos, somos um cardume', desc: 'Agir como um time, num ambiente leve. Sem deixar de ter o comprometimento individual para tomar decisões, garantir alinhamentos e executar os combinados — assumindo plena responsabilidade por cada ação.', dig: 'No Digital: alinhe dependências entre squads e avise cedo quando um combinado estiver em risco.' },
+  { id: 'bemfeito', ic: '✨', nome: 'Bem-feito, desde sempre', desc: 'Buscar a melhor performance. Manter sempre viva a paixão pela marca e pelo produto. Assegurar capricho e excelência nas entregas.', dig: 'No Digital: revise, teste e acompanhe o resultado da entrega para o cliente.' },
+  { id: 'acessivel', ic: '💬', nome: 'Acessível por vocação', desc: 'Encantar todo o Brasil. Exercitar constantemente a escuta ativa e a curiosidade para antecipar os desejos e necessidades dos clientes da Hering.', dig: 'No Digital: escute o atendimento, observe a jornada e use dados para entender o cliente.' },
+  { id: 'legado', ic: '🌱', nome: 'Legado em evolução', desc: 'Honrar a coragem e o empreendedorismo de 1880, com o inconformismo na busca do próximo passo de crescimento.', dig: 'No Digital: experimente melhorias, aprenda com os resultados e use IA com responsabilidade.' },
+];
+const CULT = Object.assign(Object.create(null), Object.fromEntries(CULTURA.map(c => [c.id, c])));
+const atIds = v => [...new Set(String(v || '').split(','))].filter(id => CULT[id]);   // só id conhecido chega à tela (nunca o valor cru do banco)
+const atChips = v => atIds(v).map(id => `<span class="chip at" title="${esc(CULT[id].desc)}"><span aria-hidden="true">${CULT[id].ic}</span> ${esc(CULT[id].nome)}</span>`).join(' ');
 // Farol da cadência do 1:1: compara os dias desde o último encontro (menos as folgas da Escala) com a cadência combinada.
 // Verde até cadência+1 dia; amarelo até 1,5× a cadência; vermelho acima. Sem cadência ou sem encontro registrado = cinza (convite pra registrar).
 function farol({ ultimo, cad, folgas, hoje }) {
@@ -397,6 +466,38 @@ function termometro(hc, hoje, totalPessoas) {
   return { media: m, respostas: atual.length, pessoas, total: totalPessoas || 0, anterior: media(ant), dist, dias, apoio, cor: m == null ? 'cinza' : m >= 3.5 ? 'verde' : m >= 2.5 ? 'amarelo' : 'vermelho' };
 }
 const ultimoEncontro = enc => Object.values(enc || {}).map(e => e && e.data).filter(Boolean).sort().pop() || null;
+// 🧭 Próxima ação (T4 da consultoria de 09/11/2026): UMA coisa no topo da Minha travessia, com um verbo e um botão. Função pura sobre o que já
+// foi lido. A ordem é a decisão de produto: o que tem OUTRA pessoa esperando vem antes do que é só meu. O humor fica fora de propósito (já está à vista;
+// um cartão diário "registre seu humor" viraria cobrança). Sem nada pendente → null, e o cartão não aparece.
+// avals = { [cid]: carregaAval(cid, me) } (ciclos de que participo) · respPar = { [cid+':'+avaliado]: resposta salva ou null } · nomes = uid → nome
+function proximaAcao({ me, ciclos, avals, pedidos, respPar, um, temLider, bau, hoje, nomes }) {
+  const cs = ciclos || {}, av = avals || {}, nm = nomes || (u => u);
+  const meus = Object.entries(cs).filter(([cid, c]) => c && c.participantes && c.participantes[me] && av[cid]).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  for (const [cid, c] of meus) { const a = av[cid];
+    if (a.devol && a.devol.liberada === true && !a.ciente) return { ic: '🔓', txt: 'Sua devolutiva de ' + (c.nome || 'avaliação') + ' foi liberada.', btn: 'Ler agora', tab: 'aval' }; }
+  for (const p of (pedidos || [])) { const c = p && cs[p.cid];
+    if (c && c.status === 'coleta' && !(respPar || {})[p.cid + ':' + p.avaliado]) return { ic: '🤝', txt: nm(p.avaliado) + ' conta com o seu feedback.', btn: 'Responder', tab: 'aval' }; }
+  for (const [cid, c] of meus) { if (c.status === 'encerrado') continue; const a = av[cid];
+    if (c.status === 'coleta') { const qs = Object.keys(perguntasDe(c, 'auto')); const feitas = qs.filter(q => a.auto && a.auto[q]).length;
+      if (feitas < qs.length) { const f = qs.length - feitas;
+        return { ic: '📝', txt: feitas ? 'Falta' + (f > 1 ? 'm ' + f + ' respostas' : ' 1 resposta') + ' na sua autoavaliação.' : 'Sua autoavaliação de ' + (c.nome || 'avaliação') + ' está aberta.', btn: feitas ? 'Continuar' : 'Começar', tab: 'aval' }; } }
+    if (c.status === 'preparacao' && Object.keys(a.pares || {}).length < 2) return { ic: '🤝', txt: 'Indique de 2 a 4 pares para ' + (c.nome || 'a avaliação') + '.', btn: 'Indicar', tab: 'aval' }; }
+  const f = temLider && um && um.farol;
+  if (f && (f.cor === 'vermelho' || f.cor === 'amarelo') && f.dias != null) return { ic: f.ic, txt: 'Seu último 1:1 foi há ' + f.dias + (f.dias === 1 ? ' dia.' : ' dias.'), btn: 'Registrar 1:1', foco: 'enc-d' };
+  const ult = Math.max(0, ...Object.values(bau || {}).map(b => (b && +b.ts) || 0));
+  if (!ult || diasEntre(isoDe(new Date(ult)), hoje) >= 21) return { ic: '📦', txt: ult ? 'Faz 3 semanas que nada entra no seu Baú.' : 'Seu Baú está vazio.', btn: 'Guardar uma conquista', tab: 'bau' };
+  return null;
+}
+async function carregaProxima(me, um, bau, temLider) {
+  // Lê só o que a aba Avaliação já leria (mesmas chaves de cache): a avaliação dos ciclos de que participo, meus pedidos de par e, para pedidos em coleta, a minha resposta.
+  const meus = Object.entries(S.ciclos).filter(([, c]) => participa(c, me));
+  const avals = {}; await Promise.all(meus.map(async ([cid]) => { avals[cid] = await cache('aval:' + cid + ':' + me, () => carregaAval(cid, me)); }));
+  let pedidos = []; try { pedidos = Object.values((await cache('pedidos', () => G(T + 'pedidos_par/' + me))) || {}).filter(p => p && S.ciclos[p.cid]); } catch (_) {}
+  const respPar = {}; await Promise.all(pedidos.filter(p => S.ciclos[p.cid].status === 'coleta').map(async p => { respPar[p.cid + ':' + p.avaliado] = await cache('resp:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/resp_pares/' + me); } catch (e) { return null; } }); }));
+  return proximaAcao({ me, ciclos: S.ciclos, avals, pedidos, respPar, um, temLider, bau, hoje: hojeISO(), nomes: nomeDe });
+}
+const viewProxima = p => p ? `<section class="gl prox" aria-labelledby="t-px"><span class="px-ic" aria-hidden="true">${esc(p.ic)}</span><div class="px-tx"><span class="eyebrow" id="t-px">Próxima ação</span><b>${esc(p.txt)}</b></div>
+  <button class="btn p" ${p.tab ? `data-tab="${esc(p.tab)}"` : `data-act="prox-foco" data-alvo="${esc(p.foco)}"`}>${esc(p.btn)}</button></section>` : '';
 
 // ───────── estado ─────────
 const S = { me: null, users: {}, vinc: {}, ciclos: {}, rh: false, adm: false, tab: 'inicio', cache: {}, sel: null, selTab: 'um', aval: {}, ultimoFoco: null, filtroBau: 'todos', pesq: '' };
@@ -449,8 +550,9 @@ async function carregaEstrelas() {
 }
 async function carregaAval(cid, uid) {   // tudo que EU posso ler da avaliação de uma pessoa (cada nó tem a sua regra; o que nega vira null)
   const ler = async p => { try { return await G(T + 'avaliacoes/' + cid + '/' + uid + '/' + p); } catch (e) { return null; } };
-  const [pares, auto, lider, resp, devol, ciente] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente')]);
-  return { pares: pares || {}, auto, lider, resp: resp || {}, devol, ciente };
+  const outro = uid !== (S.me && S.me.uid); const cult = !!(S.ciclos[cid] && S.ciclos[cid].cultura);   // atitudes só são lidas em ciclo com a cultura ligada (sem leitura nova no Início à toa)
+  const [pares, auto, lider, resp, devol, ciente, atAuto, atLider, atPares] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente'), cult ? ler('atitudes/auto') : null, cult && outro ? ler('atitudes/lider') : null, cult && outro ? ler('atitudes/par') : null]);
+  return { pares: pares || {}, auto, lider, resp: resp || {}, devol, ciente, atAuto, atLider, atPares: atPares || {} };
 }
 const invalida = k => { Object.keys(S.cache).filter(x => x === k || x.startsWith(k + ':')).forEach(x => delete S.cache[x]); };
 async function cache(k, fn) { if (!(k in S.cache)) S.cache[k] = await fn(); return S.cache[k]; }
@@ -484,6 +586,23 @@ async function viewDiario() {
     <label class="sr" for="pesq">Buscar no diário</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar no diário…" value="${esc(S.pesq)}" autocomplete="off">
     ${lista || vazio(q ? 'Nada encontrado.' : 'Seu diário está vazio. Escreva o primeiro fechamento acima.')}</section></div>`;
 }
+// 🤝 1:1 com "o que combinamos" (T1 etapa A, 11/11/2026): a regra do banco já aceitava `nota` (≤ 280) em encontros/{uid}/{id}; agora a tela grava e mostra
+// dos dois lados (pessoa e líder/gerente, que são quem lê o nó). Quem escreveu é quem pode apagar (regra: `por`).
+const campoNota = (id, quemVe) => `<label class="sr" for="${id}">O que combinamos (opcional)</label><input class="in nota" id="${id}" name="nota" maxlength="280" placeholder="O que combinamos? (opcional · ${esc(quemVe)})" autocomplete="off">`;
+// Escolha de atitudes (chips de marcar). `id` único na página guarda a escolha não salva em S.atSel (o render recria o DOM a cada ação).
+function atEscolha(id, kind, salvo, max, editavel, rotulo) {
+  if (!editavel) { const c = atChips(salvo); return c ? `<div class="chips">${c}</div>` : '<p class="small">Nenhuma atitude marcada.</p>'; }
+  const sel = (S.atSel && S.atSel[id]) || atIds(salvo);
+  return `<div class="at-esc" role="group" aria-label="${esc(rotulo)}" data-at-grupo="${kind}" data-at-id="${esc(id)}" data-at-max="${max}">${CULTURA.map(c => `<button type="button" class="at-op" data-act="at-op" data-at="${c.id}" aria-pressed="${sel.includes(c.id)}" title="${esc(c.desc)}"><span aria-hidden="true">${c.ic}</span> ${esc(c.nome)}</button>`).join('')}</div>`;
+}
+const atLidos = (raiz, kind) => [...raiz.querySelectorAll(`[data-at-grupo="${kind}"] [aria-pressed="true"]`)].map(b => b.dataset.at).filter(id => CULT[id]);
+const cultura5 = () => `<details class="cult"><summary>🧭 As 5 atitudes da Hering</summary><ul>${CULTURA.map(c => `<li><b><span aria-hidden="true">${c.ic}</span> ${esc(c.nome)}</b><span>${esc(c.desc)}</span><em>${esc(c.dig)}</em></li>`).join('')}</ul><p class="small">“Uma cultura só é realmente nossa quando aparece no jeito como a gente faz.”</p></details>`;
+const campoAtEnc = id => `<div class="at-campo"><span class="small"><b>🧭 Atitude em foco</b> (opcional): qual atitude da Hering vocês conversaram?</span>${atEscolha(id, 'enc', '', 1, true, 'Atitude em foco no 1:1')}</div>`;
+function listaEncontros(uid, enc, max, titulo) {
+  const encs = Object.entries(enc || {}).filter(([, e]) => e && e.data).sort((a, b) => String(b[1].data).localeCompare(String(a[1].data)) || (b[1].ts || 0) - (a[1].ts || 0)).slice(0, max);
+  if (!encs.length) return '';
+  return `<h3 class="h2">${esc(titulo)}</h3><ul class="lst">${encs.map(([id, e]) => `<li><span aria-hidden="true">🤝</span><div class="tx">${esc(brFull(e.data))} <span class="small">· ${esc(TIPO_1A1[e.tipo] || '1:1')} · por ${esc(e.por === S.me.uid ? 'você' : nomeDe(e.por))}</span>${CULT[e.at] ? `<div class="meta">${atChips(e.at)}</div>` : ''}${e.nota ? `<div class="enc-nota">📝 ${esc(e.nota)}</div>` : ''}</div>${e.por === S.me.uid ? `<button class="btn s" data-act="enc-del" data-uid="${esc(uid)}" data-id="${esc(id)}" aria-label="Apagar registro de ${esc(brFull(e.data))}">🗑</button>` : ''}</li>`).join('')}</ul>`;
+}
 function viewFarol(uid, d, quem) {
   // Anel do tempo desde o último 1:1: enche até 1,5× a cadência (aí vira vermelho). Decorativo — o estado vem em cor + ícone + texto ao lado.
   const f = d.farol; const lim = CAD_DIAS[d.serie && d.serie.cad] || 0; const C = 2 * Math.PI * 29; const pct = f.dias != null && lim ? Math.min(1, f.efetivo / Math.ceil(lim * 1.5)) : 0;
@@ -499,25 +618,28 @@ async function viewInicio() {
   const me = S.me.uid; const lid = liderDe(me);
   const [um, humor, bau, estrelas, diario] = await Promise.all([cache('um:' + me, () => carregaUm(me)), cache('humor:' + me, () => carregaHumor(me, false)), cache('bau:' + me, () => carregaBau(me)), cache('estrelas', carregaEstrelas), cache('diario:' + me, () => carregaDiario(me))]);
   const hj = hojeISO(); const hHoje = humor[hj];
+  let prox = null; try { prox = await carregaProxima(me, um, bau, !!lid); } catch (e) { console.warn('[travessia] próxima ação', e); }   // o cartão é ajuda: se falhar, a página segue sem ele
   const itensBau = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
   const pend = []; ciclosAtivos().forEach(([cid, c]) => { if (participa(c, me)) pend.push(`<li><span class="bb" aria-hidden="true">📐</span><div class="tx"><b>${esc(c.nome)}</b> — fase ${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</div><button class="btn s" data-tab="aval">Abrir</button><div class="fase" aria-label="Fase do ciclo">${FASES.map(f => `<span class="${f[0] === c.status ? 'on' : (FASES.findIndex(x => x[0] === c.status) > FASES.findIndex(x => x[0] === f[0]) ? 'ok' : '')}">${f[1]}</span>`).join('')}</div></li>`); });
   return `<div class="stack">
+   ${viewProxima(prox)}
    <div class="grid g2">
     <section class="gl pad stack" aria-labelledby="t-um"><h2 class="h2" id="t-um">🚦 Meu 1:1${lid ? ' com ' + esc(nomeDe(lid)) : ''}</h2>
       ${lid ? viewFarol(me, um) : `<div class="vazio">Seu líder ainda não foi definido no organograma. Peça ao ADM ou ao RH para configurar.</div>`}
-      ${lid ? `<form class="row" data-form="encontro" data-uid="${me}"><label class="sr" for="enc-d">Data do 1:1</label><input class="in" id="enc-d" type="date" name="data" value="${hj}" max="${hj}" style="max-width:170px"><button class="btn p" type="submit">✅ Registrei um 1:1</button></form>` : ''}
-      ${um.ultimo ? `<p class="small">Último registro: ${brFull(um.ultimo)}</p>` : ''}</section>
+      ${lid ? `<form class="row" data-form="encontro" data-uid="${me}"><label class="sr" for="enc-d">Data do 1:1</label><input class="in" id="enc-d" type="date" name="data" value="${hj}" max="${hj}" style="max-width:170px"><button class="btn p" type="submit">✅ Registrei um 1:1</button>${campoNota('enc-n', 'seu líder e o gerente também veem')}${campoAtEnc('enc-inicio')}</form>` : ''}
+      ${listaEncontros(me, um.enc, 3, 'Últimos 1:1')}</section>
     <section class="gl pad stack" aria-labelledby="t-hu"><h2 class="h2" id="t-hu">🌤️ Como você está hoje?</h2>
+      <p class="quem-ve">👁 ${lid ? 'Seu líder (' + esc(nomeDe(lid)) + ') vê esta resposta.' : 'Quando seu líder for definido no organograma, ele passa a ver esta resposta.'}</p>
       <div class="faces" role="group" aria-label="Humor de hoje">${FACES.map((f, i) => `<button type="button" data-act="humor" data-n="${i + 1}" aria-pressed="${hHoje && hHoje.n === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
-      <div class="mood-lbl" aria-live="polite">${hHoje && hHoje.n ? esc(FACES[hHoje.n - 1][1]) + ' hoje' : 'Toque numa carinha'}</div>
-      <p class="small">👁 ${lid ? 'Seu líder (' + esc(nomeDe(lid)) + ') vê' : 'Quando seu líder for definido no organograma, ele passa a ver'} o seu humor: a média do time no termômetro dele e, se você marcar que não está bem, um aviso para ele poder te apoiar. Ninguém (nem o sistema) analisa seu humor. O que você registrou antes de 31/10/2026 continua só seu, e o fechamento do dia (abaixo) também.</p>
+      <div class="mood-lbl" aria-live="polite">${hHoje && hHoje.n ? esc(FACES[hHoje.n - 1][1]) + ' hoje' : 'Toque numa carinha'}${humorPend ? ` <span class="mood-undo" id="humor-undo">· Registrado. <button type="button" class="btn s" data-act="humor-desfazer">↩ Desfazer</button></span>` : ''}</div>
+      <p class="small">Ele vê a média do time no termômetro e, se você marcar que não está bem, recebe um aviso para poder te apoiar. O aviso só sai ${HUMOR_DESFAZER_S} segundos depois do toque, para dar tempo de desfazer um toque errado. Ninguém (nem o sistema) analisa seu humor. O que você registrou antes de 31/10/2026 continua só seu, e o fechamento do dia (abaixo) também.</p>
       ${sparkHumor(humor, 14)}</section></div>
    ${blocoFechamento(diario)}
-   ${pend.length ? `<section class="gl pad" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
-   ${estrelas.length ? `<section class="gl pad stack" aria-labelledby="t-es"><h2 class="h2" id="t-es">⭐ Mural de Estrelas <span class="chip">${estrelas.length}</span></h2>
+   ${pend.length ? `<section class="sec" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
+   ${estrelas.length ? `<section class="sec stack" aria-labelledby="t-es"><h2 class="h2" id="t-es">⭐ Mural de Estrelas <span class="chip">${estrelas.length}</span></h2>
       <div class="carr">${estrelas.slice(0, 9).map(k => `<article class="star"><div class="de">${esc(k.fromNome || 'Alguém')}</div><div>${esc(k.texto || '')}</div><div class="meta"><span class="chip">${esc(String(k.ts || '').slice(0, 10).split('-').reverse().join('/'))}</span><span class="chip">${k._escopo === 'geral' ? '🌊 Geral' : esc(k._escopo)}</span></div>
       <div class="row" style="margin-top:8px"><button class="btn s" data-act="estrela-bau" data-id="${esc(k.id || '')}" data-i="${estrelas.indexOf(k)}">💼 Guardar no Baú</button></div></article>`).join('')}</div></section>` : ''}
-   <section class="gl pad stack" aria-labelledby="t-ba"><div class="row" style="justify-content:space-between"><h2 class="h2" id="t-ba">📦 Meu Baú <span class="chip">${itensBau.length}</span></h2><button class="btn s" data-tab="bau">Abrir o Baú</button></div>
+   <section class="sec stack" aria-labelledby="t-ba"><div class="row" style="justify-content:space-between"><h2 class="h2" id="t-ba">📦 Meu Baú <span class="chip">${itensBau.length}</span></h2><button class="btn s" data-tab="bau">Abrir o Baú</button></div>
      ${itensBau.length ? `<ul class="lst">${itensBau.slice(0, 3).map(([id, b]) => `<li class="b-${esc(b.tipo || 'manual')}"><span class="bb" aria-hidden="true">${iconeBau(b.tipo)}</span><div class="tx">${esc(b.titulo)}<div class="meta"><span class="chip">${esc(brFull(b.em || isoDe(new Date(b.ts || 0))))}</span></div></div></li>`).join('')}</ul>` : vazio('Seu Baú está vazio. Guarde entregas e aprendizados para lembrar de tudo na hora da avaliação.')}</section></div>`;
 }
 const iconeBau = t => ({ card: '🌊', marco: '🎯', kudo: '⭐', manual: '✍️' }[t] || '💼');
@@ -549,10 +671,33 @@ function sugestoesPares(cid, uid, pares) {
     const sq = S.users[u].squads || {}; return Object.keys(sq).some(k => sq[k] && meus.has(k));
   }).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b))).slice(0, 12);
 }
+// 📝 Rascunho da avaliação neste aparelho (T7 da consultoria, 11/11/2026): o texto das respostas (autoavaliação, par, líder) vai para o
+// localStorage a cada edição (antes que uma navegação destrua o campo) e volta se a aba fechar, recarregar ou trocar de aba antes do Salvar. A chave leva o uid (outra conta
+// no mesmo navegador não vê) e é apagada ao salvar e ao sair da conta. Rascunho mais velho que o que já está salvo no banco é descartado.
+const RASC_MAX = 2500;
+const rascChave = () => 'travessia_rasc' + (/-dev\.html/.test(location.pathname) ? '_dev' : '') + (DEMO ? '_demo' : '') + '_' + ((S.me && S.me.uid) || 'x');
+function rascLer() { try { const o = JSON.parse(localStorage.getItem(rascChave()) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (_) { return {}; } }
+function rascGravar(o) { try { if (Object.keys(o).length) localStorage.setItem(rascChave(), JSON.stringify(o)); else localStorage.removeItem(rascChave()); return true; } catch (_) { return false; } }
+function rascGuardar(t) { const o = rascLer(); const v = t.value; if (v !== t.defaultValue) o[t.id] = { v: v.slice(0, RASC_MAX), ts: Date.now() }; else delete o[t.id]; return rascGravar(o); }
+function rascLimpar(ids) { const o = rascLer(); ids.forEach(i => delete o[i]); rascGravar(o); }
+const rascEditaveis = () => [...document.querySelectorAll('textarea.ta[data-resp]:not([readonly])')];
+const rascSujo = t => t.value.trim() !== t.defaultValue.trim();
+function rascStatus(t, msg) { const el = [...document.querySelectorAll('[data-rasc-st]')].find(x => x.dataset.rascSt === t.dataset.resp && x.dataset.pctx === t.dataset.ctx); if (el) el.textContent = msg; }
+function avalProgresso() {
+  document.querySelectorAll('[data-prog]').forEach(el => { const ts = [...document.querySelectorAll('textarea.ta[data-resp]')].filter(t => t.dataset.resp === el.dataset.prog && t.dataset.ctx === el.dataset.pctx && !t.dataset.opc);
+    const n = ts.filter(t => t.value.trim()).length; el.textContent = n + ' de ' + ts.length + ' respondida' + (ts.length === 1 ? '' : 's'); el.classList.toggle('ok', ts.length > 0 && n === ts.length); });
+}
+function rascRestaurar() {   // depois de cada render: devolve o rascunho que é mais novo que o salvo no banco
+  const o = rascLer(); let mudou = false;
+  rascEditaveis().forEach(t => { const d = o[t.id]; if (!d) return;
+    if (typeof d.v !== 'string' || d.v === t.defaultValue || (+d.ts || 0) <= (+t.dataset.salvoTs || 0)) { delete o[t.id]; mudou = true; return; }   // igual ao salvo, ou o banco tem coisa mais nova (outro aparelho)
+    if (t.value !== d.v) { t.value = d.v; rascStatus(t, '↩ Rascunho deste aparelho recuperado. Lembre de salvar.'); } });
+  if (mudou) rascGravar(o); avalProgresso();
+}
 function formResp(cid, avaliado, grupo, dados, perguntas, editavel, acaoTipo, dono) {
   const ks = Object.keys(perguntas).sort(); const ctx = cid + '_' + avaliado + (dono ? '_' + dono : '');
-  return ks.map(k => `<div class="camp"><label for="r-${esc(grupo)}-${esc(ctx)}-${k}">${esc(perguntas[k])}</label><textarea class="ta" id="r-${esc(grupo)}-${esc(ctx)}-${k}" data-resp="${esc(grupo)}" data-ctx="${esc(ctx)}" data-q="${k}" maxlength="2500" ${editavel ? '' : 'readonly'}>${esc((dados && dados[k]) || '')}</textarea></div>`).join('')
-    + (editavel ? `<div class="row" style="margin-top:10px"><button class="btn p" data-act="${acaoTipo}" data-cid="${esc(cid)}" data-av="${esc(avaliado)}">💾 Salvar</button>${dados && dados.ts ? `<span class="small">Salvo em ${esc(new Date(dados.ts).toLocaleString('pt-BR'))}</span>` : ''}</div>` : '');
+  return ks.map(k => `<div class="camp"><label for="r-${esc(grupo)}-${esc(ctx)}-${k}">${esc(perguntas[k])}</label><textarea class="ta" id="r-${esc(grupo)}-${esc(ctx)}-${k}" data-resp="${esc(grupo)}" data-ctx="${esc(ctx)}" data-q="${k}" data-opc="${/\(opcional\)/i.test(perguntas[k]) ? 1 : ''}" data-salvo-ts="${(dados && +dados.ts) || 0}" maxlength="2500" ${editavel ? '' : 'readonly'}>${esc((dados && dados[k]) || '')}</textarea></div>`).join('')
+    + (editavel ? `<div class="row" style="margin-top:10px"><button class="btn p" data-act="${acaoTipo}" data-cid="${esc(cid)}" data-av="${esc(avaliado)}">💾 Salvar</button><span class="chip prog" data-prog="${esc(grupo)}" data-pctx="${esc(ctx)}" aria-live="polite"></span>${dados && dados.ts ? `<span class="small">Salvo em ${esc(new Date(dados.ts).toLocaleString('pt-BR'))}</span>` : ''}<span class="small rasc-st" data-rasc-st="${esc(grupo)}" data-pctx="${esc(ctx)}" aria-live="polite"></span></div>` : '');
 }
 async function viewAval() {
   const me = S.me.uid; const meus = Object.entries(S.ciclos).filter(([, c]) => participa(c, me)).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
@@ -575,6 +720,7 @@ async function viewAval() {
      <div class="${coleta ? 'sbs' : ''}"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
         ${formResp(cid, me, 'auto', a.auto, perguntasDe(c, 'auto'), coleta, 'auto-salvar')}</div>
        ${coleta ? `<aside class="foco lado" aria-label="Meu Baú para consulta"><h3 class="h2">📦 Meu Baú</h3><p class="small">Toque em 📎 para citar uma conquista na resposta em que você está escrevendo.</p>${blocoBau}</aside>` : ''}</div>
+     ${c.cultura ? blocoAtitudes(cid, me, 'auto', a.atAuto, coleta, 'Em quais atitudes da Hering você mais se viu neste ciclo? Escolha até 2. Seu líder e o gerente leem.') : ''}
      <div class="${lib ? 'foco' : 'trava'}"><h3 class="h2">${lib ? '🔓 Minha devolutiva' : '🔒 Devolutiva'}</h3>
        ${lib ? `<p style="white-space:pre-line">${esc(a.devol.texto || '')}</p>${a.ciente ? `<p class="small">✔ Ciência registrada.</p>` : `<button class="btn p" data-act="ciente" data-cid="${esc(cid)}">✔ Li e estou ciente</button>`}`
          : '<p>O resultado fica guardado até a conversa de devolutiva com o seu líder. Ele libera durante ou logo depois da conversa — você não precisa fazer nada agora.</p>'}</div></section>`;
@@ -585,10 +731,41 @@ async function viewAval() {
     const c = S.ciclos[p.cid]; const dados = await cache('resp:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/resp_pares/' + me); } catch (e) { return null; } });
     respPar += `<section class="gl pad stack"><h2 class="h2">🤝 Feedback para ${esc(nomeDe(p.avaliado))} <span class="chip">${esc(c.nome)}</span></h2>
       ${c.status === 'coleta' ? '<p class="small">Seja específico e use exemplos. Quem lê é só o líder da pessoa; ela não vê o que você escreveu individualmente.</p>' : '<p class="small">A coleta não está aberta.</p>'}
-      ${formResp(p.cid, p.avaliado, 'par', dados, perguntasDe(c, 'par'), c.status === 'coleta', 'par-salvar')}</section>`;
+      ${formResp(p.cid, p.avaliado, 'par', dados, perguntasDe(c, 'par'), c.status === 'coleta', 'par-salvar')}
+      ${c.cultura ? blocoAtitudes(p.cid, p.avaliado, 'par', await cache('atpar:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/atitudes/par/' + me); } catch (e) { return null; } }), c.status === 'coleta', 'Em quais atitudes da Hering ' + nomeDe(p.avaliado).split(' ')[0] + ' mais se destaca? Escolha até 2. Só o líder e o gerente de ' + nomeDe(p.avaliado).split(' ')[0] + ' leem; ' + nomeDe(p.avaliado).split(' ')[0] + ' não vê.') : ''}</section>`;
   }
   if (!saida && !respPar) return vazio('Você não está em nenhum ciclo de avaliação agora. Quando o RH abrir um, ele aparece aqui.');
   return `<div class="stack">${saida}${respPar}</div>`;
+}
+
+// 🧭 Bloco das atitudes num ciclo com `cultura` ligada. papel: 'auto' (a própria pessoa), 'par' (colega aprovado) ou 'lider'.
+// Grava em avaliacoes/{cid}/{av}/atitudes/{auto|lider|par/{eu}} — nó irmão, o prod não apaga (ver a regra).
+function blocoAtitudes(cid, av, papel, dados, editavel, pergunta, titulo) {
+  const ctx = cid + '_' + av; const tid = 'atx-' + papel + '-' + ctx; const d = dados || {};
+  return `<div class="foco cult-bloco"><h3 class="h2">${esc(titulo || '🧭 As atitudes da Hering')}</h3><p class="small">${esc(pergunta)}</p>
+    ${atEscolha('at-' + papel + '-' + ctx, 'at', d.at, 2, editavel, pergunta)}
+    ${papel === 'lider' ? `<p class="small" style="margin-top:8px">Qual atitude ${esc(nomeDe(av).split(' ')[0])} pode desenvolver no próximo ciclo? (até 2)</p>${atEscolha('atd-' + ctx, 'atd', d.atd, 2, editavel, 'Atitude a desenvolver')}` : ''}
+    <div class="camp"><label for="${esc(tid)}">${papel === 'auto' ? 'Conte um exemplo (vale citar o 📦 Baú)' : 'Um exemplo concreto'} <span class="small">(opcional)</span></label><textarea class="ta" id="${esc(tid)}" data-resp="at-${papel}" data-ctx="${esc(ctx)}" data-opc="1" data-salvo-ts="${(+d.ts) || 0}" maxlength="1200" ${editavel ? '' : 'readonly'}>${esc(d.atx || '')}</textarea></div>
+    ${editavel ? `<div class="row" style="margin-top:10px"><button class="btn" data-act="at-salvar" data-papel="${papel}" data-cid="${esc(cid)}" data-av="${esc(av)}">💾 Salvar atitudes</button>${d.ts ? `<span class="small">Salvo em ${esc(new Date(d.ts).toLocaleString('pt-BR'))}</span>` : ''}<span class="small rasc-st" data-rasc-st="at-${papel}" data-pctx="${esc(ctx)}" aria-live="polite"></span></div>` : ''}
+    ${cultura5()}</div>`;
+}
+// Para o líder/gerente: como a pessoa se viu e o que os pares destacaram (o avaliado nunca chega aqui — a regra também não deixa ele ler).
+function resumoAtitudesLider(a) {
+  const pares = Object.entries(a.atPares || {}).filter(([, r]) => r && (atIds(r.at).length || r.atx));
+  const cont = {}; pares.forEach(([, r]) => atIds(r.at).forEach(id => { cont[id] = (cont[id] || 0) + 1; }));
+  const auto = a.atAuto || {};
+  return `<div class="stack"><div><b>Como se vê</b> ${atChips(auto.at) || '<span class="small">ainda não marcou</span>'}${auto.atx ? `<p class="small" style="margin-top:4px;white-space:pre-line">${esc(auto.atx)}</p>` : ''}</div>
+    <div><b>O que os pares destacaram</b> ${Object.keys(cont).length ? CULTURA.filter(c => cont[c.id]).map(c => `<span class="chip at">${c.ic} ${esc(c.nome)} · ${cont[c.id]}</span>`).join(' ') : '<span class="small">nenhum par marcou ainda</span>'}
+    ${pares.length ? `<ul class="lst">${pares.map(([u, r]) => `<li><div class="tx"><b>${esc(nomeDe(u))}</b> ${atChips(r.at)}${r.atx ? `<p class="small" style="white-space:pre-line">${esc(r.atx)}</p>` : ''}</div></li>`).join('')}</ul>` : ''}</div></div>`;
+}
+// Frota: quais atitudes o time tem conversado nos 1:1 (90 dias) — sai dos encontros que a Frota já leu (zero leitura nova).
+function viewAtitudesTime(meus, dados) {
+  const lim = isoDe(new Date(Date.now() - 90 * 86400000)); const cont = {}; let total = 0;
+  meus.forEach(u => Object.values((dados[u] && dados[u].um && dados[u].um.enc) || {}).forEach(e => { if (e && CULT[e.at] && /^\d{4}-\d{2}-\d{2}$/.test(e.data || '') && Number.isFinite(Date.parse(e.data + 'T12:00:00')) && isoDe(new Date(e.data + 'T12:00:00')) === e.data && e.data >= lim && e.data <= hojeISO()) { cont[e.at] = (cont[e.at] || 0) + 1; total++; } }));
+  const max = Math.max(1, ...Object.values(cont));
+  return `<section class="gl pad stack" aria-labelledby="t-at"><h2 class="h2" id="t-at">🧭 Atitudes em foco nos 1:1 <span class="small">· últimos 90 dias</span></h2>
+    <p class="small">${total ? 'O que vocês têm conversado sobre a cultura da Hering. Não é nota: serve para ver o que o time tem trabalhado e o que ainda não apareceu.' : 'Ainda nenhum 1:1 com atitude marcada. Ao registrar um 1:1, marque a atitude em foco para acompanhar aqui.'}</p>
+    <ul class="at-barras">${CULTURA.map(c => `<li><span class="at-nome"><span aria-hidden="true">${c.ic}</span> ${esc(c.nome)}</span><span class="bar" aria-hidden="true"><i style="width:${Math.round((cont[c.id] || 0) / max * 100)}%"></i></span><b>${cont[c.id] || 0}</b><span class="small">${cont[c.id] ? '' : 'ainda não apareceu'}</span></li>`).join('')}</ul></section>`;
 }
 
 // ───────── frota (líder) ─────────
@@ -603,9 +780,10 @@ async function viewFrota() {
       <div style="margin-top:10px">${viewFarol(u, d)}</div>
       ${completo && h && Object.keys(h).length ? `<div class="small" style="margin-top:8px">🌤️ Humor (14 dias)</div>${sparkHumor(h, 14)}` : (completo ? '<p class="small" style="margin-top:8px">🌤️ Sem humor registrado.</p>' : '')}
       ${apoioDe[u] ? `<div style="margin-top:8px">${chip('🫶 Marcou ' + FACES[apoioDe[u].n - 1][1].toLowerCase() + ' em ' + esc(brDe(apoioDe[u].k)) + ' — vale um oi', 'warn')}</div>` : ''}
-      ${completo ? `<div class="acts"><button class="btn s p" data-act="abrir" data-uid="${esc(u)}">Abrir</button></div>` : ''}</article>`; };
-  return `<div class="stack"><section class="gl pad"><h2 class="h2">🚢 Frota</h2><p class="sub">${meus.length} ${meus.length === 1 ? 'pessoa' : 'pessoas'} que você lidera. Os faróis mostram a cadência dos 1:1, já descontando as folgas da Escala.</p></section>
+      ${completo ? `<div class="acts"><button class="btn s" data-act="abrir" data-uid="${esc(u)}">Abrir →</button></div>` : ''}</article>`; };
+  return `<div class="stack"><section class="sec"><h2 class="h2">🚢 Frota</h2><p class="sub">${meus.length} ${meus.length === 1 ? 'pessoa' : 'pessoas'} que você lidera. Os faróis mostram a cadência dos 1:1, já descontando as folgas da Escala.</p></section>
    ${meus.length ? viewTermometro(termo, meus) : ''}
+   ${meus.length ? viewAtitudesTime(meus, dados) : ''}
    ${meus.length ? `<div class="grid g3">${meus.map(u => cartao(u, true)).join('')}</div>` : ''}
    ${amp.length ? `<section class="gl pad"><h2 class="h2">🏛 Time dos meus líderes</h2><p class="small">Visão de farol; os detalhes ficam com cada líder.</p></section><div class="grid g3">${amp.map(u => cartao(u, false)).join('')}</div>` : ''}
    ${S.sel ? await viewDetalhe(S.sel) : ''}</div>`;
@@ -623,19 +801,18 @@ function viewTermometro(t, meus) {
     ${t.media == null ? vazio('Ninguém registrou o humor nos últimos 7 dias. Cada pessoa registra no Meu Dia (Maré) ou na Minha travessia.') : `<div class="termo ${t.cor}">${gauge}
       <div class="stack"><div class="small"><b>${t.respostas}</b> ${t.respostas === 1 ? 'resposta' : 'respostas'} de <b>${t.pessoas}</b> de ${t.total} ${t.total === 1 ? 'pessoa' : 'pessoas'} (quem registrou)${tend ? ' · ' + esc(tend) : ''}</div>${hist}</div></div><div class="small">Média diária do time · últimos 14 dias</div>${sp}
       ${t.pessoas < t.total ? `<p class="small">${t.total - t.pessoas} ${t.total - t.pessoas === 1 ? 'pessoa ainda não registrou' : 'pessoas ainda não registraram'} o humor nesta semana e não ${t.total - t.pessoas === 1 ? 'entra' : 'entram'} na média.</p>` : ''}`}
-    ${t.apoio.length ? `<div class="trava" style="margin-top:10px"><b>🫶 Pra ficar de olho</b><p class="small">Marcaram “mal” ou “muito mal” nos últimos 3 dias. Vale um oi, sem pressão.</p><ul class="lst">${t.apoio.map(a => `<li>${avatar(a.uid)}<div class="tx"><b>${esc(nomeDe(a.uid))}</b> <span class="small">${FACES[a.n - 1][0]} ${esc(FACES[a.n - 1][1])} · ${esc(brDe(a.k))}</span></div><button class="btn s" data-act="abrir" data-uid="${esc(a.uid)}">Abrir</button></li>`).join('')}</ul></div>` : ''}</section>`;
+    ${t.apoio.length ? `<div class="apoio" style="margin-top:10px"><b>🫶 Pra ficar de olho</b><p class="small">Marcaram “mal” ou “muito mal” nos últimos 3 dias. Vale um oi, sem pressão.</p><ul class="lst">${t.apoio.map(a => `<li>${avatar(a.uid)}<div class="tx"><b>${esc(nomeDe(a.uid))}</b> <span class="small">${FACES[a.n - 1][0]} ${esc(FACES[a.n - 1][1])} · ${esc(brDe(a.k))}</span></div><button class="btn s" data-act="abrir" data-uid="${esc(a.uid)}">Abrir</button></li>`).join('')}</ul></div>` : ''}</section>`;
 }
 async function viewDetalhe(uid) {
   const d = await cache('um:' + uid, () => carregaUm(uid)); const t = S.selTab;
   const abas = [['um', '🤝 1:1 e cadência'], ['bau', '📦 Baú'], ['aval', '📐 Avaliação']];
   let corpo = '';
   if (t === 'um') {
-    const encs = Object.entries(d.enc).sort((a, b) => String(b[1].data).localeCompare(String(a[1].data)));
     corpo = `<div class="grid g2"><div class="stack"><h3 class="h2">Cadência combinada</h3>
       <div class="row"><label class="sr" for="cad-sel">Cadência</label><select class="sel2" id="cad-sel" data-act-change="cad" data-uid="${esc(uid)}">${['', ...Object.keys(CAD)].map(k => `<option value="${k}" ${((d.serie && d.serie.cad) || '') === k ? 'selected' : ''}>${k ? CAD[k] : 'Escolher…'}</option>`).join('')}</select></div>
       ${viewFarol(uid, d)}
-      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button></form></div>
-      <div><h3 class="h2">Registros</h3>${encs.length ? `<ul class="lst">${encs.slice(0, 12).map(([id, e]) => `<li><span aria-hidden="true">🤝</span><div class="tx">${esc(brFull(e.data))} <span class="small">· ${esc(TIPO_1A1[e.tipo] || '1:1')} · por ${esc(nomeDe(e.por))}</span></div>${e.por === S.me.uid ? `<button class="btn s" data-act="enc-del" data-uid="${esc(uid)}" data-id="${esc(id)}" aria-label="Apagar registro">🗑</button>` : ''}</li>`).join('')}</ul>` : vazio('Nenhum 1:1 registrado.')}</div></div>`;
+      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button>${campoNota('enc-n2', 'a pessoa e o gerente também veem')}${campoAtEnc('enc-det-' + uid)}</form></div>
+      <div>${listaEncontros(uid, d.enc, 12, 'Registros') || `<h3 class="h2">Registros</h3>${vazio('Nenhum 1:1 registrado.')}`}</div></div>`;
   } else if (t === 'bau') corpo = await viewBau(uid, true);
   else corpo = await viewAvalLider(uid);
   return `<section class="gl pad stack" id="detalhe" style="border-color:var(--accent)" aria-labelledby="dt-t"><div class="row" style="justify-content:space-between"><h2 class="h2" id="dt-t">${avatar(uid)} ${esc(nomeDe(uid))}</h2><button class="btn s" data-act="fechar">✕ Fechar</button></div>
@@ -656,6 +833,7 @@ async function viewAvalLider(uid) {
       ${aprov > 4 ? '<p class="small">⚠ Mais de 4 pares aprovados: considere reduzir para evitar fadiga de avaliação.</p>' : ''}</div>
      <details class="foco" ${a.auto ? 'open' : ''}><summary class="h2">📝 Autoavaliação de ${esc(nomeDe(uid))}</summary>${a.auto ? formResp(cid, uid, 'auto', a.auto, perguntasDe(c, 'auto'), false) : '<p class="small">Ainda não respondeu.</p>'}</details>
      ${ehMeuLiderado ? `<details class="foco"><summary class="h2">✍️ Minha avaliação (só você e seu gerente leem)</summary>${formResp(cid, uid, 'lider', a.lider, perguntasDe(c, 'lider'), !enc, 'lider-salvar')}</details>` : ''}
+     ${c.cultura ? `<details class="foco"><summary class="h2">🧭 Atitudes da Hering</summary>${resumoAtitudesLider(a)}${ehMeuLiderado ? blocoAtitudes(cid, uid, 'lider', a.atLider, !enc, 'Na sua visão, em quais atitudes ' + nomeDe(uid).split(' ')[0] + ' mais se destaca? (só você e o gerente leem)', '✍️ Sua visão') : (a.atLider ? `<p class="small" style="margin-top:8px"><b>Visão do líder:</b> ${atChips(a.atLider.at) || '—'} · a desenvolver: ${atChips(a.atLider.atd) || '—'}</p>` : '')}</details>` : ''}
      <details class="foco"><summary class="h2">💬 Feedback dos pares (${Object.keys(a.resp).length})</summary>${Object.entries(a.resp).map(([u, r]) => `<div class="foco"><b>${esc(nomeDe(u))}</b>${formResp(cid, uid, 'par', r, perguntasDe(c, 'par'), false, '', u)}</div>`).join('') || '<p class="small">Ninguém respondeu ainda.</p>'}</details>
      ${ehMeuLiderado ? `<div class="${lib ? 'foco' : 'trava'}"><h4 class="h2">${lib ? '🔓 Devolutiva liberada' : '🔒 Devolutiva (a pessoa ainda não vê)'}</h4>
        <label class="sr" for="dv-t">Síntese da devolutiva</label><textarea class="ta" id="dv-t" data-devol="1" maxlength="6000" ${enc ? 'readonly' : ''} placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
@@ -683,10 +861,11 @@ async function viewAdmin() {
     <details class="foco"><summary class="h2">+ Novo ciclo</summary><form data-form="ciclo" class="camp"><label for="ci-n">Nome do ciclo</label><input class="in" id="ci-n" name="nome" maxlength="80" required placeholder="Ex.: Ciclo 2026/2">
       <label>Quem participa</label><p class="small">Marque as squads (todas as pessoas delas entram) ou escolha pessoas na lista do organograma depois.</p>
       <div class="chips">${squadsDisponiveis().map(s => `<label class="ck"><input type="checkbox" name="sq" value="${esc(s)}"> ${esc(s)}</label>`).join('')}</div>
+      <label class="ck" style="margin-top:12px"><input type="checkbox" name="cultura" checked> 🧭 Incluir as atitudes da Hering (autoavaliação, pares e líder)</label>
       <div class="row" style="margin-top:10px"><button class="btn p" type="submit">Criar ciclo (fase: preparação)</button></div></form></details>
     ${Object.entries(S.ciclos).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).map(([cid, c]) => `<div class="foco"><div class="row" style="justify-content:space-between"><b>${esc(c.nome)}</b><span class="chip">${Object.keys(c.participantes || {}).length} pessoas</span></div>
       <div class="fase">${FASES.map(f => `<span class="${f[0] === c.status ? 'on' : ''}">${f[1]}</span>`).join('')}</div>
-      <div class="row">${FASES.filter(f => f[0] !== c.status).map(f => `<button class="btn s" data-act="ciclo-fase" data-cid="${esc(cid)}" data-fase="${f[0]}">→ ${f[1]}</button>`).join('')}</div></div>`).join('') || vazio('Nenhum ciclo criado ainda.')}</section></div>`;
+      <div class="row">${FASES.filter(f => f[0] !== c.status).map(f => `<button class="btn s" data-act="ciclo-fase" data-cid="${esc(cid)}" data-fase="${f[0]}">→ ${f[1]}</button>`).join('')}<button class="btn s" data-act="ciclo-cultura" data-cid="${esc(cid)}" aria-pressed="${!!c.cultura}">🧭 Atitudes: ${c.cultura ? 'ligadas' : 'desligadas'}</button></div></div>`).join('') || vazio('Nenhum ciclo criado ainda.')}</section></div>`;
 }
 const squadsDisponiveis = () => { const s = new Set(); Object.values(S.users).forEach(u => Object.keys(u.squads || {}).forEach(k => { if (u.squads[k]) s.add(k); })); return [...s].sort(); };
 
@@ -705,14 +884,14 @@ async function render() {
   const eu = ++rendering; const tabs = TABS(); const rasc = {}; document.querySelectorAll('textarea.ta:not([readonly])').forEach(t => { if (t.id) rasc[t.id] = t.value; }); if (!tabs.some(t => t[0] === S.tab)) S.tab = 'inicio';
   const foco = document.activeElement && document.activeElement.id; const sel = document.activeElement && document.activeElement.selectionStart;
   const dataHoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-  $('#app').innerHTML = `<section class="hero"><span class="eyebrow">${saudacao()} · ${esc(dataHoje)}</span><h1 class="h1">Olá, ${esc((S.me.nome || '').split(' ')[0] || 'bem-vinda(o)')} 👋</h1><p class="sub">Sua travessia: o que você quer construir e como a gente te ajuda a chegar lá.</p>
-      <span class="barco" aria-hidden="true">⛵</span><svg class="ondas" viewBox="0 0 1200 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 18Q150 0 300 18T600 18T900 18T1200 18V34H0Z"/><path d="M0 25Q150 9 300 25T600 25T900 25T1200 25V34H0Z"/></svg></section>
+  $('#app').innerHTML = `<section class="hero"><span class="eyebrow">${saudacao()} · ${esc(dataHoje)}</span><h1 class="h1">Olá, ${esc((S.me.nome || '').split(' ')[0] || 'bem-vinda(o)')} 👋</h1><p class="sub">Sua travessia: o que você quer construir e como a gente te ajuda a chegar lá.</p></section>
     <div class="nav" role="tablist" aria-label="Seções">${tabs.map(([k, l]) => { const i = l.indexOf(' '); const nome = l.slice(i + 1); return `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}" aria-label="${esc(nome)}"><span class="ni" aria-hidden="true">${l.slice(0, i)}</span><span class="nl"><span class="long">${esc(nome)}</span><span class="short">${esc(TAB_CURTO[k] || nome)}</span></span></button>`; }).join('')}</div><div role="tabpanel" id="painel">${carregando()}</div>`;
   let html = '';
   try { html = await ({ inicio: viewInicio, bau: () => viewBau(S.me.uid, false), diario: viewDiario, aval: viewAval, frota: viewFrota, admin: viewAdmin }[S.tab])(); }
   catch (e) { console.warn('[travessia]', e); html = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
   if (eu !== rendering) return;
   $('#painel').innerHTML = html; bolhas($('#painel'));
+  rascRestaurar();
   Object.keys(rasc).forEach(id => { const el = document.getElementById(id); if (el && !el.readOnly && rasc[id] && !el.value) el.value = rasc[id]; });   // não perde o que a pessoa estava escrevendo
   if (foco) { const el = document.getElementById(foco); if (el) { el.focus(); try { if (sel != null) el.setSelectionRange(sel, sel); } catch (_) {} } }
 }
@@ -722,24 +901,59 @@ async function guardarBau(item) { const id = novoId(); item.ts = Date.now(); ite
 const salvaResp = async (cid, av, grupo, caminho) => {
   const dados = { ts: Date.now() }; document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`).forEach(t => { if (t.value.trim()) dados[t.dataset.q] = t.value.trim(); });
   if (Object.keys(dados).length < 2) { toast('Escreva pelo menos uma resposta antes de salvar.'); return false; }
-  return tenta(() => W(caminho, dados), '💾 Salvo!');
+  const ids = [...document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`)].map(t => t.id);
+  const ok = await tenta(() => W(caminho, dados), '💾 Salvo!'); if (ok) rascLimpar(ids); return ok;
 };
 // 🫶 Quando a pessoa marca "mal" (2) ou "muito mal" (1): avisa o líder direto pelo sino (um por pessoa por dia; a regra só grava se ainda não existe).
-async function alertaApoio(n) {
-  const lid = liderDe(S.me.uid); if (!(n <= 2) || !lid || lid === S.me.uid) return;
-  const id = 'apoio_' + S.me.uid + '_' + hojeISO(); const nome = (S.me.nome || 'Alguém').split(' ')[0];
+// ↩ T8 (consultoria 09/11/2026): o toque na carinha grava na hora, mas o aviso de apoio ao líder só sai depois de HUMOR_DESFAZER_S segundos.
+// Nesse meio-tempo aparece "Registrado · Desfazer"; desfazer volta ao que estava antes e cancela o aviso. Trocar de carinha na janela reinicia a
+// contagem e vale a última. Se a aba for escondida/fechada antes, o aviso sai na hora (a pessoa saiu sem desfazer; não pode se perder).
+const HUMOR_DESFAZER_S = 8; let humorPend = null;
+function humorDisparar() { const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; alertaApoio(p.n, p.pessoa, p.k, p.lid); const u = document.getElementById('humor-undo'); if (u) u.remove(); }
+function humorArmar(k, n, antes) { if (humorPend) clearTimeout(humorPend.timer); humorPend = { k, n, antes, pessoa: { ...S.me }, lid: liderDe(S.me.uid), timer: setTimeout(humorDisparar, HUMOR_DESFAZER_S * 1000) }; }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') humorDisparar(); });
+window.addEventListener('pagehide', humorDisparar);
+async function alertaApoio(n, pessoa, dia, lid) {
+  if (!(n <= 2) || !pessoa || !lid || lid === pessoa.uid) return;
+  const id = 'apoio_' + pessoa.uid + '_' + dia; const nome = (pessoa.nome || 'Alguém').split(' ')[0];
   try { await WABS('kanban/usuarios/' + lid + '/notificacoes/' + id, { id, type: 'travessia_apoio', title: '🫶 ' + nome + ' marcou que não está bem hoje', sub: 'Para você poder apoiar. Que tal um "oi"?', cardId: null, read: false, ts: new Date().toISOString(), squad: '' }); } catch (e) { /* já avisado hoje, ou sem regra: o humor da pessoa já foi salvo */ }
 }
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-tab],[data-act]'); if (!b) return;
   const a = b.dataset.act; const me = S.me && S.me.uid;
   if (b.dataset.tab && !a) { S.tab = b.dataset.tab; S.sel = null; S.pesq = ''; return render(); }
+  if (a === 'prox-foco') { const el = document.getElementById(b.dataset.alvo); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true }); } return; }
+  if (a === 'at-op') {   // marcar/desmarcar atitude; max 1 = troca, max 2 = avisa
+    const g = b.closest('[data-at-grupo]'); if (!g) return; const max = +g.dataset.atMax || 1; const on = b.getAttribute('aria-pressed') === 'true';
+    if (!on) { const ligados = [...g.querySelectorAll('[aria-pressed="true"]')]; if (max === 1) ligados.forEach(x => x.setAttribute('aria-pressed', 'false')); else if (ligados.length >= max) { toast('Escolha até ' + max + ' atitudes.'); return; } }
+    b.setAttribute('aria-pressed', String(!on)); S.atSel = S.atSel || {}; S.atSel[g.dataset.atId] = [...g.querySelectorAll('[aria-pressed="true"]')].map(x => x.dataset.at); return;
+  }
+  if (a === 'at-salvar') {
+    const { cid, av, papel } = b.dataset; const box = b.closest('.cult-bloco'); if (!box || !['auto', 'par', 'lider'].includes(papel)) return;
+    const at = atLidos(box, 'at'), atd = atLidos(box, 'atd'); const tx = box.querySelector('textarea[data-resp^="at-"]'); const atx = tx ? tx.value.trim() : '';
+    const reg = { ts: Date.now() }; if (at.length) reg.at = at.slice(0, 2).join(','); if (papel === 'lider' && atd.length) reg.atd = atd.slice(0, 2).join(','); if (atx) reg.atx = atx.slice(0, 1200);
+    const caminho = 'avaliacoes/' + cid + '/' + av + '/atitudes/' + (papel === 'par' ? 'par/' + me : papel);
+    if (await tenta(() => W(caminho, reg), '🧭 Atitudes salvas.')) { if (tx) rascLimpar([tx.id]); box.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); invalida('aval:' + cid + ':' + av); invalida('atpar:' + cid + ':' + av); render(); }
+    return;
+  }
+  if (a === 'ciclo-cultura') { const cid = b.dataset.cid; const v = !(S.ciclos[cid] && S.ciclos[cid].cultura); if (await tenta(() => W('ciclos/' + cid + '/cultura', v), v ? '🧭 Atitudes ligadas neste ciclo.' : 'Atitudes desligadas neste ciclo.')) { S.ciclos[cid] = Object.assign({}, S.ciclos[cid], { cultura: v }); invalida('aval:' + cid); render(); } return; }
   if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
   if (a === 'humor') {
-    const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() };
-    const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); await W('humor_comp/' + me + '/' + k, reg); }, FACES[n - 1][0] + ' Humor de hoje registrado — seu líder também vê.');
-    if (ok) alertaApoio(n);
-    if (ok) { S.cache['humor:' + me] = Object.assign({}, S.cache['humor:' + me], { [k]: Object.assign({ comp: true }, reg) }); render(); } return;
+    const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() }; const pessoa = { ...S.me }, lid = liderDe(me);
+    const cacheH = S.cache['humor:' + me] || {}; const antes = humorPend && humorPend.k === k ? humorPend.antes : (cacheH[k] ? Object.assign({}, cacheH[k]) : null);   // 2º toque na janela: o "desfazer" volta ao que era ANTES do 1º
+    const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); await W('humor_comp/' + me + '/' + k, reg); });
+    if (ok && S.me?.uid !== me) { alertaApoio(n, pessoa, k, lid); return; }
+    if (ok) { humorArmar(k, n, antes); S.cache['humor:' + me] = Object.assign({}, cacheH, { [k]: Object.assign({ comp: true }, reg) }); render(); } return;
+  }
+  if (a === 'humor-desfazer') {
+    const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; const k = p.k, v = p.antes;   // cancela o aviso ao líder antes de qualquer gravação
+    const ok = await tenta(async () => {
+      if (v && v.n) { const r = { n: v.n, ts: v.ts || Date.now() }; if (v.nota) r.nota = v.nota; await W('humor/' + me + '/' + k, r); await (v.comp ? W('humor_comp/' + me + '/' + k, r) : D('humor_comp/' + me + '/' + k)); }
+      else { await D('humor/' + me + '/' + k); await D('humor_comp/' + me + '/' + k); }
+    }, '↩ Desfeito.');
+    if (ok) { const h = Object.assign({}, S.cache['humor:' + me]); if (v && v.n) h[k] = v; else delete h[k]; S.cache['humor:' + me] = h; }
+    else invalida('humor:' + me);
+    render(); return;
   }
   if (a === 'dia-n') { S.diaN = +b.dataset.n; document.querySelectorAll('[data-act="dia-n"]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === S.diaN))); const l = $('#dia-lbl'); if (l) l.textContent = FACES[S.diaN - 1][1]; return; }
   if (a === 'dia-salvar') {
@@ -755,7 +969,7 @@ document.addEventListener('click', async e => {
   if (a === 'fechar') { S.sel = null; return render(); }
   if (a === 'sel-aba') { S.selTab = b.dataset.k; return render(); }
   if (a === 'enc-del') { if (await tenta(() => D('encontros/' + b.dataset.uid + '/' + b.dataset.id), 'Registro apagado.')) { invalida('um:' + b.dataset.uid); render(); } return; }
-  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { el.value = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; el.focus(); } return; }
+  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { el.value = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; el.focus(); el.dispatchEvent(new Event('input', { bubbles: true })); } return; }
   if (a === 'par-sugerir') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => W(`avaliacoes/${cid}/${me}/pares/${par}`, { aprovado: false, por: 'avaliado', ts: Date.now() }), 'Indicação enviada ao seu líder.')) { invalida('aval:' + cid + ':' + me); render(); } return; }
   if (a === 'par-retirar') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => D(`avaliacoes/${cid}/${me}/pares/${par}`))) { invalida('aval:' + cid + ':' + me); render(); } return; }
   if (a === 'auto-salvar') { if (await salvaResp(b.dataset.cid, me, 'auto', `avaliacoes/${b.dataset.cid}/${me}/auto`)) { invalida('aval:' + b.dataset.cid + ':' + me); render(); } return; }
@@ -787,16 +1001,20 @@ document.addEventListener('change', async e => {
   if (t.dataset.rh) { const uid = t.dataset.rh; if (await tenta(() => (t.checked ? W('papeis/' + uid, 'rh') : D('papeis/' + uid)), t.checked ? '🤝 Papel de RH concedido.' : 'Papel de RH removido.')) invalida('papeis'); else t.checked = !t.checked; return; }
 });
 document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('textarea[data-resp]')) S.ultimoFoco = e.target.id; });
+const rascTimers = {};
+document.addEventListener('input', e => { const t = e.target;
+  if (t.matches && t.matches('textarea.ta[data-resp]:not([readonly])')) { rascGuardar(t); avalProgresso(); clearTimeout(rascTimers[t.id]); rascTimers[t.id] = setTimeout(() => { if (!t.isConnected) return; rascStatus(t, rascGuardar(t) ? (rascSujo(t) ? '💾 Rascunho guardado neste aparelho' : '') : '⚠ Não deu para guardar o rascunho neste aparelho — salve antes de sair.'); }, 600); } });
+window.addEventListener('beforeunload', e => { const sujos = rascEditaveis().filter(rascSujo); if (!sujos.length) return; sujos.forEach(rascGuardar); e.preventDefault(); e.returnValue = ''; });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.pesq) { S.pesq = e.target.value; clearTimeout(window.__pT); window.__pT = setTimeout(render, 220); } });
 document.addEventListener('submit', async e => {
   const f = e.target.closest('[data-form]'); if (!f) return; e.preventDefault(); const k = f.dataset.form; const fd = new FormData(f); const me = S.me.uid;
   if (k === 'encontro') { const uid = f.dataset.uid; const data = fd.get('data'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) { toast('Escolha a data do 1:1.'); return; } if (data > hojeISO()) { toast('O 1:1 registrado não pode estar no futuro.'); return; }
-    if (await tenta(() => W('encontros/' + uid + '/' + novoId(), { data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }), '✅ 1:1 registrado.')) { invalida('um:' + uid); render(); } return; }
+    if (await tenta(() => W('encontros/' + uid + '/' + novoId(), Object.assign({ data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }, String(fd.get('nota') || '').trim() ? { nota: String(fd.get('nota')).trim().slice(0, 280) } : {}, atLidos(f, 'enc')[0] ? { at: atLidos(f, 'enc')[0] } : {})), '✅ 1:1 registrado.')) { invalida('um:' + uid); f.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); render(); } return; }
   if (k === 'bau') { const titulo = (fd.get('titulo') || '').trim(); if (!titulo) return; const partes = []; [['desafio', 'Desafio'], ['acao', 'O que fiz'], ['impacto', 'Impacto']].forEach(([c, r]) => { const v = (fd.get(c) || '').trim(); if (v) partes.push(r + ': ' + v); });
     const item = { tipo: 'manual', titulo: titulo.slice(0, 160) }; if (partes.length) item.texto = partes.join('\n').slice(0, 1200); if ((fd.get('comp') || '').trim()) item.comp = fd.get('comp').trim().slice(0, 60); if (await guardarBau(item)) render(); return; }
   if (k === 'ciclo') { const nome = (fd.get('nome') || '').trim(); if (!nome) return; const sqs = fd.getAll('sq'); const part = {}; Object.keys(S.users).forEach(u => { const us = S.users[u].squads || {}; if (sqs.some(s => us[s])) part[u] = true; });
     if (!Object.keys(part).length) { toast('Marque ao menos uma squad com pessoas.'); return; }
-    const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO };
+    const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO }; if (fd.get('cultura')) c.cultura = true;
     if (await tenta(() => W('ciclos/' + cid, c), '📐 Ciclo criado.')) { S.ciclos[cid] = c; render(); } return; }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-pesq]')) e.preventDefault(); });
@@ -822,7 +1040,7 @@ function demoDados() {
   ['ana', 'bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { TR.vinculos[u] = { liderUid: 'pau', gerenteUid: 'gil', squad: 'dados' }; }); ['gus', 'lia'].forEach(u => { TR.vinculos[u] = { liderUid: 'eli', gerenteUid: 'gil', squad: 'midia' }; }); TR.vinculos.pau = { liderUid: 'gil' }; TR.vinculos.eli = { liderUid: 'gil' };
   // 1:1: cadência e histórico de ~180 dias (último encontro define o farol de hoje)
   const SER = { ana: ['quinzenal', 6], bia: ['semanal', 14], cae: ['quinzenal', 26], deb: ['semanal', 4], edu: ['mensal', 40], fab: ['quinzenal', 9], gus: ['quinzenal', 5], lia: ['semanal', 3] }; const PASSO = { semanal: 7, quinzenal: 14, mensal: 30 };
-  Object.entries(SER).forEach(([u, [cad, ult]]) => { TR.serie[u] = { cad, tipo: 'acomp', ts: ts(190) }; TR.encontros[u] = {}; let n = ult, i = 0; while (n < 185) { const k = dia(n); const tipo = i % 6 === 5 ? 'carreira' : (i % 3 === 2 ? 'pdi' : 'acomp'); TR.encontros[u]['e' + i] = { data: k, tipo, por: i % 4 === 0 ? u : (u === 'gus' || u === 'lia' ? 'eli' : 'pau'), ts: ts(n) }; n += PASSO[cad] + (rnd() < 0.25 ? 3 : 0); i++; } });
+  Object.entries(SER).forEach(([u, [cad, ult]]) => { TR.serie[u] = { cad, tipo: 'acomp', ts: ts(190) }; TR.encontros[u] = {}; let n = ult, i = 0; while (n < 185) { const k = dia(n); const tipo = i % 6 === 5 ? 'carreira' : (i % 3 === 2 ? 'pdi' : 'acomp'); TR.encontros[u]['e' + i] = Object.assign({ data: k, tipo, por: i % 4 === 0 ? u : (u === 'gus' || u === 'lia' ? 'eli' : 'pau'), ts: ts(n) }, i < 3 ? { nota: ['Combinamos: fechar a documentação do pipeline até sexta e pedir revisão da Bia.', 'Priorizar o painel executivo; o estudo de dbt fica para o mês que vem.', 'Apresentar o resultado do churn na reunião da torre.'][i] } : {}, i < 4 ? { at: ['facilita', 'cardume', 'bemfeito', 'cardume'][i] } : {}); n += PASSO[cad] + (rnd() < 0.25 ? 3 : 0); i++; } });
   // folgas (a Escala desconta do farol)
   [[3, 'ana'], [4, 'ana'], [11, 'ana'], [12, 'ana'], [20, 'deb'], [21, 'deb'], [7, 'edu'], [8, 'edu'], [9, 'edu']].forEach(([n, u]) => { const k = dia(n); K.escala[k] = K.escala[k] || { dados: {} }; K.escala[k].dados[u] = { t: 'folga', por: u, ts: ts(n) }; });
   // humor e diário (tendência: começa morno, melhora, tem um vale perto de uma entrega, hoje bem)
@@ -850,7 +1068,7 @@ function demoDados() {
   // Ciclos: 2026/1 encerrado (com devolutiva liberada e ciência) e 2026/2 em coleta
   const PART = {}; ['ana', 'bia', 'cae', 'deb', 'edu', 'fab', 'gus', 'lia'].forEach(u => { PART[u] = true; });
   TR.ciclos.c2026s1 = { nome: 'Ciclo 2026/1', status: 'encerrado', ts: ts(172), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
-  TR.ciclos.c2026s2 = { nome: 'Ciclo 2026/2', status: 'coleta', ts: ts(24), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
+  TR.ciclos.c2026s2 = { nome: 'Ciclo 2026/2', status: 'coleta', ts: ts(24), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan', cultura: true };
   const R = (o) => Object.assign({ ts: ts(100) }, o);
   const AV1 = TR.avaliacoes.c2026s1 = {};
   AV1.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(150) }, cae: { aprovado: true, por: 'avaliado', ts: ts(150) }, deb: { aprovado: true, por: 'lider', ts: ts(149) } },
@@ -861,6 +1079,7 @@ function demoDados() {
   ['bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { AV1[u] = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(150) } }, auto: R({ q1: 'Entregas do ciclo concluídas no prazo.', q2: 'Evolução em técnica e comunicação.', q3: 'Quero assumir mais responsabilidade.', q4: 'Mais feedback frequente.' }), lider: R({ q1: 'Boa entrega.', q2: 'Manter a qualidade.', q3: 'Ampliar a autonomia.', q4: 'Plano de PDI combinado.' }), devolutiva: { texto: 'Bom ciclo; combinamos o PDI e os próximos passos.', liberada: true, liberadaEm: ts(70), por: 'pau', ts: ts(70) }, ciente: ts(66) }; });
   const AV2 = TR.avaliacoes.c2026s2 = {};
   AV2.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(18) }, deb: { aprovado: true, por: 'lider', ts: ts(17) }, fab: { aprovado: false, por: 'avaliado', ts: ts(2) } }, auto: R({ q1: 'Modelo de churn em produção, Black Friday planejada e o curso de storytelling concluído.', q2: 'Evoluí em comunicação: a última apresentação foi bem avaliada.', ts: ts(4) }), resp_pares: { bia: R({ q1: 'Continuar mentorando.', q2: 'Documentar mais as decisões.', ts: ts(5) }) }, devolutiva: { texto: '(rascunho) Ciclo muito forte; destacar liderança na semana de pico e o churn em produção.', liberada: false, ts: ts(1), por: 'pau' }, lider: R({ q1: 'Rascunho da avaliação do líder.', ts: ts(1) }) };
+  AV2.ana.atitudes = { par: { deb: { at: 'cardume,bemfeito', atx: 'Na Black Friday alinhou as dependências com mídia antes de todo mundo e revisou cada número do painel.', ts: ts(4) } } };
   AV2.bia = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(17) }, cae: { aprovado: false, por: 'avaliado', ts: ts(3) } } };
   TR.pedidos_par = { bia: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, deb: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, ana: { c2026s2_bia: { cid: 'c2026s2', avaliado: 'bia', ts: ts(17) } } };
   return out;
@@ -869,9 +1088,35 @@ function demoDados() {
 // ───────── login e boot ─────────
 function mostraLogin(msg) { $('#login').hidden = false; $('#app').hidden = true; $('#quem').hidden = true; $('#login-err').textContent = msg || ''; $('#login-err').hidden = !msg; }
 $('#btn-login').addEventListener('click', () => { $('#login-err').hidden = true; if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; } window._signIn().catch(e => mostraLogin('Não deu pra entrar: ' + (e && e.message || e))); });
-$('#btn-sair').addEventListener('click', () => signOut(auth));
+$('#btn-sair').addEventListener('click', async () => {   // sair da conta apaga o rascunho da avaliação deste aparelho (texto pessoal em aparelho que pode ser compartilhado)
+  if (S.me && Object.keys(rascLer()).length && !(await uiConfirm('Você tem respostas da avaliação não salvas neste aparelho. Sair apaga esse rascunho. Sair mesmo assim?', 'Sair'))) return;
+  if (S.me) { try { localStorage.removeItem(rascChave()); } catch (_) {} } humorDisparar(); signOut(auth);
+});
 $('#btn-tema').addEventListener('click', () => { const atual = document.documentElement.getAttribute('data-theme') || ''; const i = TEMAS.findIndex(x => x[0] === atual); aplicaTema(TEMAS[(i + 1) % TEMAS.length][0], true); });
 const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhenses'], ['sunset', '🌅', 'Entardecer']];
+// 🐟 Peixinhos e bolhas: os MESMOS do Oceano (FISH_SVGS + criarPeixes, MARINE_GLASS.md §5). 8 peixes e 16 bolhas (metade no celular); 🐟 no topo
+// desliga (só neste navegador). Pausam com a aba escondida, a janela sem foco ou 60 s sem mexer; "reduzir movimento" do sistema para tudo (CSS).
+const FISH_SVGS = [
+  '<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>',
+  '<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>',
+  '<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>',
+];
+const peixesLigados = () => { try { return localStorage.getItem('travessia_peixes') !== 'off'; } catch (_) { return true; } };
+function criarPeixes() {
+  const fw = $('#fwrap'), bw = $('#bwrap'); if (!fw || !bw) return; fw.innerHTML = ''; bw.innerHTML = '';
+  const on = peixesLigados(); const bt = $('#btn-peixes'); if (bt) { bt.setAttribute('aria-pressed', String(on)); bt.setAttribute('aria-label', 'Peixinhos no fundo: ' + (on ? 'ligados' : 'desligados')); bt.style.opacity = on ? '' : '.55'; }
+  if (!on) return;
+  const mobile = window.matchMedia('(max-width:768px)').matches; const nF = mobile ? 4 : 8, nB = mobile ? 8 : 16;
+  for (let i = 0; i < nF; i++) { const f = document.createElement('div'); f.className = Math.random() > .5 ? 'fish-ltr' : 'fish-rtl'; f.style.top = (5 + Math.random() * 80) + '%'; f.style.animationDuration = (14 + Math.random() * 24) + 's'; f.style.animationDelay = (-Math.random() * 24) + 's'; f.innerHTML = FISH_SVGS[i % FISH_SVGS.length]; fw.appendChild(f); }
+  for (let i = 0; i < nB; i++) { const b = document.createElement('div'), sz = 3 + Math.random() * 14; b.className = 'bubble'; b.style.cssText = 'width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random() * 100) + '%;animation-duration:' + (8 + Math.random() * 18) + 's;animation-delay:-' + (Math.random() * 18) + 's;'; bw.appendChild(b); }
+}
+let animOcioso = false, animTimer = null, animUltimo = 0;
+const animAtualizar = () => document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || animOcioso);
+function animAtividade() { const agora = Date.now(); if (!animOcioso && agora - animUltimo < 1000) return; animUltimo = agora; if (animOcioso) { animOcioso = false; animAtualizar(); } clearTimeout(animTimer); animTimer = setTimeout(() => { animOcioso = true; animAtualizar(); }, 60000); }
+['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => document.addEventListener(ev, animAtividade, { passive: true, capture: true }));
+document.addEventListener('visibilitychange', animAtualizar); window.addEventListener('focus', animAtualizar); window.addEventListener('blur', animAtualizar);
+$('#btn-peixes').addEventListener('click', () => { try { localStorage.setItem('travessia_peixes', peixesLigados() ? 'off' : 'on'); } catch (_) {} criarPeixes(); });
+criarPeixes(); animAtividade(); animAtualizar();
 function aplicaTema(v, avisa) { const i = Math.max(0, TEMAS.findIndex(x => x[0] === v)), t = TEMAS[i]; if (t[0]) document.documentElement.setAttribute('data-theme', t[0]); else document.documentElement.removeAttribute('data-theme'); $('#btn-tema').textContent = t[1]; try { localStorage.setItem('mare_theme', t[0] === 'light' ? 'light' : t[0] === 'sunset' ? 'vice' : 'dark'); localStorage.setItem('travessia_tema', t[0]); } catch (_) {} if (avisa) toast(t[1] + ' ' + t[2]); }
 try { const t = localStorage.getItem('travessia_tema'); if (t) aplicaTema(t); else { const m = localStorage.getItem('mare_theme'); if (m === 'light') aplicaTema('light'); } } catch (_) {}
 
@@ -891,20 +1136,21 @@ if (DEMO) {
   // 🎭 Modo demonstração: sem login e sem Firebase. O seletor do topo troca a pessoa que está "olhando" (cada visão enxerga o que as regras permitiriam).
   Object.assign(MEM, demoDados());
   const sel = $('#demo-persona'); sel.innerHTML = DEMO_PERSONAS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(''); $('#demo-bar').hidden = false; document.body.classList.add('demo');
-  const entrar = k => { const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
+  const entrar = k => { humorDisparar(); S.atSel = {}; S.ultimoFoco = null; const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
   sel.addEventListener('change', () => { S.tab = 'inicio'; entrar(sel.value); });
   try { const qp = new URLSearchParams(location.search).get('como'); if (qp && DEMO_PERSONAS.some(x => x[0] === qp)) sel.value = qp; } catch (_) {}
   entrar(sel.value);
 } else {
   onAuthStateChanged(auth, async u => {
     if (window.MareLogin && MareLogin.voltando) return;
-    if (!u) { S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
+    if (!u) { humorDisparar(); S.atSel = {}; S.cache = {}; S.ultimoFoco = null; S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
     const empresa = /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com');
     if (!empresa) { S.aviso = 'O Travessia é só para contas Google @ciahering.com.br.'; mostraLogin(S.aviso); signOut(auth).catch(() => {}); return; }
     await abrirApp(u);
   });
 }
-window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, CAD_DIAS, estado: S, render };
+window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, proximaAcao, CAD_DIAS, estado: S, render, humorPendente: () => !!humorPend, HUMOR_DESFAZER_S };
+if (DEMO) window.Travessia.demoMem = MEM;   // só no modo demonstração (dados fictícios): deixa o teste conferir o que foi "gravado"
 </script>
 </body>
 </html>
