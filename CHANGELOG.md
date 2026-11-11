@@ -36,10 +36,11 @@ Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O qu
 - Faixa colorida na lateral dos cartões do Baú → removida (o tipo segue no ícone e no filtro).
 - "Devolutiva trancada" em amarelo de alerta → neutra com 🔒 (trancado não é aviso). O "🫶 Pra ficar de olho" do líder continua amarelo.
 - Mural de Estrelas com moldura dourada → vidro com ⭐.
-- Cartões com desfoque (`backdrop-filter`) parados sobre o fundo → vidro lapidado (linha de luz no topo, guia §2.5 regra 6), sem refazer o desfoque a cada quadro com os peixes nadando atrás. Cantos 22 → 18 px.
+- Desfoque (`backdrop-filter`) nos cartões, na barra do topo e na barra de abas → vidro lapidado (linha de luz no topo, guia §2.5 regra 6), sem desfoque nenhum na página: com os peixes nadando atrás, ele seria refeito a cada quadro. Cantos 22 → 18 px.
+- No tema claro e no Entardecer, a saudação e as seções abertas ganham um fundo leve de vidro (texto direto sobre o azul ou o brilho laranja ficava < 4,5:1).
 - Cartões vizinhos esticando até a altura do maior (vazio embaixo do humor e no Baú) → alinhados pelo topo.
 - Folga grande embaixo da barra do modo demonstração → removida.
-- Testes: `test_travessia_marine.js` (61/61, 3 temas × 1280/390 px). `test_travessia_ui.js` foi atualizado para o desenho novo; ele também caía na `main` por procurar o interruptor de compartilhar humor, removido em 31/10.
+- Testes: `test_travessia_marine.js` (64/64, 3 temas × 1280/390 px). `test_travessia_ui.js` foi atualizado para o desenho novo; ele também caía na `main` por procurar o interruptor de compartilhar humor, removido em 31/10.
 
 ### Radar — faixa "⭐ Pra você" no topo da lista (R3 da consultoria) (SÓ DEV · okr-dev v2.113) — 2026-11-11
 

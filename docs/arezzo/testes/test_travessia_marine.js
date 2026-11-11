@@ -30,6 +30,7 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8961', out = path.join(__
     await p.click('#btn-peixes'); await p.waitForTimeout(200); t('🐟 de novo liga', (await p.locator('#fwrap > div').count()) === 8, '');
     await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); }); await p.waitForTimeout(100);
     t('aba escondida: animação pausa (data-anim-paused + play-state paused)', await p.evaluate(() => document.documentElement.hasAttribute('data-anim-paused') && getComputedStyle(document.querySelector('#fwrap > div')).animationPlayState === 'paused'), '');
+    t('nenhuma superfície com desfoque (peixes e bolhas passam atrás da barra do topo e da barra de abas: o blur seria refeito a cada quadro)', await p.evaluate(() => [...document.querySelectorAll('body *')].every(e => { const c = getComputedStyle(e); return c.backdropFilter === 'none' && (c.webkitBackdropFilter || 'none') === 'none'; })), '');
     t('sem erro de JS', !errs.length, errs); await ctx.close(); }
   { const { ctx, p } = await abre('&como=ana', { width: 390, height: 844 });
     t('celular: 4 peixes e 8 bolhas', (await p.locator('#fwrap > div').count()) === 4 && (await p.locator('#bwrap .bubble').count()) === 8, ''); await ctx.close(); }
@@ -67,8 +68,8 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8961', out = path.join(__
       t(rot + ' · ' + tab + ': sem rolagem lateral e sem erro', (await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)) && !errs.length, errs);
       if (tab === 'inicio') { const c = await p.evaluate(() => { const e = document.querySelector('#painel .btn.p'); const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor]; });
         t(rot + ': texto do botão principal ≥ 4,5:1', contr(c[0], c[1]) >= 4.5, [c, contr(c[0], c[1]).toFixed(2)]);
-        if (tema === 'light') { const s = await p.evaluate(() => { const e = document.querySelector('#painel .sec'); const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor]; });
-          t(rot + ': seção aberta no claro tem fundo de vidro (texto legível sobre o azul)', !/, 0\)$/.test(s[1]), s); }
+        if (tema) { const s = await p.evaluate(() => [document.querySelector('#painel .sec'), document.querySelector('.hero')].map(e => getComputedStyle(e).backgroundColor));
+          t(rot + ': saudação e seções abertas com fundo de vidro (texto legível sobre o ' + (tema === 'light' ? 'azul' : 'brilho laranja') + ')', s.every(x => !/, 0\)$/.test(x) && x !== 'transparent'), s); }
         await p.screenshot({ path: path.join(out, nome + '-' + vp.width + '.png'), clip: { x: 0, y: 0, width: vp.width, height: vp.height } }); }
       await ctx.close(); } }
 
