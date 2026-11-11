@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Digital Hering · Onboarding Ágil</title>
+<title>A Bordo · Seu guia no Digital Hering</title>
+<meta name="description" content="Conheça a cultura Hering, os squads, o Oceano e a forma de trabalhar do Digital. Prepare-se para o onboarding e volte sempre que precisar.">
 <link rel="icon" type="image/png" href="favicon-bordo-v2.png?v=3">
 <link rel="apple-touch-icon" href="favicon-bordo-v2.png?v=3">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -1953,6 +1954,31 @@
 
   @media (max-width: 500px) { .fl-connector { margin-left: 40px; } }
 
+
+  /* A Bordo: leitura autônoma antes do encontro e consulta por assunto. */
+  section[id] { scroll-margin-top: 90px; }
+  .bordo-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin:28px 0; }
+  .bordo-card, .bordo-destaque, .bordo-faq details { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:16px; padding:24px; }
+  .bordo-card h3, .bordo-destaque h3, .cultura-item h3 { font-family:'Syne',sans-serif; font-size:19px; margin-bottom:12px; color:var(--white); }
+  .bordo-card p, .bordo-destaque p, .bordo-faq p, .cultura-item p, .bordo-intro { color:var(--white-80); font-size:15px; line-height:1.75; }
+  .bordo-card a, .bordo-atalhos a { display:inline-block; color:var(--accent); margin-top:16px; text-underline-offset:4px; }
+  .bordo-destaque { margin:28px 0; }
+  .bordo-destaque .bordo-proposta { font-family:'Syne',sans-serif; font-size:clamp(23px,3.5vw,38px); line-height:1.35; color:var(--white); max-width:850px; }
+  .bordo-intro { margin:24px 0; }
+  .bordo-atalhos { display:flex; flex-wrap:wrap; gap:8px 20px; }
+  .bordo-atalhos a { margin:6px 0; }
+  .cultura-item .bordo-exemplo { color:var(--accent); margin-top:12px; font-size:14px; }
+  .bordo-citacao { text-align:center; font-size:clamp(19px,2.5vw,27px); color:var(--accent); margin-top:32px; line-height:1.5; }
+  .bordo-passos { padding-left:24px; color:var(--white-80); line-height:1.8; margin:16px 0 24px; }
+  .bordo-passos li + li { margin-top:8px; }
+  .bordo-faq { display:grid; gap:12px; margin-top:28px; }
+  .bordo-faq summary { cursor:pointer; font-weight:600; font-size:17px; line-height:1.5; }
+  .bordo-faq p { margin-top:14px; }
+  a:focus-visible, summary:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
+  @media(max-width:900px) { .bordo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media(max-width:640px) { .bordo-grid { grid-template-columns:1fr; } .bordo-card, .bordo-destaque, .bordo-faq details { padding:20px; } }
+  @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *, *::before, *::after { animation:none!important; transition:none!important; } .reveal { opacity:1!important; transform:none!important; } }
+
 </style>
 </head>
 <body>
@@ -1972,18 +1998,15 @@
 <nav>
   <a href="#hero" class="nav-logo">
     <div class="nav-logo-icon">🐟</div>
-    Digital Hering
+    A Bordo · Digital Hering
   </a>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#mindset" onclick="closeMenu()">Mindset</a></li>
-    <li><a href="#digital" onclick="closeMenu()">Digital</a></li>
-    <li><a href="#contexto" onclick="closeMenu()">VUCA</a></li>
+    <li><a href="#comece" onclick="closeMenu()">Comece aqui</a></li>
+    <li><a href="#cultura" onclick="closeMenu()">Cultura</a></li>
     <li><a href="#squads" onclick="closeMenu()">Squads</a></li>
-    <li><a href="#okrs" onclick="closeMenu()">OKRs</a></li>
-    <li><a href="#scrum" onclick="closeMenu()">Scrum</a></li>
-    <li><a href="#rituais" onclick="closeMenu()">Rituais</a></li>
-    <li><a href="#quiz" onclick="closeMenu()">Quiz</a></li>
-    <li><a href="#contato" onclick="closeMenu()">Contato</a></li>
+    <li><a href="#oceano" onclick="closeMenu()">Oceano</a></li>
+    <li><a href="#mindset" onclick="closeMenu()">Como trabalhamos</a></li>
+    <li><a href="#contato" onclick="closeMenu()">Precisa de ajuda?</a></li>
   </ul>
   <div class="nav-burger" onclick="toggleMenu()" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -1995,13 +2018,13 @@
   <div class="section-inner">
     <div class="hero-tag">🐟 Bem-vindo ao cardume</div>
     <h1 class="hero-title">
-      <span class="line1">Onboarding</span>
-      <span class="line2">Ágil</span>
+      <span class="line1">A Bordo</span>
+      <span class="line2">do Digital</span>
     </h1>
-    <p class="hero-sub">O despertar do ágil no Digital Hering. Você acaba de entrar num cardume de talentos icônicos.</p>
+    <p class="hero-sub">Seu ponto de partida no Digital Hering. Conheça nossa cultura, encontre seu time e entenda como trabalhamos — antes do onboarding e sempre que precisar voltar.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center;flex-direction:column;">
-      <a href="#mindset" class="hero-cta" style="width:220px;justify-content:center;">Mergulhar ↓</a>
-      <a href="https://caiosoares1899.github.io/hering/onboarding.slide.html" download class="hero-cta" style="background:var(--glass-bg);border:1px solid var(--border);backdrop-filter:blur(10px);width:220px;justify-content:center;" onmouseover="this.style.background='var(--glass-hover)'" onmouseout="this.style.background='var(--glass-bg)'">⬇️ Baixar Slides</a>
+      <a href="#comece" class="hero-cta" style="width:220px;justify-content:center;">Começar por aqui ↓</a>
+      <a href="onboarding.slide.html" class="hero-cta" style="background:var(--glass-bg);border:1px solid var(--border);backdrop-filter:blur(10px);width:220px;justify-content:center;" onmouseover="this.style.background='var(--glass-hover)'" onmouseout="this.style.background='var(--glass-bg)'">Ver apresentação</a>
     </div>
 
     <div class="hero-cards">
@@ -2078,6 +2101,36 @@
   </div>
 </section>
 
+<section id="comece">
+  <div class="section-inner">
+    <span class="section-tag">⚓ Seu primeiro mergulho</span>
+    <h2 class="section-title">Chegando agora?<br>Vem por aqui.</h2>
+    <p class="section-desc">Você não precisa decorar tudo antes do encontro. Use este guia para se situar e leve suas dúvidas para o onboarding. Depois, volte direto ao assunto que precisar.</p>
+    <div class="bordo-grid">
+      <article class="bordo-card"><span class="section-tag">01 · Antes do encontro</span><h3>Conheça o cardume</h3><p>Leia sobre a cultura Hering, entenda o que o Digital faz e encontre sua squad. Anote o que quer entender melhor.</p><a href="#cultura">Conhecer nossa cultura →</a></article>
+      <article class="bordo-card"><span class="section-tag">02 · Durante o onboarding</span><h3>Conecte com sua rotina</h3><p>Converse sobre prioridades, combinados e rituais do seu time. Use a apresentação junto de quem estiver conduzindo o encontro.</p><a href="onboarding.slide.html">Abrir apresentação →</a></article>
+      <article class="bordo-card"><span class="section-tag">03 · Nos primeiros dias e depois</span><h3>Explore e volte sempre</h3><p>Com seu acesso liberado, conheça o Oceano, localize o board da squad e entenda como suas entregas se conectam aos objetivos.</p><a href="#oceano">Entender o Oceano →</a></article>
+    </div>
+    <div class="bordo-destaque"><h3>Quero consultar um assunto</h3><div class="bordo-atalhos">
+<a href="#digital">O que é o Digital</a><a href="#cultura">Cultura Hering</a><a href="#squads">Squads e pessoas</a><a href="#oceano">Oceano e ferramentas</a><a href="#mindset">Mindset ágil</a><a href="#contexto">VUCA</a><a href="#triade">Papéis e responsabilidades</a><a href="#okrs">OKRs</a><a href="#scrum">Scrum e sprints</a><a href="#rituais">Rituais</a><a href="#quiz">Quiz</a><a href="#contato">Com quem falar</a></div></div>
+    <p class="bordo-intro">Este guia pode ser lido sem login. O acesso às ferramentas de trabalho depende da sua conta e das permissões liberadas para você.</p>
+  </div>
+</section>
+<section id="cultura">
+  <div class="section-inner">
+    <span class="section-tag">🐟 Nossa essência</span>
+    <h2 class="section-title">Esta é a<br>nossa cultura</h2>
+    <p class="section-desc">A cultura Hering torna mais claro aquilo que sempre esteve na nossa essência e nos ajuda a escolher, juntos, como escrevemos os próximos capítulos da nossa história.</p>
+    <div class="bordo-destaque"><span class="section-tag">Nossa proposta de valor</span><p class="bordo-proposta">Facilitar o vestir das famílias brasileiras com o básico bem-feito e acessível. Desde 1880.</p></div>
+    <p class="bordo-intro">Cinco atitudes que traduzem quem queremos ser na prática. Os exemplos abaixo conectam os comportamentos da Hering à nossa rotina no Digital.</p>
+    <div class="cultura-grid"><article class="cultura-item"><div class="ci-icon">🧭</div><div><h3>A gente facilita</h3><p>Simplificar. Ter coragem e responsabilidade para priorizar, dizer não e focar no que realmente gera valor para o negócio.</p><p class="bordo-exemplo">No Digital: explicite a prioridade e simplifique o caminho antes de acrescentar etapas.</p></div></article>
+      <article class="cultura-item"><div class="ci-icon">🐟</div><div><h3>Juntos, somos um cardume</h3><p>Agir como um time, num ambiente leve. Sem deixar de ter o comprometimento individual para tomar decisões, garantir alinhamentos e executar os combinados — assumindo plena responsabilidade por cada ação.</p><p class="bordo-exemplo">No Digital: alinhe dependências entre squads e avise cedo quando um combinado estiver em risco.</p></div></article>
+      <article class="cultura-item"><div class="ci-icon">✨</div><div><h3>Bem-feito, desde sempre</h3><p>Buscar a melhor performance. Manter sempre viva a paixão pela marca e pelo produto. Assegurar capricho e excelência nas entregas.</p><p class="bordo-exemplo">No Digital: revise, teste e acompanhe o resultado da entrega para o cliente.</p></div></article>
+      <article class="cultura-item"><div class="ci-icon">💬</div><div><h3>Acessível por vocação</h3><p>Encantar todo o Brasil. Exercitar constantemente a escuta ativa e a curiosidade para antecipar os desejos e necessidades dos clientes da Hering.</p><p class="bordo-exemplo">No Digital: escute o atendimento, observe a jornada e use dados para entender o cliente.</p></div></article>
+      <article class="cultura-item"><div class="ci-icon">🌱</div><div><h3>Legado em evolução</h3><p>Honrar a coragem e o empreendedorismo de 1880, com o inconformismo na busca do próximo passo de crescimento.</p><p class="bordo-exemplo">No Digital: experimente melhorias, aprenda com os resultados e use IA com responsabilidade.</p></div></article></div>
+    <p class="bordo-citacao">“Uma cultura só é realmente nossa quando aparece no jeito como a gente faz.”</p>
+  </div>
+</section>
 <!-- ─── O QUE É O DIGITAL ─── -->
 <section id="digital">
   <div class="section-inner">
@@ -2165,6 +2218,30 @@
   </div>
 </section>
 
+<section id="oceano">
+  <div class="section-inner">
+    <span class="section-tag">🌊 Nossas ferramentas</span>
+    <h2 class="section-title">Um Oceano.<br>Vários caminhos.</h2>
+    <p class="section-desc">O Oceano é a família de ferramentas que conecta o trabalho do Digital. Sua página inicial é a porta de entrada: reúne os produtos, os avisos e os atalhos para você encontrar o que precisa.</p>
+    <div class="bordo-destaque"><h3>Por onde começar</h3><ol class="bordo-passos"><li>Abra o Oceano e entre com sua conta Google <strong>@ciahering.com.br</strong>.</li><li>Confira os comunicados do Mural e os produtos disponíveis para você.</li><li>Abra o Maré Digital e encontre sua squad. Se ela não aparecer ou seu acesso estiver pendente, alinhe com o PO ou responsável do time.</li><li>Conheça os objetivos no Radar e confirme com sua squad quais entregas você vai acompanhar.</li></ol><a class="hero-cta" href="oceano.html">Abrir o Oceano →</a></div>
+    <div class="bordo-grid">
+      <article class="bordo-card"><h3>🌊 Oceano · início</h3><p>Seu ponto de encontro com o ecossistema: atalhos para produtos e squads, Mural de comunicados e notificações. Volte aqui para se orientar e acompanhar os avisos.</p><a href="oceano.html">Ir para o início →</a></article>
+      <article class="bordo-card"><h3>🐟 Maré Digital · execução</h3><p>É o board da squad. Cada card representa uma entrega e pode reunir responsável, prazo, checklist e comentários. As colunas mostram o fluxo de trabalho; confirme com seu time os combinados para movimentar os cards.</p><a href="kanban.html">Conhecer o Maré →</a></article>
+      <article class="bordo-card"><h3>📡 Radar · direção</h3><p>É onde acompanhamos os OKRs: objetivos, resultados, Marcos e próximos passos. Ajuda a entender por que uma entrega importa e como o trabalho avança na direção das metas.</p><a href="okr.html">Conhecer o Radar →</a></article>
+      <article class="bordo-card"><h3>🖥️ Painel · visão de gestão</h3><p>Reúne informações dos squads, indicadores, pessoas e comunicados para quem coordena e acompanha a operação. A disponibilidade depende do seu perfil de acesso.</p><a href="painel.html">Abrir o Painel →</a></article>
+      <article class="bordo-card"><h3>⚓ A Bordo · aprendizado</h3><p>Você está aqui. Um guia para conhecer a cultura, as pessoas e a forma de trabalhar do Digital. Consulte antes do onboarding, acompanhe o encontro e revisite quando surgir uma dúvida.</p><a href="#comece">Voltar ao roteiro →</a></article>
+      <article class="bordo-card"><h3>💼 Travessia · desenvolvimento</h3><p>Apoia conversas de desenvolvimento, avaliações e planos de desenvolvimento individual (PDI). Sua entrada no Oceano ainda aparece como “em breve”; siga a orientação da liderança sobre quando e como usar.</p></article>
+    </div>
+    <div class="bordo-destaque"><h3>Como tudo se conecta</h3><p>No <strong>Radar</strong>, entendemos o objetivo. No <strong>Maré</strong>, organizamos as entregas para avançar até ele. O <strong>Painel</strong> ajuda a acompanhar o conjunto. O <strong>Oceano</strong> reúne os caminhos, e o <strong>A Bordo</strong> ajuda você a navegar por eles.</p></div>
+    <div class="bordo-faq">
+      <details><summary>Como encontro um card, objetivo ou ferramenta?</summary><p>Use o Sonar, a busca do Oceano, do Maré e do Radar: clique na busca ou use Ctrl+K (⌘K no Mac). Os resultados se adaptam à página em que você está. No Maré e no Radar, “meus” ajuda a encontrar seus itens.</p></details>
+      <details><summary>Preciso manter várias abas abertas?</summary><p>O menu de produtos, com nove pontinhos, ajuda a trocar de ferramenta. Dependendo da sua preferência e de como abriu o Oceano, o produto pode abrir dentro dele ou em outra aba.</p></details>
+      <details><summary>Onde vejo avisos e notificações?</summary><p>Leia os comunicados no Mural do Oceano e consulte o sino para os avisos destinados a você. Confira as opções de notificações e Não Perturbe conforme sua rotina.</p></details>
+      <details><summary>Como a IA entra no trabalho?</summary><p>O Agente Ágil pode apoiar o acompanhamento dos cards e dos objetivos. No Maré, você pode mencioná-lo em um comentário; no Radar, há uma conversa própria. Confira sempre as respostas e as ações propostas. Para adoção de IA e melhoria dos processos, conte com a squad Dados e IA.</p></details>
+      <details><summary>E se eu ainda não tiver acesso?</summary><p>Continue explorando este A Bordo: ele não exige login. Para usar os produtos, alinhe com seu PO ou responsável a conta e os acessos necessários. Não é preciso resolver tudo antes do encontro de onboarding.</p></details>
+    </div>
+  </div>
+</section>
 <!-- ─── MINDSET ÁGIL ─── -->
 <section id="mindset">
   <div class="section-inner">
@@ -2417,7 +2494,7 @@
           <div class="squad-full-card red-card">
             <div class="sq-icon">🔗</div>
             <div class="sq-name">Omnichannel</div>
-            <div class="sq-po">Karla Santos</div>
+            <div class="sq-po">Allan Dickmann</div>
           </div>
         </div>
 
@@ -2425,15 +2502,12 @@
           <div class="squad-col-label white-label">Digital</div>
           <div class="squad-full-card white-data-card">
             <div class="sq-icon">📊</div>
-            <div class="sq-name">Dados</div>
+            <div class="sq-name">Dados e IA</div>
             <div class="sq-po">PO · André Andreeta</div>
+            <div class="sq-po">Caio Soares · Agilidade e implementação de IA</div>
+            <div class="sq-note">Dados para decidir, IA para transformar e agilidade para entregar valor</div>
           </div>
-          <div class="squad-full-card agilista-card">
-            <div class="sq-icon">🐟</div>
-            <div class="sq-name">Agilista</div>
-            <div class="sq-po">Caio Soares</div>
-            <div class="sq-note">Navega entre todos os times</div>
-          </div>
+
         </div>
 
       </div>
@@ -2816,60 +2890,7 @@
 </section>
 
 <!-- ─── CULTURA / BU ─── -->
-<section id="cultura">
-  <div class="section-inner">
-    <div class="reveal">
-      <span class="section-tag">🌐 Valores</span>
-      <h2 class="section-title">Conexão<br>com a BU</h2>
-      <p class="section-desc">O Digital não nada sozinho. Nossa cultura reflete os valores da Hering e do cardume como um todo.</p>
-    </div>
 
-    <div class="cultura-grid reveal">
-      <div class="cultura-item">
-        <div class="ci-icon">🌐</div>
-        <div>
-          <strong>Pensamento e Ação em Rede</strong>
-          <span>Colaboração entre times, áreas e unidades</span>
-        </div>
-      </div>
-      <div class="cultura-item">
-        <div class="ci-icon">🤝</div>
-        <div>
-          <strong>Colaboração</strong>
-          <span>Juntos chegamos mais longe e mais rápido</span>
-        </div>
-      </div>
-      <div class="cultura-item">
-        <div class="ci-icon">🎯</div>
-        <div>
-          <strong>Escolhas Conscientes</strong>
-          <span>Simplicidade como princípio de decisão</span>
-        </div>
-      </div>
-      <div class="cultura-item">
-        <div class="ci-icon">🐟</div>
-        <div>
-          <strong>Conexão com quem somos</strong>
-          <span>Parte da Cia. Hering e do Grupo Azzas 2154 — navegamos num ecossistema maior</span>
-        </div>
-      </div>
-      <div class="cultura-item">
-        <div class="ci-icon">🚀</div>
-        <div>
-          <strong>Entrega com Alta Performance</strong>
-          <span>Excelência técnica e foco no resultado</span>
-        </div>
-      </div>
-      <div class="cultura-item">
-        <div class="ci-icon">⭐</div>
-        <div>
-          <strong>Protagonistas na Evolução</strong>
-          <span>Autonomia para transformar e inovar</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ─── QUIZ ─── -->
 <section id="quiz">
@@ -2913,12 +2934,12 @@
       </h2>
 
       <p style="font-size:clamp(15px,2vw,18px);font-style:italic;color:var(--white-80);margin-bottom:8px;">⚓ Atenção! Homem ao mar!</p>
-      <p style="font-size:14px;color:var(--white-60);margin-bottom:36px;">Se precisar, não hesite em me procurar!</p>
+      <p style="font-size:14px;color:var(--white-60);margin-bottom:36px;">Para conversar sobre agilidade, implementação de IA ou seus primeiros passos no Digital, pode me procurar!</p>
 
       <div class="contact-card reveal" style="max-width:420px;margin:0 auto;">
         <div class="avatar-ring">🐟</div>
         <div class="contact-name">Caio Soares</div>
-        <div class="contact-role">Agilista · Digital Hering · Soteropolitano</div>
+        <div class="contact-role">Dados e IA · Agilidade e implementação de IA</div>
 
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px">
           <span style="background:rgba(126,200,227,0.1);border:1px solid rgba(126,200,227,0.2);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--accent)">Esportes ❤️</span>
@@ -2939,11 +2960,11 @@
         <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--white-10);text-align:center;">
           <p style="font-size:13px;color:var(--white-60);font-style:italic;">"Somos um cardume de talentos icônicos."</p>
           <p style="font-size:11px;color:var(--white-30);margin-top:6px;">— Digital Hering</p>
-          <a href="https://caiosoares1899.github.io/hering/onboarding.slide.html" download
+          <a href="onboarding.slide.html"
              style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:var(--blue-bright);color:#fff;padding:12px 24px;border-radius:50px;font-size:14px;font-weight:600;text-decoration:none;transition:all 0.25s;font-family:'DM Sans',sans-serif;"
              onmouseover="this.style.background='var(--blue-light)';this.style.transform='translateY(-2px)'"
              onmouseout="this.style.background='var(--blue-bright)';this.style.transform='translateY(0)'">
-            ⬇️ Baixar apresentação de slides
+            Abrir apresentação do onboarding
           </a>
         </div>
       </div>
