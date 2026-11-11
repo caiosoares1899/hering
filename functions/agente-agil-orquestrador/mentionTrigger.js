@@ -158,190 +158,206 @@ function createMentionTrigger({ squadId, dryRun = true }) {
       return { processed: false, reason: 'idempotent' };
     }
 
-    const tools = buildTools({ mode: 'real', db, squadId, cardId, dryRun });
+    // (5) 🏝️ "Analisando…" de verdade (Ilha Dinâmica V2, 11/11/2026 — pedido do Caio: "usando estado real, sem progresso inventado").
+    // Marcador pessoal de quem mencionou: kanban/usuarios/{uid}/agente_analisando/{commentId} = {squad, cardId, desde}. Gravado
+    // AQUI (já passou anti-auto-disparo, menção, kill switch e idempotência = o agente vai mesmo trabalhar) e apagado no `finally`
+    // abaixo, dê certo ou não. Só a própria pessoa lê (regra de kanban/usuarios/$uid). Sem texto do modelo: só squad, card e hora.
+    // Melhor esforço nas duas pontas — falhar aqui nunca impede nem desfaz a resposta. Automação não é pessoa: não marca.
+    const marcadorPath = comment.uid && comment.uid !== AUTOMACAO_UID ? `kanban/usuarios/${comment.uid}/agente_analisando/${commentId}` : null;
+    if (marcadorPath) {
+      await db.ref(marcadorPath).set({ squad: squadId, cardId, desde: new Date().toISOString() })
+        .catch((err) => console.error(`[agente-analisando:${squadId}] falha ao marcar:`, cardId, err));
+    }
+    try {
+      const tools = buildTools({ mode: 'real', db, squadId, cardId, dryRun });
 
-    const result = await runLoop({
-      llmClient,
-      tools,
-      system: SYSTEM_PROMPT_V1,
-      task: comment.text,
-      enabled: true, // kill switch já checado no passo (3) acima
-    });
+      const result = await runLoop({
+        llmClient,
+        tools,
+        system: SYSTEM_PROMPT_V1,
+        task: comment.text,
+        enabled: true, // kill switch já checado no passo (3) acima
+      });
 
-    // Rede de segurança — achado real (2026-08-18): o modelo às vezes
-    // termina só com finalText, sem chamar comentario, mesmo com a
-    // instrução explícita em systemPrompt.js ("Entrega da resposta").
-    // MESMA revisão deployada, MESMO prompt, comportamento diferente entre
-    // chamadas seguidas — não-determinismo do LLM, não bug de código/path.
-    // Pedir só no prompt reduz a frequência, não garante; sem isso a
-    // resposta fica presa no log do Cloud Functions, invisível pra quem
-    // mencionou. Garantido aqui: se o loop terminou sem NENHUMA chamada de
-    // comentario mas tem finalText, posta ele mesmo, usando a MESMA
-    // ferramenta que o modelo usaria (mesmo dryRun/squad/card).
-    const chamouComentario = result.steps.some((step) => step.toolCalls.some((call) => call.name === 'comentario'));
-    let fallbackComentario = false;
-    if (!chamouComentario && result.finalText) {
-      const comentarioTool = tools.find((t) => t.name === 'comentario');
-      if (comentarioTool) {
-        await comentarioTool.handler({ type: 'comentario', texto: result.finalText });
-        fallbackComentario = true;
+      // Rede de segurança — achado real (2026-08-18): o modelo às vezes
+      // termina só com finalText, sem chamar comentario, mesmo com a
+      // instrução explícita em systemPrompt.js ("Entrega da resposta").
+      // MESMA revisão deployada, MESMO prompt, comportamento diferente entre
+      // chamadas seguidas — não-determinismo do LLM, não bug de código/path.
+      // Pedir só no prompt reduz a frequência, não garante; sem isso a
+      // resposta fica presa no log do Cloud Functions, invisível pra quem
+      // mencionou. Garantido aqui: se o loop terminou sem NENHUMA chamada de
+      // comentario mas tem finalText, posta ele mesmo, usando a MESMA
+      // ferramenta que o modelo usaria (mesmo dryRun/squad/card).
+      const chamouComentario = result.steps.some((step) => step.toolCalls.some((call) => call.name === 'comentario'));
+      let fallbackComentario = false;
+      if (!chamouComentario && result.finalText) {
+        const comentarioTool = tools.find((t) => t.name === 'comentario');
+        if (comentarioTool) {
+          await comentarioTool.handler({ type: 'comentario', texto: result.finalText });
+          fallbackComentario = true;
+        }
       }
-    }
 
-    // Histórico do Agente Ágil (Configurações → 🤖 Histórico do Agente,
-    // PO/Organizador/ADM) — pedido direto: "quero uma area q guarde todas
-    // as alterações nos cards que ele faça naquela squad". Melhor esforço
-    // (nunca derruba o fluxo principal: a resposta do agente já foi
-    // aplicada nos passos acima, uma falha aqui só perde a entrada do log,
-    // não desfaz nada). fallbackComentario não passa por result.steps
-    // (chama o handler direto, fora do loop) — emenda manualmente.
-    const acoesRegistro = coletarAcoesAgente(result.steps);
-    if (fallbackComentario) acoesRegistro.push(`comentou: "${truncar(result.finalText, 120)}"`);
-    // AWAIT de propósito (não fire-and-forget): o Cloud Functions pode
-    // congelar/matar o processo assim que a função do trigger retornar —
-    // sem esperar aqui, a escrita do log corre risco real de nunca
-    // completar. O .catch() garante que uma falha aqui não derruba o
-    // fluxo principal (a resposta do agente já foi aplicada acima).
-    await registrarLogAgente(db, { squadId, cardId, comment, acoes: acoesRegistro }).catch((err) =>
-      console.error(`[agente-log:${squadId}] falha ao registrar log:`, cardId, err)
-    );
+      // Histórico do Agente Ágil (Configurações → 🤖 Histórico do Agente,
+      // PO/Organizador/ADM) — pedido direto: "quero uma area q guarde todas
+      // as alterações nos cards que ele faça naquela squad". Melhor esforço
+      // (nunca derruba o fluxo principal: a resposta do agente já foi
+      // aplicada nos passos acima, uma falha aqui só perde a entrada do log,
+      // não desfaz nada). fallbackComentario não passa por result.steps
+      // (chama o handler direto, fora do loop) — emenda manualmente.
+      const acoesRegistro = coletarAcoesAgente(result.steps);
+      if (fallbackComentario) acoesRegistro.push(`comentou: "${truncar(result.finalText, 120)}"`);
+      // AWAIT de propósito (não fire-and-forget): o Cloud Functions pode
+      // congelar/matar o processo assim que a função do trigger retornar —
+      // sem esperar aqui, a escrita do log corre risco real de nunca
+      // completar. O .catch() garante que uma falha aqui não derruba o
+      // fluxo principal (a resposta do agente já foi aplicada acima).
+      await registrarLogAgente(db, { squadId, cardId, comment, acoes: acoesRegistro }).catch((err) =>
+        console.error(`[agente-log:${squadId}] falha ao registrar log:`, cardId, err)
+      );
 
-    // Marca o(s) agente(s) de IA cadastrados (dados/agentes) que são
-    // responsável/participante deste card — pedido direto: "se tem um
-    // outro agente de responsável ali, ele deve ser notificado quando as
-    // coisas acontecerem". Um agente cadastrado não é um usuário de
-    // verdade (sem login/uid pra notificação real) — a solução acordada é
-    // um comentário adicional, curto, visível no histórico. Só dispara
-    // quando algo mudou de verdade (mesmo `acoesRegistro` do log acima) —
-    // ver agenteMarcador.js pro porquê e o resto do desenho. Melhor
-    // esforço, mesmo padrão do log logo acima.
-    if (acoesRegistro.length) {
-      const cardKeyMarcador = await resolveCardKey(db, cardId, { squadId }).catch(() => null);
-      const cardParaMarcador = cardKeyMarcador ? (await db.ref(`${cardsPath(squadId)}/${cardKeyMarcador}`).get()).val() : null;
-      await marcarAgenteResponsavel(db, {
-        squadId,
-        cardId,
-        card: cardParaMarcador,
-        acoes: acoesRegistro,
-        comentarioTool: tools.find((t) => t.name === 'comentario'),
-        dryRun,
-      }).catch((err) => console.error(`[agente-marcador:${squadId}] falha:`, cardId, err));
-    }
-
-    // Notifica quem fez a @menção original — achado real (2026-08-18):
-    // `comentario` só dispara notificação quando o TEXTO da resposta tem uma
-    // @menção reconhecível (heurística pensada pra menção humana dentro do
-    // texto, ver outputs/comentario.js), e a resposta do agente normalmente
-    // não menciona ninguém — a pessoa que perguntou nunca era avisada, mesmo
-    // sendo resposta direta a ela. Notifica direto por uid (já em `comment`,
-    // não precisa resolver init) com o MESMO esquema de id determinístico
-    // que @menção-no-texto usa (`mention_{cardId}_{uid}`) — se o texto por
-    // acaso também mencionar essa pessoa, buildNotifStep vê que já existe e
-    // não duplica.
-    //
-    // Segundo achado real (2026-08-24, testando due_today/due_overdue):
-    // quando quem "mencionou" o agente foi a Automação (comment.uid ===
-    // 'automacao', não uma pessoa — ver dueOverdueTrigger.js/AUTO_ACTIONS.
-    // notify_agent no client), notificar `comment.uid` grava a notificação
-    // em `kanban/usuarios/automacao/notificacoes/...` — um caminho que
-    // ninguém lê, porque 'automacao' não é um uid de usuário de verdade.
-    // Resultado observado: o 1º comentário automático (análise, sem
-    // perguntar_humano) saía sem NENHUMA notificação — só o 2º, quando o
-    // agente usava perguntar_humano e @mencionava alguém de verdade no
-    // texto (esse caminho já funcionava, via buildMentionSteps() em
-    // outputs/comentario.js). Fix: quando o disparo foi da Automação,
-    // notifica o responsável do card (`card.owner`, resolvido por init)
-    // em vez de `comment.uid` — mesmo padrão que checkDueNotifs() já usa
-    // no client pra notificar due_today/due_overdue. Sem responsável
-    // definido, não notifica ninguém (mesmo comportamento do client:
-    // melhor não notificar do que notificar errado).
-    //
-    // Terceiro achado real (2026-08-24, MESMO dia — 1ª versão deste fix
-    // ainda não resolvia de verdade): usar o MESMO idOverride
-    // (`mention_{cardId}_{uid}`) que os outros 2 caminhos (notifica quem
-    // perguntou / notifica quem foi @mencionado no texto) já usam faz o
-    // disparo da Automação colidir com QUALQUER notificação anterior pra
-    // essa pessoa nesse card, de QUALQUER origem — inclusive uma bem
-    // antiga, de um teste ou @menção manual anterior. `buildNotifStep()`
-    // vê que o slot já existe e pula pra sempre, mesmo em invocações
-    // completamente novas dias depois, com informação nova de verdade
-    // (confirmado ao vivo: notificação de 12:37, de um teste anterior,
-    // bloqueou silenciosamente os disparos de Automação de 12:57/12:58 no
-    // MESMO card). Fix na época: `idOverride` da Automação inclui
-    // `commentId` (`mention_auto_{cardId}_{uid}_{commentId}`) — único por
-    // disparo, sem colidir com os outros 2 caminhos nem se auto-bloquear
-    // pra sempre; ainda idempotente pra reentrega do MESMO commentId
-    // (mesmo padrão de sempre).
-    //
-    // Quarto achado real (2026-08-27, reportado ao vivo pelo usuário): o
-    // raciocínio "dedupe por card+pessoa faz sentido pro caso original
-    // (mesma pessoa perguntando de novo não precisa de notificação
-    // duplicada)" — texto que estava aqui até esta correção — é FALSO na
-    // prática. Uma 2ª @menção da MESMA pessoa no MESMO card é uma
-    // PERGUNTA NOVA (ex.: pediu uma coisa, minutos depois pediu outra, ou
-    // testou de novo depois de um fix), e merece notificação nova quando
-    // o agente responde — exatamente o mesmo problema que o 3º achado
-    // acima já tinha resolvido pro ramo da Automação, nunca replicado pra
-    // este ramo (o "caso original"). Confirmado ao vivo: 2ª @menção no
-    // mesmo card, resposta do agente chegou certinho no card, mas
-    // nenhuma notificação — o slot `mention_{cardId}_{uid}` já estava
-    // ocupado pela 1ª. Mesmo fix de sempre: `commentId` no idOverride.
-    // Achado real ao vivo (2026-08-27): o comentário abaixo dizia "dedupe
-    // por card+pessoa faz sentido pro caso original (mesma pessoa
-    // perguntando de novo não precisa de notificação duplicada)" — mas
-    // isso é FALSO na prática: uma 2ª @menção da mesma pessoa no mesmo
-    // card é uma PERGUNTA NOVA (ex.: "adiciona a tag X" e, minutos depois,
-    // "testa de novo") e merece notificação nova quando o agente responde.
-    // Sem `commentId` aqui, a notificação da 1ª menção deixava o slot
-    // `mention_{cardId}_{uid}` ocupado pra sempre — qualquer resposta
-    // seguinte no MESMO card pra essa pessoa era silenciosamente
-    // engolida por `buildNotifStep()` (mesma causa raiz do bug já achado
-    // e corrigido pro ramo da Automação logo abaixo, nunca replicado pra
-    // este ramo). Mesmo fix: inclui `commentId`, único por @menção.
-    let targetUid = comment.uid;
-    let notifTitle = '🤖 Agente Ágil respondeu sua menção';
-    let notifIdOverride = 'mention_' + cardId + '_' + comment.uid + '_' + commentId;
-    if (comment.uid === AUTOMACAO_UID) {
-      targetUid = null;
-      const cardKey = await resolveCardKey(db, cardId, { squadId });
-      const cardSnap = cardKey ? await db.ref(`${cardsPath(squadId)}/${cardKey}`).get() : null;
-      const card = cardSnap?.val();
-      if (card?.owner) {
-        const members = await readSquadMembers(db, squadId);
-        targetUid = getUidByInit(members, card.owner);
-      }
-      notifTitle = '🤖 Agente Ágil comentou no seu card (Automação)';
-      notifIdOverride = 'mention_auto_' + cardId + '_' + targetUid + '_' + commentId;
-    }
-    const comentarioCall = result.steps.flatMap((step) => step.toolCalls).find((call) => call.name === 'comentario');
-    const respostaTexto = comentarioCall?.input?.texto || result.finalText || '';
-    const notifStep = targetUid
-      ? await buildNotifStep(db, {
+      // Marca o(s) agente(s) de IA cadastrados (dados/agentes) que são
+      // responsável/participante deste card — pedido direto: "se tem um
+      // outro agente de responsável ali, ele deve ser notificado quando as
+      // coisas acontecerem". Um agente cadastrado não é um usuário de
+      // verdade (sem login/uid pra notificação real) — a solução acordada é
+      // um comentário adicional, curto, visível no histórico. Só dispara
+      // quando algo mudou de verdade (mesmo `acoesRegistro` do log acima) —
+      // ver agenteMarcador.js pro porquê e o resto do desenho. Melhor
+      // esforço, mesmo padrão do log logo acima.
+      if (acoesRegistro.length) {
+        const cardKeyMarcador = await resolveCardKey(db, cardId, { squadId }).catch(() => null);
+        const cardParaMarcador = cardKeyMarcador ? (await db.ref(`${cardsPath(squadId)}/${cardKeyMarcador}`).get()).val() : null;
+        await marcarAgenteResponsavel(db, {
           squadId,
-          targetUid,
-          type: 'mention',
-          title: notifTitle,
-          sub: respostaTexto.substring(0, 80) + (respostaTexto.length > 80 ? '…' : ''),
           cardId,
-          idOverride: notifIdOverride,
+          card: cardParaMarcador,
+          acoes: acoesRegistro,
+          comentarioTool: tools.find((t) => t.name === 'comentario'),
           dryRun,
-        })
-      : null;
-    if (notifStep && notifStep.kind === 'update') {
-      await db.ref(notifStep.path).update(notifStep.data);
+        }).catch((err) => console.error(`[agente-marcador:${squadId}] falha:`, cardId, err));
+      }
+
+      // Notifica quem fez a @menção original — achado real (2026-08-18):
+      // `comentario` só dispara notificação quando o TEXTO da resposta tem uma
+      // @menção reconhecível (heurística pensada pra menção humana dentro do
+      // texto, ver outputs/comentario.js), e a resposta do agente normalmente
+      // não menciona ninguém — a pessoa que perguntou nunca era avisada, mesmo
+      // sendo resposta direta a ela. Notifica direto por uid (já em `comment`,
+      // não precisa resolver init) com o MESMO esquema de id determinístico
+      // que @menção-no-texto usa (`mention_{cardId}_{uid}`) — se o texto por
+      // acaso também mencionar essa pessoa, buildNotifStep vê que já existe e
+      // não duplica.
+      //
+      // Segundo achado real (2026-08-24, testando due_today/due_overdue):
+      // quando quem "mencionou" o agente foi a Automação (comment.uid ===
+      // 'automacao', não uma pessoa — ver dueOverdueTrigger.js/AUTO_ACTIONS.
+      // notify_agent no client), notificar `comment.uid` grava a notificação
+      // em `kanban/usuarios/automacao/notificacoes/...` — um caminho que
+      // ninguém lê, porque 'automacao' não é um uid de usuário de verdade.
+      // Resultado observado: o 1º comentário automático (análise, sem
+      // perguntar_humano) saía sem NENHUMA notificação — só o 2º, quando o
+      // agente usava perguntar_humano e @mencionava alguém de verdade no
+      // texto (esse caminho já funcionava, via buildMentionSteps() em
+      // outputs/comentario.js). Fix: quando o disparo foi da Automação,
+      // notifica o responsável do card (`card.owner`, resolvido por init)
+      // em vez de `comment.uid` — mesmo padrão que checkDueNotifs() já usa
+      // no client pra notificar due_today/due_overdue. Sem responsável
+      // definido, não notifica ninguém (mesmo comportamento do client:
+      // melhor não notificar do que notificar errado).
+      //
+      // Terceiro achado real (2026-08-24, MESMO dia — 1ª versão deste fix
+      // ainda não resolvia de verdade): usar o MESMO idOverride
+      // (`mention_{cardId}_{uid}`) que os outros 2 caminhos (notifica quem
+      // perguntou / notifica quem foi @mencionado no texto) já usam faz o
+      // disparo da Automação colidir com QUALQUER notificação anterior pra
+      // essa pessoa nesse card, de QUALQUER origem — inclusive uma bem
+      // antiga, de um teste ou @menção manual anterior. `buildNotifStep()`
+      // vê que o slot já existe e pula pra sempre, mesmo em invocações
+      // completamente novas dias depois, com informação nova de verdade
+      // (confirmado ao vivo: notificação de 12:37, de um teste anterior,
+      // bloqueou silenciosamente os disparos de Automação de 12:57/12:58 no
+      // MESMO card). Fix na época: `idOverride` da Automação inclui
+      // `commentId` (`mention_auto_{cardId}_{uid}_{commentId}`) — único por
+      // disparo, sem colidir com os outros 2 caminhos nem se auto-bloquear
+      // pra sempre; ainda idempotente pra reentrega do MESMO commentId
+      // (mesmo padrão de sempre).
+      //
+      // Quarto achado real (2026-08-27, reportado ao vivo pelo usuário): o
+      // raciocínio "dedupe por card+pessoa faz sentido pro caso original
+      // (mesma pessoa perguntando de novo não precisa de notificação
+      // duplicada)" — texto que estava aqui até esta correção — é FALSO na
+      // prática. Uma 2ª @menção da MESMA pessoa no MESMO card é uma
+      // PERGUNTA NOVA (ex.: pediu uma coisa, minutos depois pediu outra, ou
+      // testou de novo depois de um fix), e merece notificação nova quando
+      // o agente responde — exatamente o mesmo problema que o 3º achado
+      // acima já tinha resolvido pro ramo da Automação, nunca replicado pra
+      // este ramo (o "caso original"). Confirmado ao vivo: 2ª @menção no
+      // mesmo card, resposta do agente chegou certinho no card, mas
+      // nenhuma notificação — o slot `mention_{cardId}_{uid}` já estava
+      // ocupado pela 1ª. Mesmo fix de sempre: `commentId` no idOverride.
+      // Achado real ao vivo (2026-08-27): o comentário abaixo dizia "dedupe
+      // por card+pessoa faz sentido pro caso original (mesma pessoa
+      // perguntando de novo não precisa de notificação duplicada)" — mas
+      // isso é FALSO na prática: uma 2ª @menção da mesma pessoa no mesmo
+      // card é uma PERGUNTA NOVA (ex.: "adiciona a tag X" e, minutos depois,
+      // "testa de novo") e merece notificação nova quando o agente responde.
+      // Sem `commentId` aqui, a notificação da 1ª menção deixava o slot
+      // `mention_{cardId}_{uid}` ocupado pra sempre — qualquer resposta
+      // seguinte no MESMO card pra essa pessoa era silenciosamente
+      // engolida por `buildNotifStep()` (mesma causa raiz do bug já achado
+      // e corrigido pro ramo da Automação logo abaixo, nunca replicado pra
+      // este ramo). Mesmo fix: inclui `commentId`, único por @menção.
+      let targetUid = comment.uid;
+      let notifTitle = '🤖 Agente Ágil respondeu sua menção';
+      let notifIdOverride = 'mention_' + cardId + '_' + comment.uid + '_' + commentId;
+      if (comment.uid === AUTOMACAO_UID) {
+        targetUid = null;
+        const cardKey = await resolveCardKey(db, cardId, { squadId });
+        const cardSnap = cardKey ? await db.ref(`${cardsPath(squadId)}/${cardKey}`).get() : null;
+        const card = cardSnap?.val();
+        if (card?.owner) {
+          const members = await readSquadMembers(db, squadId);
+          targetUid = getUidByInit(members, card.owner);
+        }
+        notifTitle = '🤖 Agente Ágil comentou no seu card (Automação)';
+        notifIdOverride = 'mention_auto_' + cardId + '_' + targetUid + '_' + commentId;
+      }
+      const comentarioCall = result.steps.flatMap((step) => step.toolCalls).find((call) => call.name === 'comentario');
+      const respostaTexto = comentarioCall?.input?.texto || result.finalText || '';
+      const notifStep = targetUid
+        ? await buildNotifStep(db, {
+            squadId,
+            targetUid,
+            type: 'mention',
+            title: notifTitle,
+            sub: respostaTexto.substring(0, 80) + (respostaTexto.length > 80 ? '…' : ''),
+            cardId,
+            idOverride: notifIdOverride,
+            dryRun,
+          })
+        : null;
+      if (notifStep && notifStep.kind === 'update') {
+        await db.ref(notifStep.path).update(notifStep.data);
+      }
+
+      // Marca DEPOIS de rodar (não antes) — se o loop lançar exceção, o
+      // comentário fica elegível pra reprocessar numa próxima tentativa, já
+      // que nada foi de fato concluído.
+      await db.ref(`${IDEMPOTENCY_PATH}/${commentId}`).set({
+        at: new Date().toISOString(),
+        status: result.status,
+        dryRun,
+        fallbackComentario,
+      });
+
+      return { processed: true, result, fallbackComentario };
+    } finally {
+      if (marcadorPath) {
+        await db.ref(marcadorPath).remove().catch((err) => console.error(`[agente-analisando:${squadId}] falha ao limpar:`, cardId, err));
+      }
     }
-
-    // Marca DEPOIS de rodar (não antes) — se o loop lançar exceção, o
-    // comentário fica elegível pra reprocessar numa próxima tentativa, já
-    // que nada foi de fato concluído.
-    await db.ref(`${IDEMPOTENCY_PATH}/${commentId}`).set({
-      at: new Date().toISOString(),
-      status: result.status,
-      dryRun,
-      fallbackComentario,
-    });
-
-    return { processed: true, result, fallbackComentario };
   }
 
   const agenteAgilMencao = onValueCreated(

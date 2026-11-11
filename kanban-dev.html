@@ -38134,6 +38134,71 @@ _ilhaRegistrar({
   }
 });
 
+// ── Módulo 🤖 Agente Ágil: "Analisando…" e "Resposta pronta" com estado REAL (nada de progresso inventado) ──
+// A função da @menção grava kanban/usuarios/{uid}/agente_analisando/{commentId} = {squad, cardId, desde} enquanto o agente trabalha
+// e apaga ao terminar (functions/agente-agil-orquestrador/mentionTrigger.js). Uma escuta nesse nó pessoal, só com o módulo ligado.
+// "Resposta pronta" = a notificação que a mesma função já manda ("🤖 Agente Ágil respondeu sua menção"), não lida, dos últimos 30 min.
+// Marcador com mais de 10 min é ignorado (função caiu antes do `finally`). O tempo mostrado é o decorrido desde `desde` — medida real.
+const _ilhaAg = {m:{}, off:null, tick:null, vis:null};
+window.__ilhaAgTick = 0;
+function _ilhaAgAnalisando(){ const agora = Date.now();
+  return Object.entries(_ilhaAg.m||{}).map(([id,v])=>Object.assign({id}, (v&&typeof v==='object')?v:{}))
+    .filter(v=>{ const t = Date.parse(v.desde||''); return isFinite(t) && agora-t < 10*60*1000 && agora-t > -60000 && typeof v.cardId==='string' && typeof v.squad==='string'; })
+    .sort((a,b)=>String(b.desde).localeCompare(String(a.desde))); }
+function _ilhaAgProntas(){ const agora = Date.now();
+  return _ilha.notifs.filter(n=>n && !n.read && /^mention_/.test(String(n.id||'')) && /Agente Ágil/.test(String(n.title||'')) && agora-Date.parse(n.ts||'') < 30*60*1000); }
+function _ilhaAgCard(v){ const c = v.squad===ACTIVE_SQUAD && typeof cards!=='undefined' ? cards.find(c=>c.id===v.cardId) : null;
+  return c ? String(c.title||'Card').slice(0,80) : (SQUAD_META_LIVE[v.squad] && SQUAD_META_LIVE[v.squad].label ? 'card em '+SQUAD_META_LIVE[v.squad].label : 'um card'); }
+function _ilhaAgDecorrido(v){ const s = Math.max(0, Math.floor((Date.now()-Date.parse(v.desde))/1000)); return s<60 ? s+' s' : Math.floor(s/60)+' min'; }
+function _ilhaAgRelogio(){
+  const precisa = !!_ilhaAg.off && !document.hidden && _ilhaAgAnalisando().length>0;
+  if(precisa && !_ilhaAg.tick) _ilhaAg.tick = setInterval(()=>{ if(!_ilhaAgAnalisando().length){ _ilhaAgRelogio(); _ilhaRender(); return; } _ilhaPilula(); }, 5000);
+  if(!precisa && _ilhaAg.tick){ clearInterval(_ilhaAg.tick); _ilhaAg.tick = null; }
+  window.__ilhaAgTick = _ilhaAg.tick ? 1 : 0;
+}
+_ilhaRegistrar({
+  id:'agente', ico:'🤖', nome:'Agente Ágil', padrao:false,
+  ligar(){
+    const u = window._currentUser; if(!u || _ilhaAg.off) return;
+    _ilhaAg.off = window._onValue(window._ref(window._db, 'kanban/usuarios/'+u.uid+'/agente_analisando'), snap=>{
+      if(!_ilhaAg.off) return;
+      const v = snap.val(); _ilhaAg.m = (v && typeof v==='object') ? v : {};
+      _ilhaAgRelogio(); _ilhaRender();
+    }) || (()=>{});
+    _ilhaAg.vis = ()=>_ilhaAgRelogio(); document.addEventListener('visibilitychange', _ilhaAg.vis);
+  },
+  desligar(){
+    const off = _ilhaAg.off; _ilhaAg.off = null; if(off) off();
+    _ilhaAg.m = {}; if(_ilhaAg.vis){ document.removeEventListener('visibilitychange', _ilhaAg.vis); _ilhaAg.vis = null; }
+    _ilhaAgRelogio();
+  },
+  candidatos(){
+    const r = [], an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+    if(pr.length) r.push({prio:75, ico:'🤖', curto:'resposta pronta', txt: pr.length===1 ? 'Resposta do agente pronta' : pr.length+' respostas do agente prontas'});
+    if(an.length) r.push({prio:55, ico:'🤖', curto:'analisando', tempo:_ilhaAgDecorrido(an[0]), txt:'Agente analisando'+(an.length>1?' ('+an.length+')':'')+' · '+_ilhaAgCard(an[0])});
+    return r;
+  },
+  aba:{
+    rot:'🤖 Agente',
+    html(){
+      const an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+      let h = '<div class="ilha-op-h">Analisando agora</div>';
+      h += an.length ? an.map(v=>`<div class="ilha-op"><b>🤖 ${esc(_ilhaAgCard(v))}</b><small>começou há ${esc(_ilhaAgDecorrido(v))}</small><div class="ilha-acoes"><button type="button" data-ag-card="${esc(v.squad+'|'+v.cardId)}">Abrir o card</button></div></div>`).join('')
+        : '<div class="ilha-vazio">Nenhuma menção ao agente em andamento.</div>';
+      h += '<div class="ilha-op-h">Respostas prontas</div>';
+      h += pr.length ? pr.slice(0,5).map(n=>`<div class="ilha-op"><b>${esc(n.title||'')}</b><small>${esc(n.sub||'')}${n.sub?' · ':''}${esc(timeAgo(n.ts))}</small><div class="ilha-acoes"><button type="button" data-ag-resp="${esc(n.id)}">Ver resposta</button></div></div>`).join('')
+        : '<div class="ilha-vazio">Nenhuma resposta nova do agente.</div>';
+      return h + '<p class="ilha-vazio">Mostra só o que o agente está fazendo de verdade: o aviso some quando ele termina.</p>';
+    },
+    clique(e){
+      const a = e.target.closest('[data-ag-card]');
+      if(a){ const i = a.dataset.agCard.indexOf('|'), sq = a.dataset.agCard.slice(0,i), cid = a.dataset.agCard.slice(i+1); _ilhaFechar(false); tmAbrirCard(sq, cid); return true; }
+      const r = e.target.closest('[data-ag-resp]');
+      if(r){ const n = _ilha.notifs.find(x=>String(x.id)===r.dataset.agResp); if(n){ _ilhaFechar(false); openNotif(n.id, n.cardId||'', n.squad||ACTIVE_SQUAD, n.commentId||'', n.type||'', '', ''); } return true; }
+      return false;
+    }
+  }
+});
 // ── Módulo ⭐ Favoritos: só neste aparelho; destinos sempre reconstruídos, nunca URLs salvas ──
 function _ilhaFavs(){
   const p = _ilhaPrefs(), vistos = new Set(), r = [];
