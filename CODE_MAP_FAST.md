@@ -108,10 +108,10 @@
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
-- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11232) · `openGlobalUsersModal` (L10824) · `updateUserRole` (L10205) · `_limparHtmlStatus` (L7189) · `_linkSeguroStatus` (L7202)
+- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11244) · `openGlobalUsersModal` (L10836) · `updateUserRole` (L10217) · `_limparHtmlStatus` (L7189) · `_linkSeguroStatus` (L7202)
 - `_statusIncidenteRecente` (L7210) · `_setStatusPill` (L7217) · `initGithubStatusMonitor` (L7172) · `loadGithubStatus` (L7226) · `renderGithubStatusUI` (L7276) · `_fbMatchServicos` (L7477)
-- `initFirebaseStatusMonitor` (L7507) · `loadFirebaseStatus` (L7521) · `renderFirebaseStatusUI` (L7588) · `loadAgentesExternosPainel` (L9382) · `renderAgentesExternosPainel` (L9394) · `criarAgenteExternoPainel` (L9462)
-- `toggleAgenteExternoSquad` (L9519) · `_fillAgentesLogSquadFilter` (L9551) · `loadAgentesTabData` (L9558) · `renderAgentesAtivosGrid` (L9582) · `renderAgentesLogCross` (L9607) · `closeAgentesHelp` (L9641)
+- `initFirebaseStatusMonitor` (L7507) · `loadFirebaseStatus` (L7521) · `renderFirebaseStatusUI` (L7588) · `loadAgentesExternosPainel` (L9394) · `renderAgentesExternosPainel` (L9406) · `criarAgenteExternoPainel` (L9474)
+- `toggleAgenteExternoSquad` (L9531) · `_fillAgentesLogSquadFilter` (L9563) · `loadAgentesTabData` (L9570) · `renderAgentesAtivosGrid` (L9594) · `renderAgentesLogCross` (L9619) · `closeAgentesHelp` (L9653)
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)
@@ -119,8 +119,8 @@
 - `_okrAgendaCartoes` (L3061) · `_okrAgendaConfirmar` (L3084) · `_okrAgendaAplicar` (L3099)
 
 ### `travessia-dev.html` (9 âncoras curadas)
-- `abrirApp` (L879) · `farol` (L380) · `termometro` (L391) · `viewBau` (L526) · `viewDiario` (L472) · `viewAval` (L558)
-- `viewFrota` (L596) · `guardarBau` (L722) · `demoDados` (L813)
+- `abrirApp` (L921) · `farol` (L387) · `termometro` (L398) · `viewBau` (L567) · `viewDiario` (L511) · `viewAval` (L599)
+- `viewFrota` (L637) · `guardarBau` (L763) · `demoDados` (L855)
 
 ### `okr-apresentacao.slide.html` (12 âncoras curadas)
 - `buildSlides` (L1234) · `startListeners` (L2111) · `rebuild` (L1349) · `fitSlideContent` (L1509) · `_okrFitDetailSections` (L1769) · `objMarcos` (L913)

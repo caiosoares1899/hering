@@ -148,6 +148,13 @@ textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:20px;}
 .lst li:has(>.fase){flex-wrap:wrap;}
 .lst .feita{text-decoration:line-through;opacity:.85;}
 .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.prox{display:flex;align-items:center;gap:14px;padding:16px 18px;border-color:var(--accent);}
+.prox .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt2);}
+.prox .px-ic{font-size:26px;line-height:1;flex:0 0 auto;}
+.prox .px-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;word-break:break-word;}
+.prox .px-tx b{font-size:15px;}
+.prox .btn{flex:0 0 auto;min-height:44px;}
+@media (max-width:560px){.prox{flex-wrap:wrap;}.prox .btn{flex:1 0 100%;}}
 .foco{padding:18px;border-radius:var(--r2);background:rgba(var(--surface2-rgb),.45);box-shadow:inset 0 0 0 1px var(--line);}
 .vazio{border:1.5px dashed var(--line2);border-radius:var(--r2);padding:22px 18px;text-align:center;color:var(--txt2);font-size:13.5px;}
 .divid{height:1px;background:var(--line);margin:14px 0;}
@@ -398,6 +405,38 @@ function termometro(hc, hoje, totalPessoas) {
   return { media: m, respostas: atual.length, pessoas, total: totalPessoas || 0, anterior: media(ant), dist, dias, apoio, cor: m == null ? 'cinza' : m >= 3.5 ? 'verde' : m >= 2.5 ? 'amarelo' : 'vermelho' };
 }
 const ultimoEncontro = enc => Object.values(enc || {}).map(e => e && e.data).filter(Boolean).sort().pop() || null;
+// 🧭 Próxima ação (T4 da consultoria de 09/11/2026): UMA coisa no topo da Minha travessia, com um verbo e um botão. Função pura sobre o que já
+// foi lido. A ordem é a decisão de produto: o que tem OUTRA pessoa esperando vem antes do que é só meu. O humor fica fora de propósito (já está à vista;
+// um cartão diário "registre seu humor" viraria cobrança). Sem nada pendente → null, e o cartão não aparece.
+// avals = { [cid]: carregaAval(cid, me) } (ciclos de que participo) · respPar = { [cid+':'+avaliado]: resposta salva ou null } · nomes = uid → nome
+function proximaAcao({ me, ciclos, avals, pedidos, respPar, um, temLider, bau, hoje, nomes }) {
+  const cs = ciclos || {}, av = avals || {}, nm = nomes || (u => u);
+  const meus = Object.entries(cs).filter(([cid, c]) => c && c.participantes && c.participantes[me] && av[cid]).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
+  for (const [cid, c] of meus) { const a = av[cid];
+    if (a.devol && a.devol.liberada === true && !a.ciente) return { ic: '🔓', txt: 'Sua devolutiva de ' + (c.nome || 'avaliação') + ' foi liberada.', btn: 'Ler agora', tab: 'aval' }; }
+  for (const p of (pedidos || [])) { const c = p && cs[p.cid];
+    if (c && c.status === 'coleta' && !(respPar || {})[p.cid + ':' + p.avaliado]) return { ic: '🤝', txt: nm(p.avaliado) + ' conta com o seu feedback.', btn: 'Responder', tab: 'aval' }; }
+  for (const [cid, c] of meus) { if (c.status === 'encerrado') continue; const a = av[cid];
+    if (c.status === 'coleta') { const qs = Object.keys(perguntasDe(c, 'auto')); const feitas = qs.filter(q => a.auto && a.auto[q]).length;
+      if (feitas < qs.length) { const f = qs.length - feitas;
+        return { ic: '📝', txt: feitas ? 'Falta' + (f > 1 ? 'm ' + f + ' respostas' : ' 1 resposta') + ' na sua autoavaliação.' : 'Sua autoavaliação de ' + (c.nome || 'avaliação') + ' está aberta.', btn: feitas ? 'Continuar' : 'Começar', tab: 'aval' }; } }
+    if (c.status === 'preparacao' && Object.keys(a.pares || {}).length < 2) return { ic: '🤝', txt: 'Indique de 2 a 4 pares para ' + (c.nome || 'a avaliação') + '.', btn: 'Indicar', tab: 'aval' }; }
+  const f = temLider && um && um.farol;
+  if (f && (f.cor === 'vermelho' || f.cor === 'amarelo') && f.dias != null) return { ic: f.ic, txt: 'Seu último 1:1 foi há ' + f.dias + (f.dias === 1 ? ' dia.' : ' dias.'), btn: 'Registrar 1:1', foco: 'enc-d' };
+  const ult = Math.max(0, ...Object.values(bau || {}).map(b => (b && +b.ts) || 0));
+  if (!ult || diasEntre(isoDe(new Date(ult)), hoje) >= 21) return { ic: '📦', txt: ult ? 'Faz 3 semanas que nada entra no seu Baú.' : 'Seu Baú está vazio.', btn: 'Guardar uma conquista', tab: 'bau' };
+  return null;
+}
+async function carregaProxima(me, um, bau, temLider) {
+  // Lê só o que a aba Avaliação já leria (mesmas chaves de cache): a avaliação dos ciclos de que participo, meus pedidos de par e, para pedidos em coleta, a minha resposta.
+  const meus = Object.entries(S.ciclos).filter(([, c]) => participa(c, me));
+  const avals = {}; await Promise.all(meus.map(async ([cid]) => { avals[cid] = await cache('aval:' + cid + ':' + me, () => carregaAval(cid, me)); }));
+  let pedidos = []; try { pedidos = Object.values((await cache('pedidos', () => G(T + 'pedidos_par/' + me))) || {}).filter(p => p && S.ciclos[p.cid]); } catch (_) {}
+  const respPar = {}; await Promise.all(pedidos.filter(p => S.ciclos[p.cid].status === 'coleta').map(async p => { respPar[p.cid + ':' + p.avaliado] = await cache('resp:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/resp_pares/' + me); } catch (e) { return null; } }); }));
+  return proximaAcao({ me, ciclos: S.ciclos, avals, pedidos, respPar, um, temLider, bau, hoje: hojeISO(), nomes: nomeDe });
+}
+const viewProxima = p => p ? `<section class="gl prox" aria-labelledby="t-px"><span class="px-ic" aria-hidden="true">${esc(p.ic)}</span><div class="px-tx"><span class="eyebrow" id="t-px">Próxima ação</span><b>${esc(p.txt)}</b></div>
+  <button class="btn p" ${p.tab ? `data-tab="${esc(p.tab)}"` : `data-act="prox-foco" data-alvo="${esc(p.foco)}"`}>${esc(p.btn)}</button></section>` : '';
 
 // ───────── estado ─────────
 const S = { me: null, users: {}, vinc: {}, ciclos: {}, rh: false, adm: false, tab: 'inicio', cache: {}, sel: null, selTab: 'um', aval: {}, ultimoFoco: null, filtroBau: 'todos', pesq: '' };
@@ -500,9 +539,11 @@ async function viewInicio() {
   const me = S.me.uid; const lid = liderDe(me);
   const [um, humor, bau, estrelas, diario] = await Promise.all([cache('um:' + me, () => carregaUm(me)), cache('humor:' + me, () => carregaHumor(me, false)), cache('bau:' + me, () => carregaBau(me)), cache('estrelas', carregaEstrelas), cache('diario:' + me, () => carregaDiario(me))]);
   const hj = hojeISO(); const hHoje = humor[hj];
+  let prox = null; try { prox = await carregaProxima(me, um, bau, !!lid); } catch (e) { console.warn('[travessia] próxima ação', e); }   // o cartão é ajuda: se falhar, a página segue sem ele
   const itensBau = Object.entries(bau).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
   const pend = []; ciclosAtivos().forEach(([cid, c]) => { if (participa(c, me)) pend.push(`<li><span class="bb" aria-hidden="true">📐</span><div class="tx"><b>${esc(c.nome)}</b> — fase ${esc((FASES.find(f => f[0] === c.status) || [0, c.status])[1])}</div><button class="btn s" data-tab="aval">Abrir</button><div class="fase" aria-label="Fase do ciclo">${FASES.map(f => `<span class="${f[0] === c.status ? 'on' : (FASES.findIndex(x => x[0] === c.status) > FASES.findIndex(x => x[0] === f[0]) ? 'ok' : '')}">${f[1]}</span>`).join('')}</div></li>`); });
   return `<div class="stack">
+   ${viewProxima(prox)}
    <div class="grid g2">
     <section class="gl pad stack" aria-labelledby="t-um"><h2 class="h2" id="t-um">🚦 Meu 1:1${lid ? ' com ' + esc(nomeDe(lid)) : ''}</h2>
       ${lid ? viewFarol(me, um) : `<div class="vazio">Seu líder ainda não foi definido no organograma. Peça ao ADM ou ao RH para configurar.</div>`}
@@ -735,6 +776,7 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('[data-tab],[data-act]'); if (!b) return;
   const a = b.dataset.act; const me = S.me && S.me.uid;
   if (b.dataset.tab && !a) { S.tab = b.dataset.tab; S.sel = null; S.pesq = ''; return render(); }
+  if (a === 'prox-foco') { const el = document.getElementById(b.dataset.alvo); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true }); } return; }
   if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
   if (a === 'humor') {
     const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() };
@@ -905,7 +947,7 @@ if (DEMO) {
     await abrirApp(u);
   });
 }
-window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, CAD_DIAS, estado: S, render };
+window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, proximaAcao, CAD_DIAS, estado: S, render };
 </script>
 </body>
 </html>
