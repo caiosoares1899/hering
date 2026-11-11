@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Travessia — humor com aviso antes e "Desfazer" (T8 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+
+- "👁 Seu líder (Nome) vê esta resposta." subiu para cima das carinhas, curto; a explicação abaixo ficou só com o detalhe.
+- O toque grava na hora, mas o aviso de apoio ao líder (mal/muito mal) só sai 8 s depois. Nesse tempo aparece "Registrado · ↩ Desfazer": desfazer volta ao humor anterior (privado e compartilhado) e cancela o aviso. Trocar de carinha na janela vale a última ("muito mal" corrigido para "bem" não avisa ninguém). Se a aba for escondida ou fechada antes, o aviso sai na hora, para não se perder.
+- Só na Travessia, por decisão do Caio (o bloco de humor do Meu Dia no Maré fica para depois). Sem deploy: as regras já deixam a pessoa regravar e apagar o próprio humor do dia.
+- Testes: `test_travessia_humor_desfazer.js` (24/24) e `test_travessia.js` ajustado (o aviso agora espera a janela de 8 s; 125 ✅).
+
 ### Travessia — 1:1 com "O que combinamos" (T1 etapa A da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
 
 - O registro do 1:1 ganhou o campo opcional "O que combinamos?" (até 280 caracteres), gravado em `encontros/{uid}/{id}/nota` — a regra do banco já aceitava o campo, então não há deploy.

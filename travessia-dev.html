@@ -189,6 +189,9 @@ details>summary.h2{width:100%;}
 .faces button{width:56px;height:56px;border-radius:50%;border:0;background:rgba(var(--surface2-rgb),.7);box-shadow:inset 0 0 0 1px var(--line2);font-size:28px;line-height:1;transition:transform .18s,box-shadow .18s,background .18s;}
 .faces button:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 2px var(--accent);}
 .faces button[aria-pressed="true"]{background:linear-gradient(var(--ag-bg),var(--ag-bg)),rgba(var(--surface-rgb),.95);box-shadow:0 0 0 3px var(--accent),0 8px 18px rgba(0,0,0,.3);transform:scale(1.12);}
+.quem-ve{margin:-4px 0 0;font-size:13px;font-weight:600;color:var(--txt2);}
+.mood-undo{font-weight:600;}
+.mood-undo .btn{margin-left:6px;vertical-align:middle;min-height:44px;}
 .mood-lbl{min-height:20px;font-size:13px;font-weight:700;color:var(--txt2);}
 .spark{display:flex;gap:4px;align-items:flex-end;height:44px;margin-top:6px;}
 .spark i{flex:1;max-width:18px;min-height:5px;border-radius:99px;background:linear-gradient(var(--teal),var(--accent));opacity:.95;}
@@ -560,9 +563,10 @@ async function viewInicio() {
       ${lid ? `<form class="row" data-form="encontro" data-uid="${me}"><label class="sr" for="enc-d">Data do 1:1</label><input class="in" id="enc-d" type="date" name="data" value="${hj}" max="${hj}" style="max-width:170px"><button class="btn p" type="submit">✅ Registrei um 1:1</button>${campoNota('enc-n', 'seu líder e o gerente também veem')}</form>` : ''}
       ${listaEncontros(me, um.enc, 3, 'Últimos 1:1')}</section>
     <section class="gl pad stack" aria-labelledby="t-hu"><h2 class="h2" id="t-hu">🌤️ Como você está hoje?</h2>
+      <p class="quem-ve">👁 ${lid ? 'Seu líder (' + esc(nomeDe(lid)) + ') vê esta resposta.' : 'Quando seu líder for definido no organograma, ele passa a ver esta resposta.'}</p>
       <div class="faces" role="group" aria-label="Humor de hoje">${FACES.map((f, i) => `<button type="button" data-act="humor" data-n="${i + 1}" aria-pressed="${hHoje && hHoje.n === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
-      <div class="mood-lbl" aria-live="polite">${hHoje && hHoje.n ? esc(FACES[hHoje.n - 1][1]) + ' hoje' : 'Toque numa carinha'}</div>
-      <p class="small">👁 ${lid ? 'Seu líder (' + esc(nomeDe(lid)) + ') vê' : 'Quando seu líder for definido no organograma, ele passa a ver'} o seu humor: a média do time no termômetro dele e, se você marcar que não está bem, um aviso para ele poder te apoiar. Ninguém (nem o sistema) analisa seu humor. O que você registrou antes de 31/10/2026 continua só seu, e o fechamento do dia (abaixo) também.</p>
+      <div class="mood-lbl" aria-live="polite">${hHoje && hHoje.n ? esc(FACES[hHoje.n - 1][1]) + ' hoje' : 'Toque numa carinha'}${humorPend ? ` <span class="mood-undo" id="humor-undo">· Registrado. <button type="button" class="btn s" data-act="humor-desfazer">↩ Desfazer</button></span>` : ''}</div>
+      <p class="small">Ele vê a média do time no termômetro e, se você marcar que não está bem, recebe um aviso para poder te apoiar. O aviso só sai ${HUMOR_DESFAZER_S} segundos depois do toque, para dar tempo de desfazer um toque errado. Ninguém (nem o sistema) analisa seu humor. O que você registrou antes de 31/10/2026 continua só seu, e o fechamento do dia (abaixo) também.</p>
       ${sparkHumor(humor, 14)}</section></div>
    ${blocoFechamento(diario)}
    ${pend.length ? `<section class="gl pad" aria-labelledby="t-av"><h2 class="h2" id="t-av">📐 Avaliação</h2><ul class="lst">${pend.join('')}</ul></section>` : ''}
@@ -776,6 +780,14 @@ const salvaResp = async (cid, av, grupo, caminho) => {
   return tenta(() => W(caminho, dados), '💾 Salvo!');
 };
 // 🫶 Quando a pessoa marca "mal" (2) ou "muito mal" (1): avisa o líder direto pelo sino (um por pessoa por dia; a regra só grava se ainda não existe).
+// ↩ T8 (consultoria 09/11/2026): o toque na carinha grava na hora, mas o aviso de apoio ao líder só sai depois de HUMOR_DESFAZER_S segundos.
+// Nesse meio-tempo aparece "Registrado · Desfazer"; desfazer volta ao que estava antes e cancela o aviso. Trocar de carinha na janela reinicia a
+// contagem e vale a última. Se a aba for escondida/fechada antes, o aviso sai na hora (a pessoa saiu sem desfazer; não pode se perder).
+const HUMOR_DESFAZER_S = 8; let humorPend = null;
+function humorDisparar() { const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; alertaApoio(p.n); const u = document.getElementById('humor-undo'); if (u) u.remove(); }
+function humorArmar(k, n, antes) { if (humorPend) clearTimeout(humorPend.timer); humorPend = { k, n, antes, timer: setTimeout(humorDisparar, HUMOR_DESFAZER_S * 1000) }; }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') humorDisparar(); });
+window.addEventListener('pagehide', humorDisparar);
 async function alertaApoio(n) {
   const lid = liderDe(S.me.uid); if (!(n <= 2) || !lid || lid === S.me.uid) return;
   const id = 'apoio_' + S.me.uid + '_' + hojeISO(); const nome = (S.me.nome || 'Alguém').split(' ')[0];
@@ -789,9 +801,19 @@ document.addEventListener('click', async e => {
   if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
   if (a === 'humor') {
     const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() };
-    const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); await W('humor_comp/' + me + '/' + k, reg); }, FACES[n - 1][0] + ' Humor de hoje registrado — seu líder também vê.');
-    if (ok) alertaApoio(n);
-    if (ok) { S.cache['humor:' + me] = Object.assign({}, S.cache['humor:' + me], { [k]: Object.assign({ comp: true }, reg) }); render(); } return;
+    const cacheH = S.cache['humor:' + me] || {}; const antes = humorPend && humorPend.k === k ? humorPend.antes : (cacheH[k] ? Object.assign({}, cacheH[k]) : null);   // 2º toque na janela: o "desfazer" volta ao que era ANTES do 1º
+    const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); await W('humor_comp/' + me + '/' + k, reg); });
+    if (ok) { humorArmar(k, n, antes); S.cache['humor:' + me] = Object.assign({}, cacheH, { [k]: Object.assign({ comp: true }, reg) }); render(); } return;
+  }
+  if (a === 'humor-desfazer') {
+    const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; const k = p.k, v = p.antes;   // cancela o aviso ao líder antes de qualquer gravação
+    const ok = await tenta(async () => {
+      if (v && v.n) { const r = { n: v.n, ts: v.ts || Date.now() }; if (v.nota) r.nota = v.nota; await W('humor/' + me + '/' + k, r); await (v.comp ? W('humor_comp/' + me + '/' + k, r) : D('humor_comp/' + me + '/' + k)); }
+      else { await D('humor/' + me + '/' + k); await D('humor_comp/' + me + '/' + k); }
+    }, '↩ Desfeito.');
+    if (ok) { const h = Object.assign({}, S.cache['humor:' + me]); if (v && v.n) h[k] = v; else delete h[k]; S.cache['humor:' + me] = h; }
+    else invalida('humor:' + me);
+    render(); return;
   }
   if (a === 'dia-n') { S.diaN = +b.dataset.n; document.querySelectorAll('[data-act="dia-n"]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === S.diaN))); const l = $('#dia-lbl'); if (l) l.textContent = FACES[S.diaN - 1][1]; return; }
   if (a === 'dia-salvar') {
@@ -956,7 +978,8 @@ if (DEMO) {
     await abrirApp(u);
   });
 }
-window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, proximaAcao, CAD_DIAS, estado: S, render };
+window.Travessia = { farol, termometro, ultimoEncontro, diasEntre, proximaAcao, CAD_DIAS, estado: S, render, humorPendente: () => !!humorPend, HUMOR_DESFAZER_S };
+if (DEMO) window.Travessia.demoMem = MEM;   // só no modo demonstração (dados fictícios): deixa o teste conferir o que foi "gravado"
 </script>
 </body>
 </html>

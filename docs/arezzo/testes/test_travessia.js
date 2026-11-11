@@ -161,11 +161,13 @@ const seed = () => ({ kanban: {
     t('?tab=frota abre direto na Frota (destino do aviso do sino)', /Termômetro do time/.test(await p.locator('#painel').innerText()), ''); await ctx.close(); }
   // 🫶 alerta ao líder quando a pessoa compartilha e marca mal
   { const { ctx, p } = await abre(U('ana', 'Ana Lima')); const nots = () => st(p, 'kanban/usuarios/pau/notificacoes');
-    await clica(p, '[data-act="humor"][data-n="2"]'); const n0 = await nots(); const k0 = n0 && n0['apoio_ana_' + HOJE]; t('marcou "mal": o líder é avisado na hora (tipo travessia_apoio, com o nome)', k0 && k0.type === 'travessia_apoio' && /Ana/.test(k0.title) && k0.read === false, n0);
+    // T8 (11/11/2026): o aviso sai 8 s depois do toque (janela do "Desfazer"), não mais na hora
+    await clica(p, '[data-act="humor"][data-n="2"]'); t('marcou "mal": durante a janela do Desfazer o líder ainda não foi avisado', !(await nots()), await nots()); await p.waitForTimeout(8600);
+    const n0 = await nots(); const k0 = n0 && n0['apoio_ana_' + HOJE]; t('marcou "mal": depois de 8 s o líder é avisado (tipo travessia_apoio, com o nome)', k0 && k0.type === 'travessia_apoio' && /Ana/.test(k0.title) && k0.read === false, n0);
     t('o aviso não diz que a pessoa "compartilhou" (não há escolha)', !/Compartilhou/.test(JSON.stringify(k0)), k0);
-    await clica(p, '[data-act="humor"][data-n="4"]'); await p.waitForTimeout(300); await clica(p, '[data-act="humor"][data-n="1"]');
+    await clica(p, '[data-act="humor"][data-n="4"]'); await p.waitForTimeout(300); await clica(p, '[data-act="humor"][data-n="1"]'); await p.waitForTimeout(8600);
     t('um aviso por pessoa por dia (id fixo, sem duplicar)', Object.keys(await nots()).length === 1, Object.keys(await nots())); await ctx.close(); }
-  { const { ctx, p } = await abre(U('ana', 'Ana Lima')); await clica(p, '[data-act="humor"][data-n="4"]'); t('marcou "bem": nenhum aviso', !(await st(p, 'kanban/usuarios/pau/notificacoes')), ''); await ctx.close(); }
+  { const { ctx, p } = await abre(U('ana', 'Ana Lima')); await clica(p, '[data-act="humor"][data-n="4"]'); await p.waitForTimeout(8600); t('marcou "bem": nenhum aviso', !(await st(p, 'kanban/usuarios/pau/notificacoes')), ''); await ctx.close(); }
   { const sd = seed(); sd.kanban.travessia.vinculos = {}; const { ctx, p, errs } = await abre(U('ana', 'Ana Lima'), { seed: sd }); await clica(p, '[data-act="humor"][data-n="1"]'); t('sem líder no organograma: salva o humor e não quebra nem avisa ninguém', (await st(p, 'kanban/travessia/humor/ana/' + HOJE)).n === 1 && !(await st(p, 'kanban/usuarios/pau/notificacoes')) && !errs.length, errs); await ctx.close(); }
   // 6) gerente (Gil): vê o time ampliado só com farol, sem detalhe
   { const { ctx, p } = await abre(U('gil', 'Gil Prado')); await aba(p, 'frota'); t('Gil (gerente do Pau): vê Ana, Bia como "time dos meus líderes" só com farol e o Pau como liderado', (await p.locator('.pcard').count()) === 3 && (await p.locator('.pcard [data-act="abrir"]').count()) === 1, await p.locator('.pcard').count()); await ctx.close(); }
