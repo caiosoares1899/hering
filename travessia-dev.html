@@ -938,7 +938,7 @@ document.addEventListener('click', async e => {
     if (await tenta(() => W(caminho, reg), '🧭 Atitudes salvas.')) { if (tx) rascLimpar([tx.id]); box.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); invalida('aval:' + cid + ':' + av); invalida('atpar:' + cid + ':' + av); render(); }
     return;
   }
-  if (a === 'ciclo-cultura') { const cid = b.dataset.cid; const v = !(S.ciclos[cid] && S.ciclos[cid].cultura); if (await tenta(() => W('ciclos/' + cid + '/cultura', v), v ? '🧭 Atitudes ligadas neste ciclo.' : 'Atitudes desligadas neste ciclo.')) { S.ciclos[cid] = Object.assign({}, S.ciclos[cid], { cultura: v }); render(); } return; }
+  if (a === 'ciclo-cultura') { const cid = b.dataset.cid; const v = !(S.ciclos[cid] && S.ciclos[cid].cultura); if (await tenta(() => W('ciclos/' + cid + '/cultura', v), v ? '🧭 Atitudes ligadas neste ciclo.' : 'Atitudes desligadas neste ciclo.')) { S.ciclos[cid] = Object.assign({}, S.ciclos[cid], { cultura: v }); invalida('aval:' + cid); render(); } return; }
   if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
   if (a === 'humor') {
     const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() };
