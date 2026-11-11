@@ -348,21 +348,21 @@
 - showMsg:L182 · clearMsg:L183 · lsGet:L184 · lsSet:L185 · isHering:L187 · arr:L190 · hojeISO:L191 · proximaSexta:L195 · camposEfetivos:L199 · tagsEspeciais:L211
 - carregarListaSquads:L214 · carregarSquadInterno:L226 · renderWho:L255 · renderSquadSlot:L272 · renderInterno:L284 · mostrar:L336 · entrar:L348 · validarInterno:L416 · avisarMembros:L432 · __intake:L489
 
-## `travessia-dev.html` (954 linhas · 43 funções)
-- **CSS:** L12–L296 | **JS:** L319–L951 (module) | **Módulos:** mare-login-dev.js?v=3 (L318)
-- **Consts (61):** firebaseConfig:L324 · fbApp:L334 · db:L335 · auth:L336 · provider:L337 · T:L344 · $:L345 · esc:L346 · _hrefOk:L347 · pad:L348 · isoDe:L349 · hojeISO:L350 · brDe:L351 · brFull:L352 · diasEntre:L353 · novoId:L354 · W:L358 · D:L359 · WABS:L360 · CAD:L375 · CAD_DIAS:L376 · TIPO_1A1:L377 · FACES:L378 · FASES:L379 · PERGUNTAS_PADRAO:L380 · ultimoEncontro:L407 · viewProxima:L438 · S:L442 · nomeDe:L443 · iniDe:L444 · liderDe:L445 · liderados:L446 · timeAmpliado:L447 · ehLider:L448 · ciclosAtivos:L449 · participa:L450 · perguntasDe:L451 · avatar:L452 · chip:L453 · vazio:L454 (+21)
-- _signIn:L339 · _signInIdToken:L341
-- **[utilidades]** toast:L356 · G:L357 · uiConfirm:L361 · erroAmigavel:L367 · tenta:L372
-- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L387 · termometro:L398 · proximaAcao:L412 · carregaProxima:L430
-- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L458 · carregaUm:L467 · carregaHumor:L473 · carregaDiario:L480 · carregaBau:L481 · carregaEstrelas:L482 · carregaAval:L490 · cache:L496
-- **[telas]** blocoFechamento:L500 · viewDiario:L511 · viewFarol:L527 · sparkHumor:L533 · viewInicio:L538 · viewBau:L567
-- **[avaliação (pessoa)]** sugestoesPares:L586 · formResp:L594 · viewAval:L599
-- **[frota (líder)]** viewFrota:L637 · viewTermometro:L655 · viewDetalhe:L670 · viewAvalLider:L686
-- **[administração (ADM e RH)]** viewAdmin:L712
-- **[montagem]** bolhas:L740 · render:L746
-- **[ações]** guardarBau:L763 · alertaApoio:L770
-- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L853 · demoDados:L855
-- **[login e boot]** mostraLogin:L913 · aplicaTema:L918 · abrirApp:L921 · Travessia:L950
+## `travessia-dev.html` (963 linhas · 44 funções)
+- **CSS:** L12–L298 | **JS:** L321–L960 (module) | **Módulos:** mare-login-dev.js?v=3 (L320)
+- **Consts (62):** firebaseConfig:L326 · fbApp:L336 · db:L337 · auth:L338 · provider:L339 · T:L346 · $:L347 · esc:L348 · _hrefOk:L349 · pad:L350 · isoDe:L351 · hojeISO:L352 · brDe:L353 · brFull:L354 · diasEntre:L355 · novoId:L356 · W:L360 · D:L361 · WABS:L362 · CAD:L377 · CAD_DIAS:L378 · TIPO_1A1:L379 · FACES:L380 · FASES:L381 · PERGUNTAS_PADRAO:L382 · ultimoEncontro:L409 · viewProxima:L440 · S:L444 · nomeDe:L445 · iniDe:L446 · liderDe:L447 · liderados:L448 · timeAmpliado:L449 · ehLider:L450 · ciclosAtivos:L451 · participa:L452 · perguntasDe:L453 · avatar:L454 · chip:L455 · vazio:L456 (+22)
+- _signIn:L341 · _signInIdToken:L343
+- **[utilidades]** toast:L358 · G:L359 · uiConfirm:L363 · erroAmigavel:L369 · tenta:L374
+- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L389 · termometro:L400 · proximaAcao:L414 · carregaProxima:L432
+- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L460 · carregaUm:L469 · carregaHumor:L475 · carregaDiario:L482 · carregaBau:L483 · carregaEstrelas:L484 · carregaAval:L492 · cache:L498
+- **[telas]** blocoFechamento:L502 · viewDiario:L513 · listaEncontros:L532 · viewFarol:L537 · sparkHumor:L543 · viewInicio:L548 · viewBau:L577
+- **[avaliação (pessoa)]** sugestoesPares:L596 · formResp:L604 · viewAval:L609
+- **[frota (líder)]** viewFrota:L647 · viewTermometro:L665 · viewDetalhe:L680 · viewAvalLider:L695
+- **[administração (ADM e RH)]** viewAdmin:L721
+- **[montagem]** bolhas:L749 · render:L755
+- **[ações]** guardarBau:L772 · alertaApoio:L779
+- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L862 · demoDados:L864
+- **[login e boot]** mostraLogin:L922 · aplicaTema:L927 · abrirApp:L930 · Travessia:L959
 
 ## `okr-apresentacao.slide.html` (2534 linhas · 120 funções)
 - **CSS:** L9–L607 | **JS:** L751–L789 (module), L791–L2508 (classic), L2509–L2531 (classic)
