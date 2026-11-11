@@ -35,6 +35,16 @@ const root=process.cwd();
   const backgrounds=await page.locator('.fish-float svg').evaluateAll(els=>els.map(el=>el.outerHTML));
   const normalizedExpected=await page.evaluate(items=>items.map(svg=>{const el=document.createElement('div');el.innerHTML=svg;return el.firstElementChild.outerHTML;}),Array.from(expectedFish));
   assert.ok(backgrounds.length>0 && backgrounds.every(svg=>normalizedExpected.includes(svg)),'peixes de fundo usam exatamente os SVGs do Oceano');
+  const checkAquarium=async(selector)=>{
+   const geometry=await page.locator(selector).evaluateAll(els=>els.map(el=>({
+    tail:el.querySelector('polygon')?.getAttribute('points'),
+    body:el.querySelector('ellipse')?.getAttribute('cx'),
+    eye:el.querySelector('circle')?.getAttribute('cx')
+   })));
+   assert.equal(geometry.length,8,'oito stakeholders');
+   assert.ok(geometry.every(f=>f.tail==='0,4 14,14 0,24' && f.body==='34' && f.eye==='47'),'aquário usa geometria do peixe do Maré/Oceano');
+  };
+  await checkAquarium('#stakeOcean .fish-svg');
   await shortcuts.first().focus();
   assert.equal(await shortcuts.first().evaluate(el=>getComputedStyle(el).outlineStyle),'solid','foco de teclado visível');
   if(!process.env.BORDO_BASE){
@@ -59,7 +69,25 @@ const root=process.cwd();
   assert.ok((await page.locator('#quizOptions button').count())>0,'quiz continua disponível');
   assert.deepEqual(errors,[],'sem erros de execução');
   if(!process.env.BORDO_BASE && !process.env.BORDO_SEM_CAPTURAS){fs.mkdirSync('docs/capturas/a-bordo',{recursive:true});for(const id of ['comece','cultura','oceano','squads']){await page.locator('#'+id).evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-90));await page.screenshot({path:`docs/capturas/a-bordo/${id}-${width}.png`});}}
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.locator('#stakeOcean').scrollIntoViewIfNeeded();
+  await page.locator('#stakeOcean').evaluate(el=>el.getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=0;}));
+  for(const key of ['crm','merchan','marca','gg','plan','cd','ti','canais']){
+   await page.locator(`[data-fish="${key}"] .fish-svg`).click();
+   assert.ok(await page.locator('#fishModal').evaluate(el=>el.classList.contains('open')),'clique do stakeholder abre modal');
+   await page.keyboard.press('Escape');
+  }
+  if(!process.env.BORDO_BASE){fs.mkdirSync('docs/capturas/a-bordo-aquario',{recursive:true});await page.locator('#stakeOcean').screenshot({path:`docs/capturas/a-bordo-aquario/site-${width}.png`});}
   await page.goto(base+'/onboarding.slide.html');
+  await page.evaluate(()=>{goTo(slides.findIndex(s=>s.id==='s10'));document.querySelector('.stake-slide').getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=0;});});
+  await checkAquarium('.stake-slide .ss-fish-svg');
+  for(let i=0;i<8;i++){
+   await page.locator('.ss-fish-svg').nth(i).click();
+   assert.ok(await page.locator('#fishModal').evaluate(el=>el.classList.contains('open')));
+   await page.keyboard.press('Escape');
+  }
+  if(!process.env.BORDO_BASE)await page.locator('.stake-slide').screenshot({path:`docs/capturas/a-bordo-aquario/slides-${width}.png`});
+  await page.emulateMedia({reducedMotion:'reduce'});
   const slideFish=await page.locator('.bg-fish svg').evaluateAll(els=>els.map(el=>el.outerHTML));
   assert.ok(slideFish.length>0 && slideFish.every(svg=>normalizedExpected.includes(svg)),'slides usam os mesmos peixes do Oceano');
   await page.evaluate(()=>goTo(slides.findIndex(s=>s.id==='s11')));
