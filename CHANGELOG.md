@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Ilha Dinâmica — sempre visível por padrão e painel na altura da tela (SÓ DEV · kanban-dev) — 2026-11-11
+
+Pedido do Caio (12/11/2026):
+- **Padrão "sempre visível"**: antes era "só com ação". A pessoa ligava em Minhas preferências, passava pela introdução e a pílula **sumia** por não ter nada acontecendo. Agora ela fica no topo.
+- **A introdução avisa e deixa escolher**: o passo 2 explica que ela é sempre visível por padrão; o passo 4 ganhou **"Quando a pílula aparece"** (sempre · só com algo acontecendo · ao passar o mouse). Em ⚙ Ajustes a lista começa por "Sempre visível (padrão)", e a Ajuda (Timer e Produtividade) cita a opção.
+- **Migração única**: quem ligou ontem com o padrão antigo ("só com ação") passa a "sempre". Quem escolher "só com algo acontecendo" daqui em diante é respeitado, e "ao passar o mouse" nunca é mexido.
+- **Painel aberto na altura da tela**: o Resumo tinha teto de 580 px e ganhava uma rolagem pequena. Agora usa a tela inteira menos o topo e, em tela baixa, rola por dentro sem sair da tela.
+- Teste: `docs/arezzo/testes/test_ilha_sempre.js` (10/10). As 8 suítes da Ilha seguem verdes.
+
 ### Travessia — cultura Hering: atitudes no 1:1 e na avaliação (SÓ DEV · travessia-dev.html + database.rules.json) — 2026-11-11
 
 Pedido do Caio: "o Travessia precisa conversar com os pilares culturais (A Bordo) e ajudar na internalização da cultura". Ele escolheu dois lugares: **1:1 com atitude em foco** e **avaliação pelas atitudes**.
