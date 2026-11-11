@@ -805,6 +805,11 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .ilha-st-ok{color:var(--teal);} .ilha-st-inc{color:var(--danger);} .ilha-st-mudo{color:var(--txt3);}
 .ilha-status-link{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);align-self:flex-start;}
 #ilha-painel [data-status]{overflow-wrap:anywhere;}
+/* Agenda: ações quebram linha e mantêm alvo de toque mesmo com títulos longos. */
+.ilha-agenda{min-width:0;overflow-wrap:anywhere;}
+.ilha-agenda .ilha-acoes{flex-wrap:wrap;}
+.ilha-agenda.ilha-acoes button,.ilha-agenda .ilha-acoes button,.ilha-agenda a{min-height:44px;max-width:100%;}
+.ilha-agenda a{display:inline-flex;align-items:center;color:var(--accent);padding:0 8px;}
 .ilha-op-h{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-top:8px;}
 #ilha-n{display:inline-flex;align-items:center;gap:3px;}
 #ilha-n[hidden]{display:none;}
@@ -6824,7 +6829,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.935-dev</div>
+<div class="version">v8.30.936-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -38078,6 +38083,157 @@ _ilhaRegistrar({
     }
   }
 });
+// ── Módulo 📅 Agenda: cópia pessoal de 3 h, sem escuta aberta ──
+const _ILHA_AG_TTL = 3*3600*1000;
+const _ilhaAgd = {v:[], t:0, tentativa:0, tick:null, geracao:0, lendo:false, pronta:false, uid:''};
+window.__ilhaAgendaTick = 0;
+const _ilhaAgChave = () => 'mare_ilha_agenda_'+_ilhaAgd.uid+(/-dev\.html/.test(location.pathname)?'_dev':'');
+// Espelho puro de functions/okr/calendario.js: mensal/anual preservam o dia possível.
+const _ilhaAgFmt = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const _ilhaAgParse = (s) => { const p = String(s || '').slice(0, 10).split('-').map(Number); return new Date(p[0] || 1970, (p[1] || 1) - 1, p[2] || 1); };
+
+const _ilhaAgLista = (v) => (Array.isArray(v) ? v.filter(Boolean) : v && typeof v === 'object' ? Object.values(v).filter(Boolean) : []);
+
+// k-ésima ocorrência (k=0 é a própria data). Mensal/anual mantêm o DIA e, se o mês não o tem (31, 29/fev), usam o último dia do mês.
+function _ilhaAgOcorrencia(data, rec, k) {
+  const base = _ilhaAgParse(data);
+  if (!k) return _ilhaAgFmt(base);
+  const n = rec.intervalo * k;
+  if (rec.unidade === 'dia') { base.setDate(base.getDate() + n); return _ilhaAgFmt(base); }
+  if (rec.unidade === 'semana') { base.setDate(base.getDate() + 7 * n); return _ilhaAgFmt(base); }
+  const meses = rec.unidade === 'ano' ? 12 * n : n;
+  const alvo = new Date(base.getFullYear(), base.getMonth() + meses, 1);
+  const ultimo = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
+  alvo.setDate(Math.min(base.getDate(), ultimo));
+  return _ilhaAgFmt(alvo);
+}
+
+function _ilhaAgRecNorm(ev) {
+  const r = ev && ev.rec;
+  if (!r || typeof r !== 'object') return null;
+  const n = Math.floor(Number(r.intervalo));
+  if (!['dia', 'semana', 'mes', 'ano'].includes(r.unidade) || !(n >= 1)) return null;
+  return { tipo: r.tipo || 'personalizada', unidade: r.unidade, intervalo: Math.min(n, 99), ate: /^\d{4}-\d{2}-\d{2}$/.test(r.ate || '') ? r.ate : '' };
+}
+
+// Datas 'YYYY-MM-DD' do evento dentro de [de, ate], sem as ocorrências canceladas (excecoes).
+function _ilhaAgOcorrencias(ev, de, ate) {
+  const out = [], ex = (ev && ev.excecoes) || {}, rec = _ilhaAgRecNorm(ev);
+  if (!ev || !/^\d{4}-\d{2}-\d{2}$/.test(ev.data || '')) return out;
+  if (!rec) { if (ev.data >= de && ev.data <= ate && !ex[ev.data]) out.push(ev.data); return out; }
+  const fim = rec.ate && rec.ate < ate ? rec.ate : ate;
+  for (let k = 0; k < 5000; k++) { const dt = _ilhaAgOcorrencia(ev.data, rec, k); if (dt > fim) break; if (dt >= de && !ex[dt]) out.push(dt); }
+  return out;
+}
+
+
+const _ilhaAgHora = h => /^([01]\d|2[0-3]):[0-5]\d$/.test(h||'') ? h : '';
+const _ilhaAgInicio = e => new Date(e.data+'T'+(e.diaInteiro?'00:00':e.hi||'00:00')+':00').getTime();
+const _ilhaAgFim = e => new Date(e.data+'T'+(e.diaInteiro?'23:59':e.hf||e.hi||'23:59')+':00').getTime();
+function _ilhaAgRender(){
+  if(document.hidden) return;
+  _ilhaRender();
+  if(_ilha.aberta && _ilha.abaAtual==='agenda') _ilhaPainel();
+}
+async function _ilhaAgLer(forcar){
+  const agora=Date.now();
+  if(!_ilhaAgd.uid || _ilhaAgd.lendo || (!forcar && _ilhaAgd.pronta && agora-_ilhaAgd.t<_ILHA_AG_TTL) || agora-_ilhaAgd.tentativa<60000) return;
+  const g=_ilhaAgd.geracao, uid=_ilhaAgd.uid, chave=_ilhaAgChave();
+  _ilhaAgd.lendo=true; _ilhaAgd.tentativa=agora;
+  // Também limita tentativas após desligar/religar ou recarregar em caso de erro.
+  try{ localStorage.setItem(chave+'_tentativa',String(agora)); }catch(e){}
+  try{
+    const snap=await window._get(window._ref(window._db,'kanban/okr/calendario/eventos'));
+    if(g!==_ilhaAgd.geracao || uid!==_ilhaAgd.uid) return;
+    const de=_ilhaAgFmt(new Date()), fim=new Date(); fim.setDate(fim.getDate()+14);
+    const v=[];
+    Object.entries(snap.val()||{}).forEach(([id,ev])=>{
+      if(!ev || !_ilhaAgLista(ev.convidados).includes(uid) || (ev.tipo==='entrega' && ev.status==='entregue')) return;
+      _ilhaAgOcorrencias(ev,de,_ilhaAgFmt(fim)).forEach(data=>v.push({id,data,titulo:String(ev.titulo||'Sem título').slice(0,120),tipo:['reuniao','evento','lembrete','entrega'].includes(ev.tipo)?ev.tipo:'evento',hi:_ilhaAgHora(ev.hi),hf:_ilhaAgHora(ev.hf),diaInteiro:!!ev.diaInteiro,link:String(ev.link||'').slice(0,600)}));
+    });
+    v.sort((a,b)=>(a.data+(a.diaInteiro?'00:00':a.hi)).localeCompare(b.data+(b.diaInteiro?'00:00':b.hi)));
+    _ilhaAgd.v=v.slice(0,30); _ilhaAgd.t=Date.now(); _ilhaAgd.pronta=true;
+    try{ localStorage.setItem(chave,JSON.stringify({s:1,t:_ilhaAgd.t,v:_ilhaAgd.v})); }catch(e){}
+  }catch(e){ /* A cópia anterior continua útil sem rede. A tentativa tem intervalo mínimo. */ }
+  finally{ if(g===_ilhaAgd.geracao){ _ilhaAgd.lendo=false; _ilhaAgRender(); } }
+}
+function _ilhaAgContagem(){
+  const p=_ilhaPrefs(), c=p.agendaContagem;
+  if(!c) return null;
+  const ev=_ilhaAgd.v.find(e=>e.id===c.id && e.data===c.data);
+  if(ev && _ilhaAgInicio(ev)>Date.now()) return ev;
+  // Não apague a escolha antes da primeira cópia chegar.
+  if(_ilhaAgd.pronta){ delete p.agendaContagem; _ilhaSalvar(); }
+  return null;
+}
+function _ilhaAgDuracao(ms){
+  const min=Math.max(1,Math.ceil(ms/60000)), h=Math.floor(min/60), d=Math.floor(h/24);
+  return d ? d+'d '+h%24+'h' : h ? h+'h '+min%60+'min' : min+' min';
+}
+_ilhaRegistrar({
+  id:'agenda', ico:'📅', nome:'Agenda do Radar', padrao:false,
+  ligar(){
+    _ilhaAgd.geracao++; _ilhaAgd.uid=window._currentUser?.uid||'';
+    try{
+      const c=JSON.parse(localStorage.getItem(_ilhaAgChave())||'null');
+      if(c && c.s===1 && Number.isFinite(c.t) && Array.isArray(c.v)){
+        _ilhaAgd.v=c.v.filter(e=>e && typeof e.id==='string' && /^\d{4}-\d{2}-\d{2}$/.test(e.data||''));
+        _ilhaAgd.t=c.t; _ilhaAgd.pronta=true;
+      }
+      _ilhaAgd.tentativa=Number(localStorage.getItem(_ilhaAgChave()+'_tentativa'))||0;
+    }catch(e){}
+    _ilhaAgLer(false);
+    _ilhaAgd.tick=setInterval(()=>{ _ilhaAgLer(false); _ilhaAgRender(); },60000);
+    window.__ilhaAgendaTick=1;
+  },
+  desligar(){
+    clearInterval(_ilhaAgd.tick); _ilhaAgd.geracao++;
+    Object.assign(_ilhaAgd,{v:[],t:0,tentativa:0,tick:null,lendo:false,pronta:false,uid:''});
+    window.__ilhaAgendaTick=0;
+  },
+  candidatos(){
+    const agora=Date.now(), hoje=_ilhaAgFmt(new Date()), r=[];
+    let proximo=false;
+    _ilhaAgd.v.filter(e=>e.data===hoje && !e.diaInteiro && e.hi).forEach(e=>{
+      const inicio=_ilhaAgInicio(e), fim=_ilhaAgFim(e), n=Math.ceil((inicio-agora)/60000);
+      if(agora>=inicio && agora<=fim) r.push({prio:65,ico:'📅',txt:e.titulo,tempo:'agora',curto:'agora'});
+      else if(inicio>agora && !proximo){ proximo=true; if(n<=60) r.push({prio:n<=15?70:40,ico:'📅',txt:e.titulo,tempo:'em '+n+' min',curto:'em '+n+' min'}); }
+    });
+    const c=_ilhaAgContagem();
+    if(c){ const t=_ilhaAgDuracao(_ilhaAgInicio(c)-agora); r.push({prio:30,ico:'⏳',txt:c.titulo,tempo:t,curto:t}); }
+    return r;
+  },
+  aba:{
+    rot:'📅 Agenda',
+    html(){
+      const agora=Date.now(), hoje=_ilhaAgFmt(new Date()), amanha=new Date(); amanha.setDate(amanha.getDate()+1);
+      const c=_ilhaAgContagem(), app=(window.MareNotif?.APPS||[]).find(a=>a.id==='okr');
+      let h='', dia='';
+      _ilhaAgd.v.filter(e=>_ilhaAgFim(e)>=agora).slice(0,8).forEach(e=>{
+        if(dia!==e.data){ dia=e.data; const d=new Date(dia+'T00:00:00');
+          h+='<div class="ilha-op-h">'+esc(dia===hoje?'Hoje':dia===_ilhaAgFmt(amanha)?'Amanhã':d.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')+', '+dia.slice(8,10)+'/'+dia.slice(5,7))+'</div>'; }
+        const contando=!!c && c.id===e.id && c.data===e.data;
+        const radar=app ? app.href+'?evento='+encodeURIComponent(e.id)+'&data='+encodeURIComponent(e.data) : '';
+        const link=String(e.link||'');
+        h+=`<div class="ilha-op ilha-agenda" data-ag-id="${esc(e.id)}" data-ag-data="${esc(e.data)}"><small>${esc(e.diaInteiro?'Dia todo':e.hi+(e.hf?'–'+e.hf:''))}</small><b>${({reuniao:'🗓️',evento:'📌',lembrete:'🔔',entrega:'📦'})[e.tipo]||'📌'} ${esc(e.titulo)}</b><div class="ilha-acoes">`
+          + `<button type="button" data-ag-contar="${esc(e.id+'|'+e.data)}" aria-pressed="${contando}">${contando?'Parar contagem':'⏳ Contar'}</button>`
+          + (radar?`<a href="${esc(radar)}" target="_blank" rel="noopener">Abrir no Radar</a>`:'')
+          + (/^https:\/\/[^\s"'<>]+$/.test(link)?`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Entrar</a>`:'')+'</div></div>';
+      });
+      return (h||'<div class="ilha-vazio">Nenhum compromisso seu nos próximos 14 dias.</div>')
+        + `<div class="ilha-agenda ilha-acoes"><small>Atualizado há ${_ilhaAgd.t?Math.max(0,Math.floor((agora-_ilhaAgd.t)/60000)):0} min</small><button type="button" data-ag-atualizar>Atualizar</button></div>`;
+    },
+    clique(e){
+      const b=e.target.closest('button[data-ag-contar],button[data-ag-atualizar]'); if(!b) return false;
+      if(b.hasAttribute('data-ag-atualizar')) _ilhaAgLer(true);
+      else{
+        const ev=_ilhaAgd.v.find(v=>v.id+'|'+v.data===b.dataset.agContar), p=_ilhaPrefs(), c=p.agendaContagem;
+        if(ev){ if(c && c.id===ev.id && c.data===ev.data) delete p.agendaContagem; else p.agendaContagem={id:ev.id,data:ev.data}; _ilhaSalvar(); _ilhaAgRender(); }
+      }
+      return true;
+    }
+  }
+});
 // ── Módulo 🚨 Serviços: escutas existem somente enquanto o módulo está ligado ──
 const _ilhaStatus = {dados:{}, offs:[], geracao:0};
 const _ILHA_SERVICOS = [
@@ -38134,6 +38290,71 @@ _ilhaRegistrar({
   }
 });
 
+// ── Módulo 🤖 Agente Ágil: "Analisando…" e "Resposta pronta" com estado REAL (nada de progresso inventado) ──
+// A função da @menção grava kanban/usuarios/{uid}/agente_analisando/{commentId} = {squad, cardId, desde} enquanto o agente trabalha
+// e apaga ao terminar (functions/agente-agil-orquestrador/mentionTrigger.js). Uma escuta nesse nó pessoal, só com o módulo ligado.
+// "Resposta pronta" = a notificação que a mesma função já manda ("🤖 Agente Ágil respondeu sua menção"), não lida, dos últimos 30 min.
+// Marcador com mais de 10 min é ignorado (função caiu antes do `finally`). O tempo mostrado é o decorrido desde `desde` — medida real.
+const _ilhaAg = {m:{}, off:null, tick:null, vis:null};
+window.__ilhaAgTick = 0;
+function _ilhaAgAnalisando(){ const agora = Date.now();
+  return Object.entries(_ilhaAg.m||{}).map(([id,v])=>Object.assign({id}, (v&&typeof v==='object')?v:{}))
+    .filter(v=>{ const t = Date.parse(v.desde||''); return isFinite(t) && agora-t < 10*60*1000 && agora-t > -60000 && typeof v.cardId==='string' && typeof v.squad==='string'; })
+    .sort((a,b)=>String(b.desde).localeCompare(String(a.desde))); }
+function _ilhaAgProntas(){ const agora = Date.now();
+  return _ilha.notifs.filter(n=>n && !n.read && /^mention_/.test(String(n.id||'')) && !/^mention_auto_/.test(String(n.id||'')) && /Agente Ágil/.test(String(n.title||'')) && agora-Date.parse(n.ts||'') < 30*60*1000); }
+function _ilhaAgCard(v){ const c = v.squad===ACTIVE_SQUAD && typeof cards!=='undefined' ? cards.find(c=>c.id===v.cardId) : null;
+  return c ? String(c.title||'Card').slice(0,80) : (SQUAD_META_LIVE[v.squad] && SQUAD_META_LIVE[v.squad].label ? 'card em '+SQUAD_META_LIVE[v.squad].label : 'um card'); }
+function _ilhaAgDecorrido(v){ const s = Math.max(0, Math.floor((Date.now()-Date.parse(v.desde))/1000)); return s<60 ? s+' s' : Math.floor(s/60)+' min'; }
+function _ilhaAgRelogio(){
+  const precisa = !!_ilhaAg.off && !document.hidden && _ilhaAgAnalisando().length>0;
+  if(precisa && !_ilhaAg.tick) _ilhaAg.tick = setInterval(()=>{ if(!_ilhaAgAnalisando().length){ _ilhaAgRelogio(); _ilhaRender(); return; } _ilhaPilula(); }, 5000);
+  if(!precisa && _ilhaAg.tick){ clearInterval(_ilhaAg.tick); _ilhaAg.tick = null; }
+  window.__ilhaAgTick = _ilhaAg.tick ? 1 : 0;
+}
+_ilhaRegistrar({
+  id:'agente', ico:'🤖', nome:'Agente Ágil', padrao:false,
+  ligar(){
+    const u = window._currentUser; if(!u || _ilhaAg.off) return;
+    _ilhaAg.off = window._onValue(window._ref(window._db, 'kanban/usuarios/'+u.uid+'/agente_analisando'), snap=>{
+      if(!_ilhaAg.off) return;
+      const v = snap.val(); _ilhaAg.m = (v && typeof v==='object') ? v : {};
+      _ilhaAgRelogio(); _ilhaRender();
+    }) || (()=>{});
+    _ilhaAg.vis = ()=>_ilhaAgRelogio(); document.addEventListener('visibilitychange', _ilhaAg.vis);
+  },
+  desligar(){
+    const off = _ilhaAg.off; _ilhaAg.off = null; if(off) off();
+    _ilhaAg.m = {}; if(_ilhaAg.vis){ document.removeEventListener('visibilitychange', _ilhaAg.vis); _ilhaAg.vis = null; }
+    _ilhaAgRelogio();
+  },
+  candidatos(){
+    const r = [], an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+    if(pr.length) r.push({prio:75, ico:'🤖', curto:'resposta pronta', txt: pr.length===1 ? 'Resposta do agente pronta' : pr.length+' respostas do agente prontas'});
+    if(an.length) r.push({prio:55, ico:'🤖', curto:'analisando', tempo:_ilhaAgDecorrido(an[0]), txt:'Agente analisando'+(an.length>1?' ('+an.length+')':'')+' · '+_ilhaAgCard(an[0])});
+    return r;
+  },
+  aba:{
+    rot:'🤖 Agente',
+    html(){
+      const an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+      let h = '<div class="ilha-op-h">Analisando agora</div>';
+      h += an.length ? an.map(v=>`<div class="ilha-op"><b>🤖 ${esc(_ilhaAgCard(v))}</b><small>começou há ${esc(_ilhaAgDecorrido(v))}</small><div class="ilha-acoes"><button type="button" data-ag-card="${esc(v.squad+'|'+v.cardId)}">Abrir o card</button></div></div>`).join('')
+        : '<div class="ilha-vazio">Nenhuma menção ao agente em andamento.</div>';
+      h += '<div class="ilha-op-h">Respostas prontas</div>';
+      h += pr.length ? pr.slice(0,5).map(n=>`<div class="ilha-op"><b>${esc(n.title||'')}</b><small>${esc(n.sub||'')}${n.sub?' · ':''}${esc(timeAgo(n.ts))}</small><div class="ilha-acoes"><button type="button" data-ag-resp="${esc(n.id)}">Ver resposta</button></div></div>`).join('')
+        : '<div class="ilha-vazio">Nenhuma resposta nova do agente.</div>';
+      return h + '<p class="ilha-vazio">Mostra só o que o agente está fazendo de verdade: o aviso some quando ele termina.</p>';
+    },
+    clique(e){
+      const a = e.target.closest('[data-ag-card]');
+      if(a){ const i = a.dataset.agCard.indexOf('|'), sq = a.dataset.agCard.slice(0,i), cid = a.dataset.agCard.slice(i+1); _ilhaFechar(false); tmAbrirCard(sq, cid); return true; }
+      const r = e.target.closest('[data-ag-resp]');
+      if(r){ const n = _ilha.notifs.find(x=>String(x.id)===r.dataset.agResp); if(n){ _ilhaFechar(false); openNotif(n.id, n.cardId||'', n.squad||ACTIVE_SQUAD, n.commentId||'', n.type||'', '', ''); } return true; }
+      return false;
+    }
+  }
+});
 // ── Módulo ⭐ Favoritos: só neste aparelho; destinos sempre reconstruídos, nunca URLs salvas ──
 function _ilhaFavs(){
   const p = _ilhaPrefs(), vistos = new Set(), r = [];

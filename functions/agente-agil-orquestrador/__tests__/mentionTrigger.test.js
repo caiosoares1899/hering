@@ -534,3 +534,50 @@ test('processarMencaoDados: dryRun:false (ativado 2026-08-24) — escreve coment
   assert.equal(lista.length, 1);
   assert.equal(lista[0].text, 'Confirmado.');
 });
+
+// 🏝️ Ilha Dinâmica V2 (11/11/2026): marcador "analisando" REAL de quem mencionou — existe enquanto o agente trabalha e some no fim.
+test('marcador agente_analisando: existe durante o loop (squad, card, hora) e é apagado no fim', async () => {
+  const db = seedDb();
+  let duranteLoop = null;
+  const llmClient = {
+    async decide() {
+      duranteLoop = (await db.ref('kanban/usuarios/uid-humano/agente_analisando/cmA1').get()).val();
+      return { toolCalls: [], text: 'pronto' };
+    },
+  };
+  const outcome = await processarMencao(db, { cardId: 'c1', commentId: 'cmA1', comment: { uid: 'uid-humano', text: '@Agente Ágil resume' }, llmClient });
+  assert.equal(outcome.processed, true);
+  assert.ok(duranteLoop, 'marcador deveria existir enquanto o modelo trabalha');
+  assert.equal(duranteLoop.squad, SQUAD_ID);
+  assert.equal(duranteLoop.cardId, 'c1');
+  assert.match(duranteLoop.desde, /^\d{4}-\d{2}-\d{2}T/);
+  assert.deepEqual(Object.keys(duranteLoop).sort(), ['cardId', 'desde', 'squad'], 'sem texto do modelo no marcador');
+  assert.equal((await db.ref('kanban/usuarios/uid-humano/agente_analisando/cmA1').get()).exists(), false);
+});
+
+test('marcador agente_analisando: apagado mesmo se o loop lançar erro', async () => {
+  const db = seedDb();
+  const llmClient = { async decide() { throw new Error('falha simulada do modelo'); } };
+  await assert.rejects(processarMencao(db, { cardId: 'c1', commentId: 'cmA2', comment: { uid: 'uid-humano', text: '@Agente Ágil resume' }, llmClient }));
+  assert.equal((await db.ref('kanban/usuarios/uid-humano/agente_analisando/cmA2').get()).exists(), false);
+});
+
+test('marcador agente_analisando: não marca quando não processa (sem menção, idempotente) nem para a Automação', async () => {
+  const db = seedDb();
+  const ok = scriptedLlmClient([{ toolCalls: [], text: 'x' }]);
+  await processarMencao(db, { cardId: 'c1', commentId: 'cmA3', comment: { uid: 'uid-humano', text: 'sem chamar ninguém' }, llmClient: ok });
+  assert.equal((await db.ref('kanban/usuarios/uid-humano/agente_analisando').get()).exists(), false);
+  let viuAutomacao = null;
+  const llmAuto = { async decide() { viuAutomacao = (await db.ref('kanban/usuarios/automacao/agente_analisando').get()).exists(); return { toolCalls: [], text: 'ok' }; } };
+  await processarMencao(db, { cardId: 'c1', commentId: 'cmA4', comment: { uid: 'automacao', text: '@Agente Ágil analisa' }, llmClient: llmAuto });
+  assert.equal(viuAutomacao, false);
+});
+
+test('marcador agente_analisando: uid com formato inválido (caminho) não grava em lugar nenhum', async () => {
+  const db = seedDb();
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'ok' }]);
+  await processarMencao(db, { cardId: 'c1', commentId: 'cmA5', comment: { uid: 'x/notificacoes/y', text: '@Agente Ágil resume' }, llmClient });
+  const usuarios = db._data().kanban.usuarios || {};
+  assert.equal(JSON.stringify(usuarios).includes('agente_analisando'), false);
+  assert.equal(JSON.stringify(usuarios).includes('"desde"'), false);
+});

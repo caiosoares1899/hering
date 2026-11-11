@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica V2: 📅 Agenda do Radar e 🤖 Agente Ágil (SÓ DEV · kanban-dev v8.30.936-dev + functions agenteAgilMencao/agenteAgilMencaoDados) — 2026-11-11
+
+- 📅 Agenda do Radar (módulo desligado por padrão): só os MEUS compromissos (sou convidado/responsável) dos próximos 14 dias, com recorrência e exceções; cópia pessoal de 3 h (1 leitura de kanban/okr/calendario/eventos a cada 3 h, sem escuta aberta). Reunião em ≤ 15 min / acontecendo vira atividade; ⏳ contagem regressiva para um evento escolhido; aba com Abrir no Radar e Entrar (só https).
+- 🤖 Agente Ágil (módulo desligado por padrão): "Agente analisando · <card> · 42 s" com estado REAL — a função da @menção grava kanban/usuarios/{uid}/agente_analisando/{commentId} = {squad, cardId, desde} enquanto trabalha e apaga no fim (mesmo com erro); "Resposta do agente pronta" a partir da notificação que a função já manda. 1 escuta no nó pessoal, só com o módulo ligado. Precisa de deploy das funções agenteAgilMencao e agenteAgilMencaoDados.
+- Fronteira: nó novo escrito só pela função (regra existente de kanban/usuarios/$uid: só o dono lê), sem texto do modelo no marcador; resposta do agente (LLM) e títulos do calendário chegam ao DOM só com esc(); links só https.
+- Agenda: código e teste pelo Codex (docs/arezzo/testes/test_ilha_agenda.js, 25); Agente: código pelo Claude, teste pelo Codex (docs/arezzo/testes/test_ilha_agente.js, 26) + 3 testes novos em functions/agente-agil-orquestrador/__tests__/mentionTrigger.test.js. Regressões da ilha: 191 asserções em 5 baterias.
+
 ### Maré › 🏝️ Ilha Dinâmica V2: 🚨 Status dos serviços (SÓ DEV · kanban-dev v8.30.935-dev) — 2026-11-11
 
 - Módulo 🚨 Status dos serviços (desligado por padrão; Ilha → ⚙ Ajustes): lê os monitores que já existem (kanban/vtex_saude, github_saude, firebase_saude — os mesmos do selinho do Oceano). Incidente vira atividade 🚨 (GitHub Pages instável tem prioridade maior: é o Pages que serve o Maré); monitor sem leitura há mais de 20 min fica cinza e nunca vira alerta.
