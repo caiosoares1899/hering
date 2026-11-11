@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Oceano e Ilha: 3 achados do /monitorarbugs (SÓ DEV · oceano-dev v1.79 · kanban-dev v8.30.945)
+
+- **Oceano — contagem por pessoa (O4):** a marca de "já contei nesta aba" (`sessionStorage.oceano_contou`) era da aba, não da pessoa. Ana entrava, saía e Bia entrava na mesma aba: a abertura da Bia nunca contava, e as abas de apresentação só sumiam para ela depois de mais aberturas que o prometido. A chave agora leva o uid.
+- **Oceano — título preso:** com um produto aberto (Radar, Maré…), ir para `#conheca`/`#tecnica` fechava o produto, mas a aba do navegador continuava "Radar · Oceano". `rotearHash` agora devolve o título "Oceano", como os outros caminhos que fecham o produto.
+- **Ilha — introdução no celular:** preferência "ao passar o mouse" salva noutro aparelho deixava o passo "Quando a pílula aparece" sem nenhum rádio marcado (a opção do mouse some no toque). No toque essa preferência funciona como "Só com algo acontecendo"; agora esse rádio vem marcado.
+- Achados pela varredura do Codex (que não editou os dois arquivos porque o quadro ainda os listava como reservados por tarefas encerradas) e corrigidos pelo maestro. Teste: `docs/arezzo/testes/test_monitorarbugs_1112b.js` (os 3 falham na `main` e passam com a correção).
+
 ### 2026-11-11 · Radar: recorte Pra você preso ao trocar de torre (SÓ DEV)
 
 Sintoma: selecionar Marcos em até 14 dias e trocar para uma torre sem esses Marcos mantinha a lista vazia e o chip de origem desaparecia. Causa: _okrEntrarTorre limpava gerência e período, mas preservava o novo filtro pv. Correção: limpar pv na mudança de torre; navegar na mesma torre preserva a escolha. Cenário: digital com pv=marcos → comercial sem Marcos pessoais. Teste: docs/arezzo/testes/test_monitorarbugs_1112.js (Playwright preparado, execução pelo maestro).
