@@ -102,7 +102,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `functions/` | **Cloud Functions** (Node 22). `index.js` registra todas; cada subpasta é uma área (`agente-agil-orquestrador/`, `backup/`, `plantao/`, `okr/`, `metas/`, `spotify/`, `rules/` = testes das regras…). Único projeto Node do repo |
 | `mac/` | **App do Mac** (barra de menu + widget, Swift/SwiftUI) do mini painel: lê a função `oceanoResumo`. Projeto gerado com XcodeGen (`project.yml`); a chave fica em `Local.xcconfig`, fora do Git. Passo a passo em `mac/README.md`. **Nunca foi compilado** (escrito sem Xcode). |
 | `windows/` | **Ícone na bandeja do Windows** do mini painel (`oceano-bandeja.ps1` + `iniciar-oceano.cmd`): bolinha 🟢🟡🔴, menu com o resumo e aviso quando o estado piora. Roda pelo `cmd` (sem abrir o PowerShell); lê a chave de `%USERPROFILE%\chave-oceano.txt`. Passo a passo em `windows/README.md`. **Nunca rodou no Windows** (escrito sem ele). |
-| `scripts/` | `checar.js` (checagens que a CI roda), `mare-cli.js` (`status`/`bump`/`log`/`map`/`ship`…) `mapa.js` (gera o bloco automático do mapa) e `delegar.sh` (o maestro entrega um contrato ao Codex em worktree próprio, em segundo plano) |
+| `scripts/` | `checar.js` (checagens que a CI roda), `mare-cli.js` (`status`/`brief`/`daily`/`bump`/`log`/`map`/`symbols`/`slice`/`find`/`check-script`/`ship`), `mapa.js` (gera o bloco automático do mapa) e `delegar.sh` (o maestro entrega um contrato ao Codex em worktree próprio, em segundo plano) |
 | `vendor/firebase-10.14.1/` | SDK do Firebase servido localmente (o FortiGate da Hering bloqueia o CDN) |
 | `.claude/skills/` | Skills do Claude/Antigravity (`/subirproprod`, `/monitorarbugs`, `/seatualizar`, `/auditoriaseguranca`, `/plantaobug`…) |
 | `.agents/` | Regras e lista de skills do Antigravity (`rules/antigravity.md` = o que era só dele no `AGENTS.md`) |
@@ -114,6 +114,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `MAPA_DO_REPOSITORIO.md` | **O mapa**: como as peças se encaixam (diagramas), por pasta e as tabelas geradas do código (`scripts/mapa.js`) |
 | `COORDENACAO_AGENTES.md` | Como Claude e Antigravity dividem o repo; o **Quadro** (em andamento / escalado / pendente de deploy) |
 | `GUIA_DE_CODIGO.md` | Como escrever código e testes sem cair nas armadilhas conhecidas |
+| `CODE_SYMBOLS.md` | Índice automático completo de linhas (`<style>`, `<script>`, `const`s e funções `fn:Lxxxx`) de todas as páginas `-dev` e módulos `mare-*-dev.js`, gerado por `node scripts/mare-cli.js map` |
 | `OCEANO.md` | A família de produtos, nomes visíveis e fases |
 | `PLANTAO_BUGS.md` | Plantão de Bugs: fluxo, regras e runbook |
 | `HISTORICO_DOCUMENTACAO.md` | 📚 Histórico das rodadas de documentação (o que foi sincronizado em cada data) — saiu do `CLAUDE.md` em 04/11/2026 para não ser lido a cada sessão; a skill `/atualizardocumentacoes` é o procedimento |
@@ -139,7 +140,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 ## "Quero… onde mexo?"
 | Quero | Vá em |
 |---|---|
-| Corrigir/alterar algo do board | `kanban-dev.html` (nunca direto o prod) → achar a função em `CODE_MAP_FAST.md` |
+| Corrigir/alterar algo do board | `kanban-dev.html` (nunca direto o prod) → achar a função em `docs/CODE_SYMBOLS.md` / `CODE_MAP_FAST.md` |
 | Notificação nova | `MareNotif.TIPOS` em `mare-notif-dev.js` (+ `PUSH_TYPES` em `functions/` se for push) |
 | Dica nova | linha no `CATALOGO` de `mare-dicas-dev.js` |
 | Subir dev → prod | skill `/subirproprod` (`.claude/skills/subirproprod/promover.js`) |

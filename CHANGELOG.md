@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Infra Antigravity › Fast-Lane sem subagentes redundantes, docs/CODE_SYMBOLS.md e mare-cli v2 (SÓ DEV) — 2026-11-11
+
+- **Índice automático completo (`docs/CODE_SYMBOLS.md` + `CODE_MAP_FAST.md`)**: `node scripts/mare-cli.js map` agora extrai âncoras com travessão/tabela do `CODE_MAP.md` e gera `docs/CODE_SYMBOLS.md` com faixas exatas de `<style>`/`<script>`, `const`s de topo e todas as funções `fn:Lxxxx` dos 15 arquivos `-dev`.
+- **Contorno para arquivos > 2,6 MB e pipeline declarativo (`scripts/mare-cli.js`)**: adicionados subcomandos `brief` (`/seatualizar` em `<0,15s`), `daily` (monitoramento diário completo), `slice` e `find` (leitura/busca numerada para `kanban-dev.html` de 2,73 MB que excede o limite do `read_file`), flag `--code` em `check-script`, e campos declarativos `files`/`patches` + espelhamento de skills no `ship`.
+- **Regras e skills otimizadas (`.agents/rules/antigravity.md`, `seatualizar`, `subirproprod`, `atualizardocumentacoes`)**: adoção da Via Rápida Direta para tarefas de 1 arquivo (1–2 min), subagentes paralelos com `Model: 'flash'` para docs/testes, atualização para os 14 alvos de promoção e suíte `docs/arezzo/testes/test_mare_cli_automacao.js`.
+
 ### Maré › 🏝️ Ilha Dinâmica V2 completa: 📅 Agenda com todas as agendas da pessoa + Ajuda e dica (SÓ DEV · kanban-dev v8.30.938-dev · mare-dicas-dev ?v=13) — 2026-11-11
 
 - 📅 Agenda: passa a trazer TODAS as agendas em que a pessoa está (decisão do Caio, 11/11/2026) — convidado/responsável OU responsável de um Objetivo ativo que o evento abrange (mesmo critério de abrange/alvosDoEvento do Radar em functions/okr/calendario.js: reunião sem recorte = a torre toda; evento/lembrete só se vinculado). Lê kanban/okr/objetivos junto com o calendário no mesmo ciclo de 3 h (2 leituras, nenhuma escuta); cópia local v2.
