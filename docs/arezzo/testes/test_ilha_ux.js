@@ -31,7 +31,7 @@ const seed=()=>({kanban:{
     e3:{id:'e3',titulo:'Lançamento Black Friday',tipo:'evento',data:d(9),diaInteiro:true,convidados:['eve']}}}}
 }});
 
-let n=0,f=0; const t=(nome,ok,d)=>{n++; if(!ok) f++; console.log((ok?'✅ ':'❌ ')+nome+(ok?'':' → '+JSON.stringify(d).slice(0,300)));};
+let n=0,f=0; const t=(nome,ok,d)=>{n++; if(!ok) f++; console.log((ok?'✅ ':'❌ ')+nome+(ok?'':' → '+String(JSON.stringify(d)).slice(0,300)));};
 const PREF={on:true,modo:'sempre',principal:'timer',timer:true,notif:true,secundaria:true,reabrir:'ultima',aba:'resumo',mods:{op:true,fav:true,status:true,agenda:true,agente:true},favs:[{tipo:'produto',id:'okr'},{tipo:'squad',id:'dados'}]};
 (async()=>{
   fs.mkdirSync(out,{recursive:true});
@@ -65,7 +65,7 @@ const PREF={on:true,modo:'sempre',principal:'timer',timer:true,notif:true,secund
     await p.click('.ilha-tile[data-ir="timers"] .ilha-tile-acao'); await p.waitForTimeout(600);
     t('⏸ no bloco pausa o timer (sem trocar de aba)', await p.evaluate(()=>(_tmMeus.t1||{}).status==='pausado') && await p.locator('.ilha-aba.on[data-aba="resumo"]').count()===1, await p.evaluate(()=>(_tmMeus.t1||{}).status));
     await p.focus('.ilha-tile[data-ir="notif"]'); await p.keyboard.press('Enter'); await p.waitForTimeout(200);
-    t('Enter num bloco abre o módulo (Avisos)', await p.locator('.ilha-aba.on[data-aba="notif"]').count()===1 && await p.locator('.ilha-cab h2').textContent().then(x=>/Avisos/.test(x)));
+    t('Enter num bloco abre o módulo (Notificações)', await p.locator('.ilha-aba.on[data-aba="notif"]').count()===1 && await p.locator('.ilha-cab h2').textContent().then(x=>/Notificações/.test(x)));
     await p.click('.ilha-aba[data-aba="ajustes"]'); await p.waitForTimeout(200);
     t('Ajustes sem rolagem lateral (bug: rótulos cortados pela esquerda)', await semLateral(p) && await p.evaluate(()=>document.querySelector('#ilha-painel').scrollLeft===0));
     t('Ajustes em grupos com interruptores', await p.locator('.ilha-cfg-grupo').count()===2 && await p.locator('#ilha-cfg-mod-agenda').evaluate(e=>getComputedStyle(e).appearance==='none'));
@@ -90,5 +90,32 @@ const PREF={on:true,modo:'sempre',principal:'timer',timer:true,notif:true,secund
     await p.screenshot({path:`${out}/ux_${w}_${tema}_resumo.png`});
     t(`${w}/${tema}: sem erro de JS`, !errs.length, errs); await ctx.close();
   }
+  // 3) larguras intermediárias (notebook pequeno, tablet com toque): o painel fica inteiro na tela
+  for(const [w,h,toque] of [[834,1112,true],[1024,768,false],[1100,800,false]]){
+    const ctx=await b.newContext({viewport:{width:w,height:h},hasTouch:toque}); await fake.install(ctx,seed());
+    await ctx.addInitScript(pref=>{ try{ localStorage.setItem('mare_ilha_eve_dev',JSON.stringify(pref)); }catch(e){} },PREF);
+    const p=await ctx.newPage(); await p.goto(base+'/kanban-dev.html?squad=site'); await p.waitForFunction(()=>!!window.__authCb);
+    await p.evaluate(u=>window.__authCb(u),U); await p.waitForTimeout(3500); await p.evaluate(()=>document.querySelectorAll('.ov.open').forEach(o=>o.classList.remove('open')));
+    await p.click('#ilha-btn'); await p.waitForTimeout(400);
+    const r=await p.evaluate(()=>{ const a=document.getElementById('ilha-painel').getBoundingClientRect(); return {l:Math.round(a.left), r:Math.round(a.right), iw:innerWidth}; });
+    t(`${w}px: painel inteiro na tela (de ${r.l} a ${r.r})`, r.l>=8 && r.r<=r.iw-8, r);
+    if(toque){ const peq=await p.$$eval('#ilha-painel .ilha-acoes button, #ilha-painel .ilha-tile-acao, #ilha-fixar',xs=>xs.filter(x=>{const q=x.getBoundingClientRect(); return q.width && (q.width<44||q.height<44);}).length);
+      t(`${w}px com toque: alvos ≥ 44 px`, peq===0, peq); }
+    await ctx.close();
+  }
+  // 4) quem já usava a ilha (aba salva = timers, sem a marca do redesenho) vê o Resumo uma vez; depois vale a última aba de novo
+  { const ctx=await b.newContext({viewport:{width:1280,height:860}}); await fake.install(ctx,seed());
+    await ctx.addInitScript(()=>{ try{ if(!sessionStorage.getItem('jaSemeou')){ localStorage.setItem('mare_ilha_eve_dev',JSON.stringify({on:true,modo:'sempre',timer:true,notif:true,reabrir:'ultima',aba:'timers',mods:{agente:true}})); sessionStorage.setItem('jaSemeou','1'); } }catch(e){} });
+    const p=await ctx.newPage(); await p.goto(base+'/kanban-dev.html?squad=site'); await p.waitForFunction(()=>!!window.__authCb);
+    await p.evaluate(u=>window.__authCb(u),U); await p.waitForTimeout(3500); await p.evaluate(()=>document.querySelectorAll('.ov.open').forEach(o=>o.classList.remove('open')));
+    await p.click('#ilha-btn'); await p.waitForTimeout(300);
+    t('quem já usava: 1ª abertura depois do redesenho mostra o Resumo', await p.locator('.ilha-aba.on[data-aba="resumo"]').count()===1);
+    await p.click('.ilha-aba[data-aba="timers"]'); await p.keyboard.press('Escape'); await p.waitForTimeout(200); await p.click('#ilha-btn'); await p.waitForTimeout(300);
+    t('…e depois volta a abrir na última aba usada', await p.locator('.ilha-aba.on[data-aba="timers"]').count()===1);
+    // "Analisando · N s" anda com o painel aberto e o foco dentro dele
+    await p.click('.ilha-aba[data-aba="resumo"]'); await p.focus('.ilha-aba[data-aba="resumo"]');
+    const a1=await p.locator('[data-vivo="ag"]').textContent(); await p.waitForTimeout(5600); const a2=await p.locator('[data-vivo="ag"]').textContent();
+    t('"Analisando" anda com o painel aberto', a1!==a2 && /Analisando · \d+ s/.test(a2), {a1,a2});
+    await ctx.close(); }
   await b.close(); console.log(`\n${n} asserções, ${f} falha(s)`); process.exit(f?1:0);
 })();
