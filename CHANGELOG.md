@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Oceano — abas de apresentação fora da navegação diária (O4 da consultoria) (SÓ DEV · oceano-dev v1.78) — 2026-11-11
+
+- "Conheça o Oceano" e "Por baixo do casco" são material de apresentação, lido uma vez. Para quem já abriu o Oceano **mais de 5 vezes neste aparelho** (contagem por pessoa, 1 por sessão), a barra de abas some do Início e as duas viram **links no rodapé**; a Ajuda ganhou a pergunta "Onde foram parar…?" com os dois links.
+- `#conheca` e `#tecnica` continuam funcionando, e quem está numa dessas abas vê a barra para voltar a "Meus produtos". Quem abre o Oceano pela primeira vez (ou mostra para alguém novo) vê tudo como antes.
+- Teste: `docs/arezzo/testes/test_oceano_abas_enxutas.js` (10/10).
+
 ### Travessia — rodada de UI/UX: mais Marine Glass, menos "cara de IA" (SÓ DEV · travessia-dev.html) — 2026-11-11
 
 Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O que estava ruim → o que ficou:
