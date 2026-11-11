@@ -138,6 +138,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 ### Pendente de deploy (só o Caio roda)
 
+> ✅ **11/11/2026:** o Caio publicou `agenteAgilMencao` e `agenteAgilMencaoDados` (marcador "analisando" da Ilha, PR #1699, tag `agente-agil-v3`).
+>
 > ✅ **Promoção #1678 (10/11/2026):** o Caio publicou as 5 funções do Agente Ágil com o conhecimento regenerado (Sonar, período padronizado, modal do card).
 >
 > 📝 **Na próxima promoção (antes de `npm run conhecimento`):** os títulos do Sonar e do modal do card no `CHANGELOG.md` dizem `kanban v8.30.921 · oceano v1.68 · mare-sonar.js ?v=3`, mas o que foi ao ar no #1678 é **kanban v8.30.922 · oceano v1.69 · mare-sonar.js ?v=4**. Corrigir junto com a regeneração do conhecimento (mudar só o título agora exigiria outro deploy das funções).
@@ -148,6 +150,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 💬 Autor do comentário preso a quem está logado: `.validate` em `squads/$squadId/dados/card_comments/$cardId/$commentId/uid`. ⚠️ **Ordem obrigatória:** (1) promover o kanban com `copiadoDe` ao duplicar (≥ v8.30.937); (2) esperar 10 min depois do Pages publicar (abas velhas recarregam); (3) rodar `docs/arezzo/testes/console_comentarios_pre_regra.js` no kanban.html de prod (migra comentários legados); (4) resync + deploy; (5) rodar `docs/arezzo/testes/console_comentarios_pos_regra.js` no kanban-dev?squad=dev. | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 11/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 

@@ -6829,7 +6829,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.937-dev</div>
+<div class="version">v8.30.938-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7182,7 +7182,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 </script>
 <script src="mare-notif-dev.js?v=41"></script>
 <script src="mare-metas-dev.js?v=19"></script>
-<script src="mare-dicas-dev.js?v=12"></script>
+<script src="mare-dicas-dev.js?v=13"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
 
@@ -29084,7 +29084,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre o Sonar, a busca do Oceano (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
-    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>⏲ Timers → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, você navega entre as abas <b>Timers</b> (pausar, continuar, iniciar, encerrar ou abrir o card), <b>Notificações</b> (as mesmas do sino; enquanto a ilha estiver ligada, ela substitui o 🔔 do topo) e <b>⚙ Ajustes</b> (quando aparecer, atividade principal, aba ao reabrir, módulos ativos e modo de compartilhar tela; o 📌 mantém aberta). Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).' },
+    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>⏲ Timers → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, você navega entre as abas <b>Timers</b> (pausar, continuar, iniciar, encerrar ou abrir o card), <b>Notificações</b> (as mesmas do sino; enquanto a ilha estiver ligada, ela substitui o 🔔 do topo) e <b>⚙ Ajustes</b> (quando aparecer, atividade principal, aba ao reabrir, módulos ativos e modo de compartilhar tela; o 📌 mantém aberta). Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).\n\n<b>Módulos</b> (Ilha → ⚙ Ajustes; todos desligados por padrão, por aparelho): 🔀 Combine atividade principal + secundária. ⭐ <b>Favoritos:</b> até 3 atalhos para produto, squad ou card aberto. 🚨 <b>Status dos serviços:</b> VTEX, GitHub e Firebase; incidente vira alerta, com prioridade para GitHub Pages instável. 📅 <b>Agenda do Radar:</b> seus compromissos dos próximos 14 dias, inclusive reuniões da torre dos seus Objetivos ativos; escolha um para ⏳ contagem regressiva. Atualiza a cada 3 h ou no botão "Atualizar". 🤖 <b>Agente Ágil:</b> mostra "analisando" enquanto ele responde sua @menção e avisa "resposta pronta". 🛡️ <b>Operação:</b> só ADM, com Guardião e falhas de backup.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
@@ -38097,6 +38097,31 @@ const _ilhaAgParse = (s) => { const p = String(s || '').slice(0, 10).split('-').
 
 const _ilhaAgLista = (v) => (Array.isArray(v) ? v.filter(Boolean) : v && typeof v === 'object' ? Object.values(v).filter(Boolean) : []);
 
+// O evento diz respeito a este Objetivo? Vínculo explícito vence (vale em qualquer torre); senão, dentro da torre do evento (global = todas), vale o recorte:
+// TAGS (Objetivo com alguma das tags) ou GERÊNCIAS (Objetivo numa delas) — um OU o outro. Com algum recorte (Objetivos/tags/gerências) e nenhum acerto = fora.
+// Sem nenhum recorte: reunião = a torre toda; evento/lembrete só se vinculado.
+function _ilhaAgAbrange(ev, o) {
+  const ids = _ilhaAgLista(ev.objetivoIds), tags = _ilhaAgLista(ev.tagIds), areas = _ilhaAgLista(ev.areaIds);
+  if (ids.includes(o.id)) return 'vinculo';
+  const torre = o.torre || 'digital';
+  if (ev.torre && ev.torre !== torre) return '';
+  if (tags.length && _ilhaAgLista(o.tagIds).some((t) => tags.includes(t))) return 'tag';
+  if (areas.length && areas.includes(o.areaId || 'geral')) return 'gerencia';
+  if (ids.length || tags.length || areas.length) return '';
+  return ev.tipo === 'reuniao' ? 'torre' : '';
+}
+
+// Quem avisar: os responsáveis dos Objetivos ATIVOS que o evento abrange (mesmo critério da pauta). Devolve {uid: [títulos dos Objetivos]}.
+function _ilhaAgAlvosDoEvento(ev, objetivos) {
+  const out = {};
+  Object.entries(objetivos || {}).forEach(([id, o0]) => {
+    const o = o0 && { ...o0, id: o0.id || id };
+    if (!o || o.arquivado || !_ilhaAgAbrange(ev, o)) return;
+    _ilhaAgLista(o.responsaveis).forEach((uid) => { (out[uid] = out[uid] || []).push(o.titulo || ''); });
+  });
+  return out;
+}
+
 // k-ésima ocorrência (k=0 é a própria data). Mensal/anual mantêm o DIA e, se o mês não o tem (31, 29/fev), usam o último dia do mês.
 function _ilhaAgOcorrencia(data, rec, k) {
   const base = _ilhaAgParse(data);
@@ -38146,17 +38171,20 @@ async function _ilhaAgLer(forcar){
   // Também limita tentativas após desligar/religar ou recarregar em caso de erro.
   try{ localStorage.setItem(chave+'_tentativa',String(agora)); }catch(e){}
   try{
-    const snap=await window._get(window._ref(window._db,'kanban/okr/calendario/eventos'));
+    const [snap, objetivos]=await Promise.all([
+      window._get(window._ref(window._db,'kanban/okr/calendario/eventos')),
+      window._get(window._ref(window._db,'kanban/okr/objetivos'))
+    ]);
     if(g!==_ilhaAgd.geracao || uid!==_ilhaAgd.uid) return;
     const de=_ilhaAgFmt(new Date()), fim=new Date(); fim.setDate(fim.getDate()+14);
     const v=[];
     Object.entries(snap.val()||{}).forEach(([id,ev])=>{
-      if(!ev || !_ilhaAgLista(ev.convidados).includes(uid) || (ev.tipo==='entrega' && ev.status==='entregue')) return;
+      if(!ev || (!_ilhaAgLista(ev.convidados).includes(uid) && !_ilhaAgAlvosDoEvento(ev,objetivos.val())[uid]) || (ev.tipo==='entrega' && ev.status==='entregue')) return;
       _ilhaAgOcorrencias(ev,de,_ilhaAgFmt(fim)).forEach(data=>v.push({id,data,titulo:String(ev.titulo||'Sem título').slice(0,120),tipo:['reuniao','evento','lembrete','entrega'].includes(ev.tipo)?ev.tipo:'evento',hi:_ilhaAgHora(ev.hi),hf:_ilhaAgHora(ev.hf),diaInteiro:!!ev.diaInteiro,link:String(ev.link||'').slice(0,600)}));
     });
     v.sort((a,b)=>(a.data+(a.diaInteiro?'00:00':a.hi)).localeCompare(b.data+(b.diaInteiro?'00:00':b.hi)));
     _ilhaAgd.v=v.slice(0,30); _ilhaAgd.t=Date.now(); _ilhaAgd.pronta=true;
-    try{ localStorage.setItem(chave,JSON.stringify({s:1,t:_ilhaAgd.t,v:_ilhaAgd.v})); }catch(e){}
+    try{ localStorage.setItem(chave,JSON.stringify({s:2,t:_ilhaAgd.t,v:_ilhaAgd.v})); }catch(e){}
   }catch(e){ /* A cópia anterior continua útil sem rede. A tentativa tem intervalo mínimo. */ }
   finally{ if(g===_ilhaAgd.geracao){ _ilhaAgd.lendo=false; _ilhaAgRender(); } }
 }
@@ -38179,7 +38207,7 @@ _ilhaRegistrar({
     _ilhaAgd.geracao++; _ilhaAgd.uid=window._currentUser?.uid||'';
     try{
       const c=JSON.parse(localStorage.getItem(_ilhaAgChave())||'null');
-      if(c && c.s===1 && Number.isFinite(c.t) && Array.isArray(c.v)){
+      if(c && c.s===2 && Number.isFinite(c.t) && Array.isArray(c.v)){
         _ilhaAgd.v=c.v.filter(e=>e && typeof e.id==='string' && /^\d{4}-\d{2}-\d{2}$/.test(e.data||''));
         _ilhaAgd.t=c.t; _ilhaAgd.pronta=true;
       }

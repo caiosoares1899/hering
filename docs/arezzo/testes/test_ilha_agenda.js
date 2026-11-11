@@ -14,15 +14,18 @@ const seed = ()=>({kanban:{usuarios:{eve:{uid:'eve',nome:'Eve',email:U.email,ini
 const NOW = new Date(2026,10,11,10,0,0).getTime();
 const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const day=n=>{const d=new Date(NOW);d.setDate(d.getDate()+n);return fmt(d);};
-const EVENTS='kanban/okr/calendario/eventos';
+const EVENTS='kanban/okr/calendario/eventos', OBJECTIVES='kanban/okr/objetivos';
 const agendaSeed=()=>{
   const s=seed(), ev=(titulo,n,extra={})=>({titulo,data:day(n),tipo:'evento',hi:'09:00',hf:'10:00',convidados:['eve'],...extra});
-  s.kanban.okr={calendario:{eventos:{
+  s.kanban.okr={objetivos:{o1:{id:'o1',torre:'digital',responsaveis:['eve'],titulo:'Meta'},o2:{id:'o2',torre:'digital',responsaveis:['outro'],titulo:'Outra meta'}},calendario:{eventos:{
     e1:ev('Reunião de hoje',0,{tipo:'reuniao',hi:'10:10',hf:'10:40'}),
     e2:ev('Reunião de outra pessoa',0,{convidados:['outro']}),
     e3:ev('Semanal',-21,{rec:{unidade:'semana',intervalo:1,ate:day(14)},excecoes:{[day(0)]:true}}),
     e4:ev('Entrega concluída',1,{tipo:'entrega',status:'entregue'}),
-    e5:ev('<img src=x onerror=alert(1)>Offsite',3,{link:'javascript:alert(1)'})
+    e5:ev('<img src=x onerror=alert(1)>Offsite',3,{link:'javascript:alert(1)'}),
+    e6:ev('Reunião da torre',4,{tipo:'reuniao',torre:'digital',convidados:[]}),
+    e7:ev('Evento da torre',4,{torre:'digital',convidados:[]}),
+    e8:ev('Reunião de outro objetivo',4,{tipo:'reuniao',torre:'digital',objetivoIds:['o2'],convidados:[]})
   }}};return s;
 };
 let assertions=0,failures=0;
@@ -47,6 +50,7 @@ const tab=async(p,id)=>{
   await p.locator(`.ilha-aba[data-aba="${id}"]`).evaluate(e=>e.click());
 };
 const count=(p,tipo='get')=>p.evaluate(({tipo,EVENTS})=>window.__agendaCalls[tipo][EVENTS]||0,{tipo,EVENTS});
+const objectives=(p,tipo='get')=>p.evaluate(({tipo,OBJECTIVES})=>window.__agendaCalls[tipo][OBJECTIVES]||0,{tipo,OBJECTIVES});
 const choose=async p=>{await tab(p,'ajustes');await p.selectOption('#ilha-cfg-principal','agenda');};
 const row=(p,id)=>p.locator(`[data-ag-id="${id}"]`).first();
 (async()=>{
@@ -64,18 +68,21 @@ const row=(p,id)=>p.locator(`[data-ag-id="${id}"]`).first();
     check('Agenda existe desmarcada',await p.locator('#ilha-cfg-mod-agenda').count()===1 && !await p.isChecked('#ilha-cfg-mod-agenda'));
     check('desligada: zero leituras de calendário',await p.evaluate(()=>Object.entries(window.__agendaCalls.get).filter(([k])=>k.includes('okr/calendario')).every(([,n])=>n===0)));
     await p.check('#ilha-cfg-mod-agenda');await p.waitForFunction(()=>_ilhaAgd.pronta);
-    check('uma leitura sem escuta',await count(p)===1 && await count(p,'onValue')===0);
+    check('um get por nó sem escuta',await count(p)===1 && await objectives(p)===1 && await count(p,'onValue')===0 && await objectives(p,'onValue')===0);
     await tab(p,'agenda');
-    check('inclui apenas convidados e entregas pendentes',await row(p,'e1').count()===1 && await row(p,'e3').count()===1 && await row(p,'e5').count()===1 && await row(p,'e2').count()===0 && await row(p,'e4').count()===0);
+    check('mantém convidados e entregas pendentes',await row(p,'e1').count()===1 && await row(p,'e3').count()===1 && await row(p,'e5').count()===1 && await row(p,'e2').count()===0 && await row(p,'e4').count()===0);
+    check('reunião sem recorte inclui responsável da torre',await row(p,'e6').count()===1);
+    check('evento sem vínculo e reunião de outro objetivo ficam fora',await row(p,'e7').count()===0 && await row(p,'e8').count()===0);
+    check('cópia s:2 guarda só compromissos',await p.evaluate(()=>{const c=JSON.parse(localStorage.getItem(_ilhaAgChave()));return c.s===2 && !('objetivos' in c) && c.v.every(e=>!('responsaveis' in e));}));
     check('recorrência pula exceção e mantém próxima semana',await row(p,'e3').getAttribute('data-ag-data')===day(7));
     await choose(p);
     check('reunião começa em 10 min',await p.locator('#ilha-titulo').textContent()==='Reunião de hoje' && await p.locator('#ilha-tempo').textContent()==='em 10 min');
     await p.clock.fastForward(11*60000);
     check('11 min depois: agora',await p.locator('#ilha-tempo').textContent()==='agora');
     await p.reload();await login(p);await p.waitForFunction(()=>_ilhaAgd.pronta);
-    check('reload usa cópia válida',await count(p)===0);
+    check('reload usa cópia válida',await count(p)===0 && await objectives(p)===0);
     await p.evaluate(()=>{_ilhaAgd.t-=3*3600000+60000;_ilhaAgd.tentativa=0;});await p.clock.fastForward(61000);await p.waitForFunction(()=>!_ilhaAgd.lendo);
-    check('cópia vence ligada: uma leitura nova',await count(p)===1);
+    check('cópia vence ligada: um get novo por nó',await count(p)===1 && await objectives(p)===1);
     await tab(p,'agenda');
     check('título hostil é texto', (await row(p,'e5').textContent()).includes('<img src=x onerror=alert(1)>Offsite') && await p.locator('#ilha-painel img').count()===0);
     check('javascript não oferece Entrar',await row(p,'e5').getByRole('link',{name:'Entrar',exact:true}).count()===0);
@@ -92,13 +99,17 @@ const row=(p,id)=>p.locator(`[data-ag-id="${id}"]`).first();
     await p.clock.fastForward(60000);await tab(p,'agenda');const antes=await count(p);
     await p.locator('[data-ag-atualizar]').evaluate(e=>e.click());await p.waitForFunction(()=>!_ilhaAgd.lendo);
     await p.locator('[data-ag-atualizar]').evaluate(e=>e.click());
-    check('duas atualizações: uma leitura extra',await count(p)===antes+1);
+    check('duas atualizações: um get extra por nó',await count(p)===antes+1 && await objectives(p)===antes+1);
+    await p.evaluate(async()=>{await window._update(window._ref(window._db,'kanban/okr/objetivos/o1'),{arquivado:true});});
+    await p.clock.fastForward(60000);await tab(p,'agenda');
+    await p.locator('[data-ag-atualizar]').evaluate(e=>e.click());await p.waitForFunction(()=>!_ilhaAgd.lendo);
+    check('objetivo arquivado deixa de incluir reunião da torre',await row(p,'e6').count()===0 && await row(p,'e5').count()===1);   // e1 já terminou a esta altura (10:40); e5 segue no futuro
     await row(p,'e5').locator('[data-ag-contar]').evaluate(e=>e.click());await choose(p);await p.check('#ilha-cfg-privado');
     check('privado oculta título na principal e secundária',await p.evaluate(()=>{const titulo='<img src=x onerror=alert(1)>Offsite';return !document.getElementById('ilha-titulo').textContent.includes(titulo) && !document.getElementById('ilha-sec').textContent.includes(titulo) && document.getElementById('ilha-titulo').textContent==='';}));
     await p.uncheck('#ilha-cfg-mod-agenda');
     check('desligar elimina intervalo e aba',await p.evaluate(()=>window.__ilhaAgendaTick===0) && await p.locator('.ilha-aba[data-aba="agenda"]').count()===0);
-    const desligado=await count(p);await p.evaluate(()=>{_ilhaAgd.t=0;_ilhaAgd.tentativa=0;});await p.clock.fastForward(61000);   // envelhece a cópia sem saltar horas (salto grande recarrega a tela velha)
-    check('desligado não atualiza cópia',await count(p)===desligado);
+    const desligado=await count(p), objetivosDesligado=await objectives(p);await p.evaluate(()=>{_ilhaAgd.t=0;_ilhaAgd.tentativa=0;});await p.clock.fastForward(61000);   // envelhece a cópia sem saltar horas (salto grande recarrega a tela velha)
+    check('desligado não atualiza cópia',await count(p)===desligado && await objectives(p)===objetivosDesligado);
     const mobile=await session(true), m=mobile.p;await tab(m,'ajustes');await m.check('#ilha-cfg-mod-agenda');await m.waitForFunction(()=>_ilhaAgd.pronta);await tab(m,'agenda');
     check('390px toque: sem rolagem lateral',await m.evaluate(()=>document.documentElement.scrollWidth<=innerWidth && document.getElementById('ilha-painel').scrollWidth<=document.getElementById('ilha-painel').clientWidth));
     check('ações Agenda têm 44px',await m.locator('.ilha-agenda button,.ilha-agenda a').evaluateAll(es=>es.length>0 && es.every(e=>e.getBoundingClientRect().height>=44)));

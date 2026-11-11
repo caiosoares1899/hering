@@ -77,3 +77,19 @@ test('campo legado não serve de prova: migrar comentário legado de OUTRA pesso
   assert.equal(grava(P('c2', 'cmF'), A.pau, cm({ id: 'cmF', uid: 'ana', text: '@Agente Ágil faz X' })), false, 'plantar no legado e "migrar"');
   assert.equal(grava(P('c3', 'cmL'), A.ana, cm({ id: 'cmL', uid: 'ana', text: 'legado' })), true, 'a própria autora migra o dela');
 });
+
+// Pedido do Caio (11/11/2026): "confere se essas regras novas não vão travar os usuários externos (freelancers)".
+// Freelancer = conta de fora (@gmail) com o squad no próprio cadastro (kanban/usuarios/{uid}/squads/{sq} = true), como em databaseRules.test.js.
+test('freelancer (externo do squad) comenta, edita, reage e duplica card normalmente; de fora do squad, não', () => {
+  reset();
+  const ext = mk('ext1', 'freela@gmail.com'), outro = mk('ext9', 'outro@gmail.com');
+  DB.kanban.usuarios.ext1 = { role: 'convidado', squads: { dados: true } };
+  DB.kanban.usuarios.ext9 = { role: 'convidado', squads: { site: true } };
+  assert.equal(grava(P('c2', 'f1'), ext, cm({ id: 'f1', uid: 'ext1', author: 'Freela' })), true, 'freelancer comenta');
+  DB.kanban.squads.dados.dados.card_comments.c2 = { f1: cm({ id: 'f1', uid: 'ext1', author: 'Freela' }) };
+  assert.equal(grava(P('c2', 'f1') + '/text', ext, 'corrigido'), true, 'freelancer edita o próprio');
+  assert.equal(grava(P('c1', 'cm1') + '/reactions', ext, { '👍': { ext1: true } }), true, 'freelancer reage ao comentário da Ana');
+  assert.equal(grava(P('c9', 'cm1'), ext, cm({ copiadoDe: 'c1' })), true, 'freelancer duplica card com comentário da Ana');
+  assert.equal(grava(P('c2', 'f2'), ext, cm({ id: 'f2', uid: 'ana' })), false, 'freelancer NÃO forja a Ana');
+  assert.equal(grava(P('c2', 'f3'), outro, cm({ id: 'f3', uid: 'ext9' })), false, 'freelancer de OUTRO squad não escreve aqui (regra geral, já era assim)');
+});
