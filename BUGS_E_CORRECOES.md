@@ -87,6 +87,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Comentários: autor (uid) preso a quem está logado — regra do banco + cópia fiel ao duplicar card (SÓ DEV · kanban-dev v8.30.937-dev · database.rules.json)
+
+- **Brecha:** card_comments herdava só a regra geral de `dados`: qualquer pessoa com acesso ao squad gravava comentário com o uid de OUTRA pessoa. A função da @menção usa esse uid para notificar e (desde o #1699) para o marcador "analisando" da Ilha.
+- **Regra nova** (`squads/$squadId/dados/card_comments/$cardId/$commentId/uid/.validate`): o uid só nasce junto com o comentário e tem de ser o de quem está logado; uid de comentário existente nunca muda. Exceções: ids de sistema (system, automacao, assistente_ferias); CÓPIA FIEL ao duplicar card (`copiadoDe` + mesmo id, autor e texto na origem — nó novo ou campo legado); migração do campo legado do próprio card. A regra mora no campo `uid` porque `.validate` de um nó não roda quando só um filho é gravado.
+- **kanban-dev:** duplicar card grava `copiadoDe` em cada comentário copiado (e loga no console se a cópia falhar, em vez de engolir o erro).
+- **Ordem do deploy:** regras SÓ depois da promoção do kanban com `copiadoDe` (senão duplicar card em prod perde os comentários de outras pessoas).
+- **Limites conhecidos (já existiam):** editar o texto de comentário alheio continua possível; `author`/`init` exibidos são texto livre; comentário pode ser gravado sem uid (fica sem autor; a função não notifica nem marca); ids de sistema seguem forjáveis.
+- **Testes:** functions/rules/__tests__/comentariosRules.test.js (simulador com `parent()` novo em functions/rules/rulesSim.js), docs/arezzo/testes/test_duplicar_comentarios.js (6), functions 1205/0.
+
 ### 2026-11-10 · Ajuda in-app (/atualizarhelpcontent): sincronização de Sonar, Ilha Dinâmica, Período padronizado, Baú no Marco, FAQ do Oceano e #hlp-faq18 do Agente
 
 - **Maré (`kanban-dev.html` · `HELP_CONTENT`)**: verbete `Sonar (Ctrl+K)` detalhado com abas/prefixos (`b:`, `r:`, `s:`, `a:`, `Ctrl+Enter`) e filtro `meus`/`minhas` (`Destacar meus N cards no board` / `Ver N cards no board` + Objetivos/Marcos no Radar); verbete `Timer e Produtividade` acrescido da seção `🏝️ Ilha Dinâmica` (`⏲ Timers → 🏝️ Ilha Dinâmica`, abas Timers/Notificações/Ajustes e alargamento por ~6 s).

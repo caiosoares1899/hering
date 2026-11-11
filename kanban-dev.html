@@ -6829,7 +6829,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.936-dev</div>
+<div class="version">v8.30.937-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18019,13 +18019,16 @@ function _duplicarCardObj(card, opts){
   // não atrasa a duplicação em si).
   const _srcComments = novo.comments;
   delete novo.comments;
+  // Cada comentário copiado leva `copiadoDe` (id do card de origem): a regra do banco (11/11/2026) só aceita comentário com o uid de
+  // OUTRA pessoa se ele for cópia fiel (mesmo autor e texto) do comentário de mesmo id na origem — sem isso a cópia seria recusada.
+  const _comCopia = obj => { const o = {}; Object.keys(obj||{}).forEach(k=>{ if(obj[k] && typeof obj[k]==='object') o[k] = Object.assign({}, obj[k], {copiadoDe:card.id}); }); return o; };
   if(opts.comments!==false){
     if(_srcComments && Object.keys(_srcComments).length){
-      window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _srcComments).catch(()=>{});
+      window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _comCopia(_srcComments)).catch(e=>console.warn('[duplicar] comentários não copiados', e));
     } else {
       window._get(window._ref(window._db, FB+'/card_comments/'+card.id)).then(snap=>{
         const val=snap.val();
-        if(val && Object.keys(val).length) window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), val).catch(()=>{});
+        if(val && Object.keys(val).length) window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _comCopia(val)).catch(e=>console.warn('[duplicar] comentários não copiados', e));
       }).catch(()=>{});
     }
   }

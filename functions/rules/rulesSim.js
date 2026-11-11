@@ -5,8 +5,10 @@
 // (a linguagem de regras é quase JS) com a cascata do Firebase — .read/.write liberam se QUALQUER
 // nível do caminho liberar; `data`/`newData` são avaliados em cada nível.
 const fs=require('fs');
-class Snap{ constructor(v){this.v=(v===undefined)?null:v;} val(){return this.v;} exists(){return this.v!==null;}
-  child(p){ return new Snap(getAt(this.v,String(p))); } isString(){return typeof this.v==='string';}
+// (2026-11-11) Snap guarda a árvore inteira (raiz) e o caminho: `parent()` funciona como no Firebase (usado pela regra do autor do comentário).
+class Snap{ constructor(v,raiz,cam){this.v=(v===undefined)?null:v; this.r=raiz===undefined?this.v:raiz; this.c=cam||'';} val(){return this.v;} exists(){return this.v!==null;}
+  child(p){ const c=(this.c?this.c+'/':'')+String(p); return new Snap(getAt(this.v,String(p)),this.r,c); }
+  parent(){ const ks=segs(this.c); ks.pop(); const c=ks.join('/'); return new Snap(c?getAt(this.r,c):this.r,this.r,c); } isString(){return typeof this.v==='string';}
   hasChild(c){return this.v&&typeof this.v==='object'&&this.v[c]!==undefined;}
   // (2026-10-12) métodos usados pelos .validate das regras novas (Escala, Metas)
   isNumber(){return typeof this.v==='number';} isBoolean(){return typeof this.v==='boolean';}
@@ -30,7 +32,7 @@ function check(rules, db, op, path, auth, newVal){
     if(e===true||e==='true'){ return true; }
     const names=Object.keys(vars);
     const fn=new Function('auth','root','data','newData','now',...names,'return ('+e+');');
-    let r=false; try{ r=!!fn(auth,new Snap(db),new Snap(getAt(db,p)),new Snap(getAt(dbAfter,p)),Date.now(),...names.map(k=>vars[k])); }catch(err){ r=false; }
+    let r=false; try{ r=!!fn(auth,new Snap(db),new Snap(getAt(db,p),db,p),new Snap(getAt(dbAfter,p),dbAfter,p),Date.now(),...names.map(k=>vars[k])); }catch(err){ r=false; }
     if(r) return true;
   } return false;
 }
@@ -47,7 +49,7 @@ function validate(rules, db, path, auth, newVal){
     if(e===false) return false;
     if(e!==undefined&&e!==true){
       const names=Object.keys(vs); const fn=new Function('auth','root','data','newData','now',...names,'return ('+e+');');
-      let r=false; try{ r=!!fn(auth,new Snap(db),new Snap(getAt(db,p)),new Snap(getAt(dbAfter,p)),Date.now(),...names.map(k=>vs[k])); }catch(err){ r=false; }
+      let r=false; try{ r=!!fn(auth,new Snap(db),new Snap(getAt(db,p),db,p),new Snap(getAt(dbAfter,p),dbAfter,p),Date.now(),...names.map(k=>vs[k])); }catch(err){ r=false; }
       if(!r) return false;
     }
     if(v&&typeof v==='object'){
