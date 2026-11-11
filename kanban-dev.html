@@ -835,12 +835,17 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha[data-estado="fio"] #ilha-fio{display:block;}
 /* 🏝️ Painel aberto = "estúdio" (referência Vorssaint, 11/11/2026): botões redondos nas laterais, conteúdo escolhido no centro.
    Esquerda: o que acontece agora (Resumo, Timers, Notificações, Agenda, Agente). Direita: atalhos e controle (Favoritos, Serviços, Operação, Ajustes). */
-#ilha-painel{position:absolute;top:46px;left:50%;transform:translateX(calc(-50% + var(--ilha-dx,0px)));width:min(680px,calc(100vw - 24px));display:none;z-index:60;outline:none;}
+#ilha-painel{position:absolute;top:46px;left:50%;transform:translate(calc(-50% + var(--ilha-dx,0px)),var(--ilha-dy,0px));width:min(680px,calc(100vw - 24px));display:none;z-index:60;outline:none;}
 #ilha[data-estado="aberta"] #ilha-painel{display:block;animation:ilhaAbre .2s var(--ease-out,ease);}
-@keyframes ilhaAbre{from{opacity:0;transform:translateX(calc(-50% + var(--ilha-dx,0px))) translateY(-6px) scale(.985);}to{opacity:1;transform:translateX(calc(-50% + var(--ilha-dx,0px)));}}
+@keyframes ilhaAbre{from{opacity:0;transform:translate(calc(-50% + var(--ilha-dx,0px)),calc(var(--ilha-dy,0px) - 6px)) scale(.985);}to{opacity:1;transform:translate(calc(-50% + var(--ilha-dx,0px)),var(--ilha-dy,0px));}}
 /* valor "ao vivo" (timer rodando, reunião chegando): no Vice o --teal é um roxo apagado — usa o pêssego do tema */
 #ilha{--ilha-vivo:var(--teal,#1de9b6);}
+/* véu de vidro (11/11/2026, pedido do Caio): com a ilha aberta o quadro desfoca e escurece — os botões e o cartão não se misturam mais com os cards */
+#ilha-veu{position:fixed;inset:0;z-index:90;background:rgba(var(--surface-rgb),.45);-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);opacity:0;pointer-events:none;transition:opacity .2s var(--ease-out,ease);}
+#ilha-veu.on{opacity:1;pointer-events:auto;}
+@media (prefers-reduced-motion:reduce){ #ilha-veu{transition:none;} }
 :root[data-theme="vice"] #ilha{--ilha-vivo:var(--accent);}
+:root[data-theme="light"] #ilha{--ilha-vivo:color-mix(in srgb,var(--teal,#1de9b6) 55%,#000);}   /* verde-água puro some no branco */
 /* aba Notificações: o cabeçalho da ilha já diz "Notificações" — some o título repetido do sino, fica o "Marcar todas" */
 #ilha-painel .notif-hd>span:first-child{display:none;}
 #ilha-painel .notif-hd{justify-content:flex-end;}
@@ -6895,7 +6900,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.939-dev</div>
+<div class="version">v8.30.940-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -38102,10 +38107,12 @@ function _ilhaLugar(){
 // Conta pela posição da pílula e pela largura do painel (não pelo getBoundingClientRect do painel, que a animação de abertura distorce).
 function _ilhaPainelLugar(){
   const pn = document.getElementById('ilha-painel'), il = document.getElementById('ilha'); if(!pn || !il) return;
-  if(!_ilha.aberta || matchMedia('(max-width:768px)').matches){ pn.style.removeProperty('--ilha-dx'); return; }
+  if(!_ilha.aberta || matchMedia('(max-width:768px)').matches){ pn.style.removeProperty('--ilha-dx'); pn.style.removeProperty('--ilha-dy'); return; }
   const r = il.getBoundingClientRect(), w = pn.offsetWidth, iw = document.documentElement.clientWidth, esq = r.left + r.width/2 - w/2;
-  const dx = esq < 8 ? 8 - esq : (esq + w > iw - 8 ? (iw - 8) - (esq + w) : 0);
-  pn.style.setProperty('--ilha-dx', Math.round(dx)+'px');
+  let dx = esq < 8 ? 8 - esq : (esq + w > iw - 8 ? (iw - 8) - (esq + w) : 0);
+  // a pílula é centrada com translate(-50%): com largura ímpar o painel caía em meio pixel e o texto ficava borrado — arredonda
+  dx = Math.round(esq + dx) - esq; const topo = r.top + 46, dy = Math.round(topo) - topo;
+  pn.style.setProperty('--ilha-dx', dx.toFixed(2)+'px'); pn.style.setProperty('--ilha-dy', dy.toFixed(2)+'px');
 }
 function _ilhaRender(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
@@ -38114,6 +38121,9 @@ function _ilhaRender(){
   ilha.hidden = e==='off';
   ilha.closest('.hd')?.classList.toggle('ilha-no-topo',e==='aberta');
   ilha.closest('.app')?.classList.toggle('ilha-no-topo',e==='aberta');
+  let veu = document.getElementById('ilha-veu'); const app = ilha.closest('.app');
+  if(!veu && app && e==='aberta'){ veu = document.createElement('div'); veu.id = 'ilha-veu'; veu.setAttribute('aria-hidden','true'); app.insertBefore(veu, app.firstChild); }
+  if(veu) veu.classList.toggle('on', e==='aberta');
   const sino = document.getElementById('notif-btn'); if(sino) sino.style.display = (p.on && p.notif) ? 'none' : '';
   if(e==='off'){ _ilhaSinoLugar(false); _ilhaRelogio(); return; }
   ilha.dataset.estado = e;

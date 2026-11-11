@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Ilha Dinâmica: texto sem nitidez no painel aberto + botões misturados com o quadro (SÓ DEV · kanban-dev v8.30.940-dev)
+
+- **Texto sem nitidez (relato do Caio):** a pílula é centralizada com translate(-50%); com largura ímpar o painel aberto caía em meio pixel e o navegador borrava o texto dos botões e do cartão. _ilhaPainelLugar() agora arredonda a posição para pixel inteiro (--ilha-dx/--ilha-dy).
+- **Botões e cartão se misturando com os cards (relato do Caio):** com a ilha aberta entra um véu de vidro (#ilha-veu, dentro de .app, abaixo do cabeçalho): o quadro desfoca e escurece; o cabeçalho segue nítido; clicar no véu fecha a ilha.
+- **Tema claro:** o valor "ao vivo" (timer, reunião chegando) em verde-água puro sumia no branco — tom mais escuro.
+- Testes: docs/arezzo/testes/test_ilha_ux.js (38: véu, pixel inteiro, clicar no véu fecha) + as 7 baterias da ilha.
+
 ### 2026-11-11 · Papéis: PO não se promove mais a ADM; gestorOkr só por ADM (regras do banco · SÓ DEV · painel-dev v5.102)
 
 - **C1 (alta, achado do Antigravity no #1701):** a validação de `kanban/usuarios/$uid/role` deixava qualquer PO gravar qualquer papel em qualquer cadastro — inclusive `adm` no próprio — e `role === 'adm'` destrava adm_emails, painel_viewers, agente_agil_orquestrador etc. Agora o papel GLOBAL só muda por ADM/Caio (seguem os caminhos de cadastro: nascer membro/convidado; convidado → membro pela própria pessoa). No papel POR SQUAD (`squads_roles`), o PO atribui membro/convidado/organizador/po, mas não `adm` e não mexe em quem é `adm`.

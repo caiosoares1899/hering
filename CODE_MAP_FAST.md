@@ -1,7 +1,7 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
 > Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-11.
-> Use este índice para localizar rapidamente a linha no `CODE_MAP.md` ou as âncoras `Lxxxx` diretas nos arquivos `-dev`.
+> Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
 
@@ -91,8 +91,38 @@
   - **L4647**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
   - **L4652**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
 
-## 2. Principais Âncoras por Arquivo (`-dev`)
+## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 
-### `kanban-dev.html` (7 símbolos mapeados)
-- `_applyCardsSync` (L10868) · `_notasUpdate` (L21531) · `saveExtraDesc` (L16563) · `openNewCard` (L17404) · `backfillFlow` (L9610) · `recordMove` (L9484)
-- `openCard` (L16964)
+### `kanban-dev.html` (206 âncoras curadas)
+- `ADM_EMAILS` (L7286) · `getEffectiveRole` (L7421) · `SQUAD_META_LIVE` (L7483) · `resolveSquadAndShow` (L12207) · `autoRegistrar` (L12597) · `_claimUserInit` (L12433)
+- `_ensureInitRegistryBackfilled` (L12476) · `doSignIn` (L12094) · `_syncAuthProfileToFirebase` (L12500) · `showApp` (L12265) · `_onRealAuthChange` (L37022) · `agentes` (L8187)
+- `allIdentities` (L8199) · `renderAgentesList` (L27109) · `fecharAddAgente` (L27150) · `salvarAgente` (L27154) · `excluirAgente` (L27181) · `CARD_SECTIONS` (L8122)
+- `openCard` (L16969) · `openAgenteHotline` (L16848) · `_applyAgenteHotlineSkin` (L16824) · `saveCard` (L17500) · `_finishCloseOv` (L36345) · `_newCardGuardOff` (L16022)
+- `fbSaveAll` (L10169) · `fbCreateCard` (L10412) · `fbSaveCard` (L10478) · `_applyCardsSync` (L10873) · `_notasUpdate` (L21536) · `_saveCardWithRetry` (L10624)
+- `saveExtraDesc` (L16568) · `openNewCard` (L17409) · `backfillFlow` (L9615) · `recordMove` (L9489) · `_reportUnexpectedCardDisappearance` (L10465) · `searchDependsCards` (L37534)
+- `_currentTheme` (L36592) · `toggleTheme` (L36654) · `toggleThemeAuto` (L36750) · `exitViceCity` (L36828) · `_isViceCityEasterEggAtivo` (L36931) · `toggleBlackFriday` (L36852)
+- `exitBlackFriday` (L36863) · `_themeBtnRightClick` (L36875) · `_isBlackFridayAtivo` (L36851) · `maybeAutoArchiveOldCards` (L15594) · `_renderArquivadosBody` (L25682) · `openArquivados` (L25747)
+- *... (+158 em docs/CODE_SYMBOLS.md)*
+
+### `painel-dev.html` (58 âncoras curadas)
+- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11232) · `openGlobalUsersModal` (L10824) · `updateUserRole` (L10205) · `_limparHtmlStatus` (L7189) · `_linkSeguroStatus` (L7202)
+- `_statusIncidenteRecente` (L7210) · `_setStatusPill` (L7217) · `initGithubStatusMonitor` (L7172) · `loadGithubStatus` (L7226) · `renderGithubStatusUI` (L7276) · `_fbMatchServicos` (L7477)
+- `initFirebaseStatusMonitor` (L7507) · `loadFirebaseStatus` (L7521) · `renderFirebaseStatusUI` (L7588) · `loadAgentesExternosPainel` (L9382) · `renderAgentesExternosPainel` (L9394) · `criarAgenteExternoPainel` (L9462)
+- `toggleAgenteExternoSquad` (L9519) · `_fillAgentesLogSquadFilter` (L9551) · `loadAgentesTabData` (L9558) · `renderAgentesAtivosGrid` (L9582) · `renderAgentesLogCross` (L9607) · `closeAgentesHelp` (L9641)
+- *... (+34 em docs/CODE_SYMBOLS.md)*
+
+### `okr-dev.html` (9 âncoras curadas)
+- `_okrObjUltimaAtividade` (L5264) · `_okrObjParadoDias` (L5276) · `_renderMd` (L2535) · `_okrToggleNotas` (L3895) · `loadOkrReuniaoNotas` (L3182) · `renderOkrNotas` (L3215)
+- `_okrAgendaCartoes` (L3061) · `_okrAgendaConfirmar` (L3084) · `_okrAgendaAplicar` (L3099)
+
+### `travessia-dev.html` (9 âncoras curadas)
+- `abrirApp` (L879) · `farol` (L380) · `termometro` (L391) · `viewBau` (L526) · `viewDiario` (L472) · `viewAval` (L558)
+- `viewFrota` (L596) · `guardarBau` (L722) · `demoDados` (L813)
+
+### `okr-apresentacao.slide.html` (12 âncoras curadas)
+- `buildSlides` (L1234) · `startListeners` (L2111) · `rebuild` (L1349) · `fitSlideContent` (L1509) · `_okrFitDetailSections` (L1769) · `objMarcos` (L913)
+- `_okrViewerKey` (L2465) · `_okrShowApp` (L2436) · `_hojeStr` (L1848) · `renderNotas` (L1888) · `_okrAgendaHoje` (L2023) · `_okrRenderCountdown` (L2052)
+
+### `mare-notif-dev.js` (9 âncoras curadas)
+- `AREAS` (L56) · `PUSH_PADRAO` (L66) · `TIPOS` (L68) · `renderNotifCentral` (L12801) · `ncSet` (L12909) · `_ncPapelGrava` (L12895)
+- `ncRestaurarTudo` (L12923) · `_ncUso` (L12787) · `_ncDnd` (L12779)

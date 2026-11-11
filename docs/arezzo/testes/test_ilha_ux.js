@@ -57,8 +57,13 @@ const PREF={on:true,modo:'sempre',principal:'timer',timer:true,notif:true,secund
     t('um bloco por módulo ligado', ['timers','notif','agenda','agente','status','op','fav'].every(x=>tiles.includes(x)), tiles);
     t('contadores reais nos botões (2 timers, 3 avisos)', await p.locator('.ilha-aba[data-aba="timers"] .ilha-aba-sel').textContent()==='2' && await p.locator('.ilha-aba[data-aba="notif"] .ilha-aba-sel').textContent()==='3');
     t('incidente aparece como alerta no bloco e no botão', await p.locator('.ilha-tile.alerta[data-ir="status"]').count()===1 && await p.locator('.ilha-aba[data-aba="status"] .ilha-aba-sel.alerta').count()===1);
+    t('véu de vidro ligado com a ilha aberta (quadro desfocado)', await p.evaluate(()=>{ const v=document.getElementById('ilha-veu'); return !!v && v.classList.contains('on') && /blur/.test(getComputedStyle(v).backdropFilter||getComputedStyle(v).webkitBackdropFilter||''); }));
+    t('painel em pixel inteiro (texto nítido)', await p.evaluate(()=>{ const a=document.getElementById('ilha-painel').getBoundingClientRect(); const fx=Math.abs(a.left-Math.round(a.left)), fy=Math.abs(a.top-Math.round(a.top)); return fx<0.01 && fy<0.01; }));
     t('centro e botões lado a lado, sem sobrepor', await p.evaluate(()=>{ const e=document.querySelector('.ilha-trilho.esq').getBoundingClientRect(), c=document.querySelector('.ilha-centro').getBoundingClientRect(), d=document.querySelector('.ilha-trilho.dir').getBoundingClientRect(); return e.right<=c.left && c.right<=d.left; }));
     await p.screenshot({path:out+'/ux_1280_dark_resumo.png',clip:{x:0,y:0,width:1280,height:600}});
+    await p.mouse.click(1240,820); await p.waitForTimeout(300);
+    t('clicar no véu fecha a ilha e apaga o véu', await p.getAttribute('#ilha','data-estado')!=='aberta' && await p.evaluate(()=>!document.getElementById('ilha-veu').classList.contains('on')));
+    await p.click('#ilha-btn'); await p.waitForTimeout(400);
     await p.click('.ilha-tile[data-ir="agenda"]'); await p.waitForTimeout(200);
     t('bloco leva ao módulo (Agenda)', await p.locator('.ilha-aba.on[data-aba="agenda"]').count()===1 && await p.locator('.ilha-cab h2').textContent().then(x=>/Agenda/.test(x)));
     await p.click('.ilha-aba[data-aba="resumo"]'); await p.waitForTimeout(200);

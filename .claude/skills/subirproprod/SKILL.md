@@ -27,7 +27,7 @@ Promove o lote acumulado em `-dev` para produção em **3 a 4 turnos (~30 segund
 ```
 node .claude/skills/subirproprod/promover.js --status
 ```
-Ele lista **os 11 pares** — `kanban`, `okr`, `oceano`, `escala`, `intake`, `painel` e os módulos `mare-notif`, `mare-dicas`, `mare-metas`, `mare-login`, `mare-plantao` — como EM DIA ou PENDENTE (o `painel` é comparado pelo conteúdo real, por merge de 3 vias, não só pela versão) e termina com uma linha de **cobertura**: se algum arquivo `-dev` novo aparecer na raiz sem alvo no `promover.js`, ele avisa (⚠) — nesse caso, acrescente o par em `TARGETS` antes de seguir. **Só diga "prod em dia" se o `--status` mostrar tudo EM DIA e a linha de cobertura estiver ✔.** Páginas sem par `-dev` (`okr-apresentacao.slide.html`, `guia-okr.html`, `ecossistema.html`, `maredigital.html`, `onboarding*.html`…) entram no ar no merge e não se promovem. Se o lote promovido incluir só alguns pares, **diga na resposta quais ficaram de fora e por quê** (ex.: "painel v5.80 sem validação").
+Ele lista **os 14 alvos** — `kanban`, `okr`, `oceano`, `escala`, `intake`, `travessia`, `painel` e os módulos `mare-notif`, `mare-dicas`, `mare-metas`, `mare-timer`, `mare-sonar`, `mare-login`, `mare-plantao` — como EM DIA ou PENDENTE (o `painel` é comparado pelo conteúdo real, por merge de 3 vias, não só pela versão) e termina com uma linha de **cobertura**: se algum arquivo `-dev` novo aparecer na raiz sem alvo no `promover.js`, ele avisa (⚠) — nesse caso, acrescente o par em `TARGETS` antes de seguir. **Só diga "prod em dia" se o `--status` mostrar tudo EM DIA e a linha de cobertura estiver ✔.** Páginas sem par `-dev` (`okr-apresentacao.slide.html`, `guia-okr.html`, `ecossistema.html`, `maredigital.html`, `onboarding*.html`…) entram no ar no merge e não se promovem. Se o lote promovido incluir só alguns pares, **diga na resposta quais ficaram de fora e por quê** (ex.: "painel v5.80 sem validação").
 
 No **primeiro turno** (depois do `--status`), faça chamadas `view_file` **em paralelo**:
 
@@ -72,13 +72,16 @@ Com o diagnóstico do Passo 1 em mãos, prepare as edições de texto usando `re
 ## Passo 3 — Execução Única Encadeada (`1 único run_command`)
 
 Concluídas as edições de `CHANGELOG.md`, `CODE_MAP.md` e `painel.html` (`COMUNICADO_RASCUNHOS_SEED`), execute **uma única chamada `run_command`** que:
-1. Roda `node .claude/skills/subirproprod/promover.js` para sincronizar todos os pares espelhados (`kanban`, `okr`, `oceano`, `escala`, `intake`, `painel` — por merge de 3 vias —, `mare-notif`, `mare-dicas`, `mare-metas`, `mare-login`, `mare-plantao`), atualizar `version.json`, preservar 100% das linhas permanentes de prod e validar a sintaxe JS de todos os `<script>` via `vm.Script`.
-2. Regenera o conhecimento do Agente Ágil (`npm --prefix functions run conhecimento`) e roda o teste de frescor (`node --test functions/agente-agil-orquestrador/__tests__/conhecimento.test.js`), pois o conhecimento lê `HELP_CONTENT` de `kanban.html`, a Ajuda de `okr.html`, o FAQ de `oceano.html` e o `CHANGELOG.md` de produção.
-3. Cria a branch a partir de `origin/main` (ou atualiza a branch de promoção caso já exista uma aberta), faz commit, push e abre a PR no GitHub.
-
-```powershell
-$env:GH_TOKEN = ("protocol=https`nhost=github.com`n" | git credential fill | Select-String '^password=(.+)$').Matches[0].Groups[1].Value; node .claude/skills/subirproprod/promover.js && npm --prefix functions run conhecimento && node --test functions/agente-agil-orquestrador/__tests__/conhecimento.test.js && git fetch origin && git checkout -b chore/promocao-prod-vX.Y.Z origin/main && git add -A && git commit -m "Promove vX.Y.Z pra prod" && git push -u origin chore/promocao-prod-vX.Y.Z && gh pr create --title "Promove vX.Y.Z pra prod" --body "Promove o lote validado em dev para produção."
-```
+1. **No Antigravity (Mac e Windows — 1 clique via `.mare-ship.json` + `node scripts/mare-cli.js ship`):**
+   Grave `.mare-ship.json` com `"promote": ["kanban", ...]` (ou todos os alvos validados), `"conhecimento": true`, `"map": true` e as atualizações de `(SÓ DEV)` → `(PROD)` + `COMUNICADO_RASCUNHOS_SEED` em `"patches"`, e rode **1 único comando**:
+   ```bash
+   node scripts/mare-cli.js ship
+   ```
+   O `ship` sincroniza `origin/main`, aplica `promover.js` nos alvos listados, regenera `conhecimento/*.json` + roda `conhecimento.test.js`, atualiza `CODE_MAP_FAST.md` + `docs/CODE_SYMBOLS.md` + `mapa.js`, executa `scripts/checar.js`, commita com `Agent: antigravity`, faz push e abre a PR extraindo `GH_TOKEN` automaticamente em Mac/Windows.
+2. **No Claude (CLI direta em `~/hering`):**
+   ```bash
+   node .claude/skills/subirproprod/promover.js && npm --prefix functions run conhecimento && node --test functions/agente-agil-orquestrador/__tests__/conhecimento.test.js && node scripts/checar.js
+   ```
 
 > **Opções úteis do `promover.js`:**
 > - `node .claude/skills/subirproprod/promover.js` → promove todos os pares sincronizados que estão com `-dev` à frente de `prod`.
