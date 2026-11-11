@@ -172,8 +172,8 @@
 - _checkDayReminder:L40965 · _initComunicados:L41018 · _refreshComunicados:L41033 · _talvezMostrarComunicado:L41110 · _algumOverlayCriticoAberto:L41125 · _mostrarComunicado:L41137 · dismissComunicado:L41153 · _updateMuralBadge:L41171 · openMural:L41184 · _swMuralTab:L41190
 - renderMuralLista:L41201 · _abrirComunicadoDoMural:L41229 · enviarFeedback:L41246 · _lsGet:L41284 · _lsSet:L41285 · wire:L41332 · frame:L41387 · updateFromClientX:L41391 · stop:L41408
 
-## `painel-dev.html` (13762 linhas · 545 funções)
-- **CSS:** L12–L1598 | **JS:** L1599–L1608 (classic), L1609–L1622 (classic), L1623–L1629 (classic), L3155–L3281 (classic), L3284–L3383 (module), L3389–L13556 (classic) | **Módulos:** mare-notif-dev.js?v=41 (L3384), mare-metas-dev.js?v=19 (L3385), mare-plantao-dev.js?v=5 (L3386), mare-dicas-dev.js?v=14 (L3387)
+## `painel-dev.html` (13774 linhas · 545 funções)
+- **CSS:** L12–L1598 | **JS:** L1599–L1608 (classic), L1609–L1622 (classic), L1623–L1629 (classic), L3155–L3281 (classic), L3284–L3383 (module), L3389–L13568 (classic) | **Módulos:** mare-notif-dev.js?v=41 (L3384), mare-metas-dev.js?v=19 (L3385), mare-plantao-dev.js?v=5 (L3386), mare-dicas-dev.js?v=14 (L3387)
 - **Consts (107):** AG_NO:L3160 · AG_CFG:L3161 · AG_ABAS:L3162 · AG_PERIODOS:L3163 · AG_FILTRO_RE:L3164 · AG_ABA_ROTULO:L3165 · AG_CHIPS:L3167 · firebaseConfig:L3302 · app:L3319 · db:L3320 · auth:L3321 · storage:L3322 · provider:L3323 · calProvider:L3327 · msProvider:L3342 · VICE_LONGPRESS_MS:L3430 · _dbg:L3484 · _DBG_LOG_PATH:L3485 · _DBG_DAILY_PATH:L3486 · GERENCIAS:L3685 · OKR_PRESENCE_TTL_MS:L3867 · _SQUAD_COLORS_CAMP:L3935 · _SQ_LABELS:L3943 · CAMP_TEMAS:L3983 · CAMP_TIPO_ICONS:L3991 · CAMP_TIPO_LABELS:L3992 · MESES:L4135 · DOW:L4136 · _pTag:L4170 · KNOWN_SQUADS:L4649 · _SQ_FB:L4773 · PAINEL_CAMP_TEMAS:L4901 · PAINEL_SQ_COLORS:L4905 · SUBMARCA_TAGS:L5407 · CANAL_VENDA_TAGS:L5426 · LEMP_TIPOS:L5647 · PCAL_COLORS:L5933 · DYNAMIC_COLOR_PALETTE:L5945 · SQUAD_COLOR_MAP:L5969 · OKR_PAGE:L5989 (+67)
 - **[🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_A]** agIniciar:L3175 · agEncerrar:L3194 · agContexto:L3199 · agAtualizarContexto:L3206 · agAlternar:L3211 · agEsc:L3220 · agEscutar:L3221 · agHora:L3226 · agMd:L3229 · agMsgHtml:L3237
 - agRender:L3247 · agIniciarEspera:L3258 · agFimEspera:L3262 · agPerguntar:L3263 · agEnviar:L3264 · agIr:L3274 · esc:L3291 · jsq:L3300 · _requestCalendarScope:L3330 · _signInMicrosoft:L3345
@@ -201,36 +201,36 @@
 - initFirebaseStatusMonitor:L7507 · loadFirebaseStatus:L7521 · renderFirebaseStatusUI:L7588
 - **[🛡️ SAÚDE DOS CARDS (03/11/2026)]** _scQuando:L7789 · _scPagina:L7790 · _scLer:L7791 · _scCausa:L7793 · _scPodeResolver:L7802 · _scMontarEventos:L7805 · _scSaude:L7830 · _scItemHtml:L7837 · _scRender:L7853 · _scResolver:L7884
 - _scCliqueLista:L7898 · loadSaudeCards:L7914 · loadStatusData:L7936 · deslogarTodos:L8054 · carregarConfigInatividade:L8065 · salvarConfigInatividade:L8081 · loadPainelNotifs:L8099 · _painelLoadLembretes:L8146 · _painelSyncFeed:L8162 · _mergePainelNotifs:L8169
-- _markOnePainelNotifRead:L8178 · markAllPainelNotifsRead:L8186 · clearReadPainelNotifs:L8215 · renderPainelNotifs:L8243 · _relTime:L8292 · togglePainelNotif:L8304 · _localDateStr:L8333 · loadComunicados:L8349 · _seedComunicadoRascunhos:L8464 · _comunicadoOndeTxt:L8501
-- _comunicadoSquadsAlvo:L8505 · _comunicadoAlvoLabel:L8510 · renderComunicadosLista:L8515 · _toggleArquivadosComunicado:L8562 · renderArquivadosComunicado:L8570 · arquivarComunicado:L8595 · reativarComunicado:L8604 · _ccToggleArquivar:L8612 · renderRascunhosComunicado:L8624 · descartarRascunhoComunicado:L8648
-- deleteComunicadoDireto:L8658 · _ccPopulaSquadSelect:L8667 · _ccToggleSquadChip:L8676 · _ccRenderSquadChips:L8688 · _ccGetSquadPayload:L8707 · _ccFormat:L8716 · openComunicadoCompose:L8726 · _ccTogglePrioridadeUI:L8785 · closeComunicadoCompose:L8801 · _painelResolveComunicadoAlvos:L8817
-- _painelNotifyBroadcast:L8849 · saveComunicado:L8881 · deleteComunicado:L8939 · _sanitizeComunicadoHtml:L8946 · loadFeedback:L8976 · setFbFilter:L8985 · renderFbLista:L8993 · _fbSetStatus:L9030 · _fbDelete:L9034 · loadUsoData:L9040
-- _errSqShort:L9205 · renderErrStatsCards:L9213 · renderErrSquadFilterRow:L9228 · loadErrorLogs:L9248 · loadAdmList:L9281 · renderAdmList:L9290 · addAdmEmail:L9308 · removeAdmEmail:L9327 · saveAdmEmails:L9349 · loadAgentesExternosPainel:L9382
-- renderAgentesExternosPainel:L9394 · _agenteExternoAutor:L9460 · criarAgenteExternoPainel:L9462 · salvarAgenteExternoPainel:L9497 · toggleAgenteExternoSquad:L9519 · excluirAgenteExternoPainel:L9533 · _fillAgentesLogSquadFilter:L9551 · loadAgentesTabData:L9558 · renderAgentesAtivosGrid:L9582 · renderAgentesLogCross:L9607
-- openAgentesHelp:L9640 · closeAgentesHelp:L9641 · _viewerRegistrarAcesso:L9656 · _viewerTempoRel:L9667 · _viewerDataBR:L9673 · _viewerStatus:L9675 · _viewerOrdena:L9684 · renderPainelViewers:L9688 · addPainelViewer:L9714 · removePainelViewer:L9727
-- openPainelViewersModal:L9734 · closePainelViewersModal:L9739 · isDadosEditor:L9749 · _todayStr:L9751 · _fmtDateBR:L9755 · _numVal:L9756 · loadDadosConfig:L9758 · loadDadosDiarios:L9771 · _pmetasUser:L9779 · renderDadosMetas:L9780
-- _pmetasPessoas:L9793 · dadosMetaNova:L9799 · dadosMetaEditar:L9803 · _pmetasIniciar:L9807 · renderDadosTab:L9811 · loadDadosFormForDate:L9832 · uploadDadosPdf:L9847 · renderDadosApresList:L9867 · addDadosApresentacao:L9880 · removeDadosApresentacao:L9892
-- saveDadosApresentacoes:L9897 · publishDadosPost:L9903 · editDadosPost:L9936 · deleteDadosPost:L9942 · renderDadosHistorico:L9950 · renderDadosEditorList:L9976 · addDadosEditor:L10002 · removeDadosEditor:L10015 · setPcfgTab:L10026 · renderPcfgDicas:L10038
-- _plSync:L10059 · loadPlinks:L10060 · _plSorted:L10063 · renderPlinks:L10064 · resetPlinkForm:L10089 · editPlink:L10090 · savePlink:L10092 · removePlink:L10110 · movePlink:L10114 · _pagesSwitcherRender:L10139
-- togglePagesSwitcher:L10150 · loadPcfgUsers:L10159 · updateUserRole:L10205 · addGuestByEmail:L10236 · initHiddenCols:L10264 · isColVisible:L10270 · toggleSqCol:L10273 · squadBoardUrl:L10290 · _sqTxt:L10294 · _sqCorOk:L10295
-- loadExtraSquads:L10298 · renderSquadLinks:L10329 · renderFilterBar:L10344 · isAdmUser:L10357 · doSignIn:L10361 · doSignInMicrosoft:L10368 · doSignOut:L10373 · _isTrustedDomainEmail:L10382 · _loginProviderMismatchMsg:L10386 · _painelViewerKey:L10421
-- _irParaOceano:L10426 · _oceanoDoDia:L10447 · _finishPainelLogin:L10529 · _painelEnsureUserRecord:L10571 · _blockIfPainelViewer:L10598 · _painelTryOpenTabFromUrl:L10614 · loadLembretesGestao:L10647 · loadKudosGeral:L10662 · _refreshKudosGeral:L10672 · _kudosUserOpts:L10687
-- renderKudosPainel:L10697 · _updKudospBtn:L10736 · addKudosPainel:L10741 · delKudosPainel:L10767 · _renderKudospReactions:L10774 · toggleKudospReaction:L10788 · _squadMembersFromGlobalCache:L10818 · openGlobalUsersModal:L10824 · closeGlobalUsersModal:L10831 · _guRefreshSoon:L10844
-- _guWrapWrites:L10860 · _usuariosNode:L10872 · _getUsuariosMap:L10873 · loadGlobalUsers:L10882 · _guTorreDe:L10932 · _guEmpresa:L10934 · _guTemPapel:L10942 · _guNoSquad:L10946 · _guTemFiltro:L10950 · _guSetFilter:L10954
-- _guClearFilters:L10955 · _guFiltersHtml:L10960 · renderGlobalUsers:L10980 · toggleAdmUser:L11164 · setGlobalUserTorre:L11179 · toggleGestorOkr:L11187 · toggleUserSquad:L11194 · updateSquadUserRole:L11232 · deleteGlobalUser:L11246 · _applySquadDados:L11278
-- _ccDb:L11361 · _ccKey:L11384 · _ccClearAll:L11388 · _ccLoad:L11395 · _ccSaveSoon:L11410 · _fetchCardsFull:L11422 · _fetchCardsDelta:L11438 · _fetchSquadDados:L11460 · _pollSquadDados:L11487 · _pollSquadSnapshots:L11508
-- loadAll:L11528 · _painelFullRefresh:L11548 · renderAll:L11550 · updateTimestamp:L11565 · renderSquadCards:L11571 · renderColToggle:L11625 · renderConsolidated:L11644 · setFlowWindow:L11668 · flowColsFor:L11676 · _squadCycleArr:L11686
-- _squadThroughput14:L11698 · _squadMaxAge:L11708 · _startTs:L11722 · _doneTs:L11729 · _createdTs:L11735 · percentile:L11741 · median:L11747 · _flowStage:L11752 · _hexA:L11762 · _sqCor:L11767
-- _sqNome:L11768 · _collectFlowCards:L11774 · _flowVal:L11805 · renderFlowMetrics:L11806 · renderThroughputChart:L11848 · renderCFD:L11913 · renderAgingWip:L11952 · resetSquadFlow:L11991 · updateFlowBaselineLabel:L12039 · renderComparison:L12052
-- resolveOwnerName:L12095 · resolveAllBlockers:L12119 · showPainelToast:L12192 · renderBlockers:L12206 · _painelTimelineSetFilter:L12287 · _painelTimelineSetFilterTexto:L12296 · _painelTimelineClearFilters:L12300 · _painelTimelineOwnerOptions:L12309 · _ptCardHasTagLabel:L12318 · _painelTimelineTagOptions:L12322
-- _painelTimelinePassesLocalFilter:L12330 · _painelTimelineSetOpen:L12349 · _painelTimelineToggleAll:L12352 · _painelTimelineExpandBucket:L12367 · _painelTimelineFimSemana:L12371 · _ptHexA:L12389 · _ptCardTags:L12393 · _ptTagsHtml:L12398 · _painelOwnerAvatarHtml:L12407 · _painelTimelineRow:L12416
-- renderPainelTimeline:L12445 · _ptDateOnlyLocalStr:L12573 · _ptMarcosNoPeriodo:L12577 · _ptFeedRow:L12612 · _ptFeedResetFilter:L12652 · _ptFeedMatchesBase:L12655 · _ptFeedMatches:L12662 · ptFeedToggleTipo:L12666 · ptFeedSetFilter:L12667 · ptFeedClearFilter:L12668
-- _ptFeedPeriodoLabel:L12669 · openPainelHistorico:L12677 · closePainelFeed:L12695 · _ptFeedBuscarPeriodo:L12698 · _renderPtFeed:L12707 · renderTrend:L12785 · renderColDist:L12810 · _ncAberta:L12851 · _ncCfg:L12852 · _ncAlterado:L12853
-- _ncDnd:L12855 · _ncAparelhos:L12860 · _ncNome:L12861 · _ncUso:L12863 · _ncFmtData:L12875 · renderNotifCentral:L12877 · ncAbrir:L12962 · ncBusca:L12963 · ncFiltroTipos:L12964 · ncFiltroPessoas:L12965
-- ncAtualizar:L12966 · _ncPor:L12967 · _ncPapelGrava:L12971 · _ncErroGravar:L12978 · ncSet:L12985 · ncRestaurar:L12999 · ncRestaurarTudo:L13004 · openBoardSetup:L13018 · closeBoardSetup:L13025 · bsSelectEmoji:L13029
-- bsSelectColor:L13036 · bsUpdatePreview:L13042 · bsRenderExisting:L13060 · saveNewBoard:L13082 · bsDeleteBoard:L13150 · showBsToast:L13172 · loadSquadData:L13189 · openGlobalBackup:L13219 · closeGlobalBackup:L13227 · buildGlobalPayload:L13237
-- exportAllSquadsJSON:L13263 · exportEachSquadJSON:L13279 · copyAllSquadsJSON:L13309 · renderGlobalBackupStats:L13319 · _initGbCfgListener:L13352 · saveGlobalBackupCfg:L13365 · loadGlobalBackupCfg:L13378 · updateGlobalBackupStatus:L13391 · sendGlobalBackupEmail:L13399 · testGlobalBackupEmail:L13452
-- checkOverdueGlobalBackup:L13460 · _onRealAuthChange:L13479 · _auGetCurrentVersion:L13501 · _auModalOpen:L13505 · _auTyping:L13510 · _auShowBanner:L13518 · _auTryIdleReload:L13529 · _auCheckVersion:L13535
+- _markOnePainelNotifRead:L8178 · markAllPainelNotifsRead:L8186 · clearReadPainelNotifs:L8215 · renderPainelNotifs:L8243 · _relTime:L8292 · togglePainelNotif:L8304 · _localDateStr:L8333 · loadComunicados:L8349 · _seedComunicadoRascunhos:L8476 · _comunicadoOndeTxt:L8513
+- _comunicadoSquadsAlvo:L8517 · _comunicadoAlvoLabel:L8522 · renderComunicadosLista:L8527 · _toggleArquivadosComunicado:L8574 · renderArquivadosComunicado:L8582 · arquivarComunicado:L8607 · reativarComunicado:L8616 · _ccToggleArquivar:L8624 · renderRascunhosComunicado:L8636 · descartarRascunhoComunicado:L8660
+- deleteComunicadoDireto:L8670 · _ccPopulaSquadSelect:L8679 · _ccToggleSquadChip:L8688 · _ccRenderSquadChips:L8700 · _ccGetSquadPayload:L8719 · _ccFormat:L8728 · openComunicadoCompose:L8738 · _ccTogglePrioridadeUI:L8797 · closeComunicadoCompose:L8813 · _painelResolveComunicadoAlvos:L8829
+- _painelNotifyBroadcast:L8861 · saveComunicado:L8893 · deleteComunicado:L8951 · _sanitizeComunicadoHtml:L8958 · loadFeedback:L8988 · setFbFilter:L8997 · renderFbLista:L9005 · _fbSetStatus:L9042 · _fbDelete:L9046 · loadUsoData:L9052
+- _errSqShort:L9217 · renderErrStatsCards:L9225 · renderErrSquadFilterRow:L9240 · loadErrorLogs:L9260 · loadAdmList:L9293 · renderAdmList:L9302 · addAdmEmail:L9320 · removeAdmEmail:L9339 · saveAdmEmails:L9361 · loadAgentesExternosPainel:L9394
+- renderAgentesExternosPainel:L9406 · _agenteExternoAutor:L9472 · criarAgenteExternoPainel:L9474 · salvarAgenteExternoPainel:L9509 · toggleAgenteExternoSquad:L9531 · excluirAgenteExternoPainel:L9545 · _fillAgentesLogSquadFilter:L9563 · loadAgentesTabData:L9570 · renderAgentesAtivosGrid:L9594 · renderAgentesLogCross:L9619
+- openAgentesHelp:L9652 · closeAgentesHelp:L9653 · _viewerRegistrarAcesso:L9668 · _viewerTempoRel:L9679 · _viewerDataBR:L9685 · _viewerStatus:L9687 · _viewerOrdena:L9696 · renderPainelViewers:L9700 · addPainelViewer:L9726 · removePainelViewer:L9739
+- openPainelViewersModal:L9746 · closePainelViewersModal:L9751 · isDadosEditor:L9761 · _todayStr:L9763 · _fmtDateBR:L9767 · _numVal:L9768 · loadDadosConfig:L9770 · loadDadosDiarios:L9783 · _pmetasUser:L9791 · renderDadosMetas:L9792
+- _pmetasPessoas:L9805 · dadosMetaNova:L9811 · dadosMetaEditar:L9815 · _pmetasIniciar:L9819 · renderDadosTab:L9823 · loadDadosFormForDate:L9844 · uploadDadosPdf:L9859 · renderDadosApresList:L9879 · addDadosApresentacao:L9892 · removeDadosApresentacao:L9904
+- saveDadosApresentacoes:L9909 · publishDadosPost:L9915 · editDadosPost:L9948 · deleteDadosPost:L9954 · renderDadosHistorico:L9962 · renderDadosEditorList:L9988 · addDadosEditor:L10014 · removeDadosEditor:L10027 · setPcfgTab:L10038 · renderPcfgDicas:L10050
+- _plSync:L10071 · loadPlinks:L10072 · _plSorted:L10075 · renderPlinks:L10076 · resetPlinkForm:L10101 · editPlink:L10102 · savePlink:L10104 · removePlink:L10122 · movePlink:L10126 · _pagesSwitcherRender:L10151
+- togglePagesSwitcher:L10162 · loadPcfgUsers:L10171 · updateUserRole:L10217 · addGuestByEmail:L10248 · initHiddenCols:L10276 · isColVisible:L10282 · toggleSqCol:L10285 · squadBoardUrl:L10302 · _sqTxt:L10306 · _sqCorOk:L10307
+- loadExtraSquads:L10310 · renderSquadLinks:L10341 · renderFilterBar:L10356 · isAdmUser:L10369 · doSignIn:L10373 · doSignInMicrosoft:L10380 · doSignOut:L10385 · _isTrustedDomainEmail:L10394 · _loginProviderMismatchMsg:L10398 · _painelViewerKey:L10433
+- _irParaOceano:L10438 · _oceanoDoDia:L10459 · _finishPainelLogin:L10541 · _painelEnsureUserRecord:L10583 · _blockIfPainelViewer:L10610 · _painelTryOpenTabFromUrl:L10626 · loadLembretesGestao:L10659 · loadKudosGeral:L10674 · _refreshKudosGeral:L10684 · _kudosUserOpts:L10699
+- renderKudosPainel:L10709 · _updKudospBtn:L10748 · addKudosPainel:L10753 · delKudosPainel:L10779 · _renderKudospReactions:L10786 · toggleKudospReaction:L10800 · _squadMembersFromGlobalCache:L10830 · openGlobalUsersModal:L10836 · closeGlobalUsersModal:L10843 · _guRefreshSoon:L10856
+- _guWrapWrites:L10872 · _usuariosNode:L10884 · _getUsuariosMap:L10885 · loadGlobalUsers:L10894 · _guTorreDe:L10944 · _guEmpresa:L10946 · _guTemPapel:L10954 · _guNoSquad:L10958 · _guTemFiltro:L10962 · _guSetFilter:L10966
+- _guClearFilters:L10967 · _guFiltersHtml:L10972 · renderGlobalUsers:L10992 · toggleAdmUser:L11176 · setGlobalUserTorre:L11191 · toggleGestorOkr:L11199 · toggleUserSquad:L11206 · updateSquadUserRole:L11244 · deleteGlobalUser:L11258 · _applySquadDados:L11290
+- _ccDb:L11373 · _ccKey:L11396 · _ccClearAll:L11400 · _ccLoad:L11407 · _ccSaveSoon:L11422 · _fetchCardsFull:L11434 · _fetchCardsDelta:L11450 · _fetchSquadDados:L11472 · _pollSquadDados:L11499 · _pollSquadSnapshots:L11520
+- loadAll:L11540 · _painelFullRefresh:L11560 · renderAll:L11562 · updateTimestamp:L11577 · renderSquadCards:L11583 · renderColToggle:L11637 · renderConsolidated:L11656 · setFlowWindow:L11680 · flowColsFor:L11688 · _squadCycleArr:L11698
+- _squadThroughput14:L11710 · _squadMaxAge:L11720 · _startTs:L11734 · _doneTs:L11741 · _createdTs:L11747 · percentile:L11753 · median:L11759 · _flowStage:L11764 · _hexA:L11774 · _sqCor:L11779
+- _sqNome:L11780 · _collectFlowCards:L11786 · _flowVal:L11817 · renderFlowMetrics:L11818 · renderThroughputChart:L11860 · renderCFD:L11925 · renderAgingWip:L11964 · resetSquadFlow:L12003 · updateFlowBaselineLabel:L12051 · renderComparison:L12064
+- resolveOwnerName:L12107 · resolveAllBlockers:L12131 · showPainelToast:L12204 · renderBlockers:L12218 · _painelTimelineSetFilter:L12299 · _painelTimelineSetFilterTexto:L12308 · _painelTimelineClearFilters:L12312 · _painelTimelineOwnerOptions:L12321 · _ptCardHasTagLabel:L12330 · _painelTimelineTagOptions:L12334
+- _painelTimelinePassesLocalFilter:L12342 · _painelTimelineSetOpen:L12361 · _painelTimelineToggleAll:L12364 · _painelTimelineExpandBucket:L12379 · _painelTimelineFimSemana:L12383 · _ptHexA:L12401 · _ptCardTags:L12405 · _ptTagsHtml:L12410 · _painelOwnerAvatarHtml:L12419 · _painelTimelineRow:L12428
+- renderPainelTimeline:L12457 · _ptDateOnlyLocalStr:L12585 · _ptMarcosNoPeriodo:L12589 · _ptFeedRow:L12624 · _ptFeedResetFilter:L12664 · _ptFeedMatchesBase:L12667 · _ptFeedMatches:L12674 · ptFeedToggleTipo:L12678 · ptFeedSetFilter:L12679 · ptFeedClearFilter:L12680
+- _ptFeedPeriodoLabel:L12681 · openPainelHistorico:L12689 · closePainelFeed:L12707 · _ptFeedBuscarPeriodo:L12710 · _renderPtFeed:L12719 · renderTrend:L12797 · renderColDist:L12822 · _ncAberta:L12863 · _ncCfg:L12864 · _ncAlterado:L12865
+- _ncDnd:L12867 · _ncAparelhos:L12872 · _ncNome:L12873 · _ncUso:L12875 · _ncFmtData:L12887 · renderNotifCentral:L12889 · ncAbrir:L12974 · ncBusca:L12975 · ncFiltroTipos:L12976 · ncFiltroPessoas:L12977
+- ncAtualizar:L12978 · _ncPor:L12979 · _ncPapelGrava:L12983 · _ncErroGravar:L12990 · ncSet:L12997 · ncRestaurar:L13011 · ncRestaurarTudo:L13016 · openBoardSetup:L13030 · closeBoardSetup:L13037 · bsSelectEmoji:L13041
+- bsSelectColor:L13048 · bsUpdatePreview:L13054 · bsRenderExisting:L13072 · saveNewBoard:L13094 · bsDeleteBoard:L13162 · showBsToast:L13184 · loadSquadData:L13201 · openGlobalBackup:L13231 · closeGlobalBackup:L13239 · buildGlobalPayload:L13249
+- exportAllSquadsJSON:L13275 · exportEachSquadJSON:L13291 · copyAllSquadsJSON:L13321 · renderGlobalBackupStats:L13331 · _initGbCfgListener:L13364 · saveGlobalBackupCfg:L13377 · loadGlobalBackupCfg:L13390 · updateGlobalBackupStatus:L13403 · sendGlobalBackupEmail:L13411 · testGlobalBackupEmail:L13464
+- checkOverdueGlobalBackup:L13472 · _onRealAuthChange:L13491 · _auGetCurrentVersion:L13513 · _auModalOpen:L13517 · _auTyping:L13522 · _auShowBanner:L13530 · _auTryIdleReload:L13541 · _auCheckVersion:L13547
 
 ## `okr-dev.html` (10677 linhas · 676 funções)
 - **CSS:** L12–L1602 | **JS:** L1603–L1611 (classic), L1612–L1625 (classic), L2089–L2136 (module), L2141–L10674 (classic) | **Módulos:** mare-notif-dev.js?v=41 (L2137), mare-dicas-dev.js?v=14 (L2138), mare-sonar-dev.js?v=8 (L2139)
@@ -348,21 +348,21 @@
 - showMsg:L182 · clearMsg:L183 · lsGet:L184 · lsSet:L185 · isHering:L187 · arr:L190 · hojeISO:L191 · proximaSexta:L195 · camposEfetivos:L199 · tagsEspeciais:L211
 - carregarListaSquads:L214 · carregarSquadInterno:L226 · renderWho:L255 · renderSquadSlot:L272 · renderInterno:L284 · mostrar:L336 · entrar:L348 · validarInterno:L416 · avisarMembros:L432 · __intake:L489
 
-## `travessia-dev.html` (912 linhas · 41 funções)
-- **CSS:** L12–L289 | **JS:** L312–L909 (module) | **Módulos:** mare-login-dev.js?v=3 (L311)
-- **Consts (60):** firebaseConfig:L317 · fbApp:L327 · db:L328 · auth:L329 · provider:L330 · T:L337 · $:L338 · esc:L339 · _hrefOk:L340 · pad:L341 · isoDe:L342 · hojeISO:L343 · brDe:L344 · brFull:L345 · diasEntre:L346 · novoId:L347 · W:L351 · D:L352 · WABS:L353 · CAD:L368 · CAD_DIAS:L369 · TIPO_1A1:L370 · FACES:L371 · FASES:L372 · PERGUNTAS_PADRAO:L373 · ultimoEncontro:L400 · S:L403 · nomeDe:L404 · iniDe:L405 · liderDe:L406 · liderados:L407 · timeAmpliado:L408 · ehLider:L409 · ciclosAtivos:L410 · participa:L411 · perguntasDe:L412 · avatar:L413 · chip:L414 · vazio:L415 · carregando:L416 (+20)
-- _signIn:L332 · _signInIdToken:L334
-- **[utilidades]** toast:L349 · G:L350 · uiConfirm:L354 · erroAmigavel:L360 · tenta:L365
-- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L380 · termometro:L391
-- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L419 · carregaUm:L428 · carregaHumor:L434 · carregaDiario:L441 · carregaBau:L442 · carregaEstrelas:L443 · carregaAval:L451 · cache:L457
-- **[telas]** blocoFechamento:L461 · viewDiario:L472 · viewFarol:L488 · sparkHumor:L494 · viewInicio:L499 · viewBau:L526
-- **[avaliação (pessoa)]** sugestoesPares:L545 · formResp:L553 · viewAval:L558
-- **[frota (líder)]** viewFrota:L596 · viewTermometro:L614 · viewDetalhe:L629 · viewAvalLider:L645
-- **[administração (ADM e RH)]** viewAdmin:L671
-- **[montagem]** bolhas:L699 · render:L705
-- **[ações]** guardarBau:L722 · alertaApoio:L729
-- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L811 · demoDados:L813
-- **[login e boot]** mostraLogin:L871 · aplicaTema:L876 · abrirApp:L879 · Travessia:L908
+## `travessia-dev.html` (954 linhas · 43 funções)
+- **CSS:** L12–L296 | **JS:** L319–L951 (module) | **Módulos:** mare-login-dev.js?v=3 (L318)
+- **Consts (61):** firebaseConfig:L324 · fbApp:L334 · db:L335 · auth:L336 · provider:L337 · T:L344 · $:L345 · esc:L346 · _hrefOk:L347 · pad:L348 · isoDe:L349 · hojeISO:L350 · brDe:L351 · brFull:L352 · diasEntre:L353 · novoId:L354 · W:L358 · D:L359 · WABS:L360 · CAD:L375 · CAD_DIAS:L376 · TIPO_1A1:L377 · FACES:L378 · FASES:L379 · PERGUNTAS_PADRAO:L380 · ultimoEncontro:L407 · viewProxima:L438 · S:L442 · nomeDe:L443 · iniDe:L444 · liderDe:L445 · liderados:L446 · timeAmpliado:L447 · ehLider:L448 · ciclosAtivos:L449 · participa:L450 · perguntasDe:L451 · avatar:L452 · chip:L453 · vazio:L454 (+21)
+- _signIn:L339 · _signInIdToken:L341
+- **[utilidades]** toast:L356 · G:L357 · uiConfirm:L361 · erroAmigavel:L367 · tenta:L372
+- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L387 · termometro:L398 · proximaAcao:L412 · carregaProxima:L430
+- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L458 · carregaUm:L467 · carregaHumor:L473 · carregaDiario:L480 · carregaBau:L481 · carregaEstrelas:L482 · carregaAval:L490 · cache:L496
+- **[telas]** blocoFechamento:L500 · viewDiario:L511 · viewFarol:L527 · sparkHumor:L533 · viewInicio:L538 · viewBau:L567
+- **[avaliação (pessoa)]** sugestoesPares:L586 · formResp:L594 · viewAval:L599
+- **[frota (líder)]** viewFrota:L637 · viewTermometro:L655 · viewDetalhe:L670 · viewAvalLider:L686
+- **[administração (ADM e RH)]** viewAdmin:L712
+- **[montagem]** bolhas:L740 · render:L746
+- **[ações]** guardarBau:L763 · alertaApoio:L770
+- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L853 · demoDados:L855
+- **[login e boot]** mostraLogin:L913 · aplicaTema:L918 · abrirApp:L921 · Travessia:L950
 
 ## `okr-apresentacao.slide.html` (2534 linhas · 120 funções)
 - **CSS:** L9–L607 | **JS:** L751–L789 (module), L791–L2508 (classic), L2509–L2531 (classic)

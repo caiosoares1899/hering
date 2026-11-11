@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Travessia — cartão "Próxima ação" no topo da Minha travessia (T4 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+
+- Uma pendência só, com verbo e botão, escolhida por prioridade: devolutiva liberada para ciência → colega esperando seu feedback (coleta) → autoavaliação aberta/pela metade ("Faltam 2 respostas") → indicar de 2 a 4 pares → 1:1 atrasado (farol amarelo/vermelho; o botão foca a data do 1:1) → Baú vazio ou parado há 3 semanas. Sem pendência, o cartão não aparece.
+- O humor fica fora de propósito (já está à vista; virar cobrança diária não é o objetivo).
+- Função pura `proximaAcao()` (exposta em `window.Travessia`), sobre leituras que a aba Avaliação já fazia, com as mesmas chaves de cache; se a leitura falhar, a página segue sem o cartão.
+- Teste: `docs/arezzo/testes/test_travessia_proxima.js` (31/31: ordem, textos, 3 temas × 1280/390 px, botão leva aonde promete, pessoas da demo).
+
 ### Maré › 🏝️ Ilha Dinâmica: ligar em Minhas preferências + introdução de 5 passos (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.943-dev · mare-dicas-dev ?v=14) — 2026-11-11
 
 - **Ligar/desligar saiu do ⏲ Timers** (pedido do Caio) e foi para **seu nome → Minhas preferências → 🏝️ Ilha Dinâmica**: Ligar/Desligar, ⚙ Ajustes da ilha (com ela ligada) e 📖 Como funciona.
