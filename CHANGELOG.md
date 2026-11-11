@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica V2 (base): módulos ligáveis, atividade principal + secundária e 🛡️ Operação para ADM (SÓ DEV · kanban-dev v8.30.933-dev) — 2026-11-11
+
+- Base da V2: cada recurso novo da ilha é um módulo com interruptor em ⚙ Ajustes; desligado não abre escuta no Firebase, não oferece atividade nem cria aba.
+- 🔀 Combinar atividades: a pílula mostra a principal (escolhida em Ajustes) e uma secundária ao lado (ex.: ⏲ 18:42 · 🚨 card sumiu); dá para desligar a secundária.
+- 🛡️ Operação (só ADM, desligado por padrão): último incidente do Guardião dos cards (vira atividade por 24 h ou até "Visto"; incidente grave deixa a borda vermelha) e falhas de backup não lidas. Leitura nova: nenhuma (reaproveita a escuta cards_guardiao/{squad}/ultimo e as notificações 🛟 backup_falhou).
+- Plano: docs/ideias/ilha-dinamica.md § V2. Testes: docs/arezzo/testes/test_ilha_v2_base.js (33, Codex), docs/arezzo/testes/test_ilha_mare.js (56), docs/arezzo/testes/test_ilha_notificacoes.js (51).
+
 ### Maré › 🏝️ Ilha Dinâmica: 1º teste real no Maré (PROD · kanban v8.30.932) — 2026-11-10
 
 Primeiro teste real da **Ilha Dinâmica**, no Maré dev: uma pílula no centro do cabeçalho com o timer que está rodando (ou "+N" se houver mais) e as notificações. **Desligada por padrão**: liga em **⏲ Timers → 🏝️ Ilha Dinâmica** (por aparelho).

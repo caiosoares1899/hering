@@ -17,7 +17,7 @@ O primeiro teste com dados reais é no **Maré dev (`kanban-dev.html`)**, não n
 | 1 | **Notificações entram na ilha**: ligada, o 🔔 do topo sai e a ilha mostra a contagem e a lista (mesmo `MareNotif`: lido, som, Não Perturbe) |
 | 2 | **Sonar fica com o botão próprio** — os dois separados (a variante "Sonar dentro da ilha" foi descartada) |
 | 3 | **Timer completo já na v1**: ver, pausar, continuar, encerrar, abrir o card |
-| 4 | **Sem favoritos** no MVP (os cartões, atalhos, links e o Sonar já levam a qualquer destino) |
+| 4 | **Sem favoritos** no MVP (os cartões, atalhos, links e o Sonar já levam a qualquer destino) — entram na V2 |
 | 5 | **Preferência por aparelho** (localStorage), em ⚙ Meu perfil; desligada por padrão |
 | 6 | **Modos de exibição** (ideia do Caio): *Sempre visível* · *Ao passar o mouse* · *Só quando houver ação* (padrão) |
 | 7 | Sem resposta explícita, seguiu a recomendação: no celular só aparece com atividade (exceto "sempre visível"); notificação no modo "só com ação" aparece ~6 s |
@@ -44,4 +44,20 @@ O primeiro teste com dados reais é no **Maré dev (`kanban-dev.html`)**, não n
 - O `oceanoResumo` (endpoint pessoal do Caio) não entra.
 
 ## Fora do escopo
-Favoritos, Mural, gráficos, lista de atrasos, Travessia, Spotify, progresso simulado do agente, Dynamic Island real do iPhone (projeto nativo à parte).
+Mural, gráficos, lista de atrasos, Travessia, Spotify, progresso simulado do agente, Dynamic Island real do iPhone (projeto nativo à parte).
+
+## V2 (iniciada em 10/11/2026) — no Maré dev
+A v1 subiu para prod em 10/11/2026 (kanban v8.30.932, desligada por padrão). A V2 continua no `kanban-dev.html`.
+
+**Base: módulos registrados (Claude).** Cada recurso da ilha vira um módulo com interruptor próprio em ⚙ Ajustes, `ligar()`/`desligar()` (só ele abre e fecha a própria escuta) e `candidatos()` (atividades que ele oferece, com prioridade). **Módulo desligado não custa nada:** zero escuta nova no Firebase (teste conta os `_onValue`). **Combinar atividades:** a pílula mostra a principal + uma secundária (ex.: `⏲ 18:42 · 📅 em 12 min`); o usuário escolhe a principal, a secundária é a de maior prioridade entre as outras.
+
+| # | Módulo | De onde vem o dado | Custo no banco | Decisão do Caio |
+|---|---|---|---|---|
+| 1 | 🔀 Combinar atividades | módulos ligados | zero | — |
+| 2 | 🛡️ Guardião / backup (só ADM) | escuta já existente `cards_guardiao/{squad}/ultimo` + notificação 🛟 de backup que já chega | zero | filtro só de exibição (a regra de leitura vale para todo @ciahering) |
+| 3 | ⭐ Favoritos (até 3) | squads, produtos, destinos | zero | **por aparelho** (localStorage) |
+| 4 | 🚨 Status dos serviços | `vtex_saude` / `*_status` | 1 escuta só com o módulo ligado | texto de terceiro chega ao DOM → checklist de fronteira |
+| 5 | 📅 Agenda do Radar | `okr/calendario` | **cópia de 3 h** (como o Sonar), sem escuta aberta | **só os meus** (convidado/responsável); contagem regressiva de um evento escolhido |
+| 6 | 🤖 Agente Ágil | marcador "analisando" novo, gravado pela function da @menção e apagado na resposta | 1 escuta em nó pessoal | **mudar a function** (deploy do Caio); entra por último |
+
+**Ordem e divisão:** (1)+(2) Claude, num PR; depois (3), (4), (5) ao Codex em PRs **em sequência**, base `main`, sem mexer em `version.json` (o bump é na integração); (6) Claude, com teste em `functions/` e linha em "Pendente de deploy".
