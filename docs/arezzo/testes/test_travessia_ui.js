@@ -34,14 +34,12 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const f
   for (const vp of [{ width: 1280, height: 900 }, { width: 390, height: 800 }]) {
     const { ctx, p } = await abre('&como=ana', vp); const r = vp.width + 'px';
     const raio = async s => p.locator(s).first().evaluate(e => parseFloat(getComputedStyle(e).borderTopLeftRadius));
-    t(r + ': cartões de vidro com cantos grandes (≥ 20 px) — nada de caixa reta', (await raio('.gl')) >= 20, await raio('.gl'));
+    t(r + ': cartões de vidro com cantos arredondados (≥ 16 px) — nada de caixa reta', (await raio('.gl')) >= 16, await raio('.gl'));   // 11/11: 22 → 18 px (Marine Glass)
     t(r + ': botões em pílula (≥ 20 px de raio)', (await raio('.btn.p')) >= 20 && (await raio('.nav button')) >= 20, [await raio('.btn.p'), await raio('.nav button')]);
     t(r + ': carinhas do humor redondas e com ≥ 44 px de lado', await p.locator('.faces button').evaluateAll(l => l.length === 10 && l.every(e => { const c = getComputedStyle(e); const w = e.getBoundingClientRect(); return parseFloat(c.borderTopLeftRadius) >= w.width / 2 - 1 && w.width >= 44 && w.height >= 44; })), '');
-    const sw = await p.locator('#humor-comp').evaluate(e => { const c = getComputedStyle(e); const w = e.getBoundingClientRect(); return { ap: c.appearance, w: w.width, h: w.height }; });
-    t(r + ': "Compartilhar com meu líder" é um interruptor (sem a caixinha nativa) e continua marcável', sw.ap === 'none' && sw.w >= 40 && sw.h >= 24, sw);
-    await p.locator('#humor-comp').check(); t(r + ': o interruptor liga', await p.locator('#humor-comp').isChecked(), '');
+    // (o interruptor "Compartilhar com meu líder" saiu em 31/10/2026: o humor vai sempre para o líder direto)
     t(r + ': o farol tem anel + texto do estado (não é só cor)', (await p.locator('.farol .fring').count()) >= 1 && /Em dia/.test(await p.locator('.farol').first().innerText()), '');
-    t(r + ': títulos ganham bolinha de ícone sem perder o texto', (await p.locator('h2 .ib').count()) >= 4 && /Fechamento do dia/.test(await p.locator('#painel').innerText()), await p.locator('h2 .ib').count());
+    t(r + ': títulos com o emoji como ícone (sem bolinha em volta) sem perder o texto', (await p.locator('h2 .ib').count()) >= 4 && /Fechamento do dia/.test(await p.locator('#painel').innerText()), await p.locator('h2 .ib').count());
     t(r + ': Mural de Estrelas é um carrossel (rola dentro do cartão, não a página)', await p.locator('.carr').evaluate(e => e.scrollWidth > e.clientWidth) && (await semLateral(p)), '');
     t(r + ': a trilha das fases mostra a fase atual e as já concluídas', (await p.locator('.lst .fase span.on').count()) === 1 && (await p.locator('.lst .fase span.ok').count()) >= 1, '');
     const nav = await p.locator('.nav').evaluate(e => { const c = getComputedStyle(e); return { pos: c.position, bottom: e.getBoundingClientRect().bottom }; });
@@ -59,7 +57,7 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const f
     await ctx.close(); }
   { const { ctx, p } = await abre('&como=pau&tab=frota', { width: 1280, height: 900 });
     t('Frota: termômetro com medidor em meia-lua, histograma de 5 humores e o aviso "Pra ficar de olho"', (await p.locator('.gauge svg').count()) === 1 && (await p.locator('.hist .hc').count()) === 5 && /Pra ficar de olho/.test(await p.locator('#painel').innerText()), '');
-    t('Frota: cada cartão tem o anel do farol e a cor do estado no avatar', (await p.locator('.pcard .fring').count()) === 6 && (await p.locator('.pcard.vermelho').count()) === 2, [await p.locator('.pcard .fring').count(), await p.locator('.pcard.vermelho').count()]);
+    t('Frota: cada cartão tem o anel do farol com a cor do estado (o avatar fica neutro: um protagonista por cartão)', (await p.locator('.pcard .fring').count()) === 6 && (await p.locator('.pcard.vermelho').count()) === 2, [await p.locator('.pcard .fring').count(), await p.locator('.pcard.vermelho').count()]);
     await ctx.close(); }
   { const { ctx, p } = await abre('&como=pau&tab=frota', { width: 390, height: 800 }); t('Frota no celular: uma coluna, sem rolagem lateral, termômetro empilhado', (await semLateral(p)) && await p.locator('.termo').evaluate(e => getComputedStyle(e).gridTemplateColumns.split(' ').length === 1), ''); await ctx.close(); }
   { const { ctx, p } = await abre('&como=adm&tab=admin', { width: 1280, height: 900 }); const sw = await p.locator('[data-rh]').first().evaluate(e => getComputedStyle(e).appearance);
@@ -71,7 +69,7 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const f
     await p.evaluate(() => { const S = window.Travessia.estado; S.me.nome = 'Maria Clara de Albuquerque Montenegro Vasconcelos Bittencourt Neto'; window.Travessia.render(); }); await p.waitForTimeout(600);
     t('nome muito longo no celular: o título quebra e não gera rolagem lateral', (await semLateral(p)) && /Olá, Maria/.test(await p.locator('.h1').innerText()), ''); await ctx.close(); }
   { const { ctx, p } = await abre('&como=ana', { width: 1280, height: 900 }, null, { reducedMotion: 'reduce' });
-    t('movimento reduzido: o barquinho do topo para de balançar', await p.locator('.hero .barco').evaluate(e => getComputedStyle(e).animationName === 'none'), ''); await ctx.close(); }
+    t('movimento reduzido: peixinhos e bolhas param', await p.locator('.fish-wrap > div').first().evaluate(e => getComputedStyle(e).animationName === 'none'), ''); await ctx.close(); }
   { const { ctx, p } = await abre('&como=ana', { width: 1280, height: 900 }); const antes = await p.evaluate(() => document.documentElement.getAttribute('data-theme'));
     await p.click('#btn-tema'); const depois = await p.evaluate(() => document.documentElement.getAttribute('data-theme')); t('o botão de tema (só emoji) continua alternando os temas', antes !== depois, [antes, depois]); await ctx.close(); }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1); })();

@@ -125,4 +125,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-11 · Maré › Ilha Dinâmica (painel aberto):** 8 abas espremidas + sem visão geral + 🐞 Ajustes rolando para o lado → "estúdio" no estilo Vorssaint (botões redondos nas laterais, cartão no centro, Resumo com um bloco por módulo), Ajustes com interruptores, faixa de botões embaixo no celular, token "ao vivo" para o Vice. Teste `test_ilha_ux.js`.
 
+- **2026-11-11 · Travessia (inteira, 2ª rodada):** "muito quadrada, cara de IA, pouco Marine Glass" → peixinhos e bolhas do Oceano (🐟 desliga; pausam ociosos), vidro lapidado sem desfoque nos cartões, botões/abas/avatares sem gradiente, saudação sem caixa nem barquinho balançando, seções de consulta abertas (linha fina, como o Oceano), nada de caixa dentro de caixa, cor do estado só no farol, "trancado" deixou de ser amarelo e o alerta de apoio continuou. Teste `test_travessia_marine.js`.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
