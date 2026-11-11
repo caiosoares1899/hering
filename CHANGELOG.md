@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### A Bordo: guia antes do onboarding, cultura Hering, Dados e IA e mapa do Oceano (SÓ DEV — PR pendente) — 2026-11-11
+### A Bordo: guia antes do onboarding, cultura Hering, Dados e IA e mapa do Oceano (SÓ DEV — PR #1705) — 2026-11-11
 
 Site onboarding.html com roteiro de chegada, consulta por assunto, cinco comportamentos e proposta de valor do comunicado de cultura Hering. Omnichannel com Allan Dickmann; Dados e IA inclui Caio com foco em agilidade e implementação de IA. Seção Oceano explica acesso, produtos, Sonar, notificações e primeiros passos; slides alinhados. Páginas sem par -dev: alterações entregues para revisão do Claude antes do merge. Teste: docs/arezzo/testes/test_onboarding_bordo.js. Dica: não, A Bordo não integra o catálogo de dicas; orientação na própria página. Fronteira: sem mudança de autenticação, banco ou dados dinâmicos; conteúdo e links internos estáticos.
 
