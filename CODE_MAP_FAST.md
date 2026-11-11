@@ -115,8 +115,8 @@
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)
-- `_okrObjUltimaAtividade` (L5264) · `_okrObjParadoDias` (L5276) · `_renderMd` (L2535) · `_okrToggleNotas` (L3895) · `loadOkrReuniaoNotas` (L3182) · `renderOkrNotas` (L3215)
-- `_okrAgendaCartoes` (L3061) · `_okrAgendaConfirmar` (L3084) · `_okrAgendaAplicar` (L3099)
+- `_okrObjUltimaAtividade` (L5275) · `_okrObjParadoDias` (L5287) · `_renderMd` (L2546) · `_okrToggleNotas` (L3906) · `loadOkrReuniaoNotas` (L3193) · `renderOkrNotas` (L3226)
+- `_okrAgendaCartoes` (L3072) · `_okrAgendaConfirmar` (L3095) · `_okrAgendaAplicar` (L3110)
 
 ### `travessia-dev.html` (9 âncoras curadas)
 - `abrirApp` (L986) · `farol` (L394) · `termometro` (L405) · `viewBau` (L583) · `viewDiario` (L518) · `viewAval` (L638)
