@@ -791,7 +791,7 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha-titulo{max-width:200px;min-width:0;}
 #ilha-aviso,#ilha-aviso-t,#ilha-aviso-s{min-width:0;}
 #ilha-titulo:empty,#ilha-tempo:empty,#ilha-mais:empty,#ilha-aviso-s:empty{display:none;}
-#ilha-tempo{font-variant-numeric:tabular-nums;color:var(--teal,#1de9b6);font-weight:700;}
+#ilha-tempo{font-variant-numeric:tabular-nums;color:var(--ilha-vivo);font-weight:700;}
 #ilha.ilha-pausa #ilha-tempo{color:var(--txt2);}
 #ilha.ilha-esg #ilha-tempo{color:var(--danger,#ff6b6b);}
 #ilha-mais{font-size:10.5px;color:var(--txt2);}
@@ -800,7 +800,12 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha-sec{flex:none;display:inline-flex;align-items:center;gap:4px;padding-left:8px;border-left:1px solid var(--glass-b);color:var(--txt2);font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;}
 #ilha-sec[hidden],#ilha[data-estado="aviso"] #ilha-sec{display:none;}
 #ilha.ilha-alerta #ilha-btn{border-color:var(--danger,#ff6b6b);}
-.ilha-op{display:flex;flex-direction:column;gap:6px;padding:10px 4px;border-bottom:1px solid var(--glass-b);}
+.ilha-op{display:flex;flex-direction:column;gap:6px;padding:10px 12px;margin-bottom:8px;border-radius:14px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);}
+/* Agenda: horário numa coluna à esquerda, título e ações à direita */
+.ilha-op.ilha-agenda{display:grid;grid-template-columns:76px minmax(0,1fr);column-gap:12px;row-gap:6px;align-items:start;}
+.ilha-op.ilha-agenda>small{grid-row:1/3;font-size:12px;font-weight:700;color:var(--txt);padding-top:1px;font-variant-numeric:tabular-nums;}
+.ilha-op.ilha-agenda>b,.ilha-op.ilha-agenda>.ilha-acoes{grid-column:2;}
+.ilha-agenda.ilha-acoes{align-items:center;justify-content:space-between;color:var(--txt3);font-size:11px;margin-top:4px;}
 .ilha-op b{font-size:12.5px;} .ilha-op small{color:var(--txt3);font-size:11px;}
 .ilha-st-ok{color:var(--teal);} .ilha-st-inc{color:var(--danger);} .ilha-st-mudo{color:var(--txt3);}
 .ilha-status-link{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);align-self:flex-start;}
@@ -810,7 +815,8 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .ilha-agenda .ilha-acoes{flex-wrap:wrap;}
 .ilha-agenda.ilha-acoes button,.ilha-agenda .ilha-acoes button,.ilha-agenda a{min-height:44px;max-width:100%;}
 .ilha-agenda a{display:inline-flex;align-items:center;color:var(--accent);padding:0 8px;}
-.ilha-op-h{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-top:8px;}
+.ilha-op-h{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin:12px 2px 8px;}
+.ilha-op-h:first-child{margin-top:2px;}
 #ilha-n{display:inline-flex;align-items:center;gap:3px;}
 #ilha-n[hidden]{display:none;}
 #ilha-n{flex:none;font-size:11px;}
@@ -827,22 +833,65 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha-fio:focus-visible{opacity:1;}
 #ilha[data-estado="oculta"] #ilha-btn,#ilha[data-estado="fio"] #ilha-btn{display:none;}
 #ilha[data-estado="fio"] #ilha-fio{display:block;}
-#ilha-painel{position:absolute;top:44px;left:50%;transform:translateX(-50%);width:min(390px,calc(100vw - 20px));padding:10px;border-radius:18px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 18px 50px rgba(0,0,0,.4);z-index:400;display:none;max-height:min(72vh,580px);overflow:auto;color:var(--txt);}
+/* 🏝️ Painel aberto = "estúdio" (referência Vorssaint, 11/11/2026): botões redondos nas laterais, conteúdo escolhido no centro.
+   Esquerda: o que acontece agora (Resumo, Timers, Notificações, Agenda, Agente). Direita: atalhos e controle (Favoritos, Serviços, Operação, Ajustes). */
+#ilha-painel{position:absolute;top:46px;left:50%;transform:translateX(calc(-50% + var(--ilha-dx,0px)));width:min(680px,calc(100vw - 24px));display:none;z-index:60;outline:none;}
 #ilha[data-estado="aberta"] #ilha-painel{display:block;animation:ilhaAbre .2s var(--ease-out,ease);}
-@keyframes ilhaAbre{from{opacity:0;transform:translateX(-50%) translateY(-4px);}to{opacity:1;transform:translateX(-50%);}}
-.ilha-abas{display:flex;gap:4px;margin-bottom:8px;align-items:center;}
-.ilha-aba{flex:1;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
-.ilha-aba.on{border-color:var(--accent);color:var(--txt);}
-#ilha-fixar{min-width:34px;min-height:34px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);cursor:pointer;color:var(--txt2);}
-#ilha-fixar[aria-pressed="true"]{border-color:var(--accent);color:var(--txt);}
-.ilha-timer{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:9px 10px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.5);margin-bottom:6px;}
+@keyframes ilhaAbre{from{opacity:0;transform:translateX(calc(-50% + var(--ilha-dx,0px))) translateY(-6px) scale(.985);}to{opacity:1;transform:translateX(calc(-50% + var(--ilha-dx,0px)));}}
+/* valor "ao vivo" (timer rodando, reunião chegando): no Vice o --teal é um roxo apagado — usa o pêssego do tema */
+#ilha{--ilha-vivo:var(--teal,#1de9b6);}
+:root[data-theme="vice"] #ilha{--ilha-vivo:var(--accent);}
+/* aba Notificações: o cabeçalho da ilha já diz "Notificações" — some o título repetido do sino, fica o "Marcar todas" */
+#ilha-painel .notif-hd>span:first-child{display:none;}
+#ilha-painel .notif-hd{justify-content:flex-end;}
+.ilha-estudio{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:12px;align-items:start;}
+.ilha-trilho{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:6px;}
+.ilha-aba{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;width:72px;padding:0;border:0;background:none;color:var(--txt2);font:inherit;cursor:pointer;}
+.ilha-aba-ico{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;font-size:19px;line-height:1;background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 6px 18px rgba(0,0,0,.28);transition:transform .15s var(--ease-out,ease),border-color .15s;}
+.ilha-aba-rot{font-size:10.5px;font-weight:600;line-height:1.2;text-align:center;max-width:72px;padding:1px 6px;border-radius:999px;background:rgba(var(--surface-rgb),.92);border:1px solid var(--glass-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ilha-aba:hover .ilha-aba-ico{transform:translateY(-1px);border-color:var(--accent);}
+.ilha-aba.on .ilha-aba-ico{border-color:var(--accent);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 0 0 3px rgba(var(--accent-rgb,56,182,255),.22),0 6px 18px rgba(0,0,0,.28);}
+.ilha-aba.on .ilha-aba-rot{color:var(--txt);}
+#ilha-painel .ilha-aba:focus,#ilha-painel .ilha-aba:focus-visible{outline:none;} #ilha-painel .ilha-aba:focus-visible .ilha-aba-ico{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-aba-sel{position:absolute;top:-2px;right:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:#02131f;font-size:10px;font-weight:800;display:grid;place-items:center;font-variant-numeric:tabular-nums;}
+.ilha-aba-sel.alerta{background:var(--danger,#ff6b6b);color:#fff;}
+.ilha-centro{min-width:0;display:flex;flex-direction:column;max-height:min(70vh,580px);border-radius:22px;background:rgba(var(--surface-rgb),.985);border:1px solid var(--glass-b);box-shadow:var(--specular,inset 0 1px 0 rgba(255,255,255,.08)),0 18px 50px rgba(0,0,0,.45);overflow:hidden;}
+.ilha-cab{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px;border-bottom:1px solid var(--glass-b);}
+.ilha-cab h2{margin:0;font-size:15px;font-weight:700;color:var(--txt);flex:1;min-width:0;}
+.ilha-cab small{color:var(--txt3);font-size:11.5px;font-weight:500;}
+#ilha-fixar{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.6);cursor:pointer;color:var(--txt2);font-size:14px;}
+#ilha-fixar[aria-pressed="true"]{border-color:var(--accent);background:rgba(var(--accent-rgb,56,182,255),.16);}
+.ilha-corpo{padding:12px 14px 14px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;}
+/* Resumo: um bloco por módulo; o bloco leva ao módulo */
+.ilha-resumo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.ilha-tile{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:92px;padding:12px 14px;border-radius:16px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.55);color:var(--txt);font:inherit;text-align:left;cursor:pointer;min-width:0;transition:border-color .15s,transform .15s var(--ease-out,ease);}
+.ilha-tile:hover{border-color:var(--accent);transform:translateY(-1px);}
+.ilha-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-tile-rot{font-size:11px;font-weight:600;color:var(--txt3);display:flex;align-items:center;gap:6px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ilha-tile-caixa .ilha-tile-rot,.ilha-tile-caixa .ilha-tile-sub{max-width:calc(100% - 42px);}
+.ilha-tile-val{font-size:22px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ilha-tile-val.menor{font-size:15px;}
+.ilha-tile-sub{font-size:11.5px;color:var(--txt2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ilha-tile.quente .ilha-tile-val{color:var(--ilha-vivo);}
+.ilha-tile.alerta{border-color:rgba(var(--danger-rgb,255,107,107),.55);}
+.ilha-tile.alerta .ilha-tile-val{color:var(--danger,#ff6b6b);}
+.ilha-tile.largo{grid-column:1/-1;}
+.ilha-tile-caixa{padding:0;cursor:default;}
+.ilha-tile-ir{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;min-height:92px;padding:12px 14px;border:0;border-radius:16px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;}
+.ilha-tile-ir:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.ilha-tile-caixa:hover{transform:none;}
+.ilha-tile-acao{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.9);color:var(--txt);cursor:pointer;font-size:13px;}
+.ilha-tile-acao:hover{border-color:var(--accent);}
+.ilha-timer{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:12px 14px;border-radius:14px;border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.5);margin-bottom:6px;}
 .ilha-timer-t{font-weight:600;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .ilha-timer-s{font-size:10.5px;color:var(--txt3);}
-.ilha-timer-tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--teal,#1de9b6);font-size:14px;}
+.ilha-timer-tempo{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ilha-vivo);font-size:20px;}
 .ilha-timer.pausado .ilha-timer-tempo,.ilha-timer.novo .ilha-timer-tempo{color:var(--txt2);}
 .ilha-timer.esg .ilha-timer-tempo{color:var(--danger,#ff6b6b);}
 .ilha-acoes{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap;}
-.ilha-acoes button,.ilha-rod button,#ilha-desligar{min-height:34px;padding:5px 11px;border-radius:10px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;}
+.ilha-centro .ilha-acoes a{display:inline-flex;align-items:center;min-height:34px;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:11.5px;font-weight:600;text-decoration:none;}
+.ilha-centro .ilha-acoes a:hover{border-color:var(--accent);}
+.ilha-acoes button,.ilha-rod button,#ilha-desligar{min-height:34px;padding:5px 12px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;}
 .ilha-acoes button:hover,.ilha-rod button:hover{border-color:var(--accent);}
 .ilha-acoes [data-acao="confirmar-encerrar"]{border-color:var(--danger,#ff6b6b);color:var(--danger,#ff6b6b);}
 .ilha-notif{display:flex;gap:8px;padding:7px 6px;border-radius:10px;font-size:12px;cursor:pointer;align-items:flex-start;}
@@ -857,8 +906,16 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 #ilha-fav-add{width:100%;min-width:0;min-height:44px;border:1px solid var(--glass-b);border-radius:10px;background:var(--glass);color:var(--txt);}
 .ilha-vazio{font-size:12px;color:var(--txt2);padding:8px 6px;}
 .ilha-rod{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
-.ilha-cfg label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;padding:6px 4px;color:var(--txt2);}
-.ilha-cfg select{background:rgba(var(--surface2-rgb),.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:8px;padding:4px 6px;font:inherit;font-size:12px;}
+.ilha-cfg-grupo{border-radius:14px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);padding:2px 12px;margin-bottom:10px;}
+.ilha-cfg label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12.5px;padding:9px 0;color:var(--txt);min-width:0;}
+.ilha-cfg-grupo label+label{border-top:1px solid var(--glass-b);}
+.ilha-cfg label span{min-width:0;} .ilha-cfg label small{display:block;color:var(--txt3);font-size:11px;margin-top:2px;}
+.ilha-cfg input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;width:38px;height:22px;border-radius:999px;background:rgba(var(--surface2-rgb),1);border:1px solid var(--glass-b);position:relative;cursor:pointer;transition:background .15s;}
+.ilha-cfg input[type=checkbox]::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--txt2);transition:transform .15s var(--ease-out,ease),background .15s;}
+.ilha-cfg input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent);}
+.ilha-cfg input[type=checkbox]:checked::after{transform:translateX(16px);background:#fff;}
+.ilha-cfg input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.ilha-cfg select{flex:none;max-width:52%;min-height:30px;background:rgba(var(--surface2-rgb),.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:8px;padding:4px 6px;font:inherit;font-size:12px;}
 .ilha-cfg p{font-size:11px;color:var(--txt3);padding:4px;line-height:1.45;}
 #ilha-anuncio{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
 @media (max-width:768px){
@@ -866,11 +923,20 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
   #ilha-btn{max-width:calc(100vw - 32px);height:42px;}
   #ilha[data-estado="aviso"] #ilha-btn{max-width:calc(100vw - 32px);}
   #ilha-titulo{max-width:110px;} #ilha-aviso-t{max-width:150px;} #ilha-aviso-s{display:none;}
-  #ilha-painel{position:fixed;top:auto;left:8px;right:8px;width:auto;transform:none;max-height:calc(100vh - 140px);}
-  @keyframes ilhaAbre{from{opacity:0;}to{opacity:1;}}
-  .ilha-acoes button,.ilha-rod button,.ilha-aba,#ilha-fixar,#ilha-desligar{min-height:44px;}
+  #ilha-painel{position:fixed;top:auto;bottom:10px;left:8px;right:8px;width:auto;transform:none;}
+  @keyframes ilhaAbre{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .ilha-estudio{display:flex;flex-direction:column;gap:10px;}
+  .ilha-centro{order:1;max-height:calc(100vh - 260px);max-height:calc(100dvh - 260px);}
+  .ilha-trilho{order:2;width:100%;box-sizing:border-box;flex-direction:row;flex-wrap:wrap;justify-content:space-around;gap:6px 0;padding:8px 4px 4px;border-radius:20px 20px 0 0;background:rgba(var(--surface-rgb),.985);border:1px solid var(--glass-b);border-bottom:0;}
+  .ilha-trilho.dir{order:3;margin-top:-10px;padding:4px 4px 8px;border-radius:0 0 20px 20px;border-top:0;border-bottom:1px solid var(--glass-b);}
+  .ilha-aba-rot{background:none;border:0;padding:0;}
+  .ilha-aba{width:62px;} .ilha-aba-ico{width:44px;height:44px;box-shadow:none;}
+  .ilha-resumo{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;} .ilha-tile{min-height:84px;padding:10px 12px;}
+  .ilha-acoes button,.ilha-rod button,.ilha-centro .ilha-acoes a,#ilha-fixar,#ilha-desligar,.ilha-tile-acao{min-height:44px;min-width:44px;}
+  .ilha-cfg label{min-height:44px;}
 }
-@media (prefers-reduced-motion:reduce){ #ilha-btn{transition:none;} #ilha[data-estado="aberta"] #ilha-painel{animation:none;} }
+@media (hover:none) and (pointer:coarse){ .ilha-acoes button,.ilha-rod button,.ilha-centro .ilha-acoes a,#ilha-fixar,#ilha-desligar,.ilha-tile-acao,.ilha-aba-ico{min-height:44px;min-width:44px;} .ilha-cfg label{min-height:44px;} }
+@media (prefers-reduced-motion:reduce){ #ilha-btn,.ilha-aba-ico,.ilha-tile,.ilha-cfg input[type=checkbox],.ilha-cfg input[type=checkbox]::after{transition:none;} #ilha[data-estado="aberta"] #ilha-painel{animation:none;} }
 /* Menu "⋯" (ver HTML/JS toggleHdMore) — só aparece no mobile, ver @media(max-width:768px) */
 .hd-more-wrap{display:none;position:relative;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
@@ -6829,7 +6895,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.938-dev</div>
+<div class="version">v8.30.939-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -29084,7 +29150,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre o Sonar, a busca do Oceano (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n↕ Reordenar os checklists: com mais de um checklist no card, cada cabeçalho ganha uma alça ⠿ — arraste por ela pra subir ou descer o checklist inteiro (os itens e as marcações vão juntos, e a ordem fica salva no card). Pelo teclado, foque a alça e use ↑/↓. No celular e no tablet aparecem os botões ▲▼ no cabeçalho. Pra reordenar só os itens dentro de um checklist, continue arrastando o ⠿ de cada item.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
-    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>⏲ Timers → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, você navega entre as abas <b>Timers</b> (pausar, continuar, iniciar, encerrar ou abrir o card), <b>Notificações</b> (as mesmas do sino; enquanto a ilha estiver ligada, ela substitui o 🔔 do topo) e <b>⚙ Ajustes</b> (quando aparecer, atividade principal, aba ao reabrir, módulos ativos e modo de compartilhar tela; o 📌 mantém aberta). Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).\n\n<b>Módulos</b> (Ilha → ⚙ Ajustes; todos desligados por padrão, por aparelho): 🔀 Combine atividade principal + secundária. ⭐ <b>Favoritos:</b> até 3 atalhos para produto, squad ou card aberto. 🚨 <b>Status dos serviços:</b> VTEX, GitHub e Firebase; incidente vira alerta, com prioridade para GitHub Pages instável. 📅 <b>Agenda do Radar:</b> seus compromissos dos próximos 14 dias, inclusive reuniões da torre dos seus Objetivos ativos; escolha um para ⏳ contagem regressiva. Atualiza a cada 3 h ou no botão "Atualizar". 🤖 <b>Agente Ágil:</b> mostra "analisando" enquanto ele responde sua @menção e avisa "resposta pronta". 🛡️ <b>Operação:</b> só ADM, com Guardião e falhas de backup.' },
+    { icon:'⏲', title:'Timer e Produtividade', text:'Dentro do modal do card, logo abaixo do Checklist, a seção <b>⏲ Timer e Produtividade</b> mede o tempo das atividades daquele card — a sua ou de outra pessoa do squad — e registra tudo no próprio card.\n\n<b>Criar:</b> clique em "+ Novo timer", dê um nome, escolha <b>Cronômetro</b> (conta pra cima, sem limite) ou <b>Timer</b> (conta pra baixo, com a duração em minutos) e diga pra quem é — descrição, tag e participantes já podem ser preenchidos aqui, antes de começar (e editados depois, expandindo a linha). Pra você, "Iniciar agora" já liga o relógio; pra outra pessoa, a atividade fica "aguardando início" até ela começar. O card precisa estar salvo — e ao editar um Modelo, Recorrente ou Agendamento o timer não aparece (ali ainda não há um card de verdade).\n\n<b>Controles:</b> cada linha mostra a carinha de quem executa, o nome da atividade, se é Timer ou Cronômetro, os botões de iniciar/retomar, pausar e encerrar, e o tempo. Pode haver várias atividades no mesmo card e vários relógios rodando ao mesmo tempo; o total somado aparece no topo da seção. Clique na linha pra expandir: descrição, tag, participantes e quem criou.\n\n<b>Quem controla:</b> só quem recebeu a atividade inicia, pausa e encerra. Quem criou pra outra pessoa só edita ou exclui enquanto ela ainda não começou — e é avisado quando ela encerra, com o tempo registrado.\n\n<b>Atalho no topo:</b> o botão "⏲" do topo da tela (ao lado do tema) mostra os seus relógios ativos de todos os squads (o selo conta os que estão rodando) e deixa pausar, retomar ou encerrar sem abrir o card; clicar no nome leva ao card.\n\n<b>Avisos:</b> te chamam quando alguém cria uma atividade pra você, quando um Timer chega a zero (em até 1 minuto, mesmo com a aba fechada) e quando uma atividade fica rodando 4 horas sem pausa — vale lembrar de pausar. Cada tipo liga e desliga na Central de Notificações do Painel.\n\n🗑️ Se o card for excluído com um timer rodando, o timer é encerrado sozinho (o tempo fica registrado) e some do atalho ⏲ em até 1 minuto.\n\n🤖 O Agente Ágil enxerga as atividades e o tempo registrado do card (só leitura): dá pra perguntar a ele quanto tempo foi gasto, mas ele nunca liga nem desliga um relógio.\n\n🏝️ <b>Ilha Dinâmica:</b> em <b>⏲ Timers → 🏝️ Ilha Dinâmica</b> você pode ligar (por aparelho, desligada por padrão) uma pílula no centro do cabeçalho que reúne o timer em andamento (ou "+N" se houver mais) e as notificações. Ao clicar na pílula, a ilha abre no <b>🏝️ Resumo</b>: um bloco por módulo com o que importa agora (tempo do timer, com ⏸/▶ no próprio bloco, notificações não lidas, próximo compromisso, serviços, agente…). Clique num bloco para abrir o módulo. Nas <b>laterais</b> ficam botões redondos com contador: à esquerda o que acontece agora (Resumo, Timers, Avisos, Agenda, Agente), à direita atalhos e controle (Favoritos, Serviços, Operação, ⚙ Ajustes). No celular, esses botões ficam numa faixa embaixo. Em <b>Timers</b> você pausa, continua, inicia, encerra ou abre o card; <b>Notificações</b> são as mesmas do sino (com a ilha ligada, ela substitui o 🔔 do topo); <b>⚙ Ajustes</b> tem quando aparecer, atividade principal, o que mostrar ao abrir, compartilhar tela e os módulos, com interruptores. O 📌 mantém aberta. Quando chega uma notificação nova, a pílula se alarga por ~6 segundos mostrando quem/o quê e onde (respeitando o Não Perturbe).\n\n<b>Módulos</b> (Ilha → ⚙ Ajustes; todos desligados por padrão, por aparelho): 🔀 Combine atividade principal + secundária. ⭐ <b>Favoritos:</b> até 3 atalhos para produto, squad ou card aberto. 🚨 <b>Status dos serviços:</b> VTEX, GitHub e Firebase; incidente vira alerta, com prioridade para GitHub Pages instável. 📅 <b>Agenda do Radar:</b> seus compromissos dos próximos 14 dias, inclusive reuniões da torre dos seus Objetivos ativos; escolha um para ⏳ contagem regressiva. Atualiza a cada 3 h ou no botão "Atualizar". 🤖 <b>Agente Ágil:</b> mostra "analisando" enquanto ele responde sua @menção e avisa "resposta pronta". 🛡️ <b>Operação:</b> só ADM, com Guardião e falhas de backup.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
@@ -37834,12 +37900,14 @@ function tmAbrirCard(sq,cardId){
 // NÃO lê nada a mais: os timers vêm do índice que o ⏲ Timers já escuta (_tmMeus) e as notificações da mesma lista do sino (renderNotifs).
 // Pausar/continuar/encerrar = tmAcao() (mesma função do card → MareTimer). Preferências por aparelho e por pessoa (localStorage).
 // Módulo desligado não gasta: sem timer na ilha = nenhum relógio da ilha rodando (window.__ilhaTicks).
-const _ILHA_PAD = {on:false, modo:'acao', principal:'timer', reabrir:'ultima', timer:true, notif:true, privado:false, aba:'timers', secundaria:true, mods:{}};
+const _ILHA_PAD = {on:false, modo:'acao', principal:'timer', reabrir:'ultima', timer:true, notif:true, privado:false, aba:'resumo', secundaria:true, mods:{}};
 const _ilha = {p:null, aberta:false, fixada:false, hover:false, notifs:[], conhecidas:null, aviso:null, tAviso:null, tSai:null, tick:null, confirmar:null};
 window.__ilhaTicks = 0;
 const _ilhaChave = () => 'mare_ilha_'+((window._currentUser&&window._currentUser.uid)||'anon')+(/-dev\.html/.test(location.pathname)?'_dev':'');
 function _ilhaPrefs(){ const k = _ilhaChave(); if(_ilha.p && _ilha.k===k) return _ilha.p; _ilha.k = k; let o=null;   // chave por pessoa: trocar de conta no mesmo aparelho não carrega a preferência de outra
-  try{ o=JSON.parse(localStorage.getItem(_ilhaChave())||'null'); }catch(e){} _ilha.p = Object.assign({}, _ILHA_PAD, (o&&typeof o==='object')?o:{}); _ilha.p.mods = Object.assign({}, (_ilha.p.mods&&typeof _ilha.p.mods==='object')?_ilha.p.mods:{}); return _ilha.p; }
+  try{ o=JSON.parse(localStorage.getItem(_ilhaChave())||'null'); }catch(e){} _ilha.p = Object.assign({}, _ILHA_PAD, (o&&typeof o==='object')?o:{}); _ilha.p.mods = Object.assign({}, (_ilha.p.mods&&typeof _ilha.p.mods==='object')?_ilha.p.mods:{});
+  if(o && _ilha.p.ux!==2){ _ilha.p.ux = 2; _ilha.p.aba = 'resumo'; try{ localStorage.setItem(k, JSON.stringify(_ilha.p)); }catch(e){} }   // redesenho de 11/11/2026: apresenta o Resumo uma vez
+  return _ilha.p; }
 function _ilhaSalvar(){ try{ localStorage.setItem(_ilhaChave(), JSON.stringify(_ilha.p)); }catch(e){} }
 const _ilhaCelular = () => matchMedia('(max-width:768px)').matches || matchMedia('(pointer:coarse)').matches;
 // timers da pessoa, rodando primeiro (o principal é o rodando mais recente)
@@ -37938,45 +38006,86 @@ function _ilhaSinoLugar(dentro){
     if(sino._ilhaCasa.isConnected) sino._ilhaCasa.after(sino);
   }
 }
+// Painel aberto ("estúdio", 11/11/2026): botões redondos nas laterais, conteúdo no centro. O Resumo mostra um bloco por módulo
+// (o que importa agora) e cada bloco leva ao módulo. Esquerda = o que acontece agora; direita = atalhos e controle.
+const _ILHA_ESQ = ['resumo','timers','notif','agenda','agente'];
+function _ilhaAbas(){
+  const p = _ilhaPrefs(), l = [{id:'resumo', ico:'🏝️', rot:'Resumo'}];
+  if(p.timer) l.push({id:'timers', ico:'⏲', rot:'Timers', sel: _ilhaTimers().length || ''});
+  if(p.notif) l.push({id:'notif', ico:'🔔', rot:'Avisos', sel: _ilhaNaoLidas() || '', alerta:false});   // 'Avisos' só no rótulo curto do botão lateral; cabeçalho e bloco dizem 'Notificações'
+  _ILHA_MODS.filter(m=>m._ativo && m.aba).forEach(m=>{ let t = {}; try{ t = (m.tile && m.tile()) || {}; }catch(e){}
+    l.push({id:m.id, ico:m.ico, rot:m.curto || String(m.aba.rot).replace(/^\S+\s+/,''), sel: t.sel || '', alerta: !!t.alerta}); });
+  l.push({id:'ajustes', ico:'⚙', rot:'Ajustes'});
+  return l;
+}
+function _ilhaResumo(){
+  const p = _ilhaPrefs(), agora = Date.now(), tiles = [];
+  if(p.timer){ const ts = _ilhaTimers(), t = ts[0];
+    if(t){ const m = MareTimer.mostra(t, agora);
+      tiles.push(`<div class="ilha-tile ilha-tile-caixa${t.status==='rodando'?' quente':''}${m.esg?' alerta':''}" data-ir="timers" data-id="${esc(t.id)}"><button type="button" class="ilha-tile-ir" data-ir="timers"><span class="ilha-tile-rot">⏲ ${t.status==='rodando'?'Timer rodando':MareTimer.estadoTxt(t)}${ts.length>1?' · +'+(ts.length-1):''}</span><span class="ilha-tile-val" data-tm-tempo="${esc(t.id)}">${t.status==='novo'?'—':esc(m.txt)}</span><span class="ilha-tile-sub">${esc(p.privado?'':t.atividade)}</span></button>`
+        + (t.status==='rodando' ? '<button type="button" class="ilha-tile-acao" data-acao="pausar" aria-label="Pausar o timer">⏸</button>' : `<button type="button" class="ilha-tile-acao" data-acao="${t.status==='novo'?'iniciar':'continuar'}" aria-label="${t.status==='novo'?'Iniciar':'Continuar'} o timer">▶</button>`)+'</div>');
+    } else tiles.push('<button type="button" class="ilha-tile" data-ir="timers"><span class="ilha-tile-rot">⏲ Timers</span><span class="ilha-tile-val menor">Nenhum ativo</span><span class="ilha-tile-sub">Crie num card</span></button>');
+  }
+  if(p.notif){ const nl = _ilha.notifs.filter(n=>n && !n.read), n = nl.length;
+    tiles.push(`<button type="button" class="ilha-tile" data-ir="notif"><span class="ilha-tile-rot">🔔 Notificações</span><span class="ilha-tile-val${n?'':' menor'}">${n ? n+' não lida'+(n>1?'s':'') : 'Tudo em dia'}</span><span class="ilha-tile-sub">${esc(n && !p.privado ? String(nl[0].title||'') : '')}</span></button>`);
+  }
+  _ILHA_MODS.filter(m=>m._ativo && m.aba && m.tile).forEach(m=>{ let t = null; try{ t = m.tile(); }catch(e){} if(!t) return;
+    tiles.push(`<button type="button" class="ilha-tile${t.alerta?' alerta':''}${t.quente?' quente':''}" data-ir="${esc(m.id)}"><span class="ilha-tile-rot">${m.ico} ${esc(m.curto||m.nome)}</span><span class="ilha-tile-val${t.menor?' menor':''}"${t.vivo?' data-vivo="'+esc(t.vivo)+'"':''}>${esc(t.val)}</span><span class="ilha-tile-sub">${esc(p.privado?'':(t.sub||''))}</span></button>`); });
+  if(tiles.length % 2) tiles[tiles.length-1] = tiles[tiles.length-1].replace('class="ilha-tile', 'class="ilha-tile largo');
+  return '<div class="ilha-resumo">'+tiles.join('')+'</div>'
+    + (tiles.length<=2 ? '<p class="ilha-vazio">Ligue agenda, favoritos, serviços e agente em ⚙ Ajustes → Módulos.</p>' : '');
+}
+function _ilhaAjustesHtml(){
+  const p = _ilhaPrefs();
+  const sel = (id, val, ops) => `<select id="${id}">`+ops.map(([v,r])=>`<option value="${v}"${val===v?' selected':''}>${r}</option>`).join('')+'</select>';
+  const chk = (id, v) => `<input type="checkbox" id="${id}"${v?' checked':''}>`;
+  const lin = (txt, sub, ctl) => `<label><span>${txt}${sub?'<small>'+sub+'</small>':''}</span>${ctl}</label>`;
+  return '<div class="ilha-cfg">'
+    + '<div class="ilha-op-h">Como a ilha aparece</div><div class="ilha-cfg-grupo">'
+    + lin('Quando aparecer', '', sel('ilha-cfg-modo', p.modo, [['acao','Só com ação'],['mouse','Ao passar o mouse'],['sempre','Sempre visível']]))
+    + lin('Atividade principal', '', sel('ilha-cfg-principal', p.principal, [['timer','Timer'],['notif','Notificações']].concat(_ILHA_MODS.filter(m=>m._ativo && m.candidatos).map(m=>[m.id, m.nome]))))
+    + lin('Mostrar uma 2ª atividade', 'ao lado da principal, na pílula', chk('ilha-cfg-sec', p.secundaria))
+    + lin('Ao abrir, mostrar', '', sel('ilha-cfg-reabrir', p.reabrir, [['ultima','A última aba'],['resumo','O resumo'],['timers','Timers'],['notif','Notificações']]))
+    + lin('Compartilhar tela', 'esconde os títulos', chk('ilha-cfg-privado', p.privado))
+    + '</div><div class="ilha-op-h">Módulos</div><div class="ilha-cfg-grupo">'
+    + lin('⏲ Timers', '', chk('ilha-cfg-timer', p.timer))
+    + lin('🔔 Notificações', 'tira o 🔔 do topo', chk('ilha-cfg-notif', p.notif))
+    + _ILHA_MODS.filter(_ilhaModPode).map(m=>lin(m.ico+' '+esc(m.nome), m.desc ? esc(m.desc) : '', chk('ilha-cfg-mod-'+m.id, _ilhaModOn(m)))).join('')
+    + '</div><p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
+    + '<button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div>';
+}
 function _ilhaPainel(){
-  const p = _ilhaPrefs(), agora = Date.now(), aba = _ilha.abaAtual || 'timers';
-  const abaBtn = (id, rot) => `<button type="button" class="ilha-aba${aba===id?' on':''}" data-aba="${id}" role="tab" aria-selected="${aba===id}">${rot}</button>`;
-  const modAbas = _ILHA_MODS.filter(m=>m._ativo && m.aba), modAba = modAbas.find(m=>m.id===aba);
-  let h = '<div class="ilha-abas" role="tablist">'+(p.timer?abaBtn('timers','⏲ Timers'):'')+(p.notif?abaBtn('notif','🔔 Notificações'):'')+modAbas.map(m=>abaBtn(m.id, m.aba.rot)).join('')+abaBtn('ajustes','⚙ Ajustes')
-    + `<button type="button" id="ilha-fixar" aria-pressed="${_ilha.fixada}" title="${_ilha.fixada?'Desafixar':'Manter aberta'}" aria-label="Manter aberta">📌</button></div>`;
-  if(aba==='timers'){
-    const ts = _ilhaTimers();
-    h += ts.length ? ts.map(t=>{ const m = MareTimer.mostra(t, agora), conf = _ilha.confirmar===t.id;
+  const p = _ilhaPrefs(), agora = Date.now(), abas = _ilhaAbas();
+  let aba = _ilha.abaAtual || 'resumo'; if(!abas.some(a=>a.id===aba)) aba = _ilha.abaAtual = 'resumo';
+  const info = abas.find(a=>a.id===aba), modAba = _ILHA_MODS.find(m=>m.id===aba && m._ativo && m.aba);
+  const abaBtn = a => `<button type="button" class="ilha-aba${aba===a.id?' on':''}" data-aba="${a.id}" role="tab" aria-selected="${aba===a.id}" aria-label="${esc(a.rot)}${a.sel?' ('+esc(a.sel)+')':''}"><span class="ilha-aba-ico" aria-hidden="true">${a.ico}</span><span class="ilha-aba-rot">${esc(a.rot)}</span>${a.sel!==''&&a.sel!=null?`<span class="ilha-aba-sel${a.alerta?' alerta':''}" aria-hidden="true">${esc(a.sel)}</span>`:''}</button>`;
+  const esq = abas.filter(a=>_ILHA_ESQ.includes(a.id)), dir = abas.filter(a=>!_ILHA_ESQ.includes(a.id));
+  let corpo = '', sub = '';
+  if(aba==='resumo'){ corpo = _ilhaResumo(); sub = 'o que importa agora'; }
+  else if(aba==='timers'){
+    const ts = _ilhaTimers(); sub = ts.length ? ts.length+' ativo'+(ts.length>1?'s':'') : '';
+    corpo = ts.length ? ts.map(t=>{ const m = MareTimer.mostra(t, agora), conf = _ilha.confirmar===t.id;
       return `<div class="ilha-timer ${t.status}${m.esg?' esg':''}" data-id="${esc(t.id)}"><div><div class="ilha-timer-t">${esc(p.privado?'Timer':t.atividade)}</div><div class="ilha-timer-s">${esc(p.privado?'':(t.cardTitle||''))}${p.privado?'':' · '}${esc(MareTimer.estadoTxt(t))}</div></div>`
         + `<div class="ilha-timer-tempo">${t.status==='novo'?'—':esc(m.txt)}</div><div class="ilha-acoes">`
         + (t.status==='rodando' ? '<button type="button" data-acao="pausar">⏸ Pausar</button>' : `<button type="button" data-acao="${t.status==='novo'?'iniciar':'continuar'}">▶ ${t.status==='novo'?'Iniciar':'Continuar'}</button>`)
         + (conf ? '<button type="button" data-acao="confirmar-encerrar">Encerrar mesmo?</button>' : '<button type="button" data-acao="encerrar">⏹ Encerrar</button>')
         + '<button type="button" data-acao="abrir-card">Abrir o card</button></div></div>'; }).join('')
       : '<div class="ilha-vazio">Nenhum timer ativo. Crie um num card, em "Timer e Produtividade".</div>';
-  } else if(aba==='notif'){
-    h += '<div id="ilha-sino-slot"></div>';
-  } else if(modAba){
-    try{ h += modAba.aba.html(); }catch(e){ console.warn('[ilha]', modAba.id, e); h += '<div class="ilha-vazio">Não deu para mostrar esta aba agora.</div>'; }
-  } else {
-    const sel = (id, val, ops) => `<select id="${id}">`+ops.map(([v,r])=>`<option value="${v}"${val===v?' selected':''}>${r}</option>`).join('')+'</select>';
-    const chk = (id, v) => `<input type="checkbox" id="${id}"${v?' checked':''}>`;
-    h += '<div class="ilha-cfg">'
-      + `<label>Quando aparecer ${sel('ilha-cfg-modo', p.modo, [['acao','Só quando houver ação'],['mouse','Ao passar o mouse'],['sempre','Sempre visível']])}</label>`
-      + `<label>Atividade principal ${sel('ilha-cfg-principal', p.principal, [['timer','Timer'],['notif','Notificações']].concat(_ILHA_MODS.filter(m=>m._ativo && m.candidatos).map(m=>[m.id, m.nome])))}</label>`
-      + `<label>Mostrar também uma atividade secundária ${chk('ilha-cfg-sec', p.secundaria)}</label>`
-      + `<label>Ao reabrir, mostrar ${sel('ilha-cfg-reabrir', p.reabrir, [['ultima','A última aba'],['timers','Timers'],['notif','Notificações']])}</label>`
-      + `<label>Timers na ilha ${chk('ilha-cfg-timer', p.timer)}</label>`
-      + `<label>Notificações na ilha (tira o 🔔 do topo) ${chk('ilha-cfg-notif', p.notif)}</label>`
-      + `<label>Compartilhar tela (sem títulos) ${chk('ilha-cfg-privado', p.privado)}</label>`
-      + _ILHA_MODS.filter(_ilhaModPode).map(m=>`<label>${m.ico} ${esc(m.nome)} ${chk('ilha-cfg-mod-'+m.id, _ilhaModOn(m))}</label>`).join('')
-      + '<p>Vale só neste aparelho. A ilha muda na hora, enquanto você ajusta. Desligar não para os timers nem as notificações.</p>'
-      + '<button type="button" id="ilha-desligar">Desligar a Ilha Dinâmica</button></div>';
-  }
+  } else if(aba==='notif'){ corpo = '<div id="ilha-sino-slot"></div>'; }
+  else if(modAba){ try{ corpo = modAba.aba.html(); }catch(e){ console.warn('[ilha]', modAba.id, e); corpo = '<div class="ilha-vazio">Não deu para mostrar esta aba agora.</div>'; } }
+  else { corpo = _ilhaAjustesHtml(); sub = 'neste aparelho'; }
+  const titulo = aba==='resumo' ? 'Ilha Dinâmica' : aba==='notif' ? 'Notificações' : (modAba ? modAba.nome : info ? info.rot : '');
+  const h = '<div class="ilha-estudio">'
+    + `<div class="ilha-abas ilha-trilho esq" role="tablist" aria-label="Agora">${esq.map(abaBtn).join('')}</div>`
+    + `<section class="ilha-centro" role="tabpanel" aria-label="${esc(titulo)}"><div class="ilha-cab"><h2>${info?info.ico+' ':''}${esc(titulo)}${sub?' <small>· '+esc(sub)+'</small>':''}</h2>`
+    + `<button type="button" id="ilha-fixar" aria-pressed="${_ilha.fixada}" title="${_ilha.fixada?'Desafixar':'Manter aberta'}" aria-label="Manter aberta">📌</button></div><div class="ilha-corpo">${corpo}</div></section>`
+    + `<div class="ilha-abas ilha-trilho dir" role="tablist" aria-label="Atalhos e ajustes">${dir.map(abaBtn).join('')}</div></div>`;
   // O sino é um único nó: mover preserva handlers, preferências e a lista completa.
   // Retire-o antes de trocar o HTML, para não destruir os controles originais.
   _ilhaSinoLugar(false);
   document.getElementById('ilha-painel').innerHTML = h;
   if(aba==='notif') _ilhaSinoLugar(true);
+  _ilhaPainelLugar();
 }
 // Lugar da ilha no desktop: centro do vão livre entre o nome do squad (.hd-l) e os botões (.hd-btns) — ou, com os botões
 // quebrados para a linha de baixo, o resto da 1ª linha. A pílula nunca passa desse vão (não empurra nem cobre botão).
@@ -37989,6 +38098,15 @@ function _ilhaLugar(){
   ilha.style.setProperty('--ilha-x', Math.round(L.right - H.left + 16 + vao/2)+'px');
   ilha.style.setProperty('--ilha-max', Math.max(150, Math.round(vao))+'px');
 }
+// O painel aberto (680 px) nasce centrado na pílula, que nem sempre está no meio da tela: prende dentro da janela (8 px de margem).
+// Conta pela posição da pílula e pela largura do painel (não pelo getBoundingClientRect do painel, que a animação de abertura distorce).
+function _ilhaPainelLugar(){
+  const pn = document.getElementById('ilha-painel'), il = document.getElementById('ilha'); if(!pn || !il) return;
+  if(!_ilha.aberta || matchMedia('(max-width:768px)').matches){ pn.style.removeProperty('--ilha-dx'); return; }
+  const r = il.getBoundingClientRect(), w = pn.offsetWidth, iw = document.documentElement.clientWidth, esq = r.left + r.width/2 - w/2;
+  const dx = esq < 8 ? 8 - esq : (esq + w > iw - 8 ? (iw - 8) - (esq + w) : 0);
+  pn.style.setProperty('--ilha-dx', Math.round(dx)+'px');
+}
 function _ilhaRender(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
   _ilhaModsSinc();   // antes do estado: módulo recém-ligado já conta neste render
@@ -38000,7 +38118,7 @@ function _ilhaRender(){
   if(e==='off'){ _ilhaSinoLugar(false); _ilhaRelogio(); return; }
   ilha.dataset.estado = e;
   document.getElementById('ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
-  _ilhaPilula(); _ilhaLugar();
+  _ilhaPilula(); _ilhaLugar(); _ilhaPainelLugar();
   if(e==='aberta' && !ilha.contains(document.activeElement) || (e==='aberta' && !document.querySelector('#ilha-painel .ilha-abas'))) _ilhaPainel();
   _ilhaRelogio();
 }
@@ -38008,15 +38126,15 @@ function _ilhaRender(){
 function _ilhaRelogio(){
   const p = _ilhaPrefs(), e = document.getElementById('ilha') && document.getElementById('ilha').dataset.estado;
   const precisa = p.on && p.timer && !document.hidden && ['atividade','aberta','aviso'].includes(e) && _ilhaTimers().some(t=>t.status==='rodando');
-  if(precisa && !_ilha.tick){ _ilha.tick = setInterval(()=>{ _ilhaPilula(); if(_ilha.aberta) document.querySelectorAll('#ilha-painel .ilha-timer').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.id]; if(t && t.status!=='novo') el.querySelector('.ilha-timer-tempo').textContent = MareTimer.mostra(t, Date.now()).txt; }); }, 1000); window.__ilhaTicks = 1; }
+  if(precisa && !_ilha.tick){ _ilha.tick = setInterval(()=>{ _ilhaPilula(); if(_ilha.aberta) document.querySelectorAll('#ilha-painel [data-tm-tempo]').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.tmTempo]; if(t && t.status!=='novo') el.textContent = MareTimer.mostra(t, Date.now()).txt; }); document.querySelectorAll('#ilha-painel .ilha-timer').forEach(el=>{ const t = (_tmMeus||{})[el.dataset.id]; if(t && t.status!=='novo') el.querySelector('.ilha-timer-tempo').textContent = MareTimer.mostra(t, Date.now()).txt; }); }, 1000); window.__ilhaTicks = 1; }
   if(!precisa && _ilha.tick){ clearInterval(_ilha.tick); _ilha.tick = null; window.__ilhaTicks = 0; }
 }
 function _ilhaAbrir(){
   const p = _ilhaPrefs();
-  _ilha.abaAtual = p.reabrir==='ultima' ? (p.aba || 'timers') : p.reabrir;
-  if(_ilha.abaAtual==='timers' && !p.timer) _ilha.abaAtual = p.notif ? 'notif' : 'ajustes';
-  if(_ilha.abaAtual==='notif' && !p.notif) _ilha.abaAtual = p.timer ? 'timers' : 'ajustes';
-  if(!['timers','notif','ajustes'].includes(_ilha.abaAtual) && !_ILHA_MODS.some(m=>m.id===_ilha.abaAtual && m._ativo && m.aba)) _ilha.abaAtual = p.timer ? 'timers' : 'ajustes';
+  _ilha.abaAtual = p.reabrir==='ultima' ? (p.aba || 'resumo') : p.reabrir;
+  if(_ilha.abaAtual==='timers' && !p.timer) _ilha.abaAtual = 'resumo';
+  if(_ilha.abaAtual==='notif' && !p.notif) _ilha.abaAtual = 'resumo';
+  if(!['resumo','timers','notif','ajustes'].includes(_ilha.abaAtual) && !_ILHA_MODS.some(m=>m.id===_ilha.abaAtual && m._ativo && m.aba)) _ilha.abaAtual = 'resumo';
   _ilha.aberta = true; _ilha.confirmar = null; _ilha.aviso = null; clearTimeout(_ilha.tAviso);
   _ilhaRender(); _ilhaPainel();
   setTimeout(()=>{ const f = document.querySelector('#ilha-painel .ilha-aba.on') || document.getElementById('ilha-painel'); f.focus({preventScroll:true}); }, 10);
@@ -38339,7 +38457,7 @@ function _ilhaAgCard(v){ const c = v.squad===ACTIVE_SQUAD && typeof cards!=='und
 function _ilhaAgDecorrido(v){ const s = Math.max(0, Math.floor((Date.now()-Date.parse(v.desde))/1000)); return s<60 ? s+' s' : Math.floor(s/60)+' min'; }
 function _ilhaAgRelogio(){
   const precisa = !!_ilhaAg.off && !document.hidden && _ilhaAgAnalisando().length>0;
-  if(precisa && !_ilhaAg.tick) _ilhaAg.tick = setInterval(()=>{ if(!_ilhaAgAnalisando().length){ _ilhaAgRelogio(); _ilhaRender(); return; } _ilhaPilula(); }, 5000);
+  if(precisa && !_ilhaAg.tick) _ilhaAg.tick = setInterval(()=>{ const an = _ilhaAgAnalisando(); if(!an.length){ _ilhaAgRelogio(); _ilhaRender(); return; } _ilhaPilula(); document.querySelectorAll('#ilha-painel [data-vivo="ag"]').forEach(el=>{ el.textContent = 'Analisando · '+_ilhaAgDecorrido(an[0]); }); }, 5000);
   if(!precisa && _ilhaAg.tick){ clearInterval(_ilhaAg.tick); _ilhaAg.tick = null; }
   window.__ilhaAgTick = _ilhaAg.tick ? 1 : 0;
 }
@@ -38443,6 +38561,38 @@ _ilhaRegistrar({
     }
   }
 });
+// ── Blocos do Resumo (painel aberto) e nomes curtos dos botões laterais — um por módulo ──
+const _ilhaModExtra = (id, o) => { const m = _ILHA_MODS.find(x=>x.id===id); if(m) Object.assign(m, o); };
+_ilhaModExtra('agenda', {curto:'Agenda', desc:'seus compromissos e contagem regressiva', tile(){
+  const agora = Date.now(), prox = (_ilhaAgd.v||[]).find(e=>_ilhaAgFim(e) >= agora);
+  if(!prox) return {val:'Livre', menor:true, sub:'nada nos próximos 14 dias'};
+  const ini = _ilhaAgInicio(prox), hoje = _ilhaAgFmt(new Date()), n = Math.ceil((ini-agora)/60000);
+  const val = !prox.diaInteiro && prox.data===hoje ? (agora>=ini ? 'agora' : n<=90 ? 'em '+n+' min' : prox.hi) : (prox.data===hoje ? 'hoje' : new Date(prox.data+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'short', day:'2-digit', month:'2-digit'}).replace('.',''));
+  return {val, sub:prox.titulo, quente: prox.data===hoje && !prox.diaInteiro && n<=15, sel: prox.data===hoje && !prox.diaInteiro && n<=60 && n>0 ? n+'m' : ''};
+}});
+_ilhaModExtra('agente', {curto:'Agente', desc:'"analisando" real e resposta pronta', tile(){
+  const an = _ilhaAgAnalisando(), pr = _ilhaAgProntas();
+  if(an.length) return {val:'Analisando · '+_ilhaAgDecorrido(an[0]), vivo:'ag', menor:true, sub:_ilhaAgCard(an[0]), quente:true, sel:'…'};
+  if(pr.length) return {val: pr.length===1 ? 'Resposta pronta' : pr.length+' respostas', menor:true, sub:String(pr[0].sub||''), quente:true, sel:pr.length};
+  return {val:'Nada agora', menor:true, sub:'chame com @Agente Ágil num card'};
+}});
+_ilhaModExtra('status', {curto:'Serviços', desc:'VTEX, GitHub e Firebase', tile(){
+  const ss = _ilhaStatusEstados(), inc = ss.filter(x=>x.incidente);
+  if(!ss.length) return {val:'Sem leitura', menor:true, sub:'monitores fora do ar'};
+  if(inc.length) return {val:'Incidente', sub:inc.map(x=>x.nome).join(', '), alerta:true, sel:'!'};
+  return {val:'Tudo normal', menor:true, sub:ss.map(x=>x.nome).join(' · ')};
+}});
+_ilhaModExtra('op', {curto:'Operação', desc:'Guardião dos cards e backups (só ADM)', tile(){
+  const bk = _ilhaOpBackups().length, g = _ilhaOp.g, novo = g && _ilhaOp.chave!==_ilhaPrefs().opVisto && Date.now()-_ilhaOpTs(g.detectadoEm) < 24*3600*1000;
+  if(bk) return {val:bk===1?'Backup falhou':bk+' backups falharam', menor:true, alerta:true, sel:'!'};
+  if(novo) return {val:g.acao==='restaurado'?'Card restaurado':'Card sumiu', menor:true, sub:String(g.titulo||''), alerta:g.acao!=='restaurado', sel:'!'};
+  return {val:'Tudo certo', menor:true, sub:'Guardião e backups'};
+}});
+_ilhaModExtra('fav', {curto:'Favoritos', desc:'até 3 atalhos: produto, squad ou card', tile(){
+  const fs = _ilhaFavs(); if(!fs.length) return {val:'Nenhum', menor:true, sub:'adicione até 3 atalhos'};
+  const apps = (window.MareNotif && MareNotif.APPS) || [];
+  return {val: fs.length+' atalho'+(fs.length>1?'s':''), menor:true, sub: fs.map(f=>f.tipo==='squad' ? ((SQUAD_META_LIVE[f.id]||{}).label||f.id) : f.tipo==='produto' ? ((apps.find(a=>a.id===f.id)||{}).nome||f.id) : f.titulo).join(' · ')};
+}});
 window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(); }, desligar:()=>{ _ilhaPrefs().on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); }, estado:()=>_ilhaEstado()};
 (function _ilhaEventos(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
@@ -38471,16 +38621,20 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
     if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
     if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
     if(e.target.closest('.notif-item') && !e.target.closest('.notif-dismiss')){ _ilhaFechar(false); return; }
+    const ir = !e.target.closest('button[data-acao]') && e.target.closest('[data-ir]');
+    if(ir){ _ilha.abaAtual = ir.dataset.ir; if(ir.dataset.ir!=='ajustes'){ p.aba = ir.dataset.ir; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
     const mAba = _ILHA_MODS.find(m=>m.id===_ilha.abaAtual && m._ativo && m.aba && m.aba.clique); if(mAba){ try{ if(mAba.aba.clique(e)) return; }catch(err){ console.warn('[ilha]', mAba.id, err); } }
     const b = e.target.closest('button[data-acao]'); if(!b) return;
-    const el = b.closest('.ilha-timer'), t = el && (_tmMeus||{})[el.dataset.id]; if(!t) return;
+    const el = b.closest('.ilha-timer,[data-ir="timers"]'), t = el && (_tmMeus||{})[el.dataset.id]; if(!t) return;
     const ac = b.dataset.acao;
     if(ac==='encerrar'){ _ilha.confirmar = t.id; _ilhaPainel(); const c = painel.querySelector('[data-acao="confirmar-encerrar"]'); if(c) c.focus(); return; }
     if(ac==='abrir-card'){ _ilhaFechar(false); tmAbrirCard(t.sq, t.cardId); return; }
     const mapa = {pausar:'pause', continuar:'play', iniciar:'play', 'confirmar-encerrar':'stop'};
     _ilha.confirmar = null;
+    const doBloco = !!b.closest('.ilha-tile');
     await tmAcao(t.sq, t.cardId, t.id, mapa[ac]);   // o índice atualiza e chama _ilhaRender
     _ilhaPainel();
+    if(doBloco){ const f = painel.querySelector('.ilha-tile[data-ir="timers"] .ilha-tile-acao'); if(f) f.focus(); }
   });
   document.getElementById('notif-panel').addEventListener('keydown', e=>{ const ni = e.target.closest('.notif-item'); if(ni && e.target===ni && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); ni.click(); } });
   painel.addEventListener('change', e=>{
