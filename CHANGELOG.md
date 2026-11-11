@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — A Bordo ligado ao Guia do Maré (onboarding.html) — 2026-11-11
+
+Pedido do Caio (11/11/2026): ligar o onboarding do Maré ao A Bordo antes de promover.
+- **Bloco novo "🧭 Aprenda a usar o Maré Digital"** na seção Oceano (`#guia-mare`): explica que o A Bordo é o jeito de trabalhar e o Guia do Maré é a ferramenta, com **⚡ Começar o Resumido**, **📚 Ver o Completo** e **🐟 Abrir o Maré**.
+- O cartão do Maré passa a levar ao bloco ("Aprender a usar o Maré"), o passo 03 do roteiro cita o Guia do Maré e "Quero consultar um assunto" ganhou o atalho **Como usar o Maré**.
+- O guia já apontava de volta para o A Bordo, na tela inicial. Sem login e sem Firebase: só links.
+- Teste `test_onboarding_bordo.js` cobre os links novos (1280 e 390 px).
+
 ### SÓ DEV — Guia do Maré com as telas reais do board (guia-mare.html · scripts/guia-mare-telas.js) — 2026-11-11
 
 Pedido do Caio (11/11/2026, `/melhoriauiux`): "as telas iguais às do Maré, um guia de verdade — em vez de print, reconstruir as telas em HTML".
