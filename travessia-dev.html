@@ -551,8 +551,8 @@ async function carregaEstrelas() {
 }
 async function carregaAval(cid, uid) {   // tudo que EU posso ler da avaliação de uma pessoa (cada nó tem a sua regra; o que nega vira null)
   const ler = async p => { try { return await G(T + 'avaliacoes/' + cid + '/' + uid + '/' + p); } catch (e) { return null; } };
-  const outro = uid !== (S.me && S.me.uid);
-  const [pares, auto, lider, resp, devol, ciente, atAuto, atLider, atPares] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente'), ler('atitudes/auto'), outro ? ler('atitudes/lider') : null, outro ? ler('atitudes/par') : null]);
+  const outro = uid !== (S.me && S.me.uid); const cult = !!(S.ciclos[cid] && S.ciclos[cid].cultura);   // atitudes só são lidas em ciclo com a cultura ligada (sem leitura nova no Início à toa)
+  const [pares, auto, lider, resp, devol, ciente, atAuto, atLider, atPares] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente'), cult ? ler('atitudes/auto') : null, cult && outro ? ler('atitudes/lider') : null, cult && outro ? ler('atitudes/par') : null]);
   return { pares: pares || {}, auto, lider, resp: resp || {}, devol, ciente, atAuto, atLider, atPares: atPares || {} };
 }
 const invalida = k => { Object.keys(S.cache).filter(x => x === k || x.startsWith(k + ':')).forEach(x => delete S.cache[x]); };
@@ -721,7 +721,7 @@ async function viewAval() {
      <div class="${coleta ? 'sbs' : ''}"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
         ${formResp(cid, me, 'auto', a.auto, perguntasDe(c, 'auto'), coleta, 'auto-salvar')}</div>
        ${coleta ? `<aside class="foco lado" aria-label="Meu Baú para consulta"><h3 class="h2">📦 Meu Baú</h3><p class="small">Toque em 📎 para citar uma conquista na resposta em que você está escrevendo.</p>${blocoBau}</aside>` : ''}</div>
-     ${c.cultura ? blocoAtitudes(cid, me, 'auto', a.atAuto, coleta, 'Em quais atitudes da Hering você mais se viu neste ciclo? Escolha até 2.') : ''}
+     ${c.cultura ? blocoAtitudes(cid, me, 'auto', a.atAuto, coleta, 'Em quais atitudes da Hering você mais se viu neste ciclo? Escolha até 2. Seu líder e o gerente leem.') : ''}
      <div class="${lib ? 'foco' : 'trava'}"><h3 class="h2">${lib ? '🔓 Minha devolutiva' : '🔒 Devolutiva'}</h3>
        ${lib ? `<p style="white-space:pre-line">${esc(a.devol.texto || '')}</p>${a.ciente ? `<p class="small">✔ Ciência registrada.</p>` : `<button class="btn p" data-act="ciente" data-cid="${esc(cid)}">✔ Li e estou ciente</button>`}`
          : '<p>O resultado fica guardado até a conversa de devolutiva com o seu líder. Ele libera durante ou logo depois da conversa — você não precisa fazer nada agora.</p>'}</div></section>`;
@@ -733,7 +733,7 @@ async function viewAval() {
     respPar += `<section class="gl pad stack"><h2 class="h2">🤝 Feedback para ${esc(nomeDe(p.avaliado))} <span class="chip">${esc(c.nome)}</span></h2>
       ${c.status === 'coleta' ? '<p class="small">Seja específico e use exemplos. Quem lê é só o líder da pessoa; ela não vê o que você escreveu individualmente.</p>' : '<p class="small">A coleta não está aberta.</p>'}
       ${formResp(p.cid, p.avaliado, 'par', dados, perguntasDe(c, 'par'), c.status === 'coleta', 'par-salvar')}
-      ${c.cultura ? blocoAtitudes(p.cid, p.avaliado, 'par', await cache('atpar:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/atitudes/par/' + me); } catch (e) { return null; } }), c.status === 'coleta', 'Em quais atitudes da Hering ' + nomeDe(p.avaliado).split(' ')[0] + ' mais se destaca? Escolha até 2.') : ''}</section>`;
+      ${c.cultura ? blocoAtitudes(p.cid, p.avaliado, 'par', await cache('atpar:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/atitudes/par/' + me); } catch (e) { return null; } }), c.status === 'coleta', 'Em quais atitudes da Hering ' + nomeDe(p.avaliado).split(' ')[0] + ' mais se destaca? Escolha até 2. Só o líder e o gerente de ' + nomeDe(p.avaliado).split(' ')[0] + ' leem; ' + nomeDe(p.avaliado).split(' ')[0] + ' não vê.') : ''}</section>`;
   }
   if (!saida && !respPar) return vazio('Você não está em nenhum ciclo de avaliação agora. Quando o RH abrir um, ele aparece aqui.');
   return `<div class="stack">${saida}${respPar}</div>`;
@@ -812,7 +812,7 @@ async function viewDetalhe(uid) {
     corpo = `<div class="grid g2"><div class="stack"><h3 class="h2">Cadência combinada</h3>
       <div class="row"><label class="sr" for="cad-sel">Cadência</label><select class="sel2" id="cad-sel" data-act-change="cad" data-uid="${esc(uid)}">${['', ...Object.keys(CAD)].map(k => `<option value="${k}" ${((d.serie && d.serie.cad) || '') === k ? 'selected' : ''}>${k ? CAD[k] : 'Escolher…'}</option>`).join('')}</select></div>
       ${viewFarol(uid, d)}
-      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button>${campoNota('enc-n2', 'a pessoa e o gerente também veem')}${campoAtEnc('enc-det')}</form></div>
+      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button>${campoNota('enc-n2', 'a pessoa e o gerente também veem')}${campoAtEnc('enc-det-' + uid)}</form></div>
       <div>${listaEncontros(uid, d.enc, 12, 'Registros') || `<h3 class="h2">Registros</h3>${vazio('Nenhum 1:1 registrado.')}`}</div></div>`;
   } else if (t === 'bau') corpo = await viewBau(uid, true);
   else corpo = await viewAvalLider(uid);

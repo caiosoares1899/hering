@@ -37,7 +37,7 @@ Pedido do Caio: "o Travessia precisa conversar com os pilares culturais (A Bordo
 - **"As 5 atitudes da Hering":** em cada bloco, um recolhível com o texto do A Bordo e o exemplo "No Digital". É a parte de internalização: a pessoa relê a atitude no momento em que reflete sobre ela.
 - **Admin:** ciclo novo vem com **"Incluir as atitudes da Hering"** marcado. Cada ciclo tem o botão **"🧭 Atitudes: ligadas/desligadas"** (é assim que o RH liga no ciclo em andamento).
 - **Dados:** `encontros/{uid}/{id}/at`, nó irmão `avaliacoes/{cid}/{avaliado}/atitudes/{auto,lider,par/{par}}` e `ciclos/{cid}/cultura`. O nó é irmão porque o prod regrava auto/lider/resp_pares inteiros e apagaria os campos novos. Leitura e escrita são copiadas das de auto, lider e resp_pares. **Exige `firebase deploy --only database`.**
-- **Testes:** `test_travessia_cultura.js` (34/34) e `travessiaRules.test.js` (3 testes novos: ids válidos, máximo 2, quem lê/grava, fases, gente de fora).
+- **Testes:** `test_travessia_cultura.js` (36/36) e `travessiaRules.test.js` (3 testes novos: ids válidos, máximo 2, quem lê/grava, fases, gente de fora).
 
 ### Travessia — rodada de UI/UX: mais Marine Glass, menos "cara de IA" (SÓ DEV · travessia-dev.html) — 2026-11-11
 

@@ -52,6 +52,7 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8961', out = path.join(__
     t('autoavaliação: grava em atitudes/auto (at "facilita,cardume" + exemplo + ts)', at && at.at === 'facilita,cardume' && /painel/.test(at.atx) && at.ts, at);
     t('as respostas q1–q4 da autoavaliação ficam intactas', JSON.stringify(await mem(p, T + 'avaliacoes/' + CID + '/ana/auto')) === JSON.stringify(autoAntes), '');
     t('depois de salvar: chips marcados e exemplo como texto', (await p.locator('.cult-bloco').first().locator('[aria-pressed="true"]').count()) === 2 && /<b>painel<\/b>/.test(await p.locator('.cult-bloco').first().locator('textarea').inputValue()), '');
+    t('o bloco diz quem lê (líder e gerente)', /Seu líder e o gerente leem/.test(await p.locator('.cult-bloco').first().innerText()) && /não vê/.test(await p.locator('.cult-bloco').last().innerText()), '');
     t('"As 5 atitudes da Hering" com o texto do A Bordo e o exemplo "No Digital"', await p.locator('.cult').first().evaluate(e => e.querySelectorAll('li').length === 5 && /No Digital: alinhe dependências entre squads/.test(e.textContent)), '');
     const par = p.locator('.cult-bloco').last();
     await par.locator('[data-at="acessivel"]').click(); await par.locator('[data-act="at-salvar"]').click(); await p.waitForTimeout(600);
@@ -62,6 +63,11 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8961', out = path.join(__
   // 3) líder (Pau) e Frota
   { const { ctx, p, errs } = await abre('&como=pau&tab=frota');
     t('Frota: "Atitudes em foco nos 1:1" com as 5 atitudes e contagem', await p.locator('.at-barras li').count() === 5 && /Atitudes em foco nos 1:1/.test(await p.locator('#painel').innerText()), '');
+    await p.click('[data-act="abrir"][data-uid="ana"]'); await p.waitForTimeout(600);
+    await p.click('#detalhe [data-at-grupo="enc"] [data-at="cardume"]'); await p.click('[data-act="fechar"]'); await p.waitForTimeout(400);
+    await p.click('[data-act="abrir"][data-uid="bia"]'); await p.waitForTimeout(600);
+    t('Frota: atitude marcada (e não salva) no 1:1 da Ana não aparece marcada no da Bia', (await p.locator('#detalhe [data-at-grupo="enc"] [aria-pressed="true"]').count()) === 0, '');
+    await p.click('[data-act="fechar"]'); await p.waitForTimeout(300);
     await p.click('[data-act="abrir"][data-uid="ana"]'); await p.waitForTimeout(600); await p.click('[data-act="sel-aba"][data-k="aval"]'); await p.waitForTimeout(700);
     const det = p.locator('details:has(> summary:has-text("Atitudes da Hering"))').first(); await det.locator('> summary').click(); await p.waitForTimeout(300);
     t('líder: vê o que o par destacou (Débora: cardume e bem-feito, com o exemplo)', /Débora Pinto/.test(await det.innerText()) && /Juntos, somos um cardume · 1/.test(await det.innerText()), (await det.innerText()).slice(0, 200));
