@@ -147,6 +147,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🤖 Ilha V2: a função da @menção grava/apaga o marcador `kanban/usuarios/{uid}/agente_analisando/{commentId}` ("Analisando…" real na Ilha). Sem mudança de regra. | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados` | 11/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
