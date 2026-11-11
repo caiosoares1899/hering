@@ -311,22 +311,22 @@
 - _okrDsCloseCfg:L10472 · _okrDsRenderCfgModal:L10478 · _okrDsSaveForm:L10551 · _okrDsDelete:L10607 · _okrDsMove:L10634 · _auGetCurrentVersion:L10679 · _auModalOpen:L10683 · _auTyping:L10688 · _auShowBanner:L10696 · _auTryIdleReload:L10707
 - _auCheckVersion:L10713
 
-## `oceano-dev.html` (2559 linhas · 122 funções)
-- **CSS:** L21–L533 | **JS:** L14–L20 (classic), L737–L773 (module), L781–L2556 (classic) | **Módulos:** mare-login-dev.js?v=3 (L736), mare-notif-dev.js?v=41 (L775), mare-plantao-dev.js?v=5 (L776), mare-dicas-dev.js?v=14 (L777), mare-metas-dev.js?v=19 (L778), mare-sonar-dev.js?v=8 (L779)
-- **Consts (57):** firebaseConfig:L742 · fbApp:L752 · db:L753 · auth:L754 · provider:L755 · VERSION:L784 · IS_DEV:L785 · SO_HERING:L786 · CONTATO:L787 · $:L788 · esc:L789 · _hrefOk:L791 · reduzMov:L792 · standalone:L793 · SVG_PAINEL:L796 · SVG_BORDO:L797 · SVG_TRAV:L798 · P:L799 · NEXT:L804 · APPS:L805 · EXTRA:L812 · APP:L813 · logoPorthole:L818 · logoQuad:L819 · temaDoMare:L822 · peixesDoMare:L823 · PREFS_PADRAO:L824 · PREFS_LS:L828 · TEMAS:L830 · FISH_SVGS:L851 · _fn:L881 · nomeCurto:L882 · iniciais:L883 · AV_TIPOS:L993 · AV_LIMITE:L994 · avLargo:L995 · OK:L1016 · VTEX_VELHO_MS:L1102 · _avMudou:L1152 · _lobbyVisivel:L1232 (+17)
-- _fcmGetToken:L763 · _fcmDeleteToken:L764 · _signIn:L767 · _signInIdToken:L769 · _signOut:L770 · logoInner:L814 · lsLer:L826 · lsSalvar:L827 · aplicarPrefs:L831 · salvarPrefs:L840
-- toast:L848 · criarPeixes:L856 · atualizarAnimacao:L868 · _animAtividade:L869 · loginErr:L889 · emailHering:L891 · viaGoogle:L892 · lerRamo:L911 · garantirCadastro:L913 · iniciarSessao:L917
-- iniciarMetasOceano:L943 · metaPodeAtualizar:L961 · metaOceanoRender:L966 · mostrarContinuar:L982 · avLimite:L996 · avHttp:L1002 · avPodeVer:L1003 · avLimpa:L1015 · avCmp:L1033 · avVistos:L1036
-- avSalvaVistos:L1037 · avBotaoHtml:L1038 · avHtml:L1039 · muralRender:L1051 · avMarcaVistos:L1075 · avAbreBotao:L1083 · avAbre:L1088 · vtexEstado:L1103 · vtexRender:L1115 · iniciarVtex:L1123
-- iniciarMural:L1130 · rotearUrl:L1157 · sinoItens:L1161 · tempoRel:L1177 · sinoRender:L1178 · sinoFecha:L1190 · sinoToggle:L1191 · sinoTudoLido:L1200 · sinoLimpar:L1206 · sinoClique:L1217
-- iniciarDicas:L1234 · iniciarSino:L1239 · visivel:L1264 · saudacao:L1267 · renderEu:L1268 · appsDoDia:L1273 · renderTudo:L1274 · renderAbas:L1316 · renderVersoes:L1324 · linkLogo:L1341
-- linksCacheSet:L1350 · carregarLinks:L1351 · renderLinks:L1361 · htmlPerfilLinks:L1368 · renderPerfilLinks:L1374 · gravaLinks:L1379 · salvarLink:L1384 · acaoLink:L1396 · abrirAqui:L1407 · abrirApp:L1408
-- lembrarUltimo:L1413 · mostrarHost:L1414 · renderHostTabs:L1432 · fecharApp:L1435 · voltarLobby:L1443 · renderAbertos:L1448 · irAba:L1453 · rotearHash:L1459 · __oceanoHost:L1478 · abrirModal:L1482
-- fecharModal:L1483 · abrirPerfil:L1489 · renderFaq:L1559 · abrirAjuda:L1564 · feriasHoje:L1593 · feriasAtivo:L1594 · feriasExpandido:L1602 · feriasSetExpandido:L1603 · feriasDispensados:L1607 · feriasDispensar:L1608
-- feriasMdLite:L1610 · feriasBugEhMeu:L1616 · feriasMeusBugsAtivos:L1623 · feriasStatusMeta:L1627 · feriasAlertasAutor:L1633 · feriasBannerAlertaAutorHtml:L1637 · feriasRenderBanner:L1652 · feriasNorm:L1869 · feriasResponder:L1883 · feriasHtmlChat:L1936
-- feriasHtmlSocorro:L1956 · feriasHtmlStatus:L1975 · feriasHtmlProximos:L2002 · feriasBlocoGuiaDevtoolsHtml:L2015 · feriasHtmlGuia:L2042 · feriasHtmlMeusChamados:L2065 · feriasHtmlBugs:L2089 · feriasRenderEvidPreview:L2146 · feriasComprimirImagem:L2157 · feriasPreencherDadosTecnicos:L2192
-- feriasRenderBugsLista:L2209 · feriasProcessarSnapshotBugs:L2222 · feriasRefBugs:L2242 · feriasIniciarBugsListener:L2247 · feriasCarregarBugs:L2260 · feriasEnviarBug:L2276 · feriasRenderModal:L2358 · abrirFerias:L2372 · feriasEnviarPergunta:L2388 · instalar:L2459
-- mostrarDocumento:L2476 · iniciarSonar:L2486
+## `oceano-dev.html` (2575 linhas · 125 funções)
+- **CSS:** L21–L538 | **JS:** L14–L20 (classic), L743–L779 (module), L787–L2572 (classic) | **Módulos:** mare-login-dev.js?v=3 (L742), mare-notif-dev.js?v=41 (L781), mare-plantao-dev.js?v=5 (L782), mare-dicas-dev.js?v=14 (L783), mare-metas-dev.js?v=19 (L784), mare-sonar-dev.js?v=8 (L785)
+- **Consts (58):** firebaseConfig:L748 · fbApp:L758 · db:L759 · auth:L760 · provider:L761 · VERSION:L790 · IS_DEV:L791 · SO_HERING:L792 · CONTATO:L793 · $:L794 · esc:L795 · _hrefOk:L797 · reduzMov:L798 · standalone:L799 · SVG_PAINEL:L802 · SVG_BORDO:L803 · SVG_TRAV:L804 · P:L805 · NEXT:L810 · APPS:L811 · EXTRA:L818 · APP:L819 · logoPorthole:L824 · logoQuad:L825 · temaDoMare:L828 · peixesDoMare:L829 · PREFS_PADRAO:L830 · PREFS_LS:L834 · TEMAS:L836 · FISH_SVGS:L857 · _fn:L887 · nomeCurto:L888 · iniciais:L889 · AV_TIPOS:L999 · AV_LIMITE:L1000 · avLargo:L1001 · OK:L1022 · VTEX_VELHO_MS:L1108 · _avMudou:L1158 · _lobbyVisivel:L1238 (+18)
+- _fcmGetToken:L769 · _fcmDeleteToken:L770 · _signIn:L773 · _signInIdToken:L775 · _signOut:L776 · logoInner:L820 · lsLer:L832 · lsSalvar:L833 · aplicarPrefs:L837 · salvarPrefs:L846
+- toast:L854 · criarPeixes:L862 · atualizarAnimacao:L874 · _animAtividade:L875 · loginErr:L895 · emailHering:L897 · viaGoogle:L898 · lerRamo:L917 · garantirCadastro:L919 · iniciarSessao:L923
+- iniciarMetasOceano:L949 · metaPodeAtualizar:L967 · metaOceanoRender:L972 · mostrarContinuar:L988 · avLimite:L1002 · avHttp:L1008 · avPodeVer:L1009 · avLimpa:L1021 · avCmp:L1039 · avVistos:L1042
+- avSalvaVistos:L1043 · avBotaoHtml:L1044 · avHtml:L1045 · muralRender:L1057 · avMarcaVistos:L1081 · avAbreBotao:L1089 · avAbre:L1094 · vtexEstado:L1109 · vtexRender:L1121 · iniciarVtex:L1129
+- iniciarMural:L1136 · rotearUrl:L1163 · sinoItens:L1167 · tempoRel:L1183 · sinoRender:L1184 · sinoFecha:L1196 · sinoToggle:L1197 · sinoTudoLido:L1206 · sinoLimpar:L1212 · sinoClique:L1223
+- iniciarDicas:L1240 · iniciarSino:L1245 · visivel:L1270 · saudacao:L1273 · renderEu:L1274 · appsDoDia:L1279 · renderTudo:L1280 · renderAbas:L1322 · renderVersoes:L1330 · linkLogo:L1347
+- linksCacheSet:L1356 · carregarLinks:L1357 · renderLinks:L1367 · htmlPerfilLinks:L1374 · renderPerfilLinks:L1380 · gravaLinks:L1385 · salvarLink:L1390 · acaoLink:L1402 · abrirAqui:L1413 · abrirApp:L1414
+- lembrarUltimo:L1419 · mostrarHost:L1420 · renderHostTabs:L1438 · fecharApp:L1441 · voltarLobby:L1449 · renderAbertos:L1454 · aberturasChave:L1463 · contarAbertura:L1464 · ehVeterano:L1466 · irAba:L1467
+- rotearHash:L1474 · __oceanoHost:L1493 · abrirModal:L1497 · fecharModal:L1498 · abrirPerfil:L1504 · renderFaq:L1575 · abrirAjuda:L1580 · feriasHoje:L1609 · feriasAtivo:L1610 · feriasExpandido:L1618
+- feriasSetExpandido:L1619 · feriasDispensados:L1623 · feriasDispensar:L1624 · feriasMdLite:L1626 · feriasBugEhMeu:L1632 · feriasMeusBugsAtivos:L1639 · feriasStatusMeta:L1643 · feriasAlertasAutor:L1649 · feriasBannerAlertaAutorHtml:L1653 · feriasRenderBanner:L1668
+- feriasNorm:L1885 · feriasResponder:L1899 · feriasHtmlChat:L1952 · feriasHtmlSocorro:L1972 · feriasHtmlStatus:L1991 · feriasHtmlProximos:L2018 · feriasBlocoGuiaDevtoolsHtml:L2031 · feriasHtmlGuia:L2058 · feriasHtmlMeusChamados:L2081 · feriasHtmlBugs:L2105
+- feriasRenderEvidPreview:L2162 · feriasComprimirImagem:L2173 · feriasPreencherDadosTecnicos:L2208 · feriasRenderBugsLista:L2225 · feriasProcessarSnapshotBugs:L2238 · feriasRefBugs:L2258 · feriasIniciarBugsListener:L2263 · feriasCarregarBugs:L2276 · feriasEnviarBug:L2292 · feriasRenderModal:L2374
+- abrirFerias:L2388 · feriasEnviarPergunta:L2404 · instalar:L2475 · mostrarDocumento:L2492 · iniciarSonar:L2502
 
 ## `escala-dev.html` (1182 linhas · 71 funções)
 - **CSS:** L8–L178 | **JS:** L233–L1179 (module) | **Módulos:** mare-login-dev.js?v=3 (L232)

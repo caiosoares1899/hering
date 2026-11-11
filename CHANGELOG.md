@@ -39,6 +39,12 @@ Pedido do Caio: "o Travessia precisa conversar com os pilares culturais (A Bordo
 - **Dados:** `encontros/{uid}/{id}/at`, nó irmão `avaliacoes/{cid}/{avaliado}/atitudes/{auto,lider,par/{par}}` e `ciclos/{cid}/cultura`. O nó é irmão porque o prod regrava auto/lider/resp_pares inteiros e apagaria os campos novos. Leitura e escrita são copiadas das de auto, lider e resp_pares. **Exige `firebase deploy --only database`.**
 - **Testes:** `test_travessia_cultura.js` (36/36) e `travessiaRules.test.js` (3 testes novos: ids válidos, máximo 2, quem lê/grava, fases, gente de fora).
 
+### Oceano — abas de apresentação fora da navegação diária (O4 da consultoria) (SÓ DEV · oceano-dev v1.78) — 2026-11-11
+
+- "Conheça o Oceano" e "Por baixo do casco" são material de apresentação, lido uma vez. Para quem já abriu o Oceano **mais de 5 vezes neste aparelho** (contagem por pessoa, 1 por sessão), a barra de abas some do Início e as duas viram **links no rodapé**; a Ajuda ganhou a pergunta "Onde foram parar…?" com os dois links.
+- `#conheca` e `#tecnica` continuam funcionando, e quem está numa dessas abas vê a barra para voltar a "Meus produtos". Quem abre o Oceano pela primeira vez (ou mostra para alguém novo) vê tudo como antes.
+- Teste: `docs/arezzo/testes/test_oceano_abas_enxutas.js` (10/10).
+
 ### Travessia — rodada de UI/UX: mais Marine Glass, menos "cara de IA" (SÓ DEV · travessia-dev.html) — 2026-11-11
 
 Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O que estava ruim → o que ficou:
