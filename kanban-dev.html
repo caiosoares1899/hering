@@ -38302,7 +38302,7 @@ function _ilhaAgAnalisando(){ const agora = Date.now();
     .filter(v=>{ const t = Date.parse(v.desde||''); return isFinite(t) && agora-t < 10*60*1000 && agora-t > -60000 && typeof v.cardId==='string' && typeof v.squad==='string'; })
     .sort((a,b)=>String(b.desde).localeCompare(String(a.desde))); }
 function _ilhaAgProntas(){ const agora = Date.now();
-  return _ilha.notifs.filter(n=>n && !n.read && /^mention_/.test(String(n.id||'')) && /Agente Ágil/.test(String(n.title||'')) && agora-Date.parse(n.ts||'') < 30*60*1000); }
+  return _ilha.notifs.filter(n=>n && !n.read && /^mention_/.test(String(n.id||'')) && !/^mention_auto_/.test(String(n.id||'')) && /Agente Ágil/.test(String(n.title||'')) && agora-Date.parse(n.ts||'') < 30*60*1000); }
 function _ilhaAgCard(v){ const c = v.squad===ACTIVE_SQUAD && typeof cards!=='undefined' ? cards.find(c=>c.id===v.cardId) : null;
   return c ? String(c.title||'Card').slice(0,80) : (SQUAD_META_LIVE[v.squad] && SQUAD_META_LIVE[v.squad].label ? 'card em '+SQUAD_META_LIVE[v.squad].label : 'um card'); }
 function _ilhaAgDecorrido(v){ const s = Math.max(0, Math.floor((Date.now()-Date.parse(v.desde))/1000)); return s<60 ? s+' s' : Math.floor(s/60)+' min'; }

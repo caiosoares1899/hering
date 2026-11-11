@@ -572,3 +572,12 @@ test('marcador agente_analisando: não marca quando não processa (sem menção,
   await processarMencao(db, { cardId: 'c1', commentId: 'cmA4', comment: { uid: 'automacao', text: '@Agente Ágil analisa' }, llmClient: llmAuto });
   assert.equal(viuAutomacao, false);
 });
+
+test('marcador agente_analisando: uid com formato inválido (caminho) não grava em lugar nenhum', async () => {
+  const db = seedDb();
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'ok' }]);
+  await processarMencao(db, { cardId: 'c1', commentId: 'cmA5', comment: { uid: 'x/notificacoes/y', text: '@Agente Ágil resume' }, llmClient });
+  const usuarios = db._data().kanban.usuarios || {};
+  assert.equal(JSON.stringify(usuarios).includes('agente_analisando'), false);
+  assert.equal(JSON.stringify(usuarios).includes('"desde"'), false);
+});

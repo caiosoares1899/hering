@@ -163,7 +163,10 @@ function createMentionTrigger({ squadId, dryRun = true }) {
     // AQUI (já passou anti-auto-disparo, menção, kill switch e idempotência = o agente vai mesmo trabalhar) e apagado no `finally`
     // abaixo, dê certo ou não. Só a própria pessoa lê (regra de kanban/usuarios/$uid). Sem texto do modelo: só squad, card e hora.
     // Melhor esforço nas duas pontas — falhar aqui nunca impede nem desfaz a resposta. Automação não é pessoa: não marca.
-    const marcadorPath = comment.uid && comment.uid !== AUTOMACAO_UID ? `kanban/usuarios/${comment.uid}/agente_analisando/${commentId}` : null;
+    // `comment.uid` vem do comentário que o NAVEGADOR gravou (não há regra prendendo-o ao auth.uid em card_comments): só um uid com
+    // formato de uid entra no caminho — nada de "/" ou "." que levaria a escrita para outro nó (ex.: ".../notificacoes/x").
+    const uidOk = typeof comment.uid === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(comment.uid);
+    const marcadorPath = uidOk && comment.uid !== AUTOMACAO_UID ? `kanban/usuarios/${comment.uid}/agente_analisando/${commentId}` : null;
     if (marcadorPath) {
       await db.ref(marcadorPath).set({ squad: squadId, cardId, desde: new Date().toISOString() })
         .catch((err) => console.error(`[agente-analisando:${squadId}] falha ao marcar:`, cardId, err));
