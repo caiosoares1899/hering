@@ -12401,7 +12401,7 @@ async function _guiaMareCarregar(){
 }
 // passos: {id: isoString}; fim: {resumido?:iso, completo?:iso}. Só entra id curto [a-z0-9-] e data ISO — o resto é descartado.
 function _guiaMareMarcar(passos, fim){
-  const u = window._currentUser; if(!u) return;
+  const u = window._currentUser; if(!u) return Promise.resolve();
   const upd = {}; const perfil = _guiaMarePerfil = _guiaMarePerfil || {};
   perfil.passos = perfil.passos || {};
   Object.keys(passos||{}).slice(0,60).forEach(id=>{
@@ -12412,18 +12412,21 @@ function _guiaMareMarcar(passos, fim){
     const ts = String((fim&&fim[k])||'');
     if(_GUIA_MARE_ISO_OK.test(ts) && !perfil[k]){ upd[k] = ts; perfil[k] = ts; }
   });
-  if(!Object.keys(upd).length) return;
+  if(!Object.keys(upd).length) return Promise.resolve();
   upd.atualizadoEm = perfil.atualizadoEm = new Date().toISOString();
   _guiaMareEspelho();
-  fbUpdate('kanban/usuarios/'+u.uid+'/onboarding_mare', upd).catch(err=>console.warn('[guia-mare] não gravou o progresso:', err));
+  return fbUpdate('kanban/usuarios/'+u.uid+'/onboarding_mare', upd);
 }
 function _guiaMareSync(){
   if(!window._currentUser || _guiaMarePerfil===null) return;
   let raw = null; try{ raw = safeLS.getItem('guia_mare_prog'); }catch(e){}
   if(!raw) return;
-  try{ safeLS.removeItem('guia_mare_prog'); }catch(e){}
   let o = null; try{ o = JSON.parse(raw); }catch(e){}
-  if(o && typeof o==='object') _guiaMareMarcar((o.passos && typeof o.passos==='object') ? o.passos : {}, o);
+  const apagar = ()=>{ try{ if(safeLS.getItem('guia_mare_prog')===raw) safeLS.removeItem('guia_mare_prog'); }catch(e){} };
+  if(!o || typeof o!=='object'){ apagar(); return; }
+  // Só apaga a cópia local depois que o perfil gravou (sem rede, tenta de novo na próxima volta à aba)
+  _guiaMareMarcar((o.passos && typeof o.passos==='object') ? o.passos : {}, o)
+    .then(apagar).catch(err=>console.warn('[guia-mare] progresso do guia não foi pro perfil; fica no aparelho:', err));
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') _guiaMareSync(); });
 
@@ -12443,7 +12446,7 @@ const TOUR_MARE = {
 const TOUR_MARE_RESUMIDO = ['board','card-criar','card-mover','card-funcoes','comentar','notificacoes','meu-dia','sonar','agente'];
 let _tourMare = null;
 function _tourMareIniciar(qual){
-  const fila = (qual==='resumido' ? TOUR_MARE_RESUMIDO : [qual]).filter(id=>TOUR_MARE[id] && (!TOUR_MARE[id].so || TOUR_MARE[id].so()));
+  const fila = (qual==='resumido' ? TOUR_MARE_RESUMIDO : [qual]).filter(id=>Object.prototype.hasOwnProperty.call(TOUR_MARE, id) && (!TOUR_MARE[id].so || TOUR_MARE[id].so()));
   if(!fila.length) return;
   _tourMareFechar();
   _tourMare = {fila, i:0, completo: qual==='resumido'};
@@ -12491,7 +12494,7 @@ function _tourMarePasso(d){
   if(d>0){
     const now = new Date().toISOString(), p = {}; p[T.fila[T.i]] = now;
     if(T.completo && T.i===T.fila.length-1) p['tour-resumido'] = now;   // tour inteiro no board ≠ guia Resumido (esse quem marca é o guia)
-    _guiaMareMarcar(p, null);
+    _guiaMareMarcar(p, null).catch(err=>console.warn('[guia-mare] não gravou o progresso:', err));
     if(T.i===T.fila.length-1){ _tourMareFechar(); showToast(T.completo ? '🎉 Tour concluído! Quer ver tudo? ❓ Ajuda → 🧭 Boas-vindas' : '✅ Passo concluído'); return; }
   }
   T.i = Math.max(0, Math.min(T.fila.length-1, T.i+d));
