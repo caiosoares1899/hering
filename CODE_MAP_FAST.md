@@ -97,14 +97,14 @@
 ## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 
 ### `kanban-dev.html` (141 âncoras curadas)
-- `ADM_EMAILS` (L7322) · `getEffectiveRole` (L7457) · `SQUAD_META_LIVE` (L7519) · `resolveSquadAndShow` (L12260) · `autoRegistrar` (L12650) · `_claimUserInit` (L12486)
-- `_ensureInitRegistryBackfilled` (L12529) · `doSignIn` (L12147) · `_syncAuthProfileToFirebase` (L12553) · `showApp` (L12318) · `_onRealAuthChange` (L37085) · `agentes` (L8223)
-- `allIdentities` (L8235) · `renderAgentesList` (L27172) · `fecharAddAgente` (L27213) · `salvarAgente` (L27217) · `excluirAgente` (L27244) · `CARD_SECTIONS` (L8158)
-- `openCard` (L17032) · `openAgenteHotline` (L16911) · `_applyAgenteHotlineSkin` (L16887) · `saveCard` (L17563) · `_finishCloseOv` (L36408) · `_newCardGuardOff` (L16085)
-- `fbSaveAll` (L10205) · `fbCreateCard` (L10448) · `fbSaveCard` (L10526) · `_applyCardsSync` (L10926) · `_notasUpdate` (L21599) · `_saveCardWithRetry` (L10677)
-- `saveExtraDesc` (L16631) · `openNewCard` (L17472) · `backfillFlow` (L9651) · `recordMove` (L9525) · `_reportUnexpectedCardDisappearance` (L10513) · `searchDependsCards` (L37597)
-- `_currentTheme` (L36655) · `toggleTheme` (L36717) · `toggleThemeAuto` (L36813) · `exitViceCity` (L36891) · `_isViceCityEasterEggAtivo` (L36994) · `toggleBlackFriday` (L36915)
-- `exitBlackFriday` (L36926) · `_themeBtnRightClick` (L36938) · `_isBlackFridayAtivo` (L36914) · `maybeAutoArchiveOldCards` (L15657) · `_renderArquivadosBody` (L25745) · `openArquivados` (L25810)
+- `ADM_EMAILS` (L7331) · `getEffectiveRole` (L7466) · `SQUAD_META_LIVE` (L7528) · `resolveSquadAndShow` (L12269) · `autoRegistrar` (L12797) · `_claimUserInit` (L12633)
+- `_ensureInitRegistryBackfilled` (L12676) · `doSignIn` (L12156) · `_syncAuthProfileToFirebase` (L12700) · `showApp` (L12327) · `_onRealAuthChange` (L37233) · `agentes` (L8232)
+- `allIdentities` (L8244) · `renderAgentesList` (L27319) · `fecharAddAgente` (L27360) · `salvarAgente` (L27364) · `excluirAgente` (L27391) · `CARD_SECTIONS` (L8167)
+- `openCard` (L17179) · `openAgenteHotline` (L17058) · `_applyAgenteHotlineSkin` (L17034) · `saveCard` (L17710) · `_finishCloseOv` (L36556) · `_newCardGuardOff` (L16232)
+- `fbSaveAll` (L10214) · `fbCreateCard` (L10457) · `fbSaveCard` (L10535) · `_applyCardsSync` (L10935) · `_notasUpdate` (L21746) · `_saveCardWithRetry` (L10686)
+- `saveExtraDesc` (L16778) · `openNewCard` (L17619) · `backfillFlow` (L9660) · `recordMove` (L9534) · `_reportUnexpectedCardDisappearance` (L10522) · `searchDependsCards` (L37745)
+- `_currentTheme` (L36803) · `toggleTheme` (L36865) · `toggleThemeAuto` (L36961) · `exitViceCity` (L37039) · `_isViceCityEasterEggAtivo` (L37142) · `toggleBlackFriday` (L37063)
+- `exitBlackFriday` (L37074) · `_themeBtnRightClick` (L37086) · `_isBlackFridayAtivo` (L37062) · `maybeAutoArchiveOldCards` (L15804) · `_renderArquivadosBody` (L25892) · `openArquivados` (L25957)
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
@@ -115,12 +115,12 @@
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)
-- `_okrObjUltimaAtividade` (L5337) · `_okrObjParadoDias` (L5349) · `_renderMd` (L2553) · `_okrToggleNotas` (L3913) · `loadOkrReuniaoNotas` (L3200) · `renderOkrNotas` (L3233)
-- `_okrAgendaCartoes` (L3079) · `_okrAgendaConfirmar` (L3102) · `_okrAgendaAplicar` (L3117)
+- `_okrObjUltimaAtividade` (L5364) · `_okrObjParadoDias` (L5376) · `_renderMd` (L2553) · `_okrToggleNotas` (L3931) · `loadOkrReuniaoNotas` (L3201) · `renderOkrNotas` (L3234)
+- `_okrAgendaCartoes` (L3080) · `_okrAgendaConfirmar` (L3103) · `_okrAgendaAplicar` (L3118)
 
 ### `travessia-dev.html` (9 âncoras curadas)
-- `abrirApp` (L1124) · `farol` (L449) · `termometro` (L460) · `viewBau` (L648) · `viewDiario` (L574) · `viewAval` (L703)
-- `viewFrota` (L773) · `guardarBau` (L901) · `demoDados` (L1031)
+- `abrirApp` (L1130) · `farol` (L450) · `termometro` (L461) · `viewBau` (L649) · `viewDiario` (L575) · `viewAval` (L704)
+- `viewFrota` (L774) · `guardarBau` (L902) · `demoDados` (L1037)
 
 ### `okr-apresentacao.slide.html` (12 âncoras curadas)
 - `buildSlides` (L1234) · `startListeners` (L2111) · `rebuild` (L1349) · `fitSlideContent` (L1509) · `_okrFitDetailSections` (L1769) · `objMarcos` (L913)
