@@ -106,6 +106,17 @@ Relato (12/11/2026): uma pessoa aplicou uma receita num card (campanha) e deu er
 - **Fronteira:** sem mudança de permissões, nós ou sinks; correção da lista branca existente e isolamento do estado por pessoa. **Dica:** não, correções de comportamento existente.
 
 
+### 2026-11-11 · Oceano e Ilha: 3 achados do /monitorarbugs (SÓ DEV · oceano-dev v1.79 · kanban-dev v8.30.945)
+
+- **Oceano — contagem por pessoa (O4):** a marca de "já contei nesta aba" (`sessionStorage.oceano_contou`) era da aba, não da pessoa. Ana entrava, saía e Bia entrava na mesma aba: a abertura da Bia nunca contava, e as abas de apresentação só sumiam para ela depois de mais aberturas que o prometido. A chave agora leva o uid.
+- **Oceano — título preso:** com um produto aberto (Radar, Maré…), ir para `#conheca`/`#tecnica` fechava o produto, mas a aba do navegador continuava "Radar · Oceano". `rotearHash` agora devolve o título "Oceano", como os outros caminhos que fecham o produto.
+- **Ilha — introdução no celular:** preferência "ao passar o mouse" salva noutro aparelho deixava o passo "Quando a pílula aparece" sem nenhum rádio marcado (a opção do mouse some no toque). No toque essa preferência funciona como "Só com algo acontecendo"; agora esse rádio vem marcado.
+- Achados pela varredura do Codex (que não editou os dois arquivos porque o quadro ainda os listava como reservados por tarefas encerradas) e corrigidos pelo maestro. Teste: `docs/arezzo/testes/test_monitorarbugs_1112b.js` (os 3 falham na `main` e passam com a correção).
+
+### 2026-11-11 · Radar: recorte Pra você preso ao trocar de torre (SÓ DEV)
+
+Sintoma: selecionar Marcos em até 14 dias e trocar para uma torre sem esses Marcos mantinha a lista vazia e o chip de origem desaparecia. Causa: _okrEntrarTorre limpava gerência e período, mas preservava o novo filtro pv. Correção: limpar pv na mudança de torre; navegar na mesma torre preserva a escolha. Cenário: digital com pv=marcos → comercial sem Marcos pessoais. Teste: docs/arezzo/testes/test_monitorarbugs_1112.js (Playwright preparado, execução pelo maestro).
+
 ### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (SÓ DEV)
 
 A correção anterior cobriu os peixes de fundo; os oito stakeholders e o cardume central ainda tinham desenhos próprios com cauda invertida no site. Corrigida a geometria em onboarding.html e onboarding.slide.html, preservando cores, rótulos e abertura de modais. Raio da órbita dos slides limitado à largura do celular para não cortar os peixes. Teste docs/arezzo/testes/test_onboarding_bordo.js falha antes na geometria antiga e verifica os oito SVGs e os cliques de cada stakeholder nas duas páginas a 1280/390 px. Capturas em docs/capturas/a-bordo-aquario/. Fronteira: sem mudança, SVGs estáticos e CSS. Dica: não, correção visual.

@@ -6936,7 +6936,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.945-dev</div>
+<div class="version">v8.30.946-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -38255,7 +38255,7 @@ function _ilhaIntroPassos(){
       <ul class="ii-lista"><li><b>No centro, o Resumo</b>: um bloco por módulo. Clique num bloco para abrir o módulo; dá para pausar o timer ali mesmo.</li><li><b>Nas laterais, botões</b>: à esquerda o que acontece agora (Timers, Notificações, Agenda, Agente); à direita atalhos e controle (Favoritos, Serviços, Preferências, ⚙ Ajustes). No celular, ficam numa faixa embaixo.</li><li><b>📌</b> mantém aberta enquanto você usa o quadro. <b>Esc</b> ou clicar fora fecha.</li></ul>`},
     {t:'Escolha o que aparece', h:`<p>Ligue só o que faz sentido para você. Dá para mudar quando quiser em ⚙ Ajustes da ilha.</p>
       <fieldset class="ii-modo"><legend>Quando a pílula aparece</legend>
-        ${[['sempre','Sempre visível','padrão: fica no topo o tempo todo'],['acao','Só com algo acontecendo','some quando não há timer rodando nem notificação nova'],['mouse','Ao passar o mouse no topo','fica escondida até você levar o mouse lá']].filter(o=>!(o[0]==='mouse' && _ilhaCelular())).map(o=>`<label class="ii-mod"><span><b>${o[1]}</b><small>${o[2]}</small></span><input type="radio" name="ii-modo" value="${o[0]}" data-ii-modo="1"${p.modo===o[0]?' checked':''}></label>`).join('')}
+        ${[['sempre','Sempre visível','padrão: fica no topo o tempo todo'],['acao','Só com algo acontecendo','some quando não há timer rodando nem notificação nova'],['mouse','Ao passar o mouse no topo','fica escondida até você levar o mouse lá']].filter(o=>!(o[0]==='mouse' && _ilhaCelular())).map(o=>`<label class="ii-mod"><span><b>${o[1]}</b><small>${o[2]}</small></span><input type="radio" name="ii-modo" value="${o[0]}" data-ii-modo="1"${(p.modo===o[0] || (o[0]==='acao' && p.modo==='mouse' && _ilhaCelular()))?' checked':''}></label>`).join('')}
       </fieldset>
       <div class="ii-mods">
         <label class="ii-mod"><span><b>⏲ Timers</b><small>o que está rodando, pausar e continuar</small></span><input type="checkbox" data-ii-base="timer"${p.timer?' checked':''}></label>
