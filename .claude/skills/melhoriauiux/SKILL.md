@@ -127,4 +127,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-11 · Travessia (inteira, 2ª rodada):** "muito quadrada, cara de IA, pouco Marine Glass" → peixinhos e bolhas do Oceano (🐟 desliga; pausam ociosos), vidro lapidado sem desfoque nos cartões, botões/abas/avatares sem gradiente, saudação sem caixa nem barquinho balançando, seções de consulta abertas (linha fina, como o Oceano), nada de caixa dentro de caixa, cor do estado só no farol, "trancado" deixou de ser amarelo e o alerta de apoio continuou. Teste `test_travessia_marine.js`.
 
+- **2026-11-11 · Guia do Maré (`guia-mare.html`):** telas "simuladas" genéricas → **telas reais** do board: `scripts/guia-mare-telas.js` abre o `kanban-dev` com o Firebase falso, captura o HTML visível + só o CSS usado (`@media` resolvido no tamanho da captura — senão o layout de celular do Maré entra na moldura) e o guia mostra em Shadow DOM, com destaque no alvo e aproximação no celular. Textos dos passos revistos contra a tela real. Teste `test_guia_mare_pagina.js`.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
