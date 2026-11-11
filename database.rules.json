@@ -319,6 +319,9 @@
               "nota": {
                 ".validate": "newData.isString() && newData.val().length <= 280"
               },
+              "at": {
+                ".validate": "newData.isString() && newData.val().matches(/^(facilita|cardume|bemfeito|acessivel|legado)$/)"
+              },
               "por": {
                 ".validate": "newData.isString()"
               },
@@ -425,6 +428,9 @@
             },
             "criadoPor": {
               ".validate": "newData.isString()"
+            },
+            "cultura": {
+              ".validate": "newData.isBoolean()"
             },
             "ts": {
               ".validate": "newData.isNumber()"
@@ -565,6 +571,68 @@
                 ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid)",
                 ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $avaliado && root.child('kanban/travessia/avaliacoes/' + $cid + '/' + $avaliado + '/devolutiva/liberada').val() === true",
                 ".validate": "newData.isNumber()"
+              },
+              "atitudes": {
+                "auto": {
+                  ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $avaliado || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                  ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $avaliado && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() === 'coleta'",
+                  ".validate": "newData.hasChild('ts')",
+                  "at": {
+                    ".validate": "newData.isString() && newData.val().matches(/^(facilita|cardume|bemfeito|acessivel|legado)(,(facilita|cardume|bemfeito|acessivel|legado))?$/)"
+                  },
+                  "atx": {
+                    ".validate": "newData.isString() && newData.val().length <= 1200"
+                  },
+                  "ts": {
+                    ".validate": "newData.isNumber()"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                },
+                "lider": {
+                  ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                  ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() !== 'encerrado'",
+                  ".validate": "newData.hasChild('ts')",
+                  "at": {
+                    ".validate": "newData.isString() && newData.val().matches(/^(facilita|cardume|bemfeito|acessivel|legado)(,(facilita|cardume|bemfeito|acessivel|legado))?$/)"
+                  },
+                  "atd": {
+                    ".validate": "newData.isString() && newData.val().matches(/^(facilita|cardume|bemfeito|acessivel|legado)(,(facilita|cardume|bemfeito|acessivel|legado))?$/)"
+                  },
+                  "atx": {
+                    ".validate": "newData.isString() && newData.val().length <= 1200"
+                  },
+                  "ts": {
+                    ".validate": "newData.isNumber()"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                },
+                "par": {
+                  ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                  "$par": {
+                    ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $par || root.child('kanban/travessia/vinculos/' + $avaliado + '/liderUid').val() === auth.uid || root.child('kanban/travessia/vinculos/' + $avaliado + '/gerenteUid').val() === auth.uid)",
+                    ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && auth.uid === $par && root.child('kanban/travessia/avaliacoes/' + $cid + '/' + $avaliado + '/pares/' + auth.uid + '/aprovado').val() === true && root.child('kanban/travessia/ciclos/' + $cid + '/status').val() === 'coleta'",
+                    ".validate": "newData.hasChild('ts')",
+                    "at": {
+                      ".validate": "newData.isString() && newData.val().matches(/^(facilita|cardume|bemfeito|acessivel|legado)(,(facilita|cardume|bemfeito|acessivel|legado))?$/)"
+                    },
+                    "atx": {
+                      ".validate": "newData.isString() && newData.val().length <= 1200"
+                    },
+                    "ts": {
+                      ".validate": "newData.isNumber()"
+                    },
+                    "$other": {
+                      ".validate": false
+                    }
+                  }
+                },
+                "$other": {
+                  ".validate": false
+                }
               },
               "$other": {
                 ".validate": false

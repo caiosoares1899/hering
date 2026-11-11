@@ -171,6 +171,24 @@ textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:var(--r);}
 .in.nota{flex:1 1 100%;}
 .chip.prog.ok{color:var(--ok);}
 .rasc-st:empty{display:none;}
+.at-campo{flex:1 1 100%;display:flex;flex-direction:column;gap:6px;}
+.at-esc{display:flex;flex-wrap:wrap;gap:6px;}
+.at-op{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--glass);font-size:12.5px;font-weight:600;color:var(--txt2);}
+.at-op:hover{border-color:var(--accent);color:var(--txt);}
+.at-op[aria-pressed="true"]{background:rgba(var(--accent-rgb),.18);color:var(--txt);box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb),.55);border-color:transparent;}
+.at-op[aria-pressed="true"]::after{content:"✓";font-weight:800;}
+.chip.at{font-weight:600;}
+.cult{margin-top:12px;}
+.cult>summary{font-weight:700;font-size:13px;color:var(--txt2);display:flex;align-items:center;gap:8px;min-height:36px;}
+.cult ul{list-style:none;display:grid;gap:10px;margin:8px 0;}
+.cult li{display:flex;flex-direction:column;gap:2px;font-size:13px;}
+.cult li span{color:var(--txt2);} .cult li em{font-style:normal;color:var(--txt3);font-size:12.5px;}
+.at-barras{list-style:none;display:grid;gap:8px;}
+.at-barras li{display:grid;grid-template-columns:minmax(150px,220px) 1fr 2.2em 9.5em;gap:10px;align-items:center;font-size:13px;}
+.at-barras li>b{text-align:right;}
+.at-barras .bar{height:8px;}
+@media (max-width:560px){ .at-barras li{grid-template-columns:1fr auto;} .at-barras .bar{grid-column:1 / -1;order:3;} .at-barras li>.small:empty{display:none;} }
+@media (hover:none) and (pointer:coarse){ .at-op{min-height:44px;} }
 .enc-nota{margin-top:4px;font-size:13.5px;color:var(--txt);white-space:pre-line;}
 .prox{display:flex;align-items:center;gap:14px;padding:16px 18px;border-color:var(--accent);}
 .prox .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt2);}
@@ -413,6 +431,19 @@ const PERGUNTAS_PADRAO = {
   lider: { q1: 'Entregas e impacto no ciclo.', q2: 'Comportamentos que a pessoa deve CONTINUAR fazendo.', q3: 'Comportamentos que deve COMEÇAR ou AJUSTAR para crescer.', q4: 'Próximos passos e oportunidades de desenvolvimento.' },
   par: { q1: 'O que essa pessoa deve CONTINUAR fazendo?', q2: 'O que ela deve COMEÇAR ou AJUSTAR para crescer?', q3: 'Um exemplo concreto de colaboração com ela (opcional).' },
 };
+// 🧭 Cultura Hering (11/11/2026, pedido do Caio: "o Travessia precisa conversar com os pilares culturais e ajudar a internalizar"):
+// as 5 atitudes, com o MESMO texto do A Bordo (onboarding.html, seção "Esta é a nossa cultura" — 3ª cópia, depois do onboarding.slide.html;
+// mudou lá, muda aqui). Os ids são os aceitos pelas regras (database.rules.json: encontros/{uid}/{id}/at e avaliacoes/{cid}/{avaliado}/atitudes).
+const CULTURA = [
+  { id: 'facilita', ic: '🧭', nome: 'A gente facilita', desc: 'Simplificar. Ter coragem e responsabilidade para priorizar, dizer não e focar no que realmente gera valor para o negócio.', dig: 'No Digital: explicite a prioridade e simplifique o caminho antes de acrescentar etapas.' },
+  { id: 'cardume', ic: '🐟', nome: 'Juntos, somos um cardume', desc: 'Agir como um time, num ambiente leve. Sem deixar de ter o comprometimento individual para tomar decisões, garantir alinhamentos e executar os combinados — assumindo plena responsabilidade por cada ação.', dig: 'No Digital: alinhe dependências entre squads e avise cedo quando um combinado estiver em risco.' },
+  { id: 'bemfeito', ic: '✨', nome: 'Bem-feito, desde sempre', desc: 'Buscar a melhor performance. Manter sempre viva a paixão pela marca e pelo produto. Assegurar capricho e excelência nas entregas.', dig: 'No Digital: revise, teste e acompanhe o resultado da entrega para o cliente.' },
+  { id: 'acessivel', ic: '💬', nome: 'Acessível por vocação', desc: 'Encantar todo o Brasil. Exercitar constantemente a escuta ativa e a curiosidade para antecipar os desejos e necessidades dos clientes da Hering.', dig: 'No Digital: escute o atendimento, observe a jornada e use dados para entender o cliente.' },
+  { id: 'legado', ic: '🌱', nome: 'Legado em evolução', desc: 'Honrar a coragem e o empreendedorismo de 1880, com o inconformismo na busca do próximo passo de crescimento.', dig: 'No Digital: experimente melhorias, aprenda com os resultados e use IA com responsabilidade.' },
+];
+const CULT = Object.fromEntries(CULTURA.map(c => [c.id, c]));
+const atIds = v => [...new Set(String(v || '').split(','))].filter(id => CULT[id]);   // só id conhecido chega à tela (nunca o valor cru do banco)
+const atChips = v => atIds(v).map(id => `<span class="chip at" title="${esc(CULT[id].desc)}"><span aria-hidden="true">${CULT[id].ic}</span> ${esc(CULT[id].nome)}</span>`).join(' ');
 // Farol da cadência do 1:1: compara os dias desde o último encontro (menos as folgas da Escala) com a cadência combinada.
 // Verde até cadência+1 dia; amarelo até 1,5× a cadência; vermelho acima. Sem cadência ou sem encontro registrado = cinza (convite pra registrar).
 function farol({ ultimo, cad, folgas, hoje }) {
@@ -520,8 +551,9 @@ async function carregaEstrelas() {
 }
 async function carregaAval(cid, uid) {   // tudo que EU posso ler da avaliação de uma pessoa (cada nó tem a sua regra; o que nega vira null)
   const ler = async p => { try { return await G(T + 'avaliacoes/' + cid + '/' + uid + '/' + p); } catch (e) { return null; } };
-  const [pares, auto, lider, resp, devol, ciente] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente')]);
-  return { pares: pares || {}, auto, lider, resp: resp || {}, devol, ciente };
+  const outro = uid !== (S.me && S.me.uid);
+  const [pares, auto, lider, resp, devol, ciente, atAuto, atLider, atPares] = await Promise.all([ler('pares'), ler('auto'), ler('lider'), ler('resp_pares'), ler('devolutiva'), ler('ciente'), ler('atitudes/auto'), outro ? ler('atitudes/lider') : null, outro ? ler('atitudes/par') : null]);
+  return { pares: pares || {}, auto, lider, resp: resp || {}, devol, ciente, atAuto, atLider, atPares: atPares || {} };
 }
 const invalida = k => { Object.keys(S.cache).filter(x => x === k || x.startsWith(k + ':')).forEach(x => delete S.cache[x]); };
 async function cache(k, fn) { if (!(k in S.cache)) S.cache[k] = await fn(); return S.cache[k]; }
@@ -558,10 +590,19 @@ async function viewDiario() {
 // 🤝 1:1 com "o que combinamos" (T1 etapa A, 11/11/2026): a regra do banco já aceitava `nota` (≤ 280) em encontros/{uid}/{id}; agora a tela grava e mostra
 // dos dois lados (pessoa e líder/gerente, que são quem lê o nó). Quem escreveu é quem pode apagar (regra: `por`).
 const campoNota = (id, quemVe) => `<label class="sr" for="${id}">O que combinamos (opcional)</label><input class="in nota" id="${id}" name="nota" maxlength="280" placeholder="O que combinamos? (opcional · ${esc(quemVe)})" autocomplete="off">`;
+// Escolha de atitudes (chips de marcar). `id` único na página guarda a escolha não salva em S.atSel (o render recria o DOM a cada ação).
+function atEscolha(id, kind, salvo, max, editavel, rotulo) {
+  if (!editavel) { const c = atChips(salvo); return c ? `<div class="chips">${c}</div>` : '<p class="small">Nenhuma atitude marcada.</p>'; }
+  const sel = (S.atSel && S.atSel[id]) || atIds(salvo);
+  return `<div class="at-esc" role="group" aria-label="${esc(rotulo)}" data-at-grupo="${kind}" data-at-id="${esc(id)}" data-at-max="${max}">${CULTURA.map(c => `<button type="button" class="at-op" data-act="at-op" data-at="${c.id}" aria-pressed="${sel.includes(c.id)}" title="${esc(c.desc)}"><span aria-hidden="true">${c.ic}</span> ${esc(c.nome)}</button>`).join('')}</div>`;
+}
+const atLidos = (raiz, kind) => [...raiz.querySelectorAll(`[data-at-grupo="${kind}"] [aria-pressed="true"]`)].map(b => b.dataset.at).filter(id => CULT[id]);
+const cultura5 = () => `<details class="cult"><summary>🧭 As 5 atitudes da Hering</summary><ul>${CULTURA.map(c => `<li><b><span aria-hidden="true">${c.ic}</span> ${esc(c.nome)}</b><span>${esc(c.desc)}</span><em>${esc(c.dig)}</em></li>`).join('')}</ul><p class="small">“Uma cultura só é realmente nossa quando aparece no jeito como a gente faz.”</p></details>`;
+const campoAtEnc = id => `<div class="at-campo"><span class="small"><b>🧭 Atitude em foco</b> (opcional): qual atitude da Hering vocês conversaram?</span>${atEscolha(id, 'enc', '', 1, true, 'Atitude em foco no 1:1')}</div>`;
 function listaEncontros(uid, enc, max, titulo) {
   const encs = Object.entries(enc || {}).filter(([, e]) => e && e.data).sort((a, b) => String(b[1].data).localeCompare(String(a[1].data)) || (b[1].ts || 0) - (a[1].ts || 0)).slice(0, max);
   if (!encs.length) return '';
-  return `<h3 class="h2">${esc(titulo)}</h3><ul class="lst">${encs.map(([id, e]) => `<li><span aria-hidden="true">🤝</span><div class="tx">${esc(brFull(e.data))} <span class="small">· ${esc(TIPO_1A1[e.tipo] || '1:1')} · por ${esc(e.por === S.me.uid ? 'você' : nomeDe(e.por))}</span>${e.nota ? `<div class="enc-nota">📝 ${esc(e.nota)}</div>` : ''}</div>${e.por === S.me.uid ? `<button class="btn s" data-act="enc-del" data-uid="${esc(uid)}" data-id="${esc(id)}" aria-label="Apagar registro de ${esc(brFull(e.data))}">🗑</button>` : ''}</li>`).join('')}</ul>`;
+  return `<h3 class="h2">${esc(titulo)}</h3><ul class="lst">${encs.map(([id, e]) => `<li><span aria-hidden="true">🤝</span><div class="tx">${esc(brFull(e.data))} <span class="small">· ${esc(TIPO_1A1[e.tipo] || '1:1')} · por ${esc(e.por === S.me.uid ? 'você' : nomeDe(e.por))}</span>${CULT[e.at] ? `<div class="meta">${atChips(e.at)}</div>` : ''}${e.nota ? `<div class="enc-nota">📝 ${esc(e.nota)}</div>` : ''}</div>${e.por === S.me.uid ? `<button class="btn s" data-act="enc-del" data-uid="${esc(uid)}" data-id="${esc(id)}" aria-label="Apagar registro de ${esc(brFull(e.data))}">🗑</button>` : ''}</li>`).join('')}</ul>`;
 }
 function viewFarol(uid, d, quem) {
   // Anel do tempo desde o último 1:1: enche até 1,5× a cadência (aí vira vermelho). Decorativo — o estado vem em cor + ícone + texto ao lado.
@@ -586,7 +627,7 @@ async function viewInicio() {
    <div class="grid g2">
     <section class="gl pad stack" aria-labelledby="t-um"><h2 class="h2" id="t-um">🚦 Meu 1:1${lid ? ' com ' + esc(nomeDe(lid)) : ''}</h2>
       ${lid ? viewFarol(me, um) : `<div class="vazio">Seu líder ainda não foi definido no organograma. Peça ao ADM ou ao RH para configurar.</div>`}
-      ${lid ? `<form class="row" data-form="encontro" data-uid="${me}"><label class="sr" for="enc-d">Data do 1:1</label><input class="in" id="enc-d" type="date" name="data" value="${hj}" max="${hj}" style="max-width:170px"><button class="btn p" type="submit">✅ Registrei um 1:1</button>${campoNota('enc-n', 'seu líder e o gerente também veem')}</form>` : ''}
+      ${lid ? `<form class="row" data-form="encontro" data-uid="${me}"><label class="sr" for="enc-d">Data do 1:1</label><input class="in" id="enc-d" type="date" name="data" value="${hj}" max="${hj}" style="max-width:170px"><button class="btn p" type="submit">✅ Registrei um 1:1</button>${campoNota('enc-n', 'seu líder e o gerente também veem')}${campoAtEnc('enc-inicio')}</form>` : ''}
       ${listaEncontros(me, um.enc, 3, 'Últimos 1:1')}</section>
     <section class="gl pad stack" aria-labelledby="t-hu"><h2 class="h2" id="t-hu">🌤️ Como você está hoje?</h2>
       <p class="quem-ve">👁 ${lid ? 'Seu líder (' + esc(nomeDe(lid)) + ') vê esta resposta.' : 'Quando seu líder for definido no organograma, ele passa a ver esta resposta.'}</p>
@@ -680,6 +721,7 @@ async function viewAval() {
      <div class="${coleta ? 'sbs' : ''}"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
         ${formResp(cid, me, 'auto', a.auto, perguntasDe(c, 'auto'), coleta, 'auto-salvar')}</div>
        ${coleta ? `<aside class="foco lado" aria-label="Meu Baú para consulta"><h3 class="h2">📦 Meu Baú</h3><p class="small">Toque em 📎 para citar uma conquista na resposta em que você está escrevendo.</p>${blocoBau}</aside>` : ''}</div>
+     ${c.cultura ? blocoAtitudes(cid, me, 'auto', a.atAuto, coleta, 'Em quais atitudes da Hering você mais se viu neste ciclo? Escolha até 2.') : ''}
      <div class="${lib ? 'foco' : 'trava'}"><h3 class="h2">${lib ? '🔓 Minha devolutiva' : '🔒 Devolutiva'}</h3>
        ${lib ? `<p style="white-space:pre-line">${esc(a.devol.texto || '')}</p>${a.ciente ? `<p class="small">✔ Ciência registrada.</p>` : `<button class="btn p" data-act="ciente" data-cid="${esc(cid)}">✔ Li e estou ciente</button>`}`
          : '<p>O resultado fica guardado até a conversa de devolutiva com o seu líder. Ele libera durante ou logo depois da conversa — você não precisa fazer nada agora.</p>'}</div></section>`;
@@ -690,10 +732,41 @@ async function viewAval() {
     const c = S.ciclos[p.cid]; const dados = await cache('resp:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/resp_pares/' + me); } catch (e) { return null; } });
     respPar += `<section class="gl pad stack"><h2 class="h2">🤝 Feedback para ${esc(nomeDe(p.avaliado))} <span class="chip">${esc(c.nome)}</span></h2>
       ${c.status === 'coleta' ? '<p class="small">Seja específico e use exemplos. Quem lê é só o líder da pessoa; ela não vê o que você escreveu individualmente.</p>' : '<p class="small">A coleta não está aberta.</p>'}
-      ${formResp(p.cid, p.avaliado, 'par', dados, perguntasDe(c, 'par'), c.status === 'coleta', 'par-salvar')}</section>`;
+      ${formResp(p.cid, p.avaliado, 'par', dados, perguntasDe(c, 'par'), c.status === 'coleta', 'par-salvar')}
+      ${c.cultura ? blocoAtitudes(p.cid, p.avaliado, 'par', await cache('atpar:' + p.cid + ':' + p.avaliado, async () => { try { return await G(T + 'avaliacoes/' + p.cid + '/' + p.avaliado + '/atitudes/par/' + me); } catch (e) { return null; } }), c.status === 'coleta', 'Em quais atitudes da Hering ' + nomeDe(p.avaliado).split(' ')[0] + ' mais se destaca? Escolha até 2.') : ''}</section>`;
   }
   if (!saida && !respPar) return vazio('Você não está em nenhum ciclo de avaliação agora. Quando o RH abrir um, ele aparece aqui.');
   return `<div class="stack">${saida}${respPar}</div>`;
+}
+
+// 🧭 Bloco das atitudes num ciclo com `cultura` ligada. papel: 'auto' (a própria pessoa), 'par' (colega aprovado) ou 'lider'.
+// Grava em avaliacoes/{cid}/{av}/atitudes/{auto|lider|par/{eu}} — nó irmão, o prod não apaga (ver a regra).
+function blocoAtitudes(cid, av, papel, dados, editavel, pergunta, titulo) {
+  const ctx = cid + '_' + av; const tid = 'atx-' + papel + '-' + ctx; const d = dados || {};
+  return `<div class="foco cult-bloco"><h3 class="h2">${esc(titulo || '🧭 As atitudes da Hering')}</h3><p class="small">${esc(pergunta)}</p>
+    ${atEscolha('at-' + papel + '-' + ctx, 'at', d.at, 2, editavel, pergunta)}
+    ${papel === 'lider' ? `<p class="small" style="margin-top:8px">Qual atitude ${esc(nomeDe(av).split(' ')[0])} pode desenvolver no próximo ciclo? (até 2)</p>${atEscolha('atd-' + ctx, 'atd', d.atd, 2, editavel, 'Atitude a desenvolver')}` : ''}
+    <div class="camp"><label for="${esc(tid)}">${papel === 'auto' ? 'Conte um exemplo (vale citar o 📦 Baú)' : 'Um exemplo concreto'} <span class="small">(opcional)</span></label><textarea class="ta" id="${esc(tid)}" data-resp="at-${papel}" data-ctx="${esc(ctx)}" data-opc="1" data-salvo-ts="${(+d.ts) || 0}" maxlength="1200" ${editavel ? '' : 'readonly'}>${esc(d.atx || '')}</textarea></div>
+    ${editavel ? `<div class="row" style="margin-top:10px"><button class="btn" data-act="at-salvar" data-papel="${papel}" data-cid="${esc(cid)}" data-av="${esc(av)}">💾 Salvar atitudes</button>${d.ts ? `<span class="small">Salvo em ${esc(new Date(d.ts).toLocaleString('pt-BR'))}</span>` : ''}<span class="small rasc-st" data-rasc-st="at-${papel}" data-pctx="${esc(ctx)}" aria-live="polite"></span></div>` : ''}
+    ${cultura5()}</div>`;
+}
+// Para o líder/gerente: como a pessoa se viu e o que os pares destacaram (o avaliado nunca chega aqui — a regra também não deixa ele ler).
+function resumoAtitudesLider(a) {
+  const pares = Object.entries(a.atPares || {}).filter(([, r]) => r && (atIds(r.at).length || r.atx));
+  const cont = {}; pares.forEach(([, r]) => atIds(r.at).forEach(id => { cont[id] = (cont[id] || 0) + 1; }));
+  const auto = a.atAuto || {};
+  return `<div class="stack"><div><b>Como se vê</b> ${atChips(auto.at) || '<span class="small">ainda não marcou</span>'}${auto.atx ? `<p class="small" style="margin-top:4px;white-space:pre-line">${esc(auto.atx)}</p>` : ''}</div>
+    <div><b>O que os pares destacaram</b> ${Object.keys(cont).length ? CULTURA.filter(c => cont[c.id]).map(c => `<span class="chip at">${c.ic} ${esc(c.nome)} · ${cont[c.id]}</span>`).join(' ') : '<span class="small">nenhum par marcou ainda</span>'}
+    ${pares.length ? `<ul class="lst">${pares.map(([u, r]) => `<li><div class="tx"><b>${esc(nomeDe(u))}</b> ${atChips(r.at)}${r.atx ? `<p class="small" style="white-space:pre-line">${esc(r.atx)}</p>` : ''}</div></li>`).join('')}</ul>` : ''}</div></div>`;
+}
+// Frota: quais atitudes o time tem conversado nos 1:1 (90 dias) — sai dos encontros que a Frota já leu (zero leitura nova).
+function viewAtitudesTime(meus, dados) {
+  const lim = isoDe(new Date(Date.now() - 90 * 86400000)); const cont = {}; let total = 0;
+  meus.forEach(u => Object.values((dados[u] && dados[u].um && dados[u].um.enc) || {}).forEach(e => { if (e && CULT[e.at] && String(e.data) >= lim) { cont[e.at] = (cont[e.at] || 0) + 1; total++; } }));
+  const max = Math.max(1, ...Object.values(cont));
+  return `<section class="gl pad stack" aria-labelledby="t-at"><h2 class="h2" id="t-at">🧭 Atitudes em foco nos 1:1 <span class="small">· últimos 90 dias</span></h2>
+    <p class="small">${total ? 'O que vocês têm conversado sobre a cultura da Hering. Não é nota: serve para ver o que o time tem trabalhado e o que ainda não apareceu.' : 'Ainda nenhum 1:1 com atitude marcada. Ao registrar um 1:1, marque a atitude em foco para acompanhar aqui.'}</p>
+    <ul class="at-barras">${CULTURA.map(c => `<li><span class="at-nome"><span aria-hidden="true">${c.ic}</span> ${esc(c.nome)}</span><span class="bar" aria-hidden="true"><i style="width:${Math.round((cont[c.id] || 0) / max * 100)}%"></i></span><b>${cont[c.id] || 0}</b><span class="small">${cont[c.id] ? '' : 'ainda não apareceu'}</span></li>`).join('')}</ul></section>`;
 }
 
 // ───────── frota (líder) ─────────
@@ -711,6 +784,7 @@ async function viewFrota() {
       ${completo ? `<div class="acts"><button class="btn s" data-act="abrir" data-uid="${esc(u)}">Abrir →</button></div>` : ''}</article>`; };
   return `<div class="stack"><section class="sec"><h2 class="h2">🚢 Frota</h2><p class="sub">${meus.length} ${meus.length === 1 ? 'pessoa' : 'pessoas'} que você lidera. Os faróis mostram a cadência dos 1:1, já descontando as folgas da Escala.</p></section>
    ${meus.length ? viewTermometro(termo, meus) : ''}
+   ${meus.length ? viewAtitudesTime(meus, dados) : ''}
    ${meus.length ? `<div class="grid g3">${meus.map(u => cartao(u, true)).join('')}</div>` : ''}
    ${amp.length ? `<section class="gl pad"><h2 class="h2">🏛 Time dos meus líderes</h2><p class="small">Visão de farol; os detalhes ficam com cada líder.</p></section><div class="grid g3">${amp.map(u => cartao(u, false)).join('')}</div>` : ''}
    ${S.sel ? await viewDetalhe(S.sel) : ''}</div>`;
@@ -738,7 +812,7 @@ async function viewDetalhe(uid) {
     corpo = `<div class="grid g2"><div class="stack"><h3 class="h2">Cadência combinada</h3>
       <div class="row"><label class="sr" for="cad-sel">Cadência</label><select class="sel2" id="cad-sel" data-act-change="cad" data-uid="${esc(uid)}">${['', ...Object.keys(CAD)].map(k => `<option value="${k}" ${((d.serie && d.serie.cad) || '') === k ? 'selected' : ''}>${k ? CAD[k] : 'Escolher…'}</option>`).join('')}</select></div>
       ${viewFarol(uid, d)}
-      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button>${campoNota('enc-n2', 'a pessoa e o gerente também veem')}</form></div>
+      <form class="row" data-form="encontro" data-uid="${esc(uid)}"><label class="sr" for="enc-d2">Data</label><input class="in" id="enc-d2" type="date" name="data" value="${hojeISO()}" max="${hojeISO()}" style="max-width:170px"><label class="sr" for="enc-t">Tipo</label><select class="sel2" id="enc-t" name="tipo">${Object.entries(TIPO_1A1).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><button class="btn p" type="submit">✅ Registrar 1:1</button>${campoNota('enc-n2', 'a pessoa e o gerente também veem')}${campoAtEnc('enc-det')}</form></div>
       <div>${listaEncontros(uid, d.enc, 12, 'Registros') || `<h3 class="h2">Registros</h3>${vazio('Nenhum 1:1 registrado.')}`}</div></div>`;
   } else if (t === 'bau') corpo = await viewBau(uid, true);
   else corpo = await viewAvalLider(uid);
@@ -760,6 +834,7 @@ async function viewAvalLider(uid) {
       ${aprov > 4 ? '<p class="small">⚠ Mais de 4 pares aprovados: considere reduzir para evitar fadiga de avaliação.</p>' : ''}</div>
      <details class="foco" ${a.auto ? 'open' : ''}><summary class="h2">📝 Autoavaliação de ${esc(nomeDe(uid))}</summary>${a.auto ? formResp(cid, uid, 'auto', a.auto, perguntasDe(c, 'auto'), false) : '<p class="small">Ainda não respondeu.</p>'}</details>
      ${ehMeuLiderado ? `<details class="foco"><summary class="h2">✍️ Minha avaliação (só você e seu gerente leem)</summary>${formResp(cid, uid, 'lider', a.lider, perguntasDe(c, 'lider'), !enc, 'lider-salvar')}</details>` : ''}
+     ${c.cultura ? `<details class="foco"><summary class="h2">🧭 Atitudes da Hering</summary>${resumoAtitudesLider(a)}${ehMeuLiderado ? blocoAtitudes(cid, uid, 'lider', a.atLider, !enc, 'Na sua visão, em quais atitudes ' + nomeDe(uid).split(' ')[0] + ' mais se destaca? (só você e o gerente leem)', '✍️ Sua visão') : (a.atLider ? `<p class="small" style="margin-top:8px"><b>Visão do líder:</b> ${atChips(a.atLider.at) || '—'} · a desenvolver: ${atChips(a.atLider.atd) || '—'}</p>` : '')}</details>` : ''}
      <details class="foco"><summary class="h2">💬 Feedback dos pares (${Object.keys(a.resp).length})</summary>${Object.entries(a.resp).map(([u, r]) => `<div class="foco"><b>${esc(nomeDe(u))}</b>${formResp(cid, uid, 'par', r, perguntasDe(c, 'par'), false, '', u)}</div>`).join('') || '<p class="small">Ninguém respondeu ainda.</p>'}</details>
      ${ehMeuLiderado ? `<div class="${lib ? 'foco' : 'trava'}"><h4 class="h2">${lib ? '🔓 Devolutiva liberada' : '🔒 Devolutiva (a pessoa ainda não vê)'}</h4>
        <label class="sr" for="dv-t">Síntese da devolutiva</label><textarea class="ta" id="dv-t" data-devol="1" maxlength="6000" ${enc ? 'readonly' : ''} placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
@@ -787,10 +862,11 @@ async function viewAdmin() {
     <details class="foco"><summary class="h2">+ Novo ciclo</summary><form data-form="ciclo" class="camp"><label for="ci-n">Nome do ciclo</label><input class="in" id="ci-n" name="nome" maxlength="80" required placeholder="Ex.: Ciclo 2026/2">
       <label>Quem participa</label><p class="small">Marque as squads (todas as pessoas delas entram) ou escolha pessoas na lista do organograma depois.</p>
       <div class="chips">${squadsDisponiveis().map(s => `<label class="ck"><input type="checkbox" name="sq" value="${esc(s)}"> ${esc(s)}</label>`).join('')}</div>
+      <label class="ck" style="margin-top:12px"><input type="checkbox" name="cultura" checked> 🧭 Incluir as atitudes da Hering (autoavaliação, pares e líder)</label>
       <div class="row" style="margin-top:10px"><button class="btn p" type="submit">Criar ciclo (fase: preparação)</button></div></form></details>
     ${Object.entries(S.ciclos).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0)).map(([cid, c]) => `<div class="foco"><div class="row" style="justify-content:space-between"><b>${esc(c.nome)}</b><span class="chip">${Object.keys(c.participantes || {}).length} pessoas</span></div>
       <div class="fase">${FASES.map(f => `<span class="${f[0] === c.status ? 'on' : ''}">${f[1]}</span>`).join('')}</div>
-      <div class="row">${FASES.filter(f => f[0] !== c.status).map(f => `<button class="btn s" data-act="ciclo-fase" data-cid="${esc(cid)}" data-fase="${f[0]}">→ ${f[1]}</button>`).join('')}</div></div>`).join('') || vazio('Nenhum ciclo criado ainda.')}</section></div>`;
+      <div class="row">${FASES.filter(f => f[0] !== c.status).map(f => `<button class="btn s" data-act="ciclo-fase" data-cid="${esc(cid)}" data-fase="${f[0]}">→ ${f[1]}</button>`).join('')}<button class="btn s" data-act="ciclo-cultura" data-cid="${esc(cid)}" aria-pressed="${!!c.cultura}">🧭 Atitudes: ${c.cultura ? 'ligadas' : 'desligadas'}</button></div></div>`).join('') || vazio('Nenhum ciclo criado ainda.')}</section></div>`;
 }
 const squadsDisponiveis = () => { const s = new Set(); Object.values(S.users).forEach(u => Object.keys(u.squads || {}).forEach(k => { if (u.squads[k]) s.add(k); })); return [...s].sort(); };
 
@@ -848,6 +924,21 @@ document.addEventListener('click', async e => {
   const a = b.dataset.act; const me = S.me && S.me.uid;
   if (b.dataset.tab && !a) { S.tab = b.dataset.tab; S.sel = null; S.pesq = ''; return render(); }
   if (a === 'prox-foco') { const el = document.getElementById(b.dataset.alvo); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true }); } return; }
+  if (a === 'at-op') {   // marcar/desmarcar atitude; max 1 = troca, max 2 = avisa
+    const g = b.closest('[data-at-grupo]'); if (!g) return; const max = +g.dataset.atMax || 1; const on = b.getAttribute('aria-pressed') === 'true';
+    if (!on) { const ligados = [...g.querySelectorAll('[aria-pressed="true"]')]; if (max === 1) ligados.forEach(x => x.setAttribute('aria-pressed', 'false')); else if (ligados.length >= max) { toast('Escolha até ' + max + ' atitudes.'); return; } }
+    b.setAttribute('aria-pressed', String(!on)); S.atSel = S.atSel || {}; S.atSel[g.dataset.atId] = [...g.querySelectorAll('[aria-pressed="true"]')].map(x => x.dataset.at); return;
+  }
+  if (a === 'at-salvar') {
+    const { cid, av, papel } = b.dataset; const box = b.closest('.cult-bloco'); if (!box || !['auto', 'par', 'lider'].includes(papel)) return;
+    const at = atLidos(box, 'at'), atd = atLidos(box, 'atd'); const tx = box.querySelector('textarea[data-resp^="at-"]'); const atx = tx ? tx.value.trim() : '';
+    const reg = { ts: Date.now() }; if (at.length) reg.at = at.slice(0, 2).join(','); if (papel === 'lider' && atd.length) reg.atd = atd.slice(0, 2).join(','); if (atx) reg.atx = atx.slice(0, 1200);
+    if (Object.keys(reg).length < 2) { toast('Marque ao menos uma atitude ou escreva um exemplo.'); return; }
+    const caminho = 'avaliacoes/' + cid + '/' + av + '/atitudes/' + (papel === 'par' ? 'par/' + me : papel);
+    if (await tenta(() => W(caminho, reg), '🧭 Atitudes salvas.')) { if (tx) rascLimpar([tx.id]); box.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); invalida('aval:' + cid + ':' + av); invalida('atpar:' + cid + ':' + av); render(); }
+    return;
+  }
+  if (a === 'ciclo-cultura') { const cid = b.dataset.cid; const v = !(S.ciclos[cid] && S.ciclos[cid].cultura); if (await tenta(() => W('ciclos/' + cid + '/cultura', v), v ? '🧭 Atitudes ligadas neste ciclo.' : 'Atitudes desligadas neste ciclo.')) { S.ciclos[cid] = Object.assign({}, S.ciclos[cid], { cultura: v }); render(); } return; }
   if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
   if (a === 'humor') {
     const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() };
@@ -919,12 +1010,12 @@ document.addEventListener('input', e => { if (e.target.dataset && e.target.datas
 document.addEventListener('submit', async e => {
   const f = e.target.closest('[data-form]'); if (!f) return; e.preventDefault(); const k = f.dataset.form; const fd = new FormData(f); const me = S.me.uid;
   if (k === 'encontro') { const uid = f.dataset.uid; const data = fd.get('data'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) { toast('Escolha a data do 1:1.'); return; } if (data > hojeISO()) { toast('O 1:1 registrado não pode estar no futuro.'); return; }
-    if (await tenta(() => W('encontros/' + uid + '/' + novoId(), Object.assign({ data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }, String(fd.get('nota') || '').trim() ? { nota: String(fd.get('nota')).trim().slice(0, 280) } : {})), '✅ 1:1 registrado.')) { invalida('um:' + uid); render(); } return; }
+    if (await tenta(() => W('encontros/' + uid + '/' + novoId(), Object.assign({ data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }, String(fd.get('nota') || '').trim() ? { nota: String(fd.get('nota')).trim().slice(0, 280) } : {}, atLidos(f, 'enc')[0] ? { at: atLidos(f, 'enc')[0] } : {})), '✅ 1:1 registrado.')) { invalida('um:' + uid); f.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); render(); } return; }
   if (k === 'bau') { const titulo = (fd.get('titulo') || '').trim(); if (!titulo) return; const partes = []; [['desafio', 'Desafio'], ['acao', 'O que fiz'], ['impacto', 'Impacto']].forEach(([c, r]) => { const v = (fd.get(c) || '').trim(); if (v) partes.push(r + ': ' + v); });
     const item = { tipo: 'manual', titulo: titulo.slice(0, 160) }; if (partes.length) item.texto = partes.join('\n').slice(0, 1200); if ((fd.get('comp') || '').trim()) item.comp = fd.get('comp').trim().slice(0, 60); if (await guardarBau(item)) render(); return; }
   if (k === 'ciclo') { const nome = (fd.get('nome') || '').trim(); if (!nome) return; const sqs = fd.getAll('sq'); const part = {}; Object.keys(S.users).forEach(u => { const us = S.users[u].squads || {}; if (sqs.some(s => us[s])) part[u] = true; });
     if (!Object.keys(part).length) { toast('Marque ao menos uma squad com pessoas.'); return; }
-    const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO };
+    const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO }; if (fd.get('cultura')) c.cultura = true;
     if (await tenta(() => W('ciclos/' + cid, c), '📐 Ciclo criado.')) { S.ciclos[cid] = c; render(); } return; }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-pesq]')) e.preventDefault(); });
@@ -950,7 +1041,7 @@ function demoDados() {
   ['ana', 'bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { TR.vinculos[u] = { liderUid: 'pau', gerenteUid: 'gil', squad: 'dados' }; }); ['gus', 'lia'].forEach(u => { TR.vinculos[u] = { liderUid: 'eli', gerenteUid: 'gil', squad: 'midia' }; }); TR.vinculos.pau = { liderUid: 'gil' }; TR.vinculos.eli = { liderUid: 'gil' };
   // 1:1: cadência e histórico de ~180 dias (último encontro define o farol de hoje)
   const SER = { ana: ['quinzenal', 6], bia: ['semanal', 14], cae: ['quinzenal', 26], deb: ['semanal', 4], edu: ['mensal', 40], fab: ['quinzenal', 9], gus: ['quinzenal', 5], lia: ['semanal', 3] }; const PASSO = { semanal: 7, quinzenal: 14, mensal: 30 };
-  Object.entries(SER).forEach(([u, [cad, ult]]) => { TR.serie[u] = { cad, tipo: 'acomp', ts: ts(190) }; TR.encontros[u] = {}; let n = ult, i = 0; while (n < 185) { const k = dia(n); const tipo = i % 6 === 5 ? 'carreira' : (i % 3 === 2 ? 'pdi' : 'acomp'); TR.encontros[u]['e' + i] = Object.assign({ data: k, tipo, por: i % 4 === 0 ? u : (u === 'gus' || u === 'lia' ? 'eli' : 'pau'), ts: ts(n) }, i < 3 ? { nota: ['Combinamos: fechar a documentação do pipeline até sexta e pedir revisão da Bia.', 'Priorizar o painel executivo; o estudo de dbt fica para o mês que vem.', 'Apresentar o resultado do churn na reunião da torre.'][i] } : {}); n += PASSO[cad] + (rnd() < 0.25 ? 3 : 0); i++; } });
+  Object.entries(SER).forEach(([u, [cad, ult]]) => { TR.serie[u] = { cad, tipo: 'acomp', ts: ts(190) }; TR.encontros[u] = {}; let n = ult, i = 0; while (n < 185) { const k = dia(n); const tipo = i % 6 === 5 ? 'carreira' : (i % 3 === 2 ? 'pdi' : 'acomp'); TR.encontros[u]['e' + i] = Object.assign({ data: k, tipo, por: i % 4 === 0 ? u : (u === 'gus' || u === 'lia' ? 'eli' : 'pau'), ts: ts(n) }, i < 3 ? { nota: ['Combinamos: fechar a documentação do pipeline até sexta e pedir revisão da Bia.', 'Priorizar o painel executivo; o estudo de dbt fica para o mês que vem.', 'Apresentar o resultado do churn na reunião da torre.'][i] } : {}, i < 4 ? { at: ['facilita', 'cardume', 'bemfeito', 'cardume'][i] } : {}); n += PASSO[cad] + (rnd() < 0.25 ? 3 : 0); i++; } });
   // folgas (a Escala desconta do farol)
   [[3, 'ana'], [4, 'ana'], [11, 'ana'], [12, 'ana'], [20, 'deb'], [21, 'deb'], [7, 'edu'], [8, 'edu'], [9, 'edu']].forEach(([n, u]) => { const k = dia(n); K.escala[k] = K.escala[k] || { dados: {} }; K.escala[k].dados[u] = { t: 'folga', por: u, ts: ts(n) }; });
   // humor e diário (tendência: começa morno, melhora, tem um vale perto de uma entrega, hoje bem)
@@ -978,7 +1069,7 @@ function demoDados() {
   // Ciclos: 2026/1 encerrado (com devolutiva liberada e ciência) e 2026/2 em coleta
   const PART = {}; ['ana', 'bia', 'cae', 'deb', 'edu', 'fab', 'gus', 'lia'].forEach(u => { PART[u] = true; });
   TR.ciclos.c2026s1 = { nome: 'Ciclo 2026/1', status: 'encerrado', ts: ts(172), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
-  TR.ciclos.c2026s2 = { nome: 'Ciclo 2026/2', status: 'coleta', ts: ts(24), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan' };
+  TR.ciclos.c2026s2 = { nome: 'Ciclo 2026/2', status: 'coleta', ts: ts(24), participantes: PART, perguntas: PERGUNTAS_PADRAO, criadoPor: 'dan', cultura: true };
   const R = (o) => Object.assign({ ts: ts(100) }, o);
   const AV1 = TR.avaliacoes.c2026s1 = {};
   AV1.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(150) }, cae: { aprovado: true, por: 'avaliado', ts: ts(150) }, deb: { aprovado: true, por: 'lider', ts: ts(149) } },
@@ -989,6 +1080,7 @@ function demoDados() {
   ['bia', 'cae', 'deb', 'edu', 'fab'].forEach(u => { AV1[u] = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(150) } }, auto: R({ q1: 'Entregas do ciclo concluídas no prazo.', q2: 'Evolução em técnica e comunicação.', q3: 'Quero assumir mais responsabilidade.', q4: 'Mais feedback frequente.' }), lider: R({ q1: 'Boa entrega.', q2: 'Manter a qualidade.', q3: 'Ampliar a autonomia.', q4: 'Plano de PDI combinado.' }), devolutiva: { texto: 'Bom ciclo; combinamos o PDI e os próximos passos.', liberada: true, liberadaEm: ts(70), por: 'pau', ts: ts(70) }, ciente: ts(66) }; });
   const AV2 = TR.avaliacoes.c2026s2 = {};
   AV2.ana = { pares: { bia: { aprovado: true, por: 'avaliado', ts: ts(18) }, deb: { aprovado: true, por: 'lider', ts: ts(17) }, fab: { aprovado: false, por: 'avaliado', ts: ts(2) } }, auto: R({ q1: 'Modelo de churn em produção, Black Friday planejada e o curso de storytelling concluído.', q2: 'Evoluí em comunicação: a última apresentação foi bem avaliada.', ts: ts(4) }), resp_pares: { bia: R({ q1: 'Continuar mentorando.', q2: 'Documentar mais as decisões.', ts: ts(5) }) }, devolutiva: { texto: '(rascunho) Ciclo muito forte; destacar liderança na semana de pico e o churn em produção.', liberada: false, ts: ts(1), por: 'pau' }, lider: R({ q1: 'Rascunho da avaliação do líder.', ts: ts(1) }) };
+  AV2.ana.atitudes = { par: { deb: { at: 'cardume,bemfeito', atx: 'Na Black Friday alinhou as dependências com mídia antes de todo mundo e revisou cada número do painel.', ts: ts(4) } } };
   AV2.bia = { pares: { ana: { aprovado: true, por: 'lider', ts: ts(17) }, cae: { aprovado: false, por: 'avaliado', ts: ts(3) } } };
   TR.pedidos_par = { bia: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, deb: { c2026s2_ana: { cid: 'c2026s2', avaliado: 'ana', ts: ts(17) } }, ana: { c2026s2_bia: { cid: 'c2026s2', avaliado: 'bia', ts: ts(17) } } };
   return out;
