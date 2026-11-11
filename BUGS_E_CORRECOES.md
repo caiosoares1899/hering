@@ -94,6 +94,8 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **painel-dev:** a opção `adm` no papel do squad só aparece para ADM; membro que já é `adm` aparece certo e travado para PO.
 - **Freelancers:** 1º login (cadastro como convidado no squad em que é externo) segue igual — testado.
 - **Deploy:** `--only database` publica o arquivo inteiro, então sai junto com a regra do comentário (#1700), depois da promoção.
+- **Antes do deploy:** docs/arezzo/testes/console_papeis_pre_regra.js (ADMs da lista `adm_emails` sem `role: 'adm'` gravado perderiam poderes no banco; o script lista e corrige).
+- **Limites que continuam (já existiam):** PO grava campos não-papel do cadastro de outras pessoas (fcm_tokens, notif_prefs, e-mail); o 1º login de quem está em `adm_emails` tenta gravar `role: 'adm'` e é recusado (a sincronização no login também só funciona com role já gravado); `torre` é livre (não entra em nenhuma regra).
 - Testes: functions/rules/__tests__/papelRules.test.js (6).
 
 ### 2026-11-11 · Segurança (/auditoriaseguranca · dom: painel-dev.html) — fecha 8 famílias de XSS/breakout no Painel Dev (v5.100, SÓ DEV) e escala 5 achados de regras RTDB
