@@ -74,3 +74,6 @@ Não fazer: deploy, merge, promoção a prod; mexer em kanban*.html ou em qualqu
 
 Entrega: branch antigravity/guia-mare + PR para a main (sem merge) + resumo com: o que fez, como validou, o que NÃO verificou, linha "Fronteira:" (parâmetros de URL → DOM/href), decisão de dica (provável "não": a dica fica no board, com o Claude).
 ```
+
+## Telas reais (11/11/2026, `/melhoriauiux`)
+As mini-telas do guia são **capturas do próprio `kanban-dev.html`** (dados fictícios), geradas por `scripts/guia-mare-telas.js` e gravadas entre os marcadores `TELAS-GERADAS` do `guia-mare.html`. **Quando o visual do Maré mudar** (redesenho do board, do card, do sino…): suba um servidor na raiz e rode `node scripts/guia-mare-telas.js` (usa `~/hering-tools`), confira as capturas e faça o commit. Para mudar o que cada passo destaca, edite `ESTADOS` no script; para os textos, o `CONTENT` do guia.

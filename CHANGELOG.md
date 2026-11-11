@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Guia do Maré com as telas reais do board (guia-mare.html · scripts/guia-mare-telas.js) — 2026-11-11
+
+Pedido do Caio (11/11/2026, `/melhoriauiux`): "as telas iguais às do Maré, um guia de verdade — em vez de print, reconstruir as telas em HTML".
+- **Antes:** cada passo mostrava uma mini-tela genérica (caixas com "👤 Responsável", "📅 Prazo") que não se parecia com o board.
+- **Agora:** cada passo mostra a **tela real do Maré** (board, card aberto, comentários, sino, Meu Dia, Sonar, barra de ferramentas), nos temas escuro e claro, com o **destaque no botão certo**. No celular a moldura aproxima no alvo, com "🖥 Tela inteira" para ver tudo.
+- **Como:** `scripts/guia-mare-telas.js` abre o `kanban-dev.html` com o Firebase falso e dados fictícios, captura o HTML visível (sem script, sem `on*`, sem links) e só o CSS usado (com os `@media` resolvidos no tamanho da captura), e grava isso no guia. O guia mostra cada tela num Shadow DOM, sem clique. Rodar de novo quando o visual do Maré mudar.
+- Textos de 7 passos revistos contra a tela real (funções do card, Agente Ágil, tema, preferências, Ilha, + Card, Sonar).
+- O guia passou de 24 KB para ~290 KB (as telas reais), ainda sem nenhuma imagem.
+
 ### SÓ DEV — Programa de boas-vindas do Maré — escolha no 1º acesso, tour no board e progresso no perfil (dev: kanban-dev v8.30.947-dev) — 2026-11-11
 
 Pedido do Caio (11/11/2026): onboarding da **ferramenta** em autosserviço (o A Bordo segue sendo o do método ágil). Desenho e divisão em `docs/ideias/onboarding-mare.md`.
