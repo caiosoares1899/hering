@@ -92,25 +92,25 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Radar (`okr-dev.html` v2.111 · `guia-okr.html`):** `#hlp-cabecalho` e o tooltip de `#okr-more-btn` passaram a listar `🏷️ Gerenciar tags` no menu `⋯ Mais`; `#hlp-apresentacao` passou a documentar `📍 Puxar sala` e o botão permanente `👑 Assumir` de ADMs na sala ao vivo; e o tooltip de `#okr-obj-config-btn` trocou `trimestre` por `período`. No `guia-okr.html`, alinhados os slides de Configurações (`Período`), Calendário (`Entrega` na legenda) e encerramento (`/` na `❓ Ajuda` e `Ctrl+K` no `🔍 Sonar`).
 - **Documentações do ecossistema (`ecossistema.html`, `maredigital.html`, `docs/OCEANO.md`, `CODE_MAP.md`, `docs/HISTORICO_DOCUMENTACAO.md`):** retrato medido de 11/11/2026 (`1213` testes automatizados, `222` arquivos `.js` e `39` exports ativos em `functions/index.js`, `872` linhas e `45` nós em `database.rules.json`, `10` suítes de regras incluindo `comentariosRules` e `papelRules`, `24` armadilhas, `1646` tags, trailers `296`/`36`/`12`), promoção de `onboarding.html` + `onboarding.slide.html` (A Bordo), `mare-timer.js` e `mare-sonar.js?v=8` em produção, Ilha Dinâmica V1/V2 e âncoras novas no `CODE_MAP.md` (`CODE_MAP_FAST.md`, `docs/CODE_SYMBOLS.md` e `docs/MAPA_DO_REPOSITORIO.md` regenerados). Intocados por reserva ativa no Quadro: `kanban-dev.html`, `oceano-dev.html`, `mare-sonar-dev.js` e `mare-dicas-dev.js`.
 
-### 2026-11-11 · Ilha Dinâmica (/monitorarbugs): 📌 com véu travava o quadro, Esc fechava a ilha atrás do card, 1ª entrega do agente perdida, principal desligada (SÓ DEV · kanban-dev v8.30.942-dev)
+### 2026-11-11 · Ilha Dinâmica (/monitorarbugs): 📌 com véu travava o quadro, Esc fechava a ilha atrás do card, 1ª entrega do agente perdida, principal desligada (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.942-dev)
 
 - **A — 📌 travava o quadro (regressão do véu, #1707):** com a ilha fixada (o 📌 promete continuar usando o quadro com ela aberta), o véu de vidro seguia cobrindo a tela e engolia todo clique. Agora o véu sai com o 📌 e volta ao desafixar.
 - **B — Esc na camada errada:** ilha fixada + card (ou Minhas preferências) aberto por cima: o Esc fechava a ilha escondida atrás em vez da janela de cima. Agora, com uma janela .ov aberta, o Esc é dela.
 - **C — 1ª entrega da escuta do 🤖 Agente perdida:** a marca de "ligado" só existia DEPOIS do onValue; o Firebase real entrega na hora (dentro da chamada) quando o dado já está em cache (ex.: desligar e religar o módulo) e essa 1ª entrega era descartada — "Analisando…" sumia até o marcador mudar. Agora a marca vem antes.
 - **D — Ajustes:** desligar o módulo escolhido como atividade principal deixava o seletor mostrando "Timer" e a preferência apontando para o módulo desligado. Agora a principal volta para Timer.
 - Testes: docs/arezzo/testes/test_ilha_monitorarbugs_1111.js (7; 4 falhavam antes), 9 baterias da ilha e do timer, functions 1212/0. Validação no console: docs/arezzo/testes/console_ilha_monitorarbugs_1111.js.
-### 2026-11-11 · A Bordo: atalhos Marine Glass e cauda dos peixes alinhada ao Maré/Oceano (SÓ DEV)
+### 2026-11-11 · A Bordo: atalhos Marine Glass e cauda dos peixes alinhada ao Maré/Oceano (PROD — no ar desde o merge)
 
 Os atalhos de consulta estavam como links sublinhados, sem o acabamento Marine Glass; o peixe de fundo do site tinha cauda invertida e olho oposto ao movimento. onboarding.html ganha botões com vidro, borda, brilho specular, hover, foco e alvo de toque de 48 px; os links dos cards recebem o mesmo acabamento. Site e onboarding.slide.html passam a usar exatamente as três silhuetas SVG de oceano.html, também usadas pelo Maré, com olho e cauda coerentes com a direção. Teste docs/arezzo/testes/test_onboarding_bordo.js reproduz a falha na main e valida os SVGs, os 12 atalhos, foco, navegação e responsividade a 1280/390 px. Capturas: docs/capturas/a-bordo-marine-glass/. Páginas sem par -dev: revisão pelo Claude antes do merge. Fronteira: sem mudança, apenas CSS e SVG estático. Dica: não, correção visual de recursos existentes.
 
-### 2026-11-11 · Ilha Dinâmica: texto sem nitidez no painel aberto + botões misturados com o quadro (SÓ DEV · kanban-dev v8.30.940-dev)
+### 2026-11-11 · Ilha Dinâmica: texto sem nitidez no painel aberto + botões misturados com o quadro (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.940-dev)
 
 - **Texto sem nitidez (relato do Caio):** a pílula é centralizada com translate(-50%); com largura ímpar o painel aberto caía em meio pixel e o navegador borrava o texto dos botões e do cartão. _ilhaPainelLugar() agora arredonda a posição para pixel inteiro (--ilha-dx/--ilha-dy).
 - **Botões e cartão se misturando com os cards (relato do Caio):** com a ilha aberta entra um véu de vidro (#ilha-veu, dentro de .app, abaixo do cabeçalho): o quadro desfoca e escurece; o cabeçalho segue nítido; clicar no véu fecha a ilha.
 - **Tema claro:** o valor "ao vivo" (timer, reunião chegando) em verde-água puro sumia no branco — tom mais escuro.
 - Testes: docs/arezzo/testes/test_ilha_ux.js (38: véu, pixel inteiro, clicar no véu fecha) + as 7 baterias da ilha.
 
-### 2026-11-11 · Papéis: PO não se promove mais a ADM; gestorOkr só por ADM (regras do banco · SÓ DEV · painel-dev v5.102)
+### 2026-11-11 · Papéis: PO não se promove mais a ADM; gestorOkr só por ADM (regras do banco · PROD · kanban v8.30.943/painel v5.103 — regras do banco ativam no deploy · dev: painel-dev v5.102)
 
 - **C1 (alta, achado do Antigravity no #1701):** a validação de `kanban/usuarios/$uid/role` deixava qualquer PO gravar qualquer papel em qualquer cadastro — inclusive `adm` no próprio — e `role === 'adm'` destrava adm_emails, painel_viewers, agente_agil_orquestrador etc. Agora o papel GLOBAL só muda por ADM/Caio (seguem os caminhos de cadastro: nascer membro/convidado; convidado → membro pela própria pessoa). No papel POR SQUAD (`squads_roles`), o PO atribui membro/convidado/organizador/po, mas não `adm` e não mexe em quem é `adm`.
 - **C2 (média):** `gestorOkr` (destrava okr/datastudio) era gravável pela própria pessoa; agora só ADM/Caio (o `toggleGestorOkr` do Painel já era só ADM).
@@ -121,7 +121,7 @@ Os atalhos de consulta estavam como links sublinhados, sem o acabamento Marine G
 - **Limites que continuam (já existiam):** PO grava campos não-papel do cadastro de outras pessoas (fcm_tokens, notif_prefs, e-mail); o 1º login de quem está em `adm_emails` tenta gravar `role: 'adm'` e é recusado (a sincronização no login também só funciona com role já gravado); `torre` é livre (não entra em nenhuma regra).
 - Testes: functions/rules/__tests__/papelRules.test.js (6).
 
-### 2026-11-11 · Segurança (/auditoriaseguranca · dom: painel-dev.html) — fecha 8 famílias de XSS/breakout no Painel Dev (v5.100, SÓ DEV) e escala 5 achados de regras RTDB
+### 2026-11-11 · Segurança (/auditoriaseguranca · dom: painel-dev.html) — fecha 8 famílias de XSS/breakout no Painel Dev (PROD · painel v5.103) e escala 5 achados de regras RTDB
 
 **Causa raiz da lacuna na suíte de 18/10:** `seedPainel()` em `docs/arezzo/testes/test_seguranca_xss.js` semeava `squads.dados`, enquanto `painel-dev.html` usa `SQUADS = ['dev', 'omnichannel']` — deixando cards, colunas, tags, bloqueios, timeline e `error_logs` com 0 itens durante o scan anterior.
 
@@ -137,7 +137,7 @@ Os atalhos de consulta estavam como links sublinhados, sem o acabamento Marine G
 - **(Guardas de UI ADM):** `if(!_isAdmPainel())` adicionado em `addAdmEmail`, `removeAdmEmail`, `_fbSetStatus`, `_fbDelete` e `toggleGestorOkr`.
 - **(Testes e Escalonamento):** criada `docs/arezzo/testes/test_painel_seguranca_xss.js` (Node `vm`, 5 suítes cobrindo D1–D8 + guardas ADM + preservação de `_painelViewerKey`), expandida `seedPainel()` em `docs/arezzo/testes/test_seguranca_xss.js`, e escalados 5 achados de `database.rules.json` (C1–C4 + D7/D8, com alerta explícito para não afetar externos) em `docs/COORDENACAO_AGENTES.md`.
 
-### 2026-11-11 · Comentários: autor (uid) preso a quem está logado — regra do banco + cópia fiel ao duplicar card (SÓ DEV · kanban-dev v8.30.937-dev · database.rules.json)
+### 2026-11-11 · Comentários: autor (uid) preso a quem está logado — regra do banco + cópia fiel ao duplicar card (PROD · kanban v8.30.943/painel v5.103 — regras do banco ativam no deploy · dev: kanban-dev v8.30.937-dev · database.rules.json)
 
 - **Brecha:** card_comments herdava só a regra geral de `dados`: qualquer pessoa com acesso ao squad gravava comentário com o uid de OUTRA pessoa. A função da @menção usa esse uid para notificar e (desde o #1699) para o marcador "analisando" da Ilha.
 - **Regra nova** (`squads/$squadId/dados/card_comments/$cardId/$commentId/uid/.validate`): o uid só nasce junto com o comentário e tem de ser o de quem está logado; uid de comentário existente nunca muda. Exceções: ids de sistema (system, automacao, assistente_ferias) e CÓPIA FIEL ao duplicar card (`copiadoDe` = id simples, mesmo id, autor e texto em card_comments da origem). O campo legado `cards/{key}/comments` NÃO serve de prova (qualquer membro escreve nele — achado da revisão do advisor): comentários legados de outras pessoas são migrados por docs/arezzo/testes/console_comentarios_pre_regra.js ANTES do deploy; a migração do Maré é atômica (falhou = campo legado intacto, sem perda). A regra mora no campo `uid` porque `.validate` de um nó não roda quando só um filho é gravado.

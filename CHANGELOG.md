@@ -24,20 +24,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Maré › 🏝️ Ilha Dinâmica: ligar em Minhas preferências + introdução de 5 passos (SÓ DEV · kanban-dev v8.30.943-dev · mare-dicas-dev ?v=14) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica: ligar em Minhas preferências + introdução de 5 passos (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.943-dev · mare-dicas-dev ?v=14) — 2026-11-11
 
 - **Ligar/desligar saiu do ⏲ Timers** (pedido do Caio) e foi para **seu nome → Minhas preferências → 🏝️ Ilha Dinâmica**: Ligar/Desligar, ⚙ Ajustes da ilha (com ela ligada) e 📖 Como funciona.
 - **Introdução** na 1ª vez que liga (e revista em 📖 Como funciona, nas preferências ou em ⚙ Ajustes da ilha): 5 passos — o que é · a pílula (principal, 2ª atividade, contador, quando aparece) · o painel aberto (Resumo, botões laterais, 📌, Esc) · **escolha os módulos** (interruptores que já valem) · onde mudar depois. Voltar/Próximo, pontos de progresso, Pular, ←/→/Esc, foco preso dentro; no celular vira folha inferior com alvos ≥ 44 px. "Começar a usar" abre a ilha no Resumo.
 - Textos que citavam o caminho antigo atualizados (Ajuda, avisos, dica ilha_v2 — mare-dicas-dev ?v=14 em kanban-dev, oceano-dev, okr-dev, painel-dev).
 - Testes: docs/arezzo/testes/test_ilha_intro.js (23) + as 9 baterias da ilha (com o caminho de ligar atualizado) e docs/arezzo/testes/test_dicas.js.
 
-### Maré › 🏝️ Ilha Dinâmica: botão 🎛️ Preferências na lateral (SÓ DEV · kanban-dev v8.30.941-dev) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica: botão 🎛️ Preferências na lateral (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.941-dev) — 2026-11-11
 
 - Pedido do Caio: atalho para "Minhas preferências" (a mesma janela do menu do nome) na lateral direita da ilha aberta, logo antes de ⚙ Ajustes. É atalho, não aba: fecha a ilha e abre a janela (openMinhasPrefs).
 - Coluna dos botões laterais 72 → 80 px para o nome inteiro caber sem passar da borda do painel; Ajuda atualizada.
 - Testes: docs/arezzo/testes/test_ilha_ux.js (40) e as 7 baterias da ilha.
 
-### Maré › 🏝️ Ilha Dinâmica: painel aberto redesenhado — botões nas laterais, Resumo no centro (/melhoriauiux · SÓ DEV · kanban-dev v8.30.939-dev) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica: painel aberto redesenhado — botões nas laterais, Resumo no centro (/melhoriauiux · PROD · kanban v8.30.943 — dev: kanban-dev v8.30.939-dev) — 2026-11-11
 
 - **Antes:** 8 abas espremidas numa faixa de 390 px (cortadas: "Favorit"; o 📌 sumia para fora), nenhuma visão geral (era preciso caçar aba por aba), cada aba com um estilo (links sublinhados ao lado de botões, horário solto acima do título), Ajustes como lista crua de caixas — e 🐞 a aba ⚙ Ajustes rolava o painel para o lado e cortava os rótulos pela esquerda.
 - **Agora (referência Vorssaint):** botões redondos nas laterais com nome e contador real — esquerda = o que acontece agora (Resumo, Timers, Avisos, Agenda, Agente), direita = atalhos e controle (Favoritos, Serviços, Operação, Ajustes) — e o conteúdo escolhido num cartão no centro, com cabeçalho e 📌.
@@ -52,25 +52,25 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **Índice automático completo (`docs/CODE_SYMBOLS.md` + `CODE_MAP_FAST.md`)**: `node scripts/mare-cli.js map` agora extrai âncoras com travessão/tabela do `CODE_MAP.md` e gera `docs/CODE_SYMBOLS.md` com faixas exatas de `<style>`/`<script>`, `const`s de topo e todas as funções `fn:Lxxxx` dos 15 arquivos `-dev`.
 - **Contorno para arquivos > 2,6 MB e pipeline declarativo (`scripts/mare-cli.js`)**: adicionados subcomandos `brief` (`/seatualizar` em `<0,15s`), `daily` (monitoramento diário completo), `slice` e `find` (leitura/busca numerada para `kanban-dev.html` de 2,73 MB que excede o limite do `read_file`), flag `--code` em `check-script`, e campos declarativos `files`/`patches` + espelhamento de skills no `ship`.
 - **Regras e skills otimizadas (`.agents/rules/antigravity.md`, `seatualizar`, `subirproprod`, `atualizardocumentacoes`)**: adoção da Via Rápida Direta para tarefas de 1 arquivo (1–2 min), subagentes paralelos com `Model: 'flash'` para docs/testes, atualização para os 14 alvos de promoção e suíte `docs/arezzo/testes/test_mare_cli_automacao.js`.
-### A Bordo: guia antes do onboarding, cultura Hering, Dados e IA e mapa do Oceano (SÓ DEV — PR #1705) — 2026-11-11
+### A Bordo: guia antes do onboarding, cultura Hering, Dados e IA e mapa do Oceano (PROD — PR #1705, no ar desde o merge) — 2026-11-11
 
 Site onboarding.html com roteiro de chegada, consulta por assunto, cinco comportamentos e proposta de valor do comunicado de cultura Hering. Omnichannel com Allan Dickmann; Dados e IA inclui Caio com foco em agilidade e implementação de IA. Seção Oceano explica acesso, produtos, Sonar, notificações e primeiros passos; slides alinhados. Páginas sem par -dev: alterações entregues para revisão do Claude antes do merge. Teste: docs/arezzo/testes/test_onboarding_bordo.js. Dica: não, A Bordo não integra o catálogo de dicas; orientação na própria página. Fronteira: sem mudança de autenticação, banco ou dados dinâmicos; conteúdo e links internos estáticos.
 
-### Maré › 🏝️ Ilha Dinâmica V2 completa: 📅 Agenda com todas as agendas da pessoa + Ajuda e dica (SÓ DEV · kanban-dev v8.30.938-dev · mare-dicas-dev ?v=13) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica V2 completa: 📅 Agenda com todas as agendas da pessoa + Ajuda e dica (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.938-dev · mare-dicas-dev ?v=13) — 2026-11-11
 
 - 📅 Agenda: passa a trazer TODAS as agendas em que a pessoa está (decisão do Caio, 11/11/2026) — convidado/responsável OU responsável de um Objetivo ativo que o evento abrange (mesmo critério de abrange/alvosDoEvento do Radar em functions/okr/calendario.js: reunião sem recorte = a torre toda; evento/lembrete só se vinculado). Lê kanban/okr/objetivos junto com o calendário no mesmo ciclo de 3 h (2 leituras, nenhuma escuta); cópia local v2.
 - 📖 Ajuda: o verbete Timer e Produtividade (seção 🏝️ Ilha Dinâmica) descreve os módulos (secundária, ⭐, 🚨, 📅 ⏳, 🤖, 🛡️).
 - 💡 Dica ilha_v2 no Maré (mare-dicas-dev.js ?v=13 em kanban-dev, oceano-dev, okr-dev, painel-dev).
 - Código pelo Codex; revisão e testes pelo Claude: docs/arezzo/testes/test_ilha_agenda.js (29), docs/arezzo/testes/test_dicas.js (TUDO OK), test_dicas_dia.js, e as 6 baterias da ilha (217).
 
-### Maré › 🏝️ Ilha Dinâmica V2: 📅 Agenda do Radar e 🤖 Agente Ágil (SÓ DEV · kanban-dev v8.30.936-dev + functions agenteAgilMencao/agenteAgilMencaoDados) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica V2: 📅 Agenda do Radar e 🤖 Agente Ágil (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.936-dev + functions agenteAgilMencao/agenteAgilMencaoDados) — 2026-11-11
 
 - 📅 Agenda do Radar (módulo desligado por padrão): só os MEUS compromissos (sou convidado/responsável) dos próximos 14 dias, com recorrência e exceções; cópia pessoal de 3 h (1 leitura de kanban/okr/calendario/eventos a cada 3 h, sem escuta aberta). Reunião em ≤ 15 min / acontecendo vira atividade; ⏳ contagem regressiva para um evento escolhido; aba com Abrir no Radar e Entrar (só https).
 - 🤖 Agente Ágil (módulo desligado por padrão): "Agente analisando · <card> · 42 s" com estado REAL — a função da @menção grava kanban/usuarios/{uid}/agente_analisando/{commentId} = {squad, cardId, desde} enquanto trabalha e apaga no fim (mesmo com erro); "Resposta do agente pronta" a partir da notificação que a função já manda. 1 escuta no nó pessoal, só com o módulo ligado. Precisa de deploy das funções agenteAgilMencao e agenteAgilMencaoDados.
 - Fronteira: nó novo escrito só pela função (regra existente de kanban/usuarios/$uid: só o dono lê), sem texto do modelo no marcador; resposta do agente (LLM) e títulos do calendário chegam ao DOM só com esc(); links só https.
 - Agenda: código e teste pelo Codex (docs/arezzo/testes/test_ilha_agenda.js, 25); Agente: código pelo Claude, teste pelo Codex (docs/arezzo/testes/test_ilha_agente.js, 26) + 3 testes novos em functions/agente-agil-orquestrador/__tests__/mentionTrigger.test.js. Regressões da ilha: 191 asserções em 5 baterias.
 
-### Maré › 🏝️ Ilha Dinâmica V2: 🚨 Status dos serviços (SÓ DEV · kanban-dev v8.30.935-dev) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica V2: 🚨 Status dos serviços (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.935-dev) — 2026-11-11
 
 - Módulo 🚨 Status dos serviços (desligado por padrão; Ilha → ⚙ Ajustes): lê os monitores que já existem (kanban/vtex_saude, github_saude, firebase_saude — os mesmos do selinho do Oceano). Incidente vira atividade 🚨 (GitHub Pages instável tem prioridade maior: é o Pages que serve o Maré); monitor sem leitura há mais de 20 min fica cinza e nunca vira alerta.
 - Aba 🚨 Serviços: estado de cada serviço, "verificado há N min", até 3 títulos de incidente e "Ver status oficial".
@@ -78,14 +78,14 @@ Site onboarding.html com roteiro de chegada, consulta por assunto, cinco comport
 - Fronteira: título de incidente (texto de terceiro) sempre como texto (esc); link só se for da página oficial do serviço, senão a raiz oficial.
 - Implementação e teste pelo Codex (docs/arezzo/testes/test_ilha_status.js, 27); regressões docs/arezzo/testes/test_ilha_favoritos.js (24), docs/arezzo/testes/test_ilha_v2_base.js (33), docs/arezzo/testes/test_ilha_mare.js (56), docs/arezzo/testes/test_ilha_notificacoes.js (51).
 
-### Maré › 🏝️ Ilha Dinâmica V2: ⭐ Favoritos (SÓ DEV · kanban-dev v8.30.934-dev) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica V2: ⭐ Favoritos (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.934-dev) — 2026-11-11
 
 - Módulo ⭐ Favoritos (desligado por padrão; liga em Ilha → ⚙ Ajustes): até 3 atalhos para produtos (Radar, Painel, Oceano…), squads ou um card, numa aba ⭐ Favoritos da ilha. Não muda a pílula (favorito não é atividade).
 - Por aparelho (localStorage, decisão do Caio), sem nenhuma leitura no Firebase.
 - Segurança: nenhum endereço é guardado — o destino é montado no clique (produto pela lista do MareNotif.APPS, squad por ?squad=, card por tmAbrirCard); itens inválidos, repetidos ou além de 3 são descartados ao ler.
 - Implementação e teste pelo Codex (docs/arezzo/testes/test_ilha_favoritos.js, 24); regressões docs/arezzo/testes/test_ilha_v2_base.js (33), docs/arezzo/testes/test_ilha_mare.js (56), docs/arezzo/testes/test_ilha_notificacoes.js (51).
 
-### Maré › 🏝️ Ilha Dinâmica V2 (base): módulos ligáveis, atividade principal + secundária e 🛡️ Operação para ADM (SÓ DEV · kanban-dev v8.30.933-dev) — 2026-11-11
+### Maré › 🏝️ Ilha Dinâmica V2 (base): módulos ligáveis, atividade principal + secundária e 🛡️ Operação para ADM (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.933-dev) — 2026-11-11
 
 - Base da V2: cada recurso novo da ilha é um módulo com interruptor em ⚙ Ajustes; desligado não abre escuta no Firebase, não oferece atividade nem cria aba.
 - 🔀 Combinar atividades: a pílula mostra a principal (escolhida em Ajustes) e uma secundária ao lado (ex.: ⏲ 18:42 · 🚨 card sumiu); dá para desligar a secundária.

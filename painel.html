@@ -3190,7 +3190,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.99 · painel</div>
+<div class="version">v5.103 · painel</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3424,7 +3424,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=19"></script>
 <script src="mare-plantao.js?v=5"></script>
-<script src="mare-dicas.js?v=12"></script>
+<script src="mare-dicas.js?v=14"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -3689,9 +3689,12 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 // da whitelist — roda JS na sessão de quem abrir a tela, inclusive ADM). JSON.stringify
 // gera um literal JS válido e esc() protege o atributo HTML.
 function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
-function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
+function safeUrl(u){u=String(u||'').trim();return /^https:\/\/[^\s"'<>]+$/i.test(u)?u:'';}
 // SEGURANÇA (18/10/2026): URL vinda do banco só vira link se for http(s)/mailto — esc() sozinho NÃO barra `javascript:` (XSS por clique).
 function _hrefOk(u){ u=String(u==null?'':u).trim(); return /^(https?:\/\/|mailto:)/i.test(u) ? u : '#'; }
+function _corCssOk(c,fb){ c=String(c==null?'':c).trim(); return /^(#[0-9a-fA-F]{3,8}|rgba?\([0-9\s.,%/]+\)|var\(--[a-z0-9-]+\))$/i.test(c) ? c : (fb||'#38b6ff'); }
+function _colsSegurasP(cols){ return (Array.isArray(cols)?cols:Object.values(cols||{})).filter(Boolean).map(c=>({...c, color:_corCssOk(c.color,'#38b6ff')})); }
+function _tagsSegurasP(tags){ return (Array.isArray(tags)?tags:Object.values(tags||{})).filter(Boolean).map(t=>({...t, ...(t.color?{color:/^tag-[a-z0-9-]+$/i.test(String(t.color))?t.color:_corCssOk(t.color,'#38b6ff')}:{}), ...(t.bg?{bg:_corCssOk(t.bg,'rgba(56,182,255,.1)')}:{}), ...(t.hex?{hex:/^#[0-9a-fA-F]{3,8}$/.test(String(t.hex).trim())?String(t.hex).trim():'#38b6ff'}:{})})); }
 // ── FILTRO DE SQUAD ────────────────────────────────────────────────
 let activeFilter = 'all';
 
@@ -3854,7 +3857,7 @@ function renderOnline(){
   const count=document.getElementById('online-count'); if(count) count.textContent=all.length;
   if(!all.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no momento.</div>'; return; }
   const renderPills=list=>list.map(u=>{
-    const foto=safeUrl(u.foto)?'<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">':'';
+    const foto=safeUrl(u.foto)?'<img src="'+esc(safeUrl(u.foto))+'" style="width:20px;height:20px;border-radius:50%;">':'';
     return '<div class="online-pill">'
       +'<span class="online-pip"></span>'
       +foto
@@ -3920,7 +3923,7 @@ function renderOkrOnlineVisao(){
   const count = document.getElementById('okr-online-count'); if(count) count.textContent = all.length;
   if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Ninguém online no Radar no momento.</div>'; return; }
   el.innerHTML = all.map(u=>{
-    const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
+    const foto = safeUrl(u.foto) ? '<img src="'+esc(safeUrl(u.foto))+'" style="width:20px;height:20px;border-radius:50%;">' : '';
     return '<div class="online-pill"'+(u.externo===true?' title="Visualizador externo"':'')+'><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span>'+(u.externo===true?'<span style="font-size:10px;opacity:.8;">👁</span>':'')+'</div>';
   }).join('');
 }
@@ -3930,7 +3933,7 @@ function renderPainelOnline(){
   const count = document.getElementById('painel-online-count'); if(count) count.textContent = all.length;
   if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no painel no momento.</div>'; return; }
   el.innerHTML = all.map(u=>{
-    const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
+    const foto = safeUrl(u.foto) ? '<img src="'+esc(safeUrl(u.foto))+'" style="width:20px;height:20px;border-radius:50%;">' : '';
     return '<div class="online-pill">'
       + '<span class="online-pip"></span>'
       + foto
@@ -3972,7 +3975,7 @@ function _pOpenCard(cardId, sqId){
   // abre board desse squad numa nova aba com o card já aberto
   window.open('kanban.html?squad='+sqId+'&opencard='+cardId,'_blank');
 }
-function _pSafeUrl(u){ try{ const h=new URL(String(u)).href; return /^(https?:|mailto:)/i.test(h) ? h : '#'; }catch(e){ return '#'; } }   // só http(s)/mailto (new URL() aceita javascript:)
+function _pSafeUrl(u){ if(/[\s"'<>]/.test(String(u||''))) return '#'; try{ const h=new URL(String(u)).href; return /^(https?:|mailto:)/i.test(h) && !/[\s"'<>]/.test(h) ? h : '#'; }catch(e){ return '#'; } }   // só http(s)/mailto (new URL() aceita javascript:)
 
 // ── Cores por squad (painel) ──
 const _SQUAD_COLORS_CAMP = {
@@ -4002,7 +4005,7 @@ async function setCampViewMode(mode){
         Promise.all(['cards','columns'].map(k=>window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados/'+k))))
           .then(([cs,cl])=>{ const v={cards:cs.val(), columns:cl.val()}; _campCrossData[sq]={
             cards:   v.cards   ?(Array.isArray(v.cards)   ?v.cards   :Object.values(v.cards))   :[],
-            columns: v.columns ?(Array.isArray(v.columns) ?v.columns :Object.values(v.columns)) :[],
+            columns: v.columns ?_colsSegurasP(v.columns) :[],
           }; })
           .catch(()=>{ _campCrossData[sq]={cards:[],columns:[]}; })
       ));
@@ -4314,8 +4317,9 @@ function renderCampList(){
       const _ct=Array.isArray(card.tags)?card.tags:(card.tag?[card.tag]:[]);
       return campTags.length ? campTags.some(t=>_ct.includes(t)) : false;
     });
-    const statusCls = `camp-status-${c.status||'planejamento'}`;
-    const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
+    const stKey = /^(ativa|planejamento|encerrada)$/.test(c.status)?c.status:'planejamento';
+    const statusCls = `camp-status-${stKey}`;
+    const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||esc(c.status||'—');
     const msBadge = c.multiSquad?'<span class="camp-ms-badge">🔗 Multi-squad</span>':'';
     const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ') || '—';
     return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe(${jsq(c.id)})">
@@ -4325,7 +4329,7 @@ function renderCampList(){
         ${c.mote?`<div class="camp-card-mote">"${esc(c.mote)}"</div>`:''}
         <div class="camp-card-meta">
           <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
-          ${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=_pTag(tid);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg||'rgba(56,182,255,.1)'};border-color:${tobj.bg||'rgba(56,182,255,.2)'};color:${tobj.color||'#38b6ff'}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
+          ${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=_pTag(tid);if(!tobj)return '';const tbg=_corCssOk(tobj.bg,'rgba(56,182,255,.1)'),tbd=_corCssOk(tobj.bg,'rgba(56,182,255,.2)'),tc=_corCssOk(tobj.color,'#38b6ff');return `<span class="camp-card-pill" style="background:${tbg};border-color:${tbd};color:${tc}">🏷 ${esc(tobj.label)}</span>`;}).join('')}
           <span class="camp-card-pill">📅 ${esc(periodo)}</span>
         </div>
       </div>
@@ -4359,7 +4363,8 @@ function renderCampDetalhe(c){
   const campTags   = (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
   const isMS       = !!(c.multiSquad);
   const msSquads   = c.squads&&c.squads.length ? c.squads : (SQUADS.map(s=>s.id));
-  const statusLabel= {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
+  const stKey      = /^(ativa|planejamento|encerrada)$/.test(c.status)?c.status:'planejamento';
+  const statusLabel= {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||esc(c.status||'—');
   const periodo    = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
 
   if(!window._campViewMode) window._campViewMode = isMS?'multi':'squad';
@@ -4416,8 +4421,9 @@ function renderCampDetalhe(c){
 
   // Render tag pills
   const tagPills = campTags.map(tid=>{
-    const t=_pTag(tid);
-    return t?`<span class="camp-card-pill" style="background:${t.bg||'rgba(56,182,255,.1)'};border-color:${t.bg||'rgba(56,182,255,.2)'};color:${t.color||'#38b6ff'}">🏷 ${esc(t.label)}</span>`:'';
+    const t=_pTag(tid); if(!t) return '';
+    const tbg=_corCssOk(t.bg,'rgba(56,182,255,.1)'), tbd=_corCssOk(t.bg,'rgba(56,182,255,.2)'), tc=_corCssOk(t.color,'#38b6ff');
+    return `<span class="camp-card-pill" style="background:${tbg};border-color:${tbd};color:${tc}">🏷 ${esc(t.label)}</span>`;
   }).join('');
 
   // Squad badges na barra de metadados
@@ -4425,7 +4431,7 @@ function renderCampDetalhe(c){
     const sqc=_sqColor(sq);
     const sqInfo=SQUADS.find(s=>s.id===sq);
     const _SQ_FB={dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪'};
-    return `<span style="color:${sqc.text};font-size:11px;">${sqInfo?.icon||_SQ_FB[sq]||'🐟'} ${sqInfo?.label||sq}</span>`;
+    return `<span style="color:${sqc.text};font-size:11px;">${esc(sqInfo?.icon||_SQ_FB[sq]||'🐟')} ${esc(sqInfo?.label||sq)}</span>`;
   }).join(' &nbsp;');
 
   document.getElementById('camp-detail-inner').innerHTML = `
@@ -4434,7 +4440,7 @@ function renderCampDetalhe(c){
       ${c.mote?`<div class="camp-detail-mote">"${esc(c.mote)}"</div>`:''}
       <div class="camp-detail-pills">
         <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
-        <span class="camp-status-pill camp-status-${c.status||'planejamento'}">${statusLabel}</span>
+        <span class="camp-status-pill camp-status-${stKey}">${statusLabel}</span>
         ${tagPills}
       </div>
     </div>
@@ -4446,7 +4452,7 @@ function renderCampDetalhe(c){
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
-        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter(${jsq(sq)})">${esc(_sqLabel(sq))}</span>`;}).join('')}
+        ${msSquads.map(sq=>{const sqc=_sqColor(sq);const sqCls=/^[a-z0-9_-]+$/i.test(sq)?sq:'x';return `<span class="camp-sq-pill camp-sq-${sqCls} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter(${jsq(sq)})">${esc(_sqLabel(sq))}</span>`;}).join('')}
         ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todas</span>`:''}
       </div>`:''}
     </div>`:''}
@@ -4586,7 +4592,8 @@ function _renderMd(txt){
 
 function _renderEntrada(e, campId){
   const icon  = CAMP_TIPO_ICONS[e.tipo]||'📝';
-  const links = (e.links||[]).map(l=>`<a class="camp-entry-link" href="${_pSafeUrl(l.url)}" target="_blank" rel="noopener">${esc(l.label||l.url)}</a>`).join('');
+  const tipoCls = /^[a-z0-9_-]+$/i.test(e.tipo||'') ? e.tipo : 'registro';
+  const links = (e.links||[]).map(l=>`<a class="camp-entry-link" href="${esc(_pSafeUrl(l.url))}" target="_blank" rel="noopener">${esc(l.label||l.url)}</a>`).join('');
   const quando = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
   const podeApagar = e.autorUid===window._currentUser?.uid || window._currentUserRole==='adm' || window._currentUserRole==='po';
   // Squad header rico — emoji + nome + cor da borda
@@ -4599,18 +4606,18 @@ function _renderEntrada(e, campId){
     const sqEmoji = sqInfo?.icon||_SQ_FALLBACK[e._squad]||'🐟';
     const sqLabel = sqInfo?.label||e._squad;
     sqHeader = `<div class="camp-entry-sq-hd">
-      <span class="camp-entry-sq-icon">${sqEmoji}</span>
+      <span class="camp-entry-sq-icon">${esc(sqEmoji)}</span>
       <span class="camp-entry-sq-name" style="color:${sqc.text};">${esc(sqLabel)}</span>
     </div>`;
   }
   const sqcBorder = isMulti ? `style="border-left-color:${_sqColor(e._squad).text};"` : '';
-  return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'}" data-icon="${icon}" ${sqcBorder}>
+  return `<div class="camp-entry camp-entry-tipo-${tipoCls}" data-icon="${icon}" ${sqcBorder}>
     ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada(${jsq(campId)},${jsq(e.id)})" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
     <div class="camp-entry-corpo">${typeof _renderMd==='function'?_renderMd(e.corpo||''):esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
-    <div class="camp-entry-meta">${esc(e.autor||'?')} · ${quando} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
+    <div class="camp-entry-meta">${esc(e.autor||'?')} · ${quando} · <b>${esc(CAMP_TIPO_LABELS[e.tipo]||e.tipo||'')}</b></div>
   </div>`;
 }
 
@@ -4825,13 +4832,13 @@ function _renderCampCardsGrid(){
     const sq_  = card._squad||'dados';
     const cols = ctx.getCols ? ctx.getCols(sq_) : [];
     const col  = cols.find(cl=>cl.id===card.col);
-    const colColor = col?.color||'#38b6ff';
+    const colColor = _corCssOk(col?.color, '#38b6ff');
     const sqc = _sqColor(sq_);
     const sqInfo = SQUADS.find(s=>s.id===sq_);
     const sqLabel = _sqLabel(sq_);
     const sqEmoji = sqInfo?.icon||_SQ_FB[sq_]||'🐟';
     const sqBadge = ctx.viewMode==='multi'
-      ? `<span class="camp-sq-tag" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};">${sqEmoji} ${esc(sqLabel)}</span>`
+      ? `<span class="camp-sq-tag" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};">${esc(sqEmoji)} ${esc(sqLabel)}</span>`
       : '';
     const dueStr = card.due ? '📅 '+new Date(card.due).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '';
     return `<div class="camp-grid-card" onclick="_pOpenCard(${jsq(card.id)},${jsq(sq_)})">
@@ -4900,7 +4907,7 @@ function _renderFixedLinks(links, tipo, campId){
   if(!links||!links.length) return '<div style="font-size:10px;color:var(--txt3);padding:2px 0;">Nenhum link adicionado.</div>';
   return links.map((l,i)=>`
     <div class="camp-fixed-link-item">
-      <a href="${_pSafeUrl(l.url)}" target="_blank" rel="noopener" title="${esc(l.url)}">${esc(l.label||l.url)}</a>
+      <a href="${esc(_pSafeUrl(l.url))}" target="_blank" rel="noopener" title="${esc(l.url)}">${esc(l.label||l.url)}</a>
       <button class="camp-fixed-link-del" onclick="campDelFixedLink(${jsq(campId)},${jsq(tipo)},${i})" title="Remover">✕</button>
     </div>`).join('');
 }
@@ -5030,7 +5037,7 @@ function renderPainelCamp(){
         const nEntradas = group.reduce((s,c)=>s+Object.keys(c.entradas||{}).length,0);
         const allSquads = [...new Set(group.flatMap(c=>c.squads||[]))];
         const kvs = group.flatMap(c=>c.kvs||[]);
-        const statusLbl={ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c0.status]||c0.status;
+        const statusLbl={ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c0.status]||esc(c0.status||'—');
         const sqRows = allSquads.map(sq=>{
           const sqc  = _painelSqColor(sq);
           const campSq = group.find(c=>(c.squads||[]).includes(sq));
@@ -5040,7 +5047,7 @@ function renderPainelCamp(){
             <span class="pcamp-sq-name" style="color:${sqc.text};">${esc(_sqLabel(sq))}</span>
             <div class="pcamp-sq-pills">
               <span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">📝 ${nEnt} registro${nEnt!==1?'s':''}</span>
-              ${campSq?.status?`<span style="font-size:9px;color:var(--txt3);">${{ativa:'✅ Ativa',planejamento:'📋 Plan.',encerrada:'🔒 Enc.'}[campSq.status]||campSq.status}</span>`:''}
+              ${campSq?.status?`<span style="font-size:9px;color:var(--txt3);">${{ativa:'✅ Ativa',planejamento:'📋 Plan.',encerrada:'🔒 Enc.'}[campSq.status]||esc(campSq.status)}</span>`:''}
             </div>
           </div>`;
         }).join('');
@@ -5091,7 +5098,7 @@ function renderPainelCamp(){
     const campList=camps.map(c=>{
     const tema      = PAINEL_CAMP_TEMAS[c.tema||'neutro']||PAINEL_CAMP_TEMAS.neutro;
     const statusCls = {ativa:'color:var(--teal)',planejamento:'color:var(--accent)',encerrada:'color:var(--txt3)'}[c.status]||'';
-    const statusLbl = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
+    const statusLbl = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||esc(c.status||'—');
     const periodo   = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'—';
     const squads    = c.squads||[];
     const nEntradas = Object.keys(c.entradas||{}).length;
@@ -5224,7 +5231,7 @@ function openPainelCampMsEdit(){
             <button class="btn btn-sm" onclick="_pmsDelGrupo(${jsq(g.id)})" style="font-size:10px;padding:3px 9px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Desagrupar</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;padding-left:24px;">
-            ${camps.length?camps.map(c=>`<div style="font-size:11px;color:var(--txt2);">• ${esc(c.nome||'—')} <span style="color:var(--txt3);">(${(c.squads||[]).join(', ')})</span></div>`).join(''):'<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha.</div>'}
+            ${camps.length?camps.map(c=>`<div style="font-size:11px;color:var(--txt2);">• ${esc(c.nome||'—')} <span style="color:var(--txt3);">(${(c.squads||[]).map(esc).join(', ')})</span></div>`).join(''):'<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha.</div>'}
           </div>
         </div>`;
       }).join('') : '<div style="font-size:11px;color:var(--txt3);padding:12px 0;">Nenhum grupo manual criado ainda.</div>'}
@@ -5296,7 +5303,7 @@ async function _pmsEditGrupoCampanhas(gid, nome, selecionadas=[]){
     ${all.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;cursor:pointer;">
       <input type="checkbox" class="pms-grupo-camp" value="${esc(c.id)}" ${selecionadas.includes(c.id)?'checked':''}>
       <span style="font-size:12px;font-weight:600;">${esc(c.nome||'—')}</span>
-      <span style="font-size:9px;color:var(--txt3);">${(c.squads||[]).join(', ')}</span>
+      <span style="font-size:9px;color:var(--txt3);">${(c.squads||[]).map(esc).join(', ')}</span>
     </label>`).join('')}
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn btn-sm" onclick="_pmsSwitchTab('manual')">← Voltar</button>
@@ -5389,12 +5396,12 @@ function renderOKR(){
     <div class="panel-card okr" onclick="openPcModal(${jsq(sq.id)},${jsq(c.id)})">
       <div class="pc-card-chips">
         <span class="pc-chip pc-chip-okr">🎯 OKR</span>
-        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
-        <span class="pc-col-badge">${colName}</span>
+        <span class="pc-chip pc-chip-squad">${esc(sq.icon)} ${esc(sq.label.replace('Squad ',''))}</span>
+        <span class="pc-col-badge">${esc(colName)}</span>
       </div>
-      <p class="pc-card-title">${c.title}</p>
+      <p class="pc-card-title">${esc(c.title)}</p>
       <div class="pc-card-footer">
-        ${c.owner?`<span>👤 ${resolveOwnerName(c.owner,sq.id)}</span>`:''}
+        ${c.owner?`<span>👤 ${esc(resolveOwnerName(c.owner,sq.id))}</span>`:''}
         ${c.due?`<span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
         ${checklistPct(c)}
       </div>
@@ -5423,10 +5430,10 @@ function renderRiscos(){
     <div class="panel-card risco" onclick="openPcModal(${jsq(sq.id)},${jsq(c.id)})">
       <div class="pc-card-chips">
         <span class="pc-chip" style="background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.3);color:var(--warn);">⚠ ${c.riscos.length} risco${c.riscos.length>1?'s':''}</span>
-        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
-        <span class="pc-col-badge">${colName}</span>
+        <span class="pc-chip pc-chip-squad">${esc(sq.icon)} ${esc(sq.label.replace('Squad ',''))}</span>
+        <span class="pc-col-badge">${esc(colName)}</span>
       </div>
-      <p class="pc-card-title">${c.title}</p>
+      <p class="pc-card-title">${esc(c.title)}</p>
       <div style="display:flex;flex-direction:column;gap:2px;">
         ${c.riscos.slice(0,2).map(r=>`<div style="font-size:10px;color:var(--txt3);">• ${esc(typeof r==='string'?r:(r&&(r.t||r.text))||'')}</div>`).join('')}
         ${c.riscos.length>2?`<div style="font-size:9px;color:var(--txt3);opacity:.7;">+${c.riscos.length-2} mais...</div>`:''}
@@ -5543,8 +5550,8 @@ function renderPainelInsights(){
       +'</div>'
       +(extraHtml||''));
   };
-  const cardRow=(card)=>'<div onclick="openPcModal(\''+esc(card._squad.id)+'\',\''+esc(card.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;gap:8px;" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
-    +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">'+card._squad.icon+' '+esc((card.title||'').substring(0,50))+'</span>'
+  const cardRow=(card)=>'<div onclick="openPcModal('+jsq(card._squad.id)+','+jsq(card.id)+')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;gap:8px;" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
+    +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">'+esc(card._squad.icon)+' '+esc((card.title||'').substring(0,50))+'</span>'
     +'<span style="flex-shrink:0;color:var(--txt3);">'+esc(card._insightSub||'')+'</span></div>';
 
   if(!total){
@@ -5605,7 +5612,7 @@ function renderPainelInsights(){
   okrCards.forEach(c=>{
     const colObj=squadData[c._squad.id]?.columns?.find(col=>col.id===c.col);
     const nome=colObj?.name||c.col;
-    if(!okrPorColMap[nome]) okrPorColMap[nome]={count:0,color:colObj?.color||'#38b6ff'};
+    if(!okrPorColMap[nome]) okrPorColMap[nome]={count:0,color:_corCssOk(colObj?.color,'#38b6ff')};
     okrPorColMap[nome].count++;
   });
   const okrPorCol=Object.entries(okrPorColMap).map(([label,v])=>({label,count:v.count,color:v.color}));
@@ -5911,43 +5918,43 @@ function openPcModal(squadId, cardId){
   const prioEmoji={'critical':'🔥 Crítica','high':'🔴 Alta','medium':'🟡 Média','low':'🟢 Baixa'};
   document.getElementById('pc-modal-body').innerHTML=`
     <div class="pc-chips">
-      ${tag?`<span class="pc-chip ${tag.isOKR?'pc-chip-okr':'pc-chip-tag'}">${tag.label}</span>`:''}
+      ${tag?`<span class="pc-chip ${tag.isOKR?'pc-chip-okr':'pc-chip-tag'}">${esc(tag.label)}</span>`:''}
       ${cardIsOkrTagged&&!tag?.isOKR?'<span class="pc-chip pc-chip-okr">🎯 OKR</span>':''}
-      <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label}</span>
-      <span class="pc-chip pc-chip-col">${colName}</span>
-      ${card.priority?`<span class="pc-chip pc-chip-prio">${prioEmoji[card.priority]||card.priority}</span>`:''}
+      <span class="pc-chip pc-chip-squad">${esc(sq.icon)} ${esc(sq.label||squadId)}</span>
+      <span class="pc-chip pc-chip-col">${esc(colName)}</span>
+      ${card.priority?`<span class="pc-chip pc-chip-prio">${esc(prioEmoji[card.priority]||card.priority)}</span>`:''}
     </div>
 
     ${card.desc?`<div class="pc-section">
       <div class="pc-section-lbl">Descrição</div>
-      <div class="pc-section-val">${card.desc}</div>
+      <div class="pc-section-val">${esc(card.desc)}</div>
     </div>`:''}
 
     ${card.po?`<div class="pc-section po">
       <div class="pc-section-lbl">🎯 Insights do PO</div>
-      <div class="pc-section-val">${card.po}</div>
+      <div class="pc-section-val">${esc(card.po)}</div>
     </div>`:''}
 
     ${(card.owner||card.due||card.sp)?`<div class="pc-meta-row">
-      ${card.owner?`<div class="pc-meta-item"><div class="lbl">Responsável</div><div class="val">👤 ${resolveOwnerName(card.owner,squadId)}</div></div>`:''}
+      ${card.owner?`<div class="pc-meta-item"><div class="lbl">Responsável</div><div class="val">👤 ${esc(resolveOwnerName(card.owner,squadId))}</div></div>`:''}
       ${card.due?`<div class="pc-meta-item"><div class="lbl">Prazo</div><div class="val">📅 ${new Date(card.due+'T00:00:00').toLocaleDateString('pt-BR')}</div></div>`:''}
-      ${card.sp?`<div class="pc-meta-item"><div class="lbl">Story Points</div><div class="val">${card.sp} pts</div></div>`:''}
+      ${card.sp?`<div class="pc-meta-item"><div class="lbl">Story Points</div><div class="val">${esc(card.sp)} pts</div></div>`:''}
     </div>`:''}
 
     ${cl.length?`<div class="pc-section">
       <div class="pc-section-lbl">Checklist (${done}/${cl.length})</div>
       <div class="pc-cl-bar"><div class="pc-cl-fill" style="width:${Math.round(done/cl.length*100)}%;"></div></div>
-      ${cl.map(i=>`<div class="pc-cl-item${i.done?' done':''}">${i.done?'✓':'○'} ${i.t}</div>`).join('')}
+      ${cl.map(i=>`<div class="pc-cl-item${i.done?' done':''}">${i.done?'✓':'○'} ${esc(i.t)}</div>`).join('')}
     </div>`:''}
 
     ${card.riscos?.length?`<div class="pc-section riscos">
       <div class="pc-section-lbl">⚠ Riscos (${card.riscos.length})</div>
-      ${card.riscos.map(r=>`<div class="pc-section-val" style="padding:3px 0;border-bottom:1px solid rgba(255,209,102,.1);">• ${r}</div>`).join('')}
+      ${card.riscos.map(r=>`<div class="pc-section-val" style="padding:3px 0;border-bottom:1px solid rgba(255,209,102,.1);">• ${esc(typeof r==='object'?(r?.t||r?.text||''):r)}</div>`).join('')}
     </div>`:''}
 
     ${card.blockerReason?`<div class="pc-section blocker">
       <div class="pc-section-lbl">🚧 Impedimento</div>
-      <div class="pc-section-val">${card.blockerReason}</div>
+      <div class="pc-section-val">${esc(card.blockerReason)}</div>
     </div>`:''}
   `;
   
@@ -6521,7 +6528,7 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
       const col=_squadColorFor(squad);
       return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
         onclick="event.stopPropagation();openPevModal(${jsq(ds)},${jsq(ev.id||'')},${jsq(ev._source||'painel')})"
-        title="${ev.title}">${ev.title}<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalEvent(${jsq(ev.id||'')},${jsq(ev._source||'painel')})" title="Excluir">✕</button></div>`;
+        title="${esc(ev.title)}">${esc(ev.title)}<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalEvent(${jsq(ev.id||'')},${jsq(ev._source||'painel')})" title="Excluir">✕</button></div>`;
     }).join('')
     +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);cursor:pointer;" onclick="event.stopPropagation();openPcalDayPopover(${jsq(ds)})">+${dayEvs.length-3} mais</div>`:'');
   div.onclick=()=>openPcalDayPopover(ds);
@@ -6590,7 +6597,7 @@ function renderPcalLegend(elId, evs){
   const squadsPresentes=new Set(evs.filter(ev=>!ev._gcal).map(ev=>ev._squad||ev.squad||'geral'));
   let html = [...squadsPresentes].map(sq=>{
     const col=_squadColorFor(sq);
-    return `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${col.label||sq}</div>`;
+    return `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${esc(col.label||sq)}</div>`;
   }).join('');
   // Agendas do Google conectadas — cor própria por agenda
   const agendas = Object.values(window._pcalCalendars||{});
@@ -7047,25 +7054,27 @@ function renderErrors(){
   el.innerHTML=filtered.slice(0,50).map(({id,squad,entry})=>{
     const cat=entry.category||'geral';
     const status=entry.status||'novo';
+    const catSafe=/^[a-z0-9_-]+$/i.test(cat)?cat:'geral';
+    const stSafe=/^[a-z0-9_-]+$/i.test(status)?status:'novo';
     const sq=SQUADS.find(s=>s.id===squad);
     const ts=new Date(entry.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const stackLines=(entry.stack||'').split('\n').slice(0,3).filter(Boolean);
-    return '<div class="err-log-item cat-'+cat+' status-'+status+'">'
+    return '<div class="err-log-item cat-'+catSafe+' status-'+stSafe+'">'
 
       // Header: badge + mensagem + status
       +'<div class="err-hd">'
-      +'<span class="err-badge cat-'+cat+'">'+(CAT_LABELS[cat]||cat)+'</span>'
-      +'<span class="err-msg">'+(sq?sq.icon+' ':'')+((entry.msg||'Erro desconhecido').substring(0,80))+'</span>'
-      +'<span class="err-status '+status+'" data-eid="'+id+'" data-esq="'+squad+'" onclick="cycleErrStatus(this.dataset.eid,this.dataset.esq)">'
-      +({novo:'🔴 Novo',visto:'🟡 Visto',resolvido:'✅ OK'}[status]||status)
+      +'<span class="err-badge cat-'+catSafe+'">'+esc(CAT_LABELS[cat]||cat)+'</span>'
+      +'<span class="err-msg">'+(sq?esc(sq.icon)+' ':'')+esc((entry.msg||'Erro desconhecido').substring(0,80))+'</span>'
+      +'<span class="err-status '+stSafe+'" data-eid="'+esc(id)+'" data-esq="'+esc(squad)+'" onclick="cycleErrStatus(this.dataset.eid,this.dataset.esq)">'
+      +({novo:'🔴 Novo',visto:'🟡 Visto',resolvido:'✅ OK'}[status]||esc(status))
       +'</span>'
       +'</div>'
 
       // Meta: data, usuário, arquivo
       +'<div class="err-meta">'
-      +'<span>📅 '+ts+'</span>'
-      +'<span>👤 '+(entry.user||'?')+'</span>'
-      +(entry.source?'<span>📄 '+entry.source.split('/').pop()+(entry.line?' :'+entry.line:'')+'</span>':'')
+      +'<span>📅 '+esc(ts)+'</span>'
+      +'<span>👤 '+esc(entry.user||'?')+'</span>'
+      +(entry.source?'<span>📄 '+esc(String(entry.source).split('/').pop())+(entry.line?' :'+esc(entry.line):'')+'</span>':'')
       +'</div>'
 
       // Stack trace compacto (só primeiras 2 linhas, fonte mono pequena)
@@ -7074,7 +7083,7 @@ function renderErrors(){
           +'background:rgba(0,0,0,.3);border-radius:5px;padding:5px 8px;margin-top:4px;'
           +'white-space:normal;word-break:break-all;line-height:1.5;display:none;" '
           +'onclick="this.classList.toggle(\'open\')">'
-          +stackLines.map(l=>l.trim().substring(0,120)).join('<br>')
+          +stackLines.map(l=>esc(l.trim().substring(0,120))).join('<br>')
           +'</div>'
         : '')
 
@@ -8320,7 +8329,7 @@ function renderPainelNotifs(){
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});${n.okrObjId==='digital'?`swPtab('dados');togglePainelNotif(event);`:`MareNotif.abrirPagina('kanban.html?squad='+encodeURIComponent(${jsq(n.squad||'')})+'&dados=squad');`}" style="cursor:pointer;"`   // 🐟 lembrete de meta: Digital → aba Dados daqui; squad → aba Dados do Maré
       : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
-      : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
+      : (n.cardId && n.squad) ? (()=>{ const _cardUrl='kanban.html?squad='+encodeURIComponent(n.squad)+'&opencard='+encodeURIComponent(n.cardId); return `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open(${jsq(_cardUrl)},'_blank')" style="cursor:pointer;"`; })() : '';
     return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(var(--slate-rgb),.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(var(--slate-rgb),.4)\'"':''}>
       <span style="font-size:13px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
@@ -8423,6 +8432,18 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_ilha_dinamica_prod_2026_11_11',
+    titulo: "🏝️ Ilha Dinâmica: acompanhe timers, avisos e sua agenda direto no topo do quadro",
+    corpo: "<p>Agora ficou mais fácil acompanhar o que importa sem perder o foco no quadro: a <b>🏝️ Ilha Dinâmica</b> é uma pílula no centro do topo que mostra o que está acontecendo em tempo real, sem você precisar procurar. Nela você vê, pausa ou continua o timer ativo na hora e acompanha suas notificações não lidas — quando chega uma nova, a pílula se alarga por alguns segundos mostrando de quem veio e onde.</p>"
+      + "<p>A novidade é opcional, vem desligada por padrão e vale por aparelho (você escolhe se quer ligar no computador, no celular ou nos dois). Para ativar, clique no <b>seu nome</b> (canto superior direito) → <b>Minhas preferências</b> → <b>🏝️ Ilha Dinâmica</b> → <b>Ligar a Ilha</b>. Na primeira vez, uma introdução rápida de 5 passos explica tudo e deixa escolher os módulos — e dá para rever sempre em <b>📖 Como funciona</b>.</p>"
+      + "<p>Ao clicar na pílula, abre um painel com fundo desfocado: no centro fica o <b>Resumo</b> com um bloco por módulo (clique no bloco para abrir ou pause o timer ali mesmo) e nas laterais ficam botões redondos com atividades, atalhos e controles — no celular, eles ficam numa faixa embaixo. Use o botão <b>📌</b> para manter a ilha aberta enquanto usa o quadro, ou aperte <b>Esc</b> (ou clique fora) para fechar.</p>"
+      + "<p>Além de Timers e Notificações, você pode ativar módulos extras na introdução ou em <b>Ajustes</b>:<br>• <b>📅 Agenda do Radar:</b> compromissos dos próximos 14 dias (incluindo as reuniões da sua torre), aviso quando a reunião está chegando e <b>⏳ contagem regressiva</b> para um evento escolhido.<br>• <b>🤖 Agente Ágil:</b> mostra de verdade enquanto está analisando a sua @menção e avisa quando a resposta fica pronta.<br>• <b>🚨 Status dos serviços:</b> acompanha VTEX, GitHub e Firebase e avisa em caso de incidente.<br>• <b>⭐ Favoritos:</b> até 3 atalhos rápidos para produto, squad ou card aberto.<br>• <b>🛡️ Operação (para ADMs):</b> acesso rápido ao Guardião dos cards e backups.</p>"
+      + "<p><b>💡 Dica final:</b> em <b>Ajustes</b> da ilha você deixa tudo do seu jeito — escolha a atividade principal, mostre uma 2ª atividade ao lado, defina quando a pílula aparece (só com ação, sempre ou ao passar o mouse) e use o modo <b>Compartilhar tela</b> para esconder os títulos durante uma reunião.</p>"
+      + "<p>Outras melhorias deste pacote:<br>• <b>Central de Ajuda atualizada</b> com todas as novidades para consulta.<br>• <b>Ajustes de segurança</b> nos comentários e no Painel (invisíveis no seu uso normal).</p>",
+    tipo: 'novidade',
+    squad: '*'
+  },
   {
     id: 'seed_sonar_ilha_vidro_2026_11_10',
     titulo: '🏝️ Ilha Dinâmica no Maré, filtro "meus" no Sonar (Ctrl+K) e acabamento vidro lapidado',
@@ -9108,7 +9129,7 @@ function renderRascunhosComunicado(rascunhos){
         <span style="font-size:15px;">${tipo.icon}</span>
         <div style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--txt);">${esc(c.titulo||'(sem título)')}</div>
       </div>
-      <div style="font-size:10.5px;color:var(--txt2);line-height:1.5;margin-bottom:8px;max-height:60px;overflow:hidden;">${(c.corpo||'').replace(/<[^>]+>/g,' ').trim().slice(0,180)}${(c.corpo||'').length>180?'…':''}</div>
+      <div style="font-size:10.5px;color:var(--txt2);line-height:1.5;margin-bottom:8px;max-height:60px;overflow:hidden;">${esc(String(c.corpo||'').replace(/<[^>]*>?/g,' ').replace(/\s+/g,' ').trim().slice(0,180))}${(c.corpo||'').length>180?'…':''}</div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">${alvo} · ${ondeAparece}</div>
       <div style="display:flex;gap:6px;">
         <button onclick="openComunicadoCompose(${jsq(c.id)})" style="flex:1;padding:6px;font-size:11px;background:rgba(255,209,102,.15);color:#ffd166;border:1px solid rgba(255,209,102,.35);border-radius:7px;cursor:pointer;font-weight:600;">👀 Revisar e publicar</button>
@@ -9206,7 +9227,7 @@ function openComunicadoCompose(id){
     const c = _comunicadosCache[_editingComunicadoId];
     document.getElementById('comunicado-compose-title').textContent = c.rascunho ? '🤖 Revisar Rascunho' : 'Editar Comunicado';
     document.getElementById('cc-titulo').value = c.titulo||'';
-    document.getElementById('cc-corpo').innerHTML = c.corpo||'';
+    document.getElementById('cc-corpo').innerHTML = _sanitizeComunicadoHtml(c.corpo||'');
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
     document.getElementById('cc-publico').value = c.publico||'todos';
     document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : c.prioridade==='oceano' ? 'oceano' : 'popup';
@@ -9414,22 +9435,28 @@ async function deleteComunicado(){
   window._set(window._ref(window._db,'kanban/comunicados/'+_editingComunicadoId), null)
     .then(()=>{ showToast('🗑 Comunicado excluído.'); closeComunicadoCompose(); });
 }
-// Sanitização básica do HTML do corpo — permite só tags de formatação simples, remove scripts/handlers
+// Sanitização inerte do HTML do corpo — faz parse em documento isolado (sem disparar img onerror), permite só tags de formatação/texto seguras e remove atributos (exceto href seguro em <a>)
 function _sanitizeComunicadoHtml(html){
-  const div = document.createElement('div');
-  div.innerHTML = html || '';
-  div.querySelectorAll('script,style,iframe,object,embed').forEach(n=>n.remove());
-  div.querySelectorAll('*').forEach(el=>{
-    [...el.attributes].forEach(attr=>{
-      const n = attr.name.toLowerCase();
-      // Remove qualquer handler on* e atributos perigosos; mantém href de links
-      if(n.startsWith('on') || n==='style' || n==='class' || n==='id') el.removeAttribute(attr.name);
-      if(n==='href' && /^\s*javascript:/i.test(attr.value)) el.removeAttribute(attr.name);
-    });
-    // Força links a abrirem em nova aba com segurança
-    if(el.tagName==='A'){ el.setAttribute('target','_blank'); el.setAttribute('rel','noopener noreferrer'); }
+  const raw = String(html == null ? '' : html);
+  if(!raw) return '';
+  if(typeof DOMParser === 'undefined') return esc(raw);
+  const doc = new DOMParser().parseFromString(raw, 'text/html');
+  const body = doc && doc.body;
+  if(!body) return esc(raw);
+  body.querySelectorAll('script,style,iframe,object,embed,svg,math,form,input,button,textarea,select,meta,link,base').forEach(n=>n.remove());
+  const okTags = new Set(['P','BR','B','STRONG','I','EM','U','S','STRIKE','CODE','PRE','UL','OL','LI','BLOCKQUOTE','A','SPAN','DIV','H1','H2','H3','H4']);
+  [...body.querySelectorAll('*')].reverse().forEach(el=>{
+    const tag = el.tagName.toUpperCase();
+    if(!okTags.has(tag)){ el.replaceWith(...el.childNodes); return; }
+    const hrefRaw = tag === 'A' ? String(el.getAttribute('href')||'').trim() : '';
+    [...el.attributes].forEach(attr=>el.removeAttribute(attr.name));
+    if(tag === 'A' && /^(https?:\/\/|mailto:)[^\s"'<>]+$/i.test(hrefRaw)){
+      el.setAttribute('href', hrefRaw);
+      el.setAttribute('target', '_blank');
+      el.setAttribute('rel', 'noopener noreferrer');
+    }
   });
-  return div.innerHTML;
+  return body.innerHTML;
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -9494,9 +9521,11 @@ function renderFbLista(){
   }).join('');
 }
 function _fbSetStatus(id, status){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
   window._set(window._ref(window._db,'kanban/feedback/'+id+'/status'), status).catch(()=>{});
 }
 async function _fbDelete(id){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
   if(!await uiConfirm('Excluir esta mensagem?',{title:'Excluir'})) return;
   window._set(window._ref(window._db,'kanban/feedback/'+id), null).catch(()=>{});
 }
@@ -9770,6 +9799,7 @@ function renderAdmList(){
 }
 
 function addAdmEmail(emailArg){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
   // Sem argumento lê o campo de ⚙ Configurações → ADMs; com argumento (chip "🛡️ ADM" de Global Users) usa o e-mail passado.
   const email=(typeof emailArg==='string' ? emailArg : document.getElementById('pcfg-adm-email')?.value)?.trim();
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
@@ -9788,6 +9818,7 @@ function addAdmEmail(emailArg){
 }
 
 function removeAdmEmail(email){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
   if(!confirm('Remover '+email+' dos ADMs?')) return;
   ADM_EMAILS=ADM_EMAILS.filter(e=>e!==email);
   saveAdmEmails();
@@ -10631,7 +10662,8 @@ function loadPcfgUsers(){
       list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito.</div>';
       return;
     }
-    const ROLES=['adm','po','organizador','membro','convidado'];
+    // 'adm' por squad só aparece para ADM: a regra do banco (11/11/2026) recusa PO gravando ou mexendo em 'adm'
+    const ROLES=(_isAdmPainel()?['adm']:[]).concat(['po','organizador','membro','convidado']);
     list.innerHTML='';
     membersArr.forEach(([uid,u])=>{
       const row=document.createElement('div');
@@ -10655,7 +10687,8 @@ function loadPcfgUsers(){
       // override por squad já definido via "👥 Global Users" -- dropdown
       // exibia o papel ERRADO sempre que existisse um override.
       const papelEfetivo=(u.squads_roles&&u.squads_roles[cfgSquadId])||u.role||'membro';
-      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(papelEfetivo===r) opt.selected=true; sel.appendChild(opt); });
+      (papelEfetivo==='adm' && !ROLES.includes('adm') ? ['adm'].concat(ROLES) : ROLES).forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(papelEfetivo===r) opt.selected=true; sel.appendChild(opt); });
+      if(papelEfetivo==='adm' && !_isAdmPainel()){ sel.disabled=true; sel.title='Só ADM muda o papel de um ADM'; }
       sel.addEventListener('change',function(){ updateUserRole(uid, this.value); });
       row.appendChild(av); row.appendChild(info); row.appendChild(sel);
       list.appendChild(row);
@@ -11788,6 +11821,7 @@ function setGlobalUserTorre(uid, torre){
     .catch(err=>{ showToast('Erro: '+err.message); renderGlobalUsers(); });
 }
 function toggleGestorOkr(uid, checked){
+  if(!_isAdmPainel()){ showToast('⚠ Só ADM altera Gestor OKR.'); renderGlobalUsers(); return; }
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), {gestorOkr: checked?true:null})
     .then(()=>{ showToast(checked?'🎯 Agora é Gestor OKR.':'Deixou de ser Gestor OKR.'); })
     .catch(err=>{ showToast('Erro: '+err.message); renderGlobalUsers(); });
@@ -11886,8 +11920,8 @@ function _applySquadDados(sqId, val){
       // Garante que todo card tem um id único e consistente
       id: card.id || ('idx_'+i),
     })):[],
-    columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
-    tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
+    columns:val.columns?_colsSegurasP(val.columns):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
+    tags:val.tags?_tagsSegurasP(val.tags):[],
     agilCfg:val.agil_cfg||{},
     // Modo de impedimento real do squad (coluna vs tag) — vem de
     // dados/config/blockerMode, o MESMO path que kanban.html lê/escreve
@@ -12803,12 +12837,12 @@ function renderBlockers(){
     return `
     <div class="panel-card blocker" onclick="openPcModal(${jsq(sq.id)},${jsq(c.id)})">
       <div class="pc-card-chips">
-        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
-        <span class="pc-col-badge">${colName}</span>
-        ${c.owner?`<span class="pc-chip" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--txt3);">👤 ${resolveOwnerName(c.owner,sq.id)}</span>`:''}
+        <span class="pc-chip pc-chip-squad">${esc(sq.icon)} ${esc(String(sq.label||sq.id).replace('Squad ',''))}</span>
+        <span class="pc-col-badge">${esc(colName)}</span>
+        ${c.owner?`<span class="pc-chip" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--txt3);">👤 ${esc(resolveOwnerName(c.owner,sq.id))}</span>`:''}
       </div>
-      <p class="pc-card-title">${c.title}</p>
-      ${c.blockerReason?`<div style="font-size:11px;color:var(--danger);opacity:.85;">🚧 ${c.blockerReason}</div>`:''}
+      <p class="pc-card-title">${esc(c.title)}</p>
+      ${c.blockerReason?`<div style="font-size:11px;color:var(--danger);opacity:.85;">🚧 ${esc(c.blockerReason)}</div>`:''}
       ${c.due?`<div class="pc-card-footer"><span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span></div>`:''}
     </div>`;
   }).join('');
@@ -13637,13 +13671,13 @@ function bsRenderExisting(){
   // Mostra squads base + os carregados do Firebase
   list.innerHTML = SQUADS.map(sq=>`
     <div class="bs-board-item">
-      <div class="bs-board-icon">${sq.icon}</div>
+      <div class="bs-board-icon">${esc(sq.icon)}</div>
       <div class="bs-board-info">
-        <div class="bs-board-name">${sq.label}</div>
-        <div class="bs-board-id">kanban.html?squad=${sq.id}</div>
+        <div class="bs-board-name">${esc(sq.label)}</div>
+        <div class="bs-board-id">kanban.html?squad=${esc(sq.id)}</div>
       </div>
       <div class="bs-board-actions">
-        <a href="kanban.html?squad=${sq.id}" target="_blank"
+        <a href="kanban.html?squad=${esc(sq.id)}" target="_blank"
            style="font-size:11px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(56,182,255,.3);border-radius:6px;">
           Abrir ↗
         </a>
@@ -13655,9 +13689,11 @@ function bsRenderExisting(){
 
 async function saveNewBoard(){
   const id       = (document.getElementById('bs-id')?.value||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
-  const name     = (document.getElementById('bs-name')?.value||'').trim();
-  const subtitle = (document.getElementById('bs-subtitle')?.value||'').trim();
+  const name     = _sqTxt((document.getElementById('bs-name')?.value||'').trim());
+  const subtitle = _sqTxt((document.getElementById('bs-subtitle')?.value||'').trim(), 120);
   const wip      = parseInt(document.getElementById('bs-wip')?.value||'3');
+  const emojiSafe = _sqTxt(_bsSelectedEmoji, 8) || '💬';
+  const colorSafe = _sqCorOk(_bsSelectedColor);
 
   if(!id){ uiAlert('Defina um ID para o squad (ex: cx, marketplace).'); return; }
   if(!name){ uiAlert('Defina o nome do squad.'); return; }
@@ -13681,8 +13717,8 @@ async function saveNewBoard(){
     label:     name,
     subtitle:  subtitle || name,
     agentRole: id,
-    emoji:     _bsSelectedEmoji,
-    color:     _bsSelectedColor,
+    emoji:     emojiSafe,
+    color:     colorSafe,
     wipLimit:  wip,
     criadoEm:  new Date().toISOString(),
     criadoPor: document.getElementById('user-name')?.textContent || '?',
@@ -13694,7 +13730,7 @@ async function saveNewBoard(){
 
     // Adiciona ao array local para aparecer no painel imediatamente
     if(!SQUADS.find(s=>s.id===id)){
-      SQUADS.push({id, label:name, icon:_bsSelectedEmoji, color:_bsSelectedColor, wipLimit:wip});
+      SQUADS.push({id, label:name, icon:emojiSafe, color:colorSafe, wipLimit:wip});
     }
     renderSquadLinks();
     bsRenderExisting();
@@ -13764,8 +13800,8 @@ function loadSquadData(sqId){
     const val=snap.val()||{};
     squadData[sqId]={
       cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({...card,id:card.id||('idx_'+i)})):[],
-      columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
-      tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
+      columns:val.columns?_colsSegurasP(val.columns):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
+      tags:val.tags?_tagsSegurasP(val.tags):[],
       agilCfg:val.agil_cfg||{},
       members: squadData[sqId]?.members||[], // populated separately below
     };
