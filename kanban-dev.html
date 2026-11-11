@@ -3915,6 +3915,14 @@ input[type="date"]{-moz-appearance:textfield;}
 #ilha-painel button:focus-visible,#ilha-painel .notif-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 @media(pointer:coarse){#ilha-painel .notif-ft button,#ilha-painel .notif-mark-all,#ilha-painel .notif-dismiss{min-width:44px;min-height:44px;}#ilha-painel #notif-perm-row{min-height:44px;display:inline-flex;align-items:center;}}
 
+/* 🧭 Tour do programa de boas-vindas (_tourMareIniciar) */
+#tourm-ring{position:fixed;z-index:9990;border-radius:12px;pointer-events:none;box-shadow:0 0 0 2px var(--teal),0 0 0 9999px rgba(0,0,0,.58);transition:top .25s ease,left .25s ease,width .25s ease,height .25s ease;}
+#tourm-bub{position:fixed;z-index:9991;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(29,233,182,.35);border-radius:12px;padding:14px 16px;box-shadow:0 12px 32px rgba(0,0,0,.45);color:var(--txt);font-size:12.5px;line-height:1.55;box-sizing:border-box;}
+#tourm-bub .tourm-cnt{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--teal);text-transform:uppercase;margin-bottom:4px;}
+#tourm-bub .tourm-t{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:6px;}
+#tourm-bub .tourm-x{color:var(--txt2);}
+#tourm-bub .tourm-bts{display:flex;gap:6px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;}
+@media (prefers-reduced-motion: reduce){ #tourm-ring{transition:none;} }
 </style>
 <script>
 // 🏢 MODO "SÓ HERING" (2026-10-08) — o Maré atende só a Hering: login só pelo Google (@ciahering.com.br), OKR de uma torre só (Digital),
@@ -5970,6 +5978,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 <div class="panel help-panel" style="max-width:640px;width:92vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
     <div class="panel-title">❓ Central de Ajuda · Kanban Hering</div>
+    <button class="btn btn-sm" onclick="closeOv('help-ov');abrirGuiaMare()" title="Programa de boas-vindas: passo a passo guiado, resumido (5 min) ou completo" style="margin-left:auto;margin-right:8px;">🧭 Boas-vindas</button>
     <button class="x-btn" onclick="closeOv('help-ov')">✕</button>
   </div>
   <!-- Campo de busca -->
@@ -6936,7 +6945,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.946-dev</div>
+<div class="version">v8.30.947-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12346,7 +12355,10 @@ function showApp(user) {
   _saveBoardPrefGlobal('last_squad', ACTIVE_SQUAD);
 }
 
-function _showBoasVindas(user){
+function _showBoasVindas(user, _tent){
+  // Usuário novo vê primeiro a inscrição (iniciais/torre); as boas-vindas esperam ela fechar (antes as duas abriam juntas)
+  const _insc = document.getElementById('insc-ov');
+  if(_insc && _insc.classList.contains('open') && (_tent||0) < 600){ setTimeout(()=>_showBoasVindas(user, (_tent||0)+1), 1000); return; }
   const nome = (user.displayName||user.email||'').split(' ')[0];
   const el = document.getElementById('boasvindas-ov');
   if(!el) return;
@@ -12360,6 +12372,135 @@ function closeBoasVindas(){
 function boasVindasOpenHelp(){
   closeBoasVindas();
   setTimeout(()=>openHelp(), 200);
+}
+
+// ── 🧭 Programa de boas-vindas do Maré (11/11/2026 · docs/ideias/onboarding-mare.md) ──
+// O guia (guia-mare.html) é estático: não usa Firebase. Ele grava o progresso em localStorage['guia_mare_prog'];
+// o board junta isso no perfil (kanban/usuarios/{uid}/onboarding_mare) e espelha o perfil em 'guia_mare_prog_espelho'
+// pro guia mostrar ✓. O tour (?tour=<passo>|resumido) destaca os botões reais; ?hotline=1 abre o card do Agente Ágil.
+const _GUIA_MARE_ID_OK = /^[a-z0-9-]{1,30}$/;
+const _GUIA_MARE_ISO_OK = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+let _guiaMarePerfil = null;
+function boasVindasGuia(modo){ closeBoasVindas(); abrirGuiaMare(modo); }
+function boasVindasTour(){ closeBoasVindas(); setTimeout(()=>_tourMareIniciar('resumido'), 250); }
+function _guiaMareAgenteAtivo(){ try{ return AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD); }catch(e){ return false; } }
+function _guiaMareVolta(){ return /kanban-dev\.html$/.test(location.pathname) ? 'kanban-dev.html' : 'kanban.html'; }
+function abrirGuiaMare(modo){
+  _guiaMareEspelho();
+  const p = new URLSearchParams({squad:ACTIVE_SQUAD, agente:_guiaMareAgenteAtivo()?'1':'0', volta:_guiaMareVolta()});
+  if(modo==='resumido' || modo==='completo') p.set('modo', modo);
+  window.open('guia-mare.html?'+p.toString(), '_blank', 'noopener');
+}
+function _guiaMareEspelho(){ try{ safeLS.setItem('guia_mare_prog_espelho', JSON.stringify(_guiaMarePerfil||{})); }catch(e){} }
+async function _guiaMareCarregar(){
+  const u = window._currentUser; if(!u) return;
+  try{ const snap = await fbGet('kanban/usuarios/'+u.uid+'/onboarding_mare'); _guiaMarePerfil = snap.val() || {}; }
+  catch(e){ _guiaMarePerfil = _guiaMarePerfil || {}; }
+  _guiaMareEspelho();
+  _guiaMareSync();
+}
+// passos: {id: isoString}; fim: {resumido?:iso, completo?:iso}. Só entra id curto [a-z0-9-] e data ISO — o resto é descartado.
+function _guiaMareMarcar(passos, fim){
+  const u = window._currentUser; if(!u) return;
+  const upd = {}; const perfil = _guiaMarePerfil = _guiaMarePerfil || {};
+  perfil.passos = perfil.passos || {};
+  Object.keys(passos||{}).slice(0,60).forEach(id=>{
+    const ts = String(passos[id]||'');
+    if(_GUIA_MARE_ID_OK.test(id) && _GUIA_MARE_ISO_OK.test(ts) && !perfil.passos[id]){ upd['passos/'+id] = ts; perfil.passos[id] = ts; }
+  });
+  ['resumido','completo'].forEach(k=>{
+    const ts = String((fim&&fim[k])||'');
+    if(_GUIA_MARE_ISO_OK.test(ts) && !perfil[k]){ upd[k] = ts; perfil[k] = ts; }
+  });
+  if(!Object.keys(upd).length) return;
+  upd.atualizadoEm = perfil.atualizadoEm = new Date().toISOString();
+  _guiaMareEspelho();
+  fbUpdate('kanban/usuarios/'+u.uid+'/onboarding_mare', upd).catch(err=>console.warn('[guia-mare] não gravou o progresso:', err));
+}
+function _guiaMareSync(){
+  if(!window._currentUser || _guiaMarePerfil===null) return;
+  let raw = null; try{ raw = safeLS.getItem('guia_mare_prog'); }catch(e){}
+  if(!raw) return;
+  try{ safeLS.removeItem('guia_mare_prog'); }catch(e){}
+  let o = null; try{ o = JSON.parse(raw); }catch(e){}
+  if(o && typeof o==='object') _guiaMareMarcar((o.passos && typeof o.passos==='object') ? o.passos : {}, o);
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') _guiaMareSync(); });
+
+// Tour: um balão por vez, com o botão real destacado. Alvo escondido (celular, ⋯ Mais) → balão no centro, sem destaque.
+function _tourMareCard(){ const t = document.querySelector('#board .card-title'); return t ? (t.closest('[draggable="true"]') || t.parentElement) : null; }
+const TOUR_MARE = {
+  'board':        {alvo:()=>document.getElementById('board'), t:'🗂️ O board da squad', x:'Cada coluna é uma etapa do trabalho, da esquerda (a fazer) para a direita (feito). O número no topo da coluna mostra quantos cards ela tem.'},
+  'card-criar':   {alvo:()=>document.querySelector('#board .add-btn') || document.querySelector('[onclick="openNewCard()"]'), t:'➕ Criar um card', x:'Use <b>+ Card</b> no fim de uma coluna (ou no topo da tela). Dê um título curto; o resto você completa depois.'},
+  'card-mover':   {alvo:_tourMareCard, t:'↔️ Mover um card', x:'Arraste o card para outra coluna quando o trabalho avançar. Clique nele para abrir. Mexeu sem querer? <b>Ctrl+Z</b> desfaz.'},
+  'card-funcoes': {alvo:_tourMareCard, t:'🧰 Funções do card', x:'Dentro do card: <b>responsável</b>, participantes, <b>prazo</b>, prioridade, tags, checklist e seções. Com o <b>botão direito</b> no card você tem ações rápidas: mover, impedir, duplicar, arquivar…'},
+  'comentar':     {alvo:_tourMareCard, t:'💬 Comentar e @mencionar', x:'No fim do card ficam os comentários. Digite <b>@</b> e o nome para chamar alguém: a pessoa recebe um aviso no sino.'},
+  'notificacoes': {alvo:()=>document.getElementById('notif-btn'), t:'🔔 Notificações', x:'O sino junta menções, cards que você recebeu e prazos. Clique num aviso para ir direto ao card. Ative o aviso no celular quando o navegador pedir.'},
+  'meu-dia':      {alvo:()=>document.querySelector('[data-tb-id="meudia"]'), t:'🌅 Meu Dia (Ctrl+D)', x:'Os <b>seus</b> cards de todas as squads, agrupados por prazo. Bom para começar o dia.'},
+  'sonar':        {alvo:()=>document.getElementById('header-search-btn'), t:'🔍 Sonar (Ctrl+K)', x:'Ache qualquer card, Objetivo do Radar ou tópico da Ajuda. Não importa acento nem maiúscula.'},
+  'agente':       {alvo:()=>document.getElementById('fab-agente-hotline-btn'), so:_guiaMareAgenteAtivo, t:'🤖 Agente Ágil', x:'Ficou com dúvida? Converse com o Agente Ágil: ele responde e pode criar ou atualizar cards por você.'},
+};
+const TOUR_MARE_RESUMIDO = ['board','card-criar','card-mover','card-funcoes','comentar','notificacoes','meu-dia','sonar','agente'];
+let _tourMare = null;
+function _tourMareIniciar(qual){
+  const fila = (qual==='resumido' ? TOUR_MARE_RESUMIDO : [qual]).filter(id=>TOUR_MARE[id] && (!TOUR_MARE[id].so || TOUR_MARE[id].so()));
+  if(!fila.length) return;
+  _tourMareFechar();
+  _tourMare = {fila, i:0, completo: qual==='resumido'};
+  const ring = document.createElement('div'); ring.id = 'tourm-ring';
+  const bub = document.createElement('div'); bub.id = 'tourm-bub'; bub.setAttribute('role','dialog'); bub.setAttribute('aria-live','polite');
+  document.body.append(ring, bub);
+  _tourMare.onKey = e=>{ if(e.key==='Escape'){ e.stopPropagation(); _tourMareFechar(); } else if(e.key==='ArrowRight') _tourMarePasso(1); else if(e.key==='ArrowLeft') _tourMarePasso(-1); };
+  _tourMare.onResize = ()=>_tourMareDesenhar();
+  document.addEventListener('keydown', _tourMare.onKey, true);
+  window.addEventListener('resize', _tourMare.onResize);
+  _tourMareDesenhar();
+}
+function _tourMareDesenhar(){
+  const T = _tourMare; if(!T) return;
+  const id = T.fila[T.i], st = TOUR_MARE[id];
+  const ring = document.getElementById('tourm-ring'), bub = document.getElementById('tourm-bub');
+  let el = null; try{ el = st.alvo(); }catch(e){}
+  let r = el ? el.getBoundingClientRect() : null;
+  if(r && r.width>0 && (r.top<0 || r.bottom>innerHeight)){ try{ el.scrollIntoView({block:'center', inline:'nearest'}); }catch(e){} r = el.getBoundingClientRect(); }
+  const visivel = r && r.width>0 && r.height>0 && r.bottom>0 && r.top<innerHeight && r.right>0 && r.left<innerWidth;
+  const ultimo = T.i===T.fila.length-1;
+  bub.innerHTML = '<div class="tourm-cnt">'+(T.i+1)+' de '+T.fila.length+'</div>'
+    + '<div class="tourm-t">'+st.t+'</div><div class="tourm-x">'+st.x+'</div>'
+    + (visivel ? '' : '<div class="tourm-x" style="opacity:.75;margin-top:6px;">Neste tamanho de tela o botão fica no menu <b>⋯</b> ou na barra de baixo.</div>')
+    + '<div class="tourm-bts"><button class="btn btn-sm" onclick="_tourMareFechar()">Sair</button>'
+    + (T.i>0 ? '<button class="btn btn-sm" onclick="_tourMarePasso(-1)">← Voltar</button>' : '')
+    + '<button class="btn btn-p btn-sm" onclick="_tourMarePasso(1)">'+(ultimo?'Concluir ✓':'Próximo →')+'</button></div>';
+  if(visivel){
+    const pad = 6, h = Math.min(r.height, innerHeight-24);
+    ring.style.cssText = 'display:block;top:'+(Math.max(4,r.top-pad))+'px;left:'+(Math.max(4,r.left-pad))+'px;width:'+(Math.min(r.width,innerWidth-16)+pad*2)+'px;height:'+(h+pad*2)+'px;';
+    const bw = Math.min(320, innerWidth-24), bh = bub.offsetHeight || 170;
+    let top = r.bottom + 14; if(top + bh > innerHeight - 8) top = Math.max(8, r.top - bh - 14);
+    if(h > innerHeight*0.6) top = Math.max(8, innerHeight - bh - 16);
+    const left = Math.min(Math.max(12, r.left + r.width/2 - bw/2), innerWidth - bw - 12);
+    bub.style.cssText = 'top:'+top+'px;left:'+left+'px;width:'+bw+'px;';
+  } else {
+    ring.style.cssText = 'display:block;top:50%;left:50%;width:0;height:0;';
+    const bw = Math.min(320, innerWidth-24);
+    bub.style.cssText = 'top:50%;left:50%;width:'+bw+'px;transform:translate(-50%,-50%);';
+  }
+  try{ bub.querySelector('.btn-p').focus({preventScroll:true}); }catch(e){}
+}
+function _tourMarePasso(d){
+  const T = _tourMare; if(!T) return;
+  if(d>0){
+    const now = new Date().toISOString(), p = {}; p[T.fila[T.i]] = now;
+    if(T.completo && T.i===T.fila.length-1) p['tour-resumido'] = now;   // tour inteiro no board ≠ guia Resumido (esse quem marca é o guia)
+    _guiaMareMarcar(p, null);
+    if(T.i===T.fila.length-1){ _tourMareFechar(); showToast(T.completo ? '🎉 Tour concluído! Quer ver tudo? ❓ Ajuda → 🧭 Boas-vindas' : '✅ Passo concluído'); return; }
+  }
+  T.i = Math.max(0, Math.min(T.fila.length-1, T.i+d));
+  _tourMareDesenhar();
+}
+function _tourMareFechar(){
+  if(_tourMare){ document.removeEventListener('keydown', _tourMare.onKey, true); window.removeEventListener('resize', _tourMare.onResize); }
+  _tourMare = null;
+  document.getElementById('tourm-ring')?.remove(); document.getElementById('tourm-bub')?.remove();
 }
 
 function showSquadSelectorFiltered(squadIds) {
@@ -29171,6 +29312,7 @@ async function doTrelloImport(){
 // ═══════════════════════════════════════════════════════
 const HELP_CONTENT = {
   board: [
+    { icon:'🧭', title:'Programa de boas-vindas (guia do Maré)', text:'Um <b>passo a passo guiado</b> do Maré Digital, com telas de exemplo, em duas versões: <b>⚡ Resumido</b> (as principais ações em ~5 min: board e cards, funções do card, comentar e @mencionar, notificações, Meu Dia e Sonar) e <b>📚 Completo</b> (todos os recursos, um a um). Aparece no seu primeiro acesso e fica sempre em <b>❓ Ajuda → 🧭 Boas-vindas</b>. Em cada passo, <b>👉 Fazer no board</b> volta para cá e destaca o botão de verdade (o <b>🎯 Tour</b>); nas squads com o Agente Ágil ativo, <b>🤖 Pergunte ao Agente</b> abre a conversa com ele. O progresso fica salvo no seu cadastro: você continua de onde parou, em qualquer computador.' },
     { icon:'🌊', title:'Menu de produtos (⋮⋮⋮) e a página Oceano', text:'O botão de 9 pontinhos no cabeçalho abre o <b>menu de produtos</b> do Oceano, a família que reúne o Maré Digital, o Painel, o Radar (OKR) e o A Bordo. Tem 3 abas:\n\n<b>Produtos</b> — atalhos para cada produto (abrem em outra aba). O título "🌊 Oceano · início" leva à <b>página Oceano</b> (oceano.html): o lobby com os botões dos produtos, links e ajuda; se você instalar o Oceano como aplicativo, ele abre os produtos aqui dentro.\n\n<b>Hering</b> — os links importantes de sistemas da empresa (portal do RH, ServiceDesk, VTEX…), cadastrados pelos administradores em <b>Painel → ⚙ Configurações → 🔗 Links</b> (título, endereço, imagem e uma descrição curta).\n\n<b>Meus links</b> — atalhos só seus. Para criar: aba <b>Meus links</b> → <b>＋ Adicionar ou editar meus links</b> (ou Oceano → ⚙ Meu perfil → 🔗 Meus links). Informe título e link (https://…); a imagem é opcional — sem ela usamos o ícone do site. Dá para reordenar com ▲▼, editar ✎ e remover ✕ (até 30 links).\n\n💡 Quando a lista de links tem 3, 6, 9… itens, ela vira uma grade de quadrados; nas outras quantidades fica em lista.\n\n🚪 <b>Porta de entrada</b>: se você abrir o Maré (ou o Painel) sem estar logado, é levado ao <b>Oceano</b> para entrar com o Google da Hering (e fazer o cadastro básico). Depois do login você <b>fica no Oceano</b> — vê o Mural da página inicial — e o atalho <b>↩ Continuar</b> no topo leva de volta ao produto que você queria.\n\nMesmo <b>já logado</b>, na <b>primeira vez do dia</b> em que você abre o Maré (ou o Painel) por um favorito ou link simples, o Maré passa antes pelo Oceano — assim você vê o Mural e os avisos do dia. Nas demais aberturas do dia, abre direto. Link que leva a algo específico (um card, uma notificação, o Radar) e o aplicativo instalado do Maré <b>não</b> passam pelo Oceano.' },
     { icon:'💡', title:'Dicas (mini popups)', text:'De vez em quando aparece um <b>mini aviso no canto da tela</b> com um truque ou um lugar útil que muita gente demora a descobrir (um atalho, o Meu Dia, o menu de produtos…). Aparece <b>no máximo uma por dia</b> em cada produto (Maré, Radar e Oceano contam separado) e <b>uma única vez cada</b> — depois de vista não volta. O <b>Saiba mais</b> abre esta Central de Ajuda direto no assunto; o ✕ fecha.\n\n<b>Desligar ou religar</b>: no topo desta Central de Ajuda há o interruptor <b>💡 Dicas do Maré</b> — vale só pro Maré, e o Radar e o Oceano têm o interruptor deles (cada um na própria Ajuda). <b>Rever dicas</b> zera o que você já viu pra elas aparecerem de novo. A escolha fica salva na sua conta (vale em qualquer aparelho). O Painel e o A Bordo não mostram dicas; o Painel só <b>lista todas</b> em ⚙ Configurações → 💡 Dicas.' },
     { icon:'🐟', title:'Metas e desafios (O mar tá pra peixe)', text:'Na aba lateral <b>📊 Dados → 🐠 sua squad</b> você acompanha, num relance, a <b>meta da squad</b> (anel grande com o %, quanto falta, quantos dias restam e quanto precisa entrar por dia) e os <b>desafios extras</b> — por exemplo "no dia 27, vender 500 camisetas Hering Kids", "meta do Mercado Livre" ou "conversão do App", por submarca, canal de venda ou dia. As cores seguem o Radar: 🟢 no ritmo, 🟡 atenção, 🔴 atrasada, 🏆 batida; o <b>tracinho branco</b> no anel/na barra é onde deveria estar hoje.\n\n📈 <b>Gráfico de evolução (Acumulado, Por dia e ⛶ Expandir)</b>: o bloco <b>📈 Evolução</b> tem um seletor no topo para alternar entre <b>Acumulado</b> (curva acumulada real contra o ritmo ideal e a linha da meta) e <b>Por dia</b> (quanto entrou em cada dia comparado à <b>linha tracejada do esperado do dia</b>, com tooltip detalhando o realizado e o esperado do dia vs. o acumulado). Ao lado do seletor, o botão <b>⛶ Expandir</b> abre o gráfico em <b>tela cheia</b> com resumo dos indicadores e uma <b>tabela dia a dia</b> comparando <b>Realizado do dia</b>, <b>Esperado do dia</b> e <b>∆ diferença</b> (em valor e status).\n\n🐟 <b>O mar tá pra peixe!</b> A cada <b>20 %</b> da meta (20, 40, 60, 80 e 100) aparece um popup com peixinhos pulando e uma <b>buzina de navio</b> 🚢 (toca inteira, ~10 s, e o popup fecha logo depois que ela acaba) — uma vez por pessoa. A buzina respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s. Corrigir o valor pra baixo não tira o peixe já conquistado. No cadastro da meta, a seção <b>🎉 Popups de marco (20% a 100%)</b> permite personalizar <b>título, mensagem e emoji</b> de cada marco (20%, 40%, 60%, 80% e 100% — campos em branco usam o padrão).\n\n✏️ <b>Atualizar valor</b>: qualquer pessoa da squad informa o valor — escolha <i>Definir o total</i> ou <i>Somar ao atual</i>; a prévia mostra o novo % e se vem peixe novo. Dá pra mudar a <b>data e a hora da entrada</b> (horário de Brasília) pra lançar um valor <b>retroativo</b>, de duas formas: <i>+ Somar ao atual</i> lança aquele dia como uma <b>parte</b> — ela entra no total e o gráfico é recalculado a partir da data (ex.: os 12 dias de setembro, um por vez; o todo é a soma, na ordem que quiser e dá pra corrigir com valor negativo) — ou <i>Definir o total</i>, informando o acumulado daquele momento (só vira o valor atual se for o mais recente; um retroativo mais antigo não derruba o que já está lá). Cartões com ⏰ "atualize!" estão sem atualização há mais que o dobro do lembrete.\n\n📅 <b>Ritmo não linear (diarização)</b>: no cadastro, em <i>Ritmo ao longo do período</i>, escolha <b>Por dia</b> quando o time define antes quanto a meta pede de cada dia (ex.: a venda pesa mais nos últimos dias). Preencha um valor por dia — ou use <b>Colar da planilha</b> (uma coluna na ordem dos dias, ou linhas como 12/11 1500) e <b>Distribuir igual</b>. Se o período ainda estiver em branco, o <i>Colar</i> ajusta sozinho: com linhas "dd/mm valor" ele monta o período pelas datas; com só valores, preencha o início e o fim é calculado. Vale a <i>proporção</i> entre os dias, não precisa fechar a soma. Daí o <b>esperado agora</b> (tracinho do anel e da barra — acompanha também a hora do dia, pra um dia pesado não deixar o farol vermelho de madrugada), os <b>faróis</b> 🟢🟡🔴 (no ritmo/atenção/atrasada), o gráfico e o KPI <b>Meta de hoje</b> seguem a curva. Precisa de período com pelo menos 2 dias.\n\n🗂 <b>Entradas</b>: o botão 🗂 do cartão lista tudo o que foi lançado (mais novo primeiro, com quem lançou, quando e a nota) e deixa <b>✏️ editar</b> (data/hora, valor e nota) ou <b>🗑 excluir</b>. Quando a entrada é uma <i>parte</i> (lançada com + Somar), editar ou excluir ajusta o total e recalcula o gráfico a partir daquela data — o todo continua sendo a soma das partes; um <i>total</i> mexe só naquele ponto. O valor atual passa a ser o do último ponto; sem nenhuma entrada, a meta volta a "sem valor ainda". Se o total da meta ficar abaixo da soma dos lançamentos do histórico, o modal mostra um aviso e oferece o botão <b>Corrigir o total</b> para igualar o valor com 1 clique. Quem pode atualizar o valor pode gerir as entradas.\n\n⚙ <b>Quem cria/edita</b>: PO, Organizador e ADM, em <b>⚙ Configurações → 🐟 Metas</b> (nome, ícone, R$/quantidade/%, alvo, período, diarização Por dia, submarca, canal, <b>🌊 Mostrar na visão global</b>, <b>⏰ lembrete de preenchimento</b> a cada 1 h/2 h, 1× por dia ou em horários exatos — horário de Brasília — e <b>🎉 Popups de marco (20% a 100%)</b> para personalizar título, mensagem e emoji de cada marco). A meta global do Digital e os desafios do Digital são cadastrados no <b>Painel → 📊 Dados</b>; aparecem na aba <b>🌊 Digital</b> junto com um ranking das squads.' },
@@ -41350,6 +41492,24 @@ renderBoard();
   setTimeout(tentar, 600);
 })();
 
+// 🧭 Programa de boas-vindas: ?tour=<passo>|resumido abre o tour no board; ?hotline=1 abre o card do Agente Ágil.
+// Só entram IDs da lista TOUR_MARE (nunca o texto cru); os parâmetros saem da URL depois de usados.
+(function _guiaMareFromUrl(){
+  const tour = String(_urlParams.get('tour')||''), hot = _urlParams.get('hotline')==='1';
+  if(!tour && !hot) return;
+  try{ const u = new URL(location.href); u.searchParams.delete('tour'); u.searchParams.delete('hotline'); history.replaceState(history.state, '', u.pathname+u.search+u.hash); }catch(e){}
+  let tentativas = 0;
+  const tentar = () => {
+    tentativas++;
+    if((!window._currentUser || !(Array.isArray(cards) && cards.length)) && tentativas < 20){ setTimeout(tentar, 400); return; }
+    if(!window._currentUser) return;
+    if(hot){ openAgenteHotline(); return; }   // sem squad ativa, o próprio openAgenteHotline avisa
+    if(tour==='resumido' || Object.prototype.hasOwnProperty.call(TOUR_MARE, tour)) _tourMareIniciar(tour);
+  };
+  setTimeout(tentar, 900);
+})();
+_onRealAuthChange(()=>setTimeout(_guiaMareCarregar, 1500));
+
 // ── Toolbar: rolagem horizontal por clique-e-arraste + setas do teclado ──
 (function _initToolbarDragScroll(){
   let hovered = null;
@@ -41612,10 +41772,16 @@ renderBoard();
           <li><b>❓ Central de Ajuda</b> — <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;font-size:10px;">Ctrl+K</kbd> abre a busca de qualquer lugar</li>
         </ul>
       </div>
+      <div style="font-size:12px;color:var(--txt);font-weight:600;text-align:center;margin-top:2px;">🧭 Quer um passo a passo guiado?</div>
       <div style="display:flex;gap:8px;">
-        <button onclick="boasVindasOpenHelp()" style="flex:1;padding:11px;font-size:12px;font-weight:600;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:9px;cursor:pointer;">❓ Ver Central de Ajuda</button>
-        <button onclick="closeBoasVindas()" class="btn btn-p" style="flex:1;padding:11px;font-size:12px;justify-content:center;">Entendi, vamos lá! →</button>
+        <button onclick="boasVindasGuia('resumido')" class="btn btn-p" style="flex:1;padding:11px;font-size:12px;justify-content:center;" title="As principais ações, com telas de exemplo">⚡ Resumido · 5 min</button>
+        <button onclick="boasVindasGuia('completo')" style="flex:1;padding:11px;font-size:12px;font-weight:600;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:9px;cursor:pointer;" title="Todos os recursos do Maré, um a um">📚 Completo</button>
       </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="boasVindasTour()" class="btn btn-sm" style="flex:1;justify-content:center;" title="Destaca os botões de verdade, aqui no board">🎯 Tour aqui no board</button>
+        <button onclick="closeBoasVindas()" class="btn btn-sm" style="flex:1;justify-content:center;">Agora não</button>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);text-align:center;">Dá pra rever quando quiser em <b>❓ Ajuda → 🧭 Boas-vindas</b>.</div>
     </div>
   </div>
 </div>
