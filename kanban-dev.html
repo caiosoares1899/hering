@@ -6816,7 +6816,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.932-dev</div>
+<div class="version">v8.30.933-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -37975,12 +37975,12 @@ function _ilhaLugar(){
 }
 function _ilhaRender(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
+  _ilhaModsSinc();   // antes do estado: módulo recém-ligado já conta neste render
   const p = _ilhaPrefs(), e = _ilhaEstado();
   ilha.hidden = e==='off';
   ilha.closest('.hd')?.classList.toggle('ilha-no-topo',e==='aberta');
   ilha.closest('.app')?.classList.toggle('ilha-no-topo',e==='aberta');
   const sino = document.getElementById('notif-btn'); if(sino) sino.style.display = (p.on && p.notif) ? 'none' : '';
-  _ilhaModsSinc();
   if(e==='off'){ _ilhaSinoLugar(false); _ilhaRelogio(); return; }
   ilha.dataset.estado = e;
   document.getElementById('ilha-btn').setAttribute('aria-expanded', String(e==='aberta'));
