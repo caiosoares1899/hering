@@ -48,9 +48,10 @@ html, body {
     linear-gradient(180deg,#0a1628 0%,#0d2244 50%,#0a1628 100%);
 }
 .bg-fish {
-  position:absolute; opacity:0.07;
+  position:absolute; opacity:0.8;
   animation:bgFishSwim linear infinite;
 }
+.bg-fish svg { display:block; width:100%; height:auto; }
 @keyframes bgFishSwim {
   0%   { transform:translateX(-120px) translateY(0); }
   50%  { transform:translateX(50vw)   translateY(-20px); }
@@ -1436,12 +1437,17 @@ setInterval(updateClock, 1000);
     b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*18+12}s;animation-delay:${Math.random()*-20}s;`;
     bg.appendChild(b);
   }
-  const fishSvg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" fill="white"><ellipse cx="35" cy="15" rx="18" ry="10"/><polygon points="17,15 0,5 0,25"/><circle cx="48" cy="12" r="2.5" fill="#0a1628"/></svg>`;
+  // Mesmas três silhuetas do Maré/Oceano: cauda atrás, olho na direção do movimento.
+  const FISH_SVGS = [
+  '<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>',
+  '<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>',
+  '<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>',
+];
   for(let i=0;i<6;i++){
     const f=document.createElement('div'); f.className='bg-fish';
     const sc=Math.random()*0.5+0.3;
     f.style.cssText=`top:${Math.random()*85}%;width:${60*sc}px;animation-duration:${Math.random()*28+22}s;animation-delay:${Math.random()*-30}s;`;
-    f.innerHTML=fishSvg; bg.appendChild(f);
+    f.innerHTML=FISH_SVGS[i % FISH_SVGS.length]; bg.appendChild(f);
   }
 })();
 

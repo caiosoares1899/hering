@@ -94,6 +94,9 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **C — 1ª entrega da escuta do 🤖 Agente perdida:** a marca de "ligado" só existia DEPOIS do onValue; o Firebase real entrega na hora (dentro da chamada) quando o dado já está em cache (ex.: desligar e religar o módulo) e essa 1ª entrega era descartada — "Analisando…" sumia até o marcador mudar. Agora a marca vem antes.
 - **D — Ajustes:** desligar o módulo escolhido como atividade principal deixava o seletor mostrando "Timer" e a preferência apontando para o módulo desligado. Agora a principal volta para Timer.
 - Testes: docs/arezzo/testes/test_ilha_monitorarbugs_1111.js (7; 4 falhavam antes), 9 baterias da ilha e do timer, functions 1212/0. Validação no console: docs/arezzo/testes/console_ilha_monitorarbugs_1111.js.
+### 2026-11-11 · A Bordo: atalhos Marine Glass e cauda dos peixes alinhada ao Maré/Oceano (SÓ DEV)
+
+Os atalhos de consulta estavam como links sublinhados, sem o acabamento Marine Glass; o peixe de fundo do site tinha cauda invertida e olho oposto ao movimento. onboarding.html ganha botões com vidro, borda, brilho specular, hover, foco e alvo de toque de 48 px; os links dos cards recebem o mesmo acabamento. Site e onboarding.slide.html passam a usar exatamente as três silhuetas SVG de oceano.html, também usadas pelo Maré, com olho e cauda coerentes com a direção. Teste docs/arezzo/testes/test_onboarding_bordo.js reproduz a falha na main e valida os SVGs, os 12 atalhos, foco, navegação e responsividade a 1280/390 px. Capturas: docs/capturas/a-bordo-marine-glass/. Páginas sem par -dev: revisão pelo Claude antes do merge. Fronteira: sem mudança, apenas CSS e SVG estático. Dica: não, correção visual de recursos existentes.
 
 ### 2026-11-11 · Ilha Dinâmica: texto sem nitidez no painel aberto + botões misturados com o quadro (SÓ DEV · kanban-dev v8.30.940-dev)
 

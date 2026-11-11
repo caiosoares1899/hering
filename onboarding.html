@@ -28,6 +28,8 @@
     --glass-hover: rgba(255,255,255,0.14);
     --accent: #7ec8e3;
     --accent-bright: #a8e0f5;
+    --specular: inset 0 1px 0 rgba(255,255,255,.08);
+    --ease-out: cubic-bezier(.32,.72,0,1);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -81,9 +83,11 @@
   /* Fish SVG floating */
   .fish-float {
     position: absolute;
-    opacity: 0.08;
+    opacity: 0.8;
     animation: fishSwim linear infinite;
   }
+
+  .fish-float svg { display:block; width:100%; height:auto; }
 
   @keyframes fishSwim {
     0% { transform: translateX(-150px) translateY(0px); }
@@ -1961,12 +1965,26 @@
   .bordo-card, .bordo-destaque, .bordo-faq details { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:16px; padding:24px; }
   .bordo-card h3, .bordo-destaque h3, .cultura-item h3 { font-family:'Syne',sans-serif; font-size:19px; margin-bottom:12px; color:var(--white); }
   .bordo-card p, .bordo-destaque p, .bordo-faq p, .cultura-item p, .bordo-intro { color:var(--white-80); font-size:15px; line-height:1.75; }
-  .bordo-card a, .bordo-atalhos a { display:inline-block; color:var(--accent); margin-top:16px; text-underline-offset:4px; }
+  /* Mesmo acabamento dos botões do Oceano; sem empilhar desfoque no vidro. */
+  .bordo-card a, .bordo-atalhos a {
+    display:inline-flex; align-items:center; justify-content:space-between; gap:12px;
+    min-height:48px; padding:12px 16px; margin-top:16px;
+    border:1px solid var(--glass-border); border-radius:12px;
+    background:linear-gradient(160deg,var(--glass-hover),var(--glass-bg));
+    box-shadow:var(--specular); color:var(--white-80);
+    font-size:14px; font-weight:500; line-height:1.5; text-decoration:none;
+    transition:background .2s var(--ease-out),border-color .2s var(--ease-out),color .2s var(--ease-out),transform .2s var(--ease-out);
+  }
+  .bordo-card a:hover, .bordo-atalhos a:hover { background:var(--glass-hover); border-color:var(--accent); color:var(--white); transform:translateY(-2px); }
+  .bordo-card a:active, .bordo-atalhos a:active { transform:translateY(0); }
+  .bordo-atalhos a::after { content:'→'; flex-shrink:0; color:var(--accent); }
   .bordo-destaque { margin:28px 0; }
   .bordo-destaque .bordo-proposta { font-family:'Syne',sans-serif; font-size:clamp(23px,3.5vw,38px); line-height:1.35; color:var(--white); max-width:850px; }
   .bordo-intro { margin:24px 0; }
-  .bordo-atalhos { display:flex; flex-wrap:wrap; gap:8px 20px; }
-  .bordo-atalhos a { margin:6px 0; }
+  .bordo-atalhos { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:20px; }
+  .bordo-atalhos a { margin:0; }
+  @media(max-width:900px) { .bordo-atalhos { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media(max-width:640px) { .bordo-atalhos { grid-template-columns:1fr; } }
   .cultura-item .bordo-exemplo { color:var(--accent); margin-top:12px; font-size:14px; }
   .bordo-citacao { text-align:center; font-size:clamp(19px,2.5vw,27px); color:var(--accent); margin-top:32px; line-height:1.5; }
   .bordo-passos { padding-left:24px; color:var(--white-80); line-height:1.8; margin:16px 0 24px; }
@@ -2993,11 +3011,12 @@
   }
 
   // Fish SVGs
-  const fishSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" fill="white">
-    <ellipse cx="25" cy="15" rx="18" ry="10"/>
-    <polygon points="43,5 60,15 43,25"/>
-    <circle cx="12" cy="12" r="2.5" fill="#0a1628"/>
-  </svg>`;
+  // Mesmas três silhuetas do Maré/Oceano: cauda atrás, olho na direção do movimento.
+  const FISH_SVGS = [
+  '<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>',
+  '<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>',
+  '<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>',
+];
 
   for (let i = 0; i < 8; i++) {
     const f = document.createElement('div');
@@ -3009,7 +3028,7 @@
       animation-duration:${Math.random()*30+25}s;
       animation-delay:${Math.random()*-30}s;
     `;
-    f.innerHTML = fishSvg;
+    f.innerHTML = FISH_SVGS[i % FISH_SVGS.length];
     bg.appendChild(f);
   }
 })();
