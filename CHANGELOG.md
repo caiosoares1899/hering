@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Travessia — 1:1 com "O que combinamos" (T1 etapa A da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+
+- O registro do 1:1 ganhou o campo opcional "O que combinamos?" (até 280 caracteres), gravado em `encontros/{uid}/{id}/nota` — a regra do banco já aceitava o campo, então não há deploy.
+- A nota aparece dos dois lados: no Início da pessoa ("Últimos 1:1", os 3 mais recentes, no lugar de "Último registro") e no detalhe da pessoa na Frota do líder. O campo avisa quem mais lê (líder/pessoa e o gerente).
+- Só quem escreveu o registro vê o 🗑 (como a regra exige).
+- Teste: `docs/arezzo/testes/test_travessia_1a1_nota.js` (20/20: gravar com e sem nota, corte em 280, HTML vira texto, líder vê a nota da pessoa, 1280/390 px).
+
 ### Travessia — cartão "Próxima ação" no topo da Minha travessia (T4 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
 
 - Uma pendência só, com verbo e botão, escolhida por prioridade: devolutiva liberada para ciência → colega esperando seu feedback (coleta) → autoavaliação aberta/pela metade ("Faltam 2 respostas") → indicar de 2 a 4 pares → 1:1 atrasado (farol amarelo/vermelho; o botão foca a data do 1:1) → Baú vazio ou parado há 3 semanas. Sem pendência, o cartão não aparece.
