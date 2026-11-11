@@ -8,6 +8,10 @@ Pedido do Caio (11/11/2026): o onboarding do Maré hoje é feito ao vivo (via A 
 - **Agente Ágil:** botão "Pergunte ao Agente" leva ao **card de conversa que já existe** (`openAgenteHotline()`), só nas squads onde ele está ativo (`AGENTE_AGIL_MENTION_SQUADS`, hoje `dev` e `dados`). Sem função nova, sem deploy.
 - **Progresso:** no perfil, `kanban/usuarios/{uid}/onboarding_mare`.
 
+## Pendências combinadas
+- **Dica** (regra 7): sim — "🧭 Boas-vindas em ❓ Ajuda" para quem já usa o Maré. Entra **depois que o `guia-mare.html` estiver na main** (mexer no `mare-dicas-dev.js` exige bump do `?v=` nas 4 páginas; antes do guia a dica levaria a 404).
+- **`.validate` de formato** para `onboarding_mare` (opcional, deploy de regras): necessária se alguém além do próprio usuário passar a ler esse nó no DOM (ex.: visão do ADM de quem concluiu).
+
 ## Divisão (§7.7)
 | Parte | Quem | Arquivos |
 |---|---|---|
@@ -26,7 +30,7 @@ Pedido do Caio (11/11/2026): o onboarding do Maré hoje é feito ao vivo (via A 
 **Botões do guia que voltam ao board:**
 - "👉 Fazer no board" → `<volta>?squad=<squad>&tour=<passo>` (abre o tour daquele passo no board real).
 - "🤖 Pergunte ao Agente" (só com `agente=1`) → `<volta>?squad=<squad>&hotline=1`.
-- Abrem na **mesma aba** se o guia foi aberto pelo board (`window.opener` existe → `opener.location` não; usar link normal com `target="_blank"` e `rel="noopener"`). Simples: sempre nova aba.
+- Abrem sempre na **mesma aba nomeada** `mare_board` (`target="mare_board"` / `window.open(url,'mare_board')`): os 9 passos reaproveitam uma aba do board, em vez de abrir 9 boards (cada um com 2,7 MB + listeners).
 
 **Progresso (o guia NÃO usa Firebase):** o guia grava em `localStorage['guia_mare_prog']` (envolver em try/catch):
 ```json
@@ -49,7 +53,7 @@ Objetivo: criar guia-mare.html — o programa de boas-vindas do Maré Digital, c
 Contexto:
 - Leia docs/ideias/onboarding-mare.md inteiro (decisões, interface FIXA de URL/localStorage e IDs dos passos), docs/GUIA_UI_UX.md e MARINE_GLASS.md antes de desenhar.
 - Precedente de estilo: guia-okr.html (guia do Radar), mas ele pesa 14 MB por causa de gifs — aqui é o oposto: cada "print" é uma mini-tela montada em HTML/CSS (colunas, cards, modal do card, sino, Meu Dia, Sonar…) com um cursor/destaque animado indicando onde clicar. Meta: a página inteira < 250 KB.
-- Textos: use a Central de Ajuda do Maré como fonte da verdade — const HELP_CONTENT em kanban-dev.html (L29172–L30322; grep "const HELP_CONTENT"). Reescreva em linguagem de usuário, curta, 1 ação por frase. Não invente recurso que não está lá.
+- Textos: use a Central de Ajuda do Maré como fonte da verdade — const HELP_CONTENT em kanban-dev.html (grep -n "const HELP_CONTENT"). Reescreva em linguagem de usuário, curta, 1 ação por frase. Não invente recurso que não está lá.
 - Nomes visíveis: "Maré Digital", "Radar" (nunca "página do OKR"), "Oceano" — ver docs/OCEANO.md.
 - Estrutura de cada passo: título · "por que importa" (1 frase) · mini-tela simulada · 2–4 passos numerados · botões "👉 Fazer no board" (só nos IDs que o tour atende) e "🤖 Pergunte ao Agente" (só com agente=1) · "Concluir passo ✓".
 - Tela inicial: escolha ⚡ Resumido (5 min) × 📚 Completo; barra de progresso; ✓ nos passos feitos; no fim de cada modo, tela de conclusão (grava "resumido"/"completo" no progresso). Navegação por teclado (← →), "pular", índice lateral no Completo (no celular, vira lista recolhível).

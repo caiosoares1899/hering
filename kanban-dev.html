@@ -12344,10 +12344,9 @@ function showApp(user) {
   if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
   // Popup de boas-vindas na primeira vez que a pessoa abre o board
   const bvKey = 'bvmd_'+user.uid;
-  if(!safeLS.getItem(bvKey)){
-    safeLS.setItem(bvKey, '1');
-    setTimeout(()=>_showBoasVindas(user), 1500);
-  }
+  // A marca 'já viu' só é gravada quando a janela ABRE (em _showBoasVindas): o 1º cadastro recarrega a página
+  // (cad_welcome/cad_insc) e mataria este timer — com a marca gravada aqui, quem é novo de verdade nunca via a oferta.
+  if(!safeLS.getItem(bvKey)) setTimeout(()=>_showBoasVindas(user), 1500);
   // Lembra o squad onde a pessoa realmente ficou, pra próxima vez que
   // abrir o board sem pedir um squad específico na URL (ver
   // _resolveSquadPadrao()/resolveSquadAndShow()) — não sobrescreve
@@ -12361,7 +12360,8 @@ function _showBoasVindas(user, _tent){
   if(_insc && _insc.classList.contains('open') && (_tent||0) < 600){ setTimeout(()=>_showBoasVindas(user, (_tent||0)+1), 1000); return; }
   const nome = (user.displayName||user.email||'').split(' ')[0];
   const el = document.getElementById('boasvindas-ov');
-  if(!el) return;
+  if(!el || el.classList.contains('open')) return;
+  try{ safeLS.setItem('bvmd_'+user.uid, '1'); }catch(e){}
   const nomeEl = document.getElementById('boasvindas-nome');
   if(nomeEl) nomeEl.textContent = nome ? 'Olá, '+nome+'! 👋' : 'Bem-vindo(a)! 👋';
   el.classList.add('open');
@@ -12466,11 +12466,14 @@ function _tourMareDesenhar(){
   let el = null; try{ el = st.alvo(); }catch(e){}
   let r = el ? el.getBoundingClientRect() : null;
   if(r && r.width>0 && (r.top<0 || r.bottom>innerHeight)){ try{ el.scrollIntoView({block:'center', inline:'nearest'}); }catch(e){} r = el.getBoundingClientRect(); }
+  const semAlvo = !el;
   const visivel = r && r.width>0 && r.height>0 && r.bottom>0 && r.top<innerHeight && r.right>0 && r.left<innerWidth;
   const ultimo = T.i===T.fila.length-1;
   bub.innerHTML = '<div class="tourm-cnt">'+(T.i+1)+' de '+T.fila.length+'</div>'
     + '<div class="tourm-t">'+st.t+'</div><div class="tourm-x">'+st.x+'</div>'
-    + (visivel ? '' : '<div class="tourm-x" style="opacity:.75;margin-top:6px;">Neste tamanho de tela o botão fica no menu <b>⋯</b> ou na barra de baixo.</div>')
+    + (visivel ? '' : '<div class="tourm-x" style="opacity:.75;margin-top:6px;">'+(semAlvo
+        ? 'Este board ainda não tem cards: crie o primeiro com <b>+ Card</b> e veja isso nele.'
+        : 'Neste tamanho de tela o botão fica no menu <b>⋯</b> ou na barra de baixo.')+'</div>')
     + '<div class="tourm-bts"><button class="btn btn-sm" onclick="_tourMareFechar()">Sair</button>'
     + (T.i>0 ? '<button class="btn btn-sm" onclick="_tourMarePasso(-1)">← Voltar</button>' : '')
     + '<button class="btn btn-p btn-sm" onclick="_tourMarePasso(1)">'+(ultimo?'Concluir ✓':'Próximo →')+'</button></div>';
