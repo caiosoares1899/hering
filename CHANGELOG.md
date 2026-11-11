@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar — ritmo esperado × realizado nos Objetivos (R1 da consultoria) (SÓ DEV · okr-dev v2.114) — 2026-11-11
+
+- Antes, um Objetivo com 40% aparecia igual no dia 10 e no dia 80 do trimestre. Agora, para toda meta numérica (💰 📊 🔢) com período padrão, o Radar calcula o **esperado hoje** (linha reta do início ao fim do período; vários períodos = do início do 1º ao fim do último) e classifica: **adiantado** (≥ +5 pontos), **no ritmo** (até −10), **atrás** (até −25), **muito atrás**. Também mostra **onde fecha** mantendo o ritmo.
+- **Cartão:** traço na barra no esperado de hoje e, fora do ritmo, uma linha curta ("33 pontos atrás · fecha em ~23%"). No ritmo, o cartão fica quieto.
+- **📈 Evolução:** linha "esperado hoje 43% · realizado 10% → ▼▼ Muito atrás", projeção com a data de fim e **diagonal pontilhada** no gráfico. O eixo cobre o período, com o início e o fim embaixo. Sem período padrão, explica como ligar o ritmo; o mesmo vale para período que ainda não começou e para os primeiros 10% (cedo demais).
+- Decisões do Caio: faixas +5/−10/−25, silêncio nos primeiros 10% e esperado linear (meta sazonal fica para uma 2ª etapa, com a curva diária das Metas).
+- Ajuda do Radar (seção do atingimento) explica o ritmo. Nada novo é lido do banco.
+- Teste: `docs/arezzo/testes/test_okr_ritmo.js` (26/26, inclui o exemplo do plano: T4/26 em 09/11 → esperado 43%).
+
 ### Ilha Dinâmica — sempre visível por padrão e painel na altura da tela (SÓ DEV · kanban-dev) — 2026-11-11
 
 Pedido do Caio (12/11/2026):
