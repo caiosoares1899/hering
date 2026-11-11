@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### A Bordo: guia antes do onboarding, cultura Hering, Dados e IA e mapa do Oceano (SÓ DEV — PR pendente) — 2026-11-11
+
+Site onboarding.html com roteiro de chegada, consulta por assunto, cinco comportamentos e proposta de valor do comunicado de cultura Hering. Omnichannel com Allan Dickmann; Dados e IA inclui Caio com foco em agilidade e implementação de IA. Seção Oceano explica acesso, produtos, Sonar, notificações e primeiros passos; slides alinhados. Páginas sem par -dev: alterações entregues para revisão do Claude antes do merge. Teste: docs/arezzo/testes/test_onboarding_bordo.js. Dica: não, A Bordo não integra o catálogo de dicas; orientação na própria página. Fronteira: sem mudança de autenticação, banco ou dados dinâmicos; conteúdo e links internos estáticos.
+
 ### Maré › 🏝️ Ilha Dinâmica V2 completa: 📅 Agenda com todas as agendas da pessoa + Ajuda e dica (SÓ DEV · kanban-dev v8.30.938-dev · mare-dicas-dev ?v=13) — 2026-11-11
 
 - 📅 Agenda: passa a trazer TODAS as agendas em que a pessoa está (decisão do Caio, 11/11/2026) — convidado/responsável OU responsável de um Objetivo ativo que o evento abrange (mesmo critério de abrange/alvosDoEvento do Radar em functions/okr/calendario.js: reunião sem recorte = a torre toda; evento/lembrete só se vinculado). Lê kanban/okr/objetivos junto com o calendário no mesmo ciclo de 3 h (2 leituras, nenhuma escuta); cópia local v2.

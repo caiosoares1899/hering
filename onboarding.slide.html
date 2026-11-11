@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Digital Hering · Onboarding Ágil · Slides</title>
+<title>A Bordo · Digital Hering · Slides</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -705,6 +705,11 @@ html, body {
   #topbar { padding:10px 14px; }
   .tb-center { display:none; }
 }
+
+/* Os textos de cultura e Oceano continuam legíveis em telas estreitas. */
+#s11, #s-oceano { overflow-y:auto; align-items:flex-start; padding-bottom:80px; }
+#s11 .slide-inner, #s-oceano .slide-inner { margin-top:auto; margin-bottom:auto; padding-top:24px; padding-bottom:24px; }
+@media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none!important; transition:none!important; } }
 </style>
 </head>
 <body>
@@ -723,7 +728,7 @@ html, body {
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progressFill"></div>
     </div>
-    <span class="slide-counter" id="slideCounter">1 / 15</span>
+    <span class="slide-counter" id="slideCounter">1 / 16</span>
   </div>
   <div class="tb-nav">
     <button class="tb-btn" id="btnPrev" onclick="go(-1)">← Anterior</button>
@@ -738,7 +743,7 @@ html, body {
   <div class="slide" id="s1">
     <div class="slide-inner" style="display:flex;flex-direction:column;align-items:center">
       <div class="s-tag">🐟 Bem-vindo ao cardume</div>
-      <h1 class="hero-title">Onboarding<span>Ágil</span></h1>
+      <h1 class="hero-title">A Bordo<span>do Digital</span></h1>
       <p class="hero-sub">Você acaba de entrar num cardume de talentos icônicos. Esse é o seu ponto de partida no Digital Hering.</p>
       <div class="hero-pills">
         <div class="hero-pill">
@@ -829,7 +834,7 @@ html, body {
           </div>
           <div class="pcard-body">
             <div class="pcard-name">Caio Soares</div>
-            <div class="pcard-role">🐟 Agilista</div>
+            <div class="pcard-role">🐟 Agilidade e IA</div>
             <div class="pcard-info"><span class="pcard-tag">Time</span>Digital Hering</div>
             <div class="pcard-info"><span class="pcard-tag">De</span>Salvador, BA</div>
             <div class="pcard-curiosity">"Rompi o LCA esquiando 🎿"</div>
@@ -1087,7 +1092,7 @@ html, body {
           </div>
           <div class="sq-card-s sqc-red" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
             <div class="sn" style="font-size:13px;margin-bottom:4px;">🔗 Omnichannel</div>
-            <div class="sp" style="font-size:11px;">Karla Santos</div>
+            <div class="sp" style="font-size:11px;">Allan Dickmann</div>
           </div>
         </div>
 
@@ -1095,13 +1100,14 @@ html, body {
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div class="sq-col-label-s sql-white" style="font-size:11px;padding:8px 12px;">Digital</div>
           <div class="sq-card-s sqc-white" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
-            <div class="sn" style="font-size:13px;margin-bottom:4px;">📊 Dados</div>
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">📊 Dados e IA</div>
             <div class="sp" style="font-size:11px;">PO · André Andreeta</div>
+            <div class="sp" style="font-size:11px;">Caio Soares · Agilidade e implementação de IA</div>
           </div>
           <div class="sq-card-s sqc-agil" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
-            <div class="sn" style="font-size:13px;margin-bottom:4px;">🐟 Agilista</div>
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">🐟 Agilidade e IA</div>
             <div class="sp" style="font-size:11px;">Caio Soares</div>
-            <div style="font-size:10px;color:rgba(126,200,227,0.5);font-style:italic;margin-top:4px;">navega entre todos</div>
+            <div style="font-size:10px;color:rgba(126,200,227,0.5);font-style:italic;margin-top:4px;">Dados e IA · atuação transversal</div>
           </div>
         </div>
 
@@ -1313,20 +1319,36 @@ html, body {
     </div>
   </div>
 
+  <!-- Oceano: mapa dos produtos para quem está chegando. -->
+  <div class="slide" id="s-oceano"><div class="slide-inner">
+    <div class="s-tag">🌊 Nossas ferramentas</div>
+    <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Seu ponto de partida: Oceano</h2>
+    <p class="s-sub">Entre com sua conta Google da Hering, leia o Mural e encontre os produtos disponíveis para você.</p>
+    <div class="cultura-slide">
+      <div class="cu-item"><div class="cu-icon">🐟</div><div><strong class="cu-title">Maré Digital</strong><span class="cu-desc">Cards, responsáveis, prazos e combinados da squad. É onde organizamos a execução.</span></div></div>
+      <div class="cu-item"><div class="cu-icon">📡</div><div><strong class="cu-title">Radar</strong><span class="cu-desc">Objetivos, OKRs, Marcos e próximos passos. Entenda a direção e acompanhe o progresso.</span></div></div>
+      <div class="cu-item"><div class="cu-icon">🖥️</div><div><strong class="cu-title">Painel</strong><span class="cu-desc">Visão de gestão, pessoas e comunicados. Acesso conforme seu perfil.</span></div></div>
+      <div class="cu-item"><div class="cu-icon">⚓</div><div><strong class="cu-title">A Bordo</strong><span class="cu-desc">Seu guia de cultura, squads e forma de trabalhar. Leia antes do encontro e revisite sempre.</span></div></div>
+      <div class="cu-item"><div class="cu-icon">💼</div><div><strong class="cu-title">Travessia</strong><span class="cu-desc">Desenvolvimento, avaliações e PDI. Entrada no Oceano ainda “em breve”; siga a orientação da liderança.</span></div></div>
+      <div class="cu-item"><div class="cu-icon">🔍</div><div><strong class="cu-title">Sonar e ajuda</strong><span class="cu-desc">Busque com Ctrl+K / ⌘K no Oceano, Maré e Radar. Se faltar acesso, procure o PO ou responsável do time.</span></div></div>
+    </div>
+    <p style="margin-top:16px;"><a href="oceano.html" style="color:var(--accent);">Abrir Oceano →</a> · <a href="onboarding.html#oceano" style="color:var(--accent);">Consultar o guia completo →</a></p>
+  </div></div>
+
   <!-- ── S11: CULTURA ── -->
   <div class="slide" id="s11">
     <div class="slide-inner">
-      <div class="s-tag">🌐 Valores</div>
-      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Conexão com a BU</h2>
-      <p class="s-sub">O Digital não nada sozinho. Nossa cultura reflete os valores do cardume como um todo.</p>
+      <div class="s-tag">🐟 Cultura Hering</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Esta é a nossa cultura</h2>
+      <p class="s-sub">Facilitar o vestir das famílias brasileiras com o básico bem-feito e acessível. Desde 1880.</p>
       <div class="cultura-slide">
-        <div class="cu-item"><div class="cu-icon">🌐</div><div><strong class="cu-title">Pensamento e Ação em Rede</strong><span class="cu-desc">Colaboração entre times, áreas e unidades</span></div></div>
-        <div class="cu-item"><div class="cu-icon">🤝</div><div><strong class="cu-title">Colaboração</strong><span class="cu-desc">Juntos chegamos mais longe e mais rápido</span></div></div>
-        <div class="cu-item"><div class="cu-icon">🎯</div><div><strong class="cu-title">Escolhas Conscientes</strong><span class="cu-desc">Simplicidade como princípio de decisão</span></div></div>
-        <div class="cu-item"><div class="cu-icon">🐟</div><div><strong class="cu-title">Conexão com quem somos</strong><span class="cu-desc">Motivação autêntica e propósito compartilhado</span></div></div>
-        <div class="cu-item"><div class="cu-icon">🚀</div><div><strong class="cu-title">Entrega com Alta Performance</strong><span class="cu-desc">Excelência técnica e foco no resultado</span></div></div>
-        <div class="cu-item"><div class="cu-icon">⭐</div><div><strong class="cu-title">Protagonistas na Evolução</strong><span class="cu-desc">Autonomia para transformar e inovar</span></div></div>
+        <div class="cu-item"><div class="cu-icon">🧭</div><div><strong class="cu-title">A gente facilita</strong><span class="cu-desc">Simplificar. Ter coragem e responsabilidade para priorizar, dizer não e focar no que realmente gera valor para o negócio.</span></div></div>
+        <div class="cu-item"><div class="cu-icon">🐟</div><div><strong class="cu-title">Juntos, somos um cardume</strong><span class="cu-desc">Agir como um time, num ambiente leve. Sem deixar de ter o comprometimento individual para tomar decisões, garantir alinhamentos e executar os combinados — assumindo plena responsabilidade por cada ação.</span></div></div>
+        <div class="cu-item"><div class="cu-icon">✨</div><div><strong class="cu-title">Bem-feito, desde sempre</strong><span class="cu-desc">Buscar a melhor performance. Manter sempre viva a paixão pela marca e pelo produto. Assegurar capricho e excelência nas entregas.</span></div></div>
+        <div class="cu-item"><div class="cu-icon">💬</div><div><strong class="cu-title">Acessível por vocação</strong><span class="cu-desc">Encantar todo o Brasil. Exercitar constantemente a escuta ativa e a curiosidade para antecipar os desejos e necessidades dos clientes da Hering.</span></div></div>
+        <div class="cu-item"><div class="cu-icon">🌱</div><div><strong class="cu-title">Legado em evolução</strong><span class="cu-desc">Honrar a coragem e o empreendedorismo de 1880, com o inconformismo na busca do próximo passo de crescimento.</span></div></div>
       </div>
+      <p style="margin-top:16px;color:var(--w60);font-size:13px;">“Uma cultura só é realmente nossa quando aparece no jeito como a gente faz.”</p>
     </div>
   </div>
 
@@ -1344,7 +1366,7 @@ html, body {
       <div style="margin-bottom:10px;text-align:center;">
         <div style="font-size:1.8rem;margin-bottom:4px;">🐟</div>
         <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;">Caio Soares</div>
-        <div style="font-size:13px;color:var(--accent);margin-top:2px;">Agilista · Digital Hering</div>
+        <div style="font-size:13px;color:var(--accent);margin-top:2px;">Dados e IA · Agilidade e implementação de IA</div>
       </div>
 
       <div class="contact-row" style="margin-bottom:10px;">
@@ -1424,11 +1446,12 @@ setInterval(updateClock, 1000);
 })();
 
 // ── SLIDE ENGINE ──
-const total = 15;
+
 let cur = 0;
 let prev = -1;
 
 const slides = Array.from(document.querySelectorAll('.slide'));
+const total = slides.length;
 const dotsWrap = document.getElementById('bottombar');
 const counter = document.getElementById('slideCounter');
 const fill = document.getElementById('progressFill');
@@ -1480,6 +1503,9 @@ function isTyping() {
 document.addEventListener('keydown', e => {
   if (isTyping()) return; // ← não captura teclas quando digitando
   if (document.getElementById('addModal') && document.getElementById('addModal').style.display === 'flex') return;
+  // Nos slides longos, setas verticais e espaço preservam a leitura por rolagem.
+  const leituraLonga = ['s11', 's-oceano'].includes(slides[cur]?.id);
+  if (leituraLonga && ['ArrowDown', 'ArrowUp', ' '].includes(e.key)) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
   if (e.key === 'f' || e.key === 'F') toggleFullscreen();
@@ -1487,11 +1513,12 @@ document.addEventListener('keydown', e => {
 });
 
 // Touch swipe
-let touchX = 0;
-document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+let touchX = 0, touchY = 0;
+document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; });
 document.addEventListener('touchend',   e => {
   const dx = e.changedTouches[0].clientX - touchX;
-  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+  const dy = e.changedTouches[0].clientY - touchY;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
 });
 
 // Fullscreen
