@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Radar — faixa "⭐ Pra você" no topo da lista (R3 da consultoria) (SÓ DEV · okr-dev v2.113) — 2026-11-11
+
+- Até 4 números da pessoa logada, acima do resumo, cada um clicável (clicar de novo desfaz): 🎯 Objetivos meus (responsável pelo Objetivo ou por algum Marco ativo), 🧊 parados, ⚠️ em risco ou atrasados, 📅 Marcos meus com prazo em até 14 dias (inclui os vencidos, com a contagem).
+- Quem não é responsável por nada não vê a faixa. Os números contam os Objetivos ativos da visão atual (torre ou global), sem os outros filtros.
+- Zero leitura nova: usa o que já está carregado e os filtros que já existiam (⭐ Eu, Parados), mais um recorte `pv` para "em risco ou atrasados" e "Marcos em 14 dias"; "✕ Limpar filtros" desliga tudo.
+- "Em risco ou atrasados" usa o status dos Marcos. Quando o ritmo do Objetivo (R1) entrar, o chip pode passar a ser "atrás do ritmo".
+- Ajuda do Radar (pergunta sobre filtros) cita a faixa.
+- Teste: `docs/arezzo/testes/test_okr_pravoce.js` (19/19, 3 temas × 1280/390 px).
+
 ### Travessia — avaliação com rascunho no aparelho e progresso (T7 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
 
 - As respostas da avaliação (autoavaliação, feedback de par e avaliação do líder) vão para um rascunho neste aparelho a cada pausa de digitação, com "💾 Rascunho guardado neste aparelho" ao lado do Salvar. Fechar a aba, recarregar ou trocar de aba não perde mais o texto: ele volta com "↩ Rascunho deste aparelho recuperado. Lembre de salvar."
