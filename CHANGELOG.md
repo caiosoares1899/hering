@@ -24,6 +24,21 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Travessia — cultura Hering: atitudes no 1:1 e na avaliação (SÓ DEV · travessia-dev.html + database.rules.json) — 2026-11-11
+
+Pedido do Caio: "o Travessia precisa conversar com os pilares culturais (A Bordo) e ajudar na internalização da cultura". Ele escolheu dois lugares: **1:1 com atitude em foco** e **avaliação pelas atitudes**.
+- **1:1:** ao registrar (pessoa ou líder), dá para marcar a **🧭 atitude em foco** (uma das 5, opcional). Ela aparece como selo nos registros dos dois lados.
+- **Frota:** o líder vê **"Atitudes em foco nos 1:1"** dos últimos 90 dias, com quantas vezes cada atitude apareceu no time e quais "ainda não apareceram" (não é nota). Sai dos 1:1 que a Frota já lia: nenhuma leitura nova.
+- **Avaliação (ciclos com as atitudes ligadas):**
+  - **Autoavaliação:** "Em quais atitudes você mais se viu? (até 2)" + exemplo.
+  - **Feedback de par:** "Em quais atitudes a pessoa mais se destaca?" + exemplo.
+  - **Líder:** onde a pessoa se destaca, **qual atitude pode desenvolver** e um exemplo, ao lado do resumo de como ela se vê e do que os pares destacaram (com contagem).
+  - A pessoa **não** vê o que o líder e os pares marcaram (a regra também não deixa).
+- **"As 5 atitudes da Hering":** em cada bloco, um recolhível com o texto do A Bordo e o exemplo "No Digital". É a parte de internalização: a pessoa relê a atitude no momento em que reflete sobre ela.
+- **Admin:** ciclo novo vem com **"Incluir as atitudes da Hering"** marcado. Cada ciclo tem o botão **"🧭 Atitudes: ligadas/desligadas"** (é assim que o RH liga no ciclo em andamento).
+- **Dados:** `encontros/{uid}/{id}/at`, nó irmão `avaliacoes/{cid}/{avaliado}/atitudes/{auto,lider,par/{par}}` e `ciclos/{cid}/cultura`. O nó é irmão porque o prod regrava auto/lider/resp_pares inteiros e apagaria os campos novos. Leitura e escrita são copiadas das de auto, lider e resp_pares. **Exige `firebase deploy --only database`.**
+- **Testes:** `test_travessia_cultura.js` (36/36) e `travessiaRules.test.js` (3 testes novos: ids válidos, máximo 2, quem lê/grava, fases, gente de fora).
+
 ### Oceano — abas de apresentação fora da navegação diária (O4 da consultoria) (SÓ DEV · oceano-dev v1.78) — 2026-11-11
 
 - "Conheça o Oceano" e "Por baixo do casco" são material de apresentação, lido uma vez. Para quem já abriu o Oceano **mais de 5 vezes neste aparelho** (contagem por pessoa, 1 por sessão), a barra de abas some do Início e as duas viram **links no rodapé**; a Ajuda ganhou a pergunta "Onde foram parar…?" com os dois links.
