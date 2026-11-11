@@ -1,9 +1,9 @@
 // 🏝️ Validação do painel aberto da Ilha (redesenho de 11/11/2026). Cole no console (F12) do kanban-dev.html logado, com a ilha
-// LIGADA (⏲ Timers → 🏝️ Ilha Dinâmica). Só lê a tela: abre o painel, confere e fecha. Teste também no celular e no tema claro.
+// LIGADA (seu nome → Minhas preferências → 🏝️ Ilha Dinâmica). Só lê a tela: abre o painel, confere e fecha. Teste também no celular e no tema claro.
 (async () => {
   const r = [], ok = (o, c, d) => r.push({ o, '': c ? '✅' : '❌', detalhe: d || '' });
   if (typeof _ilhaAbrir !== 'function') { console.error('❌ Abra no kanban-dev.html.'); return; }
-  if (!_ilhaPrefs().on) { console.error('❌ Ligue a ilha antes: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
+  if (!_ilhaPrefs().on) { console.error('❌ Ligue a ilha antes: seu nome → Minhas preferências → 🏝️ Ilha Dinâmica.'); return; }
   _ilhaAbrir(); await new Promise(f => setTimeout(f, 400));
   const pn = document.getElementById('ilha-painel'), a = pn.getBoundingClientRect();
   ok('painel inteiro na tela', a.left >= 0 && a.right <= innerWidth && a.bottom <= innerHeight + 1, Math.round(a.left) + '→' + Math.round(a.right) + ' de ' + innerWidth);

@@ -22,7 +22,7 @@ const text = (p,s)=>p.locator(s).textContent();
 const timer = (id,action)=>`.ilha-timer[data-id="${id}"] [data-acao="${action}"]`;
 const until = async(p,fn,arg,timeout=2500)=>{ try {await p.waitForFunction(fn,arg,{timeout}); return true;} catch(e) {if(e.name==='TimeoutError') return false; throw e;} };
 // Com a ilha recolhida e invisível (ex.: "só com ação" sem atividade), o caminho para ela é o ⏲ Timers → 🏝️ Ilha Dinâmica (abre nos ajustes).
-const openPanel = async p=>{ if(await state(p)==='aberta'){ await p.waitForSelector('#ilha-painel',{state:'visible'}); return; } if(await p.locator('#ilha-btn').isVisible()) await p.click('#ilha-btn'); else { await p.click('#tb-timers'); await p.click('#ilha-ligar'); } await p.waitForSelector('#ilha-painel',{state:'visible'}); };
+const openPanel = async p=>{ if(await state(p)==='aberta'){ await p.waitForSelector('#ilha-painel',{state:'visible'}); return; } if(await p.locator('#ilha-btn').isVisible()) await p.click('#ilha-btn'); else { await p.evaluate(()=>_ilhaAbrirAjustes()); } await p.waitForSelector('#ilha-painel',{state:'visible'}); };
 const tab = async(p,name)=>{await openPanel(p); await p.click(`.ilha-aba[data-aba="${name}"]`);};
 const config = async(p,id,value)=>{await tab(p,'ajustes'); if(typeof value==='boolean') await p.locator(id).setChecked(value); else await p.selectOption(id,value);};
 const close = async p=>{await p.keyboard.press('Escape'); await p.waitForTimeout(150);};
@@ -47,7 +47,7 @@ const read = (p,key)=>p.evaluate(key=>key.split('/').reduce((o,k)=>o?.[k],window
     return {ctx,p,errors};
   };
   const run = async(name,fn,width)=>{const s=await session(width); try {await fn(s);} catch(e){check(name+' executável',false,e.message);} finally {check(name+' sem erro de JavaScript',!s.errors.length,s.errors); await s.ctx.close();}};
-  const enable = async p=>{await p.click('#tb-timers'); await p.click('#ilha-ligar'); await p.waitForSelector('#ilha',{state:'visible'});};
+  const enable = async p=>{await p.evaluate(()=>openMinhasPrefs()); await p.click('#ilha-ligar'); await p.waitForSelector('#ilha-intro.open'); await p.click('[data-ii="pular"]'); await p.waitForSelector('#ilha',{state:'visible'});};
   try {
     await run('paridade do sino',async({p})=>{
       await p.evaluate(()=>{
