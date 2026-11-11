@@ -24,6 +24,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Programa de boas-vindas do Maré — escolha no 1º acesso, tour no board e progresso no perfil (dev: kanban-dev v8.30.947-dev) — 2026-11-11
+
+Pedido do Caio (11/11/2026): onboarding da **ferramenta** em autosserviço (o A Bordo segue sendo o do método ágil). Desenho e divisão em `docs/ideias/onboarding-mare.md`.
+- **1º acesso:** a janela de boas-vindas agora oferece **⚡ Resumido (5 min)**, **📚 Completo**, **🎯 Tour aqui no board** ou "Agora não", e espera a inscrição (iniciais/torre) fechar antes de aparecer (antes as duas abriam juntas).
+- **Depois:** **❓ Ajuda → 🧭 Boas-vindas** reabre o guia; tópico novo "Programa de boas-vindas" na Ajuda.
+- **Tour no board:** balões com o botão real destacado (board, + Card, mover, funções do card, comentar e @mencionar, sino, Meu Dia, Sonar e, onde o Agente está ativo, 🤖 Agente Ágil). Botão escondido no celular → balão no centro, avisando que fica no menu ⋯. Esc, ← →.
+- **Links do guia:** `?tour=<passo>|resumido` abre o tour; `?hotline=1` abre o card de conversa com o Agente Ágil (só `dev`/`dados`). Os parâmetros saem da URL depois de usados; só entram IDs da lista.
+- **Progresso no perfil** (`kanban/usuarios/{uid}/onboarding_mare`): o guia (estático, sem Firebase) grava em `localStorage`, e o board junta no perfil (só IDs `[a-z0-9-]` e datas ISO).
+- O guia em si (`guia-mare.html`, telas simuladas em HTML) vem num PR do Antigravity.
+
 ### Radar — ritmo esperado × realizado nos Objetivos (R1 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: okr-dev v2.114) — 2026-11-11
 
 - Antes, um Objetivo com 40% aparecia igual no dia 10 e no dia 80 do trimestre. Agora, para toda meta numérica (💰 📊 🔢) com período padrão, o Radar calcula o **esperado hoje** (linha reta do início ao fim do período; vários períodos = do início do 1º ao fim do último) e classifica: **adiantado** (≥ +5 pontos), **no ritmo** (até −10), **atrás** (até −25), **muito atrás**. Também mostra **onde fecha** mantendo o ritmo.
