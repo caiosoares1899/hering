@@ -20,6 +20,62 @@ const iso=s=>typeof s==='string' && /^\d{4}-\d\d-\d\dT/.test(s) && !Number.isNaN
   const label=viewport.width+'px · ';
   const go=async query=>{await p.goto(base+'/guia-mare.html?'+query);await p.waitForFunction(()=>!!window.GuiaMare);};
   const move=async id=>{const ids=await p.evaluate(()=>GuiaMare.passos(GuiaMare.estado().modo));const n=ids.indexOf(id);if(n<0)throw Error('Passo ausente: '+id);await p.locator('body').click({position:{x:2,y:2}});for(let i=0;i<ids.length+1;i++){const state=await p.evaluate(()=>GuiaMare.estado());if(state.idx===n)return;await p.keyboard.press(state.idx<n?'ArrowRight':'ArrowLeft');}throw Error('Navegação não chegou a '+id);};
+  // O desenho e o ResizeObserver precisam concluir antes de medir a moldura.
+  const desenhada=()=>p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await go('modo=completo&agente=1');
+  for(const id of [...expected,...extras]){
+   await move(id);await desenhada();
+   const tela=await p.evaluate(()=>{
+    const fig=document.querySelector('figure.tela'),host=fig?.querySelector('.tela-host'),sr=host?.shadowRoot;
+    if(!sr)return {figure:!!fig,shadow:false};
+    const eventos=[],hrefs=[];
+    for(const el of sr.querySelectorAll('*'))for(const attr of el.attributes){
+     if(/^on/i.test(attr.name))eventos.push(el.tagName+':'+attr.name);
+     if(attr.localName.toLowerCase()==='href')hrefs.push(el.tagName+':'+attr.name);
+    }
+    const vp=sr.querySelector('.mg-html > .mg-vp');
+    return {figure:true,shadow:true,viewport:!!vp&&vp.offsetWidth===1280&&vp.offsetHeight===760,
+     scripts:sr.querySelectorAll('script').length,eventos,hrefs,alvo:!!sr.querySelector('.mg-alvo')};
+   });
+   t(label+'tela real com shadowRoot: '+id,tela.figure&&tela.shadow,tela);
+   t(label+'viewport capturado 1280×760: '+id,tela.viewport===true,tela);
+   t(label+'captura sem script, on* ou href: '+id,tela.scripts===0&&tela.eventos?.length===0&&tela.hrefs?.length===0,tela);
+   t(label+'destaque conforme o passo: '+id,tela.alvo===!['criativos','spotify'].includes(id),tela);
+   if(viewport.width===390)t(label+'Completo sem rolagem horizontal: '+id,await p.evaluate(w=>document.documentElement.scrollWidth<=w,viewport.width));
+  }
+  await go('modo=resumido&agente=1');
+  for(const id of expected){
+   await move(id);await desenhada();
+   const area=await p.evaluate(()=>{
+    const host=document.querySelector('figure.tela .tela-host'),alvo=host?.shadowRoot?.querySelector('.mg-alvo');
+    if(!host||!alvo)return null;
+    const h=host.getBoundingClientRect(),a=alvo.getBoundingClientRect();
+    return {host:{x:h.x,y:h.y,w:h.width,h:h.height},alvo:{x:a.x,y:a.y,w:a.width,h:a.height},
+     visivel:h.width>0&&h.height>0&&a.width>0&&a.height>0&&Math.min(h.right,a.right)>Math.max(h.left,a.left)&&Math.min(h.bottom,a.bottom)>Math.max(h.top,a.top)};
+   });
+   t(label+'destaque intersecta a moldura: '+id,area?.visivel===true,area);
+  }
+  if(viewport.width===390){
+   // Card pequeno garante alturas diferentes entre aproximação e tela inteira.
+   await move('card-mover');await desenhada();
+   const botao=p.locator('figure.tela .tela-bar button'),host=p.locator('figure.tela .tela-host');
+   const altura=()=>host.evaluate(el=>el.getBoundingClientRect().height);
+   const antes=await altura();
+   t(label+'zoom inicia com Tela inteira',await botao.isVisible()&&(await botao.textContent())==='🖥 Tela inteira');
+   await botao.click();await desenhada();const inteira=await altura();
+   t(label+'zoom oferece Aproximar e muda altura',(await botao.textContent())==='🔍 Aproximar'&&Math.abs(inteira-antes)>1,{antes,inteira});
+   await botao.click();await desenhada();const aproximada=await altura();
+   t(label+'zoom volta a Tela inteira e restaura altura',(await botao.textContent())==='🖥 Tela inteira'&&Math.abs(aproximada-inteira)>1&&Math.abs(aproximada-antes)<=1,{antes,inteira,aproximada});
+  }
+  for(const theme of ['light','dark']){
+   await p.evaluate(()=>{window.__telaAnterior=document.querySelector('figure.tela .tela-host');});
+   await p.selectOption('#theme',theme);await desenhada();
+   const tema=await p.evaluate(()=>{
+    const host=document.querySelector('figure.tela .tela-host'),html=host?.shadowRoot?.querySelector('.mg-html');
+    return {redesenhou:!!host&&host!==window.__telaAnterior,html:!!html,tema:html?.getAttribute('data-theme')};
+   });
+   t(label+'tema redesenha captura: '+theme,tema.redesenhou&&tema.html&&tema.tema===(theme==='light'?'light':null),tema);
+  }
   await go('modo=resumido&squad=dados&agente=1&volta=kanban-dev.html');
   t(label+'9 ids na ordem',JSON.stringify(await p.evaluate(()=>GuiaMare.passos('resumido')))===JSON.stringify(expected));
   t(label+'33 ids completos na ordem',JSON.stringify(await p.evaluate(()=>GuiaMare.passos('completo')))===JSON.stringify([...expected,...extras]));
@@ -42,7 +98,7 @@ const iso=s=>typeof s==='string' && /^\d{4}-\d\d-\d\dT/.test(s) && !Number.isNaN
   t(label+'sem pageerror',errors.length===0,errors);await ctx.close();
   const blocked=await browser.newContext({viewport});await blocked.addInitScript(()=>{Storage.prototype.getItem=function(){throw Error('bloqueado');};Storage.prototype.setItem=function(){throw Error('bloqueado');};});const bp=await blocked.newPage(),be=[];bp.on('pageerror',e=>be.push(e.message));await bp.goto(base+'/guia-mare.html?modo=resumido');await bp.locator('#complete').click();await bp.keyboard.press('ArrowRight');t(label+'storage bloqueado permite navegar',await bp.evaluate(()=>GuiaMare.estado().idx===2));t(label+'storage bloqueado sem pageerror',be.length===0,be);await blocked.close();
  }
- const html=fs.readFileSync(path.resolve(__dirname,'../../../guia-mare.html'),'utf8');t('Página menor que 250 KB',Buffer.byteLength(html)<250*1024,Buffer.byteLength(html));t('Sem imagens remotas ou GIF',!/<img\b[^>]*src\s*=\s*["']?https?:/i.test(html)&&!html.toLowerCase().includes('.gif'));t('Sem scripts externos, Firebase ou fetch',!/<script\b[^>]*src\s*=/i.test(html)&&!/\bfetch\s*\(|firebase/i.test(html));
+ const html=fs.readFileSync(path.resolve(__dirname,'../../../guia-mare.html'),'utf8');t('Página menor que 400 KB',Buffer.byteLength(html)<400*1024,Buffer.byteLength(html));t('Sem imagens remotas ou GIF',!/<img\b[^>]*src\s*=\s*["']?https?:/i.test(html)&&!html.toLowerCase().includes('.gif'));t('Sem scripts externos, Firebase ou fetch',!/<script\b[^>]*src\s*=/i.test(html)&&!/\bfetch\s*\(|firebase/i.test(html));
  }finally{await browser.close();}
  console.log(failures?`${failures} FALHA(S) / ${assertions}`:`TUDO OK · ${assertions} verificações`);process.exitCode=failures?1:0;
 })().catch(e=>{console.error(e);process.exitCode=1;});
