@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica: botão 🎛️ Preferências na lateral (SÓ DEV · kanban-dev v8.30.941-dev) — 2026-11-11
+
+- Pedido do Caio: atalho para "Minhas preferências" (a mesma janela do menu do nome) na lateral direita da ilha aberta, logo antes de ⚙ Ajustes. É atalho, não aba: fecha a ilha e abre a janela (openMinhasPrefs).
+- Coluna dos botões laterais 72 → 80 px para o nome inteiro caber sem passar da borda do painel; Ajuda atualizada.
+- Testes: docs/arezzo/testes/test_ilha_ux.js (40) e as 7 baterias da ilha.
+
 ### Maré › 🏝️ Ilha Dinâmica: painel aberto redesenhado — botões nas laterais, Resumo no centro (/melhoriauiux · SÓ DEV · kanban-dev v8.30.939-dev) — 2026-11-11
 
 - **Antes:** 8 abas espremidas numa faixa de 390 px (cortadas: "Favorit"; o 📌 sumia para fora), nenhuma visão geral (era preciso caçar aba por aba), cada aba com um estilo (links sublinhados ao lado de botões, horário solto acima do título), Ajustes como lista crua de caixas — e 🐞 a aba ⚙ Ajustes rolava o painel para o lado e cortava os rótulos pela esquerda.

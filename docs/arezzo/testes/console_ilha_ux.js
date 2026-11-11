@@ -8,7 +8,7 @@
   const pn = document.getElementById('ilha-painel'), a = pn.getBoundingClientRect();
   ok('painel inteiro na tela', a.left >= 0 && a.right <= innerWidth && a.bottom <= innerHeight + 1, Math.round(a.left) + '→' + Math.round(a.right) + ' de ' + innerWidth);
   ok('botões nas laterais (ou na faixa de baixo, no celular)', !!document.querySelector('.ilha-trilho.esq .ilha-aba') && !!document.querySelector('.ilha-trilho.dir .ilha-aba[data-aba="ajustes"]'));
-  const abas = [...document.querySelectorAll('#ilha-painel .ilha-aba')].map(x => x.dataset.aba); const lateral = [];
+  const abas = [...document.querySelectorAll('#ilha-painel .ilha-aba[data-aba]')].map(x => x.dataset.aba); const lateral = [];
   for (const id of abas) { document.querySelector(`#ilha-painel .ilha-aba[data-aba="${id}"]`).click(); await new Promise(f => setTimeout(f, 120)); const c = document.querySelector('#ilha-painel .ilha-corpo'); if (c && (c.scrollWidth > c.clientWidth + 1 || c.scrollLeft)) lateral.push(id); }
   ok('nenhuma aba rola para o lado', !lateral.length, lateral.join(', ') || abas.length + ' abas conferidas');
   document.querySelector('#ilha-painel .ilha-aba[data-aba="resumo"]').click(); await new Promise(f => setTimeout(f, 120));
