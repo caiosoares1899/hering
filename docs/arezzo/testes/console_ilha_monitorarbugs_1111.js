@@ -3,7 +3,7 @@
 (async () => {
   const linhas = []; function registraTesteIlha(teste, passou, detalhe){ linhas.push({ teste, '': passou ? '✅' : '❌', detalhe: detalhe || '' }); }
   const espera = ms => new Promise(r => setTimeout(r, ms));
-  const p = _ilhaPrefs(); if (!p.on) { console.error('❌ Ligue a ilha antes: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
+  const p = _ilhaPrefs(); if (!p.on) { console.error('❌ Ligue a ilha antes: seu nome → Minhas preferências → 🏝️ Ilha Dinâmica.'); return; }
   const antes = JSON.stringify(p);
   try {
     // A) 📌 sem véu

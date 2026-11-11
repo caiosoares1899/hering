@@ -18,7 +18,7 @@ let assertions = 0, failures = 0;
 const check = (name, pass, detail)=>{ assertions++; if(!pass) failures++; console.log((pass?'✅ ':'❌ ')+name+(pass?'':' → '+JSON.stringify(detail))); };
 const until = async(p,fn,arg,timeout=3000)=>{try{await p.waitForFunction(fn,arg,{timeout});return true;}catch(e){if(e.name==='TimeoutError') return false;throw e;}};
 // Sem atividade (bob), a entrada pelos Timers abre os ajustes da ilha oculta.
-const open = async p=>{if(await p.getAttribute('#ilha','data-estado')!=='aberta'){if(await p.locator('#ilha-btn').isVisible()) await p.click('#ilha-btn');else {await p.click('#tb-timers');await p.click('#ilha-ligar');}}await p.waitForSelector('#ilha-painel',{state:'visible'});};
+const open = async p=>{if(await p.getAttribute('#ilha','data-estado')!=='aberta'){if(await p.locator('#ilha-btn').isVisible()) await p.click('#ilha-btn');else { await p.evaluate(()=>_ilhaAbrirAjustes()); }}await p.waitForSelector('#ilha-painel',{state:'visible'});};
 const tab = async(p,id)=>{await open(p);await p.click(`.ilha-aba[data-aba="${id}"]`);};
 const config = async(p,id,value)=>{await tab(p,'ajustes');if(typeof value==='boolean') await p.locator(id).setChecked(value);else await p.selectOption(id,value);};
 const close = async p=>{await p.keyboard.press('Escape');};

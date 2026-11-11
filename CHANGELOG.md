@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica: ligar em Minhas preferências + introdução de 5 passos (SÓ DEV · kanban-dev v8.30.943-dev · mare-dicas-dev ?v=14) — 2026-11-11
+
+- **Ligar/desligar saiu do ⏲ Timers** (pedido do Caio) e foi para **seu nome → Minhas preferências → 🏝️ Ilha Dinâmica**: Ligar/Desligar, ⚙ Ajustes da ilha (com ela ligada) e 📖 Como funciona.
+- **Introdução** na 1ª vez que liga (e revista em 📖 Como funciona, nas preferências ou em ⚙ Ajustes da ilha): 5 passos — o que é · a pílula (principal, 2ª atividade, contador, quando aparece) · o painel aberto (Resumo, botões laterais, 📌, Esc) · **escolha os módulos** (interruptores que já valem) · onde mudar depois. Voltar/Próximo, pontos de progresso, Pular, ←/→/Esc, foco preso dentro; no celular vira folha inferior com alvos ≥ 44 px. "Começar a usar" abre a ilha no Resumo.
+- Textos que citavam o caminho antigo atualizados (Ajuda, avisos, dica ilha_v2 — mare-dicas-dev ?v=14 em kanban-dev, oceano-dev, okr-dev, painel-dev).
+- Testes: docs/arezzo/testes/test_ilha_intro.js (23) + as 9 baterias da ilha (com o caminho de ligar atualizado) e docs/arezzo/testes/test_dicas.js.
+
 ### Maré › 🏝️ Ilha Dinâmica: botão 🎛️ Preferências na lateral (SÓ DEV · kanban-dev v8.30.941-dev) — 2026-11-11
 
 - Pedido do Caio: atalho para "Minhas preferências" (a mesma janela do menu do nome) na lateral direita da ilha aberta, logo antes de ⚙ Ajustes. É atalho, não aba: fecha a ilha e abre a janela (openMinhasPrefs).
