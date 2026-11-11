@@ -111,7 +111,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Codex | `codex/a-bordo-marine-glass` | `onboarding.html`, `onboarding.slide.html`, teste e registros: atalhos Marine Glass e peixes iguais aos do Maré/Oceano. Continuação do PR #1705 já publicado. | 11/11/2026 |
+| Codex | `codex/a-bordo-aquario` | `onboarding.html`, `onboarding.slide.html`, teste e registros: corrige os peixes do aquário de stakeholders e cardume central. PR #1709 já publicado. | 11/11/2026 |
 | Codex | `codex/ilha-notificacoes` | `kanban-dev.html` (sino completo na Ilha), testes e registros; autorizado pelo Caio a trabalhar nesta área | 10/11/2026 |
 | Claude | `claude/sonar-*` (evolução do Sonar: correções, filtros, prévia, histórico) | **`mare-sonar-dev.js`** (módulo: só o Claude edita), adaptadores do Sonar em `kanban-dev.html` e `oceano-dev.html`. **Antigravity:** o `/monitorarbugs` do Sonar relata os achados em "Escalado para o Claude" (ou comentário no PR), sem editar esses arquivos | 10/11/2026 |
 

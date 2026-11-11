@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (SÓ DEV)
+
+A correção anterior cobriu os peixes de fundo; os oito stakeholders e o cardume central ainda tinham desenhos próprios com cauda invertida no site. Corrigida a geometria em onboarding.html e onboarding.slide.html, preservando cores, rótulos e abertura de modais. Raio da órbita dos slides limitado à largura do celular para não cortar os peixes. Teste docs/arezzo/testes/test_onboarding_bordo.js falha antes na geometria antiga e verifica os oito SVGs e os cliques de cada stakeholder nas duas páginas a 1280/390 px. Capturas em docs/capturas/a-bordo-aquario/. Fronteira: sem mudança, SVGs estáticos e CSS. Dica: não, correção visual.
+
 ### 2026-11-11 · okr-dev.html (v2.111) · guia-okr.html · ecossistema.html · maredigital.html · docs/OCEANO.md · CODE_MAP.md — sincronização de documentações (/atualizardocumentacoes) e ajuda in-app (/atualizarhelpcontent)
 
 - **Radar (`okr-dev.html` v2.111 · `guia-okr.html`):** `#hlp-cabecalho` e o tooltip de `#okr-more-btn` passaram a listar `🏷️ Gerenciar tags` no menu `⋯ Mais`; `#hlp-apresentacao` passou a documentar `📍 Puxar sala` e o botão permanente `👑 Assumir` de ADMs na sala ao vivo; e o tooltip de `#okr-obj-config-btn` trocou `trimestre` por `período`. No `guia-okr.html`, alinhados os slides de Configurações (`Período`), Calendário (`Entrega` na legenda) e encerramento (`/` na `❓ Ajuda` e `Ctrl+K` no `🔍 Sonar`).
