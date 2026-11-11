@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica V2: ⭐ Favoritos (SÓ DEV · kanban-dev v8.30.934-dev) — 2026-11-11
+
+- Módulo ⭐ Favoritos (desligado por padrão; liga em Ilha → ⚙ Ajustes): até 3 atalhos para produtos (Radar, Painel, Oceano…), squads ou um card, numa aba ⭐ Favoritos da ilha. Não muda a pílula (favorito não é atividade).
+- Por aparelho (localStorage, decisão do Caio), sem nenhuma leitura no Firebase.
+- Segurança: nenhum endereço é guardado — o destino é montado no clique (produto pela lista do MareNotif.APPS, squad por ?squad=, card por tmAbrirCard); itens inválidos, repetidos ou além de 3 são descartados ao ler.
+- Implementação e teste pelo Codex (docs/arezzo/testes/test_ilha_favoritos.js, 24); regressões docs/arezzo/testes/test_ilha_v2_base.js (33), docs/arezzo/testes/test_ilha_mare.js (56), docs/arezzo/testes/test_ilha_notificacoes.js (51).
+
 ### Maré › 🏝️ Ilha Dinâmica V2 (base): módulos ligáveis, atividade principal + secundária e 🛡️ Operação para ADM (SÓ DEV · kanban-dev v8.30.933-dev) — 2026-11-11
 
 - Base da V2: cada recurso novo da ilha é um módulo com interruptor em ⚙ Ajustes; desligado não abre escuta no Firebase, não oferece atividade nem cria aba.
