@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Radar — ritmo esperado × realizado nos Objetivos (R1 da consultoria) (SÓ DEV · okr-dev v2.114) — 2026-11-11
+### Radar — ritmo esperado × realizado nos Objetivos (R1 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: okr-dev v2.114) — 2026-11-11
 
 - Antes, um Objetivo com 40% aparecia igual no dia 10 e no dia 80 do trimestre. Agora, para toda meta numérica (💰 📊 🔢) com período padrão, o Radar calcula o **esperado hoje** (linha reta do início ao fim do período; vários períodos = do início do 1º ao fim do último) e classifica: **adiantado** (≥ +5 pontos), **no ritmo** (até −10), **atrás** (até −25), **muito atrás**. Também mostra **onde fecha** mantendo o ritmo.
 - **Cartão:** traço na barra no esperado de hoje e, fora do ritmo, uma linha curta ("33 pontos atrás · fecha em ~23%"). No ritmo, o cartão fica quieto.
@@ -33,7 +33,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - Ajuda do Radar (seção do atingimento) explica o ritmo. Nada novo é lido do banco.
 - Teste: `docs/arezzo/testes/test_okr_ritmo.js` (26/26, inclui o exemplo do plano: T4/26 em 09/11 → esperado 43%).
 
-### Ilha Dinâmica — sempre visível por padrão e painel na altura da tela (SÓ DEV · kanban-dev) — 2026-11-11
+### Ilha Dinâmica — sempre visível por padrão e painel na altura da tela (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: kanban-dev) — 2026-11-11
 
 Pedido do Caio (12/11/2026):
 - **Padrão "sempre visível"**: antes era "só com ação". A pessoa ligava em Minhas preferências, passava pela introdução e a pílula **sumia** por não ter nada acontecendo. Agora ela fica no topo.
@@ -42,7 +42,7 @@ Pedido do Caio (12/11/2026):
 - **Painel aberto na altura da tela**: o Resumo tinha teto de 580 px e ganhava uma rolagem pequena. Agora usa a tela inteira menos o topo e, em tela baixa, rola por dentro sem sair da tela.
 - Teste: `docs/arezzo/testes/test_ilha_sempre.js` (10/10). As 8 suítes da Ilha seguem verdes.
 
-### Travessia — cultura Hering: atitudes no 1:1 e na avaliação (SÓ DEV · travessia-dev.html + database.rules.json) — 2026-11-11
+### Travessia — cultura Hering: atitudes no 1:1 e na avaliação (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html + database.rules.json) — 2026-11-11
 
 Pedido do Caio: "o Travessia precisa conversar com os pilares culturais (A Bordo) e ajudar na internalização da cultura". Ele escolheu dois lugares: **1:1 com atitude em foco** e **avaliação pelas atitudes**.
 - **1:1:** ao registrar (pessoa ou líder), dá para marcar a **🧭 atitude em foco** (uma das 5, opcional). Ela aparece como selo nos registros dos dois lados.
@@ -57,13 +57,13 @@ Pedido do Caio: "o Travessia precisa conversar com os pilares culturais (A Bordo
 - **Dados:** `encontros/{uid}/{id}/at`, nó irmão `avaliacoes/{cid}/{avaliado}/atitudes/{auto,lider,par/{par}}` e `ciclos/{cid}/cultura`. O nó é irmão porque o prod regrava auto/lider/resp_pares inteiros e apagaria os campos novos. Leitura e escrita são copiadas das de auto, lider e resp_pares. **Exige `firebase deploy --only database`.**
 - **Testes:** `test_travessia_cultura.js` (36/36) e `travessiaRules.test.js` (3 testes novos: ids válidos, máximo 2, quem lê/grava, fases, gente de fora).
 
-### Oceano — abas de apresentação fora da navegação diária (O4 da consultoria) (SÓ DEV · oceano-dev v1.78) — 2026-11-11
+### Oceano — abas de apresentação fora da navegação diária (O4 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: oceano-dev v1.78) — 2026-11-11
 
 - "Conheça o Oceano" e "Por baixo do casco" são material de apresentação, lido uma vez. Para quem já abriu o Oceano **mais de 5 vezes neste aparelho** (contagem por pessoa, 1 por sessão), a barra de abas some do Início e as duas viram **links no rodapé**; a Ajuda ganhou a pergunta "Onde foram parar…?" com os dois links.
 - `#conheca` e `#tecnica` continuam funcionando, e quem está numa dessas abas vê a barra para voltar a "Meus produtos". Quem abre o Oceano pela primeira vez (ou mostra para alguém novo) vê tudo como antes.
 - Teste: `docs/arezzo/testes/test_oceano_abas_enxutas.js` (10/10).
 
-### Travessia — rodada de UI/UX: mais Marine Glass, menos "cara de IA" (SÓ DEV · travessia-dev.html) — 2026-11-11
+### Travessia — rodada de UI/UX: mais Marine Glass, menos "cara de IA" (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11
 
 Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O que estava ruim → o que ficou:
 - Fundo sem vida (só o degradê) → **peixinhos e bolhas iguais aos do Oceano** (8/16 no computador, 4/8 no celular). O botão 🐟 no topo desliga e lembra neste navegador. Eles pausam com a aba escondida, sem foco ou 60 s parada, e param com "reduzir movimento".
@@ -81,7 +81,7 @@ Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O qu
 - Folga grande embaixo da barra do modo demonstração → removida.
 - Testes: `test_travessia_marine.js` (64/64, 3 temas × 1280/390 px). `test_travessia_ui.js` foi atualizado para o desenho novo; ele também caía na `main` por procurar o interruptor de compartilhar humor, removido em 31/10.
 
-### Radar — faixa "⭐ Pra você" no topo da lista (R3 da consultoria) (SÓ DEV · okr-dev v2.113) — 2026-11-11
+### Radar — faixa "⭐ Pra você" no topo da lista (R3 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: okr-dev v2.113) — 2026-11-11
 
 - Até 4 números da pessoa logada, acima do resumo, cada um clicável (clicar de novo desfaz): 🎯 Objetivos meus (responsável pelo Objetivo ou por algum Marco ativo), 🧊 parados, ⚠️ em risco ou atrasados, 📅 Marcos meus com prazo em até 14 dias (inclui os vencidos, com a contagem).
 - Quem não é responsável por nada não vê a faixa. Os números contam os Objetivos ativos da visão atual (torre ou global), sem os outros filtros.
@@ -90,7 +90,7 @@ Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O qu
 - Ajuda do Radar (pergunta sobre filtros) cita a faixa.
 - Teste: `docs/arezzo/testes/test_okr_pravoce.js` (19/19, 3 temas × 1280/390 px).
 
-### Travessia — avaliação com rascunho no aparelho e progresso (T7 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+### Travessia — avaliação com rascunho no aparelho e progresso (T7 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11
 
 - As respostas da avaliação (autoavaliação, feedback de par e avaliação do líder) vão para um rascunho neste aparelho a cada pausa de digitação, com "💾 Rascunho guardado neste aparelho" ao lado do Salvar. Fechar a aba, recarregar ou trocar de aba não perde mais o texto: ele volta com "↩ Rascunho deste aparelho recuperado. Lembre de salvar."
 - Contador "X de N respondidas" (perguntas opcionais não contam), atualizado enquanto a pessoa digita.
@@ -98,21 +98,21 @@ Pedido do Caio: "tá muito quadrada, muita cara de IA, pouco Marine Glass". O qu
 - O rascunho fica numa chave com o uid (outra conta no mesmo navegador não vê), é apagado ao salvar e ao sair da conta (com confirmação, se houver rascunho), e é descartado se o banco tiver uma versão mais nova (salva em outro aparelho).
 - Teste: `docs/arezzo/testes/test_travessia_rascunho.js` (25/25, 1280/390 px).
 
-### Travessia — humor com aviso antes e "Desfazer" (T8 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+### Travessia — humor com aviso antes e "Desfazer" (T8 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11
 
 - "👁 Seu líder (Nome) vê esta resposta." subiu para cima das carinhas, curto; a explicação abaixo ficou só com o detalhe.
 - O toque grava na hora, mas o aviso de apoio ao líder (mal/muito mal) só sai 8 s depois. Nesse tempo aparece "Registrado · ↩ Desfazer": desfazer volta ao humor anterior (privado e compartilhado) e cancela o aviso. Trocar de carinha na janela vale a última ("muito mal" corrigido para "bem" não avisa ninguém). Se a aba for escondida ou fechada antes, o aviso sai na hora, para não se perder.
 - Só na Travessia, por decisão do Caio (o bloco de humor do Meu Dia no Maré fica para depois). Sem deploy: as regras já deixam a pessoa regravar e apagar o próprio humor do dia.
 - Testes: `test_travessia_humor_desfazer.js` (24/24) e `test_travessia.js` ajustado (o aviso agora espera a janela de 8 s; 125 ✅).
 
-### Travessia — 1:1 com "O que combinamos" (T1 etapa A da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+### Travessia — 1:1 com "O que combinamos" (T1 etapa A da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11
 
 - O registro do 1:1 ganhou o campo opcional "O que combinamos?" (até 280 caracteres), gravado em `encontros/{uid}/{id}/nota` — a regra do banco já aceitava o campo, então não há deploy.
 - A nota aparece dos dois lados: no Início da pessoa ("Últimos 1:1", os 3 mais recentes, no lugar de "Último registro") e no detalhe da pessoa na Frota do líder. O campo avisa quem mais lê (líder/pessoa e o gerente).
 - Só quem escreveu o registro vê o 🗑 (como a regra exige).
 - Teste: `docs/arezzo/testes/test_travessia_1a1_nota.js` (20/20: gravar com e sem nota, corte em 280, HTML vira texto, líder vê a nota da pessoa, 1280/390 px).
 
-### Travessia — cartão "Próxima ação" no topo da Minha travessia (T4 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+### Travessia — cartão "Próxima ação" no topo da Minha travessia (T4 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11
 
 - Uma pendência só, com verbo e botão, escolhida por prioridade: devolutiva liberada para ciência → colega esperando seu feedback (coleta) → autoavaliação aberta/pela metade ("Faltam 2 respostas") → indicar de 2 a 4 pares → 1:1 atrasado (farol amarelo/vermelho; o botão foca a data do 1:1) → Baú vazio ou parado há 3 semanas. Sem pendência, o cartão não aparece.
 - O humor fica fora de propósito (já está à vista; virar cobrança diária não é o objetivo).

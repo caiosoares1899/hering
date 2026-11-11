@@ -787,7 +787,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.78 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.79 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1461,7 +1461,7 @@ function renderAbertos(){
 // #tecnica continuam funcionando, e quem está numa delas vê a barra para voltar a "Meus produtos". Quem mostra o Oceano pela 1ª vez vê tudo.
 const OCEANO_VETERANO_APOS = 5;
 function aberturasChave(){ return 'oceano_aberturas_' + (U && U.uid || ''); }
-function contarAbertura(){ try{ if(!sessionStorage.getItem('oceano_contou')){ sessionStorage.setItem('oceano_contou','1'); localStorage.setItem(aberturasChave(), String((+localStorage.getItem(aberturasChave())||0) + 1)); } }catch(_){}   // 1 por sessão (recarregar a mesma aba não conta)
+function contarAbertura(){ try{ const sk = 'oceano_contou_' + (U && U.uid || ''); if(!sessionStorage.getItem(sk)){ sessionStorage.setItem(sk,'1'); localStorage.setItem(aberturasChave(), String((+localStorage.getItem(aberturasChave())||0) + 1)); } }catch(_){}   // 1 por sessão (recarregar a mesma aba não conta)
   const sel = document.querySelector('.tabs button[aria-selected="true"]'); document.body.classList.toggle('abas-enxutas', (!sel || sel.dataset.tab==='inicio') && ehVeterano()); }   // 1ª chamada do irAba vem antes do login (sem uid): reaplica agora
 function ehVeterano(){ try{ return (+localStorage.getItem(aberturasChave())||0) > OCEANO_VETERANO_APOS; }catch(_){ return false; } }
 function irAba(id, hash){
@@ -1474,7 +1474,7 @@ function irAba(id, hash){
 function rotearHash(inicio){
   const h = location.hash||'';
   if(h==='#meus-links'){ irAba('inicio', false); abrirPerfil('links'); history.replaceState(null,'',location.pathname+location.search); return; }
-  if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; atualizarAnimacao(); renderAbertos(); } return; }
+  if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; atualizarAnimacao(); document.title=(IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':''); renderAbertos(); } return; }
   const m = /^#\/(\w+)$/.exec(h);
   if(m && APP(m[1]) && visivel(APP(m[1])) && !APP(m[1]).futuro){ mostrarHost(m[1]); return; }
   if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; atualizarAnimacao(); document.title=(IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':''); renderAbertos(); return; }

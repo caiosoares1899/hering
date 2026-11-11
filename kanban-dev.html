@@ -6936,7 +6936,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.944-dev</div>
+<div class="version">v8.30.946-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10456,10 +10456,20 @@ async function fbCreateCard(card){
   _garantirCardVisivel(card); // síncrono, antes de qualquer await: os chamadores redesenham o board logo em seguida
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
+  // 🧩 HOTFIX 12/11/2026 (receita apagando cards): enquanto a chave do card não sai da transação, ele NÃO está em _cardsByKey — e um
+  // fbSaveCard() nesse meio-tempo (ex.: _crvPropagateToChildren() logo depois de aplicar a receita) caía no fallback pela posição LOCAL
+  // do array e sobrescrevia o card que estava naquela chave no banco (squad com "buracos" de cards excluídos). Registro "criando":
+  // fbSaveCard() espera a chave real antes de gravar.
+  window._cardsCriando = window._cardsCriando || {};
+  let _fimCriacao = ()=>{};
+  window._cardsCriando[card.id] = new Promise(r=>{ _fimCriacao = r; });
+  const _soltaCriacao = ok => { _fimCriacao(ok); if(window._cardsCriando) delete window._cardsCriando[card.id]; };
+  let txResult;
+  try{
   if(!window._fbReady) await _waitForFirebaseReady();
   card.updatedAt = new Date().toISOString();
   const idxRef = fb(FB+'/cards_index');
-  const txResult = await window._runTransaction(idxRef, currentIndex=>{
+  txResult = await window._runTransaction(idxRef, currentIndex=>{
     currentIndex = currentIndex || {};
     const used = new Set(Object.values(currentIndex).map(String));
     let key = 0;
@@ -10467,7 +10477,8 @@ async function fbCreateCard(card){
     currentIndex[card.id] = String(key);
     return currentIndex;
   });
-  if(!txResult.committed) throw new Error('fbCreateCard: transaction de cards_index não commitou');
+  }catch(e){ _soltaCriacao(false); throw e; }
+  if(!txResult.committed){ _soltaCriacao(false); throw new Error('fbCreateCard: transaction de cards_index não commitou'); }
   const key = txResult.snapshot.val()[card.id];
   // Popula o espelho AGORA, síncrono — mesmo padrão de fbSaveAll() (ver
   // comentário lá): fbSaveCard() usa window._cardsByKey pra achar a chave
@@ -10475,6 +10486,7 @@ async function fbCreateCard(card){
   // fallback por posição LOCAL (cards.indexOf), voltando a arriscar
   // colisão — justamente o que este fix evita na criação em si.
   if(window._cardsByKey) window._cardsByKey[key] = card;
+  _soltaCriacao(true);   // a partir daqui fbSaveCard() acha a chave real
   const updates = {};
   updates['cards/'+key] = card;
   updates['cards_updated_at/'+card.id] = card.updatedAt;
@@ -10547,6 +10559,11 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       const byKey = window._cardsByKey||{};
       let key = Object.keys(byKey).find(k => byKey[k] && byKey[k].id === card.id);
       const updates = {};
+      // 🧩 HOTFIX 12/11/2026: card ainda nascendo (fbCreateCard no meio da transação) — espera a chave real em vez de
+      // chutar a posição local (que sobrescrevia outro card no banco). Ver o registro em fbCreateCard().
+      if(key == null && window._cardsCriando && window._cardsCriando[card.id]){
+        return window._cardsCriando[card.id].then(ok=>{ if(!ok) throw new Error('fbSaveCard: a criação do card falhou'); return fbSaveCard(card); });
+      }
       if(key == null){
         // Fallback: snapshot espelhado ainda não tem esse card (ex.: acabou
         // de ser criado) — tenta pela posição local antes do fbSaveAll.
@@ -38238,7 +38255,7 @@ function _ilhaIntroPassos(){
       <ul class="ii-lista"><li><b>No centro, o Resumo</b>: um bloco por módulo. Clique num bloco para abrir o módulo; dá para pausar o timer ali mesmo.</li><li><b>Nas laterais, botões</b>: à esquerda o que acontece agora (Timers, Notificações, Agenda, Agente); à direita atalhos e controle (Favoritos, Serviços, Preferências, ⚙ Ajustes). No celular, ficam numa faixa embaixo.</li><li><b>📌</b> mantém aberta enquanto você usa o quadro. <b>Esc</b> ou clicar fora fecha.</li></ul>`},
     {t:'Escolha o que aparece', h:`<p>Ligue só o que faz sentido para você. Dá para mudar quando quiser em ⚙ Ajustes da ilha.</p>
       <fieldset class="ii-modo"><legend>Quando a pílula aparece</legend>
-        ${[['sempre','Sempre visível','padrão: fica no topo o tempo todo'],['acao','Só com algo acontecendo','some quando não há timer rodando nem notificação nova'],['mouse','Ao passar o mouse no topo','fica escondida até você levar o mouse lá']].filter(o=>!(o[0]==='mouse' && _ilhaCelular())).map(o=>`<label class="ii-mod"><span><b>${o[1]}</b><small>${o[2]}</small></span><input type="radio" name="ii-modo" value="${o[0]}" data-ii-modo="1"${p.modo===o[0]?' checked':''}></label>`).join('')}
+        ${[['sempre','Sempre visível','padrão: fica no topo o tempo todo'],['acao','Só com algo acontecendo','some quando não há timer rodando nem notificação nova'],['mouse','Ao passar o mouse no topo','fica escondida até você levar o mouse lá']].filter(o=>!(o[0]==='mouse' && _ilhaCelular())).map(o=>`<label class="ii-mod"><span><b>${o[1]}</b><small>${o[2]}</small></span><input type="radio" name="ii-modo" value="${o[0]}" data-ii-modo="1"${(p.modo===o[0] || (o[0]==='acao' && p.modo==='mouse' && _ilhaCelular()))?' checked':''}></label>`).join('')}
       </fieldset>
       <div class="ii-mods">
         <label class="ii-mod"><span><b>⏲ Timers</b><small>o que está rodando, pausar e continuar</small></span><input type="checkbox" data-ii-base="timer"${p.timer?' checked':''}></label>

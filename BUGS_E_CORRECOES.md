@@ -87,6 +87,36 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · 🧩 Receita (fan-out) sobrescrevia cards e acionava o Guardião (PROD hotfix · kanban v8.30.945 · kanban-dev v8.30.945)
+
+Relato (12/11/2026): uma pessoa aplicou uma receita num card (campanha) e deu erro, o Guardião disparou e cards sumiram.
+- **Causa:** `applyFanoutToCurrentCard()` cria os filhos com `fbCreateCard()` (assíncrono: a chave sai de uma transação em `cards_index`) e logo depois `_crvPropagateToChildren()` copia a Ficha Técnica da campanha para cada filho com `fbSaveCard()`. O filho ainda não estava em `_cardsByKey`, e `fbSaveCard()` caía no fallback **pela posição local do array**, gravando `cards/{posição}` e `cards_index/{filho}=posição`. Em squad com "buracos" nas chaves (cards excluídos), essa posição é a de OUTRO card no banco, que era sobrescrito e sumia (e o índice ficava inconsistente, o que acionava o Guardião).
+- **Correção (ponto único):** `fbCreateCard()` registra o card como "criando" até a chave sair da transação; `fbSaveCard()` de um card nessa situação espera a chave real em vez de chutar a posição local. Vale para todo caminho que salva um card logo depois de criar (receita, filho de supercard, duplicar…).
+- **Teste:** `docs/arezzo/testes/test_receita_cards_somem.js` (squad com chave 4 excluída + receita de 3 filhos numa campanha). Na versão anterior o "Card 7" é sobrescrito, inclusive com rede lenta (`LENTO=400`); corrigido, 5/5 no `kanban.html` e no `kanban-dev.html`. Suítes de supercard, duplicar e modal do card sem regressão.
+- **Exceção ao dev-first:** aplicado em dev E prod no mesmo PR, porque havia perda de dado acontecendo em produção.
+
+### 2026-11-11 · Travessia: /monitorarbugs das entregas do dia (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html)
+
+- **Rascunho perdido ao navegar:** o debounce de 600 ms ignorava o textarea já desconectado; editar e mudar de aba imediatamente perdia a resposta ou o exemplo das atitudes. Agora o input guarda antes da navegação. Apagar uma resposta também é uma edição: o filtro de vazio descartava esse rascunho e fazia o texto do banco reaparecer; agora preserva `''`. Readonly continua sem restauração.
+- **Troca de pessoa no demo:** `S.atSel` reutilizava `enc-inicio`, levando a atitude não salva de uma pessoa para outra. A troca limpa escolhas e último foco. O humor pendente também sobrevivia à troca (Desfazer podia alterar a nova pessoa; o aviso usava a identidade corrente). Agora encerra a janela ao trocar/sair e guarda pessoa, líder e dia originais; uma gravação que termina depois da troca não arma Desfazer na nova pessoa.
+- **Limpar atitudes:** desmarcar tudo e apagar o exemplo era recusado, mantendo os dados anteriores. Salvar vazio agora grava só `ts`, formato aceito pelas regras atuais, removendo as escolhas anteriores.
+- **Frota:** data ausente, lixo ou futura entrava na contagem de 90 dias por comparação de strings. Exige data real no intervalo até hoje.
+- **Lista branca:** `constructor`/`__proto__` passavam por `CULT[id]` via herança e geravam chips `undefined`. O catálogo agora tem protótipo nulo, aceitando só as cinco atitudes reais. Não foi identificado caminho de execução de script nesse achado.
+- **Validação:** `node scripts/checar.js`; reprodução Node com funções extraídas do HEAD e do corrigido confirmou falha antes/acerto depois para rascunho vazio, id herdado e data ausente. `docs/arezzo/testes/test_travessia_monitorarbugs_1111.js`: regressões Playwright e vizinhos (rascunhos separados, readonly, cultura desligada, ciclo sem participantes). **Playwright não executado neste sandbox, por contrato; o maestro deve rodar antes de entregar à validação do ADM.** Firebase real, entrega de notificação ao fechar a aba e regras publicadas não verificados. Regras somente lidas, sem alteração.
+- **Fronteira:** sem mudança de permissões, nós ou sinks; correção da lista branca existente e isolamento do estado por pessoa. **Dica:** não, correções de comportamento existente.
+
+
+### 2026-11-11 · Oceano e Ilha: 3 achados do /monitorarbugs (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: oceano-dev v1.79 · kanban-dev v8.30.945)
+
+- **Oceano — contagem por pessoa (O4):** a marca de "já contei nesta aba" (`sessionStorage.oceano_contou`) era da aba, não da pessoa. Ana entrava, saía e Bia entrava na mesma aba: a abertura da Bia nunca contava, e as abas de apresentação só sumiam para ela depois de mais aberturas que o prometido. A chave agora leva o uid.
+- **Oceano — título preso:** com um produto aberto (Radar, Maré…), ir para `#conheca`/`#tecnica` fechava o produto, mas a aba do navegador continuava "Radar · Oceano". `rotearHash` agora devolve o título "Oceano", como os outros caminhos que fecham o produto.
+- **Ilha — introdução no celular:** preferência "ao passar o mouse" salva noutro aparelho deixava o passo "Quando a pílula aparece" sem nenhum rádio marcado (a opção do mouse some no toque). No toque essa preferência funciona como "Só com algo acontecendo"; agora esse rádio vem marcado.
+- Achados pela varredura do Codex (que não editou os dois arquivos porque o quadro ainda os listava como reservados por tarefas encerradas) e corrigidos pelo maestro. Teste: `docs/arezzo/testes/test_monitorarbugs_1112b.js` (os 3 falham na `main` e passam com a correção).
+
+### 2026-11-11 · Radar: recorte Pra você preso ao trocar de torre (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia)
+
+Sintoma: selecionar Marcos em até 14 dias e trocar para uma torre sem esses Marcos mantinha a lista vazia e o chip de origem desaparecia. Causa: _okrEntrarTorre limpava gerência e período, mas preservava o novo filtro pv. Correção: limpar pv na mudança de torre; navegar na mesma torre preserva a escolha. Cenário: digital com pv=marcos → comercial sem Marcos pessoais. Teste: docs/arezzo/testes/test_monitorarbugs_1112.js (Playwright preparado, execução pelo maestro).
+
 ### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (SÓ DEV)
 
 A correção anterior cobriu os peixes de fundo; os oito stakeholders e o cardume central ainda tinham desenhos próprios com cauda invertida no site. Corrigida a geometria em onboarding.html e onboarding.slide.html, preservando cores, rótulos e abertura de modais. Raio da órbita dos slides limitado à largura do celular para não cortar os peixes. Teste docs/arezzo/testes/test_onboarding_bordo.js falha antes na geometria antiga e verifica os oito SVGs e os cliques de cada stakeholder nas duas páginas a 1280/390 px. Capturas em docs/capturas/a-bordo-aquario/. Fronteira: sem mudança, SVGs estáticos e CSS. Dica: não, correção visual.

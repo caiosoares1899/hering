@@ -441,7 +441,7 @@ const CULTURA = [
   { id: 'acessivel', ic: '💬', nome: 'Acessível por vocação', desc: 'Encantar todo o Brasil. Exercitar constantemente a escuta ativa e a curiosidade para antecipar os desejos e necessidades dos clientes da Hering.', dig: 'No Digital: escute o atendimento, observe a jornada e use dados para entender o cliente.' },
   { id: 'legado', ic: '🌱', nome: 'Legado em evolução', desc: 'Honrar a coragem e o empreendedorismo de 1880, com o inconformismo na busca do próximo passo de crescimento.', dig: 'No Digital: experimente melhorias, aprenda com os resultados e use IA com responsabilidade.' },
 ];
-const CULT = Object.fromEntries(CULTURA.map(c => [c.id, c]));
+const CULT = Object.assign(Object.create(null), Object.fromEntries(CULTURA.map(c => [c.id, c])));
 const atIds = v => [...new Set(String(v || '').split(','))].filter(id => CULT[id]);   // só id conhecido chega à tela (nunca o valor cru do banco)
 const atChips = v => atIds(v).map(id => `<span class="chip at" title="${esc(CULT[id].desc)}"><span aria-hidden="true">${CULT[id].ic}</span> ${esc(CULT[id].nome)}</span>`).join(' ');
 // Farol da cadência do 1:1: compara os dias desde o último encontro (menos as folgas da Escala) com a cadência combinada.
@@ -673,13 +673,13 @@ function sugestoesPares(cid, uid, pares) {
   }).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b))).slice(0, 12);
 }
 // 📝 Rascunho da avaliação neste aparelho (T7 da consultoria, 11/11/2026): o texto das respostas (autoavaliação, par, líder) vai para o
-// localStorage a cada pausa de digitação e volta se a aba fechar, recarregar ou trocar de aba antes do Salvar. A chave leva o uid (outra conta
+// localStorage a cada edição (antes que uma navegação destrua o campo) e volta se a aba fechar, recarregar ou trocar de aba antes do Salvar. A chave leva o uid (outra conta
 // no mesmo navegador não vê) e é apagada ao salvar e ao sair da conta. Rascunho mais velho que o que já está salvo no banco é descartado.
 const RASC_MAX = 2500;
 const rascChave = () => 'travessia_rasc' + (/-dev\.html/.test(location.pathname) ? '_dev' : '') + (DEMO ? '_demo' : '') + '_' + ((S.me && S.me.uid) || 'x');
 function rascLer() { try { const o = JSON.parse(localStorage.getItem(rascChave()) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (_) { return {}; } }
 function rascGravar(o) { try { if (Object.keys(o).length) localStorage.setItem(rascChave(), JSON.stringify(o)); else localStorage.removeItem(rascChave()); return true; } catch (_) { return false; } }
-function rascGuardar(t) { const o = rascLer(); const v = t.value; if (v.trim() && v !== t.defaultValue) o[t.id] = { v: v.slice(0, RASC_MAX), ts: Date.now() }; else delete o[t.id]; return rascGravar(o); }
+function rascGuardar(t) { const o = rascLer(); const v = t.value; if (v !== t.defaultValue) o[t.id] = { v: v.slice(0, RASC_MAX), ts: Date.now() }; else delete o[t.id]; return rascGravar(o); }
 function rascLimpar(ids) { const o = rascLer(); ids.forEach(i => delete o[i]); rascGravar(o); }
 const rascEditaveis = () => [...document.querySelectorAll('textarea.ta[data-resp]:not([readonly])')];
 const rascSujo = t => t.value.trim() !== t.defaultValue.trim();
@@ -691,7 +691,7 @@ function avalProgresso() {
 function rascRestaurar() {   // depois de cada render: devolve o rascunho que é mais novo que o salvo no banco
   const o = rascLer(); let mudou = false;
   rascEditaveis().forEach(t => { const d = o[t.id]; if (!d) return;
-    if (!d.v || d.v === t.defaultValue || (+d.ts || 0) <= (+t.dataset.salvoTs || 0)) { delete o[t.id]; mudou = true; return; }   // igual ao salvo, ou o banco tem coisa mais nova (outro aparelho)
+    if (typeof d.v !== 'string' || d.v === t.defaultValue || (+d.ts || 0) <= (+t.dataset.salvoTs || 0)) { delete o[t.id]; mudou = true; return; }   // igual ao salvo, ou o banco tem coisa mais nova (outro aparelho)
     if (t.value !== d.v) { t.value = d.v; rascStatus(t, '↩ Rascunho deste aparelho recuperado. Lembre de salvar.'); } });
   if (mudou) rascGravar(o); avalProgresso();
 }
@@ -762,7 +762,7 @@ function resumoAtitudesLider(a) {
 // Frota: quais atitudes o time tem conversado nos 1:1 (90 dias) — sai dos encontros que a Frota já leu (zero leitura nova).
 function viewAtitudesTime(meus, dados) {
   const lim = isoDe(new Date(Date.now() - 90 * 86400000)); const cont = {}; let total = 0;
-  meus.forEach(u => Object.values((dados[u] && dados[u].um && dados[u].um.enc) || {}).forEach(e => { if (e && CULT[e.at] && String(e.data) >= lim) { cont[e.at] = (cont[e.at] || 0) + 1; total++; } }));
+  meus.forEach(u => Object.values((dados[u] && dados[u].um && dados[u].um.enc) || {}).forEach(e => { if (e && CULT[e.at] && /^\d{4}-\d{2}-\d{2}$/.test(e.data || '') && Number.isFinite(Date.parse(e.data + 'T12:00:00')) && isoDe(new Date(e.data + 'T12:00:00')) === e.data && e.data >= lim && e.data <= hojeISO()) { cont[e.at] = (cont[e.at] || 0) + 1; total++; } }));
   const max = Math.max(1, ...Object.values(cont));
   return `<section class="gl pad stack" aria-labelledby="t-at"><h2 class="h2" id="t-at">🧭 Atitudes em foco nos 1:1 <span class="small">· últimos 90 dias</span></h2>
     <p class="small">${total ? 'O que vocês têm conversado sobre a cultura da Hering. Não é nota: serve para ver o que o time tem trabalhado e o que ainda não apareceu.' : 'Ainda nenhum 1:1 com atitude marcada. Ao registrar um 1:1, marque a atitude em foco para acompanhar aqui.'}</p>
@@ -910,13 +910,13 @@ const salvaResp = async (cid, av, grupo, caminho) => {
 // Nesse meio-tempo aparece "Registrado · Desfazer"; desfazer volta ao que estava antes e cancela o aviso. Trocar de carinha na janela reinicia a
 // contagem e vale a última. Se a aba for escondida/fechada antes, o aviso sai na hora (a pessoa saiu sem desfazer; não pode se perder).
 const HUMOR_DESFAZER_S = 8; let humorPend = null;
-function humorDisparar() { const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; alertaApoio(p.n); const u = document.getElementById('humor-undo'); if (u) u.remove(); }
-function humorArmar(k, n, antes) { if (humorPend) clearTimeout(humorPend.timer); humorPend = { k, n, antes, timer: setTimeout(humorDisparar, HUMOR_DESFAZER_S * 1000) }; }
+function humorDisparar() { const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; alertaApoio(p.n, p.pessoa, p.k, p.lid); const u = document.getElementById('humor-undo'); if (u) u.remove(); }
+function humorArmar(k, n, antes) { if (humorPend) clearTimeout(humorPend.timer); humorPend = { k, n, antes, pessoa: { ...S.me }, lid: liderDe(S.me.uid), timer: setTimeout(humorDisparar, HUMOR_DESFAZER_S * 1000) }; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') humorDisparar(); });
 window.addEventListener('pagehide', humorDisparar);
-async function alertaApoio(n) {
-  const lid = liderDe(S.me.uid); if (!(n <= 2) || !lid || lid === S.me.uid) return;
-  const id = 'apoio_' + S.me.uid + '_' + hojeISO(); const nome = (S.me.nome || 'Alguém').split(' ')[0];
+async function alertaApoio(n, pessoa, dia, lid) {
+  if (!(n <= 2) || !pessoa || !lid || lid === pessoa.uid) return;
+  const id = 'apoio_' + pessoa.uid + '_' + dia; const nome = (pessoa.nome || 'Alguém').split(' ')[0];
   try { await WABS('kanban/usuarios/' + lid + '/notificacoes/' + id, { id, type: 'travessia_apoio', title: '🫶 ' + nome + ' marcou que não está bem hoje', sub: 'Para você poder apoiar. Que tal um "oi"?', cardId: null, read: false, ts: new Date().toISOString(), squad: '' }); } catch (e) { /* já avisado hoje, ou sem regra: o humor da pessoa já foi salvo */ }
 }
 document.addEventListener('click', async e => {
@@ -933,7 +933,6 @@ document.addEventListener('click', async e => {
     const { cid, av, papel } = b.dataset; const box = b.closest('.cult-bloco'); if (!box || !['auto', 'par', 'lider'].includes(papel)) return;
     const at = atLidos(box, 'at'), atd = atLidos(box, 'atd'); const tx = box.querySelector('textarea[data-resp^="at-"]'); const atx = tx ? tx.value.trim() : '';
     const reg = { ts: Date.now() }; if (at.length) reg.at = at.slice(0, 2).join(','); if (papel === 'lider' && atd.length) reg.atd = atd.slice(0, 2).join(','); if (atx) reg.atx = atx.slice(0, 1200);
-    if (Object.keys(reg).length < 2) { toast('Marque ao menos uma atitude ou escreva um exemplo.'); return; }
     const caminho = 'avaliacoes/' + cid + '/' + av + '/atitudes/' + (papel === 'par' ? 'par/' + me : papel);
     if (await tenta(() => W(caminho, reg), '🧭 Atitudes salvas.')) { if (tx) rascLimpar([tx.id]); box.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); invalida('aval:' + cid + ':' + av); invalida('atpar:' + cid + ':' + av); render(); }
     return;
@@ -941,9 +940,10 @@ document.addEventListener('click', async e => {
   if (a === 'ciclo-cultura') { const cid = b.dataset.cid; const v = !(S.ciclos[cid] && S.ciclos[cid].cultura); if (await tenta(() => W('ciclos/' + cid + '/cultura', v), v ? '🧭 Atitudes ligadas neste ciclo.' : 'Atitudes desligadas neste ciclo.')) { S.ciclos[cid] = Object.assign({}, S.ciclos[cid], { cultura: v }); invalida('aval:' + cid); render(); } return; }
   if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
   if (a === 'humor') {
-    const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() };
+    const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() }; const pessoa = { ...S.me }, lid = liderDe(me);
     const cacheH = S.cache['humor:' + me] || {}; const antes = humorPend && humorPend.k === k ? humorPend.antes : (cacheH[k] ? Object.assign({}, cacheH[k]) : null);   // 2º toque na janela: o "desfazer" volta ao que era ANTES do 1º
     const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); await W('humor_comp/' + me + '/' + k, reg); });
+    if (ok && S.me?.uid !== me) { alertaApoio(n, pessoa, k, lid); return; }
     if (ok) { humorArmar(k, n, antes); S.cache['humor:' + me] = Object.assign({}, cacheH, { [k]: Object.assign({ comp: true }, reg) }); render(); } return;
   }
   if (a === 'humor-desfazer') {
@@ -1004,7 +1004,7 @@ document.addEventListener('change', async e => {
 document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('textarea[data-resp]')) S.ultimoFoco = e.target.id; });
 const rascTimers = {};
 document.addEventListener('input', e => { const t = e.target;
-  if (t.matches && t.matches('textarea.ta[data-resp]:not([readonly])')) { avalProgresso(); clearTimeout(rascTimers[t.id]); rascTimers[t.id] = setTimeout(() => { if (!t.isConnected) return; rascStatus(t, rascGuardar(t) ? (rascSujo(t) ? '💾 Rascunho guardado neste aparelho' : '') : '⚠ Não deu para guardar o rascunho neste aparelho — salve antes de sair.'); }, 600); } });
+  if (t.matches && t.matches('textarea.ta[data-resp]:not([readonly])')) { rascGuardar(t); avalProgresso(); clearTimeout(rascTimers[t.id]); rascTimers[t.id] = setTimeout(() => { if (!t.isConnected) return; rascStatus(t, rascGuardar(t) ? (rascSujo(t) ? '💾 Rascunho guardado neste aparelho' : '') : '⚠ Não deu para guardar o rascunho neste aparelho — salve antes de sair.'); }, 600); } });
 window.addEventListener('beforeunload', e => { const sujos = rascEditaveis().filter(rascSujo); if (!sujos.length) return; sujos.forEach(rascGuardar); e.preventDefault(); e.returnValue = ''; });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.pesq) { S.pesq = e.target.value; clearTimeout(window.__pT); window.__pT = setTimeout(render, 220); } });
 document.addEventListener('submit', async e => {
@@ -1091,7 +1091,7 @@ function mostraLogin(msg) { $('#login').hidden = false; $('#app').hidden = true;
 $('#btn-login').addEventListener('click', () => { $('#login-err').hidden = true; if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; } window._signIn().catch(e => mostraLogin('Não deu pra entrar: ' + (e && e.message || e))); });
 $('#btn-sair').addEventListener('click', async () => {   // sair da conta apaga o rascunho da avaliação deste aparelho (texto pessoal em aparelho que pode ser compartilhado)
   if (S.me && Object.keys(rascLer()).length && !(await uiConfirm('Você tem respostas da avaliação não salvas neste aparelho. Sair apaga esse rascunho. Sair mesmo assim?', 'Sair'))) return;
-  if (S.me) { try { localStorage.removeItem(rascChave()); } catch (_) {} } signOut(auth);
+  if (S.me) { try { localStorage.removeItem(rascChave()); } catch (_) {} } humorDisparar(); signOut(auth);
 });
 $('#btn-tema').addEventListener('click', () => { const atual = document.documentElement.getAttribute('data-theme') || ''; const i = TEMAS.findIndex(x => x[0] === atual); aplicaTema(TEMAS[(i + 1) % TEMAS.length][0], true); });
 const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhenses'], ['sunset', '🌅', 'Entardecer']];
@@ -1137,14 +1137,14 @@ if (DEMO) {
   // 🎭 Modo demonstração: sem login e sem Firebase. O seletor do topo troca a pessoa que está "olhando" (cada visão enxerga o que as regras permitiriam).
   Object.assign(MEM, demoDados());
   const sel = $('#demo-persona'); sel.innerHTML = DEMO_PERSONAS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(''); $('#demo-bar').hidden = false; document.body.classList.add('demo');
-  const entrar = k => { const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
+  const entrar = k => { humorDisparar(); S.atSel = {}; S.ultimoFoco = null; const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
   sel.addEventListener('change', () => { S.tab = 'inicio'; entrar(sel.value); });
   try { const qp = new URLSearchParams(location.search).get('como'); if (qp && DEMO_PERSONAS.some(x => x[0] === qp)) sel.value = qp; } catch (_) {}
   entrar(sel.value);
 } else {
   onAuthStateChanged(auth, async u => {
     if (window.MareLogin && MareLogin.voltando) return;
-    if (!u) { S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
+    if (!u) { humorDisparar(); S.atSel = {}; S.cache = {}; S.ultimoFoco = null; S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
     const empresa = /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com');
     if (!empresa) { S.aviso = 'O Travessia é só para contas Google @ciahering.com.br.'; mostraLogin(S.aviso); signOut(auth).catch(() => {}); return; }
     await abrirApp(u);

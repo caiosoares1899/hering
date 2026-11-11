@@ -111,9 +111,6 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| Codex | `codex/a-bordo-aquario` | `onboarding.html`, `onboarding.slide.html`, teste e registros: corrige os peixes do aquário de stakeholders e cardume central. PR #1709 já publicado. | 11/11/2026 |
-| Codex | `codex/ilha-notificacoes` | `kanban-dev.html` (sino completo na Ilha), testes e registros; autorizado pelo Caio a trabalhar nesta área | 10/11/2026 |
-| Claude | `claude/sonar-*` (evolução do Sonar: correções, filtros, prévia, histórico) | **`mare-sonar-dev.js`** (módulo: só o Claude edita), adaptadores do Sonar em `kanban-dev.html` e `oceano-dev.html`. **Antigravity:** o `/monitorarbugs` do Sonar relata os achados em "Escalado para o Claude" (ou comentário no PR), sem editar esses arquivos | 10/11/2026 |
 
 ### Backlog (combinado para depois das férias do Caio, a partir de 04/11/2026)
 | Ideia | Dono | Onde está o desenho |
@@ -153,6 +150,7 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🚀 Promoção de 12/11 (kanban v8.30.946, okr v2.115, oceano v1.79, travessia, painel v5.104): conhecimento do Agente Ágil regenerado (Ajuda de prod mudou) — republicar as 5 funções que leem o conhecimento. | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 12/11/2026 |
 | Claude | 🧭 Cultura Hering na Travessia: `encontros/{uid}/{id}/at` (atitude em foco do 1:1), nó `avaliacoes/{cid}/{avaliado}/atitudes/{auto,lider,par/{par}}` (leitura/escrita copiadas de auto, lider e resp_pares) e `ciclos/{cid}/cultura`. Só acrescenta campos/nós (nada fica mais aberto); testes em `travessiaRules.test.js`. **Antes de alguém usar a Travessia dev com o PR mergeado** (sem a regra, salvar um 1:1 com atitude dá permissão negada). | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 11/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
