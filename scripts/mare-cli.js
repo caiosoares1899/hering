@@ -2,20 +2,28 @@
 'use strict';
 
 /**
- * mare-cli.js — CLI de Governança de Versão (-dev), Cache-Buster, Logs e Code Map do Maré Digital
+ * mare-cli.js — CLI de Governança, Índice de Símbolos, Busca Cirúrgica e Ship do Maré Digital
  * Zero dependências externas (Node.js puro / CommonJS).
  *
  * Divisão de papéis sem sobreposição com `promover.js`:
- * - `scripts/mare-cli.js` cuida de `status` (versões e `?v=N`), `bump` (incremento em `-dev` + `version.json` + `?v=N`),
- *   `log` (inserção padronizada em `CHANGELOG.md` ou `BUGS_E_CORRECOES.md`) e `map` (revalidação de `CODE_MAP.md` + geração de `CODE_MAP_FAST.md`).
+ * - `scripts/mare-cli.js` cuida de `status`, `brief` (/seatualizar instantâneo), `daily` (rotina diária),
+ *   `bump` (-dev + version.json + ?v=N), `log` (CHANGELOG.md / BUGS_E_CORRECOES.md),
+ *   `map` / `symbols` (CODE_MAP.md + CODE_MAP_FAST.md + docs/CODE_SYMBOLS.md),
+ *   `slice` / `find` (leitura e busca cirúrgica em HTMLs > 2,6 MB sem travar read_file),
+ *   `check-script` (--file ou --code) e `ship` (pipeline declarativo em 1 clique via .mare-ship.json).
  * - `.claude/skills/subirproprod/promover.js` cuida exclusivamente da promoção dev → prod (`--status` e `<alvos>`),
  *   preservando as divergências permanentes de produção.
  *
  * Subcomandos:
  *   node scripts/mare-cli.js status
+ *   node scripts/mare-cli.js brief
+ *   node scripts/mare-cli.js daily
  *   node scripts/mare-cli.js bump [alvos...]
  *   node scripts/mare-cli.js log --type <feature|bug> --title "<titulo>" [--body "<itens>"] [--body-file <caminho>]
- *   node scripts/mare-cli.js map
+ *   node scripts/mare-cli.js map [--deep]
+ *   node scripts/mare-cli.js symbols
+ *   node scripts/mare-cli.js slice <arquivo> <linha_inicio> [linha_fim]
+ *   node scripts/mare-cli.js find <padrao> [--file <arquivo>] [--max <N>]
  *   node scripts/mare-cli.js check-script --page <arquivo-dev.html> (--file <script.js> | --code "<js>")
  *   node scripts/mare-cli.js ship [--manifest <caminho>]
  */
@@ -23,7 +31,7 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { execFileSync, spawnSync } = require('child_process');
+const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -34,6 +42,7 @@ const DEV_HTML_FILES = [
   'oceano-dev.html',
   'escala-dev.html',
   'intake-dev.html',
+  'travessia-dev.html',
 ];
 
 const SHARED_MODULES = [
@@ -62,6 +71,9 @@ const PAGE_TARGET_MAP = {
   'escala-dev': { versionKey: 'escala_dev', htmlFile: 'escala-dev.html' },
   'escala_dev': { versionKey: 'escala_dev', htmlFile: 'escala-dev.html' },
   'escala':     { versionKey: 'escala_dev', htmlFile: 'escala-dev.html' },
+  'intake-dev': { versionKey: 'intake_dev', htmlFile: 'intake-dev.html' },
+  'intake_dev': { versionKey: 'intake_dev', htmlFile: 'intake-dev.html' },
+  'intake':     { versionKey: 'intake_dev', htmlFile: 'intake-dev.html' },
 };
 
 const MODULE_TARGET_MAP = {
@@ -115,13 +127,11 @@ function writeVersionJson(data) {
  * - "v5.75 · painel-dev" -> "v5.76 · painel-dev"
  */
 function incrementVersionString(verStr) {
-  // Caso 1: vX.Y.Z-dev ou vX.Y.Z
   const semverMatch = verStr.match(/^(v\d+\.\d+\.)(\d+)(.*)$/);
   if (semverMatch) {
     const nextPatch = parseInt(semverMatch[2], 10) + 1;
     return `${semverMatch[1]}${nextPatch}${semverMatch[3]}`;
   }
-  // Caso 2: vX.Y · sufixo
   const minorMatch = verStr.match(/^(v\d+\.)(\d+)(.*)$/);
   if (minorMatch) {
     const nextMinor = parseInt(minorMatch[2], 10) + 1;
@@ -132,7 +142,6 @@ function incrementVersionString(verStr) {
 
 /**
  * Escaneia os arquivos -dev.html em busca de `<script src="<mod>.js?v=N">`
- * Retorna { [mod]: { max: number, byFile: { [htmlFile]: number[] } } }
  */
 function scanModuleCacheBusters() {
   const result = {};
@@ -177,6 +186,7 @@ function cmdStatus() {
     ['slide',  ver.okr_apresentacao, null, null],
   ];
   for (const [prodKey, prodVal, devKey, devVal] of pairs) {
+    if (!prodVal && !devVal) continue;
     if (devKey) {
       console.log(`  ${prodKey.padEnd(8)} prod: ${String(prodVal).padEnd(22)} | ${devKey.padEnd(10)} dev: ${devVal}`);
     } else {
@@ -195,13 +205,118 @@ function cmdStatus() {
 }
 
 // ---------------------------------------------------------------------------
+// 1-B. Subcomandos rápidos: brief (/seatualizar <0.15s) e daily (rotina diária)
+// ---------------------------------------------------------------------------
+
+function normalizeCompareVer(v) {
+  return String(v || '')
+    .replace(/-dev\b/g, '')
+    .replace(/\s*·\s*[a-z0-9_-]+$/i, '')
+    .trim();
+}
+
+function cmdBrief() {
+  console.log('=== ⚡ /seatualizar · Resumo Instantâneo (mare-cli brief) ===');
+
+  // 1. Git local
+  const branchRes = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT, encoding: 'utf8' });
+  const headRes = spawnSync('git', ['log', '-1', '--oneline'], { cwd: ROOT, encoding: 'utf8' });
+  console.log(`Git local : ${(branchRes.stdout || '').trim()} @ ${(headRes.stdout || '').trim()}`);
+
+  // 2. Versões (destaca onde dev > prod)
+  const ver = readVersionJson();
+  const verSummary = [];
+  for (const base of ['kanban', 'painel', 'okr', 'oceano', 'escala']) {
+    const p = ver[base];
+    const d = ver[`${base}_dev`];
+    if (!p && !d) continue;
+    const ahead = normalizeCompareVer(p) !== normalizeCompareVer(d);
+    verSummary.push(`${base}: ${ahead ? `⚡ ${d} (prod ${p})` : `= ${p}`}`);
+  }
+  console.log(`Versões   : ${verSummary.join(' | ')}`);
+
+  // 3. Quadro de coordenação
+  const coordPath = path.join(ROOT, 'docs', 'COORDENACAO_AGENTES.md');
+  if (fs.existsSync(coordPath)) {
+    const coord = fs.readFileSync(coordPath, 'utf8');
+    const secMatch = coord.match(/##\s+6\.\s+Quadro[\s\S]*?(?=\n##\s+7\.|$)/);
+    if (secMatch) {
+      const lines = secMatch[0].split(/\r?\n/);
+      console.log('\n--- Quadro de Coordenação (docs/COORDENACAO_AGENTES.md) ---');
+      let currentSub = '';
+      for (const l of lines) {
+        if (/^###\s+/.test(l)) {
+          currentSub = l.replace(/^###\s+/, '').trim();
+          if (/Backlog/i.test(currentSub)) continue;
+          console.log(`[${currentSub}]`);
+          continue;
+        }
+        if (/Backlog/i.test(currentSub)) continue;
+        if (l.startsWith('|') && !l.startsWith('|---') && !/\|\s*Agente\s*\|/.test(l) && !/\|\s*Quem\s/.test(l)) {
+          console.log('  ' + l.slice(0, 180) + (l.length > 180 ? '…' : ''));
+        }
+      }
+    }
+  }
+
+  // 4. Topo de CHANGELOG.md e BUGS_E_CORRECOES.md
+  const clPath = path.join(ROOT, 'CHANGELOG.md');
+  if (fs.existsSync(clPath)) {
+    const clHeads = fs.readFileSync(clPath, 'utf8')
+      .split(/\r?\n/)
+      .filter((l) => l.startsWith('### '))
+      .slice(0, 5);
+    console.log('\n--- Últimas Features (CHANGELOG.md) ---');
+    clHeads.forEach((h) => console.log('  ' + h.replace(/^###\s+/, '• ')));
+  }
+
+  const bugsPath = path.join(ROOT, 'BUGS_E_CORRECOES.md');
+  if (fs.existsSync(bugsPath)) {
+    const bugsTxt = fs.readFileSync(bugsPath, 'utf8');
+    const histIdx = bugsTxt.indexOf('## 🐛 Histórico de Bugs e Correções');
+    const bugHeads = (histIdx >= 0 ? bugsTxt.slice(histIdx) : bugsTxt)
+      .split(/\r?\n/)
+      .filter((l) => l.startsWith('### '))
+      .slice(0, 5);
+    console.log('\n--- Últimos Bugs/Correções (BUGS_E_CORRECOES.md) ---');
+    bugHeads.forEach((h) => console.log('  ' + h.replace(/^###\s+/, '• ')));
+  }
+}
+
+function cmdDaily() {
+  cmdBrief();
+
+  console.log('\n=== 🔄 Status de Promoção dev → prod (promover.js --status) ===');
+  const promPath = path.join(ROOT, '.claude/skills/subirproprod/promover.js');
+  if (fs.existsSync(promPath)) {
+    spawnSync(process.execPath, [promPath, '--status'], { cwd: ROOT, stdio: 'inherit' });
+  }
+
+  console.log('\n=== 🛡️ Checagens da CI (scripts/checar.js) ===');
+  const checarRes = spawnSync(process.execPath, [path.join(ROOT, 'scripts/checar.js')], { cwd: ROOT, stdio: 'inherit' });
+
+  console.log('\n=== 🧪 Testes de Cloud Functions e Regras (functions) ===');
+  const fnRes = spawnSync('npm', ['--prefix', 'functions', 'test'], { cwd: ROOT, encoding: 'utf8' });
+  const tailLines = `${fnRes.stdout || ''}\n${fnRes.stderr || ''}`
+    .split(/\r?\n/)
+    .filter((l) => /^ℹ\s+(tests|pass|fail|skipped)|not ok /i.test(l));
+  tailLines.forEach((l) => console.log('  ' + l));
+
+  if (checarRes.status !== 0 || fnRes.status !== 0) {
+    console.error('\n❌ [daily] Falha detectada em checar.js ou nos testes de functions/.');
+    process.exit(1);
+  }
+  console.log('\n✅ [daily] Ecossistema 100% verde (checar.js + functions test OK).');
+}
+
+// ---------------------------------------------------------------------------
 // 2. Subcomando: bump [alvos...]
 // ---------------------------------------------------------------------------
 
 function cmdBump(targets) {
   if (!targets || targets.length === 0) {
     console.error('Uso: node scripts/mare-cli.js bump <alvo1> [alvo2 ...]');
-    console.error('  Módulos: mare-notif-dev, mare-metas-dev, mare-dicas-dev, mare-login-dev');
+    console.error('  Módulos: mare-notif-dev, mare-metas-dev, mare-dicas-dev, mare-login-dev, mare-plantao-dev, mare-sonar-dev, mare-timer-dev');
     console.error('  Páginas: kanban-dev, painel-dev, okr-dev, oceano-dev, escala-dev');
     process.exit(1);
   }
@@ -250,20 +365,18 @@ function cmdBump(targets) {
 
       const oldVer = ver[versionKey];
       if (!oldVer) {
-        console.error(`[bump] Chave "${versionKey}" não encontrada em version.json`);
-        process.exit(1);
+        console.warn(`[bump] Aviso: "${htmlFile}" não possui chave "${versionKey}" em version.json (sem versão própria).`);
+        continue;
       }
       const newVer = incrementVersionString(oldVer);
       ver[versionKey] = newVer;
       versionJsonDirty = true;
 
-      // Atualiza no arquivo HTML correspondente
       const htmlPath = path.join(ROOT, htmlFile);
       if (fs.existsSync(htmlPath)) {
         let html = fs.readFileSync(htmlPath, 'utf8');
         let replacedInHtml = false;
 
-        // Padrão 1: <div class="version">oldVer</div> (kanban-dev, painel-dev, okr-dev)
         const divTarget = `<div class="version">${oldVer}</div>`;
         if (html.includes(divTarget)) {
           html = html.replace(divTarget, `<div class="version">${newVer}</div>`);
@@ -276,7 +389,6 @@ function cmdBump(targets) {
           }
         }
 
-        // Padrão 2: const VERSION = 'oldVer' (oceano-dev, escala-dev)
         const constTarget = `const VERSION = '${oldVer}'`;
         if (html.includes(constTarget)) {
           html = html.replace(constTarget, `const VERSION = '${newVer}'`);
@@ -353,10 +465,9 @@ function cmdLog(args) {
 
   let bodyText = '';
   if (opts.bodyFile) {
-    const bfPath = path.resolve( process.cwd(), opts.bodyFile );
+    const bfPath = path.resolve(process.cwd(), opts.bodyFile);
     bodyText = fs.readFileSync(bfPath, 'utf8');
   } else if (opts.body) {
-    // Converte "\n" escapado em quebras reais se necessário
     bodyText = opts.body.replace(/\\n/g, '\n');
   } else {
     console.error('Erro: informe --body "<itens>" ou --body-file <caminho>.');
@@ -402,7 +513,7 @@ function cmdLog(args) {
     const content = fs.readFileSync(bugsPath, 'utf8');
     const headingMatch = content.match(/^##\s+(?:🐛\s+)?Histórico de Bugs e Correções[^\r\n]*$/m);
     if (!headingMatch) {
-      console.error('Erro: cabeçalho "## 🐛 Histórico de Bugs e Correções" não encontrado em BUGS_E_CORRECOES.md (nunca inserir antes da seção de Armadilhas).');
+      console.error('Erro: cabeçalho "## 🐛 Histórico de Bugs e Correções" não encontrado em BUGS_E_CORRECOES.md.');
       process.exit(1);
     }
     const idx = headingMatch.index;
@@ -417,7 +528,7 @@ function cmdLog(args) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Subcomando: map (Revalidação de âncoras Lxxxx + geração do CODE_MAP_FAST.md)
+// 4. Subcomandos: map & symbols (CODE_MAP.md + CODE_MAP_FAST.md + docs/CODE_SYMBOLS.md)
 // ---------------------------------------------------------------------------
 
 const MAP_TARGET_FILES = [
@@ -426,12 +537,16 @@ const MAP_TARGET_FILES = [
   'okr-dev.html',
   'oceano-dev.html',
   'escala-dev.html',
+  'intake-dev.html',
+  'travessia-dev.html',
   'okr-apresentacao.slide.html',
   'mare-notif-dev.js',
   'mare-metas-dev.js',
   'mare-dicas-dev.js',
   'mare-login-dev.js',
   'mare-plantao-dev.js',
+  'mare-sonar-dev.js',
+  'mare-timer-dev.js',
 ];
 
 function escapeRegExp(str) {
@@ -449,10 +564,25 @@ function loadSourceLines() {
   return files;
 }
 
-/**
- * Detecta a qual arquivo pertence uma linha do CODE_MAP.md baseando-se nos
- * cabeçalhos `## ` e `### ` atuais do documento (nunca depende de números fixos de linha).
- */
+function detectFileFromHeading(line) {
+  if (line.includes('mare-notif.js') || line.includes('mare-notif-dev.js')) return 'mare-notif-dev.js';
+  if (line.includes('mare-metas.js') || line.includes('mare-metas-dev.js')) return 'mare-metas-dev.js';
+  if (line.includes('mare-dicas.js') || line.includes('mare-dicas-dev.js')) return 'mare-dicas-dev.js';
+  if (line.includes('mare-login.js') || line.includes('mare-login-dev.js')) return 'mare-login-dev.js';
+  if (line.includes('mare-plantao.js') || line.includes('mare-plantao-dev.js')) return 'mare-plantao-dev.js';
+  if (line.includes('mare-sonar.js') || line.includes('mare-sonar-dev.js')) return 'mare-sonar-dev.js';
+  if (line.includes('mare-timer.js') || line.includes('mare-timer-dev.js')) return 'mare-timer-dev.js';
+  if (line.includes('okr-apresentacao.slide.html')) return 'okr-apresentacao.slide.html';
+  if (line.includes('kanban.html') || line.includes('kanban-dev.html')) return 'kanban-dev.html';
+  if (line.includes('painel.html') || line.includes('painel-dev.html')) return 'painel-dev.html';
+  if (line.includes('okr.html') || line.includes('okr-dev.html')) return 'okr-dev.html';
+  if (line.includes('oceano.html') || line.includes('oceano-dev.html')) return 'oceano-dev.html';
+  if (line.includes('escala.html') || line.includes('escala-dev.html')) return 'escala-dev.html';
+  if (line.includes('intake.html') || line.includes('intake-dev.html')) return 'intake-dev.html';
+  if (line.includes('travessia.html') || line.includes('travessia-dev.html')) return 'travessia-dev.html';
+  return undefined;
+}
+
 function buildSectionFileResolver(mapLines) {
   const lineToFile = new Array(mapLines.length + 1).fill(null);
   let currentFile = null;
@@ -460,44 +590,13 @@ function buildSectionFileResolver(mapLines) {
   for (let i = 0; i < mapLines.length; i++) {
     const line = mapLines[i];
     if (/^##\s+/.test(line)) {
-      if (line.includes('mare-notif.js') || line.includes('mare-notif-dev.js')) {
-        currentFile = 'mare-notif-dev.js';
-      } else if (line.includes('mare-metas.js') || line.includes('mare-metas-dev.js')) {
-        currentFile = 'mare-metas-dev.js';
-      } else if (line.includes('mare-dicas.js') || line.includes('mare-dicas-dev.js')) {
-        currentFile = 'mare-dicas-dev.js';
-      } else if (line.includes('mare-login.js') || line.includes('mare-login-dev.js')) {
-        currentFile = 'mare-login-dev.js';
-      } else if (line.includes('mare-plantao.js') || line.includes('mare-plantao-dev.js')) {
-        currentFile = 'mare-plantao-dev.js';
-      } else if (line.includes('kanban.html') || line.includes('kanban-dev.html')) {
-        currentFile = 'kanban-dev.html';
-      } else if (line.includes('painel.html') || line.includes('painel-dev.html')) {
-        currentFile = 'painel-dev.html';
-      } else if (line.includes('okr.html') || line.includes('okr-dev.html')) {
-        currentFile = 'okr-dev.html';
-      } else if (line.includes('oceano.html') || line.includes('oceano-dev.html')) {
-        currentFile = 'oceano-dev.html';
-      } else if (line.includes('escala.html') || line.includes('escala-dev.html')) {
-        currentFile = 'escala-dev.html';
-      } else if (line.includes('okr-apresentacao.slide.html')) {
-        currentFile = 'okr-apresentacao.slide.html';
-      } else {
-        currentFile = null;
-      }
+      const detected = detectFileFromHeading(line);
+      currentFile = detected !== undefined ? detected : null;
     } else if (/^###\s+/.test(line)) {
-      // Na seção "Páginas Secundárias", cada ### define uma página diferente
-      if (line.includes('painel.html') || line.includes('painel-dev.html')) {
-        currentFile = 'painel-dev.html';
-      } else if (line.includes('okr.html') || line.includes('okr-dev.html')) {
-        currentFile = 'okr-dev.html';
-      } else if (line.includes('oceano.html') || line.includes('oceano-dev.html')) {
-        currentFile = 'oceano-dev.html';
-      } else if (line.includes('escala.html') || line.includes('escala-dev.html')) {
-        currentFile = 'escala-dev.html';
-      } else if (line.includes('okr-apresentacao.slide.html')) {
-        currentFile = 'okr-apresentacao.slide.html';
-      } else if (line.includes('maredigital.html') || line.includes('intake.html')) {
+      const detected = detectFileFromHeading(line);
+      if (detected !== undefined) {
+        currentFile = detected;
+      } else if (/\b(?:functions\/|agent[e]?-agil\/|intake\/\s*e\s*backup\/|okr\/\s*—|spotify\/|maredigital\.html|guia-okr\.html)/.test(line)) {
         currentFile = null;
       }
     }
@@ -530,21 +629,22 @@ function findDecl(srcLines, name, hintLine) {
   }
 
   if (candidates.length === 0) return null;
+  const h = Number.isFinite(hintLine) ? hintLine : 1;
   candidates.sort((a, b) => {
     if (a[0] !== b[0]) return a[0] - b[0];
-    return Math.abs(a[1] - hintLine) - Math.abs(b[1] - hintLine);
+    return Math.abs(a[1] - h) - Math.abs(b[1] - h);
   });
   return candidates[0][1];
 }
 
-function generateCodeMapFast(mapLines) {
+function generateCodeMapFast(mapLines, srcFiles) {
   const fastLines = [];
   const today = new Date().toISOString().slice(0, 10);
 
   fastLines.push('# CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida');
   fastLines.push('');
   fastLines.push(`> Gerado automaticamente por \`node scripts/mare-cli.js map\` em ${today}.`);
-  fastLines.push('> Use este índice para localizar rapidamente a linha no `CODE_MAP.md` ou as âncoras `Lxxxx` diretas nos arquivos `-dev`.');
+  fastLines.push('> Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).');
   fastLines.push('');
   fastLines.push('## 1. Sumário de Seções (`CODE_MAP.md`)');
   fastLines.push('');
@@ -560,40 +660,65 @@ function generateCodeMapFast(mapLines) {
   }
 
   fastLines.push('');
-  fastLines.push('## 2. Principais Âncoras por Arquivo (`-dev`)');
+  fastLines.push('## 2. Principais Âncoras Curadas por Arquivo (`-dev`)');
   fastLines.push('');
 
-  // Coleta as primeiras âncoras de cada seção/arquivo no CODE_MAP.md
   const lineToFile = buildSectionFileResolver(mapLines);
   const anchorsByFile = {};
-  for (const f of MAP_TARGET_FILES) anchorsByFile[f] = [];
+  const seenNamesByFile = {};
+  for (const f of MAP_TARGET_FILES) {
+    anchorsByFile[f] = [];
+    seenNamesByFile[f] = new Set();
+  }
 
-  const anchorExtractRe = /`([a-zA-Z_$][\w$]*)\([^`]*\)`\s*\(L(\d+)(?:[–-]\d+)?\)|\*\*`([a-zA-Z_$][\w$]*)`\*\*\s*\(L(\d+)\)/g;
+  const addAnchor = (file, fnName, rawLine) => {
+    if (!file || !anchorsByFile[file] || !fnName) return;
+    if (['if', 'for', 'while', 'return', 'const', 'let', 'var', 'function', 'async'].includes(fnName)) return;
+    if (seenNamesByFile[file].has(fnName)) return;
+    const hint = parseInt(rawLine, 10) || 1;
+    const realLine = srcFiles && srcFiles[file] ? (findDecl(srcFiles[file], fnName, hint) || hint) : hint;
+    seenNamesByFile[file].add(fnName);
+    anchorsByFile[file].push(`\`${fnName}\` (L${realLine})`);
+  };
+
+  // Suporta `(L1234)`, `— L1234`, `— \`arq\` L1234` e tabelas `| \`fn\` | L1234 |`
+  const parenOrDashRe = /`([a-zA-Z_$][\w$]*)(?:\([^`]*\))?`(?:\s*\((?:let|const|var)\))?\s*(?:\(\s*(?:aprox\.\s*)?L(\d+)(?:[–-]\d+)?\)|[—–-]\s*(?:`([a-zA-Z0-9_.-]+\.(?:html|js))`\s*)?L(\d+))/g;
+  const boldParenRe = /\*\*`([a-zA-Z_$][\w$]*)`\*\*\s*\(L(\d+)\)/g;
+  const tableRowRe = /^\|\s*`([a-zA-Z_$][\w$]*)(?:\([^`]*\))?`\s*\|\s*L(\d+)/;
 
   for (let i = 0; i < mapLines.length; i++) {
-    const f = lineToFile[i + 1];
-    if (!f || !anchorsByFile[f]) continue;
+    const sectionFile = lineToFile[i + 1];
     const line = mapLines[i];
     let m;
-    anchorExtractRe.lastIndex = 0;
-    while ((m = anchorExtractRe.exec(line)) !== null) {
-      const fnName = m[1] || m[3];
+
+    parenOrDashRe.lastIndex = 0;
+    while ((m = parenOrDashRe.exec(line)) !== null) {
+      const fnName = m[1];
+      const explicitFile = m[3] ? detectFileFromHeading(m[3]) : undefined;
+      if (m[3] && explicitFile === undefined) continue; // ex.: functions/okr/agendaAgente.js
+      const targetFile = explicitFile || sectionFile;
       const lineNum = m[2] || m[4];
-      const token = `\`${fnName}\` (L${lineNum})`;
-      if (!anchorsByFile[f].includes(token)) {
-        anchorsByFile[f].push(token);
-      }
+      addAnchor(targetFile, fnName, lineNum);
+    }
+
+    boldParenRe.lastIndex = 0;
+    while ((m = boldParenRe.exec(line)) !== null) {
+      addAnchor(sectionFile, m[1], m[2]);
+    }
+
+    const tm = line.match(tableRowRe);
+    if (tm && sectionFile) {
+      addAnchor(sectionFile, tm[1], tm[2]);
     }
   }
 
   for (const f of MAP_TARGET_FILES) {
     const list = anchorsByFile[f];
     if (!list || list.length === 0) continue;
-    const maxItems = f === 'kanban-dev.html' ? 45 : 18;
+    const maxItems = f === 'kanban-dev.html' ? 48 : 24;
     const sliced = list.slice(0, maxItems);
-    const more = list.length > maxItems ? ` ... (+${list.length - maxItems} em CODE_MAP.md)` : '';
-    fastLines.push(`### \`${f}\` (${list.length} símbolos mapeados)`);
-    // Agrupa em linhas de até 6 símbolos para manter < 350 linhas com alta densidade
+    const more = list.length > maxItems ? ` ... (+${list.length - maxItems} em docs/CODE_SYMBOLS.md)` : '';
+    fastLines.push(`### \`${f}\` (${list.length} âncoras curadas)`);
     for (let j = 0; j < sliced.length; j += 6) {
       fastLines.push('- ' + sliced.slice(j, j + 6).join(' · '));
     }
@@ -604,7 +729,195 @@ function generateCodeMapFast(mapLines) {
   return fastLines.join('\n');
 }
 
-function cmdMap() {
+/**
+ * Escaneia diretamente o código-fonte de um arquivo `.html` ou `.js` e extrai:
+ * - faixas `<style>` e `<script>` (imune a strings '<style>' dentro do JS)
+ * - módulos `mare-*` importados
+ * - constantes globais/topo (`const NOME =` na coluna 0 ou `UPPER_CASE` até 2 espaços)
+ * - todas as funções de topo/IIFE (`function foo`, `async function foo`, `window.foo =`)
+ */
+function scanSymbolsInSource(relFile, srcLines) {
+  const isHtml = relFile.endsWith('.html');
+  const styles = [];
+  const scripts = [];
+  const extModules = [];
+  const consts = [];
+  const constSeen = new Set();
+  const sections = [];
+  let currentSection = { title: 'Topo', fns: [] };
+  sections.push(currentSection);
+  const fnSeen = new Set();
+
+  let inStyle = false;
+  let styleStart = 0;
+  let inScript = !isHtml;
+  let scriptStart = isHtml ? 0 : 1;
+  let scriptKind = 'classic';
+  let inBlockComment = false;
+
+  for (let i = 0; i < srcLines.length; i++) {
+    const line = srcLines[i];
+    const ln = i + 1;
+
+    if (isHtml && !inScript) {
+      if (!inStyle) {
+        if (/^\s*<style\b/i.test(line)) {
+          if (/<\/style\s*>/i.test(line)) {
+            styles.push(`L${ln}`);
+          } else {
+            inStyle = true;
+            styleStart = ln;
+          }
+          continue;
+        }
+        const extMatch = line.match(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>/i);
+        if (extMatch) {
+          if (/mare-[a-z0-9_-]+\.js/i.test(extMatch[1])) {
+            extModules.push(`${extMatch[1]} (L${ln})`);
+          }
+          continue;
+        }
+        if (/^\s*<script\b/i.test(line)) {
+          scriptKind = /\btype\s*=\s*["']module["']/i.test(line) ? 'module' : 'classic';
+          if (/<\/script\s*>/i.test(line)) {
+            scripts.push(`L${ln} (${scriptKind})`);
+          } else {
+            inScript = true;
+            scriptStart = ln;
+          }
+          continue;
+        }
+      } else {
+        if (/<\/style\s*>/i.test(line)) {
+          styles.push(`L${styleStart}–L${ln}`);
+          inStyle = false;
+        }
+        continue;
+      }
+      continue;
+    }
+
+    if (isHtml && inScript && /<\/script\s*>/i.test(line)) {
+      scripts.push(`L${scriptStart}–L${ln} (${scriptKind})`);
+      inScript = false;
+      inBlockComment = false;
+      continue;
+    }
+
+    if (!inScript) continue;
+
+    // Comentários de bloco /* ... */
+    if (inBlockComment) {
+      if (line.includes('*/')) inBlockComment = false;
+      continue;
+    }
+    if (/^\s*\/\*/.test(line) && !line.includes('*/')) {
+      inBlockComment = true;
+      continue;
+    }
+
+    // Banner de seção: // ═══ Título ═══
+    const secMatch = line.match(/^\s*\/\/\s*(?:═{3,}|─{4,})\s*([^═─\r\n]+?)\s*(?:═{2,}|─{2,})?\s*$/);
+    if (secMatch) {
+      const cleanSec = secMatch[1].trim().slice(0, 60);
+      if (cleanSec.length >= 3) {
+        if (currentSection.fns.length === 0) {
+          currentSection.title = cleanSec;
+        } else {
+          currentSection = { title: cleanSec, fns: [] };
+          sections.push(currentSection);
+        }
+      }
+      continue;
+    }
+
+    // Constantes globais/topo (evita pegar const locais dentro de funções indentadas)
+    const cMatch = line.match(/^const\s+([A-Za-z_$][\w$]*)\s*=/) ||
+                   line.match(/^\s{1,2}const\s+([A-Z_$][A-Z0-9_$]{1,})\s*=/);
+    if (cMatch && !constSeen.has(cMatch[1])) {
+      constSeen.add(cMatch[1]);
+      consts.push(`${cMatch[1]}:L${ln}`);
+    }
+
+    // Declarações de função de topo / IIFE / exports window.*
+    const fnMatch = line.match(/^\s{0,2}(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/) ||
+                    line.match(/^\s{0,2}window\.([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function|\(|[A-Za-z_$][\w$]*\s*=>|\{)/);
+    if (fnMatch && !fnSeen.has(fnMatch[1])) {
+      fnSeen.add(fnMatch[1]);
+      currentSection.fns.push(`${fnMatch[1]}:L${ln}`);
+    }
+  }
+
+  if (!isHtml && srcLines.length > 0) {
+    scripts.push(`L1–L${srcLines.length} (js)`);
+  }
+
+  return {
+    totalLines: srcLines.length,
+    styles,
+    scripts,
+    extModules,
+    consts,
+    sections: sections.filter((s) => s.fns.length > 0),
+    fnCount: fnSeen.size,
+  };
+}
+
+function generateCodeSymbols(srcFiles) {
+  const files = srcFiles || loadSourceLines();
+  const out = [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  out.push('# CODE_SYMBOLS.md — Índice Automático Completo de Símbolos, Blocos e `const`s');
+  out.push('');
+  out.push(`> Gerado automaticamente do código-fonte por \`node scripts/mare-cli.js map\` (ou \`symbols\`) em ${today}.`);
+  out.push('> **Como usar (Zero Buscas Cegas):** leia este arquivo com `read_file` para obter a linha exata `Lxxxx` de qualquer `<style>`, `<script>`, `const` global ou função em todos os apps `-dev` e módulos `mare-*-dev.js`.');
+  out.push('> Em arquivos > 2,5 MB onde `read_file` acusa binário (`kanban-dev.html`, `kanban.html`, `guia-okr.html`), use `node scripts/mare-cli.js slice <arquivo> <inicio> <fim>` para ler o trecho exato e `"patches"` no `.mare-ship.json` para editar.');
+  out.push('');
+
+  for (const relFile of MAP_TARGET_FILES) {
+    const lines = files[relFile];
+    if (!lines) continue;
+    const info = scanSymbolsInSource(relFile, lines);
+
+    out.push(`## \`${relFile}\` (${info.totalLines} linhas · ${info.fnCount} funções)`);
+    const metaParts = [];
+    if (info.styles.length) metaParts.push(`**CSS:** ${info.styles.join(', ')}`);
+    if (info.scripts.length) metaParts.push(`**JS:** ${info.scripts.join(', ')}`);
+    if (info.extModules.length) metaParts.push(`**Módulos:** ${info.extModules.join(', ')}`);
+    if (metaParts.length) out.push(`- ${metaParts.join(' | ')}`);
+
+    if (info.consts.length) {
+      const maxConsts = 40;
+      const shownConsts = info.consts.slice(0, maxConsts);
+      const extraC = info.consts.length > maxConsts ? ` (+${info.consts.length - maxConsts})` : '';
+      out.push(`- **Consts (${info.consts.length}):** ${shownConsts.join(' · ')}${extraC}`);
+    }
+
+    for (const sec of info.sections) {
+      const chunkSize = 10;
+      for (let j = 0; j < sec.fns.length; j += chunkSize) {
+        const prefix = j === 0 && sec.title !== 'Topo' ? `**[${sec.title}]** ` : '';
+        out.push(`- ${prefix}${sec.fns.slice(j, j + chunkSize).join(' · ')}`);
+      }
+    }
+    out.push('');
+  }
+
+  return out.join('\n');
+}
+
+function cmdSymbols() {
+  const srcFiles = loadSourceLines();
+  const symbolsContent = generateCodeSymbols(srcFiles);
+  const symbolsPath = path.join(ROOT, 'docs', 'CODE_SYMBOLS.md');
+  fs.mkdirSync(path.dirname(symbolsPath), { recursive: true });
+  fs.writeFileSync(symbolsPath, symbolsContent, 'utf8');
+  console.log(`[symbols] docs/CODE_SYMBOLS.md gerado com sucesso (${symbolsContent.split('\n').length} linhas).`);
+}
+
+function cmdMap(args = []) {
+  const deepMode = args.includes('--deep');
   const codeMapPath = path.join(ROOT, 'CODE_MAP.md');
   const originalContent = fs.readFileSync(codeMapPath, 'utf8');
   const mapLines = originalContent.split(/\r?\n/);
@@ -615,12 +928,16 @@ function cmdMap() {
   let updatesPass2 = 0;
   let updatesPass3 = 0;
 
-  // Passo 1: Padrões `fnName(...)` (L1234) ou **`CONST_NAME`** (L1234)
   const pass1Patterns = [
     new RegExp('(`([a-zA-Z_$][\\w$]*)\\([^`]*\\)`\\s*\\(\\s*(?:aprox\\.\\s*)?L)(\\d+)([–-]\\d+)?(\\))', 'g'),
     new RegExp('(\\*\\*`([a-zA-Z_$][\\w$]*)`\\*\\*\\s*\\(L)(\\d+)(\\))', 'g'),
     new RegExp('(`([a-zA-Z_$][\\w$]*)`\\s*\\(L)(\\d+)([–-]\\d+)?(\\))', 'g'),
   ];
+  if (deepMode) {
+    pass1Patterns.push(
+      new RegExp('(`([a-zA-Z_$][\\w$]*)(?:\\([^`]*\\))?`(?:\\s*\\((?:let|const|var)\\))?\\s*[—–-]\\s*L)(\\d+)([–-]\\d+)?(\\b)', 'g')
+    );
+  }
 
   for (let idx = 0; idx < mapLines.length; idx++) {
     const f = lineToFile[idx + 1];
@@ -629,19 +946,18 @@ function cmdMap() {
 
     for (const pat of pass1Patterns) {
       pat.lastIndex = 0;
-      line = line.replace(pat, (...args) => {
-        // Ajusta grupos conforme o padrão (5 ou 4 grupos)
-        const hasRangeGroup = args.length >= 8;
-        const prefix = args[1];
-        const name = args[2];
-        const oldLineStr = args[3];
-        const rangePart = hasRangeGroup ? (args[4] || '') : '';
-        const suffix = hasRangeGroup ? args[5] : args[4];
+      line = line.replace(pat, (...mArgs) => {
+        const hasRangeGroup = mArgs.length >= 8;
+        const prefix = mArgs[1];
+        const name = mArgs[2];
+        const oldLineStr = mArgs[3];
+        const rangePart = hasRangeGroup ? (mArgs[4] || '') : '';
+        const suffix = hasRangeGroup ? mArgs[5] : mArgs[4];
 
         const oldLine = parseInt(oldLineStr, 10);
         const found = findDecl(srcFiles[f], name, oldLine);
-        if (found === null || found === oldLine) {
-          return args[0];
+        if (found === null || found === oldLine || (deepMode && Math.abs(found - oldLine) > 600)) {
+          return mArgs[0];
         }
         updatesPass1++;
         if (rangePart) {
@@ -712,17 +1028,109 @@ function cmdMap() {
     fs.writeFileSync(codeMapPath, updatedContent, 'utf8');
   }
 
-  const fastContent = generateCodeMapFast(mapLines);
+  const fastContent = generateCodeMapFast(mapLines, srcFiles);
   const fastPath = path.join(ROOT, 'CODE_MAP_FAST.md');
   fs.writeFileSync(fastPath, fastContent, 'utf8');
-  const fastLineCount = fastContent.split('\n').length;
+
+  const symbolsContent = generateCodeSymbols(srcFiles);
+  const symbolsPath = path.join(ROOT, 'docs', 'CODE_SYMBOLS.md');
+  fs.mkdirSync(path.dirname(symbolsPath), { recursive: true });
+  fs.writeFileSync(symbolsPath, symbolsContent, 'utf8');
 
   console.log(
     `[map] CODE_MAP.md revalidado (Pass1: ${updatesPass1}, Pass2: ${updatesPass2}, Pass3: ${updatesPass3} atualizações).`
   );
   console.log(
-    `[map] CODE_MAP_FAST.md gerado com sucesso (${fastLineCount} linhas).`
+    `[map] CODE_MAP_FAST.md (${fastContent.split('\n').length} linhas) e docs/CODE_SYMBOLS.md (${symbolsContent.split('\n').length} linhas) gerados.`
   );
+}
+
+// ---------------------------------------------------------------------------
+// 4-B. Subcomandos cirúrgicos: slice e find (leitura rápida para HTMLs > 2,6 MB)
+// ---------------------------------------------------------------------------
+
+function cmdSlice(args) {
+  if (args.length < 2) {
+    console.error('Uso: node scripts/mare-cli.js slice <arquivo> <linha_inicio> [linha_fim]');
+    process.exit(1);
+  }
+  const relFile = args[0];
+  const fullPath = path.isAbsolute(relFile) ? relFile : path.join(ROOT, relFile);
+  if (!fs.existsSync(fullPath)) {
+    console.error(`Erro [slice]: arquivo não encontrado: ${relFile}`);
+    process.exit(1);
+  }
+  const lines = fs.readFileSync(fullPath, 'utf8').split(/\r?\n/);
+  const start = Math.max(1, parseInt(args[1], 10) || 1);
+  const endReq = args[2] ? parseInt(args[2], 10) : start + 80;
+  const end = Math.min(lines.length, Math.max(start, Math.min(endReq, start + 600)));
+
+  console.log(`=== ${relFile} (L${start}–L${end} de ${lines.length}) ===`);
+  for (let i = start; i <= end; i++) {
+    console.log(`${String(i).padStart(5)}: ${lines[i - 1]}`);
+  }
+}
+
+function cmdFind(args) {
+  let pattern = '';
+  let fileFilter = '';
+  let maxHits = 40;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--file' && args[i + 1]) fileFilter = args[++i];
+    else if (args[i] === '--max' && args[i + 1]) maxHits = parseInt(args[++i], 10) || 40;
+    else if (!pattern) pattern = args[i];
+  }
+  if (!pattern) {
+    console.error('Uso: node scripts/mare-cli.js find <padrao> [--file <arquivo>] [--max <N>]');
+    process.exit(1);
+  }
+
+  let re;
+  try {
+    re = new RegExp(pattern);
+  } catch (_) {
+    re = new RegExp(escapeRegExp(pattern));
+  }
+
+  const candidates = [];
+  if (fileFilter) {
+    candidates.push(fileFilter);
+  } else {
+    candidates.push(...MAP_TARGET_FILES);
+    const walkJs = (dir) => {
+      const absDir = path.join(ROOT, dir);
+      if (!fs.existsSync(absDir)) return;
+      for (const e of fs.readdirSync(absDir, { withFileTypes: true })) {
+        if (e.name === 'node_modules' || e.name === '.git') continue;
+        const rel = path.posix.join(dir, e.name);
+        if (e.isDirectory()) walkJs(rel);
+        else if (/\.(js|md|json)$/.test(e.name)) candidates.push(rel);
+      }
+    };
+    walkJs('functions');
+    walkJs('scripts');
+  }
+
+  let hits = 0;
+  for (const rel of candidates) {
+    const abs = path.isAbsolute(rel) ? rel : path.join(ROOT, rel);
+    if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) continue;
+    const lines = fs.readFileSync(abs, 'utf8').split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      if (re.test(lines[i])) {
+        const snippet = lines[i].length > 180 ? lines[i].slice(0, 180) + '…' : lines[i];
+        console.log(`${rel}:L${i + 1}: ${snippet}`);
+        hits++;
+        if (hits >= maxHits) {
+          console.log(`... (limite de ${maxHits} ocorrências atingido; use --file ou --max para refinar)`);
+          return;
+        }
+      }
+    }
+  }
+  if (hits === 0) {
+    console.log(`[find] Nenhuma ocorrência para /${re.source}/.`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -734,7 +1142,6 @@ function cmdArchiveChangelog() {
   const archivePath = path.join(ROOT, 'docs', 'changelog-archive-2026-07-a-09.md');
   const content = fs.readFileSync(changelogPath, 'utf8');
 
-  // Divide o arquivo pelas seções de nível 2 (`\n## `)
   const parts = content.split(/\n(?=## )/);
   const headerPart = parts[0];
   const keptSections = [headerPart];
@@ -764,7 +1171,6 @@ function cmdArchiveChangelog() {
       const yearMonth = dateMatch ? dateMatch[1] : '2026-10';
       const isSoDev = /SÓ DEV/i.test(firstLine);
 
-      // Mantém tudo de 2026-10 em diante (e garante pelo menos 35 entradas de prod em kanban.html para o gerar.js)
       if (yearMonth >= '2026-10' || (isKanbanProd && !isSoDev && prodKeptInKanban < 35)) {
         keptEntries.push(entry);
         keptCount++;
@@ -801,13 +1207,11 @@ function cmdArchiveChangelog() {
 // ---------------------------------------------------------------------------
 
 const JS_KEYWORDS_AND_GLOBALS = new Set([
-  // Keywords / statements
   'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue',
   'return', 'try', 'catch', 'finally', 'throw', 'new', 'delete', 'typeof',
   'instanceof', 'void', 'in', 'of', 'function', 'async', 'await', 'class',
   'extends', 'super', 'import', 'export', 'default', 'const', 'let', 'var',
   'true', 'false', 'null', 'undefined', 'NaN', 'Infinity', 'this', 'arguments',
-  // Standard Browser & JS Globals
   'window', 'document', 'console', 'location', 'history', 'navigator',
   'localStorage', 'sessionStorage', 'performance', 'screen', 'crypto',
   'Object', 'Array', 'String', 'Number', 'Boolean', 'Date', 'Math', 'RegExp',
@@ -819,7 +1223,7 @@ const JS_KEYWORDS_AND_GLOBALS = new Set([
   'AbortController', 'Event', 'CustomEvent', 'KeyboardEvent', 'MouseEvent',
   'FocusEvent', 'InputEvent', 'MutationObserver', 'IntersectionObserver',
   'ResizeObserver', 'Node', 'Element', 'HTMLElement', 'NodeFilter', 'DOMParser',
-  'XMLSerializer', 'CSS', ' parseInt', 'parseInt', 'parseFloat', 'isNaN',
+  'XMLSerializer', 'CSS', 'parseInt', 'parseFloat', 'isNaN',
   'isFinite', 'encodeURI', 'decodeURI', 'encodeURIComponent',
   'decodeURIComponent', 'setTimeout', 'clearTimeout', 'setInterval',
   'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame',
@@ -840,7 +1244,6 @@ function collectLocalDeclarations(cleanCode, rawCode) {
   const locals = new Set();
   let m;
 
-  // function foo(...) / function(a, b) / (a, b) => / a =>
   const fnDeclRe = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)/g;
   while ((m = fnDeclRe.exec(cleanCode)) !== null) {
     locals.add(m[1]);
@@ -871,13 +1274,11 @@ function collectLocalDeclarations(cleanCode, rawCode) {
     locals.add(m[1]);
   }
 
-  // catch (e)
   const catchRe = /\bcatch\s*\(\s*([A-Za-z_$][\w$]*)\s*\)/g;
   while ((m = catchRe.exec(cleanCode)) !== null) {
     locals.add(m[1]);
   }
 
-  // const / let / var declarations (including simple destructuring)
   const varRe = /\b(?:const|let|var)\s+([^;=\n]+)/g;
   while ((m = varRe.exec(cleanCode)) !== null) {
     const chunk = m[1];
@@ -888,7 +1289,6 @@ function collectLocalDeclarations(cleanCode, rawCode) {
     }
   }
 
-  // Also check rawCode for local function declarations that might be near template strings
   const rawFnRe = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g;
   while ((m = rawFnRe.exec(rawCode)) !== null) {
     locals.add(m[1]);
@@ -913,14 +1313,6 @@ function symbolExistsInPage(sym, combinedPageSource) {
   return patterns.some((re) => re.test(combinedPageSource));
 }
 
-/**
- * Valida se um script de teste de console:
- * 1. Tem sintaxe JS válida (`new vm.Script`)
- * 2. É estritamente read-only (não chama _set, _update, _remove, saveCard, etc.)
- * 3. Não reatribui variáveis `const` da página (ex.: `today = ...`)
- * 4. Só chama funções/símbolos e IDs que realmente existem no arquivo `-dev` alvo (Linha Vermelha #4)
- * 5. Preenche `_resultadosTeste` e chama `console.table`
- */
 function verifyConsoleTestScript(pageFile, scriptCode) {
   const errors = [];
   const resolvedPage = pageFile.endsWith('.html') || pageFile.endsWith('.js')
@@ -932,12 +1324,11 @@ function verifyConsoleTestScript(pageFile, scriptCode) {
     return { ok: false, errors: [`Arquivo alvo não encontrado: ${resolvedPage}`] };
   }
 
-  // 1. Sintaxe JS válida
   try {
     new vm.Script(scriptCode, { filename: 'console-test-script.js' });
   } catch (err) {
     errors.push(`Erro de sintaxe JS no script de teste: ${err.message}`);
-    return { ok: false, errors };
+    return { ok: false, errors, page: resolvedPage };
   }
 
   const pageSource = fs.readFileSync(pagePath, 'utf8');
@@ -952,7 +1343,6 @@ function verifyConsoleTestScript(pageFile, scriptCode) {
 
   const cleanScript = stripCommentsAndStrings(scriptCode);
 
-  // 2. Proibição de escrita no Firebase / mutação persistente (read-only)
   const forbiddenCalls = ['_set', '_update', '_remove', 'saveCard', 'deleteCard', 'saveComunicado', 'excluirComunicado'];
   for (const fn of forbiddenCalls) {
     const re = new RegExp(`(?:^|[^\\w$])${escapeRegExp(fn)}\\s*\\(`, 'm');
@@ -961,7 +1351,6 @@ function verifyConsoleTestScript(pageFile, scriptCode) {
     }
   }
 
-  // 3. Proibição de reatribuir `const` global da página (ex.: `today = new Date(...)`)
   const pageConsts = new Set();
   const constRe = /^\s*const\s+([A-Za-z_$][\w$]*)\s*=/gm;
   let cm;
@@ -977,7 +1366,6 @@ function verifyConsoleTestScript(pageFile, scriptCode) {
     }
   }
 
-  // 4. Verificação de existência de todas as funções livres chamadas no script (Linha Vermelha #4 — caso fmtDate)
   const callRe = /(^|[^.\w$])([A-Za-z_$][\w$]*)\s*\(/g;
   let fm;
   const checkedFns = new Set();
@@ -992,19 +1380,16 @@ function verifyConsoleTestScript(pageFile, scriptCode) {
     }
   }
 
-  // 5. Verificação de IDs buscados via document.getElementById('...')
   const getByIdRe = /getElementById\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
   let im;
   while ((im = getByIdRe.exec(scriptCode)) !== null) {
     const idVal = im[1];
-    // Se o próprio script cria esse ID dinamicamente, ignora
     const createdLocally = new RegExp(`id\\s*=\\s*['"]${escapeRegExp(idVal)}['"]`).test(scriptCode);
     if (!createdLocally && !combinedSource.includes(idVal)) {
       errors.push(`Elemento DOM inexistente: getElementById('${idVal}') chamado no script, mas "${idVal}" não consta em ${resolvedPage}.`);
     }
   }
 
-  // 6. Estrutura padrão (_resultadosTeste e console.table)
   if (!scriptCode.includes('_resultadosTeste')) {
     errors.push('O script de teste deve gravar os resultados em `window._resultadosTeste`.');
   }
@@ -1018,20 +1403,25 @@ function verifyConsoleTestScript(pageFile, scriptCode) {
 function cmdCheckScript(args) {
   let page = '';
   let file = '';
+  let inlineCode = '';
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--page' && args[i + 1]) page = args[++i];
     else if (args[i] === '--file' && args[i + 1]) file = args[++i];
+    else if (args[i] === '--code' && args[i + 1]) inlineCode = args[++i];
   }
-  if (!page || !file) {
-    console.error('Uso: node scripts/mare-cli.js check-script --page <arquivo-dev.html> --file <script.js>');
+  if (!page || (!file && !inlineCode)) {
+    console.error('Uso: node scripts/mare-cli.js check-script --page <arquivo-dev.html> (--file <script.js> | --code "<js>")');
     process.exit(1);
   }
-  const scriptPath = path.isAbsolute(file) ? file : path.join(ROOT, file);
-  if (!fs.existsSync(scriptPath)) {
-    console.error(`Erro: arquivo de script não encontrado: ${file}`);
-    process.exit(1);
+  let code = inlineCode;
+  if (file) {
+    const scriptPath = path.isAbsolute(file) ? file : path.join(ROOT, file);
+    if (!fs.existsSync(scriptPath)) {
+      console.error(`Erro: arquivo de script não encontrado: ${file}`);
+      process.exit(1);
+    }
+    code = fs.readFileSync(scriptPath, 'utf8');
   }
-  const code = fs.readFileSync(scriptPath, 'utf8');
   const res = verifyConsoleTestScript(page, code);
   if (!res.ok) {
     console.error(`❌ [check-script] Falha na validação contra ${res.page}:`);
@@ -1042,7 +1432,7 @@ function cmdCheckScript(args) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. Subcomando: ship (Pipeline Zero-Approval em 1 único clique via .mare-ship.json)
+// 7. Subcomando: ship (Pipeline declarativo em 1 clique via .mare-ship.json)
 // ---------------------------------------------------------------------------
 
 function runCmdOrThrow(bin, cmdArgs, opts = {}) {
@@ -1077,6 +1467,71 @@ function getGitHubTokenFromGitCredential() {
   return '';
 }
 
+function applyManifestFilesAndPatches(manifest) {
+  if (Array.isArray(manifest.files)) {
+    for (const item of manifest.files) {
+      if (!item || !item.path || typeof item.content !== 'string') {
+        throw new Error('Entrada inválida em manifest.files (exige { path, content }).');
+      }
+      const abs = path.join(ROOT, item.path);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, item.content, 'utf8');
+      console.log(`[ship:files] Gravado ${item.path} (${item.content.length} chars).`);
+    }
+  }
+
+  if (Array.isArray(manifest.patches)) {
+    for (const p of manifest.patches) {
+      if (!p || !p.file || typeof p.target !== 'string' || typeof p.replacement !== 'string') {
+        throw new Error('Entrada inválida em manifest.patches (exige { file, target, replacement }).');
+      }
+      const abs = path.join(ROOT, p.file);
+      if (!fs.existsSync(abs)) {
+        throw new Error(`[ship:patches] Arquivo não encontrado: ${p.file}`);
+      }
+      const original = fs.readFileSync(abs, 'utf8');
+      if (!original.includes(p.target)) {
+        throw new Error(`[ship:patches] Trecho target não encontrado em ${p.file}: "${p.target.slice(0, 80)}..."`);
+      }
+      const updated = p.all
+        ? original.split(p.target).join(p.replacement)
+        : original.replace(p.target, () => p.replacement);
+      fs.writeFileSync(abs, updated, 'utf8');
+      console.log(`[ship:patches] Patch aplicado em ${p.file}.`);
+    }
+  }
+}
+
+/**
+ * Em ambientes Windows onde `.agents/skills` foi materializado como diretório físico
+ * em vez de symlink, espelha automaticamente `.claude/skills/*\/SKILL.md` -> `.agents/skills/*\/SKILL.md`.
+ */
+function syncAgentSkillsMirror() {
+  const claudeSkillsDir = path.join(ROOT, '.claude', 'skills');
+  const agentsSkillsDir = path.join(ROOT, '.agents', 'skills');
+  if (!fs.existsSync(claudeSkillsDir) || !fs.existsSync(agentsSkillsDir)) return;
+  const lstat = fs.lstatSync(agentsSkillsDir);
+  if (lstat.isSymbolicLink() || !lstat.isDirectory()) return;
+
+  let synced = 0;
+  for (const entry of fs.readdirSync(claudeSkillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const srcSkill = path.join(claudeSkillsDir, entry.name, 'SKILL.md');
+    const dstSkill = path.join(agentsSkillsDir, entry.name, 'SKILL.md');
+    if (!fs.existsSync(srcSkill)) continue;
+    const srcContent = fs.readFileSync(srcSkill, 'utf8');
+    const dstContent = fs.existsSync(dstSkill) ? fs.readFileSync(dstSkill, 'utf8') : '';
+    if (srcContent !== dstContent) {
+      fs.mkdirSync(path.dirname(dstSkill), { recursive: true });
+      fs.writeFileSync(dstSkill, srcContent, 'utf8');
+      synced++;
+    }
+  }
+  if (synced > 0) {
+    console.log(`[ship] ${synced} skill(s) sincronizada(s) em .agents/skills/.`);
+  }
+}
+
 function cmdShip(args) {
   let manifestRel = '.mare-ship.json';
   for (let i = 0; i < args.length; i++) {
@@ -1084,7 +1539,7 @@ function cmdShip(args) {
   }
   const manifestPath = path.isAbsolute(manifestRel) ? manifestRel : path.join(ROOT, manifestRel);
   if (!fs.existsSync(manifestPath)) {
-    console.error(`Erro: manifesto ${manifestRel} não encontrado. Crie-o com write_to_file antes de rodar "node scripts/mare-cli.js ship".`);
+    console.error(`Erro: manifesto ${manifestRel} não encontrado. Crie-o com write_file antes de rodar "node scripts/mare-cli.js ship".`);
     process.exit(1);
   }
 
@@ -1105,7 +1560,6 @@ function cmdShip(args) {
     process.exit(1);
   }
 
-  // Monta prBody automaticamente se prSummary/testScript forem passados
   let prBody = manifest.prBody || '';
   if (!prBody && manifest.prSummary) {
     prBody = `## Resumo\n${manifest.prSummary.trim()}\n`;
@@ -1114,7 +1568,6 @@ function cmdShip(args) {
     }
   }
 
-  // 1. Validação obrigatória do script de teste (explícito ou extraído de ## Script de teste no prBody)
   let testPage = manifest.testScript && manifest.testScript.page;
   let testCode = manifest.testScript && manifest.testScript.code;
   if (!testCode && prBody && prBody.includes('## Script de teste')) {
@@ -1126,20 +1579,21 @@ function cmdShip(args) {
       }
     }
   }
-  if (testCode && testPage) {
-    const check = verifyConsoleTestScript(testPage, testCode);
-    if (!check.ok) {
-      console.error(`❌ [ship] Abortado! O script de teste falhou na validação contra ${check.page}:`);
-      check.errors.forEach((e) => console.error(`  - ${e}`));
+
+  // Pré-validação rápida de sintaxe do testScript antes de tocar no Git
+  if (testCode) {
+    try {
+      new vm.Script(testCode, { filename: 'console-test-script.js' });
+    } catch (err) {
+      console.error(`❌ [ship] Erro de sintaxe JS no script de teste: ${err.message}`);
       process.exit(1);
     }
-    console.log(`✅ [ship] Script de teste validado contra ${check.page}.`);
   }
 
-  // Remove o manifesto após validação do script para manter a árvore git limpa
+  // Remove o manifesto antes de inspecionar git status
   if (fs.existsSync(manifestPath)) fs.unlinkSync(manifestPath);
 
-  // 2. Salva em memória os arquivos editados antes do checkout para nunca ter conflito de stash em version.json/CHANGELOG
+  // Salva em memória arquivos já editados na worktree antes do checkout
   const statusOut = runCmdOrThrow('git', ['status', '--porcelain'], { capture: true }).stdout;
   const savedFiles = new Map();
   for (const line of statusOut.split(/\r?\n/)) {
@@ -1152,7 +1606,6 @@ function cmdShip(args) {
     }
   }
 
-  // 3. Sincroniza origin e posiciona a branch sem conflito
   console.log(`[ship] Sincronizando git e preparando branch ${branch}...`);
   runCmdOrThrow('git', ['fetch', 'origin']);
   if (reuseBranch) {
@@ -1161,14 +1614,16 @@ function cmdShip(args) {
     runCmdOrThrow('git', ['checkout', '-f', '-B', branch, baseRef]);
   }
 
-  // Restaura as edições feitas nos arquivos-alvo sobre a base atualizada
   for (const [rel, buf] of savedFiles.entries()) {
     const abs = path.join(ROOT, rel);
     fs.mkdirSync(path.dirname(abs), { recursive: true });
     fs.writeFileSync(abs, buf);
   }
 
-  // 4. Executa passos declarativos (promote, bump, log, map, conhecimento, tests)
+  // Aplica files e patches declarativos sobre a base limpa
+  applyManifestFilesAndPatches(manifest);
+  syncAgentSkillsMirror();
+
   if (Array.isArray(manifest.promote) && manifest.promote.length > 0) {
     console.log(`[ship] Promovendo dev -> prod: ${manifest.promote.join(', ')}...`);
     runCmdOrThrow(process.execPath, [path.join(ROOT, '.claude/skills/subirproprod/promover.js'), ...manifest.promote]);
@@ -1176,6 +1631,17 @@ function cmdShip(args) {
 
   if (Array.isArray(manifest.bump) && manifest.bump.length > 0) {
     cmdBump(manifest.bump);
+  }
+
+  // Validação completa do script de teste contra o arquivo -dev JÁ atualizado
+  if (testCode && testPage) {
+    const check = verifyConsoleTestScript(testPage, testCode);
+    if (!check.ok) {
+      console.error(`❌ [ship] Abortado! O script de teste falhou na validação contra ${check.page}:`);
+      check.errors.forEach((e) => console.error(`  - ${e}`));
+      process.exit(1);
+    }
+    console.log(`✅ [ship] Script de teste validado contra ${check.page}.`);
   }
 
   if (Array.isArray(manifest.log)) {
@@ -1195,9 +1661,12 @@ function cmdShip(args) {
     }
   }
 
-  if (manifest.conhecimento) {
+  const promotedConhecimentoTarget = Array.isArray(manifest.promote) &&
+    manifest.promote.some((t) => ['kanban', 'okr', 'oceano'].includes(t));
+  if (manifest.conhecimento || promotedConhecimentoTarget) {
     console.log('[ship] Gerando functions/agente-agil-orquestrador/conhecimento/*.json...');
     runCmdOrThrow(process.execPath, [path.join(ROOT, 'functions/agente-agil-orquestrador/conhecimento/gerar.js')]);
+    runCmdOrThrow(process.execPath, ['--test', path.join(ROOT, 'functions/agente-agil-orquestrador/__tests__/conhecimento.test.js')]);
   }
 
   if (Array.isArray(manifest.tests)) {
@@ -1207,11 +1676,9 @@ function cmdShip(args) {
     }
   }
 
-  // 5. Roda node scripts/checar.js obrigatoriamente antes de commitar
   console.log('[ship] Executando node scripts/checar.js...');
   runCmdOrThrow(process.execPath, [path.join(ROOT, 'scripts/checar.js')]);
 
-  // 6. Stage, commit com trailer Agent: antigravity e push
   runCmdOrThrow('git', ['add', '-A']);
   const fullCommitMsg = /Agent:\s*antigravity/i.test(commitMessage)
     ? commitMessage
@@ -1219,7 +1686,6 @@ function cmdShip(args) {
   runCmdOrThrow('git', ['commit', '-m', fullCommitMsg]);
   runCmdOrThrow('git', ['push', '-u', 'origin', branch]);
 
-  // 7. Cria ou atualiza a PR via gh com GH_TOKEN extraído do git credential fill
   if (manifest.skipPr) {
     console.log(`✅ [ship] Branch ${branch} enviada com sucesso (skipPr=true).`);
     return;
@@ -1269,6 +1735,12 @@ function main() {
     case 'status':
       cmdStatus();
       break;
+    case 'brief':
+      cmdBrief();
+      break;
+    case 'daily':
+      cmdDaily();
+      break;
     case 'bump':
       cmdBump(args.slice(1));
       break;
@@ -1276,7 +1748,16 @@ function main() {
       cmdLog(args.slice(1));
       break;
     case 'map':
-      cmdMap();
+      cmdMap(args.slice(1));
+      break;
+    case 'symbols':
+      cmdSymbols();
+      break;
+    case 'slice':
+      cmdSlice(args.slice(1));
+      break;
+    case 'find':
+      cmdFind(args.slice(1));
       break;
     case 'archive-changelog':
       cmdArchiveChangelog();
@@ -1288,14 +1769,19 @@ function main() {
       cmdShip(args.slice(1));
       break;
     default:
-      console.log('Uso: node scripts/mare-cli.js <status|bump|log|map|archive-changelog|check-script|ship> [opções]');
+      console.log('Uso: node scripts/mare-cli.js <status|brief|daily|bump|log|map|symbols|slice|find|archive-changelog|check-script|ship> [opções]');
       console.log('  status                                  Mostra versões (version.json) e ?v=N dos módulos');
+      console.log('  brief                                   Resumo instantâneo (/seatualizar em <0,15s)');
+      console.log('  daily                                   Monitoramento diário completo (brief + promover --status + checar + tests)');
       console.log('  bump [alvos...]                         Incrementa versão de páginas -dev ou ?v=N de módulos');
       console.log('  log --type <feature|bug> --title "..."  Insere entrada em CHANGELOG.md ou BUGS_E_CORRECOES.md');
-      console.log('  map                                     Revalida âncoras Lxxxx em CODE_MAP.md e gera CODE_MAP_FAST.md');
+      console.log('  map [--deep]                            Revalida âncoras e gera CODE_MAP_FAST.md + docs/CODE_SYMBOLS.md');
+      console.log('  symbols                                 Regenera apenas docs/CODE_SYMBOLS.md');
+      console.log('  slice <arq> <ini> [fim]                 Lê trecho numerado (essencial para HTMLs > 2,6 MB como kanban-dev.html)');
+      console.log('  find <padrao> [--file <arq>] [--max N]  Busca rápida numerada em páginas -dev, módulos e functions/');
       console.log('  archive-changelog                       Arquiva entradas 2026-07..09 em docs/changelog-archive-2026-07-a-09.md');
-      console.log('  check-script --page <arq> --file <js>   Valida sintaxe, read-only, consts e símbolos do script de teste');
-      console.log('  ship [--manifest .mare-ship.json]       Executa check-script + checkout + bump/log/map + checar + commit + PR');
+      console.log('  check-script --page <arq> (--file|--code) Valida sintaxe, read-only, consts e símbolos do script de teste');
+      console.log('  ship [--manifest .mare-ship.json]       Executa files/patches + bump/log/map + check-script + checar + commit + PR');
       process.exit(cmd ? 1 : 0);
   }
 }
@@ -1307,12 +1793,20 @@ if (require.main === module) {
 module.exports = {
   incrementVersionString,
   scanModuleCacheBusters,
+  scanSymbolsInSource,
+  generateCodeSymbols,
   cmdStatus,
+  cmdBrief,
+  cmdDaily,
   cmdBump,
   cmdLog,
   cmdMap,
+  cmdSymbols,
+  cmdSlice,
+  cmdFind,
   cmdArchiveChangelog,
   verifyConsoleTestScript,
   cmdCheckScript,
+  applyManifestFilesAndPatches,
   cmdShip,
 };

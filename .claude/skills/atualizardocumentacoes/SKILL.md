@@ -26,13 +26,14 @@ Esta skill é compartilhada entre **Claude** e **Antigravity** para manter **tod
 - Ao final, rode `node scripts/mare-cli.js map` (se mudou âncoras no `CODE_MAP.md`), `cd functions && npm run conhecimento` (se mudou `HELP_CONTENT` do `kanban.html` de prod ou `CHANGELOG.md`) e `node scripts/checar.js`.
 
 ### Se você é o **Antigravity**:
-- **Regra Orquestrador Zero-Código (`AGENTS.md`):** Nunca leia nem edite arquivos grandes (`.html` / `CODE_MAP.md`) diretamente na conversa principal.
-- **Delegue ao subagente de documentação `agente-functions-docs`** (e, quando for atualizar ajuda in-app dentro de HTMLs que **não** estejam travados no Quadro pelo Claude, acione em paralelo os subagentes de domínio correspondentes via `invoke_subagent` com `Workspace: 'inherit'` e zero terminal):
-  - **`agente-functions-docs`**: `maredigital.html`, `ecossistema.html`, `CHANGELOG.md`, `BUGS_E_CORRECOES.md`, `CODE_MAP.md`, `docs/OCEANO.md`, `version.json`.
-  - **`agente-mare`**: `HELP_CONTENT` e textos inline de ajuda em `kanban-dev.html` (somente se `kanban-dev.html` estiver livre no Quadro).
-  - **`agente-radar`**: modal de ajuda `#okr-help-ov` em `okr-dev.html` e slides de `guia-okr.html` (somente se estiverem livres no Quadro).
-  - **`agente-painel-oceano`**: `const FAQ` em `oceano-dev.html` e `docs/OCEANO.md` (somente se `oceano-dev.html` estiver livre no Quadro).
-- Quando os subagentes terminarem, o Orquestrador executa **1 único comando agrupado** no final com `node scripts/mare-cli.js bump` (se algum `-dev.html` foi tocado), `node scripts/mare-cli.js map`, `npm --prefix functions run conhecimento`, `node scripts/checar.js`, branch, commit (`Agent: antigravity`), push e PR.
+- **Localização instantânea (`docs/CODE_SYMBOLS.md`):** consulte primeiro `docs/CODE_SYMBOLS.md` e `CODE_MAP_FAST.md` para pegar as linhas exatas `Lxxxx` antes de abrir qualquer arquivo (para `kanban-dev.html` > 2,6 MB, use `node scripts/mare-cli.js slice kanban-dev.html <ini> <fim>` e `"patches"` no `.mare-ship.json`).
+- **Escopo pontual (1–2 arquivos) → Via Rápida Direta:** edite cirurgicamente na própria sessão sem custo de cold-start de subagentes.
+- **Varredura completa (3+ arquivos) → Subagentes Paralelos no mesmo turno** (`Workspace: 'inherit'`, passando já no prompt as âncoras `Lxxxx` e os valores medidos):
+  - **`agente-functions-docs`** (`Model: 'flash'` para sincronia mecânica / `'inherit'` para texto novo): `maredigital.html`, `ecossistema.html`, `CHANGELOG.md`, `BUGS_E_CORRECOES.md`, `CODE_MAP.md`, `docs/OCEANO.md`.
+  - **`agente-mare`**: `HELP_CONTENT` em `kanban-dev.html` (somente se livre no Quadro).
+  - **`agente-radar`**: `#okr-help-ov` em `okr-dev.html` e `guia-okr.html` (somente se livres no Quadro).
+  - **`agente-painel-oceano`**: `const FAQ` em `oceano-dev.html` (somente se livre no Quadro).
+- No fechamento, grave `.mare-ship.json` (`"bump"` se tocou `-dev`, `"map": true`, `"conhecimento": true` se tocou prod/`CHANGELOG` de prod) e rode **1 único comando**: `node scripts/mare-cli.js ship`.
 
 ---
 
@@ -103,7 +104,7 @@ Passe pelos 8 alvos abaixo (3 e 3-B são a documentação técnica). Se o usuár
 - ⚠️ **Atenção:** Verifique sempre o Quadro em `docs/COORDENACAO_AGENTES.md` antes de tocar em `oceano-dev.html`. Se o outro agente estiver trabalhando nele, atualize apenas `docs/OCEANO.md`.
 
 ### 7. Base de Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`)
-- O Agente Ágil lê os JSONs gerados por `functions/agente-agil-orquestrador/conhecimento/gerarConhecimento.js` a partir do `HELP_CONTENT` de `kanban.html` (prod) e do `CHANGELOG.md`.
+- O Agente Ágil lê os JSONs gerados por `functions/agente-agil-orquestrador/conhecimento/gerar.js` a partir do `HELP_CONTENT` de `kanban.html` (prod), da Ajuda de `okr.html`, do FAQ de `oceano.html` e do `CHANGELOG.md`.
 - Sempre que `CHANGELOG.md` ou `kanban.html` mudarem, inclua no comando final:
   `npm --prefix functions run conhecimento`
   Isso regenera os JSONs e garante que o teste `conhecimento.test.js` (e `node scripts/checar.js`) passe sem divergências.

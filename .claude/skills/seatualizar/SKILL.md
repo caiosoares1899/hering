@@ -3,53 +3,37 @@ name: seatualizar
 description: Coloca o agente (Claude ou Antigravity) 100% em dia com tudo o que o outro agente e o Caio mudaram recentemente no repositório — quadro de coordenação, versões, changelog, bugs e correções, guia de código, plantão de bugs, codemap e últimos commits/PRs — antes de começar uma tarefa nova, evitando conflitos de arquivo, retrabalho ou premissas desatualizadas. Use sempre que o usuário pedir "se atualiza", "roda o seatualizar", "vê o que o Claude/Antigravity mudou", "fica em dia com o repositório", ou invocar /seatualizar diretamente — e aplique também como REGRA PERMANENTE no início de qualquer sessão ou novo pedido.
 ---
 
-# `/seatualizar` — Sincronização entre Agentes e Leitura de Contexto Recente (Regra Permanente)
+# `/seatualizar` — Sincronização Rápida em 1 Turno Paralelo (Regra Permanente)
 
-> **REGRA PERMANENTE DO PROJETO:** Tanto o **Claude** quanto o **Antigravity** devem executar este protocolo de atualização **sempre no início de uma sessão**, **após um resync/merge**, ou **antes de iniciar um novo pedido**, mesmo que o usuário não digite `/seatualizar` explicitamente. Começar uma tarefa sem saber o que o outro agente acabou de fazer causa conflito de branch, sobrescrita de código e premissas erradas.
-
----
-
-## O que ler e conferir (Ordem Rápida e Sem Desperdício de Contexto)
-
-> **Para o Antigravity:** Faça todas as leituras de arquivos abaixo usando **exclusivamente `view_file` e `read_url_content` em chamadas paralelas** (zero terminal!). Inspecione até mesmo a branch e o último commit local lendo `.git/HEAD` e `.git/logs/HEAD` via `view_file`, e leia comentários de revisão do Claude (`🔍 Revisão do Claude`) nas PRs via `read_url_content` na URL da PR (`https://github.com/caiosoares1899/hering/pull/<N>`). Só use terminal no comando único final da tarefa (`node scripts/mare-cli.js ship`).
-
-### Passo 0 — Estado do Git Local e Revisões de PRs (`view_file` em `.git/HEAD` e `.git/logs/HEAD`)
-1. Leia `.git/HEAD` e o final de `.git/logs/HEAD` com `view_file` (sem usar `git status`/`git log` no terminal) para saber em qual branch e commit o clone local está.
-2. Se houver PR `antigravity/*` aberta, confira via `read_url_content` se há comentário `🔍 Revisão do Claude` (`docs/COORDENACAO_AGENTES.md` §4.1) antes de abrir qualquer nova frente.
-
-### Passo 1 — Quadro de Coordenação e Divisão de Trabalho (`docs/COORDENACAO_AGENTES.md`)
-Leia `docs/COORDENACAO_AGENTES.md` inteiro (é curto, ~150 linhas) e verifique:
-1. **`### Em andamento`:** Quais arquivos e branches o outro agente está mexendo **agora**?
-   - **Regra de ouro:** Se o outro agente declarou que está mexendo em um arquivo (ex.: `oceano-dev.html`, `kanban-dev.html`), **NÃO edite esse arquivo** até o PR dele ser mergeado.
-2. **`### Escalado para o Claude` / `### Pendências do Antigravity`:** Há algum item pendente para você resolver ou algum bloqueio registrado?
-3. **`### Pendente de deploy (só o Caio roda)`:** O que mudou em `functions/` ou `database.rules.json` que já está no código da `main`, mas pode aguardar deploy (ou já foi implantado)?
-
-### Passo 2 — Versões Atuais (`version.json`)
-Leia `version.json` completo (~25 linhas) para saber exatamente:
-- Qual versão está em `-dev` e qual versão está em **produção** para cada app (`kanban`, `painel`, `okr`, `oceano`, `escala`, `intake`, `okr_apresentacao`).
-- Se `-dev` está à frente de `prod` em algum arquivo (sinalizando que já existe mudança não promovida naquele arquivo!).
-
-### Passo 3 — Últimas Entregas e Últimos Bugs (`CHANGELOG.md` e `BUGS_E_CORRECOES.md`)
-1. Leia as **primeiras 100 linhas de `CHANGELOG.md`** (`StartLine: 1, EndLine: 100`) para ver as últimas features entregues por qualquer um dos dois agentes.
-2. Leia as **primeiras 140 linhas de `BUGS_E_CORRECOES.md`** (`StartLine: 1, EndLine: 140`) para:
-   - Relembrar a seção **`## 🛡️ Armadilhas Conhecidas & Regras de Ouro (Não Repetir)`**.
-   - Ver as correções de bugs mais recentes no topo de **`## 🐛 Histórico de Bugs e Correções`**.
-
-### Passo 4 — Guias Operacionais e Regras (`AGENTS.md`, `docs/GUIA_DE_CODIGO.md`, `docs/PLANTAO_BUGS.md`)
-- Confira se houve apontamentos ou regras novas em:
-  - `AGENTS.md` e `.agents/rules/release-process.md` (regras operacionais e linhas vermelhas).
-  - `docs/GUIA_DE_CODIGO.md` (como escrever código e scripts de teste sem cair em armadilhas de `const`, escopo IIFE, XSS ou race conditions).
-  - `docs/PLANTAO_BUGS.md` (se a tarefa envolver o Plantão de Férias / Oceano / `functions/plantao/`).
-
-### Passo 5 — Índice Rápido do Arquivo Alvo (`CODE_MAP_FAST.md`)
-- Antes de procurar qualquer função ou seção num arquivo grande, leia a seção correspondente em `CODE_MAP_FAST.md` para pegar as linhas atualizadas (`Lxxxx`) deixadas pela última entrega.
+> **REGRA PERMANENTE DO PROJETO:** Tanto o **Claude** quanto o **Antigravity** devem executar este protocolo **no início de uma sessão**, **após um resync/merge**, ou **antes de iniciar um novo pedido**. Começar sem conferir o Quadro causa conflito de arquivo, retrabalho e premissas erradas.
 
 ---
 
-## Quando o usuário invocar `/seatualizar` diretamente (ou pedir "vê o que o outro mudou")
+## Modo Express (1 Único Turno Paralelo — ~2 segundos, Zero Desperdício de Contexto)
 
-Entregue um resumo executivo curto e direto estruturado assim:
-1. **🛠️ Em andamento / Travas no Quadro:** o que o outro agente está mexendo agora (e quais arquivos estão reservados).
-2. **🚀 Últimas alterações que entraram no repositório:** resumo objetivo das últimas features (`CHANGELOG.md`), correções (`BUGS_E_CORRECOES.md`), regras/skills novas e estado das versões (`version.json` — o que já está igual em prod e o que está só em `-dev`).
-3. **☁️ Pendente de deploy no Firebase:** itens listados na tabela de deploy do `docs/COORDENACAO_AGENTES.md`.
-4. **✅ Pronto para começar:** confirmação de que o contexto foi atualizado e quais cuidados serão tomados no próximo pedido para não conflitar com o outro agente.
+> **Para o Antigravity:** Você já recebe `AGENTS.md`, `.agents/rules/antigravity.md` e `.agents/rules/release-process.md` injetados automaticamente em `<user_rules>` — **NÃO gaste turnos relendo esses arquivos**! Faça **1 única bateria paralela de `read_file`** nos 4 alvos dinâmicos abaixo (ou rode `node scripts/mare-cli.js brief` se já for usar terminal na rotina diária):
+
+1. **`docs/COORDENACAO_AGENTES.md` inteiro (~270 linhas; o Quadro é a §6 — não use faixa de linhas fixa: o arquivo muda todo dia e a faixa perde "Em andamento"/"Pendente de deploy"):**
+   - **`### Em andamento`:** quais arquivos estão reservados por Claude ou Codex agora? (**Proibido tocar neles** até o merge.)
+   - **`### Escalado para o Claude` / `### Pendente de deploy`:** há bloqueio ou deploy pendente do Caio?
+   *(Na 1ª tarefa da sessão, se ainda não leu a tabela de escopo §1 ou o §7, leia `StartLine: 1, EndLine: 225`.)*
+2. **`version.json` (inteiro, ~15 linhas):**
+   - Quais páginas estão com `-dev` à frente de `prod` (`kanban`, `painel`, `okr`, `oceano`, `escala`)?
+3. **`CHANGELOG.md` (`StartLine: 1, EndLine: 65`) e `BUGS_E_CORRECOES.md` (`StartLine: 1, EndLine: 130`):**
+   - Últimas features e correções que acabaram de entrar + seção `🛡️ Armadilhas Conhecidas` (1 a 16).
+4. **`.git/HEAD` (e últimas linhas de `.git/logs/HEAD`):**
+   - Confirma branch/commit local sem rodar terminal. Se houver PR `antigravity/*` aberta sua, confira se há comentário `🔍 Revisão do Claude` antes de abrir outra frente.
+
+### Ao partir para o código da tarefa:
+- Leia **`docs/CODE_SYMBOLS.md`** (e `CODE_MAP_FAST.md`) para pegar a linha exata `Lxxxx` de qualquer `<style>`, `<script>`, `const` ou função antes de abrir páginas grandes.
+- Se for mexer em tela/fluxo/cor, consulte `docs/GUIA_UI_UX.md`; se for editar código/testes de área nova, consulte `docs/GUIA_DE_CODIGO.md` e a regra `.claude/rules/*.md` correspondente.
+
+---
+
+## Quando o usuário invocar `/seatualizar` diretamente
+
+Entregue um resumo executivo curto e direto em 4 pontos:
+1. **🛠️ Em andamento / Travas no Quadro:** o que Claude e Codex estão mexendo agora (e quais arquivos estão reservados).
+2. **🚀 Últimas alterações e Versões (`version.json`):** o que entrou recentemente em `CHANGELOG.md` e `BUGS_E_CORRECOES.md`, e o que está só em `-dev` vs. igual a `prod`.
+3. **☁️ Pendente de deploy no Firebase:** itens ativos na tabela *Pendente de deploy* do Quadro.
+4. **✅ Pronto para começar:** confirmação de contexto sincronizado e arquivos livres.
