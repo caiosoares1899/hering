@@ -29,7 +29,7 @@ Tudo que **não** é servido ao usuário (documentação, testes, capturas, scri
 | 🛟 **A Bordo** (onboarding) | `onboarding.html` | — | Onboarding ágil |
 | ⛵ **Travessia** (pessoas / 1:1 / avaliação) | em produção desde 31/10/2026 (entrada discreta: o card do Oceano segue "em breve") | `travessia.html` ↔ `travessia-dev.html` (sem versão própria; alvo `travessia` do `promover.js`) | Fase 1: Baú, faróis, humor, mural de Estrelas, avaliação com indicação de pares e trava de devolutiva (desenho em `docs/ideias/travessia-2026-10-22.md`; protótipo antigo em `docs/demo/travessia-prototipo-fase0.html`) |
 
-Sem par dev: `okr-apresentacao.slide.html` (apresentação do Radar) · `guia-okr.html` (guia do Radar, 14 MB — prints embutidos).
+Sem par dev: `okr-apresentacao.slide.html` (apresentação do Radar) · `guia-okr.html` (guia do Radar, 14 MB — prints embutidos) · `guia-mare.html` (guia do Maré: programa de boas-vindas, telas simuladas em HTML).
 
 ### Documentação técnica navegável
 `ecossistema.html` (Ecossistema de gestão — para a TI) · `maredigital.html` (documentação técnica do Maré Digital).
