@@ -87,6 +87,17 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Travessia: /monitorarbugs das entregas do dia (SÓ DEV · travessia-dev.html)
+
+- **Rascunho perdido ao navegar:** o debounce de 600 ms ignorava o textarea já desconectado; editar e mudar de aba imediatamente perdia a resposta ou o exemplo das atitudes. Agora o input guarda antes da navegação. Apagar uma resposta também é uma edição: o filtro de vazio descartava esse rascunho e fazia o texto do banco reaparecer; agora preserva `''`. Readonly continua sem restauração.
+- **Troca de pessoa no demo:** `S.atSel` reutilizava `enc-inicio`, levando a atitude não salva de uma pessoa para outra. A troca limpa escolhas e último foco. O humor pendente também sobrevivia à troca (Desfazer podia alterar a nova pessoa; o aviso usava a identidade corrente). Agora encerra a janela ao trocar/sair e guarda pessoa, líder e dia originais; uma gravação que termina depois da troca não arma Desfazer na nova pessoa.
+- **Limpar atitudes:** desmarcar tudo e apagar o exemplo era recusado, mantendo os dados anteriores. Salvar vazio agora grava só `ts`, formato aceito pelas regras atuais, removendo as escolhas anteriores.
+- **Frota:** data ausente, lixo ou futura entrava na contagem de 90 dias por comparação de strings. Exige data real no intervalo até hoje.
+- **Lista branca:** `constructor`/`__proto__` passavam por `CULT[id]` via herança e geravam chips `undefined`. O catálogo agora tem protótipo nulo, aceitando só as cinco atitudes reais. Não foi identificado caminho de execução de script nesse achado.
+- **Validação:** `node scripts/checar.js`; reprodução Node com funções extraídas do HEAD e do corrigido confirmou falha antes/acerto depois para rascunho vazio, id herdado e data ausente. `docs/arezzo/testes/test_travessia_monitorarbugs_1111.js`: regressões Playwright e vizinhos (rascunhos separados, readonly, cultura desligada, ciclo sem participantes). **Playwright não executado neste sandbox, por contrato; o maestro deve rodar antes de entregar à validação do ADM.** Firebase real, entrega de notificação ao fechar a aba e regras publicadas não verificados. Regras somente lidas, sem alteração.
+- **Fronteira:** sem mudança de permissões, nós ou sinks; correção da lista branca existente e isolamento do estado por pessoa. **Dica:** não, correções de comportamento existente.
+
+
 ### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (SÓ DEV)
 
 A correção anterior cobriu os peixes de fundo; os oito stakeholders e o cardume central ainda tinham desenhos próprios com cauda invertida no site. Corrigida a geometria em onboarding.html e onboarding.slide.html, preservando cores, rótulos e abertura de modais. Raio da órbita dos slides limitado à largura do celular para não cortar os peixes. Teste docs/arezzo/testes/test_onboarding_bordo.js falha antes na geometria antiga e verifica os oito SVGs e os cliques de cada stakeholder nas duas páginas a 1280/390 px. Capturas em docs/capturas/a-bordo-aquario/. Fronteira: sem mudança, SVGs estáticos e CSS. Dica: não, correção visual.
