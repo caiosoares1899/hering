@@ -52,6 +52,7 @@ const PREF={on:true,modo:'sempre',principal:'timer',timer:true,notif:true,secund
     const lados=await p.evaluate(()=>({esq:[...document.querySelectorAll('.ilha-trilho.esq .ilha-aba')].map(a=>a.dataset.aba), dir:[...document.querySelectorAll('.ilha-trilho.dir .ilha-aba')].map(a=>a.dataset.aba)}));
     t('abre no Resumo', await p.locator('.ilha-aba.on[data-aba="resumo"]').count()===1);
     t('esquerda = o que acontece agora', JSON.stringify(lados.esq)===JSON.stringify(['resumo','timers','notif','agenda','agente']), lados);
+    t('Preferências (atalho) na direita, logo antes de Ajustes', await p.evaluate(()=>{ const b=[...document.querySelectorAll('.ilha-trilho.dir .ilha-aba')]; const i=b.findIndex(x=>x.dataset.atalho==='prefs'); return i>=0 && b[i+1] && b[i+1].dataset.aba==='ajustes'; }));
     t('direita = atalhos e controle, Ajustes por último', lados.dir[lados.dir.length-1]==='ajustes' && ['fav','status','op'].every(x=>lados.dir.includes(x)), lados);
     const tiles=await p.$$eval('.ilha-tile',xs=>xs.map(x=>x.dataset.ir));
     t('um bloco por módulo ligado', ['timers','notif','agenda','agente','status','op','fav'].every(x=>tiles.includes(x)), tiles);
@@ -61,6 +62,9 @@ const PREF={on:true,modo:'sempre',principal:'timer',timer:true,notif:true,secund
     t('painel em pixel inteiro (texto nítido)', await p.evaluate(()=>{ const a=document.getElementById('ilha-painel').getBoundingClientRect(); const fx=Math.abs(a.left-Math.round(a.left)), fy=Math.abs(a.top-Math.round(a.top)); return fx<0.01 && fy<0.01; }));
     t('centro e botões lado a lado, sem sobrepor', await p.evaluate(()=>{ const e=document.querySelector('.ilha-trilho.esq').getBoundingClientRect(), c=document.querySelector('.ilha-centro').getBoundingClientRect(), d=document.querySelector('.ilha-trilho.dir').getBoundingClientRect(); return e.right<=c.left && c.right<=d.left; }));
     await p.screenshot({path:out+'/ux_1280_dark_resumo.png',clip:{x:0,y:0,width:1280,height:600}});
+    await p.click('[data-atalho="prefs"]'); await p.waitForTimeout(300);
+    t('Preferências abre "Minhas preferências" e fecha a ilha', await p.evaluate(()=>document.getElementById('minhasprefs-ov')?.classList.contains('open')) && await p.getAttribute('#ilha','data-estado')!=='aberta');
+    await p.evaluate(()=>document.getElementById('minhasprefs-ov')?.classList.remove('open')); await p.click('#ilha-btn'); await p.waitForTimeout(400);
     await p.mouse.click(1240,820); await p.waitForTimeout(300);
     t('clicar no véu fecha a ilha e apaga o véu', await p.getAttribute('#ilha','data-estado')!=='aberta' && await p.evaluate(()=>!document.getElementById('ilha-veu').classList.contains('on')));
     await p.click('#ilha-btn'); await p.waitForTimeout(400);
@@ -86,7 +90,7 @@ const PREF={on:true,modo:'sempre',principal:'timer',timer:true,notif:true,secund
   // 2) temas e celular: sem rolagem lateral em nenhuma aba; toque com alvos de 44 px
   for(const [w,h,tema] of [[1280,860,'light'],[1280,860,'vice'],[1280,860,'blackfriday'],[390,800,'dark'],[390,800,'light']]){
     const {ctx,p,errs}=await abrir(w,h,tema); const ruins=[];
-    for(const a of await p.$$eval('.ilha-aba',xs=>xs.map(x=>x.dataset.aba))){ await p.click(`.ilha-aba[data-aba="${a}"]`); await p.waitForTimeout(150); if(!await semLateral(p)) ruins.push(a); }
+    for(const a of await p.$$eval('.ilha-aba[data-aba]',xs=>xs.map(x=>x.dataset.aba))){ await p.click(`.ilha-aba[data-aba="${a}"]`); await p.waitForTimeout(150); if(!await semLateral(p)) ruins.push(a); }
     t(`${w}/${tema}: nenhuma aba com rolagem lateral`, !ruins.length, ruins);
     if(w<500){ const peq=await p.$$eval('#ilha-painel .ilha-aba-ico, #ilha-painel .ilha-tile-acao, #ilha-fixar',xs=>xs.filter(x=>{const r=x.getBoundingClientRect(); return r.width && (r.width<44||r.height<44);}).length);
       t(`${w}/${tema}: alvos de toque ≥ 44 px`, peq===0, peq);
