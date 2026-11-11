@@ -20,8 +20,8 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3 classes de
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.914 e dev
-em v8.30.916-dev (modal do card no celular/tablet e ajuda atualizada);
+DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.932 e dev
+em v8.30.941-dev (Ilha Dinâmica V2 com módulos ligáveis, véu de vidro e atalho Preferências);
 o estado NORMAL na maior parte do tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
@@ -1979,6 +1979,15 @@ cabeçalho, ao lado do tema (popover `#tm-pop`). Código em bloco único, antes 
 - **Agente Ágil**: `ler_card` devolve `timers` + `tempo_total_timers` (`resumoTimers()` em `agente-agil-orquestrador/tools/lerCard.js`, caminho `cardTimersPath()` em `agente-agil/board.js`) — só leitura.
 - **Painel**: `COMUNICADO_RASCUNHOS_SEED` em `painel-dev.html` contém o rascunho `seed_timer_produtividade_2026_11_01`; o controle dos timers fica no Maré, sem um segundo motor no Painel.
 - **Testes**: `docs/arezzo/testes/test_timers_card.js`, `functions/timers/__tests__/vigia.test.js`, `functions/rules/__tests__/timersRules.test.js`.
+
+### 🏝️ Ilha Dinâmica V1/V2 & `mare-timer.js` (`kanban-dev.html` v8.30.925–v8.30.941-dev · prod v8.30.932)
+- **Módulo `mare-timer.js` / `mare-timer-dev.js` (`?v=1`)**: `window.MareTimer` — `fmt()` L21, `mostra()` L23, `patch()` L29, `caminhos()` L41, `acao()` L53 (contrato único de escrita entre o card e `kanban/timers_ativos/{uid}`).
+- **Motor e painel da Ilha em `kanban-dev.html`**: `_ilhaPrefs()` — L37912 (`kanban/usuarios/{uid}/board_prefs_global/ilha` + `ilha_mods` + `ilha_favs`), `_ilhaPilula()` — L37973, `_ilhaResumo()` — L38026 (resumo na barra superior), `_ilhaPainel()` — L38062, `_ilhaPainelLugar()` — L38111 (coordenadas em pixel inteiro + véu `#ilha-veu`), `_ilhaRender()` — L38120, `_ilhaAbrir()` / `_ilhaFechar()` — L38145/L38155, `window.__ilha` — L38610.
+- **Módulos ligáveis (V2)**: Timers (`_ilhaTimers()` L37919), Avisos (`_ilhaNotifs()` L37922), Operação ADM (`_ilhaOpGuardiao()` / `_ilhaOpBackups()` L38177/L38179), Agenda (`_ilhaAgLer()` / `_ilhaAgRender()` L38297/L38292), Serviços (`_ilhaStatusEstados()` L38406), Agente (`_ilhaAgAnalisando()` / `_ilhaAgProntas()` L38462/L38466 — escuta `kanban/squads/{squad}/agente_analisando/{cid}` gravado pelo orquestrador) e Favoritos (`_ilhaFavs()` / `_ilhaFavAdicionar()` L38522/L38539).
+
+### 🔍 Sonar — Busca unificada (`mare-sonar.js` / `mare-sonar-dev.js` `?v=8`, 2026-11-10)
+- **Módulo `mare-sonar-dev.js`**: `window.MareSonar` — `pontua()` L48, `fonteRadar()` L103 (cache enxuto 3 h `oceano_sonar_radar[_dev]`, esquema `s:2`), `montar()` L195, `grupos()` L257, `render()` L293, `abrir()` / `fechar()` L341/L353, `iniciar()` L359.
+- **Adaptadores nas páginas**: `_sonarMareIniciar()` / `_sonarAbrirCard()` / `_sonarVerNoBoard()` em `kanban-dev.html` (L37291/L37352/L37353); `_okrSonarIniciar()` / `_okrSonarAbrir()` em `okr-dev.html` (L3594/L3644); `iniciarSonar()` em `oceano-dev.html` (L2486).
 
 ### 📅 Calendários (Google Calendar) — nunca teve seção própria até 2026-09-18
 Arquitetura em 2 camadas independentes, sem token OAuth próprio pro squad
@@ -4654,4 +4663,8 @@ Popup `#boarddata-ov` até 1500px; barra única `#boarddata-colbar-chips` (`_bdR
 Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,nome,user,isViewer,dicas,abrirAjuda})`, `gatilho(nome)`, `controle(elemento)` (interruptor + "Rever dicas"), `definir(bool)`, `reiniciar()`, `fechar()`, `_estado()`. Internos: `proxima(g, checaQuando)` (o `quando` só vale na hora de MOSTRAR), `mostra(d)` (marca vista ao aparecer), prefs em `kanban/usuarios/{uid}/dicas` + localStorage `mare_dicas_{uid}`.
 **Marcador `edita`** (v2.60): dica que manda editar/criar (6 no Radar) é filtrada em `init()` quando `isViewer` (externo só acompanha). **`controle(el)`** desenha UMA vez e só sincroniza o `checked` (foco do teclado), 1 ouvinte por elemento (`el._mdicaOuv`), `avisa()` poda ouvinte que devolve `false`. Oceano: dicas de entrada com `_lobbyVisivel()`. `renderHelp()` (kanban) ordena título-antes-de-texto na busca. **Catálogo centralizado (painel-dev v5.34):** `CATALOGO` no módulo (dados puros por app: `dicas[{id,gatilho,texto,saiba,ajuda}]`, `gatilhos` = rótulos legíveis); `MareDicas.catalogo()` + `MareDicas.minhasPrefs(user)` alimentam a aba **💡 Dicas** do Painel (`renderPcfgDicas()`, `setPcfgTab('dicas')`, `#painel-cfg-dicas`). Ganchos por página (só o que depende do estado): `OKR_DICAS_QUANDO`/`_okrDicasIniciar()` (okr-dev; gatilhos em `_okrSetView()` `view:<aba>`, `openOkrObjetivo` `obj-modal`; controle em `#okr-help-dicas`); `MARE_DICAS_QUANDO`/`_mareDicasIniciar()` (kanban-dev, antes de `loadNotifs()`; gatilhos em `openCard()`/`openCfg()`; controle em `#help-dicas-ctl`); `OCEANO_DICAS_QUANDO`/`iniciarDicas()` (oceano-dev; gatilhos `sino` em `sinoToggle()`, `perfil` em `abrirPerfil()`; controle em `#pf-dicas`). Painel e A Bordo não mostram dicas. Teste: `docs/arezzo/testes/test_dicas.js`.
 
-*Retrato do commit `7b4362b0` (2026-11-10).*
+### 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
+- **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3655/L3657, `_corCssOk()` — L3658, `_colsSegurasP()` — L3659, `_tagsSegurasP()` — L3660, `_pSafeUrl()` — L3932, `_sanitizeComunicadoHtml()` — L8946 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10295. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
+- **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10205) e `updateSquadUserRole()` (L11232) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
+
+*Retrato do commit `1bfb5d6e` (2026-11-11).*

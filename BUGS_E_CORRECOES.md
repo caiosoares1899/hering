@@ -87,6 +87,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · okr-dev.html (v2.111) · guia-okr.html · ecossistema.html · maredigital.html · docs/OCEANO.md · CODE_MAP.md — sincronização de documentações (/atualizardocumentacoes) e ajuda in-app (/atualizarhelpcontent)
+
+- **Radar (`okr-dev.html` v2.111 · `guia-okr.html`):** `#hlp-cabecalho` e o tooltip de `#okr-more-btn` passaram a listar `🏷️ Gerenciar tags` no menu `⋯ Mais`; `#hlp-apresentacao` passou a documentar `📍 Puxar sala` e o botão permanente `👑 Assumir` de ADMs na sala ao vivo; e o tooltip de `#okr-obj-config-btn` trocou `trimestre` por `período`. No `guia-okr.html`, alinhados os slides de Configurações (`Período`), Calendário (`Entrega` na legenda) e encerramento (`/` na `❓ Ajuda` e `Ctrl+K` no `🔍 Sonar`).
+- **Documentações do ecossistema (`ecossistema.html`, `maredigital.html`, `docs/OCEANO.md`, `CODE_MAP.md`, `docs/HISTORICO_DOCUMENTACAO.md`):** retrato medido de 11/11/2026 (`1213` testes automatizados, `222` arquivos `.js` e `39` exports ativos em `functions/index.js`, `872` linhas e `45` nós em `database.rules.json`, `10` suítes de regras incluindo `comentariosRules` e `papelRules`, `24` armadilhas, `1646` tags, trailers `296`/`36`/`12`), promoção de `onboarding.html` + `onboarding.slide.html` (A Bordo), `mare-timer.js` e `mare-sonar.js?v=8` em produção, Ilha Dinâmica V1/V2 e âncoras novas no `CODE_MAP.md` (`CODE_MAP_FAST.md`, `docs/CODE_SYMBOLS.md` e `docs/MAPA_DO_REPOSITORIO.md` regenerados). Intocados por reserva ativa no Quadro: `kanban-dev.html`, `oceano-dev.html`, `mare-sonar-dev.js` e `mare-dicas-dev.js`.
+
 ### 2026-11-11 · Ilha Dinâmica (/monitorarbugs): 📌 com véu travava o quadro, Esc fechava a ilha atrás do card, 1ª entrega do agente perdida, principal desligada (SÓ DEV · kanban-dev v8.30.942-dev)
 
 - **A — 📌 travava o quadro (regressão do véu, #1707):** com a ilha fixada (o 📌 promete continuar usando o quadro com ela aberta), o véu de vidro seguia cobrindo a tela e engolia todo clique. Agora o véu sai com o 📌 e volta ao desafixar.

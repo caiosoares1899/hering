@@ -6,11 +6,11 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 |---|---|---|---|
 | **Maré Digital** | o kanban (gestão dos squads) | `kanban.html` | mantém o nome |
 | **Painel** | gestão/diretoria, pessoas, comunicados | `painel.html` | mantém o nome (a ideia "Passadiço" foi descartada) |
-| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (`okr.html` v2.105 · dev `okr-dev.html` v2.109-dev; `mare-metas.js` v19) — logo: `favicon-radar.png`. Inclui aba **📊 Data Studio**, promoção **Próximo Passo → Progresso → Marco**, **🔍 Sonar (`Ctrl+K`)**, período padronizado (**Trimestre · Semestre · Ano**, ex.: `T126, S226, A27`) e Metas com **📅 Curva diária**, **Projeção de Fechamento**, reconciliação do total e expansão em tela cheia (**⛶ Expandir**) |
-| **A Bordo** | onboarding | `onboarding.html` | a renomear (não mexido ainda) |
+| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (`okr.html` v2.109 · dev `okr-dev.html` v2.111-dev; `mare-metas.js` v19) — logo: `favicon-radar.png`. Inclui aba **📊 Data Studio**, promoção **Próximo Passo → Progresso → Marco**, **🔍 Sonar (`Ctrl+K`)**, período padronizado (**Trimestre · Semestre · Ano**, ex.: `T126, S226, A27`) e Metas com **📅 Curva diária**, **Projeção de Fechamento**, reconciliação do total e expansão em tela cheia (**⛶ Expandir**) |
+| **A Bordo** 🧭 | guia de chegada ao Digital Hering (cultura, squads, rituais e Oceano) | `onboarding.html` · `onboarding.slide.html` | renomeado e **em produção desde 11/11/2026** (logo `favicon-bordo-v2.png`) |
 | **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | `travessia.html` | **em produção desde 31/10/2026** (entrada discreta: Baú 💼 no Maré/Radar e humor no Meu Dia; o card no Oceano segue "em breve" até decidirmos abrir a porta) |
 
-**Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v41 · `mare-metas.js` v19 · `mare-dicas.js` v10 (dev `?v=12`) · `mare-login.js` v3 · `mare-plantao.js` v5 (conferido em 10/11/2026; desativado, guardado) · `mare-sonar.js` v4 (dev `?v=8`) · `mare-timer-dev.js` v1 (dev). Versões do dia 10/11/2026: Maré v8.30.923 (dev v8.30.932-dev) · Painel v5.96 (dev v5.99-dev) · Radar v2.105 (dev v2.109-dev) · Oceano v1.69 (dev v1.75-dev) · Escala v1.11.
+**Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v41 · `mare-metas.js` v19 · `mare-dicas.js` v12 (dev `?v=13`) · `mare-login.js` v3 · `mare-plantao.js` v5 (conferido em 11/11/2026; desativado, guardado) · `mare-sonar.js` v8 (prod e dev) · `mare-timer.js` v1 (prod e dev). Versões do dia 11/11/2026: Maré v8.30.932 (dev v8.30.941-dev) · Painel v5.99 (dev v5.102-dev) · Radar v2.109 (dev v2.111-dev) · Oceano v1.75 (dev v1.76-dev) · Escala v1.11.
 
 ## Regras do que renomear (e do que NÃO)
 - **Renomeia** onde "OKR" é o **nome da página/produto**: título da aba do navegador, cabeçalho, "Ajuda do Radar", "Mural do Radar", "Notificações do Radar", "Online no Radar", "Guia do Radar", links/abas nas outras páginas, textos de ajuda/inscrição, notificação "te mencionou nas anotações do Radar".
@@ -32,10 +32,10 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 ## Logos
 - **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
 
-## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.69; dev: `oceano-dev.html` v1.75)
-`oceano.html` é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `ecossistema.html` — visão do ecossistema para a TI — e `maredigital.html`, referência detalhada do Maré), **🔍 Sonar** (`Ctrl+K` / `⌘K` ou barra no topo), **🏝️ Ilha Dinâmica** (planejada para o Oceano; o 1º teste está no Maré dev — pílula no topo com os seus timers e notificações, Sonar separado), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
+## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.75; dev: `oceano-dev.html` v1.76)
+`oceano.html` é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `ecossistema.html` — visão do ecossistema para a TI — e `maredigital.html`, referência detalhada do Maré), **🔍 Sonar** (`Ctrl+K` / `⌘K` ou barra no topo), **🏝️ Ilha Dinâmica** (já em produção no Maré `v8.30.932` na V1 e em evolução na V2 em `kanban-dev.html` `v8.30.941-dev`; planejada depois para o Oceano), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
 
-### 🔍 Sonar (`mare-sonar.js` v4 / `mare-sonar-dev.js` v8)
+### 🔍 Sonar (`mare-sonar.js` v8 / `mare-sonar-dev.js` v8)
 Busca unificada da família Oceano (`Ctrl+K` / `⌘K` no Oceano, no Maré fora de modal de card e no Radar):
 - **Um só componente e visual (`MareSonar`)**, com foco adaptativo por página: no **Oceano**, prioriza Produtos, Maré (squads), Radar, Links e Ajuda; no **Maré**, prioriza **Este squad** (cards ativos + filtros/ações do board), seguido de Radar, Oceano, Links e Ajuda; no **Radar**, prioriza **Objetivos**, **Marcos** e **Atalhos** da própria página, seguidos de Maré, Links e Ajuda.
 - **Palavra mágica `meus` / `minhas`:** filtra cards onde você é responsável/participante no Maré e Objetivos/Marcos onde você é responsável no Radar (mesma régua do filtro de pessoa).
