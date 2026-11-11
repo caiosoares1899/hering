@@ -12,7 +12,7 @@ const U = { uid: 'eve', email: 'eve@ciahering.com.br', displayName: 'Eve', photo
 const iso = (d) => new Date(d).toISOString();
 
 const PAY = (p) => `"'><img src=x onerror=xh('${p}')> [l](https://e.example/"onmouseover="xh('${p}-md')"x=")`;
-const LIVRES = new Set(['title', 'name', 'nome', 'text', 'texto', 'desc', 'descricao', 'description', 'sub', 'label', 'author', 'autor', 'demandante', 'contato', 'squadDemandante', 'body', 'msg', 'mensagem', 'titulo', 'obs', 'nota', 'note', 'resumo', 'conteudo', 'mensagemHtml', 'autorNome', 'displayName', 'assunto', 'motivo', 'objetivo', 'what', 'who', 'group', 'color', 'cor', 'emoji', 'icon', 'icone', 'photo', 'foto', 'photoURL']);
+const LIVRES = new Set(['title', 'name', 'nome', 'text', 'texto', 'desc', 'descricao', 'description', 'sub', 'label', 'author', 'autor', 'demandante', 'contato', 'squadDemandante', 'body', 'corpo', 'msg', 'mensagem', 'message', 'stack', 'titulo', 'obs', 'nota', 'note', 'resumo', 'conteudo', 'mensagemHtml', 'autorNome', 'displayName', 'assunto', 'motivo', 'objetivo', 'what', 'who', 'group', 'color', 'cor', 'hex', 'bg', 'blockerDesc', 'po', 'sprint', 'cap', 'goal', 'emoji', 'icon', 'icone', 'photo', 'foto', 'photoURL']);
 // campos de URL: o payload é um esquema perigoso (javascript:) — nenhum <a href> pode sair assim na tela
 const URLS = new Set(['url', 'link', 'href', 'meetingLink', 'relatorioUrl', 'pdfUrl', 'shortlink', 'prUrl', 'viewUrl', 'img', 'photoURL', 'foto']);
 const LISTAS_LIVRES = new Set(['indicadores', 'progressos', 'proximosPassos', 'riscos', 'planosAcao']);
@@ -118,22 +118,48 @@ const passosOkr = [
 ];
 
 function seedPainel() {
-  const dados = { columns: [{ id: 'backlog', name: 'Backlog' }], cards: { 0: { id: 'c1', col: 'backlog', title: 'Card', createdAt: '2026-10-01', owner: 'AA', flow: { enteredAt: { backlog: iso('2026-10-01') }, log: [] } } }, cards_index: { c1: '0' },
-    error_logs: { e1: { id: 'e1', message: 'Erro', stack: 'stack', url: 'https://x', ts: iso(new Date()), uid: 'ana', autor: 'Ana', nome: 'Ana', page: 'kanban' } } };
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dadosDev = {
+    columns: [{ id: 'backlog', name: 'Backlog', color: '#38b6ff' }, { id: 'blocker', name: 'Impedimento', color: '#ff6b6b' }],
+    tags: [{ id: 't1', name: 'Tag Painel', hex: '#1de9b6', bg: 'rgba(29,233,182,.15)' }],
+    sprints: [{ id: 'sp1', name: 'Sprint 1', goal: 'Meta da sprint', start: '2026-11-01', end: '2026-11-30', active: true }],
+    capacidades: [{ id: 'cap1', name: 'Capacidade 1' }],
+    lembretes: [{ id: 'lp1', tipo: 'po', text: 'Aviso PO', autor: 'Bia', target: 'u1', targetLabel: 'Alvo', ts: iso(new Date()) }],
+    cards: {
+      0: card('c1', 'Card Painel', { col: 'blocker', blocker: true, blockerDesc: 'Bloqueio externo', po: 'Bia', sprint: 'sp1', cap: 'cap1', due: todayStr, startDate: todayStr, riscos: [{ id: 'r1', text: 'Risco 1', owner: 'AA' }] }),
+    },
+    cards_index: { c1: '0' },
+    error_logs: { e1: { id: 'e1', message: 'Erro render', stack: 'Error: stack', url: 'https://x', ts: iso(new Date()), uid: 'ana', autor: 'Ana', nome: 'Ana', userName: 'Ana', userEmail: 'ana@ciahering.com.br', category: 'uncaught', status: 'open', page: 'kanban' } },
+  };
   return { kanban: {
-    usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: 'ana@ciahering.com.br', inscrito: true, init: 'AA', role: 'adm', squads: { dados: true } }, bia: { uid: 'bia', nome: 'Bia', email: 'bia@ciahering.com.br', inscrito: true, init: 'BI', role: 'membro', squads: { dados: true } } },
-    usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana ADM', init: 'AA' }, bia: { uid: 'bia', nome: 'Bia', init: 'BI' } },
+    usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: 'ana@ciahering.com.br', foto: 'https://lh3.googleusercontent.com/a/foto', inscrito: true, init: 'AA', role: 'adm', squads: { dev: true, dados: true }, notificacoes: notificacoes() }, bia: { uid: 'bia', nome: 'Bia', email: 'bia@ciahering.com.br', foto: 'https://lh3.googleusercontent.com/a/bia', inscrito: true, init: 'BI', role: 'membro', squads: { dev: true, dados: true } } },
+    usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana ADM', init: 'AA', foto: 'https://lh3.googleusercontent.com/a/foto' }, bia: { uid: 'bia', nome: 'Bia', init: 'BI', foto: 'https://lh3.googleusercontent.com/a/bia' } },
     config: { adm_emails: ['ana@ciahering.com.br'], links_hering: { l1: { id: 'l1', title: 'Link', url: 'https://example.com', label: 'Link', emoji: '🔗' } } },
-    squads_meta: { novo: { id: 'novo', label: 'Squad Novo', emoji: '🐟', color: '#38b6ff', name: 'Novo' } },
-    comunicados: { m1: { id: 'm1', titulo: 'Aviso', mensagem: 'texto', ativo: true, ts: iso('2026-10-15'), tipo: 'mural', autor: 'Ana' } },
-    feedback: { f1: { id: 'f1', tipo: 'bug', texto: 'relato', titulo: 'Bug', app: 'kanban', autorNome: 'Bia', autorUid: 'bia', criadoEm: Date.now(), status: 'aberto' } },
+    squads_meta: { dev: { id: 'dev', label: 'Squad Dev', emoji: '💻', color: '#38b6ff', name: 'Dev' }, novo: { id: 'novo', label: 'Squad Novo', emoji: '🐟', color: '#38b6ff', name: 'Novo' } },
+    comunicados: {
+      m1: { id: 'm1', titulo: 'Aviso', corpo: '<p>texto</p>', mensagem: 'texto', ativo: true, ts: iso('2026-10-15'), tipo: 'novidade', autor: 'Ana' },
+      r1: { id: 'r1', titulo: 'Rascunho', corpo: '<p>rascunho</p>', rascunho: true, ativo: false, ts: iso('2026-10-16'), tipo: 'aviso', autor: 'Ana' },
+    },
+    campanhas: { k1: { id: 'k1', nome: 'Campanha', desc: 'descrição', status: 'ativa', squads: ['dev'], entregas: [{ id: 'en1', titulo: 'KV Home', tipo: 'kv', status: 'andamento', links: [{ label: 'Brief', url: 'mailto:a@ciahering.com.br' }] }] } },
+    campanhas_dev: { k1: { id: 'k1', nome: 'Campanha Dev', desc: 'descrição', status: 'ativa', squads: ['dev'], entregas: [{ id: 'en1', titulo: 'KV Home', tipo: 'kv', status: 'andamento', links: [{ label: 'Brief', url: 'mailto:a@ciahering.com.br' }] }] } },
+    feedback: { f1: { id: 'f1', tipo: 'bug', texto: 'relato', titulo: 'Bug', app: 'kanban', autorNome: 'Bia', autorUid: 'bia', criadoEm: Date.now(), status: 'novo' } },
+    feedback_dev: { f1: { id: 'f1', tipo: 'bug', texto: 'relato', titulo: 'Bug', app: 'kanban', autorNome: 'Bia', autorUid: 'bia', criadoEm: Date.now(), status: 'novo' } },
+    painel: {
+      online: { u1: { uid: 'bia', name: 'Bia', foto: 'https://lh3.googleusercontent.com/a/bia', ts: Date.now() } },
+      okr: { items: [{ id: 'ok1', obj: 'Objetivo 1', kr: 'KR 1', owner: 'Bia', current: 10, target: 100, unit: '%' }] },
+      cal_events: { ev1: { id: 'ev1', title: 'Evento Painel', start: todayStr, end: todayStr, squad: 'dev' } },
+    },
     plantao: { p1: { id: 'p1', estado: 'testando', criadoEm: Date.now(), atualizadoEm: Date.now(), app: 'kanban', autorNome: 'Bia', autorUid: 'bia', titulo: 'Bug', descricao: 'descrição', prTitulo: 'Corrige', prResumo: 'resumo', resumo: 'resumo', prUrl: 'https://github.com/x/y/pull/1', cardId: 'c1' } },
     plantao_status: { agenteVistoEm: Date.now() },
-    squads: { dados: { dados } },
+    squads: { dev: { dados: dadosDev, online: { bia: { uid: 'bia', name: 'Bia', foto: 'https://lh3.googleusercontent.com/a/bia', ts: Date.now() } } }, dados: { dados: dadosDev } },
   } };
 }
 const passosPainel = [
   ...['visao', 'fluxo', 'timeline', 'pessoas', 'dados', 'monitor', 'notifs', 'status', 'agentes', 'okr', 'config'].map((t) => ['aba ' + t, (p) => p.evaluate((t) => { try { swPtab(t); } catch (e) { } }, t)]),
+  ['modal card painel', (p) => p.evaluate(() => { try { openPcModal('dev', 'c1'); } catch (e) { } })],
+  ['campanhas painel', (p) => p.evaluate(() => { try { openCamp(); openCampDetalhe('k1'); } catch (e) { } })],
+  ['comunicado compose', (p) => p.evaluate(() => { try { openComunicadoCompose('m1'); } catch (e) { } })],
+  ['calendario dia', (p) => p.evaluate(() => { try { openPcalDayPopover(new Date().toISOString().slice(0, 10)); } catch (e) { } })],
 ];
 
 

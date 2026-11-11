@@ -87,6 +87,22 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Segurança (/auditoriaseguranca · dom: painel-dev.html) — fecha 8 famílias de XSS/breakout no Painel Dev (v5.100, SÓ DEV) e escala 5 achados de regras RTDB
+
+**Causa raiz da lacuna na suíte de 18/10:** `seedPainel()` em `docs/arezzo/testes/test_seguranca_xss.js` semeava `squads.dados`, enquanto `painel-dev.html` usa `SQUADS = ['dev', 'omnichannel']` — deixando cards, colunas, tags, bloqueios, timeline e `error_logs` com 0 itens durante o scan anterior.
+
+**Correções aplicadas em `painel-dev.html` (v5.100, zero impacto no login de externos e `painel_viewers`):**
+- **(D1 · Avatares de presença):** `safeUrl()` endurecida (`/^https:\/\/[^\s"'<>]+$/i`) + `esc(safeUrl(...))` em `renderOnline`, `renderOkrOnlineVisao`, `renderPainelOnline` e `_painelOwnerAvatarHtml`.
+- **(D2 · Sinks cross-squad de texto/HTML):** `esc()` aplicado em `renderOKR`, `renderRiscos`, `openPcModal`, `renderSquadLinks`, `renderFilterBar`, `renderSquadCards`, `renderBlockers`, `renderPainelTimeline`, `bsRenderExisting` e sanitização de texto/cor em `saveNewBoard`.
+- **(D3 · Handlers inline `onclick`):** substituição de `'${esc(...)}'` por `jsq(...)` / `encodeURIComponent(...)` em `renderPainelInsights` e `renderPainelNotifs`.
+- **(D4 · Injeção de estilo/atributo CSS):** criação de `_corCssOk`, `_colsSegurasP` e `_tagsSegurasP` aplicados na entrada (`_applySquadDados`, `loadSquadData`, `setCampViewMode`) e nos renders (`renderPainelInsights`, `renderSquadCards`, `renderColToggle`, `_ptTagsHtml`, `renderColDist` e Campanhas).
+- **(D5 · Calendário):** `esc(ev.title)` e `esc(col.label||sq)` em `makePcalDay` e `renderPcalLegend`.
+- **(D6 · Monitor de erros):** `esc()` e whitelist alfanumérica para `category`/`status`/`id` + `dataset` em `renderErrors`.
+- **(D7 · Campanhas / KVs):** `_pSafeUrl()` barra caracteres de quebra (`[\s"'<>]`) inclusive no caminho opaco de `mailto:` + `esc()` e whitelist de classes para `c.status`, `c.squads[]` e `e.tipo`.
+- **(D8 · Comunicados / Rascunhos):** `_sanitizeComunicadoHtml()` reescrita com `DOMParser` inerte (sem instanciar DOM vivo nem disparar `img onerror`) + allowlist estrita de tags de formatação e remoção de `<svg>`/`<math>`/atributos; aplicada também em `openComunicadoCompose`, e tag não fechada neutralizada com `/<[^>]*>?/g` + `esc()` em `renderRascunhosComunicado`.
+- **(Guardas de UI ADM):** `if(!_isAdmPainel())` adicionado em `addAdmEmail`, `removeAdmEmail`, `_fbSetStatus`, `_fbDelete` e `toggleGestorOkr`.
+- **(Testes e Escalonamento):** criada `docs/arezzo/testes/test_painel_seguranca_xss.js` (Node `vm`, 5 suítes cobrindo D1–D8 + guardas ADM + preservação de `_painelViewerKey`), expandida `seedPainel()` em `docs/arezzo/testes/test_seguranca_xss.js`, e escalados 5 achados de `database.rules.json` (C1–C4 + D7/D8, com alerta explícito para não afetar externos) em `docs/COORDENACAO_AGENTES.md`.
+
 ### 2026-11-11 · Comentários: autor (uid) preso a quem está logado — regra do banco + cópia fiel ao duplicar card (SÓ DEV · kanban-dev v8.30.937-dev · database.rules.json)
 
 - **Brecha:** card_comments herdava só a regra geral de `dados`: qualquer pessoa com acesso ao squad gravava comentário com o uid de OUTRA pessoa. A função da @menção usa esse uid para notificar e (desde o #1699) para o marcador "analisando" da Ilha.
