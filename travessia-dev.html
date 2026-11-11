@@ -149,6 +149,8 @@ textarea.in{width:100%;min-height:92px;resize:vertical;border-radius:20px;}
 .lst .feita{text-decoration:line-through;opacity:.85;}
 .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
 .in.nota{flex:1 1 100%;}
+.chip.prog.ok{color:var(--ok);}
+.rasc-st:empty{display:none;}
 .enc-nota{margin-top:4px;font-size:13.5px;color:var(--txt);white-space:pre-line;}
 .prox{display:flex;align-items:center;gap:14px;padding:16px 18px;border-color:var(--accent);}
 .prox .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--txt2);}
@@ -605,10 +607,33 @@ function sugestoesPares(cid, uid, pares) {
     const sq = S.users[u].squads || {}; return Object.keys(sq).some(k => sq[k] && meus.has(k));
   }).sort((a, b) => nomeDe(a).localeCompare(nomeDe(b))).slice(0, 12);
 }
+// 📝 Rascunho da avaliação neste aparelho (T7 da consultoria, 11/11/2026): o texto das respostas (autoavaliação, par, líder) vai para o
+// localStorage a cada pausa de digitação e volta se a aba fechar, recarregar ou trocar de aba antes do Salvar. A chave leva o uid (outra conta
+// no mesmo navegador não vê) e é apagada ao salvar e ao sair da conta. Rascunho mais velho que o que já está salvo no banco é descartado.
+const RASC_MAX = 2500;
+const rascChave = () => 'travessia_rasc' + (/-dev\.html/.test(location.pathname) ? '_dev' : '') + (DEMO ? '_demo' : '') + '_' + ((S.me && S.me.uid) || 'x');
+function rascLer() { try { const o = JSON.parse(localStorage.getItem(rascChave()) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (_) { return {}; } }
+function rascGravar(o) { try { if (Object.keys(o).length) localStorage.setItem(rascChave(), JSON.stringify(o)); else localStorage.removeItem(rascChave()); return true; } catch (_) { return false; } }
+function rascGuardar(t) { const o = rascLer(); const v = t.value; if (v.trim() && v !== t.defaultValue) o[t.id] = { v: v.slice(0, RASC_MAX), ts: Date.now() }; else delete o[t.id]; return rascGravar(o); }
+function rascLimpar(ids) { const o = rascLer(); ids.forEach(i => delete o[i]); rascGravar(o); }
+const rascEditaveis = () => [...document.querySelectorAll('textarea.ta[data-resp]:not([readonly])')];
+const rascSujo = t => t.value.trim() !== t.defaultValue.trim();
+function rascStatus(t, msg) { const el = [...document.querySelectorAll('[data-rasc-st]')].find(x => x.dataset.rascSt === t.dataset.resp && x.dataset.pctx === t.dataset.ctx); if (el) el.textContent = msg; }
+function avalProgresso() {
+  document.querySelectorAll('[data-prog]').forEach(el => { const ts = [...document.querySelectorAll('textarea.ta[data-resp]')].filter(t => t.dataset.resp === el.dataset.prog && t.dataset.ctx === el.dataset.pctx && !t.dataset.opc);
+    const n = ts.filter(t => t.value.trim()).length; el.textContent = n + ' de ' + ts.length + ' respondida' + (ts.length === 1 ? '' : 's'); el.classList.toggle('ok', ts.length > 0 && n === ts.length); });
+}
+function rascRestaurar() {   // depois de cada render: devolve o rascunho que é mais novo que o salvo no banco
+  const o = rascLer(); let mudou = false;
+  rascEditaveis().forEach(t => { const d = o[t.id]; if (!d) return;
+    if (!d.v || d.v === t.defaultValue || (+d.ts || 0) <= (+t.dataset.salvoTs || 0)) { delete o[t.id]; mudou = true; return; }   // igual ao salvo, ou o banco tem coisa mais nova (outro aparelho)
+    if (t.value !== d.v) { t.value = d.v; rascStatus(t, '↩ Rascunho deste aparelho recuperado. Lembre de salvar.'); } });
+  if (mudou) rascGravar(o); avalProgresso();
+}
 function formResp(cid, avaliado, grupo, dados, perguntas, editavel, acaoTipo, dono) {
   const ks = Object.keys(perguntas).sort(); const ctx = cid + '_' + avaliado + (dono ? '_' + dono : '');
-  return ks.map(k => `<div class="camp"><label for="r-${esc(grupo)}-${esc(ctx)}-${k}">${esc(perguntas[k])}</label><textarea class="ta" id="r-${esc(grupo)}-${esc(ctx)}-${k}" data-resp="${esc(grupo)}" data-ctx="${esc(ctx)}" data-q="${k}" maxlength="2500" ${editavel ? '' : 'readonly'}>${esc((dados && dados[k]) || '')}</textarea></div>`).join('')
-    + (editavel ? `<div class="row" style="margin-top:10px"><button class="btn p" data-act="${acaoTipo}" data-cid="${esc(cid)}" data-av="${esc(avaliado)}">💾 Salvar</button>${dados && dados.ts ? `<span class="small">Salvo em ${esc(new Date(dados.ts).toLocaleString('pt-BR'))}</span>` : ''}</div>` : '');
+  return ks.map(k => `<div class="camp"><label for="r-${esc(grupo)}-${esc(ctx)}-${k}">${esc(perguntas[k])}</label><textarea class="ta" id="r-${esc(grupo)}-${esc(ctx)}-${k}" data-resp="${esc(grupo)}" data-ctx="${esc(ctx)}" data-q="${k}" data-opc="${/\(opcional\)/i.test(perguntas[k]) ? 1 : ''}" data-salvo-ts="${(dados && +dados.ts) || 0}" maxlength="2500" ${editavel ? '' : 'readonly'}>${esc((dados && dados[k]) || '')}</textarea></div>`).join('')
+    + (editavel ? `<div class="row" style="margin-top:10px"><button class="btn p" data-act="${acaoTipo}" data-cid="${esc(cid)}" data-av="${esc(avaliado)}">💾 Salvar</button><span class="chip prog" data-prog="${esc(grupo)}" data-pctx="${esc(ctx)}" aria-live="polite"></span>${dados && dados.ts ? `<span class="small">Salvo em ${esc(new Date(dados.ts).toLocaleString('pt-BR'))}</span>` : ''}<span class="small rasc-st" data-rasc-st="${esc(grupo)}" data-pctx="${esc(ctx)}" aria-live="polite"></span></div>` : '');
 }
 async function viewAval() {
   const me = S.me.uid; const meus = Object.entries(S.ciclos).filter(([, c]) => participa(c, me)).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
@@ -768,6 +793,7 @@ async function render() {
   catch (e) { console.warn('[travessia]', e); html = `<div class="err">${esc(erroAmigavel(e))}</div>`; }
   if (eu !== rendering) return;
   $('#painel').innerHTML = html; bolhas($('#painel'));
+  rascRestaurar();
   Object.keys(rasc).forEach(id => { const el = document.getElementById(id); if (el && !el.readOnly && rasc[id] && !el.value) el.value = rasc[id]; });   // não perde o que a pessoa estava escrevendo
   if (foco) { const el = document.getElementById(foco); if (el) { el.focus(); try { if (sel != null) el.setSelectionRange(sel, sel); } catch (_) {} } }
 }
@@ -777,7 +803,8 @@ async function guardarBau(item) { const id = novoId(); item.ts = Date.now(); ite
 const salvaResp = async (cid, av, grupo, caminho) => {
   const dados = { ts: Date.now() }; document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`).forEach(t => { if (t.value.trim()) dados[t.dataset.q] = t.value.trim(); });
   if (Object.keys(dados).length < 2) { toast('Escreva pelo menos uma resposta antes de salvar.'); return false; }
-  return tenta(() => W(caminho, dados), '💾 Salvo!');
+  const ids = [...document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`)].map(t => t.id);
+  const ok = await tenta(() => W(caminho, dados), '💾 Salvo!'); if (ok) rascLimpar(ids); return ok;
 };
 // 🫶 Quando a pessoa marca "mal" (2) ou "muito mal" (1): avisa o líder direto pelo sino (um por pessoa por dia; a regra só grava se ainda não existe).
 // ↩ T8 (consultoria 09/11/2026): o toque na carinha grava na hora, mas o aviso de apoio ao líder só sai depois de HUMOR_DESFAZER_S segundos.
@@ -829,7 +856,7 @@ document.addEventListener('click', async e => {
   if (a === 'fechar') { S.sel = null; return render(); }
   if (a === 'sel-aba') { S.selTab = b.dataset.k; return render(); }
   if (a === 'enc-del') { if (await tenta(() => D('encontros/' + b.dataset.uid + '/' + b.dataset.id), 'Registro apagado.')) { invalida('um:' + b.dataset.uid); render(); } return; }
-  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { el.value = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; el.focus(); } return; }
+  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { el.value = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; el.focus(); el.dispatchEvent(new Event('input', { bubbles: true })); } return; }
   if (a === 'par-sugerir') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => W(`avaliacoes/${cid}/${me}/pares/${par}`, { aprovado: false, por: 'avaliado', ts: Date.now() }), 'Indicação enviada ao seu líder.')) { invalida('aval:' + cid + ':' + me); render(); } return; }
   if (a === 'par-retirar') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => D(`avaliacoes/${cid}/${me}/pares/${par}`))) { invalida('aval:' + cid + ':' + me); render(); } return; }
   if (a === 'auto-salvar') { if (await salvaResp(b.dataset.cid, me, 'auto', `avaliacoes/${b.dataset.cid}/${me}/auto`)) { invalida('aval:' + b.dataset.cid + ':' + me); render(); } return; }
@@ -861,6 +888,10 @@ document.addEventListener('change', async e => {
   if (t.dataset.rh) { const uid = t.dataset.rh; if (await tenta(() => (t.checked ? W('papeis/' + uid, 'rh') : D('papeis/' + uid)), t.checked ? '🤝 Papel de RH concedido.' : 'Papel de RH removido.')) invalida('papeis'); else t.checked = !t.checked; return; }
 });
 document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('textarea[data-resp]')) S.ultimoFoco = e.target.id; });
+const rascTimers = {};
+document.addEventListener('input', e => { const t = e.target;
+  if (t.matches && t.matches('textarea.ta[data-resp]:not([readonly])')) { avalProgresso(); clearTimeout(rascTimers[t.id]); rascTimers[t.id] = setTimeout(() => { if (!t.isConnected) return; rascStatus(t, rascGuardar(t) ? (rascSujo(t) ? '💾 Rascunho guardado neste aparelho' : '') : '⚠ Não deu para guardar o rascunho neste aparelho — salve antes de sair.'); }, 600); } });
+window.addEventListener('beforeunload', e => { const sujos = rascEditaveis().filter(rascSujo); if (!sujos.length) return; sujos.forEach(rascGuardar); e.preventDefault(); e.returnValue = ''; });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.pesq) { S.pesq = e.target.value; clearTimeout(window.__pT); window.__pT = setTimeout(render, 220); } });
 document.addEventListener('submit', async e => {
   const f = e.target.closest('[data-form]'); if (!f) return; e.preventDefault(); const k = f.dataset.form; const fd = new FormData(f); const me = S.me.uid;
@@ -943,7 +974,10 @@ function demoDados() {
 // ───────── login e boot ─────────
 function mostraLogin(msg) { $('#login').hidden = false; $('#app').hidden = true; $('#quem').hidden = true; $('#login-err').textContent = msg || ''; $('#login-err').hidden = !msg; }
 $('#btn-login').addEventListener('click', () => { $('#login-err').hidden = true; if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; } window._signIn().catch(e => mostraLogin('Não deu pra entrar: ' + (e && e.message || e))); });
-$('#btn-sair').addEventListener('click', () => signOut(auth));
+$('#btn-sair').addEventListener('click', async () => {   // sair da conta apaga o rascunho da avaliação deste aparelho (texto pessoal em aparelho que pode ser compartilhado)
+  if (S.me && Object.keys(rascLer()).length && !(await uiConfirm('Você tem respostas da avaliação não salvas neste aparelho. Sair apaga esse rascunho. Sair mesmo assim?', 'Sair'))) return;
+  if (S.me) { try { localStorage.removeItem(rascChave()); } catch (_) {} } signOut(auth);
+});
 $('#btn-tema').addEventListener('click', () => { const atual = document.documentElement.getAttribute('data-theme') || ''; const i = TEMAS.findIndex(x => x[0] === atual); aplicaTema(TEMAS[(i + 1) % TEMAS.length][0], true); });
 const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhenses'], ['sunset', '🌅', 'Entardecer']];
 function aplicaTema(v, avisa) { const i = Math.max(0, TEMAS.findIndex(x => x[0] === v)), t = TEMAS[i]; if (t[0]) document.documentElement.setAttribute('data-theme', t[0]); else document.documentElement.removeAttribute('data-theme'); $('#btn-tema').textContent = t[1]; try { localStorage.setItem('mare_theme', t[0] === 'light' ? 'light' : t[0] === 'sunset' ? 'vice' : 'dark'); localStorage.setItem('travessia_tema', t[0]); } catch (_) {} if (avisa) toast(t[1] + ' ' + t[2]); }

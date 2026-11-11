@@ -348,21 +348,21 @@
 - showMsg:L182 · clearMsg:L183 · lsGet:L184 · lsSet:L185 · isHering:L187 · arr:L190 · hojeISO:L191 · proximaSexta:L195 · camposEfetivos:L199 · tagsEspeciais:L211
 - carregarListaSquads:L214 · carregarSquadInterno:L226 · renderWho:L255 · renderSquadSlot:L272 · renderInterno:L284 · mostrar:L336 · entrar:L348 · validarInterno:L416 · avisarMembros:L432 · __intake:L489
 
-## `travessia-dev.html` (986 linhas · 46 funções)
-- **CSS:** L12–L301 | **JS:** L324–L983 (module) | **Módulos:** mare-login-dev.js?v=3 (L323)
-- **Consts (63):** firebaseConfig:L329 · fbApp:L339 · db:L340 · auth:L341 · provider:L342 · T:L349 · $:L350 · esc:L351 · _hrefOk:L352 · pad:L353 · isoDe:L354 · hojeISO:L355 · brDe:L356 · brFull:L357 · diasEntre:L358 · novoId:L359 · W:L363 · D:L364 · WABS:L365 · CAD:L380 · CAD_DIAS:L381 · TIPO_1A1:L382 · FACES:L383 · FASES:L384 · PERGUNTAS_PADRAO:L385 · ultimoEncontro:L412 · viewProxima:L443 · S:L447 · nomeDe:L448 · iniDe:L449 · liderDe:L450 · liderados:L451 · timeAmpliado:L452 · ehLider:L453 · ciclosAtivos:L454 · participa:L455 · perguntasDe:L456 · avatar:L457 · chip:L458 · vazio:L459 (+23)
-- _signIn:L344 · _signInIdToken:L346
-- **[utilidades]** toast:L361 · G:L362 · uiConfirm:L366 · erroAmigavel:L372 · tenta:L377
-- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L392 · termometro:L403 · proximaAcao:L417 · carregaProxima:L435
-- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L463 · carregaUm:L472 · carregaHumor:L478 · carregaDiario:L485 · carregaBau:L486 · carregaEstrelas:L487 · carregaAval:L495 · cache:L501
-- **[telas]** blocoFechamento:L505 · viewDiario:L516 · listaEncontros:L535 · viewFarol:L540 · sparkHumor:L546 · viewInicio:L551 · viewBau:L581
-- **[avaliação (pessoa)]** sugestoesPares:L600 · formResp:L608 · viewAval:L613
-- **[frota (líder)]** viewFrota:L651 · viewTermometro:L669 · viewDetalhe:L684 · viewAvalLider:L699
-- **[administração (ADM e RH)]** viewAdmin:L725
-- **[montagem]** bolhas:L753 · render:L759
-- **[ações]** guardarBau:L776 · humorDisparar:L787 · humorArmar:L788 · alertaApoio:L791
-- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L884 · demoDados:L886
-- **[login e boot]** mostraLogin:L944 · aplicaTema:L949 · abrirApp:L952 · Travessia:L981
+## `travessia-dev.html` (1020 linhas · 53 funções)
+- **CSS:** L12–L303 | **JS:** L326–L1017 (module) | **Módulos:** mare-login-dev.js?v=3 (L325)
+- **Consts (68):** firebaseConfig:L331 · fbApp:L341 · db:L342 · auth:L343 · provider:L344 · T:L351 · $:L352 · esc:L353 · _hrefOk:L354 · pad:L355 · isoDe:L356 · hojeISO:L357 · brDe:L358 · brFull:L359 · diasEntre:L360 · novoId:L361 · W:L365 · D:L366 · WABS:L367 · CAD:L382 · CAD_DIAS:L383 · TIPO_1A1:L384 · FACES:L385 · FASES:L386 · PERGUNTAS_PADRAO:L387 · ultimoEncontro:L414 · viewProxima:L445 · S:L449 · nomeDe:L450 · iniDe:L451 · liderDe:L452 · liderados:L453 · timeAmpliado:L454 · ehLider:L455 · ciclosAtivos:L456 · participa:L457 · perguntasDe:L458 · avatar:L459 · chip:L460 · vazio:L461 (+28)
+- _signIn:L346 · _signInIdToken:L348
+- **[utilidades]** toast:L363 · G:L364 · uiConfirm:L368 · erroAmigavel:L374 · tenta:L379
+- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L394 · termometro:L405 · proximaAcao:L419 · carregaProxima:L437
+- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L465 · carregaUm:L474 · carregaHumor:L480 · carregaDiario:L487 · carregaBau:L488 · carregaEstrelas:L489 · carregaAval:L497 · cache:L503
+- **[telas]** blocoFechamento:L507 · viewDiario:L518 · listaEncontros:L537 · viewFarol:L542 · sparkHumor:L548 · viewInicio:L553 · viewBau:L583
+- **[avaliação (pessoa)]** sugestoesPares:L602 · rascLer:L615 · rascGravar:L616 · rascGuardar:L617 · rascLimpar:L618 · rascStatus:L621 · avalProgresso:L622 · rascRestaurar:L626 · formResp:L633 · viewAval:L638
+- **[frota (líder)]** viewFrota:L676 · viewTermometro:L694 · viewDetalhe:L709 · viewAvalLider:L724
+- **[administração (ADM e RH)]** viewAdmin:L750
+- **[montagem]** bolhas:L778 · render:L784
+- **[ações]** guardarBau:L802 · humorDisparar:L814 · humorArmar:L815 · alertaApoio:L818
+- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L915 · demoDados:L917
+- **[login e boot]** mostraLogin:L975 · aplicaTema:L983 · abrirApp:L986 · Travessia:L1015
 
 ## `okr-apresentacao.slide.html` (2534 linhas · 120 funções)
 - **CSS:** L9–L607 | **JS:** L751–L789 (module), L791–L2508 (classic), L2509–L2531 (classic)

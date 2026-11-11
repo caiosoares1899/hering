@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Travessia — avaliação com rascunho no aparelho e progresso (T7 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
+
+- As respostas da avaliação (autoavaliação, feedback de par e avaliação do líder) vão para um rascunho neste aparelho a cada pausa de digitação, com "💾 Rascunho guardado neste aparelho" ao lado do Salvar. Fechar a aba, recarregar ou trocar de aba não perde mais o texto: ele volta com "↩ Rascunho deste aparelho recuperado. Lembre de salvar."
+- Contador "X de N respondidas" (perguntas opcionais não contam), atualizado enquanto a pessoa digita.
+- Sair da página com texto não salvo pede confirmação.
+- O rascunho fica numa chave com o uid (outra conta no mesmo navegador não vê), é apagado ao salvar e ao sair da conta (com confirmação, se houver rascunho), e é descartado se o banco tiver uma versão mais nova (salva em outro aparelho).
+- Teste: `docs/arezzo/testes/test_travessia_rascunho.js` (25/25, 1280/390 px).
+
 ### Travessia — humor com aviso antes e "Desfazer" (T8 da consultoria) (SÓ DEV · travessia-dev.html) — 2026-11-11
 
 - "👁 Seu líder (Nome) vê esta resposta." subiu para cima das carinhas, curto; a explicação abaixo ficou só com o detalhe.

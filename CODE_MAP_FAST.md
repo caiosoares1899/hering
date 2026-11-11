@@ -119,8 +119,8 @@
 - `_okrAgendaCartoes` (L3061) · `_okrAgendaConfirmar` (L3084) · `_okrAgendaAplicar` (L3099)
 
 ### `travessia-dev.html` (9 âncoras curadas)
-- `abrirApp` (L952) · `farol` (L392) · `termometro` (L403) · `viewBau` (L581) · `viewDiario` (L516) · `viewAval` (L613)
-- `viewFrota` (L651) · `guardarBau` (L776) · `demoDados` (L886)
+- `abrirApp` (L986) · `farol` (L394) · `termometro` (L405) · `viewBau` (L583) · `viewDiario` (L518) · `viewAval` (L638)
+- `viewFrota` (L676) · `guardarBau` (L802) · `demoDados` (L917)
 
 ### `okr-apresentacao.slide.html` (12 âncoras curadas)
 - `buildSlides` (L1234) · `startListeners` (L2111) · `rebuild` (L1349) · `fitSlideContent` (L1509) · `_okrFitDetailSections` (L1769) · `objMarcos` (L913)
