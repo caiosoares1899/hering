@@ -26,8 +26,13 @@ const root=process.cwd();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/onboarding.html');
   await page.locator('#comece').waitFor({timeout:3000});
-  const shortcuts=page.locator('.bordo-atalhos a');
-  assert.equal(await shortcuts.count(),12);
+  const shortcuts=page.locator('#comece .bordo-atalhos a');
+  assert.equal(await shortcuts.count(),13);
+  // 🧭 Guia do Maré (11/11/2026): o A Bordo leva ao guia da ferramenta, nos dois modos, e o atalho do roteiro aponta pro bloco
+  assert.equal(await page.locator('#comece .bordo-atalhos a[href="#guia-mare"]').count(),1,'atalho "Como usar o Maré" no roteiro');
+  const guia=await page.locator('#guia-mare .bordo-atalhos a').evaluateAll(as=>as.map(a=>a.getAttribute('href')));
+  assert.deepEqual(guia,['guia-mare.html?modo=resumido&volta=kanban.html','guia-mare.html?modo=completo&volta=kanban.html','kanban.html'],'bloco do Guia do Maré com Resumido, Completo e Abrir o Maré');
+  assert.equal(await page.locator('#oceano .bordo-card a[href="#guia-mare"]').count(),1,'cartão do Maré aponta pro guia');
   const style=await shortcuts.first().evaluate(el=>{const s=getComputedStyle(el);return {height:el.getBoundingClientRect().height,border:s.borderTopStyle,radius:parseFloat(s.borderRadius),decoration:s.textDecorationLine};});
   assert.ok(style.height>=44 && style.border==='solid' && style.radius>=10 && style.decoration==='none','atalhos são botões Marine Glass com área de toque');
   const fishRef=fs.readFileSync(path.join(root,'oceano.html'),'utf8').match(/const FISH_SVGS = (\[[\s\S]*?\]);/)[1];
@@ -49,8 +54,10 @@ const root=process.cwd();
   assert.equal(await shortcuts.first().evaluate(el=>getComputedStyle(el).outlineStyle),'solid','foco de teclado visível');
   if(!process.env.BORDO_BASE){
    fs.mkdirSync('docs/capturas/a-bordo-marine-glass',{recursive:true});
-   await page.locator('.bordo-atalhos').evaluate(el=>el.parentElement.scrollIntoView({block:'center'}));
-   await page.locator('.bordo-atalhos').locator('..').screenshot({path:`docs/capturas/a-bordo-marine-glass/atalhos-${width}.png`});
+   await page.locator('#comece .bordo-atalhos').evaluate(el=>el.parentElement.scrollIntoView({block:'center'}));
+   await page.locator('#comece .bordo-atalhos').locator('..').screenshot({path:`docs/capturas/a-bordo-marine-glass/atalhos-${width}.png`});
+   await page.locator('#guia-mare').scrollIntoViewIfNeeded();
+   await page.locator('#guia-mare').screenshot({path:`docs/capturas/a-bordo-marine-glass/guia-mare-${width}.png`});
   }
 
   assert.equal(await page.locator('#cultura .cultura-item').count(),5,'cinco comportamentos oficiais');
