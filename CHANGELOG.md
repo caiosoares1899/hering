@@ -24,6 +24,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Maré › 🏝️ Ilha Dinâmica: painel aberto redesenhado — botões nas laterais, Resumo no centro (/melhoriauiux · SÓ DEV · kanban-dev v8.30.939-dev) — 2026-11-11
+
+- **Antes:** 8 abas espremidas numa faixa de 390 px (cortadas: "Favorit"; o 📌 sumia para fora), nenhuma visão geral (era preciso caçar aba por aba), cada aba com um estilo (links sublinhados ao lado de botões, horário solto acima do título), Ajustes como lista crua de caixas — e 🐞 a aba ⚙ Ajustes rolava o painel para o lado e cortava os rótulos pela esquerda.
+- **Agora (referência Vorssaint):** botões redondos nas laterais com nome e contador real — esquerda = o que acontece agora (Resumo, Timers, Avisos, Agenda, Agente), direita = atalhos e controle (Favoritos, Serviços, Operação, Ajustes) — e o conteúdo escolhido num cartão no centro, com cabeçalho e 📌.
+- **Resumo** (abre nele): um bloco por módulo com o que importa agora (tempo do timer com ⏸/▶ no próprio bloco, avisos não lidos, próximo compromisso, serviços, agente, favoritos, operação); cada bloco leva ao módulo. Quem já usava a ilha vê o Resumo na 1ª abertura depois da atualização; depois ela volta a abrir na última aba usada (o padrão), ou no que estiver em ⚙ Ajustes → "Ao abrir, mostrar".
+- **Ajustes** em dois grupos (Como a ilha aparece · Módulos) com interruptores e uma linha explicando cada módulo; botões e links de ação num estilo só; Agenda com o horário numa coluna.
+- **Celular:** cartão em cima e os botões numa faixa embaixo (alcance do polegar), quebrando em linhas — sem rolagem lateral, alvos ≥ 44 px.
+- **Cor:** valor "ao vivo" (timer, reunião chegando) com token próprio — no Vice o --teal é apagado, agora usa o pêssego do tema (também no tempo da pílula). Na aba Avisos, o título repetido do sino sumiu.
+- Também: painel preso dentro da tela de 769 a 1100 px (no tablet de 834 px ele saía pela esquerda), alvos de 44 px em qualquer tela de toque, sem botão dentro de botão no bloco do timer, foco devolvido ao ⏸/▶, "Analisando · N s" andando com o painel aberto, 100dvh no celular, Ajuda atualizada.
+- Testes: docs/arezzo/testes/test_ilha_ux.js (35: 1280/390, 4 temas, sem rolagem lateral em nenhuma aba, bug dos Ajustes, navegação pelos blocos, ⏸ no bloco, teclado, toque, quadros da abertura) + as 7 baterias da ilha (244); validação no console: docs/arezzo/testes/console_ilha_ux.js.
 ### A Bordo: guia antes do onboarding, cultura Hering, Dados e IA e mapa do Oceano (SÓ DEV — PR #1705) — 2026-11-11
 
 Site onboarding.html com roteiro de chegada, consulta por assunto, cinco comportamentos e proposta de valor do comunicado de cultura Hering. Omnichannel com Allan Dickmann; Dados e IA inclui Caio com foco em agilidade e implementação de IA. Seção Oceano explica acesso, produtos, Sonar, notificações e primeiros passos; slides alinhados. Páginas sem par -dev: alterações entregues para revisão do Claude antes do merge. Teste: docs/arezzo/testes/test_onboarding_bordo.js. Dica: não, A Bordo não integra o catálogo de dicas; orientação na própria página. Fronteira: sem mudança de autenticação, banco ou dados dinâmicos; conteúdo e links internos estáticos.
