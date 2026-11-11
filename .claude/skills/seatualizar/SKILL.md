@@ -13,7 +13,7 @@ description: Coloca o agente (Claude ou Antigravity) 100% em dia com tudo o que 
 
 > **Para o Antigravity:** Você já recebe `AGENTS.md`, `.agents/rules/antigravity.md` e `.agents/rules/release-process.md` injetados automaticamente em `<user_rules>` — **NÃO gaste turnos relendo esses arquivos**! Faça **1 única bateria paralela de `read_file`** nos 4 alvos dinâmicos abaixo (ou rode `node scripts/mare-cli.js brief` se já for usar terminal na rotina diária):
 
-1. **`docs/COORDENACAO_AGENTES.md` (`StartLine: 109, EndLine: 165`):**
+1. **`docs/COORDENACAO_AGENTES.md` inteiro (~270 linhas; o Quadro é a §6 — não use faixa de linhas fixa: o arquivo muda todo dia e a faixa perde "Em andamento"/"Pendente de deploy"):**
    - **`### Em andamento`:** quais arquivos estão reservados por Claude ou Codex agora? (**Proibido tocar neles** até o merge.)
    - **`### Escalado para o Claude` / `### Pendente de deploy`:** há bloqueio ou deploy pendente do Caio?
    *(Na 1ª tarefa da sessão, se ainda não leu a tabela de escopo §1 ou o §7, leia `StartLine: 1, EndLine: 225`.)*

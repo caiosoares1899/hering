@@ -3150,7 +3150,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.101 · painel-dev</div>
+<div class="version">v5.102 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -10169,7 +10169,8 @@ function loadPcfgUsers(){
       list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito.</div>';
       return;
     }
-    const ROLES=['adm','po','organizador','membro','convidado'];
+    // 'adm' por squad só aparece para ADM: a regra do banco (11/11/2026) recusa PO gravando ou mexendo em 'adm'
+    const ROLES=(_isAdmPainel()?['adm']:[]).concat(['po','organizador','membro','convidado']);
     list.innerHTML='';
     membersArr.forEach(([uid,u])=>{
       const row=document.createElement('div');
@@ -10193,7 +10194,8 @@ function loadPcfgUsers(){
       // override por squad já definido via "👥 Global Users" -- dropdown
       // exibia o papel ERRADO sempre que existisse um override.
       const papelEfetivo=(u.squads_roles&&u.squads_roles[cfgSquadId])||u.role||'membro';
-      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(papelEfetivo===r) opt.selected=true; sel.appendChild(opt); });
+      (papelEfetivo==='adm' && !ROLES.includes('adm') ? ['adm'].concat(ROLES) : ROLES).forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(papelEfetivo===r) opt.selected=true; sel.appendChild(opt); });
+      if(papelEfetivo==='adm' && !_isAdmPainel()){ sel.disabled=true; sel.title='Só ADM muda o papel de um ADM'; }
       sel.addEventListener('change',function(){ updateUserRole(uid, this.value); });
       row.appendChild(av); row.appendChild(info); row.appendChild(sel);
       list.appendChild(row);

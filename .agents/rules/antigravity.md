@@ -16,7 +16,7 @@
 ## 3. Via Rápida Direta (Fast-Lane) vs. Subagentes Paralelos
 - **Via Rápida Direta (1 arquivo localizado / ≤ 150 linhas lidas — 80% dos pedidos, meta 1–2 min):**
   - Resolva **diretamente no agente principal**, sem instanciar subagentes frios:
-    1. `/seatualizar` enxuto em 1 turno paralelo (`docs/COORDENACAO_AGENTES.md` L109–165, `version.json`, `CHANGELOG.md` L1–55, `BUGS_E_CORRECOES.md` L1–115 — não releia `AGENTS.md`/regras já injetadas em `<user_rules>`).
+    1. `/seatualizar` enxuto em 1 turno paralelo (`docs/COORDENACAO_AGENTES.md` inteiro (o Quadro é a §6; sem faixa de linhas fixa), `version.json`, `CHANGELOG.md` L1–55, `BUGS_E_CORRECOES.md` L1–115 — não releia `AGENTS.md`/regras já injetadas em `<user_rules>`).
     2. Consulte a linha `Lxxxx` em `docs/CODE_SYMBOLS.md` e leia só a fatia cirúrgica (`StartLine`/`EndLine` de 60–120 linhas, ou `mare-cli.js slice` para `kanban-dev.html`).
     3. Aplique a edição (`edit_file` ou `"patches"` no `.mare-ship.json`), inclua `testScript` no `.mare-ship.json` e execute **1 único comando final**: `node scripts/mare-cli.js ship`.
 - **Arquitetura Multiagentes Paralela (2+ páginas/domínios, `/atualizardocumentacoes`, `/monitorarbugs`, `/auditoriaseguranca` ou contexto longo):**

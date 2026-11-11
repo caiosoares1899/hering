@@ -123,4 +123,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-09 · Maré › Modal do card:** campos sem rolagem lateral, rodapé quebrando no tablet, grupos de checklist separados, alvos de toque e nomes acessíveis; foco preservado ao recolher por teclado (kanban-dev v8.30.915-dev, PR #1661). Teste `test_card_modal_ui.js`.
 
+- **2026-11-11 · Maré › Ilha Dinâmica (painel aberto):** 8 abas espremidas + sem visão geral + 🐞 Ajustes rolando para o lado → "estúdio" no estilo Vorssaint (botões redondos nas laterais, cartão no centro, Resumo com um bloco por módulo), Ajustes com interruptores, faixa de botões embaixo no celular, token "ao vivo" para o Vice. Teste `test_ilha_ux.js`.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
