@@ -63,7 +63,9 @@ const read = (p,key)=>p.evaluate(key=>key.split('/').reduce((o,k)=>o?.[k],window
       check('contador reaproveita não lidas do sino',badge===1 && Number(await text(p,'#ilha-n b'))===badge,badge);
       check('notificação antiga nunca provoca aviso',await p.evaluate(()=>!window.__ilhaStates.includes('aviso')));
       await openPanel(p);
-      check('abrir expande e lista dois timers',await state(p)==='aberta' && await p.getAttribute('#ilha-btn','aria-expanded')==='true' && await p.locator('.ilha-timer').count()===2);
+      // desde o redesenho de 11/11/2026 a ilha abre no Resumo (um bloco por módulo); a lista completa fica na aba Timers
+      check('abrir expande no Resumo com o bloco do timer',await state(p)==='aberta' && await p.getAttribute('#ilha-btn','aria-expanded')==='true' && await p.locator('.ilha-aba.on[data-aba="resumo"]').count()===1 && await p.locator('.ilha-tile[data-ir="timers"] [data-tm-tempo]').count()===1);
+      await tab(p,'timers'); check('aba Timers lista dois timers',await p.locator('.ilha-timer').count()===2);
       await tab(p,'notif'); check('aba notificações lista n1 e oferece ações do sino',await p.locator('#ilha-sino-slot .notif-item').count()===1 && await p.locator('#ilha-sino-slot .notif-mark-all').first().isVisible() && await p.locator('#ilha-sino-slot #dnd-toggle-btn').isVisible());
       await tab(p,'timers'); await close(p);
       check('Esc recolhe e devolve foco',await state(p)!=='aberta' && await p.evaluate(()=>document.activeElement===document.getElementById('ilha-btn')));
