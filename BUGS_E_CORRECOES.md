@@ -87,6 +87,17 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · Papéis: PO não se promove mais a ADM; gestorOkr só por ADM (regras do banco · SÓ DEV · painel-dev v5.102)
+
+- **C1 (alta, achado do Antigravity no #1701):** a validação de `kanban/usuarios/$uid/role` deixava qualquer PO gravar qualquer papel em qualquer cadastro — inclusive `adm` no próprio — e `role === 'adm'` destrava adm_emails, painel_viewers, agente_agil_orquestrador etc. Agora o papel GLOBAL só muda por ADM/Caio (seguem os caminhos de cadastro: nascer membro/convidado; convidado → membro pela própria pessoa). No papel POR SQUAD (`squads_roles`), o PO atribui membro/convidado/organizador/po, mas não `adm` e não mexe em quem é `adm`.
+- **C2 (média):** `gestorOkr` (destrava okr/datastudio) era gravável pela própria pessoa; agora só ADM/Caio (o `toggleGestorOkr` do Painel já era só ADM).
+- **painel-dev:** a opção `adm` no papel do squad só aparece para ADM; membro que já é `adm` aparece certo e travado para PO.
+- **Freelancers:** 1º login (cadastro como convidado no squad em que é externo) segue igual — testado.
+- **Deploy:** `--only database` publica o arquivo inteiro, então sai junto com a regra do comentário (#1700), depois da promoção.
+- **Antes do deploy:** docs/arezzo/testes/console_papeis_pre_regra.js (ADMs da lista `adm_emails` sem `role: 'adm'` gravado perderiam poderes no banco; o script lista e corrige).
+- **Limites que continuam (já existiam):** PO grava campos não-papel do cadastro de outras pessoas (fcm_tokens, notif_prefs, e-mail); o 1º login de quem está em `adm_emails` tenta gravar `role: 'adm'` e é recusado (a sincronização no login também só funciona com role já gravado); `torre` é livre (não entra em nenhuma regra).
+- Testes: functions/rules/__tests__/papelRules.test.js (6).
+
 ### 2026-11-11 · Segurança (/auditoriaseguranca · dom: painel-dev.html) — fecha 8 famílias de XSS/breakout no Painel Dev (v5.100, SÓ DEV) e escala 5 achados de regras RTDB
 
 **Causa raiz da lacuna na suíte de 18/10:** `seedPainel()` em `docs/arezzo/testes/test_seguranca_xss.js` semeava `squads.dados`, enquanto `painel-dev.html` usa `SQUADS = ['dev', 'omnichannel']` — deixando cards, colunas, tags, bloqueios, timeline e `error_logs` com 0 itens durante o scan anterior.
