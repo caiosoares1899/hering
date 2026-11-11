@@ -146,12 +146,12 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 >
 > Antes disso: **tudo o que estava listado até 09/11/2026 foi publicado pelo Caio** (confirmação dele em 07/11 e em 09/11, incluindo a regra do Guardião 'Resolvido por' da auditoria de 09/11 — o gatilho do chat do Agente Ágil no Painel, `agenteAgilPainelChat`/`agenteAgilPainelChatDev` com 1 GiB, foi no ar em 09/11; e as 5 funções da promoção #1650 — `criarCard` com várias submarcas + conhecimento — também em 09/11), além de: regras e funções de 21/10 a 06/11 — Travessia, Timer (`timersVigia`), backup do plantão, VTEX, Guardião (`cardsEspelhar`/`cardsGuardiao`/`guardiaoStatus`), Mini painel (`oceanoResumo`), cobrança e agenda do Radar (`okrDailyScan`/`okrAgenteChat`), origem externa do Agente Ágil, conhecimento regenerado, `functions:delete` do plantão e as regras do Agente Ágil no Painel (#1633). O detalhe de cada linha está no histórico do git deste arquivo.
 
+> ✅ **12/11/2026:** o Caio publicou a regra da cultura da Travessia (#1722: `encontros/at`, `avaliacoes/atitudes`, `ciclos/cultura`) e as 5 funções do Agente Ágil com o conhecimento da promoção #1728.
+>
 > ✅ **11/11/2026:** o Caio publicou tudo da promoção #1713 (conhecimento do Agente Ágil, regra do autor do comentário e papéis C1/C2).
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🚀 Promoção de 12/11 (kanban v8.30.946, okr v2.115, oceano v1.79, travessia, painel v5.104): conhecimento do Agente Ágil regenerado (Ajuda de prod mudou) — republicar as 5 funções que leem o conhecimento. | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 12/11/2026 |
-| Claude | 🧭 Cultura Hering na Travessia: `encontros/{uid}/{id}/at` (atitude em foco do 1:1), nó `avaliacoes/{cid}/{avaliado}/atitudes/{auto,lider,par/{par}}` (leitura/escrita copiadas de auto, lider e resp_pares) e `ciclos/{cid}/cultura`. Só acrescenta campos/nós (nada fica mais aberto); testes em `travessiaRules.test.js`. **Antes de alguém usar a Travessia dev com o PR mergeado** (sem a regra, salvar um 1:1 com atitude dá permissão negada). | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` | 11/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
