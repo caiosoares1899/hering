@@ -842,6 +842,11 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .ilha-notif b{display:block;font-weight:600;}
 .ilha-notif small{color:var(--txt3);}
 .ilha-notif.lida{opacity:.6;}
+.ilha-fav{display:flex;flex-wrap:nowrap;margin-bottom:8px;}
+.ilha-fav button{min-height:44px;overflow-wrap:anywhere;}
+.ilha-fav [data-fav],.ilha-fav [data-fav-card]{flex:1;min-width:0;text-align:left;}
+.ilha-fav [data-fav-rm]{flex:0 0 44px;}
+#ilha-fav-add{width:100%;min-width:0;min-height:44px;border:1px solid var(--glass-b);border-radius:10px;background:var(--glass);color:var(--txt);}
 .ilha-vazio{font-size:12px;color:var(--txt2);padding:8px 6px;}
 .ilha-rod{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
 .ilha-cfg label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;padding:6px 4px;color:var(--txt2);}
@@ -6816,7 +6821,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.933-dev</div>
+<div class="version">v8.30.934-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -38070,6 +38075,63 @@ _ilhaRegistrar({
     }
   }
 });
+// ── Módulo ⭐ Favoritos: só neste aparelho; destinos sempre reconstruídos, nunca URLs salvas ──
+function _ilhaFavs(){
+  const p = _ilhaPrefs(), vistos = new Set(), r = [];
+  const idOk = v => typeof v==='string' && !!v.trim();
+  (Array.isArray(p.favs) ? p.favs : []).forEach(f=>{
+    if(!f || typeof f!=='object') return;
+    let n;
+    if(f.tipo==='squad' && idOk(f.id)) n = {tipo:'squad', id:f.id};
+    else if(f.tipo==='produto' && idOk(f.id) && (window.MareNotif?.APPS||[]).some(a=>a.id===f.id)) n = {tipo:'produto', id:f.id};
+    else if(f.tipo==='card' && idOk(f.sq) && idOk(f.cardId) && typeof f.titulo==='string') n = {tipo:'card', sq:f.sq, cardId:f.cardId, titulo:f.titulo.slice(0,80)};
+    if(!n) return;
+    const k = JSON.stringify([n.tipo,n.id,n.sq,n.cardId]);
+    if(!vistos.has(k) && r.length<3){ vistos.add(k); r.push(n); }
+  });
+  p.favs = r; return r;
+}
+function _ilhaFavCard(){ return document.querySelector('#card-ov.open') ? cards.find(c=>c.id===editingId) : null; }
+function _ilhaFavAtualizar(){ _ilhaSalvar(); _ilhaPainel(); const f = (document.getElementById('ilha-fav-add') || document.querySelector('#ilha-painel [data-fav]')); if(f) f.focus(); }
+function _ilhaFavAdicionar(f){
+  const favs = _ilhaFavs();
+  if(favs.length<3){ _ilhaPrefs().favs = favs.concat(f); _ilhaFavs(); }
+  _ilhaFavAtualizar();
+}
+_ilhaRegistrar({
+  id:'fav', ico:'⭐', nome:'Favoritos', padrao:false,
+  aba:{
+    rot:'⭐ Favoritos',
+    html(){
+      const fs = _ilhaFavs(), apps = window.MareNotif?.APPS||[];
+      let h = fs.length ? fs.map((f,i)=>{
+        const nome = f.tipo==='squad' ? (SQUAD_META_LIVE[f.id]?.label||f.id) : f.tipo==='produto' ? apps.find(a=>a.id===f.id).nome : f.titulo;
+        return `<div class="ilha-acoes ilha-fav"><button type="button" data-fav="${i}">${esc(f.tipo==='squad'?'👥':f.tipo==='produto'?'🌊':'🗂')} ${esc(nome)}</button><button type="button" data-fav-rm="${i}" aria-label="Remover dos favoritos">✕</button></div>`;
+      }).join('') : '<div class="ilha-vazio">Adicione um produto ou squad abaixo, ou favorite um card enquanto ele estiver aberto.</div>';
+      if(fs.length===3) return h+'<div class="ilha-vazio">Máximo de 3 — remova um para trocar</div>';
+      const tem = (tipo,id)=>fs.some(f=>f.tipo===tipo && f.id===id);
+      h += '<select id="ilha-fav-add" aria-label="Adicionar favorito"><option value="">＋ Adicionar favorito…</option><optgroup label="Produtos">'
+        + apps.filter(a=>!tem('produto',a.id)).map(a=>`<option value="${esc('produto:'+a.id)}">${esc(a.nome)}</option>`).join('')
+        + '</optgroup><optgroup label="Squads">'+Object.keys(SQUAD_META_LIVE).filter(id=>!tem('squad',id)).map(id=>`<option value="${esc('squad:'+id)}">${esc(SQUAD_META_LIVE[id].label||id)}</option>`).join('')+'</optgroup></select>';
+      const c = _ilhaFavCard();
+      if(c && !fs.some(f=>f.tipo==='card' && f.sq===ACTIVE_SQUAD && f.cardId===c.id)) h += '<div class="ilha-acoes ilha-fav"><button type="button" data-fav-card>⭐ Favoritar o card aberto</button></div>';
+      return h;
+    },
+    clique(e){
+      const b = e.target.closest('[data-fav], [data-fav-rm], [data-fav-card]'); if(!b) return false;
+      const fs = _ilhaFavs();
+      if(b.hasAttribute('data-fav-rm')){ fs.splice(Number(b.dataset.favRm),1); _ilhaFavAtualizar(); }
+      else if(b.hasAttribute('data-fav-card')){ const c = _ilhaFavCard(); if(c) _ilhaFavAdicionar({tipo:'card', sq:ACTIVE_SQUAD, cardId:c.id, titulo:String(c.title||'Card sem título').slice(0,80)}); }
+      else {
+        const f = fs[Number(b.dataset.fav)]; if(!f) return true;
+        if(f.tipo==='squad') location.href = location.pathname+'?squad='+encodeURIComponent(f.id);
+        else if(f.tipo==='produto'){ const a = (window.MareNotif?.APPS||[]).find(a=>a.id===f.id); if(a) window.open(a.href, '_blank', 'noopener'); }
+        else { _ilhaFechar(false); tmAbrirCard(f.sq,f.cardId); }
+      }
+      return true;
+    }
+  }
+});
 window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(); }, desligar:()=>{ _ilhaPrefs().on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); }, estado:()=>_ilhaEstado()};
 (function _ilhaEventos(){
   const ilha = document.getElementById('ilha'); if(!ilha) return;
@@ -38115,6 +38177,11 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
     if(id==='ilha-cfg-modo') p.modo = e.target.value; else if(id==='ilha-cfg-principal') p.principal = e.target.value; else if(id==='ilha-cfg-reabrir') p.reabrir = e.target.value;
     else if(id==='ilha-cfg-timer') p.timer = e.target.checked; else if(id==='ilha-cfg-notif') p.notif = e.target.checked; else if(id==='ilha-cfg-privado') p.privado = e.target.checked;
     else if(id==='ilha-cfg-sec') p.secundaria = e.target.checked;
+    else if(id==='ilha-fav-add'){
+      const v = e.target.value, sep = v.indexOf(':'), tipo = v.slice(0,sep), favId = v.slice(sep+1);
+      if(sep>0 && ((tipo==='produto' && (window.MareNotif?.APPS||[]).some(a=>a.id===favId)) || (tipo==='squad' && Object.hasOwn(SQUAD_META_LIVE,favId)))) _ilhaFavAdicionar({tipo,id:favId});
+      return;
+    }
     else if(id.indexOf('ilha-cfg-mod-')===0){ p.mods[id.slice(13)] = e.target.checked; _ilhaSalvar(); _ilhaRender(); _ilhaPainel(); const f = document.getElementById(id); if(f) f.focus(); return; }   // liga/desliga aba e escuta do módulo
     else return;
     _ilhaSalvar(); _ilhaPilula(); _ilhaRender(); _ilhaRelogio();   // prévia ao vivo: a pílula muda enquanto ajusta
