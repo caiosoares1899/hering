@@ -6900,7 +6900,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.941-dev</div>
+<div class="version">v8.30.942-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -38126,7 +38126,7 @@ function _ilhaRender(){
   ilha.closest('.app')?.classList.toggle('ilha-no-topo',e==='aberta');
   let veu = document.getElementById('ilha-veu'); const app = ilha.closest('.app');
   if(!veu && app && e==='aberta'){ veu = document.createElement('div'); veu.id = 'ilha-veu'; veu.setAttribute('aria-hidden','true'); app.insertBefore(veu, app.firstChild); }
-  if(veu) veu.classList.toggle('on', e==='aberta');
+  if(veu) veu.classList.toggle('on', e==='aberta' && !_ilha.fixada);   // com o 📌 a pessoa segue usando o quadro: sem véu (/monitorarbugs 11/11/2026)
   const sino = document.getElementById('notif-btn'); if(sino) sino.style.display = (p.on && p.notif) ? 'none' : '';
   if(e==='off'){ _ilhaSinoLugar(false); _ilhaRelogio(); return; }
   ilha.dataset.estado = e;
@@ -38457,7 +38457,7 @@ _ilhaRegistrar({
 // e apaga ao terminar (functions/agente-agil-orquestrador/mentionTrigger.js). Uma escuta nesse nó pessoal, só com o módulo ligado.
 // "Resposta pronta" = a notificação que a mesma função já manda ("🤖 Agente Ágil respondeu sua menção"), não lida, dos últimos 30 min.
 // Marcador com mais de 10 min é ignorado (função caiu antes do `finally`). O tempo mostrado é o decorrido desde `desde` — medida real.
-const _ilhaAg = {m:{}, off:null, tick:null, vis:null};
+const _ilhaAg = {m:{}, off:null, tick:null, vis:null, vivo:false};
 window.__ilhaAgTick = 0;
 function _ilhaAgAnalisando(){ const agora = Date.now();
   return Object.entries(_ilhaAg.m||{}).map(([id,v])=>Object.assign({id}, (v&&typeof v==='object')?v:{}))
@@ -38469,7 +38469,7 @@ function _ilhaAgCard(v){ const c = v.squad===ACTIVE_SQUAD && typeof cards!=='und
   return c ? String(c.title||'Card').slice(0,80) : (SQUAD_META_LIVE[v.squad] && SQUAD_META_LIVE[v.squad].label ? 'card em '+SQUAD_META_LIVE[v.squad].label : 'um card'); }
 function _ilhaAgDecorrido(v){ const s = Math.max(0, Math.floor((Date.now()-Date.parse(v.desde))/1000)); return s<60 ? s+' s' : Math.floor(s/60)+' min'; }
 function _ilhaAgRelogio(){
-  const precisa = !!_ilhaAg.off && !document.hidden && _ilhaAgAnalisando().length>0;
+  const precisa = _ilhaAg.vivo && !document.hidden && _ilhaAgAnalisando().length>0;
   if(precisa && !_ilhaAg.tick) _ilhaAg.tick = setInterval(()=>{ const an = _ilhaAgAnalisando(); if(!an.length){ _ilhaAgRelogio(); _ilhaRender(); return; } _ilhaPilula(); document.querySelectorAll('#ilha-painel [data-vivo="ag"]').forEach(el=>{ el.textContent = 'Analisando · '+_ilhaAgDecorrido(an[0]); }); }, 5000);
   if(!precisa && _ilhaAg.tick){ clearInterval(_ilhaAg.tick); _ilhaAg.tick = null; }
   window.__ilhaAgTick = _ilhaAg.tick ? 1 : 0;
@@ -38477,16 +38477,17 @@ function _ilhaAgRelogio(){
 _ilhaRegistrar({
   id:'agente', ico:'🤖', nome:'Agente Ágil', padrao:false,
   ligar(){
-    const u = window._currentUser; if(!u || _ilhaAg.off) return;
+    const u = window._currentUser; if(!u || _ilhaAg.vivo) return;
+    _ilhaAg.vivo = true;   // ANTES do onValue: o Firebase real entrega na hora (dentro da chamada) quando o dado já está em cache
     _ilhaAg.off = window._onValue(window._ref(window._db, 'kanban/usuarios/'+u.uid+'/agente_analisando'), snap=>{
-      if(!_ilhaAg.off) return;
+      if(!_ilhaAg.vivo) return;
       const v = snap.val(); _ilhaAg.m = (v && typeof v==='object') ? v : {};
       _ilhaAgRelogio(); _ilhaRender();
     }) || (()=>{});
     _ilhaAg.vis = ()=>_ilhaAgRelogio(); document.addEventListener('visibilitychange', _ilhaAg.vis);
   },
   desligar(){
-    const off = _ilhaAg.off; _ilhaAg.off = null; if(off) off();
+    const off = _ilhaAg.off; _ilhaAg.vivo = false; _ilhaAg.off = null; if(off) off();
     _ilhaAg.m = {}; if(_ilhaAg.vis){ document.removeEventListener('visibilitychange', _ilhaAg.vis); _ilhaAg.vis = null; }
     _ilhaAgRelogio();
   },
@@ -38619,6 +38620,7 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
   ilha.addEventListener('focusout', e=>{ if(!ilha.contains(e.relatedTarget) && !_ilha.dentro) sai(true); });
   // Esc fecha (e desfixa) — o 📌 só impede o clique fora de fechar; nunca chega aos atalhos do board
   window.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ilha.aberta){
+    if(document.querySelector('.ov.open')) return;   // card/preferências abertos por cima (ilha fixada ou aberta por atalho): o Esc é deles
     e.preventDefault(); e.stopImmediatePropagation();
     const dnd=document.getElementById('dnd-menu'), ins=document.getElementById('mn-ins-menu');
     if(dnd?.style.display==='block'){ dnd.style.display='none'; document.getElementById('dnd-toggle-btn')?.focus(); }
@@ -38632,7 +38634,7 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
     const p = _ilhaPrefs();
     const at = e.target.closest('[data-atalho]'); if(at){ _ilhaFechar(false); if(at.dataset.atalho==='prefs' && typeof openMinhasPrefs==='function') openMinhasPrefs(); return; }
     const ab = e.target.closest('.ilha-aba[data-aba]'); if(ab){ _ilha.abaAtual = ab.dataset.aba; if(ab.dataset.aba!=='ajustes'){ p.aba = ab.dataset.aba; _ilhaSalvar(); } _ilhaPainel(); const f = painel.querySelector('.ilha-aba.on'); if(f) f.focus(); return; }
-    if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
+    if(e.target.closest('#ilha-fixar')){ _ilha.fixada = !_ilha.fixada; document.getElementById('ilha-veu')?.classList.toggle('on', !_ilha.fixada); _ilhaPainel(); document.getElementById('ilha-fixar').focus(); return; }
     if(e.target.closest('#ilha-desligar')){ p.on = false; _ilhaSalvar(); _ilha.aberta = false; _ilhaRender(); showToast('Ilha Dinâmica desligada. Para religar: ⏲ Timers → 🏝️ Ilha Dinâmica.'); return; }
     if(e.target.closest('.notif-item') && !e.target.closest('.notif-dismiss')){ _ilhaFechar(false); return; }
     const ir = !e.target.closest('button[data-acao]') && e.target.closest('[data-ir]');
@@ -38661,7 +38663,7 @@ window.__ilha = {ligar:()=>{ _ilhaPrefs().on = true; _ilhaSalvar(); _ilhaRender(
       if(sep>0 && ((tipo==='produto' && (window.MareNotif?.APPS||[]).some(a=>a.id===favId)) || (tipo==='squad' && Object.hasOwn(SQUAD_META_LIVE,favId)))) _ilhaFavAdicionar({tipo,id:favId});
       return;
     }
-    else if(id.indexOf('ilha-cfg-mod-')===0){ p.mods[id.slice(13)] = e.target.checked; _ilhaSalvar(); _ilhaRender(); _ilhaPainel(); const f = document.getElementById(id); if(f) f.focus(); return; }   // liga/desliga aba e escuta do módulo
+    else if(id.indexOf('ilha-cfg-mod-')===0){ p.mods[id.slice(13)] = e.target.checked; if(!e.target.checked && p.principal===id.slice(13)) p.principal = 'timer'; _ilhaSalvar(); _ilhaRender(); _ilhaPainel(); const f = document.getElementById(id); if(f) f.focus(); return; }   // liga/desliga aba e escuta do módulo
     else return;
     _ilhaSalvar(); _ilhaPilula(); _ilhaRender(); _ilhaRelogio();   // prévia ao vivo: a pílula muda enquanto ajusta
   });
