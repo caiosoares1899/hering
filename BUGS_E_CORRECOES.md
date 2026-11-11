@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-11 · 🧩 Receita (fan-out) sobrescrevia cards e acionava o Guardião (PROD hotfix · kanban v8.30.945 · kanban-dev v8.30.945)
+
+Relato (12/11/2026): uma pessoa aplicou uma receita num card (campanha) e deu erro, o Guardião disparou e cards sumiram.
+- **Causa:** `applyFanoutToCurrentCard()` cria os filhos com `fbCreateCard()` (assíncrono: a chave sai de uma transação em `cards_index`) e logo depois `_crvPropagateToChildren()` copia a Ficha Técnica da campanha para cada filho com `fbSaveCard()`. O filho ainda não estava em `_cardsByKey`, e `fbSaveCard()` caía no fallback **pela posição local do array**, gravando `cards/{posição}` e `cards_index/{filho}=posição`. Em squad com "buracos" nas chaves (cards excluídos), essa posição é a de OUTRO card no banco, que era sobrescrito e sumia (e o índice ficava inconsistente, o que acionava o Guardião).
+- **Correção (ponto único):** `fbCreateCard()` registra o card como "criando" até a chave sair da transação; `fbSaveCard()` de um card nessa situação espera a chave real em vez de chutar a posição local. Vale para todo caminho que salva um card logo depois de criar (receita, filho de supercard, duplicar…).
+- **Teste:** `docs/arezzo/testes/test_receita_cards_somem.js` (squad com chave 4 excluída + receita de 3 filhos numa campanha). Na versão anterior o "Card 7" é sobrescrito, inclusive com rede lenta (`LENTO=400`); corrigido, 5/5 no `kanban.html` e no `kanban-dev.html`. Suítes de supercard, duplicar e modal do card sem regressão.
+- **Exceção ao dev-first:** aplicado em dev E prod no mesmo PR, porque havia perda de dado acontecendo em produção.
+
 ### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (SÓ DEV)
 
 A correção anterior cobriu os peixes de fundo; os oito stakeholders e o cardume central ainda tinham desenhos próprios com cauda invertida no site. Corrigida a geometria em onboarding.html e onboarding.slide.html, preservando cores, rótulos e abertura de modais. Raio da órbita dos slides limitado à largura do celular para não cortar os peixes. Teste docs/arezzo/testes/test_onboarding_bordo.js falha antes na geometria antiga e verifica os oito SVGs e os cliques de cada stakeholder nas duas páginas a 1280/390 px. Capturas em docs/capturas/a-bordo-aquario/. Fronteira: sem mudança, SVGs estáticos e CSS. Dica: não, correção visual.
