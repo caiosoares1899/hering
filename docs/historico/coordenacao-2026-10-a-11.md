@@ -273,3 +273,9 @@ Lição da rodada de UI/UX da apresentação do Radar (PR #1629): foi feita **in
 
 **Ordem sugerida:** (1) mergear este plano → (2) itens 1, 5 e 3/2 em paralelo (Claude: item 1; Antigravity: 5, 3, 2)
 → (3) item 7 (Claude) → (4) deploy do item 8 (Caio) → (5) rotina da seção 4 todo dia.
+
+---
+
+## Confirmações de deploy depois da reorganização (12/11/2026 em diante)
+
+- ✅ **12/11/2026:** o Caio publicou as 5 funções do Agente Ágil com o conhecimento da promoção #1742 (kanban v8.30.948, tag `kanban-v8.30.948`; bugfix #1741 + apresentação alternada).
