@@ -87,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-11 · Travessia (dev) & Radar (dev) — Correções de permissão em recusa de par, devolutiva multi-ciclo, T4/T7/T8, faixa Pra você, R1 Ritmo e Sonar (`/monitorarbugs`)
+### 2026-11-11 · Travessia & Radar — Correções de permissão em recusa de par, devolutiva multi-ciclo, T4/T7/T8, faixa Pra você, R1 Ritmo e Sonar (`/monitorarbugs`) (PROD 11/11 · kanban v8.30.947 · okr v2.116 · travessia · PR #1732)
 
 - **Travessia (`travessia-dev.html`) — Recusar par ainda não aprovado falhava com `PERMISSION_DENIED` (`par-reprovar`):** quando o avaliado indicava um par (`aprovado: false`), `pedidos_par/{par}/{cid}_{av}` ainda não existia; clicar em **Recusar** tentava `remove()` em `pedidos_par/...` antes de apagar o par, disparando `PERMISSION_DENIED` na regra `.write` de `pedidos_par` (`data.child('avaliado').val() === null`). Agora apaga `avaliacoes/.../pares/{par}` primeiro e só remove `pedidos_par/...` quando `existente.aprovado` for verdadeiro.
 - **Travessia (`travessia-dev.html`) — `<textarea id="dv-t">` duplicado entre ciclos e perda de rascunho não salvo em `render()`:** liderados em 2+ ciclos renderizavam múltiplos `#dv-t`, fazendo `Salvar rascunho`/`Liberar` no 2º ciclo ler o campo do 1º ciclo, além de `render()` descartar edições de `#dv-t` e `#dia-txt` quando já havia valor salvo no banco (`!el.value`). Cada devolutiva agora usa `id="dv-t-${cid}-${uid}"`, `#pesq` usa `id="pesq-${cid}"`, e `S.rascMem` preserva textos editados não salvos até o salvamento ou logout.
@@ -124,7 +124,7 @@ Relato (12/11/2026): uma pessoa aplicou uma receita num card (campanha) e deu er
 
 Sintoma: selecionar Marcos em até 14 dias e trocar para uma torre sem esses Marcos mantinha a lista vazia e o chip de origem desaparecia. Causa: _okrEntrarTorre limpava gerência e período, mas preservava o novo filtro pv. Correção: limpar pv na mudança de torre; navegar na mesma torre preserva a escolha. Cenário: digital com pv=marcos → comercial sem Marcos pessoais. Teste: docs/arezzo/testes/test_monitorarbugs_1112.js (Playwright preparado, execução pelo maestro).
 
-### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (SÓ DEV)
+### 2026-11-11 · A Bordo: peixes do aquário de stakeholders com a silhueta do Maré/Oceano (PROD · onboarding.html, sem par -dev: no ar com o merge)
 
 A correção anterior cobriu os peixes de fundo; os oito stakeholders e o cardume central ainda tinham desenhos próprios com cauda invertida no site. Corrigida a geometria em onboarding.html e onboarding.slide.html, preservando cores, rótulos e abertura de modais. Raio da órbita dos slides limitado à largura do celular para não cortar os peixes. Teste docs/arezzo/testes/test_onboarding_bordo.js falha antes na geometria antiga e verifica os oito SVGs e os cliques de cada stakeholder nas duas páginas a 1280/390 px. Capturas em docs/capturas/a-bordo-aquario/. Fronteira: sem mudança, SVGs estáticos e CSS. Dica: não, correção visual.
 

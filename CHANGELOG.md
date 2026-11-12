@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — A Bordo ligado ao Guia do Maré (onboarding.html) — 2026-11-11
+### A Bordo ligado ao Guia do Maré (PROD 11/11 · onboarding.html, no ar com o merge #1734) — 2026-11-11
 
 Pedido do Caio (11/11/2026): ligar o onboarding do Maré ao A Bordo antes de promover.
 - **Bloco novo "🧭 Aprenda a usar o Maré Digital"** na seção Oceano (`#guia-mare`): explica que o A Bordo é o jeito de trabalhar e o Guia do Maré é a ferramenta, com **⚡ Começar o Resumido**, **📚 Ver o Completo** e **🐟 Abrir o Maré**.
@@ -32,7 +32,7 @@ Pedido do Caio (11/11/2026): ligar o onboarding do Maré ao A Bordo antes de pro
 - O guia já apontava de volta para o A Bordo, na tela inicial. Sem login e sem Firebase: só links.
 - Teste `test_onboarding_bordo.js` cobre os links novos (1280 e 390 px).
 
-### SÓ DEV — Guia do Maré com as telas reais do board (guia-mare.html · scripts/guia-mare-telas.js) — 2026-11-11
+### Guia do Maré com as telas reais do board (PROD 11/11 · guia-mare.html, no ar com o merge #1733 · scripts/guia-mare-telas.js) — 2026-11-11
 
 Pedido do Caio (11/11/2026, `/melhoriauiux`): "as telas iguais às do Maré, um guia de verdade — em vez de print, reconstruir as telas em HTML".
 - **Antes:** cada passo mostrava uma mini-tela genérica (caixas com "👤 Responsável", "📅 Prazo") que não se parecia com o board.
@@ -41,7 +41,7 @@ Pedido do Caio (11/11/2026, `/melhoriauiux`): "as telas iguais às do Maré, um 
 - Textos de 7 passos revistos contra a tela real (funções do card, Agente Ágil, tema, preferências, Ilha, + Card, Sonar).
 - O guia passou de 24 KB para ~290 KB (as telas reais), ainda sem nenhuma imagem.
 
-### SÓ DEV — Programa de boas-vindas do Maré — escolha no 1º acesso, tour no board e progresso no perfil (dev: kanban-dev v8.30.947-dev) — 2026-11-11
+### Programa de boas-vindas do Maré — escolha no 1º acesso, tour no board e progresso no perfil (PROD 11/11 · kanban v8.30.947 · okr v2.116 · travessia · PRs #1730/#1731) — 2026-11-11
 
 Pedido do Caio (11/11/2026): onboarding da **ferramenta** em autosserviço (o A Bordo segue sendo o do método ágil). Desenho e divisão em `docs/ideias/onboarding-mare.md`.
 - **1º acesso:** a janela de boas-vindas agora oferece **⚡ Resumido (5 min)**, **📚 Completo**, **🎯 Tour aqui no board** ou "Agora não", e espera a inscrição (iniciais/torre) fechar antes de aparecer (antes as duas abriam juntas).
