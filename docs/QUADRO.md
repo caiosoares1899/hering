@@ -34,7 +34,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | Conhecimento do Agente Ágil regenerado na promoção de 12/11 (pacote de campanhas, PR #1755) | resync + `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 12/11/2026 |
 
 ## Backlog
 

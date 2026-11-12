@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Supercard no board: lista de filhos rola em vez de cortar em 6 (kanban v8.30.958-dev) — SÓ DEV — 2026-11-12
+
+- **Antes:** o card do supercard mostrava só os 6 primeiros filhos e um "+N mais..." sem clique; o resto só aparecia abrindo o card.
+- **Agora:** todos os filhos ficam na lista, que rola dentro do card a partir do 7º (altura de ~6 linhas, barra fina, leve esmaecido no fim); a rolagem não arrasta a coluna junto e a posição se mantém quando o board se atualiza. Supercard com até 6 filhos não muda.
+- Teste: `docs/arezzo/testes/test_supercard_rollup_rolagem.js` (1280 e 390 px; falha na versão anterior).
+
 ### Board: visão 📊 Gantt (período Início → Fim e marcos ◆ de prazo) (PROD 12/11 · kanban v8.30.957 · PRs #1749–#1752) — 2026-11-12
 
 Nova visão 📊 Gantt na toolbar de kanban-dev.html (ao lado de 🛤️ Timeline, exclusivas entre si com estado unificado dos botões e suporte a reorganização da barra e atalhos). Exibe régua de 6 semanas começando no domingo da semana passada (navegação ◀ / Hoje / ▶ deslocando 4 semanas, fins de semana sombreados e linha vertical de hoje), agrupada pela 1ª tag do card ('Sem tag' por último) e ordenada por início||prazo e título. Cada linha traz coluna esquerda sticky com o título, barra Início → Fim na cor da 1ª tag (ou neutra tracejada sem tag) com avatares na ponta, ✓ quando concluído e canto reto + ◂/▸ quando ultrapassa a janela, além do marco ◆ no dia exato do Prazo com dueHora quando houver (inclusive em cards que também têm período, sem sobreposição; cards só com Prazo exibem apenas ◆). Cards sem período nem prazo ficam fora e são contados no rodapé ('N cards sem datas não aparecem'). Respeita todos os filtros do board (inclusive com raia ativa antes da troca) e 💡 Meus cards, nos 3 temas (dark, light, vice) em 1280 e 390 px (alvos de toque >= 44 px e rolagem horizontal restrita a #gantt-view). Tópico 📊 Gantt adicionado ao HELP_CONTENT (com menção em Timeline) e teste Playwright em docs/arezzo/testes/test_gantt_board.js.

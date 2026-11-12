@@ -3354,6 +3354,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .super-rollup-hd{font-size:10px;font-weight:600;color:#c4b5fd;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
 .super-rollup-row{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--txt2);padding:2px 0;}
 .super-rollup-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+/* Muitos filhos: rola dentro do card em vez de cortar (≈6 linhas de 19px). */
+.super-rollup-list.rola{max-height:118px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:4px;padding-bottom:8px;mask-image:linear-gradient(to bottom,#000 calc(100% - 10px),transparent);-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 10px),transparent);}
+.super-rollup-list.rola::-webkit-scrollbar{width:4px;}
+.super-rollup-list.rola::-webkit-scrollbar-thumb{background:rgba(167,139,250,.45);border-radius:4px;}
 .super-rollup-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .super-rollup-row:hover .super-rollup-title{color:var(--txt);}
 /* Mesmo problema do .has-blocker-tag: 40% de opacidade de um amarelo puro
@@ -7489,7 +7493,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.957-dev</div>
+<div class="version">v8.30.958-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8697,6 +8701,7 @@ function uniqueInitForSquad(desiredInit, allUsers, excludeUid, fullName){
 }
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
+const _superRollupScroll={}; // posição da rolagem da lista de filhos de cada supercard (sobrevive ao re-render)
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
 let flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{}, cfdHiddenCols:[] }; // config de fluxo do PO (relatório de tempo) + limiares de aging por coluna (Fase 5.2) + colunas fora do fluxo escondidas do CFD (Fase 5.3, pedido direto). Vazio = heurística automática / aging desligado / CFD mostra todas as colunas.
 // "Padrões de card": organizador/PO cria um ou mais PADRÕES nomeados —
@@ -13999,23 +14004,30 @@ function makeCardEl(card){
     ? `<div class="card-cover-strip card-cover-img"><img src="${esc(card.coverImageUrl)}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none';"></div>`
     : (_coverCol?`<div class="card-cover-strip" style="background:${_coverCol.hex};"></div>`:'');
   // Rollup do supercard — lista compacta dos filhos (título + bolinha da
-  // coluna deles), até 6 visíveis + contador do resto. Clique num filho abre
-  // ele direto (stopPropagation pra não abrir o pai por cima).
+  // coluna deles). Até ~6 cabem na altura; com mais, a lista ROLA dentro do
+  // card (12/11/2026 — antes cortava em 6 com "+N mais..." e o resto ficava
+  // inacessível pelo board). A rolagem não vaza para a coluna
+  // (overscroll-behavior) e a posição sobrevive ao re-render do board
+  // (_superRollupScroll). Clique num filho abre ele direto (stopPropagation
+  // pra não abrir o pai por cima).
   let superHtml='';
   if(isSuper_){
     const doneN=_superChildren.filter(c=>_isColDone(c.col)).length;
-    const rows=_superChildren.slice(0,6).map(c=>{
+    const rows=_superChildren.map(c=>{
       const col=columns.find(x=>x.id===c.col);
       return `<div class="super-rollup-row" onclick="event.stopPropagation();openCard(${jsq(c.id)})">`
         +`<span class="super-rollup-dot" style="background:${col?.color||'#888'};"></span>`
         +`<span class="super-rollup-title">${esc(c.title)}</span>`
         +`</div>`;
     }).join('');
-    const moreN=_superChildren.length-6;
-    const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
-    superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
+    const rolaCls=_superChildren.length>6?' rola':'';
+    superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div><div class="super-rollup-list${rolaCls}" data-sid="${esc(card.id)}" onscroll="_superRollupScroll[this.dataset.sid]=this.scrollTop">${rows}</div></div>`;
   }
   div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}${_comInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${card.inicio||card.fim?`<div class="card-periodo" style="font-size:10px;color:var(--txt3);margin-top:5px;">${esc(_cardPeriodoData(card.inicio))} → ${esc(_cardPeriodoData(card.fim))}</div>`:''}${clHtml}${superHtml}`;
+  if(isSuper_ && _superRollupScroll[card.id]){
+    const _sl=div.querySelector('.super-rollup-list'), _st=_superRollupScroll[card.id];
+    if(_sl) requestAnimationFrame(()=>{ _sl.scrollTop=_st; });
+  }
   return div;
 }
 
