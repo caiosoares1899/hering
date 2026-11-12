@@ -680,18 +680,35 @@ const check = (name, pass, detail) => {
         out.tagSync = activeFilters.tag === tagV && document.getElementById('f-tag').value === tagV;
         fEl.querySelector('.gantt-flimpa').click();
         out.limpou = !activeFilters.owner && !activeFilters.tag && fEl.querySelector('.gantt-flimpa').hidden;
-        const inp = fEl.querySelector('input[type="date"]');
+        const inp = fEl.querySelector('input[data-p="de"]');
         inp.value = '2027-03-10'; inp.dispatchEvent(new Event('change'));
         const hd = document.querySelector('#gantt-view .gantt-day-hd[data-date="2027-03-10"]');
         const sc = document.getElementById('gantt-scroll');
         out.irPara = !!hd && hd.getBoundingClientRect().right <= sc.getBoundingClientRect().right + 1;
+        inp.value = ''; inp.dispatchEvent(new Event('change'));
+        // Período De/Até — só cards cujo período ou prazo cruza o intervalo.
+        ganttNav(0);
+        const cb = cards.find(c => c.id === 'c_camp_both');
+        const de = cb.inicio, ate = cb.inicio;
+        const inDe = fEl.querySelector('input[data-p="de"]'), inAte = fEl.querySelector('input[data-p="ate"]');
+        inDe.value = de; inAte.value = ate; inAte.dispatchEvent(new Event('change'));
+        const rowsPer = [...document.querySelectorAll('#gantt-view .gantt-row')].map(r => r.dataset.id);
+        const cruza = id => { const c = cards.find(x => x.id === id); const temP = _calCardTemPeriodo(c); const temD = /^\d{4}-\d{2}-\d{2}$/.test(c.due || '');
+          return (temP && c.inicio <= ate && c.fim >= de) || (temD && c.due >= de && c.due <= ate); };
+        out.periodo = rowsPer.includes('c_camp_both') && rowsPer.every(cruza) && _ganttPeriodo.de === de && _ganttPeriodo.ate === ate
+          && /Período/.test(document.getElementById('gantt-footer').textContent) && !fEl.querySelector('.gantt-flimpa').hidden;
+        // Invertido de verdade: Até antes do De → troca.
+        inDe.value = '2026-12-20'; inAte.value = '2026-12-01'; inAte.dispatchEvent(new Event('change'));
+        out.troca = _ganttPeriodo.de === '2026-12-01' && _ganttPeriodo.ate === '2026-12-20';
+        fEl.querySelector('.gantt-flimpa').click();
+        out.limpaPeriodo = !_ganttPeriodo.de && !_ganttPeriodo.ate && !inDe.value && !inAte.value;
         ganttNav(0);
         out.semRolagemPagina = document.documentElement.scrollWidth - innerWidth <= 1;
         return out;
       });
-      check(label + ' barra de filtros do Gantt usa os filtros do board (pessoa/tag sincronizam com 🔭, Limpar, Ir para data)',
+      check(label + ' barra de filtros do Gantt usa os filtros do board (pessoa/tag sincronizam com 🔭, Limpar, De/Até: ir para e período)',
         filtRes.existe && filtRes.depoisDaToolbar && filtRes.mesmasOpcoes && filtRes.drawerSync && filtRes.soDaPessoa &&
-        filtRes.mesmoNo && filtRes.sobreviveRedesenho && filtRes.limparVisivel && filtRes.tagSync && filtRes.limpou && filtRes.irPara && filtRes.semRolagemPagina,
+        filtRes.mesmoNo && filtRes.sobreviveRedesenho && filtRes.limparVisivel && filtRes.tagSync && filtRes.limpou && filtRes.irPara && filtRes.periodo && filtRes.troca && filtRes.limpaPeriodo && filtRes.semRolagemPagina,
         filtRes);
 
       check(label + ' sem erro de JavaScript', errors.length === 0, errors);
