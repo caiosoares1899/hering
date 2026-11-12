@@ -1,4 +1,4 @@
-// 📅 Calendário do board: barras de período por semana (estilo Trello), hora do prazo e ✓ em entregas de 1 dia.
+// 📅 Calendário do board: barras de período por semana (estilo Trello), hora do prazo e ✓ nas entregas (inclusive Fim ≠ Prazo).
 // Maestro: servir a raiz em BASE_URL; node docs/arezzo/testes/test_calendario_periodo.js
 // MAIN_HTML permite provar a falha na versão anterior sem trocar arquivos no disco.
 // CAPTURE_DIR grava as 6 capturas (1280 e 390 px × dark, light, vice).
@@ -56,35 +56,35 @@ const seed = () => ({
           ],
           cards_index: { c_cross: 'k0', c_ov1: 'k1', c_ov2: 'k2', c_dia_hora: 'k3', c_dia_done: 'k4' },
           cards: {
-            // Atravessa 2 semanas em Nov/2026: Qui 12/11..Sáb 14/11 (sem 2) e Dom 15/11..Qua 18/11 (sem 3)
+            // Campanha no ar de Qui 12/11 a Qua 18/11 (2 semanas), com ENTREGA (due) antes, em Ter 10/11 às 16:00 (Fim != Prazo!)
             k0: {
               id: 'c_cross',
               title: 'Campanha Alto Verão',
               col: 'doing',
               inicio: '2026-11-12',
               fim: '2026-11-18',
-              due: '2026-11-18',
-              dueHora: '18:00',
+              due: '2026-11-10',
+              dueHora: '16:00',
               tags: ['t_camp', 't_crm'],
               owner: 'AL',
               participants: ['BR', 'CS'],
               priority: 'high',
               updatedAt: '2026-11-09T12:00:00.000Z'
             },
-            // Sobrepõe c_cross na semana 2 e 3 -> deve empilhar em raia (lane) separada sem sobrepor!
+            // Sobrepõe c_cross nas semanas 2 e 3 (sem due separado -> só barra de período)
             k1: {
               id: 'c_ov1',
               title: 'Esquenta CRM VIP',
               col: 'review',
               inicio: '2026-11-10',
               fim: '2026-11-16',
-              due: '2026-11-16',
+              due: '',
               tags: ['t_crm'],
               owner: 'BR',
               priority: 'medium',
               updatedAt: '2026-11-09T12:00:00.000Z'
             },
-            // 3ª barra concorrente na semana 2 com tag amarela clara (testa contraste de texto escuro!) + concluída
+            // 3ª barra concorrente na semana 2, concluída, com tag amarela clara E prazo no dia 13/11 às 11:00
             k2: {
               id: 'c_ov2',
               title: 'Teaser Mídia Paga',
@@ -92,12 +92,13 @@ const seed = () => ({
               inicio: '2026-11-11',
               fim: '2026-11-13',
               due: '2026-11-13',
+              dueHora: '11:00',
               tags: ['t_midia'],
               owner: 'CS',
               priority: 'low',
               updatedAt: '2026-11-09T12:00:00.000Z'
             },
-            // Entrega de 1 dia no mesmo dia 12/11 (deve ficar abaixo das 3 barras, com hora 14:30)
+            // Entrega de 1 dia (sem período) em 12/11 às 14:30 (abaixo das 3 barras)
             k3: {
               id: 'c_dia_hora',
               title: 'Subir vitrine home',
@@ -109,7 +110,7 @@ const seed = () => ({
               priority: 'high',
               updatedAt: '2026-11-09T12:00:00.000Z'
             },
-            // Entrega de 1 dia concluída no dia 20/11 (deve mostrar ✓ e hora 10:15)
+            // Entrega de 1 dia concluída em 20/11 às 10:15
             k4: {
               id: 'c_dia_done',
               title: 'Relatório pós-live',
@@ -128,7 +129,7 @@ const seed = () => ({
   }
 });
 
-const CONTRAST_SCAN_CAL = () => {
+const CONTRAST_SCAN_SELECTOR = (rootSel) => {
   const lum = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); };
   const ratio = (a, b) => { const l1 = lum(a), l2 = lum(b); return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); };
   const parse = s => { const m = s && s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
@@ -142,8 +143,8 @@ const CONTRAST_SCAN_CAL = () => {
     let acc = [rootBg[0], rootBg[1], rootBg[2], 1]; for (let i = chain.length - 1; i >= 0; i--) acc = over(chain[i], acc); return acc;
   }
   const vis = el => { const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return false; let n = el; while (n && n.nodeType === 1) { const s = getComputedStyle(n); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; n = n.parentElement; } return true; };
-  const calRoot = document.querySelector('#cal-ov .cal-panel');
-  if (!calRoot) return { baixo: [{ el: 'missing-cal', r: 0 }], fixas: [] };
+  const calRoot = document.querySelector(rootSel);
+  if (!calRoot) return { baixo: [{ el: 'missing:' + rootSel, r: 0 }], fixas: [] };
   const baixo = [];
   const walker = document.createTreeWalker(calRoot, NodeFilter.SHOW_TEXT);
   let tn;
@@ -207,13 +208,23 @@ const check = (name, pass, detail) => {
       await p.waitForTimeout(250);
       const label = width + 'px';
 
-      // 1. Card com início e fim vira UMA barra por semana (quebra na virada Sáb->Dom, sem repetir nos dias)
+      // 1. Card com início+fim (12..18/11) E due separado (10/11 às 16:00):
+      //    vira 2 barras semanais nos dias do período (sem repetir .cal-event-prazo em 12..18/11)
+      //    E mantém a entrega .cal-event-prazo no dia do due (10/11 com 16:00)!
       const crossInfo = await p.evaluate(() => {
         const bars = [...document.querySelectorAll('#cal-grid .cal-periodo-bar[data-card-id="c_cross"]')];
-        const dupInDays = [...document.querySelectorAll('#cal-grid .cal-event-prazo')].filter(el => el.textContent.includes('Campanha Alto Verão')).length;
+        const prazosCross = [...document.querySelectorAll('#cal-grid .cal-event-prazo[data-card-id="c_cross"]')];
+        const prazosOv1 = [...document.querySelectorAll('#cal-grid .cal-event-prazo[data-card-id="c_ov1"]')];
+        const dueDay10 = document.querySelector('#cal-grid .cal-day[data-date="2026-11-10"] .cal-event-prazo[data-card-id="c_cross"]');
+        const dueDay13Done = document.querySelector('#cal-grid .cal-day[data-date="2026-11-13"] .cal-event-prazo[data-card-id="c_ov2"]');
         return {
           count: bars.length,
-          dupInDays,
+          prazosCrossCount: prazosCross.length,
+          prazosOv1Count: prazosOv1.length,
+          due10Hora: dueDay10?.querySelector('.cal-prazo-hora')?.textContent.trim() || '',
+          due10Ico: dueDay10?.querySelector('.cal-prazo-ico')?.textContent.trim() || '',
+          due13Hora: dueDay13Done?.querySelector('.cal-prazo-hora')?.textContent.trim() || '',
+          due13Ico: dueDay13Done?.querySelector('.cal-prazo-ico')?.textContent.trim() || '',
           segs: bars.map(b => ({
             col: b.style.gridColumn,
             contL: b.classList.contains('cont-l'),
@@ -229,15 +240,24 @@ const check = (name, pass, detail) => {
         };
       });
       check(
-        label + ' card 12/11..18/11 vira 2 barras semanais (Qui..Sáb e Dom..Qua) sem repetir por dia',
+        label + ' card 12/11..18/11 vira 2 barras semanais (Qui..Sáb e Dom..Qua) sem repetir nos dias do período',
         crossInfo.count === 2 &&
-          crossInfo.dupInDays === 0 &&
+          crossInfo.prazosOv1Count === 0 &&
           crossInfo.segs[0]?.col.replace(/\s+/g, '') === '5/8' &&
           crossInfo.segs[0]?.contR === true &&
           crossInfo.segs[0]?.contL === false &&
           crossInfo.segs[1]?.col.replace(/\s+/g, '') === '1/5' &&
           crossInfo.segs[1]?.contL === true &&
           crossInfo.segs[1]?.contR === false,
+        crossInfo
+      );
+      check(
+        label + ' Fim != Prazo: card com período + due mantém entrega no dia do due (10/11 às 16:00 e 13/11 ✓ às 11:00)',
+        crossInfo.prazosCrossCount === 1 &&
+          crossInfo.due10Ico === '📎' &&
+          crossInfo.due10Hora === '16:00' &&
+          crossInfo.due13Ico === '✓' &&
+          crossInfo.due13Hora === '11:00',
         crossInfo
       );
 
@@ -249,7 +269,7 @@ const check = (name, pass, detail) => {
         crossInfo.segs
       );
 
-      // 3. Empilhamento sem sobreposição (3 barras concorrentes na semana 2 + entrega de 1 dia + números dos dias)
+      // 3. Empilhamento sem sobreposição (3 barras concorrentes na semana 2 + entregas nos dias 10, 12 e 13 + números dos dias)
       const overlapCheck = await p.evaluate(() => {
         const weeks = [...document.querySelectorAll('#cal-grid .cal-week')];
         const overlaps = [];
@@ -275,7 +295,7 @@ const check = (name, pass, detail) => {
         overlapCheck
       );
 
-      // 4. Entrega de 1 dia continua no dia, com hora quando houver e ✓ se concluída
+      // 4. Entrega de 1 dia (sem período) continua no dia, com hora quando houver e ✓ se concluída
       const oneDayCheck = await p.evaluate(() => {
         const d12 = document.querySelector('#cal-grid .cal-day[data-date="2026-11-12"]');
         const d20 = document.querySelector('#cal-grid .cal-day[data-date="2026-11-20"]');
@@ -309,7 +329,7 @@ const check = (name, pass, detail) => {
         const themeName = theme || 'dark';
         await p.evaluate(t => { document.documentElement.dataset.theme = t; }, theme);
         await p.waitForTimeout(300);
-        const layout = await p.evaluate(CONTRAST_SCAN_CAL);
+        const layout = await p.evaluate(CONTRAST_SCAN_SELECTOR, '#cal-ov .cal-panel');
         const scroll = await p.evaluate(() => {
           const doc = document.documentElement.scrollWidth - window.innerWidth;
           const panel = document.querySelector('#cal-ov .cal-panel');
@@ -336,7 +356,48 @@ const check = (name, pass, detail) => {
       }
       await p.evaluate(() => { document.documentElement.dataset.theme = ''; });
 
-      // 6. Clique na barra abre o card correspondente
+      // 6. Popover do dia (openCalDayPopover): barra de período tem background da 1ª tag, role="button", tabindex="0", contraste legível no claro e Enter abre o card
+      await p.evaluate(() => {
+        document.documentElement.dataset.theme = 'light';
+        document.querySelector('#cal-grid .cal-day[data-date="2026-11-12"]').click();
+      });
+      await p.waitForTimeout(300);
+      const popCheck = await p.evaluate((scanFnSrc) => {
+        const scan = eval('(' + scanFnSrc + ')');
+        const bar = document.querySelector('#cal-day-pop-body .cal-periodo-bar[data-card-id="c_cross"]');
+        const contrast = scan('#cal-day-pop-ov');
+        return {
+          open: document.getElementById('cal-day-pop-ov').classList.contains('open'),
+          bg: bar ? getComputedStyle(bar).backgroundColor : '',
+          role: bar?.getAttribute('role') || '',
+          tabIndex: bar?.getAttribute('tabindex') || '',
+          baixo: contrast.baixo
+        };
+      }, CONTRAST_SCAN_SELECTOR.toString());
+      check(
+        label + ' popover do dia exibe barra de período com fundo da tag, role=button, tabindex=0 e contraste no claro',
+        popCheck.open &&
+          popCheck.bg === 'rgb(255, 92, 138)' &&
+          popCheck.role === 'button' &&
+          popCheck.tabIndex === '0' &&
+          popCheck.baixo.length === 0,
+        popCheck
+      );
+      await p.locator('#cal-day-pop-body .cal-periodo-bar[data-card-id="c_cross"]').focus();
+      await p.keyboard.press('Enter');
+      await p.waitForFunction(() => document.getElementById('card-ov').classList.contains('open'));
+      const popOpenedTitle = await p.evaluate(() => document.getElementById('m-title').value);
+      check(label + ' Enter na barra de período do popover abre o card', popOpenedTitle === 'Campanha Alto Verão', popOpenedTitle);
+      await p.evaluate(() => {
+        document.documentElement.dataset.theme = '';
+        closeOv('card-ov');
+        openCal();
+        calYear = 2026;
+        calMonth = 10;
+        renderCal();
+      });
+
+      // 7. Clique direto na barra do calendário abre o card correspondente
       await p.locator('#cal-grid .cal-periodo-bar[data-card-id="c_cross"]').first().click();
       await p.waitForFunction(() => document.getElementById('card-ov').classList.contains('open'));
       const openedTitle = await p.evaluate(() => document.getElementById('m-title').value);
@@ -349,15 +410,15 @@ const check = (name, pass, detail) => {
         renderCal();
       });
 
-      // 7. Filtros do board + filtros do calendário valem para barras e entregas de 1 dia
+      // 8. Filtros do board + filtros do calendário valem para barras e entregas (inclusive due de card com período)
       const filterRes = await p.evaluate(() => {
-        // Filtro do BOARD por prioridade 'high' -> só c_cross (2 segmentos) e c_dia_hora (1 item)
+        // Filtro do BOARD por prioridade 'high' -> c_cross (2 segmentos + 1 prazo no dia 10) e c_dia_hora (1 prazo no dia 12)
         activeFilters.priority = 'high';
         renderBoard();
         const highBars = [...document.querySelectorAll('#cal-grid .cal-periodo-bar')].map(e => e.dataset.cardId);
-        const highPrazos = [...document.querySelectorAll('#cal-grid .cal-event-prazo')].map(e => e.dataset.cardId);
+        const highPrazos = [...document.querySelectorAll('#cal-grid .cal-event-prazo')].map(e => e.dataset.cardId).sort();
 
-        // Filtro do BOARD por texto 'Teaser' -> só c_ov2
+        // Filtro do BOARD por texto 'Teaser' -> só c_ov2 (1 barra + 1 prazo no dia 13)
         activeFilters.priority = '';
         activeFilters.texto = 'Teaser';
         renderBoard();
@@ -371,7 +432,7 @@ const check = (name, pass, detail) => {
         subSel.value = 'st_perf';
         renderCal();
         const subBars = [...new Set([...document.querySelectorAll('#cal-grid .cal-periodo-bar')].map(e => e.dataset.cardId))].sort();
-        const subPrazos = [...document.querySelectorAll('#cal-grid .cal-event-prazo')].map(e => e.dataset.cardId);
+        const subPrazos = [...document.querySelectorAll('#cal-grid .cal-event-prazo')].map(e => e.dataset.cardId).sort();
         subSel.value = '';
         renderCal();
 
@@ -380,15 +441,15 @@ const check = (name, pass, detail) => {
       check(
         label + ' filtros do board (prioridade, busca) e filtros do calendário valem',
         JSON.stringify(filterRes.highBars) === JSON.stringify(['c_cross', 'c_cross']) &&
-          JSON.stringify(filterRes.highPrazos) === JSON.stringify(['c_dia_hora']) &&
+          JSON.stringify(filterRes.highPrazos) === JSON.stringify(['c_cross', 'c_dia_hora']) &&
           JSON.stringify(filterRes.txtBars) === JSON.stringify(['c_ov2']) &&
-          filterRes.txtPrazos.length === 0 &&
+          JSON.stringify(filterRes.txtPrazos) === JSON.stringify(['c_ov2']) &&
           JSON.stringify(filterRes.subBars) === JSON.stringify(['c_cross', 'c_ov2']) &&
-          JSON.stringify(filterRes.subPrazos) === JSON.stringify(['c_dia_done']),
+          JSON.stringify(filterRes.subPrazos) === JSON.stringify(['c_cross', 'c_dia_done', 'c_ov2']),
         filterRes
       );
 
-      // 8. Sanitização contra XSS em título, hora, owner e cor de tag
+      // 9. Sanitização contra XSS em título, hora, owner e cor de tag
       const xssSafe = await p.evaluate(() => {
         tags.push({ id: 't_xss', label: 'XSS', hex: 'red;background:url(javascript:alert(1))' });
         cards.push({
@@ -409,10 +470,12 @@ const check = (name, pass, detail) => {
           dueHora: '<img src=x onerror=window.__xss=5>'
         });
         renderCal();
-        const hasHandler = !!document.querySelector('#cal-grid [onerror], #cal-grid [onload], #cal-grid [onmouseover]');
+        document.querySelector('#cal-grid .cal-day[data-date="2026-11-04"]').click();
+        const hasHandler = !!document.querySelector('#cal-grid [onerror], #cal-grid [onload], #cal-grid [onmouseover], #cal-day-pop-ov [onerror], #cal-day-pop-ov [onload], #cal-day-pop-ov [onmouseover]');
+        closeOv('cal-day-pop-ov');
         return !window.__xss && !hasHandler;
       });
-      check(label + ' campos vindos do banco entram sem HTML/CSS executável no calendário', xssSafe);
+      check(label + ' campos vindos do banco entram sem HTML/CSS executável no calendário e no popover', xssSafe);
 
       check(label + ' sem erro de JavaScript', errors.length === 0, errors);
       await ctx.close();
