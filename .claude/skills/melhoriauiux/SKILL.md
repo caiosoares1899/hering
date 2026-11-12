@@ -15,14 +15,14 @@ Nasceu do padrão de pedido que se repete: *"quero que você faça uma análise 
 - **Não é licença para redesenhar o que está bom nem para trocar a identidade.** Marine Glass não muda; a tela se **adequa** a ele. Nada de biblioteca nova, fonte nova, paleta nova.
 - **Não muda dado nem métrica em silêncio.** Se a regra de um número muda ("Item mais velho" → "Parado há mais tempo"), isso é **decisão de produto**: sinalize como *mudança de propósito* e peça confirmação quando for relevante.
 
-## Quem faz o quê (Claude × Antigravity) — `docs/COORDENACAO_AGENTES.md`
+## Quem faz o quê (Claude × Antigravity × Codex) — `docs/COORDENACAO_AGENTES.md` › *Roteamento por risco*
 - **Antigravity:** ajuste **localizado** (1 página, 1 componente, até ~1 tela de mudança): espaçamento, alinhamento, cor/token, estado vazio, texto/copy, acessibilidade, mobile de uma tela. Usa os subagentes por produto (`agente-mare`, `agente-radar`, `agente-painel-oceano`), **sem terminal para ler/editar arquivo**, e fecha com **um** comando agrupado.
 - **Claude:** redesenho de fluxo/página inteira, gráfico novo, módulo compartilhado (`mare-*-dev.js`), 3+ páginas, qualquer coisa que mude métrica ou permissão.
-- Escalar **não é falha**: pare, registre no Quadro (*Escalado*) com **print/descrição do problema e como reproduzir**, e siga com o resto.
+- Escalar **não é falha**: pare, registre em *Escalado* no `docs/QUADRO.md` com **print/descrição do problema e como reproduzir**, e siga com o resto.
 
 ## Passo 0 — Em dia e sem pisar no outro
 1. `/seatualizar` (quadro, `version.json`, topo do `CHANGELOG.md`/`BUGS_E_CORRECOES.md`, `git log` recente). **Arquivo reservado no Quadro por outro agente = não toque** até o PR dele sair.
-2. Declare no Quadro ("Em andamento": branch `claude/…` ou `antigravity/…`, arquivos que vai tocar) se a rodada for mexer em página grande.
+2. Declare no `docs/QUADRO.md` ("Em andamento": branch `claude/…` ou `antigravity/…`, arquivos que vai tocar) se a rodada for mexer em página grande.
 
 ## Passo 1 — Escopo: direcionada (ideal) ou geral
 - **Direcionada** ("melhora a aba Fluxo", "o modal de Comunicados", "a home do Oceano"): o escopo é essa tela **e** o que ela compartilha (modal que ela abre, componente que ela usa). Diga o escopo na primeira linha da resposta.
@@ -87,7 +87,7 @@ Priorize por **impacto × esforço**: primeiro o que confunde a ação principal
 6. **Dica:** sim/não + versões e PR.
 
 ## Como conduzir a rodada sem demorar nem errar (lições de 06/11/2026, apresentação do Radar)
-1. **Divida antes de começar** (`docs/COORDENACAO_AGENTES.md` §7.7): correção localizada com teste → Codex; docs, capturas, CHANGELOG → Antigravity; diagnóstico, design e revisão → você. Rodada que mistura **correção** (fps) e **redesenho** vira **2 PRs**; a correção sobe primeiro.
+1. **Divida antes de começar** (`docs/COORDENACAO_AGENTES.md` › *Roteamento por risco* e *Contrato de tarefa (v2)*): correção localizada com teste → Codex; docs, capturas, CHANGELOG → Antigravity; diagnóstico, design e revisão → você. Rodada que mistura **correção** (fps) e **redesenho** vira **2 PRs**; a correção sobe primeiro.
 2. **Se o pedido cita lentidão/fps, meça primeiro e no cenário real** (tracing, não `requestAnimationFrame`; sessão ao vivo ligada, não só tela parada): `docs/arezzo/testes/perf_apresentacao.js`. Procure **animação infinita** e `backdrop-filter` sobre fundo estático (guia 2.3 e 2.5 regra 4).
 3. **Baseline honesto:** compare com a `main` por `page.route` (`PAGINA_ALT`), nunca trocando o arquivo no disco; número antes = depois é erro de método (BUGS Armadilha 16).
 4. **Redesenho muda o tamanho do conteúdo:** meça **o que piorou** contra a `main` (texto renderizado, conteúdo atrás de rolagem, caso cheio de itens) antes do PR; o ajuste automático de escala (`fitSlideContent`) devolve texto menor se o cartão ficou mais alto.

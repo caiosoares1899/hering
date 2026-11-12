@@ -11,7 +11,7 @@ Esta skill é compartilhada entre **Claude** e **Antigravity** para manter **tod
 
 ## Passo 0 — Antes de tocar em qualquer arquivo: `/seatualizar` + Quadro
 
-1. **Conferir `docs/COORDENACAO_AGENTES.md` (seção "6. Quadro → Em andamento"):**
+1. **Conferir `docs/QUADRO.md` (*Em andamento*):**
    - Se o outro agente declarou que está editando um arquivo HTML (ex.: `oceano-dev.html`, `kanban-dev.html`, `okr-dev.html`, `painel-dev.html`), **NÃO toque nesse arquivo agora**. Atualize apenas as documentações livres e registre no resumo final qual arquivo ficou de fora por estar em andamento no outro agente.
 2. **Conferir o estado real do repositório (`version.json`, topo do `CHANGELOG.md` e `BUGS_E_CORRECOES.md`):**
    - Nunca invente nomes de arquivos nem versões de cabeça (ex.: o Radar é `okr.html` / `okr-dev.html`, o portal de visão do ecossistema para a TI é `ecossistema.html` e a referência detalhada do Maré é `maredigital.html`, nunca `radar.html` ou `maredigital-dev.html`).
@@ -101,7 +101,7 @@ Passe pelos 8 alvos abaixo (3 e 3-B são a documentação técnica). Se o usuár
 ### 6. Documentação e FAQ do Oceano (`docs/OCEANO.md` e `oceano-dev.html`)
 - **`docs/OCEANO.md`**: documento markdown detalhando a arquitetura e funcionalidades do hub Oceano (`oceano.html` / `oceano-dev.html`), incluindo tiles, monitor de status, metas no Oceano, Assistente/Plantão de Férias e integrações.
 - **`oceano-dev.html` (`const FAQ`)**: perguntas e respostas da seção de ajuda do Oceano (e base de conhecimento do Assistente de Férias, quando aplicável).
-- ⚠️ **Atenção:** Verifique sempre o Quadro em `docs/COORDENACAO_AGENTES.md` antes de tocar em `oceano-dev.html`. Se o outro agente estiver trabalhando nele, atualize apenas `docs/OCEANO.md`.
+- ⚠️ **Atenção:** Verifique sempre o Quadro em `docs/QUADRO.md` antes de tocar em `oceano-dev.html`. Se o outro agente estiver trabalhando nele, atualize apenas `docs/OCEANO.md`.
 
 ### 7. Base de Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`)
 - O Agente Ágil lê os JSONs gerados por `functions/agente-agil-orquestrador/conhecimento/gerar.js` a partir do `HELP_CONTENT` de `kanban.html` (prod), da Ajuda de `okr.html`, do FAQ de `oceano.html` e do `CHANGELOG.md`.

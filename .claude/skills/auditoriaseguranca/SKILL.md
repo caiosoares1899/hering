@@ -16,7 +16,7 @@ Uma área: `intake`, `agente` (Agente Ágil + `okrAgenteChat`), `backup`, `regra
 3. **Regra de entrada:** cada candidato precisa das 4 linhas (quem · fronteira · controle · resultado). Sem elas, descarte na hora. Modelo interno aceito (§1 do doc) não é achado.
 4. **Verificador que refuta:** mande **todos** os candidatos restantes da rodada a **um** verificador de contexto limpo (Agent — só trechos e contratos, **sem** a sua explicação) com a missão de provar, candidato a candidato, que já existe barreira. Só segue o que sobrevive. Quem achou não valida. (Um por rodada, não um por candidato — custo de token.)
 5. **Veredicto:** `confirmado` (trace + resultado observável em teste **local**: Firebase falso, `functions/rules/rulesSim.js`, Playwright em localhost) · `precisa_validar` (falta fato fora do repo: regra no Console, Google Cloud/Auth, cabeçalho do Pages — diga exatamente o que o Caio precisa olhar; sem severidade) · `rejeitado` (uma linha com o motivo).
-6. **Corrija só o `confirmado`**, no `-dev`/`functions/`, com teste de regressão; siga o Release process (dev primeiro; `functions/`/regras → "Pendente de deploy", o Caio roda). Antes de dar por concluído algo em `functions/` ou regras, consulte o advisor.
+6. **Corrija só o `confirmado`**, no `-dev`/`functions/`, com teste de regressão; siga o Release process (dev primeiro; `functions/`/regras → *Pendente de deploy* no `docs/QUADRO.md`, o Caio roda). Antes de dar por concluído algo em `functions/` ou regras, consulte o advisor.
 7. **Registre** em `BUGS_E_CORRECOES.md` (`mare-cli.js log --type bug`): área, o que foi coberto e o que NÃO foi, e os veredictos. Armadilha nova entra em "Armadilhas Conhecidas".
 
 ## Limites (inegociáveis)

@@ -648,7 +648,7 @@ Você vai implementar, no repositório hering, as propostas aprovadas da consult
   de kanban/travessia. Inclua os testes listados na seção 6.3 e os que você julgar necessários.
 - Passe o checklist de docs/SEGURANCA_FRONTEIRAS.md e diga o resultado.
 - Consulte o advisor antes de fechar o plano e antes de dar a tarefa por concluída.
-- Acrescente a linha em "Pendente de deploy" de docs/COORDENACAO_AGENTES.md e me entregue o resync seguido do
+- Acrescente a linha em *Pendente de deploy* de docs/QUADRO.md e me entregue o resync seguido do
   comando de deploy. A tela só entra depois que eu confirmar o deploy.
 
 ## O que me entregar em cada PR

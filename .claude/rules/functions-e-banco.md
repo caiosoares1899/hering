@@ -21,7 +21,7 @@ git reset --hard origin/<branch-name>
 - **Por quê:** o `firebase deploy` descobre os exports de `functions/index.js` **no disco local**. Se o export novo não está lá, falha com `No function matches the filter: default:<nome>` — sem cara de problema de git. O mesmo vale antes de `npm install`/testar algo em `functions/` depois de um push: assuma o clone velho e diga isso logo de cara.
 - Sempre `firebase deploy --only functions:<nome>`; nunca `--only functions` puro (mexe em todas) sem querer isso de propósito. Cada `exports.xxx = require(...)` de `functions/index.js` traz o comando de deploy num comentário acima.
 - Tag e log valem também para releases de função (ver `agente-agil-v1a` no `CHANGELOG.md`), que versionam à parte do `version.json`.
-- Acrescente a linha em "Pendente de deploy" do `docs/COORDENACAO_AGENTES.md`; não rode `firebase deploy`.
+- Acrescente a linha em *Pendente de deploy* do `docs/QUADRO.md`; não rode `firebase deploy`.
 
 ## Funções, push e backup
 

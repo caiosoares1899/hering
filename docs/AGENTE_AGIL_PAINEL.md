@@ -1,7 +1,7 @@
 # 🤖 Agente Ágil no Painel — desenho (rascunho de 06/11/2026)
 
 > **Status:** só desenho — **nada implementado**. Pedido do Caio: "agente ágil no painel também! me ajudar a gerir, ler os dados, fazer análises" e "esse agente precisa ler os dados do painel em si".
-> **Para quem:** o Caio (as 4 decisões da §11 já foram tomadas) e, depois, quem implementar (Codex/Antigravity, pelo contrato do `docs/COORDENACAO_AGENTES.md` §7.3).
+> **Para quem:** o Caio (as 4 decisões da §11 já foram tomadas) e, depois, quem implementar (Codex/Antigravity, pelo contrato do `docs/COORDENACAO_AGENTES.md` › *Contrato de tarefa (v2)*).
 > **Mockup:** `docs/capturas/agente-agil-painel/mockup-gaveta.png` (fonte: `mockup-gaveta.html`; números fictícios).
 
 ## 1. O que é, em uma frase
@@ -92,7 +92,7 @@ Resultado esperado desta passada: **"fronteira: X checado, Y exige validação d
 ## 7. Escrever (fase 3) — só como **proposta com confirmação**
 O agente nunca escreve sozinho no Painel. Quando a ação faz sentido ("avisa o PO"), devolve um **cartão de proposta** (mockup: bloco amarelo com *Enviar / Editar texto / Cancelar*) mostrando **exatamente** o que será feito; o clique executa **no navegador, com a permissão da própria pessoa** (mesmo caminho que ela usaria à mão). Candidatas, da menos para a mais arriscada: notificar alguém · criar lembrete de gestão · comentar num card · mover card. Cada ação nova repete o checklist da §6.
 
-## 8. Fases e quem faz o quê (`COORDENACAO_AGENTES.md` §7.7)
+## 8. Fases e quem faz o quê (`COORDENACAO_AGENTES.md` › *Roteamento por risco*)
 | Fase | Entrega | Quem | Onde sobe |
 |---|---|---|---|
 | **0** | este desenho + decisões da §11 | Claude + Caio | PR de docs |

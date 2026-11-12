@@ -1,14 +1,14 @@
 # AGENTS.md — leitura comum para os agentes de código (Codex e Antigravity)
 
 > O **Claude** lê o `CLAUDE.md` (fonte única das regras do projeto). Este arquivo é o ponto de entrada de **Codex** e **Antigravity**: só o que vale para os dois + o que é específico do Codex. **Não copie regras do `CLAUDE.md` para cá** (já divergiram uma vez).
-> **Divisão do trabalho entre os 3 agentes, canais, revisão cruzada, branches, trailer e Quadro = `docs/COORDENACAO_AGENTES.md` (leia antes de cada tarefa; o §7 é o plano dos três).**
+> **Divisão do trabalho entre os 3 agentes, canais, revisão cruzada, branches, trailer e Quadro = `docs/COORDENACAO_AGENTES.md` (regras: decisões D1–D3, roteamento por risco, revisão cruzada, contrato). O estado do dia (em andamento, fila, escalado, pendente de deploy) = `docs/QUADRO.md` — leia antes de cada tarefa.**
 
 ## Comum a Codex e Antigravity
 
 - **Regras do projeto = `CLAUDE.md`** — leia inteiro antes de começar. Detalhes por área ficam em `.claude/rules/*.md` (cada uma com `paths:` dizendo que arquivos cobre): **leia a da área antes de editar** (Radar/OKR; Oceano, login, Escala, Mini painel; `functions/` e banco).
 - **Sempre se manter atualizado (`/seatualizar`):** antes de qualquer pedido novo (ou depois de um resync/merge), execute o protocolo de `.claude/skills/seatualizar/SKILL.md` e nunca mexa em arquivo reservado por outro agente no Quadro.
 - **Branch e trailer:** `<agente>/<assunto>` (`codex/…`, `antigravity/…`) a partir de `origin/main`; todo commit leva `Agent: codex` ou `Agent: antigravity`. **Nunca** merge de PR (nem o seu), **nunca** `git push --force`, **nunca** `firebase deploy`: o Caio faz merge e deploy.
-- **Quem revisa:** o Caio e o Claude. Ninguém revisa o próprio PR. O Claude, quando chamado, comenta na própria PR (`🔍 Revisão do Claude`); leia e corrija no mesmo branch. "ESCALAR AO CLAUDE" é parada, não sugestão.
+- **Quem revisa:** o Caio e o Claude; autor e revisor nunca são o mesmo modelo, e o Codex faz a 1ª passada nos PRs `claude/*` quando a decisão D1 está ligada (`docs/COORDENACAO_AGENTES.md` › *Revisão cruzada*). Ninguém revisa o próprio PR. O Claude, quando chamado, comenta na própria PR (`🔍 Revisão do Claude`); leia e corrija no mesmo branch. "ESCALAR AO CLAUDE" é parada, não sugestão.
 - **Dev primeiro:** mudança em página vai só no `-dev` (bump com `node scripts/mare-cli.js bump`); prod só depois de validação explícita do Caio (`CLAUDE.md`, Release process).
 - **Onde está cada coisa:** `docs/BIBLIOTECA.md`. Arquivo novo na **raiz** precisa de uma linha lá (a CI falha se faltar); capturas e saídas de teste vão para `docs/capturas/`, nunca para a raiz.
 - **Antes de editar código, leia `docs/GUIA_DE_CODIGO.md`; antes de mexer em tela, `docs/GUIA_UI_UX.md`** (ajuste localizado de 1 página/componente você faz no `-dev`; redesenho, módulo compartilhado ou 3+ páginas → escale).
@@ -19,18 +19,18 @@ Suas regras específicas (Windows, sem terminal para arquivos, `ship`, subagente
 
 ## Codex
 
-Papel: **autor** de features e correções **localizadas** (1 página `-dev` ou 1 função) **sempre com teste**. Não revisa PR, não faz merge, deploy nem promoção a prod, e não toca arquivo reservado no Quadro. Branch `codex/<assunto>`, trailer `Agent: codex`.
+Papel: **autor** de features e correções **localizadas** (1 página `-dev` ou 1 função) **sempre com teste**. Revisa só a 1ª passada dos PRs `claude/*` (decisão D1, sem aprovar nem dar merge); não faz merge, deploy nem promoção a prod, e não toca arquivo reservado no Quadro (`docs/QUADRO.md`). Branch `codex/<assunto>`, trailer `Agent: codex`.
 
 - **Trabalhe no seu worktree, nunca na pasta de outro agente:** Codex em `~/hering-codex`; Antigravity no Mac em `~/hering-agy` (no Windows, o clone de sempre). `~/hering` é do Claude e do Caio: edição deixada aberta ali vira arquivo solto na pasta dele (10/11/2026: o Caio fechou o VS Code sem salvar restos do `/subirproprod`).
 - **Ferramentas do projeto:** `node scripts/mare-cli.js` (`bump`, `log --type feature|bug`, `map`), `node scripts/checar.js` e, em `functions/`, `cd functions && npm test`. Rode você mesmo; não diga que passou sem rodar.
-- **Todo PR seu traz, no corpo:** o que mudou · como validou (para correção: o teste falhava antes e passa depois) · **o que NÃO conseguiu verificar** · a linha `Fronteira:` (passo 8 do Release process do `CLAUDE.md`; se for "sem mudança", diga por quê) · a decisão de dica (`Dica: sim/não, porque…`) · e, se tocou `functions/` ou regras do banco, a linha em "Pendente de deploy" do Quadro com o comando completo e o aviso de resync.
+- **Todo PR seu traz, no corpo:** o que mudou · como validou (para correção: o teste falhava antes e passa depois) · **o que NÃO conseguiu verificar** · a linha `Fronteira:` (passo 8 do Release process do `CLAUDE.md`; se for "sem mudança", diga por quê) · a decisão de dica (`Dica: sim/não, porque…`) · e, se tocou `functions/` ou regras do banco, a linha em *Pendente de deploy* de `docs/QUADRO.md` com o comando completo e o aviso de resync.
 - **Registros:** feature → `CHANGELOG.md`; bug/correção → `BUGS_E_CORRECOES.md`, sempre pelo `mare-cli.js log`. Nome de arquivo ou versão citados em texto só depois de conferir com `ls`/`grep`.
-- **Tarefa delegada pelo Claude** chega como **contrato de tarefa** (`docs/COORDENACAO_AGENTES.md` §7.3): objetivo, arquivos, critérios de aceite, o que não fazer e saída esperada. Se o contrato pedir algo fora do seu escopo ou impossível, **pare e diga** em vez de improvisar.
-- **Dúvida real ou algo grande demais:** pare e registre no Quadro, coluna *Escalado*, com como reproduzir.
+- **Tarefa delegada pelo Claude** chega como **contrato de tarefa** (`docs/COORDENACAO_AGENTES.md` › *Contrato de tarefa (v2)*): objetivo, risco, modelo e esforço, orçamento, arquivos, critérios de aceite, o que não fazer e a prova esperada. Os contratos prontos ficam na sua *Fila* em `docs/QUADRO.md`. Se o contrato pedir algo fora do seu escopo ou impossível, **pare e diga** em vez de improvisar.
+- **Dúvida real ou algo grande demais:** pare e registre em *Escalado* no `docs/QUADRO.md`, com como reproduzir.
 
 ## Linhas vermelhas (valem sempre — inclusive nas férias do Caio)
 
-Nasceram da auditoria de 16/10 (`docs/COORDENACAO_AGENTES.md`). Quebrar qualquer uma é motivo de parar e escalar, nunca de "dar um jeito":
+Nasceram da auditoria de 16/10 (`docs/historico/coordenacao-2026-10-a-11.md`). Quebrar qualquer uma é motivo de parar e escalar, nunca de "dar um jeito":
 
 1. **Nunca contorne um controle corporativo.** Se o seu ambiente (Antigravity, Codex…) exige aprovação para rodar um comando, **peça a aprovação**. Proibido criar daemon, `.bat`, agendador ou script que "aperte o botão" por você (o `ferias-daemon.js` foi removido por isso). Mensagem como "Always Proceed disabled by admin" é regra da empresa, não obstáculo técnico.
 2. **Nada de automação que reage a texto de terceiros no GitHub.** Proibido workflow com gatilho `issues`, `issue_comment` ou `pull_request_target` (qualquer pessoa pode abrir issue/comentar e disparar o robô com permissão de escrita). A CI (`scripts/checar.js`) reprova o PR que criar um.
