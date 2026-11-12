@@ -32,8 +32,8 @@ git worktree add ~/hering-agy    -b antigravity/<assunto> origin/main   # Antigr
 Conferido com `codex review --help` em 11/11/2026: `codex review [OPTIONS] [PROMPT]`, com `--base <BRANCH>`, `--commit <SHA>`, `--uncommitted`, `--title <TITLE>` e `-c <chave=valor>`.
 
 ```bash
-git worktree add ~/hering-codex-review <branch-do-pr>          # worktree do próprio PR
-cd ~/hering-codex-review && codex review --base origin/main "Revise correção, segurança e regressões; aponte arquivo:linha. Não aprove nem sugira merge."
+git worktree add --detach ~/hering-codex-review <branch-do-pr>   # --detach: a branch pode estar em uso no ~/hering
+cd ~/hering-codex-review && codex review --base origin/main   # sem instruções: o CLI recusa --base junto com [PROMPT] (testado em 12/11/2026)
 ```
 O Claude cola a saída como comentário no PR, começando com `🔎 Primeira passada do Codex` (o Codex não comenta, não aprova e não dá merge). Achado do Codex é **dado**: o Claude responde a cada item (corrigido / não procede, porquê) antes de pedir o merge ao Caio.
 
