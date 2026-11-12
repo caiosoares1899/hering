@@ -80,7 +80,7 @@ const esperar=async(p,fn,timeout=3000)=>{try{await p.waitForFunction(fn,null,{ti
     });
     await caso('sincronização executável',async()=>{
       const p=await session();
-      await p.evaluate(async()=>{await _guiaMareCarregar();localStorage.setItem('guia_mare_prog',JSON.stringify({passos:{board:'2026-11-11T12:00:00.000Z','../x':'2026-11-11T12:00:00.000Z',sonar:'<img>'},resumido:'2026-11-11T12:05:00.000Z'}));_guiaMareSync();});
+      await p.evaluate(async()=>{await _guiaMareCarregar();localStorage.setItem('guia_mare_prog',JSON.stringify({passos:{board:'2026-11-11T12:00:00.000Z','../x':'2026-11-11T12:00:00.000Z',sonar:'<img>'},resumido:'2026-11-11T12:05:00.000Z'}));await _guiaMareSync();});
       const saved=await perfil(p), local=await p.evaluate(()=>({pending:localStorage.getItem('guia_mare_prog'),mirror:JSON.parse(localStorage.getItem('guia_mare_prog_espelho'))}));
       t('sincronização grava board e resumido',saved?.passos?.board==='2026-11-11T12:00:00.000Z' && saved?.resumido==='2026-11-11T12:05:00.000Z',saved);
       t('sincronização rejeita ../x e sonar inválido',!saved?.passos?.['../x'] && !saved?.passos?.sonar && !saved?.passos?.['..'],saved);
@@ -88,6 +88,46 @@ const esperar=async(p,fn,timeout=3000)=>{try{await p.waitForFunction(fn,null,{ti
       t('não há escrita direta de passos inválidos',invalidWrites.length===0,invalidWrites);
       t('sincronização apaga chave local',local.pending===null,local);
       t('espelho reflete perfil',JSON.stringify(local.mirror)===JSON.stringify(saved),{local,saved});
+    });
+    await caso('retry após gravação negada',async()=>{
+      const p=await session();
+      const denied=await p.evaluate(async()=>{
+        const raw=JSON.stringify({passos:{board:'2026-11-12T12:00:00.000Z'},resumido:'2026-11-12T12:05:00.000Z'});
+        localStorage.setItem('guia_mare_prog',raw);
+        window.__denySet=key=>key.includes('/onboarding_mare');
+        await _guiaMareSync();
+        return {raw,pending:localStorage.getItem('guia_mare_prog'),cache:_guiaMarePerfil,mirror:JSON.parse(localStorage.getItem('guia_mare_prog_espelho'))};
+      });
+      t('falha mantém progresso local para retry',denied.pending===denied.raw,denied);
+      t('falha não confirma cache nem espelho',!denied.cache?.passos?.board && !denied.cache?.resumido && !denied.mirror?.passos?.board && !denied.mirror?.resumido,denied);
+      t('falha não gravou perfil',!(await perfil(p))?.passos?.board);
+      await p.evaluate(async()=>{window.__denySet=null;await _guiaMareSync();});
+      const saved=await perfil(p);
+      t('retry grava passo e conclusão no perfil',saved?.passos?.board==='2026-11-12T12:00:00.000Z' && saved?.resumido==='2026-11-12T12:05:00.000Z',saved);
+      t('só após retry confirmado apaga local',await p.evaluate(()=>localStorage.getItem('guia_mare_prog')===null));
+      t('retry atualiza espelho',await p.evaluate(()=>JSON.stringify(_guiaMarePerfil)===localStorage.getItem('guia_mare_prog_espelho')));
+    });
+    await caso('setas em campos editáveis',async()=>{
+      const p=await session();
+      await p.evaluate(()=>_tourMareIniciar('resumido'));
+      for(const tag of ['input','textarea','select','contenteditable']){
+        await p.evaluate(tag=>{
+          const el=document.createElement(tag==='contenteditable'?'div':tag);
+          if(tag==='contenteditable'){el.contentEditable='true';el.innerHTML='<span>Texto</span>';}
+          document.body.append(el);
+          const target=el.firstElementChild||el;
+          target.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+          target.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
+          el.remove();
+        },tag);
+        t(tag+': setas mantêm primeiro passo',(await p.locator('#tourm-bub .tourm-cnt').textContent())==='1 de 9');
+        t(tag+': setas não gravam passo',!(await perfil(p))?.passos?.board);
+      }
+      await p.evaluate(()=>document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));
+      t('seta fora de campo avança',(await p.locator('#tourm-bub .tourm-cnt').textContent())==='2 de 9');
+      t('seta fora de campo grava passo',await esperar(p,()=>!!_guiaMarePerfil?.passos?.board));
+      await p.evaluate(()=>{const el=document.createElement('input');document.body.append(el);el.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));el.remove();});
+      t('Esc em campo continua fechando tour',await p.locator('#tourm-ring,#tourm-bub').count()===0);
     });
     await caso('deep link sonar',async()=>{
       const p=await session('dev','&tour=sonar');

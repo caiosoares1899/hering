@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-12 · SÓ DEV — Guia, tour e criação pelo Agente: três correções do monitoramento de 12/11
+
+Em kanban-dev.html: o guia alterava cache e espelho antes de fbUpdate confirmar; gravação negada fazia o retry apagar o progresso local sem persistir. Agora só confirma cache/espelho após sucesso. O tour capturava setas em campos editáveis e concluía passos durante a digitação; agora ignora setas nesses campos e mantém Esc. criar_card usava fbSaveCard sem chave real e sobrescrevia cards em squads com buracos; agora usa fbCreateCard com aviso de falha, sem alterar o fallback. Regressões em docs/arezzo/testes/test_guia_mare_board.js e docs/arezzo/testes/test_agente_criar_card_buraco.js; execução no navegador pendente do maestro.
+
 ### 2026-11-11 · Travessia & Radar — Correções de permissão em recusa de par, devolutiva multi-ciclo, T4/T7/T8, faixa Pra você, R1 Ritmo e Sonar (`/monitorarbugs`) (PROD 11/11 · kanban v8.30.947 · okr v2.116 · travessia · PR #1732)
 
 - **Travessia (`travessia-dev.html`) — Recusar par ainda não aprovado falhava com `PERMISSION_DENIED` (`par-reprovar`):** quando o avaliado indicava um par (`aprovado: false`), `pedidos_par/{par}/{cid}_{av}` ainda não existia; clicar em **Recusar** tentava `remove()` em `pedidos_par/...` antes de apagar o par, disparando `PERMISSION_DENIED` na regra `.write` de `pedidos_par` (`data.child('avaliado').val() === null`). Agora apaga `avaliacoes/.../pares/{par}` primeiro e só remove `pedidos_par/...` quando `existente.aprovado` for verdadeiro.
