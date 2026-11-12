@@ -133,4 +133,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-12 · Maré › Modal do card (datas do PR 1a):** coluna do Prazo virou torre (Hora sozinha embaixo, larguras diferentes) e Período solto com rótulo em 2 níveis → bloco "📅 Datas" em grade (Prazo|Hora, Início|Fim, legenda "Período no ar"), Prioridade ao lado do Responsável. Armadilha da rodada: recorte de HTML por script achou `        </div>` DENTRO de `          </div>` e deixou uma div aberta — o Checklist pulou de coluna; conferir balanço de `<div>` e tirar print depois de todo recorte. v8.30.956-dev.
 
+- **2026-11-12 · Maré › Modal do card (2ª):** o bloco "📅 Datas" ainda pareceu bagunçado ao Caio — campos novos foram para um cartão `.cl-sec` "📅 Período e hora" embaixo de Riscos (registrado em `CARD_SECTIONS`, o PO esconde por padrão) e a esquerda voltou byte a byte ao pré-1a. **Lição:** campo novo numa tela que o time já usa vai para um bloco PRÓPRIO, sem reordenar os conhecidos — mexer no que a pessoa já sabe onde está lê como bagunça. v8.30.957-dev.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
