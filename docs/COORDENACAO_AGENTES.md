@@ -138,6 +138,8 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 ### Pendente de deploy (só o Caio roda)
 
+> ✅ **11/11/2026:** o Caio publicou as 5 funções do Agente Ágil com o conhecimento da promoção #1735 (programa de boas-vindas · kanban v8.30.947 · okr v2.116 · travessia; tags `kanban-v8.30.947` e `okr-v2.116`).
+
 > ✅ **11/11/2026:** o Caio publicou `agenteAgilMencao` e `agenteAgilMencaoDados` (marcador "analisando" da Ilha, PR #1699, tag `agente-agil-v3`).
 >
 > ✅ **Promoção #1678 (10/11/2026):** o Caio publicou as 5 funções do Agente Ágil com o conhecimento regenerado (Sonar, período padronizado, modal do card).
@@ -152,7 +154,6 @@ Toda PR de branch `antigravity/*` é revisada pelo Claude **antes** de o ADM val
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🚀 Promoção de 11/11 (kanban v8.30.947 · okr v2.116 · travessia): conhecimento do Agente Ágil regenerado (Ajuda de prod ganhou o Programa de boas-vindas; novidades do lote; versões do Sonar/modal do #1678 corrigidas) — republicar as 5 funções que leem o conhecimento. | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 11/11/2026 |
 
 ## 7. Três agentes (desde 05/11/2026)
 
