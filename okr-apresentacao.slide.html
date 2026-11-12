@@ -110,6 +110,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   transform:translateX(50px);transition:opacity .35s ease,transform .35s ease;overflow:hidden;}
 .slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
 .slide.prev{transform:translateX(-50px);}
+/* Slides alternados (pedido do Caio, 12/11/2026): os pares ganham um azul um pouco mais claro, para quem assiste perceber a troca de slide.
+   Só cor de fundo (sem backdrop-filter nem animação: o slide parado continua sem custo de GPU — ver a rodada de fps de 06/11). Conta pela
+   posição no #slides, então a capa é ímpar e a alternância segue a ordem em que os slides passam. */
+.slide:nth-child(even){background:radial-gradient(ellipse at 50% 0%,rgba(56,182,255,.10) 0%,transparent 70%),rgba(37,99,201,.10);}
 .slide-inner{max-width:min(1740px,100%);margin:0 auto;width:100%;transform-origin:top center;}
 /* Entrada do slide (GUIA_UI_UX §2.4, regime experiência): só quando alguém navega, uma vez; nunca em atualização de dado.
    fill backwards: depois de entrar não prende o transform (o :hover dos cartões continua valendo). Nada anima o .slide-inner (é onde mora o zoom do ajuste).

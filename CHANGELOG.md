@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar › Apresentação: slides pares em azul mais claro, para marcar a troca de slide (okr-apresentacao.slide.html) — 2026-11-12
+
+- Pedido do Caio (12/11/2026): diferenciar os slides ímpares dos pares para quem assiste perceber a troca.
+- Os slides **pares** ganham um azul um pouco mais claro (fundo com brilho suave no topo); os ímpares continuam no oceano escuro. Conta pela ordem em que os slides passam (a capa é ímpar).
+- Só cor de fundo: sem `backdrop-filter` nem animação, então o slide parado continua sem custo de GPU (rodada de fps de 06/11).
+- Conferido a 1920×1080 com dados de exemplo: slides 0–3 alternando, sem erro de JS, 54–60 fps.
+
 ### A Bordo ligado ao Guia do Maré (PROD 11/11 · onboarding.html, no ar com o merge #1734) — 2026-11-11
 
 Pedido do Caio (11/11/2026): ligar o onboarding do Maré ao A Bordo antes de promover.
