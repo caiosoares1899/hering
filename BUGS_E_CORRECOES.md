@@ -87,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-12 · SÓ DEV — Guia, tour e criação pelo Agente: três correções do monitoramento de 12/11
+### 2026-11-12 · Guia, tour e criação pelo Agente: três correções do monitoramento de 12/11 (PROD 12/11 · kanban v8.30.948 · PR #1741)
 
 Em kanban-dev.html: o guia alterava cache e espelho antes de fbUpdate confirmar; gravação negada fazia o retry apagar o progresso local sem persistir. Agora só confirma cache/espelho após sucesso. O tour capturava setas em campos editáveis e concluía passos durante a digitação; agora ignora setas nesses campos e mantém Esc. criar_card usava fbSaveCard sem chave real e sobrescrevia cards em squads com buracos; agora usa fbCreateCard com aviso de falha, sem alterar o fallback. Regressões em docs/arezzo/testes/test_guia_mare_board.js e docs/arezzo/testes/test_agente_criar_card_buraco.js; execução no navegador pendente do maestro.
 

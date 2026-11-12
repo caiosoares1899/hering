@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Radar › Apresentação: slides pares em azul mais claro, para marcar a troca de slide (okr-apresentacao.slide.html) — 2026-11-12
+### Radar › Apresentação: slides pares em azul mais claro, para marcar a troca de slide (PROD 12/11 · okr-apresentacao.slide.html, sem par -dev: no ar com os merges #1738/#1739/#1740) — 2026-11-12
 
 - Pedido do Caio (12/11/2026): diferenciar os slides ímpares dos pares para quem assiste perceber a troca.
 - Os slides **pares** ganham um azul um pouco mais claro (fundo com brilho suave no topo); os ímpares continuam no oceano escuro. Conta pela ordem em que os slides passam (a capa é ímpar).

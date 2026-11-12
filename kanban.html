@@ -6945,7 +6945,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.947</div>
+<div class="version">v8.30.948</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12403,19 +12403,24 @@ async function _guiaMareCarregar(){
 function _guiaMareMarcar(passos, fim){
   const u = window._currentUser; if(!u) return Promise.resolve();
   const upd = {}; const perfil = _guiaMarePerfil = _guiaMarePerfil || {};
-  perfil.passos = perfil.passos || {};
   Object.keys(passos||{}).slice(0,60).forEach(id=>{
     const ts = String(passos[id]||'');
-    if(_GUIA_MARE_ID_OK.test(id) && _GUIA_MARE_ISO_OK.test(ts) && !perfil.passos[id]){ upd['passos/'+id] = ts; perfil.passos[id] = ts; }
+    if(_GUIA_MARE_ID_OK.test(id) && _GUIA_MARE_ISO_OK.test(ts) && !perfil.passos?.[id]){ upd['passos/'+id] = ts; }
   });
   ['resumido','completo'].forEach(k=>{
     const ts = String((fim&&fim[k])||'');
-    if(_GUIA_MARE_ISO_OK.test(ts) && !perfil[k]){ upd[k] = ts; perfil[k] = ts; }
+    if(_GUIA_MARE_ISO_OK.test(ts) && !perfil[k]){ upd[k] = ts; }
   });
   if(!Object.keys(upd).length) return Promise.resolve();
-  upd.atualizadoEm = perfil.atualizadoEm = new Date().toISOString();
-  _guiaMareEspelho();
-  return fbUpdate('kanban/usuarios/'+u.uid+'/onboarding_mare', upd);
+  upd.atualizadoEm = new Date().toISOString();
+  // Só confirma no cache/espelho o que o banco aceitou; falha precisa permitir retry.
+  return fbUpdate('kanban/usuarios/'+u.uid+'/onboarding_mare', upd).then(()=>{
+    Object.entries(upd).forEach(([k,ts])=>{
+      if(k.startsWith('passos/')){ perfil.passos = perfil.passos || {}; perfil.passos[k.slice(7)] = ts; }
+      else perfil[k] = ts;
+    });
+    _guiaMareEspelho();
+  });
 }
 function _guiaMareSync(){
   if(!window._currentUser || _guiaMarePerfil===null) return;
@@ -12425,7 +12430,7 @@ function _guiaMareSync(){
   const apagar = ()=>{ try{ if(safeLS.getItem('guia_mare_prog')===raw) safeLS.removeItem('guia_mare_prog'); }catch(e){} };
   if(!o || typeof o!=='object'){ apagar(); return; }
   // Só apaga a cópia local depois que o perfil gravou (sem rede, tenta de novo na próxima volta à aba)
-  _guiaMareMarcar((o.passos && typeof o.passos==='object') ? o.passos : {}, o)
+  return _guiaMareMarcar((o.passos && typeof o.passos==='object') ? o.passos : {}, o)
     .then(apagar).catch(err=>console.warn('[guia-mare] progresso do guia não foi pro perfil; fica no aparelho:', err));
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') _guiaMareSync(); });
@@ -12453,7 +12458,11 @@ function _tourMareIniciar(qual){
   const ring = document.createElement('div'); ring.id = 'tourm-ring';
   const bub = document.createElement('div'); bub.id = 'tourm-bub'; bub.setAttribute('role','dialog'); bub.setAttribute('aria-live','polite');
   document.body.append(ring, bub);
-  _tourMare.onKey = e=>{ if(e.key==='Escape'){ e.stopPropagation(); _tourMareFechar(); } else if(e.key==='ArrowRight') _tourMarePasso(1); else if(e.key==='ArrowLeft') _tourMarePasso(-1); };
+  _tourMare.onKey = e=>{
+    if(e.key==='Escape'){ e.stopPropagation(); _tourMareFechar(); return; }
+    if(e.target?.closest?.('input,textarea,select') || e.target?.isContentEditable) return;
+    if(e.key==='ArrowRight') _tourMarePasso(1); else if(e.key==='ArrowLeft') _tourMarePasso(-1);
+  };
   _tourMare.onResize = ()=>_tourMareDesenhar();
   document.addEventListener('keydown', _tourMare.onKey, true);
   window.addEventListener('resize', _tourMare.onResize);
@@ -28088,7 +28097,12 @@ function executeTool(name,input){
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
         created:user,edited:user,createdAt:td,editedAt:td};
       recordMove(novo, novo.col); // ← métricas de fluxo
-      cards.push(novo); renderBoard(); fbSaveCard(novo);
+      cards.push(novo);
+      fbCreateCard(novo).catch(err=>{
+        console.warn('[agente] não gravou o card novo:', err);
+        showToast('⚠️ Não foi possível salvar o card criado pelo Agente Ágil. Confira sua conexão e tente novamente.');
+      });
+      renderBoard();
       // Achado real 2026-08-26 (skill /monitorarbugs): esta é a única ferramenta
       // de criação fora do modal principal que também deveria disparar "Card
       // criado em [coluna]" — decisão do usuário: só esta, não fan-out/
