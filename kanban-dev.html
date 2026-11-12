@@ -8737,6 +8737,7 @@ function _applyCardSectionsVisibility(){
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
 let boardView='kanban'; // 'kanban' (colunas, padrão) | 'timeline' (lista cronológica por prazo) | 'gantt' (barras Início→Fim + ◆ Prazo, ver renderGanttView())
 let _ganttOffsetDays=0; // deslocamento em dias (múltiplos de 28) da régua de 6 semanas do Gantt
+let _ganttScrollPend='hoje'; // próxima pintura do Gantt: 'hoje' (rola até hoje) | 'inicio' (começo da janela) | '' (mantém a posição — redesenho por atualização do Firebase)
 // Ordenação dos cards dentro de cada coluna — preferência pessoal por squad,
 // não é dado do board (cada pessoa pode preferir ver diferente).
 let colSortMode = safeLS.getItem('col_sort_'+ACTIVE_SQUAD) || 'priority';
@@ -14223,6 +14224,7 @@ function renderBoard(){
     if(ganttEl){ ganttEl.style.display='none'; ganttEl.innerHTML=''; }
     if(timelineEl){ timelineEl.style.display='flex'; renderTimelineView(activeCards); }
     updateMetrics();
+    _scheduleColIndicator(); // esconde o "coluna · n/N" do celular fora do modo colunas
     if(document.getElementById('cal-ov')?.classList.contains('open') && calViewMode!=='escala') renderCal();
     return;
   }
@@ -14231,6 +14233,7 @@ function renderBoard(){
     if(timelineEl){ timelineEl.style.display='none'; timelineEl.innerHTML=''; }
     if(ganttEl){ ganttEl.style.display='flex'; renderGanttView(activeCards); }
     updateMetrics();
+    _scheduleColIndicator(); // esconde o "coluna · n/N" do celular fora do modo colunas
     if(document.getElementById('cal-ov')?.classList.contains('open') && calViewMode!=='escala') renderCal();
     return;
   }
@@ -14287,12 +14290,13 @@ function toggleTimelineView(){
 }
 function toggleGanttView(){
   boardView = boardView==='gantt' ? 'kanban' : 'gantt';
+  if(boardView==='gantt') _ganttScrollPend='hoje';
   _syncBoardViewBtns();
   renderBoard();
 }
 function ganttNav(deltaDays){
-  if(deltaDays===0) _ganttOffsetDays = 0;
-  else _ganttOffsetDays += deltaDays;
+  if(deltaDays===0){ _ganttOffsetDays = 0; _ganttScrollPend='hoje'; }
+  else { _ganttOffsetDays += deltaDays; _ganttScrollPend='inicio'; }
   if(boardView==='gantt') renderBoard();
 }
 function _ganttParseIsoLocal(iso){
@@ -14517,6 +14521,10 @@ function renderGanttView(activeCards){
     ? ('<span>'+foraJanelaCount+' '+(foraJanelaCount===1?'card':'cards')+' em outras semanas (use ◀ ▶)</span>')
     : '';
 
+  // Redesenho por atualização do Firebase (alguém editou um card) não pode
+  // jogar a régua de volta pro começo: guarda a rolagem lateral e devolve.
+  const prevScroll = document.getElementById('gantt-scroll');
+  const keepX = prevScroll ? prevScroll.scrollLeft : 0;
   wrap.innerHTML =
     '<div class="gantt-toolbar">'
       +'<div class="gantt-nav-grp">'
@@ -14550,6 +14558,24 @@ function renderGanttView(activeCards){
       +'<span class="gantt-sem-datas">'+esc(semDatasTxt)+'</span>'
       +foraTxt
     +'</div>';
+  const sc = document.getElementById('gantt-scroll');
+  if(sc){
+    const pend = _ganttScrollPend; _ganttScrollPend = '';
+    if(pend==='inicio') sc.scrollLeft = 0;
+    else if(pend==='hoje'){
+      // Celular: cabem ~8 dias e a janela começa na semana passada; deixa a
+      // coluna de hoje visível logo depois da coluna fixa do título.
+      const td = sc.querySelector('.gantt-day-hd.is-today');
+      const corner = sc.querySelector('.gantt-ruler-corner');
+      if(td && corner){
+        const scR = sc.getBoundingClientRect(), tdR = td.getBoundingClientRect();
+        const left = tdR.left - scR.left + sc.scrollLeft;
+        if(left + tdR.width > sc.clientWidth) sc.scrollLeft = Math.max(0, left - corner.offsetWidth - tdR.width);
+        else sc.scrollLeft = 0;
+      } else sc.scrollLeft = 0;
+    }
+    else sc.scrollLeft = keepX;
+  }
 }
 // ── Caso #1 de "personalização baseada em rotina": Timeline aberta cedo
 // na sessão, com frequência -- tornar visão inicial? Mesma janela
@@ -15243,7 +15269,7 @@ function _mobileColIndicatorUpdate(){
   if(!ind) return;
   const wrap = document.getElementById('board-wrap');
   const isMobile = window.matchMedia('(max-width:768px)').matches;
-  if(!isMobile || !wrap || raiaMode){
+  if(!isMobile || !wrap || raiaMode || boardView!=='kanban'){ // Gantt/Timeline: o indicador de coluna não se aplica
     ind.style.display='none';
     return;
   }

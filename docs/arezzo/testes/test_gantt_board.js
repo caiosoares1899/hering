@@ -614,6 +614,40 @@ const check = (name, pass, detail) => {
         extraChecks
       );
 
+      // Revisão do Claude (#1749): rolagem lateral sobrevive ao redesenho, abre rolado até hoje, sem indicador de coluna.
+      await p.evaluate(() => { if (boardView !== 'kanban') { boardView = 'kanban'; _syncBoardViewBtns(); renderBoard(); } });
+      await p.waitForTimeout(250);
+      const indNoKanban = await p.evaluate(() => { const i = document.getElementById('mobile-col-indicator'); return i ? getComputedStyle(i).display : 'none'; });
+      await p.evaluate(() => toggleGanttView());
+      await p.waitForTimeout(250);
+      const scrollRes = await p.evaluate(async () => {
+        const sc = () => document.getElementById('gantt-scroll');
+        const hojeVisivel = () => {
+          const s = sc(), td = s.querySelector('.gantt-day-hd.is-today'), corner = s.querySelector('.gantt-ruler-corner');
+          if (!td) return false;
+          const sr = s.getBoundingClientRect(), tr = td.getBoundingClientRect(), cr = corner.getBoundingClientRect();
+          return tr.left >= cr.right - 1 && tr.right <= sr.right + 1;
+        };
+        const abriuHoje = hojeVisivel();
+        const max = sc().scrollWidth - sc().clientWidth;
+        const alvo = Math.max(1, Math.min(max, sc().scrollLeft === 0 ? 120 : sc().scrollLeft - 40));
+        sc().scrollLeft = alvo;
+        const antes = sc().scrollLeft;
+        renderBoard();
+        const depois = sc().scrollLeft;
+        ganttNav(28);
+        const aposAvancar = sc().scrollLeft;
+        ganttNav(0);
+        const voltouHoje = hojeVisivel();
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const ind = document.getElementById('mobile-col-indicator');
+        return { abriuHoje, max, antes, depois, aposAvancar, voltouHoje, indicador: ind ? getComputedStyle(ind).display : 'none' };
+      });
+      check(label + ' Gantt abre com o dia de hoje visível (e o botão Hoje volta até ele)', scrollRes.abriuHoje && scrollRes.voltouHoje, scrollRes);
+      check(label + ' rolagem lateral do Gantt sobrevive ao redesenho (atualização do Firebase)', scrollRes.max <= 0 || (scrollRes.antes > 0 && scrollRes.depois === scrollRes.antes), scrollRes);
+      check(label + ' ▶ volta a rolagem ao começo da nova janela', scrollRes.aposAvancar === 0, scrollRes);
+      check(label + ' indicador "coluna · n/N" do celular escondido no Gantt' + (width <= 768 ? ' (aparecia no modo colunas)' : ''), scrollRes.indicador === 'none' && (width > 768 || indNoKanban !== 'none'), { ...scrollRes, indNoKanban });
+
       check(label + ' sem erro de JavaScript', errors.length === 0, errors);
       await ctx.close();
     }
