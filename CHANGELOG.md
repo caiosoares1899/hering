@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Board: visão 📊 Gantt (período Início → Fim e marcos ◆ de prazo) — 2026-11-12
+### Board: visão 📊 Gantt (período Início → Fim e marcos ◆ de prazo) (PROD 12/11 · kanban v8.30.957 · PRs #1749–#1752) — 2026-11-12
 
 Nova visão 📊 Gantt na toolbar de kanban-dev.html (ao lado de 🛤️ Timeline, exclusivas entre si com estado unificado dos botões e suporte a reorganização da barra e atalhos). Exibe régua de 6 semanas começando no domingo da semana passada (navegação ◀ / Hoje / ▶ deslocando 4 semanas, fins de semana sombreados e linha vertical de hoje), agrupada pela 1ª tag do card ('Sem tag' por último) e ordenada por início||prazo e título. Cada linha traz coluna esquerda sticky com o título, barra Início → Fim na cor da 1ª tag (ou neutra tracejada sem tag) com avatares na ponta, ✓ quando concluído e canto reto + ◂/▸ quando ultrapassa a janela, além do marco ◆ no dia exato do Prazo com dueHora quando houver (inclusive em cards que também têm período, sem sobreposição; cards só com Prazo exibem apenas ◆). Cards sem período nem prazo ficam fora e são contados no rodapé ('N cards sem datas não aparecem'). Respeita todos os filtros do board (inclusive com raia ativa antes da troca) e 💡 Meus cards, nos 3 temas (dark, light, vice) em 1280 e 390 px (alvos de toque >= 44 px e rolagem horizontal restrita a #gantt-view). Tópico 📊 Gantt adicionado ao HELP_CONTENT (com menção em Timeline) e teste Playwright em docs/arezzo/testes/test_gantt_board.js.
 
@@ -36,13 +36,13 @@ Nova visão 📊 Gantt na toolbar de kanban-dev.html (ao lado de 🛤️ Timelin
 
 **12/11, período no filtro (Claude, a pedido do Caio):** o "Ir para" virou **📅 De … até …** — só o De leva a régua até a data; De e Até mostram só os cards cujo período ou prazo cai no intervalo (datas invertidas são trocadas; o rodapé diz o período e quantos ficaram de fora; ✕ Limpar zera junto). Filtro só do Gantt (o board não tem eixo de datas). kanban-dev v8.30.955-dev.
 
-### SÓ DEV — Calendário: barra de período do card e hora do prazo — 2026-11-12
+### Calendário: barra de período do card e hora do prazo (PROD 12/11 · kanban v8.30.957 · PRs #1746/#1747) — 2026-11-12
 
 No 📅 Calendário do board (kanban-dev.html), cards com Início e Fim aparecem como uma barra contínua por semana atravessando os dias (quebrando na virada da semana, sem repetir em cada dia), clicável para abrir o card, com a cor da 1ª tag e os avatares do responsável e participantes na ponta; várias barras na mesma semana empilham sem sobrepor. Entregas no dia do prazo (inclusive em cards que também têm período) permanecem no dia correspondente com a hora do prazo quando houver e ✓ quando concluídas, respeitando os filtros do board e do calendário nos 3 temas (1280 e 390 px). Tópico Calendário atualizado no HELP_CONTENT e teste Playwright em docs/arezzo/testes/test_calendario_periodo.js.
 
 **12/11, rodada /melhoriauiux (Claude):** card sem tag vira barra neutra tracejada (antes herdava a cor da coluna, a mesma do 📎 das entregas); barra de 1 dia sem avatar no tablet/celular (e de 2 dias no celular), para o título caber; no toque, tocar no dia abre a lista do dia com linhas de 44 px (antes a barra de 18 px abria um card por engano); ✕ no canto superior direito no celular; entregas 📎 alcançáveis por teclado; hover sem movimento com `prefers-reduced-motion`. Teste `test_calendario_periodo.js` ampliado.
 
-### SÓ DEV — Card: período e hora do prazo — 2026-11-12
+### Card: período e hora do prazo (PROD 12/11 · kanban v8.30.957 · PRs #1745/#1753/#1754) — 2026-11-12
 
 Campos opcionais Início, Fim e Hora do prazo no modal e no board. Persistência no autosave, Salvar e criação; histórico legível, duplicação e sincronização do modal. Fim anterior ao Início gera aviso e não é gravado. Modelos, recorrentes e agendamentos não capturam as datas da ocorrência. Teste Playwright em docs/arezzo/testes/test_card_periodo.js (1280 e 390 px); execução pelo maestro.
 
