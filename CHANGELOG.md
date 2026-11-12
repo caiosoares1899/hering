@@ -250,7 +250,7 @@ Popup de dica do Sonar no Maré e no lobby (`mare-dicas-dev.js`, `?v=11` em kanb
 - Teste: `docs/arezzo/testes/test_dicas.js` (contagens do Painel 12..13 + 13 + 7; "Saiba mais" de todas as dicas). Na `main`, a dica `busca` falhava no "Saiba mais"; passa agora.
 - Dica: é ela. Fronteira: sem mudança.
 
-### Maré › 🔍 Sonar com o mesmo layout do lobby (módulo mare-sonar), foco nos cards do board (PROD · kanban v8.30.921 · oceano v1.68 · mare-sonar.js ?v=3) — 2026-11-10
+### Maré › 🔍 Sonar com o mesmo layout do lobby (módulo mare-sonar), foco nos cards do board (PROD · kanban v8.30.922 · oceano v1.69 · mare-sonar.js ?v=4) — 2026-11-10
 
 O Ctrl+K do Maré passa a abrir o **mesmo Sonar do lobby** (módulo `mare-sonar-dev.js`): o mesmo título com o disco que varre, as mesmas abas, o mesmo teclado. O que muda é o foco:
 - **Abas:** Tudo · 1 Este board · 2 Radar · 3 Squads · 4 Ajuda (prefixos `b:`, `r:`, `s:`, `a:`).
@@ -263,14 +263,14 @@ O Ctrl+K do Maré passa a abrir o **mesmo Sonar do lobby** (módulo `mare-sonar-
 - Substitui a versão do #1672, que reaproveitava a janela antiga. Teste: `docs/arezzo/testes/test_mare_sonar.js` (4 temas, incluindo Black Friday). Sem regressão em `test_busca_comentarios.js` (as 2 checagens de "Ctrl+K sem card" passam a olhar o Sonar), `test_card_modal_ui.js` e `test_oceano_sonar.js`.
 - Dica: sim, no PR do CATALOGO. Fronteira: texto do card e do Radar por `esc()`; a cor da coluna passa por uma lista fechada antes de virar estilo; id na URL por `encodeURIComponent()`.
 
-### Oceano › 🔍 Sonar vira módulo compartilhado (mare-sonar-dev.js) com título e disco de sonar (PROD · oceano v1.68 · mare-sonar.js ?v=3) — 2026-11-10
+### Oceano › 🔍 Sonar vira módulo compartilhado (mare-sonar-dev.js) com título e disco de sonar (PROD · oceano v1.69 · mare-sonar.js ?v=4) — 2026-11-10
 
 O Sonar sai do lobby e vira o módulo compartilhado **`mare-sonar-dev.js`** (`?v=1`): um layout e um comportamento só para todas as páginas, e cada página entrega apenas o próprio foco. O lobby é o primeiro a usar (o Maré entra no PR seguinte, trocando a busca antiga pelo mesmo visual).
 - **Título "Sonar" com disco de sonar:** no lugar da lupa, um disco com anéis; ele **varre só enquanto procura** (ao digitar, até ~0,5 s depois da última tecla, e enquanto o Radar carrega). Ao lado do título: "busca em todo o Oceano", "escaneando…" e depois "N resultados" (anunciado sem pressa para o leitor de tela). Parado, nada anima; "reduzir movimento" desliga a varredura.
 - Por fora, o resto fica igual: abas, teclado, recentes e a cópia do Radar de 3 h no aparelho (mesma chave, então quem já tinha a cópia continua sem ler o banco).
 - Teste: `docs/arezzo/testes/test_oceano_sonar.js` (agora com o título, a varredura ao digitar e o disco parado depois que os resultados assentam). Fronteira: sem mudança (a mesma lógica, mudou de arquivo). Dica: sim, no PR do `CATALOGO`.
 
-### Maré › 🔍 Ctrl+K vira o Sonar: cards do board + Radar, outros squads e Ajuda (PROD · kanban v8.30.921) — 2026-11-10
+### Maré › 🔍 Ctrl+K vira o Sonar: cards do board + Radar, outros squads e Ajuda (PROD · kanban v8.30.922) — 2026-11-10
 
 O **Ctrl+K** do Maré deixa de ser a "busca global" e vira o **🔍 Sonar**, o mesmo nome e a mesma ideia do lobby do Oceano. A lista agora tem quatro grupos:
 - **Neste board:** os cards, como antes (título, descrição, Insights do PO e responsável), agora sem se importar com acento, e com o botão "Ver N cards no board".
@@ -281,7 +281,7 @@ O **Ctrl+K** do Maré deixa de ser a "busca global" e vira o **🔍 Sonar**, o m
 - Teste: `docs/arezzo/testes/test_mare_sonar.js` (boot real, Firebase falso, 3 temas, 1280 e 390 px, título hostil, cópia do lobby = 0 leituras). Sem regressão em `test_busca_comentarios.js` e `test_card_modal_ui.js`. Capturas em `docs/capturas/mare-sonar/`.
 - Dica: sim (junto com a do lobby, num PR do `CATALOGO`). Fronteira: campo novo no DOM com texto de outras pessoas (títulos de Objetivo e Marco), sempre por `esc()`; id do Objetivo vai na URL por `encodeURIComponent()`; nenhuma leitura que a pessoa já não pudesse fazer.
 
-### Oceano › 🔍 Sonar: busca em todo o Oceano com Ctrl+K / ⌘K (PROD · oceano v1.68 · kanban v8.30.921) — 2026-11-10
+### Oceano › 🔍 Sonar: busca em todo o Oceano com Ctrl+K / ⌘K (PROD · oceano v1.69 · kanban v8.30.922) — 2026-11-10
 
 Busca de todo o Oceano. **Ctrl+K** (no Mac **⌘K**) ou o botão **🔍 Sonar** no topo abre uma caixa só que acha produtos, os seus squads do Maré, **Objetivos e Marcos do Radar**, links da Hering e os seus, a Ajuda e comandos (perfil, ajuda). Enter abre já no lugar certo (o Objetivo pelo `?okr=`, o squad pelo `?squad=`); Ctrl+Enter abre em aba nova.
 - **Onde buscar:** abas Tudo · 1 Maré · 2 Radar · 3 Links · 4 Ajuda. Com a caixa vazia, as teclas 1–4 trocam de aba; Tab passa de uma para a outra; prefixos `m:`, `r:`, `l:` e `a:`. `r: meus` mostra só os Objetivos em que a pessoa é responsável.
@@ -307,7 +307,7 @@ O período do Objetivo deixa de ser texto livre ("2T", "4T-2026", "1S27"…, cad
 - Teste: `docs/arezzo/testes/test_okr_periodo.js` (boot real, Firebase falso, 3 temas, 1280 e 390 px). Capturas em `docs/capturas/okr-periodo/`.
 - Dica: não (o próprio Salvar explica na hora). Fronteira: sem mudança (só a tela; nenhum nó, regra ou sink novo).
 
-### Maré › Modal do card: checklists legíveis e controles acessíveis no toque (PROD · kanban v8.30.921 · PR #1661) — 2026-11-09
+### Maré › Modal do card: checklists legíveis e controles acessíveis no toque (PROD · kanban v8.30.922 · PR #1661) — 2026-11-09
 
 Antes, campos e ações apertavam no celular/tablet; os controles dos checklists eram pequenos e o título disputava espaço com as setas. Agora, campos respeitam a largura do modal, grupos têm separação discreta e o nome ocupa uma linha própria no toque; ações do checklist e do cabeçalho têm alvo de 44 px e nomes acessíveis. Rodapé quebra linha no tablet. Teste: docs/arezzo/testes/test_card_modal_ui.js (boot real, três temas, desktop/celular/tablet, zero/2/50 itens e ADM/membro/PO). Dica: não — ajuste de uma tela já usada.
 

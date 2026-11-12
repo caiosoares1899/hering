@@ -424,6 +424,7 @@ const CAD = { semanal: 'Semanal', quinzenal: 'Quinzenal', mensal: 'Mensal', trim
 const CAD_DIAS = { semanal: 7, quinzenal: 14, mensal: 30, trimestral: 90 };
 const TIPO_1A1 = { acomp: 'Acompanhamento', pdi: 'Check-in de PDI', carreira: 'Carreira e ciclo' };
 const FACES = [['😣', 'Muito mal'], ['🙁', 'Mal'], ['😐', 'Mais ou menos'], ['🙂', 'Bem'], ['😄', 'Muito bem']];
+const faceDe = n => FACES[Math.min(4, Math.max(0, Math.round(Number(n) || 3) - 1))];
 const FASES = [['preparacao', 'Preparação'], ['coleta', 'Coleta'], ['devolutiva', 'Devolutiva'], ['encerrado', 'Encerrado']];
 const PERGUNTAS_PADRAO = {
   auto: { q1: 'Quais foram suas principais entregas neste ciclo e do que você mais se orgulha?', q2: 'Onde você sente que evoluiu? Dê exemplos.', q3: 'Onde você quer evoluir no próximo ciclo?', q4: 'Como seu líder e o time podem te apoiar?' },
@@ -459,7 +460,7 @@ function farol({ ultimo, cad, folgas, hoje }) {
 function termometro(hc, hoje, totalPessoas) {
   const idade = k => diasEntre(k, hoje); const w = (a, b) => { const v = []; Object.keys(hc || {}).forEach(u => Object.entries(hc[u] || {}).forEach(([k, e]) => { const i = idade(k); if (e && e.n && i >= a && i <= b) v.push({ u, k, n: e.n }); })); return v; };
   const atual = w(0, 6), ant = w(7, 13); const media = v => v.length ? v.reduce((s, x) => s + x.n, 0) / v.length : null;
-  const dist = [0, 0, 0, 0, 0]; atual.forEach(x => dist[x.n - 1]++);
+  const dist = [0, 0, 0, 0, 0]; atual.forEach(x => dist[Math.min(4, Math.max(0, Math.round(Number(x.n) || 3) - 1))]++);
   const dias = []; for (let i = 13; i >= 0; i--) { const d = new Date(Date.parse(hoje + 'T12:00:00')); d.setDate(d.getDate() - i); const k = isoDe(d); const v = w(0, 13).filter(x => x.k === k); dias.push({ k, media: media(v), n: v.length }); }
   const apoio = []; Object.keys(hc || {}).forEach(u => { const es = Object.entries(hc[u] || {}).filter(([k, e]) => e && e.n && idade(k) >= 0 && idade(k) <= 2).sort((a, b) => b[0].localeCompare(a[0])); if (es.length && es[0][1].n <= 2) apoio.push({ uid: u, n: es[0][1].n, k: es[0][0] }); });
   const m = media(atual), pessoas = new Set(atual.map(x => x.u)).size;
@@ -478,7 +479,7 @@ function proximaAcao({ me, ciclos, avals, pedidos, respPar, um, temLider, bau, h
   for (const p of (pedidos || [])) { const c = p && cs[p.cid];
     if (c && c.status === 'coleta' && !(respPar || {})[p.cid + ':' + p.avaliado]) return { ic: '🤝', txt: nm(p.avaliado) + ' conta com o seu feedback.', btn: 'Responder', tab: 'aval' }; }
   for (const [cid, c] of meus) { if (c.status === 'encerrado') continue; const a = av[cid];
-    if (c.status === 'coleta') { const qs = Object.keys(perguntasDe(c, 'auto')); const feitas = qs.filter(q => a.auto && a.auto[q]).length;
+    if (c.status === 'coleta') { const ps = perguntasDe(c, 'auto'); const qs = Object.keys(ps).filter(q => !/\(opcional\)/i.test(ps[q])); const feitas = qs.filter(q => a.auto && String(a.auto[q] || '').trim()).length;
       if (feitas < qs.length) { const f = qs.length - feitas;
         return { ic: '📝', txt: feitas ? 'Falta' + (f > 1 ? 'm ' + f + ' respostas' : ' 1 resposta') + ' na sua autoavaliação.' : 'Sua autoavaliação de ' + (c.nome || 'avaliação') + ' está aberta.', btn: feitas ? 'Continuar' : 'Começar', tab: 'aval' }; } }
     if (c.status === 'preparacao' && Object.keys(a.pares || {}).length < 2) return { ic: '🤝', txt: 'Indique de 2 a 4 pares para ' + (c.nome || 'a avaliação') + '.', btn: 'Indicar', tab: 'aval' }; }
@@ -565,7 +566,7 @@ function blocoFechamento(diario) {
   return `<section class="gl pad stack" aria-labelledby="t-fe"><h2 class="h2" id="t-fe">🌙 Fechamento do dia${hoje ? ' <span class="chip ok">✔ salvo hoje</span>' : ''}</h2>
     <p class="sub">Como foi o seu dia? Conte do seu jeito — o que rolou de bom, o que pesou, o que você aprendeu.</p>
     <div class="faces" role="group" aria-label="Humor do fim do dia">${FACES.map((f, i) => `<button type="button" data-act="dia-n" data-n="${i + 1}" aria-pressed="${S.diaN === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
-    <div class="mood-lbl" id="dia-lbl" aria-live="polite">${S.diaN ? esc(FACES[S.diaN - 1][1]) : 'Toque numa carinha'}</div>
+    <div class="mood-lbl" id="dia-lbl" aria-live="polite">${S.diaN ? esc(faceDe(S.diaN)[1]) : 'Toque numa carinha'}</div>
     <label class="sr" for="dia-txt">Como foi o seu dia</label><textarea class="ta" id="dia-txt" maxlength="1500" placeholder="Hoje eu…">${esc((hoje && hoje.texto) || '')}</textarea>
     <div class="row"><button class="btn p" data-act="dia-salvar">💾 Salvar o dia</button><span class="small">🔒 Fica salvo só pra você, no 📓 Diário da Travessia, pra você se lembrar depois. Ninguém lê — nem o seu líder.</span></div>
     ${!hoje && ult && ult.texto ? `<p class="small">Seu último registro (${esc(brDe(passadas[0]))}): “${esc(String(ult.texto).slice(0, 140))}${String(ult.texto).length > 140 ? '…' : ''}”</p>` : ''}</section>`;
@@ -575,7 +576,7 @@ async function viewDiario() {
   const dias = Object.keys(d).sort().reverse().filter(k => !q || String(d[k].texto || '').toLowerCase().includes(q));
   const mes = k => { const [a, m] = k.split('-'); return ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'][+m - 1] + ' de ' + a; };
   const grupos = []; dias.forEach(k => { const m = mes(k); if (!grupos.length || grupos[grupos.length - 1].m !== m) grupos.push({ m, ks: [] }); grupos[grupos.length - 1].ks.push(k); });
-  const card = k => { const e = d[k]; return `<article class="dia"><div class="dh"><b>${esc(brFull(k))}</b>${e.n ? `<span class="mo" role="img" aria-label="${FACES[e.n - 1][1]}" title="${FACES[e.n - 1][1]}">${FACES[e.n - 1][0]}</span>` : ''}</div>
+  const card = k => { const e = d[k]; return `<article class="dia"><div class="dh"><b>${esc(brFull(k))}</b>${e.n ? `<span class="mo" role="img" aria-label="${faceDe(e.n)[1]}" title="${faceDe(e.n)[1]}">${faceDe(e.n)[0]}</span>` : ''}</div>
       ${e.texto ? `<p>${esc(e.texto)}</p>` : '<p class="small">Só o humor, sem texto.</p>'}
       <div class="row" style="margin-top:8px">${e.texto ? `<button class="btn s" data-act="dia-bau" data-d="${esc(k)}">💼 Guardar no Baú</button>` : ''}<button class="btn s" data-act="dia-del" data-d="${esc(k)}" aria-label="Apagar o registro de ${esc(brFull(k))}">🗑</button></div></article>`; };
   // Só o mês mais recente (ou o resultado de uma busca) vem aberto; os meses antigos ficam recolhidos com o resumo (quantos dias e o humor médio) — 2 trimestres de diário não viram uma parede de texto.
@@ -611,7 +612,7 @@ function viewFarol(uid, d, quem) {
 }
 function sparkHumor(h, dias) {
   const out = []; const hoje = new Date();
-  for (let i = dias - 1; i >= 0; i--) { const d = new Date(hoje); d.setDate(hoje.getDate() - i); const k = isoDe(d); const n = h[k] && h[k].n; out.push(n ? `<i style="height:${n * 20}%" title="${brDe(k)}: ${FACES[n - 1][1]}"></i>` : `<i class="v" title="${brDe(k)}: sem registro"></i>`); }
+  for (let i = dias - 1; i >= 0; i--) { const d = new Date(hoje); d.setDate(hoje.getDate() - i); const k = isoDe(d); const n = h[k] && h[k].n; out.push(n ? `<i style="height:${Math.min(100, Math.max(20, Math.round(Number(n) || 3) * 20))}%" title="${brDe(k)}: ${faceDe(n)[1]}"></i>` : `<i class="v" title="${brDe(k)}: sem registro"></i>`); }
   return `<div class="spark" role="img" aria-label="Humor dos últimos ${dias} dias">${out.join('')}</div>`;
 }
 async function viewInicio() {
@@ -631,7 +632,7 @@ async function viewInicio() {
     <section class="gl pad stack" aria-labelledby="t-hu"><h2 class="h2" id="t-hu">🌤️ Como você está hoje?</h2>
       <p class="quem-ve">👁 ${lid ? 'Seu líder (' + esc(nomeDe(lid)) + ') vê esta resposta.' : 'Quando seu líder for definido no organograma, ele passa a ver esta resposta.'}</p>
       <div class="faces" role="group" aria-label="Humor de hoje">${FACES.map((f, i) => `<button type="button" data-act="humor" data-n="${i + 1}" aria-pressed="${hHoje && hHoje.n === i + 1}" aria-label="${f[1]}" title="${f[1]}">${f[0]}</button>`).join('')}</div>
-      <div class="mood-lbl" aria-live="polite">${hHoje && hHoje.n ? esc(FACES[hHoje.n - 1][1]) + ' hoje' : 'Toque numa carinha'}${humorPend ? ` <span class="mood-undo" id="humor-undo">· Registrado. <button type="button" class="btn s" data-act="humor-desfazer">↩ Desfazer</button></span>` : ''}</div>
+      <div class="mood-lbl" aria-live="polite">${hHoje && hHoje.n ? esc(faceDe(hHoje.n)[1]) + ' hoje' : 'Toque numa carinha'}${humorPend ? ` <span class="mood-undo" id="humor-undo">· Registrado. <button type="button" class="btn s" data-act="humor-desfazer">↩ Desfazer</button></span>` : ''}</div>
       <p class="small">Ele vê a média do time no termômetro e, se você marcar que não está bem, recebe um aviso para poder te apoiar. O aviso só sai ${HUMOR_DESFAZER_S} segundos depois do toque, para dar tempo de desfazer um toque errado. Ninguém (nem o sistema) analisa seu humor. O que você registrou antes de 31/10/2026 continua só seu, e o fechamento do dia (abaixo) também.</p>
       ${sparkHumor(humor, 14)}</section></div>
    ${blocoFechamento(diario)}
@@ -714,7 +715,7 @@ async function viewAval() {
      <div class="fase" aria-label="Fase do ciclo">${FASES.map(f => `<span class="${f[0] === fase ? 'on' : (FASES.findIndex(x => x[0] === fase) > FASES.findIndex(x => x[0] === f[0]) ? 'ok' : '')}">${f[1]}</span>`).join('')}</div>
      <div class="foco"><h3 class="h2">🤝 Meus pares</h3>${prep ? '<p class="small">Indique de 2 a 4 colegas que trabalharam com você. Seu líder aprova a lista; só quem for aprovado responde. Você não vê o que cada par escreveu.</p>' : '<p class="small">Pares que responderam neste ciclo. Você não vê o que cada um escreveu.</p>'}
        <ul class="lst">${Object.entries(a.pares).map(([u, p]) => `<li>${avatar(u)}<div class="tx"><b>${esc(nomeDe(u))}</b><div class="meta">${p.aprovado ? chip('✅ Aprovado pelo líder', 'ok') : chip('⏳ Aguardando aprovação', 'warn')}</div></div>${!p.aprovado && prep ? `<button class="btn s" data-act="par-retirar" data-cid="${esc(cid)}" data-par="${esc(u)}">Retirar</button>` : ''}</li>`).join('') || '<li class="small">Nenhum par indicado ainda.</li>'}</ul>
-       ${prep ? `<label class="sr" for="pesq">Buscar colega</label><input class="in pesq" id="pesq" data-pesq="1" placeholder="Buscar colega pelo nome…" value="${esc(S.pesq)}" autocomplete="off">
+       ${prep ? `<label class="sr" for="pesq-${esc(cid)}">Buscar colega</label><input class="in pesq" id="pesq-${esc(cid)}" data-pesq="1" placeholder="Buscar colega pelo nome…" value="${esc(S.pesq)}" autocomplete="off">
        <div class="chips" style="margin-top:8px">${sugestoesPares(cid, me, a.pares).map(u => `<button class="btn s" data-act="par-sugerir" data-cid="${esc(cid)}" data-par="${esc(u)}" aria-label="Indicar ${esc(nomeDe(u))}">+ ${esc(nomeDe(u))}</button>`).join('') || '<span class="small">Sem sugestões — use a busca.</span>'}</div>` : ''}
        ${aprovados < 2 && prep ? `<p class="small">⚠ Faltam pares aprovados (mínimo 2). Hoje: ${aprovados}.</p>` : ''}</div>
      <div class="${coleta ? 'sbs' : ''}"><div class="foco"><h3 class="h2">📝 Minha autoavaliação</h3>${coleta || a.auto ? '' : '<p class="small">A coleta ainda não abriu.</p>'}
@@ -779,7 +780,7 @@ async function viewFrota() {
     return `<article class="gl pcard ${d.farol.cor} ${d.farol.cor === 'vermelho' || d.farol.cor === 'amarelo' ? 'at' : ''}" aria-label="${esc(nomeDe(u))}"><div class="top">${avatar(u)}<div style="flex:1;min-width:0"><b>${esc(nomeDe(u))}</b><div class="small">${d.serie ? esc(CAD[d.serie.cad]) : 'sem cadência'}</div></div></div>
       <div style="margin-top:10px">${viewFarol(u, d)}</div>
       ${completo && h && Object.keys(h).length ? `<div class="small" style="margin-top:8px">🌤️ Humor (14 dias)</div>${sparkHumor(h, 14)}` : (completo ? '<p class="small" style="margin-top:8px">🌤️ Sem humor registrado.</p>' : '')}
-      ${apoioDe[u] ? `<div style="margin-top:8px">${chip('🫶 Marcou ' + FACES[apoioDe[u].n - 1][1].toLowerCase() + ' em ' + esc(brDe(apoioDe[u].k)) + ' — vale um oi', 'warn')}</div>` : ''}
+      ${apoioDe[u] ? `<div style="margin-top:8px">${chip('🫶 Marcou ' + faceDe(apoioDe[u].n)[1].toLowerCase() + ' em ' + esc(brDe(apoioDe[u].k)) + ' — vale um oi', 'warn')}</div>` : ''}
       ${completo ? `<div class="acts"><button class="btn s" data-act="abrir" data-uid="${esc(u)}">Abrir →</button></div>` : ''}</article>`; };
   return `<div class="stack"><section class="sec"><h2 class="h2">🚢 Frota</h2><p class="sub">${meus.length} ${meus.length === 1 ? 'pessoa' : 'pessoas'} que você lidera. Os faróis mostram a cadência dos 1:1, já descontando as folgas da Escala.</p></section>
    ${meus.length ? viewTermometro(termo, meus) : ''}
@@ -801,7 +802,7 @@ function viewTermometro(t, meus) {
     ${t.media == null ? vazio('Ninguém registrou o humor nos últimos 7 dias. Cada pessoa registra no Meu Dia (Maré) ou na Minha travessia.') : `<div class="termo ${t.cor}">${gauge}
       <div class="stack"><div class="small"><b>${t.respostas}</b> ${t.respostas === 1 ? 'resposta' : 'respostas'} de <b>${t.pessoas}</b> de ${t.total} ${t.total === 1 ? 'pessoa' : 'pessoas'} (quem registrou)${tend ? ' · ' + esc(tend) : ''}</div>${hist}</div></div><div class="small">Média diária do time · últimos 14 dias</div>${sp}
       ${t.pessoas < t.total ? `<p class="small">${t.total - t.pessoas} ${t.total - t.pessoas === 1 ? 'pessoa ainda não registrou' : 'pessoas ainda não registraram'} o humor nesta semana e não ${t.total - t.pessoas === 1 ? 'entra' : 'entram'} na média.</p>` : ''}`}
-    ${t.apoio.length ? `<div class="apoio" style="margin-top:10px"><b>🫶 Pra ficar de olho</b><p class="small">Marcaram “mal” ou “muito mal” nos últimos 3 dias. Vale um oi, sem pressão.</p><ul class="lst">${t.apoio.map(a => `<li>${avatar(a.uid)}<div class="tx"><b>${esc(nomeDe(a.uid))}</b> <span class="small">${FACES[a.n - 1][0]} ${esc(FACES[a.n - 1][1])} · ${esc(brDe(a.k))}</span></div><button class="btn s" data-act="abrir" data-uid="${esc(a.uid)}">Abrir</button></li>`).join('')}</ul></div>` : ''}</section>`;
+    ${t.apoio.length ? `<div class="apoio" style="margin-top:10px"><b>🫶 Pra ficar de olho</b><p class="small">Marcaram “mal” ou “muito mal” nos últimos 3 dias. Vale um oi, sem pressão.</p><ul class="lst">${t.apoio.map(a => `<li>${avatar(a.uid)}<div class="tx"><b>${esc(nomeDe(a.uid))}</b> <span class="small">${faceDe(a.n)[0]} ${esc(faceDe(a.n)[1])} · ${esc(brDe(a.k))}</span></div><button class="btn s" data-act="abrir" data-uid="${esc(a.uid)}">Abrir</button></li>`).join('')}</ul></div>` : ''}</section>`;
 }
 async function viewDetalhe(uid) {
   const d = await cache('um:' + uid, () => carregaUm(uid)); const t = S.selTab;
@@ -836,7 +837,7 @@ async function viewAvalLider(uid) {
      ${c.cultura ? `<details class="foco"><summary class="h2">🧭 Atitudes da Hering</summary>${resumoAtitudesLider(a)}${ehMeuLiderado ? blocoAtitudes(cid, uid, 'lider', a.atLider, !enc, 'Na sua visão, em quais atitudes ' + nomeDe(uid).split(' ')[0] + ' mais se destaca? (só você e o gerente leem)', '✍️ Sua visão') : (a.atLider ? `<p class="small" style="margin-top:8px"><b>Visão do líder:</b> ${atChips(a.atLider.at) || '—'} · a desenvolver: ${atChips(a.atLider.atd) || '—'}</p>` : '')}</details>` : ''}
      <details class="foco"><summary class="h2">💬 Feedback dos pares (${Object.keys(a.resp).length})</summary>${Object.entries(a.resp).map(([u, r]) => `<div class="foco"><b>${esc(nomeDe(u))}</b>${formResp(cid, uid, 'par', r, perguntasDe(c, 'par'), false, '', u)}</div>`).join('') || '<p class="small">Ninguém respondeu ainda.</p>'}</details>
      ${ehMeuLiderado ? `<div class="${lib ? 'foco' : 'trava'}"><h4 class="h2">${lib ? '🔓 Devolutiva liberada' : '🔒 Devolutiva (a pessoa ainda não vê)'}</h4>
-       <label class="sr" for="dv-t">Síntese da devolutiva</label><textarea class="ta" id="dv-t" data-devol="1" maxlength="6000" ${enc ? 'readonly' : ''} placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
+       <label class="sr" for="dv-t-${esc(cid)}-${esc(uid)}">Síntese da devolutiva</label><textarea class="ta" id="dv-t-${esc(cid)}-${esc(uid)}" data-devol="1" maxlength="6000" ${enc ? 'readonly' : ''} placeholder="Escreva a síntese que vai conduzir a conversa (junte autoavaliação, sua visão e os feedbacks dos pares, sem identificar quem disse o quê)…">${esc((a.devol && a.devol.texto) || '')}</textarea>
        ${enc ? `<p class="small">Ciclo encerrado — só leitura.${a.ciente ? ' ✔ Ciência registrada.' : ''}</p>` : ''}
        <div class="row" style="margin-top:8px" ${enc ? 'hidden' : ''}><button class="btn" data-act="devol-salvar" data-cid="${esc(cid)}" data-av="${esc(uid)}">💾 Salvar rascunho</button>
         ${lib ? `<button class="btn" data-act="devol-recolher" data-cid="${esc(cid)}" data-av="${esc(uid)}">↩ Recolher liberação</button>` : `<button class="btn p" data-act="devol-liberar" data-cid="${esc(cid)}" data-av="${esc(uid)}">🔓 Liberar para ${esc(nomeDe(uid).split(' ')[0])}</button>`}${a.ciente ? '<span class="chip ok">✔ ciência registrada</span>' : ''}</div></div>` : ''}</div>`;
@@ -881,7 +882,7 @@ function bolhas(raiz) {
 const saudacao = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 let rendering = 0;
 async function render() {
-  const eu = ++rendering; const tabs = TABS(); const rasc = {}; document.querySelectorAll('textarea.ta:not([readonly])').forEach(t => { if (t.id) rasc[t.id] = t.value; }); if (!tabs.some(t => t[0] === S.tab)) S.tab = 'inicio';
+  const eu = ++rendering; const tabs = TABS(); S.rascMem = S.rascMem || {}; document.querySelectorAll('textarea.ta:not([readonly]):not([data-resp])').forEach(t => { if (!t.id) return; if (t.value !== t.defaultValue) S.rascMem[t.id] = t.value; }); if (!tabs.some(t => t[0] === S.tab)) S.tab = 'inicio';
   const foco = document.activeElement && document.activeElement.id; const sel = document.activeElement && document.activeElement.selectionStart;
   const dataHoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   $('#app').innerHTML = `<section class="hero"><span class="eyebrow">${saudacao()} · ${esc(dataHoje)}</span><h1 class="h1">Olá, ${esc((S.me.nome || '').split(' ')[0] || 'bem-vinda(o)')} 👋</h1><p class="sub">Sua travessia: o que você quer construir e como a gente te ajuda a chegar lá.</p></section>
@@ -892,14 +893,14 @@ async function render() {
   if (eu !== rendering) return;
   $('#painel').innerHTML = html; bolhas($('#painel'));
   rascRestaurar();
-  Object.keys(rasc).forEach(id => { const el = document.getElementById(id); if (el && !el.readOnly && rasc[id] && !el.value) el.value = rasc[id]; });   // não perde o que a pessoa estava escrevendo
+  Object.keys(S.rascMem).forEach(id => { const el = document.getElementById(id); if (el && !el.readOnly) el.value = S.rascMem[id]; });   // não perde o que a pessoa estava escrevendo mesmo quando já havia texto salvo
   if (foco) { const el = document.getElementById(foco); if (el) { el.focus(); try { if (sel != null) el.setSelectionRange(sel, sel); } catch (_) {} } }
 }
 
 // ───────── ações ─────────
 async function guardarBau(item) { const id = novoId(); item.ts = Date.now(); item.em = item.em || hojeISO(); const ok = await tenta(() => W('bau/' + S.me.uid + '/' + id, item), '💼 Guardado no seu Baú!'); if (ok) { invalida('bau:' + S.me.uid); } return ok; }
 const salvaResp = async (cid, av, grupo, caminho) => {
-  const dados = { ts: Date.now() }; document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`).forEach(t => { if (t.value.trim()) dados[t.dataset.q] = t.value.trim(); });
+  const dados = { ts: Date.now() }; document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`).forEach(t => { if (t.value.trim()) dados[t.dataset.q] = t.value.trim().slice(0, RASC_MAX); });
   if (Object.keys(dados).length < 2) { toast('Escreva pelo menos uma resposta antes de salvar.'); return false; }
   const ids = [...document.querySelectorAll(`textarea[data-resp="${grupo}"][data-ctx="${cid}_${av}"]`)].map(t => t.id);
   const ok = await tenta(() => W(caminho, dados), '💾 Salvo!'); if (ok) rascLimpar(ids); return ok;
@@ -908,7 +909,7 @@ const salvaResp = async (cid, av, grupo, caminho) => {
 // ↩ T8 (consultoria 09/11/2026): o toque na carinha grava na hora, mas o aviso de apoio ao líder só sai depois de HUMOR_DESFAZER_S segundos.
 // Nesse meio-tempo aparece "Registrado · Desfazer"; desfazer volta ao que estava antes e cancela o aviso. Trocar de carinha na janela reinicia a
 // contagem e vale a última. Se a aba for escondida/fechada antes, o aviso sai na hora (a pessoa saiu sem desfazer; não pode se perder).
-const HUMOR_DESFAZER_S = 8; let humorPend = null;
+const HUMOR_DESFAZER_S = 8; let humorPend = null, humorSeq = 0;
 function humorDisparar() { const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; alertaApoio(p.n, p.pessoa, p.k, p.lid); const u = document.getElementById('humor-undo'); if (u) u.remove(); }
 function humorArmar(k, n, antes) { if (humorPend) clearTimeout(humorPend.timer); humorPend = { k, n, antes, pessoa: { ...S.me }, lid: liderDe(S.me.uid), timer: setTimeout(humorDisparar, HUMOR_DESFAZER_S * 1000) }; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') humorDisparar(); });
@@ -939,14 +940,15 @@ document.addEventListener('click', async e => {
   if (a === 'ciclo-cultura') { const cid = b.dataset.cid; const v = !(S.ciclos[cid] && S.ciclos[cid].cultura); if (await tenta(() => W('ciclos/' + cid + '/cultura', v), v ? '🧭 Atitudes ligadas neste ciclo.' : 'Atitudes desligadas neste ciclo.')) { S.ciclos[cid] = Object.assign({}, S.ciclos[cid], { cultura: v }); invalida('aval:' + cid); render(); } return; }
   if (a === 'filtro-bau') { S.filtroBau = b.dataset.f; return render(); }
   if (a === 'humor') {
-    const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() }; const pessoa = { ...S.me }, lid = liderDe(me);
+    const seq = ++humorSeq; const n = +b.dataset.n; const k = hojeISO(); const reg = { n, ts: Date.now() }; const pessoa = { ...S.me }, lid = liderDe(me);
     const cacheH = S.cache['humor:' + me] || {}; const antes = humorPend && humorPend.k === k ? humorPend.antes : (cacheH[k] ? Object.assign({}, cacheH[k]) : null);   // 2º toque na janela: o "desfazer" volta ao que era ANTES do 1º
     const ok = await tenta(async () => { await W('humor/' + me + '/' + k, Object.assign({}, reg)); await W('humor_comp/' + me + '/' + k, reg); });
+    if (seq !== humorSeq) return;
     if (ok && S.me?.uid !== me) { alertaApoio(n, pessoa, k, lid); return; }
     if (ok) { humorArmar(k, n, antes); S.cache['humor:' + me] = Object.assign({}, cacheH, { [k]: Object.assign({ comp: true }, reg) }); render(); } return;
   }
   if (a === 'humor-desfazer') {
-    const p = humorPend; if (!p) return; clearTimeout(p.timer); humorPend = null; const k = p.k, v = p.antes;   // cancela o aviso ao líder antes de qualquer gravação
+    const p = humorPend; if (!p) return; ++humorSeq; clearTimeout(p.timer); humorPend = null; const k = p.k, v = p.antes;   // cancela o aviso ao líder antes de qualquer gravação
     const ok = await tenta(async () => {
       if (v && v.n) { const r = { n: v.n, ts: v.ts || Date.now() }; if (v.nota) r.nota = v.nota; await W('humor/' + me + '/' + k, r); await (v.comp ? W('humor_comp/' + me + '/' + k, r) : D('humor_comp/' + me + '/' + k)); }
       else { await D('humor/' + me + '/' + k); await D('humor_comp/' + me + '/' + k); }
@@ -955,21 +957,21 @@ document.addEventListener('click', async e => {
     else invalida('humor:' + me);
     render(); return;
   }
-  if (a === 'dia-n') { S.diaN = +b.dataset.n; document.querySelectorAll('[data-act="dia-n"]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === S.diaN))); const l = $('#dia-lbl'); if (l) l.textContent = FACES[S.diaN - 1][1]; return; }
+  if (a === 'dia-n') { S.diaN = +b.dataset.n; document.querySelectorAll('[data-act="dia-n"]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === S.diaN))); const l = $('#dia-lbl'); if (l) l.textContent = faceDe(S.diaN)[1]; return; }
   if (a === 'dia-salvar') {
     const txt = ($('#dia-txt') && $('#dia-txt').value.trim()) || ''; if (!S.diaN && !txt) { toast('Escolha como foi o dia ou escreva um pouco antes de salvar.'); return; }
     const reg = { ts: Date.now() }; if (S.diaN) reg.n = S.diaN; if (txt) reg.texto = txt.slice(0, 1500);
-    if (await tenta(() => W('diario/' + me + '/' + hojeISO(), reg), '🌙 Dia guardado no seu diário — só você lê.')) { invalida('diario:' + me); render(); } return;
+    if (await tenta(() => W('diario/' + me + '/' + hojeISO(), reg), '🌙 Dia guardado no seu diário — só você lê.')) { if (S.rascMem) delete S.rascMem['dia-txt']; invalida('diario:' + me); render(); } return;
   }
-  if (a === 'dia-bau') { const d = (await cache('diario:' + me, () => carregaDiario(me)))[b.dataset.d]; if (!d || !d.texto) return; if (await guardarBau({ tipo: 'manual', titulo: ('Dia ' + brDe(b.dataset.d) + ' — ' + d.texto.split('\n')[0]).slice(0, 160), texto: d.texto.slice(0, 1200), em: b.dataset.d })) render(); return; }
-  if (a === 'dia-del') { if (!(await uiConfirm('Apagar o registro de ' + brFull(b.dataset.d) + '? Não dá pra recuperar.', 'Apagar'))) return; if (await tenta(() => D('diario/' + me + '/' + b.dataset.d), 'Registro apagado.')) { invalida('diario:' + me); if (b.dataset.d === hojeISO()) S.diaN = undefined; render(); } return; }
-  if (a === 'estrela-bau') { const est = await cache('estrelas', carregaEstrelas); const k = est[+b.dataset.i]; if (!k) return; const ok = await guardarBau({ tipo: 'kudo', titulo: ('Estrela de ' + (k.fromNome || 'alguém')).slice(0, 160), texto: String(k.texto || '').slice(0, 1200), ref: String(k.id || '').slice(0, 200), squad: k._escopo === 'geral' ? 'geral' : k._escopo, em: String(k.ts || '').slice(0, 10) || hojeISO() }); if (ok) render(); return; }
+  if (a === 'dia-bau') { if (b.disabled) return; b.disabled = true; try { const d = (await cache('diario:' + me, () => carregaDiario(me)))[b.dataset.d]; if (!d || !d.texto) return; if (await guardarBau({ tipo: 'manual', titulo: ('Dia ' + brDe(b.dataset.d) + ' — ' + d.texto.split('\n')[0]).slice(0, 160), texto: d.texto.slice(0, 1200), em: b.dataset.d })) render(); } finally { b.disabled = false; } return; }
+  if (a === 'dia-del') { if (!(await uiConfirm('Apagar o registro de ' + brFull(b.dataset.d) + '? Não dá pra recuperar.', 'Apagar'))) return; if (await tenta(() => D('diario/' + me + '/' + b.dataset.d), 'Registro apagado.')) { invalida('diario:' + me); if (b.dataset.d === hojeISO()) { S.diaN = undefined; if (S.rascMem) delete S.rascMem['dia-txt']; } render(); } return; }
+  if (a === 'estrela-bau') { if (b.disabled) return; b.disabled = true; try { const est = await cache('estrelas', carregaEstrelas); const k = est[+b.dataset.i]; if (!k) return; const ok = await guardarBau({ tipo: 'kudo', titulo: ('Estrela de ' + (k.fromNome || 'alguém')).slice(0, 160), texto: String(k.texto || '').slice(0, 1200), ref: String(k.id || '').slice(0, 200), squad: k._escopo === 'geral' ? 'geral' : k._escopo, em: String(k.ts || '').slice(0, 10) || hojeISO() }); if (ok) render(); } finally { b.disabled = false; } return; }
   if (a === 'bau-del') { if (!(await uiConfirm('Remover este item do Baú?', 'Remover'))) return; if (await tenta(() => D('bau/' + me + '/' + b.dataset.id), 'Removido.')) { invalida('bau:' + me); render(); } return; }
   if (a === 'abrir') { S.sel = b.dataset.uid; S.selTab = 'um'; await render(); const d = $('#detalhe'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   if (a === 'fechar') { S.sel = null; return render(); }
   if (a === 'sel-aba') { S.selTab = b.dataset.k; return render(); }
   if (a === 'enc-del') { if (await tenta(() => D('encontros/' + b.dataset.uid + '/' + b.dataset.id), 'Registro apagado.')) { invalida('um:' + b.dataset.uid); render(); } return; }
-  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { el.value = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; el.focus(); el.dispatchEvent(new Event('input', { bubbles: true })); } return; }
+  if (a === 'citar') { const t = S.ultimoFoco; if (!t) { toast('Clique antes na resposta onde quer citar.'); return; } const el = document.getElementById(t); if (el && !el.readOnly) { const novo = (el.value ? el.value + '\n' : '') + '• ' + b.dataset.t; if (novo.length > RASC_MAX) toast('⚠ Limite de ' + RASC_MAX + ' caracteres atingido.'); el.value = novo.slice(0, RASC_MAX); el.focus(); el.dispatchEvent(new Event('input', { bubbles: true })); } return; }
   if (a === 'par-sugerir') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => W(`avaliacoes/${cid}/${me}/pares/${par}`, { aprovado: false, por: 'avaliado', ts: Date.now() }), 'Indicação enviada ao seu líder.')) { invalida('aval:' + cid + ':' + me); render(); } return; }
   if (a === 'par-retirar') { const [cid, par] = [b.dataset.cid, b.dataset.par]; if (await tenta(() => D(`avaliacoes/${cid}/${me}/pares/${par}`))) { invalida('aval:' + cid + ':' + me); render(); } return; }
   if (a === 'auto-salvar') { if (await salvaResp(b.dataset.cid, me, 'auto', `avaliacoes/${b.dataset.cid}/${me}/auto`)) { invalida('aval:' + b.dataset.cid + ':' + me); render(); } return; }
@@ -980,42 +982,46 @@ document.addEventListener('click', async e => {
     const { cid, av, par } = b.dataset; const existente = (S.cache['aval:' + cid + ':' + av]?.pares || {})[par] || {};
     const ok = await tenta(async () => {
       if (a === 'par-aprovar') { await W(`avaliacoes/${cid}/${av}/pares/${par}`, { aprovado: true, por: existente.por || 'lider', ts: Date.now() }); await W(`pedidos_par/${par}/${cid}_${av}`, { cid, avaliado: av, ts: Date.now() }); }
-      else { await D(`pedidos_par/${par}/${cid}_${av}`); await D(`avaliacoes/${cid}/${av}/pares/${par}`); }
-    }, a === 'par-aprovar' ? '✅ Par aprovado — ele já pode responder.' : 'Par retirado.');
+      else { await D(`avaliacoes/${cid}/${av}/pares/${par}`); if (existente.aprovado) { try { await D(`pedidos_par/${par}/${cid}_${av}`); } catch (_) {} } }
+    }, a === 'par-aprovar' ? '✅ Par aprovado — ele já pode responder.' : (existente.aprovado ? 'Par retirado.' : 'Indicação recusada.'));
     if (ok) { invalida('aval:' + cid + ':' + av); render(); } return;
   }
   if (a === 'devol-salvar' || a === 'devol-liberar' || a === 'devol-recolher') {
-    const { cid, av } = b.dataset; const txt = ($('#dv-t') && $('#dv-t').value.trim()) || ''; const atual = S.cache['aval:' + cid + ':' + av]?.devol || {};
+    const { cid, av } = b.dataset; const dvId = 'dv-t-' + cid + '-' + av; const elDv = document.getElementById(dvId); const txt = (elDv && elDv.value.trim()) || ''; const atual = S.cache['aval:' + cid + ':' + av]?.devol || {};
     if (a === 'devol-liberar' && !txt) { toast('Escreva a síntese antes de liberar.'); return; }
     if (a === 'devol-liberar' && !(await uiConfirm('Liberar a devolutiva para ' + nomeDe(av).split(' ')[0] + '? A pessoa passa a ver o texto agora.', '🔓 Liberar'))) return;
     const dados = { texto: txt.slice(0, 6000), liberada: a === 'devol-liberar' ? true : (a === 'devol-recolher' ? false : atual.liberada === true), ts: Date.now(), por: me };
     if (dados.liberada) dados.liberadaEm = atual.liberadaEm || Date.now();
-    if (await tenta(() => W(`avaliacoes/${cid}/${av}/devolutiva`, dados), a === 'devol-liberar' ? '🔓 Devolutiva liberada.' : a === 'devol-recolher' ? '🔒 Liberação recolhida.' : '💾 Rascunho salvo.')) { invalida('aval:' + cid + ':' + av); render(); } return;
+    if (await tenta(() => W(`avaliacoes/${cid}/${av}/devolutiva`, dados), a === 'devol-liberar' ? '🔓 Devolutiva liberada.' : a === 'devol-recolher' ? '🔒 Liberação recolhida.' : '💾 Rascunho salvo.')) { if (S.rascMem) delete S.rascMem[dvId]; invalida('aval:' + cid + ':' + av); render(); } return;
   }
   if (a === 'ciclo-fase') { const { cid, fase } = b.dataset; const c = Object.assign({}, S.ciclos[cid], { status: fase }); if (await tenta(() => W('ciclos/' + cid + '/status', fase), 'Fase atualizada.')) { S.ciclos[cid] = c; render(); } return; }
 });
 document.addEventListener('change', async e => {
   const t = e.target;
   if (t.dataset.actChange === 'cad') { const uid = t.dataset.uid; if (!t.value) return; if (await tenta(() => W('serie/' + uid, { cad: t.value, tipo: 'acomp', ts: Date.now() }), 'Cadência definida.')) { invalida('um:' + uid); render(); } return; }
-  if (t.dataset.vinc) { const uid = t.dataset.vinc; const v = Object.assign({}, S.vinc[uid] || {}); v[t.dataset.campo] = t.value || null; if (!v.liderUid) { if (await tenta(() => D('vinculos/' + uid), 'Vínculo removido.')) { delete S.vinc[uid]; } return render(); } Object.keys(v).forEach(k => { if (!v[k]) delete v[k]; }); if (await tenta(() => W('vinculos/' + uid, v), 'Organograma atualizado.')) { S.vinc[uid] = v; } return; }
+  if (t.dataset.vinc) { const uid = t.dataset.vinc; const tinha = !!(S.vinc[uid] && S.vinc[uid].liderUid); const v = Object.assign({}, S.vinc[uid] || {}); v[t.dataset.campo] = t.value || null; if (!v.liderUid) { if (!tinha) { toast('Defina primeiro o líder direto antes do gerente.'); return render(); } if (await tenta(() => D('vinculos/' + uid), 'Vínculo removido.')) { delete S.vinc[uid]; } return render(); } Object.keys(v).forEach(k => { if (!v[k]) delete v[k]; }); if (await tenta(() => W('vinculos/' + uid, v), 'Organograma atualizado.')) { S.vinc[uid] = v; } return; }
   if (t.dataset.rh) { const uid = t.dataset.rh; if (await tenta(() => (t.checked ? W('papeis/' + uid, 'rh') : D('papeis/' + uid)), t.checked ? '🤝 Papel de RH concedido.' : 'Papel de RH removido.')) invalida('papeis'); else t.checked = !t.checked; return; }
 });
 document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('textarea[data-resp]')) S.ultimoFoco = e.target.id; });
 const rascTimers = {};
 document.addEventListener('input', e => { const t = e.target;
-  if (t.matches && t.matches('textarea.ta[data-resp]:not([readonly])')) { rascGuardar(t); avalProgresso(); clearTimeout(rascTimers[t.id]); rascTimers[t.id] = setTimeout(() => { if (!t.isConnected) return; rascStatus(t, rascGuardar(t) ? (rascSujo(t) ? '💾 Rascunho guardado neste aparelho' : '') : '⚠ Não deu para guardar o rascunho neste aparelho — salve antes de sair.'); }, 600); } });
+  if (t.matches && t.matches('textarea.ta[data-resp]:not([readonly])')) { rascGuardar(t); avalProgresso(); clearTimeout(rascTimers[t.id]); rascTimers[t.id] = setTimeout(() => { if (!t.isConnected) return; rascStatus(t, rascGuardar(t) ? (rascSujo(t) ? '💾 Rascunho guardado neste aparelho' : '') : '⚠ Não deu para guardar o rascunho neste aparelho — salve antes de sair.'); }, 600); }
+  else if (t.matches && t.matches('textarea.ta:not([readonly]):not([data-resp])') && t.id) { S.rascMem = S.rascMem || {}; if (t.value !== t.defaultValue) S.rascMem[t.id] = t.value; else delete S.rascMem[t.id]; } });
 window.addEventListener('beforeunload', e => { const sujos = rascEditaveis().filter(rascSujo); if (!sujos.length) return; sujos.forEach(rascGuardar); e.preventDefault(); e.returnValue = ''; });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.pesq) { S.pesq = e.target.value; clearTimeout(window.__pT); window.__pT = setTimeout(render, 220); } });
 document.addEventListener('submit', async e => {
-  const f = e.target.closest('[data-form]'); if (!f) return; e.preventDefault(); const k = f.dataset.form; const fd = new FormData(f); const me = S.me.uid;
-  if (k === 'encontro') { const uid = f.dataset.uid; const data = fd.get('data'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) { toast('Escolha a data do 1:1.'); return; } if (data > hojeISO()) { toast('O 1:1 registrado não pode estar no futuro.'); return; }
-    if (await tenta(() => W('encontros/' + uid + '/' + novoId(), Object.assign({ data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }, String(fd.get('nota') || '').trim() ? { nota: String(fd.get('nota')).trim().slice(0, 280) } : {}, atLidos(f, 'enc')[0] ? { at: atLidos(f, 'enc')[0] } : {})), '✅ 1:1 registrado.')) { invalida('um:' + uid); f.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); render(); } return; }
-  if (k === 'bau') { const titulo = (fd.get('titulo') || '').trim(); if (!titulo) return; const partes = []; [['desafio', 'Desafio'], ['acao', 'O que fiz'], ['impacto', 'Impacto']].forEach(([c, r]) => { const v = (fd.get(c) || '').trim(); if (v) partes.push(r + ': ' + v); });
-    const item = { tipo: 'manual', titulo: titulo.slice(0, 160) }; if (partes.length) item.texto = partes.join('\n').slice(0, 1200); if ((fd.get('comp') || '').trim()) item.comp = fd.get('comp').trim().slice(0, 60); if (await guardarBau(item)) render(); return; }
-  if (k === 'ciclo') { const nome = (fd.get('nome') || '').trim(); if (!nome) return; const sqs = fd.getAll('sq'); const part = {}; Object.keys(S.users).forEach(u => { const us = S.users[u].squads || {}; if (sqs.some(s => us[s])) part[u] = true; });
-    if (!Object.keys(part).length) { toast('Marque ao menos uma squad com pessoas.'); return; }
-    const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO }; if (fd.get('cultura')) c.cultura = true;
-    if (await tenta(() => W('ciclos/' + cid, c), '📐 Ciclo criado.')) { S.ciclos[cid] = c; render(); } return; }
+  const f = e.target.closest('[data-form]'); if (!f || f.dataset.busy) return; e.preventDefault(); f.dataset.busy = '1';
+  try {
+    const k = f.dataset.form; const fd = new FormData(f); const me = S.me.uid;
+    if (k === 'encontro') { const uid = f.dataset.uid; const data = fd.get('data'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data || '')) { toast('Escolha a data do 1:1.'); return; } if (data > hojeISO()) { toast('O 1:1 registrado não pode estar no futuro.'); return; }
+      if (await tenta(() => W('encontros/' + uid + '/' + novoId(), Object.assign({ data, tipo: fd.get('tipo') || 'acomp', por: me, ts: Date.now() }, String(fd.get('nota') || '').trim() ? { nota: String(fd.get('nota')).trim().slice(0, 280) } : {}, atLidos(f, 'enc')[0] ? { at: atLidos(f, 'enc')[0] } : {})), '✅ 1:1 registrado.')) { invalida('um:' + uid); f.querySelectorAll('[data-at-id]').forEach(g => { if (S.atSel) delete S.atSel[g.dataset.atId]; }); render(); } return; }
+    if (k === 'bau') { const titulo = (fd.get('titulo') || '').trim(); if (!titulo) return; const partes = []; [['desafio', 'Desafio'], ['acao', 'O que fiz'], ['impacto', 'Impacto']].forEach(([c, r]) => { const v = (fd.get(c) || '').trim(); if (v) partes.push(r + ': ' + v); });
+      const item = { tipo: 'manual', titulo: titulo.slice(0, 160) }; if (partes.length) item.texto = partes.join('\n').slice(0, 1200); if ((fd.get('comp') || '').trim()) item.comp = fd.get('comp').trim().slice(0, 60); if (await guardarBau(item)) render(); return; }
+    if (k === 'ciclo') { const nome = (fd.get('nome') || '').trim(); if (!nome) return; const sqs = fd.getAll('sq'); const part = {}; Object.keys(S.users).forEach(u => { const us = S.users[u].squads || {}; if (sqs.some(s => us[s])) part[u] = true; });
+      if (!Object.keys(part).length) { toast('Marque ao menos uma squad com pessoas.'); return; }
+      const cid = 'c' + Date.now().toString(36); const c = { nome: nome.slice(0, 80), status: 'preparacao', ts: Date.now(), criadoPor: me, participantes: part, perguntas: PERGUNTAS_PADRAO }; if (fd.get('cultura')) c.cultura = true;
+      if (await tenta(() => W('ciclos/' + cid, c), '📐 Ciclo criado.')) { S.ciclos[cid] = c; render(); } return; }
+  } finally { delete f.dataset.busy; }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-pesq]')) e.preventDefault(); });
 
@@ -1090,7 +1096,7 @@ function mostraLogin(msg) { $('#login').hidden = false; $('#app').hidden = true;
 $('#btn-login').addEventListener('click', () => { $('#login-err').hidden = true; if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; } window._signIn().catch(e => mostraLogin('Não deu pra entrar: ' + (e && e.message || e))); });
 $('#btn-sair').addEventListener('click', async () => {   // sair da conta apaga o rascunho da avaliação deste aparelho (texto pessoal em aparelho que pode ser compartilhado)
   if (S.me && Object.keys(rascLer()).length && !(await uiConfirm('Você tem respostas da avaliação não salvas neste aparelho. Sair apaga esse rascunho. Sair mesmo assim?', 'Sair'))) return;
-  if (S.me) { try { localStorage.removeItem(rascChave()); } catch (_) {} } humorDisparar(); signOut(auth);
+  if (S.me) { try { localStorage.removeItem(rascChave()); } catch (_) {} } S.rascMem = {}; humorDisparar(); signOut(auth);
 });
 $('#btn-tema').addEventListener('click', () => { const atual = document.documentElement.getAttribute('data-theme') || ''; const i = TEMAS.findIndex(x => x[0] === atual); aplicaTema(TEMAS[(i + 1) % TEMAS.length][0], true); });
 const TEMAS = [['', '🌙', 'Abrolhos'], ['light', '☀️', 'Lençóis Maranhenses'], ['sunset', '🌅', 'Entardecer']];
@@ -1136,14 +1142,14 @@ if (DEMO) {
   // 🎭 Modo demonstração: sem login e sem Firebase. O seletor do topo troca a pessoa que está "olhando" (cada visão enxerga o que as regras permitiriam).
   Object.assign(MEM, demoDados());
   const sel = $('#demo-persona'); sel.innerHTML = DEMO_PERSONAS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(''); $('#demo-bar').hidden = false; document.body.classList.add('demo');
-  const entrar = k => { humorDisparar(); S.atSel = {}; S.ultimoFoco = null; const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
+  const entrar = k => { humorDisparar(); S.atSel = {}; S.rascMem = {}; S.ultimoFoco = null; const p = MEM.kanban.usuarios_publicos[k]; const tab = S.tab; S.cache = {}; S.sel = null; S.pesq = ''; S.diaN = undefined; S.filtroBau = 'todos'; abrirApp({ uid: k, email: p.email, displayName: p.nome, photoURL: '' }); S.tab = tab; };
   sel.addEventListener('change', () => { S.tab = 'inicio'; entrar(sel.value); });
   try { const qp = new URLSearchParams(location.search).get('como'); if (qp && DEMO_PERSONAS.some(x => x[0] === qp)) sel.value = qp; } catch (_) {}
   entrar(sel.value);
 } else {
   onAuthStateChanged(auth, async u => {
     if (window.MareLogin && MareLogin.voltando) return;
-    if (!u) { humorDisparar(); S.atSel = {}; S.cache = {}; S.ultimoFoco = null; S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
+    if (!u) { humorDisparar(); S.atSel = {}; S.rascMem = {}; S.cache = {}; S.ultimoFoco = null; S.me = null; const av = S.aviso; S.aviso = ''; return mostraLogin(av); }
     const empresa = /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com');
     if (!empresa) { S.aviso = 'O Travessia é só para contas Google @ciahering.com.br.'; mostraLogin(S.aviso); signOut(auth).catch(() => {}); return; }
     await abrirApp(u);
