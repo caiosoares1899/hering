@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Calendário: barra de período do card e hora do prazo — 2026-11-12
+
+No 📅 Calendário do board (kanban-dev.html), cards com Início e Fim aparecem como uma barra contínua por semana atravessando os dias (quebrando na virada da semana, sem repetir em cada dia), clicável para abrir o card, com a cor da 1ª tag e os avatares do responsável e participantes na ponta; várias barras na mesma semana empilham sem sobrepor. Entregas de 1 dia permanecem no dia correspondente com a hora do prazo quando houver e ✓ quando concluídas, respeitando os filtros do board e do calendário nos 3 temas (1280 e 390 px). Tópico Calendário atualizado no HELP_CONTENT e teste Playwright em docs/arezzo/testes/test_calendario_periodo.js.
+
 ### SÓ DEV — Card: período e hora do prazo — 2026-11-12
 
 Campos opcionais Início, Fim e Hora do prazo no modal e no board. Persistência no autosave, Salvar e criação; histórico legível, duplicação e sincronização do modal. Fim anterior ao Início gera aviso e não é gravado. Modelos, recorrentes e agendamentos não capturam as datas da ocorrência. Teste Playwright em docs/arezzo/testes/test_card_periodo.js (1280 e 390 px); execução pelo maestro.
