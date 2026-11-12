@@ -283,6 +283,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
              radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
 #detail-ov.open{display:block;}
 .detail-modal{position:absolute;inset:0;overflow:hidden;padding:34px 46px;}
+/* Detalhe alternado (pedido do Caio, 12/11/2026): Objetivos em posição par na gerência ganham o mesmo azul dos slides pares, para "← Anterior / Próximo →"
+   marcar a troca de Objetivo. Só cor de fundo, como nos slides (sem backdrop-filter nem animação). */
+.detail-modal.par{background:radial-gradient(ellipse at 50% 0%,rgba(56,182,255,.24) 0%,transparent 75%),rgba(37,99,201,.24);}
 
 .d2-wrap{height:100%;display:flex;flex-direction:column;gap:16px;min-height:0;transform-origin:top center;}
 /* Header em grid real (não position:fixed) — título, trimestre e marca/fechar
@@ -1684,6 +1687,7 @@ window._okrOpenDetail = id => {
   const gerIdx = gerObjs.findIndex(x=>x.id===id);
   const nextObj = gerIdx>=0 && gerIdx<gerObjs.length-1 ? gerObjs[gerIdx+1] : null;
   const prevObj = gerIdx>0 ? gerObjs[gerIdx-1] : null;
+  document.getElementById('detail-modal').classList.toggle('par', gerIdx % 2 === 1);   // alterna a cor a cada Objetivo (ver .detail-modal.par)
   document.getElementById('detail-modal').innerHTML = `
     <div class="d2-wrap" id="d2-wrap">
       <div class="d2-header">
