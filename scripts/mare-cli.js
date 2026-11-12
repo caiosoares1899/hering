@@ -236,25 +236,26 @@ function cmdBrief() {
   console.log(`Versões   : ${verSummary.join(' | ')}`);
 
   // 3. Quadro de coordenação
-  const coordPath = path.join(ROOT, 'docs', 'COORDENACAO_AGENTES.md');
-  if (fs.existsSync(coordPath)) {
-    const coord = fs.readFileSync(coordPath, 'utf8');
-    const secMatch = coord.match(/##\s+6\.\s+Quadro[\s\S]*?(?=\n##\s+7\.|$)/);
-    if (secMatch) {
-      const lines = secMatch[0].split(/\r?\n/);
-      console.log('\n--- Quadro de Coordenação (docs/COORDENACAO_AGENTES.md) ---');
-      let currentSub = '';
-      for (const l of lines) {
-        if (/^###\s+/.test(l)) {
-          currentSub = l.replace(/^###\s+/, '').trim();
-          if (/Backlog/i.test(currentSub)) continue;
-          console.log(`[${currentSub}]`);
-          continue;
-        }
-        if (/Backlog/i.test(currentSub)) continue;
-        if (l.startsWith('|') && !l.startsWith('|---') && !/\|\s*Agente\s*\|/.test(l) && !/\|\s*Quem\s/.test(l)) {
-          console.log('  ' + l.slice(0, 180) + (l.length > 180 ? '…' : ''));
-        }
+  const quadroPath = process.env.MARE_QUADRO_PATH || path.join(ROOT, 'docs', 'QUADRO.md');
+  if (!fs.existsSync(quadroPath)) {
+    console.log('⚠ docs/QUADRO.md não encontrado');
+  } else {
+    const lines = fs.readFileSync(quadroPath, 'utf8').split(/\r?\n/);
+    const sections = new Set(['Em andamento', 'Fila', 'Escalado', 'Pendente de deploy']);
+    console.log('\n--- Quadro de Coordenação (docs/QUADRO.md) ---');
+    let active = false;
+    let header = true;
+    for (const line of lines) {
+      const heading = line.match(/^##\s+(.+?)\s*$/);
+      if (heading) {
+        active = sections.has(heading[1]);
+        header = true;
+        if (active) console.log(`[${heading[1]}]`);
+      } else if (active && line.trim().startsWith('|')) {
+        if (header) { header = false; continue; }
+        if (/^\s*\|[\s:|\-]+$/.test(line)) continue;
+        const summary = line.trim();
+        console.log('  ' + (summary.length > 160 ? summary.slice(0, 159) + '…' : summary));
       }
     }
   }
