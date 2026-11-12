@@ -91,18 +91,29 @@ const save=(p)=>p.evaluate(()=>saveCard()).then(()=>p.waitForFunction(()=>!docum
    await p.locator('#m-fim').fill('2026-11-01');await p.locator('#m-fim').dispatchEvent('change');
    await p.waitForTimeout(1300);
    check(label+' Fim inválido avisa e não substitui o salvo',await p.locator('#m-periodo-aviso').isVisible()&&(await getCard(p,'c1')).fim===manual.fim);
-   await setDates(p,{fim:manual.fim});await p.evaluate(()=>closeOv('card-ov'));
+   // Período exige as DUAS datas (12/11/2026): só Início (ou só Fim) avisa e não grava metade — fica o período salvo.
+   await p.locator('#m-fim').fill('');await p.locator('#m-fim').dispatchEvent('change');
+   await p.waitForTimeout(1300);
+   const meia=await getCard(p,'c1');
+   check(label+' só Início: avisa "Falta o Fim" e mantém o período salvo',/Falta o Fim/.test(await p.locator('#m-periodo-aviso').innerText())&&meia.inicio===manual.inicio&&meia.fim===manual.fim,meia);
+   await p.locator('#m-inicio').fill('');await p.locator('#m-inicio').dispatchEvent('change');await p.locator('#m-fim').fill(manual.fim);await p.locator('#m-fim').dispatchEvent('change');
+   await p.waitForTimeout(1300);
+   check(label+' só Fim: avisa "Falta o Início" e mantém o período salvo',/Falta o Início/.test(await p.locator('#m-periodo-aviso').innerText())&&(await getCard(p,'c1')).inicio===manual.inicio);
+   check(label+' card no board sem período pela metade (linha só com as duas datas)',await p.evaluate(()=>!makeCardEl({...cards.find(c=>c.id==='c1'),inicio:'2026-11-10',fim:''}).querySelector('.card-periodo')&&!!makeCardEl({...cards.find(c=>c.id==='c1'),inicio:'2026-11-10',fim:'2026-11-12'}).querySelector('.card-periodo')));
+   await setDates(p,{inicio:manual.inicio,fim:manual.fim});
+   check(label+' com as duas datas o aviso some',await p.evaluate(()=>{_onCardPeriodoChange();return document.getElementById('m-periodo-aviso').style.display==='none';}));
+   await p.evaluate(()=>closeOv('card-ov'));
    // Duplicação real e persistência no fake.
    const copyId=await p.evaluate(async()=>{const copy=_duplicarCardObj(cards.find(c=>c.id==='c1'),{comments:false});await fbCreateCard(copy);return copy.id;});
    const copy=await getCard(p,copyId);
    check(label+' duplicar copia três campos',Object.entries(manual).every(([k,v])=>copy[k]===v),copy);
-   for(const [title,dates] of [['Novo com período',first],['Novo sem período',{inicio:'',fim:'',dueHora:''}],['Novo com Fim inválido',{inicio:'2026-11-20',fim:'2026-11-10',dueHora:'10:00'}]]){
+   for(const [title,dates] of [['Novo com período',first],['Novo sem período',{inicio:'',fim:'',dueHora:''}],['Novo com Fim inválido',{inicio:'2026-11-20',fim:'2026-11-10',dueHora:'10:00'}],['Novo só com Início',{inicio:'2026-11-20',fim:'',dueHora:'10:00'}]]){
     await p.evaluate(()=>openNewCard('doing'));
     check(label+'/'+title+' campos limpos ao criar',await p.evaluate(()=>Object.values(_cardDatasNow()).every(v=>v==='')));
     await p.evaluate(title=>{document.getElementById('m-title').value=title;document.getElementById('m-due').value='2026-11-25';},title);
     await setDates(p,dates);await save(p);
     const novo=await p.evaluate(title=>Object.values(window.__store.kanban.squads.site.dados.cards).find(c=>c&&c.title===title),title);
-    const expected={...dates,fim:dates.fim<dates.inicio?'':dates.fim};
+    const meio=!dates.inicio!==!dates.fim||dates.fim<dates.inicio;const expected={...dates,inicio:meio?'':dates.inicio,fim:meio?'':dates.fim};
     check(label+'/'+title+' criação grava campos normalizados',!!novo&&Object.entries(expected).every(([k,v])=>novo[k]===v),novo);
    }
    // Atualização recebida com modal aberto não pode ser desfeita por outra edição.
