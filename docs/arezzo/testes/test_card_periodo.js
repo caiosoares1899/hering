@@ -52,13 +52,15 @@ const save=(p)=>p.evaluate(()=>saveCard()).then(()=>p.waitForFunction(()=>!docum
    });
    check(label+' fechar card antigo não pede confirmação',closed);
    await open(p,'c1');
-   // /melhoriauiux 12/11: Prazo+Hora e Início+Fim num bloco "📅 Datas" só, alinhados em grade.
+   // /melhoriauiux 12/11 (2ª): as datas novas num cartão "📅 Período e hora" embaixo de Riscos; Prazo segue onde o time conhece.
    const lay=await p.evaluate(()=>{const r=id=>document.getElementById(id).getBoundingClientRect();const due=r('m-due'),hora=r('m-dueHora'),ini=r('m-inicio'),fim=r('m-fim');
-    const bloco=document.querySelector('.m-datas');
-    return {dentro:['m-due','m-dueHora','m-inicio','m-fim','m-nodue-btn'].every(id=>bloco&&bloco.contains(document.getElementById(id))),
-     linha1:Math.abs(due.top-hora.top)<=1&&Math.abs(due.height-hora.height)<=1,linha2:Math.abs(ini.top-fim.top)<=1,
-     colunas:Math.abs(due.left-ini.left)<=1&&Math.abs(hora.left-fim.left)<=1,ordem:hora.left>due.left&&ini.top>due.top};});
-   check(label+' bloco 📅 Datas: Prazo|Hora e Início|Fim alinhados em grade',lay.dentro&&lay.linha1&&lay.linha2&&lay.colunas&&lay.ordem,lay);
+    const sec=document.getElementById('m-periodo-sec'),riscos=document.getElementById('m-riscos-sec');
+    return {noCartao:['m-inicio','m-fim','m-dueHora','m-periodo-aviso'].every(id=>sec&&sec.contains(document.getElementById(id))),
+     prazoFora:!!sec&&!sec.contains(document.getElementById('m-due')),depoisDeRiscos:!!sec&&riscos.nextElementSibling===sec,
+     linha:Math.abs(ini.top-fim.top)<=1&&fim.left>ini.left,horaEmbaixo:hora.top>ini.top&&Math.abs(hora.left-ini.left)<=1,
+     botaoNaLinha:(()=>{const b=document.querySelector('#m-due + .dp-btn').getBoundingClientRect();return Math.abs((b.top+b.height/2)-(due.top+due.height/2))<=3&&b.left>due.left;})(),
+     secao:CARD_SECTIONS.some(x=>x.key==='periodo'&&x.id==='m-periodo-sec')};});
+   check(label+' cartão 📅 Período e hora embaixo de Riscos (Início|Fim, Hora), Prazo no lugar de sempre',Object.values(lay).every(Boolean),lay);
    for(const theme of ['','light','vice']){
     await p.evaluate(t=>document.documentElement.dataset.theme=t,theme);
     const overflow=await p.evaluate(()=>{const el=document.querySelector('#card-ov .card-panel');return el.scrollWidth-el.clientWidth;});
