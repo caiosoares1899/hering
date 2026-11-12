@@ -397,11 +397,66 @@ const check = (name, pass, detail) => {
         renderCal();
       });
 
-      // 7. Clique direto na barra do calendário abre o card correspondente
-      await p.locator('#cal-grid .cal-periodo-bar[data-card-id="c_cross"]').first().click();
+      // 7. Mouse: clique direto na barra abre o card. Toque: a barra (18 px) não é alvo;
+      //    tocar no dia abre a lista do dia (linhas >= 44 px) e dali o card (rodada /melhoriauiux 12/11).
+      const isTouch = await p.evaluate(() => matchMedia('(hover:none) and (pointer:coarse)').matches);
+      if (!isTouch) {
+        await p.locator('#cal-grid .cal-periodo-bar[data-card-id="c_cross"]').first().click();
+      } else {
+        const bb = await p.locator('#cal-grid .cal-periodo-bar[data-card-id="c_cross"]').first().boundingBox();
+        await p.touchscreen.tap(bb.x + bb.width / 2, bb.y + bb.height / 2);
+        await p.waitForFunction(() => document.getElementById('cal-day-pop-ov').classList.contains('open'));
+        const popRow = await p.evaluate(() => {
+          const r = document.querySelector('#cal-day-pop-body .cal-periodo-bar[data-card-id="c_cross"]');
+          const prazos = [...document.querySelectorAll('#cal-day-pop-body .cal-event-prazo')].map(e => Math.round(e.getBoundingClientRect().height));
+          return { ok: !!r, h: r ? Math.round(r.getBoundingClientRect().height) : 0, prazos };
+        });
+        check(label + ' toque na barra abre a lista do dia com linhas de 44 px (não abre card por engano)',
+          popRow.ok && popRow.h >= 44 && popRow.prazos.every(h => h >= 44), popRow);
+        const rb = await p.locator('#cal-day-pop-body .cal-periodo-bar[data-card-id="c_cross"]').boundingBox();
+        await p.touchscreen.tap(rb.x + rb.width / 2, rb.y + rb.height / 2);
+      }
       await p.waitForFunction(() => document.getElementById('card-ov').classList.contains('open'));
       const openedTitle = await p.evaluate(() => document.getElementById('m-title').value);
-      check(label + ' clicar na barra de período abre o modal do card', openedTitle === 'Campanha Alto Verão', openedTitle);
+      check(label + (isTouch ? ' tocar na linha da lista do dia abre o card' : ' clicar na barra de período abre o modal do card'), openedTitle === 'Campanha Alto Verão', openedTitle);
+      await p.evaluate(() => {
+        closeOv('card-ov');
+        openCal();
+        calYear = 2026;
+        calMonth = 10;
+        renderCal();
+      });
+
+      // 7b. Rodada /melhoriauiux: card sem tag = barra neutra (não a cor da coluna), barra de 1 dia sem avatar
+      //     no celular, entrega 📎 alcançável por teclado e ✕ no canto no celular.
+      const ui = await p.evaluate(() => {
+        cards.push({ id: 'c_semtag', title: 'Sem tag', col: 'doing', inicio: '2026-11-24', fim: '2026-11-24', tags: [], owner: 'AL', participants: ['BR'] });
+        renderCal();
+        const b = document.querySelector('#cal-grid .cal-periodo-bar[data-card-id="c_semtag"]');
+        const avs = b?.querySelector('.cal-bar-avs');
+        const pz = document.querySelector('#cal-grid .cal-event-prazo[data-card-id="c_dia_hora"]');
+        const x = document.querySelector('#cal-ov .cal-hd .x-btn').getBoundingClientRect();
+        const hd = document.querySelector('#cal-ov .cal-hd').getBoundingClientRect();
+        const out = {
+          semTag: !!b && b.classList.contains('sem-tag') && !/background/.test(b.getAttribute('style') || ''),
+          avsVisivel: !!avs && getComputedStyle(avs).display !== 'none',
+          prazoTab: pz?.getAttribute('tabindex') === '0' && pz?.getAttribute('role') === 'button',
+          xNoCanto: (hd.right - x.right) <= 24 && (x.top - hd.top) <= 24
+        };
+        cards.splice(cards.findIndex(c => c.id === 'c_semtag'), 1);
+        renderCal();
+        return out;
+      });
+      check(label + ' card sem tag vira barra neutra (sem a cor da coluna)', ui.semTag, ui);
+      check(label + ' barra de 1 dia ' + (width <= 900 ? 'esconde' : 'mostra') + ' os avatares', ui.avsVisivel === (width > 900), ui);
+      check(label + ' entrega 📎 no dia é alcançável por teclado (role=button, tabindex=0)', ui.prazoTab, ui);
+      check(label + ' ✕ de fechar no canto superior direito', ui.xNoCanto, ui);
+      // Espião no openCard: abrir um 2º card com o fakefb trava no _checkCardLock (armadilha do /melhoriauiux).
+      await p.evaluate(() => { window.__openCardReal = window.openCard; window.__abriu = ''; window.openCard = id => { window.__abriu = id; }; });
+      await p.locator('#cal-grid .cal-event-prazo[data-card-id="c_dia_hora"]').focus();
+      await p.keyboard.press('Enter');
+      const abriu = await p.evaluate(() => { const v = window.__abriu; window.openCard = window.__openCardReal; openCal(); calYear = 2026; calMonth = 10; renderCal(); return v; });
+      check(label + ' Enter na entrega 📎 abre o card', abriu === 'c_dia_hora', abriu);
       await p.evaluate(() => {
         closeOv('card-ov');
         openCal();
