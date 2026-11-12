@@ -4735,11 +4735,22 @@ window.MARE_LOGIN_PELO_OCEANO = true;
               <select class="fi" id="m-demandante" onchange="scheduleAutoSave();_updateDescProtectedBadge()"></select>
             </div>
           </div>
-          <div class="field"><label class="fl">Prazo</label>
-            <input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
+          <div class="field" style="min-width:0;">
+            <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+              <div style="flex:2;min-width:120px;display:flex;flex-direction:column;gap:4px;"><label class="fl" for="m-due">Prazo</label><div style="display:flex;gap:6px;align-items:center;"><input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button></div></div>
+              <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:4px;"><label class="fl" for="m-dueHora">Hora</label><input class="fi" id="m-dueHora" type="time" onchange="scheduleAutoSave()"></div>
+            </div>
             <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
             <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;"></div>
           </div>
+        </div>
+        <div class="field" style="margin-top:12px;min-width:0;">
+          <div class="fl">📅 Período</div>
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;min-width:0;"><label class="fl" for="m-inicio">Início</label><input class="fi" id="m-inicio" type="date" onchange="_onCardPeriodoChange()" style="width:100%;min-width:0;box-sizing:border-box;"></div>
+            <div style="flex:1;min-width:0;"><label class="fl" for="m-fim">Fim</label><input class="fi" id="m-fim" type="date" onchange="_onCardPeriodoChange()" style="width:100%;min-width:0;box-sizing:border-box;"></div>
+          </div>
+          <div id="m-periodo-aviso" role="status" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">O Fim não pode ser anterior ao Início. Esse Fim não será salvo.</div>
         </div>
         <div class="card-attr-row">
           <div class="field" style="flex:1;"><label class="fl">Prioridade</label>
@@ -6945,7 +6956,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.948-dev</div>
+<div class="version">v8.30.949-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9696,6 +9707,7 @@ const HIST_CAP = 50; // mantém só as últimas N entradas por card (storage)
 // Rótulos legíveis dos campos rastreados
 const HIST_FIELDS = {
   title:'título', col:'coluna', owner:'responsável', due:'prazo',
+  inicio:'Início', fim:'Fim', dueHora:'Hora do prazo',
   priority:'prioridade', tag:'tag', desc:'descrição', po:'Insights do PO',
   sp:'story points', blocker:'impedimento', archived:'arquivamento', isOKR:'OKR',
   // demandante: mesmo achado /monitorarbugs 2026-09-08 dos campos abaixo —
@@ -9707,6 +9719,7 @@ function _histWho(){ return window._currentUser?.displayName || window._currentU
 // Resolve valor "humano" de um campo (coluna/owner/demandante viram nomes)
 function _histVal(field, val){
   if(val==null||val==='') return '—';
+  if(field==='inicio'||field==='fim') return _cardPeriodoData(val);
   if(field==='col'){ const c=columns.find(x=>x.id===val); return c?c.name:val; }
   if(field==='owner'||field==='demandante'){ const m=members.find(x=>x.init===val); return m?m.name:val; }
   if(field==='blocker') return val?'sim':'não';
@@ -9777,7 +9790,8 @@ function _histDiff(card, before, whoOverride){
     const b = isBoolField ? !!newV : ((newV===undefined||newV===null)?'':newV);
     if(String(a)!==String(b)){
       const label=HIST_FIELDS[f];
-      if(f==='title') recordHistory(card, `renomeou o card para "${_histVal(f,newV)}"`, whoOverride);
+      if(f==='inicio'||f==='fim'||f==='dueHora') recordHistory(card, `${label}: ${_histVal(f,oldV)} → ${_histVal(f,newV)}`, whoOverride);
+      else if(f==='title') recordHistory(card, `renomeou o card para "${_histVal(f,newV)}"`, whoOverride);
       else if(f==='col') recordHistory(card, `moveu para ${_histVal(f,newV)}`, whoOverride);
       else if(f==='blocker') recordHistory(card, newV?'marcou como impedido':'removeu o impedimento', whoOverride);
       else if(f==='archived') recordHistory(card, newV?'arquivou o card':'desarquivou o card', whoOverride);
@@ -13250,7 +13264,7 @@ function makeCardEl(card){
   const cp=clProg(card.checklist);
   const bex=_cardIsBlocked(card)?'border-color:rgba(255,107,107,.4);':''
   const op=isDone?'opacity:.62;':''
-  const dueHtml=dl?`<span class="due-badge ${dc}">${dl}</span>`:`<span class="due-none">sem prazo</span>`;
+  const dueHtml=dl?`<span class="due-badge ${dc}">${dl}${card.dueHora?' · '+esc(card.dueHora):''}</span>`:`<span class="due-none">sem prazo</span>`;
   const m=allIdentities().find(m=>m.init===card.owner);
   const avHtml=card.owner
     ?(m?.isAgent?`<div class="avatar agent-avatar" style="background:${_hexA(m.cor,.25)};border-color:${_hexA(m.cor,.5)};" title="🤖 ${esc(m.name)}">${esc(m.avatarEmoji)}</div>`
@@ -13465,7 +13479,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}${_comInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}${_comInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${card.inicio||card.fim?`<div class="card-periodo" style="font-size:10px;color:var(--txt3);margin-top:5px;">${esc(_cardPeriodoData(card.inicio))} → ${esc(_cardPeriodoData(card.fim))}</div>`:''}${clHtml}${superHtml}`;
   return div;
 }
 
@@ -16012,6 +16026,36 @@ function initSquadUI(){ /* squad fixo, nada a inicializar */ }
 // ── FIM SQUAD UI ──────────────────────────────────────────────────
 
 // ── AUTO-SAVE CARD ─────────────────────────────────────────────────
+// Datas pertencem à ocorrência do card: QL (Modelos/Recorrentes/Agendamentos)
+// usa listas explícitas e NÃO captura inicio/fim/dueHora, assim como não copia due.
+// dueOffsetDays/dueCard dos agendamentos continuam sendo configurações próprias.
+const _CARD_DATAS = ['inicio','fim','dueHora'];
+let _modalDatasBase = {};
+function _cardPeriodoData(v){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v||''));
+  return m ? m[3]+'/'+m[2] : '—';
+}
+function _cardDatasNow(){
+  return Object.fromEntries(_CARD_DATAS.map(f=>[f,document.getElementById('m-'+f)?.value||'']));
+}
+function _onCardPeriodoChange(){
+  const d=_cardDatasNow();
+  document.getElementById('m-periodo-aviso').style.display=d.inicio&&d.fim&&d.fim<d.inicio?'block':'none';
+  scheduleAutoSave();
+}
+function _cardDatasToSave(card){
+  const d=_cardDatasNow();
+  const invalid=!!(d.inicio&&d.fim&&d.fim<d.inicio);
+  document.getElementById('m-periodo-aviso').style.display=invalid?'block':'none';
+  if(invalid){
+    showToast('⚠ O Fim não pode ser anterior ao Início. Esse Fim não foi salvo.');
+    // Não substitui o Fim salvo por um valor inválido; se o início avançou
+    // além do fim anterior, limpa o fim para manter o período consistente.
+    d.fim=card?.fim && card.fim>=d.inicio ? card.fim : '';
+  }
+  _modalDatasBase={...d};
+  return d;
+}
 let _autoSaveTimer = null;
 function scheduleAutoSave(){
   if(!editingId) return; // só auto-salva cards existentes
@@ -16121,7 +16165,7 @@ function _performAutoSave(){
     _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags); // base de Responsável/Tags = o que está sendo gravado (ver _modalSyncCol)
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:_colToSave,owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',
-      due:document.getElementById('m-due').value,noDue:_mNoDue,desc:_descProtViolada?c.desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
+      due:document.getElementById('m-due').value,..._cardDatasToSave(c),noDue:_mNoDue,desc:_descProtViolada?c.desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       // blockerReason faltava aqui — o autosave nunca capturava esse campo
       // (só o botão "Salvar" manual fazia isso), então uma edição do motivo
@@ -16215,7 +16259,10 @@ function _performAutoSave(){
     // já cobre o feedback de erro — só engole a rejeição aqui pra não gerar
     // "uncaught promise" no console.
     const btn=document.querySelector('#card-ov .btn-p');
+    const _savedDatas=Object.fromEntries(_CARD_DATAS.map(f=>[f,c[f]||'']));
+    const _asManualSnap=_cardManualSnap; // uma resposta antiga não altera a base de uma reabertura
     _asSaveP.then(()=>{
+      if(editingId===c.id && _cardManualSnap && _cardManualSnap===_asManualSnap){ Object.assign(_cardManualSnap,_savedDatas); _updateSaveBtnDirtyState(); }
       if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
     }).catch(()=>{});
 }
@@ -16241,6 +16288,7 @@ let _cardManualSnap = null;
 let _newCardGuardOff = false;
 function _manualFieldsNow(){
   return {
+    ..._cardDatasNow(),
     sp: document.getElementById('m-sp')?.value||'',
     priority: document.getElementById('m-priority')?.value||'',
     isOKR: document.getElementById('m-is-okr')?.checked||false,
@@ -16277,6 +16325,7 @@ function _newCardHasContent(){
   // fora/Cancelar/✕ perdia a escolha em silêncio, contradizendo o próprio
   // propósito deste guard (ver comentário no topo do bloco).
   if(document.getElementById('m-priority')?.value) return true;
+  if(Object.values(_cardDatasNow()).some(Boolean)) return true;
   if(editingTags.length) return true;
   if(editingDescs.length) return true;
   if(getCL().length) return true;
@@ -16627,6 +16676,15 @@ function _modalSyncCol(){
   if(!editingId) return;
   const ov=document.getElementById('card-ov'); if(!ov || !ov.classList.contains('open')) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
+  // Campos intocados acompanham o banco; rascunhos locais continuam no DOM.
+  _CARD_DATAS.forEach(f=>{
+    const el=document.getElementById('m-'+f), next=c[f]||'';
+    if(el && el.value===_modalDatasBase[f]){
+      const old=el.value;
+      el.value=next; _modalDatasBase[f]=el.value;
+      if(_cardManualSnap && _cardManualSnap[f]===old) _cardManualSnap[f]=el.value;
+    }
+  });
   const sel=document.getElementById('m-col');
   if(sel && sel.value===_modalOpenCol && c.col!==_modalOpenCol && columns.some(x=>x.id===c.col)){ sel.value=c.col; _modalOpenCol=c.col; }
   // Achado real (/monitorarbugs, 2026-10-31, continuação do "a automação moveu e voltou"): Responsável e Tags tinham o MESMO furo da coluna — o
@@ -17232,6 +17290,9 @@ function openCard(id){
   _updateDescProtectedBadge();
   _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
+  _CARD_DATAS.forEach(f=>{ document.getElementById('m-'+f).value=c[f]||''; });
+  _modalDatasBase=_cardDatasNow();
+  document.getElementById('m-periodo-aviso').style.display='none';
   _mNoDue=!!c.noDue; _renderNoDueBtn();
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
   _editingDescIdx=new Set(); editingDescs = getExtraDescs(c).map(d=>({...d})); renderExtraDescs();
@@ -17661,6 +17722,9 @@ function openNewCard(col, prefillOwner, prefillTagId){
   _modalOpenCol=null;
   document.getElementById('m-owner').value=prefillOwner||window._currentUserInit||'';
   document.getElementById('m-due').value='';
+  _CARD_DATAS.forEach(f=>{ document.getElementById('m-'+f).value=''; });
+  _modalDatasBase=_cardDatasNow();
+  document.getElementById('m-periodo-aviso').style.display='none';
   _mNoDue=false; _renderNoDueBtn();
   document.getElementById('m-meta-c').textContent='';
   document.getElementById('m-meta-e').textContent='';
@@ -17724,6 +17788,7 @@ function saveCard(){
   // (fora do fluxo de "campos obrigatórios" abaixo — segue silencioso como
   // sempre foi, mesmo escopo que due/submarca também não cobrem aqui)
   if(_editingQLItem){
+    // Datas da ocorrência (inicio/fim/dueHora) não entram no item reutilizável.
     if(!title) return;
     const {tipo, idx} = _editingQLItem;
     const item = (qlItems[tipo]||[])[idx];
@@ -17911,7 +17976,7 @@ function saveCard(){
     // deriva/mantém o flag em modo tag.
     const _blockerRowOn=document.getElementById('m-blocker-row')?.style.display!=='none';
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
-      owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,noDue:_mNoDue,
+      owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,..._cardDatasToSave(c),noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
@@ -18006,7 +18071,7 @@ function saveCard(){
       coverColor:_pendingCoverColor||null,
       coverImageUrl:_pendingCoverImageUrl||null,
       padraoId:_newCardPadraoId||null,
-      due:document.getElementById('m-due').value,noDue:_mNoDue,po:document.getElementById('m-po').value,
+      due:document.getElementById('m-due').value,..._cardDatasToSave(null),noDue:_mNoDue,po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
       agentStatus:document.getElementById('m-agentstatus')?.value||'',
@@ -18020,6 +18085,7 @@ function saveCard(){
       childCardIds:[...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds],
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'};
+    _histDiff(_newCard, _histSnapshot({..._newCard,inicio:'',fim:'',dueHora:''}));
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
@@ -18297,7 +18363,9 @@ function _duplicarCardObj(card, opts){
   if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
   if(opts.owner===false){ novo.owner=''; }
   if(opts.participants===false){ novo.participants=[]; }
-  if(opts.due===false){ novo.due=''; }
+  // Período e hora são copiados como o prazo; cards antigos normalizam vazio.
+  _CARD_DATAS.forEach(f=>{ novo[f]=card[f]||''; });
+  if(opts.due===false){ novo.due=''; novo.dueHora=''; }
   if(opts.priority===false){ novo.priority=''; }
   if(opts.riscos===false){ novo.riscos=[]; }
   if(opts.links===false){ novo.links=[]; }
@@ -26387,7 +26455,7 @@ function _criarCardRecorrente(item, hoje){
     desc:item.desc||'',
     descsExtra:[],
     owner:item.owner||'',
-    due:_recorrenteDueDate(hoje,item.dueOffsetDays), po:item.po||'',
+    due:_recorrenteDueDate(hoje,item.dueOffsetDays), inicio:'', fim:'', dueHora:'', po:item.po||'',
     checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
     riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
     sp:item.sp||'', priority:item.priority||'medium',
@@ -26482,7 +26550,7 @@ function _criarCardAgendado(item){
     tags, tag:tags[0]||'',
     title:item.title||'(agendado)',
     desc:item.desc||'', descsExtra:[],
-    owner:item.owner||'', due:item.dueCard||'', po:item.po||'',
+    owner:item.owner||'', due:item.dueCard||'', inicio:'', fim:'', dueHora:'', po:item.po||'',
     checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
     riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
     sp:item.sp||'', priority:item.priority||'medium',
@@ -26601,6 +26669,7 @@ let _editingQLItem = null; // {tipo, idx} quando editando um modelo/recorrente v
 
 // Edição completa: abre o item como se fosse um card real no quadro
 function openQLEdit(i){
+  // Não captura inicio/fim/dueHora: datas pertencem ao card, não ao item QL.
   const tipo = currentQL;
   const item = (qlItems[tipo]||[])[i]; if(!item) return;
   _editingQLItem = { tipo, idx:i };
@@ -36183,6 +36252,7 @@ function toggleCampMetaMobile(){
   btn.classList.toggle('open', !isOpen);
 }
 async function ctxModel(){
+  // Não captura inicio/fim/dueHora: datas pertencem ao card, não ao item QL.
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   hideCtxMenu();
   if(window._ensureModelosLoaded) await window._ensureModelosLoaded();
@@ -36207,6 +36277,7 @@ async function ctxModel(){
 }
 
 function ctxRecorrente(){
+  // Não captura inicio/fim/dueHora: datas pertencem ao card, não ao item QL.
   const card=cards.find(x=>x.id===_ctxCardId); if(!card){ hideCtxMenu(); return; }
   if(!qlItems.recorrentes) qlItems.recorrentes=[];
   // Evita duplicar pelo título
@@ -36251,6 +36322,7 @@ async function ctxDelete(){
 // UTILS
 // ═══════════════════════════════════════════════════════
 async function salvarComoModeloModal(){
+  // Não captura inicio/fim/dueHora: datas pertencem ao card, não ao item QL.
   const btn=event.target; // captura antes de qualquer await — window.event não sobrevive à espera
   const title=document.getElementById('m-title').value.trim(); if(!title) return;
   if(window._ensureModelosLoaded) await window._ensureModelosLoaded();
@@ -36540,7 +36612,7 @@ document.addEventListener('click', e=>{
 
 function closeOv(id, afterClose){
   if(id==='card-ov' && editingId && _cardIsDirty()){
-    uiConfirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento, OKR ou um comentário digitado mas não enviado).\n\nFechar mesmo assim?',
+    uiConfirm('Você tem alterações não salvas neste card (datas, hora do prazo, prioridade, story points, impedimento, OKR ou um comentário digitado mas não enviado).\n\nFechar mesmo assim?',
       {title:'Alterações não salvas', okText:'Fechar mesmo assim', cancelText:'Continuar editando'}).then(ok=>{
       if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
     });

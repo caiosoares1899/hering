@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Card: período e hora do prazo — 2026-11-12
+
+Campos opcionais Início, Fim e Hora do prazo no modal e no board. Persistência no autosave, Salvar e criação; histórico legível, duplicação e sincronização do modal. Fim anterior ao Início gera aviso e não é gravado. Modelos, recorrentes e agendamentos não capturam as datas da ocorrência. Teste Playwright em docs/arezzo/testes/test_card_periodo.js (1280 e 390 px); execução pelo maestro.
+
 ### Radar › Apresentação: slides pares em azul mais claro, para marcar a troca de slide (PROD 12/11 · okr-apresentacao.slide.html, sem par -dev: no ar com os merges #1738/#1739/#1740) — 2026-11-12
 
 - Pedido do Caio (12/11/2026): diferenciar os slides ímpares dos pares para quem assiste perceber a troca.
