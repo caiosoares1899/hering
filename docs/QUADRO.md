@@ -34,7 +34,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🚀 Promoção de 12/11 (kanban v8.30.948 · bugfix #1741 + apresentação alternada): conhecimento do Agente Ágil regenerado (novidades) — republicar as 5 funções | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat --project hering-onboarding --account caio.soares@ciahering.com.br` | 12/11/2026 |
+| *(nenhum)* | — | — | — |
 
 ## Backlog
 
