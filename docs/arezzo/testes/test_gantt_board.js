@@ -366,7 +366,7 @@ const check = (name, pass, detail) => {
         const rowDueOnly = document.querySelector('#gantt-view .gantt-row[data-id="c_only_due"]');
         const barDueOnly = rowDueOnly?.querySelector('.gantt-bar');
         const marcoDueOnly = rowDueOnly?.querySelector('.gantt-marco');
-        const titleEl = rowDueOnly?.querySelector('.gantt-row-title');
+        const titleEl = rowDueOnly?.querySelector('.gantt-marco-nome'); // 12/11: card só com prazo leva o nome no marco ◆
 
         // c_sem_tag: barra neutra .sem-tag
         const barSemTag = document.querySelector('#gantt-view .gantt-bar[data-card-id="c_sem_tag"]');
@@ -386,6 +386,8 @@ const check = (name, pass, detail) => {
           barAligned: !!(barR && d10 && d19 && Math.abs(barR.left - d10.left) <= 6 && Math.abs(barR.right - d19.right) <= 6),
           barBg: barBoth ? getComputedStyle(barBoth).backgroundColor : '',
           barTag: barBoth ? barBoth.style.getPropertyValue('--gantt-tag').trim() : '',
+          barTitulo: (cards.find(c => c.id === 'c_camp_both') || {}).title || '',
+          colDatas: rowBoth?.querySelector('.gantt-row-title')?.textContent.trim() || '',
           barTxt: barBoth?.querySelector('.gantt-bar-txt')?.textContent.trim() || '',
           barAvs: barBoth ? [...barBoth.querySelectorAll('.cal-bar-av')].map(e => e.textContent.trim()) : [],
           marcoCol: +(marcoBoth?.dataset.dueCol || 0),
@@ -418,7 +420,7 @@ const check = (name, pass, detail) => {
         label + ' barra Início→Fim na cor da 1ª tag com avatares + marco ◆ com dueHora (inclusive Fim ≠ Prazo, sem sobrepor)',
         JSON.stringify(ganttInfo.barCols) === JSON.stringify([10, 19]) &&
           ganttInfo.barAligned &&
-          ganttInfo.barBg === 'rgba(255, 92, 138, 0.24)' && ganttInfo.barTag === '#ff5c8a' && /^\d{2}\/\d{2} → \d{2}\/\d{2}$/.test(ganttInfo.barTxt) &&
+          ganttInfo.barBg === 'rgba(255, 92, 138, 0.24)' && ganttInfo.barTag === '#ff5c8a' && ganttInfo.barTxt === ganttInfo.barTitulo && /^\d{2}\/\d{2} → \d{2}\/\d{2}$/.test(ganttInfo.colDatas) &&
           JSON.stringify(ganttInfo.barAvs) === JSON.stringify(['AL', 'BR', 'CS']) &&
           ganttInfo.marcoCol === 7 &&
           ganttInfo.marcoAligned &&
@@ -519,6 +521,9 @@ const check = (name, pass, detail) => {
       const openedTitle = await p.evaluate(() => document.getElementById('m-title').value);
       check(label + ' clicar na barra do Gantt abre o modal do card', openedTitle === 'Campanha Alto Verão', openedTitle);
       await p.evaluate(() => closeOv('card-ov'));
+      // O fechamento anima e devolve o foco: esperar terminar, senão o Enter cai em outro elemento (teste instável).
+      await p.waitForFunction(() => !document.getElementById('card-ov')?.classList.contains('open'));
+      await p.waitForTimeout(400);
 
       // Espião para testar Enter e Espaço sem travar no _checkCardLock do fakefb
       await p.evaluate(() => {
@@ -649,6 +654,45 @@ const check = (name, pass, detail) => {
       check(label + ' rolagem lateral do Gantt sobrevive ao redesenho (atualização do Firebase)', scrollRes.max <= 0 || (scrollRes.antes > 0 && scrollRes.depois === scrollRes.antes), scrollRes);
       check(label + ' ▶ volta a rolagem ao começo da nova janela', scrollRes.aposAvancar === 0, scrollRes);
       check(label + ' indicador "coluna · n/N" do celular escondido no Gantt' + (width <= 768 ? ' (aparecia no modo colunas)' : ''), scrollRes.indicador === 'none' && (width > 768 || indNoKanban !== 'none'), { ...scrollRes, indNoKanban });
+
+      // 📊 Filtros do Gantt (12/11): atalho dos MESMOS filtros do board.
+      await p.evaluate(() => { clearFilters(); if (boardView !== 'gantt') toggleGanttView(); });
+      await p.waitForTimeout(200);
+      const filtRes = await p.evaluate(() => {
+        const fEl = document.getElementById('gantt-filtros');
+        const tb = document.querySelector('#gantt-view .gantt-toolbar');
+        const out = { existe: !!fEl, depoisDaToolbar: !!(tb && tb.nextElementSibling === fEl) };
+        const selOwner = fEl.querySelector('select[data-campo="owner"]');
+        out.mesmasOpcoes = selOwner.options.length === document.getElementById('f-owner').options.length;
+        const pessoa = [...selOwner.options].map(o => o.value).find(v => v && cards.some(c => !c.archived && (c.owner === v) && (c.due || c.inicio)));
+        selOwner.value = pessoa; selOwner.dispatchEvent(new Event('change'));
+        const rows = [...document.querySelectorAll('#gantt-view .gantt-row')].map(r => r.dataset.id);
+        out.pessoa = pessoa;
+        out.drawerSync = document.getElementById('f-owner').value === pessoa && activeFilters.owner === pessoa;
+        out.soDaPessoa = rows.length > 0 && rows.every(id => { const c = cards.find(x => x.id === id); return c.owner === pessoa || (c.participants || []).includes(pessoa); });
+        out.mesmoNo = document.getElementById('gantt-filtros') === fEl;
+        renderBoard();
+        out.sobreviveRedesenho = document.getElementById('gantt-filtros') === fEl && fEl.querySelector('select[data-campo="owner"]').value === pessoa;
+        out.limparVisivel = !fEl.querySelector('.gantt-flimpa').hidden;
+        const selTag = fEl.querySelector('select[data-campo="tag"]');
+        const tagV = [...selTag.options].map(o => o.value).find(Boolean);
+        selTag.value = tagV; selTag.dispatchEvent(new Event('change'));
+        out.tagSync = activeFilters.tag === tagV && document.getElementById('f-tag').value === tagV;
+        fEl.querySelector('.gantt-flimpa').click();
+        out.limpou = !activeFilters.owner && !activeFilters.tag && fEl.querySelector('.gantt-flimpa').hidden;
+        const inp = fEl.querySelector('input[type="date"]');
+        inp.value = '2027-03-10'; inp.dispatchEvent(new Event('change'));
+        const hd = document.querySelector('#gantt-view .gantt-day-hd[data-date="2027-03-10"]');
+        const sc = document.getElementById('gantt-scroll');
+        out.irPara = !!hd && hd.getBoundingClientRect().right <= sc.getBoundingClientRect().right + 1;
+        ganttNav(0);
+        out.semRolagemPagina = document.documentElement.scrollWidth - innerWidth <= 1;
+        return out;
+      });
+      check(label + ' barra de filtros do Gantt usa os filtros do board (pessoa/tag sincronizam com 🔭, Limpar, Ir para data)',
+        filtRes.existe && filtRes.depoisDaToolbar && filtRes.mesmasOpcoes && filtRes.drawerSync && filtRes.soDaPessoa &&
+        filtRes.mesmoNo && filtRes.sobreviveRedesenho && filtRes.limparVisivel && filtRes.tagSync && filtRes.limpou && filtRes.irPara && filtRes.semRolagemPagina,
+        filtRes);
 
       check(label + ' sem erro de JavaScript', errors.length === 0, errors);
       await ctx.close();
