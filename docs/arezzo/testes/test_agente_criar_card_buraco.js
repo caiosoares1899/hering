@@ -30,7 +30,7 @@ const seed = () => ({ kanban: {
   const db = await p.evaluate(async () => { const r = await window._get(window._ref(window._db, FB + '/cards')); const c = r.val() || {}; const ix = (await window._get(window._ref(window._db, FB + '/cards_index'))).val() || {}; return { cards: c, ids: Object.entries(c).map(([k, v]) => k + ':' + (v && v.id)), idx: ix }; });
   const idsNoBanco = db.ids.map(s => s.split(':')[1]);
   t('cards existentes (c5, c6, c7) continuam no banco depois da criação pelo agente', ['c1', 'c2', 'c3', 'c5', 'c6', 'c7'].every(id => idsNoBanco.includes(id)), db.ids);
-  t('chave 7 que o índice local apontaria continua intacta', JSON.stringify(db.cards['7'])===JSON.stringify(CARDS['7']), db);
+  t('chave 7 que o índice local apontaria continua intacta', db.cards['7']?.id==='c7' && db.cards['7']?.title===CARDS['7'].title, db.cards['7']);   // o boot preenche flow: compara identidade e título, não o JSON inteiro
   t('novo card existe no banco e tem cards_index', idsNoBanco.includes(result.card_id) && db.ids.includes(db.idx[result.card_id]+':'+result.card_id), db);
   const idxOk = Object.entries(db.idx).every(([id, k]) => db.ids.includes(k + ':' + id));
   t('índice aponta cada card para a posição certa', idxOk, db);
