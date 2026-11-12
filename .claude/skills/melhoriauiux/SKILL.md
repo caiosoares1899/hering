@@ -129,4 +129,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-11 · Guia do Maré (`guia-mare.html`):** telas "simuladas" genéricas → **telas reais** do board: `scripts/guia-mare-telas.js` abre o `kanban-dev` com o Firebase falso, captura o HTML visível + só o CSS usado (`@media` resolvido no tamanho da captura — senão o layout de celular do Maré entra na moldura) e o guia mostra em Shadow DOM, com destaque no alvo e aproximação no celular. Textos dos passos revistos contra a tela real. Teste `test_guia_mare_pagina.js`.
 
+- **2026-11-12 · Maré › 📅 Calendário (barras de período, PR #1746):** barra sem tag na cor da coluna (= cor do 📎) → neutra tracejada; avatar comendo o título em barra de 1–2 dias; barra de 18 px como alvo de toque → no toque, o dia abre a lista (44 px); ✕ no meio do cabeçalho no celular → canto; 📎 sem teclado. Teste `test_calendario_periodo.js`.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
