@@ -2115,6 +2115,7 @@ input[type="date"]{-moz-appearance:textfield;}
   line-height: 1;
 }
 .cal-bar-av:first-child { margin-left: 0; }
+.cal-bar-av.av3 { font-size: 6px; letter-spacing: -.3px; } /* iniciais de 3 letras ("RMN") cabem no círculo */
 .cal-bar-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* Card sem tag: barra neutra (a cor da coluna já é a do 📎 das entregas; uma cor = um significado) */
 .cal-periodo-bar.sem-tag { background: rgba(var(--surface2-rgb),.95); color: var(--txt); border: 1px dashed var(--txt3); }
@@ -3167,6 +3168,13 @@ input[type="date"]{-moz-appearance:textfield;}
 .gantt-bar.ink-dark{color:#000000;border-color:rgba(0,0,0,.18);}
 .gantt-bar.ink-light{color:#ffffff;}
 .gantt-bar.sem-tag{background:rgb(var(--surface2-rgb));color:var(--txt);border:1px dashed var(--txt2);}
+/* Leitura (12/11): o título já está na coluna da esquerda — a barra mostra as datas, em vidro tingido
+   da cor da 1ª tag (faixa forte à esquerda), como as pílulas de tag; cor cheia em toda barra gritava. */
+.gantt-bar.tinted{color:var(--txt);font-weight:600;box-shadow:none;
+  /* borda misturada com a cor do texto do tema: tag quase preta continua visível no escuro, tag clara no claro */
+  border:1px solid color-mix(in srgb, var(--gantt-tag) 62%, var(--txt) 38%);
+  border-left:3px solid color-mix(in srgb, var(--gantt-tag) 80%, var(--txt) 20%);}
+.gantt-bar.tinted:hover{box-shadow:0 2px 6px rgba(0,0,0,.22);}
 .gantt-bar.clip-l{margin-left:0;border-top-left-radius:0;border-bottom-left-radius:0;border-left:none;padding-left:4px;}
 .gantt-bar.clip-r{margin-right:0;border-top-right-radius:0;border-bottom-right-radius:0;border-right:none;padding-right:4px;}
 .gantt-bar-clip{flex-shrink:0;font-size:10px;line-height:1;font-weight:900;}
@@ -7460,7 +7468,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.952-dev</div>
+<div class="version">v8.30.953-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14464,16 +14472,17 @@ function renderGanttView(activeCards){
           const colS = _ganttDayDiff(winStartIso, sIso) + 1;
           const colE = _ganttDayDiff(winStartIso, eIso) + 1;
           const span = colE - colS + 1;
-          const cor = _calBarCorAttrs(c);
-          const barCls = 'gantt-bar '+cor.cls
+          const corHex = _calCardPrimeiraTagCor(c);
+          const corStyle = corHex ? 'background:'+_hexA(corHex,.24)+';--gantt-tag:'+corHex+';' : '';
+          const barCls = 'gantt-bar '+(corHex ? 'tinted' : 'sem-tag')
             +(clipL?' clip-l':'')
             +(clipR?' clip-r':'')
             +(span===1?' span-1':'')
             +(span<3?' is-narrow':'');
-          barHtml = '<div class="'+barCls+'" data-card-id="'+esc(c.id)+'" data-start-col="'+colS+'" data-end-col="'+colE+'" tabindex="-1" style="grid-row:1;grid-column:'+colS+'/'+(colE+1)+';'+cor.bg+'" title="'+esc(fullTip)+'">'
+          barHtml = '<div class="'+barCls+'" data-card-id="'+esc(c.id)+'" data-start-col="'+colS+'" data-end-col="'+colE+'" tabindex="-1" style="grid-row:1;grid-column:'+colS+'/'+(colE+1)+';'+corStyle+'" title="'+esc(fullTip)+'">'
             +(clipL?'<span class="gantt-bar-clip" aria-label="Inicia antes desta janela">◂</span>':'')
             +(done?'<span class="cal-bar-chk" aria-label="Concluído">✓</span>':'')
-            +'<span class="gantt-bar-txt">'+esc(titulo)+'</span>'
+            +'<span class="gantt-bar-txt">'+esc(_cardPeriodoData(c.inicio)+' → '+_cardPeriodoData(c.fim))+'</span>'
             +_calBarAvataresHtml(c)
             +(clipR?'<span class="gantt-bar-clip" aria-label="Continua após esta janela">▸</span>':'')
             +'</div>';
@@ -33556,7 +33565,7 @@ function _calBarAvataresHtml(c){
     if(m?.isAgent) return `<span class="cal-bar-av" title="🤖 ${esc(lbl)}">${esc(m.avatarEmoji||'🤖')}</span>`;
     const foto=typeof safeUrl==='function'?safeUrl(m?.foto):'';
     if(foto) return `<span class="cal-bar-av" data-init="${esc(init)}" title="${esc(lbl)}"><img src="${foto}" alt="${esc(init)}" loading="lazy" onerror="this.parentElement.textContent=this.parentElement.dataset.init||'?'"></span>`;
-    return `<span class="cal-bar-av" title="${esc(lbl)}">${esc(init)}</span>`;
+    return `<span class="cal-bar-av${String(init).length>2?' av3':''}" title="${esc(lbl)}">${esc(init)}</span>`;
   }).join('');
   const more=extra>0?`<span class="cal-bar-av" title="+${extra} participante(s)">+${extra}</span>`:'';
   return `<span class="cal-bar-avs">${items}${more}</span>`;

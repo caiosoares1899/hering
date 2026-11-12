@@ -30,6 +30,8 @@ Nova visão 📊 Gantt na toolbar de kanban-dev.html (ao lado de 🛤️ Timelin
 
 **12/11, revisão (Claude):** a rolagem lateral do Gantt não volta mais ao começo quando alguém edita um card (o redesenho guarda a posição); no celular o Gantt abre rolado até hoje (e o botão Hoje volta até ele); o indicador "coluna · n/N" do celular some no Gantt e na Timeline.
 
+**12/11, leitura (Claude, a pedido do Caio):** no Gantt a barra repetia o título que já está na coluna da esquerda e era um bloco de cor cheia — agora mostra as **datas** ("10/11 → 19/11") em vidro tingido da cor da 1ª tag, com faixa forte à esquerda e borda misturada à cor do texto do tema (tag quase preta continua visível no escuro). Iniciais de 3 letras ("RMN") cabem no avatar (Gantt e Calendário). kanban-dev v8.30.953-dev.
+
 ### SÓ DEV — Calendário: barra de período do card e hora do prazo — 2026-11-12
 
 No 📅 Calendário do board (kanban-dev.html), cards com Início e Fim aparecem como uma barra contínua por semana atravessando os dias (quebrando na virada da semana, sem repetir em cada dia), clicável para abrir o card, com a cor da 1ª tag e os avatares do responsável e participantes na ponta; várias barras na mesma semana empilham sem sobrepor. Entregas no dia do prazo (inclusive em cards que também têm período) permanecem no dia correspondente com a hora do prazo quando houver e ✓ quando concluídas, respeitando os filtros do board e do calendário nos 3 temas (1280 e 390 px). Tópico Calendário atualizado no HELP_CONTENT e teste Playwright em docs/arezzo/testes/test_calendario_periodo.js.
