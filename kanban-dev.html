@@ -2283,6 +2283,21 @@ input[type="date"]{-moz-appearance:textfield;}
 .modal-col{display:flex;flex-direction:column;gap:10px;}
 .modal-divider{border:none;border-top:1px solid var(--glass-b);margin:4px 0;}
 .card-attr-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+/* 📅 Datas do card (12/11/2026): Prazo+Hora e Início+Fim numa grade só, alinhados */
+.m-datas{min-width:0;}
+.m-datas-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px;align-items:stretch;}
+.m-datas-cel .fl{display:flex;align-items:baseline;gap:4px;min-height:14px;margin:0;}
+/* o campo de hora nasce 3 px mais alto que o de data: as duas células da linha esticam juntas */
+.m-datas-cel > .fi,.m-datas-cel > div{flex:1 1 auto;}
+.m-datas-cel > div .fi{align-self:stretch;}
+.m-datas-cel{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.m-datas-cel .fi{width:100%;min-width:0;box-sizing:border-box;}
+.m-datas-cel > div{display:flex;gap:6px;align-items:center;min-width:0;}
+.m-datas-cel > div .fi{flex:1;}
+.m-datas-cel .dp-btn{margin-left:0;flex-shrink:0;}
+.m-datas-sub{grid-column:1/-1;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--txt2);}
+.m-datas-dica{font-weight:500;text-transform:none;letter-spacing:0;color:var(--txt2);}
+.m-datas-rodape{margin-top:6px;}
 .crv-radio-group,.crv-check-group{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(var(--surface2-rgb),.4);}
 .crv-radio-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;white-space:nowrap;}
 .crv-radio-row input,.crv-check-group label input{accent-color:#ffb3d9;}
@@ -5242,16 +5257,9 @@ window.MARE_LOGIN_PELO_OCEANO = true;
           </div>
         </div>
         <div class="card-attr-row">
-          <!-- Responsável + Demandante empilhados na MESMA coluna do grid —
-               precisa ser um wrapper próprio (não um 3º item solto): grid
-               auto-flow põe o 3º item numa linha NOVA depois que a linha
-               inteira (a mais alta das duas colunas) termina, não "encaixado"
-               ao lado do que sobrou de espaço na coluna mais curta (1ª
-               tentativa errada — Demandante saía abaixo de tudo, não do lado
-               do "Sem prazo definido"). Com os dois dentro do mesmo wrapper
-               flex, o Demandante nasce logo abaixo do Responsável, na altura
-               aproximada de onde a coluna do Prazo (mais alta, por causa do
-               botão calendário + Sem prazo) também está. -->
+          <!-- Responsável (+ Demandante embaixo) | Prioridade. Antes a 2ª coluna era a do Prazo,
+               que virou torre (Prazo, Hora embaixo, Sem prazo) com as datas novas — 12/11/2026, as
+               datas foram para o bloco "📅 Datas" logo abaixo, em largura cheia. -->
           <div style="display:flex;flex-direction:column;gap:8px;">
             <div class="field"><label class="fl">Responsável</label>
               <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
@@ -5260,25 +5268,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
               <select class="fi" id="m-demandante" onchange="scheduleAutoSave();_updateDescProtectedBadge()"></select>
             </div>
           </div>
-          <div class="field" style="min-width:0;">
-            <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
-              <div style="flex:2;min-width:120px;display:flex;flex-direction:column;gap:4px;"><label class="fl" for="m-due">Prazo</label><div style="display:flex;gap:6px;align-items:center;"><input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button></div></div>
-              <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:4px;"><label class="fl" for="m-dueHora">Hora</label><input class="fi" id="m-dueHora" type="time" onchange="scheduleAutoSave()"></div>
-            </div>
-            <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
-            <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;"></div>
-          </div>
-        </div>
-        <div class="field" style="margin-top:12px;min-width:0;">
-          <div class="fl">📅 Período</div>
-          <div style="display:flex;gap:10px;">
-            <div style="flex:1;min-width:0;"><label class="fl" for="m-inicio">Início</label><input class="fi" id="m-inicio" type="date" onchange="_onCardPeriodoChange()" style="width:100%;min-width:0;box-sizing:border-box;"></div>
-            <div style="flex:1;min-width:0;"><label class="fl" for="m-fim">Fim</label><input class="fi" id="m-fim" type="date" onchange="_onCardPeriodoChange()" style="width:100%;min-width:0;box-sizing:border-box;"></div>
-          </div>
-          <div id="m-periodo-aviso" role="status" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">O Fim não pode ser anterior ao Início. Esse Fim não será salvo.</div>
-        </div>
-        <div class="card-attr-row">
-          <div class="field" style="flex:1;"><label class="fl">Prioridade</label>
+          <div class="field"><label class="fl">Prioridade</label>
             <select class="fi" id="m-priority" onchange="scheduleAutoSave();renderSubPrioRow();">
               <option value="">— sem prioridade —</option>
               <option value="low">🟢 Baixa</option>
@@ -5287,6 +5277,21 @@ window.MARE_LOGIN_PELO_OCEANO = true;
               <option value="critical">🔥 Crítica</option>
             </select>
           </div>
+        </div>
+        <div class="field m-datas">
+          <div class="fl">📅 Datas</div>
+          <div class="m-datas-grid">
+            <div class="m-datas-cel"><label class="fl" for="m-due">Prazo <span class="m-datas-dica">entrega</span></label><div style="display:flex;gap:6px;align-items:center;"><input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button></div></div>
+            <div class="m-datas-cel"><label class="fl" for="m-dueHora">Hora</label><input class="fi" id="m-dueHora" type="time" onchange="scheduleAutoSave()"></div>
+            <div class="m-datas-sub">Período no ar <span class="m-datas-dica">opcional · campanha, coleção</span></div>
+            <div class="m-datas-cel"><label class="fl" for="m-inicio">Início</label><input class="fi" id="m-inicio" type="date" onchange="_onCardPeriodoChange()"></div>
+            <div class="m-datas-cel"><label class="fl" for="m-fim">Fim</label><input class="fi" id="m-fim" type="date" onchange="_onCardPeriodoChange()"></div>
+          </div>
+          <div id="m-periodo-aviso" role="status" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">O Fim não pode ser anterior ao Início. Esse Fim não será salvo.</div>
+          <div class="m-datas-rodape"><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
+          <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;"></div>
+        </div>
+        <div class="card-attr-row">
           <div class="field" id="m-tamanho-field" style="flex:1;display:none;"><label class="fl">👕 Tamanho</label>
             <select class="fi" id="m-tamanho" onchange="setCardTamanho(this.value)">
               <option value="">— sem tamanho —</option>
@@ -7481,7 +7486,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.955-dev</div>
+<div class="version">v8.30.956-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

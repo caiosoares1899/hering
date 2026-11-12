@@ -46,6 +46,8 @@ No 📅 Calendário do board (kanban-dev.html), cards com Início e Fim aparecem
 
 Campos opcionais Início, Fim e Hora do prazo no modal e no board. Persistência no autosave, Salvar e criação; histórico legível, duplicação e sincronização do modal. Fim anterior ao Início gera aviso e não é gravado. Modelos, recorrentes e agendamentos não capturam as datas da ocorrência. Teste Playwright em docs/arezzo/testes/test_card_periodo.js (1280 e 390 px); execução pelo maestro.
 
+**12/11, /melhoriauiux no modal (Claude):** as datas novas tinham bagunçado o modal — a coluna do Prazo virou torre (Prazo, Hora sozinha embaixo em outra largura, "Sem prazo"), o Período ficou solto entre Prazo e Prioridade com dois níveis de rótulo, e nada dizia que Prazo é a entrega e Período é quando a campanha está no ar. Agora um bloco **📅 Datas** em largura cheia: **Prazo (entrega) | Hora** e, sob "Período no ar · opcional", **Início | Fim**, alinhados em grade; "Sem prazo definido" no fim do bloco; a **Prioridade** subiu para o lado do Responsável (o vão sumiu). Modal 36 px mais baixo no desktop. kanban-dev v8.30.956-dev; teste em `test_card_periodo.js`.
+
 ### Radar › Apresentação: slides pares em azul mais claro, para marcar a troca de slide (PROD 12/11 · okr-apresentacao.slide.html, sem par -dev: no ar com os merges #1738/#1739/#1740) — 2026-11-12
 
 - Pedido do Caio (12/11/2026): diferenciar os slides ímpares dos pares para quem assiste perceber a troca.

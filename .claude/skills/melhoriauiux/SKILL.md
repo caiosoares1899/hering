@@ -131,4 +131,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-12 · Maré › 📅 Calendário (barras de período, PR #1746):** barra sem tag na cor da coluna (= cor do 📎) → neutra tracejada; avatar comendo o título em barra de 1–2 dias; barra de 18 px como alvo de toque → no toque, o dia abre a lista (44 px); ✕ no meio do cabeçalho no celular → canto; 📎 sem teclado. Teste `test_calendario_periodo.js`.
 
+- **2026-11-12 · Maré › Modal do card (datas do PR 1a):** coluna do Prazo virou torre (Hora sozinha embaixo, larguras diferentes) e Período solto com rótulo em 2 níveis → bloco "📅 Datas" em grade (Prazo|Hora, Início|Fim, legenda "Período no ar"), Prioridade ao lado do Responsável. Armadilha da rodada: recorte de HTML por script achou `        </div>` DENTRO de `          </div>` e deixou uma div aberta — o Checklist pulou de coluna; conferir balanço de `<div>` e tirar print depois de todo recorte. v8.30.956-dev.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
