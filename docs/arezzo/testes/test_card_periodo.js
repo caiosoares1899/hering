@@ -52,6 +52,13 @@ const save=(p)=>p.evaluate(()=>saveCard()).then(()=>p.waitForFunction(()=>!docum
    });
    check(label+' fechar card antigo não pede confirmação',closed);
    await open(p,'c1');
+   // /melhoriauiux 12/11: Prazo+Hora e Início+Fim num bloco "📅 Datas" só, alinhados em grade.
+   const lay=await p.evaluate(()=>{const r=id=>document.getElementById(id).getBoundingClientRect();const due=r('m-due'),hora=r('m-dueHora'),ini=r('m-inicio'),fim=r('m-fim');
+    const bloco=document.querySelector('.m-datas');
+    return {dentro:['m-due','m-dueHora','m-inicio','m-fim','m-nodue-btn'].every(id=>bloco&&bloco.contains(document.getElementById(id))),
+     linha1:Math.abs(due.top-hora.top)<=1&&Math.abs(due.height-hora.height)<=1,linha2:Math.abs(ini.top-fim.top)<=1,
+     colunas:Math.abs(due.left-ini.left)<=1&&Math.abs(hora.left-fim.left)<=1,ordem:hora.left>due.left&&ini.top>due.top};});
+   check(label+' bloco 📅 Datas: Prazo|Hora e Início|Fim alinhados em grade',lay.dentro&&lay.linha1&&lay.linha2&&lay.colunas&&lay.ordem,lay);
    for(const theme of ['','light','vice']){
     await p.evaluate(t=>document.documentElement.dataset.theme=t,theme);
     const overflow=await p.evaluate(()=>{const el=document.querySelector('#card-ov .card-panel');return el.scrollWidth-el.clientWidth;});
