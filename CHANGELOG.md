@@ -30,6 +30,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - Os slides **pares** ganham um azul um pouco mais claro (fundo com brilho suave no topo); os ímpares continuam no oceano escuro. Conta pela ordem em que os slides passam (a capa é ímpar).
 - Só cor de fundo: sem `backdrop-filter` nem animação, então o slide parado continua sem custo de GPU (rodada de fps de 06/11).
 - Conferido a 1920×1080 com dados de exemplo: slides 0–3 alternando, sem erro de JS, 54–60 fps.
+- **12/11, ajuste:** a 1ª versão (tom `.10`) quase não aparecia no projetor; o azul dos pares subiu para `.24`.
 
 ### A Bordo ligado ao Guia do Maré (PROD 11/11 · onboarding.html, no ar com o merge #1734) — 2026-11-11
 
