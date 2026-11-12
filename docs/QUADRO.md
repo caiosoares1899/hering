@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/coordenacao-v2` | `docs/COORDENACAO_AGENTES.md`, `docs/QUADRO.md`, `docs/quadro/`, `docs/historico/`, `docs/coordenacao-invocacoes.md`, `AGENTS.md`, `CLAUDE.md`, `.agents/rules/`, `.claude/skills/`, `.claude/rules/`, `scripts/placar.js`, `scripts/mare-cli.js`, `docs/BIBLIOTECA.md` | 11/11/2026 |
 
 ## Fila
 
@@ -16,10 +15,8 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Antigravity | R2 | 📊 PR 2 — visão Gantt do board (base: `main` com o #1747) | [contrato](ideias/campanha-periodo-gantt.md#contrato-pr-2-antigravity--visão-gantt-do-board) |
 | Antigravity | R0 | 🪟 Acabamento "vidro lapidado" (`--specular` por tema + curvas `--ease-*`) | [GUIA_UI_UX §2.4/§2.5](GUIA_UI_UX.md) · [backlog](quadro/backlog.md#vidro-lapidado) |
-| Codex | R1 | 📅 PR 1a — campos Início/Fim/Hora do prazo no card (em andamento) | [desenho](ideias/campanha-periodo-gantt.md#contrato-pr-1a-codex) |
-| Antigravity | R2 | 📅 PR 1b — calendário estilo Trello (barra do período) — **depois do merge do 1a** | [desenho](ideias/campanha-periodo-gantt.md#contrato-pr-1b-antigravity--depois-do-merge-do-pr-1a) |
-| Antigravity | R2 | 📊 PR 2 — visão Gantt do board — depois do 1b (contrato a escrever) | [desenho](ideias/campanha-periodo-gantt.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado

@@ -60,3 +60,37 @@ Não fazer: Gantt, alerta, push, merge, deploy, prod.
 Prova: saída dos testes colada, caminhos das capturas, o que NÃO verificou.
 Entrega: branch antigravity/calendario-periodo + PR (sem merge) + resumo com a Prova, "Fronteira:" e "Dica:".
 ```
+
+## Contrato PR 2 (Antigravity) — visão Gantt do board
+```
+Objetivo: 3ª visão do board, "📊 Gantt": uma linha por card, barra de Início → Fim e marco do Prazo, numa régua de dias, para o time ver as campanhas e coleções no tempo.
+Risco: R2 · Modelo e esforço: Gemini 4 Carbon, padrão · Orçamento: ~2 h; estourou, pare e relate.
+Base: main atualizada (já tem o #1747, rodada de UI/UX do calendário); reaproveite _calBarCorAttrs (cor da 1ª tag / barra neutra .sem-tag), _calBarAvataresHtml, _calHexValido, _isColDone, _cardPeriodoData — não duplique.
+Contexto (leia inteiros, grep -n): let boardView (hoje 'kanban' | 'timeline') · renderBoard (ramo da Timeline: board-hidden + return cedo) · toggleTimelineView · renderTimelineView · botão #btn-timeline (data-tb-id="timeline") · TODO leitor de boardView: ignoreOwner/ignoreTag/ignoreSubteam no renderBoard (hoje "boardView!=='timeline'" → vira "boardView==='kanban'"), highlightMyCards (seletor .meudia-row[data-id] → incluir a linha do Gantt), _applyBoardPrefsSquad (visão inicial: segue só Timeline). Campos: card.inicio, card.fim ('AAAA-MM-DD'), card.due, card.dueHora ('HH:MM').
+Desenho:
+  - boardView ganha 'gantt'. Botão "📊 Gantt" ao lado do 🛤️ Timeline (data-tb-id="gantt", entra na personalização da toolbar como os vizinhos). Timeline × Gantt mutuamente exclusivos: um helper único pinta os 2 botões (nada de estilo solto em 2 lugares).
+  - renderBoard: ramo 'gantt' igual ao da Timeline (board-hidden, #gantt-view visível, renderGanttView(activeCards), updateMetrics, return). Usa o MESMO activeCards: todos os filtros do board valem.
+  - Quem entra: cards ativos com período (inicio+fim) OU com due. Sem nenhum dos dois: fora (e o rodapé diz "N cards sem datas não aparecem").
+  - Agrupamento: pela 1ª tag do card (cabeçalho do grupo com a cor da tag); "Sem tag" por último. Dentro do grupo: por inicio (ou due), depois título.
+  - Régua: janela de 6 semanas começando no domingo da semana passada; ◀ / Hoje / ▶ andam 4 semanas. Cabeçalho com mês e dia; fim de semana levemente sombreado; linha vertical de "hoje" (--accent).
+  - Linha: coluna esquerda fixa (sticky) com o título do card; barra inicio→fim na cor da 1ª tag (ou .sem-tag), título dentro quando couber, avatares na ponta, ✓ se concluído (_isColDone). Barra que passa da janela: canto reto + "◂"/"▸". Marco ◆ no dia do due com a hora (dueHora) — inclusive em card que também tem período (Fim ≠ Prazo). Card só com due: só o marco.
+  - Só leitura: clique/Enter/Espaço na linha ou na barra abre o card (openCard); sem arrastar datas.
+  - Estados: vazio ("Nenhum card com período ou prazo nestas 6 semanas — preencha Início e Fim no card"), muitos cards (100+, sem travar), título longo, HTML no título (aparece como texto).
+  - Celular 390: rolagem lateral SÓ dentro do #gantt-view (a página não rola de lado); coluna do título estreita (~110 px); toque (hover:none)+(pointer:coarse): linhas com 44 px.
+  - Sem leitura nova do Firebase; sem animação contínua; prefers-reduced-motion em qualquer transição; tokens dos 3 temas (nada de cor crua fora a da tag validada por _calHexValido).
+Arquivos: kanban-dev.html (visão Gantt + ramos de boardView listados + HELP_CONTENT: tópico novo "📊 Gantt" e menção no tópico da Timeline) · version.json + <div class="version"> (node scripts/mare-cli.js bump kanban_dev) · CHANGELOG.md (SÓ DEV) · docs/arezzo/testes/test_gantt_board.js (novo) · docs/capturas/gantt/ (1280 e 390, 3 temas) · docs/MAPA_DO_REPOSITORIO.md (node scripts/mapa.js).
+Reservados (não tocar): kanban.html, mare-*-dev.js (a dica é integrada pelo Claude), okr-dev.html, docs/QUADRO.md, o calendário (só reaproveitar funções).
+Critérios de aceite (teste Playwright novo, 1280 e 390 px, fakefb):
+  - botão alterna Kanban → Gantt → Kanban; ligar Timeline desliga Gantt e vice-versa (os 2 botões refletem o estado);
+  - card com período vira barra nas colunas certas da régua; card com período + due mostra barra E marco ◆ com hora; card só com due mostra só o marco; card sem datas não aparece e entra na contagem do rodapé;
+  - grupos pela 1ª tag, "Sem tag" por último; ◀ ▶ Hoje mudam a janela; linha de hoje no dia certo;
+  - filtros do board (prioridade, busca, responsável) valem; "💡 Meus cards" acha as linhas no Gantt;
+  - clique e Enter abrem o card; HTML no título não executa;
+  - 390 px: documento sem rolagem lateral, #gantt-view rola de lado; linhas ≥ 44 px no toque; 3 temas com contraste ≥ 4,5 no texto;
+  - regressão: test_calendario_periodo.js e test_card_periodo.js seguem verdes.
+  node scripts/checar.js e cd functions && npm test (tocou CHANGELOG/Ajuda).
+Não fazer: arrastar datas, alerta da hora (PR 3), mare-dicas, merge, deploy, prod. (git push e abrir PR: SIM.)
+Prova: saída dos testes colada, caminhos das capturas, o que NÃO verificou.
+Entrega: branch antigravity/gantt-board + PR com base main (sem merge) + resumo com a Prova, "Fronteira:" e "Dica:" (proponha o texto de uma linha da dica do Gantt; o Claude integra no mare-dicas).
+```
+
