@@ -385,12 +385,14 @@ const check = (name, pass, detail) => {
           barCols: [+(barBoth?.dataset.startCol || 0), +(barBoth?.dataset.endCol || 0)],
           barAligned: !!(barR && d10 && d19 && Math.abs(barR.left - d10.left) <= 6 && Math.abs(barR.right - d19.right) <= 6),
           barBg: barBoth ? getComputedStyle(barBoth).backgroundColor : '',
+          barTag: barBoth ? barBoth.style.getPropertyValue('--gantt-tag').trim() : '',
+          barTxt: barBoth?.querySelector('.gantt-bar-txt')?.textContent.trim() || '',
           barAvs: barBoth ? [...barBoth.querySelectorAll('.cal-bar-av')].map(e => e.textContent.trim()) : [],
           marcoCol: +(marcoBoth?.dataset.dueCol || 0),
           marcoAligned: !!(marcoR && d7 && marcoR.left >= d7.left - 2 && marcoR.left <= d7.right),
           marcoTxt: marcoBoth?.textContent.trim() || '',
           doneChkBar: barDone?.querySelector('.cal-bar-chk')?.textContent.trim() || '',
-          doneInkDark: barDone?.classList.contains('ink-dark') || false,
+          doneInkDark: (barDone?.classList.contains('tinted') && getComputedStyle(barDone).color === getComputedStyle(document.querySelector('.gantt-row-title')).color) || false, // 12/11: barra em vidro tingido, texto na cor do tema
           doneNoOverlap,
           clipL: !!(barClipL?.classList.contains('clip-l') && barClipL.textContent.includes('◂') && getComputedStyle(barClipL).borderTopLeftRadius === '0px'),
           clipR: !!(barClipR?.classList.contains('clip-r') && barClipR.textContent.includes('▸') && getComputedStyle(barClipR).borderTopRightRadius === '0px'),
@@ -416,7 +418,7 @@ const check = (name, pass, detail) => {
         label + ' barra Início→Fim na cor da 1ª tag com avatares + marco ◆ com dueHora (inclusive Fim ≠ Prazo, sem sobrepor)',
         JSON.stringify(ganttInfo.barCols) === JSON.stringify([10, 19]) &&
           ganttInfo.barAligned &&
-          ganttInfo.barBg === 'rgb(255, 92, 138)' &&
+          ganttInfo.barBg === 'rgba(255, 92, 138, 0.24)' && ganttInfo.barTag === '#ff5c8a' && /^\d{2}\/\d{2} → \d{2}\/\d{2}$/.test(ganttInfo.barTxt) &&
           JSON.stringify(ganttInfo.barAvs) === JSON.stringify(['AL', 'BR', 'CS']) &&
           ganttInfo.marcoCol === 7 &&
           ganttInfo.marcoAligned &&
