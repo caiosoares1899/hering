@@ -90,4 +90,36 @@ test('CLI brief executa sem erro e resume versões e Quadro', () => {
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /Resumo Instantâneo/);
   assert.match(r.stdout, /Versões\s*:/);
+  assert.ok(r.stdout.includes('[Em andamento]') || r.stdout.includes('⚠ docs/QUADRO.md não encontrado'));
+});
+
+test('CLI brief lê as quatro seções do Quadro novo e resume linhas', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mare-quadro-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const quadro = path.join(dir, 'QUADRO.md');
+  fs.writeFileSync(quadro, ['Em andamento', 'Fila', 'Escalado', 'Pendente de deploy', 'Backlog']
+    .map((sec) => `## ${sec}\n| Item | Detalhe |\n| :--- | ---: |\n| ${sec === 'Backlog' ? 'NAO_IMPRIMIR' : 'tarefa-' + sec} | ${'x'.repeat(200)} |\n`).join('\n'));
+  const r = spawnSync(process.execPath, [CLI_PATH, 'brief'], {
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, MARE_QUADRO_PATH: quadro },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  for (const sec of ['Em andamento', 'Fila', 'Escalado', 'Pendente de deploy']) {
+    assert.ok(r.stdout.includes(`[${sec}]`));
+    assert.ok(r.stdout.includes('tarefa-' + sec));
+  }
+  assert.ok(!r.stdout.includes('NAO_IMPRIMIR'));
+  assert.ok(!r.stdout.includes('| Item |'));
+  for (const line of r.stdout.split('\n').filter((l) => l.includes('tarefa-'))) {
+    assert.ok(line.length <= 162);
+  }
+});
+
+test('CLI brief avisa quando QUADRO.md não existe', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mare-quadro-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const r = spawnSync(process.execPath, [CLI_PATH, 'brief'], {
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, MARE_QUADRO_PATH: path.join(dir, 'ausente.md') },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(r.stdout.includes('⚠ docs/QUADRO.md não encontrado'));
 });

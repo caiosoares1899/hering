@@ -1,6 +1,6 @@
 # Antigravity — regras específicas (Alta Velocidade & Automação)
 
-> **Regras do projeto = `CLAUDE.md`; divisão entre os 3 agentes = `docs/COORDENACAO_AGENTES.md` §7.** Linhas vermelhas e o núcleo comum continuam no `AGENTS.md`. Revisão dos seus PRs: Caio e Claude (`docs/COORDENACAO_AGENTES.md` §4.1). "ESCALAR AO CLAUDE" é parada, não sugestão.
+> **Regras do projeto = `CLAUDE.md`; divisão entre os 3 agentes = `docs/COORDENACAO_AGENTES.md` (decisões D1–D3, roteamento por risco); estado do dia = `docs/QUADRO.md`.** Linhas vermelhas e o núcleo comum continuam no `AGENTS.md`. Revisão dos seus PRs: Caio e Claude (`docs/COORDENACAO_AGENTES.md` › *Revisão cruzada*). Pela decisão D2 você pode ser autor de PR em `database.rules.json`, sempre como R3. O Caio aciona você com "pegue o próximo da sua fila": o contrato está na sua *Fila* no `docs/QUADRO.md`. "ESCALAR AO CLAUDE" é parada, não sugestão.
 
 ## 1. Workspace & Zero Prompts Desnecessários
 - **No Mac (`~/hering-agy`):** trabalhe **sempre** em `/Users/caiosoares/hering-agy` (nunca edite `/Users/caiosoares/hering`, que é a pasta do Claude e do Caio). **Dica crítica de velocidade:** mantenha `/Users/caiosoares/hering-agy` aberta diretamente como Workspace da janela do Antigravity — quando a janela está aberta em `~/hering` e você grava em `~/hering-agy`, cada `write_file`/`edit_file` dispara um prompt corporativo *Outside of workspace*. Se a sessão estiver aberta em outra pasta, concentre todas as edições em `"files"` e `"patches"` dentro de um único `.mare-ship.json` para pedir aprovação **1 única vez**.
@@ -16,7 +16,7 @@
 ## 3. Via Rápida Direta (Fast-Lane) vs. Subagentes Paralelos
 - **Via Rápida Direta (1 arquivo localizado / ≤ 150 linhas lidas — 80% dos pedidos, meta 1–2 min):**
   - Resolva **diretamente no agente principal**, sem instanciar subagentes frios:
-    1. `/seatualizar` enxuto em 1 turno paralelo (`docs/COORDENACAO_AGENTES.md` inteiro (o Quadro é a §6; sem faixa de linhas fixa), `version.json`, `CHANGELOG.md` L1–55, `BUGS_E_CORRECOES.md` L1–115 — não releia `AGENTS.md`/regras já injetadas em `<user_rules>`).
+    1. `/seatualizar` enxuto em 1 turno paralelo (`docs/QUADRO.md` inteiro; do `docs/COORDENACAO_AGENTES.md` só o que mudou desde a última leitura, via `git log`), `version.json`, `CHANGELOG.md` L1–55, `BUGS_E_CORRECOES.md` L1–115 — não releia `AGENTS.md`/regras já injetadas em `<user_rules>`).
     2. Consulte a linha `Lxxxx` em `docs/CODE_SYMBOLS.md` e leia só a fatia cirúrgica (`StartLine`/`EndLine` de 60–120 linhas, ou `mare-cli.js slice` para `kanban-dev.html`).
     3. Aplique a edição (`edit_file` ou `"patches"` no `.mare-ship.json`), inclua `testScript` no `.mare-ship.json` e execute **1 único comando final**: `node scripts/mare-cli.js ship`.
 - **Arquitetura Multiagentes Paralela (2+ páginas/domínios, `/atualizardocumentacoes`, `/monitorarbugs`, `/auditoriaseguranca` ou contexto longo):**
@@ -35,4 +35,4 @@
   - `node scripts/mare-cli.js slice <arq> <ini> <fim>` e `find <padrao> [--file <arq>]` → leitura/busca numerada instantânea.
   - `node scripts/mare-cli.js check-script --page <arq> (--file <js> | --code "<js>")` → valida sintaxe, read-only, `const`s e existência de cada símbolo/ID.
 - **`node .claude/skills/subirproprod/promover.js`:** cuida exclusivamente da promoção dev→prod (`--status` e `<alvos>` nos 14 pares/módulos).
-- **Regras permanentes:** nunca faça merge de PR próprio, nunca `git push --force`, nunca `firebase deploy` sem comando explícito do Caio (registre em *Pendente de deploy* no Quadro), e só gere log de card / aviso de Mural+WhatsApp em `/subirproprod`.
+- **Regras permanentes:** nunca faça merge de PR próprio, nunca `git push --force`, nunca `firebase deploy` sem comando explícito do Caio (registre em *Pendente de deploy* no `docs/QUADRO.md`), e só gere log de card / aviso de Mural+WhatsApp em `/subirproprod`.

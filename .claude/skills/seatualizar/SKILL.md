@@ -13,10 +13,11 @@ description: Coloca o agente (Claude ou Antigravity) 100% em dia com tudo o que 
 
 > **Para o Antigravity:** Você já recebe `AGENTS.md`, `.agents/rules/antigravity.md` e `.agents/rules/release-process.md` injetados automaticamente em `<user_rules>` — **NÃO gaste turnos relendo esses arquivos**! Faça **1 única bateria paralela de `read_file`** nos 4 alvos dinâmicos abaixo (ou rode `node scripts/mare-cli.js brief` se já for usar terminal na rotina diária):
 
-1. **`docs/COORDENACAO_AGENTES.md` inteiro (~270 linhas; o Quadro é a §6 — não use faixa de linhas fixa: o arquivo muda todo dia e a faixa perde "Em andamento"/"Pendente de deploy"):**
-   - **`### Em andamento`:** quais arquivos estão reservados por Claude ou Codex agora? (**Proibido tocar neles** até o merge.)
-   - **`### Escalado para o Claude` / `### Pendente de deploy`:** há bloqueio ou deploy pendente do Caio?
-   *(Na 1ª tarefa da sessão, se ainda não leu a tabela de escopo §1 ou o §7, leia `StartLine: 1, EndLine: 225`.)*
+1. **`docs/QUADRO.md` inteiro (~5 KB; o estado do dia):**
+   - **`## Em andamento`:** quais arquivos estão reservados por outro agente agora? (**Proibido tocar neles** até o merge.)
+   - **`## Fila`:** há contrato pronto na sua fila? (O Caio aciona com "pegue o próximo da sua fila".)
+   - **`## Escalado` / `## Pendente de deploy`:** há bloqueio ou deploy pendente do Caio?
+   - **`docs/COORDENACAO_AGENTES.md` (as regras):** leia inteiro na 1ª tarefa da sessão; depois, **só o que mudou**: `git log -3 --format='%h %ad %s' --date=short -- docs/COORDENACAO_AGENTES.md` e, se houver commit novo desde a sua última leitura, `git diff <hash>..HEAD -- docs/COORDENACAO_AGENTES.md`. Sem terminal (Antigravity): `node scripts/mare-cli.js brief` já mostra o Quadro.
 2. **`version.json` (inteiro, ~15 linhas):**
    - Quais páginas estão com `-dev` à frente de `prod` (`kanban`, `painel`, `okr`, `oceano`, `escala`)?
 3. **`CHANGELOG.md` (`StartLine: 1, EndLine: 65`) e `BUGS_E_CORRECOES.md` (`StartLine: 1, EndLine: 130`):**
@@ -33,7 +34,7 @@ description: Coloca o agente (Claude ou Antigravity) 100% em dia com tudo o que 
 ## Quando o usuário invocar `/seatualizar` diretamente
 
 Entregue um resumo executivo curto e direto em 4 pontos:
-1. **🛠️ Em andamento / Travas no Quadro:** o que Claude e Codex estão mexendo agora (e quais arquivos estão reservados).
+1. **🛠️ Em andamento, fila e travas (`docs/QUADRO.md`):** o que cada agente está mexendo agora, os arquivos reservados e o próximo da fila de cada um.
 2. **🚀 Últimas alterações e Versões (`version.json`):** o que entrou recentemente em `CHANGELOG.md` e `BUGS_E_CORRECOES.md`, e o que está só em `-dev` vs. igual a `prod`.
-3. **☁️ Pendente de deploy no Firebase:** itens ativos na tabela *Pendente de deploy* do Quadro.
+3. **☁️ Pendente de deploy no Firebase:** itens ativos em *Pendente de deploy* no `docs/QUADRO.md`.
 4. **✅ Pronto para começar:** confirmação de contexto sincronizado e arquivos livres.

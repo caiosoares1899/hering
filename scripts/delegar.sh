@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# delegar.sh — o maestro (Claude) entrega um contrato (§7.3 de docs/COORDENACAO_AGENTES.md)
+# delegar.sh — o maestro (Claude) entrega um contrato ("Contrato de tarefa (v2)" em docs/COORDENACAO_AGENTES.md)
 # ao Codex num worktree próprio, em segundo plano, sem cerimônia.
 #
 #   scripts/delegar.sh <assunto> <arquivo-do-contrato.md>

@@ -112,7 +112,10 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | Documento | Assunto |
 |---|---|
 | `MAPA_DO_REPOSITORIO.md` | **O mapa**: como as peças se encaixam (diagramas), por pasta e as tabelas geradas do código (`scripts/mapa.js`) |
-| `COORDENACAO_AGENTES.md` | Como Claude e Antigravity dividem o repo; o **Quadro** (em andamento / escalado / pendente de deploy) |
+| `COORDENACAO_AGENTES.md` | **Regras** de como Claude, Codex e Antigravity dividem o repo: decisões D1–D3, modelos, roteamento por risco R0–R3, revisão cruzada, contrato de tarefa (v2) |
+| `QUADRO.md` | **Estado do dia** dos agentes: em andamento (arquivos reservados), fila de contratos, escalado, pendente de deploy e backlog; detalhe das linhas longas em `quadro/` |
+| `coordenacao-invocacoes.md` | Como acionar cada agente: canais e flags testados (`codex exec`, `codex review`, `agy -p`, worktrees) |
+| `historico/` | O que saiu dos docs vivos sem ser apagado (ex.: `coordenacao-2026-10-a-11.md`, a coordenação de 16/10 a 11/11 com a auditoria e os ✅ de deploy) |
 | `GUIA_DE_CODIGO.md` | Como escrever código e testes sem cair nas armadilhas conhecidas |
 | `CODE_SYMBOLS.md` | Índice automático completo de linhas (`<style>`, `<script>`, `const`s e funções `fn:Lxxxx`) de todas as páginas `-dev` e módulos `mare-*-dev.js`, gerado por `node scripts/mare-cli.js map` |
 | `OCEANO.md` | A família de produtos, nomes visíveis e fases |
@@ -144,7 +147,8 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | Notificação nova | `MareNotif.TIPOS` em `mare-notif-dev.js` (+ `PUSH_TYPES` em `functions/` se for push) |
 | Dica nova | linha no `CATALOGO` de `mare-dicas-dev.js` |
 | Subir dev → prod | skill `/subirproprod` (`.claude/skills/subirproprod/promover.js`) |
-| Ver o que o outro agente está fazendo | `docs/COORDENACAO_AGENTES.md` → Quadro |
+| Ver o que o outro agente está fazendo | `docs/QUADRO.md` |
+| Medir o trabalho por agente | `node scripts/placar.js` |
 | Registrar feature / bug | `node scripts/mare-cli.js log --type feature|bug` |
 | Rodar as checagens da CI | `node scripts/checar.js` e `cd functions && npm test` |
 | Testar uma tela no navegador | `docs/arezzo/testes/` (`fakefb.js` + Playwright) |
@@ -163,15 +167,15 @@ O `CLAUDE.md` guarda só o que vale em qualquer tarefa; o catálogo detalhado de
 - `docs/BIBLIOTECA.md` (este arquivo) — **o "bibliotecário" do repo**: onde mora cada arquivo da raiz e de cada pasta, e por que as páginas/imagens/módulos ficam na raiz (URL do GitHub Pages = nome do arquivo). **Arquivo novo na raiz = linha nela** (`node scripts/checar.js` falha se faltar); screenshots/saídas de teste não vão pra raiz (`docs/capturas/`). Ao lado dele, `docs/MAPA_DO_REPOSITORIO.md` é **o mapa** (diagramas das relações páginas → módulos → Firebase → functions, dev → prod); o bloco "O que o código diz" é gerado por `node scripts/mapa.js` e a CI reprova se estiver velho — **mudou módulo de uma página, função exportada ou nó do banco → rode `node scripts/mapa.js` e commite**.
 
 - `docs/ASSISTENTE_FERIAS.md` — **Assistente Férias do Caio + Plantão de Bugs: desativado em 03/11/2026, guardado para reuso** (nada foi apagado): o interruptor (`FERIAS_FIM` / `?ferias=1` em `oceano(-dev).html`), o inventário de todas as peças (front, módulo `mare-plantao`, funções `plantao*`, regras, skill `/plantaobug`), o checklist do dia da volta e o passo a passo para religar numa próxima ausência. O runbook técnico do plantão continua em `docs/PLANTAO_BUGS.md`.
-- `docs/COORDENACAO_AGENTES.md` — **how the two agents share this repo**
-  (Claude = big features/fixes, `functions/`, DB rules, shared modules;
-  Antigravity/Gemini = daily monitoring, small features/fixes, docs,
-  routine promotions), branch/commit conventions, the shared "board"
-  (in progress / escalated / pending deploy) and the daily checklist.
-  **Read it before starting any task.** This `CLAUDE.md` is the single
-  source of truth for project rules; `AGENTS.md` and `.agents/rules/` only
-  add what is specific to Antigravity and must not restate these rules.
-- **Revisão automática das PRs do Antigravity (2026-10-16) — ⏸ PAUSADA em 03/11/2026 (tarefa agendada desabilitada, não apagada; religar = pedir ao Claude ou reabilitar no claude.ai, ver `docs/COORDENACAO_AGENTES.md` §4.1)** — enquanto pausada, não há revisão automática; mesmo assim, quando você (Claude) for chamado numa conversa com o Caio e houver PR do Antigravity aberta, revise à mão. Como era: tarefa agendada acorda a sessão fixa "Revisor das PRs do Antigravity" (seg–sex, de 2 em 2 h, 8h–20h Brasília) para revisar toda PR `antigravity/*` e comentar nela (`<!-- revisao-claude:SHA7 -->`); nunca faz merge/aprovação/push. Procedimento, limites e como pausar em `docs/COORDENACAO_AGENTES.md` §4.1. Quando você (Claude) for chamado numa conversa com o Caio e houver PR aberta do Antigravity sem comentário de revisão, revise na hora.
+- `docs/COORDENACAO_AGENTES.md` — **the rules for how the three agents
+  share this repo** (decisions D1–D3, models, risk routing R0–R3, cross
+  review, task contract v2); the day-to-day state (in progress, queues,
+  escalated, pending deploy, backlog) lives in `docs/QUADRO.md`, the only
+  coordination file agents edit daily. **Read the board before starting any
+  task.** This `CLAUDE.md` is the single source of truth for project rules;
+  `AGENTS.md` and `.agents/rules/` only add what is specific to Antigravity
+  and Codex and must not restate these rules.
+- **Revisão automática das PRs do Antigravity (2026-10-16) — ⏸ PAUSADA em 03/11/2026 (tarefa agendada desabilitada, não apagada; religar = pedir ao Claude ou reabilitar no claude.ai, ver `docs/historico/coordenacao-2026-10-a-11.md`, seção 4.1)** — enquanto pausada, não há revisão automática; mesmo assim, quando você (Claude) for chamado numa conversa com o Caio e houver PR do Antigravity aberta, revise à mão. Como era: tarefa agendada acorda a sessão fixa "Revisor das PRs do Antigravity" (seg–sex, de 2 em 2 h, 8h–20h Brasília) para revisar toda PR `antigravity/*` e comentar nela (`<!-- revisao-claude:SHA7 -->`); nunca faz merge/aprovação/push. Procedimento, limites e como pausar em `docs/COORDENACAO_AGENTES.md` §4.1. Quando você (Claude) for chamado numa conversa com o Caio e houver PR aberta do Antigravity sem comentário de revisão, revise na hora.
 - `CODE_MAP_FAST.md` — compact, auto-generated line index of functions and
   anchors for the main pages (`node scripts/mare-cli.js map`); `CODE_MAP.md`
   (below) is the detailed, hand-curated index by feature area.

@@ -12,7 +12,7 @@ Pedido do Caio (11/11/2026): o onboarding do Maré hoje é feito ao vivo (via A 
 - **Dica** (regra 7): sim — "🧭 Boas-vindas em ❓ Ajuda" para quem já usa o Maré. Entra **depois que o `guia-mare.html` estiver na main** (mexer no `mare-dicas-dev.js` exige bump do `?v=` nas 4 páginas; antes do guia a dica levaria a 404).
 - **`.validate` de formato** para `onboarding_mare` (opcional, deploy de regras): necessária se alguém além do próprio usuário passar a ler esse nó no DOM (ex.: visão do ADM de quem concluiu).
 
-## Divisão (§7.7)
+## Divisão (`COORDENACAO_AGENTES.md` › *Roteamento por risco*)
 | Parte | Quem | Arquivos |
 |---|---|---|
 | Página do guia (telas simuladas, textos, modos, progresso local) | **Codex** (11/11: o Antigravity estava num `/monitorarbugs`; contrato em `~/hering-logs/delegacoes/2026-11-11-codex-guia-mare.md`; revisão visual do Claude) | `guia-mare.html` (novo), linha em `docs/BIBLIOTECA.md` |
