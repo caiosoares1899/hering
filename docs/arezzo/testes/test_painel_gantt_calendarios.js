@@ -69,7 +69,7 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     await p.click('#pcfg-tab-gantt'); await p.waitForTimeout(400);
     return { ctx, p, errs };
   };
-  const envia = async (p, cal, arquivo) => { await p.setInputFiles(`#pcfg-gantt-cards input[data-cal="${cal}"]`, arquivo); await p.waitForFunction(c => !!document.querySelector(`.pg-card[data-cal="${c}"] .pg-pv`), cal); };
+  const envia = async (p, cal, arquivo) => { await p.setInputFiles(`#pcfg-gantt-cards input[data-cal="${cal}"]`, arquivo); await p.waitForFunction(c => !!document.querySelector(`.pg-card[data-cal="${c}"] .pg-pv:not(.pg-pv-lendo)`), cal); };
   const pv = (p, cal) => p.evaluate(c => { const e = document.querySelector(`.pg-card[data-cal="${c}"] .pg-pv`); return e ? e.innerText : ''; }, cal);
   const store = (p, cal) => p.evaluate(([n, c]) => JSON.parse(JSON.stringify((window.__store.kanban[n] || {})[c] || null)), [NO, cal]);
 

@@ -7594,7 +7594,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.964-dev</div>
+<div class="version">v8.30.965-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14716,6 +14716,9 @@ function _ganttTipLigar(){
   });
   v.addEventListener('focusin', e=>{ const el=e.target.closest && e.target.closest(_GANTT_TIP_SEL); if(el && el.matches(':focus-visible')){ _ganttTipEsconder(); _ganttTipMostrar(el); } });
   v.addEventListener('focusout', ()=>_ganttTipEsconder());
+  // clicar/tocar (abre o card ou o editor) fecha o balão — senão ele ficava por cima do card aberto até o mouse se mexer
+  v.addEventListener('pointerdown', ()=>_ganttTipEsconder(), true);
+  v.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' ') _ganttTipEsconder(); }, true);
   v.addEventListener('scroll', ()=>_ganttTipEsconder(), true);
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ganttTipAlvo) _ganttTipEsconder(); });
 }
@@ -14978,6 +14981,8 @@ async function ganttMarcoSalvar(){
   if(!_ganttMcPodeEditar(escopo)){ aviso.textContent=escopo==='global'?'Só ADM cria datas-chave para todas as squads.':'Só PO, Organizador ou ADM da squad criam datas-chave.'; return; }
   const u=window._currentUser||{};
   const ant=_ganttMcEd.id?(_ganttMc[escopo]||{})[_ganttMcEd.id]:null;
+  // editando uma que sumiu (outra pessoa excluiu com o formulário aberto): gravar a RESSUSCITARIA como nova, com o autor trocado
+  if(_ganttMcEd.id && !ant){ aviso.textContent='Esta data-chave foi excluída por outra pessoa enquanto você editava — nada foi salvo. Feche e crie de novo, se ainda fizer sentido.'; return; }
   const id=_ganttMcEd.id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
   const dado={ titulo, ini, fim, cor:_ganttMcEd.cor, porUid:ant?ant.porUid:u.uid, porNome:ant?(ant.porNome||''):String(u.displayName||u.email||'').slice(0,80), em:Date.now() };
   const bt=ov.querySelector('#gantt-mc-ok'); bt.disabled=true;
@@ -14989,7 +14994,8 @@ async function ganttMarcoSalvar(){
   }finally{ bt.disabled=false; }
 }
 async function ganttMarcoExcluir(){
-  const {escopo,id}=_ganttMcEd; const m=(_ganttMc[escopo]||{})[id]; if(!id||!m) return;
+  const {escopo,id}=_ganttMcEd; const m=(_ganttMc[escopo]||{})[id]; if(!id) return;
+  if(!m){ _ganttMcOv().querySelector('#gantt-mc-aviso').textContent='Esta data-chave já foi excluída por outra pessoa.'; return; }
   if(!await uiConfirm('Excluir a data-chave "'+m.titulo+'"?'+(escopo==='global'?' Ela some do Gantt de todas as squads.':''), { okText:'Excluir', danger:true })) return;
   try{ await window._remove(_ganttMcRef(escopo,id)); closeOv('gantt-mc-ov'); showToast('🗑 Data-chave excluída'); }
   catch(e){ _ganttMcOv().querySelector('#gantt-mc-aviso').textContent='Não consegui excluir (sem permissão?).'; }
