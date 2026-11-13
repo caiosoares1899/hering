@@ -2009,6 +2009,9 @@ input[type="date"]{-moz-appearance:textfield;}
 .cal-ov #cal-escala{display:none;flex:1;min-height:0;flex-direction:column;}
 .cal-ov.cal-esc #cal-escala{display:flex;}
 .cal-ov.cal-esc #cal-nav,.cal-ov.cal-esc #cal-filtros-row,.cal-ov.cal-esc #cal-body,.cal-ov.cal-esc #gcal-token-warn{display:none !important;}
+.cal-ov #cal-ferias{display:none;flex:1;min-height:0;overflow-y:auto;padding:14px 16px;flex-direction:column;}
+.cal-ov.cal-ferias #cal-ferias{display:flex;}
+.cal-ov.cal-ferias #cal-nav,.cal-ov.cal-ferias #cal-filtros-row,.cal-ov.cal-ferias #cal-body,.cal-ov.cal-ferias #gcal-token-warn{display:none !important;}
 .cal-panel{background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:var(--r2);width:96vw;max-width:1600px;height:calc(100vh - 2rem);max-height:calc(100vh - 2rem);display:flex;flex-direction:column;box-shadow:var(--specular);}.cal-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .cal-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
   display:flex;align-items:center;justify-content:space-between;
@@ -6765,6 +6768,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
           <button class="view-btn" data-mode="events" onclick="changeCalView('events')">🗓️ Eventos</button>
           <button class="view-btn" data-mode="cards" onclick="changeCalView('cards')">📎 Prazos</button>
           <button class="view-btn" data-mode="escala" onclick="changeCalView('escala')" title="Quem trabalha quando: escala da squad e de todas as squads, com cadastro">👥 Escala</button>
+          <button class="view-btn" data-mode="ferias" id="btn-cal-ferias" onclick="changeCalView('ferias')" title="Agenda geral de férias do Digital e minhas férias">🏖️ Férias</button>
         </div>
       </div>
       
@@ -6810,6 +6814,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       </div>
       <iframe id="cal-escala-fr" title="Escala" style="flex:1;width:100%;border:0;min-height:0;"></iframe>
     </div>
+    <div id="cal-ferias"></div>
     <div class="cal-body" id="cal-body">
       <div class="cal-weekdays">
         <div class="cal-wd">Dom</div><div class="cal-wd">Seg</div><div class="cal-wd">Ter</div>
@@ -7645,7 +7650,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.979-dev</div>
+<div class="version">v8.30.980-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7998,10 +8003,11 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 </script>
 <script src="mare-notif-dev.js?v=43"></script>
 <script src="mare-metas-dev.js?v=19"></script>
-<script src="mare-dicas-dev.js?v=17"></script>
+<script src="mare-dicas-dev.js?v=18"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
 <script src="mare-gcal-dev.js?v=7"></script>
+<script src="mare-ferias-dev.js?v=2"></script>
 
 <script>
 
@@ -31415,6 +31421,7 @@ const HELP_CONTENT = {
     { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
     { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
     { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Abra 📅 Calendários e escolha a visão <b>👥 Escala</b> (ao lado de Tudo, Eventos e Prazos). Você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém). Também abre em tela cheia (escala-dev.html).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia (no título da coluna) pra ver o detalhe: a <b>📋 Lista</b> (plantão primeiro) ou a <b>📊 Visão Gantt</b>, e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, <b>entrada e saída</b> (opcionais) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n☕ <b>Pausas</b>: se a pessoa sai e volta no meio do expediente (almoço, consulta…), use <b>☕ Adicionar pausa (saída e volta)</b> logo abaixo da entrada/saída — até <b>3 pausas</b> por dia. Cada pausa precisa ter a volta depois da saída, ficar dentro do expediente, em ordem e sem sobrepor outra. A pausa aparece na lista do dia (☕ pausa 12:00–13:00), num ☕ na célula e abre um <b>intervalo na barra do Gantt</b>. Ao editar um dia que já tem pausa, ela vem preenchida; marcar Folga descarta a pausa.\n\n📊 <b>Visão Gantt</b>: no detalhe do dia, cada pessoa é uma linha com uma <b>barra do período</b> em que está (✅ azul-esverdeada pra escalado, 🔥 laranja pra plantão). Sem horário cadastrado a barra fica listrada ("dia todo"); só entrada ou só saída deixa a barra aberta pra um dos lados. O eixo se ajusta aos horários do dia, o <b>traço vermelho</b> marca "agora" (no dia de hoje), a linha <b>Cobertura</b> mostra quantas pessoas estão em cada hora (quem está em pausa não conta) e a folga vai numa linha à parte. A escolha Lista/Gantt fica lembrada neste aparelho.\n\n🔎 <b>Filtros</b>: o botão <b>🔎 Filtros</b> da barra (com um selo com o número de filtros ativos) abre uma <b>mini tela</b> com chips: de <b>squad</b> (na visão da squad, clicar numa troca de squad; na global, marque uma ou várias — <i>Todas</i> limpa) e de <b>subtime</b> (os que o PO cria em ⚙ Config → Subtimes; multi-seleção, <i>Todos</i> limpa). Clicar já filtra a escala por trás; <b>✕ Limpar filtros</b> zera tudo e <b>Pronto</b> (ou Esc) fecha. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads). O filtro vale também pro JPG e fica no link da página.\n\n🖼️ <b>Baixar JPG</b>: gera uma imagem da escala pra mandar no WhatsApp ou colar numa apresentação. Escolha <b>Dia, Semana ou Mês</b> e uma data de referência, confira a prévia e baixe. Vale pra squad (ou todas as squads) e respeita os filtros. No <b>Dia</b> há ainda <b>📋 Lista | 📊 Visão Gantt</b> — a imagem do Gantt traz o eixo de horas, uma barra por pessoa, as pausas tracejadas, a cobertura por hora e a folga. No detalhe de um dia, <b>🖼️ JPG do dia</b> (ou <b>JPG do Gantt</b>, se a visão for Gantt) abre direto no modo Dia.\n\n📅 <b>No mês</b>: na visão Tudo/Eventos/Prazos do Calendário, cada dia mostra a <b>sua</b> escala (✅ horário · 🔥 Plantão · 🏖️ Folga) e quantas pessoas da squad estão escaladas (👥 N · 🔥 plantão). Clique no dia pra ver quem é e use Abrir na Escala pra ir direto à semana dele. O botão <b>👥 Escala ✓</b> nas Legendas liga/desliga isso (fica lembrado neste aparelho).\n\n🔔 <b>Aviso</b>: quando PO, Organizador ou ADM cadastra (ou limpa) a escala de OUTRA pessoa, ela recebe uma notificação com o período e o tipo — clicar abre a Escala na semana certa.' },
+    { icon:'🏖️', title:'Férias do Digital', text:'Abra 📅 Calendários e escolha a visão <b>🏖️ Férias</b> (ao lado de 👥 Escala). Você vê quem está <b>fora agora</b>, as <b>próximas saídas</b> (60 dias) e as faixas do mês — por padrão das suas squads, com o botão <b>🌐 Todo o Digital</b> para ver todas. Em <b>Minhas férias</b> você cadastra, edita e exclui seus próprios períodos (apenas login Google @ciahering.com.br; ADM pode corrigir os de qualquer pessoa).' },
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
     { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
@@ -34378,6 +34385,7 @@ let editingEvId=null;
 let calViewMode = 'both';
 
 function changeCalView(mode) {
+  if(mode==='ferias' && !(window.MareFerias && MareFerias.permitido(window._currentUser))) mode = 'both';
   if(calViewMode==='escala' && mode!=='escala') _calEscala.ts=0;   // voltou da Escala: o iframe pode ter cadastrado — o mês relê
   calViewMode = mode;
   document.querySelectorAll('#cal-ov .view-btn').forEach(btn => {
@@ -34387,7 +34395,47 @@ function changeCalView(mode) {
     }
   });
   _calMostrarEscala(mode === 'escala');
-  if (mode !== 'escala') renderCal();
+  _calMostrarFerias(mode === 'ferias');
+  if (mode !== 'escala' && mode !== 'ferias') renderCal();
+}
+let _calFeriasInst = null;
+function _feriasIsAdm(){
+  const u = window._currentUser || {}, uid = u.uid;
+  const email = String(u.email || "").toLowerCase();
+  const raw = (window._allUsersRaw && uid) ? window._allUsersRaw[uid] : null;
+  return !!(window.MareFerias && MareFerias.permitido(u)) && ((raw && raw.role === "adm") || email === "caio.soares@ciahering.com.br");
+}
+function _calMostrarFerias(on){
+  document.getElementById('cal-ov')?.classList.toggle('cal-ferias', !!on);
+  const add=document.getElementById('btn-add-event'); if(add && on) add.style.display='none';
+  if(!on || !window.MareFerias) return;
+  const host = document.getElementById('cal-ferias'); if(!host) return;
+  if(_calFeriasInst){ _calFeriasInst.redesenhar(); return; }
+  const u = window._currentUser || {}, users = window._allUsersRaw || {};
+  const pessoas = Object.entries(users).map(([id, d])=>({
+    uid: id,
+    nome: (d && (d.nome || d.email)) || id,
+    squads: d && d.squads ? Object.keys(d.squads).filter(k=>d.squads[k]===true) : [],
+  }));
+  _calFeriasInst = MareFerias.montar(host, {
+    uid: u.uid || "",
+    pessoas,
+    padraoTodasSquads: false,
+    minhasSquads: ()=>{
+      const me = users[u.uid];
+      const sqs = me && me.squads ? Object.keys(me.squads).filter(k=>me.squads[k]===true) : [];
+      return sqs.length ? sqs : (ACTIVE_SQUAD ? [ACTIVE_SQUAD] : []);
+    },
+    nomeDe: id => (users[id] && (users[id].nome || users[id].email)) || id,
+    squadsDe: id => (users[id] && users[id].squads) ? Object.keys(users[id].squads).filter(k=>users[id].squads[k]===true) : [],
+    squadNome: id => (typeof SQUAD_LABELS !== "undefined" && SQUAD_LABELS[id]) || id,
+    uidDeInit: init => {
+      const q = String(init || "").trim().toUpperCase();
+      const hit = Object.entries(users).find(([, d]) => String((d && d.init) || "").trim().toUpperCase() === q);
+      return hit ? hit[0] : "";
+    },
+    isAdm: _feriasIsAdm,
+  });
 }
 // 👥 Escala dentro do Calendário (2026-10-12): a página escala(-dev).html embutida (?embed=1) — é a MESMA página (squad + global + cadastro), sem cópia do código.
 // Carrega só quando a pessoa abre a visão (e recarrega se trocou de squad); no modo Escala somem o mês, os filtros e o "+ Evento", que não fazem sentido ali.
@@ -34439,7 +34487,12 @@ function openCal(){
   document.getElementById('btn-add-event').style.display=isPO?'':'none';
   populateCalFilters();
   renderCal();
+  const fBtn = document.getElementById('btn-cal-ferias');
+  const podeFerias = !!(window.MareFerias && MareFerias.permitido(window._currentUser));
+  if(fBtn) fBtn.style.display = podeFerias ? '' : 'none';
+  if(calViewMode === 'ferias' && !podeFerias) calViewMode = 'both';
   _calMostrarEscala(calViewMode === 'escala');
+  _calMostrarFerias(calViewMode === 'ferias');
   document.getElementById('cal-ov').classList.add('open');
   _calEscalaCarregar();
 }
