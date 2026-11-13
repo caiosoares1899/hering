@@ -49,6 +49,10 @@ Deploy (do Caio, depois do resync): F1 → `firebase deploy --only database` e d
 - Maré: por padrão, só as pessoas das minhas squads (chip "Todo o Digital"); Radar: todo o Digital.
 - Período longo: a regra não limita; a tela **avisa** acima de 45 dias (não bloqueia).
 
+## Prova no banco real (13/11/2026)
+
+Script de console no `kanban-dev.html`, conta do Caio (ADM na regra), nó `ferias_dev`: **11/11 ✅** — lê o calendário; cadastra e edita as próprias; recusa data fora de AAAA-MM-DD, campo extra, `por` de outra pessoa, obs > 140 e apagar o nó inteiro; como ADM, grava e apaga as de outra pessoa; limpeza ok. **Falta:** a mesma rodada com uma conta não-ADM (esperado: "férias de OUTRA pessoa" recusado) — o simulador e a revisão R3 já cobrem esse caso.
+
 ## Registro (pós-merge/deploy)
 Como a regra do 🔔 Gantt: **sem tag própria**; a F1 entra na entrada de feature do CHANGELOG quando a F2 for ao ar ("Banco: nó novo kanban/ferias(_dev)…"), e a confirmação do deploy sai do *Pendente de deploy* para o histórico.
 
