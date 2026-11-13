@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/modo-ferias-f1` | `database.rules.json`, `functions/backup/completo.js`, `functions/rules/__tests__/feriasRules.test.js`, `docs/ideias/modo-ferias.md` | 13/11/2026 |
 
 
 ## Fila
@@ -18,7 +17,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
 | Antigravity | R0 | 🪟 Acabamento "vidro lapidado" (`--specular` por tema + curvas `--ease-*`) | [GUIA_UI_UX §2.4/§2.5](GUIA_UI_UX.md) · [backlog](quadro/backlog.md#vidro-lapidado) |
-| Antigravity | R3 | 🔍 2ª revisão do PR #1786 (🏖️ férias F1: regras de `kanban/ferias`) | [contrato](ideias/modo-ferias.md#contrato--revisão-r3-da-f1-antigravity-2ª-revisão) |
 | Antigravity | R2 | 🏖️ Férias F2: módulo `mare-ferias-dev.js` + vista 🏖️ Férias no Radar e no Maré | [contrato](ideias/modo-ferias.md#contrato--f2-módulo-mare-ferias-devjs--vista-️-férias-antigravity) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
@@ -38,15 +36,14 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
 | Claude | 📣 Pedir atualização no Gantt: tipo `gantt_pedido` vira push (sem regra nova) | resync + `firebase deploy --project hering-onboarding --only functions:sendPushOnNotification` | 13/11/2026 |
-| Claude | 🔔 Avisos de mudança no Gantt: nó `gantt_inscritos(_dev)` + funções de aviso + `gantt_cal` no push (+ backup diário) | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:sendPushOnNotification,functions:backupCompletoSemanal,functions:backupGlobalDiario` | 13/11/2026 |
+| Claude | 🔔 Avisos de mudança no Gantt: regras e backups **já foram** junto com o deploy da 🏖️ F1 (13/11); faltam só as funções de aviso e o push | resync + `firebase deploy --project hering-onboarding --only functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:sendPushOnNotification` | 13/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na promoção do Gantt de 13/11 (Digital · dia a dia, Radar Gantt) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 13/11/2026 |
-| Claude | 🏖️ Férias F1: nó `kanban/ferias(_dev)` + regras + entra no backup (PR claude/modo-ferias-f1) | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:backupGlobalDiario,functions:backupCompletoSemanal` (se a linha do 🔔 Gantt acima ainda não foi feita, um deploy só cobre as duas) | 13/11/2026 |
 
 ## Backlog
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
-| 🏖️ Calendário geral de férias + **modo férias** — decidido em 13/11, em 4 fases (F1 em andamento) | Claude | [nota de desenho](ideias/modo-ferias.md) |
+| 🏖️ Calendário geral de férias + **modo férias** — F1 (banco) no ar em 13/11; F2 na fila do Antigravity; depois F3 (Codex) e F4 (Claude) | Claude | [nota de desenho](ideias/modo-ferias.md) |
 | 📱 Gantt no celular: nenhum texto cabe, só barrinhas (Maré e Radar) | Claude | [escopo](quadro/escalados.md#gantt-celular) |
 | ⭐ Gantt: aba favorita ao abrir + 🔔 inscrição para avisos quando um calendário muda | Claude | [escopo](quadro/escalados.md#gantt-favorito-avisos) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |

@@ -284,3 +284,7 @@ Lição da rodada de UI/UX da apresentação do Radar (PR #1629): foi feita **in
 
 Caio confirmou o merge da #1768 e todos os deploys pendentes do Gantt: regras de calendários, histórico/cópias e destaques (incluindo Marketplace/Outlet), backups e conhecimento do Agente Ágil. Pendências removidas do Quadro na tarefa do botão Mês.
 - ✅ **13/11/2026:** o Caio publicou as 5 funções do Agente Ágil com o conhecimento da promoção do lote Gantt (#1770; tags `kanban-v8.30.969`, `painel-v5.113`).
+
+## Confirmação de deploy — 13/11/2026 (🏖️ Férias F1)
+
+Caio confirmou o merge da #1786 e o deploy das regras (`--only database`: nó `kanban/ferias(_dev)` e, de carona, as regras de `gantt_inscritos(_dev)` que já estavam na main) e das funções `backupGlobalDiario` e `backupCompletoSemanal`. Revisões R3: Codex (D1, sem defeito) e Antigravity (8 hipóteses rejeitadas; motor real = validar no dev).
