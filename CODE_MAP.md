@@ -20,8 +20,8 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3 classes de
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.932 e dev
-em v8.30.941-dev (Ilha Dinâmica V2 com módulos ligáveis, véu de vidro e atalho Preferências);
+DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.973 e dev
+em v8.30.976-dev (📊 Gantt com 5 abas, 🔔 Avisar-me e 📣 Pedir atualização);
 o estado NORMAL na maior parte do tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
@@ -4040,7 +4040,7 @@ A página consulta `oceanoResumo` a cada minuto quando visível; `?compacto=1` a
   mesmo gap do `feedback` — irmão quase idêntico `okr_reuniao` já tinha
   push, o genérico não); depois entraram `meta_lembrete` (2026-10-12),
   `escala`, `backup_falhou`, `vtex_incidente`, `vtex_monitor_falhou` (2026-10-13) e
-  `github_incidente`, `github_monitor_falhou`, `firebase_incidente`, `firebase_monitor_falhou` (2026-10-14); depois `okr_cobranca`, `card_resgatado`, `plantao_bug` (guardado), `timer_criado`, `timer_zero`, `timer_esquecido`, `timer_encerrado`; o interruptor por tipo do ADM está em
+  `github_incidente`, `github_monitor_falhou`, `firebase_incidente`, `firebase_monitor_falhou` (2026-10-14); depois `okr_cobranca`, `card_resgatado`, `plantao_bug` (guardado), `timer_criado`, `timer_zero`, `timer_esquecido`, `timer_encerrado` e, em 2026-11-13, `gantt_cal` e `gantt_pedido`; o interruptor por tipo do ADM está em
   `common/notifConfig.js`) — `PUSH_TYPES` em `functions/index.js` L26
 - `sendPushOnNotification` — L28 (URL/tag do push em `common/pushUrl.js`: `urlDoPush()`/`tagDoPush()` — `okr_*` abre `okr.html`; `okr_mencao` entrou em `PUSH_TYPES` 2026-10-07)
 - `sendPushOnMural` — L135 (`okr/pushMural.js`: `runPushMural()`/`deveReceber()`/`criaTrigger()`) — push do aviso novo do Mural, disparado por evento `tipo:'mural'` em `kanban/notif_feed/{id}`; só ADM/Geral/torre alvo, respeita Não Perturbe
@@ -4091,8 +4091,9 @@ A página consulta `oceanoResumo` a cada minuto quando visível; `?compacto=1` a
 - `cardsGuardiao` — `functions/index.js` L269 — resgate após remoção inesperada.
 - `cardsEspelhoVarredura` — `functions/index.js` L270 — varredura diária do espelho.
 - `guardiaoStatus` — `functions/index.js` L273 — pulso de saúde do Guardião.
-- `agenteAgilPainelChat` — `functions/index.js` L415 — chat do Painel, ambiente prod.
-- `agenteAgilPainelChatDev` — `functions/index.js` L416 — chat do Painel, ambiente dev.
+- `agenteAgilPainelChat` — `functions/index.js` L422 — chat do Painel, ambiente prod.
+- `agenteAgilPainelChatDev` — `functions/index.js` L423 — chat do Painel, ambiente dev.
+- `ganttAvisoMudanca` / `ganttAvisoMudancaDev` — `functions/index.js` L286/L287 → `gantt/avisos.js` — `onValueCreated` em `kanban/calendarios_gantt_hist(_dev)/{cal}/{histId}`; envia aviso `gantt_cal` (sino + push) aos inscritos em `kanban/gantt_inscritos(_dev)/{cal}/{uid}` (exceto autor).
 
 ### cards/ — Guardião dos cards
 Espelho independente em `kanban/cards_espelho/{squad}/{cardId}`; incidentes em `kanban/cards_guardiao/{squad}/incidentes`. A remoção inesperada aguarda seis segundos e checa exclusão intencional, pausa de operação em massa e índice antes de decidir. Varredura diária às 05:30 completa o espelho; pulso a cada cinco minutos usa consultas indexadas.
@@ -4667,4 +4668,9 @@ Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,n
 - **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3655/L3657, `_corCssOk()` — L3658, `_colsSegurasP()` — L3659, `_tagsSegurasP()` — L3660, `_pSafeUrl()` — L3932, `_sanitizeComunicadoHtml()` — L8946 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10295. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
 - **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10403) e `updateSquadUserRole()` (L11430) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
 
-*Retrato do commit `1bfb5d6e` (2026-11-11).*
+### 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v2` prod · `v5`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-13)
+- **`mare-gcal-dev.js` (`window.MareGCal`, v5)**: `CALS` (marca, comercial, mktplace, outlet), `CONSOLIDADO` (aba virtual 🧭 Digital · dia a dia), `ABAS`, `NOME`, `ROT_NOVO`, `GRUPOS`, `LINHA_COR`, `CORES`, `NOME_COR`, `LARGO`, `permitido(u)`, `linhaNoGrupo(g,k)`, `linhasDe(id,d)`, `doDia(dadosPorFonte, dia, fontes)` (painel "tudo deste dia"), `montar(root, opts)` (visualizador no Radar `okr(-dev).html?gantt`), `inscricao()` (nó `kanban/gantt_inscritos(_dev)/{cal}/{uid}`, botão 🔔 Avisar-me), `PEDIDO` / `pedido()` (botão 📣 Pedir atualização, aviso `gantt_pedido` com deduplicação diária).
+- **`mare-gxl-dev.js` (`window.MareGXL`, v2, sob demanda)**: `zipDir()`, `ler(buf, quer)`, `hid(s)`, `montarMarca(abas)`, `montarComercial(abas, anoMin)`, `montarMarketplace(abas)`, `montarOutlet(abas, nomeArquivo)`, `mesclar(tipo, novo, atual)`, `preparar(tipo, file, atual)`, `previaHtml(tipo, pv, acoes)`, `publicar(tipo, pv, user, extra)`, `historico(tipo)`, `restaurar(tipo, h, user, atual)` — usado pelo Maré e pelo Painel.
+- **`functions/gantt/avisos.js` (2026-11-13)**: `ganttAvisoMudanca` / `ganttAvisoMudancaDev` (`onValueCreated` em `kanban/calendarios_gantt_hist(_dev)/{cal}/{histId}`); `avisarMudanca()`, `podeReceber()` (Auth + `@ciahering` + Google + `usuarios/{uid}`), `textoDoAviso()`, `quando()`. URL e tag de `gantt_cal` / `gantt_pedido` em `common/pushUrl.js`. Testes: `functions/gantt/__tests__/avisos.test.js`, `functions/rules/__tests__/ganttInscritosRules.test.js`, `docs/arezzo/testes/test_gantt_avisos.js`, `docs/arezzo/testes/test_gantt_pedido.js`.
+
+*Retrato do commit `925a144d` (2026-11-13).*
