@@ -9,6 +9,7 @@
      • MareFerias.ausente(quem, diaISO)    → { uid, ini, fim, obs } | null (aceita uid ou inicial)
      • MareFerias.periodoDe(quem)          → período atual ou próximo { uid, id, ini, fim, obs } | null
      • MareFerias.montar(root, opts)       → { destruir(), redesenhar() }
+   v2 (revisão #1791): 🗑️ Excluir pede confirmação (uiConfirm da página).
 */
 (function(){
   'use strict';
@@ -401,6 +402,12 @@
 
     async function excluirPeriodo(uid, id){
       if(uid !== opts.uid && !ehAdm()) return;
+      const p = periodosDoUid(uid).find(x => x.id === id);
+      const quem = uid === opts.uid ? 'suas férias' : 'as férias de ' + nomeDe(uid);
+      const msg = 'Excluir ' + quem + (p ? ' (' + brAno(p.ini) + ' a ' + brAno(p.fim) + ')' : '') + '?';
+      // uiConfirm das páginas escapa a mensagem (nome é texto de outra pessoa); sem ele, o confirm nativo
+      const ok = typeof window.uiConfirm === 'function' ? await window.uiConfirm(msg, { danger: true, okText: 'Excluir' }) : window.confirm(msg);
+      if(!ok) return;
       try{
         await salvarFirebase(uid, id, null);
         if(ST.dados[uid]) delete ST.dados[uid][id];
@@ -640,6 +647,6 @@
     configurar,
     hojeSP,
     permitido,
-    v: 1,
+    v: 2,
   };
 })();

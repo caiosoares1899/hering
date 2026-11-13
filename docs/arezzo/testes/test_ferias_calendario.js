@@ -149,6 +149,12 @@ function startServer() {
     t('H. Editar período próprio funciona', await p.evaluate(() => MareFerias.periodoDe('ana')?.fim === '2026-11-18'));
 
     await p.click('#okr-ferias-host [data-act="del"][data-uid="ana"]');
+    await p.waitForTimeout(150);
+    t('I0. Excluir pede confirmação (nada apagado antes)', await p.evaluate(() => MareFerias.periodoDe('ana') !== null) && await p.locator('#_uimp-ok').count() === 1);
+    await p.click('#_uimp-cancel'); await p.waitForTimeout(150);
+    t('I1. Cancelar mantém o período', await p.evaluate(() => MareFerias.periodoDe('ana') !== null));
+    await p.click('#okr-ferias-host [data-act="del"][data-uid="ana"]');
+    await p.waitForTimeout(150); await p.click('#_uimp-ok');
     await p.waitForTimeout(200);
     t('I. Excluir período próprio funciona', await p.evaluate(() => MareFerias.periodoDe('ana') === null));
 

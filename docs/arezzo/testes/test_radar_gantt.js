@@ -48,7 +48,7 @@ const seed = () => ({ kanban: {
     let s = await st();
     t('A. ?gantt=outlet abre Calendário → 📊 Gantt na aba Outlet (pessoa sem squad no Maré)', s.cal && s.vista === 'gantt' && s.host && s.aba === 'outlet' && /OUTLET PRINCIPAL/.test(s.txt), s);
     t('B. 5 abas: Marca, Comercial Hering, Marketplace, Outlet e 🧭 Digital', await p.evaluate(() => [...document.querySelectorAll('.mgc-aba')].map(x => x.dataset.aba).join()) === 'marca,comercial,mktplace,outlet,digital');
-    t('C. botão 📊 Gantt marcado no seletor Mês · Agenda · Gantt', await p.evaluate(() => { const bs = [...document.querySelectorAll('.okr-cal-seg button')]; return bs.length === 3 && bs[2].classList.contains('on') && /Gantt/.test(bs[2].textContent); }));
+    t('C. botão 📊 Gantt marcado no seletor Mês · Agenda · Gantt · 🏖️ Férias', await p.evaluate(() => { const bs = [...document.querySelectorAll('.okr-cal-seg button')]; return bs.length === 4 && bs[2].classList.contains('on') && /Gantt/.test(bs[2].textContent) && /Férias/.test(bs[3].textContent) && !bs[3].classList.contains('on'); }));
     t('D. Outlet filtra por grupo (chips Tudo + 7)', await p.evaluate(() => document.querySelectorAll('.mgc-chip').length === 8));
     await p.click('.mgc-aba[data-aba="comercial"]'); await p.waitForTimeout(200);
     s = await st();
