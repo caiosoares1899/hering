@@ -27,7 +27,7 @@
   // Ícone de cada tipo (pessoais + feed). As páginas podem ter o próprio mapa; este é o de referência.
   const ICONS = {
     assigned:'👤', mention:'💬', unblocked:'✅', risk:'⚠️', due_today:'📅', due_overdue:'🔴', done:'🏁', checklist:'☑️', moved:'➡️',
-    intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍', gantt_cal:'📊',
+    intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍', gantt_cal:'📊', gantt_pedido:'📣',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_cobranca:'📦', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
     mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
@@ -63,7 +63,7 @@
     {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
   ];
   // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
-  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_cobranca','card_resgatado','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou','timer_criado','timer_zero','timer_esquecido','timer_encerrado','gantt_cal']);
+  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_cobranca','card_resgatado','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou','timer_criado','timer_zero','timer_esquecido','timer_encerrado','gantt_cal','gantt_pedido']);
   // fonte: 'pessoal' = notificação gravada na caixa de cada pessoa (kanban/usuarios/{uid}/notificacoes); 'feed' = evento único da torre (kanban/notif_feed).
   const TIPOS = [
     // ── Cards do board ──
@@ -187,6 +187,9 @@
     {id:'gantt_cal', area:'agenda', fonte:'pessoal', nome:'Calendário do Gantt atualizado', pushPossivel:true,
       quando:'Alguém publica uma planilha nova (ou volta uma versão) de um calendário do Gantt que você segue — Marca, Comercial Hering, Marketplace ou Outlet. Diz quem atualizou e o que mudou (＋ novas · ✎ mudaram · − saíram). Você não recebe o aviso da sua própria atualização.',
       quem:'Quem tocou em 🔔 Avisar-me na aba do calendário (Maré → 📊 Gantt ou Radar → Calendário → 📊 Gantt).', onde:'Servidor: ganttAvisoMudanca (functions/gantt/avisos.js). Clicar abre o Gantt naquele calendário, no Maré ou no Radar (onde a pessoa se inscreveu).'},
+    {id:'gantt_pedido', area:'agenda', fonte:'pessoal', nome:'Pedido para atualizar um calendário do Gantt', pushPossivel:true,
+      quando:'Alguém tocou em 📣 Pedir atualização num calendário do Gantt que a sua squad cuida (Comercial Hering: squads APP e Site Hering · Marketplace: squad Marketplace · Outlet: squad Outlet Comercial · Marca: o Caio). No máximo um pedido por pessoa, por calendário, por dia.',
+      quem:'As pessoas das squads responsáveis pelo calendário (sem repetir quem está em mais de uma, e sem quem pediu).', onde:'Maré e Radar: botão 📣 no 📊 Gantt (mare-gcal). Clicar abre o Maré no 📤 Atualizar planilha daquele calendário.'},
     {id:'gcal_pending', area:'agenda', fonte:'pessoal', nome:'Agenda aguardando aprovação',
       quando:'Alguém pede para conectar uma agenda do Google ao squad.', quem:'Todos os ADMs.', onde:'Maré: pedido de conexão de agenda.'},
     {id:'gcal_approved', area:'agenda', fonte:'pessoal', nome:'Agenda conectada',
@@ -378,6 +381,7 @@
     if(t==='meta_lembrete') return {url:PAGES.kanban+'?'+(n.squad?'squad='+encodeURIComponent(n.squad)+'&':'')+'dados='+(n.okrObjId==='digital'?'digital':'squad')};   // abre a aba 📊 Dados (Squad ou Digital) do Maré
     if(t==='reuniao') return /^https?:\/\//i.test(String(n.meetingLink||'')) ? {url:n.meetingLink, externo:true} : null;   // só http(s): um javascript: gravado na notificação viraria XSS no window.open
     if(t==='gantt_cal'){ const c=['marca','comercial','mktplace','outlet'].includes(n.cal)?n.cal:''; return {url:(n.onde==='radar'?PAGES.okr:PAGES.kanban)+'?gantt='+c}; }   // 🔔 calendário do Gantt atualizado: abre o Gantt naquele calendário
+    if(t==='gantt_pedido'){ const c=['marca','comercial','mktplace','outlet'].includes(n.cal)?n.cal:''; return {url:PAGES.kanban+'?gantt='+c+'&atualizar=1'}; }   // 📣 pedido de atualização: abre o Maré no 📤 daquele calendário
     if(t==='painel_broadcast') return {url:PAGES.kanban+(n.squad?'?squad='+encodeURIComponent(n.squad):'')};
     if(n.cardId) return {url:PAGES.kanban+'?squad='+encodeURIComponent(n.squad||'')+'&card='+encodeURIComponent(n.cardId)};
     return {url:PAGES.kanban+(n.squad?'?squad='+encodeURIComponent(n.squad):'')};

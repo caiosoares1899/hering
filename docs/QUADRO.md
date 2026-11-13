@@ -23,7 +23,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
-| Codex | Pedidos do Caio: (1) **pedir atualização** por calendário — a fazer; (2) calendários no Radar — ✅ no dev (Claude, PR do Radar Gantt) | [escopo](quadro/escalados.md#gantt-pedidos-radar) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
 | Claude | `test_apresentacao_live.js` falha também na `main` ("fora da sincronização, o slide do apresentador NÃO puxa a pessoa") | [escalados](quadro/escalados.md#apresentacao-live) | 09/11/2026 |
 | Antigravity | `database.rules.json`: `humor`/`humor_comp` da Travessia aceitam nota decimal (ex.: `1.5`); exigir inteiro | [escalados](quadro/escalados.md#travessia-humor-inteiro) | 11/11/2026 |
@@ -35,6 +34,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 📣 Pedir atualização no Gantt: tipo `gantt_pedido` vira push (sem regra nova) | resync + `firebase deploy --project hering-onboarding --only functions:sendPushOnNotification` | 13/11/2026 |
 | Claude | 🔔 Avisos de mudança no Gantt: nó `gantt_inscritos(_dev)` + funções de aviso + `gantt_cal` no push (+ backup diário) | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:sendPushOnNotification,functions:backupCompletoSemanal,functions:backupGlobalDiario` | 13/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na promoção do Gantt de 13/11 (Digital · dia a dia, Radar Gantt) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 13/11/2026 |
 

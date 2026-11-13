@@ -109,3 +109,11 @@ test('o nome de quem atualizou vem do cadastro público, não do texto livre da 
   const [b] = await notifs(db, 'bia');
   assert.match(b.sub, /^Ana Lima · /);
 });
+
+test('push do 📣 pedido de atualização: no PUSH_TYPES e abre o Maré no 📤 daquele calendário', () => {
+  const idx = fs.readFileSync(path.join(__dirname, '..', '..', 'index.js'), 'utf8');
+  assert.match(idx, /PUSH_TYPES = new Set\(\[[^\]]*'gantt_pedido'/);
+  assert.equal(urlDoPush({ type: 'gantt_pedido', cal: 'outlet' }), 'https://caiosoares1899.github.io/hering/kanban.html?gantt=outlet&atualizar=1');
+  assert.equal(urlDoPush({ type: 'gantt_pedido', cal: 'marca', dev: true }), 'https://caiosoares1899.github.io/hering/kanban-dev.html?gantt=marca&atualizar=1');
+  assert.equal(urlDoPush({ type: 'gantt_pedido', cal: '"><x' }), 'https://caiosoares1899.github.io/hering/kanban.html?gantt=&atualizar=1');
+});

@@ -98,20 +98,20 @@
 
 ### `kanban-dev.html` (141 âncoras curadas)
 - `ADM_EMAILS` (L8024) · `getEffectiveRole` (L8159) · `SQUAD_META_LIVE` (L8221) · `resolveSquadAndShow` (L12976) · `autoRegistrar` (L13513) · `_claimUserInit` (L13349)
-- `_ensureInitRegistryBackfilled` (L13392) · `doSignIn` (L12863) · `_syncAuthProfileToFirebase` (L13416) · `showApp` (L13034) · `_onRealAuthChange` (L39303) · `agentes` (L8936)
-- `allIdentities` (L8948) · `renderAgentesList` (L29223) · `fecharAddAgente` (L29264) · `salvarAgente` (L29268) · `excluirAgente` (L29295) · `CARD_SECTIONS` (L8861)
-- `openCard` (L19071) · `openAgenteHotline` (L18950) · `_applyAgenteHotlineSkin` (L18926) · `saveCard` (L19608) · `_finishCloseOv` (L38626) · `_newCardGuardOff` (L18113)
-- `fbSaveAll` (L10921) · `fbCreateCard` (L11164) · `fbSaveCard` (L11242) · `_applyCardsSync` (L11642) · `_notasUpdate` (L23649) · `_saveCardWithRetry` (L11393)
-- `saveExtraDesc` (L18670) · `openNewCard` (L19514) · `backfillFlow` (L10364) · `recordMove` (L10238) · `_reportUnexpectedCardDisappearance` (L11229) · `searchDependsCards` (L39815)
-- `_currentTheme` (L38873) · `toggleTheme` (L38935) · `toggleThemeAuto` (L39031) · `exitViceCity` (L39109) · `_isViceCityEasterEggAtivo` (L39212) · `toggleBlackFriday` (L39133)
-- `exitBlackFriday` (L39144) · `_themeBtnRightClick` (L39156) · `_isBlackFridayAtivo` (L39132) · `maybeAutoArchiveOldCards` (L17638) · `_renderArquivadosBody` (L27795) · `openArquivados` (L27860)
+- `_ensureInitRegistryBackfilled` (L13392) · `doSignIn` (L12863) · `_syncAuthProfileToFirebase` (L13416) · `showApp` (L13034) · `_onRealAuthChange` (L39318) · `agentes` (L8936)
+- `allIdentities` (L8948) · `renderAgentesList` (L29235) · `fecharAddAgente` (L29276) · `salvarAgente` (L29280) · `excluirAgente` (L29307) · `CARD_SECTIONS` (L8861)
+- `openCard` (L19083) · `openAgenteHotline` (L18962) · `_applyAgenteHotlineSkin` (L18938) · `saveCard` (L19620) · `_finishCloseOv` (L38641) · `_newCardGuardOff` (L18125)
+- `fbSaveAll` (L10921) · `fbCreateCard` (L11164) · `fbSaveCard` (L11242) · `_applyCardsSync` (L11642) · `_notasUpdate` (L23661) · `_saveCardWithRetry` (L11393)
+- `saveExtraDesc` (L18682) · `openNewCard` (L19526) · `backfillFlow` (L10364) · `recordMove` (L10238) · `_reportUnexpectedCardDisappearance` (L11229) · `searchDependsCards` (L39830)
+- `_currentTheme` (L38888) · `toggleTheme` (L38950) · `toggleThemeAuto` (L39046) · `exitViceCity` (L39124) · `_isViceCityEasterEggAtivo` (L39227) · `toggleBlackFriday` (L39148)
+- `exitBlackFriday` (L39159) · `_themeBtnRightClick` (L39171) · `_isBlackFridayAtivo` (L39147) · `maybeAutoArchiveOldCards` (L17650) · `_renderArquivadosBody` (L27807) · `openArquivados` (L27872)
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
-- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11428) · `openGlobalUsersModal` (L11020) · `updateUserRole` (L10401) · `_limparHtmlStatus` (L7208) · `_linkSeguroStatus` (L7221)
+- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11430) · `openGlobalUsersModal` (L11022) · `updateUserRole` (L10403) · `_limparHtmlStatus` (L7208) · `_linkSeguroStatus` (L7221)
 - `_statusIncidenteRecente` (L7229) · `_setStatusPill` (L7236) · `initGithubStatusMonitor` (L7191) · `loadGithubStatus` (L7245) · `renderGithubStatusUI` (L7295) · `_fbMatchServicos` (L7496)
-- `initFirebaseStatusMonitor` (L7526) · `loadFirebaseStatus` (L7540) · `renderFirebaseStatusUI` (L7607) · `loadAgentesExternosPainel` (L9493) · `renderAgentesExternosPainel` (L9505) · `criarAgenteExternoPainel` (L9573)
-- `toggleAgenteExternoSquad` (L9630) · `_fillAgentesLogSquadFilter` (L9662) · `loadAgentesTabData` (L9669) · `renderAgentesAtivosGrid` (L9693) · `renderAgentesLogCross` (L9718) · `closeAgentesHelp` (L9752)
+- `initFirebaseStatusMonitor` (L7526) · `loadFirebaseStatus` (L7540) · `renderFirebaseStatusUI` (L7607) · `loadAgentesExternosPainel` (L9495) · `renderAgentesExternosPainel` (L9507) · `criarAgenteExternoPainel` (L9575)
+- `toggleAgenteExternoSquad` (L9632) · `_fillAgentesLogSquadFilter` (L9664) · `loadAgentesTabData` (L9671) · `renderAgentesAtivosGrid` (L9695) · `renderAgentesLogCross` (L9720) · `closeAgentesHelp` (L9754)
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)

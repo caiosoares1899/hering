@@ -27,6 +27,11 @@ function urlDoPush(notif) {
     const cal = ['marca', 'comercial', 'mktplace', 'outlet'].includes(String(n.cal)) ? String(n.cal) : '';
     return SITE_BASE_URL + (n.onde === 'radar' ? 'okr' : 'kanban') + (n.dev ? '-dev' : '') + '.html?gantt=' + encodeURIComponent(cal);
   }
+  // 📣 Pedido para atualizar um calendário do Gantt: abre o Maré direto no 📤 Atualizar planilha daquele calendário.
+  if (type === 'gantt_pedido') {
+    const cal = ['marca', 'comercial', 'mktplace', 'outlet'].includes(String(n.cal)) ? String(n.cal) : '';
+    return SITE_BASE_URL + 'kanban' + (n.dev ? '-dev' : '') + '.html?gantt=' + encodeURIComponent(cal) + '&atualizar=1';
+  }
   // Aviso do vigia dos backups ou do monitor da VTEX (só ADMs): abre o Painel.
   if (type === 'backup_falhou' || type === 'vtex_monitor_falhou') return SITE_BASE_URL + 'painel.html';
   // Incidente ou falha de monitor do GitHub / GitHub Pages ou Firebase (só ADMs): abre o Painel direto na aba 🔋 Status.
