@@ -33,6 +33,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 📊 Gantt: regra do destaque das barras (`gantt_destaques` e `_dev`, só ADM grava) + o nó no backup completo | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:backupCompletoSemanal,functions:backupGlobalDiario` | 13/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado nas promoções do supercard (PR #1757) e do período/dica do Gantt (12/11) | resync + `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 12/11/2026 |
 
 ## Backlog

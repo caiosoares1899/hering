@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📊 Gantt (/melhoriauiux): Hoje na linha 📌, rótulo de 1 dia centrado, destaque ⚠️ do ADM, filtro por grupo e "Site e App" (kanban v8.30.963-dev, painel v5.109-dev) — SÓ DEV — 2026-11-13
+
+- **Linha 📌 Datas-chave**: ganhou o rótulo **Hoje** (centrado na linha de hoje). Data de **1 dia** tinha o nome começando na borda da coluna, "torto" em relação à linha (relato do Caio) → agora o nome fica **centrado na linha**; nas pontas da janela encosta na borda.
+- **⚠️ Destaque nas barras** (Marca e Comercial): o **ADM** toca numa barra e escolhe uma cor (paleta das datas-chave) e/ou o **⚠️ Ação importante**; vale para **todas as squads**. Fica em `kanban/gantt_destaques(_dev)/{marca|comercial}/{id da barra}` (regra nova: só ADM grava; empresa lê; visualizador do Painel não) — sobrevive a reenviar a planilha se a barra não mudou de texto/início. Barra destacada: cor cheia, borda de 2 px, ⚠️ (importante) ou ★ (só cor) com texto alternativo e legenda "Ação importante"; para quem não é ADM o toque mostra "⚠️ Importante · …".
+- **Filtro "mostrar só"** por grupo de linhas (chips acima do De/Até, guardado por aba no aparelho): Comercial = Site · App · CRM · Mídia · Lançamentos e datas ("Site e App" entra nos dois); Marca = Coleção · Web · Redes · Canais · Kids. Limpar filtros volta para Tudo.
+- **"Site e App"**: "Site todo" e "Site · Saldos" viraram **Site e App · todo** e **Site e App · saldos** (vale já no que foi publicado antes); o leitor do Painel aceita o nome antigo e o novo da planilha. Rótulo da coluna B que o leitor não conhece (outro jeito de escrever) aparece como **⚠ aviso na prévia** do Painel, com a aba — antes o conteúdo ia calado para a linha de cima.
+- Testes: `test_gantt_ui.js` (alinhamento medido por DOM nas 3 abas, 1280/390 px, destaque do ADM, filtro, nomes) e `ganttRules.test.js` (destaques).
+
 ### 📊 Gantt: Marca com Canais Intimates/Sports e bloco Hering Kids; Comercial legível como no Excel (kanban v8.30.962-dev, painel v5.108-dev) — SÓ DEV — 2026-11-13
 
 - **Calendário de Marca** (Painel lê a planilha): além de Coleção sellout, Web e Redes sociais, entram **Canais Intimates (site e CRM)** e **Canais Sports (site e CRM)** da aba HERING e, da aba **KIDS**, Coleção sellout, Web e Redes sociais | Kids (a aba KIDS traz a data no cabeçalho em vez de "JANEIRO": o leitor entende os dois). No Maré, o Kids vem num bloco à parte com o título **👶 Hering Kids** e um respiro antes. **Reenvie a planilha no Painel** para as linhas novas aparecerem.

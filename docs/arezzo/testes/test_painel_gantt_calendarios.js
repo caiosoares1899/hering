@@ -36,10 +36,13 @@ const novSemanas = [
   [],
   [[4, 'SITE - TODO SALDOS', [27, 28], 'OFERTA FICTÍCIA B']],   // 4ª semana de nov/2026 (22–28)
 ];
+const DEZ26 = () => X.comercialMes('Dez26', 2026, 12, [[[2, 'SITE E APP TODO - Não remarcados', [1, 2], 'AÇÃO SITE E APP TESTE'], [4, 'SITE E APP - TODO SALDOS', [3], 'SALDO SITE E APP TESTE'], [6, 'APP E SITE PROMO', [4], 'RÓTULO DESCONHECIDO TESTE']]]);
 const COM = arq('Calendário Comercial Hering.xlsx', [
   X.comercialMes('Nov25', 2025, 11, [[[4, 'SITE - TODO SALDOS', [3], 'ANO VELHO NÃO ENTRA']]]),
   X.comercialMes('Out26', 2026, 10, [[[4, 'SITE - TODO SALDOS', [1, 2, 3], 'AÇÃO OUTUBRO TESTE']], [[2, 'MÍDIA', [5], 'MÍDIA TESTE']], [], [], [[6, 'Ação App', [30, 31], 'APP VIRADA DO MÊS']]]),
   X.comercialMes('Nov26', 2026, 11, novSemanas, { '71,4': '*Cupom Mensal Para CRM - nota de rodapé' }),
+  // Dez26 já com os nomes NOVOS do time ("Site e App") e um rótulo que o leitor não conhece
+  DEZ26(),
   X.comercialMes('Jun26. RASCUNHO n considerar', 2026, 6, [[[4, 'SITE - TODO SALDOS', [3], 'RASCUNHO NÃO ENTRA']]]),
   Object.assign(X.comercialMes('Dez26 oculta', 2026, 12, [[[4, 'SITE - TODO SALDOS', [3], 'OCULTA NÃO ENTRA']]]), { oculta: true }),
 ]);
@@ -48,6 +51,7 @@ const COM = arq('Calendário Comercial Hering.xlsx', [
 const COM2 = arq('Calendário Comercial Hering (v2).xlsx', [
   X.comercialMes('Out26', 2026, 10, [[[4, 'SITE - TODO SALDOS', [1, 2, 3], 'AÇÃO OUTUBRO TESTE']], [[2, 'MÍDIA', [5], 'MÍDIA TESTE']], [], [], [[6, 'Ação App', [30, 31], 'APP VIRADA DO MÊS']]]),
   X.comercialMes('Nov26', 2026, 11, [novSemanas[0].filter(x => x[3] !== 'FERIADO'), novSemanas[1], [], novSemanas[3], [[4, 'SITE - TODO SALDOS', [29, 30], 'OFERTA FICTÍCIA B']]]),
+  DEZ26(),
 ]);
 const LIXO = arq('nao-e-planilha.xlsx', []); fs.writeFileSync(LIXO, 'isto não é um zip');
 
@@ -88,7 +92,8 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     await p.click('.pg-card[data-cal="marca"] .err-filter-btn:not(label)');
     // Comercial
     await envia(p, 'comercial', COM); txt = await pv(p, 'comercial');
-    t('H. Comercial: só 2026 (Out e Nov); fora rascunho, aba oculta e 2025', /2 abas de mês/.test(txt) && !/NÃO ENTRA/.test(txt), txt);
+    t('H. Comercial: só 2026 (Out, Nov, Dez); fora rascunho, aba oculta e 2025', /3 abas de mês/.test(txt) && !/NÃO ENTRA/.test(txt), txt);
+    t('H2. rótulo da coluna B que o leitor não conhece aparece como aviso na prévia (com a aba)', /Rótulos da coluna B que não reconheci.*APP E SITE PROMO \(Dez26\)/.test(txt), txt);
     await p.click('.pg-card[data-cal="comercial"] .btn-p'); await p.waitForTimeout(300);
     const c = await store(p, 'comercial'); const cb = Object.values(c.barras);
     const um = re => cb.filter(x => re.test(x.txt));
@@ -96,6 +101,7 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     t('J. linhas: lançamentos (FERIADO, 12h LANÇAMENTO) antes do 1º rótulo; site, saldos, CRM, mídia', ['lancamentos', 'site', 'saldos', 'crm', 'midia'].every(k => c.linhas[k]) && um(/FERIADO/)[0].linha === 'lancamentos' && um(/LANÇAMENTO TESTE/)[0].linha === 'lancamentos' && um(/AÇÃO CRM TESTE/)[0].linha === 'crm', c.linhas);
     t('J2. oferta da 4ª semana 27–28/11 na linha de saldos', um(/OFERTA FICTÍCIA B/).length === 1 && um(/OFERTA FICTÍCIA B/)[0].ini === '2026-11-27' && um(/OFERTA FICTÍCIA B/)[0].fim === '2026-11-28', um(/OFERTA FICTÍCIA B/));
     t('J3. barra que atravessa a virada do mês (30/10 → 02/11, abas diferentes) vira 1 barra só', um(/APP VIRADA/).length === 1 && um(/APP VIRADA/)[0].ini === '2026-10-30' && um(/APP VIRADA/)[0].fim === '2026-11-02' && um(/APP VIRADA/)[0].linha === 'app', um(/APP VIRADA/));
+    t('J4. nomes NOVOS da planilha ("SITE E APP TODO", "SITE E APP - TODO SALDOS") caem em site e saldos', um(/AÇÃO SITE E APP TESTE/)[0].linha === 'site' && um(/SALDO SITE E APP TESTE/)[0].linha === 'saldos', [um(/SITE E APP/)]);
     t('K. nota de rodapé do mês não vira barra no último dia', !um(/rodapé/).length, um(/rodapé/));
     // 2º envio: só novembro
     await envia(p, 'comercial', COM2); txt = await pv(p, 'comercial');
