@@ -3190,7 +3190,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.104 · painel</div>
+<div class="version">v5.105 · painel</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3424,7 +3424,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=19"></script>
 <script src="mare-plantao.js?v=5"></script>
-<script src="mare-dicas.js?v=14"></script>
+<script src="mare-dicas.js?v=15"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8432,6 +8432,16 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_mare_periodo_duas_datas_2026_11_12',
+    titulo: "📅 Período da campanha: agora pede Início e Fim",
+    corpo: "<p>Um ajuste no cartão <b>📅 Período e hora</b> do card (embaixo de ⚠ Riscos):</p>"
+      + "<ul><li>O período só vale com <b>Início e Fim</b> preenchidos. É isso que faz a campanha aparecer como barra no <b>📅 Calendário</b> e no <b>📊 Gantt</b>.</li>"
+      + "<li>Se você preencher só uma das datas, o cartão avisa <b>“Falta o Fim”</b> (ou “Falta o Início”) e só salva quando as duas estiverem lá.</li>"
+      + "<li>Para tirar o período, apague as duas datas.</li></ul>",
+    tipo: 'novidade',
+    squad: '*'
+  },
   {
     id: 'seed_mare_supercard_rolagem_2026_11_12',
     titulo: "🧩 Supercard: agora dá pra ver todos os filhos direto no board",

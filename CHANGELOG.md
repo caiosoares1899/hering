@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Período do card exige Início e Fim + dica do Gantt (kanban v8.30.959-dev, mare-dicas v15) — SÓ DEV — 2026-11-12
+### Período do card exige Início e Fim + dica do Gantt (kanban v8.30.959, mare-dicas v15) — PROD 12/11 — 2026-11-12
 
 - **Período exige as duas datas** (decisão do Caio): só Início ou só Fim não grava metade. O cartão 📅 Período e hora avisa "Falta o Fim"/"Falta o Início" e mantém o período salvo antes (ou nenhum); apagar as duas limpa. A linha de período no card do board só aparece com as duas datas (Calendário e Gantt já exigiam).
 - **💡 Dica nova no Maré** (`gantt`, ao entrar): apresenta o botão 📊 Gantt ao lado da 🛤️ Timeline, com "Saiba mais" no tópico Gantt da Ajuda. `?v=15` do `mare-dicas-dev.js` em kanban-dev, okr-dev, oceano-dev e painel-dev (bump das 4 páginas).

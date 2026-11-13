@@ -51,6 +51,7 @@
       {id:'insistente',gatilho:'boot',     texto:'Não ouve o “ding” do sino? Ligue o modo insistente no rodapé do 🔔: a tela treme e o som se repete.', saiba:{tab:'config', q:'Notificações'}, ajuda:'Notificações'},
       {id:'sonar',    gatilho:'boot',      texto:'Conheça o 🔍 Sonar: Ctrl+K (⌘K no Mac) acha cards deste board, Objetivos do Radar, outros squads e a Ajuda, sem se importar com acento.', saiba:{tab:'board', q:'Sonar'}, ajuda:'Sonar (Ctrl+K)'},
       {id:'ilha_v2',  gatilho:'boot',      texto:'🏝️ Agenda com contagem regressiva, favoritos, status e agente na Ilha! Ligue em seu nome → Minhas preferências → 🏝️ Ilha Dinâmica.', saiba:{tab:'cards', q:'Timer e Produtividade'}, ajuda:'Timer e Produtividade'},
+      {id:'gantt',    gatilho:'boot',      texto:'Campanhas no tempo: o botão 📊 Gantt, ao lado da 🛤️ Timeline, mostra os cards numa régua de 6 semanas, com filtros e período De…até.', saiba:{tab:'board', q:'Gantt'}, ajuda:'Gantt'},
       {id:'meudia',   gatilho:'boot',      texto:'Ctrl+D abre o Meu Dia: o que é seu hoje, num lugar só.', saiba:{tab:'board', q:'Meu Dia'}, ajuda:'Meu Dia (Ctrl+D)'},
       {id:'menu-card',gatilho:'boot',      texto:'Clique com o botão direito num card pra ações rápidas: mover, impedir, duplicar…', saiba:{tab:'cards', q:'Funções de card'}, ajuda:'Funções de card'},
       {id:'desfazer', gatilho:'boot',      texto:'Mexeu sem querer? Ctrl+Z desfaz a última mudança no board.', saiba:{tab:'board', q:'Desfazer'}, ajuda:'Desfazer (Ctrl+Z)'},
