@@ -74,7 +74,7 @@ const seed = comCal => ({ kanban: Object.assign({
     t(`F ${L}. BLACK FRIDAY da Web começa antes da janela (◂) e vai até 30/11 (coluna 1 → 31)`, r.bfCol === '1 / 31' && /clip-l/.test(r.bfClip), r);
     t(`G ${L}. barras que se cruzam (CAMPANHA × TEASER) vão para pistas diferentes nas Redes`, r.pistasRedes === 2, r.pistasRedes);
     t(`H ${L}. texto da planilha é só texto (sem <img>, nada executa)`, !r.xss && /<img src=x/.test(r.xssTxt) && await p.evaluate(() => !window.__xss), r.xssTxt);
-    t(`I ${L}. filtros de card somem; De/Até fica; rodapé diz quando e quem atualizou`, r.filtrosCards && r.deAte && /atualizado em 10\/11\/2026 por Caio/.test(r.rodape), r);
+    t(`I ${L}. filtros de card somem; De/Até fica; rodapé diz quando e quem atualizou`, r.filtrosCards && r.deAte && /atualizado em 10\/11\/2026 às \d{2}:\d{2} por Caio/.test(r.rodape), r);
     await p.click('.gantt-cal-bar[data-tip*="BLACK FRIDAY · 31/10"]');
     t(`J ${L}. tocar numa barra mostra o texto inteiro com datas e linha`, await p.evaluate(() => /BLACK FRIDAY · 31\/10 – 30\/11 · Web/.test(document.body.innerText)));
     await p.click('.gantt-cal-bar[data-tip*="CAMPANHA TESTE"]'); await p.waitForTimeout(200);

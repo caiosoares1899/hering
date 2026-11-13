@@ -80,15 +80,18 @@ for (const suf of ['', '_dev']) {
     assert.equal(lê(`kanban/gantt_marcos_globais${suf}`, A.membro), true, 'membro lê');
     assert.equal(lê(`kanban/gantt_marcos_globais${suf}`, A.forasteiro), false, 'fora da Hering não lê');
   });
-  test(`calendários do Gantt${suf}: só ADM publica; a empresa lê; formato validado`, () => {
+  test(`calendários do Gantt${suf}: a empresa (login Google Hering) publica e lê; formato validado`, () => {
     reset(); const C = c => `kanban/calendarios_gantt${suf}/${c}`;
     assert.equal(grava(C('marca'), A.adm, cal()), true, 'ADM publica o de Marca');
     assert.equal(grava(C('comercial'), A.adm, cal()), true, 'ADM publica o Comercial');
-    assert.equal(grava(C('marca'), A.po, cal()), false, 'PO NÃO publica');
-    assert.equal(grava(C('marca'), A.membro, cal()), false, 'membro NÃO publica');
+    // 13/11: a atualização foi para o Maré — qualquer login Google da Hering publica (o histórico guarda quem e a cópia)
+    assert.equal(grava(C('marca'), A.po, cal()), true, 'PO publica');
+    assert.equal(grava(C('marca'), A.membro, cal()), true, 'membro da Hering publica');
+    assert.equal(grava(C('marca'), A.forasteiro, cal()), false, 'fora da Hering NÃO publica');
+    assert.equal(grava(C('marca'), A.arezzo, cal()), false, 'Arezzo (Microsoft) NÃO publica');
     assert.equal(grava(C('mktplace'), A.adm, cal()), true, 'ADM publica o Comercial Marketplace');
     assert.equal(grava(C('outlet'), A.adm, cal()), true, 'ADM publica o Comercial Outlet (já liberado)');
-    assert.equal(grava(C('mktplace'), A.po, cal()), false, 'PO NÃO publica o Marketplace');
+    assert.equal(grava(C('mktplace'), A.forasteiro, cal()), false, 'fora da Hering NÃO publica o Marketplace');
     assert.equal(grava(C('outro'), A.adm, cal()), false, 'só marca|comercial|mktplace|outlet');
     assert.equal(grava(C('marca'), A.adm, cal({ barras: { b_x1: { linha: 'web', ini: '30/11/2026', fim: '2026-12-01', txt: 'X' } } })), false, 'data fora do ISO');
     assert.equal(grava(C('marca'), A.adm, cal({ barras: { b_x1: { linha: 'web', ini: '2026-11-01', fim: '2026-11-02', txt: 'x'.repeat(201) } } })), false, 'texto longo');
@@ -121,5 +124,30 @@ for (const suf of ['', '_dev']) {
     DB.kanban.painel_viewers = { 'visita@gmail,com': true };
     assert.equal(lê(`kanban/gantt_destaques${suf}`, mk('vis1', 'visita@gmail.com')), false, 'visualizador do Painel não lê');
     assert.equal(lê(`kanban/gantt_destaques${suf}`, A.forasteiro), false, 'fora da Hering não lê');
+  });
+  test(`histórico e cópias do Gantt${suf}: qualquer um da Hering ACRESCENTA; ninguém apaga nem reescreve; autor não se forja`, () => {
+    reset(); const H = id => `kanban/calendarios_gantt_hist${suf}/comercial/${id}`, S = id => `kanban/calendarios_gantt_snap${suf}/comercial/${id}`;
+    const h = (uid, o) => Object.assign({ em: 1, porUid: uid, porNome: 'Fulano', arquivo: 'x.xlsx', acao: 'publicou', snap: 'vabc1234', n: 10, novas: 2, mudaram: 1, saem: 0 }, o || {});
+    assert.equal(grava(H('vabc1234'), A.membro, h('mem')), true, 'membro registra a própria publicação');
+    assert.equal(grava(H('vabc1235'), A.membro, h('po')), false, 'não registra em nome de outra pessoa');
+    assert.equal(grava(H('vabc1236'), A.membro, h('mem', { acao: 'apagou' })), false, 'ação fora da lista');
+    assert.equal(grava(H('vabc1237'), A.membro, h('mem', { snap: '../x' })), false, 'id de cópia fora do padrão');
+    assert.equal(grava(H('vabc1238'), A.forasteiro, h('out1')), false, 'fora da Hering não registra');
+    assert.equal(grava(`kanban/calendarios_gantt_hist${suf}/outro/vx1234567`, A.membro, h('mem')), false, 'calendário desconhecido');
+    DB.kanban[`calendarios_gantt_hist${suf}`] = { comercial: { vabc1234: h('mem') } };
+    assert.equal(grava(H('vabc1234'), A.membro, h('mem', { n: 99 })), false, 'NÃO reescreve uma linha do histórico');
+    assert.equal(grava(H('vabc1234'), A.membro, null), false, 'NÃO apaga histórico');
+    assert.equal(grava(H('vabc1234'), A.adm, null), false, 'nem o ADM apaga pelo app');
+    assert.equal(lê(`kanban/calendarios_gantt_hist${suf}`, A.membro), true, 'empresa lê o histórico');
+    assert.equal(lê(`kanban/calendarios_gantt_hist${suf}`, A.forasteiro), false, 'fora da Hering não lê');
+    // cópias
+    assert.equal(grava(S('vabc1234'), A.membro, cal()), true, 'membro guarda a cópia');
+    DB.kanban[`calendarios_gantt_snap${suf}`] = { comercial: { vabc1234: cal() } };
+    assert.equal(grava(S('vabc1234'), A.membro, cal({ barras: {} })), false, 'NÃO reescreve uma cópia');
+    assert.equal(grava(S('vabc1234'), A.membro, null), false, 'NÃO apaga uma cópia');
+    assert.equal(grava(S('vabc9999'), A.membro, cal({ barras: { b_x: { linha: 'web', ini: '2026-11-01', fim: '2026-11-02', txt: 'x'.repeat(201) } } })), false, 'texto longo na cópia');
+    assert.equal(lê(`kanban/calendarios_gantt_snap${suf}/comercial/vabc1234`, A.membro), true, 'empresa lê a cópia (ao restaurar)');
+    DB.kanban.painel_viewers = { 'visita@gmail,com': true };
+    assert.equal(lê(`kanban/calendarios_gantt_snap${suf}`, mk('vis1', 'visita@gmail.com')), false, 'visualizador do Painel não lê cópias');
   });
 }

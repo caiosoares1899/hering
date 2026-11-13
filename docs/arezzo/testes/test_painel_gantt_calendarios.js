@@ -97,6 +97,8 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     const acha = (lin, txtRe) => bs.find(x => x.linha === lin && txtRe.test(x.txt));
     t('D. Marca publicada no nó ' + NO + '/marca com meta, linhas e barras', !!m && m.meta.porNome === 'Ana ADM' && /Campanhas/.test(m.meta.arquivo) && Object.keys(m.linhas).join() === 'sellout,web,redes,intimates,sports,kids_sellout,kids_web,kids_redes' && bs.length === 12, m && m.meta);
     t('D2. aba KIDS com a data no cabeçalho (em vez de "JANEIRO"): datas certas — Black Friday Kids 01/11–01/12', acha('kids_web', /BLACK/).ini === '2026-11-01' && acha('kids_web', /BLACK/).fim === '2026-12-01' && acha('kids_redes', /REDES TESTE/).fim === '2026-11-12', bs.filter(x => /^kids/.test(x.linha)));
+    const hm = await p.evaluate(n => Object.values(((window.__store.kanban[n.replace('calendarios_gantt', 'calendarios_gantt_hist')] || {}).marca) || {}), NO);
+    t('D2. publicar pelo Painel também entra no 🕘 Histórico (com cópia)', hm.length === 1 && hm[0].acao === 'publicou' && hm[0].porNome === 'Ana ADM' && hm[0].n === 12, hm);
     t('E. datas certas (âncora na linha dos dias, não no cabeçalho adiantado): Mães até 10/05, Pais até 09/08, BF web 31/10–30/11, BF redes 27–29/11',
       acha('web', /MÃES/).fim === '2026-05-10' && acha('web', /PAIS/).fim === '2026-08-09' && acha('web', /BLACK/).ini === '2026-10-31' && acha('web', /BLACK/).fim === '2026-11-30' && acha('redes', /BLACK/).ini === '2026-11-27' && acha('redes', /BLACK/).fim === '2026-11-29', bs);
     t('F. o texto da planilha vira só texto (nada executa na prévia)', await p.evaluate(() => !window.__xss));
@@ -142,7 +144,7 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     t('P. celular 390 px: sem rolagem lateral na aba, botão Publicar alcançável', await p.evaluate(() => { const pn = document.querySelector('.cfg-body'); const bt = document.querySelector('.pg-card[data-cal="marca"] .btn-p').getBoundingClientRect(); return pn.scrollWidth <= pn.clientWidth + 1 && bt.right <= innerWidth && bt.height >= 36; }));
     await ctx.close(); }
   { const { ctx, p } = await abre({ width: 1280, height: 900 }, false);
-    t('Q. quem não é ADM vê o cadeado e nenhum envio', await p.evaluate(() => /Só ADM/.test(document.getElementById('pcfg-gantt-cards').innerText) && !document.querySelector('#pcfg-gantt-cards input[type=file]')));
+    t('Q. quem não é ADM também envia (13/11: a atualização é de todo mundo da Hering; o histórico guarda quem)', await p.evaluate(() => !/Só ADM/.test(document.getElementById('pcfg-gantt-cards').innerText) && document.querySelectorAll('#pcfg-gantt-cards input[type=file]').length === 3));
     await ctx.close(); }
   await b.close(); fs.rmSync(tmp, { recursive: true, force: true }); console.log(ok ? '\nTUDO OK' : '\nFALHOU'); process.exit(ok ? 0 : 1);
 })();

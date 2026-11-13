@@ -42,7 +42,7 @@
       "calendarios_gantt": {
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$cal": {
-          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
           ".validate": "($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && newData.hasChildren(['meta','linhas','barras'])",
           "meta": {
             ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])",
@@ -77,7 +77,7 @@
       "calendarios_gantt_dev": {
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$cal": {
-          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
           ".validate": "($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && newData.hasChildren(['meta','linhas','barras'])",
           "meta": {
             ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])",
@@ -135,6 +135,74 @@
             "alerta": { ".validate": "newData.isBoolean()" },
             "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
             "em": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
+      "calendarios_gantt_hist": {
+        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+        "$cal": {
+          "$id": {
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['em','porUid','porNome','arquivo','acao','snap','n','novas','mudaram','saem']) && newData.child('porUid').val() === auth.uid",
+            "em": { ".validate": "newData.isNumber()" },
+            "deEm": { ".validate": "newData.isNumber()" },
+            "porUid": { ".validate": "newData.isString()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "arquivo": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "acao": { ".validate": "newData.isString() && newData.val().matches(/^(publicou|restaurou)$/)" },
+            "snap": { ".validate": "newData.isString() && newData.val().matches(/^v[a-z0-9]{6,30}$/)" },
+            "n": { ".validate": "newData.isNumber()" },
+            "novas": { ".validate": "newData.isNumber()" },
+            "mudaram": { ".validate": "newData.isNumber()" },
+            "saem": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
+      "calendarios_gantt_snap": {
+        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+        "$cal": {
+          "$id": {
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['meta','linhas','barras'])",
+            "meta": { ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])" },
+            "linhas": { "$lin": { ".validate": "newData.hasChildren(['rot','ordem'])" } },
+            "barras": { "$b": { ".validate": "newData.hasChildren(['linha','ini','fim','txt']) && newData.child('txt').isString() && newData.child('txt').val().length <= 200" } },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
+      "calendarios_gantt_hist_dev": {
+        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+        "$cal": {
+          "$id": {
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['em','porUid','porNome','arquivo','acao','snap','n','novas','mudaram','saem']) && newData.child('porUid').val() === auth.uid",
+            "em": { ".validate": "newData.isNumber()" },
+            "deEm": { ".validate": "newData.isNumber()" },
+            "porUid": { ".validate": "newData.isString()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "arquivo": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "acao": { ".validate": "newData.isString() && newData.val().matches(/^(publicou|restaurou)$/)" },
+            "snap": { ".validate": "newData.isString() && newData.val().matches(/^v[a-z0-9]{6,30}$/)" },
+            "n": { ".validate": "newData.isNumber()" },
+            "novas": { ".validate": "newData.isNumber()" },
+            "mudaram": { ".validate": "newData.isNumber()" },
+            "saem": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
+      "calendarios_gantt_snap_dev": {
+        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+        "$cal": {
+          "$id": {
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['meta','linhas','barras'])",
+            "meta": { ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])" },
+            "linhas": { "$lin": { ".validate": "newData.hasChildren(['rot','ordem'])" } },
+            "barras": { "$b": { ".validate": "newData.hasChildren(['linha','ini','fim','txt']) && newData.child('txt').isString() && newData.child('txt').val().length <= 200" } },
             "$outro": { ".validate": false }
           }
         }
