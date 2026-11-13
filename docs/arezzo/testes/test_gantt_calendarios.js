@@ -77,8 +77,10 @@ const seed = comCal => ({ kanban: Object.assign({
     t(`I ${L}. filtros de card somem; De/Até fica; rodapé diz quando e quem atualizou`, r.filtrosCards && r.deAte && /atualizado em 10\/11\/2026 às \d{2}:\d{2} por Caio/.test(r.rodape), r);
     await p.click('.gantt-cal-bar[data-tip*="BLACK FRIDAY · 31/10"]');
     t(`J ${L}. tocar numa barra mostra o texto inteiro com datas e linha`, await p.evaluate(() => /BLACK FRIDAY · 31\/10 – 30\/11 · Web/.test(document.body.innerText)));
+    await p.evaluate(()=>document.querySelector('.mgc-leitura button[data-fechar]')?.click());
     await p.click('.gantt-cal-bar[data-tip*="CAMPANHA TESTE"]'); await p.waitForTimeout(200);
-    t(`J2 ${L}. tocar na barra com HTML no texto: o aviso mostra o texto como texto e nada executa`, await p.evaluate(() => !window.__xss && /<img src=x/.test(document.getElementById('kb-toast').textContent) && !document.querySelector('#kb-toast img')));
+    t(`J2 ${L}. tocar na barra com HTML no texto: o aviso mostra o texto como texto e nada executa`, await p.evaluate(() => !window.__xss && /<img src=x/.test((document.querySelector('.mgc-leitura p')||document.getElementById('kb-toast')).textContent) && !document.querySelector('#kb-toast img,.mgc-leitura img')));
+    await p.evaluate(()=>document.querySelector('.mgc-leitura button[data-fechar]')?.click());
     // De/Até: 25/11–30/11 deixa só o que cruza
     await p.evaluate(() => { const f = document.getElementById('gantt-filtros'); f.querySelector('input[data-p="de"]').value = '2026-11-25'; f.querySelector('input[data-p="ate"]').value = '2026-11-30'; ganttPeriodo(); }); await p.waitForTimeout(300);
     const per = await p.evaluate(() => [...document.querySelectorAll('.gantt-cal-bar .gantt-bar-txt')].map(x => x.textContent).sort());
