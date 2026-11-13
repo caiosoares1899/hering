@@ -80,19 +80,20 @@
   - **L4018**: Mini painel — página e endpoint oceanoResumo
 - **L4027**: functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
   - **L4029**: index.js — registro de exports
-  - **L4097**: cards/ — Guardião dos cards
-  - **L4106**: Intake no Agente Ágil — origem externa do card
-  - **L4111**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
-  - **L4421**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
-  - **L4483**: intake/ e backup/ — online
-  - **L4508**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
-  - **L4610**: spotify/ — PAUSADO (2026-08-04)
-  - **L4629**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
-  - **L4639**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
-  - **L4645**: 💬 Indicador de comentários na face do card (2026-10-05)
-  - **L4656**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
-  - **L4661**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
-  - **L4666**: 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
+  - **L4098**: cards/ — Guardião dos cards
+  - **L4107**: Intake no Agente Ágil — origem externa do card
+  - **L4112**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
+  - **L4422**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
+  - **L4484**: intake/ e backup/ — online
+  - **L4509**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
+  - **L4611**: spotify/ — PAUSADO (2026-08-04)
+  - **L4630**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
+  - **L4640**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
+  - **L4646**: 💬 Indicador de comentários na face do card (2026-10-05)
+  - **L4657**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
+  - **L4662**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
+  - **L4667**: 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
+  - **L4671**: 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v2` prod · `v5`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-13)
 
 ## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 
