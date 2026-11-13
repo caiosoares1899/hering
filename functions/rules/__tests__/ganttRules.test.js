@@ -86,7 +86,10 @@ for (const suf of ['', '_dev']) {
     assert.equal(grava(C('comercial'), A.adm, cal()), true, 'ADM publica o Comercial');
     assert.equal(grava(C('marca'), A.po, cal()), false, 'PO NÃO publica');
     assert.equal(grava(C('marca'), A.membro, cal()), false, 'membro NÃO publica');
-    assert.equal(grava(C('outro'), A.adm, cal()), false, 'só marca|comercial');
+    assert.equal(grava(C('mktplace'), A.adm, cal()), true, 'ADM publica o Comercial Marketplace');
+    assert.equal(grava(C('outlet'), A.adm, cal()), true, 'ADM publica o Comercial Outlet (já liberado)');
+    assert.equal(grava(C('mktplace'), A.po, cal()), false, 'PO NÃO publica o Marketplace');
+    assert.equal(grava(C('outro'), A.adm, cal()), false, 'só marca|comercial|mktplace|outlet');
     assert.equal(grava(C('marca'), A.adm, cal({ barras: { b_x1: { linha: 'web', ini: '30/11/2026', fim: '2026-12-01', txt: 'X' } } })), false, 'data fora do ISO');
     assert.equal(grava(C('marca'), A.adm, cal({ barras: { b_x1: { linha: 'web', ini: '2026-11-01', fim: '2026-11-02', txt: 'x'.repeat(201) } } })), false, 'texto longo');
     assert.equal(grava(C('marca'), A.adm, cal({ barras: { b_x1: { linha: 'WEB INVÁLIDA', ini: '2026-11-01', fim: '2026-11-02', txt: 'X' } } })), false, 'linha fora do padrão');
@@ -105,7 +108,9 @@ for (const suf of ['', '_dev']) {
     assert.equal(grava(D('comercial', 'b_abc'), A.po, d()), false, 'PO NÃO destaca');
     assert.equal(grava(D('comercial', 'b_abc'), A.poGlobal, d()), false, 'role po NÃO destaca');
     assert.equal(grava(D('comercial', 'b_abc'), A.membro, d()), false, 'membro NÃO destaca');
-    assert.equal(grava(D('outro', 'b_abc'), A.adm, d()), false, 'só marca|comercial');
+    assert.equal(grava(D('mktplace', 'b_abc'), A.adm, d()), true, 'ADM destaca no Marketplace');
+    assert.equal(grava(D('mktplace', 'b_abc'), A.membro, d()), false, 'membro NÃO destaca no Marketplace');
+    assert.equal(grava(D('outro', 'b_abc'), A.adm, d()), false, 'só calendários conhecidos');
     assert.equal(grava(D('comercial', 'b_abc'), A.adm, d({ cor: '#ff0000' })), false, 'cor fora da paleta');
     assert.equal(grava(D('comercial', 'b_abc'), A.adm, d({ alerta: 'sim' })), false, 'alerta tem que ser booleano');
     assert.equal(grava(D('comercial', 'b_abc'), A.adm, d({ txt: '<img>' })), false, 'campo extra');

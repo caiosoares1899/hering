@@ -43,7 +43,7 @@
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$cal": {
           ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
-          ".validate": "($cal === 'marca' || $cal === 'comercial') && newData.hasChildren(['meta','linhas','barras'])",
+          ".validate": "($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && newData.hasChildren(['meta','linhas','barras'])",
           "meta": {
             ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])",
             "atualizadoEm": { ".validate": "newData.isNumber()" },
@@ -78,7 +78,7 @@
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$cal": {
           ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
-          ".validate": "($cal === 'marca' || $cal === 'comercial') && newData.hasChildren(['meta','linhas','barras'])",
+          ".validate": "($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && newData.hasChildren(['meta','linhas','barras'])",
           "meta": {
             ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])",
             "atualizadoEm": { ".validate": "newData.isNumber()" },
@@ -112,8 +112,8 @@
       "gantt_destaques": {
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$cal": {
-          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') && ($cal === 'marca' || $cal === 'comercial')",
-          ".validate": "$cal === 'marca' || $cal === 'comercial'",
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet')",
+          ".validate": "$cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet'",
           "$id": {
             ".validate": "newData.hasChildren(['em'])",
             "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
@@ -127,8 +127,8 @@
       "gantt_destaques_dev": {
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$cal": {
-          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') && ($cal === 'marca' || $cal === 'comercial')",
-          ".validate": "$cal === 'marca' || $cal === 'comercial'",
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet')",
+          ".validate": "$cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet'",
           "$id": {
             ".validate": "newData.hasChildren(['em'])",
             "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
