@@ -45,9 +45,12 @@
 
 Deploy (do Caio, depois do resync): F1 → `firebase deploy --only database` e depois `--only functions:backupGlobalDiario,functions:backupCompletoSemanal`.
 
-## Perguntas que ficam para a F2/F4 (não bloqueiam a F1)
-- Na vista do Maré, entram só as pessoas das minhas squads por padrão (com "todo o Digital" no filtro)? Proposta: sim no Maré e todo o Digital no Radar.
-- Período máximo de um cadastro: a regra não limita; a tela avisa acima de 45 dias.
+## Assumido no contrato da F2 — a confirmar com o Caio antes de colar
+- Maré: por padrão, só as pessoas das minhas squads (chip "Todo o Digital"); Radar: todo o Digital.
+- Período longo: a regra não limita; a tela **avisa** acima de 45 dias (não bloqueia).
+
+## Registro (pós-merge/deploy)
+Como a regra do 🔔 Gantt: **sem tag própria**; a F1 entra na entrada de feature do CHANGELOG quando a F2 for ao ar ("Banco: nó novo kanban/ferias(_dev)…"), e a confirmação do deploy sai do *Pendente de deploy* para o histórico.
 
 ## Contrato — revisão R3 da F1 (Antigravity, 2ª revisão)
 
@@ -70,7 +73,7 @@ Risco: R2  ·  Modelo e esforço: Gemini high  ·  Orçamento: 1 dia; estourou, 
 Contexto:
 - Nota de desenho: docs/ideias/modo-ferias.md (decisões do Caio, modelo de dados). Dado: kanban/ferias{,_dev}/{uid}/{id} = { ini, fim, obs?, em, por } — regras no PR #1786 (sufixo _dev nas páginas -dev, como calendarios_gantt_dev).
 - Padrão a copiar: mare-gcal-dev.js (fonte única + visualizador montado pelas duas páginas; o Radar baixa o módulo só quando a vista abre, ver _okrGcalMontar/_GCAL_V em okr-dev.html; o Maré carrega com <script src="mare-gcal-dev.js?v=N">). No Maré, a visão entra como changeCalView('ferias') no #cal-ov (precedente: 👥 Escala, kanban-dev.html ~L34392). No Radar, b('ferias','🏖️ Férias') em _okrCalSegHtml + ramo em renderOkrCalendario.
-- API mínima do módulo (a F3/F4 dependem dela): MareFerias.ouvir(db, suf, cb) · ausente(uid, diaISO) → {ini,fim,obs}|null · periodoDe(uid) (o atual ou o próximo) · montar(root, {uid, nomeDe(uid), squadsDe(uid), isAdm, gravar, apagar}) → {destruir()} · leituraFechar não se aplica.
+- API mínima do módulo (a F3/F4 dependem dela): MareFerias.ouvir(db, suf, cb) · ausente(quem, diaISO) → {uid,ini,fim,obs}|null · periodoDe(quem) (o atual ou o próximo) · montar(root, {uid, nomeDe(uid), squadsDe(uid), isAdm, gravar, apagar}) → {destruir()}. **`quem` aceita uid OU inicial**: no Maré, responsável (card.owner), participantes e @menções são INICIAIS — o módulo resolve inicial → uid por kanban/usuarios_publicos/{uid}/init (lido pela página; passe um resolvedor `uidDeInit(init)` no init do módulo). Teste: ausente('AB', dia) e ausente(uid, dia) dão o mesmo resultado.
 - Vista: mês com uma faixa por pessoa (nome + período), lista "🏖️ Fora agora" e "📆 Próximas" (60 dias); filtros pessoa, squad e período. Maré: por padrão só as pessoas das minhas squads, com chip "Todo o Digital"; Radar: todo o Digital.
 - "Minhas férias": criar/editar/excluir os próprios períodos (data de início e fim, obs ≤140). fim < ini → a tela recusa (a regra não confere a ordem). Acima de 45 dias → aviso, não bloqueio. "Hoje" = data de São Paulo (como o resto das páginas).
 - ADM na tela = ADM na regra: o "corrigir/apagar de outra pessoa" só aparece para usuarios/{uid}/role === 'adm' ou caio.soares@ciahering.com.br — NÃO para config.adm_emails (Armadilha 9).
