@@ -43,6 +43,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 |---|---|---|
 | 🏖️ Calendário geral de férias + **modo férias** (alerta ao marcar quem está fora, cadastro obrigatório ao ativar, pausar/passar cards e Objetivos item a item) | Claude | [escopo](quadro/escalados.md#modo-ferias) |
 | 📱 Gantt no celular: nenhum texto cabe, só barrinhas (Maré e Radar) | Claude | [escopo](quadro/escalados.md#gantt-celular) |
+| ⭐ Gantt: aba favorita ao abrir + 🔔 inscrição para avisos quando um calendário muda | Claude | [escopo](quadro/escalados.md#gantt-favorito-avisos) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
 | 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
