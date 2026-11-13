@@ -29,12 +29,16 @@ const comercial = { meta: { atualizadoEm: Date.UTC(2026, 10, 10, 15), porNome: '
   linhas: { saldos: { rot: 'Site · Saldos', ordem: 2 } },
   barras: { b_c1: { linha: 'saldos', ini: '2026-11-02', fim: '2026-11-13', txt: 'OFERTA FICTÍCIA COM UM TÍTULO BEM COMPRIDO QUE PRECISA APARECER INTEIRO, QUEBRANDO EM VÁRIAS LINHAS COMO NO EXCEL' },
     b_c2: { linha: 'saldos', ini: '2026-11-12', fim: '2026-11-12', txt: 'AÇÃO DE UM DIA COM TEXTO LONGO PARA QUEBRAR LINHA' } } };
+const mktplace = { meta: { atualizadoEm: Date.UTC(2026, 10, 10, 15), porNome: 'Caio', arquivo: 'Calendário Mktplace.xlsx', de: '2026-10-01', ate: '2026-11-30' },
+  linhas: { mkt_amazon: { rot: 'Amazon', ordem: 0 }, mkt_shopee: { rot: 'Shopee', ordem: 2 }, mkt_meli: { rot: 'Mercado Livre (Meli + Full)', ordem: 3 } },
+  barras: { b_m1: { linha: 'mkt_amazon', ini: '2026-11-03', fim: '2026-11-30', txt: 'OFERTA DESTAQUE TESTE COM UM TEXTO LONGO PARA QUEBRAR EM VÁRIAS LINHAS NA BARRA' },
+    b_m2: { linha: 'mkt_shopee', ini: '2026-11-01', fim: '2026-11-30', txt: 'KITS TESTE' }, b_m3: { linha: 'mkt_meli', ini: '2026-11-05', fim: '2026-11-05', txt: 'ENVIO FULL TESTE' } } };
 const fl = col => ({ enteredAt: { [col]: '2026-10-20T12:00:00.000Z' }, log: [{ from: '—', to: col, at: '2026-10-20T12:00:00.000Z' }] });
 const seed = comCal => ({ kanban: Object.assign({
   usuarios: { ana: { uid: 'ana', nome: 'Ana', email: U.email, inscrito: true, init: 'AA', role: 'membro', squads: { [SQ]: true } } }, usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana', init: 'AA', squads: { [SQ]: true } } },
   squads: { [SQ]: { dados: { columns: [{ id: 'doing', name: 'Fazendo' }, { id: 'done', name: 'Concluído', isDone: true }], tags: [],
     cards_index: { c1: 'k1' }, cards: { k1: { id: 'c1', title: 'Card com período', col: 'doing', owner: 'AA', createdAt: '2026-10-20', flow: fl('doing'), inicio: '2026-11-09', fim: '2026-11-13', updatedAt: '2026-10-27T10:00:00.000Z' } } } } } },
-  comCal ? { [NO]: { marca, comercial } } : {}) });
+  comCal ? { [NO]: { marca, comercial, mktplace } } : {}) });
 
 (async () => {
   const b = await chromium.launch({ executablePath: resolveChrome(), headless: true }); let ok = true;
@@ -54,7 +58,7 @@ const seed = comCal => ({ kanban: Object.assign({
     const L = vp.width + 'px'; const { ctx, p, errs } = await abre(vp);
     t(`A ${L}. o calendário NÃO é lido no boot`, await leuCal(p) === 0);
     await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(300);
-    t(`B ${L}. Gantt abre na aba "Cards da squad" com 3 abas e ainda sem ler o calendário`, await p.evaluate(() => [...document.querySelectorAll('.gantt-aba')].map(x => x.dataset.aba + ':' + x.getAttribute('aria-selected')).join() === 'cards:true,marca:false,comercial:false') && await leuCal(p) === 0);
+    t(`B ${L}. Gantt abre na aba "Cards da squad" com 4 abas e ainda sem ler o calendário`, await p.evaluate(() => [...document.querySelectorAll('.gantt-aba')].map(x => x.dataset.aba + ':' + x.getAttribute('aria-selected')).join() === 'cards:true,marca:false,comercial:false,mktplace:false') && await leuCal(p) === 0);
     await p.click('.gantt-aba[data-aba="marca"]'); await p.waitForTimeout(400);
     t(`C ${L}. aba de Marca: lê o nó ${NO}/marca ao abrir`, await leuCal(p) === 1);
     const r = await p.evaluate(() => {
@@ -96,7 +100,14 @@ const seed = comCal => ({ kanban: Object.assign({
       const sticky = await p.evaluate(() => { const sc = document.getElementById('gantt-scroll'); sc.scrollLeft = 900; const b = [...document.querySelectorAll('.gantt-cal-bar')].find(x => /COMPRIDO/.test(x.textContent)); const t = b.querySelector('.gantt-bar-txt').getBoundingClientRect(); const col = document.querySelector('.gantt-cal-row .gantt-col-sticky').getBoundingClientRect(); return { txtL: t.left, colR: col.right }; });
       t(`N3 ${L}. barra que começou fora da tela: o texto acompanha a rolagem e fica logo depois da coluna fixa`, sticky.txtL >= sticky.colR - 1, sticky);
       await p.evaluate(() => ganttAba('marca')); await p.waitForTimeout(200);
-      t(`N4 ${L}. a aba de Marca continua compacta (só o Comercial alarga)`, await p.evaluate(() => !document.getElementById('gantt-view').classList.contains('gantt-largo')));
+      await p.evaluate(() => ganttAba('mktplace')); await p.waitForTimeout(300);
+      const mk = await p.evaluate(() => ({ largo: document.getElementById('gantt-view').classList.contains('gantt-largo'), lins: [...document.querySelectorAll('.gantt-cal-lin')].map(x => x.textContent),
+        chips: [...document.querySelectorAll('.gantt-cal-fchip')].map(x => x.textContent), cheio: [...document.querySelectorAll('.gantt-cal-bar .gantt-bar-txt')].every(x => getComputedStyle(x).whiteSpace === 'normal') }));
+      t(`N5 ${L}. 🛍️ Comercial Marketplace: largo e com texto inteiro como o Hering; uma linha por marketplace; chips por marketplace`, mk.largo && mk.cheio && mk.lins.join('|') === 'Amazon|Shopee|Mercado Livre (Meli + Full)' && mk.chips[0] === 'Tudo' && mk.chips.includes('Amazon') && mk.chips.includes('Mercado Livre'), mk);
+      await p.click('.gantt-cal-fchip[data-g="meli"]'); await p.waitForTimeout(250);
+      t(`N6 ${L}. filtro "Mercado Livre" mostra só ele`, await p.evaluate(() => [...document.querySelectorAll('.gantt-cal-lin')].map(x => x.textContent).join('|') === 'Mercado Livre (Meli + Full)'));
+      await p.evaluate(() => { ganttLimpar(); ganttAba('marca'); }); await p.waitForTimeout(250);
+      t(`N4 ${L}. a aba de Marca continua compacta (só os Comerciais alargam)`, await p.evaluate(() => !document.getElementById('gantt-view').classList.contains('gantt-largo')));
       await p.evaluate(() => ganttAba('comercial'));
       await p.click('.gantt-aba[data-aba="cards"]'); await p.evaluate(() => ganttNav(0)); await p.waitForTimeout(300);   // o De/Até do passo K levou a régua para 25/11
       const o = await p.evaluate(() => ({ row: !!document.querySelector('.gantt-row[data-id="c1"]'), cal: document.getElementById('gantt-filtros').classList.contains('is-cal'), aba: document.querySelector('.gantt-aba.on').dataset.aba, vazio: (document.querySelector('.gantt-empty') || {}).textContent }));

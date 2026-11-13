@@ -75,4 +75,24 @@ function comercialMes(nome, ano, mes, semanas, extra) {
   Object.assign(cel, extra || {});
   return { nome, celulas: cel, merges: [] };
 }
-module.exports = { xlsx, marca, comercialMes, colL };
+// ── Calendário Marketplace (aba "NOVEMBRO 26"): régua longa com um bloco ANTIGO copiado no começo (DEZEMBRO 2023, deve ser ignorado)
+// e o bloco do mês no fim (cabeçalho "Novembro 2026" na linha 1). Coluna A: "HERING MARKETPLACE" e os marketplaces, cada rótulo
+// MESCLADO sobre as sublinhas dele. linhas: [{ r, rot, ate, barras:[[rLinha, diaIni, diaFim, txt]] }]; sobra: [[r, dia, txt]] = linha fora de mescla.
+const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+function mktMes(nome, ano, mes, linhas, extra) {
+  const cel = {}, merges = []; const C0 = 40;   // o mês começa na coluna 40; 2..38 é o bloco antigo
+  cel['1,2'] = 'DEZEMBRO 2023'; for (let d = 1; d <= 30; d++) { cel[`2,${1 + d}`] = d; cel[`3,${1 + d}`] = 'SEG'; }
+  cel[`1,${C0}`] = `${MESES_PT[mes - 1]} ${ano}`;
+  const ult = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  for (let d = 1; d <= ult; d++) { cel[`2,${C0 + d - 1}`] = d; cel[`3,${C0 + d - 1}`] = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][new Date(Date.UTC(ano, mes - 1, d)).getUTCDay()]; }
+  cel['7,1'] = 'WEB'; cel[`7,${C0}`] = 'WEB DA MARCA NÃO ENTRA';
+  cel['22,1'] = 'HERING MARKETPLACE';
+  (linhas || []).forEach(L => {
+    cel[`${L.r},1`] = L.rot; if (L.ate > L.r) merges.push([L.r, 1, L.ate, 1]);
+    cel[`${L.r},5`] = 'BLOCO ANTIGO NÃO ENTRA';
+    (L.barras || []).forEach(([r, d1, d2, txt]) => { const a = C0 + d1 - 1, b = C0 + d2 - 1; cel[`${r},${a}`] = txt; if (b > a) merges.push([r, a, r, b]); });
+  });
+  Object.assign(cel, (extra && extra.celulas) || {});
+  return { nome, oculta: !!(extra && extra.oculta), celulas: cel, merges, C0 };
+}
+module.exports = { xlsx, marca, comercialMes, mktMes, colL };

@@ -3168,7 +3168,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.110 · painel-dev</div>
+<div class="version">v5.111 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3402,7 +3402,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-notif-dev.js?v=41"></script>
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-plantao-dev.js?v=5"></script>
-<script src="mare-dicas-dev.js?v=16"></script>
+<script src="mare-dicas-dev.js?v=17"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -10158,24 +10158,28 @@ async function renderPcfgDicas(){
 const GXL = (()=>{
   const MAX_BARRAS = 3000;
   const u16=(b,o)=>b[o]|(b[o+1]<<8), u32=(b,o)=>(b[o]|(b[o+1]<<8)|(b[o+2]<<16)|(b[o+3]<<24))>>>0;
-  async function unzip(buf){
+  // Diretório do zip (sem descompactar nada); `abrir(nome)` descompacta só o arquivo pedido — planilhas grandes (a do Marketplace tem
+  // 36 abas de ~9 MB de XML cada) só pagam pelas abas que o calendário usa.
+  function zipDir(buf){
     const b=new Uint8Array(buf); let e=-1;
     for(let i=b.length-22;i>=Math.max(0,b.length-66000);i--){ if(u32(b,i)===0x06054b50){ e=i; break; } }
     if(e<0) throw new Error('Não parece um arquivo .xlsx (zip sem diretório central).');
-    const n=u16(b,e+10); let p=u32(b,e+16); const out={}; const dec=new TextDecoder('utf-8');
+    const n=u16(b,e+10); let p=u32(b,e+16); const dir=new Map(); const dec=new TextDecoder('utf-8');
     for(let k=0;k<n;k++){
       if(u32(b,p)!==0x02014b50) throw new Error('Diretório do .xlsx corrompido.');
       const metodo=u16(b,p+10), csize=u32(b,p+20), nlen=u16(b,p+28), xlen=u16(b,p+30), clen=u16(b,p+32), loff=u32(b,p+42);
-      const nome=dec.decode(b.subarray(p+46,p+46+nlen)); p+=46+nlen+xlen+clen;
-      if(!/^xl\/(workbook\.xml|sharedStrings\.xml|_rels\/workbook\.xml\.rels|worksheets\/[^/]+\.xml)$/.test(nome)) continue;
-      const ini=loff+30+u16(b,loff+26)+u16(b,loff+28); const dado=b.subarray(ini,ini+csize);
-      let bytes;
-      if(metodo===0) bytes=dado;
-      else if(metodo===8){ const ds=new DecompressionStream('deflate-raw'); const r=new Response(new Blob([dado]).stream().pipeThrough(ds)); bytes=new Uint8Array(await r.arrayBuffer()); }
-      else throw new Error('Compressão não suportada no .xlsx ('+metodo+').');
-      out[nome]=dec.decode(bytes);
+      dir.set(dec.decode(b.subarray(p+46,p+46+nlen)), { metodo, csize, loff }); p+=46+nlen+xlen+clen;
     }
-    return out;
+    async function abrir(nome){
+      const x=dir.get(nome); if(!x) return '';
+      const ini=x.loff+30+u16(b,x.loff+26)+u16(b,x.loff+28); const dado=b.subarray(ini,ini+x.csize);
+      let bytes;
+      if(x.metodo===0) bytes=dado;
+      else if(x.metodo===8){ const ds=new DecompressionStream('deflate-raw'); const r=new Response(new Blob([dado]).stream().pipeThrough(ds)); bytes=new Uint8Array(await r.arrayBuffer()); }
+      else throw new Error('Compressão não suportada no .xlsx ('+x.metodo+').');
+      return dec.decode(bytes);
+    }
+    return { abrir };
   }
   const ent=s=>String(s).replace(/&(lt|gt|quot|apos|amp|#(\d+)|#x([0-9a-fA-F]+));/g,(m,a,d,h)=>a==='lt'?'<':a==='gt'?'>':a==='quot'?'"':a==='apos'?"'":a==='amp'?'&':String.fromCodePoint(d?Number(d):parseInt(h,16)));
   const attr=(tag,n)=>{ const m=new RegExp('\\s'+n+'="([^"]*)"').exec(tag); return m?ent(m[1]):null; };
@@ -10183,17 +10187,21 @@ const GXL = (()=>{
   const colN=l=>{ let c=0; for(const ch of l) c=c*26+ch.charCodeAt(0)-64; return c; };
   function rc(ref){ const m=/^([A-Z]+)(\d+)$/.exec(ref); return m?{r:+m[2],c:colN(m[1])}:null; }
   // Planilha → [{nome, oculta, cells: Map("r,c" → texto), merges:[{r1,c1,r2,c2}], rows: Map(r → Map(c → texto))}]
-  async function ler(buf){
-    const z=await unzip(buf);
-    if(!z['xl/workbook.xml']) throw new Error('Arquivo sem planilhas (xl/workbook.xml).');
-    const ss=[]; const sst=z['xl/sharedStrings.xml']||'';
+  // quer(nomeDaAba, oculta) → true/false: só as abas aceitas são descompactadas (as outras voltam sem linhas)
+  async function ler(buf, quer){
+    const Z=zipDir(buf);
+    const wb=await Z.abrir('xl/workbook.xml');
+    if(!wb) throw new Error('Arquivo sem planilhas (xl/workbook.xml).');
+    const ss=[]; const sst=await Z.abrir('xl/sharedStrings.xml');
     (sst.match(/<si>[\s\S]*?<\/si>|<si\/>/g)||[]).forEach(si=>ss.push(textos(si)));
-    const rels={}; (z['xl/_rels/workbook.xml.rels']||'').replace(/<Relationship\b[^>]*>/g,t=>{ rels[attr(t,'Id')]=attr(t,'Target'); return t; });
+    const rels={}; (await Z.abrir('xl/_rels/workbook.xml.rels')).replace(/<Relationship\b[^>]*>/g,t=>{ rels[attr(t,'Id')]=attr(t,'Target'); return t; });
     const abas=[];
-    z['xl/workbook.xml'].replace(/<sheet\b[^>]*>/g,t=>{ abas.push({ nome:attr(t,'name')||'', oculta:/state="(hidden|veryHidden)"/.test(t), rid:attr(t,'r:id') }); return t; });
-    return abas.map(a=>{
+    wb.replace(/<sheet\b[^>]*>/g,t=>{ abas.push({ nome:attr(t,'name')||'', oculta:/state="(hidden|veryHidden)"/.test(t), rid:attr(t,'r:id') }); return t; });
+    const out=[];
+    for(const a of abas){
       let alvo=rels[a.rid]||''; alvo=alvo.replace(/^\//,''); if(!alvo.startsWith('xl/')) alvo='xl/'+alvo;
-      const xml=z[alvo]||''; const rows=new Map(); const merges=[];
+      const pula=quer && !quer(a.nome, a.oculta);
+      const xml=pula ? '' : await Z.abrir(alvo); const rows=new Map(); const merges=[];
       const reC=/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g; let m;
       while((m=reC.exec(xml))){
         const tag=m[1], corpo=m[2]||''; const ref=attr(' '+tag,'r'); const pos=ref&&rc(ref); if(!pos) continue;
@@ -10204,9 +10212,16 @@ const GXL = (()=>{
         if(!rows.has(pos.r)) rows.set(pos.r,new Map()); rows.get(pos.r).set(pos.c,{v:String(v),num:t!=='s'&&t!=='inlineStr'&&t!=='str'});
       }
       xml.replace(/<mergeCell\b[^>]*ref="([A-Z]+\d+):([A-Z]+\d+)"/g,(x,a1,a2)=>{ const p=rc(a1),q=rc(a2); if(p&&q) merges.push({r1:p.r,c1:p.c,r2:q.r,c2:q.c}); return x; });
-      return { nome:a.nome, oculta:a.oculta, rows, merges };
-    });
+      out.push({ nome:a.nome, oculta:a.oculta, rows, merges });
+    }
+    return out;
   }
+  // filtros de aba por calendário (quais descompactar)
+  const QUER={
+    marca:(n,o)=>!o && /^(HERING|KIDS)\s+20\d\d$/i.test(limpa(n)),
+    comercial:(n,o)=>!o && !ABA_FORA_RE.test(n),
+    mktplace:(n)=>ABA_MES_RE.test(sem(n)),
+  };
   // ── datas ──
   const z2=n=>String(n).padStart(2,'0');
   const iso=d=>d.getUTCFullYear()+'-'+z2(d.getUTCMonth()+1)+'-'+z2(d.getUTCDate());
@@ -10308,7 +10323,7 @@ const GXL = (()=>{
     { id:'acao_site',   rot:'Ação Site',          ok:s=>/^ACAO SITE\b/.test(s) },
     { id:'geral',       rot:'Geral (aba sem rótulos)', ok:()=>false },
   ];
-  const ABA_FORA=/rascunho|backup|aprova|copy of|^base\b|oculta|n[aã]o considerar/i;
+  const ABA_FORA=/rascunho|backup|aprova|copy of|^base\b|oculta|n[aã]o considerar/i; const ABA_FORA_RE=ABA_FORA;
   function linhaDeRotulo(s){ const S=sem(s); if(/^SITE\b/.test(S) && /SALDOS/.test(S)) return 'saldos'; for(const L of LINHAS_COM) if(L.ok(S)) return L.id; return null; }
   function montarComercial(abas, anoMin){
     anoMin=anoMin||2026;
@@ -10369,6 +10384,87 @@ const GXL = (()=>{
     const de=meses[0]+'-01'; const ult=meses[meses.length-1]; const [ay,am]=ult.split('-').map(Number); const ate=iso(new Date(Date.UTC(ay,am,0)));
     return { abas:[...porMes.values()].map(x=>x.aba), linhas, barras, de, ate, meses, naoReconhecidos:[...naoRec.entries()].map(([r,a])=>r+' ('+[...a].join(', ')+')') };
   }
+  // ── 🛍️ Calendário Comercial Marketplace (13/11/2026): cada aba com nome de MÊS ("NOVEMBRO 26", "Julho 2026", "DEZEMBRO") é uma régua
+  // longa de dias que carrega meses antigos copiados; o mês DA ABA é o bloco cujo cabeçalho (linha 1) é "<Mês> <ano>" — o último da linha.
+  // Datas pela linha 2 (dia) conferidas pela linha 3 (dia da semana). Linhas = marketplaces (coluna A: AMAZON, DAFITI, SHOPEE…) a partir de
+  // "HERING MARKETPLACE"; as sublinhas sem rótulo herdam o marketplace de cima. Barras = células mescladas (cortadas no fim do mês).
+  // Para no 1º bloco de linhas com data por extenso (número de série) na coluna do mês — é uma tabela solta, não o calendário.
+  const MKT=[
+    { id:'mkt_amazon',   rot:'Amazon',        ok:s=>/^AMAZON\b/.test(s) },
+    { id:'mkt_dafiti',   rot:'Dafiti',        ok:s=>/^DAFITI\b/.test(s) },
+    { id:'mkt_shopee',   rot:'Shopee',        ok:s=>/^SHOPEE\b/.test(s) },
+    { id:'mkt_meli',     rot:'Mercado Livre (Meli + Full)', ok:s=>/^(MELI|MERCADO ?LIVRE)\b/.test(s) },
+    { id:'mkt_tiktok',   rot:'TikTok Shop',   ok:s=>/^TIK ?TOK/.test(s) },
+    { id:'mkt_magalu',   rot:'Magalu',        ok:s=>/^MAGALU\b|^MAGAZINE LUIZA\b/.test(s) },
+    { id:'mkt_netshoes', rot:'Netshoes',      ok:s=>/^NETSHOES\b/.test(s) },
+    { id:'mkt_zattini',  rot:'Zattini',       ok:s=>/^ZATTINI\b/.test(s) },
+    { id:'mkt_offprem',  rot:'Off Premium',   ok:s=>/^OFF ?PREMIUM\b/.test(s) },
+    { id:'mkt_privalia', rot:'Privalia',      ok:s=>/^PRIVALIA\b/.test(s) },
+    { id:'mkt_zzmall',   rot:'Zzmall',        ok:s=>/^ZZ ?MALL\b/.test(s) },
+    { id:'mkt_posthaus', rot:'Posthaus',      ok:s=>/^POSTHAUS\b/.test(s) },
+    { id:'mkt_offhering',rot:'Off Hering',    ok:s=>/^OFF ?HERING\b/.test(s) },
+  ];
+  const ABA_MES=/^(JANEIRO|FEVEREIRO|MARCO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)(\s+(20)?\d\d)?$/; const ABA_MES_RE=ABA_MES;
+  function montarMarketplace(abas){
+    const porMes=new Map(); // 'AAAA-MM' → {aba, oculta, barras:[]}
+    const naoRec=new Map();
+    for(const aba of abas){
+      const N=sem(aba.nome); if(!ABA_MES.test(N)) continue;           // fora: "provisório", "NOVEMBRO BF", resumos, calculadoras…
+      const r1=aba.rows.get(1)||new Map(), r2=aba.rows.get(2)||new Map(), r3=aba.rows.get(3)||new Map();
+      // bloco do mês: o cabeçalho "<Mês> <ano>" mais à direita da linha 1
+      let ini=null, mesN=-1, ano=0;
+      for(const [c,x] of [...r1.entries()].sort((a,b)=>b[0]-a[0])){
+        const m=/^(JANEIRO|FEVEREIRO|MARCO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)\s*\/?\s*(20\d\d)$/.exec(sem(x.v));
+        if(m){ ini=c; mesN=MESES.indexOf(m[1]); ano=+m[2]; break; }
+      }
+      if(ini===null) continue;
+      const colData=new Map(); let ant=0, erros=0, conf=0;
+      for(let c=ini; c<ini+40; c++){
+        const x=r2.get(c); if(!x || !/^\d{1,2}(\.0+)?$/.test(limpa(x.v))) break;
+        const dia=Math.round(+x.v); if(dia<=ant) break; ant=dia;
+        const d=ano+'-'+z2(mesN+1)+'-'+z2(dia); colData.set(c,d);
+        const w=r3.get(c); if(w){ conf++; const dow=new Date(d+'T12:00:00Z').getUTCDay(); if(!sem(w.v).startsWith(DOW[dow])) erros++; }
+      }
+      if(colData.size<20 || !conf || erros>2) continue;                  // bloco do mês ilegível: não chuta datas
+      const cIni=ini, cFim=Math.max(...colData.keys());
+      const span=new Map(); aba.merges.forEach(m=>{ if(m.c1>=cIni && m.c1<=cFim) span.set(m.r1+','+m.c1,m.c2); });
+      const mesKey=ano+'-'+z2(mesN+1); const barras=[];
+      // o rótulo da coluna A é MESCLADO sobre as sublinhas do marketplace: a mescla diz quais linhas são dele
+      const spanA=new Map(); aba.merges.forEach(m=>{ if(m.c1===1 && m.r2>m.r1) spanA.set(m.r1,m.r2); });
+      let lin=null, linAte=0, emMkt=false;
+      for(const [r,row] of [...aba.rows.entries()].sort((a,b)=>a[0]-b[0])){
+        const rot=row.get(1); const R=rot&&!rot.num?sem(rot.v):'';
+        if(/^HERING MARKETPLACE\b/.test(R)){ emMkt=true; continue; }
+        if(!emMkt || r<=3) continue;
+        // tabela solta embaixo (datas por extenso na coluna do mês): fim do calendário
+        const c0=row.get(cIni); if(c0 && c0.num && +c0.v>40000) break;
+        if(R){ const L=MKT.find(L=>L.ok(R)); linAte=spanA.get(r)||Infinity;   // sem mescla: vale até o próximo rótulo
+          if(L) lin=L.id; else { lin=null; if(/[A-Z]/.test(R)){ const k=limpa(rot.v).slice(0,60); if(!naoRec.has(k)) naoRec.set(k,new Set()); naoRec.get(k).add(aba.nome); } } }
+        else if(r>linAte) lin=null;   // passou do fim da mescla do rótulo: linha de ninguém
+        if(!lin) continue;
+        for(const [c,x] of row){
+          if(c<cIni || c>cFim) continue;
+          const txt=limpa(x.v); if(!txt || !/[\p{L}\p{N}]/u.test(txt)) continue;
+          const c2=Math.min(span.get(r+','+c)||c, cFim);
+          barras.push({ linha:lin, ini:colData.get(c), fim:colData.get(c2)||colData.get(c), txt:txt.slice(0,200) });
+        }
+      }
+      const atual=porMes.get(mesKey);
+      // mesmo mês em 2 abas: vale a visível (a oculta costuma ser rascunho/antiga)
+      if(atual && (!atual.oculta || aba.oculta)) continue;
+      porMes.set(mesKey,{ aba:aba.nome, oculta:aba.oculta, barras });
+    }
+    if(!porMes.size) throw new Error('Não achei abas de mês (ex.: "NOVEMBRO 26") com o bloco do mês no fim da linha 1 ("Novembro 2026").');
+    const linhas={}, barras={}; let n=0;
+    for(const [,m] of porMes) for(const b of m.barras){
+      if(++n>MAX_BARRAS) throw new Error('Barras demais (mais de '+MAX_BARRAS+').');
+      barras[hid(b.linha+'|'+b.ini+'|'+sem(b.txt))]=b;
+    }
+    MKT.forEach((L,ordem)=>{ if(Object.values(barras).some(b=>b.linha===L.id)) linhas[L.id]={ rot:L.rot, ordem }; });
+    const meses=[...porMes.keys()].sort();
+    const de=meses[0]+'-01'; const [ay,am]=meses[meses.length-1].split('-').map(Number); const ate=iso(new Date(Date.UTC(ay,am,0)));
+    return { abas:[...porMes.values()].map(x=>x.aba), linhas, barras, de, ate, meses, naoReconhecidos:[...naoRec.entries()].map(([r,a])=>r+' ('+[...a].join(', ')+')') };
+  }
   // ── prévia: compara com o que está publicado. Os dois calendários trocam TUDO pelo arquivo novo (a planilha que o time
   // mantém tem o ano inteiro); trocar só "os meses do arquivo" duplicava ou cortava barras que atravessam a virada do mês.
   // O que deixa de existir aparece em "− saem" antes de publicar.
@@ -10385,12 +10481,13 @@ const GXL = (()=>{
     const de=ds.reduce((x,y)=>y.ini<x?y.ini:x,'9999-12-31'), ate=ds.reduce((x,y)=>y.fim>x?y.fim:x,'0000-01-01');
     return { barras, linhas, dif, de, ate };
   }
-  return { ler, montarMarca, montarComercial, mesclar, _hid:hid };
+  return { ler, QUER, montarMarca, montarComercial, montarMarketplace, mesclar, _hid:hid };
 })();
 const _GANTT_SUF = /-dev\.html/.test(location.pathname) ? '_dev' : '';   // painel-dev escreve no mesmo nó que o kanban-dev lê
 const _GANTT_CALS = {
   marca:     { icone:'🎯', nome:'Calendário de Marca', sub:'Campanhas · aba HERING: Coleção sellout, Web, Redes sociais e Canais Intimates e Sports · aba KIDS: Coleção sellout, Web e Redes sociais', montar:a=>GXL.montarMarca(a), regra:'Reenviar troca o calendário inteiro.' },
-  comercial: { icone:'🛒', nome:'Calendário Comercial Digital', sub:'Uma aba por mês, de 2026 em diante: lançamentos, Site e App (todo e saldos), mídia, CRM e ações de app/site', montar:a=>GXL.montarComercial(a, 2026), regra:'Reenviar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses).' },
+  comercial: { icone:'🛒', nome:'Calendário Comercial Hering', sub:'Uma aba por mês, de 2026 em diante: lançamentos, Site e App (todo e saldos), mídia, CRM e ações de app/site', montar:a=>GXL.montarComercial(a, 2026), regra:'Reenviar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses).' },
+  mktplace:  { icone:'🛍️', nome:'Calendário Comercial Marketplace', sub:'Abas com nome de mês ("NOVEMBRO 26", "Julho 2026"…): o bloco do mês no fim de cada aba, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop…)', montar:a=>GXL.montarMarketplace(a), regra:'Reenviar troca o calendário inteiro pelo arquivo (abas de mês ocultas também entram; "provisório" e "BF" ficam de fora).' },
 };
 const _ganttCalAtual = {}, _ganttCalPrevia = {};
 const _ganttRef = tipo => window._ref(window._db, 'kanban/calendarios_gantt'+_GANTT_SUF+'/'+tipo);
@@ -10448,10 +10545,10 @@ async function pcfgGanttArquivo(inp){
   const tipo=inp.dataset.cal, f=inp.files&&inp.files[0]; inp.value=''; if(!f||!_GANTT_CALS[tipo]) return;
   const seq=(_ganttLeituraSeq[tipo]=(_ganttLeituraSeq[tipo]||0)+1);
   _ganttCalPrevia[tipo]={ lendo:f.name.slice(0,200) }; _pcfgGanttDesenha();
-  if(f.size>25*1024*1024){ _ganttCalPrevia[tipo]={ erro:'Arquivo grande demais (máx. 25 MB).' }; return _pcfgGanttDesenha(); }
+  if(f.size>80*1024*1024){ _ganttCalPrevia[tipo]={ erro:'Arquivo grande demais (máx. 80 MB).' }; return _pcfgGanttDesenha(); }
   if(typeof DecompressionStream==='undefined'){ _ganttCalPrevia[tipo]={ erro:'Este navegador não abre .xlsx aqui. Use o Chrome, o Edge ou o Safari atualizados.' }; return _pcfgGanttDesenha(); }
   try{
-    const abas=await GXL.ler(await f.arrayBuffer());
+    const abas=await GXL.ler(await f.arrayBuffer(), GXL.QUER[tipo]);   // só descompacta as abas que este calendário usa
     if(seq!==_ganttLeituraSeq[tipo]) return;   // outro arquivo foi escolhido enquanto este era lido
     const novo=_GANTT_CALS[tipo].montar(abas);
     const atual=_ganttCalAtual[tipo]&&!_ganttCalAtual[tipo]._erro?_ganttCalAtual[tipo]:null;

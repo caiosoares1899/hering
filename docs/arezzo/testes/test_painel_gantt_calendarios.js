@@ -53,6 +53,20 @@ const COM2 = arq('Calendário Comercial Hering (v2).xlsx', [
   X.comercialMes('Nov26', 2026, 11, [novSemanas[0].filter(x => x[3] !== 'FERIADO'), novSemanas[1], [], novSemanas[3], [[4, 'SITE - TODO SALDOS', [29, 30], 'OFERTA FICTÍCIA B']]]),
   DEZ26(),
 ]);
+// Marketplace: NOVEMBRO 26 (visível) + Outubro 26 (oculta, entra) + abas que ficam de fora
+const novMkt = X.mktMes('NOVEMBRO 26', 2026, 11, [
+  { r: 23, rot: 'AMAZON', ate: 25, barras: [[23, 3, 30, 'AMAZON OFERTA TESTE'], [24, 11, 11, 'AMAZON DIA TESTE']] },
+  { r: 26, rot: 'MELI  + FULL', ate: 28, barras: [[26, 1, 9, 'MELI CUPOM TESTE'], [28, 5, 5, 'MELI ESTOQUE TESTE']] },
+  { r: 30, rot: 'TIKTOKSHOP', ate: 31, barras: [[31, 10, 10, 'TIKTOK LIVE TESTE']] },
+  { r: 34, rot: 'SHOPEE', ate: 34, barras: [[34, 1, 30, 'SHOPEE KITS TESTE']] },
+], { celulas: { '33,45': 'SOBRA FORA DA MESCLA NÃO ENTRA', '60,40': 45962, '60,41': 'Sábado', '60,43': 'TABELA SOLTA NÃO ENTRA' } });
+const MKT = arq('Calendário Mktplace + Rede de Campanhas.xlsx', [
+  { nome: 'Mktplace Resumo', celulas: { '1,1': 'RESUMO NÃO ENTRA' } },
+  novMkt,
+  X.mktMes('Outubro 26', 2026, 10, [{ r: 23, rot: 'AMAZON', ate: 23, barras: [[23, 25, 31, 'AMAZON OUTUBRO TESTE']] }], { oculta: true }),
+  X.mktMes('NOVEMBRO BF', 2026, 11, [{ r: 23, rot: 'AMAZON', ate: 23, barras: [[23, 1, 2, 'BF NÃO ENTRA']] }]),
+  X.mktMes('Julho provisório', 2026, 7, [{ r: 23, rot: 'AMAZON', ate: 23, barras: [[23, 1, 2, 'PROVISÓRIO NÃO ENTRA']] }]),
+]);
 const LIXO = arq('nao-e-planilha.xlsx', []); fs.writeFileSync(LIXO, 'isto não é um zip');
 
 const U = { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana ADM', photoURL: '', providerData: [{ providerId: 'google.com' }] };
@@ -74,7 +88,7 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
   const store = (p, cal) => p.evaluate(([n, c]) => JSON.parse(JSON.stringify((window.__store.kanban[n] || {})[c] || null)), [NO, cal]);
 
   { const { ctx, p, errs } = await abre({ width: 1280, height: 900 });
-    t('A. aba 📊 Gantt nas Configurações, com os dois calendários', await p.evaluate(() => document.querySelectorAll('#pcfg-gantt-cards .pg-card').length === 2 && /Ainda não publicado/.test(document.getElementById('pcfg-gantt-cards').innerText)));
+    t('A. aba 📊 Gantt nas Configurações, com os três calendários (Marca, Comercial Hering, Comercial Marketplace)', await p.evaluate(() => document.querySelectorAll('#pcfg-gantt-cards .pg-card').length === 3 && /Comercial Hering/.test(document.getElementById('pcfg-gantt-cards').innerText) && /Comercial Marketplace/.test(document.getElementById('pcfg-gantt-cards').innerText) && /Ainda não publicado/.test(document.getElementById('pcfg-gantt-cards').innerText)));
     await envia(p, 'marca', MARCA); let txt = await pv(p, 'marca');
     t('B. Marca: prévia com as linhas certas da HERING (sellout 2, web 3, redes 2, Canais Intimates 1, Canais Sports 1) e da KIDS (sellout, web, redes 1 cada)', /^Coleção sellout 2/m.test(txt) && / Web 3/.test(txt) && / Redes sociais 2/.test(txt) && /Canais Intimates \(site e CRM\) 1/.test(txt) && /Canais Sports \(site e CRM\) 1/.test(txt) && /Kids · Coleção sellout 1/.test(txt) && /Kids · Web 1/.test(txt) && /Kids · Redes sociais 1/.test(txt) && /＋ 12 novas/.test(txt), txt);
     t('C. Marca: não entram ACELERADORES WEB, EXCLUSIVO WEB, 2a ATIVAÇÃO (nem a da KIDS) e REDES | SPORTS', !/ACELERADOR|NÃO ENTRA|CONSUMIDOR/.test(txt), txt);
@@ -110,6 +124,14 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     const c2 = Object.values((await store(p, 'comercial')).barras);
     const vira = c2.filter(x => /APP VIRADA/.test(x.txt));
     t('M. depois do 2º envio: outubro segue, a oferta vai até 30/11, o feriado saiu e a barra da virada do mês continua 1 só (sem duplicar)', c2.some(x => /AÇÃO OUTUBRO TESTE/.test(x.txt)) && c2.find(x => /OFERTA FICTÍCIA B/.test(x.txt)).fim === '2026-11-30' && !c2.some(x => /FERIADO/.test(x.txt)) && vira.length === 1 && vira[0].fim === '2026-11-02', c2.map(x => x.txt + ' ' + x.ini + '→' + x.fim));
+    // Marketplace
+    await envia(p, 'mktplace', MKT); txt = await pv(p, 'mktplace');
+    t('M2. Marketplace: só abas de MÊS (NOVEMBRO 26 + Outubro 26 oculta); fora BF, provisório e resumo', /2 abas de mês/.test(txt) && !/NÃO ENTRA/.test(txt), txt);
+    await p.click('.pg-card[data-cal="mktplace"] .btn-p'); await p.waitForTimeout(300);
+    const mk = await store(p, 'mktplace'); const mb = Object.values(mk.barras); const um2 = re => mb.filter(x => re.test(x.txt));
+    t('M3. bloco do mês no fim da linha 1 ("Novembro 2026"): datas certas e barra mesclada 03→30/11', um2(/AMAZON OFERTA/)[0].ini === '2026-11-03' && um2(/AMAZON OFERTA/)[0].fim === '2026-11-30' && um2(/AMAZON OUTUBRO/)[0].ini === '2026-10-25' && um2(/AMAZON OUTUBRO/)[0].fim === '2026-10-31', mb);
+    t('M4. sublinhas pela mescla do rótulo: Amazon (2), Meli+Full, TikTok (sublinha), Shopee', um2(/AMAZON DIA/)[0].linha === 'mkt_amazon' && um2(/MELI ESTOQUE/)[0].linha === 'mkt_meli' && um2(/TIKTOK LIVE/)[0].linha === 'mkt_tiktok' && um2(/SHOPEE KITS/)[0].linha === 'mkt_shopee', mb.map(x => x.linha + ':' + x.txt));
+    t('M5. NÃO entram: bloco antigo copiado, Web da marca, linha fora da mescla, tabela solta de baixo', !mb.some(x => /NÃO ENTRA/.test(x.txt)) && mb.length === 7, mb.map(x => x.txt));
     // arquivo inválido
     await envia(p, 'marca', LIXO); txt = await pv(p, 'marca');
     t('N. arquivo que não é planilha: erro claro, sem publicar', /não parece um arquivo \.xlsx/i.test(txt) && !await p.evaluate(() => !!document.querySelector('.pg-card[data-cal="marca"] .btn-p')), txt);

@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🛍️ Gantt: aba Comercial Marketplace (planilha de marketplace) + "Comercial Hering" (kanban v8.30.966-dev, painel v5.111-dev, mare-dicas v17) — SÓ DEV — 2026-11-13
+
+- **Painel → ⚙ → 📊 Gantt** ganha o **Calendário Comercial Marketplace**: lê as abas com nome de **mês** ("NOVEMBRO 26", "Julho 2026", "DEZEMBRO"…, inclusive as ocultas; "provisório", "BF", resumos e calculadoras ficam de fora). Cada aba é uma régua longa que carrega meses antigos copiados: vale só o **bloco do mês** — o cabeçalho "<Mês> <ano>" mais à direita da linha 1 —, com as datas da linha 2 conferidas pelo dia da semana. Uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes/Zattini, Off Premium, Privalia, Zzmall, Posthaus, Off Hering); as sublinhas pertencem ao marketplace cujo rótulo (mesclado) as cobre. A tabela solta de baixo e o bloco antigo são ignorados. Mesmo mês em 2 abas: vale a visível.
+- **Leitor mais leve**: descompacta só as abas que cada calendário usa (o Marketplace tem 26,8 MB e 36 abas de ~9 MB de XML; lê 12 em ~1,6 s); limite do arquivo 25 → 80 MB.
+- **Maré → 📊 Gantt**: abas **🛒 Comercial Hering** (antes "Comercial Digital") e **🛍️ Comercial Marketplace** — mesmo estilo largo com texto inteiro, filtro por marketplace (Amazon · Mercado Livre · Shopee · Dafiti · TikTok Shop · Magalu · Netshoes e Zattini · Outros), destaque ⚠️ do ADM e datas-chave.
+- **Banco**: `calendarios_gantt`/`gantt_destaques` aceitam `mktplace` e já `outlet` (o Comercial Outlet entra sem novo deploy de regras). Dica `gantt-abas` atualizada (`?v=17`).
+- Testes: `test_painel_gantt_calendarios.js` (planilha sintética no formato do Marketplace: bloco antigo, rótulos mesclados, linha fora da mescla, tabela solta, abas BF/provisório/resumo), `test_gantt_calendarios.js` (4 abas, Marketplace largo e filtro), `ganttRules.test.js`.
+
 ### 💬 Gantt: balão com o nome inteiro quando o título não cabe (kanban v8.30.964-dev) — SÓ DEV — 2026-11-13
 
 - Passar o mouse (ou focar pelo teclado) numa barra — de card, do Calendário de Marca ou do Comercial — ou num nome de data-chave **cujo texto não cabe** mostra um balão com o **nome inteiro** e, embaixo, as datas (e a linha/⚠️ quando houver). Texto que já se lê inteiro não abre balão.
