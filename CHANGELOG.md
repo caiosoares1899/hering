@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### Supercard no board: lista de filhos rola em vez de cortar em 6 (kanban v8.30.958-dev) — SÓ DEV — 2026-11-12
+### Supercard no board: lista de filhos rola em vez de cortar em 6 (kanban v8.30.958) — PROD 12/11 — 2026-11-12
 
 - **Antes:** o card do supercard mostrava só os 6 primeiros filhos e um "+N mais..." sem clique; o resto só aparecia abrindo o card.
 - **Agora:** todos os filhos ficam na lista, que rola dentro do card a partir do 7º (altura de ~6 linhas, barra fina, leve esmaecido no fim); a rolagem não arrasta a coluna junto e a posição se mantém quando o board se atualiza. Supercard com até 6 filhos não muda.
