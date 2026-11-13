@@ -10,12 +10,15 @@
 // O push sai do sendPushOnNotification (gantt_cal está no PUSH_TYPES) e o clique abre o Gantt naquele calendário, na página onde a pessoa
 // se inscreveu (common/pushUrl.js).
 //
-// Cuidados: id determinístico (gantt_<cal>_<histId>) gravado por transação — retry da função não duplica; destinatário que não existe mais ou
-// não é da empresa NÃO recebe (gravar em usuarios/{uid}/notificacoes recriaria um usuarios/{uid} órfão) e a inscrição dele é apagada.
+// Cuidados: id determinístico (gantt_<cal>_<histId>) gravado por transação — retry da função não duplica. Destinatário conferido no CADASTRO
+// DE LOGIN (Auth: existe, e-mail da empresa, provedor Google) e com registro em usuarios/{uid} — senão NÃO recebe (gravar em
+// usuarios/{uid}/notificacoes recriaria um usuarios/{uid} órfão) e a inscrição dele é apagada. O nome de quem atualizou vem de
+// usuarios_publicos/{porUid}/nome (o porNome da linha é texto livre: só reserva).
 // Deploy (regras primeiro): firebase deploy --only database ; depois
 //   firebase deploy --only functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:sendPushOnNotification
 const { onValueCreated } = require('firebase-functions/v2/database');
 const { getDatabase } = require('firebase-admin/database');
+const { getAuth } = require('firebase-admin/auth');
 const { emailDaEmpresa } = require('../common/mareModo');
 
 const CALS = { marca: 'Calendário de Marca', comercial: 'Comercial Hering', mktplace: 'Comercial Marketplace', outlet: 'Comercial Outlet' };
@@ -45,20 +48,31 @@ function textoDoAviso(cal, h) {
 }
 
 // Handler (testável): cal, id da linha do histórico, a linha, e se é o ambiente de testes (_dev)
-async function avisarMudanca({ db, cal, histId, h, dev, agora }) {
+// A pessoa ainda pode receber? (existe no login, é da empresa pelo Google e tem registro no Maré)
+async function podeReceber(db, auth, uid) {
+  let u = null;
+  try { u = await auth.getUser(uid); } catch (e) { if (e && e.code === 'auth/user-not-found') return false; throw e; }
+  const google = (u.providerData || []).some((p) => p && p.providerId === 'google.com');
+  if (!u || u.disabled || !emailDaEmpresa(u.email) || !google) return false;
+  return (await db.ref(`kanban/usuarios/${uid}`).get()).exists();
+}
+
+async function avisarMudanca({ db, auth, cal, histId, h, dev, agora }) {
   if (!CALS[cal] || !h || typeof h !== 'object') return { enviados: 0, motivo: 'linha inválida' };
+  auth = auth || getAuth();
   const suf = dev ? '_dev' : '';
   const inscritos = (await db.ref(`kanban/gantt_inscritos${suf}/${cal}`).get()).val() || {};
   const autor = String(h.porUid || '');
-  const { title, sub } = textoDoAviso(cal, h);
+  // nome real de quem publicou (porNome é texto livre na linha — qualquer um da Hering poderia escrever o nome de outra pessoa)
+  const nomeReal = autor ? (await db.ref(`kanban/usuarios_publicos/${autor}/nome`).get()).val() : null;
+  const { title, sub } = textoDoAviso(cal, Object.assign({}, h, nomeReal ? { porNome: nomeReal } : {}));
   const id = `gantt_${cal}_${String(histId).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 60)}`;
   const ts = new Date(agora || Date.now()).toISOString();
   let enviados = 0, removidos = 0;
   for (const [uid, insc] of Object.entries(inscritos)) {
     if (!uid || uid === autor || !insc) continue;
-    // destinatário ainda existe e é da empresa? (senão: não grava — evitaria recriar um usuarios/{uid} órfão — e limpa a inscrição)
-    const email = (await db.ref(`kanban/usuarios/${uid}/email`).get()).val();
-    if (!emailDaEmpresa(email)) { await db.ref(`kanban/gantt_inscritos${suf}/${cal}/${uid}`).remove(); removidos++; continue; }
+    // destinatário ainda pode receber? (senão: não grava — evitaria recriar um usuarios/{uid} órfão — e limpa a inscrição)
+    if (!(await podeReceber(db, auth, uid))) { await db.ref(`kanban/gantt_inscritos${suf}/${cal}/${uid}`).remove(); removidos++; continue; }
     const ref = db.ref(`kanban/usuarios/${uid}/notificacoes/${id}`);
     const onde = insc.onde === 'radar' ? 'radar' : 'mare';
     // transação: retry da função (ou dois disparos) nunca duplica — só grava se ainda não existe
@@ -76,4 +90,4 @@ const handler = (dev) => async (event) => {
 
 exports.ganttAvisoMudanca = onValueCreated({ ref: '/kanban/calendarios_gantt_hist/{cal}/{histId}', region: 'us-central1' }, handler(false));
 exports.ganttAvisoMudancaDev = onValueCreated({ ref: '/kanban/calendarios_gantt_hist_dev/{cal}/{histId}', region: 'us-central1' }, handler(true));
-exports._test = { avisarMudanca, textoDoAviso, quando, CALS, TIPO };
+exports._test = { avisarMudanca, podeReceber, textoDoAviso, quando, CALS, TIPO };

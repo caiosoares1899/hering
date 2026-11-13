@@ -243,7 +243,7 @@
         await Promise.all(fs.map(f=>inscricao.definir(f, ligar, opts.onde)));
         fs.forEach(f=>{ S.insc[f]=ligar; });
         const alvo=ehCons()?'os calendários comerciais':(NOME[S.aba]||'o calendário');
-        S.det=ligar?'🔔 Pronto: você recebe um aviso (sino'+(typeof Notification!=='undefined'&&Notification.permission==='denied'?'; o push está bloqueado neste navegador':' e push')+') quando '+alvo+' for atualizado.':'🔕 Você não recebe mais avisos de '+alvo+'.';
+        S.det=ligar?'🔔 Pronto: você recebe um aviso no sino'+(typeof Notification!=='undefined'&&Notification.permission==='denied'?' (o push está bloqueado neste navegador)':' e nos aparelhos onde você ativou o push')+' quando '+alvo+' for atualizado.':'🔕 Você não recebe mais avisos de '+alvo+'.';
       }catch(e){
         S.det='⚠ Não consegui salvar o aviso'+(/permission|denied/i.test(String(e&&e.message||e))?' — as permissões novas do banco ainda não foram publicadas.':'. Tente de novo em instantes.');
       }

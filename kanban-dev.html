@@ -14735,7 +14735,7 @@ async function ganttSinoClique(){
     await Promise.all(fs.map(f=>MareGCal.inscricao.definir(f, ligar, 'mare')));
     fs.forEach(f=>{ _ganttInsc.on[f]=ligar; });
     const alvo=(_GANTT_CONS && _ganttAba===_GANTT_CONS.id)?'os calendários comerciais':(_GANTT_CAL_NOME[_ganttAba]||'o calendário');
-    showToast(ligar ? '🔔 Pronto: você recebe um aviso'+(window.Notification&&Notification.permission==='denied'?' no sino (o push está bloqueado neste navegador)':' no sino e no celular')+' quando '+alvo+' for atualizado.' : '🔕 Você não recebe mais avisos de '+alvo+'.');
+    showToast(ligar ? '🔔 Pronto: você recebe um aviso'+(window.Notification&&Notification.permission==='denied'?' no sino (o push está bloqueado neste navegador)':' no sino e nos aparelhos onde você ativou o push')+' quando '+alvo+' for atualizado.' : '🔕 Você não recebe mais avisos de '+alvo+'.');
   }catch(e){
     showToast('⚠ Não consegui salvar o aviso'+(/permission|denied/i.test(String(e&&e.message||e))?' — as permissões novas do banco ainda não foram publicadas.':'. Tente de novo em instantes.'));
   }
