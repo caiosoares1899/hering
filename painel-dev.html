@@ -3168,7 +3168,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.109 · painel-dev</div>
+<div class="version">v5.110 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -10414,7 +10414,8 @@ function _pcfgGanttDesenha(){
       : at&&at.meta ? `Publicado em ${esc(new Date(at.meta.atualizadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}))} por ${esc(at.meta.porNome||'—')} · ${nB} barras · ${esc(_fmtBr(at.meta.de))}–${esc(_fmtBr(at.meta.ate))} · <span title="${esc(at.meta.arquivo||'')}">📄 ${esc(at.meta.arquivo||'')}</span>`
       : 'Ainda não publicado.';
     let previa='';
-    if(pv && pv.erro) previa=`<div class="pg-pv pg-pv-erro" role="alert">❌ ${esc(pv.erro)}</div>`;
+    if(pv && pv.lendo) previa=`<div class="pg-pv pg-pv-lendo" role="status">⏳ Lendo 📄 ${esc(pv.lendo)}…</div>`;
+    else if(pv && pv.erro) previa=`<div class="pg-pv pg-pv-erro" role="alert">❌ ${esc(pv.erro)}</div>`;
     else if(pv){
       const d=pv.mescla.dif, lin=pv.mescla.linhas;
       const porLinha=Object.keys(lin).sort((a,b)=>lin[a].ordem-lin[b].ordem).map(k=>`${esc(lin[k].rot)} <b>${Object.values(pv.mescla.barras).filter(b=>b.linha===k).length}</b>`).join(' · ');
@@ -10442,21 +10443,25 @@ function _pcfgGanttDesenha(){
       </div>${previa}</div>`;
   }).join('');
 }
+const _ganttLeituraSeq={};   // só a ÚLTIMA leitura de arquivo vale (um .xlsx grande enviado antes pode terminar depois do seguinte)
 async function pcfgGanttArquivo(inp){
   const tipo=inp.dataset.cal, f=inp.files&&inp.files[0]; inp.value=''; if(!f||!_GANTT_CALS[tipo]) return;
+  const seq=(_ganttLeituraSeq[tipo]=(_ganttLeituraSeq[tipo]||0)+1);
+  _ganttCalPrevia[tipo]={ lendo:f.name.slice(0,200) }; _pcfgGanttDesenha();
   if(f.size>25*1024*1024){ _ganttCalPrevia[tipo]={ erro:'Arquivo grande demais (máx. 25 MB).' }; return _pcfgGanttDesenha(); }
   if(typeof DecompressionStream==='undefined'){ _ganttCalPrevia[tipo]={ erro:'Este navegador não abre .xlsx aqui. Use o Chrome, o Edge ou o Safari atualizados.' }; return _pcfgGanttDesenha(); }
   try{
     const abas=await GXL.ler(await f.arrayBuffer());
+    if(seq!==_ganttLeituraSeq[tipo]) return;   // outro arquivo foi escolhido enquanto este era lido
     const novo=_GANTT_CALS[tipo].montar(abas);
     const atual=_ganttCalAtual[tipo]&&!_ganttCalAtual[tipo]._erro?_ganttCalAtual[tipo]:null;
     _ganttCalPrevia[tipo]={ arquivo:f.name.slice(0,200), abas:novo.abas?novo.abas.length+' abas de mês':novo.aba, mescla:GXL.mesclar(tipo, novo, atual), naoRec:novo.naoReconhecidos||[] };
-  }catch(e){ _ganttCalPrevia[tipo]={ erro:(e&&e.message)||'Não consegui ler o arquivo.' }; }
+  }catch(e){ if(seq!==_ganttLeituraSeq[tipo]) return; _ganttCalPrevia[tipo]={ erro:(e&&e.message)||'Não consegui ler o arquivo.' }; }
   _pcfgGanttDesenha();
 }
 function pcfgGanttCancelar(tipo){ delete _ganttCalPrevia[tipo]; _pcfgGanttDesenha(); }
 async function pcfgGanttPublicar(tipo){
-  const pv=_ganttCalPrevia[tipo]; if(!pv||pv.erro) return;
+  const pv=_ganttCalPrevia[tipo]; if(!pv||pv.erro||pv.lendo||!pv.mescla) return;
   if(!isAdmUser(window._currentUser)){ showToast('🔒 Só ADM publica.'); return; }
   const u=window._currentUser||{};
   const dado={ meta:{ atualizadoEm:Date.now(), porNome:String(u.displayName||u.email||'ADM').slice(0,80), arquivo:pv.arquivo, de:pv.mescla.de, ate:pv.mescla.ate }, linhas:pv.mescla.linhas, barras:pv.mescla.barras };
