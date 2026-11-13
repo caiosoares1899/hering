@@ -38,14 +38,14 @@
 
 | Fase | O quê | Risco | Autor | Depende de |
 |---|---|---|---|---|
-| **F1** | Nó + regras + backup + `functions/rules/__tests__/feriasRules.test.js` (simulador) | R3 | Claude | — |
+| **F1** ✅ no ar em 13/11 (#1786) | Nó + regras + backup + `functions/rules/__tests__/feriasRules.test.js` (simulador) | R3 | Claude | — |
 | **F2** | Módulo `mare-ferias(-dev).js`: dados (`ouvir`, `ausente(uid, dia)`, `periodoDe(uid)`), "Minhas férias" (criar/editar/excluir; ADM corrige qualquer um) e a vista **🏖️ Férias** (mês com faixas por pessoa + "fora agora" e "próximas"; filtros pessoa, squad e período). Montada no Radar e no Maré. Ajuda + dica. | R2 | Antigravity (contrato) · Claude integra | F1 (formato; o deploy só para usar de verdade) |
 | **F3** | **Alerta + selo 🏖️**: ao @mencionar, pôr como responsável ou participante (Maré) e como responsável de Objetivo/Marco ou @menção nas notas (Radar), um aviso "🏖️ Fulana está de férias até 28/11"; selo nos avatares/chips de quem está fora hoje | R1/R2 | Codex | F2 (API do módulo) |
-| **F4** | **🧳 Preparar minha saída**, item a item com confirmação: ➡️ passar (escolhe a pessoa) ou ✋ manter. **No Maré**: os cards ativos da squad aberta em que sou responsável ou participante, aplicando com o mesmo caminho do `executarReatribuir()` (`recordHistory` + `runAutoRules('assigned')` + `fbSaveAll`), e um seletor para repetir em cada uma das minhas squads. **No Radar**: meus Objetivos (`responsaveis[]`) e Marcos (`responsavel`). **O Radar não escreve card** (Armadilha 10: schema de card fora do Maré); lá aparece "passar meus cards no Maré →". Aviso `assigned` no sino de quem recebe: **um por pessoa e lote**, não um por card | R2 | Claude | F2 |
+| **F4** | **🧳 Preparar minha saída**, item a item com confirmação: ➡️ passar (escolhe a pessoa) ou ✋ manter. **No Maré**: os cards ativos da squad aberta em que sou responsável ou participante, aplicando com o mesmo caminho do `executarReatribuir()` (`recordHistory` + `runAutoRules('assigned')` + `fbSaveAll`), e um seletor para repetir em cada uma das minhas squads. **No Radar**: meus Objetivos (`responsaveis[]`) e Marcos (`responsavel`). **O Radar não escreve card** (Armadilha 10: schema de card fora do Maré); lá aparece "passar meus cards no Maré →". Aviso `assigned` no sino de quem recebe: **um por pessoa e lote**, não um por card. **Nenhum item vem pré-marcado**: o "Confirmar" fica travado até cada item ter decisão (atalho "manter todos os restantes" só preenche as escolhas, não grava); nada é gravado antes da tela final de confirmação. ⏸ Pausar card: **fora** (decisão de 13/11: "passar ou manter"); entra como 3ª opção só se o Caio pedir | R2 | Claude | F2 |
 
 Deploy (do Caio, depois do resync): F1 → `firebase deploy --only database` e depois `--only functions:backupGlobalDiario,functions:backupCompletoSemanal`.
 
-## Assumido no contrato da F2 — a confirmar com o Caio antes de colar
+## Padrões da F2 (propostos pelo Claude; o Caio mandou seguir em 13/11 — muda fácil depois)
 - Maré: por padrão, só as pessoas das minhas squads (chip "Todo o Digital"); Radar: todo o Digital.
 - Período longo: a regra não limita; a tela **avisa** acima de 45 dias (não bloqueia).
 
