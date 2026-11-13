@@ -14,7 +14,8 @@
    Tudo o que vem do banco (texto das barras, rótulos, quem publicou, arquivo) passa por esc().
    Mudou este arquivo → bump do ?v= no kanban-dev.html (<script src>) e no okr-dev.html (_GCAL_V).
    v2 (13/11): 🧭 Digital · dia a dia — CONSOLIDADO (aba virtual), doDia() e o painel do dia.
-   v3 (13/11): 🔔 inscrição nos avisos de mudança (inscricao.ouvir/definir + botão Avisar-me no visualizador). */
+   v3 (13/11): 🔔 inscrição nos avisos de mudança (inscricao.ouvir/definir + botão Avisar-me no visualizador).
+   v4 (13/11): um sininho por calendário — na 🧭 Digital, 3 botões (Hering · Marketplace · Outlet). */
 (function(){
   'use strict';
   const CALS=[
@@ -189,6 +190,7 @@
 .mgc-dhd.is-sel b{color:#04121f;}
 [data-theme="light"] .mgc-dhd.is-sel,[data-theme="light"] .mgc-dhd.is-sel b{color:#fff;}
 .mgc-dhd.is-clic:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.mgc-sinos{display:inline-flex;flex-wrap:wrap;gap:6px;}
 .mgc-sino.on{border-color:var(--accent);color:var(--accent);}
 [data-theme="light"] .mgc-sino.on{color:var(--cyan,#065670);}
 .mgc-sino[disabled]{opacity:.6;cursor:progress;}
@@ -224,17 +226,22 @@
       CALS.forEach(c=>{ S.subs.push(inscricao.ouvir(c.id, (on)=>{ S.insc[c.id]=on===true; if(!S.inscBusy) sinoSync(); })); });
     }
     const fontesSino=()=>ehCons()?CONSOLIDADO.fontes:(CALS.some(c=>c.id===S.aba)?[S.aba]:[]);
+    // Um sininho POR CALENDÁRIO (pedido do Caio, 13/11): na 🧭 Digital aparecem 3 (Hering · Marketplace · Outlet), cada um liga só o seu.
+    function sinoBtn(cal, curto){
+      const on=!!S.insc[cal], nome=NOME[cal]||cal;
+      return '<button type="button" class="mgc-btn mgc-sino'+(on?' on':'')+'" data-sino="'+cal+'" aria-pressed="'+on+'" title="'+esc(on?'Você recebe um aviso (sino e push) quando o '+nome+' for atualizado — toque para parar':'Receber um aviso (sino e push) quando o '+nome+' for atualizado')+'"'+(S.inscBusy?' disabled':'')+'>'
+        +(curto ? '🔔 '+esc(curto)+(on?' ✓':'') : (on?'🔔 Avisando':'🔔 Avisar-me'))+'</button>';
+    }
     function sinoHtml(){
       if(!permitido(window._currentUser) || opts.semSino) return '';
       const fs=fontesSino(); if(!fs.length) return '';
-      const on=fs.every(f=>S.insc[f]);
-      const alvo=ehCons()?'os 3 calendários comerciais':(NOME[S.aba]||'');
-      return '<button type="button" class="mgc-btn mgc-sino'+(on?' on':'')+'" data-sino aria-pressed="'+on+'" title="'+esc(on?'Você recebe um aviso (sino e push) quando '+alvo+' for atualizado — toque para parar':'Receber um aviso (sino e push) quando '+alvo+' for atualizado')+'"'+(S.inscBusy?' disabled':'')+'>'+(on?'🔔 Avisando':'🔔 Avisar-me')+'</button>';
+      if(ehCons()) return '<span class="mgc-sinos" role="group" aria-label="Avisos de mudança por calendário">'+fs.map(f=>sinoBtn(f, ((CONSOLIDADO.grupos.find(g=>g.id===f)||{}).rot||f).replace(/^\S+\s/,''))).join('')+'</span>';
+      return '<span class="mgc-sinos">'+sinoBtn(fs[0], '')+'</span>';
     }
-    function sinoSync(){ const b=root.querySelector('.mgc-sino'); if(!b) return; const t=document.createElement('div'); t.innerHTML=sinoHtml(); const n=t.firstChild; if(n) b.replaceWith(n); }
-    async function sinoClique(){
+    function sinoSync(){ const b=root.querySelector('.mgc-sinos'); if(!b) return; const t=document.createElement('div'); t.innerHTML=sinoHtml(); const n=t.firstChild; if(n) b.replaceWith(n); }
+    async function sinoClique(cal){
       if(S.inscBusy) return;
-      const fs=fontesSino(); if(!fs.length) return;
+      const fs=CALS.some(c=>c.id===cal)?[cal]:fontesSino(); if(!fs.length) return;
       const ligar=!fs.every(f=>S.insc[f]);
       // pedir o push AINDA dentro do clique (Safari/iOS só mostram o pedido de permissão com o gesto da pessoa)
       try{ if(ligar && typeof opts.pedirPush==='function' && typeof Notification!=='undefined' && Notification.permission==='default') opts.pedirPush(); }catch(e){}
@@ -242,7 +249,7 @@
       try{
         await Promise.all(fs.map(f=>inscricao.definir(f, ligar, opts.onde)));
         fs.forEach(f=>{ S.insc[f]=ligar; });
-        const alvo=ehCons()?'os calendários comerciais':(NOME[S.aba]||'o calendário');
+        const alvo=fs.length===1?'o '+(NOME[fs[0]]||'calendário'):'os calendários comerciais';
         S.det=ligar?'🔔 Pronto: você recebe um aviso no sino'+(typeof Notification!=='undefined'&&Notification.permission==='denied'?' (o push está bloqueado neste navegador)':' e nos aparelhos onde você ativou o push')+' quando '+alvo+' for atualizado.':'🔕 Você não recebe mais avisos de '+alvo+'.';
       }catch(e){
         S.det='⚠ Não consegui salvar o aviso'+(/permission|denied/i.test(String(e&&e.message||e))?' — as permissões novas do banco ainda não foram publicadas.':'. Tente de novo em instantes.');
@@ -421,7 +428,7 @@
       const t=ev.target.closest('button,.mgc-bar,.mgc-dhd[data-dia]'); if(!t || !root.contains(t)) return;
       if(t.dataset.aba) return trocaAba(t.dataset.aba);
       if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=root.querySelector(S.dia?'.mgc-dia .mgc-btn':'.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
-      if(t.hasAttribute('data-sino')) return sinoClique();
+      if(t.hasAttribute('data-sino')) return sinoClique(t.getAttribute('data-sino'));
       if(t.hasAttribute('data-dia-fechar')){ const d=S.dia; S.dia=''; desenhar(); const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.dataset.nav!=null){ const n=+t.dataset.nav; S.mes=''; return n===0?ir(0,'hoje'):ir(S.off+n,'inicio'); }
       if(t.dataset.g!=null){ const g=t.dataset.g; filtro[S.aba]=(filtro[S.aba]===g)?'':g; salvaFiltro(); S.det=''; desenhar(); const f=root.querySelector('.mgc-chip[data-g="'+(filtro[S.aba]||'')+'"]'); if(f) f.focus({preventScroll:true}); return; }
@@ -453,5 +460,5 @@
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, v:3 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, v:4 };
 })();

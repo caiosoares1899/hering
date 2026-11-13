@@ -48,10 +48,13 @@ const seed = () => ({ kanban: {
     s = await insc(p);
     t('M5. tocar de novo desinscreve', !(s.outlet && s.outlet.mem) && (await bt()).txt === '🔔 Avisar-me', s);
     await p.evaluate(() => ganttAba('digital')); await p.waitForTimeout(200);
-    t('M6. na 🧭 Digital só o 🔔 (sem 📤/🕘)', await p.evaluate(() => { const a = document.querySelector('#gantt-filtros .gantt-cal-acoes'); return !!a && a.querySelectorAll('button').length === 1 && !!a.querySelector('.gantt-sino'); }));
-    await p.click('#gantt-filtros .gantt-sino'); await p.waitForTimeout(250);
+    t('M6. na 🧭 Digital: 3 sininhos, um por calendário comercial (sem 📤/🕘)', await p.evaluate(() => { const a = document.querySelector('#gantt-filtros .gantt-cal-acoes'); return !!a && [...a.querySelectorAll('button')].map(b => b.dataset.cal).join() === 'comercial,mktplace,outlet'; }));
+    await p.click('#gantt-filtros .gantt-sino[data-cal="mktplace"]'); await p.waitForTimeout(250);
     s = await insc(p);
-    t('M7. na 🧭 Digital o 🔔 segue os 3 comerciais', ['comercial', 'mktplace', 'outlet'].every(c => s[c] && s[c].mem) && !(s.marca && s.marca.mem), s);
+    t('M7. o 🔔 Marketplace da 🧭 liga SÓ o Marketplace', s.mktplace && s.mktplace.mem && !(s.comercial && s.comercial.mem) && !(s.outlet && s.outlet.mem) && !(s.marca && s.marca.mem), s);
+    t('M7b. só o botão do Marketplace fica marcado', await p.evaluate(() => [...document.querySelectorAll('#gantt-filtros .gantt-sino')].map(b => b.dataset.cal + ':' + b.getAttribute('aria-pressed')).join() === 'comercial:false,mktplace:true,outlet:false'));
+    await p.evaluate(() => ganttAba('comercial')); await p.waitForTimeout(150);
+    t('M7c. na aba Comercial Hering o sininho dela continua desligado', (await bt()).txt === '🔔 Avisar-me');
     await p.evaluate(() => ganttAba('marca')); await p.waitForTimeout(150);
     t('M8. na Marca o botão mostra o estado DELA (não inscrita)', (await bt()).txt === '🔔 Avisar-me');
     // clique no aviso no sino do Maré
@@ -77,6 +80,12 @@ const seed = () => ({ kanban: {
     let s = await insc(p);
     t('R1. Radar: 🔔 grava a inscrição com onde=radar', s.comercial && s.comercial.mem && s.comercial.mem.onde === 'radar', s);
     t('R2. botão vira 🔔 Avisando e a linha de aviso confirma', await p.evaluate(() => document.querySelector('.mgc-sino').textContent === '🔔 Avisando' && /Pronto/.test(document.querySelector('.mgc-det').textContent)));
+    await p.evaluate(() => _okrGcal.aba('digital')); await p.waitForTimeout(200);
+    t('R1b. Radar 🧭 Digital: 3 sininhos; o Hering já aparece ligado, os outros não', await p.evaluate(() => [...document.querySelectorAll('.mgc-sino')].map(b => b.dataset.sino + ':' + b.getAttribute('aria-pressed')).join() === 'comercial:true,mktplace:false,outlet:false'));
+    await p.click('.mgc-sino[data-sino="outlet"]'); await p.waitForTimeout(250);
+    s = await insc(p);
+    t('R1c. Radar: o 🔔 Outlet liga só o Outlet', s.outlet && s.outlet.mem && !(s.mktplace && s.mktplace.mem), s);
+    await p.evaluate(() => _okrGcal.aba('comercial')); await p.waitForTimeout(150);
     await p.evaluate(() => _okrSetView('objetivos')); await p.waitForTimeout(150);
     t('R3a. o aviso chegou ao sino do Radar', await p.evaluate(() => _okrNotifPessoais.some(x => x.id === 'gantt_outlet_v1')));
     await p.evaluate(() => _okrBellClick('p', 'gantt_outlet_v1'));
