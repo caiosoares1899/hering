@@ -47,7 +47,7 @@ const seed = () => ({ kanban: {
       aba: document.querySelector('.mgc-aba.on')?.dataset.aba, txt: document.getElementById('okr-gcal-host').innerText }));
     let s = await st();
     t('A. ?gantt=outlet abre Calendário → 📊 Gantt na aba Outlet (pessoa sem squad no Maré)', s.cal && s.vista === 'gantt' && s.host && s.aba === 'outlet' && /OUTLET PRINCIPAL/.test(s.txt), s);
-    t('B. 4 abas: Marca, Comercial Hering, Marketplace, Outlet', await p.evaluate(() => [...document.querySelectorAll('.mgc-aba')].map(x => x.dataset.aba).join()) === 'marca,comercial,mktplace,outlet');
+    t('B. 5 abas: Marca, Comercial Hering, Marketplace, Outlet e 🧭 Digital', await p.evaluate(() => [...document.querySelectorAll('.mgc-aba')].map(x => x.dataset.aba).join()) === 'marca,comercial,mktplace,outlet,digital');
     t('C. botão 📊 Gantt marcado no seletor Mês · Agenda · Gantt', await p.evaluate(() => { const bs = [...document.querySelectorAll('.okr-cal-seg button')]; return bs.length === 3 && bs[2].classList.contains('on') && /Gantt/.test(bs[2].textContent); }));
     t('D. Outlet filtra por grupo (chips Tudo + 7)', await p.evaluate(() => document.querySelectorAll('.mgc-chip').length === 8));
     await p.click('.mgc-aba[data-aba="comercial"]'); await p.waitForTimeout(200);
@@ -96,7 +96,9 @@ const seed = () => ({ kanban: {
       return { over: document.documentElement.scrollWidth - innerWidth, rola: sc && sc.scrollWidth > sc.clientWidth, hoje: sc && sc.scrollLeft > 0, toques, bars: h.querySelectorAll('.mgc-bar').length }; });
     t(`U. 390 ${tema}: sem rolagem lateral da página; régua rola dentro e começa perto de hoje`, m.over <= 0 && m.rola && m.hoje && m.bars >= 3, m);
     t(`V. 390 ${tema}: alvos de toque ≥ 44 px`, m.toques === 0, m);
-    t(`V2. 390 ${tema}: abas com rótulo curto (cabem sem rolar)`, await p.evaluate(() => { const a = document.querySelector('.mgc-abas'); return a.scrollWidth <= a.clientWidth + 1 && getComputedStyle(document.querySelector('.mgc-aba-c')).display !== 'none'; }));
+    t(`V2. 390 ${tema}: abas com rótulo curto e a aba ativa inteira à vista (a lista rola de lado)`, await p.evaluate(() => { const a = document.querySelector('.mgc-abas'), on = a.querySelector('.mgc-aba.on').getBoundingClientRect(), r = a.getBoundingClientRect(); return getComputedStyle(document.querySelector('.mgc-aba-c')).display !== 'none' && on.left >= r.left - 1 && on.right <= r.right + 1; }));
+    await p.evaluate(() => _okrGcal.aba('digital')); await p.waitForTimeout(150);
+    t(`V3. 390 ${tema}: a 5ª aba (🧭 Digital) ativa fica à vista`, await p.evaluate(() => { const a = document.querySelector('.mgc-abas'), on = a.querySelector('.mgc-aba.on').getBoundingClientRect(), r = a.getBoundingClientRect(); return on.left >= r.left - 1 && on.right <= r.right + 1; }));
     if (tema === 'light') t('V3. tema claro: aba e chip ativos com texto branco', await p.evaluate(() => getComputedStyle(document.querySelector('.mgc-aba.on')).color === 'rgb(255, 255, 255)' && getComputedStyle(document.querySelector('.mgc-chip.on')).color === 'rgb(255, 255, 255)'));
     if (cap) { fs.mkdirSync(cap, { recursive: true }); await p.evaluate(() => { document.querySelectorAll('.dica-pop,[class*="dica"]').forEach(e => { if (e.getBoundingClientRect().height < 300 && /Dica/.test(e.textContent)) e.style.display = 'none'; }); document.getElementById('okr-gcal-host').scrollIntoView(); }); await p.screenshot({ path: path.join(cap, `radar_gantt_390_${tema}.png`), fullPage: false }); }
     t(`W. 390 ${tema}: sem erro de JS`, errs.length === 0, errs);
