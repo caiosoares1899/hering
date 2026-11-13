@@ -2941,6 +2941,21 @@ input[type="date"]{-moz-appearance:textfield;}
 @media (prefers-reduced-motion:reduce){ .gantt-tip,.gantt-tip.baixo{transition:opacity .01s;transform:none;} }
 @media (hover:none) and (pointer:coarse){ .gantt-tip{display:none;} }
 .gantt-cal-fgrp{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;}
+.gantt-cal-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+.gantt-up-panel{width:min(620px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.gantt-up-body{padding:12px 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;font-size:12.5px;color:var(--txt);line-height:1.5;}
+.gantt-up-exp{color:var(--txt2);}
+.gantt-up-pick{position:relative;align-self:flex-start;cursor:pointer;}
+.gantt-up-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;}
+.gantt-hist-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.gantt-hist-it{border:1px solid var(--glass-b);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:4px;}
+.gantt-hist-it.is-atual{border-color:var(--accent);}
+.gantt-hist-l1 span{color:var(--txt2);}
+.gantt-hist-l2{color:var(--txt2);font-size:11.5px;overflow-wrap:anywhere;}
+.gantt-hist-atual{color:var(--accent)!important;font-weight:700;font-size:11px;}
+.gantt-hist-volta{align-self:flex-start;}
+.gantt-hist-vazio{color:var(--txt2);}
+@media (hover:none) and (pointer:coarse){ .gantt-cal-acoes .btn,.gantt-hist-volta,.gantt-up-pick{min-height:44px;} }
 .gantt-cal-fchip{border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.8);color:var(--txt2);border-radius:999px;padding:5px 12px;font:600 12px/1.2 'DM Sans',sans-serif;cursor:pointer;}
 .gantt-cal-fchip:hover{color:var(--txt);border-color:var(--accent);}
 .gantt-cal-fchip.on{background:var(--accent);color:#04121f;border-color:var(--accent);}
@@ -7594,7 +7609,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.966-dev</div>
+<div class="version">v8.30.967-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14642,9 +14657,16 @@ function ganttCalFiltro(grupo){
 function _ganttCalFiltroSync(el){
   let box=el.querySelector('.gantt-cal-fgrp');
   const tipo=_ganttAba, grupos=_GANTT_CAL_GRUPOS[tipo];
-  if(!grupos){ if(box) box.remove(); return; }
+  if(!grupos){ if(box) box.remove(); const ac=el.querySelector('.gantt-cal-acoes'); if(ac) ac.remove(); return; }
   if(!box){ box=document.createElement('div'); box.className='gantt-cal-fgrp'; box.setAttribute('role','group'); box.setAttribute('aria-label','Mostrar só'); el.prepend(box); }
   const sel=_ganttCalFiltro[tipo]||'';
+  // ações do calendário (atualizar/histórico) — só login Google da Hering
+  let acoes=el.querySelector('.gantt-cal-acoes');
+  if(_ganttCalPermitido()){
+    if(!acoes){ acoes=document.createElement('div'); acoes.className='gantt-cal-acoes';
+      acoes.innerHTML='<button type="button" class="btn btn-sm" onclick="ganttAtualizarAbrir()" title="Enviar a planilha nova e publicar para todas as squads">📤 Atualizar planilha</button><button type="button" class="btn btn-sm" onclick="ganttHistoricoAbrir()" title="Quem atualizou, quando — e voltar a uma versão anterior">🕘 Histórico</button>';
+      el.appendChild(acoes); }
+  } else if(acoes) acoes.remove();
   const sig=tipo+'|'+sel; if(box.dataset.sig===sig) return; box.dataset.sig=sig;
   box.innerHTML=[{id:'',rot:'Tudo'}].concat(grupos).map(g=>'<button type="button" class="gantt-cal-fchip'+(g.id===sel?' on':'')+'" data-g="'+g.id+'" aria-pressed="'+(g.id===sel)+'" onclick="ganttCalFiltro(this.dataset.g)">'+esc(g.rot)+'</button>').join('');
 }
@@ -14760,6 +14782,125 @@ function _ganttCalCarregar(tipo){
     }, err=>console.warn('[gantt] destaques '+tipo+':', err));
   }catch(e){ st.estado='erro'; st.erro='falha'; }
 }
+// ── 📤 Atualizar calendário pelo Maré + 🕘 Histórico (13/11/2026, pedido do Caio: "os próprios analistas mexem no Excel")
+// Qualquer pessoa da Hering (login Google — conferido nas regras) envia a planilha, vê a prévia (＋ ✎ −) e publica para todas as squads.
+// Cada publicação guarda uma cópia + uma linha no histórico (quem, quando, arquivo); qualquer um volta a uma versão anterior, e isso
+// também fica registrado. O leitor (mare-gxl) só é baixado quando alguém usa — o Gantt continua leve para quem só olha.
+const _GXL_V=1;   // ?v do mare-gxl(-dev).js — subir junto quando o módulo mudar
+let _gxlP=null;
+function _ganttGxl(){
+  if(window.MareGXL) return Promise.resolve(window.MareGXL);
+  if(_gxlP) return _gxlP;
+  _gxlP=new Promise((ok,nok)=>{
+    const sc=document.createElement('script');
+    sc.src=(/-dev\.html/.test(location.pathname)?'mare-gxl-dev.js':'mare-gxl.js')+'?v='+_GXL_V;
+    sc.onload=()=>window.MareGXL?ok(window.MareGXL):nok(new Error('Não consegui carregar o leitor de planilhas.'));
+    sc.onerror=()=>{ _gxlP=null; nok(new Error('Não consegui carregar o leitor de planilhas (rede?). Tente de novo.')); };
+    document.head.appendChild(sc);
+  });
+  return _gxlP;
+}
+let _ganttUp={ tipo:'', pv:null, seq:0, publicando:false };
+function _ganttUpOv(){
+  let ov=document.getElementById('gantt-up-ov'); if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='gantt-up-ov';
+  ov.innerHTML='<div class="panel gantt-up-panel" role="dialog" aria-modal="true" aria-labelledby="gantt-up-tt">'
+    +'<div class="panel-hd"><div class="panel-title" id="gantt-up-tt">📤 Atualizar calendário</div><button class="x-btn" type="button" aria-label="Fechar" onclick="closeOv(\'gantt-up-ov\')">✕</button></div>'
+    +'<div class="gantt-up-body"><div class="gantt-up-exp" id="gantt-up-exp"></div>'
+    +'<label class="btn gantt-up-pick">📄 Escolher a planilha (.xlsx)<input type="file" id="gantt-up-inp" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="ganttUpArquivo(this)"></label>'
+    +'<div id="gantt-up-pv" aria-live="polite"></div></div></div>';
+  document.body.appendChild(ov); return ov;
+}
+function ganttAtualizarAbrir(){
+  const tipo=_ganttAba; if(!_GANTT_CAL_NOME[tipo] || !_ganttCalPermitido()) return;
+  const ov=_ganttUpOv(); _ganttUp={ tipo, pv:null, seq:_ganttUp.seq+1, publicando:false };
+  ov.querySelector('#gantt-up-tt').textContent='📤 Atualizar o '+_GANTT_CAL_NOME[tipo];
+  ov.querySelector('#gantt-up-exp').innerHTML='Envie o <b>.xlsx</b> (no Google Sheets: Arquivo → Fazer download → Microsoft Excel). Antes de publicar você vê o que <b>entra</b>, o que <b>muda</b> e o que <b>sai</b>. Publicar vale para <b>todas as squads</b> e fica no <b>🕘 Histórico</b> — se algo sair errado, dá para voltar a qualquer versão.';
+  ov.querySelector('#gantt-up-pv').innerHTML='';
+  ov.classList.add('open');
+  _ganttGxl().catch(()=>{});   // já vai baixando o leitor enquanto a pessoa escolhe o arquivo
+}
+function _ganttUpDesenha(){
+  const box=document.getElementById('gantt-up-pv'); if(!box) return;
+  const pv=_ganttUp.pv; if(!pv){ box.innerHTML=''; return; }
+  if(window.MareGXL) box.innerHTML=MareGXL.previaHtml(_ganttUp.tipo, pv, { publicar:'ganttUpPublicar()', cancelar:'ganttUpCancelar()' });
+  else box.innerHTML=pv.lendo?'<div role="status">⏳ Lendo 📄 '+esc(pv.lendo)+'…</div>':pv.erro?'<div role="alert" style="color:var(--danger)">❌ '+esc(pv.erro)+'</div>':'';
+}
+async function ganttUpArquivo(inp){
+  const f=inp.files&&inp.files[0]; inp.value=''; if(!f || !_ganttUp.tipo) return;
+  const seq=++_ganttUp.seq, tipo=_ganttUp.tipo;
+  _ganttUp.pv={ lendo:f.name.slice(0,200) }; _ganttUpDesenha();
+  try{
+    const G=await _ganttGxl();
+    // a prévia compara com o que está publicado: espera o calendário atual chegar (senão diria "tudo novo, nada sai")
+    _ganttCalCarregar(tipo);
+    for(let i=0; i<80 && (_ganttCal[tipo]||{}).estado!=='ok'; i++){ if((_ganttCal[tipo]||{}).estado==='erro') throw new Error('Não consegui ler o calendário atual para comparar — confira a conexão e tente de novo.'); await new Promise(r=>setTimeout(r,100)); }
+    if((_ganttCal[tipo]||{}).estado!=='ok') throw new Error('O calendário atual ainda não carregou — tente de novo em instantes.');
+    const pv=await G.preparar(tipo, f, (_ganttCal[tipo]||{}).dado);
+    if(seq!==_ganttUp.seq) return;   // outro arquivo foi escolhido enquanto este era lido: só a última leitura vale
+    _ganttUp.pv=pv;
+  }catch(e){ if(seq!==_ganttUp.seq) return; _ganttUp.pv={ erro:(e&&e.message)||'Não consegui ler o arquivo.' }; }
+  _ganttUpDesenha();
+}
+function ganttUpCancelar(){ _ganttUp.seq++; _ganttUp.pv=null; _ganttUpDesenha(); }
+async function ganttUpPublicar(){
+  const pv=_ganttUp.pv, tipo=_ganttUp.tipo; if(!pv || !pv.mescla || _ganttUp.publicando) return;
+  _ganttUp.publicando=true; const bt=document.querySelector('#gantt-up-pv .gxl-ok'); if(bt){ bt.disabled=true; bt.textContent='Publicando…'; }
+  try{
+    const G=await _ganttGxl();
+    await G.publicar(tipo, pv, window._currentUser||{});
+    closeOv('gantt-up-ov'); showToast('✅ '+_GANTT_CAL_NOME[tipo]+' atualizado para todas as squads — fica no 🕘 Histórico');
+  }catch(e){
+    const box=document.getElementById('gantt-up-pv');
+    if(box) box.insertAdjacentHTML('afterbegin','<div role="alert" style="color:var(--danger);font-weight:700;margin-bottom:6px;">❌ Não publiquei: '+esc(/permission/i.test(String(e&&e.message||e))?'sem permissão (só login Google da Hering; as permissões novas do banco já foram publicadas?)':'falha ao gravar — tente de novo')+'</div>');
+    if(bt){ bt.disabled=false; bt.textContent='✅ Publicar para todas as squads'; }
+  }finally{ _ganttUp.publicando=false; }
+}
+function _ganttHistOv(){
+  let ov=document.getElementById('gantt-hist-ov'); if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='gantt-hist-ov';
+  ov.innerHTML='<div class="panel gantt-up-panel" role="dialog" aria-modal="true" aria-labelledby="gantt-hist-tt">'
+    +'<div class="panel-hd"><div class="panel-title" id="gantt-hist-tt">🕘 Histórico</div><button class="x-btn" type="button" aria-label="Fechar" onclick="closeOv(\'gantt-hist-ov\')">✕</button></div>'
+    +'<div class="gantt-up-body" id="gantt-hist-body"></div></div>';
+  document.body.appendChild(ov); return ov;
+}
+let _ganttHist={ tipo:'', itens:[], restaurando:false };
+async function ganttHistoricoAbrir(){
+  const tipo=_ganttAba; if(!_GANTT_CAL_NOME[tipo] || !_ganttCalPermitido()) return;
+  const ov=_ganttHistOv(); _ganttHist={ tipo, itens:[], restaurando:false };
+  ov.querySelector('#gantt-hist-tt').textContent='🕘 Histórico do '+_GANTT_CAL_NOME[tipo];
+  const body=ov.querySelector('#gantt-hist-body'); body.innerHTML='<div role="status">Carregando…</div>';
+  ov.classList.add('open');
+  try{ const G=await _ganttGxl(); _ganttHist.itens=await G.historico(tipo); if(_ganttHist.tipo===tipo) _ganttHistDesenha(); }
+  catch(e){ body.innerHTML='<div role="alert" style="color:var(--danger)">❌ '+esc(/permission/i.test(String(e&&e.message||e))?'Ainda sem acesso ao histórico — as permissões novas do banco estão sendo publicadas.':'Não consegui carregar o histórico.')+'</div>'; }
+}
+function _ganttHistDesenha(){
+  const body=document.getElementById('gantt-hist-body'); if(!body) return;
+  const it=_ganttHist.itens;
+  if(!it.length){ body.innerHTML='<div class="gantt-hist-vazio">Nenhuma atualização registrada ainda. A próxima publicação (pelo Maré ou pelo Painel) aparece aqui.</div>'; return; }
+  body.innerHTML='<ol class="gantt-hist-ul">'+it.map((h,i)=>{
+    const quando=new Date(h.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const acao=h.acao==='restaurou'?'↩ voltou para a versão de '+new Date(h.deEm||h.em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'publicou';
+    return '<li class="gantt-hist-it'+(i===0?' is-atual':'')+'">'
+      +'<div class="gantt-hist-l1"><b>'+esc(h.porNome||'—')+'</b> '+esc(acao)+' · <span>'+esc(quando)+'</span>'+(i===0?' <span class="gantt-hist-atual">versão atual</span>':'')+'</div>'
+      +'<div class="gantt-hist-l2">📄 '+esc(h.arquivo||'—')+' · '+(+h.n||0)+' barras · <span class="gxl-novo">＋'+(+h.novas||0)+'</span> <span class="gxl-alt">✎'+(+h.mudaram||0)+'</span> <span class="gxl-rem">−'+(+h.saem||0)+'</span></div>'
+      +(i>0?'<button type="button" class="btn gantt-hist-volta" data-i="'+i+'" onclick="ganttHistRestaurar(+this.dataset.i)">↩ Voltar para esta versão</button>':'')
+      +'</li>';
+  }).join('')+'</ol>';
+}
+async function ganttHistRestaurar(i){
+  const h=_ganttHist.itens[i], tipo=_ganttHist.tipo; if(!h || _ganttHist.restaurando) return;
+  const quando=new Date(h.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  if(!await uiConfirm('Voltar o '+_GANTT_CAL_NOME[tipo]+' para a versão de '+quando+' ('+(h.porNome||'—')+')?\nVale para todas as squads e fica registrado no histórico.', { okText:'Voltar para esta versão' })) return;
+  _ganttHist.restaurando=true;
+  try{
+    const G=await _ganttGxl();
+    await G.restaurar(tipo, h, window._currentUser||{}, (_ganttCal[tipo]||{}).dado);
+    showToast('↩ '+_GANTT_CAL_NOME[tipo]+' voltou para a versão de '+quando);
+    _ganttHist.itens=await G.historico(tipo); _ganttHistDesenha();
+  }catch(e){ showToast('❌ '+((e&&e.message)||'Não consegui voltar para esta versão.')); }
+  finally{ _ganttHist.restaurando=false; }
+}
 function ganttCalBarra(el){
   if(window._currentUserRole==='adm' && el.dataset.cal && el.dataset.id) return ganttDestaqueForm(el.dataset.cal, el.dataset.id);
   const t=el.getAttribute('data-tip')||''; if(t) showToast(t);
@@ -14825,7 +14966,7 @@ function _ganttCalCorpo(tipo, winStartIso, winEndIso, perOn, perDe, perAte){
   if(st.estado==='carregando' || !st.estado) return vazio('Carregando o '+esc(nome)+'…');
   if(st.estado==='erro') return vazio(st.erro==='permissao' ? 'Ainda sem acesso ao '+esc(nome)+' — as permissões novas do banco estão sendo publicadas.' : 'Não consegui carregar o '+esc(nome)+'. Tente de novo em instantes.');
   const d=st.dado;
-  if(!d || !d.barras) return vazio('O '+esc(nome)+' ainda não foi publicado. Um ADM publica no Painel → ⚙ Configurações → 📊 Gantt.');
+  if(!d || !d.barras) return vazio('O '+esc(nome)+' ainda não foi publicado.'+(_ganttCalPermitido()?' Use <b>📤 Atualizar planilha</b> (logo acima) para enviar o .xlsx.':''));
   const linhas=Object.assign({}, d.linhas||{});
   Object.entries(_GANTT_ROT_NOVO[tipo]||{}).forEach(([k,r])=>{ if(linhas[k]) linhas[k]=Object.assign({}, linhas[k], { rot:r }); });
   const fSel=_ganttCalFiltro[tipo]||'', fGrp=fSel&&(_GANTT_CAL_GRUPOS[tipo]||[]).find(g=>g.id===fSel);
@@ -14884,7 +15025,8 @@ function _ganttCalCorpo(tipo, winStartIso, winEndIso, perOn, perDe, perAte){
     });
   });
   const m=d.meta||{};
-  const quando=m.atualizadoEm?new Date(m.atualizadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+  // data E hora da última atualização (pedido do Caio, 13/11): "13/11/2026 às 14:32"
+  const quando=m.atualizadoEm?(()=>{ const dt=new Date(m.atualizadoEm); return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' às '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); })():'';
   let footer='<span>📄 '+esc(nome)+(quando?' · atualizado em '+esc(quando)+(m.porNome?' por '+esc(m.porNome):''):'')+'</span>'
     +(perOn?'<span class="gantt-per-on">📅 Período '+esc(_cardPeriodoData(perDe)+' – '+_cardPeriodoData(perAte))+(foraPer?' · '+foraPer+' fora dele':'')+'</span>':'')
     +(fora?'<span>'+fora+' '+(fora===1?'item':'itens')+' em outras semanas (use ◀ ▶)</span>':'');
@@ -30962,7 +31104,7 @@ const HELP_CONTENT = {
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.\n\n📊 <b>Quer ver campanhas e coleções em barras no tempo?</b> Ao lado de "🛤️ Timeline" fica o botão <b>"📊 Gantt"</b> (as duas visões são exclusivas entre si): enquanto a Timeline lista pendências por vencimento, o Gantt desenha a barra de <b>Início → Fim</b> e o marco <b>◆</b> do <b>Prazo</b> numa régua de 6 semanas — veja o tópico "Gantt".' },
-    { icon:'📊', title:'Gantt', text:'Botão <b>"📊 Gantt"</b> na toolbar, ao lado de "🛤️ Timeline", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram os cards ativos com <b>Início + Fim</b> válidos ou com <b>Prazo</b> preenchido (cards sem datas ficam de fora e aparecem contados no rodapé: <i>"N cards sem datas não aparecem"</i>). Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) — inclusive em cards que também têm período (<b>Fim ≠ Prazo</b>). Cards só com Prazo mostram apenas o marco <b>◆</b>.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📅 De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo período ou prazo cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card. Nome que não cabe na barra? <b>Passe o mouse</b> (ou chegue pelo Tab) e um <b>balão</b> mostra o nome inteiro e as datas — vale também para os calendários e as datas-chave.\n\n🗂 <b>Abas: Cards, 🎯 Calendário de Marca, 🛒 Comercial Hering e 🛍️ Comercial Marketplace</b>: no topo do Gantt, além dos cards da squad, há as abas com os calendários da empresa, iguais para <b>todas as squads</b>. O <b>Calendário de Marca</b> mostra as campanhas nas linhas <b>Coleção sellout</b>, <b>Web</b>, <b>Redes sociais</b> e <b>Canais Intimates</b> e <b>Sports</b> (site e CRM), e logo abaixo, num bloco à parte, as do <b>👶 Hering Kids</b> (Coleção sellout, Web e Redes sociais); o <b>Comercial Hering</b> mostra as ações do mês por linha (<b>Lançamentos e datas</b>, Site e App, Saldos, Mídia, CRM, App…) e o <b>Comercial Marketplace</b>, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes…), os dois <b>em colunas largas e com o texto inteiro</b>, como as células da planilha — role para o lado para ver os outros dias; o texto acompanha a rolagem. Barras que se cruzam na mesma linha descem para uma faixa de baixo. <b>Toque numa barra</b> para ler o texto inteiro com as datas. Nessas abas valem <b>◀ Hoje ▶</b> e o <b>📅 De … até …</b>; os filtros de pessoa/tag/submarca/canal são só dos cards. Os calendários são publicados por um <b>ADM no Painel → ⚙ Configurações → 📊 Gantt</b>, a partir da planilha (.xlsx); o rodapé diz quando e por quem foram atualizados. A aba escolhida fica guardada neste aparelho.\n\n📌 <b>Datas-chave</b>: logo abaixo dos dias, a linha <b>📌 Datas-chave</b> mostra os eventos que a squad marcou (Black Friday, Natal, um lançamento…). Cada uma vira uma <b>faixa colorida</b> atrás das barras (ou uma <b>linha</b>, se for um dia só), nas três abas — ajuda a ler o que acontece em volta da data. <b>PO, Organizador ou ADM</b> criam no <b>＋</b> ao lado de "📌 Datas-chave" (nome, início, fim opcional e cor) e tocam num nome para editar ou excluir; quem não edita vê o nome e o período ao tocar. O <b>ADM</b> pode marcar uma data para <b>🌐 todas as squads</b>. A linha também mostra o rótulo <b>Hoje</b>, centrado na linha do dia.\n\n⚠️ <b>Destaques e filtro nos calendários</b>: nas abas de Marca e Comercial, barras com <b>⚠️</b> e cor forte são <b>ações importantes</b> marcadas por um ADM — valem para todas as squads; o <b>ADM</b> toca numa barra para escolher a cor e o ⚠️ (ou tirar o destaque). Os botões acima do De/Até mostram <b>só um grupo de linhas</b>: no Comercial, <b>🖥️ Site</b>, <b>📱 App</b>, <b>✉️ CRM</b>, <b>📣 Mídia</b> e <b>🚀 Lançamentos e datas</b> (as linhas <b>Site e App</b> entram em Site e em App); na Marca, Coleção, Web, Redes, Canais e Kids. <b>✕ Limpar filtros</b> volta para Tudo.' },
+    { icon:'📊', title:'Gantt', text:'Botão <b>"📊 Gantt"</b> na toolbar, ao lado de "🛤️ Timeline", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram os cards ativos com <b>Início + Fim</b> válidos ou com <b>Prazo</b> preenchido (cards sem datas ficam de fora e aparecem contados no rodapé: <i>"N cards sem datas não aparecem"</i>). Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) — inclusive em cards que também têm período (<b>Fim ≠ Prazo</b>). Cards só com Prazo mostram apenas o marco <b>◆</b>.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📅 De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo período ou prazo cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card. Nome que não cabe na barra? <b>Passe o mouse</b> (ou chegue pelo Tab) e um <b>balão</b> mostra o nome inteiro e as datas — vale também para os calendários e as datas-chave.\n\n🗂 <b>Abas: Cards, 🎯 Calendário de Marca, 🛒 Comercial Hering e 🛍️ Comercial Marketplace</b>: no topo do Gantt, além dos cards da squad, há as abas com os calendários da empresa, iguais para <b>todas as squads</b>. O <b>Calendário de Marca</b> mostra as campanhas nas linhas <b>Coleção sellout</b>, <b>Web</b>, <b>Redes sociais</b> e <b>Canais Intimates</b> e <b>Sports</b> (site e CRM), e logo abaixo, num bloco à parte, as do <b>👶 Hering Kids</b> (Coleção sellout, Web e Redes sociais); o <b>Comercial Hering</b> mostra as ações do mês por linha (<b>Lançamentos e datas</b>, Site e App, Saldos, Mídia, CRM, App…) e o <b>Comercial Marketplace</b>, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes…), os dois <b>em colunas largas e com o texto inteiro</b>, como as células da planilha — role para o lado para ver os outros dias; o texto acompanha a rolagem. Barras que se cruzam na mesma linha descem para uma faixa de baixo. <b>Toque numa barra</b> para ler o texto inteiro com as datas. Nessas abas valem <b>◀ Hoje ▶</b> e o <b>📅 De … até …</b>; os filtros de pessoa/tag/submarca/canal são só dos cards. <b>Qualquer pessoa da Hering atualiza</b> os calendários ali mesmo: <b>📤 Atualizar planilha</b> (ao lado dos filtros) → escolha o .xlsx → veja o que <b>entra</b>, <b>muda</b> e <b>sai</b> → <b>Publicar</b> (vale para todas as squads). O <b>🕘 Histórico</b> mostra quem atualizou, quando e com qual arquivo — e <b>↩ Voltar para esta versão</b> desfaz uma atualização errada (a volta também fica registrada). O rodapé diz quando e por quem foi a última atualização. A aba escolhida fica guardada neste aparelho.\n\n📌 <b>Datas-chave</b>: logo abaixo dos dias, a linha <b>📌 Datas-chave</b> mostra os eventos que a squad marcou (Black Friday, Natal, um lançamento…). Cada uma vira uma <b>faixa colorida</b> atrás das barras (ou uma <b>linha</b>, se for um dia só), nas três abas — ajuda a ler o que acontece em volta da data. <b>PO, Organizador ou ADM</b> criam no <b>＋</b> ao lado de "📌 Datas-chave" (nome, início, fim opcional e cor) e tocam num nome para editar ou excluir; quem não edita vê o nome e o período ao tocar. O <b>ADM</b> pode marcar uma data para <b>🌐 todas as squads</b>. A linha também mostra o rótulo <b>Hoje</b>, centrado na linha do dia.\n\n⚠️ <b>Destaques e filtro nos calendários</b>: nas abas de Marca e Comercial, barras com <b>⚠️</b> e cor forte são <b>ações importantes</b> marcadas por um ADM — valem para todas as squads; o <b>ADM</b> toca numa barra para escolher a cor e o ⚠️ (ou tirar o destaque). Os botões acima do De/Até mostram <b>só um grupo de linhas</b>: no Comercial, <b>🖥️ Site</b>, <b>📱 App</b>, <b>✉️ CRM</b>, <b>📣 Mídia</b> e <b>🚀 Lançamentos e datas</b> (as linhas <b>Site e App</b> entram em Site e em App); na Marca, Coleção, Web, Redes, Canais e Kids. <b>✕ Limpar filtros</b> volta para Tudo.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação (mais antigos primeiro) — a ordem em que os cards foram criados, do mais antigo pro mais novo; no mesmo dia vale a hora da criação.\n🕐 Data de criação (mais recentes primeiro) — o inverso: os cards criados por último aparecem no topo. Card sem data de criação (legado/importado) fica no final nos dois sentidos.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).\n\n🔴 <b>Ativar "Atrasados" automaticamente num horário</b>: se você costuma abrir cards atrasados sempre no mesmo intervalo de 2h do dia, o app pode sugerir ativar o filtro "Atrasados" sozinho quando você abre o board dentro desse horário — só na primeira vez que você abre o board naquele dia, nunca liga/desliga sozinho no meio da sessão. Sugestão opcional, mesmas 3 respostas de sempre (aceitar/agora não/não sugerir mais).' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.\n\n📌 <b>Fixar na toolbar principal</b>: se você usa "💡 Meus cards" na maioria das vezes que abre o board, o app pode sugerir sozinho fixar um atalho pra ele lá em cima, direto na barra de ferramentas (mesma ação, sem precisar abrir Filtros primeiro) — é só uma sugestão opcional (aceite/adie/recuse), nunca muda a tela sem você confirmar.' },

@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📤 Gantt: atualizar os calendários direto no Maré (qualquer pessoa da Hering) + 🕘 Histórico com volta de versão (kanban v8.30.967-dev, painel v5.112-dev, mare-gxl v1) — SÓ DEV — 2026-11-13
+
+- **Maré → 📊 Gantt** (abas de calendário): botões **📤 Atualizar planilha** e **🕘 Histórico** ao lado dos filtros. Qualquer login Google da Hering envia o .xlsx, vê a prévia (＋ entra · ✎ muda · − sai · rótulos não reconhecidos) e **publica para todas as squads**. Pedido do Caio: os próprios analistas mantêm o Excel.
+- **🕘 Histórico**: cada publicação (pelo Maré ou pelo Painel) guarda uma **cópia** da versão e uma linha com quem, quando, arquivo e ＋/✎/−; **↩ Voltar para esta versão** desfaz uma atualização errada (a volta também vira linha do histórico). A lista não baixa as cópias — a cópia só é lida ao voltar.
+- **Módulo novo `mare-gxl(-dev).js`** (leitor de .xlsx, prévia, publicação, histórico, restauração): o Maré só o baixa quando alguém clica em atualizar/histórico; o Painel deixou de ter cópia própria do leitor.
+- **Banco**: `calendarios_gantt` passa a aceitar escrita de qualquer login Google da Hering (antes só ADM); `calendarios_gantt_hist`/`_snap` (+ `_dev`) **só acrescentam** — ninguém reescreve nem apaga pelo app, e o autor do registro tem que ser quem grava. Destaques ⚠️ continuam só ADM. Backup: histórico diário, cópias semanal.
+- O rodapé do calendário mostra **data e hora** da última atualização ("atualizado em 13/11/2026 às 14:32 por Fulano").
+- Testes: `test_gantt_atualizar.js` (membro publica, 2ª versão, histórico, voltar, externo sem botões, celular, leitor só sob demanda), `ganttRules.test.js` (16), `test_painel_gantt_calendarios.js`.
+
 ### 🛍️ Gantt: aba Comercial Marketplace (planilha de marketplace) + "Comercial Hering" (kanban v8.30.966-dev, painel v5.111-dev, mare-dicas v17) — SÓ DEV — 2026-11-13
 
 - **Painel → ⚙ → 📊 Gantt** ganha o **Calendário Comercial Marketplace**: lê as abas com nome de **mês** ("NOVEMBRO 26", "Julho 2026", "DEZEMBRO"…, inclusive as ocultas; "provisório", "BF", resumos e calculadoras ficam de fora). Cada aba é uma régua longa que carrega meses antigos copiados: vale só o **bloco do mês** — o cabeçalho "<Mês> <ano>" mais à direita da linha 1 —, com as datas da linha 2 conferidas pelo dia da semana. Uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes/Zattini, Off Premium, Privalia, Zzmall, Posthaus, Off Hering); as sublinhas pertencem ao marketplace cujo rótulo (mesclado) as cobre. A tabela solta de baixo e o bloco antigo são ignorados. Mesmo mês em 2 abas: vale a visível.
