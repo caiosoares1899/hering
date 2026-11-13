@@ -11,6 +11,7 @@
 | Quem vê / quem grava | **Todo login Google @ciahering.com.br lê.** Cada um grava **só as próprias** férias; o **ADM corrige ou apaga** as de qualquer um. Visualizador externo e outro login não veem. |
 | Passagem dos itens | Cada card/Objetivo/Marco: **➡️ passar** para outra pessoa (reatribui com histórico + aviso no sino) ou **✋ manter**. Item mantido mostra o selo 🏖️ "responsável de férias até 28/11". **Não mexe** na contagem de tempo (o ⏸ Pausar card fica de fora). |
 | Interruptor | **No próprio cadastro**: em "Minhas férias", o botão **🧳 Preparar minha saída** abre a passagem. Sem período cadastrado não há botão, então o cadastro é obrigatório por construção. |
+| Entrada pelo menu (Caio, 13/11) | Item **🏖️ Minhas férias** no menu que abre ao clicar no **nome do usuário** no Maré (o mesmo do status, Sonar, Equipe, tema e 🚪 Sair) e no **⋯ Mais** do Radar. Abre "Minhas férias" (cadastro + 🧳 Preparar minha saída). Quem está de férias hoje vê "🏖️ De férias até 28/11" no próprio item. **Entra na F4** (Claude), para não mudar o contrato da F2 com o Antigravity no meio do trabalho. |
 | Fora do escopo | aprovação, RH, saldo de dias, push de "fulano saiu de férias". |
 
 ## Modelo de dados — nó novo
