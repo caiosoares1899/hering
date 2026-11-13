@@ -143,23 +143,43 @@
         const sq=u.squads||{}; return (P.squads||[]).some(id=>sq[id]);
       }).map(([uid])=>uid);
     },
-    // Manda o pedido. Um aviso por pessoa, id fixo por calendário + quem pediu + dia: as regras só deixam CRIAR aviso na caixa de outra
-    // pessoa — repetir no mesmo dia é recusado pelo banco (proteção contra clique repetido e insistência). Devolve {enviados, ja, total}.
+    // Manda o pedido. Um aviso por pessoa, id fixo por calendário + quem pediu + dia: se a pessoa já tem o pedido de hoje, NÃO regrava (as regras
+    // já recusam criar de novo para membro; PO/ADM poderiam sobrescrever — por isso a conferência antes). Uma falha não para os demais.
+    // AMBIENTE DE TESTE (-dev): a caixa de notificações é a mesma do prod — o aviso vai SÓ para quem pediu (dá para testar push e clique
+    // sem incomodar ninguém); `producao` diz para quem iria de verdade. Devolve {enviados, ja, erros, total, teste, producao:[nomes]}.
     async enviar(cal){
       const u=window._currentUser; if(!u || !u.uid || !PEDIDO[cal]) throw new Error('sem login');
       const pubs=(await window._get(window._ref(window._db, 'kanban/usuarios_publicos'))).val()||{};
-      const uids=pedido.destinatarios(cal, pubs, u.uid);
+      const reais=pedido.destinatarios(cal, pubs, u.uid), teste=suf()==='_dev';
+      const producao=reais.map(id=>String((pubs[id]||{}).nome||id));
+      const uids=teste?[u.uid]:reais;
       const meu=pubs[u.uid]||{}, nome=String(meu.nome||u.displayName||'Alguém').slice(0,60);
       const id='gantt_pedido_'+cal+'_'+u.uid.replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)+'_'+diaHoje();
       const aviso={ id, type:'gantt_pedido', title:('📣 '+nome+' pediu para atualizar o '+NOME[cal]).slice(0,120), sub:'Toque para abrir o 📤 Atualizar planilha do '+NOME[cal], cal, de:u.uid, dev:suf()==='_dev', read:false, ts:new Date().toISOString() };
-      let enviados=0, ja=0;
+      let enviados=0, ja=0, erros=0;
       for(const uid of uids){
-        try{ await window._set(window._ref(window._db, 'kanban/usuarios/'+uid+'/notificacoes/'+id), aviso); enviados++; }
-        catch(e){ if(/permission|denied/i.test(String(e&&e.message||e))) ja++; else throw e; }
+        const r=window._ref(window._db, 'kanban/usuarios/'+uid+'/notificacoes/'+id);
+        try{
+          if((await window._get(r)).exists()){ ja++; continue; }   // já tem o pedido de hoje: não regrava (nem para PO/ADM)
+          await window._set(r, aviso); enviados++;
+        }catch(e){ if(/permission|denied/i.test(String(e&&e.message||e))) ja++; else erros++; }
       }
-      return { enviados, ja, total:uids.length };
+      return { enviados, ja, erros, total:uids.length, teste, producao };
     },
     quem:cal=>(PEDIDO[cal]||{}).quem||'',
+    // Texto do resultado (o mesmo no Maré e no Radar)
+    resumo(cal, r){
+      const quem=pedido.quem(cal), nome=NOME[cal]||'calendário';
+      if(r.teste){
+        const lista=r.producao.length?r.producao.slice(0,6).join(', ')+(r.producao.length>6?' e mais '+(r.producao.length-6):''):'ninguém ('+quem+' ainda sem pessoas cadastradas)';
+        return '🧪 Ambiente de teste: o aviso foi só para você'+(r.ja?' (você já tinha o de hoje)':'')+'. Em produção iria para '+r.producao.length+' pessoa'+(r.producao.length===1?'':'s')+': '+lista+'.';
+      }
+      if(r.total===0) return '📣 Ninguém para avisar: '+quem+' ainda não tem pessoas cadastradas no Maré.';
+      if(!r.enviados && !r.erros) return '📣 Você já pediu a atualização do '+nome+' hoje — o aviso continua com eles.';
+      return (r.enviados?'📣 Pedido enviado para '+r.enviados+' pessoa'+(r.enviados===1?'':'s')+' ('+quem+').':'')
+        +(r.ja?' '+r.ja+' já tinha'+(r.ja===1?'':'m')+' o seu pedido de hoje.':'')
+        +(r.erros?' ⚠ Não consegui avisar '+r.erros+' — tente de novo em instantes.':'');
+    },
   };
 
   // ── CSS do visualizador (só entra na página que monta; usa os tokens da página, com valores de reserva)
@@ -287,13 +307,10 @@
     }
     async function pedirClique(cal){
       if(S.pedBusy || !PEDIDO[cal]) return;
-      if(!window.confirm('Avisar '+pedido.quem(cal)+' que o '+NOME[cal]+' precisa ser atualizado?\n\nEles recebem um aviso no sino (e no celular, se ativaram o push).')) return;
+      if(!window.confirm('Avisar '+pedido.quem(cal)+' que o '+NOME[cal]+' precisa ser atualizado?\n\nEles recebem um aviso no sino (e no celular, se ativaram o push).'+(suf()==='_dev'?'\n\n🧪 Ambiente de teste: o aviso vai só para você.':''))) return;
       S.pedBusy=true; const b=root.querySelector('.mgc-pedir'); if(b) b.disabled=true;
       try{
-        const r=await pedido.enviar(cal);
-        S.det = r.total===0 ? '📣 Ninguém para avisar: '+pedido.quem(cal)+' ainda não tem pessoas cadastradas no Maré.'
-          : r.enviados ? '📣 Pedido enviado para '+r.enviados+' pessoa'+(r.enviados===1?'':'s')+' ('+pedido.quem(cal)+').'+(r.ja?' '+r.ja+' já tinha'+(r.ja===1?'':'m')+' o seu pedido de hoje.':'')
-          : '📣 Você já pediu a atualização do '+NOME[cal]+' hoje — o aviso continua com eles.';
+        S.det=pedido.resumo(cal, await pedido.enviar(cal));
       }catch(e){ S.det='⚠ Não consegui enviar o pedido. Tente de novo em instantes.'; }
       S.pedBusy=false; const b2=root.querySelector('.mgc-pedir'); if(b2) b2.disabled=false;
       const d=root.querySelector('.mgc-det'); if(d) d.textContent=S.det;

@@ -28,7 +28,8 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 - **📣 Pedir atualização** em cada aba de calendário do 📊 Gantt (Maré e Radar; não na 🧭 Digital): avisa quem cuida da planilha — **Comercial Hering** → squads APP e Site Hering; **Marketplace** → squad Marketplace; **Outlet** → squad Outlet Comercial; **Marca** → o Caio (IDs das squads conferidos em squads_meta com o Caio). Sem repetir quem está em mais de uma squad, sem quem pediu e sem conta de fora da Hering.
 - **Aviso `gantt_pedido`** (sino + push): "📣 Mel pediu para atualizar o Calendário Comercial Hering" — tocar abre o Maré **direto no 📤 Atualizar planilha** daquele calendário (`kanban.html?gantt=<cal>&atualizar=1`).
-- **Um pedido por pessoa, por calendário, por dia**: id fixo e as regras de notificação já só deixam CRIAR aviso na caixa de outra pessoa — o 2º pedido do dia é recusado pelo banco e a tela explica. Sem regra nova.
+- **Um pedido por pessoa, por calendário, por dia**: id fixo; antes de gravar confere se a pessoa já tem o pedido de hoje e não regrava (as regras já recusam criar de novo para membro; PO/ADM poderiam sobrescrever — a conferência cobre). Uma falha não interrompe os demais. Sem regra nova.
+- **Ambiente de teste (-dev)**: a caixa de notificações é a mesma do prod, então no dev o aviso vai **só para quem pediu** (testa push e clique sem incomodar ninguém); a mensagem mostra para quem iria em produção.
 - Teste: `docs/arezzo/testes/test_gantt_pedido.js` (destinatários por calendário, deduplicação, sem autor/externo, 2º pedido barrado, clique e link abrindo o 📤, Radar e Painel); push no `functions/gantt/__tests__/avisos.test.js`. **Deploy: `sendPushOnNotification`** (tipo novo no PUSH_TYPES).
 
 ### 🔔 Gantt: avisos de mudança nos calendários, com push (kanban v8.30.974-dev, okr v2.122-dev, painel v5.114-dev, oceano v1.83-dev, mare-gcal v3, mare-notif v42) — SÓ DEV — 2026-11-13

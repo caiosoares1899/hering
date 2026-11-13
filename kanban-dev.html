@@ -14749,13 +14749,10 @@ let _ganttPedBusy=false;
 async function ganttPedirAtualizacao(cal){
   if(_ganttPedBusy || !window.MareGCal || !MareGCal.pedido || !_GANTT_CAL_NOME[cal]) return;
   const quem=MareGCal.pedido.quem(cal);
-  if(!(await uiConfirm('Avisar '+quem+' que o '+_GANTT_CAL_NOME[cal]+' precisa ser atualizado?\n\nEles recebem um aviso no sino (e no celular, se ativaram o push).', { okText:'📣 Pedir' }))) return;
+  if(!(await uiConfirm('Avisar '+quem+' que o '+_GANTT_CAL_NOME[cal]+' precisa ser atualizado?\n\nEles recebem um aviso no sino (e no celular, se ativaram o push).'+(/-dev\.html/.test(location.pathname)?'\n\n🧪 Ambiente de teste: o aviso vai só para você.':''), { okText:'📣 Pedir' }))) return;
   _ganttPedBusy=true; const b=document.querySelector('#gantt-filtros .gantt-pedir'); if(b) b.disabled=true;
   try{
-    const r=await MareGCal.pedido.enviar(cal);
-    showToast(r.total===0 ? '📣 Ninguém para avisar: '+quem+' ainda não tem pessoas cadastradas no Maré.'
-      : r.enviados ? '📣 Pedido enviado para '+r.enviados+' pessoa'+(r.enviados===1?'':'s')+' ('+quem+').'
-      : '📣 Você já pediu a atualização do '+_GANTT_CAL_NOME[cal]+' hoje — o aviso continua com eles.');
+    showToast(MareGCal.pedido.resumo(cal, await MareGCal.pedido.enviar(cal)));
   }catch(e){ showToast('⚠ Não consegui enviar o pedido. Tente de novo em instantes.'); }
   _ganttPedBusy=false; const b2=document.querySelector('#gantt-filtros .gantt-pedir'); if(b2) b2.disabled=false;
 }

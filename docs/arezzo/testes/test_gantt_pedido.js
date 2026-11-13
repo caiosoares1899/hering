@@ -43,23 +43,23 @@ const seed = () => ({ kanban: {
     const toasts = []; await p.exposeFunction('__toastSpy', m => toasts.push(m));
     await p.evaluate(() => { const o = window.showToast; window.showToast = (m, ...r) => { try { window.__toastSpy(String(m)); } catch (e) {} return o && o(m, ...r); }; window.uiConfirm = async () => true; });
     t('M1. botão 📣 Pedir atualização na aba do calendário', await p.evaluate(() => !!document.querySelector('#gantt-filtros .gantt-pedir')));
+    // destinatários de PRODUÇÃO (função pura do módulo, mesmos dados): por calendário, sem repetir, sem quem pede, sem conta de fora
+    const dest = await p.evaluate(() => { const pubs = window.__store.kanban.usuarios_publicos; const D = c => MareGCal.pedido.destinatarios(c, pubs, 'mem').sort().join(); return { comercial: D('comercial'), marca: D('marca'), mktplace: D('mktplace'), outlet: D('outlet') }; });
+    t('M2. destinatários: Hering = app+site (Ana, Bia uma vez; sem Mel, sem freelancer), Marca = Caio, Mkt = Carla, Outlet = Otto (não a CRM)',
+      JSON.stringify(dest) === JSON.stringify({ comercial: 'ana,bia', marca: 'caio', mktplace: 'carl', outlet: 'oto' }), dest);
+    // no -dev o aviso vai SÓ para quem pediu (a caixa de notificações é a mesma do prod)
     await p.click('#gantt-filtros .gantt-pedir'); await p.waitForTimeout(400);
     let c = await caixas(p);
-    t('M2. Comercial Hering: squads app + site, cada um uma vez, sem quem pediu, sem conta de fora', JSON.stringify([c.ana, c.bia, c.mem, c.ext, c.caio, c.carl]) === JSON.stringify([['comercial'], ['comercial'], [], [], [], []]), c);
-    t('M3. toast diz quantos e quem', toasts.some(m => /Pedido enviado para 2 pessoas \(as squads APP e Site Hering\)/.test(m)), toasts);
-    const aviso = await p.evaluate(() => Object.values(window.__store.kanban.usuarios.ana.notificacoes).find(n => n.type === 'gantt_pedido'));
-    t('M4. o aviso diz quem pediu e qual calendário', /^📣 Mel Membro pediu para atualizar o Calendário Comercial Hering$/.test(aviso.title) && aviso.cal === 'comercial' && aviso.dev === true, aviso);
+    t('M3. ambiente de teste: só quem pediu recebe; ninguém das squads reais', c.mem.join() === 'comercial' && !c.ana.length && !c.bia.length, c);
+    t('M4. a mensagem diz para quem iria em produção', toasts.some(m => /Ambiente de teste: o aviso foi só para você\. Em produção iria para 2 pessoas: Ana App, Bia Site/.test(m)), toasts);
+    const aviso = await p.evaluate(() => Object.values(window.__store.kanban.usuarios.mem.notificacoes).find(n => n.type === 'gantt_pedido' && n.cal === 'comercial'));
+    t('M5. o aviso diz quem pediu e qual calendário', /^📣 Mel Membro pediu para atualizar o Calendário Comercial Hering$/.test(aviso.title) && aviso.dev === true, aviso);
     toasts.length = 0; await p.click('#gantt-filtros .gantt-pedir'); await p.waitForTimeout(400);
     c = await caixas(p);
-    t('M5. 2º pedido no mesmo dia: o banco recusa, ninguém recebe de novo e o toast explica', c.ana.length === 1 && toasts.some(m => /já pediu/.test(m)), { c, toasts });
-    await p.evaluate(() => ganttAba('marca')); await p.waitForTimeout(150);
+    t('M6. 2º pedido no mesmo dia não regrava (vale para PO/ADM, que as regras deixariam sobrescrever)', c.mem.length === 1 && toasts.some(m => /já tinha o de hoje/.test(m)), { c, toasts });
+    await p.evaluate(() => { const n = Object.values(window.__store.kanban.usuarios.mem.notificacoes).find(n => n.cal === 'comercial' && /_mem_/.test(n.id)); n.read = true; });
     await p.click('#gantt-filtros .gantt-pedir'); await p.waitForTimeout(300);
-    c = await caixas(p);
-    t('M6. Marca: só o Caio', c.caio.join() === 'marca' && c.ana.join() === 'comercial', c);
-    await p.evaluate(() => ganttAba('outlet')); await p.waitForTimeout(150);
-    await p.click('#gantt-filtros .gantt-pedir'); await p.waitForTimeout(300);
-    c = await caixas(p);
-    t('M7. Outlet: squad Outlet Comercial, não a Outlet CRM', c.oto.join() === 'outlet' && c.crm.length === 0, c);
+    t('M7. aviso já lido continua lido (não volta como novo)', await p.evaluate(() => Object.values(window.__store.kanban.usuarios.mem.notificacoes).find(n => n.cal === 'comercial' && /_mem_/.test(n.id)).read === true));
     await p.evaluate(() => ganttAba('digital')); await p.waitForTimeout(150);
     t('M8. na 🧭 Digital não há 📣 (pede-se na aba de cada calendário)', await p.evaluate(() => !document.querySelector('#gantt-filtros .gantt-pedir')));
     // aviso recebido: abre o Gantt no calendário e já o 📤
@@ -78,8 +78,8 @@ const seed = () => ({ kanban: {
     await p.evaluate(() => { window.confirm = () => true; });
     await p.click('.mgc-pedir'); await p.waitForTimeout(400);
     const c = await caixas(p);
-    t('R1. Radar: 📣 no Marketplace avisa a squad Marketplace', c.carl.join() === 'mktplace' && c.ana.length === 0, c);
-    t('R2. a linha de aviso confirma', /Pedido enviado para 1 pessoa \(a squad Marketplace\)/.test(await p.textContent('.mgc-det')), await p.textContent('.mgc-det'));
+    t('R1. Radar (teste): o aviso vai só para quem pediu', c.mem.join() === 'mktplace' && !c.carl.length, c);
+    t('R2. a linha de aviso mostra quem receberia em produção', /Em produção iria para 1 pessoa: Carla Mkt/.test(await p.textContent('.mgc-det')), await p.textContent('.mgc-det'));
     await p.evaluate(() => _okrGcal.aba('digital')); await p.waitForTimeout(150);
     t('R3. sem 📣 na 🧭 Digital', await p.evaluate(() => !document.querySelector('.mgc-pedir')));
     t('R4. roteador: aviso abre o Maré no 📤', await p.evaluate(() => MareNotif.urlPessoal({ type: 'gantt_pedido', cal: 'outlet' }).url === 'kanban-dev.html?gantt=outlet&atualizar=1'));
