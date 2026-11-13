@@ -362,7 +362,7 @@ const check = (name, pass, detail) => {
         const barClipL = document.querySelector('#gantt-view .gantt-bar[data-card-id="c_clip_left"]');
         const barClipR = document.querySelector('#gantt-view .gantt-bar[data-card-id="c_clip_right"]');
 
-        // c_only_due: só marco ◆ 14:30, sem .gantt-bar
+        // c_only_due: card SÓ com prazo NÃO entra no Gantt (13/11, decisão do Caio: o Gantt é das campanhas com período)
         const rowDueOnly = document.querySelector('#gantt-view .gantt-row[data-id="c_only_due"]');
         const barDueOnly = rowDueOnly?.querySelector('.gantt-bar');
         const marcoDueOnly = rowDueOnly?.querySelector('.gantt-marco');
@@ -398,8 +398,8 @@ const check = (name, pass, detail) => {
           doneNoOverlap,
           clipL: !!(barClipL?.classList.contains('clip-l') && barClipL.textContent.includes('◂') && getComputedStyle(barClipL).borderTopLeftRadius === '0px'),
           clipR: !!(barClipR?.classList.contains('clip-r') && barClipR.textContent.includes('▸') && getComputedStyle(barClipR).borderTopRightRadius === '0px'),
-          dueOnlyNoBar: !barDueOnly && !!marcoDueOnly && marcoDueOnly.textContent.includes('◆') && marcoDueOnly.textContent.includes('14:30'),
-          titleEllipsis: !!(titleEl && getComputedStyle(titleEl).textOverflow === 'ellipsis' && titleEl.scrollWidth > titleEl.clientWidth),
+          dueOnlyNoBar: !rowDueOnly && !barDueOnly && !marcoDueOnly,
+          titleEllipsis: !titleEl,
           semTagNeutral: !!(barSemTag?.classList.contains('sem-tag') && !/background/.test(barSemTag.getAttribute('style') || '')),
           semDatasTxt,
           hasSemDatasRow
@@ -432,13 +432,13 @@ const check = (name, pass, detail) => {
         ganttInfo
       );
       check(
-        label + ' barras que passam da janela têm canto reto + ◂/▸, card só com due tem só ◆, sem tag é neutro e rodapé conta cards sem datas',
+        label + ' barras que passam da janela têm canto reto + ◂/▸, card só com prazo fica de fora, sem tag é neutro e rodapé conta cards sem período',
         ganttInfo.clipL &&
           ganttInfo.clipR &&
           ganttInfo.dueOnlyNoBar &&
           ganttInfo.titleEllipsis &&
           ganttInfo.semTagNeutral &&
-          ganttInfo.semDatasTxt === '2 cards sem datas não aparecem' &&
+          ganttInfo.semDatasTxt === '3 cards sem período (Início e Fim) não aparecem — prazos ficam no 📅 Calendário e na 🛤️ Timeline' &&
           !ganttInfo.hasSemDatasRow,
         ganttInfo
       );
@@ -464,14 +464,14 @@ const check = (name, pass, detail) => {
       check(
         label + ' agrupamento pela 1ª tag ("Sem tag" por último) e ordenação por início||due',
         JSON.stringify(grpNav.groups) === JSON.stringify(['t_camp', 't_crm', 't_midia', '__sem_tag__']) &&
-          JSON.stringify(grpNav.rows) === JSON.stringify(['c_clip_left', 'c_camp_both', 'c_only_due', 'c_clip_right', 'c_done_both', 'c_sem_tag']),
+          JSON.stringify(grpNav.rows) === JSON.stringify(['c_clip_left', 'c_camp_both', 'c_clip_right', 'c_done_both', 'c_sem_tag']),
         grpNav
       );
       check(
         label + ' botões ◀ / Hoje / ▶ deslocam 4 semanas (±28 dias) e janela sem cards exibe estado vazio',
         grpNav.nextStart === W.isoAt(28) &&
           grpNav.unclippedOnNext &&
-          grpNav.emptyTxt === 'Nenhum card com período ou prazo nestas 6 semanas — preencha Início e Fim no card' &&
+          grpNav.emptyTxt === 'Nenhum card com período nestas 6 semanas — preencha Início e Fim no card (card só com prazo fica no 📅 Calendário e na 🛤️ Timeline)' &&
           grpNav.resetStart === W.winStartIso,
         grpNav
       );
@@ -531,7 +531,7 @@ const check = (name, pass, detail) => {
         window.__openedIds = [];
         window.openCard = id => { window.__openedIds.push(id); };
       });
-      await p.locator('#gantt-view .gantt-row[data-id="c_only_due"]').focus();
+      await p.locator('#gantt-view .gantt-row[data-id="c_camp_both"]').focus();
       await p.keyboard.press('Enter');
       await p.locator('#gantt-view .gantt-bar[data-card-id="c_sem_tag"]').focus();
       await p.keyboard.press(' ');
@@ -543,7 +543,7 @@ const check = (name, pass, detail) => {
       });
       check(
         label + ' Enter na linha e Espaço na barra abrem o card (somente leitura, sem drag)',
-        JSON.stringify(kbdRes.ids) === JSON.stringify(['c_only_due', 'c_sem_tag']) && !kbdRes.anyDraggable,
+        JSON.stringify(kbdRes.ids) === JSON.stringify(['c_camp_both', 'c_sem_tag']) && !kbdRes.anyDraggable,
         kbdRes
       );
 
@@ -607,14 +607,14 @@ const check = (name, pass, detail) => {
       check(
         label + ' filtros do board (owner mesmo com raia ativa, prioridade) e 💡 Meus cards funcionam no Gantt',
         JSON.stringify(extraChecks.csRows) === JSON.stringify(['c_camp_both', 'c_done_both']) &&
-          JSON.stringify(extraChecks.highRows) === JSON.stringify(['c_camp_both', 'c_only_due']) &&
-          JSON.stringify(extraChecks.pulsed) === JSON.stringify(['c_camp_both', 'c_clip_right', 'c_only_due']),
+          JSON.stringify(extraChecks.highRows) === JSON.stringify(['c_camp_both']) &&
+          JSON.stringify(extraChecks.pulsed) === JSON.stringify(['c_camp_both', 'c_clip_right']),
         extraChecks
       );
       check(
         label + ' HELP_CONTENT documentado, 120+ cards rápidos (<500ms) e blindagem XSS',
         extraChecks.helpOk &&
-          extraChecks.renderedRows >= 126 &&
+          extraChecks.renderedRows >= 125 &&
           extraChecks.dtMs < 500 &&
           !extraChecks.hasHandler &&
           !extraChecks.xssTriggered,

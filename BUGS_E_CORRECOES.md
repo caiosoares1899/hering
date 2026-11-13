@@ -87,9 +87,9 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-13 · Gantt: card só com prazo parecia ter período (kanban v8.30.972-dev)
+### 2026-11-13 · Gantt: card só com prazo parecia ter período — o Gantt passa a mostrar só cards com período (kanban v8.30.972-dev)
 
-**Sintoma (relato do Caio, 13/11):** na squad Dados o Gantt mostrava cápsulas longas em cards que só têm prazo, dando a impressão de que o código tinha gravado Início/Fim/Hora sozinho. **Diagnóstico:** script de console (só leitura) no prod confirmou 0 cards com Início/Fim/Hora — nenhum dado foi gravado. **Causa:** sem barra na janela, o marco ◆ leva o nome do card dentro da MESMA cápsula com borda, que se estende pelos dias seguintes e lê como uma barra de período. **Correção:** classe `com-nome` — a cápsula fica só no ◆ do dia (círculo) e o nome vem solto, em texto secundário. Testes do Gantt verdes; capturas 1280/390 × 3 temas conferidas.
+**Sintoma (relato do Caio, squad Dados):** o Gantt mostrava cápsulas longas em cards que só têm prazo, parecendo que o código tinha gravado Início/Fim/Hora sozinho. **Diagnóstico:** script de console só leitura no prod: 0 cards com Início/Fim/Hora — nenhum dado foi gravado; nenhum caminho grava datas em massa. **Causa:** o Gantt também desenhava cards só com prazo, com o nome dentro da cápsula do ◆ que se estendia pelos dias seguintes. **Decisão do Caio:** o Gantt é das campanhas — só entra card com **período (Início + Fim)**; card que termina num dia fica no 📅 Calendário e na 🛤️ Timeline. O ◆ do prazo continua nos cards com período; quando só o ◆ cai na janela, ele é um ponto com o nome solto (`com-nome`). Rodapé: "N cards sem período (Início e Fim) não aparecem — prazos ficam no 📅 Calendário e na 🛤️ Timeline". `docs/arezzo/testes/test_gantt_board.js` atualizado.
 
 ### 2026-11-13 · Gantt (/monitorarbugs 13/11): data-chave ressuscitada, prévia do .xlsx trocada, exclusão muda (kanban v8.30.965-dev, painel v5.110-dev)
 
