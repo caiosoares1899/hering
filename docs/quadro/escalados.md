@@ -54,6 +54,31 @@ Caio pediu para deixar salva, como visão dentro de **Calendário**, uma agenda 
 **Encaminhamento ao Claude:** desenhar fluxo e permissões antes do código; cadastro persistente/novo nó requer avaliação R3, regras garantindo autoria e visibilidade, backup e testes. Verificar se há dados/fluxos de férias existentes para reaproveitar. Ideia registrada, sem implementação.
 
 
+<a id="modo-ferias"></a>
+
+## Ideia: 🏖️ Modo férias (junto com o calendário geral de férias) — 13/11/2026
+
+Pedido do Caio, complementa a [agenda geral de férias](#calendario-ferias-digital) — os dois viram uma coisa só:
+
+1. **Cadastro das próprias férias** (período), visível para todo mundo e lançado no **calendário** (a agenda geral de férias da ideia acima).
+2. **Alerta ao mencionar/marcar** alguém de férias: ao @mencionar, atribuir ou pôr como participante uma pessoa que está de férias, um aviso na tela ("Fulana está de férias até 28/11").
+3. **Conferência antes de sair:** em tese a pessoa cadastra antes; se ela **ativar o modo férias sem ter cadastrado**, o cadastro passa a ser obrigatório (não ativa sem período).
+4. **Passagem dos itens dela:** ao ativar, uma tela para decidir **cada card e cada Objetivo/Marco** dela — ⏸ pausar ou passar para outra pessoa — com confirmação item a item.
+
+**Para o desenho (a confirmar):** onde fica o interruptor (Oceano/perfil?); quem vê o cadastro (só empresa, como os calendários); o alerta usa o mesmo nó do calendário; pausa = ⏸ Pausar card que já existe; passar = reatribuir com histórico + notificação. Nó novo e regras → avaliação R3 (autoria: cada um grava as próprias férias; ADM corrige).
+
+<a id="periodo-historico"></a>
+
+## Conferir: histórico do período e hora do card — 13/11/2026
+
+Caio pediu para o histórico do card registrar quando alguém define período e hora. **Já existe desde 12/11 (PR 1a):** "Início: — → 10/11", "Fim: …", "Hora do prazo: …", no autosave e no Salvar (`test_card_periodo.js`). Se aparecer um caso sem registro, anotar QUAL caminho (Agente, duplicar, outra tela) — esse é o bug.
+
+<a id="gantt-celular"></a>
+
+## Ideia: 📱 Gantt no celular — texto não cabe — 13/11/2026
+
+No celular (390 px) os dias são estreitos e nenhum texto cabe nas barras: sobram só as barrinhas. Caminhos a avaliar: janela menor no celular (2 semanas em vez de 6, com dia mais largo), nome da barra fora dela/ao lado quando não cabe, toque abre um painel com a lista do dia/da barra, ou uma lista por período no lugar da régua. Vale para os cards e para os calendários (Maré e Radar).
+
 <a id="gantt-digital-por-dia"></a>
 
 ## Ideia: Gantt — visão consolidada Digital por dia — 13/11/2026

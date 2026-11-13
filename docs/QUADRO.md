@@ -41,7 +41,9 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | Ideia | Dono | Detalhe |
 |---|---|---|
 | 📊 Gantt: Digital por dia, consolidando os calendários comerciais Hering, Marketplace e Outlet | Claude | [escopo](quadro/escalados.md#gantt-digital-por-dia) |
-| 🏖️ Calendário geral de férias do Digital: cadastro próprio, visível para todos e filtros | Claude | [escopo](quadro/escalados.md#calendario-ferias-digital) |
+| 🏖️ Calendário geral de férias + **modo férias** (alerta ao marcar quem está fora, cadastro obrigatório ao ativar, pausar/passar cards e Objetivos item a item) | Claude | [escopo](quadro/escalados.md#modo-ferias) |
+| 📱 Gantt no celular: nenhum texto cabe, só barrinhas (Maré e Radar) | Claude | [escopo](quadro/escalados.md#gantt-celular) |
+| 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
 | 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
