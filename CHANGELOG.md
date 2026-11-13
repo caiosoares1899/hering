@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### ⭐ Gantt: aba favorita sincronizada no Maré e no Radar — SÓ DEV — 2026-11-13
+
+Favoritar esta aba salva a preferência na conta para todos os aparelhos. Link direto mantém prioridade; no Radar a favorita Cards é ignorada. Resposta atrasada não desfaz troca manual; valores inválidos ignorados. Exceção administrativa de PO/ADM aceita pelo Caio e Claude, sem mudança nas regras.
+
 ### 📣 Gantt: Pedir atualização de um calendário (kanban v8.30.976-dev, okr v2.124-dev, painel v5.115-dev, oceano v1.84-dev, mare-gcal v5, mare-notif v43) — SÓ DEV — 2026-11-13
 
 - **📣 Pedir atualização** em cada aba de calendário do 📊 Gantt (Maré e Radar; não na 🧭 Digital): avisa quem cuida da planilha — **Comercial Hering** → squads APP e Site Hering; **Marketplace** → squad Marketplace; **Outlet** → squad Outlet Comercial; **Marca** → o Caio (IDs das squads conferidos em squads_meta com o Caio). Sem repetir quem está em mais de uma squad, sem quem pediu e sem conta de fora da Hering.
