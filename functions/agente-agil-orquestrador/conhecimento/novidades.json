@@ -1,6 +1,26 @@
 [
  {
   "data": "2026-11-13",
+  "titulo": "🧭 Gantt: Digital · dia a dia — Comercial Hering, Marketplace e Outlet na mesma régua + tudo de um dia (kanban v8.30.973, okr v2.121, mare-gcal v2) — PROD 13/11 — 2026-11-13",
+  "texto": "- Maré → 📊 Gantt e Radar → 📅 Calendário → 📊 Gantt: aba nova 🧭 Digital · dia a dia (pedido do Caio, era a ideia \"Gantt consolidado por dia\"). Os 3 calendários comerciais na mesma régua, um bloco por origem (cada um com o próprio aviso: carregando, não publicado, nada nestas semanas); chips filtram por origem — o filtro de grupo de cada aba própria não vaza para cá.\n- Toque num dia do cabeçalho: painel \"tudo deste dia\" com cada ação que cobre o dia (inclusive as de vários dias, com o período), agrupada por calendário; Esc ou ✕ fecha; respeita o filtro de origem. Redesenha ao vivo quando qualquer um dos 3 é republicado.\n- Destaques ⚠️/★ continuam do calendário de origem. Sem 📤/🕘 na consolidada (cada planilha se atualiza na sua aba). Radar: okr.html?gantt=digital.\n- mare-gcal v2: CONSOLIDADO (aba virtual, fora de CALS/regras) e doDia() — a mesma função alimenta o painel nos dois apps.\n- Teste: docs/arezzo/testes/test_gantt_digital.js (Maré e Radar: blocos, filtro que não vaza, painel com ação de vários dias, republicação ao vivo, destaque, XSS, Esc, ?gantt=digital, 390 px × 3 temas). Promoção: kanban, okr e mare-gcal juntos."
+ },
+ {
+  "data": "2026-11-13",
+  "titulo": "📊 Gantt dos cards: só cards com período (Início + Fim) (kanban v8.30.972-dev → PROD 13/11 em v8.30.973) — 2026-11-13",
+  "texto": "Decisão do Caio (13/11): o Gantt é das campanhas, que atravessam vários dias. Card que só tem prazo (termina num dia) sai do Gantt e fica no 📅 Calendário e na 🛤️ Timeline; o rodapé diz quantos ficaram de fora e onde vê-los. O ◆ do prazo continua aparecendo nos cards com período. Filtro De/Até passa a olhar só o período. Ajuda do Gantt atualizada."
+ },
+ {
+  "data": "2026-11-13",
+  "titulo": "📊 Radar: Gantt dos calendários do Digital no Calendário + link direto okr.html?gantt (okr v2.120-dev, kanban v8.30.971-dev, mare-gcal v1 → PROD 13/11 em kanban v8.30.973 · okr v2.121) — 2026-11-13",
+  "texto": "- Radar → 📅 Calendário → 📊 Gantt (ao lado de Mês e Agenda): os mesmos calendários do Maré — 🎯 Marca, 🛒 Comercial Hering, 🛍️ Marketplace e 🏷️ Outlet — na régua de 6 semanas, com ◀ Hoje ▶, 📆 Mês, filtro por grupo e os destaques ⚠️/★ do ADM. Só leitura (atualizar continua no Maré). Pedido do Caio: os líderes que não usam o Maré também enxergam.\n- Link direto: okr.html?gantt abre direto no Gantt (?gantt=marca|comercial|mktplace|outlet escolhe a aba).\n- Acesso: só login Google @ciahering.com.br (a regra do banco já era essa, sem squad); visualizador externo e outro login não veem a vista. Sem deploy.\n- Módulo novo mare-gcal(-dev).js: fonte única da configuração dos calendários (abas, nomes, grupos, cores) — o Maré passou a ler dele — e o visualizador do Radar, baixado só quando a vista abre.\n- Teste: test_radar_gantt.js (link, 4 abas, Mês, Hoje/◀▶, filtro, destaque, XSS, sem acesso, 390 px × 3 temas); suítes do Gantt do Maré seguem verdes.\n- Promoção: kanban, okr e mare-gcal sobem JUNTOS (o kanban carrega o módulo na abertura; sem ele, o Gantt do Maré fica só com os cards da squad). Na promoção: guia-okr.html (passo do Calendário) e npm run conhecimento (Ajuda do Radar → Agente; deploy das funções)."
+ },
+ {
+  "data": "2026-11-13",
+  "titulo": "📊 Gantt ao lado da ↕ Ordenação na toolbar (kanban v8.30.970-dev → PROD 13/11 em v8.30.973) — 2026-11-13",
+  "texto": "Na ordem padrão da toolbar, o botão 📊 Gantt saiu do fim da fila (ao lado da 🛤️ Timeline) e foi para logo depois de ↕ Ordenação. Quem já reorganizou a barra (⌨️ Atalhos → Reorganizar) mantém a própria ordem. Ajuda do Gantt atualizada (posição do botão e 📆 Mês no parágrafo dos filtros)."
+ },
+ {
+  "data": "2026-11-13",
   "titulo": "📆 Gantt: botão Mês ao lado do De/Até (kanban v8.30.969) — PROD 13/11 — 2026-11-13",
   "texto": "Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem alterar o filtro de período. Escolha preservada nas atualizações, zerada por navegação, De/Até e limpar. Ajuda atualizada e teste Playwright em desktop/celular."
  },
@@ -128,25 +148,5 @@
   "data": "2026-11-11",
   "titulo": "Travessia — humor com aviso antes e \"Desfazer\" (T8 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11",
   "texto": "- \"👁 Seu líder (Nome) vê esta resposta.\" subiu para cima das carinhas, curto; a explicação abaixo ficou só com o detalhe.\n- O toque grava na hora, mas o aviso de apoio ao líder (mal/muito mal) só sai 8 s depois. Nesse tempo aparece \"Registrado · ↩ Desfazer\": desfazer volta ao humor anterior (privado e compartilhado) e cancela o aviso. Trocar de carinha na janela vale a última (\"muito mal\" corrigido para \"bem\" não avisa ninguém). Se a aba for escondida ou fechada antes, o aviso sai na hora, para não se perder.\n- Só na Travessia, por decisão do Caio (o bloco de humor do Meu Dia no Maré fica para depois). Sem deploy: as regras já deixam a pessoa regravar e apagar o próprio humor do dia.\n- Testes: test_travessia_humor_desfazer.js (24/24) e test_travessia.js ajustado (o aviso agora espera a janela de 8 s; 125 ✅)."
- },
- {
-  "data": "2026-11-11",
-  "titulo": "Travessia — 1:1 com \"O que combinamos\" (T1 etapa A da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11",
-  "texto": "- O registro do 1:1 ganhou o campo opcional \"O que combinamos?\" (até 280 caracteres), gravado em encontros/{uid}/{id}/nota — a regra do banco já aceitava o campo, então não há deploy.\n- A nota aparece dos dois lados: no Início da pessoa (\"Últimos 1:1\", os 3 mais recentes, no lugar de \"Último registro\") e no detalhe da pessoa na Frota do líder. O campo avisa quem mais lê (líder/pessoa e o gerente).\n- Só quem escreveu o registro vê o 🗑 (como a regra exige).\n- Teste: docs/arezzo/testes/test_travessia_1a1_nota.js (20/20: gravar com e sem nota, corte em 280, HTML vira texto, líder vê a nota da pessoa, 1280/390 px)."
- },
- {
-  "data": "2026-11-11",
-  "titulo": "Travessia — cartão \"Próxima ação\" no topo da Minha travessia (T4 da consultoria) (PROD 12/11 · kanban v8.30.946 · okr v2.115 · oceano v1.79 · travessia · dev: travessia-dev.html) — 2026-11-11",
-  "texto": "- Uma pendência só, com verbo e botão, escolhida por prioridade: devolutiva liberada para ciência → colega esperando seu feedback (coleta) → autoavaliação aberta/pela metade (\"Faltam 2 respostas\") → indicar de 2 a 4 pares → 1:1 atrasado (farol amarelo/vermelho; o botão foca a data do 1:1) → Baú vazio ou parado há 3 semanas. Sem pendência, o cartão não aparece.\n- O humor fica fora de propósito (já está à vista; virar cobrança diária não é o objetivo).\n- Função pura proximaAcao() (exposta em window.Travessia), sobre leituras que a aba Avaliação já fazia, com as mesmas chaves de cache; se a leitura falhar, a página segue sem o cartão.\n- Teste: docs/arezzo/testes/test_travessia_proxima.js (31/31: ordem, textos, 3 temas × 1280/390 px, botão leva aonde promete, pessoas da demo)."
- },
- {
-  "data": "2026-11-11",
-  "titulo": "Maré › 🏝️ Ilha Dinâmica: ligar em Minhas preferências + introdução de 5 passos (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.943-dev · mare-dicas-dev ?v=14) — 2026-11-11",
-  "texto": "- Ligar/desligar saiu do ⏲ Timers (pedido do Caio) e foi para seu nome → Minhas preferências → 🏝️ Ilha Dinâmica: Ligar/Desligar, ⚙ Ajustes da ilha (com ela ligada) e 📖 Como funciona.\n- Introdução na 1ª vez que liga (e revista em 📖 Como funciona, nas preferências ou em ⚙ Ajustes da ilha): 5 passos — o que é · a pílula (principal, 2ª atividade, contador, quando aparece) · o painel aberto (Resumo, botões laterais, 📌, Esc) · escolha os módulos (interruptores que já valem) · onde mudar depois. Voltar/Próximo, pontos de progresso, Pular, ←/→/Esc, foco preso dentro; no celular vira folha inferior com alvos ≥ 44 px. \"Começar a usar\" abre a ilha no Resumo.\n- Textos que citavam o caminho antigo atualizados (Ajuda, avisos, dica ilha_v2 — mare-dicas-dev ?v=14 em kanban-dev, oceano-dev, okr-dev, painel-dev).\n- Testes: docs/arezzo/testes/test_ilha_intro.js (23) + as 9 baterias da ilha (com o caminho de ligar atualizado) e docs/arezzo/testes/test_dicas.js."
- },
- {
-  "data": "2026-11-11",
-  "titulo": "Maré › 🏝️ Ilha Dinâmica: botão 🎛️ Preferências na lateral (PROD · kanban v8.30.943 — dev: kanban-dev v8.30.941-dev) — 2026-11-11",
-  "texto": "- Pedido do Caio: atalho para \"Minhas preferências\" (a mesma janela do menu do nome) na lateral direita da ilha aberta, logo antes de ⚙ Ajustes. É atalho, não aba: fecha a ilha e abre a janela (openMinhasPrefs).\n- Coluna dos botões laterais 72 → 80 px para o nome inteiro caber sem passar da borda do painel; Ajuda atualizada.\n- Testes: docs/arezzo/testes/test_ilha_ux.js (40) e as 7 baterias da ilha."
  }
 ]

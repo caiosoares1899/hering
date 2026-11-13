@@ -151,7 +151,7 @@ function normalizeEnvLine(line) {
     .replace(/favicon-dev\.png/g, 'favicon.png')
     .replace(/favicon-dev-monochrome\.png/g, 'favicon-monochrome.png')
     .replace(/oceano-dev\.webmanifest/g, 'oceano.webmanifest')
-    .replace(/mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl)-dev\.js/g, 'mare-$1.js')
+    .replace(/mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl|gcal)-dev\.js/g, 'mare-$1.js')
     .replace(/force_logout_after_dev/g, 'force_logout_after')
     .replace(/fb_(apiKey|authDomain|databaseURL|projectId|storageBucket|messagingSenderId|appId)(kanban|painel|okr|oceano|escala|intake|travessia)_dev/g, 'fb_$1$2')
     .replace(/\b(kanban|painel|okr|oceano|escala|intake|travessia)_dev\b/g, '$1')
@@ -226,7 +226,7 @@ function isEnvHunk(prodSlice, devSlice) {
  * - Caso contrário, preserva exatamente a linha original do prod.
  */
 function resolveEnvLineForProd(prodLine, devLine) {
-  if (/class="version"|const VERSION\b|mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl)-dev\.js/.test(devLine)) {
+  if (/class="version"|const VERSION\b|mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl|gcal)-dev\.js/.test(devLine)) {
     const eol = prodLine.endsWith('\r') ? '\r' : '';
     return normalizeEnvLine(devLine) + eol;
   }
@@ -387,7 +387,7 @@ function promoteSyncTarget(targetKey) {
     }
 
     const middleDev = devSlice.slice(dLo, dHi).map(line => {
-      if (/class="version"|const VERSION\b|mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl)-dev\.js/.test(line)) {
+      if (/class="version"|const VERSION\b|mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl|gcal)-dev\.js/.test(line)) {
         const eol = line.endsWith('\r') ? '\r' : '';
         return normalizeEnvLine(line) + eol;
       }
@@ -408,7 +408,7 @@ function promoteSyncTarget(targetKey) {
 /** Módulos mare-*.js: o -dev aponta para páginas -dev e tem o nome no cabeçalho; a cópia de prod usa os nomes de prod. */
 function copiaParaProd(devRaw) {
   return devRaw
-    .replace(/mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl)-dev\.js/g, 'mare-$1.js')
+    .replace(/mare-(notif|dicas|metas|login|plantao|sonar|timer|gxl|gcal)-dev\.js/g, 'mare-$1.js')
     .replace(/(n\s*\+\s*')-dev(\.html')/g, '$1$2');
 }
 

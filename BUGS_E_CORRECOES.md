@@ -87,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-13 · Gantt: card só com prazo parecia ter período — o Gantt passa a mostrar só cards com período (kanban v8.30.972-dev)
+### 2026-11-13 · Gantt: card só com prazo parecia ter período — o Gantt passa a mostrar só cards com período (kanban v8.30.972-dev · PROD 13/11 em v8.30.973)
 
 **Sintoma (relato do Caio, squad Dados):** o Gantt mostrava cápsulas longas em cards que só têm prazo, parecendo que o código tinha gravado Início/Fim/Hora sozinho. **Diagnóstico:** script de console só leitura no prod: 0 cards com Início/Fim/Hora — nenhum dado foi gravado; nenhum caminho grava datas em massa. **Causa:** o Gantt também desenhava cards só com prazo, com o nome dentro da cápsula do ◆ que se estendia pelos dias seguintes. **Decisão do Caio:** o Gantt é das campanhas — só entra card com **período (Início + Fim)**; card que termina num dia fica no 📅 Calendário e na 🛤️ Timeline. O ◆ do prazo continua nos cards com período; quando só o ◆ cai na janela, ele é um ponto com o nome solto (`com-nome`). Rodapé: "N cards sem período (Início e Fim) não aparecem — prazos ficam no 📅 Calendário e na 🛤️ Timeline". `docs/arezzo/testes/test_gantt_board.js` atualizado.
 

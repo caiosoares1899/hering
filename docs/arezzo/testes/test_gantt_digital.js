@@ -7,7 +7,7 @@ const { chromium } = require(pwPath); const fake = require('./fakefb');
 function resolveChrome() { if (process.env.CHROME) return process.env.CHROME; if (fs.existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome')) return '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
   const r = path.join(home, 'hering-tools/chrome'); const arm = fs.readdirSync(r).find(n => n.startsWith('mac_arm-')); return path.join(r, arm, 'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'); }
 const base = process.env.BASE_URL || 'http://127.0.0.1:8949'; const cap = process.env.CAPTURE_DIR || ''; const FIXO = '2026-11-12T13:00:00';
-const SQ = 'site';
+const SQ = 'site'; const PROD = process.env.PROD === '1'; const SUF = PROD ? '' : '_dev'; const KAN = PROD ? 'kanban.html' : 'kanban-dev.html', OKR = PROD ? 'okr.html' : 'okr-dev.html';   // PROD=1 testa as páginas de produção
 const U = { uid: 'mem', nome: 'Mel Membro', email: 'mem@ciahering.com.br', init: 'MM', role: 'membro', squads: { [SQ]: true } };
 const meta = { atualizadoEm: Date.parse('2026-11-13T14:32:00'), porNome: 'Caio', arquivo: 'x.xlsx' };
 const seed = () => ({ kanban: {
@@ -16,14 +16,14 @@ const seed = () => ({ kanban: {
   usuarios: { mem: Object.assign({ inscrito: true }, U) },
   usuarios_publicos: { mem: { uid: 'mem', nome: U.nome, init: 'MM', squads: U.squads } },
   squads: { [SQ]: { dados: { columns: [{ id: 'doing', name: 'Fazendo' }], tags: [], cards_index: {}, cards: {} } } },
-  calendarios_gantt_dev: {
+  ['calendarios_gantt' + SUF]: {
     comercial: { meta, linhas: { site: { rot: 'Site todo (não remarcados)', ordem: 1 }, crm: { rot: 'CRM', ordem: 6 } },
       barras: { h1: { linha: 'site', ini: '2026-11-10', fim: '2026-11-14', txt: 'AÇÃO SITE LONGA' }, h2: { linha: 'crm', ini: '2026-11-13', fim: '2026-11-13', txt: '<img src=x onerror=window.__xss=1>CRM DO DIA' } } },
     mktplace: { meta, linhas: { mkt_amazon: { rot: 'Amazon', ordem: 0 } },
       barras: { h1: { linha: 'mkt_amazon', ini: '2026-11-12', fim: '2026-11-15', txt: 'CUPOM AMAZON' } } },
     // outlet: NÃO publicado (o bloco dele avisa sozinho)
   },
-  gantt_destaques_dev: { mktplace: { h1: { cor: 'red', alerta: true, porNome: 'Ana', em: 1 } }, comercial: { h1: { cor: 'blue', alerta: false, porNome: 'Ana', em: 1 } } },
+  ['gantt_destaques' + SUF]: { mktplace: { h1: { cor: 'red', alerta: true, porNome: 'Ana', em: 1 } }, comercial: { h1: { cor: 'blue', alerta: false, porNome: 'Ana', em: 1 } } },
 } });
 
 (async () => {
@@ -41,7 +41,7 @@ const seed = () => ({ kanban: {
   };
 
   // ── MARÉ ────────────────────────────────────────────────────────────
-  { const { ctx, p, errs } = await abre('kanban-dev.html', '?squad=' + SQ, { width: 1280, height: 900 });
+  { const { ctx, p, errs } = await abre(KAN, '?squad=' + SQ, { width: 1280, height: 900 });
     await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); toggleGanttView(); }); await p.waitForTimeout(300);
     t('M1. aba 🧭 Digital · dia a dia existe depois do Outlet', await p.evaluate(() => [...document.querySelectorAll('.gantt-aba')].map(a => a.dataset.aba).join()) === 'cards,marca,comercial,mktplace,outlet,digital');
     // filtro de grupo esquecido na aba própria NÃO pode vazar para a consolidada
@@ -63,7 +63,7 @@ const seed = () => ({ kanban: {
     t('M8. tocar no dia 13 abre "tudo deste dia": ação de vários dias + do dia, por origem', /3 ações/.test(dia) && /AÇÃO SITE LONGA/.test(dia) && /10\/11 – 14\/11/.test(dia) && /CRM DO DIA/.test(dia) && /CUPOM AMAZON/.test(dia) && /Ainda não publicado/.test(dia), dia);
     t('M9. dia escolhido destacado (aria-pressed) e foco no ✕', await p.evaluate(() => document.querySelector('.gantt-day-hd[data-date="2026-11-13"]').getAttribute('aria-pressed') === 'true' && document.activeElement && document.activeElement.closest('#gantt-dia')));
     // republicação ao vivo de uma fonte com a consolidada aberta
-    await p.evaluate(() => window._set(window._ref(window._db, 'kanban/calendarios_gantt_dev/outlet'), { meta: { atualizadoEm: 1, porNome: 'X', arquivo: 'o.xlsx' }, linhas: { out_acao_principal: { rot: 'Ação principal', ordem: 0 } }, barras: { o1: { linha: 'out_acao_principal', ini: '2026-11-13', fim: '2026-11-13', txt: 'OUTLET NOVO' } } }));
+    await p.evaluate(suf => window._set(window._ref(window._db, 'kanban/calendarios_gantt' + suf + '/outlet'), { meta: { atualizadoEm: 1, porNome: 'X', arquivo: 'o.xlsx' }, linhas: { out_acao_principal: { rot: 'Ação principal', ordem: 0 } }, barras: { o1: { linha: 'out_acao_principal', ini: '2026-11-13', fim: '2026-11-13', txt: 'OUTLET NOVO' } } }), SUF);
     await p.waitForTimeout(300);
     dia = await p.evaluate(() => (document.getElementById('gantt-dia') || {}).innerText || '');
     t('M10. republicar o Outlet com a consolidada aberta: régua e painel atualizam na hora', /OUTLET NOVO/.test(await p.evaluate(() => document.getElementById('gantt-view').innerText)) && /4 ações/.test(dia), dia);
@@ -81,7 +81,7 @@ const seed = () => ({ kanban: {
     await ctx.close(); }
 
   // ── RADAR ───────────────────────────────────────────────────────────
-  { const { ctx, p, errs } = await abre('okr-dev.html', '?gantt=digital', { width: 1280, height: 900 });
+  { const { ctx, p, errs } = await abre(OKR, '?gantt=digital', { width: 1280, height: 900 });
     const st = () => p.evaluate(() => { const h = document.getElementById('okr-gcal-host'); return { aba: (h.querySelector('.mgc-aba.on') || {}).dataset?.aba, txt: h.innerText, origens: [...h.querySelectorAll('.mgc-origem')].map(e => e.textContent) }; });
     let s = await st();
     t('R1. ?gantt=digital abre a consolidada no Radar', s.aba === 'digital' && s.origens.length === 3, s);
@@ -98,14 +98,14 @@ const seed = () => ({ kanban: {
 
   // ── 390 px × 3 temas (Maré e Radar) ────────────────────────────────
   for (const tema of ['dark', 'light', 'vice']) {
-    { const { ctx, p, errs } = await abre('kanban-dev.html', '?squad=' + SQ, { width: 390, height: 820 }, tema);
+    { const { ctx, p, errs } = await abre(KAN, '?squad=' + SQ, { width: 390, height: 820 }, tema);
       await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); toggleGanttView(); ganttAba('digital'); }); await p.waitForTimeout(300);
       await p.evaluate(() => ganttDia('2026-11-13')); await p.waitForTimeout(200);
       const m = await p.evaluate(() => ({ over: document.documentElement.scrollWidth - innerWidth, dia: !!document.getElementById('gantt-dia'), alvo: document.querySelector('.gantt-day-hd.is-clic').getBoundingClientRect().height }));
       t(`P. Maré 390 ${tema}: sem rolagem lateral, painel aberto, dia ≥ 44 px`, m.over <= 0 && m.dia && m.alvo >= 43.5, m);
       if (cap) { fs.mkdirSync(cap, { recursive: true }); await p.evaluate(() => document.getElementById('gantt-dia').scrollIntoView()); await p.screenshot({ path: path.join(cap, `mare_digital_390_${tema}.png`) }); }
       t(`P. Maré 390 ${tema}: sem erro de JS`, errs.length === 0, errs); await ctx.close(); }
-    { const { ctx, p, errs } = await abre('okr-dev.html', '?gantt=digital', { width: 390, height: 820 }, tema);
+    { const { ctx, p, errs } = await abre(OKR, '?gantt=digital', { width: 390, height: 820 }, tema);
       await p.click('.mgc-dhd.is-clic[data-dia="2026-11-13"]'); await p.waitForTimeout(200);
       const m = await p.evaluate(() => ({ over: document.documentElement.scrollWidth - innerWidth, dia: !!document.querySelector('.mgc-dia'), abas: (() => { const a = document.querySelector('.mgc-abas'); return a.scrollWidth - a.clientWidth; })() }));
       t(`Q. Radar 390 ${tema}: sem rolagem lateral, painel aberto`, m.over <= 0 && m.dia, m);
@@ -113,7 +113,7 @@ const seed = () => ({ kanban: {
       if (cap) { await p.evaluate(() => document.querySelector('.mgc-dia').scrollIntoView()); await p.screenshot({ path: path.join(cap, `radar_digital_390_${tema}.png`) }); }
       t(`Q. Radar 390 ${tema}: sem erro de JS`, errs.length === 0, errs); await ctx.close(); }
   }
-  if (cap) { const { ctx, p } = await abre('kanban-dev.html', '?squad=' + SQ, { width: 1280, height: 900 });
+  if (cap) { const { ctx, p } = await abre(KAN, '?squad=' + SQ, { width: 1280, height: 900 });
     await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); toggleGanttView(); ganttAba('digital'); ganttDia('2026-11-13'); }); await p.waitForTimeout(300);
     await p.screenshot({ path: path.join(cap, 'mare_digital_1280.png'), fullPage: true }); await ctx.close(); }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nFALHOU'); process.exit(ok ? 0 : 1);
