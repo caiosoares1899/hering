@@ -28,6 +28,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 Decisão do Caio (13/11): o Gantt é das campanhas, que atravessam vários dias. Card que só tem prazo (termina num dia) sai do Gantt e fica no 📅 Calendário e na 🛤️ Timeline; o rodapé diz quantos ficaram de fora e onde vê-los. O ◆ do prazo continua aparecendo nos cards com período. Filtro De/Até passa a olhar só o período. Ajuda do Gantt atualizada.
 
+### 📊 Radar: Gantt dos calendários do Digital no Calendário + link direto okr.html?gantt (okr v2.120-dev, kanban v8.30.971-dev, mare-gcal v1) — SÓ DEV — 2026-11-13
+
+- **Radar → 📅 Calendário → 📊 Gantt** (ao lado de Mês e Agenda): os mesmos calendários do Maré — 🎯 Marca, 🛒 Comercial Hering, 🛍️ Marketplace e 🏷️ Outlet — na régua de 6 semanas, com ◀ Hoje ▶, 📆 Mês, filtro por grupo e os destaques ⚠️/★ do ADM. Só leitura (atualizar continua no Maré). Pedido do Caio: os líderes que não usam o Maré também enxergam.
+- **Link direto**: `okr.html?gantt` abre direto no Gantt (`?gantt=marca|comercial|mktplace|outlet` escolhe a aba).
+- **Acesso**: só login Google @ciahering.com.br (a regra do banco já era essa, sem squad); visualizador externo e outro login não veem a vista. Sem deploy.
+- **Módulo novo `mare-gcal(-dev).js`**: fonte única da configuração dos calendários (abas, nomes, grupos, cores) — o Maré passou a ler dele — e o visualizador do Radar, baixado só quando a vista abre.
+- Teste: `test_radar_gantt.js` (link, 4 abas, Mês, Hoje/◀▶, filtro, destaque, XSS, sem acesso, 390 px × 3 temas); suítes do Gantt do Maré seguem verdes.
+- **Promoção: `kanban`, `okr` e `mare-gcal` sobem JUNTOS** (o kanban carrega o módulo na abertura; sem ele, o Gantt do Maré fica só com os cards da squad). Na promoção: `guia-okr.html` (passo do Calendário) e `npm run conhecimento` (Ajuda do Radar → Agente; deploy das funções).
+
 ### 📊 Gantt ao lado da ↕ Ordenação na toolbar (kanban v8.30.970-dev) — SÓ DEV — 2026-11-13
 
 Na ordem padrão da toolbar, o botão 📊 Gantt saiu do fim da fila (ao lado da 🛤️ Timeline) e foi para logo depois de ↕ Ordenação. Quem já reorganizou a barra (⌨️ Atalhos → Reorganizar) mantém a própria ordem. Ajuda do Gantt atualizada (posição do botão e 📆 Mês no parágrafo dos filtros).
