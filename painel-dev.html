@@ -3168,7 +3168,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.112 · painel-dev</div>
+<div class="version">v5.113 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3403,7 +3403,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-plantao-dev.js?v=5"></script>
 <script src="mare-dicas-dev.js?v=17"></script>
-<script src="mare-gxl-dev.js?v=1"></script>
+<script src="mare-gxl-dev.js?v=2"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -10157,6 +10157,7 @@ const _GANTT_SUF = /-dev\.html/.test(location.pathname) ? '_dev' : '';   // pain
 const _GANTT_CALS = {
   marca:     { icone:'🎯', nome:'Calendário de Marca', sub:'Campanhas · aba HERING: Coleção sellout, Web, Redes sociais e Canais Intimates e Sports · aba KIDS: Coleção sellout, Web e Redes sociais', montar:a=>GXL.montarMarca(a), regra:'Reenviar troca o calendário inteiro.' },
   comercial: { icone:'🛒', nome:'Calendário Comercial Hering', sub:'Uma aba por mês, de 2026 em diante: lançamentos, Site e App (todo e saldos), mídia, CRM e ações de app/site', montar:a=>GXL.montarComercial(a, 2026), regra:'Reenviar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses).' },
+  outlet:    { icone:'🏷️', nome:'Calendário Comercial Outlet', sub:'Uma planilha por mês (aba CALENDÁRIO: um dia por linha, uma coluna por tipo de ação)', montar:(a,arq)=>GXL.montarOutlet(a, arq), regra:'Publicar troca SÓ o mês desta planilha — os meses anteriores continuam.' },
   mktplace:  { icone:'🛍️', nome:'Calendário Comercial Marketplace', sub:'Abas com nome de mês ("NOVEMBRO 26", "Julho 2026"…): o bloco do mês no fim de cada aba, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop…)', montar:a=>GXL.montarMarketplace(a), regra:'Reenviar troca o calendário inteiro pelo arquivo (abas de mês ocultas também entram; "provisório" e "BF" ficam de fora).' },
 };
 const _ganttCalAtual = {}, _ganttCalPrevia = {};
@@ -10219,7 +10220,7 @@ async function pcfgGanttArquivo(inp){
   try{
     const abas=await GXL.ler(await f.arrayBuffer(), GXL.QUER[tipo]);   // só descompacta as abas que este calendário usa
     if(seq!==_ganttLeituraSeq[tipo]) return;   // outro arquivo foi escolhido enquanto este era lido
-    const novo=_GANTT_CALS[tipo].montar(abas);
+    const novo=_GANTT_CALS[tipo].montar(abas, f.name);
     const atual=_ganttCalAtual[tipo]&&!_ganttCalAtual[tipo]._erro?_ganttCalAtual[tipo]:null;
     _ganttCalPrevia[tipo]={ arquivo:f.name.slice(0,200), abas:novo.abas?novo.abas.length+' abas de mês':novo.aba, mescla:GXL.mesclar(tipo, novo, atual), naoRec:novo.naoReconhecidos||[] };
   }catch(e){ if(seq!==_ganttLeituraSeq[tipo]) return; _ganttCalPrevia[tipo]={ erro:(e&&e.message)||'Não consegui ler o arquivo.' }; }

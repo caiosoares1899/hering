@@ -84,6 +84,7 @@ const GXL = (()=>{
     marca:(n,o)=>!o && /^(HERING|KIDS)\s+20\d\d$/i.test(limpa(n)),
     comercial:(n,o)=>!o && !ABA_FORA_RE.test(n),
     mktplace:(n)=>ABA_MES_RE.test(sem(n)),
+    outlet:(n)=>/^CALENDARIO$|DIA A DIA|ACOMPANHAMENTO/.test(sem(n)),
   };
   // ── datas ──
   const z2=n=>String(n).padStart(2,'0');
@@ -328,12 +329,70 @@ const GXL = (()=>{
     const de=meses[0]+'-01'; const [ay,am]=meses[meses.length-1].split('-').map(Number); const ate=iso(new Date(Date.UTC(ay,am,0)));
     return { abas:[...porMes.values()].map(x=>x.aba), linhas, barras, de, ate, meses, naoReconhecidos:[...naoRec.entries()].map(([r,a])=>r+' ('+[...a].join(', ')+')') };
   }
+  // ── 🏷️ Calendário Comercial Outlet (13/11/2026): UMA planilha por mês ("Outlet | Calendário Novembro 2026.xlsx"). Aba "CALENDÁRIO":
+  // cabeçalho com DIA DA SEMANA | DIA | AÇÃO PRINCIPAL | AÇÃO SECUNDÁRIA | … (os nomes vêm do próprio cabeçalho — coluna nova aparece
+  // sozinha); uma LINHA por dia. Colunas de número (META, SHARE, CAPTADO, MARGEM, FATURADO) ficam de fora. O mês vem do nome do arquivo;
+  // sem ele, das datas (número de série) de outra aba — e só vale se o dia da semana da planilha bater. Publicar troca SÓ esse mês
+  // (os meses anteriores continuam), porque cada arquivo traz um mês.
+  const OUT_FORA=/^(DIA|DIA DA SEMANA|META\b|SHARE\b|CAPTADO\b|MARGEM\b|FATURADO\b|RECEITA\b|PECAS\b|TOTAL\b)/;
+  function _slugOut(s){ return ('out_'+sem(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')).slice(0,40).replace(/_+$/,''); }
+  function _rotOut(s){ const t=limpa(s).toLowerCase(); return t.charAt(0).toUpperCase()+t.slice(1); }
+  function montarOutlet(abas, nomeArquivo){
+    const aba=abas.find(a=>/^CALENDARIO$/.test(sem(a.nome))); if(!aba) throw new Error('Não achei a aba "CALENDÁRIO" na planilha do Outlet.');
+    let rH=null, cDia=null, cDow=null; const cols=[];
+    for(const [r,row] of [...aba.rows.entries()].sort((a,b)=>a[0]-b[0])){
+      const vals=[...row.entries()].map(([c,x])=>[c,sem(x.v)]);
+      if(vals.some(([,v])=>v==='DIA') && vals.some(([,v])=>/^ACAO PRINCIPAL/.test(v))){
+        rH=r; for(const [c,v] of vals){ if(v==='DIA') cDia=c; else if(v==='DIA DA SEMANA') cDow=c; }
+        for(const [c,x] of [...row.entries()].sort((a,b)=>a[0]-b[0])){ const v=sem(x.v); if(x.num || !v || OUT_FORA.test(v)) continue; cols.push({ c, id:_slugOut(x.v), rot:_rotOut(x.v) }); }
+        break;
+      }
+    }
+    if(rH===null || cDia===null || !cols.length) throw new Error('A aba "CALENDÁRIO" não tem o cabeçalho esperado (DIA · AÇÃO PRINCIPAL …).');
+    const dias=[];
+    for(const [r,row] of [...aba.rows.entries()].sort((a,b)=>a[0]-b[0])){
+      if(r<=rH) continue; const x=row.get(cDia); if(!x || !/^\d{1,2}(\.0+)?$/.test(limpa(x.v))) continue;
+      const d=Math.round(+x.v); if(d<1||d>31) continue; dias.push({ r, dia:d, dow:cDow&&row.get(cDow)?sem(row.get(cDow).v):'' });
+    }
+    if(dias.length<20) throw new Error('A aba "CALENDÁRIO" não tem os dias do mês (coluna DIA).');
+    const DOWX=['DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO'];
+    const bate=(ano,mes)=>{ let ok=0, ruim=0; for(const d of dias){ if(!d.dow) continue; const dt=new Date(Date.UTC(ano,mes,d.dia)); if(dt.getUTCMonth()!==mes){ ruim++; continue; } if(d.dow.startsWith(DOWX[dt.getUTCDay()].slice(0,3))) ok++; else ruim++; } return ok>0 && ruim<=1; };
+    const cands=[]; const mN=/(JANEIRO|FEVEREIRO|MARCO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)\D{0,4}(20\d\d)/.exec(sem(nomeArquivo||''));
+    if(mN) cands.push([+mN[2], MESES.indexOf(mN[1])]);
+    const cont=new Map();
+    for(const a of abas){ if(a===aba) continue; for(const [,row] of a.rows) for(const [,x] of row){ if(x.num && +x.v>40000 && +x.v<80000 && Number.isInteger(+x.v)){ const k=serialIso(+x.v).slice(0,7); cont.set(k,(cont.get(k)||0)+1); } } }
+    [...cont.entries()].sort((a,b)=>b[1]-a[1]).forEach(([k])=>cands.push([+k.slice(0,4), +k.slice(5,7)-1]));
+    const achou=cands.find(([y,m])=>bate(y,m));
+    if(!achou) throw new Error('Não descobri o mês desta planilha: ponha o mês no nome do arquivo (ex.: "Outlet | Calendário Novembro 2026.xlsx").');
+    const [ano,mes]=achou; const mesKey=ano+'-'+z2(mes+1);
+    const linhas={}, barras={}; let n=0;
+    cols.forEach((C,ordem)=>{
+      let ab=null; const fecha=()=>{ if(!ab) return; if(++n>MAX_BARRAS) throw new Error('Barras demais (mais de '+MAX_BARRAS+').'); barras[hid(C.id+'|'+ab.ini+'|'+sem(ab.txt))]={ linha:C.id, ini:ab.ini, fim:ab.fim, txt:ab.txt }; linhas[C.id]={ rot:C.rot, ordem }; ab=null; };
+      for(const d of dias){
+        const x=aba.rows.get(d.r).get(C.c); const txt=x&&!x.num?limpa(x.v).slice(0,200):'';
+        const isoD=mesKey+'-'+z2(d.dia);
+        if(!txt || !/[\p{L}\p{N}]/u.test(txt)){ fecha(); continue; }
+        if(ab && sem(ab.txt)===sem(txt) && somaDias(ab.fim,1)===isoD){ ab.fim=isoD; continue; }
+        fecha(); ab={ ini:isoD, fim:isoD, txt };
+      }
+      fecha();
+    });
+    if(!Object.keys(barras).length) throw new Error('Não achei ações preenchidas na aba "CALENDÁRIO".');
+    const ult=iso(new Date(Date.UTC(ano,mes+1,0)));
+    return { abas:['CALENDÁRIO ('+['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][mes]+'/'+ano+')'], linhas, barras, de:mesKey+'-01', ate:ult, meses:[mesKey] };
+  }
   // ── prévia: compara com o que está publicado. Os dois calendários trocam TUDO pelo arquivo novo (a planilha que o time
   // mantém tem o ano inteiro); trocar só "os meses do arquivo" duplicava ou cortava barras que atravessam a virada do mês.
   // O que deixa de existir aparece em "− saem" antes de publicar.
   function mesclar(tipo, novo, atual){
     const atualB=(atual&&atual.barras)||{};
     const barras={...novo.barras}, linhas={...novo.linhas};
+    // 🏷️ Outlet: 1 arquivo por mês → troca SÓ os meses do arquivo; os outros (barras inteiras dentro de cada mês) continuam
+    if(tipo==='outlet' && novo.meses && atual && atual.barras){
+      const meses=new Set(novo.meses);
+      for(const [id,b] of Object.entries(atual.barras)){ if(b && !meses.has(String(b.ini).slice(0,7)) && !barras[id]) barras[id]=b; }
+      for(const [k,l] of Object.entries(atual.linhas||{})) if(!linhas[k]) linhas[k]=l;
+    }
     const ids=new Set([...Object.keys(barras),...Object.keys(atualB)]);
     const dif={ novas:[], alteradas:[], removidas:[], iguais:0 };
     for(const id of ids){
@@ -344,13 +403,14 @@ const GXL = (()=>{
     const de=ds.reduce((x,y)=>y.ini<x?y.ini:x,'9999-12-31'), ate=ds.reduce((x,y)=>y.fim>x?y.fim:x,'0000-01-01');
     return { barras, linhas, dif, de, ate };
   }
-  return { ler, QUER, montarMarca, montarComercial, montarMarketplace, mesclar, _hid:hid };
+  return { ler, QUER, montarMarca, montarComercial, montarMarketplace, montarOutlet, mesclar, _hid:hid };
 })();
 
   // ── calendários conhecidos (nome, explicação, como montar e o que o reenvio faz)
   const CALS={
     marca:     { icone:'🎯', nome:'Calendário de Marca', sub:'Campanhas · aba HERING: Coleção sellout, Web, Redes sociais e Canais Intimates e Sports · aba KIDS: Coleção sellout, Web e Redes sociais', montar:a=>GXL.montarMarca(a) },
     comercial: { icone:'🛒', nome:'Calendário Comercial Hering', sub:'Uma aba por mês, de 2026 em diante: lançamentos, Site e App (todo e saldos), mídia, CRM e ações de app/site', montar:a=>GXL.montarComercial(a, 2026) },
+    outlet:    { icone:'🏷️', nome:'Calendário Comercial Outlet', sub:'Uma planilha por mês (aba CALENDÁRIO: um dia por linha, uma coluna por tipo de ação). Publicar troca só o mês do arquivo', montar:(a,arq)=>GXL.montarOutlet(a, arq), regra:'Publicar troca SÓ o mês desta planilha — os meses anteriores continuam. Fica no 🕘 Histórico — dá para voltar a qualquer versão.' },
     mktplace:  { icone:'🛍️', nome:'Calendário Comercial Marketplace', sub:'Abas com nome de mês ("NOVEMBRO 26", "Julho 2026"…): o bloco do mês no fim de cada aba, uma linha por marketplace', montar:a=>GXL.montarMarketplace(a) },
   };
   const REGRA='Publicar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses). Fica no 🕘 Histórico — dá para voltar a qualquer versão.';
@@ -368,7 +428,7 @@ const GXL = (()=>{
     if(file.size>80*1024*1024) throw new Error('Arquivo grande demais (máx. 80 MB).');
     if(typeof DecompressionStream==='undefined') throw new Error('Este navegador não abre .xlsx aqui. Use o Chrome, o Edge ou o Safari atualizados.');
     const abas=await GXL.ler(await file.arrayBuffer(), GXL.QUER[tipo]);
-    const novo=C.montar(abas);
+    const novo=C.montar(abas, file.name);
     return { arquivo:String(file.name||'planilha.xlsx').slice(0,200), abas:novo.abas?novo.abas.length+' abas de mês':novo.aba, mescla:GXL.mesclar(tipo, novo, atual&&atual.barras?atual:null), naoRec:novo.naoReconhecidos||[] };
   }
   // HTML da prévia (classes gxl-*; o CSS vem junto, injetado 1x). acoes = { publicar:'js()', cancelar:'js()' } — strings de onclick JÁ seguras
@@ -387,7 +447,7 @@ const GXL = (()=>{
       +(pv.naoRec&&pv.naoRec.length?'<div class="gxl-aviso" role="alert">⚠ Rótulos que não reconheci — o conteúdo deles não entrou (ou foi para a linha de cima): '+pv.naoRec.slice(0,8).map(escH).join(' · ')+(pv.naoRec.length>8?' …':'')+'. Confira o nome na planilha.</div>':'')
       +'<div class="gxl-dif"><span class="gxl-novo">＋ '+d.novas.length+' novas</span><span class="gxl-alt">✎ '+d.alteradas.length+' mudaram</span><span class="gxl-rem">− '+d.removidas.length+' saem</span><span class="gxl-ig">'+d.iguais+' iguais</span></div>'
       +(nada?'<div class="gxl-ig" style="margin-top:6px;">Nada mudou em relação ao que está publicado.</div>':'<ul class="gxl-ul">'+ex(d.novas,'＋')+ex(d.alteradas,'✎')+ex(d.removidas,'−')+'</ul>')
-      +'<div class="gxl-regra">'+escH(REGRA)+'</div>'
+      +'<div class="gxl-regra">'+escH((CALS[tipo]&&CALS[tipo].regra)||REGRA)+'</div>'
       +'<div class="gxl-pe"><button type="button" class="btn-p gxl-ok" onclick="'+acoes.publicar+'"'+(nada?' disabled':'')+'>✅ Publicar para todas as squads</button>'
       +'<button type="button" class="btn gxl-cancel" onclick="'+acoes.cancelar+'">Cancelar</button></div></div>';
   }

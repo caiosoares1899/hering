@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🏷️ Gantt: aba Comercial Outlet — uma planilha por mês, publicar só acrescenta/troca aquele mês (kanban v8.30.968-dev, painel v5.113-dev, mare-gxl v2) — SÓ DEV — 2026-11-13
+
+- **Leitor (`mare-gxl` v2)**: planilha mensal do Outlet ("Outlet | Calendário Novembro 2026.xlsx"). Aba **CALENDÁRIO**: um dia por linha, uma coluna por tipo de ação — os nomes das linhas vêm do **cabeçalho da própria planilha** (Ação principal, Ação secundária, Relâmpago, Madrugada, CRM, Ofertas do dia, Reloginhos e headers, Extras, BEON, Mídia 01/02/perene, Afiliados, Livelo, Benefícios…; coluna nova aparece sozinha). Colunas de número (Meta, Share, Captado, Margem, Faturado) e as outras abas (receita, kits, resumos) ficam de fora. Dias seguidos com o mesmo texto = 1 barra.
+- **Mês**: do nome do arquivo; sem ele, das datas de outra aba — sempre conferido pelo dia da semana da planilha (senão recusa e pede o mês no nome).
+- **Mês a mês**: publicar o Outlet troca **só o mês do arquivo** — os meses anteriores continuam ("só criar mais um mês"); republicar um mês substitui só ele. Histórico e ↩ voltar funcionam igual.
+- **Maré → 📊 Gantt**: aba **🏷️ Comercial Outlet** (larga, texto inteiro, 📤/🕘, filtro: Principal · Secundária · Relâmpago e ofertas · Madrugada · CRM · Mídia e afiliados · Extras). Painel: 4º cartão.
+- Planilha real (fora do repo): novembro/2026, 32 barras, mês descoberto também sem o nome. Sem deploy (as regras já aceitavam `outlet`).
+- Testes: `test_painel_gantt_calendarios.js` (O1–O5: mês a mês, mês pelas datas, métricas fora), `test_gantt_atualizar.js` (N–P: Outlet pelo Maré, novembro + dezembro), `test_gantt_calendarios.js` (5 abas).
+
 ### 📤 Gantt: atualizar os calendários direto no Maré (qualquer pessoa da Hering) + 🕘 Histórico com volta de versão (kanban v8.30.967-dev, painel v5.112-dev, mare-gxl v1) — SÓ DEV — 2026-11-13
 
 - **Maré → 📊 Gantt** (abas de calendário): botões **📤 Atualizar planilha** e **🕘 Histórico** ao lado dos filtros. Qualquer login Google da Hering envia o .xlsx, vê a prévia (＋ entra · ✎ muda · − sai · rótulos não reconhecidos) e **publica para todas as squads**. Pedido do Caio: os próprios analistas mantêm o Excel.

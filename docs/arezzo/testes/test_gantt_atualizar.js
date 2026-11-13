@@ -10,6 +10,8 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8949'; const SQ = 'site';
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gup-')); const arq = (n, abas) => { const f = path.join(tmp, n); fs.writeFileSync(f, X.xlsx(abas)); return f; };
 const V1 = arq('Campanhas v1.xlsx', [X.marca(2026, [{ r: 7, rot: 'WEB', barras: [['2026-11-01', '2026-11-20', 'CAMPANHA V1 TESTE']] }])]);
 const V2 = arq('Campanhas v2.xlsx', [X.marca(2026, [{ r: 7, rot: 'WEB', barras: [['2026-11-01', '2026-11-20', 'CAMPANHA V2 TESTE'], ['2026-11-25', '2026-11-30', 'NOVA DA V2']] }])]);
+const O_NOV = arq('Outlet | Calendário Novembro 2026.xlsx', X.outletMes(2026, 11, { 'AÇÃO PRINCIPAL': [[1, 4, 'OUTLET NOV TESTE']] }));
+const O_DEZ = arq('Outlet | Calendário Dezembro 2026.xlsx', X.outletMes(2026, 12, { 'AÇÃO PRINCIPAL': [[1, 5, 'OUTLET DEZ TESTE']] }));
 const fl = col => ({ enteredAt: { [col]: '2026-10-20T12:00:00.000Z' }, log: [{ from: '—', to: col, at: '2026-10-20T12:00:00.000Z' }] });
 const seed = () => ({ kanban: { usuarios: { mem: { uid: 'mem', nome: 'Mel Membro', email: 'mem@ciahering.com.br', inscrito: true, init: 'MM', role: 'membro', squads: { [SQ]: true } } },
   usuarios_publicos: { mem: { uid: 'mem', nome: 'Mel Membro', init: 'MM', squads: { [SQ]: true } } },
@@ -54,6 +56,16 @@ const seed = () => ({ kanban: { usuarios: { mem: { uid: 'mem', nome: 'Mel Membro
     st = await store(p); hs = Object.values(st.hist).sort((a, b) => b.em - a.em);
     t('I. voltar à versão 1: calendário volta, e a volta fica no histórico como "restaurou" apontando para a cópia antiga', /CAMPANHA V1/.test(JSON.stringify(st.cal.barras)) && !/NOVA DA V2/.test(JSON.stringify(st.cal.barras)) && hs.length === 3 && hs.some(h => h.acao === 'restaurou') && Object.keys(st.snap).length === 3, hs);
     t('J. a lista do histórico se atualiza (3 itens, "voltou para a versão de…")', await p.evaluate(() => document.querySelectorAll('.gantt-hist-it').length === 3 && /voltou para a versão de/.test(document.querySelector('.gantt-hist-it').textContent)));
+    // 🏷️ Outlet pelo Maré: novembro, depois dezembro — novembro continua
+    await p.keyboard.press('Escape'); await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); ganttAba('outlet'); }); await p.waitForTimeout(400);
+    await p.evaluate(() => { window.__avanco = 10800000; ganttAtualizarAbrir(); }); await p.waitForTimeout(150); await envia(p, O_NOV);
+    t('N. Outlet: o aviso da prévia diz que só o mês do arquivo é trocado', await p.evaluate(() => /troca SÓ o mês desta planilha/.test(document.getElementById('gantt-up-pv').textContent)));
+    await p.click('#gantt-up-pv .gxl-ok'); await p.waitForTimeout(500);
+    await p.evaluate(() => { window.__avanco = 14400000; ganttAtualizarAbrir(); }); await p.waitForTimeout(150); await envia(p, O_DEZ);
+    t('O. dezembro: entra 1, sai 0', await p.evaluate(() => /＋ 1 novas/.test(document.getElementById('gantt-up-pv').textContent) && /− 0 saem/.test(document.getElementById('gantt-up-pv').textContent)));
+    await p.click('#gantt-up-pv .gxl-ok'); await p.waitForTimeout(500);
+    const ob = await p.evaluate(() => Object.values(((window.__store.kanban.calendarios_gantt_dev || {}).outlet || {}).barras || {}).map(x => x.txt));
+    t('P. Outlet publicado com novembro E dezembro (só "criou mais um mês")', ob.includes('OUTLET NOV TESTE') && ob.includes('OUTLET DEZ TESTE'), ob);
     t('K. sem erro de JS', errs.length === 0, errs);
     await ctx.close(); }
   { const { ctx, p } = await abre({ width: 1280, height: 900 }, { uid: 'conv', email: 'convidado@gmail.com', displayName: 'Conv', photoURL: '', providerData: [{ providerId: 'password' }] });
