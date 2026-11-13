@@ -111,6 +111,13 @@ const TARGETS = {
     versionDevKey: null,
     mode: 'copy',
   },
+  'mare-gcal': {
+    dev: 'mare-gcal-dev.js',
+    prod: 'mare-gcal.js',
+    versionProdKey: null,
+    versionDevKey: null,
+    mode: 'copy',
+  },
   'mare-sonar': {
     dev: 'mare-sonar-dev.js',
     prod: 'mare-sonar.js',

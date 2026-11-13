@@ -31,6 +31,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **Acesso**: só login Google @ciahering.com.br (a regra do banco já era essa, sem squad); visualizador externo e outro login não veem a vista. Sem deploy.
 - **Módulo novo `mare-gcal(-dev).js`**: fonte única da configuração dos calendários (abas, nomes, grupos, cores) — o Maré passou a ler dele — e o visualizador do Radar, baixado só quando a vista abre.
 - Teste: `test_radar_gantt.js` (link, 4 abas, Mês, Hoje/◀▶, filtro, destaque, XSS, sem acesso, 390 px × 3 temas); suítes do Gantt do Maré seguem verdes.
+- **Promoção: `kanban`, `okr` e `mare-gcal` sobem JUNTOS** (o kanban carrega o módulo na abertura; sem ele, o Gantt do Maré fica só com os cards da squad). Na promoção: `guia-okr.html` (passo do Calendário) e `npm run conhecimento` (Ajuda do Radar → Agente; deploy das funções).
 
 ### 📊 Gantt ao lado da ↕ Ordenação na toolbar (kanban v8.30.970-dev) — SÓ DEV — 2026-11-13
 

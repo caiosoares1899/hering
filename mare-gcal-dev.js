@@ -306,6 +306,7 @@
     return {
       aba:id=>trocaAba(id),
       redesenhar:()=>desenhar(),
+      reabrir:()=>{ S.rolar=S.mes?'mes':(S.off===0?'hoje':'inicio'); desenhar(); },   // a vista voltou a aparecer: o scroll de quando estava escondida não vale
       destruir:()=>{ root.removeEventListener('click', clique); root.removeEventListener('keydown', tecla); root.removeEventListener('change', muda); S.subs.forEach(u=>{ try{ typeof u==='function'&&u(); }catch(e){} }); S.subs=[]; root.classList.remove('mgc','is-largo'); root.innerHTML=''; },
       _estado:S,
     };

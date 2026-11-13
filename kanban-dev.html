@@ -14632,7 +14632,9 @@ function ganttIrPara(iso){
 }
 // Abas de calendário, nomes, grupos e cores vêm do módulo mare-gcal(-dev).js — a MESMA fonte do Radar (Calendário → 📊 Gantt).
 // Calendário novo = 1 entrada lá. Sem o módulo (rede), o Gantt fica só com os cards da squad.
-const _GCAL=window.MareGCal||{ CALS:[], NOME:{}, ROT_NOVO:{}, GRUPOS:{}, LINHA_COR:['#38b6ff'], CORES:{}, NOME_COR:{} };
+const _GCAL=window.MareGCal||{ CALS:[], NOME:{}, ROT_NOVO:{}, GRUPOS:{}, LINHA_COR:['#38b6ff'],   // reserva: as datas-chave da squad usam a paleta mesmo sem os calendários
+  CORES:{ red:'#ff6b6b', orange:'#fb923c', yellow:'#facc15', green:'#34d399', cyan:'#22d3ee', blue:'#60a5fa', purple:'#a78bfa', pink:'#f472b6' },
+  NOME_COR:{ red:'Vermelho', orange:'Laranja', yellow:'Amarelo', green:'Verde', cyan:'Ciano', blue:'Azul', purple:'Roxo', pink:'Rosa' } };
 const _GANTT_ABAS=[
   { id:'cards',     rot:'🗂 Cards da squad',      curto:'🗂 Cards' },
 ].concat(_GCAL.CALS.map(c=>({ id:c.id, rot:c.rot, curto:c.curto })));

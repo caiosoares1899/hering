@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/radar-gantt-calendarios` | `okr-dev.html`, `kanban-dev.html`, `mare-gcal-dev.js`, `version.json` | 13/11/2026 |
 
 
 ## Fila

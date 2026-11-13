@@ -6089,9 +6089,9 @@ function _okrGcalCarregar(){
   });
   return _okrGcalP;
 }
-function _okrGcalMontar(){
+function _okrGcalMontar(reaparece){   // reaparece: a vista estava escondida (voltou da Agenda/Mês ou de outra aba do Radar)
   const host = document.getElementById('okr-gcal-host'); if(!host) return;
-  if(_okrGcal){ if(_okrGcalAba) _okrGcal.aba(_okrGcalAba); return; }
+  if(_okrGcal){ if(_okrGcalAba) _okrGcal.aba(_okrGcalAba); if(reaparece) _okrGcal.reabrir(); return; }
   if(!host.firstChild) host.innerHTML = '<div class="mut" role="status" style="padding:24px;text-align:center;font-size:12px;">⏳ Carregando os calendários…</div>';
   _okrGcalCarregar().then(G=>{
     if(_okrGcal || _okrCalVista!=='gantt') return;
@@ -6146,8 +6146,8 @@ function _okrCalLegendaHtml(todos){
 function renderOkrCalendario(){
   const root = document.getElementById('okr-cal-root'); if(!root) return;
   if(_okrCalVista==='gantt' && !_okrGcalPermitido()) _okrCalVista = (window.innerWidth<760) ? 'agenda' : 'mes';   // vista salva de quem não pode ler os calendários
-  const gHost = document.getElementById('okr-gcal-host'); if(gHost) gHost.hidden = _okrCalVista!=='gantt';
-  if(_okrCalVista==='gantt'){ root.innerHTML = `<div class="okr-cal-bar"><div class="okr-cal-title">📊 Calendários do Digital</div>${_okrCalSegHtml()}</div>`; _okrGcalMontar(); return; }
+  const gHost = document.getElementById('okr-gcal-host'), gEraOculto = !!(gHost && gHost.hidden); if(gHost) gHost.hidden = _okrCalVista!=='gantt';
+  if(_okrCalVista==='gantt'){ root.innerHTML = `<div class="okr-cal-bar"><div class="okr-cal-title">📊 Calendários do Digital</div>${_okrCalSegHtml()}</div>`; _okrGcalMontar(gEraOculto); return; }
   const hoje = todaySPStr();
   if(!_okrCalMes){ const t = _calParse(hoje); _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); }
   if(!_okrCalSel) _okrCalSel = hoje;

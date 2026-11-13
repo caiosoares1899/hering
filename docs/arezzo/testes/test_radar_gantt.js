@@ -70,8 +70,13 @@ const seed = () => ({ kanban: {
     t('M. redesenhos da agenda não derrubam o Gantt (mesmo visualizador, aba mantida)', await p.evaluate(() => { const g = _okrGcal; renderOkrCalendario(); renderOkrCalendario(); return _okrGcal === g && !!document.querySelector('.mgc-scroll') && document.querySelector('.mgc-aba.on').dataset.aba === 'comercial'; }));
     await p.click('.mgc-aba[data-aba="marca"]'); await p.waitForTimeout(150);
     t('N. Marca: bloco 👶 Hering Kids separado, dia estreito (não largo)', await p.evaluate(() => /Hering Kids/.test(document.getElementById('okr-gcal-host').innerText) && !document.getElementById('okr-gcal-host').classList.contains('is-largo')));
+    const xs = await p.evaluate(() => { const sc = document.querySelector('.mgc-scroll'); sc.scrollLeft = 100; renderOkrCalendario(); return document.querySelector('.mgc-scroll').scrollLeft; });
+    t('M2. redesenho da agenda com o Gantt aberto mantém a rolagem de quem está lendo', xs === 100, xs);
     await p.evaluate(() => _okrCalSetVista('mes')); await p.waitForTimeout(150);
     t('O. voltar para Mês esconde o Gantt e mostra a grade do mês', await p.evaluate(() => document.getElementById('okr-gcal-host').hidden && !!document.querySelector('.okr-cal-grid')));
+    await p.evaluate(() => { _okrCalSetVista('gantt'); }); await p.waitForTimeout(150);
+    t('O2. voltar ao Gantt rola até hoje de novo', await p.evaluate(() => { const sc = document.querySelector('.mgc-scroll'); return !document.getElementById('okr-gcal-host').hidden && sc.scrollLeft > 0 && sc.scrollLeft !== 100; }));
+    await p.evaluate(() => _okrCalSetVista('mes'));
     t('P. a vista escolhida e a aba ficam salvas', await p.evaluate(() => localStorage.getItem('okr_cal_vista') === 'mes' && localStorage.getItem('okr_gcal_aba') === 'marca'));
     t('Q. lê os nós _dev (calendarios_gantt_dev)', await p.evaluate(() => (window.MareGCal && MareGCal.CALS.length === 4)));
     t('R. sem erro de JS (desktop)', errs.length === 0, errs);
