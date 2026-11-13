@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📊 Gantt: abas Calendário de Marca e Comercial Digital, publicados pelo Painel a partir do .xlsx (kanban v8.30.960-dev, painel v5.106-dev) — SÓ DEV — 2026-11-13
+
+- **Painel → ⚙ Configurações → 📊 Gantt** (só ADM): envia o **.xlsx** do Calendário de Campanhas e do Calendário Comercial Hering; o Painel lê no navegador (sem servidor nem biblioteca externa), mostra a **prévia** (＋ novas · ✎ mudaram · − saem · iguais) e publica. **Marca**: aba HERING, linhas Coleção sellout, Web e Redes sociais | Hering, com as barras das células mescladas; datas ancoradas na linha dos dias (o cabeçalho de meses vem 1 coluna adiantado de fev a jul) e conferidas pelo dia da semana. **Comercial**: uma aba por mês de 2026 em diante (fora rascunho, backup, aprovação, cópia e abas ocultas); linhas Lançamentos e datas, Site todo, Saldos (+ Adulto/Intimates/Kids/Sports quando a aba tem), Mídia, CRM, Ação App/Site; dias seguidos com o mesmo texto viram 1 barra, inclusive virando o mês. Reenviar a planilha troca o calendário inteiro (a prévia mostra o que sai).
+- **Maré → 📊 Gantt** ganha abas **🗂 Cards da squad · 🎯 Calendário de Marca · 🛒 Comercial Digital** (iguais para todas as squads). Uma faixa por linha da planilha, barras que se cruzam em pistas, toque na barra mostra o texto inteiro; ◀ Hoje ▶ e De/Até valem; leitura só quando a aba abre; aba guardada no aparelho; aviso amigável se as regras novas ainda não foram publicadas.
+- **Banco** (`database.rules.json`): `kanban/calendarios_gantt{,_dev}` (só login Google Hering lê — visualizador externo do Painel não; **só ADM grava**, formato validado) e, já para o próximo PR, `kanban/squads/{sq}/gantt_marcos{,_dev}` (PO/Organizador da própria squad ou ADM) e `kanban/gantt_marcos_globais{,_dev}` (só ADM). Testes: `functions/rules/__tests__/ganttRules.test.js`.
+- Só contas com papel **ADM** no Maré (ou o Caio) publicam — a regra do banco confere o papel, não a lista de e-mails do Painel.
+- Testes: `test_painel_gantt_calendarios.js` (planilhas sintéticas de `xlsx_sintetico.js`; as reais não entram no repositório) e `test_gantt_calendarios.js`.
+
 ### Período do card exige Início e Fim + dica do Gantt (kanban v8.30.959, mare-dicas v15) — PROD 12/11 — 2026-11-12
 
 - **Período exige as duas datas** (decisão do Caio): só Início ou só Fim não grava metade. O cartão 📅 Período e hora avisa "Falta o Fim"/"Falta o Início" e mantém o período salvo antes (ou nenhum); apagar as duas limpa. A linha de período no card do board só aparece com as duas datas (Calendário e Gantt já exigiam).

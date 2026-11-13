@@ -54,6 +54,8 @@ const NOS_GLOBAIS = [
   { no: 'dados_diarios_dev', diario: false }, // exceção ao "nada de _dev": a Central de Dados também é publicada pelo painel de teste (painel-dev)
   { no: 'feedback', diario: false },
   { no: 'cards_guardiao', diario: false },  // 🛡️ incidentes/resgates do guardião dos cards (histórico pequeno)
+  { no: 'calendarios_gantt', diario: false }, // 📊 calendários de Marca e Comercial do Gantt (publicados pelo ADM a partir do .xlsx; reconstituíveis reenviando a planilha)
+  { no: 'gantt_marcos_globais', diario: true }, // 📊 datas-chave do Gantt que valem para todas as squads (as da squad entram no backup da squad)
   { no: 'plantao', diario: false },          // 🛟 fichas do Plantão de Bugs / Assistente Férias (histórico: PR, script de teste, quem validou) — só ADM lê; ver docs/ASSISTENTE_FERIAS.md
 ];
 
