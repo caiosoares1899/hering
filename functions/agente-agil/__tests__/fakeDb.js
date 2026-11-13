@@ -50,11 +50,17 @@ function makeFakeDb(initialData) {
         setAt(path, value);
       },
       async remove() {
-        setAt(path, null);
+        // como o RTDB: a chave some do pai (antes ficava `null` lá dentro e aparecia em Object.keys)
+        const parts = path.split('/').filter(Boolean);
+        if (!parts.length) { data = {}; return; }
+        const pai = getAt(parts.slice(0, -1).join('/'));
+        if (pai && typeof pai === 'object') delete pai[parts[parts.length - 1]];
       },
       async transaction(transform) {
         const cur = getAt(path);
         const newVal = transform(cur === undefined ? null : cur);
+        // como o RTDB: devolver undefined ABORTA a transação (nada é gravado, committed:false)
+        if (newVal === undefined) return { committed: false, snapshot: { val: () => (cur === undefined ? null : cur) } };
         setAt(path, newVal);
         return { committed: true, snapshot: { val: () => newVal } };
       },

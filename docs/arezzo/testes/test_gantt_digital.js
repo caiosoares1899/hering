@@ -54,7 +54,7 @@ const seed = () => ({ kanban: {
     t('M2. 3 blocos por origem (Hering, Marketplace, Outlet), dia largo', s.origens.join() === 'comercial,mktplace,outlet' && s.largo, s.origens);
     t('M3. o "só CRM" da aba Hering não vaza: o Site aparece na consolidada', /AÇÃO SITE LONGA/.test(s.txt) && /CRM DO DIA/.test(s.txt), s.txt.slice(0, 400));
     t('M4. Outlet não publicado avisa só no bloco dele', /O Calendário Comercial Outlet ainda não foi publicado/.test(s.txt) && !document_has_empty_global(s.txt), '');
-    t('M5. sem 📤/🕘 na consolidada; chips por origem', !s.acoes && s.chips.join() === ',comercial,mktplace,outlet', s);
+    t('M5. sem 📤/🕘 na consolidada (só o 🔔); chips por origem', await p.evaluate(() => { const a = document.querySelector('#gantt-view .gantt-cal-acoes'); return !a || (a.querySelectorAll('button').length === 1 && !!a.querySelector('.gantt-sino')); }) && s.chips.join() === ',comercial,mktplace,outlet', s);
     t('M6. destaque ⚠️ do Marketplace aparece e a barra leva a origem (data-cal=mktplace)', await p.evaluate(() => { const x = document.querySelector('.gantt-cal-bar[data-cal="mktplace"][data-id="h1"]'); return !!x && x.classList.contains('is-alerta'); }));
     t('M7. XSS: texto do banco escapado', await p.evaluate(() => !window.__xss && !document.querySelector('#gantt-view img')));
     // painel do dia

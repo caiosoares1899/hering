@@ -36,7 +36,7 @@ const seed = () => ({ kanban: { usuarios: { mem: { uid: 'mem', nome: 'Mel Membro
   { const { ctx, p, errs } = await abre({ width: 1280, height: 900 }, MEL);
     t('A. membro (login Google Hering) vê 📤 Atualizar planilha e 🕘 Histórico; o leitor ainda NÃO foi baixado', await p.evaluate(() => /Atualizar planilha/.test(document.getElementById('gantt-filtros').textContent) && /Histórico/.test(document.getElementById('gantt-filtros').textContent) && !window.MareGXL && !document.querySelector('script[src*="mare-gxl"]')));
     t('B. calendário vazio aponta para o botão (e não mais "um ADM publica no Painel")', await p.evaluate(() => /Atualizar planilha/.test(document.querySelector('.gantt-empty').textContent) && !/ADM publica/.test(document.querySelector('.gantt-empty').textContent)));
-    await p.click('.gantt-cal-acoes .btn:first-child'); await p.waitForTimeout(300);
+    await p.click('.gantt-cal-acoes [onclick="ganttAtualizarAbrir()"]'); await p.waitForTimeout(300);
     t('C. abrir a janela baixa o leitor (sob demanda) e explica o que acontece', await p.evaluate(() => document.getElementById('gantt-up-ov').classList.contains('open') && /todas as squads/.test(document.getElementById('gantt-up-exp').textContent)) && await p.waitForFunction(() => !!window.MareGXL, null, { timeout: 8000 }).then(() => true, () => false));
     await envia(p, V1);
     t('D. prévia com o que entra e o botão de publicar', await p.evaluate(() => /＋ 1 novas/.test(document.getElementById('gantt-up-pv').textContent) && /Publicar para todas as squads/.test(document.getElementById('gantt-up-pv').textContent)));
@@ -49,7 +49,7 @@ const seed = () => ({ kanban: { usuarios: { mem: { uid: 'mem', nome: 'Mel Membro
     t('G. 2ª planilha: prévia compara com o que está publicado (1 nova, 1 sai)', await p.evaluate(() => /＋ 2 novas/.test(document.getElementById('gantt-up-pv').textContent) && /− 1 saem/.test(document.getElementById('gantt-up-pv').textContent)));
     await p.click('#gantt-up-pv .gxl-ok'); await p.waitForTimeout(500);
     // histórico + voltar
-    await p.click('.gantt-cal-acoes .btn:last-child'); await p.waitForTimeout(500);
+    await p.click('.gantt-cal-acoes [onclick="ganttHistoricoAbrir()"]'); await p.waitForTimeout(500);
     const hl = await p.evaluate(() => [...document.querySelectorAll('.gantt-hist-it')].map(x => ({ txt: x.textContent, atual: x.classList.contains('is-atual'), volta: !!x.querySelector('.gantt-hist-volta') })));
     t('H. histórico: 2 publicações, a mais nova marcada como atual (sem "voltar") e a antiga com "↩ Voltar"', hl.length === 2 && hl[0].atual && !hl[0].volta && /Campanhas v2/.test(hl[0].txt) && hl[1].volta && /Campanhas v1/.test(hl[1].txt) && /Mel Membro/.test(hl[1].txt), hl);
     await p.evaluate(() => { window.__avanco = 7200000; }); await p.click('.gantt-hist-volta'); await p.waitForTimeout(200); await p.click('#ui-modal-ok'); await p.waitForTimeout(700);

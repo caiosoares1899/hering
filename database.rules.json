@@ -194,6 +194,30 @@
           }
         }
       },
+      "gantt_inscritos": {
+        "$cal": {
+          "$uid": {
+            ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet')",
+            ".validate": "newData.hasChildren(['em','onde'])",
+            "em": { ".validate": "newData.isNumber()" },
+            "onde": { ".validate": "newData.isString() && newData.val().matches(/^(mare|radar)$/)" },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
+      "gantt_inscritos_dev": {
+        "$cal": {
+          "$uid": {
+            ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet')",
+            ".validate": "newData.hasChildren(['em','onde'])",
+            "em": { ".validate": "newData.isNumber()" },
+            "onde": { ".validate": "newData.isString() && newData.val().matches(/^(mare|radar)$/)" },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
       "calendarios_gantt_snap_dev": {
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$cal": {
