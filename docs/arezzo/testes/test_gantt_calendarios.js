@@ -58,7 +58,7 @@ const seed = comCal => ({ kanban: Object.assign({
     const L = vp.width + 'px'; const { ctx, p, errs } = await abre(vp);
     t(`A ${L}. o calendário NÃO é lido no boot`, await leuCal(p) === 0);
     await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(300);
-    t(`B ${L}. Gantt abre na aba "Cards da squad" com 5 abas e ainda sem ler o calendário`, await p.evaluate(() => [...document.querySelectorAll('.gantt-aba')].map(x => x.dataset.aba + ':' + x.getAttribute('aria-selected')).join() === 'cards:true,marca:false,comercial:false,mktplace:false,outlet:false') && await leuCal(p) === 0);
+    t(`B ${L}. Gantt abre na aba "Cards da squad" com 6 abas (5 + 🧭 Digital) e ainda sem ler o calendário`, await p.evaluate(() => [...document.querySelectorAll('.gantt-aba')].map(x => x.dataset.aba + ':' + x.getAttribute('aria-selected')).join() === 'cards:true,marca:false,comercial:false,mktplace:false,outlet:false,digital:false') && await leuCal(p) === 0);
     await p.click('.gantt-aba[data-aba="marca"]'); await p.waitForTimeout(400);
     t(`C ${L}. aba de Marca: lê o nó ${NO}/marca ao abrir`, await leuCal(p) === 1);
     const r = await p.evaluate(() => {

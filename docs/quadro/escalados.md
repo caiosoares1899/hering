@@ -83,6 +83,8 @@ No celular (390 px) os dias são estreitos e nenhum texto cabe nas barras: sobra
 
 ## Ideia: Gantt — visão consolidada Digital por dia — 13/11/2026
 
+> ✅ **No dev em 13/11/2026** como **🧭 Digital · dia a dia** (Maré e Radar; régua única + painel do dia, decisão do Caio). Ver CHANGELOG.
+
 Caio pediu para anotar uma visão no Gantt que reúna **todos os calendários comerciais por dia**, permitindo consultar, em cada data, o conjunto de ações do Digital.
 
 **Escopo registrado:** consolidar Comercial Hering, Comercial Marketplace e Comercial Outlet numa mesma visão diária, preservando a identificação do calendário de origem de cada ação. Reutilizar os dados já publicados, sem exigir outra planilha ou cadastro duplicado. O pedido é de calendários comerciais; Marca não foi incluída explicitamente.

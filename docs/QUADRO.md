@@ -40,7 +40,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
-| 📊 Gantt: Digital por dia, consolidando os calendários comerciais Hering, Marketplace e Outlet | Claude | [escopo](quadro/escalados.md#gantt-digital-por-dia) |
 | 🏖️ Calendário geral de férias + **modo férias** (alerta ao marcar quem está fora, cadastro obrigatório ao ativar, pausar/passar cards e Objetivos item a item) | Claude | [escopo](quadro/escalados.md#modo-ferias) |
 | 📱 Gantt no celular: nenhum texto cabe, só barrinhas (Maré e Radar) | Claude | [escopo](quadro/escalados.md#gantt-celular) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
