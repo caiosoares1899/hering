@@ -73,6 +73,17 @@ Pedido do Caio, complementa a [agenda geral de férias](#calendario-ferias-digit
 
 Caio pediu para o histórico do card registrar quando alguém define período e hora. **Já existe desde 12/11 (PR 1a):** "Início: — → 10/11", "Fim: …", "Hora do prazo: …", no autosave e no Salvar (`test_card_periodo.js`). Se aparecer um caso sem registro, anotar QUAL caminho (Agente, duplicar, outra tela) — esse é o bug.
 
+<a id="gantt-favorito-avisos"></a>
+
+## Ideia: Gantt — aba favorita e avisos de mudança — 13/11/2026
+
+Pedido do Caio:
+
+1. **⭐ Aba favorita:** a pessoa escolhe qual Gantt abre primeiro (Cards da squad, Marca, Comercial Hering, Marketplace, Outlet ou 🧭 Digital · dia a dia), no Maré e no Radar. Hoje cada um lembra a última aba usada só no aparelho (`localStorage`); o favorito seria uma preferência da pessoa (segue para outros aparelhos), com ⭐ na própria aba.
+2. **🔔 Avisos de mudança no Gantt:** opção de **se inscrever** para receber notificação quando um calendário mudar (ex.: "📊 Comercial Outlet atualizado por Fulana: ＋3 ✎1 −0"). A pessoa escolhe quais calendários segue. Encaixa no sino único (`mare-notif`): tipo novo + entrada na Central de Notificações; o gatilho é a publicação (que já grava a linha no 🕘 Histórico com ＋/✎/−).
+
+**Para o desenho (a confirmar):** onde fica a inscrição (botão 🔔 na aba do calendário? Minhas Preferências?); push ou só sino; agrupar várias publicações seguidas; o aviso leva direto à aba do calendário (Maré e Radar). Inscrição e envio mexem em nó/regras e provavelmente numa function (fan-out) → avaliação R3. Relacionado: [pedir atualização](#gantt-pedidos-radar).
+
 <a id="gantt-celular"></a>
 
 ## Ideia: 📱 Gantt no celular — texto não cabe — 13/11/2026
