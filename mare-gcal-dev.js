@@ -16,7 +16,8 @@
    v2 (13/11): 🧭 Digital · dia a dia — CONSOLIDADO (aba virtual), doDia() e o painel do dia.
    v3 (13/11): 🔔 inscrição nos avisos de mudança (inscricao.ouvir/definir + botão Avisar-me no visualizador).
    v4 (13/11): um sininho por calendário — na 🧭 Digital, 3 botões (Hering · Marketplace · Outlet).
-   v5 (13/11): 📣 Pedir atualização (PEDIDO + pedido.destinatarios/enviar + botão no visualizador). */
+   v5 (13/11): 📣 Pedir atualização (PEDIDO + pedido.destinatarios/enviar + botão no visualizador).
+   v6 (13/11): ⭐ aba favorita sincronizada entre aparelhos. */
 (function(){
   'use strict';
   const CALS=[
@@ -239,6 +240,7 @@
 .mgc-bloco{padding:7px 10px;font-size:12.5px;font-weight:800;color:var(--txt);background:var(--mgc-surf2);border-top:1px solid var(--glass-b);}
 .mgc-bloco.is-kids{margin-top:10px;}
 .mgc-vazio{padding:28px 16px;text-align:center;color:var(--txt2);font-size:13px;}
+.mgc-fav{flex:none;white-space:nowrap;border-radius:999px;}
 .mgc-det{min-height:20px;font-size:12.5px;color:var(--txt);padding:0 4px;overflow-wrap:anywhere;}
 .mgc-det:empty{display:none;}
 .mgc-pe{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--txt2);padding:0 4px;}
@@ -275,6 +277,42 @@
   function css(){
     if(document.getElementById('mgc-css')) return;
     const st=document.createElement('style'); st.id='mgc-css'; st.textContent=CSS; document.head.appendChild(st);
+  }
+
+  // ⭐ Preferência da própria conta; PO/ADM mantêm a exceção administrativa das regras.
+  function favoritaControle(opts){
+    let valor='', uid='', off=null, carregou=false, aplicada=false, tocou=false, busy=false;
+    const valida=v=>typeof v==='string' && opts.abas.includes(v)?v:'';
+    const aplicar=()=>{ if(carregou && !aplicada){ aplicada=true; if(!tocou && valor) opts.aplicar(valor); } };
+    return {
+      valor:()=>valor,
+      tocar:()=>{ tocou=true; },
+      abrir:(prioridade=false)=>{
+        tocou=prioridade; aplicada=false;
+        const u=window._currentUser;
+        if(!opts.permitido() || !u){ if(typeof off==='function') off(); off=null; uid=''; valor=''; carregou=false; return; }
+        if(uid!==u.uid){
+          if(typeof off==='function') off(); uid=u.uid; valor=''; carregou=false;
+          const dono=uid;
+          off=window._onValue(window._ref(window._db,'kanban/usuarios/'+uid+'/gantt_favorita'), snap=>{
+            if(uid!==dono || window._currentUser?.uid!==dono || !opts.permitido()) return;
+            valor=valida(snap.val()); carregou=true; aplicar(); opts.sync();
+          }, ()=>{ carregou=true; opts.sync(); });
+        }
+        aplicar(); opts.sync();
+      },
+      alternar:async(id)=>{
+        if(busy || !opts.permitido() || !valida(id)) return '';
+        const u=window._currentUser; if(!u || u.uid!==uid) return '';
+        tocou=true; busy=true;
+        try{
+          const novo=valor===id?'':id;
+          await window._set(window._ref(window._db,'kanban/usuarios/'+u.uid+'/gantt_favorita'),novo||null);
+          valor=novo; carregou=true; opts.sync();
+          return novo?'⭐ Aba favorita salva para todos os aparelhos.':'☆ Favorita removida. Ao abrir, vale a última aba deste aparelho.';
+        }finally{ busy=false; }
+      }
+    };
   }
 
   // ── Visualizador só de leitura. opts: { aba, aoTrocarAba(id) } → { aba(id), redesenhar(), destruir() }
@@ -457,7 +495,7 @@
       const aba=ABAS.find(k=>k.id===S.aba);
       const rolagem=root.querySelector('.mgc-scroll'), x0=rolagem?rolagem.scrollLeft:0;
       root.innerHTML=
-        '<div class="mgc-abas" role="tablist" aria-label="Calendários">'+ABAS.map(k=>'<button type="button" role="tab" class="mgc-aba'+(k.id===S.aba?' on':'')+'" data-aba="'+k.id+'" aria-selected="'+(k.id===S.aba)+'" tabindex="'+(k.id===S.aba?0:-1)+'" aria-label="'+esc(k.nome)+'"><span class="mgc-aba-l">'+esc(k.rot)+'</span><span class="mgc-aba-c" aria-hidden="true">'+esc(k.curto)+'</span></button>').join('')+'</div>'
+        '<div class="mgc-abas" role="tablist" aria-label="Calendários">'+ABAS.map(k=>'<button type="button" role="tab" class="mgc-aba'+(k.id===S.aba?' on':'')+'" data-aba="'+k.id+'" aria-selected="'+(k.id===S.aba)+'" tabindex="'+(k.id===S.aba?0:-1)+'" aria-label="'+esc(k.nome)+'"><span class="mgc-aba-l">'+esc(k.rot)+'</span><span class="mgc-aba-c" aria-hidden="true">'+esc(k.curto)+'</span></button>').join('')+(typeof opts.aoFavoritar==='function' && permitido(window._currentUser)?'<button type="button" class="mgc-btn mgc-fav" data-favorita aria-pressed="'+(opts.favorita()===S.aba)+'" title="Escolha a aba que abre primeiro no Maré e no Radar, em todos os aparelhos">'+(opts.favorita()===S.aba?'⭐ Aba favorita':'☆ Favoritar esta aba')+'</button>':'')+'</div>'
         +'<div class="mgc-bar-top">'
           +'<button type="button" class="mgc-btn" data-nav="-28" aria-label="4 semanas antes">◀</button>'
           +'<button type="button" class="mgc-btn'+(S.off===0?' is-hoje':'')+'" data-nav="0">Hoje</button>'
@@ -494,15 +532,16 @@
       const base=inicioPadrao(), ini=soma(alvo,-alvo.getDay()-7);
       S.mes=v; ir(Math.round((ini-base)/864e5),'mes');
     }
-    function trocaAba(id){
+    function trocaAba(id, manual=true){
       if(!ABAS.some(c=>c.id===id) || id===S.aba) return;
       S.aba=id; S.rolar='hoje'; S.det=''; S.dia='';
-      if(typeof opts.aoTrocarAba==='function'){ try{ opts.aoTrocarAba(id); }catch(e){} }
+      if(typeof opts.aoTrocarAba==='function'){ try{ opts.aoTrocarAba(id, manual); }catch(e){} }
       desenhar();
       const b=root.querySelector('.mgc-aba[data-aba="'+id+'"]'); if(b) b.focus({preventScroll:true});
     }
     function clique(ev){
       const t=ev.target.closest('button,.mgc-bar,.mgc-dhd[data-dia]'); if(!t || !root.contains(t)) return;
+      if(t.hasAttribute('data-favorita')){ Promise.resolve(opts.aoFavoritar(S.aba)).then(msg=>{ if(msg) S.det=msg; desenhar(); }).catch(()=>{ S.det='⚠ Não consegui salvar a favorita. Tente novamente.'; desenhar(); }); return; }
       if(t.dataset.aba) return trocaAba(t.dataset.aba);
       if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=root.querySelector(S.dia?'.mgc-dia .mgc-btn':'.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.hasAttribute('data-sino')) return sinoClique(t.getAttribute('data-sino'));
@@ -530,7 +569,7 @@
     window.addEventListener('keydown', escDia, true);
     desenhar();
     return {
-      aba:id=>trocaAba(id),
+      aba:id=>trocaAba(id, false),
       redesenhar:()=>desenhar(),
       reabrir:()=>{ S.rolar=S.mes?'mes':(S.off===0?'hoje':'inicio'); desenhar(); },   // a vista voltou a aparecer: o scroll de quando estava escondida não vale
       destruir:()=>{ window.removeEventListener('keydown', escDia, true); root.removeEventListener('click', clique); root.removeEventListener('keydown', tecla); root.removeEventListener('change', muda); S.subs.forEach(u=>{ try{ typeof u==='function'&&u(); }catch(e){} }); S.subs=[]; root.classList.remove('mgc','is-largo'); root.innerHTML=''; },
@@ -538,5 +577,5 @@
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, v:5 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, v:6 };
 })();
