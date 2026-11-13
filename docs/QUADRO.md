@@ -41,6 +41,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
+| 📊 Gantt: Digital por dia, consolidando os calendários comerciais Hering, Marketplace e Outlet | Claude | [escopo](quadro/escalados.md#gantt-digital-por-dia) |
 | 🏖️ Calendário geral de férias do Digital: cadastro próprio, visível para todos e filtros | Claude | [escopo](quadro/escalados.md#calendario-ferias-digital) |
 | 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |

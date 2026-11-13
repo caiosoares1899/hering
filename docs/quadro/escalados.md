@@ -52,3 +52,16 @@ Caio pediu para deixar salva, como visão dentro de **Calendário**, uma agenda 
 **Sugestões para o desenho (a confirmar, não decisões do Caio):** filtros por pessoa, squad e período; visualização mensal e faixas de duração; edição/cancelamento dos próprios registros. Definir em qual calendário/página entra e o alcance exato de "todo mundo" antes da implementação; não presumir acesso de convidados externos. Aprovação de férias, integração com RH, saldo e notificações não foram solicitados.
 
 **Encaminhamento ao Claude:** desenhar fluxo e permissões antes do código; cadastro persistente/novo nó requer avaliação R3, regras garantindo autoria e visibilidade, backup e testes. Verificar se há dados/fluxos de férias existentes para reaproveitar. Ideia registrada, sem implementação.
+
+
+<a id="gantt-digital-por-dia"></a>
+
+## Ideia: Gantt — visão consolidada Digital por dia — 13/11/2026
+
+Caio pediu para anotar uma visão no Gantt que reúna **todos os calendários comerciais por dia**, permitindo consultar, em cada data, o conjunto de ações do Digital.
+
+**Escopo registrado:** consolidar Comercial Hering, Comercial Marketplace e Comercial Outlet numa mesma visão diária, preservando a identificação do calendário de origem de cada ação. Reutilizar os dados já publicados, sem exigir outra planilha ou cadastro duplicado. O pedido é de calendários comerciais; Marca não foi incluída explicitamente.
+
+**Objetivo:** enxergar o que acontece simultaneamente em cada dia entre as frentes comerciais e facilitar alinhamento e planejamento do Digital.
+
+**Desenho a definir com Claude:** apresentação da visão diária dentro do Gantt, tratamento de ações que duram vários dias e filtros por origem/frente e período. Esses detalhes são propostas para desenho, não decisões já confirmadas. Ideia salva, sem implementação.
