@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 💬 Gantt: balão com o nome inteiro quando o título não cabe (kanban v8.30.964-dev) — SÓ DEV — 2026-11-13
+
+- Passar o mouse (ou focar pelo teclado) numa barra — de card, do Calendário de Marca ou do Comercial — ou num nome de data-chave **cujo texto não cabe** mostra um balão com o **nome inteiro** e, embaixo, as datas (e a linha/⚠️ quando houver). Texto que já se lê inteiro não abre balão.
+- Abre acima do elemento (para baixo perto do topo da tela), nunca sai da tela, some ao sair, no Esc, ao rolar e no redesenho do board; o `title` nativo fica guardado enquanto o balão está aberto (não aparecem os dois). Receita de movimento do Toast (opacity/translateY .14 s; nada com movimento reduzido). No toque não aparece — lá continua o toque.
+- Teste: `test_gantt_balao.js`.
+
 ### 📊 Gantt (/melhoriauiux): Hoje na linha 📌, rótulo de 1 dia centrado, destaque ⚠️ do ADM, filtro por grupo e "Site e App" (kanban v8.30.963-dev, painel v5.109-dev) — SÓ DEV — 2026-11-13
 
 - **Linha 📌 Datas-chave**: ganhou o rótulo **Hoje** (centrado na linha de hoje). Data de **1 dia** tinha o nome começando na borda da coluna, "torto" em relação à linha (relato do Caio) → agora o nome fica **centrado na linha**; nas pontas da janela encosta na borda.
