@@ -2928,6 +2928,35 @@ input[type="date"]{-moz-appearance:textfield;}
 .gantt-aba-c{display:none;}
 @media (max-width:600px){ .gantt-aba-l{display:none;} .gantt-aba-c{display:inline;} }
 .gantt-cal-bar{cursor:pointer;}
+/* 📌 Datas-chave: faixa/linha atrás das barras (a camada da linha de hoje) + nome numa linha da régua */
+.gantt-mc-faixa{height:100%;background:color-mix(in srgb, var(--mc) 13%, transparent);border-left:1px dashed color-mix(in srgb, var(--mc) 70%, transparent);border-right:1px dashed color-mix(in srgb, var(--mc) 70%, transparent);}
+.gantt-mc-faixa.is-dia{width:2px;justify-self:center;background:var(--mc);border:none;opacity:.75;}
+.gantt-mc-row .gantt-mc-corner{gap:6px;justify-content:space-between;}
+.gantt-mc-add{border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);border-radius:999px;width:24px;height:24px;font-size:14px;line-height:1;cursor:pointer;flex:none;}
+.gantt-mc-add:hover{border-color:var(--accent);background:var(--glass-h);}
+.gantt-mc-track{display:grid;grid-template-columns:repeat(42, minmax(var(--gantt-day-w), 1fr));grid-auto-rows:24px;row-gap:3px;padding:4px 0;align-items:center;min-height:32px;}
+.gantt-mc-chip{display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:100%;height:22px;margin:0 2px;padding:0 8px;border-radius:999px;cursor:pointer;
+  font:700 11px/1 'DM Sans',sans-serif;color:var(--txt);background:color-mix(in srgb, var(--mc) 22%, rgb(var(--surface-rgb)));border:1px solid color-mix(in srgb, var(--mc) 70%, var(--txt) 30%);white-space:nowrap;overflow:hidden;justify-self:start;}
+.gantt-mc-chip:hover{background:color-mix(in srgb, var(--mc) 34%, rgb(var(--surface-rgb)));}
+.gantt-mc-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.gantt-mc-nome{overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.gantt-mc-glb{font-size:10px;flex:none;}
+.gantt-mc-vazio{grid-column:1/43;font-size:11px;color:var(--txt2);padding-left:10px;}
+.gantt-mc-panel{width:min(440px,94vw);}
+.gantt-mc-form{display:flex;flex-direction:column;gap:6px;padding:12px 18px 18px;}
+.gantt-mc-datas{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.gantt-mc-opc{font-weight:400;color:var(--txt3);}
+.gantt-mc-cores{display:flex;gap:8px;flex-wrap:wrap;}
+.gantt-mc-cor{width:28px;height:28px;border-radius:50%;background:var(--mc);border:2px solid transparent;cursor:pointer;}
+.gantt-mc-cor.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--mc);}
+.gantt-mc-cor:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.gantt-mc-glob{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);margin-top:4px;}
+.gantt-mc-glob[hidden]{display:none;}
+.gantt-mc-aviso{min-height:16px;font-size:11.5px;color:var(--danger);}
+.gantt-mc-pe{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.gantt-mc-del[hidden]{display:none;}
+.gantt-mc-del{color:var(--danger);}
+@media (hover:none) and (pointer:coarse){ .gantt-mc-add{width:44px;height:44px;} .gantt-mc-track{grid-auto-rows:34px;} .gantt-mc-chip{height:32px;} .gantt-mc-cor{width:40px;height:40px;} .gantt-mc-form .fi{font-size:16px;} .gantt-mc-pe .btn,.gantt-mc-pe .btn-p{min-height:44px;} }
 @media (max-width:768px){ .gantt-abas{align-self:stretch;} .gantt-aba{flex:1 0 auto;padding:9px 12px;} }
 @media (hover:none) and (pointer:coarse){ .gantt-aba{min-height:44px;} .gantt-cal-row{min-height:44px;} .gantt-cal-bar{height:32px;} }
 @media (max-width:768px){ .gantt-filtros{padding:7px 9px;} .gantt-fsel{max-width:none;flex:1 1 140px;} .gantt-fdata{flex:1 1 100%;} .gantt-fdata input{flex:1;} }
@@ -7513,7 +7542,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.960-dev</div>
+<div class="version">v8.30.961-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7866,7 +7895,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 </script>
 <script src="mare-notif-dev.js?v=41"></script>
 <script src="mare-metas-dev.js?v=19"></script>
-<script src="mare-dicas-dev.js?v=15"></script>
+<script src="mare-dicas-dev.js?v=16"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
 
@@ -8796,6 +8825,9 @@ let _ganttOffsetDays=0; // deslocamento em dias (múltiplos de 28) da régua de 
 // Os calendários são publicados pelo ADM no Painel (⚙ → 📊 Gantt) em kanban/calendarios_gantt(_dev) e só são lidos quando a aba abre.
 let _ganttAba=(()=>{ try{ const v=safeLS.getItem('mare_gantt_aba'); return ['cards','marca','comercial'].includes(v)?v:'cards'; }catch(e){ return 'cards'; } })();
 const _ganttCal={ marca:{ estado:'' , dado:null }, comercial:{ estado:'', dado:null } };
+// 📌 Datas-chave do Gantt (13/11/2026): eventos que a squad marca (Black Friday, Natal…) e viram faixa/linha atrás das barras nas 3 abas.
+// Da squad: kanban/squads/{sq}/gantt_marcos(_dev) — PO/Organizador/ADM criam. Globais: kanban/gantt_marcos_globais(_dev) — só ADM.
+const _ganttMc={ squad:{}, global:{}, lido:'' };
 let _ganttScrollPend='hoje'; // próxima pintura do Gantt: 'hoje' (rola até hoje) | 'inicio' (começo da janela) | '' (mantém a posição — redesenho por atualização do Firebase)
 // Ordenação dos cards dentro de cada coluna — preferência pessoal por squad,
 // não é dado do board (cada pessoa pode preferir ver diferente).
@@ -14621,7 +14653,116 @@ function _ganttCalCorpo(tipo, winStartIso, winEndIso, perOn, perDe, perAte){
   if(!chunks.length) return { body:'<div class="gantt-empty">'+(perOn?'Nada do '+esc(nome)+' neste período — ajuste o De/Até':'Nada do '+esc(nome)+' nestas 6 semanas — use ◀ ▶')+'</div>', footer, leg:'' };
   return { body:chunks.join(''), footer, leg:'<span class="gantt-leg-item">Toque numa barra para ler o texto inteiro</span>' };
 }
+const _GANTT_MC_CORES={ red:'#ff6b6b', orange:'#fb923c', yellow:'#facc15', green:'#34d399', cyan:'#22d3ee', blue:'#60a5fa', purple:'#a78bfa', pink:'#f472b6' };
+const _GANTT_MC_NOME_COR={ red:'Vermelho', orange:'Laranja', yellow:'Amarelo', green:'Verde', cyan:'Ciano', blue:'Azul', purple:'Roxo', pink:'Rosa' };
+const _ganttMcSuf=()=>/-dev\.html/.test(location.pathname)?'_dev':'';
+const _ganttMcRef=(escopo,id)=>window._ref(window._db, (escopo==='global' ? 'kanban/gantt_marcos_globais'+_ganttMcSuf() : 'kanban/squads/'+ACTIVE_SQUAD+'/gantt_marcos'+_ganttMcSuf())+(id?'/'+id:''));
+function _ganttMcCarregar(){
+  if(_ganttMc.lido===ACTIVE_SQUAD) return;
+  _ganttMc.lido=ACTIVE_SQUAD; _ganttMc.squad={}; _ganttMc.global={};
+  const ouvir=escopo=>{ try{ window._onValue(_ganttMcRef(escopo), snap=>{ _ganttMc[escopo]=(snap.exists()&&snap.val())||{}; if(boardView==='gantt') renderBoard(); }, err=>console.warn('[gantt] datas-chave '+escopo+':', err)); }catch(e){} };
+  ouvir('squad'); ouvir('global');
+}
+function _ganttMcPodeEditar(escopo){ return escopo==='global' ? window._currentUserRole==='adm' : _isPOorOrg(); }
+// Lista as datas-chave válidas que cruzam a janela, com colunas e pista do rótulo (rótulos que se cruzam descem).
+function _ganttMcNaJanela(winStartIso, winEndIso){
+  const ehIso=v=>typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const out=[];
+  for(const escopo of ['global','squad']){
+    for(const [id,m] of Object.entries(_ganttMc[escopo]||{})){
+      if(!m || !ehIso(m.ini)) continue;
+      const fim=ehIso(m.fim)&&m.fim>=m.ini?m.fim:m.ini;
+      if(fim<winStartIso || m.ini>winEndIso) continue;
+      const colS=_ganttDayDiff(winStartIso, m.ini<winStartIso?winStartIso:m.ini)+1, colE=_ganttDayDiff(winStartIso, fim>winEndIso?winEndIso:fim)+1;
+      out.push({ id, escopo, titulo:String(m.titulo||'').slice(0,80), ini:m.ini, fim, cor:_GANTT_MC_CORES[m.cor]||_GANTT_MC_CORES.purple, colS, colE, umDia:m.ini===fim });
+    }
+  }
+  out.sort((a,b)=>a.colS-b.colS || b.colE-a.colE);
+  // o nome ocupa pelo menos 6 colunas (data de 1 dia não cabe em 1 coluna); perto do fim da janela, recua para a esquerda
+  for(const m of out){ m.lblS=m.colS; m.lblE=Math.max(m.colE, m.colS+5); if(m.lblE>42){ m.lblE=42; m.lblS=Math.min(m.colS, 37); } }
+  out.sort((a,b)=>a.lblS-b.lblS || b.lblE-a.lblE);
+  const fins=[]; // pista do nome: nomes que se cruzam descem
+  for(const m of out){ let k=fins.findIndex(f=>f<m.lblS); if(k<0){ fins.push(0); k=fins.length-1; } fins[k]=m.lblE; m.pista=k+1; }
+  return out;
+}
+function ganttMarcoClique(el){
+  const m=(_ganttMc[el.dataset.escopo]||{})[el.dataset.id]; if(!m) return;
+  if(_ganttMcPodeEditar(el.dataset.escopo)) return ganttMarcoForm(el.dataset.escopo, el.dataset.id);
+  const per=(!m.fim||m.fim===m.ini)?_cardPeriodoData(m.ini):_cardPeriodoData(m.ini)+' – '+_cardPeriodoData(m.fim);
+  showToast('📌 '+m.titulo+' · '+per+(el.dataset.escopo==='global'?' · todas as squads':''));
+}
+function _ganttMcOv(){
+  let ov=document.getElementById('gantt-mc-ov'); if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='gantt-mc-ov';
+  ov.innerHTML='<div class="panel gantt-mc-panel" role="dialog" aria-modal="true" aria-labelledby="gantt-mc-tt">'
+    +'<div class="panel-hd"><div class="panel-title" id="gantt-mc-tt">📌 Data-chave</div><button class="x-btn" type="button" aria-label="Fechar" onclick="closeOv(\'gantt-mc-ov\')">✕</button></div>'
+    +'<form class="gantt-mc-form" onsubmit="event.preventDefault();ganttMarcoSalvar();">'
+      +'<label class="fl" for="gantt-mc-titulo">Nome</label><input class="fi" id="gantt-mc-titulo" maxlength="80" required placeholder="Ex.: Black Friday">'
+      +'<div class="gantt-mc-datas"><div><label class="fl" for="gantt-mc-ini">Início</label><input class="fi" id="gantt-mc-ini" type="date" required></div>'
+      +'<div><label class="fl" for="gantt-mc-fim">Fim <span class="gantt-mc-opc">(opcional)</span></label><input class="fi" id="gantt-mc-fim" type="date"></div></div>'
+      +'<div class="fl">Cor</div><div class="gantt-mc-cores" role="radiogroup" aria-label="Cor">'
+        +Object.entries(_GANTT_MC_CORES).map(([k,h])=>'<button type="button" role="radio" class="gantt-mc-cor" data-cor="'+k+'" style="--mc:'+h+'" aria-label="'+_GANTT_MC_NOME_COR[k]+'" onclick="_ganttMcCor(this.dataset.cor)"></button>').join('')
+      +'</div>'
+      +'<label class="gantt-mc-glob" id="gantt-mc-glob-l"><input type="checkbox" id="gantt-mc-glob"> 🌐 Vale para <b>todas as squads</b> (só ADM)</label>'
+      +'<div class="gantt-mc-aviso" id="gantt-mc-aviso" role="alert"></div>'
+      +'<div class="gantt-mc-pe"><button type="button" class="btn gantt-mc-del" id="gantt-mc-del" onclick="ganttMarcoExcluir()">🗑 Excluir</button><span style="flex:1"></span>'
+      +'<button type="button" class="btn" onclick="closeOv(\'gantt-mc-ov\')">Cancelar</button><button type="submit" class="btn-p" id="gantt-mc-ok">Salvar</button></div>'
+    +'</form></div>';
+  document.body.appendChild(ov); return ov;
+}
+let _ganttMcEd={ escopo:'squad', id:'', cor:'purple' };
+function _ganttMcCor(cor){
+  _ganttMcEd.cor=_GANTT_MC_CORES[cor]?cor:'purple';
+  document.querySelectorAll('#gantt-mc-ov .gantt-mc-cor').forEach(b=>{ const on=b.dataset.cor===_ganttMcEd.cor; b.classList.toggle('on',on); b.setAttribute('aria-checked',String(on)); b.tabIndex=on?0:-1; });
+}
+function ganttMarcoForm(escopo, id){
+  const ov=_ganttMcOv(); const m=id?((_ganttMc[escopo]||{})[id]||null):null;
+  if(id && !m){ showToast('Esta data-chave não existe mais.'); return; }
+  _ganttMcEd={ escopo:escopo||'squad', id:id||'', cor:(m&&m.cor)||'purple' };
+  ov.querySelector('#gantt-mc-tt').textContent=id?'📌 Editar data-chave':'📌 Nova data-chave';
+  ov.querySelector('#gantt-mc-titulo').value=m?m.titulo:'';
+  const hoje=_calIsoLocal(new Date());
+  ov.querySelector('#gantt-mc-ini').value=m?m.ini:(_ganttPeriodo.de||hoje);
+  ov.querySelector('#gantt-mc-fim').value=m&&m.fim&&m.fim!==m.ini?m.fim:'';
+  const adm=window._currentUserRole==='adm';
+  ov.querySelector('#gantt-mc-glob-l').hidden=!adm || !!id;   // escopo não muda depois de criada
+  ov.querySelector('#gantt-mc-glob').checked=_ganttMcEd.escopo==='global';
+  ov.querySelector('#gantt-mc-del').hidden=!id;
+  ov.querySelector('#gantt-mc-aviso').textContent='';
+  _ganttMcCor(_ganttMcEd.cor);
+  ov.classList.add('open');
+  setTimeout(()=>ov.querySelector('#gantt-mc-titulo').focus(),30);
+}
+async function ganttMarcoSalvar(){
+  const ov=_ganttMcOv(), aviso=ov.querySelector('#gantt-mc-aviso');
+  const titulo=ov.querySelector('#gantt-mc-titulo').value.replace(/\s+/g,' ').trim().slice(0,80);
+  const ini=ov.querySelector('#gantt-mc-ini').value, fimIn=ov.querySelector('#gantt-mc-fim').value;
+  const escopo=_ganttMcEd.id?_ganttMcEd.escopo:(ov.querySelector('#gantt-mc-glob').checked&&window._currentUserRole==='adm'?'global':'squad');
+  if(!titulo){ aviso.textContent='Dê um nome para a data-chave.'; return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(ini)){ aviso.textContent='Escolha o dia de início.'; return; }
+  const fim=/^\d{4}-\d{2}-\d{2}$/.test(fimIn)?fimIn:ini;
+  if(fim<ini){ aviso.textContent='O fim não pode ser antes do início.'; return; }
+  if(!_ganttMcPodeEditar(escopo)){ aviso.textContent=escopo==='global'?'Só ADM cria datas-chave para todas as squads.':'Só PO, Organizador ou ADM da squad criam datas-chave.'; return; }
+  const u=window._currentUser||{};
+  const ant=_ganttMcEd.id?(_ganttMc[escopo]||{})[_ganttMcEd.id]:null;
+  const id=_ganttMcEd.id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+  const dado={ titulo, ini, fim, cor:_ganttMcEd.cor, porUid:ant?ant.porUid:u.uid, porNome:ant?(ant.porNome||''):String(u.displayName||u.email||'').slice(0,80), em:Date.now() };
+  const bt=ov.querySelector('#gantt-mc-ok'); bt.disabled=true;
+  try{
+    await window._set(_ganttMcRef(escopo,id), dado);
+    closeOv('gantt-mc-ov'); showToast('📌 '+titulo+(ant?' atualizada':' marcada no Gantt'));
+  }catch(e){
+    aviso.textContent=/permission/i.test(String(e&&e.message||e)) ? 'Sem permissão para salvar aqui (só PO, Organizador ou ADM da squad; global, só ADM).' : 'Não consegui salvar. Tente de novo.';
+  }finally{ bt.disabled=false; }
+}
+async function ganttMarcoExcluir(){
+  const {escopo,id}=_ganttMcEd; const m=(_ganttMc[escopo]||{})[id]; if(!id||!m) return;
+  if(!await uiConfirm('Excluir a data-chave "'+m.titulo+'"?'+(escopo==='global'?' Ela some do Gantt de todas as squads.':''), { okText:'Excluir', danger:true })) return;
+  try{ await window._remove(_ganttMcRef(escopo,id)); closeOv('gantt-mc-ov'); showToast('🗑 Data-chave excluída'); }
+  catch(e){ _ganttMcOv().querySelector('#gantt-mc-aviso').textContent='Não consegui excluir (sem permissão?).'; }
+}
 function renderGanttView(activeCards){
+  _ganttMcCarregar();
   const wrap = document.getElementById('gantt-view');
   if(!wrap) return;
   const MESES_LONGO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -14798,8 +14939,22 @@ function renderGanttView(activeCards){
   if(_ganttAba!=='cards' && !_ganttCalPermitido()) _ganttAba='cards';
   const _aba=_ganttAba; let _calInfo=null;
   if(_aba!=='cards'){ _calInfo=_ganttCalCorpo(_aba, winStartIso, winEndIso, perOn, perDe, perAte); bodyHtml=_calInfo.body; }
-  const todayLineHtml = todayIdx>=0
-    ? '<div class="gantt-canvas-ov" aria-hidden="true"><div class="gantt-canvas-ov-track"><div class="gantt-today-line" data-date="'+todayIso+'" data-col="'+(todayIdx+1)+'" style="grid-column:'+(todayIdx+1)+';"></div></div></div>'
+  // 📌 datas-chave: faixa (período) ou linha (1 dia) atrás das barras + o nome numa linha própria da régua
+  const _mcs=_ganttMcNaJanela(winStartIso, winEndIso);
+  const _mcFaixas=_mcs.map(m=>'<div class="gantt-mc-faixa'+(m.umDia?' is-dia':'')+'" data-mc="'+esc(m.escopo+':'+m.id)+'" style="grid-row:1;grid-column:'+m.colS+'/'+(m.colE+1)+';--mc:'+m.cor+';"></div>').join('');
+  const _podeCriarMc=_isPOorOrg();
+  const _mcRow=(_mcs.length||_podeCriarMc)
+    ? '<div class="gantt-ruler-row gantt-mc-row"><div class="gantt-ruler-corner gantt-mc-corner">📌 Datas-chave'
+        +(_podeCriarMc?'<button type="button" class="gantt-mc-add" onclick="ganttMarcoForm(\'squad\')" aria-label="Nova data-chave" title="Nova data-chave (ex.: Black Friday)">＋</button>':'')+'</div>'
+      +'<div class="gantt-mc-track">'+(_mcs.length ? _mcs.map(m=>{
+          const per=m.umDia?_cardPeriodoData(m.ini):_cardPeriodoData(m.ini)+' – '+_cardPeriodoData(m.fim);
+          return '<button type="button" class="gantt-mc-chip" data-escopo="'+m.escopo+'" data-id="'+esc(m.id)+'" style="grid-row:'+m.pista+';grid-column:'+m.lblS+'/'+(m.lblE+1)+';--mc:'+m.cor+';" title="'+esc(m.titulo+' · '+per+(m.escopo==='global'?' · todas as squads':''))+'" onclick="ganttMarcoClique(this)">'
+            +(m.escopo==='global'?'<span class="gantt-mc-glb" aria-label="Todas as squads">🌐</span>':'')+'<span class="gantt-mc-nome">'+esc(m.titulo)+'</span></button>';
+        }).join('') : '<span class="gantt-mc-vazio">'+(_podeCriarMc?'Marque Black Friday, Natal… no ＋ ao lado':'')+'</span>')+'</div></div>'
+    : '';
+  const todayLineHtml = (todayIdx>=0 || _mcFaixas)
+    ? '<div class="gantt-canvas-ov" aria-hidden="true"><div class="gantt-canvas-ov-track">'+_mcFaixas
+      +(todayIdx>=0?'<div class="gantt-today-line" data-date="'+todayIso+'" data-col="'+(todayIdx+1)+'" style="grid-row:1;grid-column:'+(todayIdx+1)+';"></div>':'')+'</div></div>'
     : '';
 
   const rangeTxt = _cardPeriodoData(winStartIso)+' – '+_cardPeriodoData(winEndIso);
@@ -14847,6 +15002,7 @@ function renderGanttView(activeCards){
             +'<div class="gantt-ruler-corner">Datas</div>'
             +'<div class="gantt-ruler-days">'+daysHtml+'</div>'
           +'</div>'
+          +_mcRow
         +'</div>'
         +'<div class="gantt-body">'+bodyHtml+'</div>'
       +'</div>'
@@ -30548,7 +30704,7 @@ const HELP_CONTENT = {
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.\n\n📊 <b>Quer ver campanhas e coleções em barras no tempo?</b> Ao lado de "🛤️ Timeline" fica o botão <b>"📊 Gantt"</b> (as duas visões são exclusivas entre si): enquanto a Timeline lista pendências por vencimento, o Gantt desenha a barra de <b>Início → Fim</b> e o marco <b>◆</b> do <b>Prazo</b> numa régua de 6 semanas — veja o tópico "Gantt".' },
-    { icon:'📊', title:'Gantt', text:'Botão <b>"📊 Gantt"</b> na toolbar, ao lado de "🛤️ Timeline", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram os cards ativos com <b>Início + Fim</b> válidos ou com <b>Prazo</b> preenchido (cards sem datas ficam de fora e aparecem contados no rodapé: <i>"N cards sem datas não aparecem"</i>). Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) — inclusive em cards que também têm período (<b>Fim ≠ Prazo</b>). Cards só com Prazo mostram apenas o marco <b>◆</b>.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📅 De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo período ou prazo cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card.\n\n🗂 <b>Abas: Cards, 🎯 Calendário de Marca e 🛒 Comercial Digital</b>: no topo do Gantt, além dos cards da squad, há duas abas com os calendários da empresa, iguais para <b>todas as squads</b>. O <b>Calendário de Marca</b> mostra as campanhas nas linhas <b>Coleção sellout</b>, <b>Web</b> e <b>Redes sociais</b>; o <b>Comercial Digital</b> mostra as ações do mês por linha (<b>Lançamentos e datas</b>, Site, Saldos, Mídia, CRM, App…). Barras que se cruzam na mesma linha descem para uma faixa de baixo. <b>Toque numa barra</b> para ler o texto inteiro com as datas. Nessas abas valem <b>◀ Hoje ▶</b> e o <b>📅 De … até …</b>; os filtros de pessoa/tag/submarca/canal são só dos cards. Os calendários são publicados por um <b>ADM no Painel → ⚙ Configurações → 📊 Gantt</b>, a partir da planilha (.xlsx); o rodapé diz quando e por quem foram atualizados. A aba escolhida fica guardada neste aparelho.' },
+    { icon:'📊', title:'Gantt', text:'Botão <b>"📊 Gantt"</b> na toolbar, ao lado de "🛤️ Timeline", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram os cards ativos com <b>Início + Fim</b> válidos ou com <b>Prazo</b> preenchido (cards sem datas ficam de fora e aparecem contados no rodapé: <i>"N cards sem datas não aparecem"</i>). Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) — inclusive em cards que também têm período (<b>Fim ≠ Prazo</b>). Cards só com Prazo mostram apenas o marco <b>◆</b>.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📅 De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo período ou prazo cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card.\n\n🗂 <b>Abas: Cards, 🎯 Calendário de Marca e 🛒 Comercial Digital</b>: no topo do Gantt, além dos cards da squad, há duas abas com os calendários da empresa, iguais para <b>todas as squads</b>. O <b>Calendário de Marca</b> mostra as campanhas nas linhas <b>Coleção sellout</b>, <b>Web</b> e <b>Redes sociais</b>; o <b>Comercial Digital</b> mostra as ações do mês por linha (<b>Lançamentos e datas</b>, Site, Saldos, Mídia, CRM, App…). Barras que se cruzam na mesma linha descem para uma faixa de baixo. <b>Toque numa barra</b> para ler o texto inteiro com as datas. Nessas abas valem <b>◀ Hoje ▶</b> e o <b>📅 De … até …</b>; os filtros de pessoa/tag/submarca/canal são só dos cards. Os calendários são publicados por um <b>ADM no Painel → ⚙ Configurações → 📊 Gantt</b>, a partir da planilha (.xlsx); o rodapé diz quando e por quem foram atualizados. A aba escolhida fica guardada neste aparelho.\n\n📌 <b>Datas-chave</b>: logo abaixo dos dias, a linha <b>📌 Datas-chave</b> mostra os eventos que a squad marcou (Black Friday, Natal, um lançamento…). Cada uma vira uma <b>faixa colorida</b> atrás das barras (ou uma <b>linha</b>, se for um dia só), nas três abas — ajuda a ler o que acontece em volta da data. <b>PO, Organizador ou ADM</b> criam no <b>＋</b> ao lado de "📌 Datas-chave" (nome, início, fim opcional e cor) e tocam num nome para editar ou excluir; quem não edita vê o nome e o período ao tocar. O <b>ADM</b> pode marcar uma data para <b>🌐 todas as squads</b>.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação (mais antigos primeiro) — a ordem em que os cards foram criados, do mais antigo pro mais novo; no mesmo dia vale a hora da criação.\n🕐 Data de criação (mais recentes primeiro) — o inverso: os cards criados por último aparecem no topo. Card sem data de criação (legado/importado) fica no final nos dois sentidos.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).\n\n🔴 <b>Ativar "Atrasados" automaticamente num horário</b>: se você costuma abrir cards atrasados sempre no mesmo intervalo de 2h do dia, o app pode sugerir ativar o filtro "Atrasados" sozinho quando você abre o board dentro desse horário — só na primeira vez que você abre o board naquele dia, nunca liga/desliga sozinho no meio da sessão. Sugestão opcional, mesmas 3 respostas de sempre (aceitar/agora não/não sugerir mais).' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.\n\n📌 <b>Fixar na toolbar principal</b>: se você usa "💡 Meus cards" na maioria das vezes que abre o board, o app pode sugerir sozinho fixar um atalho pra ele lá em cima, direto na barra de ferramentas (mesma ação, sem precisar abrir Filtros primeiro) — é só uma sugestão opcional (aceite/adie/recuse), nunca muda a tela sem você confirmar.' },
