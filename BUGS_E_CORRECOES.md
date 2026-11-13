@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-13 · Gantt: card só com prazo parecia ter período (kanban v8.30.972-dev)
+
+**Sintoma (relato do Caio, 13/11):** na squad Dados o Gantt mostrava cápsulas longas em cards que só têm prazo, dando a impressão de que o código tinha gravado Início/Fim/Hora sozinho. **Diagnóstico:** script de console (só leitura) no prod confirmou 0 cards com Início/Fim/Hora — nenhum dado foi gravado. **Causa:** sem barra na janela, o marco ◆ leva o nome do card dentro da MESMA cápsula com borda, que se estende pelos dias seguintes e lê como uma barra de período. **Correção:** classe `com-nome` — a cápsula fica só no ◆ do dia (círculo) e o nome vem solto, em texto secundário. Testes do Gantt verdes; capturas 1280/390 × 3 temas conferidas.
+
 ### 2026-11-13 · Gantt (/monitorarbugs 13/11): data-chave ressuscitada, prévia do .xlsx trocada, exclusão muda (kanban v8.30.965-dev, painel v5.110-dev)
 
 - **Data-chave ressuscitada (kanban-dev, `ganttMarcoSalvar`)** — PO abre a edição, outra pessoa exclui, o PO salva: a data voltava como NOVA, com o autor trocado para quem editou (as regras deixam criar quando o nó não existe e `porUid` = quem grava). Agora recusa e avisa. Mesma classe dos "editar ressuscita" de 2026-10-07/09.

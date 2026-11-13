@@ -3339,6 +3339,13 @@ input[type="date"]{-moz-appearance:textfield;}
 .gantt-marco-hora{color:var(--txt);font-variant-numeric:tabular-nums;}
 .gantt-marco-chk{color:var(--txt2);font-size:10px;font-weight:900;}
 .gantt-marco-nome{max-width:220px;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+/* 13/11 (relato do Caio: "o Gantt criou período sozinho"): card SÓ com prazo levava o nome dentro da cápsula com borda, que se
+   estendia pelos dias seguintes e lia como uma barra de período. Agora a cápsula fica só no ◆ do dia; o nome vem solto ao lado. */
+.gantt-marco.com-nome{background:none;border-color:transparent;box-shadow:none;padding-left:0;gap:5px;}
+[data-theme="light"] .gantt-marco.com-nome{border-color:transparent;}
+.gantt-marco.com-nome .gantt-marco-dia{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:rgb(var(--surface-rgb));border:1.5px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.24);flex:none;}
+[data-theme="light"] .gantt-marco.com-nome .gantt-marco-dia{border-color:var(--cyan);}
+.gantt-marco.com-nome .gantt-marco-nome{color:var(--txt2);font-weight:600;}
 .gantt-bar-lbl{position:relative;z-index:2;max-width:220px;padding:0 6px;font-size:11px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;}
 .gantt-row-title{font-variant-numeric:tabular-nums;}
 .gantt-empty{
@@ -7609,7 +7616,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.971-dev</div>
+<div class="version">v8.30.972-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -15300,7 +15307,7 @@ function renderGanttView(activeCards){
           const gridCol = alignEnd ? ('1/'+(dueCol+1)) : (dueCol+'/43');
           const justSelf = alignEnd ? 'end' : 'start';
           const marcoTip = 'Prazo: '+_cardPeriodoData(c.due)+(c.dueHora?' às '+c.dueHora:'')+(done?' · Concluído':'');
-          marcoHtml = '<span class="gantt-marco" data-due-date="'+esc(c.due)+'" data-due-col="'+dueCol+'" style="grid-row:'+marcoRow+';grid-column:'+gridCol+';justify-self:'+justSelf+';" title="'+esc(marcoTip)+'">'
+          marcoHtml = '<span class="gantt-marco'+(!barInWin?' com-nome':'')+'" data-due-date="'+esc(c.due)+'" data-due-col="'+dueCol+'" style="grid-row:'+marcoRow+';grid-column:'+gridCol+';justify-self:'+justSelf+';" title="'+esc(marcoTip)+'">'
             +'<span class="gantt-marco-dia" aria-hidden="true">◆</span>'
             +(c.dueHora?'<span class="gantt-marco-hora">'+esc(c.dueHora)+'</span>':'')
             +(!barInWin?'<span class="gantt-marco-nome">'+esc(titulo)+'</span>':'')
