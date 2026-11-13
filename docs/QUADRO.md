@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/radar-gantt-calendarios` | `okr-dev.html`, `kanban-dev.html`, `mare-gcal-dev.js`, `version.json` | 13/11/2026 |
 
 
 ## Fila
@@ -23,7 +24,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
-| Codex | Pedidos do Caio: solicitar atualização por calendário + mesmos calendários no Radar (R2; Claude integra) | [escopo](quadro/escalados.md#gantt-pedidos-radar) | 13/11/2026 |
+| Codex | Pedidos do Caio: (1) **pedir atualização** por calendário — a fazer; (2) calendários no Radar — ✅ no dev (Claude, PR do Radar Gantt) | [escopo](quadro/escalados.md#gantt-pedidos-radar) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
 | Claude | `test_apresentacao_live.js` falha também na `main` ("fora da sincronização, o slide do apresentador NÃO puxa a pessoa") | [escalados](quadro/escalados.md#apresentacao-live) | 09/11/2026 |
 | Antigravity | `database.rules.json`: `humor`/`humor_comp` da Travessia aceitam nota decimal (ex.: `1.5`); exigir inteiro | [escalados](quadro/escalados.md#travessia-humor-inteiro) | 11/11/2026 |
