@@ -1,6 +1,11 @@
 [
  {
   "data": "2026-11-12",
+  "titulo": "Período do card exige Início e Fim + dica do Gantt (kanban v8.30.959, mare-dicas v15) — PROD 12/11 — 2026-11-12",
+  "texto": "- Período exige as duas datas (decisão do Caio): só Início ou só Fim não grava metade. O cartão 📅 Período e hora avisa \"Falta o Fim\"/\"Falta o Início\" e mantém o período salvo antes (ou nenhum); apagar as duas limpa. A linha de período no card do board só aparece com as duas datas (Calendário e Gantt já exigiam).\n- 💡 Dica nova no Maré (gantt, ao entrar): apresenta o botão 📊 Gantt ao lado da 🛤️ Timeline, com \"Saiba mais\" no tópico Gantt da Ajuda. ?v=15 do mare-dicas-dev.js em kanban-dev, okr-dev, oceano-dev e painel-dev (bump das 4 páginas).\n- Ajuda (Calendário) explica a regra. Teste: test_card_periodo.js (só Início, só Fim, criação só com Início, linha no board)."
+ },
+ {
+  "data": "2026-11-12",
   "titulo": "Supercard no board: lista de filhos rola em vez de cortar em 6 (kanban v8.30.958) — PROD 12/11 — 2026-11-12",
   "texto": "- Antes: o card do supercard mostrava só os 6 primeiros filhos e um \"+N mais...\" sem clique; o resto só aparecia abrindo o card.\n- Agora: todos os filhos ficam na lista, que rola dentro do card a partir do 7º (altura de ~6 linhas, barra fina, leve esmaecido no fim); a rolagem não arrasta a coluna junto e a posição se mantém quando o board se atualiza. Supercard com até 6 filhos não muda.\n- Teste: docs/arezzo/testes/test_supercard_rollup_rolagem.js (1280 e 390 px; falha na versão anterior)."
  },
@@ -143,10 +148,5 @@
   "data": "2026-11-10",
   "titulo": "Maré, Painel, Radar e Oceano › 🪟 Acabamento vidro lapidado (`--specular`) e curvas com nome (`--ease-*`) (PROD · kanban v8.30.932 · okr v2.109 · oceano v1.75 · painel v5.99 · PR #1687) — 2026-11-10",
   "texto": "- Vidro lapidado (--specular) por tema: definido --specular: inset 0 1px 0 rgba(255,255,255,.08) no escuro/Vice/Entardecer e --specular: inset 0 1px 0 rgba(255,255,255,.7) no claro ([data-theme=\"light\"]), somado às superfícies .vidro, .panel, .card, .col e modais das 4 páginas (kanban-dev.html, painel-dev.html, okr-dev.html e oceano-dev.html) conforme o docs/GUIA_UI_UX.md (§2.5 regra 6), sem adicionar backdrop-filter nem alterar a GPU com a tela parada.\n- Curvas com nome (--ease-*) no :root: adicionados --ease-out: cubic-bezier(.32,.72,0,1), --ease-in-out: cubic-bezier(.4,0,.2,1) e --ease-overshoot: cubic-bezier(.34,1.56,.64,1) no :root das 4 páginas, substituindo todos os cubic-bezier(...) soltos por var(--ease-*) (§2.4).\n- Capturas em docs/capturas/vidro-lapidado/: só as depois (24, 4 páginas × 3 temas × 1280/390); as \"antes\" saem da main anterior. Conflito de versão com o #1686 resolvido pelo Claude (versões +1)."
- },
- {
-  "data": "2026-11-10",
-  "titulo": "Radar › 🔍 Sonar no Radar: achar Objetivo ou Marco na hora, sem leitura nova (PROD · okr v2.109 · mare-sonar.js ?v=8 · mare-dicas.js ?v=12) — 2026-11-10",
-  "texto": "O Radar ganha o 🔍 Sonar (botão no topo e Ctrl+K / ⌘K), com o mesmo layout do lobby e do Maré. O foco aqui são Objetivos e Marcos:\n- Abas: Tudo · 1 Objetivos · 2 Marcos · 3 Maré · 4 Ajuda (prefixos o:, k:, m:, a:). Visualizador externo não vê a aba do Maré.\n- Enter abre o Objetivo aqui mesmo (no modal de sempre, já na torre dele); um Marco abre o Objetivo dele; Ctrl/⌘+Enter abre em aba nova.\n- meus = Objetivos em que a pessoa é responsável, ou responsável por algum Marco (a régua do filtro de pessoa do Radar). Período (T426, S127…) também é pesquisável, e código com número não aceita erro de digitação (T426 não acha T126).\n- Sem custo de leitura: a busca usa os Objetivos e Marcos que o Radar já carregou (opção nova radar.dados do módulo); nenhuma leitura nova, nem a cópia de 3 h do lobby.\n- Aba Maré: \"Buscar “…” nos cards\" nos squads da pessoa (abre o Maré em aba nova com a busca preenchida). Aba Ajuda: os tópicos da Ajuda do Radar; tópico novo \"Sonar (Ctrl+K)\" em Navegar.\n- Dica: sim — dica sonar no Radar (fim da fila de entrada; mare-dicas ?v=12). mare-sonar ?v=8 nas 3 páginas.\n- Teste: docs/arezzo/testes/test_okr_sonar.js (53 asserções, escrito pelo Codex por contrato; rodado e ajustado aqui — pegou o T426 × T126). test_sonar_logica.js ganhou a regra do código com número; test_dicas.js atualizado.\n- Fronteira: sem mudança (dados que a página já tinha; títulos por esc(); ende"
  }
 ]

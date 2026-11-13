@@ -4665,6 +4665,6 @@ Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,n
 
 ### 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
 - **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3655/L3657, `_corCssOk()` — L3658, `_colsSegurasP()` — L3659, `_tagsSegurasP()` — L3660, `_pSafeUrl()` — L3932, `_sanitizeComunicadoHtml()` — L8946 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10295. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
-- **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10273) e `updateSquadUserRole()` (L11300) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
+- **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10283) e `updateSquadUserRole()` (L11310) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
 
 *Retrato do commit `1bfb5d6e` (2026-11-11).*
