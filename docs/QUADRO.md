@@ -41,6 +41,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
+| 🏖️ Calendário geral de férias do Digital: cadastro próprio, visível para todos e filtros | Claude | [escopo](quadro/escalados.md#calendario-ferias-digital) |
 | 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |

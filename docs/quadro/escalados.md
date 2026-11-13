@@ -39,3 +39,16 @@ Pedido explícito do Caio, com esclarecimentos na sessão Codex:
 **Encaminhamento ao Claude:** escopo R2 por envolver Maré, Radar e possível módulo compartilhado de notificações; AGENTS.md exige escalar módulo compartilhado/redesenho. Se exigir backend ou regras novas, separar avaliação R3 antes de implementar. Codex não iniciou alterações funcionais.
 
 **Aceite proposto:** dev primeiro; notificações apenas aos destinatários do calendário escolhido (Marca só Caio), sem duplicar; calendários compartilhados exibidos no Radar; estados vazio/carregando/erro; desktop 1280 e toque 390, três temas, sem overflow; testes fakefb e checks completos; Ajuda/dicas/versões atualizadas. Sem merge, deploy ou promoção.
+
+
+<a id="calendario-ferias-digital"></a>
+
+## Ideia: calendário geral de férias do Digital — 13/11/2026
+
+Caio pediu para deixar salva, como visão dentro de **Calendário**, uma agenda geral de férias do Digital. Cada pessoa pode cadastrar as próprias férias, e os períodos ficam visíveis para todo o Digital. Objetivo: consultar ausências e planejar entregas/cobertura entre equipes.
+
+**Requisitos confirmados:** visão geral compartilhada; cadastro das próprias férias; filtros para consultar a agenda. Preferência de localização: dentro de Calendário, em vez de tratar como uma aba comercial do Gantt.
+
+**Sugestões para o desenho (a confirmar, não decisões do Caio):** filtros por pessoa, squad e período; visualização mensal e faixas de duração; edição/cancelamento dos próprios registros. Definir em qual calendário/página entra e o alcance exato de "todo mundo" antes da implementação; não presumir acesso de convidados externos. Aprovação de férias, integração com RH, saldo e notificações não foram solicitados.
+
+**Encaminhamento ao Claude:** desenhar fluxo e permissões antes do código; cadastro persistente/novo nó requer avaliação R3, regras garantindo autoria e visibilidade, backup e testes. Verificar se há dados/fluxos de férias existentes para reaproveitar. Ideia registrada, sem implementação.
