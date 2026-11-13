@@ -15,7 +15,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
-| Antigravity | R2 | 📊 PR 2 — visão Gantt do board (base: `main` com o #1747) | [contrato](ideias/campanha-periodo-gantt.md#contrato-pr-2-antigravity--visão-gantt-do-board) |
 | Antigravity | R0 | 🪟 Acabamento "vidro lapidado" (`--specular` por tema + curvas `--ease-*`) | [GUIA_UI_UX §2.4/§2.5](GUIA_UI_UX.md) · [backlog](quadro/backlog.md#vidro-lapidado) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
@@ -34,6 +33,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 📊 Gantt: regras dos calendários e das datas-chave (`calendarios_gantt`, `gantt_marcos`, `gantt_marcos_globais` e os `_dev`) + os 2 nós novos no backup completo | resync + `firebase deploy --only database` **e depois** `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario` | 13/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado nas promoções do supercard (PR #1757) e do período/dica do Gantt (12/11) | resync + `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 12/11/2026 |
 
 ## Backlog
