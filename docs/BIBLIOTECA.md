@@ -58,6 +58,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `mare-timer(-dev).js` | ⏲ Timer: contas e gravação de play/pausa/encerrar (o Maré e, depois, a Ilha Dinâmica usam as mesmas funções) | kanban |
 | `mare-gxl(-dev).js` | 📊 Calendários do Gantt: leitor de .xlsx (sem biblioteca), prévia, publicação com histórico e restauração — carregado só quando alguém atualiza um calendário | kanban (sob demanda), painel |
 | `mare-gcal(-dev).js` | 📊 Calendários do Gantt: **fonte única** da configuração (abas, nomes, grupos do filtro, cores) + visualizador só leitura da régua de 6 semanas; v2: a aba virtual 🧭 Digital · dia a dia e `doDia()` | kanban (lê a configuração), okr/Radar (Calendário → 📊 Gantt, sob demanda) |
+| `mare-ferias(-dev).js` | 🏖️ Calendário geral de férias + Minhas férias (`kanban/ferias(_dev)`): `ouvir`, `ausente(quem, dia)`, `periodoDe(quem)` e `montar()` | kanban (📅 Calendários → 🏖️ Férias), okr/Radar (Calendário → 🏖️ Férias, sob demanda) |
 | `mare-sonar(-dev).js` | 🔍 Sonar: a busca do Oceano (Ctrl/⌘+K), um layout para todas as páginas | oceano, kanban, okr |
 | `mare-login(-dev).js` | Login Google direto (iPhone/iPad) | oceano, kanban (+ escala/intake via Oceano) |
 | `mare-plantao(-dev).js` | 🐛 Plantão de Bugs (relato, validação) | oceano, painel |
