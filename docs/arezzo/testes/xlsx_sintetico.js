@@ -95,4 +95,18 @@ function mktMes(nome, ano, mes, linhas, extra) {
   Object.assign(cel, (extra && extra.celulas) || {});
   return { nome, oculta: !!(extra && extra.oculta), celulas: cel, merges, C0 };
 }
-module.exports = { xlsx, marca, comercialMes, mktMes, colL };
+// ── Calendário Outlet (uma planilha por mês): aba "CALENDÁRIO", linha 2 = cabeçalho (DIA DA SEMANA | DIA | AÇÃO PRINCIPAL | AÇÃO SECUNDÁRIA |
+// AÇÃO DA MADRUGADA | AÇÕES MÍDIA 02 | META CAPTADO | MARGEM), uma linha por dia. acoes: { 'AÇÃO PRINCIPAL': [[d1, d2, txt]], … }.
+// serial: põe datas (número de série) numa 2ª aba — é de onde o leitor tira o mês quando o nome do arquivo não diz.
+const DOW_OUT = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+function outletMes(ano, mes, acoes, serial) {
+  const cab = ['DIA DA SEMANA', 'DIA', 'AÇÃO PRINCIPAL', 'AÇÃO SECUNDÁRIA', 'AÇÃO DA MADRUGADA', 'AÇÕES MÍDIA 02', 'META CAPTADO', 'MARGEM'];
+  const cel = { '1,11': 'CALENDÁRIO MÍDIA' }; cab.forEach((h, i) => { cel[`2,${i + 1}`] = h; });
+  const ult = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  for (let d = 1; d <= ult; d++) { const r = 2 + d; cel[`${r},1`] = DOW_OUT[new Date(Date.UTC(ano, mes - 1, d)).getUTCDay()]; cel[`${r},2`] = d; cel[`${r},7`] = 1000 * d; cel[`${r},8`] = 'MARGEM NÃO ENTRA'; }
+  for (const [col, lista] of Object.entries(acoes)) { const c = cab.indexOf(col) + 1; lista.forEach(([d1, d2, txt]) => { for (let d = d1; d <= d2; d++) cel[`${2 + d},${c}`] = txt; }); }
+  const abas = [{ nome: 'CALENDÁRIO', celulas: cel }, { nome: 'RESUMO AÇÕES', celulas: { '3,1': 'BEMVINDO20', '3,4': 130639.19 } }];
+  if (serial) { const c2 = {}; const s0 = Math.round((Date.UTC(ano, mes - 1, 1) - Date.UTC(1899, 11, 30)) / 864e5); for (let d = 0; d < ult; d++) c2[`${4 + d},1`] = s0 + d; abas.push({ nome: 'AÇÕES DIA A DIA', celulas: c2 }); }
+  return abas;
+}
+module.exports = { xlsx, marca, comercialMes, mktMes, outletMes, colL };

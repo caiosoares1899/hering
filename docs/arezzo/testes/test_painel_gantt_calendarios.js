@@ -67,6 +67,10 @@ const MKT = arq('Calendário Mktplace + Rede de Campanhas.xlsx', [
   X.mktMes('NOVEMBRO BF', 2026, 11, [{ r: 23, rot: 'AMAZON', ate: 23, barras: [[23, 1, 2, 'BF NÃO ENTRA']] }]),
   X.mktMes('Julho provisório', 2026, 7, [{ r: 23, rot: 'AMAZON', ate: 23, barras: [[23, 1, 2, 'PROVISÓRIO NÃO ENTRA']] }]),
 ]);
+// Outlet: 1 planilha por mês
+const OUT_NOV = arq('Outlet | Calendário Novembro 2026.xlsx', X.outletMes(2026, 11, { 'AÇÃO PRINCIPAL': [[1, 4, 'OUTLET PRINCIPAL A'], [5, 6, 'OUTLET PRINCIPAL B']], 'AÇÃO DA MADRUGADA': [[10, 10, 'MADRUGADA TESTE']] }));
+const OUT_DEZ = arq('Outlet | Calendário Dezembro 2026.xlsx', X.outletMes(2026, 12, { 'AÇÃO PRINCIPAL': [[1, 10, 'OUTLET DEZEMBRO']] }));
+const OUT_NOV2 = arq('calendario-sem-mes-no-nome.xlsx', X.outletMes(2026, 11, { 'AÇÃO PRINCIPAL': [[1, 4, 'OUTLET PRINCIPAL A'], [5, 8, 'OUTLET PRINCIPAL B']], 'AÇÕES MÍDIA 02': [[20, 22, 'MÍDIA TESTE']] }, true));
 const LIXO = arq('nao-e-planilha.xlsx', []); fs.writeFileSync(LIXO, 'isto não é um zip');
 
 const U = { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana ADM', photoURL: '', providerData: [{ providerId: 'google.com' }] };
@@ -88,7 +92,7 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
   const store = (p, cal) => p.evaluate(([n, c]) => JSON.parse(JSON.stringify((window.__store.kanban[n] || {})[c] || null)), [NO, cal]);
 
   { const { ctx, p, errs } = await abre({ width: 1280, height: 900 });
-    t('A. aba 📊 Gantt nas Configurações, com os três calendários (Marca, Comercial Hering, Comercial Marketplace)', await p.evaluate(() => document.querySelectorAll('#pcfg-gantt-cards .pg-card').length === 3 && /Comercial Hering/.test(document.getElementById('pcfg-gantt-cards').innerText) && /Comercial Marketplace/.test(document.getElementById('pcfg-gantt-cards').innerText) && /Ainda não publicado/.test(document.getElementById('pcfg-gantt-cards').innerText)));
+    t('A. aba 📊 Gantt nas Configurações, com os quatro calendários (Marca, Comercial Hering, Marketplace, Outlet)', await p.evaluate(() => document.querySelectorAll('#pcfg-gantt-cards .pg-card').length === 4 && /Comercial Outlet/.test(document.getElementById('pcfg-gantt-cards').innerText) && /Comercial Hering/.test(document.getElementById('pcfg-gantt-cards').innerText) && /Comercial Marketplace/.test(document.getElementById('pcfg-gantt-cards').innerText) && /Ainda não publicado/.test(document.getElementById('pcfg-gantt-cards').innerText)));
     await envia(p, 'marca', MARCA); let txt = await pv(p, 'marca');
     t('B. Marca: prévia com as linhas certas da HERING (sellout 2, web 3, redes 2, Canais Intimates 1, Canais Sports 1) e da KIDS (sellout, web, redes 1 cada)', /^Coleção sellout 2/m.test(txt) && / Web 3/.test(txt) && / Redes sociais 2/.test(txt) && /Canais Intimates \(site e CRM\) 1/.test(txt) && /Canais Sports \(site e CRM\) 1/.test(txt) && /Kids · Coleção sellout 1/.test(txt) && /Kids · Web 1/.test(txt) && /Kids · Redes sociais 1/.test(txt) && /＋ 12 novas/.test(txt), txt);
     t('C. Marca: não entram ACELERADORES WEB, EXCLUSIVO WEB, 2a ATIVAÇÃO (nem a da KIDS) e REDES | SPORTS', !/ACELERADOR|NÃO ENTRA|CONSUMIDOR/.test(txt), txt);
@@ -134,6 +138,20 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     t('M3. bloco do mês no fim da linha 1 ("Novembro 2026"): datas certas e barra mesclada 03→30/11', um2(/AMAZON OFERTA/)[0].ini === '2026-11-03' && um2(/AMAZON OFERTA/)[0].fim === '2026-11-30' && um2(/AMAZON OUTUBRO/)[0].ini === '2026-10-25' && um2(/AMAZON OUTUBRO/)[0].fim === '2026-10-31', mb);
     t('M4. sublinhas pela mescla do rótulo: Amazon (2), Meli+Full, TikTok (sublinha), Shopee', um2(/AMAZON DIA/)[0].linha === 'mkt_amazon' && um2(/MELI ESTOQUE/)[0].linha === 'mkt_meli' && um2(/TIKTOK LIVE/)[0].linha === 'mkt_tiktok' && um2(/SHOPEE KITS/)[0].linha === 'mkt_shopee', mb.map(x => x.linha + ':' + x.txt));
     t('M5. NÃO entram: bloco antigo copiado, Web da marca, linha fora da mescla, tabela solta de baixo', !mb.some(x => /NÃO ENTRA/.test(x.txt)) && mb.length === 7, mb.map(x => x.txt));
+    // Outlet: mês a mês
+    await envia(p, 'outlet', OUT_NOV); txt = await pv(p, 'outlet');
+    t('O1. Outlet novembro: linhas pelo cabeçalho (Ação principal, Ação da madrugada); fora métricas (Meta, Margem)', /Ação principal 2/.test(txt) && /Ação da madrugada 1/.test(txt) && !/MARGEM|Meta captado/i.test(txt), txt);
+    await p.click('.pg-card[data-cal="outlet"] .btn-p'); await p.waitForTimeout(300);
+    await envia(p, 'outlet', OUT_DEZ); txt = await pv(p, 'outlet');
+    t('O2. dezembro depois: prévia diz que NADA de novembro sai (só entra dezembro)', /＋ 1 novas/.test(txt) && /− 0 saem/.test(txt), txt);
+    await p.click('.pg-card[data-cal="outlet"] .btn-p'); await p.waitForTimeout(300);
+    let ob = Object.values((await store(p, 'outlet')).barras);
+    t('O3. depois de dezembro, novembro continua publicado (só criou mais um mês)', ob.some(x => /PRINCIPAL A/.test(x.txt) && x.ini === '2026-11-01' && x.fim === '2026-11-04') && ob.some(x => /DEZEMBRO/.test(x.txt) && x.ini === '2026-12-01' && x.fim === '2026-12-10'), ob.map(x => x.ini + ' ' + x.txt));
+    await envia(p, 'outlet', OUT_NOV2); txt = await pv(p, 'outlet');
+    t('O4. novembro de novo, SEM o mês no nome do arquivo: descobre pelas datas e troca só novembro (madrugada sai, B muda, mídia entra)', /＋ 1 novas/.test(txt) && /✎ 1 mudaram/.test(txt) && /− 1 saem/.test(txt), txt);
+    await p.click('.pg-card[data-cal="outlet"] .btn-p'); await p.waitForTimeout(300);
+    ob = Object.values((await store(p, 'outlet')).barras);
+    t('O5. dezembro intocado; novembro atualizado', ob.some(x => /DEZEMBRO/.test(x.txt)) && ob.find(x => /PRINCIPAL B/.test(x.txt)).fim === '2026-11-08' && !ob.some(x => /MADRUGADA TESTE/.test(x.txt)) && ob.some(x => /MÍDIA TESTE/.test(x.txt)), ob.map(x => x.ini + '→' + x.fim + ' ' + x.txt));
     // arquivo inválido
     await envia(p, 'marca', LIXO); txt = await pv(p, 'marca');
     t('N. arquivo que não é planilha: erro claro, sem publicar', /não parece um arquivo \.xlsx/i.test(txt) && !await p.evaluate(() => !!document.querySelector('.pg-card[data-cal="marca"] .btn-p')), txt);
@@ -144,7 +162,7 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
     t('P. celular 390 px: sem rolagem lateral na aba, botão Publicar alcançável', await p.evaluate(() => { const pn = document.querySelector('.cfg-body'); const bt = document.querySelector('.pg-card[data-cal="marca"] .btn-p').getBoundingClientRect(); return pn.scrollWidth <= pn.clientWidth + 1 && bt.right <= innerWidth && bt.height >= 36; }));
     await ctx.close(); }
   { const { ctx, p } = await abre({ width: 1280, height: 900 }, false);
-    t('Q. quem não é ADM também envia (13/11: a atualização é de todo mundo da Hering; o histórico guarda quem)', await p.evaluate(() => !/Só ADM/.test(document.getElementById('pcfg-gantt-cards').innerText) && document.querySelectorAll('#pcfg-gantt-cards input[type=file]').length === 3));
+    t('Q. quem não é ADM também envia (13/11: a atualização é de todo mundo da Hering; o histórico guarda quem)', await p.evaluate(() => !/Só ADM/.test(document.getElementById('pcfg-gantt-cards').innerText) && document.querySelectorAll('#pcfg-gantt-cards input[type=file]').length === 4));
     await ctx.close(); }
   await b.close(); fs.rmSync(tmp, { recursive: true, force: true }); console.log(ok ? '\nTUDO OK' : '\nFALHOU'); process.exit(ok ? 0 : 1);
 })();
