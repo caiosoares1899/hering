@@ -23,6 +23,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
+| Codex | Pedidos do Caio: solicitar atualização por calendário + mesmos calendários no Radar (R2; Claude integra) | [escopo](quadro/escalados.md#gantt-pedidos-radar) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
 | Claude | `test_apresentacao_live.js` falha também na `main` ("fora da sincronização, o slide do apresentador NÃO puxa a pessoa") | [escalados](quadro/escalados.md#apresentacao-live) | 09/11/2026 |
 | Antigravity | `database.rules.json`: `humor`/`humor_comp` da Travessia aceitam nota decimal (ex.: `1.5`); exigir inteiro | [escalados](quadro/escalados.md#travessia-humor-inteiro) | 11/11/2026 |
@@ -40,6 +41,8 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
+| 📊 Gantt: Digital por dia, consolidando os calendários comerciais Hering, Marketplace e Outlet | Claude | [escopo](quadro/escalados.md#gantt-digital-por-dia) |
+| 🏖️ Calendário geral de férias do Digital: cadastro próprio, visível para todos e filtros | Claude | [escopo](quadro/escalados.md#calendario-ferias-digital) |
 | 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
