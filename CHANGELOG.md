@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🧭 Gantt: Digital · dia a dia — Comercial Hering, Marketplace e Outlet na mesma régua + tudo de um dia (kanban v8.30.973-dev, okr v2.121-dev, mare-gcal v2) — SÓ DEV — 2026-11-13
+### 🧭 Gantt: Digital · dia a dia — Comercial Hering, Marketplace e Outlet na mesma régua + tudo de um dia (kanban v8.30.973, okr v2.121, mare-gcal v2) — PROD 13/11 — 2026-11-13
 
 - **Maré → 📊 Gantt** e **Radar → 📅 Calendário → 📊 Gantt**: aba nova **🧭 Digital · dia a dia** (pedido do Caio, era a ideia "Gantt consolidado por dia"). Os 3 calendários comerciais na mesma régua, **um bloco por origem** (cada um com o próprio aviso: carregando, não publicado, nada nestas semanas); chips filtram por **origem** — o filtro de grupo de cada aba própria não vaza para cá.
 - **Toque num dia** do cabeçalho: painel **"tudo deste dia"** com cada ação que cobre o dia (inclusive as de vários dias, com o período), agrupada por calendário; Esc ou ✕ fecha; respeita o filtro de origem. Redesenha ao vivo quando qualquer um dos 3 é republicado.
@@ -32,11 +32,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **mare-gcal v2**: `CONSOLIDADO` (aba virtual, fora de `CALS`/regras) e `doDia()` — a mesma função alimenta o painel nos dois apps.
 - Teste: `docs/arezzo/testes/test_gantt_digital.js` (Maré e Radar: blocos, filtro que não vaza, painel com ação de vários dias, republicação ao vivo, destaque, XSS, Esc, `?gantt=digital`, 390 px × 3 temas). Promoção: `kanban`, `okr` e `mare-gcal` juntos.
 
-### 📊 Gantt dos cards: só cards com período (Início + Fim) (kanban v8.30.972-dev) — SÓ DEV — 2026-11-13
+### 📊 Gantt dos cards: só cards com período (Início + Fim) (kanban v8.30.972-dev → PROD 13/11 em v8.30.973) — 2026-11-13
 
 Decisão do Caio (13/11): o Gantt é das campanhas, que atravessam vários dias. Card que só tem prazo (termina num dia) sai do Gantt e fica no 📅 Calendário e na 🛤️ Timeline; o rodapé diz quantos ficaram de fora e onde vê-los. O ◆ do prazo continua aparecendo nos cards com período. Filtro De/Até passa a olhar só o período. Ajuda do Gantt atualizada.
 
-### 📊 Radar: Gantt dos calendários do Digital no Calendário + link direto okr.html?gantt (okr v2.120-dev, kanban v8.30.971-dev, mare-gcal v1) — SÓ DEV — 2026-11-13
+### 📊 Radar: Gantt dos calendários do Digital no Calendário + link direto okr.html?gantt (okr v2.120-dev, kanban v8.30.971-dev, mare-gcal v1 → PROD 13/11 em kanban v8.30.973 · okr v2.121) — 2026-11-13
 
 - **Radar → 📅 Calendário → 📊 Gantt** (ao lado de Mês e Agenda): os mesmos calendários do Maré — 🎯 Marca, 🛒 Comercial Hering, 🛍️ Marketplace e 🏷️ Outlet — na régua de 6 semanas, com ◀ Hoje ▶, 📆 Mês, filtro por grupo e os destaques ⚠️/★ do ADM. Só leitura (atualizar continua no Maré). Pedido do Caio: os líderes que não usam o Maré também enxergam.
 - **Link direto**: `okr.html?gantt` abre direto no Gantt (`?gantt=marca|comercial|mktplace|outlet` escolhe a aba).
@@ -45,7 +45,7 @@ Decisão do Caio (13/11): o Gantt é das campanhas, que atravessam vários dias.
 - Teste: `test_radar_gantt.js` (link, 4 abas, Mês, Hoje/◀▶, filtro, destaque, XSS, sem acesso, 390 px × 3 temas); suítes do Gantt do Maré seguem verdes.
 - **Promoção: `kanban`, `okr` e `mare-gcal` sobem JUNTOS** (o kanban carrega o módulo na abertura; sem ele, o Gantt do Maré fica só com os cards da squad). Na promoção: `guia-okr.html` (passo do Calendário) e `npm run conhecimento` (Ajuda do Radar → Agente; deploy das funções).
 
-### 📊 Gantt ao lado da ↕ Ordenação na toolbar (kanban v8.30.970-dev) — SÓ DEV — 2026-11-13
+### 📊 Gantt ao lado da ↕ Ordenação na toolbar (kanban v8.30.970-dev → PROD 13/11 em v8.30.973) — 2026-11-13
 
 Na ordem padrão da toolbar, o botão 📊 Gantt saiu do fim da fila (ao lado da 🛤️ Timeline) e foi para logo depois de ↕ Ordenação. Quem já reorganizou a barra (⌨️ Atalhos → Reorganizar) mantém a própria ordem. Ajuda do Gantt atualizada (posição do botão e 📆 Mês no parágrafo dos filtros).
 
