@@ -91,3 +91,28 @@ Não fazer: database.rules.json, functions/, merge, deploy, promoção para prod
 Prova: saída dos testes colada · capturas em docs/capturas/ferias_calendario/ · o que NÃO verificou
 Entrega: branch antigravity/ferias-calendario + PR (base main, sem merge) + resumo com Prova, "Fronteira:" (obs e nomes de outras pessoas indo para o DOM → só esc()/textContent) e "Dica:"
 ```
+
+## Contrato — F3: aviso "🏖️ está de férias" + selo (Codex)
+
+```
+Objetivo: ao marcar alguém que está (ou estará) de férias, a pessoa que marca vê na hora "🏖️ Ana Souza está de férias até 28/11" — sem impedir a ação; e quem está fora HOJE ganha um selo 🏖️ discreto onde aparece como responsável.
+Risco: R1 (2 páginas -dev, só leitura do nó; nada novo gravado)  ·  Modelo e esforço: GPT high  ·  Orçamento: 3 h; estourou, para e relata
+COMEÇA SÓ DEPOIS DO MERGE DA F2 (usa a API do mare-ferias-dev.js). Branch a partir de origin/main com a F2 dentro.
+Contexto:
+- Nota: docs/ideias/modo-ferias.md (decisões e modelo). Fonte única: MareFerias.ausente(quem, diaISO) e MareFerias.periodoDe(quem) — `quem` aceita uid OU inicial (o Maré usa iniciais em card.owner, participantes e @menções). NÃO ler kanban/ferias direto nas páginas: tudo pelo módulo (que a página já carrega por causa da F2).
+- "De férias" para o aviso = período ATUAL ou que COMEÇA nos próximos 7 dias ("🏖️ Ana sai de férias em 02/12 (até 15/12)"). Selo = só quem está fora HOJE (data de São Paulo).
+- Aviso: o toast da página (Maré: showToast(msg, duration) ~L30437; Radar: showToast ~L2491), 6 s, uma vez por pessoa por ação (marcar 3 pessoas de férias = 1 toast com os 3 nomes). Não bloqueia nem pede confirmação.
+- Pontos de disparo (grep -n pelo nome; números de linha envelhecem):
+  Maré (kanban-dev.html): insertMention (@menção em comentário/descrição) · #m-owner (onchange do responsável) · addParticipant · _doBulkAssign (atribuir em lote) · executarReatribuir (🔄 Reatribuir cards).
+  Radar (okr-dev.html): _okrMencaoEscolhe (@menção nas anotações) · #okr-m-resp (responsável do Marco) · responsáveis do Objetivo (onde draft.responsaveis ganha uid; ver o _okrRecordHistory "adicionou … como responsável" ~L7495).
+- Selo 🏖️ (title "De férias até 28/11"): Maré — no responsável do card no board (onde .minicard-owner / avatar do dono é desenhado) e nos chips de participantes do modal; Radar — no responsável do Marco e nos responsáveis do Objetivo no cartão. Texto do title por textContent/esc() (nome e obs são texto de outra pessoa).
+- Quem não tem o módulo carregado (ex.: falhou a rede) segue sem aviso e sem erro (guard `window.MareFerias?.ausente`).
+Arquivos: kanban-dev.html, okr-dev.html, version.json (mare-cli bump), Ajuda (1 frase no tópico de Férias que a F2 criou, Maré e Radar), docs/arezzo/testes/test_ferias_aviso.js (novo) · Reservados por outros: os do Quadro
+Critérios de aceite:
+- test_ferias_aviso.js (Playwright + fakefb; Maré e Radar; 1280 e 390 px): cada ponto de disparo acima mostra o toast para alguém de férias hoje e para quem sai em ≤7 dias; NÃO mostra para quem volta antes de hoje nem para quem sai em 8+ dias; 3 pessoas de férias numa ação = 1 toast; marcar continua funcionando (o card/Marco é salvo); selo aparece só para quem está fora hoje; inicial e uid dão o mesmo resultado; nome com <img src=x onerror=...> vira texto; sem MareFerias carregado não há erro JS
+- O teste FALHA no main antes da mudança (rode e cole as falhas) e passa depois
+- checar.js e `cd functions && npm test` verdes; mapas regenerados
+Não fazer: gravar qualquer coisa nova no banco, mexer no mare-ferias-dev.js (se faltar algo na API, pare e relate), database.rules.json, functions/, merge, deploy, prod
+Prova: saída do teste antes/depois · captura de 1 toast e 1 selo em docs/capturas/ferias_aviso/ · o que NÃO verificou
+Entrega: branch codex/ferias-aviso + PR (base main, sem merge) + resumo com Prova, "Fronteira:" (nome de outra pessoa no toast/title → só textContent/esc) e "Dica:"
+```
