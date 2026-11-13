@@ -2910,7 +2910,123 @@ input[type="date"]{-moz-appearance:textfield;}
 .gantt-fdata{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--txt2);font-weight:600;}
 .gantt-fmais.on{border-color:var(--accent);color:var(--txt);}
 .gantt-per-on{color:var(--txt);font-weight:700;}
-@media (max-width:768px){ .gantt-filtros{padding:7px 9px;} .gantt-fsel{max-width:none;flex:1 1 140px;} .gantt-fdata{flex:1 1 100%;} .gantt-fdata input{flex:1;} }
+/* 📊 Abas do Gantt (cards · Calendário de Marca · Comercial Hering · Comercial Marketplace) */
+.gantt-abas{display:flex;gap:4px;padding:4px;background:rgb(var(--surface-rgb));border:1px solid var(--glass-b);border-radius:999px;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none;}
+.gantt-abas::-webkit-scrollbar{display:none;}
+.gantt-aba{flex:none;border:none;background:none;color:var(--txt2);font:600 12.5px/1 'DM Sans',sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+.gantt-aba:hover{color:var(--txt);background:var(--glass-h);}
+.gantt-aba.on{background:var(--accent);color:#04121f;}
+[data-theme="light"] .gantt-aba.on{color:#fff;}
+.gantt-aba:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.gantt-filtros.is-cal select[data-campo],.gantt-filtros.is-cal .gantt-fmais{display:none;}
+.gantt-cal-row{cursor:default;min-height:32px;}
+.gantt-cal-row:hover{background:none;}
+.gantt-cal-row .gantt-col-sticky{background:var(--gantt-sticky-bg);border-left:3px solid var(--gantt-lin);}
+.gantt-cal-row.is-1a{border-top:1px solid var(--glass-b);}
+.gantt-cal-row.is-1a:first-child{border-top:none;}
+.gantt-cal-lin{color:var(--txt);font-weight:700;font-size:12px;}
+.gantt-aba-c{display:none;}
+@media (max-width:600px){ .gantt-aba-l{display:none;} .gantt-aba-c{display:inline;} }
+.gantt-cal-bar{cursor:pointer;}
+/* 💬 balão do nome inteiro (só quando o texto não cabe) — receita do Toast: opacity + translateY curtos */
+.gantt-tip{position:fixed;z-index:1000;max-width:min(340px,calc(100vw - 16px));padding:8px 11px;border-radius:10px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);box-shadow:0 8px 24px rgba(0,0,0,.32);color:var(--txt);font:12px/1.4 'DM Sans',sans-serif;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .14s var(--ease-out,ease),transform .14s var(--ease-out,ease);overflow-wrap:anywhere;}
+.gantt-tip.on{opacity:1;transform:none;}
+.gantt-tip.baixo{transform:translateY(-4px);}
+.gantt-tip.baixo.on{transform:none;}
+.gantt-tip::after{content:'';position:absolute;left:var(--seta,50%);bottom:-6px;width:10px;height:10px;margin-left:-5px;background:inherit;border-right:1px solid var(--glass-b);border-bottom:1px solid var(--glass-b);transform:rotate(45deg);}
+.gantt-tip.baixo::after{bottom:auto;top:-6px;transform:rotate(225deg);}
+.gantt-tip-nome{font-weight:700;font-size:12.5px;}
+.gantt-tip-det{color:var(--txt2);font-size:11.5px;margin-top:2px;}
+.gantt-tip-selo{font-size:11px;font-weight:700;color:var(--warn);margin-bottom:2px;}
+@media (prefers-reduced-motion:reduce){ .gantt-tip,.gantt-tip.baixo{transition:opacity .01s;transform:none;} }
+@media (hover:none) and (pointer:coarse){ .gantt-tip{display:none;} }
+.gantt-cal-fgrp{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;}
+.gantt-cal-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+.gantt-up-panel{width:min(620px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.gantt-up-body{padding:12px 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;font-size:12.5px;color:var(--txt);line-height:1.5;}
+.gantt-up-exp{color:var(--txt2);}
+.gantt-up-pick{position:relative;align-self:flex-start;cursor:pointer;}
+.gantt-up-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;}
+.gantt-hist-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.gantt-hist-it{border:1px solid var(--glass-b);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:4px;}
+.gantt-hist-it.is-atual{border-color:var(--accent);}
+.gantt-hist-l1 span{color:var(--txt2);}
+.gantt-hist-l2{color:var(--txt2);font-size:11.5px;overflow-wrap:anywhere;}
+.gantt-hist-atual{color:var(--accent)!important;font-weight:700;font-size:11px;}
+.gantt-hist-volta{align-self:flex-start;}
+.gantt-hist-vazio{color:var(--txt2);}
+@media (hover:none) and (pointer:coarse){ .gantt-cal-acoes .btn,.gantt-hist-volta,.gantt-up-pick{min-height:44px;} }
+.gantt-cal-fchip{border:1px solid var(--glass-b);background:rgba(var(--surface2-rgb),.8);color:var(--txt2);border-radius:999px;padding:5px 12px;font:600 12px/1.2 'DM Sans',sans-serif;cursor:pointer;}
+.gantt-cal-fchip:hover{color:var(--txt);border-color:var(--accent);}
+.gantt-cal-fchip.on{background:var(--accent);color:#04121f;border-color:var(--accent);}
+[data-theme="light"] .gantt-cal-fchip.on{color:#fff;}
+.gantt-cal-fchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+@media (hover:none) and (pointer:coarse){ .gantt-cal-fchip{min-height:44px;padding:8px 14px;} }
+/* ⚠️ destaque do ADM: cor cheia e borda forte; o alerta leva ícone + texto alternativo (estado = cor + ícone + texto) */
+.gantt-cal-bar.is-dest{font-weight:800;border-width:2px;border-color:var(--gantt-tag);}
+.gantt-cal-bar.is-alerta{box-shadow:0 0 0 1px var(--gantt-tag), 0 2px 8px color-mix(in srgb, var(--gantt-tag) 35%, transparent);}
+.gantt-cal-alerta{flex:none;font-size:11px;line-height:1.2;}
+.gantt-cal-dest{flex:none;font-size:11px;line-height:1.2;color:var(--gantt-tag);}
+.gantt-dz-txt{font-size:13px;font-weight:700;color:var(--txt);line-height:1.4;overflow-wrap:anywhere;}
+.gantt-dz-per{font-size:11.5px;color:var(--txt2);margin-bottom:6px;}
+.gantt-dz-nota{font-size:11px;color:var(--txt2);line-height:1.45;margin-top:4px;}
+.gantt-dz-semcor{background:rgb(var(--surface2-rgb));color:var(--txt2);font-size:13px;border:2px dashed var(--txt2);}
+.gantt-mc-chip.is-centro{justify-self:center;max-width:none;overflow:visible;margin:0;z-index:1;}
+.gantt-mc-chip.is-ini{justify-self:start;max-width:none;overflow:visible;margin:0;}
+.gantt-mc-chip.is-fim{justify-self:end;max-width:none;overflow:visible;margin:0;}
+.gantt-mc-chip.is-centro .gantt-mc-nome,.gantt-mc-chip.is-ini .gantt-mc-nome,.gantt-mc-chip.is-fim .gantt-mc-nome{max-width:calc(6 * var(--gantt-day-w));}
+
+.gantt-cal-bloco .gantt-grp-lbl{font-size:12.5px;letter-spacing:.02em;}
+.gantt-cal-bloco.is-kids{margin-top:14px;border-top:1px solid var(--glass-b);}
+/* 🛒🛍️ Comerciais (Hering e Marketplace) "como no Excel": dia largo e o texto inteiro dentro da barra, quebrando linha */
+#gantt-view.gantt-largo{--gantt-day-w:150px;}
+.gantt-largo .gantt-cal-row .gantt-track{align-items:start;row-gap:4px;padding:5px 0;}
+.gantt-largo .gantt-cal-bar{height:auto;min-height:30px;align-items:flex-start;padding:6px 8px;}
+.gantt-largo .gantt-cal-bar .gantt-bar-txt{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px;line-height:1.35;overflow-wrap:anywhere;}
+.gantt-largo .gantt-bar.span-1{justify-content:flex-start;padding:6px 8px;}
+.gantt-largo .gantt-bar-clip{line-height:1.35;}
+.gantt-largo .gantt-day-hd{font-size:12px;}
+/* com dia largo, barra/mês começam fora da tela: o texto acompanha a rolagem e fica logo depois da coluna fixa */
+.gantt-largo .gantt-cal-bar{overflow:visible;}
+.gantt-largo .gantt-cal-bar .gantt-bar-txt{position:sticky;left:calc(var(--gantt-title-w) + 10px);flex:0 1 auto;}   /* largura do texto (não da barra): sobra espaço para ele acompanhar a rolagem */
+.gantt-largo .gantt-month-hd{overflow:visible;}
+.gantt-largo .gantt-month-lbl{position:sticky;left:calc(var(--gantt-title-w) + 10px);}
+@media (max-width:768px){ #gantt-view.gantt-largo{--gantt-day-w:132px;} }
+@media (hover:none) and (pointer:coarse){ .gantt-largo .gantt-cal-bar{height:auto;min-height:44px;} }
+/* 📌 Datas-chave: faixa/linha atrás das barras (a camada da linha de hoje) + nome numa linha da régua */
+.gantt-mc-faixa{height:100%;background:color-mix(in srgb, var(--mc) 13%, transparent);border-left:1px dashed color-mix(in srgb, var(--mc) 70%, transparent);border-right:1px dashed color-mix(in srgb, var(--mc) 70%, transparent);}
+.gantt-mc-faixa.is-dia{width:2px;justify-self:center;background:var(--mc);border:none;opacity:.75;}
+.gantt-mc-row .gantt-mc-corner{gap:6px;justify-content:space-between;}
+.gantt-mc-add{border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);border-radius:999px;width:24px;height:24px;font-size:14px;line-height:1;cursor:pointer;flex:none;}
+.gantt-mc-add:hover{border-color:var(--accent);background:var(--glass-h);}
+.gantt-mc-track{display:grid;grid-template-columns:repeat(42, minmax(var(--gantt-day-w), 1fr));grid-auto-rows:24px;row-gap:3px;padding:4px 0;align-items:center;min-height:32px;}
+.gantt-mc-chip{display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:100%;height:22px;margin:0 2px;padding:0 8px;border-radius:999px;cursor:pointer;
+  font:700 11px/1 'DM Sans',sans-serif;color:var(--txt);background:color-mix(in srgb, var(--mc) 22%, rgb(var(--surface-rgb)));border:1px solid color-mix(in srgb, var(--mc) 70%, var(--txt) 30%);white-space:nowrap;overflow:hidden;justify-self:start;}
+.gantt-mc-chip:hover{background:color-mix(in srgb, var(--mc) 34%, rgb(var(--surface-rgb)));}
+.gantt-mc-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.gantt-mc-nome{overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.gantt-mc-glb{font-size:10px;flex:none;}
+/* "Hoje" na linha 📌: mesma pílula das datas-chave, na cor de destaque (a mesma da linha de hoje) e sem clique */
+.gantt-mc-chip.gantt-mc-hoje{--mc:var(--accent);color:var(--txt);cursor:default;}
+.gantt-mc-vazio{grid-column:1/43;font-size:11px;color:var(--txt2);padding-left:10px;}
+.gantt-mc-panel{width:min(440px,94vw);}
+.gantt-mc-form{display:flex;flex-direction:column;gap:6px;padding:12px 18px 18px;}
+.gantt-mc-datas{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.gantt-mc-opc{font-weight:400;color:var(--txt3);}
+.gantt-mc-cores{display:flex;gap:8px;flex-wrap:wrap;}
+.gantt-mc-cor{width:28px;height:28px;border-radius:50%;background:var(--mc);border:2px solid transparent;cursor:pointer;}
+.gantt-mc-cor.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--mc);}
+.gantt-mc-cor:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.gantt-mc-glob{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);margin-top:4px;}
+.gantt-mc-glob[hidden]{display:none;}
+.gantt-mc-aviso{min-height:16px;font-size:11.5px;color:var(--danger);}
+.gantt-mc-pe{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.gantt-mc-del[hidden]{display:none;}
+.gantt-mc-del{color:var(--danger);}
+@media (hover:none) and (pointer:coarse){ .gantt-mc-add{width:44px;height:44px;} .gantt-mc-track{grid-auto-rows:34px;} .gantt-mc-chip{height:32px;} .gantt-mc-cor{width:40px;height:40px;} .gantt-mc-form .fi{font-size:16px;} .gantt-mc-pe .btn,.gantt-mc-pe .btn-p{min-height:44px;} }
+@media (max-width:768px){ .gantt-abas{align-self:stretch;} .gantt-aba{flex:1 0 auto;padding:9px 12px;} }
+@media (hover:none) and (pointer:coarse){ .gantt-aba{min-height:44px;} .gantt-cal-row{min-height:44px;} .gantt-cal-bar{height:32px;} }
+@media (max-width:768px){ .gantt-filtros{padding:7px 9px;} .gantt-fsel{max-width:none;flex:1 1 140px;} .gantt-fdata{flex:1 1 100%;flex-wrap:wrap;min-width:0;} .gantt-fdata .gantt-fmes{flex:1 1 100%;} .gantt-fdata input{flex:1;} }
 @media (hover:none) and (pointer:coarse){ .gantt-fsel{font-size:16px;min-height:44px;} .gantt-filtros .btn{min-height:44px;} }
 /* 📊 Visão Gantt do board (Início → Fim + marco ◆ no Prazo) */
 #gantt-view{
@@ -7493,7 +7609,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.959</div>
+<div class="version">v8.30.969</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7846,7 +7962,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 </script>
 <script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=19"></script>
-<script src="mare-dicas.js?v=15"></script>
+<script src="mare-dicas.js?v=17"></script>
 <script src="mare-sonar.js?v=8"></script>
 <script src="mare-timer.js?v=1"></script>
 
@@ -8772,6 +8888,13 @@ function _applyCardSectionsVisibility(){
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
 let boardView='kanban'; // 'kanban' (colunas, padrão) | 'timeline' (lista cronológica por prazo) | 'gantt' (barras Início→Fim + ◆ Prazo, ver renderGanttView())
 let _ganttOffsetDays=0; // deslocamento em dias (múltiplos de 28) da régua de 6 semanas do Gantt
+// 📊 Abas do Gantt (13/11/2026): 'cards' (cards da squad) | 'marca' (Calendário de Marca) | 'comercial' (Comercial Hering) | 'mktplace' (Comercial Marketplace).
+// Os calendários são publicados pelo ADM no Painel (⚙ → 📊 Gantt) em kanban/calendarios_gantt(_dev) e só são lidos quando a aba abre.
+let _ganttAba=(()=>{ try{ const v=safeLS.getItem('mare_gantt_aba'); return ['cards','marca','comercial','mktplace','outlet'].includes(v)?v:'cards'; }catch(e){ return 'cards'; } })();
+const _ganttCal={ marca:{ estado:'' , dado:null, dest:{} }, comercial:{ estado:'', dado:null, dest:{} }, mktplace:{ estado:'', dado:null, dest:{} }, outlet:{ estado:'', dado:null, dest:{} } };
+// 📌 Datas-chave do Gantt (13/11/2026): eventos que a squad marca (Black Friday, Natal…) e viram faixa/linha atrás das barras nas 3 abas.
+// Da squad: kanban/squads/{sq}/gantt_marcos(_dev) — PO/Organizador/ADM criam. Globais: kanban/gantt_marcos_globais(_dev) — só ADM.
+const _ganttMc={ squad:{}, global:{}, lido:'' };
 let _ganttScrollPend='hoje'; // próxima pintura do Gantt: 'hoje' (rola até hoje) | 'inicio' (começo da janela) | '' (mantém a posição — redesenho por atualização do Firebase)
 // Ordenação dos cards dentro de cada coluna — preferência pessoal por squad,
 // não é dado do board (cada pessoa pode preferir ver diferente).
@@ -14337,6 +14460,7 @@ function toggleGanttView(){
   renderBoard();
 }
 function ganttNav(deltaDays){
+  _ganttMesSel='';
   if(deltaDays===0){ _ganttOffsetDays = 0; _ganttScrollPend='hoje'; }
   else { _ganttOffsetDays += deltaDays; _ganttScrollPend='inicio'; }
   if(boardView==='gantt') renderBoard();
@@ -14396,6 +14520,7 @@ function _ganttCardGrupo(c){
 // As opções vêm dos <select> do 🔭 (uma fonte só) e a escolha passa pelo mesmo caminho do drawer
 // (applyFilters / setSubmarcaFromDrawer / setCanalVendaFromDrawer): board, calendário e 🔭 ficam em sincronia.
 let _ganttScrollIso='';
+let _ganttMesSel='';
 const _GANTT_FILTROS=[
   { campo:'owner',    src:'f-owner',      rot:'Pessoa' },
   { campo:'tag',      src:'f-tag',        rot:'Tag' },
@@ -14406,13 +14531,23 @@ function _ganttFiltrosCriar(){
   const el=document.createElement('div');
   el.id='gantt-filtros'; el.className='gantt-filtros'; el.setAttribute('role','group'); el.setAttribute('aria-label','Filtros do Gantt');
   el.innerHTML=_GANTT_FILTROS.map(f=>`<select class="gantt-fsel" data-campo="${f.campo}" aria-label="${f.rot}" onchange="ganttFiltro(this.dataset.campo,this.value)"></select>`).join('')
-    +'<span class="gantt-fdata" title="Só De: leva a régua até a data. De e Até: mostra só os cards cujo período ou prazo cai no intervalo.">📅 <span>De</span> <input type="date" class="gantt-fsel" data-p="de" aria-label="Período: de" onchange="ganttPeriodo()"> <span>até</span> <input type="date" class="gantt-fsel" data-p="ate" aria-label="Período: até" onchange="ganttPeriodo()"></span>'
+    +'<span class="gantt-fdata" title="Só De: leva a régua até a data. De e Até: mostra só os cards cujo período ou prazo cai no intervalo."><select class="gantt-fsel gantt-fmes" aria-label="Ir para o mês" onchange="ganttIrMes(this.value)"></select> <span>De</span> <input type="date" class="gantt-fsel" data-p="de" aria-label="Período: de" onchange="ganttPeriodo()"> <span>até</span> <input type="date" class="gantt-fsel" data-p="ate" aria-label="Período: até" onchange="ganttPeriodo()"></span>'
     +'<button type="button" class="btn btn-sm gantt-fmais" onclick="_prefsOpenFilters()" title="Prioridade, prazo, texto, subtime e os demais filtros do board">🔭 Mais filtros</button>'
     +'<button type="button" class="btn btn-sm gantt-flimpa" onclick="ganttLimpar()">✕ Limpar filtros</button>';
   return el;
 }
 function _ganttFiltrosSync(el){
   if(!el) return;
+  const mes=el.querySelector('.gantt-fmes'), ano=String(new Date().getFullYear());
+  if(mes){
+    // Preserva as opções (e o select aberto) nas atualizações ao vivo.
+    if(mes.dataset.ano!==ano){
+      const nomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      mes.innerHTML='<option value="">📆 Mês</option>'+nomes.map((nome,i)=>`<option value="${ano}-${String(i+1).padStart(2,'0')}">${nome} ${ano}</option>`).join('');
+      mes.dataset.ano=ano;
+    }
+    if(mes.value!==_ganttMesSel) mes.value=_ganttMesSel;
+  }
   const af=activeFilters||{};
   // As opções do 🔭 só são montadas quando o drawer abre: monta aqui também, sem perder o escolhido.
   const fo=document.getElementById('f-owner'), ft=document.getElementById('f-tag');
@@ -14450,13 +14585,14 @@ function _ganttFiltrosSync(el){
     inp.classList.toggle('on', _ganttPeriodoAtivo());
   });
   const limpa=el.querySelector('.gantt-flimpa');
-  if(limpa) limpa.hidden=!((typeof _hasActiveFilters==='function' && _hasActiveFilters()) || _ganttPeriodoAtivo());
+  if(limpa) limpa.hidden=!((_ganttAba==='cards' && typeof _hasActiveFilters==='function' && _hasActiveFilters()) || _ganttPeriodoAtivo() || !!(_ganttAba!=='cards' && _ganttCalFiltro[_ganttAba]));
 }
 // 📅 Período do Gantt (12/11): filtro só desta visão (o board não tem eixo de datas).
 // Só "De" = ir para a data; "De" e "Até" = mostra só cards cujo período ou prazo cai no intervalo.
 let _ganttPeriodo={ de:'', ate:'' };
 function _ganttPeriodoAtivo(){ return !!(_ganttPeriodo.de && _ganttPeriodo.ate); }
 function ganttPeriodo(){
+  _ganttMesSel='';
   const el=document.getElementById('gantt-filtros'); if(!el) return;
   const iso=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:'';
   let de=iso(el.querySelector('input[data-p="de"]')?.value), ate=iso(el.querySelector('input[data-p="ate"]')?.value);
@@ -14466,7 +14602,9 @@ function ganttPeriodo(){
   else if(boardView==='gantt') renderBoard();
 }
 function ganttLimpar(){
+  _ganttMesSel='';
   _ganttPeriodo={ de:'', ate:'' };
+  if(_ganttCalFiltro[_ganttAba]){ _ganttCalFiltro[_ganttAba]=''; try{ safeLS.setItem('mare_gantt_cal_filtro', JSON.stringify(_ganttCalFiltro)); }catch(e){} }
   clearFilters(); // zera os filtros do board e redesenha (o Gantt junto)
 }
 function ganttFiltro(campo,v){
@@ -14478,6 +14616,11 @@ function ganttFiltro(campo,v){
   else if(campo==='canal') setCanalVendaFromDrawer();
   else applyFilters();
 }
+function ganttIrMes(v){
+  if(!v) return;
+  _ganttMesSel=v;
+  ganttIrPara(v+'-01');
+}
 function ganttIrPara(iso){
   const alvo=_ganttParseIsoLocal(iso); if(!alvo) return;
   // Mesmo enquadramento do "Hoje": a janela começa no domingo da semana anterior à data.
@@ -14486,7 +14629,563 @@ function ganttIrPara(iso){
   _ganttScrollPend='data'; _ganttScrollIso=iso;
   if(boardView==='gantt') renderBoard();
 }
+const _GANTT_ABAS=[
+  { id:'cards',     rot:'🗂 Cards da squad',      curto:'🗂 Cards' },
+  { id:'marca',     rot:'🎯 Calendário de Marca', curto:'🎯 Marca' },
+  { id:'comercial', rot:'🛒 Comercial Hering',      curto:'🛒 Hering' },
+  { id:'mktplace',  rot:'🛍️ Comercial Marketplace', curto:'🛍️ Mktplace' },
+  { id:'outlet',    rot:'🏷️ Comercial Outlet',      curto:'🏷️ Outlet' },
+];
+const _GANTT_CAL_NOME={ marca:'Calendário de Marca', comercial:'Calendário Comercial Hering', mktplace:'Calendário Comercial Marketplace', outlet:'Calendário Comercial Outlet' };
+// 13/11: "Site todo"/"Site Saldos" viraram "Site e App" (as ações valem nos dois) — vale já para o que foi publicado antes do novo nome
+const _GANTT_ROT_NOVO={ comercial:{ site:'Site e App · todo (não remarcados)', saldos:'Site e App · saldos' } };
+// Filtro por grupo de linhas (chips na barra do De/Até): "Site e App" entra tanto em Site quanto em App.
+const _GANTT_CAL_GRUPOS={
+  comercial:[
+    { id:'site', rot:'🖥️ Site', linhas:['site','saldos','adulto','intimates','kids','sports','acao_site'] },
+    { id:'app',  rot:'📱 App',  linhas:['site','saldos','app'] },
+    { id:'crm',  rot:'✉️ CRM',  linhas:['crm'] },
+    { id:'midia',rot:'📣 Mídia',linhas:['midia'] },
+    { id:'lanc', rot:'🚀 Lançamentos e datas', linhas:['lancamentos','geral'] },
+  ],
+  // Outlet: as linhas nascem do cabeçalho da planilha (out_<nome da coluna>) — os grupos casam pelo nome (re)
+  outlet:[
+    { id:'principal', rot:'⭐ Principal',   re:/^out_acao_principal/ },
+    { id:'secundaria',rot:'Secundária',    re:/^out_acao_secundaria/ },
+    { id:'relampago', rot:'⚡ Relâmpago e ofertas do dia', re:/relampago|ofertas_do_dia/ },
+    { id:'madrugada', rot:'🌙 Madrugada',   re:/madrugada/ },
+    { id:'crm',       rot:'✉️ CRM',          re:/crm/ },
+    { id:'midia',     rot:'📣 Mídia e afiliados', re:/midia|afiliados|livelo/ },
+    { id:'extras',    rot:'Extras (reloginhos, BEON, benefícios…)', re:/extras|reloginhos|beon|beneficios/ },
+  ],
+  mktplace:[
+    { id:'amazon',  rot:'Amazon',         linhas:['mkt_amazon'] },
+    { id:'meli',    rot:'Mercado Livre',  linhas:['mkt_meli'] },
+    { id:'shopee',  rot:'Shopee',         linhas:['mkt_shopee'] },
+    { id:'dafiti',  rot:'Dafiti',         linhas:['mkt_dafiti'] },
+    { id:'tiktok',  rot:'TikTok Shop',    linhas:['mkt_tiktok'] },
+    { id:'magalu',  rot:'Magalu',         linhas:['mkt_magalu'] },
+    { id:'netshoes',rot:'Netshoes e Zattini', linhas:['mkt_netshoes','mkt_zattini'] },
+    { id:'outros',  rot:'Outros (Off Premium, Privalia, Zzmall, Posthaus, Off Hering)', linhas:['mkt_offprem','mkt_privalia','mkt_zzmall','mkt_posthaus','mkt_offhering'] },
+  ],
+  marca:[
+    { id:'colecao', rot:'👕 Coleção', linhas:['sellout','kids_sellout'] },
+    { id:'web',     rot:'🖥️ Web',     linhas:['web','kids_web'] },
+    { id:'redes',   rot:'📲 Redes',   linhas:['redes','kids_redes'] },
+    { id:'canais',  rot:'🛍️ Canais Intimates e Sports', linhas:['intimates','sports'] },
+    { id:'kids',    rot:'👶 Kids',    linhas:['kids_sellout','kids_web','kids_redes'] },
+  ],
+};
+let _ganttCalFiltro=(()=>{ try{ const v=JSON.parse(safeLS.getItem('mare_gantt_cal_filtro')||'{}'); return { marca:String(v.marca||''), comercial:String(v.comercial||''), mktplace:String(v.mktplace||''), outlet:String(v.outlet||'') }; }catch(e){ return { marca:'', comercial:'', mktplace:'', outlet:'' }; } })();
+function ganttCalFiltro(grupo){
+  const tipo=_ganttAba; if(!_GANTT_CAL_GRUPOS[tipo]) return;
+  _ganttCalFiltro[tipo]=(_ganttCalFiltro[tipo]===grupo||!_GANTT_CAL_GRUPOS[tipo].some(g=>g.id===grupo))?'':grupo;
+  try{ safeLS.setItem('mare_gantt_cal_filtro', JSON.stringify(_ganttCalFiltro)); }catch(e){}
+  if(boardView==='gantt') renderBoard();
+  requestAnimationFrame(()=>{ const b=document.querySelector('.gantt-cal-fchip[data-g="'+(_ganttCalFiltro[tipo]||'')+'"]'); if(b) b.focus({preventScroll:true}); });
+}
+function _ganttCalFiltroSync(el){
+  let box=el.querySelector('.gantt-cal-fgrp');
+  const tipo=_ganttAba, grupos=_GANTT_CAL_GRUPOS[tipo];
+  if(!grupos){ if(box) box.remove(); const ac=el.querySelector('.gantt-cal-acoes'); if(ac) ac.remove(); return; }
+  if(!box){ box=document.createElement('div'); box.className='gantt-cal-fgrp'; box.setAttribute('role','group'); box.setAttribute('aria-label','Mostrar só'); el.prepend(box); }
+  const sel=_ganttCalFiltro[tipo]||'';
+  // ações do calendário (atualizar/histórico) — só login Google da Hering
+  let acoes=el.querySelector('.gantt-cal-acoes');
+  if(_ganttCalPermitido()){
+    if(!acoes){ acoes=document.createElement('div'); acoes.className='gantt-cal-acoes';
+      acoes.innerHTML='<button type="button" class="btn btn-sm" onclick="ganttAtualizarAbrir()" title="Enviar a planilha nova e publicar para todas as squads">📤 Atualizar planilha</button><button type="button" class="btn btn-sm" onclick="ganttHistoricoAbrir()" title="Quem atualizou, quando — e voltar a uma versão anterior">🕘 Histórico</button>';
+      el.appendChild(acoes); }
+  } else if(acoes) acoes.remove();
+  const sig=tipo+'|'+sel; if(box.dataset.sig===sig) return; box.dataset.sig=sig;
+  box.innerHTML=[{id:'',rot:'Tudo'}].concat(grupos).map(g=>'<button type="button" class="gantt-cal-fchip'+(g.id===sel?' on':'')+'" data-g="'+g.id+'" aria-pressed="'+(g.id===sel)+'" onclick="ganttCalFiltro(this.dataset.g)">'+esc(g.rot)+'</button>').join('');
+}
+const _GANTT_LINHA_COR=['#1de9b6','#38b6ff','#f472b6','#f59e0b','#a78bfa','#34d399','#fb7185','#60a5fa','#facc15','#c084fc','#2dd4bf','#94a3b8'];
+// Os calendários são da empresa: a regra do banco só deixa ler quem entrou com Google @ciahering.com.br.
+// Convidado externo do squad não vê as abas (em vez de um aviso de permissão que nunca se resolveria).
+function _ganttCalPermitido(){
+  const u=window._currentUser||{}; const email=String(u.email||'').toLowerCase();
+  return email.endsWith('@ciahering.com.br') && (u.providerData||[]).some(p=>p&&p.providerId==='google.com');
+}
+function _ganttAbasVisiveis(){ return _ganttCalPermitido() ? _GANTT_ABAS : _GANTT_ABAS.filter(a=>a.id==='cards'); }
+function ganttAba(id){
+  if(!_ganttAbasVisiveis().some(a=>a.id===id) || id===_ganttAba) return;
+  _ganttAba=id; try{ safeLS.setItem('mare_gantt_aba', id); }catch(e){}
+  _ganttScrollPend='hoje';
+  if(boardView==='gantt') renderBoard();
+  // devolve o foco à aba escolhida (o redesenho recria os botões)
+  requestAnimationFrame(()=>{ const b=document.querySelector('.gantt-aba[data-aba="'+id+'"]'); if(b) b.focus({preventScroll:true}); });
+}
+function _ganttAbaTecla(ev){
+  if(ev.key!=='ArrowRight' && ev.key!=='ArrowLeft') return;
+  ev.preventDefault();
+  const abas=_ganttAbasVisiveis(), i=abas.findIndex(a=>a.id===_ganttAba), n=abas.length;
+  if(n>1) ganttAba(abas[(i+(ev.key==='ArrowRight'?1:n-1))%n].id);
+}
+// 💬 Balão do Gantt (13/11/2026, pedido do Caio): passar o mouse (ou focar pelo teclado) numa barra ou num nome de data-chave
+// cujo texto NÃO cabe mostra o nome inteiro + as datas. Só aparece quando corta (o que já se lê inteiro não precisa de balão).
+// No toque continua o aviso do toque (title/hover não existem lá). Um elemento só, ouvido por delegação no #gantt-view.
+let _ganttTipT=0, _ganttTipAlvo=null;
+const _GANTT_TIP_SEL='.gantt-bar, .gantt-mc-chip[data-id]';
+function _ganttTipEl(){
+  let t=document.getElementById('gantt-tip');
+  if(!t){ t=document.createElement('div'); t.id='gantt-tip'; t.className='gantt-tip'; t.setAttribute('role','tooltip'); document.body.appendChild(t); }
+  return t;
+}
+function _ganttTipCortado(el){
+  const txt=el.querySelector('.gantt-bar-txt, .gantt-mc-nome'); if(!txt) return false;
+  if(getComputedStyle(txt).display==='none') return true;            // barra estreita: o nome nem aparece dentro
+  return txt.scrollWidth>txt.clientWidth+1 || txt.scrollHeight>txt.clientHeight+1;
+}
+function _ganttTipEsconder(){
+  clearTimeout(_ganttTipT);
+  const a=_ganttTipAlvo; _ganttTipAlvo=null;
+  if(a){ [a, a.closest('.gantt-row')].forEach(x=>{ if(x && x.dataset.tipTitle!==undefined){ x.setAttribute('title', x.dataset.tipTitle); delete x.dataset.tipTitle; } }); a.removeAttribute('aria-describedby'); }
+  const t=document.getElementById('gantt-tip'); if(t) t.classList.remove('on');
+}
+function _ganttTipMostrar(el){
+  if(!el.isConnected || !_ganttTipCortado(el)) return;
+  const raw=el.getAttribute('data-tip')||el.getAttribute('title')||''; if(!raw) return;
+  // "⚠️ Importante · NOME · datas · linha" / "NOME · Período: … · Prazo: …" → nome em destaque, o resto embaixo
+  let partes=raw.split(' · '), selo='';
+  if(/^(⚠️|★)/.test(partes[0]) && partes.length>1){ selo=partes.shift(); }
+  const t=_ganttTipEl(); t.textContent='';
+  if(selo){ const s=document.createElement('div'); s.className='gantt-tip-selo'; s.textContent=selo; t.appendChild(s); }
+  const n=document.createElement('div'); n.className='gantt-tip-nome'; n.textContent=partes.shift(); t.appendChild(n);
+  if(partes.length){ const d=document.createElement('div'); d.className='gantt-tip-det'; d.textContent=partes.join(' · '); t.appendChild(d); }
+  // o title nativo mostraria o mesmo texto por cima: guarda enquanto o balão está aberto
+  [el, el.closest('.gantt-row')].forEach(x=>{ if(x && x.hasAttribute('title')){ x.dataset.tipTitle=x.getAttribute('title'); x.removeAttribute('title'); } });   // a linha do card também tem title
+  el.setAttribute('aria-describedby','gantt-tip');
+  _ganttTipAlvo=el;
+  t.style.left='0px'; t.style.top='0px'; t.classList.remove('baixo'); t.classList.add('on');
+  const r=el.getBoundingClientRect(), w=t.offsetWidth, h=t.offsetHeight;
+  let left=Math.round(r.left+r.width/2-w/2); left=Math.max(8, Math.min(left, innerWidth-w-8));
+  let top=Math.round(r.top-h-8);
+  if(top<8){ top=Math.round(r.bottom+8); t.classList.add('baixo'); }
+  t.style.left=left+'px'; t.style.top=top+'px';
+  t.style.setProperty('--seta', Math.round(Math.max(12, Math.min(w-12, r.left+r.width/2-left)))+'px');
+}
+function _ganttTipLigar(){
+  const v=document.getElementById('gantt-view'); if(!v || v.dataset.tip) return; v.dataset.tip='1';
+  v.addEventListener('pointerover', e=>{
+    if(e.pointerType && e.pointerType!=='mouse') return;
+    const el=e.target.closest && e.target.closest(_GANTT_TIP_SEL); if(!el || el===_ganttTipAlvo) return;
+    _ganttTipEsconder(); _ganttTipT=setTimeout(()=>_ganttTipMostrar(el), 220);
+  });
+  v.addEventListener('pointerout', e=>{
+    const el=e.target.closest && e.target.closest(_GANTT_TIP_SEL); if(!el) return;
+    if(e.relatedTarget && el.contains(e.relatedTarget)) return;
+    _ganttTipEsconder();
+  });
+  v.addEventListener('focusin', e=>{ const el=e.target.closest && e.target.closest(_GANTT_TIP_SEL); if(el && el.matches(':focus-visible')){ _ganttTipEsconder(); _ganttTipMostrar(el); } });
+  v.addEventListener('focusout', ()=>_ganttTipEsconder());
+  // clicar/tocar (abre o card ou o editor) fecha o balão — senão ele ficava por cima do card aberto até o mouse se mexer
+  v.addEventListener('pointerdown', ()=>_ganttTipEsconder(), true);
+  v.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' ') _ganttTipEsconder(); }, true);
+  v.addEventListener('scroll', ()=>_ganttTipEsconder(), true);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && _ganttTipAlvo) _ganttTipEsconder(); });
+}
+function _ganttAbasHtml(){
+  const abas=_ganttAbasVisiveis(); if(abas.length<2) return '';
+  return '<div class="gantt-abas" role="tablist" aria-label="O que mostrar no Gantt">'
+    +abas.map(a=>'<button type="button" role="tab" class="gantt-aba'+(a.id===_ganttAba?' on':'')+'" data-aba="'+a.id+'" aria-selected="'+(a.id===_ganttAba)+'" tabindex="'+(a.id===_ganttAba?0:-1)+'" onclick="ganttAba(this.dataset.aba)" onkeydown="_ganttAbaTecla(event)" aria-label="'+esc(a.rot.replace(/^\S+\s/,''))+'"><span class="gantt-aba-l">'+esc(a.rot)+'</span><span class="gantt-aba-c" aria-hidden="true">'+esc(a.curto)+'</span></button>').join('')
+    +'</div>';
+}
+// Lê o calendário na 1ª vez que a aba abre e continua ouvindo (o ADM pode republicar com a tela aberta).
+function _ganttCalCarregar(tipo){
+  const st=_ganttCal[tipo]; if(!st || st.estado) return;
+  st.estado='carregando';
+  const suf=/-dev\.html/.test(location.pathname)?'_dev':'';
+  try{
+    window._onValue(window._ref(window._db,'kanban/calendarios_gantt'+suf+'/'+tipo), snap=>{
+      st.dado=snap.exists()?snap.val():null; st.estado='ok';
+      if(boardView==='gantt' && _ganttAba===tipo) renderBoard();
+    }, err=>{
+      st.estado='erro'; st.erro=/permission/i.test(String(err&&err.message||err))?'permissao':'falha';
+      console.warn('[gantt] calendário '+tipo+':', err);
+      if(boardView==='gantt' && _ganttAba===tipo) renderBoard();
+    });
+    // ⚠️ destaques (cor/alerta) que o ADM pôs nas barras: nó próprio, sobrevive a reenviar a planilha (id da barra = linha+início+texto)
+    window._onValue(window._ref(window._db,'kanban/gantt_destaques'+suf+'/'+tipo), snap=>{
+      st.dest=(snap.exists()&&snap.val())||{};
+      if(boardView==='gantt' && _ganttAba===tipo) renderBoard();
+    }, err=>console.warn('[gantt] destaques '+tipo+':', err));
+  }catch(e){ st.estado='erro'; st.erro='falha'; }
+}
+// ── 📤 Atualizar calendário pelo Maré + 🕘 Histórico (13/11/2026, pedido do Caio: "os próprios analistas mexem no Excel")
+// Qualquer pessoa da Hering (login Google — conferido nas regras) envia a planilha, vê a prévia (＋ ✎ −) e publica para todas as squads.
+// Cada publicação guarda uma cópia + uma linha no histórico (quem, quando, arquivo); qualquer um volta a uma versão anterior, e isso
+// também fica registrado. O leitor (mare-gxl) só é baixado quando alguém usa — o Gantt continua leve para quem só olha.
+const _GXL_V=2;   // ?v do mare-gxl(-dev).js — subir junto quando o módulo mudar
+let _gxlP=null;
+function _ganttGxl(){
+  if(window.MareGXL) return Promise.resolve(window.MareGXL);
+  if(_gxlP) return _gxlP;
+  _gxlP=new Promise((ok,nok)=>{
+    const sc=document.createElement('script');
+    sc.src=(/-dev\.html/.test(location.pathname)?'mare-gxl.js':'mare-gxl.js')+'?v='+_GXL_V;
+    sc.onload=()=>window.MareGXL?ok(window.MareGXL):nok(new Error('Não consegui carregar o leitor de planilhas.'));
+    sc.onerror=()=>{ _gxlP=null; nok(new Error('Não consegui carregar o leitor de planilhas (rede?). Tente de novo.')); };
+    document.head.appendChild(sc);
+  });
+  return _gxlP;
+}
+let _ganttUp={ tipo:'', pv:null, seq:0, publicando:false };
+function _ganttUpOv(){
+  let ov=document.getElementById('gantt-up-ov'); if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='gantt-up-ov';
+  ov.innerHTML='<div class="panel gantt-up-panel" role="dialog" aria-modal="true" aria-labelledby="gantt-up-tt">'
+    +'<div class="panel-hd"><div class="panel-title" id="gantt-up-tt">📤 Atualizar calendário</div><button class="x-btn" type="button" aria-label="Fechar" onclick="closeOv(\'gantt-up-ov\')">✕</button></div>'
+    +'<div class="gantt-up-body"><div class="gantt-up-exp" id="gantt-up-exp"></div>'
+    +'<label class="btn gantt-up-pick">📄 Escolher a planilha (.xlsx)<input type="file" id="gantt-up-inp" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="ganttUpArquivo(this)"></label>'
+    +'<div id="gantt-up-pv" aria-live="polite"></div></div></div>';
+  document.body.appendChild(ov); return ov;
+}
+function ganttAtualizarAbrir(){
+  const tipo=_ganttAba; if(!_GANTT_CAL_NOME[tipo] || !_ganttCalPermitido()) return;
+  const ov=_ganttUpOv(); _ganttUp={ tipo, pv:null, seq:_ganttUp.seq+1, publicando:false };
+  ov.querySelector('#gantt-up-tt').textContent='📤 Atualizar o '+_GANTT_CAL_NOME[tipo];
+  ov.querySelector('#gantt-up-exp').innerHTML='Envie o <b>.xlsx</b> (no Google Sheets: Arquivo → Fazer download → Microsoft Excel). Antes de publicar você vê o que <b>entra</b>, o que <b>muda</b> e o que <b>sai</b>. Publicar vale para <b>todas as squads</b> e fica no <b>🕘 Histórico</b> — se algo sair errado, dá para voltar a qualquer versão.';
+  ov.querySelector('#gantt-up-pv').innerHTML='';
+  ov.classList.add('open');
+  _ganttGxl().catch(()=>{});   // já vai baixando o leitor enquanto a pessoa escolhe o arquivo
+}
+function _ganttUpDesenha(){
+  const box=document.getElementById('gantt-up-pv'); if(!box) return;
+  const pv=_ganttUp.pv; if(!pv){ box.innerHTML=''; return; }
+  if(window.MareGXL) box.innerHTML=MareGXL.previaHtml(_ganttUp.tipo, pv, { publicar:'ganttUpPublicar()', cancelar:'ganttUpCancelar()' });
+  else box.innerHTML=pv.lendo?'<div role="status">⏳ Lendo 📄 '+esc(pv.lendo)+'…</div>':pv.erro?'<div role="alert" style="color:var(--danger)">❌ '+esc(pv.erro)+'</div>':'';
+}
+async function ganttUpArquivo(inp){
+  const f=inp.files&&inp.files[0]; inp.value=''; if(!f || !_ganttUp.tipo) return;
+  const seq=++_ganttUp.seq, tipo=_ganttUp.tipo;
+  _ganttUp.pv={ lendo:f.name.slice(0,200) }; _ganttUpDesenha();
+  try{
+    const G=await _ganttGxl();
+    // a prévia compara com o que está publicado: espera o calendário atual chegar (senão diria "tudo novo, nada sai")
+    _ganttCalCarregar(tipo);
+    for(let i=0; i<80 && (_ganttCal[tipo]||{}).estado!=='ok'; i++){ if((_ganttCal[tipo]||{}).estado==='erro') throw new Error('Não consegui ler o calendário atual para comparar — confira a conexão e tente de novo.'); await new Promise(r=>setTimeout(r,100)); }
+    if((_ganttCal[tipo]||{}).estado!=='ok') throw new Error('O calendário atual ainda não carregou — tente de novo em instantes.');
+    const pv=await G.preparar(tipo, f, (_ganttCal[tipo]||{}).dado);
+    if(seq!==_ganttUp.seq) return;   // outro arquivo foi escolhido enquanto este era lido: só a última leitura vale
+    _ganttUp.pv=pv;
+  }catch(e){ if(seq!==_ganttUp.seq) return; _ganttUp.pv={ erro:(e&&e.message)||'Não consegui ler o arquivo.' }; }
+  _ganttUpDesenha();
+}
+function ganttUpCancelar(){ _ganttUp.seq++; _ganttUp.pv=null; _ganttUpDesenha(); }
+async function ganttUpPublicar(){
+  const pv=_ganttUp.pv, tipo=_ganttUp.tipo; if(!pv || !pv.mescla || _ganttUp.publicando) return;
+  _ganttUp.publicando=true; const bt=document.querySelector('#gantt-up-pv .gxl-ok'); if(bt){ bt.disabled=true; bt.textContent='Publicando…'; }
+  try{
+    const G=await _ganttGxl();
+    await G.publicar(tipo, pv, window._currentUser||{});
+    closeOv('gantt-up-ov'); showToast('✅ '+_GANTT_CAL_NOME[tipo]+' atualizado para todas as squads — fica no 🕘 Histórico');
+  }catch(e){
+    const box=document.getElementById('gantt-up-pv');
+    if(box) box.insertAdjacentHTML('afterbegin','<div role="alert" style="color:var(--danger);font-weight:700;margin-bottom:6px;">❌ Não publiquei: '+esc(/permission/i.test(String(e&&e.message||e))?'sem permissão (só login Google da Hering; as permissões novas do banco já foram publicadas?)':'falha ao gravar — tente de novo')+'</div>');
+    if(bt){ bt.disabled=false; bt.textContent='✅ Publicar para todas as squads'; }
+  }finally{ _ganttUp.publicando=false; }
+}
+function _ganttHistOv(){
+  let ov=document.getElementById('gantt-hist-ov'); if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='gantt-hist-ov';
+  ov.innerHTML='<div class="panel gantt-up-panel" role="dialog" aria-modal="true" aria-labelledby="gantt-hist-tt">'
+    +'<div class="panel-hd"><div class="panel-title" id="gantt-hist-tt">🕘 Histórico</div><button class="x-btn" type="button" aria-label="Fechar" onclick="closeOv(\'gantt-hist-ov\')">✕</button></div>'
+    +'<div class="gantt-up-body" id="gantt-hist-body"></div></div>';
+  document.body.appendChild(ov); return ov;
+}
+let _ganttHist={ tipo:'', itens:[], restaurando:false };
+async function ganttHistoricoAbrir(){
+  const tipo=_ganttAba; if(!_GANTT_CAL_NOME[tipo] || !_ganttCalPermitido()) return;
+  const ov=_ganttHistOv(); _ganttHist={ tipo, itens:[], restaurando:false };
+  ov.querySelector('#gantt-hist-tt').textContent='🕘 Histórico do '+_GANTT_CAL_NOME[tipo];
+  const body=ov.querySelector('#gantt-hist-body'); body.innerHTML='<div role="status">Carregando…</div>';
+  ov.classList.add('open');
+  try{ const G=await _ganttGxl(); _ganttHist.itens=await G.historico(tipo); if(_ganttHist.tipo===tipo) _ganttHistDesenha(); }
+  catch(e){ body.innerHTML='<div role="alert" style="color:var(--danger)">❌ '+esc(/permission/i.test(String(e&&e.message||e))?'Ainda sem acesso ao histórico — as permissões novas do banco estão sendo publicadas.':'Não consegui carregar o histórico.')+'</div>'; }
+}
+function _ganttHistDesenha(){
+  const body=document.getElementById('gantt-hist-body'); if(!body) return;
+  const it=_ganttHist.itens;
+  if(!it.length){ body.innerHTML='<div class="gantt-hist-vazio">Nenhuma atualização registrada ainda. A próxima publicação (pelo Maré ou pelo Painel) aparece aqui.</div>'; return; }
+  body.innerHTML='<ol class="gantt-hist-ul">'+it.map((h,i)=>{
+    const quando=new Date(h.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const acao=h.acao==='restaurou'?'↩ voltou para a versão de '+new Date(h.deEm||h.em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'publicou';
+    return '<li class="gantt-hist-it'+(i===0?' is-atual':'')+'">'
+      +'<div class="gantt-hist-l1"><b>'+esc(h.porNome||'—')+'</b> '+esc(acao)+' · <span>'+esc(quando)+'</span>'+(i===0?' <span class="gantt-hist-atual">versão atual</span>':'')+'</div>'
+      +'<div class="gantt-hist-l2">📄 '+esc(h.arquivo||'—')+' · '+(+h.n||0)+' barras · <span class="gxl-novo">＋'+(+h.novas||0)+'</span> <span class="gxl-alt">✎'+(+h.mudaram||0)+'</span> <span class="gxl-rem">−'+(+h.saem||0)+'</span></div>'
+      +(i>0?'<button type="button" class="btn gantt-hist-volta" data-i="'+i+'" onclick="ganttHistRestaurar(+this.dataset.i)">↩ Voltar para esta versão</button>':'')
+      +'</li>';
+  }).join('')+'</ol>';
+}
+async function ganttHistRestaurar(i){
+  const h=_ganttHist.itens[i], tipo=_ganttHist.tipo; if(!h || _ganttHist.restaurando) return;
+  const quando=new Date(h.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  if(!await uiConfirm('Voltar o '+_GANTT_CAL_NOME[tipo]+' para a versão de '+quando+' ('+(h.porNome||'—')+')?\nVale para todas as squads e fica registrado no histórico.', { okText:'Voltar para esta versão' })) return;
+  _ganttHist.restaurando=true;
+  try{
+    const G=await _ganttGxl();
+    await G.restaurar(tipo, h, window._currentUser||{}, (_ganttCal[tipo]||{}).dado);
+    showToast('↩ '+_GANTT_CAL_NOME[tipo]+' voltou para a versão de '+quando);
+    _ganttHist.itens=await G.historico(tipo); _ganttHistDesenha();
+  }catch(e){ showToast('❌ '+((e&&e.message)||'Não consegui voltar para esta versão.')); }
+  finally{ _ganttHist.restaurando=false; }
+}
+function ganttCalBarra(el){
+  if(window._currentUserRole==='adm' && el.dataset.cal && el.dataset.id) return ganttDestaqueForm(el.dataset.cal, el.dataset.id);
+  const t=el.getAttribute('data-tip')||''; if(t) showToast(t);
+}
+// ⚠️ Destaque de barra (só ADM; vale para todas as squads): cor da paleta das datas-chave e/ou sinal de alerta
+let _ganttDz={ cal:'', id:'', cor:'' };
+function _ganttDzOv(){
+  let ov=document.getElementById('gantt-dz-ov'); if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='gantt-dz-ov';
+  ov.innerHTML='<div class="panel gantt-mc-panel" role="dialog" aria-modal="true" aria-labelledby="gantt-dz-tt">'
+    +'<div class="panel-hd"><div class="panel-title" id="gantt-dz-tt">⚠️ Destacar ação</div><button class="x-btn" type="button" aria-label="Fechar" onclick="closeOv(\'gantt-dz-ov\')">✕</button></div>'
+    +'<div class="gantt-mc-form">'
+      +'<div class="gantt-dz-txt" id="gantt-dz-txt"></div><div class="gantt-dz-per" id="gantt-dz-per"></div>'
+      +'<div class="fl">Cor</div><div class="gantt-mc-cores" role="radiogroup" aria-label="Cor">'
+        +'<button type="button" role="radio" class="gantt-mc-cor gantt-dz-semcor" data-cor="" aria-label="Cor da linha (sem destaque de cor)" onclick="_ganttDzCor(\'\')">∅</button>'
+        +Object.entries(_GANTT_MC_CORES).map(([k,h])=>'<button type="button" role="radio" class="gantt-mc-cor" data-cor="'+k+'" style="--mc:'+h+'" aria-label="'+_GANTT_MC_NOME_COR[k]+'" onclick="_ganttDzCor(this.dataset.cor)"></button>').join('')
+      +'</div>'
+      +'<label class="gantt-mc-glob"><input type="checkbox" id="gantt-dz-alerta"> ⚠️ <b>Ação importante</b> (sinal de alerta na barra)</label>'
+      +'<div class="gantt-dz-nota">Vale para <b>todas as squads</b>. Se a planilha for reenviada com outro texto ou outra data de início, o destaque dessa barra some.</div>'
+      +'<div class="gantt-mc-aviso" id="gantt-dz-aviso" role="alert"></div>'
+      +'<div class="gantt-mc-pe"><button type="button" class="btn gantt-mc-del" id="gantt-dz-del" onclick="ganttDestaqueTirar()">Tirar destaque</button><span style="flex:1"></span>'
+      +'<button type="button" class="btn" onclick="closeOv(\'gantt-dz-ov\')">Cancelar</button><button type="button" class="btn-p" id="gantt-dz-ok" onclick="ganttDestaqueSalvar()">Salvar</button></div>'
+    +'</div></div>';
+  document.body.appendChild(ov); return ov;
+}
+function _ganttDzCor(cor){
+  _ganttDz.cor=_GANTT_MC_CORES[cor]?cor:'';
+  document.querySelectorAll('#gantt-dz-ov .gantt-mc-cor').forEach(b=>{ const on=(b.dataset.cor||'')===_ganttDz.cor; b.classList.toggle('on',on); b.setAttribute('aria-checked',String(on)); b.tabIndex=on?0:-1; });
+}
+function ganttDestaqueForm(cal, id){
+  const st=_ganttCal[cal]; const b=st&&st.dado&&st.dado.barras&&st.dado.barras[id]; if(!b) return;
+  const dz=(st.dest||{})[id]||null; const ov=_ganttDzOv();
+  _ganttDz={ cal, id, cor:(dz&&dz.cor)||'' };
+  ov.querySelector('#gantt-dz-txt').textContent=String(b.txt||'');
+  const lin=((st.dado.linhas||{})[b.linha]||{}).rot||b.linha;
+  ov.querySelector('#gantt-dz-per').textContent=(b.ini===b.fim?_cardPeriodoData(b.ini):_cardPeriodoData(b.ini)+' – '+_cardPeriodoData(b.fim))+' · '+lin+' · '+_GANTT_CAL_NOME[cal];
+  ov.querySelector('#gantt-dz-alerta').checked=!!(dz&&dz.alerta);
+  ov.querySelector('#gantt-dz-del').hidden=!dz;
+  ov.querySelector('#gantt-dz-aviso').textContent='';
+  _ganttDzCor(_ganttDz.cor);
+  ov.classList.add('open');
+  setTimeout(()=>{ const f=ov.querySelector('.gantt-mc-cor.on'); if(f) f.focus(); },30);
+}
+const _ganttDzRef=(cal,id)=>window._ref(window._db,'kanban/gantt_destaques'+(/-dev\.html/.test(location.pathname)?'_dev':'')+'/'+cal+'/'+id);
+async function ganttDestaqueSalvar(){
+  const ov=_ganttDzOv(), {cal,id,cor}=_ganttDz; const alerta=ov.querySelector('#gantt-dz-alerta').checked;
+  if(!cor && !alerta) return ganttDestaqueTirar();
+  const u=window._currentUser||{};
+  const dado={ alerta, porNome:String(u.displayName||u.email||'').slice(0,80), em:Date.now() }; if(cor) dado.cor=cor;
+  try{ await window._set(_ganttDzRef(cal,id), dado); closeOv('gantt-dz-ov'); showToast(alerta?'⚠️ Ação marcada como importante para todas as squads':'🎨 Cor da ação atualizada para todas as squads'); }
+  catch(e){ ov.querySelector('#gantt-dz-aviso').textContent=/permission/i.test(String(e&&e.message||e))?'Sem permissão: só ADM destaca (as permissões novas do banco já foram publicadas?).':'Não consegui salvar. Tente de novo.'; }
+}
+async function ganttDestaqueTirar(){
+  const {cal,id}=_ganttDz;
+  try{ await window._remove(_ganttDzRef(cal,id)); closeOv('gantt-dz-ov'); showToast('Destaque tirado'); }
+  catch(e){ _ganttDzOv().querySelector('#gantt-dz-aviso').textContent='Não consegui tirar o destaque (sem permissão?).'; }
+}
+// Corpo de uma aba de calendário: uma faixa por linha da planilha; barras que se cruzam vão para pistas (lanes) de baixo.
+function _ganttCalCorpo(tipo, winStartIso, winEndIso, perOn, perDe, perAte){
+  _ganttCalCarregar(tipo);
+  const st=_ganttCal[tipo], nome=_GANTT_CAL_NOME[tipo];
+  const vazio=msg=>({ body:'<div class="gantt-empty">'+msg+'</div>', footer:'', leg:'' });
+  if(st.estado==='carregando' || !st.estado) return vazio('Carregando o '+esc(nome)+'…');
+  if(st.estado==='erro') return vazio(st.erro==='permissao' ? 'Ainda sem acesso ao '+esc(nome)+' — as permissões novas do banco estão sendo publicadas.' : 'Não consegui carregar o '+esc(nome)+'. Tente de novo em instantes.');
+  const d=st.dado;
+  if(!d || !d.barras) return vazio('O '+esc(nome)+' ainda não foi publicado.'+(_ganttCalPermitido()?' Use <b>📤 Atualizar planilha</b> (logo acima) para enviar o .xlsx.':''));
+  const linhas=Object.assign({}, d.linhas||{});
+  Object.entries(_GANTT_ROT_NOVO[tipo]||{}).forEach(([k,r])=>{ if(linhas[k]) linhas[k]=Object.assign({}, linhas[k], { rot:r }); });
+  const fSel=_ganttCalFiltro[tipo]||'', fGrp=fSel&&(_GANTT_CAL_GRUPOS[tipo]||[]).find(g=>g.id===fSel);
+  if(fGrp) Object.keys(linhas).forEach(k=>{ if(!((fGrp.linhas&&fGrp.linhas.includes(k)) || (fGrp.re&&fGrp.re.test(k)))) delete linhas[k]; });
+  const ordem=Object.keys(linhas).sort((a,b)=>(linhas[a].ordem||0)-(linhas[b].ordem||0));
+  const ehIso=v=>typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  let fora=0, foraPer=0;
+  const porLinha=new Map();
+  for(const [bid,b0] of Object.entries(d.barras)){
+    const b=b0&&Object.assign({ _id:bid }, b0);
+    if(!b || !ehIso(b.ini) || !ehIso(b.fim) || b.fim<b.ini || !linhas[b.linha]) continue;
+    if(perOn && !(b.ini<=perAte && b.fim>=perDe)){ foraPer++; continue; }
+    if(b.fim<winStartIso || b.ini>winEndIso){ fora++; continue; }
+    if(!porLinha.has(b.linha)) porLinha.set(b.linha,[]);
+    porLinha.get(b.linha).push(b);
+  }
+  const chunks=[]; const dest=st.dest||{}; let temDestaque=false; const souAdm=window._currentUserRole==='adm';
+  // Marca: as linhas da aba KIDS (ids kids_*) vêm num bloco à parte, com um título e um respiro antes (pedido do Caio, 13/11)
+  const temKids=ordem.some(l=>/^kids_/.test(l) && porLinha.has(l));
+  let blocoAtual='';
+  ordem.forEach((lin,i)=>{
+    const bloco=/^kids_/.test(lin)?'kids':'base';
+    if(temKids && porLinha.has(lin) && bloco!==blocoAtual){
+      blocoAtual=bloco;
+      chunks.push('<div class="gantt-grp-hd gantt-cal-bloco'+(bloco==='kids'?' is-kids':'')+'"><div class="gantt-grp-sticky"><span class="gantt-grp-lbl">'+(bloco==='kids'?'👶 Hering Kids':'Hering')+'</span></div></div>');
+    }
+    const lista=(porLinha.get(lin)||[]).sort((a,b)=>a.ini<b.ini?-1:a.ini>b.ini?1:(b.fim<a.fim?-1:1));
+    if(!lista.length) return;
+    const cor=_GANTT_LINHA_COR[(linhas[lin].ordem||i)%_GANTT_LINHA_COR.length];
+    // pistas: cada barra vai na 1ª pista cujo último fim é antes do início dela
+    const pistas=[];
+    for(const b of lista){ let k=pistas.findIndex(p=>p.fim<b.ini); if(k<0){ pistas.push({fim:'',bs:[]}); k=pistas.length-1; } pistas[k].fim=b.fim; pistas[k].bs.push(b); }
+    pistas.forEach((p,pi)=>{
+      const bars=p.bs.map(b=>{
+        const clipL=b.ini<winStartIso, clipR=b.fim>winEndIso;
+        const colS=_ganttDayDiff(winStartIso, clipL?winStartIso:b.ini)+1, colE=_ganttDayDiff(winStartIso, clipR?winEndIso:b.fim)+1;
+        const span=colE-colS+1;
+        const per=b.ini===b.fim?_cardPeriodoData(b.ini):_cardPeriodoData(b.ini)+' – '+_cardPeriodoData(b.fim);
+        const dz=dest[b._id]||null, corDz=dz&&_GANTT_MC_CORES[dz.cor], alerta=!!(dz&&dz.alerta);
+        if(corDz||alerta) temDestaque=true;
+        const corB=corDz||cor;
+        const tip=(alerta?'⚠️ Importante · ':corDz?'★ Destacada · ':'')+String(b.txt||'')+' · '+per+' · '+(linhas[lin].rot||lin);
+        return '<div class="gantt-bar tinted gantt-cal-bar'+(corDz?' is-dest':'')+(alerta?' is-alerta':'')+(clipL?' clip-l':'')+(clipR?' clip-r':'')+(span===1?' span-1':'')+'" role="button" tabindex="0" data-cal="'+tipo+'" data-id="'+esc(b._id)+'" data-tip="'+esc(tip)+'" title="'+esc(tip+(souAdm?' — toque para destacar':''))+'"'
+          +' style="grid-row:1;grid-column:'+colS+'/'+(colE+1)+';background:'+_hexA(corB,corDz?.42:.22)+';--gantt-tag:'+corB+';"'
+          +' onclick="ganttCalBarra(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ganttCalBarra(this);}">'
+          +(clipL?'<span class="gantt-bar-clip" aria-label="Começa antes desta janela">◂</span>':'')
+          +(alerta?'<span class="gantt-cal-alerta" role="img" aria-label="Ação importante">⚠️</span>':(corDz?'<span class="gantt-cal-dest" role="img" aria-label="Ação destacada">★</span>':''))
+          +'<span class="gantt-bar-txt">'+esc(b.txt)+'</span>'
+          +(clipR?'<span class="gantt-bar-clip" aria-label="Continua depois desta janela">▸</span>':'')
+          +'</div>';
+      }).join('');
+      // o nome da linha aparece 1 vez (na 1ª pista), com a cor e quantas barras há na janela
+      chunks.push('<div class="gantt-row gantt-cal-row'+(pi===0?' is-1a':'')+'" data-linha="'+esc(lin)+'" style="--gantt-lin:'+cor+';">'
+        +'<div class="gantt-col-sticky">'+(pi===0?'<span class="gantt-grp-dot" style="background:'+cor+';"></span><span class="gantt-row-title gantt-cal-lin">'+esc(temKids?String(linhas[lin].rot||lin).replace(/^Kids · /,''):(linhas[lin].rot||lin))+'</span><span class="gantt-grp-cnt">'+lista.length+'</span>':'')+'</div>'
+        +'<div class="gantt-track">'+bars+'</div></div>');
+    });
+  });
+  const m=d.meta||{};
+  // data E hora da última atualização (pedido do Caio, 13/11): "13/11/2026 às 14:32"
+  const quando=m.atualizadoEm?(()=>{ const dt=new Date(m.atualizadoEm); return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' às '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); })():'';
+  let footer='<span>📄 '+esc(nome)+(quando?' · atualizado em '+esc(quando)+(m.porNome?' por '+esc(m.porNome):''):'')+'</span>'
+    +(perOn?'<span class="gantt-per-on">📅 Período '+esc(_cardPeriodoData(perDe)+' – '+_cardPeriodoData(perAte))+(foraPer?' · '+foraPer+' fora dele':'')+'</span>':'')
+    +(fora?'<span>'+fora+' '+(fora===1?'item':'itens')+' em outras semanas (use ◀ ▶)</span>':'');
+  if(fGrp) footer+='<span class="gantt-per-on">Mostrando só '+esc(fGrp.rot)+'</span>';
+  if(!chunks.length) return { body:'<div class="gantt-empty">'+(fGrp?'Nada de '+esc(fGrp.rot)+' nestas 6 semanas — use ◀ ▶ ou toque em Tudo':perOn?'Nada do '+esc(nome)+' neste período — ajuste o De/Até':'Nada do '+esc(nome)+' nestas 6 semanas — use ◀ ▶')+'</div>', footer, leg:'' };
+  const leg=(temDestaque?'<span class="gantt-leg-item"><span aria-hidden="true">⚠️</span>Ação importante</span><span class="gantt-leg-item"><span aria-hidden="true">★</span>Destacada</span>':'')
+    +'<span class="gantt-leg-item">'+(souAdm?'Toque numa barra para destacar (cor ou ⚠️)':'Toque numa barra para ler o texto inteiro')+'</span>';
+  return { body:chunks.join(''), footer, leg };
+}
+const _GANTT_MC_CORES={ red:'#ff6b6b', orange:'#fb923c', yellow:'#facc15', green:'#34d399', cyan:'#22d3ee', blue:'#60a5fa', purple:'#a78bfa', pink:'#f472b6' };
+const _GANTT_MC_NOME_COR={ red:'Vermelho', orange:'Laranja', yellow:'Amarelo', green:'Verde', cyan:'Ciano', blue:'Azul', purple:'Roxo', pink:'Rosa' };
+const _ganttMcSuf=()=>/-dev\.html/.test(location.pathname)?'_dev':'';
+const _ganttMcRef=(escopo,id)=>window._ref(window._db, (escopo==='global' ? 'kanban/gantt_marcos_globais'+_ganttMcSuf() : 'kanban/squads/'+ACTIVE_SQUAD+'/gantt_marcos'+_ganttMcSuf())+(id?'/'+id:''));
+function _ganttMcCarregar(){
+  if(_ganttMc.lido===ACTIVE_SQUAD) return;
+  _ganttMc.lido=ACTIVE_SQUAD; _ganttMc.squad={}; _ganttMc.global={};
+  const ouvir=escopo=>{ try{ window._onValue(_ganttMcRef(escopo), snap=>{ _ganttMc[escopo]=(snap.exists()&&snap.val())||{}; if(boardView==='gantt') renderBoard(); }, err=>console.warn('[gantt] datas-chave '+escopo+':', err)); }catch(e){} };
+  ouvir('squad'); ouvir('global');
+}
+function _ganttMcPodeEditar(escopo){ return escopo==='global' ? window._currentUserRole==='adm' : _isPOorOrg(); }
+// Lista as datas-chave válidas que cruzam a janela, com colunas e pista do rótulo (rótulos que se cruzam descem).
+function _ganttMcNaJanela(winStartIso, winEndIso, todayCol){
+  const ehIso=v=>typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const out=[];
+  for(const escopo of ['global','squad']){
+    for(const [id,m] of Object.entries(_ganttMc[escopo]||{})){
+      if(!m || !ehIso(m.ini)) continue;
+      const fim=ehIso(m.fim)&&m.fim>=m.ini?m.fim:m.ini;
+      if(fim<winStartIso || m.ini>winEndIso) continue;
+      const colS=_ganttDayDiff(winStartIso, m.ini<winStartIso?winStartIso:m.ini)+1, colE=_ganttDayDiff(winStartIso, fim>winEndIso?winEndIso:fim)+1;
+      out.push({ id, escopo, titulo:String(m.titulo||'').slice(0,80), ini:m.ini, fim, cor:_GANTT_MC_CORES[m.cor]||_GANTT_MC_CORES.purple, colS, colE, umDia:m.ini===fim });
+    }
+  }
+  out.sort((a,b)=>a.colS-b.colS || b.colE-a.colE);
+  // "Hoje" ganha o seu rótulo nesta linha (é a referência de leitura da régua), disputando pista como os outros
+  if(todayCol>0) out.push({ hoje:true, id:'hoje', escopo:'', titulo:'Hoje', colS:todayCol, colE:todayCol, umDia:true });
+  // o nome ocupa pelo menos 6 colunas (data de 1 dia não cabe em 1 coluna); perto do fim da janela, recua para a esquerda
+  // data de 1 dia (e o Hoje): o rótulo fica CENTRADO na linha do dia — começar na borda da coluna deixava o nome "torto" em relação à linha
+  for(const m of out){
+    if(m.umDia){ const meia=m.hoje?1:3; m.lblS=Math.max(1, m.colS-meia); m.lblE=Math.min(42, m.colS+meia); m.centro=true; }
+    else { m.lblS=m.colS; m.lblE=Math.max(m.colE, m.colS+5); if(m.lblE>42){ m.lblE=42; m.lblS=Math.min(m.colS, 37); } }
+  }
+  out.sort((a,b)=>a.lblS-b.lblS || b.lblE-a.lblE);
+  const fins=[]; // pista do nome: nomes que se cruzam descem
+  for(const m of out){ let k=fins.findIndex(f=>f<m.lblS); if(k<0){ fins.push(0); k=fins.length-1; } fins[k]=m.lblE; m.pista=k+1; }
+  return out;
+}
+function ganttMarcoClique(el){
+  const m=(_ganttMc[el.dataset.escopo]||{})[el.dataset.id]; if(!m) return;
+  if(_ganttMcPodeEditar(el.dataset.escopo)) return ganttMarcoForm(el.dataset.escopo, el.dataset.id);
+  const per=(!m.fim||m.fim===m.ini)?_cardPeriodoData(m.ini):_cardPeriodoData(m.ini)+' – '+_cardPeriodoData(m.fim);
+  showToast('📌 '+m.titulo+' · '+per+(el.dataset.escopo==='global'?' · todas as squads':''));
+}
+function _ganttMcOv(){
+  let ov=document.getElementById('gantt-mc-ov'); if(ov) return ov;
+  ov=document.createElement('div'); ov.className='ov'; ov.id='gantt-mc-ov';
+  ov.innerHTML='<div class="panel gantt-mc-panel" role="dialog" aria-modal="true" aria-labelledby="gantt-mc-tt">'
+    +'<div class="panel-hd"><div class="panel-title" id="gantt-mc-tt">📌 Data-chave</div><button class="x-btn" type="button" aria-label="Fechar" onclick="closeOv(\'gantt-mc-ov\')">✕</button></div>'
+    +'<form class="gantt-mc-form" onsubmit="event.preventDefault();ganttMarcoSalvar();">'
+      +'<label class="fl" for="gantt-mc-titulo">Nome</label><input class="fi" id="gantt-mc-titulo" maxlength="80" required placeholder="Ex.: Black Friday">'
+      +'<div class="gantt-mc-datas"><div><label class="fl" for="gantt-mc-ini">Início</label><input class="fi" id="gantt-mc-ini" type="date" required></div>'
+      +'<div><label class="fl" for="gantt-mc-fim">Fim <span class="gantt-mc-opc">(opcional)</span></label><input class="fi" id="gantt-mc-fim" type="date"></div></div>'
+      +'<div class="fl">Cor</div><div class="gantt-mc-cores" role="radiogroup" aria-label="Cor">'
+        +Object.entries(_GANTT_MC_CORES).map(([k,h])=>'<button type="button" role="radio" class="gantt-mc-cor" data-cor="'+k+'" style="--mc:'+h+'" aria-label="'+_GANTT_MC_NOME_COR[k]+'" onclick="_ganttMcCor(this.dataset.cor)"></button>').join('')
+      +'</div>'
+      +'<label class="gantt-mc-glob" id="gantt-mc-glob-l"><input type="checkbox" id="gantt-mc-glob"> 🌐 Vale para <b>todas as squads</b> (só ADM)</label>'
+      +'<div class="gantt-mc-aviso" id="gantt-mc-aviso" role="alert"></div>'
+      +'<div class="gantt-mc-pe"><button type="button" class="btn gantt-mc-del" id="gantt-mc-del" onclick="ganttMarcoExcluir()">🗑 Excluir</button><span style="flex:1"></span>'
+      +'<button type="button" class="btn" onclick="closeOv(\'gantt-mc-ov\')">Cancelar</button><button type="submit" class="btn-p" id="gantt-mc-ok">Salvar</button></div>'
+    +'</form></div>';
+  document.body.appendChild(ov); return ov;
+}
+let _ganttMcEd={ escopo:'squad', id:'', cor:'purple' };
+function _ganttMcCor(cor){
+  _ganttMcEd.cor=_GANTT_MC_CORES[cor]?cor:'purple';
+  document.querySelectorAll('#gantt-mc-ov .gantt-mc-cor').forEach(b=>{ const on=b.dataset.cor===_ganttMcEd.cor; b.classList.toggle('on',on); b.setAttribute('aria-checked',String(on)); b.tabIndex=on?0:-1; });
+}
+function ganttMarcoForm(escopo, id){
+  const ov=_ganttMcOv(); const m=id?((_ganttMc[escopo]||{})[id]||null):null;
+  if(id && !m){ showToast('Esta data-chave não existe mais.'); return; }
+  _ganttMcEd={ escopo:escopo||'squad', id:id||'', cor:(m&&m.cor)||'purple' };
+  ov.querySelector('#gantt-mc-tt').textContent=id?'📌 Editar data-chave':'📌 Nova data-chave';
+  ov.querySelector('#gantt-mc-titulo').value=m?m.titulo:'';
+  const hoje=_calIsoLocal(new Date());
+  ov.querySelector('#gantt-mc-ini').value=m?m.ini:(_ganttPeriodo.de||hoje);
+  ov.querySelector('#gantt-mc-fim').value=m&&m.fim&&m.fim!==m.ini?m.fim:'';
+  const adm=window._currentUserRole==='adm';
+  ov.querySelector('#gantt-mc-glob-l').hidden=!adm || !!id;   // escopo não muda depois de criada
+  ov.querySelector('#gantt-mc-glob').checked=_ganttMcEd.escopo==='global';
+  ov.querySelector('#gantt-mc-del').hidden=!id;
+  ov.querySelector('#gantt-mc-aviso').textContent='';
+  _ganttMcCor(_ganttMcEd.cor);
+  ov.classList.add('open');
+  setTimeout(()=>ov.querySelector('#gantt-mc-titulo').focus(),30);
+}
+async function ganttMarcoSalvar(){
+  const ov=_ganttMcOv(), aviso=ov.querySelector('#gantt-mc-aviso');
+  const titulo=ov.querySelector('#gantt-mc-titulo').value.replace(/\s+/g,' ').trim().slice(0,80);
+  const ini=ov.querySelector('#gantt-mc-ini').value, fimIn=ov.querySelector('#gantt-mc-fim').value;
+  const escopo=_ganttMcEd.id?_ganttMcEd.escopo:(ov.querySelector('#gantt-mc-glob').checked&&window._currentUserRole==='adm'?'global':'squad');
+  if(!titulo){ aviso.textContent='Dê um nome para a data-chave.'; return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(ini)){ aviso.textContent='Escolha o dia de início.'; return; }
+  const fim=/^\d{4}-\d{2}-\d{2}$/.test(fimIn)?fimIn:ini;
+  if(fim<ini){ aviso.textContent='O fim não pode ser antes do início.'; return; }
+  if(!_ganttMcPodeEditar(escopo)){ aviso.textContent=escopo==='global'?'Só ADM cria datas-chave para todas as squads.':'Só PO, Organizador ou ADM da squad criam datas-chave.'; return; }
+  const u=window._currentUser||{};
+  const ant=_ganttMcEd.id?(_ganttMc[escopo]||{})[_ganttMcEd.id]:null;
+  // editando uma que sumiu (outra pessoa excluiu com o formulário aberto): gravar a RESSUSCITARIA como nova, com o autor trocado
+  if(_ganttMcEd.id && !ant){ aviso.textContent='Esta data-chave foi excluída por outra pessoa enquanto você editava — nada foi salvo. Feche e crie de novo, se ainda fizer sentido.'; return; }
+  const id=_ganttMcEd.id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+  const dado={ titulo, ini, fim, cor:_ganttMcEd.cor, porUid:ant?ant.porUid:u.uid, porNome:ant?(ant.porNome||''):String(u.displayName||u.email||'').slice(0,80), em:Date.now() };
+  const bt=ov.querySelector('#gantt-mc-ok'); bt.disabled=true;
+  try{
+    await window._set(_ganttMcRef(escopo,id), dado);
+    closeOv('gantt-mc-ov'); showToast('📌 '+titulo+(ant?' atualizada':' marcada no Gantt'));
+  }catch(e){
+    aviso.textContent=/permission/i.test(String(e&&e.message||e)) ? 'Sem permissão para salvar aqui (só PO, Organizador ou ADM da squad; global, só ADM).' : 'Não consegui salvar. Tente de novo.';
+  }finally{ bt.disabled=false; }
+}
+async function ganttMarcoExcluir(){
+  const {escopo,id}=_ganttMcEd; const m=(_ganttMc[escopo]||{})[id]; if(!id) return;
+  if(!m){ _ganttMcOv().querySelector('#gantt-mc-aviso').textContent='Esta data-chave já foi excluída por outra pessoa.'; return; }
+  if(!await uiConfirm('Excluir a data-chave "'+m.titulo+'"?'+(escopo==='global'?' Ela some do Gantt de todas as squads.':''), { okText:'Excluir', danger:true })) return;
+  try{ await window._remove(_ganttMcRef(escopo,id)); closeOv('gantt-mc-ov'); showToast('🗑 Data-chave excluída'); }
+  catch(e){ _ganttMcOv().querySelector('#gantt-mc-aviso').textContent='Não consegui excluir (sem permissão?).'; }
+}
 function renderGanttView(activeCards){
+  _ganttTipEsconder(); _ganttTipLigar();   // o redesenho troca os elementos: o balão não pode ficar preso num que sumiu
+  _ganttMcCarregar();
   const wrap = document.getElementById('gantt-view');
   if(!wrap) return;
   const MESES_LONGO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -14517,7 +15216,7 @@ function renderGanttView(activeCards){
   const monthsHtml = monthSpans.map(ms=>{
     const span = ms.endCol - ms.startCol + 1;
     const lbl = span<=4 ? (MESES_CURTO[ms.m]+' '+String(ms.y).slice(2)) : (MESES_LONGO[ms.m]+' '+ms.y);
-    return '<div class="gantt-month-hd" style="grid-column:'+ms.startCol+'/'+(ms.endCol+1)+';">'+esc(lbl)+'</div>';
+    return '<div class="gantt-month-hd" style="grid-column:'+ms.startCol+'/'+(ms.endCol+1)+';"><span class="gantt-month-lbl">'+esc(lbl)+'</span></div>';
   }).join('');
 
   const daysHtml = days.map((d, i)=>{
@@ -14660,8 +15359,29 @@ function renderGanttView(activeCards){
     bodyHtml = chunks.join('');
   }
 
-  const todayLineHtml = todayIdx>=0
-    ? '<div class="gantt-canvas-ov" aria-hidden="true"><div class="gantt-canvas-ov-track"><div class="gantt-today-line" data-date="'+todayIso+'" data-col="'+(todayIdx+1)+'" style="grid-column:'+(todayIdx+1)+';"></div></div></div>'
+  if(_ganttAba!=='cards' && !_ganttCalPermitido()) _ganttAba='cards';
+  const _aba=_ganttAba; let _calInfo=null;
+  if(_aba!=='cards'){ _calInfo=_ganttCalCorpo(_aba, winStartIso, winEndIso, perOn, perDe, perAte); bodyHtml=_calInfo.body; }
+  // 📌 datas-chave: faixa (período) ou linha (1 dia) atrás das barras + o nome numa linha própria da régua
+  const _mcs=_ganttMcNaJanela(winStartIso, winEndIso, todayIdx>=0?todayIdx+1:0);
+  const _mcFaixas=_mcs.filter(m=>!m.hoje).map(m=>'<div class="gantt-mc-faixa'+(m.umDia?' is-dia':'')+'" data-mc="'+esc(m.escopo+':'+m.id)+'" style="grid-row:1;grid-column:'+m.colS+'/'+(m.colE+1)+';--mc:'+m.cor+';"></div>').join('');
+  const _podeCriarMc=_isPOorOrg();
+  const _mcRow=(_mcs.length||_podeCriarMc)   // _mcs inclui o "Hoje"; a dica de vazio olha só as datas-chave de verdade
+    ? '<div class="gantt-ruler-row gantt-mc-row"><div class="gantt-ruler-corner gantt-mc-corner">📌 Datas-chave'
+        +(_podeCriarMc?'<button type="button" class="gantt-mc-add" onclick="ganttMarcoForm(\'squad\')" aria-label="Nova data-chave" title="Nova data-chave (ex.: Black Friday)">＋</button>':'')+'</div>'
+      +'<div class="gantt-mc-track">'+(_mcs.length ? _mcs.map(m=>{
+          const _gc=m.centro ? (m.colS+'/'+(m.colS+1)) : (m.lblS+'/'+(m.lblE+1));
+          const _al=m.centro ? (m.colS<=3?' is-ini':m.colS>=40?' is-fim':' is-centro') : '';
+          if(m.hoje) return '<span class="gantt-mc-chip gantt-mc-hoje'+_al+'" style="grid-row:'+m.pista+';grid-column:'+_gc+';" title="Hoje · '+esc(_cardPeriodoData(todayIso))+'">Hoje</span>';
+          const per=m.umDia?_cardPeriodoData(m.ini):_cardPeriodoData(m.ini)+' – '+_cardPeriodoData(m.fim);
+          return '<button type="button" class="gantt-mc-chip'+_al+'" data-escopo="'+m.escopo+'" data-id="'+esc(m.id)+'" style="grid-row:'+m.pista+';grid-column:'+_gc+';--mc:'+m.cor+';" title="'+esc(m.titulo+' · '+per+(m.escopo==='global'?' · todas as squads':''))+'" onclick="ganttMarcoClique(this)">'
+            +(m.escopo==='global'?'<span class="gantt-mc-glb" aria-label="Todas as squads">🌐</span>':'')+'<span class="gantt-mc-nome">'+esc(m.titulo)+'</span></button>';
+        }).join('') : '')
+      +((_podeCriarMc && !_mcs.some(m=>!m.hoje)) ? '<span class="gantt-mc-vazio" style="grid-row:'+(Math.max(0,..._mcs.map(m=>m.pista||0))+1)+';">Marque Black Friday, Natal… no ＋ ao lado</span>' : '')+'</div></div>'
+    : '';
+  const todayLineHtml = (todayIdx>=0 || _mcFaixas)
+    ? '<div class="gantt-canvas-ov" aria-hidden="true"><div class="gantt-canvas-ov-track">'+_mcFaixas
+      +(todayIdx>=0?'<div class="gantt-today-line" data-date="'+todayIso+'" data-col="'+(todayIdx+1)+'" style="grid-row:1;grid-column:'+(todayIdx+1)+';"></div>':'')+'</div></div>'
     : '';
 
   const rangeTxt = _cardPeriodoData(winStartIso)+' – '+_cardPeriodoData(winEndIso);
@@ -14683,7 +15403,8 @@ function renderGanttView(activeCards){
   const filtrosEl = document.getElementById('gantt-filtros');
   if(filtrosEl) filtrosEl.remove();
   wrap.innerHTML =
-    '<div class="gantt-toolbar">'
+    _ganttAbasHtml()
+    +'<div class="gantt-toolbar">'
       +'<div class="gantt-nav-grp">'
         +'<button type="button" class="btn btn-sm gantt-nav-btn" onclick="ganttNav(-28)" aria-label="Voltar 4 semanas" title="Voltar 4 semanas">◀</button>'
         +'<button type="button" class="btn btn-sm gantt-nav-btn'+(_ganttOffsetDays===0?' is-today':'')+'" onclick="ganttNav(0)" title="Voltar para a janela atual">Hoje</button>'
@@ -14691,8 +15412,9 @@ function renderGanttView(activeCards){
         +'<span class="gantt-range-lbl">'+esc(rangeTxt)+' · 6 semanas</span>'
       +'</div>'
       +'<div class="gantt-leg">'
-        +'<span class="gantt-leg-item"><span class="gantt-leg-bar"></span>Período (1ª tag)</span>'
-        +'<span class="gantt-leg-item"><span class="gantt-leg-dia">◆</span>Prazo</span>'
+        +(_calInfo ? _calInfo.leg
+          : '<span class="gantt-leg-item"><span class="gantt-leg-bar"></span>Período (1ª tag)</span>'
+          +'<span class="gantt-leg-item"><span class="gantt-leg-dia">◆</span>Prazo</span>')
       +'</div>'
     +'</div>'
     +'<div class="gantt-scroll" id="gantt-scroll">'
@@ -14707,17 +15429,20 @@ function renderGanttView(activeCards){
             +'<div class="gantt-ruler-corner">Datas</div>'
             +'<div class="gantt-ruler-days">'+daysHtml+'</div>'
           +'</div>'
+          +_mcRow
         +'</div>'
         +'<div class="gantt-body">'+bodyHtml+'</div>'
       +'</div>'
     +'</div>'
     +'<div class="gantt-footer" id="gantt-footer">'
-      +'<span class="gantt-sem-datas">'+esc(semDatasTxt)+'</span>'
-      +periodoTxt
-      +foraTxt
+      +(_calInfo ? _calInfo.footer : '<span class="gantt-sem-datas">'+esc(semDatasTxt)+'</span>'+periodoTxt+foraTxt)
     +'</div>';
   const fEl = filtrosEl || _ganttFiltrosCriar();
   wrap.querySelector('.gantt-toolbar')?.after(fEl);
+  fEl.classList.toggle('is-cal', _aba!=='cards');   // nos calendários só vale o De/Até (os filtros são dos cards)
+  _ganttCalFiltroSync(fEl);   // …mais o "mostrar só" por grupo de linhas do calendário
+  // 🛒 Comercial: colunas largas e texto inteiro, quebrando linha, como as células da planilha (13/11, pedido do Caio)
+  wrap.classList.toggle('gantt-largo', _aba==='comercial' || _aba==='mktplace' || _aba==='outlet');   // os calendários comerciais: dia largo e texto inteiro
   _ganttFiltrosSync(fEl);
   const sc = document.getElementById('gantt-scroll');
   if(sc){
@@ -30409,7 +31134,7 @@ const HELP_CONTENT = {
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.\n\n📊 <b>Quer ver campanhas e coleções em barras no tempo?</b> Ao lado de "🛤️ Timeline" fica o botão <b>"📊 Gantt"</b> (as duas visões são exclusivas entre si): enquanto a Timeline lista pendências por vencimento, o Gantt desenha a barra de <b>Início → Fim</b> e o marco <b>◆</b> do <b>Prazo</b> numa régua de 6 semanas — veja o tópico "Gantt".' },
-    { icon:'📊', title:'Gantt', text:'Botão <b>"📊 Gantt"</b> na toolbar, ao lado de "🛤️ Timeline", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram os cards ativos com <b>Início + Fim</b> válidos ou com <b>Prazo</b> preenchido (cards sem datas ficam de fora e aparecem contados no rodapé: <i>"N cards sem datas não aparecem"</i>). Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) — inclusive em cards que também têm período (<b>Fim ≠ Prazo</b>). Cards só com Prazo mostram apenas o marco <b>◆</b>.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📅 De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo período ou prazo cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card.' },
+    { icon:'📊', title:'Gantt', text:'📆 Mês: ao lado de De/Até, escolha um mês do ano para a régua ir direto pra ele.\n\nBotão <b>"📊 Gantt"</b> na toolbar, ao lado de "🛤️ Timeline", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram os cards ativos com <b>Início + Fim</b> válidos ou com <b>Prazo</b> preenchido (cards sem datas ficam de fora e aparecem contados no rodapé: <i>"N cards sem datas não aparecem"</i>). Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) — inclusive em cards que também têm período (<b>Fim ≠ Prazo</b>). Cards só com Prazo mostram apenas o marco <b>◆</b>.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📅 De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo período ou prazo cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card. Nome que não cabe na barra? <b>Passe o mouse</b> (ou chegue pelo Tab) e um <b>balão</b> mostra o nome inteiro e as datas — vale também para os calendários e as datas-chave.\n\n🗂 <b>Abas: Cards, 🎯 Calendário de Marca, 🛒 Comercial Hering, 🛍️ Comercial Marketplace e 🏷️ Comercial Outlet</b>: no topo do Gantt, além dos cards da squad, há as abas com os calendários da empresa, iguais para <b>todas as squads</b>. O <b>Calendário de Marca</b> mostra as campanhas nas linhas <b>Coleção sellout</b>, <b>Web</b>, <b>Redes sociais</b> e <b>Canais Intimates</b> e <b>Sports</b> (site e CRM), e logo abaixo, num bloco à parte, as do <b>👶 Hering Kids</b> (Coleção sellout, Web e Redes sociais); o <b>Comercial Hering</b> mostra as ações do mês por linha (<b>Lançamentos e datas</b>, Site e App, Saldos, Mídia, CRM, App…) e o <b>Comercial Marketplace</b>, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes…) e o <b>Comercial Outlet</b>, uma linha por tipo de ação (principal, secundária, madrugada, mídia…) — o Outlet vem <b>uma planilha por mês</b>: publicar troca só aquele mês e os anteriores continuam; os três comerciais <b>em colunas largas e com o texto inteiro</b>, como as células da planilha — role para o lado para ver os outros dias; o texto acompanha a rolagem. Barras que se cruzam na mesma linha descem para uma faixa de baixo. <b>Toque numa barra</b> para ler o texto inteiro com as datas. Nessas abas valem <b>◀ Hoje ▶</b> e o <b>📅 De … até …</b>; os filtros de pessoa/tag/submarca/canal são só dos cards. <b>Qualquer pessoa da Hering atualiza</b> os calendários ali mesmo: <b>📤 Atualizar planilha</b> (ao lado dos filtros) → escolha o .xlsx → veja o que <b>entra</b>, <b>muda</b> e <b>sai</b> → <b>Publicar</b> (vale para todas as squads). O <b>🕘 Histórico</b> mostra quem atualizou, quando e com qual arquivo — e <b>↩ Voltar para esta versão</b> desfaz uma atualização errada (a volta também fica registrada). O rodapé diz quando e por quem foi a última atualização. A aba escolhida fica guardada neste aparelho.\n\n📌 <b>Datas-chave</b>: logo abaixo dos dias, a linha <b>📌 Datas-chave</b> mostra os eventos que a squad marcou (Black Friday, Natal, um lançamento…). Cada uma vira uma <b>faixa colorida</b> atrás das barras (ou uma <b>linha</b>, se for um dia só), nas três abas — ajuda a ler o que acontece em volta da data. <b>PO, Organizador ou ADM</b> criam no <b>＋</b> ao lado de "📌 Datas-chave" (nome, início, fim opcional e cor) e tocam num nome para editar ou excluir; quem não edita vê o nome e o período ao tocar. O <b>ADM</b> pode marcar uma data para <b>🌐 todas as squads</b>. A linha também mostra o rótulo <b>Hoje</b>, centrado na linha do dia.\n\n⚠️ <b>Destaques e filtro nos calendários</b>: nas abas de Marca e Comercial, barras com <b>⚠️</b> e cor forte são <b>ações importantes</b> marcadas por um ADM — valem para todas as squads; o <b>ADM</b> toca numa barra para escolher a cor e o ⚠️ (ou tirar o destaque). Os botões acima do De/Até mostram <b>só um grupo de linhas</b>: no Comercial, <b>🖥️ Site</b>, <b>📱 App</b>, <b>✉️ CRM</b>, <b>📣 Mídia</b> e <b>🚀 Lançamentos e datas</b> (as linhas <b>Site e App</b> entram em Site e em App); na Marca, Coleção, Web, Redes, Canais e Kids. <b>✕ Limpar filtros</b> volta para Tudo.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação (mais antigos primeiro) — a ordem em que os cards foram criados, do mais antigo pro mais novo; no mesmo dia vale a hora da criação.\n🕐 Data de criação (mais recentes primeiro) — o inverso: os cards criados por último aparecem no topo. Card sem data de criação (legado/importado) fica no final nos dois sentidos.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).\n\n🔴 <b>Ativar "Atrasados" automaticamente num horário</b>: se você costuma abrir cards atrasados sempre no mesmo intervalo de 2h do dia, o app pode sugerir ativar o filtro "Atrasados" sozinho quando você abre o board dentro desse horário — só na primeira vez que você abre o board naquele dia, nunca liga/desliga sozinho no meio da sessão. Sugestão opcional, mesmas 3 respostas de sempre (aceitar/agora não/não sugerir mais).' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.\n\n📌 <b>Fixar na toolbar principal</b>: se você usa "💡 Meus cards" na maioria das vezes que abre o board, o app pode sugerir sozinho fixar um atalho pra ele lá em cima, direto na barra de ferramentas (mesma ação, sem precisar abrir Filtros primeiro) — é só uma sugestão opcional (aceite/adie/recuse), nunca muda a tela sem você confirmar.' },
