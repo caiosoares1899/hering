@@ -9,6 +9,7 @@
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
 
+
 ## Fila
 
 Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fila"); o agente pega o 1º, move para *Em andamento* e segue o contrato (formato em [Contrato de tarefa](COORDENACAO_AGENTES.md#contrato-de-tarefa-v2)). O Antigravity continua sendo acionado por mensagem do Caio.
@@ -33,10 +34,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 📊 Gantt: qualquer login Google da Hering publica calendário; nós novos `calendarios_gantt_hist`/`_snap` (só acrescentar) + backup | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:backupCompletoSemanal,functions:backupGlobalDiario` | 13/11/2026 |
-| Claude | 📊 Gantt: regras aceitam os calendários `mktplace` e `outlet` (calendarios_gantt e gantt_destaques) — o Outlet já fica liberado | resync + `firebase deploy --project hering-onboarding --only database` | 13/11/2026 |
-| Claude | 📊 Gantt: regra do destaque das barras (`gantt_destaques` e `_dev`, só ADM grava) + o nó no backup completo | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:backupCompletoSemanal,functions:backupGlobalDiario` | 13/11/2026 |
-| Claude | Conhecimento do Agente Ágil regenerado nas promoções do supercard (PR #1757) e do período/dica do Gantt (12/11) | resync + `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 12/11/2026 |
 
 ## Backlog
 

@@ -279,3 +279,7 @@ Lição da rodada de UI/UX da apresentação do Radar (PR #1629): foi feita **in
 ## Confirmações de deploy depois da reorganização (12/11/2026 em diante)
 
 - ✅ **12/11/2026:** o Caio publicou as 5 funções do Agente Ágil com o conhecimento da promoção #1742 (kanban v8.30.948, tag `kanban-v8.30.948`; bugfix #1741 + apresentação alternada).
+
+## Confirmação de deploy — 13/11/2026
+
+Caio confirmou o merge da #1768 e todos os deploys pendentes do Gantt: regras de calendários, histórico/cópias e destaques (incluindo Marketplace/Outlet), backups e conhecimento do Agente Ágil. Pendências removidas do Quadro na tarefa do botão Mês.

@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📆 Gantt: botão Mês ao lado do De/Até (kanban v8.30.969-dev) — SÓ DEV — 2026-11-13
+
+Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem alterar o filtro de período. Escolha preservada nas atualizações, zerada por navegação, De/Até e limpar. Ajuda atualizada e teste Playwright em desktop/celular.
+
 ### 🏷️ Gantt: aba Comercial Outlet — uma planilha por mês, publicar só acrescenta/troca aquele mês (kanban v8.30.968-dev, painel v5.113-dev, mare-gxl v2) — SÓ DEV — 2026-11-13
 
 - **Leitor (`mare-gxl` v2)**: planilha mensal do Outlet ("Outlet | Calendário Novembro 2026.xlsx"). Aba **CALENDÁRIO**: um dia por linha, uma coluna por tipo de ação — os nomes das linhas vêm do **cabeçalho da própria planilha** (Ação principal, Ação secundária, Relâmpago, Madrugada, CRM, Ofertas do dia, Reloginhos e headers, Extras, BEON, Mídia 01/02/perene, Afiliados, Livelo, Benefícios…; coluna nova aparece sozinha). Colunas de número (Meta, Share, Captado, Margem, Faturado) e as outras abas (receita, kits, resumos) ficam de fora. Dias seguidos com o mesmo texto = 1 barra.
