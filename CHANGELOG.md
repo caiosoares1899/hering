@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📌 Gantt: datas-chave (Black Friday, Natal…) como faixa/linha nas 3 abas + dica (kanban v8.30.961-dev, mare-dicas v16) — SÓ DEV — 2026-11-13
+
+- Linha **📌 Datas-chave** na régua do Gantt: cada evento vira uma **faixa** colorida atrás das barras (ou **linha**, se for 1 dia) nas abas Cards, Marca e Comercial; nomes que se cruzam descem de pista.
+- **PO/Organizador/ADM** criam no **＋** (nome, início, fim opcional, cor) e tocam no nome para editar/excluir (com confirmação); quem não edita vê nome e período ao tocar. **ADM** marca 🌐 datas para todas as squads.
+- Dados: `kanban/squads/{sq}/gantt_marcos(_dev)` e `kanban/gantt_marcos_globais(_dev)` (regras e backup já publicados com a #1760); leitura só quando o Gantt abre; fim ≥ início conferido na tela.
+- 💡 Dica `gantt-abas` no Maré (calendários + datas-chave); `?v=16` do `mare-dicas-dev.js` em kanban-dev, okr-dev, oceano-dev e painel-dev.
+- Teste: `test_gantt_datas_chave.js` (membro/PO/ADM, 1280 e 390 px, 3 temas, XSS no nome).
+
 ### 📊 Gantt: abas Calendário de Marca e Comercial Digital, publicados pelo Painel a partir do .xlsx (kanban v8.30.960-dev, painel v5.106-dev) — SÓ DEV — 2026-11-13
 
 - **Painel → ⚙ Configurações → 📊 Gantt** (só ADM): envia o **.xlsx** do Calendário de Campanhas e do Calendário Comercial Hering; o Painel lê no navegador (sem servidor nem biblioteca externa), mostra a **prévia** (＋ novas · ✎ mudaram · − saem · iguais) e publica. **Marca**: aba HERING, linhas Coleção sellout, Web e Redes sociais | Hering, com as barras das células mescladas; datas ancoradas na linha dos dias (o cabeçalho de meses vem 1 coluna adiantado de fev a jul) e conferidas pelo dia da semana. **Comercial**: uma aba por mês de 2026 em diante (fora rascunho, backup, aprovação, cópia e abas ocultas); linhas Lançamentos e datas, Site todo, Saldos (+ Adulto/Intimates/Kids/Sports quando a aba tem), Mídia, CRM, Ação App/Site; dias seguidos com o mesmo texto viram 1 barra, inclusive virando o mês. Reenviar a planilha troca o calendário inteiro (a prévia mostra o que sai).
