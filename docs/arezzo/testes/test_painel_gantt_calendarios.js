@@ -19,9 +19,16 @@ const MARCA = arq('Calendário de Campanhas 2026.xlsx', [
     { r: 11, rot: 'ACELERADORES WEB', barras: [['2026-05-26', '2026-06-05', 'ACELERADOR TESTE']] },
     { r: 12, rot: 'EXCLUSIVO WEB', barras: [['2026-02-01', '2026-02-10', 'NÃO ENTRA']] },
     { r: 18, rot: 'REDE SOCIAIS | HERING', barras: [['2026-11-27', '2026-11-29', 'BLACK FRIDAY'], ['2026-11-10', '2026-11-17', '<img src=x onerror="window.__xss=1"> CAMPANHA TESTE']] },
+    { r: 24, rot: 'CANAIS INTIMATES (SITE E CRM)', barras: [['2026-11-01', '2026-11-20', 'COLEÇÃO INTIMATES TESTE']] },
+    { r: 26, rot: 'CANAIS SPORTS (SITE E CRM)', barras: [['2026-11-03', '2026-11-25', 'COLEÇÃO SPORTS TESTE']] },
     { r: 27, rot: 'REDE SOCIAIS | SPORTS', barras: [['2026-01-15', '2026-01-30', 'SPORTS NÃO ENTRA']] },
   ]),
-  { nome: 'KIDS 2026', celulas: { '4,1': 'COLEÇÃO SELLOUT', '4,9': 'KIDS NÃO ENTRA' } },
+  X.marca(2026, [
+    { r: 4, rot: 'COLEÇÃO SELLOUT', barras: [['2026-10-16', '2026-12-31', 'KIDS COLEÇÃO TESTE']] },
+    { r: 6, rot: 'WEB', barras: [['2026-11-01', '2026-12-01', 'BLACK FRIDAY']] },
+    { r: 8, rot: '2a ATIVAÇÃO (LOJAS + WEB)', barras: [['2026-10-25', '2026-10-31', 'KIDS NÃO ENTRA']] },
+    { r: 15, rot: 'REDES SOCIAIS | KIDS', barras: [['2026-11-05', '2026-11-12', 'KIDS REDES TESTE']] },
+  ], 'KIDS 2026', 46023),
 ]);
 const novSemanas = [
   [[1, null, [5], 'FERIADO'], [6, 'Ação App', [1, 2], 'APP VIRADA DO MÊS'], [2, 'SITE TODO - Não remarcados', [6, 7], 'AÇÃO SITE TESTE'], [4, 'SITE - TODO SALDOS', [1, 2, 3, 4, 5, 6, 7], 'OFERTA FICTÍCIA A'], [8, 'CRM', [2, 3], 'AÇÃO CRM TESTE']],
@@ -65,12 +72,13 @@ const seed = adm => ({ kanban: { squads_meta: { dados: { id: 'dados', label: 'Sq
   { const { ctx, p, errs } = await abre({ width: 1280, height: 900 });
     t('A. aba 📊 Gantt nas Configurações, com os dois calendários', await p.evaluate(() => document.querySelectorAll('#pcfg-gantt-cards .pg-card').length === 2 && /Ainda não publicado/.test(document.getElementById('pcfg-gantt-cards').innerText)));
     await envia(p, 'marca', MARCA); let txt = await pv(p, 'marca');
-    t('B. Marca: prévia com as 3 linhas certas (sellout 2, web 3, redes 2) e tudo como "novas"', /Coleção sellout 2/.test(txt) && /Web 3/.test(txt) && /Redes sociais 2/.test(txt) && /＋ 7 novas/.test(txt), txt);
-    t('C. Marca: não entram ACELERADORES WEB, EXCLUSIVO WEB, 2a ATIVAÇÃO, REDES | SPORTS nem a aba KIDS', !/ACELERADOR|NÃO ENTRA|CONSUMIDOR/.test(txt), txt);
+    t('B. Marca: prévia com as linhas certas da HERING (sellout 2, web 3, redes 2, Canais Intimates 1, Canais Sports 1) e da KIDS (sellout, web, redes 1 cada)', /^Coleção sellout 2/m.test(txt) && / Web 3/.test(txt) && / Redes sociais 2/.test(txt) && /Canais Intimates \(site e CRM\) 1/.test(txt) && /Canais Sports \(site e CRM\) 1/.test(txt) && /Kids · Coleção sellout 1/.test(txt) && /Kids · Web 1/.test(txt) && /Kids · Redes sociais 1/.test(txt) && /＋ 12 novas/.test(txt), txt);
+    t('C. Marca: não entram ACELERADORES WEB, EXCLUSIVO WEB, 2a ATIVAÇÃO (nem a da KIDS) e REDES | SPORTS', !/ACELERADOR|NÃO ENTRA|CONSUMIDOR/.test(txt), txt);
     await p.click('.pg-card[data-cal="marca"] .btn-p'); await p.waitForTimeout(300);
     const m = await store(p, 'marca'); const bs = Object.values(m.barras);
     const acha = (lin, txtRe) => bs.find(x => x.linha === lin && txtRe.test(x.txt));
-    t('D. Marca publicada no nó ' + NO + '/marca com meta, linhas e barras', !!m && m.meta.porNome === 'Ana ADM' && /Campanhas/.test(m.meta.arquivo) && Object.keys(m.linhas).join() === 'sellout,web,redes' && bs.length === 7, m && m.meta);
+    t('D. Marca publicada no nó ' + NO + '/marca com meta, linhas e barras', !!m && m.meta.porNome === 'Ana ADM' && /Campanhas/.test(m.meta.arquivo) && Object.keys(m.linhas).join() === 'sellout,web,redes,intimates,sports,kids_sellout,kids_web,kids_redes' && bs.length === 12, m && m.meta);
+    t('D2. aba KIDS com a data no cabeçalho (em vez de "JANEIRO"): datas certas — Black Friday Kids 01/11–01/12', acha('kids_web', /BLACK/).ini === '2026-11-01' && acha('kids_web', /BLACK/).fim === '2026-12-01' && acha('kids_redes', /REDES TESTE/).fim === '2026-11-12', bs.filter(x => /^kids/.test(x.linha)));
     t('E. datas certas (âncora na linha dos dias, não no cabeçalho adiantado): Mães até 10/05, Pais até 09/08, BF web 31/10–30/11, BF redes 27–29/11',
       acha('web', /MÃES/).fim === '2026-05-10' && acha('web', /PAIS/).fim === '2026-08-09' && acha('web', /BLACK/).ini === '2026-10-31' && acha('web', /BLACK/).fim === '2026-11-30' && acha('redes', /BLACK/).ini === '2026-11-27' && acha('redes', /BLACK/).fim === '2026-11-29', bs);
     t('F. o texto da planilha vira só texto (nada executa na prévia)', await p.evaluate(() => !window.__xss));

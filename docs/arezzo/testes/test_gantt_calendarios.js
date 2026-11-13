@@ -22,13 +22,19 @@ const marca = { meta: { atualizadoEm: Date.UTC(2026, 10, 10, 15), porNome: 'Caio
     b_r1: { linha: 'redes', ini: '2026-11-10', fim: '2026-11-17', txt: '<img src=x onerror="window.__xss=1"> CAMPANHA TESTE' },
     b_r2: { linha: 'redes', ini: '2026-11-15', fim: '2026-11-18', txt: 'TEASER TESTE (cruza com a campanha)' },
     b_r3: { linha: 'redes', ini: '2026-11-27', fim: '2026-11-29', txt: 'BLACK FRIDAY' },
+    b_k1: { linha: 'kids_web', ini: '2026-11-01', fim: '2026-12-01', txt: 'BLACK FRIDAY KIDS' },
   } };
+marca.linhas.kids_web = { rot: 'Kids · Web', ordem: 101 };
+const comercial = { meta: { atualizadoEm: Date.UTC(2026, 10, 10, 15), porNome: 'Caio', arquivo: 'Calendário Comercial.xlsx', de: '2026-11-01', ate: '2026-11-30' },
+  linhas: { saldos: { rot: 'Site · Saldos', ordem: 2 } },
+  barras: { b_c1: { linha: 'saldos', ini: '2026-11-02', fim: '2026-11-13', txt: 'OFERTA FICTÍCIA COM UM TÍTULO BEM COMPRIDO QUE PRECISA APARECER INTEIRO, QUEBRANDO EM VÁRIAS LINHAS COMO NO EXCEL' },
+    b_c2: { linha: 'saldos', ini: '2026-11-12', fim: '2026-11-12', txt: 'AÇÃO DE UM DIA COM TEXTO LONGO PARA QUEBRAR LINHA' } } };
 const fl = col => ({ enteredAt: { [col]: '2026-10-20T12:00:00.000Z' }, log: [{ from: '—', to: col, at: '2026-10-20T12:00:00.000Z' }] });
 const seed = comCal => ({ kanban: Object.assign({
   usuarios: { ana: { uid: 'ana', nome: 'Ana', email: U.email, inscrito: true, init: 'AA', role: 'membro', squads: { [SQ]: true } } }, usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana', init: 'AA', squads: { [SQ]: true } } },
   squads: { [SQ]: { dados: { columns: [{ id: 'doing', name: 'Fazendo' }, { id: 'done', name: 'Concluído', isDone: true }], tags: [],
     cards_index: { c1: 'k1' }, cards: { k1: { id: 'c1', title: 'Card com período', col: 'doing', owner: 'AA', createdAt: '2026-10-20', flow: fl('doing'), inicio: '2026-11-09', fim: '2026-11-13', updatedAt: '2026-10-27T10:00:00.000Z' } } } } } },
-  comCal ? { [NO]: { marca } } : {}) });
+  comCal ? { [NO]: { marca, comercial } } : {}) });
 
 (async () => {
   const b = await chromium.launch({ executablePath: resolveChrome(), headless: true }); let ok = true;
@@ -59,8 +65,8 @@ const seed = comCal => ({ kanban: Object.assign({
         xss: !!document.querySelector('.gantt-cal-bar img'), xssTxt: (bar(/CAMPANHA TESTE/) || {}).textContent, filtrosCards: [...document.querySelectorAll('#gantt-filtros select[data-campo]')].every(x => getComputedStyle(x).display === 'none'),
         deAte: getComputedStyle(document.querySelector('#gantt-filtros .gantt-fdata')).display !== 'none', rodape: document.getElementById('gantt-footer').innerText, sticky: document.querySelector('.gantt-cal-row .gantt-cal-lin').textContent };
     });
-    t(`D ${L}. faixas na ordem da planilha: Coleção sellout, Web, Redes sociais`, r.grp.join('|') === 'Coleção sellout|Web|Redes sociais', r.grp);
-    t(`E ${L}. só o que cruza a janela (7 barras; Dia das Mães de maio fica de fora e é contado no rodapé)`, r.nBar === 7 && /1 item em outras semanas/.test(r.rodape), r);
+    t(`D ${L}. faixas na ordem da planilha, com o bloco 👶 Hering Kids separado (Web do Kids sem o prefixo)`, r.grp.join('|') === 'Coleção sellout|Web|Redes sociais|Web' && await p.evaluate(() => [...document.querySelectorAll('.gantt-cal-bloco .gantt-grp-lbl')].map(x => x.textContent).join('|') === 'Hering|👶 Hering Kids'), r.grp);
+    t(`E ${L}. só o que cruza a janela (8 barras; Dia das Mães de maio fica de fora e é contado no rodapé)`, r.nBar === 8 && /1 item em outras semanas/.test(r.rodape), r);
     t(`F ${L}. BLACK FRIDAY da Web começa antes da janela (◂) e vai até 30/11 (coluna 1 → 31)`, r.bfCol === '1 / 31' && /clip-l/.test(r.bfClip), r);
     t(`G ${L}. barras que se cruzam (CAMPANHA × TEASER) vão para pistas diferentes nas Redes`, r.pistasRedes === 2, r.pistasRedes);
     t(`H ${L}. texto da planilha é só texto (sem <img>, nada executa)`, !r.xss && /<img src=x/.test(r.xssTxt) && await p.evaluate(() => !window.__xss), r.xssTxt);
@@ -72,7 +78,7 @@ const seed = comCal => ({ kanban: Object.assign({
     // De/Até: 25/11–30/11 deixa só o que cruza
     await p.evaluate(() => { const f = document.getElementById('gantt-filtros'); f.querySelector('input[data-p="de"]').value = '2026-11-25'; f.querySelector('input[data-p="ate"]').value = '2026-11-30'; ganttPeriodo(); }); await p.waitForTimeout(300);
     const per = await p.evaluate(() => [...document.querySelectorAll('.gantt-cal-bar .gantt-bar-txt')].map(x => x.textContent).sort());
-    t(`K ${L}. De/Até 25–30/11: só COLEÇÃO TESTE B, BF da Web e BF das Redes`, per.join('|') === 'BLACK FRIDAY|BLACK FRIDAY|COLEÇÃO TESTE B', per);
+    t(`K ${L}. De/Até 25–30/11: só COLEÇÃO TESTE B, BF da Web, das Redes e do Kids`, per.join('|') === 'BLACK FRIDAY|BLACK FRIDAY|BLACK FRIDAY KIDS|COLEÇÃO TESTE B', per);
     await p.evaluate(() => ganttLimpar()); await p.waitForTimeout(200);
     // a aba sobrevive ao redesenho do board e à volta para o Gantt
     await p.evaluate(() => renderBoard()); await p.waitForTimeout(150);
@@ -81,7 +87,17 @@ const seed = comCal => ({ kanban: Object.assign({
     if (vp.width >= 1000) {
       // teclado: setas trocam de aba e o foco acompanha
       await p.focus('.gantt-aba[data-aba="marca"]'); await p.keyboard.press('ArrowRight'); await p.waitForTimeout(300);
-      t(`N ${L}. seta → leva para Comercial Digital (foco junto); sem publicação mostra o caminho do Painel`, await p.evaluate(() => document.activeElement && document.activeElement.dataset.aba === 'comercial' && /ainda não foi publicado.*Painel → ⚙ Configurações → 📊 Gantt/.test(document.querySelector('.gantt-empty').textContent)));
+      t(`N ${L}. seta → leva para Comercial Digital (foco junto)`, await p.evaluate(() => document.activeElement && document.activeElement.dataset.aba === 'comercial'));
+      await p.evaluate(() => ganttNav(0)); await p.waitForTimeout(300);
+      const larg = await p.evaluate(() => { const v = document.getElementById('gantt-view'); const d = document.querySelector('.gantt-day-hd').getBoundingClientRect().width;
+        const txts = [...document.querySelectorAll('.gantt-cal-bar .gantt-bar-txt')].map(x => ({ cheio: x.scrollWidth <= x.clientWidth + 1 && x.scrollHeight <= x.clientHeight + 1 && getComputedStyle(x).whiteSpace === 'normal', linhas: Math.round(x.getBoundingClientRect().height / parseFloat(getComputedStyle(x).lineHeight)) }));
+        return { largo: v.classList.contains('gantt-largo'), dia: d, txts }; });
+      t(`N2 ${L}. Comercial "como no Excel": dia largo (≥ 130 px), texto inteiro quebrando linha (nada cortado)`, larg.largo && larg.dia >= 130 && larg.txts.length === 2 && larg.txts.every(x => x.cheio) && larg.txts.some(x => x.linhas >= 2), larg);
+      const sticky = await p.evaluate(() => { const sc = document.getElementById('gantt-scroll'); sc.scrollLeft = 900; const b = [...document.querySelectorAll('.gantt-cal-bar')].find(x => /COMPRIDO/.test(x.textContent)); const t = b.querySelector('.gantt-bar-txt').getBoundingClientRect(); const col = document.querySelector('.gantt-cal-row .gantt-col-sticky').getBoundingClientRect(); return { txtL: t.left, colR: col.right }; });
+      t(`N3 ${L}. barra que começou fora da tela: o texto acompanha a rolagem e fica logo depois da coluna fixa`, sticky.txtL >= sticky.colR - 1, sticky);
+      await p.evaluate(() => ganttAba('marca')); await p.waitForTimeout(200);
+      t(`N4 ${L}. a aba de Marca continua compacta (só o Comercial alarga)`, await p.evaluate(() => !document.getElementById('gantt-view').classList.contains('gantt-largo')));
+      await p.evaluate(() => ganttAba('comercial'));
       await p.click('.gantt-aba[data-aba="cards"]'); await p.evaluate(() => ganttNav(0)); await p.waitForTimeout(300);   // o De/Até do passo K levou a régua para 25/11
       const o = await p.evaluate(() => ({ row: !!document.querySelector('.gantt-row[data-id="c1"]'), cal: document.getElementById('gantt-filtros').classList.contains('is-cal'), aba: document.querySelector('.gantt-aba.on').dataset.aba, vazio: (document.querySelector('.gantt-empty') || {}).textContent }));
       t(`O ${L}. de volta aos cards: o card com período aparece e os filtros de card voltam`, o.row && !o.cal, o);

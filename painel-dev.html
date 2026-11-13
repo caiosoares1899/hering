@@ -3167,7 +3167,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.107 · painel-dev</div>
+<div class="version">v5.108 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -10225,16 +10225,29 @@ const GXL = (()=>{
     { id:'sellout', rot:'Coleção sellout', ok:s=>/^COLECAO SELLOUT\b/.test(s) },
     { id:'web',     rot:'Web',             ok:s=>s==='WEB' },
     { id:'redes',   rot:'Redes sociais',   ok:s=>/^REDES? SOCIAIS?\s*\|\s*HERING$/.test(s) },
+    { id:'intimates', rot:'Canais Intimates (site e CRM)', ok:s=>/^CANAIS? INTIMATES\b/.test(s) },
+    { id:'sports',    rot:'Canais Sports (site e CRM)',    ok:s=>/^CANAIS? SPORTS\b/.test(s) },
   ];
-  function montarMarca(abas){
-    const aba=abas.find(a=>!a.oculta && /^HERING\s+20\d\d$/i.test(limpa(a.nome)));
-    if(!aba) throw new Error('Não achei a aba "HERING 20xx" na planilha.');
+  // Aba KIDS: mesmas ideias, num bloco à parte (ids "kids_*" — o Maré desenha um separador "Hering Kids" antes).
+  const LINHAS_KIDS=[
+    { id:'kids_sellout', rot:'Kids · Coleção sellout', ok:s=>/^COLECAO SELLOUT\b/.test(s) },
+    { id:'kids_web',     rot:'Kids · Web',             ok:s=>s==='WEB' },
+    { id:'kids_redes',   rot:'Kids · Redes sociais',   ok:s=>/^REDES? SOCIAIS?\s*\|\s*(HERING\s+)?KIDS$/.test(s) },
+  ];
+  // coluna → data numa aba anual: linha 2 = número do dia (vira o mês quando volta a 1), conferida pela linha 3 (dia da semana).
+  // O mês inicial vem da 1ª célula da linha 1 (nome do mês ou número de série — a aba KIDS usa a data).
+  function _colDatasAno(aba){
     const ano=+/20\d\d/.exec(aba.nome)[0];
     const r1=aba.rows.get(1)||new Map(), r2=aba.rows.get(2)||new Map(), r3=aba.rows.get(3)||new Map();
     const cols=[...r2.keys()].filter(c=>r2.get(c).num && /^\d+(\.0+)?$/.test(r2.get(c).v)).sort((a,b)=>a-b);
-    if(cols.length<300) throw new Error('A linha 2 (números dos dias) não tem o ano inteiro — confira se é o Calendário de Campanhas.');
-    // mês inicial: o 1º mês citado na linha 1
-    let mes=0; for(const [,x] of [...r1.entries()].sort((a,b)=>a[0]-b[0])){ const k=MESES.findIndex(m=>sem(x.v).startsWith(m)); if(k>=0){ mes=k; break; } }
+    if(cols.length<300) throw new Error('A linha 2 (números dos dias) da aba '+aba.nome+' não tem o ano inteiro — confira se é o Calendário de Campanhas.');
+    let mes=null;
+    for(const [,x] of [...r1.entries()].sort((a,b)=>a[0]-b[0])){
+      if(x.num && +x.v>40000 && +x.v<80000){ mes=+serialIso(+x.v).slice(5,7)-1; break; }
+      const k=MESES.findIndex(m=>sem(x.v).startsWith(m)); if(k>=0){ mes=k; break; }
+    }
+    if(mes===null) mes=0;
+    // a 1ª coluna de dia é dia 1 do mês inicial; se a linha 1 citar um mês depois do 1º dia (cabeçalho adiantado), o dia 1 manda
     const colData=new Map(); let ant=0, erros=0, conferidos=0;
     for(const c of cols){
       const dia=Math.round(+r2.get(c).v); if(dia<ant) mes++; ant=dia;
@@ -10243,25 +10256,36 @@ const GXL = (()=>{
       colData.set(c,d);
       const w=r3.get(c); if(w){ conferidos++; const dow=new Date(d+'T12:00:00Z').getUTCDay(); if(!sem(w.v).startsWith(DOW[dow])) erros++; }
     }
-    if(!conferidos || erros>2) throw new Error('As datas da planilha não batem com os dias da semana (linha 3) — o formato mudou?');
+    if(!conferidos || erros>2) throw new Error('As datas da aba '+aba.nome+' não batem com os dias da semana (linha 3) — o formato mudou?');
+    return colData;
+  }
+  function _barrasDaAba(aba, defs, ordem0, linhas, barras, cont){
+    const colData=_colDatasAno(aba);
     const span=new Map(); aba.merges.forEach(m=>span.set(m.r1+','+m.c1,m.c2));
-    const linhas={}, barras={}; let n=0;
-    LINHAS_MARCA.forEach((L,ordem)=>{
-      for(const [r,row] of aba.rows){
+    defs.forEach((L,i)=>{
+      for(const [r,row] of [...aba.rows.entries()].sort((a,b)=>a[0]-b[0])){
         const rot=row.get(1); if(!rot || !L.ok(sem(rot.v))) continue;
-        linhas[L.id]={ rot:L.rot, ordem };
+        linhas[L.id]={ rot:L.rot, ordem:ordem0+i };
         for(const [c,x] of row){
           if(c===1) continue; const txt=limpa(x.v); if(!txt) continue;
           const ini=colData.get(c); const fim=colData.get(span.get(r+','+c)||c)||ini; if(!ini) continue;
-          if(++n>MAX_BARRAS) throw new Error('Barras demais na planilha (mais de '+MAX_BARRAS+').');
+          if(++cont.n>MAX_BARRAS) throw new Error('Barras demais na planilha (mais de '+MAX_BARRAS+').');
           barras[hid(L.id+'|'+ini+'|'+txt)]={ linha:L.id, ini, fim, txt:txt.slice(0,200) };
         }
         break; // 1ª linha com esse rótulo
       }
     });
-    if(!Object.keys(barras).length) throw new Error('Não achei barras nas linhas Coleção sellout, Web e Redes sociais | Hering.');
+  }
+  function montarMarca(abas){
+    const aba=abas.find(a=>!a.oculta && /^HERING\s+20\d\d$/i.test(limpa(a.nome)));
+    if(!aba) throw new Error('Não achei a aba "HERING 20xx" na planilha.');
+    const kids=abas.find(a=>!a.oculta && /^KIDS\s+20\d\d$/i.test(limpa(a.nome)));
+    const linhas={}, barras={}, cont={n:0};
+    _barrasDaAba(aba, LINHAS_MARCA, 0, linhas, barras, cont);
+    if(kids) _barrasDaAba(kids, LINHAS_KIDS, 100, linhas, barras, cont);
+    if(!Object.keys(barras).length) throw new Error('Não achei barras nas linhas Coleção sellout, Web, Redes sociais e Canais Intimates/Sports.');
     const ds=Object.values(barras); const de=ds.reduce((a,b)=>b.ini<a?b.ini:a,'9999'), ate=ds.reduce((a,b)=>b.fim>a?b.fim:a,'0000');
-    return { aba:aba.nome, linhas, barras, de, ate, meses:null };
+    return { aba:aba.nome+(kids?' + '+kids.nome:''), linhas, barras, de, ate, meses:null };
   }
 
   // ── 🛒 Calendário Comercial Digital: uma aba por mês (modelo Vertex42), de 2026 em diante. Mês = a data do
@@ -10360,10 +10384,9 @@ const GXL = (()=>{
   }
   return { ler, montarMarca, montarComercial, mesclar, _hid:hid };
 })();
-
 const _GANTT_SUF = /-dev\.html/.test(location.pathname) ? '_dev' : '';   // painel-dev escreve no mesmo nó que o kanban-dev lê
 const _GANTT_CALS = {
-  marca:     { icone:'🎯', nome:'Calendário de Marca', sub:'Campanhas · aba HERING: Coleção sellout, Web e Redes sociais', montar:a=>GXL.montarMarca(a), regra:'Reenviar troca o calendário inteiro.' },
+  marca:     { icone:'🎯', nome:'Calendário de Marca', sub:'Campanhas · aba HERING: Coleção sellout, Web, Redes sociais e Canais Intimates e Sports · aba KIDS: Coleção sellout, Web e Redes sociais', montar:a=>GXL.montarMarca(a), regra:'Reenviar troca o calendário inteiro.' },
   comercial: { icone:'🛒', nome:'Calendário Comercial Digital', sub:'Uma aba por mês, de 2026 em diante: lançamentos, site, saldos, mídia, CRM e app', montar:a=>GXL.montarComercial(a, 2026), regra:'Reenviar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses).' },
 };
 const _ganttCalAtual = {}, _ganttCalPrevia = {};
