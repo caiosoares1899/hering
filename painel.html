@@ -556,6 +556,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   position:sticky;top:0;background:rgba(6,26,46,.97);border-radius:14px 14px 0 0;box-shadow:var(--specular);z-index:1;}
 .cfg-hd-title{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px;}
 .cfg-body{padding:16px;display:flex;flex-direction:column;gap:14px;}
+/* 📊 Calendários do Gantt (Config → 📊 Gantt) */
+.pg-card{position:relative;padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb,6,26,46),.35);}
+.pg-pv{margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb,6,26,46),.45);font-size:11px;color:var(--txt);line-height:1.5;}
+.pg-pv-erro{color:var(--danger);border-color:rgba(255,107,107,.35);}
+.pg-pv-aviso{color:var(--warn);font-weight:600;margin-bottom:6px;line-height:1.5;}
+.pg-pv-dif{display:flex;gap:10px;flex-wrap:wrap;font-weight:700;}
+.pg-novo{color:var(--teal);} .pg-alt{color:var(--warn);} .pg-rem{color:var(--danger);}
+.pg-pv-ul{margin:6px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:3px;max-height:180px;overflow:auto;}
+.pg-pv-ul li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cfg-sec{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;
   letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:2px;}
 .cfg-field{display:flex;flex-direction:column;gap:3px;}
@@ -3020,11 +3029,20 @@ window.MARE_LOGIN_PELO_OCEANO = true;
           <button class="err-filter-btn" id="pcfg-tab-adm"    onclick="setPcfgTab('adm')">🔑 ADMs</button>
           <button class="err-filter-btn" id="pcfg-tab-links"  onclick="setPcfgTab('links')">🔗 Links</button>
           <button class="err-filter-btn" id="pcfg-tab-dicas"  onclick="setPcfgTab('dicas')">💡 Dicas</button>
+          <button class="err-filter-btn" id="pcfg-tab-gantt"  onclick="setPcfgTab('gantt')">📊 Gantt</button>
         </div>
       </div>
       <button class="x-btn" onclick="closeCfg()">✕</button>
     </div>
     <div class="cfg-body">
+
+      <!-- Aba Gantt (13/11/2026): o ADM envia o .xlsx do Calendário de Marca e do Comercial Digital; o Painel lê no navegador
+           (sem servidor), mostra o que muda e publica em kanban/calendarios_gantt(_dev)/{marca|comercial}. O Maré mostra como abas da visão 📊 Gantt. -->
+      <div id="painel-cfg-gantt" style="display:none;">
+        <div class="cfg-sec">Calendários do Gantt</div>
+        <div style="font-size:10.5px;color:var(--txt3);margin-bottom:12px;line-height:1.55;">Aparecem para <b>todas as squads</b> (só quem entra com conta Hering) como abas da visão <b>📊 Gantt</b> do Maré. Envie o arquivo <b>.xlsx</b> (no Google Sheets: Arquivo → Fazer download → Microsoft Excel). Reenviar troca o calendário pelo arquivo novo: antes de publicar você vê o que é <b>novo</b>, o que <b>mudou</b> e o que <b>sai</b>. Qualquer pessoa da Hering pode atualizar — <b>aqui ou direto no 📊 Gantt do Maré</b> — e cada publicação fica no 🕘 Histórico de lá, com volta a qualquer versão.</div>
+        <div id="pcfg-gantt-cards" style="display:flex;flex-direction:column;gap:12px;"></div>
+      </div>
 
       <!-- Aba Dicas (2026-10-09): lista de TODAS as dicas (mini popups) de Radar, Maré e Oceano, vindas do catálogo do módulo mare-dicas(-dev).js. Só leitura. -->
       <div id="painel-cfg-dicas" style="display:none;">
@@ -3190,7 +3208,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.105 · painel</div>
+<div class="version">v5.113 · painel</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3424,7 +3442,8 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-notif.js?v=41"></script>
 <script src="mare-metas.js?v=19"></script>
 <script src="mare-plantao.js?v=5"></script>
-<script src="mare-dicas.js?v=15"></script>
+<script src="mare-dicas.js?v=17"></script>
+<script src="mare-gxl.js?v=2"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8433,6 +8452,18 @@ function loadComunicados(){
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_gantt_calendarios_2026_11_13',
+    titulo: '📊 Gantt: calendários e campanhas no mesmo lugar',
+    corpo: '<p>Abra o <b>📊 Gantt</b> no Maré para acompanhar os cards e os calendários lado a lado no tempo.</p>'
+      + '<ul><li>Abas de <b>Marca, Comercial Hering, Marketplace e Outlet</b>, além dos cards da squad.</li>'
+      + '<li>Qualquer pessoa da Hering pode usar <b>📤 Atualizar planilha</b>: envie o Excel, confira a prévia e publique para todas as squads.</li>'
+      + '<li>O <b>🕘 Histórico</b> guarda as versões e permite <b>↩ voltar</b> quando precisar corrigir uma atualização.</li>'
+      + '<li><b>📌 Datas-chave</b> destacam Black Friday, Natal e outros marcos. PO, Organizador ou ADM cadastram; o ADM pode destacar ações importantes nas barras.</li>'
+      + '<li>Use os <b>filtros</b> para focar no que importa e <b>📆 Mês</b>, ao lado de De/Até, para ir direto a um mês do ano.</li></ul>',
+    tipo: 'novidade',
+    squad: '*'
+  },
+  {
     id: 'seed_mare_periodo_duas_datas_2026_11_12',
     titulo: "📅 Período da campanha: agora pede Início e Fim",
     corpo: "<p>Um ajuste no cartão <b>📅 Período e hora</b> do card (embaixo de ⚠ Riscos):</p>"
@@ -10583,7 +10614,7 @@ function removeDadosEditor(email){
 
 // ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
 function setPcfgTab(tab){
-  ['sprint','users','adm','links','dicas'].forEach(t=>{
+  ['sprint','users','adm','links','dicas','gantt'].forEach(t=>{
     const el=document.getElementById('painel-cfg-'+t); if(el) el.style.display=tab===t?'block':'none';
     const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
   });
@@ -10591,6 +10622,7 @@ function setPcfgTab(tab){
   if(tab==='adm'){ renderAdmList(); renderPainelViewers(); }
   if(tab==='links') loadPlinks();
   if(tab==='dicas') renderPcfgDicas();
+  if(tab==='gantt') renderPcfgGantt();
 }
 
 // ── 💡 DICAS DOS APPS (lista só leitura) — catálogo vem do módulo mare-dicas(-dev).js (MareDicas.catalogo()); o ✅ vem do próprio nó da pessoa ──
@@ -10609,6 +10641,90 @@ async function renderPcfgDicas(){
         <div style="min-width:0;flex:1;"><div style="font-size:12px;color:var(--txt);line-height:1.45;">${esc(d.texto)}</div>
           <div style="font-size:10.5px;color:var(--txt3);margin-top:3px;line-height:1.5;">📍 ${esc((c.gatilhos||{})[d.gatilho]||d.gatilho)}${d.ajuda?' · 📖 Saiba mais → '+esc(d.ajuda):' · sem "Saiba mais"'}</div></div></div>`).join('')}</div></div>`;
   }).join('');
+}
+
+// ── 📊 CALENDÁRIOS DO GANTT (13/11/2026) ─────────────────────────────────────────────────────────────
+// Leitor de .xlsx, prévia e publicação com histórico: módulo compartilhado mare-gxl(-dev).js (o Maré usa o mesmo, sob demanda).
+const GXL = window.MareGXL;
+const _GANTT_SUF = /-dev\.html/.test(location.pathname) ? '_dev' : '';   // painel-dev escreve no mesmo nó que o kanban-dev lê
+const _GANTT_CALS = {
+  marca:     { icone:'🎯', nome:'Calendário de Marca', sub:'Campanhas · aba HERING: Coleção sellout, Web, Redes sociais e Canais Intimates e Sports · aba KIDS: Coleção sellout, Web e Redes sociais', montar:a=>GXL.montarMarca(a), regra:'Reenviar troca o calendário inteiro.' },
+  comercial: { icone:'🛒', nome:'Calendário Comercial Hering', sub:'Uma aba por mês, de 2026 em diante: lançamentos, Site e App (todo e saldos), mídia, CRM e ações de app/site', montar:a=>GXL.montarComercial(a, 2026), regra:'Reenviar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses).' },
+  outlet:    { icone:'🏷️', nome:'Calendário Comercial Outlet', sub:'Uma planilha por mês (aba CALENDÁRIO: um dia por linha, uma coluna por tipo de ação)', montar:(a,arq)=>GXL.montarOutlet(a, arq), regra:'Publicar troca SÓ o mês desta planilha — os meses anteriores continuam.' },
+  mktplace:  { icone:'🛍️', nome:'Calendário Comercial Marketplace', sub:'Abas com nome de mês ("NOVEMBRO 26", "Julho 2026"…): o bloco do mês no fim de cada aba, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop…)', montar:a=>GXL.montarMarketplace(a), regra:'Reenviar troca o calendário inteiro pelo arquivo (abas de mês ocultas também entram; "provisório" e "BF" ficam de fora).' },
+};
+const _ganttCalAtual = {}, _ganttCalPrevia = {};
+const _ganttRef = tipo => window._ref(window._db, 'kanban/calendarios_gantt'+_GANTT_SUF+'/'+tipo);
+const _fmtBr = iso => (iso||'').split('-').reverse().slice(0,2).join('/');
+async function renderPcfgGantt(){
+  const box=document.getElementById('pcfg-gantt-cards'); if(!box) return;
+  box.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando…</div>';
+  for(const tipo of Object.keys(_GANTT_CALS)){
+    try{ const sn=await window._get(_ganttRef(tipo)); _ganttCalAtual[tipo]=sn&&sn.exists()?sn.val():null; }
+    catch(e){ _ganttCalAtual[tipo]={ _erro: /permission/i.test(String(e&&e.message||e)) ? 'sem permissão (as regras novas do banco já foram publicadas?)' : 'não consegui ler' }; }
+  }
+  _pcfgGanttDesenha();
+}
+function _pcfgGanttDesenha(){
+  const box=document.getElementById('pcfg-gantt-cards'); if(!box) return;
+  box.innerHTML=Object.entries(_GANTT_CALS).map(([tipo,c])=>{
+    const at=_ganttCalAtual[tipo], pv=_ganttCalPrevia[tipo];
+    const nB=at&&at.barras?Object.keys(at.barras).length:0;
+    const status = at&&at._erro ? `<span style="color:var(--warn);">⚠ ${esc(at._erro)}</span>`
+      : at&&at.meta ? `Publicado em ${esc(new Date(at.meta.atualizadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}))} por ${esc(at.meta.porNome||'—')} · ${nB} barras · ${esc(_fmtBr(at.meta.de))}–${esc(_fmtBr(at.meta.ate))} · <span title="${esc(at.meta.arquivo||'')}">📄 ${esc(at.meta.arquivo||'')}</span>`
+      : 'Ainda não publicado.';
+    let previa='';
+    if(pv && pv.lendo) previa=`<div class="pg-pv pg-pv-lendo" role="status">⏳ Lendo 📄 ${esc(pv.lendo)}…</div>`;
+    else if(pv && pv.erro) previa=`<div class="pg-pv pg-pv-erro" role="alert">❌ ${esc(pv.erro)}</div>`;
+    else if(pv){
+      const d=pv.mescla.dif, lin=pv.mescla.linhas;
+      const porLinha=Object.keys(lin).sort((a,b)=>lin[a].ordem-lin[b].ordem).map(k=>`${esc(lin[k].rot)} <b>${Object.values(pv.mescla.barras).filter(b=>b.linha===k).length}</b>`).join(' · ');
+      const ex=(arr,ico)=>arr.slice(0,6).map(b=>`<li>${ico} <b>${esc(_fmtBr(b.ini))}${b.fim!==b.ini?'–'+esc(_fmtBr(b.fim)):''}</b> · ${esc((lin[b.linha]||{}).rot||b.linha)} · ${esc(b.txt)}</li>`).join('')+(arr.length>6?`<li style="color:var(--txt3);">… e mais ${arr.length-6}</li>`:'');
+      const nada=!d.novas.length&&!d.alteradas.length&&!d.removidas.length;
+      previa=`<div class="pg-pv">
+        <div style="font-weight:700;margin-bottom:4px;">Prévia de 📄 ${esc(pv.arquivo)}${pv.abas?` <span style="font-weight:400;color:var(--txt3);">(${esc(pv.abas)})</span>`:''}</div>
+        <div style="color:var(--txt2);margin-bottom:6px;">${porLinha}</div>
+        ${pv.naoRec&&pv.naoRec.length?`<div class="pg-pv-aviso" role="alert">⚠ Rótulos da coluna B que não reconheci — o conteúdo deles foi para a linha de cima: ${pv.naoRec.slice(0,8).map(r=>esc(r)).join(' · ')}${pv.naoRec.length>8?' …':''}. Confira o nome na planilha (ex.: "SITE E APP TODO", "SITE E APP - TODO SALDOS", "MÍDIA", "CRM", "Ação App").</div>`:''}
+        <div class="pg-pv-dif"><span class="pg-novo">＋ ${d.novas.length} novas</span><span class="pg-alt">✎ ${d.alteradas.length} mudaram</span><span class="pg-rem">− ${d.removidas.length} saem</span><span style="color:var(--txt3);">${d.iguais} iguais</span></div>
+        ${nada?'<div style="color:var(--txt3);margin-top:6px;">Nada mudou em relação ao que está publicado.</div>':`<ul class="pg-pv-ul">${ex(d.novas,'＋')}${ex(d.alteradas,'✎')}${ex(d.removidas,'−')}</ul>`}
+        <div style="color:var(--txt3);font-size:10px;margin-top:6px;">${esc(c.regra)}</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button class="btn-p" style="min-height:36px;" onclick="pcfgGanttPublicar('${tipo}')" ${nada?'disabled':''}>✅ Publicar</button>
+          <button class="err-filter-btn" style="min-height:36px;" onclick="pcfgGanttCancelar('${tipo}')">Cancelar</button>
+        </div></div>`;
+    }
+    return `<div class="pg-card" data-cal="${tipo}">
+      <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;"><div style="font-size:13px;font-weight:700;color:var(--txt);">${c.icone} ${esc(c.nome)}</div>
+          <div style="font-size:10.5px;color:var(--txt3);margin-top:2px;line-height:1.5;">${esc(c.sub)}</div>
+          <div style="font-size:10.5px;color:var(--txt2);margin-top:6px;line-height:1.5;">${status}</div></div>
+        <label class="err-filter-btn" style="min-height:36px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">📤 Enviar .xlsx
+          <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-cal="${tipo}" onchange="pcfgGanttArquivo(this)" style="position:absolute;width:1px;height:1px;opacity:0;"></label>
+      </div>${previa}</div>`;
+  }).join('');
+}
+const _ganttLeituraSeq={};   // só a ÚLTIMA leitura de arquivo vale (um .xlsx grande enviado antes pode terminar depois do seguinte)
+async function pcfgGanttArquivo(inp){
+  const tipo=inp.dataset.cal, f=inp.files&&inp.files[0]; inp.value=''; if(!f||!_GANTT_CALS[tipo]) return;
+  const seq=(_ganttLeituraSeq[tipo]=(_ganttLeituraSeq[tipo]||0)+1);
+  _ganttCalPrevia[tipo]={ lendo:f.name.slice(0,200) }; _pcfgGanttDesenha();
+  if(f.size>80*1024*1024){ _ganttCalPrevia[tipo]={ erro:'Arquivo grande demais (máx. 80 MB).' }; return _pcfgGanttDesenha(); }
+  if(typeof DecompressionStream==='undefined'){ _ganttCalPrevia[tipo]={ erro:'Este navegador não abre .xlsx aqui. Use o Chrome, o Edge ou o Safari atualizados.' }; return _pcfgGanttDesenha(); }
+  try{
+    const abas=await GXL.ler(await f.arrayBuffer(), GXL.QUER[tipo]);   // só descompacta as abas que este calendário usa
+    if(seq!==_ganttLeituraSeq[tipo]) return;   // outro arquivo foi escolhido enquanto este era lido
+    const novo=_GANTT_CALS[tipo].montar(abas, f.name);
+    const atual=_ganttCalAtual[tipo]&&!_ganttCalAtual[tipo]._erro?_ganttCalAtual[tipo]:null;
+    _ganttCalPrevia[tipo]={ arquivo:f.name.slice(0,200), abas:novo.abas?novo.abas.length+' abas de mês':novo.aba, mescla:GXL.mesclar(tipo, novo, atual), naoRec:novo.naoReconhecidos||[] };
+  }catch(e){ if(seq!==_ganttLeituraSeq[tipo]) return; _ganttCalPrevia[tipo]={ erro:(e&&e.message)||'Não consegui ler o arquivo.' }; }
+  _pcfgGanttDesenha();
+}
+function pcfgGanttCancelar(tipo){ delete _ganttCalPrevia[tipo]; _pcfgGanttDesenha(); }
+async function pcfgGanttPublicar(tipo){
+  const pv=_ganttCalPrevia[tipo]; if(!pv||pv.erro||pv.lendo||!pv.mescla) return;
+  try{ const dado=await GXL.publicar(tipo, pv, window._currentUser||{}); _ganttCalAtual[tipo]=dado; delete _ganttCalPrevia[tipo]; showToast('✅ '+_GANTT_CALS[tipo].nome+' publicado — já aparece no 📊 Gantt do Maré (e no 🕘 Histórico)'); }
+  catch(e){ showToast('❌ Não publiquei: '+(/permission/i.test(String(e&&e.message||e))?'sem permissão (só login Google da Hering; as regras novas do banco já foram publicadas?)':'falha ao gravar')); }
+  _pcfgGanttDesenha();
 }
 
 // ── 🔗 LINKS DA HERING (aba "Hering" do menu de produtos) ─────────────────────────────────────────

@@ -108,10 +108,10 @@
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
-- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11414) · `openGlobalUsersModal` (L11006) · `updateUserRole` (L10387) · `_limparHtmlStatus` (L7208) · `_linkSeguroStatus` (L7221)
+- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11426) · `openGlobalUsersModal` (L11018) · `updateUserRole` (L10399) · `_limparHtmlStatus` (L7208) · `_linkSeguroStatus` (L7221)
 - `_statusIncidenteRecente` (L7229) · `_setStatusPill` (L7236) · `initGithubStatusMonitor` (L7191) · `loadGithubStatus` (L7245) · `renderGithubStatusUI` (L7295) · `_fbMatchServicos` (L7496)
-- `initFirebaseStatusMonitor` (L7526) · `loadFirebaseStatus` (L7540) · `renderFirebaseStatusUI` (L7607) · `loadAgentesExternosPainel` (L9479) · `renderAgentesExternosPainel` (L9491) · `criarAgenteExternoPainel` (L9559)
-- `toggleAgenteExternoSquad` (L9616) · `_fillAgentesLogSquadFilter` (L9648) · `loadAgentesTabData` (L9655) · `renderAgentesAtivosGrid` (L9679) · `renderAgentesLogCross` (L9704) · `closeAgentesHelp` (L9738)
+- `initFirebaseStatusMonitor` (L7526) · `loadFirebaseStatus` (L7540) · `renderFirebaseStatusUI` (L7607) · `loadAgentesExternosPainel` (L9491) · `renderAgentesExternosPainel` (L9503) · `criarAgenteExternoPainel` (L9571)
+- `toggleAgenteExternoSquad` (L9628) · `_fillAgentesLogSquadFilter` (L9660) · `loadAgentesTabData` (L9667) · `renderAgentesAtivosGrid` (L9691) · `renderAgentesLogCross` (L9716) · `closeAgentesHelp` (L9750)
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)

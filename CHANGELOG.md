@@ -24,11 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 📆 Gantt: botão Mês ao lado do De/Até (kanban v8.30.969-dev) — SÓ DEV — 2026-11-13
+### 📆 Gantt: botão Mês ao lado do De/Até (kanban v8.30.969) — PROD 13/11 — 2026-11-13
 
 Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem alterar o filtro de período. Escolha preservada nas atualizações, zerada por navegação, De/Até e limpar. Ajuda atualizada e teste Playwright em desktop/celular.
 
-### 🏷️ Gantt: aba Comercial Outlet — uma planilha por mês, publicar só acrescenta/troca aquele mês (kanban v8.30.968-dev, painel v5.113-dev, mare-gxl v2) — SÓ DEV — 2026-11-13
+### 🏷️ Gantt: aba Comercial Outlet — uma planilha por mês, publicar só acrescenta/troca aquele mês (kanban v8.30.969, painel v5.113, mare-gxl v2) — PROD 13/11 — 2026-11-13
 
 - **Leitor (`mare-gxl` v2)**: planilha mensal do Outlet ("Outlet | Calendário Novembro 2026.xlsx"). Aba **CALENDÁRIO**: um dia por linha, uma coluna por tipo de ação — os nomes das linhas vêm do **cabeçalho da própria planilha** (Ação principal, Ação secundária, Relâmpago, Madrugada, CRM, Ofertas do dia, Reloginhos e headers, Extras, BEON, Mídia 01/02/perene, Afiliados, Livelo, Benefícios…; coluna nova aparece sozinha). Colunas de número (Meta, Share, Captado, Margem, Faturado) e as outras abas (receita, kits, resumos) ficam de fora. Dias seguidos com o mesmo texto = 1 barra.
 - **Mês**: do nome do arquivo; sem ele, das datas de outra aba — sempre conferido pelo dia da semana da planilha (senão recusa e pede o mês no nome).
@@ -37,7 +37,7 @@ Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem a
 - Planilha real (fora do repo): novembro/2026, 32 barras, mês descoberto também sem o nome. Sem deploy (as regras já aceitavam `outlet`).
 - Testes: `test_painel_gantt_calendarios.js` (O1–O5: mês a mês, mês pelas datas, métricas fora), `test_gantt_atualizar.js` (N–P: Outlet pelo Maré, novembro + dezembro), `test_gantt_calendarios.js` (5 abas).
 
-### 📤 Gantt: atualizar os calendários direto no Maré (qualquer pessoa da Hering) + 🕘 Histórico com volta de versão (kanban v8.30.967-dev, painel v5.112-dev, mare-gxl v1) — SÓ DEV — 2026-11-13
+### 📤 Gantt: atualizar os calendários direto no Maré (qualquer pessoa da Hering) + 🕘 Histórico com volta de versão (kanban v8.30.969, painel v5.113, mare-gxl v2) — PROD 13/11 — 2026-11-13
 
 - **Maré → 📊 Gantt** (abas de calendário): botões **📤 Atualizar planilha** e **🕘 Histórico** ao lado dos filtros. Qualquer login Google da Hering envia o .xlsx, vê a prévia (＋ entra · ✎ muda · − sai · rótulos não reconhecidos) e **publica para todas as squads**. Pedido do Caio: os próprios analistas mantêm o Excel.
 - **🕘 Histórico**: cada publicação (pelo Maré ou pelo Painel) guarda uma **cópia** da versão e uma linha com quem, quando, arquivo e ＋/✎/−; **↩ Voltar para esta versão** desfaz uma atualização errada (a volta também vira linha do histórico). A lista não baixa as cópias — a cópia só é lida ao voltar.
@@ -46,7 +46,7 @@ Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem a
 - O rodapé do calendário mostra **data e hora** da última atualização ("atualizado em 13/11/2026 às 14:32 por Fulano").
 - Testes: `test_gantt_atualizar.js` (membro publica, 2ª versão, histórico, voltar, externo sem botões, celular, leitor só sob demanda), `ganttRules.test.js` (16), `test_painel_gantt_calendarios.js`.
 
-### 🛍️ Gantt: aba Comercial Marketplace (planilha de marketplace) + "Comercial Hering" (kanban v8.30.966-dev, painel v5.111-dev, mare-dicas v17) — SÓ DEV — 2026-11-13
+### 🛍️ Gantt: aba Comercial Marketplace (planilha de marketplace) + "Comercial Hering" (kanban v8.30.969, painel v5.113, mare-dicas v17) — PROD 13/11 — 2026-11-13
 
 - **Painel → ⚙ → 📊 Gantt** ganha o **Calendário Comercial Marketplace**: lê as abas com nome de **mês** ("NOVEMBRO 26", "Julho 2026", "DEZEMBRO"…, inclusive as ocultas; "provisório", "BF", resumos e calculadoras ficam de fora). Cada aba é uma régua longa que carrega meses antigos copiados: vale só o **bloco do mês** — o cabeçalho "<Mês> <ano>" mais à direita da linha 1 —, com as datas da linha 2 conferidas pelo dia da semana. Uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes/Zattini, Off Premium, Privalia, Zzmall, Posthaus, Off Hering); as sublinhas pertencem ao marketplace cujo rótulo (mesclado) as cobre. A tabela solta de baixo e o bloco antigo são ignorados. Mesmo mês em 2 abas: vale a visível.
 - **Leitor mais leve**: descompacta só as abas que cada calendário usa (o Marketplace tem 26,8 MB e 36 abas de ~9 MB de XML; lê 12 em ~1,6 s); limite do arquivo 25 → 80 MB.
@@ -54,13 +54,13 @@ Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem a
 - **Banco**: `calendarios_gantt`/`gantt_destaques` aceitam `mktplace` e já `outlet` (o Comercial Outlet entra sem novo deploy de regras). Dica `gantt-abas` atualizada (`?v=17`).
 - Testes: `test_painel_gantt_calendarios.js` (planilha sintética no formato do Marketplace: bloco antigo, rótulos mesclados, linha fora da mescla, tabela solta, abas BF/provisório/resumo), `test_gantt_calendarios.js` (4 abas, Marketplace largo e filtro), `ganttRules.test.js`.
 
-### 💬 Gantt: balão com o nome inteiro quando o título não cabe (kanban v8.30.964-dev) — SÓ DEV — 2026-11-13
+### 💬 Gantt: balão com o nome inteiro quando o título não cabe (kanban v8.30.969) — PROD 13/11 — 2026-11-13
 
 - Passar o mouse (ou focar pelo teclado) numa barra — de card, do Calendário de Marca ou do Comercial — ou num nome de data-chave **cujo texto não cabe** mostra um balão com o **nome inteiro** e, embaixo, as datas (e a linha/⚠️ quando houver). Texto que já se lê inteiro não abre balão.
 - Abre acima do elemento (para baixo perto do topo da tela), nunca sai da tela, some ao sair, no Esc, ao rolar e no redesenho do board; o `title` nativo fica guardado enquanto o balão está aberto (não aparecem os dois). Receita de movimento do Toast (opacity/translateY .14 s; nada com movimento reduzido). No toque não aparece — lá continua o toque.
 - Teste: `test_gantt_balao.js`.
 
-### 📊 Gantt (/melhoriauiux): Hoje na linha 📌, rótulo de 1 dia centrado, destaque ⚠️ do ADM, filtro por grupo e "Site e App" (kanban v8.30.963-dev, painel v5.109-dev) — SÓ DEV — 2026-11-13
+### 📊 Gantt (/melhoriauiux): Hoje na linha 📌, rótulo de 1 dia centrado, destaque ⚠️ do ADM, filtro por grupo e "Site e App" (kanban v8.30.969, painel v5.113) — PROD 13/11 — 2026-11-13
 
 - **Linha 📌 Datas-chave**: ganhou o rótulo **Hoje** (centrado na linha de hoje). Data de **1 dia** tinha o nome começando na borda da coluna, "torto" em relação à linha (relato do Caio) → agora o nome fica **centrado na linha**; nas pontas da janela encosta na borda.
 - **⚠️ Destaque nas barras** (Marca e Comercial): o **ADM** toca numa barra e escolhe uma cor (paleta das datas-chave) e/ou o **⚠️ Ação importante**; vale para **todas as squads**. Fica em `kanban/gantt_destaques(_dev)/{marca|comercial}/{id da barra}` (regra nova: só ADM grava; empresa lê; visualizador do Painel não) — sobrevive a reenviar a planilha se a barra não mudou de texto/início. Barra destacada: cor cheia, borda de 2 px, ⚠️ (importante) ou ★ (só cor) com texto alternativo e legenda "Ação importante"; para quem não é ADM o toque mostra "⚠️ Importante · …".
@@ -68,13 +68,13 @@ Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem a
 - **"Site e App"**: "Site todo" e "Site · Saldos" viraram **Site e App · todo** e **Site e App · saldos** (vale já no que foi publicado antes); o leitor do Painel aceita o nome antigo e o novo da planilha. Rótulo da coluna B que o leitor não conhece (outro jeito de escrever) aparece como **⚠ aviso na prévia** do Painel, com a aba — antes o conteúdo ia calado para a linha de cima.
 - Testes: `test_gantt_ui.js` (alinhamento medido por DOM nas 3 abas, 1280/390 px, destaque do ADM, filtro, nomes) e `ganttRules.test.js` (destaques).
 
-### 📊 Gantt: Marca com Canais Intimates/Sports e bloco Hering Kids; Comercial legível como no Excel (kanban v8.30.962-dev, painel v5.108-dev) — SÓ DEV — 2026-11-13
+### 📊 Gantt: Marca com Canais Intimates/Sports e bloco Hering Kids; Comercial legível como no Excel (kanban v8.30.969, painel v5.113) — PROD 13/11 — 2026-11-13
 
 - **Calendário de Marca** (Painel lê a planilha): além de Coleção sellout, Web e Redes sociais, entram **Canais Intimates (site e CRM)** e **Canais Sports (site e CRM)** da aba HERING e, da aba **KIDS**, Coleção sellout, Web e Redes sociais | Kids (a aba KIDS traz a data no cabeçalho em vez de "JANEIRO": o leitor entende os dois). No Maré, o Kids vem num bloco à parte com o título **👶 Hering Kids** e um respiro antes. **Reenvie a planilha no Painel** para as linhas novas aparecerem.
 - **Comercial Digital** "como no Excel": dia largo (150 px; 132 no celular) e o **texto inteiro** dentro da barra, quebrando linha; barra que começou fora da tela mostra o texto logo depois da coluna fixa e o nome do mês acompanha a rolagem. A aba de Marca segue compacta.
 - Testes: `test_painel_gantt_calendarios.js` (linhas novas e aba KIDS com data no cabeçalho) e `test_gantt_calendarios.js` (bloco Kids, texto inteiro, texto que acompanha a rolagem).
 
-### 📌 Gantt: datas-chave (Black Friday, Natal…) como faixa/linha nas 3 abas + dica (kanban v8.30.961-dev, mare-dicas v16) — SÓ DEV — 2026-11-13
+### 📌 Gantt: datas-chave (Black Friday, Natal…) como faixa/linha nas 3 abas + dica (kanban v8.30.969, mare-dicas v16) — PROD 13/11 — 2026-11-13
 
 - Linha **📌 Datas-chave** na régua do Gantt: cada evento vira uma **faixa** colorida atrás das barras (ou **linha**, se for 1 dia) nas abas Cards, Marca e Comercial; nomes que se cruzam descem de pista.
 - **PO/Organizador/ADM** criam no **＋** (nome, início, fim opcional, cor) e tocam no nome para editar/excluir (com confirmação); quem não edita vê nome e período ao tocar. **ADM** marca 🌐 datas para todas as squads.
@@ -82,7 +82,7 @@ Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem a
 - 💡 Dica `gantt-abas` no Maré (calendários + datas-chave); `?v=16` do `mare-dicas-dev.js` em kanban-dev, okr-dev, oceano-dev e painel-dev.
 - Teste: `test_gantt_datas_chave.js` (membro/PO/ADM, 1280 e 390 px, 3 temas, XSS no nome).
 
-### 📊 Gantt: abas Calendário de Marca e Comercial Digital, publicados pelo Painel a partir do .xlsx (kanban v8.30.960-dev, painel v5.106-dev) — SÓ DEV — 2026-11-13
+### 📊 Gantt: abas Calendário de Marca e Comercial Digital, publicados pelo Painel a partir do .xlsx (kanban v8.30.969, painel v5.113) — PROD 13/11 — 2026-11-13
 
 - **Painel → ⚙ Configurações → 📊 Gantt** (só ADM): envia o **.xlsx** do Calendário de Campanhas e do Calendário Comercial Hering; o Painel lê no navegador (sem servidor nem biblioteca externa), mostra a **prévia** (＋ novas · ✎ mudaram · − saem · iguais) e publica. **Marca**: aba HERING, linhas Coleção sellout, Web e Redes sociais | Hering, com as barras das células mescladas; datas ancoradas na linha dos dias (o cabeçalho de meses vem 1 coluna adiantado de fev a jul) e conferidas pelo dia da semana. **Comercial**: uma aba por mês de 2026 em diante (fora rascunho, backup, aprovação, cópia e abas ocultas); linhas Lançamentos e datas, Site todo, Saldos (+ Adulto/Intimates/Kids/Sports quando a aba tem), Mídia, CRM, Ação App/Site; dias seguidos com o mesmo texto viram 1 barra, inclusive virando o mês. Reenviar a planilha troca o calendário inteiro (a prévia mostra o que sai).
 - **Maré → 📊 Gantt** ganha abas **🗂 Cards da squad · 🎯 Calendário de Marca · 🛒 Comercial Digital** (iguais para todas as squads). Uma faixa por linha da planilha, barras que se cruzam em pistas, toque na barra mostra o texto inteiro; ◀ Hoje ▶ e De/Até valem; leitura só quando a aba abre; aba guardada no aparelho; aviso amigável se as regras novas ainda não foram publicadas.
@@ -1145,14 +1145,14 @@ Auditoria pedida ("o backup deve estar bem desatualizado"). O `weeklyBackup` (12
 - **`CODE_MAP.md`:** 391 âncoras revalidadas por script (faixas de seção do script reajustadas), registro de exports de `functions/index.js` renumerado, cabeçalho e rodapé do retrato. **`CLAUDE.md`/`docs/OCEANO.md`:** Metas, login direto e Escala marcados como em prod; Escala v1.8–v1.9 documentada.
 - **Sem mudança:** Ajuda do Radar e `guia-okr.html` (o Radar só ganhou o módulo de lembretes desde 10/10). O conhecimento do Agente Ágil só muda quando a Ajuda/Changelog de **produção** mudar — regenerar (`cd functions && npm run conhecimento`) e republicar as funções do agente na próxima promoção. Dica: não (documentação).
 
-### 🗓️ Escala: filtros numa mini tela, ☕ pausas no cadastro e 🖼️ JPG da Visão Gantt — 2026-10-13 · escala-dev v1.9 · `database.rules.json` (campo `p`) (SÓ DEV)
+### 🗓️ Escala: filtros numa mini tela, ☕ pausas no cadastro e 🖼️ JPG da Visão Gantt — 2026-10-13 · escala-dev v1.9 · `database.rules.json` (campo `p`) (PROD 13/11)
 - **🔎 Filtros viraram um botão:** a faixa de chips que ocupava a tela saiu. Na barra fica só **🔎 Filtros** (com um selo com o número de filtros ativos e destaque quando há filtro); clicando abre uma **mini tela** com os chips de squad e de subtime (multi-seleção, "Todas"/"Todos", ✕ Limpar filtros, "Pronto (N)"). Clicar nos chips já filtra a página por trás; Esc fecha. Mesmo comportamento de antes (URL `f_sq`/`f_sub`, vale pro JPG).
 - **🖼️ JPG da Visão Gantt:** ao baixar a imagem do **Dia** há agora **📋 Lista | 📊 Visão Gantt**. O botão do detalhe do dia vira "JPG do Gantt" quando a visão é Gantt (nome do arquivo termina em `-gantt`). A imagem tem eixo de horas, barra por pessoa (verde = escalado, laranja = plantão, listrado/tracejado = "dia todo"), pausas tracejadas, linha de cobertura por hora, folga à parte e agrupamento por squad na visão global.
 - **☕ Pausas (entradas e saídas adicionais):** no **Cadastrar escala**, abaixo de Entrada/Saída, **☕ Adicionar pausa (saída e volta)** — até 3 por dia (ex.: almoço 12:00–13:00). Validação: volta depois da saída, dentro do expediente, em ordem e sem sobrepor; ao virar Folga a pausa é descartada. A pausa aparece na lista do dia ("☕ pausa 12:00–13:00"), no tooltip/☕ da célula, **na Visão Gantt como intervalo no meio da barra** (a cobertura por hora não conta a pessoa durante a pausa) e no JPG. Editar um dia que já tem pausa abre com ela preenchida.
 - **⚠️ Exige `firebase deploy --only database`:** o dado novo é `kanban/escala/{data}/{squad}/{uid}/p` (texto `"12:00-13:00;15:00-15:15"`, validado nas regras; sem o deploy o banco recusa gravar escala com pausa). Regras testadas em `metasEscalaRules.test.js`.
 - Dica: não — a Escala é página própria (sem o módulo de dicas) e os três recursos aparecem à vista (botão Filtros, botão "Adicionar pausa", seletor Lista | Gantt). Ainda não aparece a pausa no popover do Calendário do Maré (`kanban-dev`, só horário). Testes: `test_escala_pausas.js` (novo), `test_escala_gantt.js`/`test_escala.js`/`test_escala_jpg.js` adaptados à mini tela.
 
-### 🗓️ Escala: filtros em chips + 📊 Visão Gantt do dia — 2026-10-13 · escala-dev v1.8 (SÓ DEV)
+### 🗓️ Escala: filtros em chips + 📊 Visão Gantt do dia — 2026-10-13 · escala-dev v1.8 (PROD 13/11)
 - **Filtros viraram chips:** a barra de filtros mostra **chips de squad** (visão da squad: a que está em foco, clicar em outra troca a squad; visão global: **Todas** ou várias squads ao mesmo tempo) e **chips de subtime** (multi-seleção, **Todos** limpa). Subtime de uma squad que saiu do escopo deixa de filtrar. Entram na URL (`?f_sq=dev,dados&f_sub=Designers,Backend`), valem pro JPG, e **✕ Limpar filtros** zera os dois. O select de squad continua no topo.
 - **📊 Visão Gantt (detalhe do dia):** ao abrir um dia há agora **📋 Lista | 📊 Visão Gantt**. No Gantt cada pessoa é uma linha com uma **barra do período** em que está (✅ azul, 🔥 laranja pro plantão; sem horário = barra listrada "dia todo"; só entrada = barra aberta pra direita, só saída = pra esquerda). O eixo se ajusta aos horários do dia (padrão 08h–18h), tem marcador vermelho de **agora** no dia de hoje, linha de **cobertura por hora** (quantas pessoas em cada hora) e a folga numa linha à parte. Na visão global o Gantt agrupa por squad. A escolha fica lembrada no aparelho.
 - Dica: não — a Escala é página própria (não carrega o módulo de dicas) e o Gantt é um botão visível no próprio detalhe do dia. Testes: `test_escala_gantt.js` (novo), `test_escala.js` e `test_escala_jpg.js` adaptados aos chips.
