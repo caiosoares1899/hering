@@ -18,6 +18,8 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
 | Antigravity | R0 | 🪟 Acabamento "vidro lapidado" (`--specular` por tema + curvas `--ease-*`) | [GUIA_UI_UX §2.4/§2.5](GUIA_UI_UX.md) · [backlog](quadro/backlog.md#vidro-lapidado) |
+| Antigravity | R3 | 🔍 2ª revisão do PR #1786 (🏖️ férias F1: regras de `kanban/ferias`) | [contrato](ideias/modo-ferias.md#contrato--revisão-r3-da-f1-antigravity-2ª-revisão) |
+| Antigravity | R2 | 🏖️ Férias F2: módulo `mare-ferias-dev.js` + vista 🏖️ Férias no Radar e no Maré | [contrato](ideias/modo-ferias.md#contrato--f2-módulo-mare-ferias-devjs--vista-️-férias-antigravity) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado

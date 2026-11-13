@@ -48,3 +48,39 @@ Deploy (do Caio, depois do resync): F1 → `firebase deploy --only database` e d
 ## Perguntas que ficam para a F2/F4 (não bloqueiam a F1)
 - Na vista do Maré, entram só as pessoas das minhas squads por padrão (com "todo o Digital" no filtro)? Proposta: sim no Maré e todo o Digital no Radar.
 - Período máximo de um cadastro: a regra não limita; a tela avisa acima de 45 dias.
+
+## Contrato — revisão R3 da F1 (Antigravity, 2ª revisão)
+
+```
+Objetivo: 2ª revisão (modelo diferente do Codex) do PR #1786 — regras do nó kanban/ferias(_dev). Tentar REFUTAR: achar um caminho em que alguém grava, apaga ou lê férias que não deveria.
+Risco: R3 (só revisão)  ·  Modelo e esforço: Gemini high  ·  Orçamento: 30 min
+Contexto: docs/ideias/modo-ferias.md (tabela "Modelo de dados"); docs/SEGURANCA_FRONTEIRAS.md §2–§4; achado anterior em docs/quadro/escalados.md#gantt-favorita-autoria (escrita herdada de nó ancestral).
+Arquivos: ler database.rules.json (blocos "ferias" e "ferias_dev"), functions/rules/__tests__/feriasRules.test.js, functions/backup/completo.js · Reservados por outros: os do Quadro
+Critérios de aceite: cada hipótese com veredito (confirmado / precisa_validar / rejeitado) e, se confirmado, um caso de teste no feriasRules.test.js que falha hoje
+Não fazer: editar database.rules.json, merge, deploy
+Prova: saída de `cd functions && node --test rules/__tests__/feriasRules.test.js`
+Entrega: comentário no PR #1786 começando com "🔍 Revisão do Antigravity (R3)"
+```
+
+## Contrato — F2: módulo `mare-ferias(-dev).js` + vista 🏖️ Férias (Antigravity)
+
+```
+Objetivo: agenda geral de férias do Digital, a mesma no Radar (📅 Calendário → vista "🏖️ Férias", ao lado de Mês/Agenda/📊 Gantt) e no Maré (📅 Calendários → visão "🏖️ Férias", ao lado de 👥 Escala), com "Minhas férias" para cadastrar, editar e excluir.
+Risco: R2  ·  Modelo e esforço: Gemini high  ·  Orçamento: 1 dia; estourou, para e relata
+Contexto:
+- Nota de desenho: docs/ideias/modo-ferias.md (decisões do Caio, modelo de dados). Dado: kanban/ferias{,_dev}/{uid}/{id} = { ini, fim, obs?, em, por } — regras no PR #1786 (sufixo _dev nas páginas -dev, como calendarios_gantt_dev).
+- Padrão a copiar: mare-gcal-dev.js (fonte única + visualizador montado pelas duas páginas; o Radar baixa o módulo só quando a vista abre, ver _okrGcalMontar/_GCAL_V em okr-dev.html; o Maré carrega com <script src="mare-gcal-dev.js?v=N">). No Maré, a visão entra como changeCalView('ferias') no #cal-ov (precedente: 👥 Escala, kanban-dev.html ~L34392). No Radar, b('ferias','🏖️ Férias') em _okrCalSegHtml + ramo em renderOkrCalendario.
+- API mínima do módulo (a F3/F4 dependem dela): MareFerias.ouvir(db, suf, cb) · ausente(uid, diaISO) → {ini,fim,obs}|null · periodoDe(uid) (o atual ou o próximo) · montar(root, {uid, nomeDe(uid), squadsDe(uid), isAdm, gravar, apagar}) → {destruir()} · leituraFechar não se aplica.
+- Vista: mês com uma faixa por pessoa (nome + período), lista "🏖️ Fora agora" e "📆 Próximas" (60 dias); filtros pessoa, squad e período. Maré: por padrão só as pessoas das minhas squads, com chip "Todo o Digital"; Radar: todo o Digital.
+- "Minhas férias": criar/editar/excluir os próprios períodos (data de início e fim, obs ≤140). fim < ini → a tela recusa (a regra não confere a ordem). Acima de 45 dias → aviso, não bloqueio. "Hoje" = data de São Paulo (como o resto das páginas).
+- ADM na tela = ADM na regra: o "corrigir/apagar de outra pessoa" só aparece para usuarios/{uid}/role === 'adm' ou caio.soares@ciahering.com.br — NÃO para config.adm_emails (Armadilha 9).
+- Visualizador externo do Painel e login não-Google não veem a vista (como o 📊 Gantt do Radar: _okrGcalPermitido).
+- Botão "🧳 Preparar minha saída" em "Minhas férias": só o lugar (desabilitado, title "em breve"), a ação é a F4.
+Arquivos: mare-ferias-dev.js (novo), kanban-dev.html, okr-dev.html, version.json (mare-cli bump), docs/BIBLIOTECA.md (arquivo novo na raiz), Ajuda (HELP_CONTENT do Maré, ajuda do Radar), mare-dicas-dev.js (1 dica, se couber), docs/arezzo/testes/test_ferias_calendario.js (novo) · Reservados por outros: os do Quadro
+Critérios de aceite:
+- test_ferias_calendario.js (Playwright + fakefb, Maré e Radar, 1280 e 390 px, 3 temas): cadastrar/editar/excluir as próprias; não ver botão de editar nas de outra pessoa (membro e PO); ADM corrige a de outra; fim<ini recusado; "Fora agora" respeita o dia de SP; filtro squad/pessoa; obs com <img src=x onerror=...> aparece como texto (XSS); visualizador externo não vê a vista; sem erro JS; sem overflow horizontal em 390 px
+- checar.js e `cd functions && npm test` verdes; mapas regenerados (mare-cli map, scripts/mapa.js)
+Não fazer: database.rules.json, functions/, merge, deploy, promoção para prod, alerta de menção (é a F3), passagem de itens (é a F4)
+Prova: saída dos testes colada · capturas em docs/capturas/ferias_calendario/ · o que NÃO verificou
+Entrega: branch antigravity/ferias-calendario + PR (base main, sem merge) + resumo com Prova, "Fronteira:" (obs e nomes de outras pessoas indo para o DOM → só esc()/textContent) e "Dica:"
+```
