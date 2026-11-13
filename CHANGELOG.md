@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📱 Gantt: campanhas legíveis a um toque no celular — SÓ DEV — 2026-11-13
+
+Maré e Radar mantêm 42 dias e navegação. No celular, cada barra abre leitor persistente com texto completo, datas e linha, Fechar/Esc e ação Abrir card ou Destacar para ADM. Dias compactos de 48 px e barras de 44×44 px, cores dos temas e desktop preservado. Teste com baseline main, três temas, ações de 1 dia e 50 simultâneas; capturas em docs/capturas/gantt_celular/.
+
 ### ⭐ Gantt: aba favorita sincronizada no Maré e no Radar — SÓ DEV — 2026-11-13
 
 Favoritar esta aba salva a preferência na conta para todos os aparelhos. Link direto mantém prioridade; no Radar a favorita Cards é ignorada. Resposta atrasada não desfaz troca manual; valores inválidos ignorados. Exceção administrativa de PO/ADM aceita pelo Caio e Claude, sem mudança nas regras.

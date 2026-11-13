@@ -17,7 +17,8 @@
    v3 (13/11): 🔔 inscrição nos avisos de mudança (inscricao.ouvir/definir + botão Avisar-me no visualizador).
    v4 (13/11): um sininho por calendário — na 🧭 Digital, 3 botões (Hering · Marketplace · Outlet).
    v5 (13/11): 📣 Pedir atualização (PEDIDO + pedido.destinatarios/enviar + botão no visualizador).
-   v6 (13/11): ⭐ aba favorita sincronizada entre aparelhos. */
+   v6 (13/11): ⭐ aba favorita sincronizada entre aparelhos.
+   v7 (13/11): leitor persistente e alvos44px no celular; desktop preservado. */
 (function(){
   'use strict';
   const CALS=[
@@ -272,6 +273,20 @@
 @media (max-width:600px){ .mgc-aba-l{display:none;} .mgc-aba-c{display:inline;} }
 @media (max-width:768px){ .mgc{--mgc-title:118px;} .mgc.is-largo{--mgc-day:120px;} .mgc-abas{align-self:stretch;gap:2px;} .mgc-aba{flex:1 0 auto;padding:9px 8px;} .mgc-mes{margin-left:0;flex:1 1 100%;} .mgc-lin{white-space:normal;font-size:11.5px;line-height:1.2;} }
 @media (hover:none) and (pointer:coarse){ .mgc-aba,.mgc-btn,.mgc-chip,.mgc-mes,.mgc-dhd.is-clic{min-height:44px;} .mgc-mes{font-size:16px;} }
+
+.mgc-leitura-dica{display:none;}
+@media (max-width:768px){
+ .mgc-leitura-dica{display:block;font-size:12px;color:var(--txt);margin:0;}
+ .mgc{--mgc-day:48px;}
+ .mgc .mgc-bar,.mgc.is-largo .mgc-bar{min-height:44px;}
+ .mgc-leitura{position:fixed;z-index:100000;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:16px;border-radius:20px;border:1px solid var(--glass-b);background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));color:var(--txt);box-shadow:var(--specular),0 12px 40px rgba(0,0,0,.35);max-height:70dvh;display:flex;flex-direction:column;gap:12px;font-family:inherit;}
+ .mgc-leitura-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+ .mgc-leitura strong{font-size:14px;}
+ .mgc-leitura p{margin:0;font-size:16px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:42dvh;color:var(--txt);}
+ .mgc-leitura button{flex:none;min-height:44px;min-width:44px;padding:8px 12px;border:1px solid var(--glass-b);border-radius:999px;background:transparent;color:var(--txt);font-size:14px;font-weight:600;line-height:1.3;font-family:inherit;cursor:pointer;}
+ .mgc-leitura :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+}
+
 @media (prefers-reduced-motion:reduce){ .mgc-scroll{scroll-behavior:auto;} }
 `;
   function css(){
@@ -313,6 +328,27 @@
         }finally{ busy=false; }
       }
     };
+  }
+
+  // Leitura persistente a um toque no celular; o texto é dado, nunca HTML.
+  // leituraFechar(): as páginas chamam ao sair do Gantt (o leitor fica no <body>, fora da régua).
+  function leituraFechar(){ document.querySelector('.mgc-leitura button[data-fechar]')?.click(); }
+  function leituraAbrir(texto, origem, acao, rotulo){
+    if(!window.matchMedia('(max-width:768px)').matches) return;
+    css(); leituraFechar();
+    const box=document.createElement('section'); box.className='mgc-leitura';
+    box.setAttribute('role','region'); box.setAttribute('aria-label','Campanha e período');
+    const topo=document.createElement('div'); topo.className='mgc-leitura-hd';
+    const tit=document.createElement('strong'); tit.textContent='📖 Campanha e período';
+    const fechar=document.createElement('button'); fechar.type='button'; fechar.dataset.fechar=''; fechar.textContent='✕ Fechar';
+    const p=document.createElement('p'); p.textContent=String(texto||''); p.tabIndex=0;
+    topo.append(tit,fechar); box.append(topo,p);
+    const encerrar=()=>{ box.remove(); document.removeEventListener('keydown',tecla,true); window.removeEventListener('resize',resize); if(origem?.isConnected) origem.focus({preventScroll:true}); };
+    const tecla=e=>{ if(e.key==='Escape'){e.preventDefault();e.stopPropagation();encerrar();} };
+    const resize=()=>{ if(!window.matchMedia('(max-width:768px)').matches) encerrar(); };
+    fechar.onclick=encerrar;
+    if(acao){ const b=document.createElement('button'); b.type='button'; b.textContent=rotulo; b.onclick=()=>{encerrar();acao();}; box.append(b); }
+    document.body.append(box); document.addEventListener('keydown',tecla,true); window.addEventListener('resize',resize); fechar.focus({preventScroll:true});
   }
 
   // ── Visualizador só de leitura. opts: { aba, aoTrocarAba(id) } → { aba(id), redesenhar(), destruir() }
@@ -505,6 +541,7 @@
           +sinoHtml()+pedirHtml()
           +(grupos.length?'<div class="mgc-chips" role="group" aria-label="Mostrar só">'+[{id:'',rot:'Tudo'}].concat(grupos).map(x=>'<button type="button" class="mgc-chip'+(x.id===gSel?' on':'')+'" data-g="'+x.id+'" aria-pressed="'+(x.id===gSel)+'">'+esc(x.rot)+'</button>').join('')+'</div>':'')
         +'</div>'
+        +'<p class="mgc-leitura-dica">Toque numa barra para ler a campanha e as datas.</p>'
         +'<div class="mgc-scroll" tabindex="0" aria-label="'+esc(aba.nome)+' — régua de 6 semanas"><div class="mgc-canvas">'
           +'<div class="mgc-row mgc-hd"><div class="mgc-sticky"><span class="mgc-lin">'+esc(aba.curto)+'</span></div><div class="mgc-track">'
             +meses.map(ms=>{ const span=ms.f-ms.i+1; return '<div class="mgc-mhd" style="grid-row:1;grid-column:'+ms.i+'/'+(ms.f+1)+'"><span>'+esc(span<=4&&!largo?MES_C[ms.m]+' '+String(ms.y).slice(2):MES_L[ms.m]+' '+ms.y)+'</span></div>'; }).join('')
@@ -526,7 +563,7 @@
       S.rolar='';
     }
 
-    function ir(off, rolar){ S.off=off; S.rolar=rolar; S.det=''; desenhar(); }
+    function ir(off, rolar){ leituraFechar(); S.off=off; S.rolar=rolar; S.det=''; desenhar(); }
     function irMes(v){
       const alvo=parse(v+'-01'); if(!alvo) return;
       const base=inicioPadrao(), ini=soma(alvo,-alvo.getDay()-7);
@@ -534,6 +571,7 @@
     }
     function trocaAba(id, manual=true){
       if(!ABAS.some(c=>c.id===id) || id===S.aba) return;
+      leituraFechar();
       S.aba=id; S.rolar='hoje'; S.det=''; S.dia='';
       if(typeof opts.aoTrocarAba==='function'){ try{ opts.aoTrocarAba(id, manual); }catch(e){} }
       desenhar();
@@ -549,6 +587,7 @@
       if(t.hasAttribute('data-dia-fechar')){ const d=S.dia; S.dia=''; desenhar(); const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.dataset.nav!=null){ const n=+t.dataset.nav; S.mes=''; return n===0?ir(0,'hoje'):ir(S.off+n,'inicio'); }
       if(t.dataset.g!=null){ const g=t.dataset.g; filtro[S.aba]=(filtro[S.aba]===g)?'':g; salvaFiltro(); S.det=''; desenhar(); const f=root.querySelector('.mgc-chip[data-g="'+(filtro[S.aba]||'')+'"]'); if(f) f.focus({preventScroll:true}); return; }
+      if(t.classList.contains('mgc-bar') && window.matchMedia('(max-width:768px)').matches){ leituraAbrir(t.getAttribute('data-tip')||t.textContent,t); return; }
       if(t.classList.contains('mgc-bar')){ S.det=t.getAttribute('data-tip')||''; const d=root.querySelector('.mgc-det'); if(d) d.textContent=S.det; }
     }
     function tecla(ev){
@@ -561,7 +600,7 @@
     function muda(ev){ if(ev.target.classList.contains('mgc-mes')){ const v=ev.target.value; if(v) irMes(v); else { S.mes=''; } } }
     // Esc fecha o painel do dia ANTES de qualquer outra camada da página (captura na window, como os diálogos da casa)
     function escDia(ev){
-      if(ev.key!=='Escape' || !S.dia || !root.isConnected || root.closest('[hidden]')) return;
+      if(document.querySelector('.mgc-leitura') || ev.key!=='Escape' || !S.dia || !root.isConnected || root.closest('[hidden]')) return;
       ev.preventDefault(); ev.stopPropagation(); const d=S.dia; S.dia=''; desenhar();
       const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true});
     }
@@ -577,5 +616,5 @@
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, v:6 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, leituraFechar, v:7 };
 })();
