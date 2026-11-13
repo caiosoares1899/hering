@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📊 Gantt: Marca com Canais Intimates/Sports e bloco Hering Kids; Comercial legível como no Excel (kanban v8.30.962-dev, painel v5.108-dev) — SÓ DEV — 2026-11-13
+
+- **Calendário de Marca** (Painel lê a planilha): além de Coleção sellout, Web e Redes sociais, entram **Canais Intimates (site e CRM)** e **Canais Sports (site e CRM)** da aba HERING e, da aba **KIDS**, Coleção sellout, Web e Redes sociais | Kids (a aba KIDS traz a data no cabeçalho em vez de "JANEIRO": o leitor entende os dois). No Maré, o Kids vem num bloco à parte com o título **👶 Hering Kids** e um respiro antes. **Reenvie a planilha no Painel** para as linhas novas aparecerem.
+- **Comercial Digital** "como no Excel": dia largo (150 px; 132 no celular) e o **texto inteiro** dentro da barra, quebrando linha; barra que começou fora da tela mostra o texto logo depois da coluna fixa e o nome do mês acompanha a rolagem. A aba de Marca segue compacta.
+- Testes: `test_painel_gantt_calendarios.js` (linhas novas e aba KIDS com data no cabeçalho) e `test_gantt_calendarios.js` (bloco Kids, texto inteiro, texto que acompanha a rolagem).
+
 ### 📌 Gantt: datas-chave (Black Friday, Natal…) como faixa/linha nas 3 abas + dica (kanban v8.30.961-dev, mare-dicas v16) — SÓ DEV — 2026-11-13
 
 - Linha **📌 Datas-chave** na régua do Gantt: cada evento vira uma **faixa** colorida atrás das barras (ou **linha**, se for 1 dia) nas abas Cards, Marca e Comercial; nomes que se cruzam descem de pista.

@@ -49,14 +49,14 @@ function xlsx(abas) {
 // ── Calendário de Marca (aba HERING 2026): col 2 = 01/01, linha 2 = dia do mês, linha 3 = dia da semana.
 // O cabeçalho de meses da linha 1 vem 1 coluna adiantado em fevereiro (como na planilha real).
 const DOWS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
-function marca(ano, linhas) {
+function marca(ano, linhas, nome, cab1) {
   const cel = {}, merges = [], col = iso => 2 + Math.round((Date.UTC(...iso.split('-').map((v, i) => i === 1 ? v - 1 : +v)) - Date.UTC(ano, 0, 1)) / 864e5);
-  cel['1,2'] = `JANEIRO/${ano}`; cel['1,32'] = `FEVEREIRO ${ano}`;
+  cel['1,2'] = cab1 !== undefined ? cab1 : `JANEIRO/${ano}`; cel['1,32'] = `FEVEREIRO ${ano}`;   // a aba KIDS real traz a DATA (número de série) em vez de "JANEIRO"
   for (let d = new Date(Date.UTC(ano, 0, 1)); d.getUTCFullYear() === ano; d.setUTCDate(d.getUTCDate() + 1)) {
     const c = col(d.toISOString().slice(0, 10)); cel[`2,${c}`] = d.getUTCDate(); cel[`3,${c}`] = DOWS[d.getUTCDay()];
   }
   linhas.forEach(({ r, rot, barras }) => { cel[`${r},1`] = rot; (barras || []).forEach(([ini, fim, txt]) => { const a = col(ini), b = col(fim); cel[`${r},${a}`] = txt; if (b > a) merges.push([r, a, r, b]); }); });
-  return { nome: `HERING ${ano}`, celulas: cel, merges };
+  return { nome: nome || `HERING ${ano}`, celulas: cel, merges };
 }
 // ── Calendário Comercial (uma aba por mês, modelo Vertex42): D1 = número de série do dia 1; semana = linha com os
 // números dos dias nas colunas D..J (domingo..sábado); rótulo da linha na coluna B.
