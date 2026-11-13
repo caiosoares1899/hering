@@ -517,6 +517,7 @@ const check = (name, pass, detail) => {
 
       // 5. Somente leitura: clique abre o card real; Enter e Espaço na linha/barra abrem o card; sem draggable
       await p.locator('#gantt-view .gantt-bar[data-card-id="c_camp_both"]').click();
+      if(width<769) await p.getByRole('button',{name:'Abrir card',exact:true}).click();
       await p.waitForFunction(() => document.getElementById('card-ov')?.classList.contains('open'));
       const openedTitle = await p.evaluate(() => document.getElementById('m-title').value);
       check(label + ' clicar na barra do Gantt abre o modal do card', openedTitle === 'Campanha Alto Verão', openedTitle);

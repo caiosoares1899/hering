@@ -67,7 +67,8 @@ const seed = () => ({ kanban: {
     t(`E ${L}. barra destacada pelo ADM: cor do destaque, ⚠️ com texto alternativo e legenda "Ação importante"`, dz.dest && dz.alerta && /ff6b6b/i.test(dz.cor) && /Ação importante/.test(dz.leg), dz);
     t(`E2 ${L}. destaque só de cor também tem sinal além da cor (★ com texto "Ação destacada")`, await p.evaluate(() => !!document.querySelector('.gantt-cal-bar[data-id="b_a5"] .gantt-cal-dest[aria-label="Ação destacada"]') && /Destacada/.test(document.querySelector('.gantt-leg').textContent)));
     await p.click('.gantt-cal-bar[data-id="b_a2"]'); await p.waitForTimeout(200);
-    t(`F ${L}. membro toca na barra destacada: aviso "⚠️ Importante · …" e nada de editor`, await p.evaluate(() => /⚠️ Importante · OFERTA FICTÍCIA/.test(document.getElementById('kb-toast').textContent) && !(document.getElementById('gantt-dz-ov') || {}).classList?.contains('open')));
+    t(`F ${L}. membro toca na barra destacada: aviso "⚠️ Importante · …" e nada de editor`, await p.evaluate(() => /⚠️ Importante · OFERTA FICTÍCIA/.test((document.querySelector('.mgc-leitura p')||document.getElementById('kb-toast')).textContent) && !(document.getElementById('gantt-dz-ov') || {}).classList?.contains('open')));
+    await p.evaluate(()=>document.querySelector('.mgc-leitura button[data-fechar]')?.click());
     // filtro "mostrar só"
     const chips = await p.evaluate(() => [...document.querySelectorAll('.gantt-cal-fchip')].map(x => x.textContent));
     t(`G ${L}. chips de filtro do Comercial: Tudo · Site · App · CRM · Mídia · Lançamentos`, chips.join('|') === 'Tudo|🖥️ Site|📱 App|✉️ CRM|📣 Mídia|🚀 Lançamentos e datas', chips);
