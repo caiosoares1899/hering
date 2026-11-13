@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-12.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-13.
 > Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
@@ -108,10 +108,10 @@
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
-- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11289) · `openGlobalUsersModal` (L10881) · `updateUserRole` (L10262) · `_limparHtmlStatus` (L7189) · `_linkSeguroStatus` (L7202)
+- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11300) · `openGlobalUsersModal` (L10892) · `updateUserRole` (L10273) · `_limparHtmlStatus` (L7189) · `_linkSeguroStatus` (L7202)
 - `_statusIncidenteRecente` (L7210) · `_setStatusPill` (L7217) · `initGithubStatusMonitor` (L7172) · `loadGithubStatus` (L7226) · `renderGithubStatusUI` (L7276) · `_fbMatchServicos` (L7477)
-- `initFirebaseStatusMonitor` (L7507) · `loadFirebaseStatus` (L7521) · `renderFirebaseStatusUI` (L7588) · `loadAgentesExternosPainel` (L9439) · `renderAgentesExternosPainel` (L9451) · `criarAgenteExternoPainel` (L9519)
-- `toggleAgenteExternoSquad` (L9576) · `_fillAgentesLogSquadFilter` (L9608) · `loadAgentesTabData` (L9615) · `renderAgentesAtivosGrid` (L9639) · `renderAgentesLogCross` (L9664) · `closeAgentesHelp` (L9698)
+- `initFirebaseStatusMonitor` (L7507) · `loadFirebaseStatus` (L7521) · `renderFirebaseStatusUI` (L7588) · `loadAgentesExternosPainel` (L9450) · `renderAgentesExternosPainel` (L9462) · `criarAgenteExternoPainel` (L9530)
+- `toggleAgenteExternoSquad` (L9587) · `_fillAgentesLogSquadFilter` (L9619) · `loadAgentesTabData` (L9626) · `renderAgentesAtivosGrid` (L9650) · `renderAgentesLogCross` (L9675) · `closeAgentesHelp` (L9709)
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)
