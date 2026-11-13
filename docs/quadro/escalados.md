@@ -105,3 +105,14 @@ Caio pediu para anotar uma visão no Gantt que reúna **todos os calendários co
 **Objetivo:** enxergar o que acontece simultaneamente em cada dia entre as frentes comerciais e facilitar alinhamento e planejamento do Digital.
 
 **Desenho a definir com Claude:** apresentação da visão diária dentro do Gantt, tratamento de ações que duram vários dias e filtros por origem/frente e período. Esses detalhes são propostas para desenho, não decisões já confirmadas. Ideia salva, sem implementação.
+
+
+<a id="gantt-favorita-autoria"></a>
+
+## Prova de permissão da ⭐ aba favorita — exceção aceita — 13/11/2026
+
+Contrato do Caio exige, antes do front, provar com `functions/rules/rulesSim.js` que só a própria pessoa grava `kanban/usuarios/{uid}/gantt_favorita`. Prova executada na main `925a144d`, com dados sintéticos: autora Google Hering grava `outlet` e `null`; outro membro comum é negado; **outro usuário com role PO ou ADM consegue gravar ambos**. A `.write` de `usuarios/$uid` concede escrita ao próprio uid ou Google Hering com role PO/ADM (e exceção administrativa existente). Logo, o critério literal "outra pessoa não consegue" não passa.
+
+**Parada prevista no contrato:** nenhuma implementação funcional ou mudança em regras. Para exclusividade estrita, Claude precisa desenhar a correção R3: `.write` em nó ancestral não pode ser restringida apenas por `.write` no filho; exclusão `null` também precisa ser protegida. Alternativamente, Caio pode esclarecer que a exceção administrativa existente é aceita e ajustar o critério antes de retomar o front R1.
+
+**Retomada autorizada pelo Caio e Claude:** outro membro comum deve ser negado; PO/ADM mantêm a exceção administrativa já existente. Preferência sem efeito de acesso, validada por lista de abas em cada app. Continua R1, sem alteração em `database.rules.json`.
