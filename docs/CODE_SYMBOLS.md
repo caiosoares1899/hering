@@ -1,6 +1,6 @@
 # CODE_SYMBOLS.md — Índice Automático Completo de Símbolos, Blocos e `const`s
 
-> Gerado automaticamente do código-fonte por `node scripts/mare-cli.js map` (ou `symbols`) em 2026-11-12.
+> Gerado automaticamente do código-fonte por `node scripts/mare-cli.js map` (ou `symbols`) em 2026-11-13.
 > **Como usar (Zero Buscas Cegas):** leia este arquivo com `read_file` para obter a linha exata `Lxxxx` de qualquer `<style>`, `<script>`, `const` global ou função em todos os apps `-dev` e módulos `mare-*-dev.js`.
 > Em arquivos > 2,5 MB onde `read_file` acusa binário (`kanban-dev.html`, `kanban.html`, `guia-okr.html`), use `node scripts/mare-cli.js slice <arquivo> <inicio> <fim>` para ler o trecho exato e `"patches"` no `.mare-ship.json` para editar.
 
