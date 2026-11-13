@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/modo-ferias-f1` | `database.rules.json`, `functions/backup/completo.js`, `functions/rules/__tests__/feriasRules.test.js`, `docs/ideias/modo-ferias.md` | 13/11/2026 |
 
 
 ## Fila
@@ -37,12 +38,13 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | Claude | 📣 Pedir atualização no Gantt: tipo `gantt_pedido` vira push (sem regra nova) | resync + `firebase deploy --project hering-onboarding --only functions:sendPushOnNotification` | 13/11/2026 |
 | Claude | 🔔 Avisos de mudança no Gantt: nó `gantt_inscritos(_dev)` + funções de aviso + `gantt_cal` no push (+ backup diário) | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:sendPushOnNotification,functions:backupCompletoSemanal,functions:backupGlobalDiario` | 13/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na promoção do Gantt de 13/11 (Digital · dia a dia, Radar Gantt) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 13/11/2026 |
+| Claude | 🏖️ Férias F1: nó `kanban/ferias(_dev)` + regras + entra no backup (PR claude/modo-ferias-f1) | resync + `firebase deploy --project hering-onboarding --only database` **e depois** `--only functions:backupGlobalDiario,functions:backupCompletoSemanal` (se a linha do 🔔 Gantt acima ainda não foi feita, um deploy só cobre as duas) | 13/11/2026 |
 
 ## Backlog
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
-| 🏖️ Calendário geral de férias + **modo férias** (alerta ao marcar quem está fora, cadastro obrigatório ao ativar, pausar/passar cards e Objetivos item a item) | Claude | [escopo](quadro/escalados.md#modo-ferias) |
+| 🏖️ Calendário geral de férias + **modo férias** — decidido em 13/11, em 4 fases (F1 em andamento) | Claude | [nota de desenho](ideias/modo-ferias.md) |
 | 📱 Gantt no celular: nenhum texto cabe, só barrinhas (Maré e Radar) | Claude | [escopo](quadro/escalados.md#gantt-celular) |
 | ⭐ Gantt: aba favorita ao abrir + 🔔 inscrição para avisos quando um calendário muda | Claude | [escopo](quadro/escalados.md#gantt-favorito-avisos) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |

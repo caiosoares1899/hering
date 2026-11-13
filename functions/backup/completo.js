@@ -59,6 +59,7 @@ const NOS_GLOBAIS = [
   { no: 'gantt_destaques', diario: true },
   { no: 'calendarios_gantt_hist', diario: true },   // 📊 quem atualizou cada calendário do Gantt e quando (pequeno)
   { no: 'gantt_inscritos', diario: true },   // 🔔 quem pediu aviso de mudança em cada calendário do Gantt (pequeno)
+  { no: 'ferias', diario: true },            // 🏖️ períodos de férias de cada pessoa (calendário geral de férias / modo férias; pequeno) — ver docs/ideias/modo-ferias.md
   { no: 'calendarios_gantt_snap', diario: false },  // 📊 cópias de cada versão publicada dos calendários (dá para restaurar; volumoso: só semanal)      // 📊 cor/⚠️ que o ADM pôs nas barras dos calendários do Gantt
   { no: 'plantao', diario: false },          // 🛟 fichas do Plantão de Bugs / Assistente Férias (histórico: PR, script de teste, quem validou) — só ADM lê; ver docs/ASSISTENTE_FERIAS.md
 ];
