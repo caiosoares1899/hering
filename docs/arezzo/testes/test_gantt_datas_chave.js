@@ -52,14 +52,14 @@ const seed = () => ({ kanban: {
     await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(400);
     t(`B ${L}. ao abrir o Gantt lê as da squad e as globais`, await leu(p, 'squads/site/gantt_marcos') === 1 && await leu(p, 'gantt_marcos_globais') === 1);
     const r = await p.evaluate(() => {
-      const chips = [...document.querySelectorAll('.gantt-mc-chip')].map(c => ({ n: c.querySelector('.gantt-mc-nome').textContent, col: c.style.gridColumn, row: c.style.gridRow, glb: !!c.querySelector('.gantt-mc-glb') }));
+      const chips = [...document.querySelectorAll('.gantt-mc-chip:not(.gantt-mc-hoje)')].map(c => ({ n: c.querySelector('.gantt-mc-nome').textContent, col: c.style.gridColumn, row: c.style.gridRow, glb: !!c.querySelector('.gantt-mc-glb') }));
       const faixas = [...document.querySelectorAll('.gantt-mc-faixa')].map(f => ({ col: f.style.gridColumn, dia: f.classList.contains('is-dia') }));
       return { chips, faixas, add: !!document.querySelector('.gantt-mc-add'), img: !!document.querySelector('.gantt-mc-chip img'), corner: (document.querySelector('.gantt-mc-corner') || {}).textContent };
     });
     const bf = r.chips.find(c => c.n === 'Black Friday'), xs = r.chips.find(c => /Esquenta/.test(c.n)), gl = r.chips.find(c => /Dia do Cliente/.test(c.n));
     t(`C ${L}. linha "📌 Datas-chave" com 3 nomes (o de maio fica fora da janela)`, r.chips.length === 3 && /Datas-chave/.test(r.corner), r);
     t(`D ${L}. Black Friday 27–30/11 começa na coluna 27 e a faixa cobre 27→30; 1 dia vira linha`, bf && /^27 \//.test(bf.col) && r.faixas.some(f => f.col === '27 / 31' && !f.dia) && r.faixas.some(f => f.col === '28 / 29' && f.dia), r);
-    t(`D2 ${L}. nome de data de 1 dia cabe (não fica só o ícone)`, await p.evaluate(() => [...document.querySelectorAll('.gantt-mc-chip .gantt-mc-nome')].every(n => n.getBoundingClientRect().width >= 40)));
+    t(`D2 ${L}. nome de data de 1 dia cabe (não fica só o ícone)`, await p.evaluate(() => [...document.querySelectorAll('.gantt-mc-chip:not(.gantt-mc-hoje) .gantt-mc-nome')].every(n => n.getBoundingClientRect().width >= 40)));
     t(`E ${L}. nomes que se cruzam vão para outra pista (Esquenta embaixo da Black Friday)`, bf && xs && bf.row !== xs.row, [bf, xs]);
     t(`F ${L}. a global tem o 🌐 e as da squad não`, gl && gl.glb && bf && !bf.glb, r.chips);
     t(`G ${L}. nome com HTML aparece como texto (nada executa)`, !r.img && await p.evaluate(() => !window.__xss) && /<img src=x/.test(xs && xs.n), xs);
@@ -67,7 +67,7 @@ const seed = () => ({ kanban: {
     await p.click('.gantt-mc-chip[data-id="mbf"]'); await p.waitForTimeout(200);
     t(`I ${L}. membro toca no nome: aviso com nome e período (sem abrir formulário)`, await p.evaluate(() => /Black Friday · 27\/11 – 30\/11/.test(document.getElementById('kb-toast').textContent) && !(document.getElementById('gantt-mc-ov') || {}).classList?.contains('open')));
     await p.evaluate(() => ganttAba('marca')); await p.waitForTimeout(300);
-    t(`J ${L}. nas abas de calendário as datas-chave continuam (linha e faixa)`, await p.evaluate(() => document.querySelectorAll('.gantt-mc-chip').length === 3 && document.querySelectorAll('.gantt-mc-faixa').length === 3));
+    t(`J ${L}. nas abas de calendário as datas-chave continuam (linha e faixa)`, await p.evaluate(() => document.querySelectorAll('.gantt-mc-chip:not(.gantt-mc-hoje)').length === 3 && document.querySelectorAll('.gantt-mc-faixa').length === 3));
     t(`K ${L}. sem rolagem lateral da página e sem erro de JS`, await p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1) && errs.length === 0, errs);
     if (cap) { await p.evaluate(() => ganttAba('cards')); await p.waitForTimeout(200); for (const th of ['', 'light', 'vice']) { await p.evaluate(x => document.documentElement.dataset.theme = x, th); await p.waitForTimeout(150); await p.screenshot({ path: path.join(cap, `mc_${vp.width}_${th || 'dark'}.png`) }); } }
     await ctx.close();
@@ -95,6 +95,14 @@ const seed = () => ({ kanban: {
     t('S. PO não edita a global (toque só mostra o aviso)', await p.evaluate(() => { document.querySelector('.gantt-mc-chip[data-escopo="global"]').click(); return !document.getElementById('gantt-mc-ov').classList.contains('open') && /todas as squads/.test(document.getElementById('kb-toast').textContent); }));
     t('T. sem erro de JS', errs.length === 0, errs);
     await ctx.close(); }
+  // ── PO numa squad SEM datas-chave: a dica de vazio aparece junto com o "Hoje" (antes o Hoje a escondia)
+  { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const sd = seed(); delete sd.kanban.squads[SQ]['gantt_marcos' + SUF]; delete sd.kanban['gantt_marcos_globais' + SUF]; await fake.install(ctx, sd);
+    const p = await ctx.newPage(); await p.addInitScript(f => { const R = Date; const fixed = new R(f).getTime(); class D extends R { constructor(...a) { if (!a.length) super(fixed); else super(...a); } static now() { return fixed; } } window.Date = D; }, FIXO);
+    await p.goto(base + '/' + K + '.html?squad=' + SQ); await p.waitForFunction(() => !!window.__authCb); const u = USERS.po;
+    await p.evaluate(x => window.__authCb(x), { uid: u.uid, email: u.email, displayName: u.nome, photoURL: '', providerData: [{ providerId: 'google.com' }] }); await p.waitForTimeout(2500);
+    await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); toggleGanttView(); }); await p.waitForTimeout(300);
+    t('L2. PO sem datas-chave: "Hoje" e a dica "Marque Black Friday…" aparecem juntos', await p.evaluate(() => !!document.querySelector('.gantt-mc-hoje') && /Marque Black Friday/.test((document.querySelector('.gantt-mc-vazio') || {}).textContent || '')));
+    await ctx.close(); }
   // ── ADM: cria global
   { const { ctx, p } = await abre('adm', { width: 1280, height: 900 });
     await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(300);
@@ -107,7 +115,7 @@ const seed = () => ({ kanban: {
   // ── celular: alvos de toque do PO
   { const { ctx, p } = await abre('po', { width: 390, height: 800 });
     await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(300);
-    t('W. celular: ＋ e nomes com alvo ≥ 32 px (＋ ≥ 44), formulário cabe na tela', await p.evaluate(() => { const a = document.querySelector('.gantt-mc-add').getBoundingClientRect(); const c = document.querySelector('.gantt-mc-chip').getBoundingClientRect(); return a.height >= 44 && c.height >= 32; })
+    t('W. celular: ＋ e nomes com alvo ≥ 32 px (＋ ≥ 44), formulário cabe na tela', await p.evaluate(() => { const a = document.querySelector('.gantt-mc-add').getBoundingClientRect(); const c = document.querySelector('.gantt-mc-chip:not(.gantt-mc-hoje)').getBoundingClientRect(); return a.height >= 44 && c.height >= 32; })
       && await (async () => { await p.click('.gantt-mc-add'); await p.waitForTimeout(150); return p.evaluate(() => { const r = document.querySelector('.gantt-mc-panel').getBoundingClientRect(); return r.right <= innerWidth && r.left >= 0 && document.documentElement.scrollWidth <= innerWidth + 1; }); })());
     await ctx.close(); }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nFALHOU'); process.exit(ok ? 0 : 1);

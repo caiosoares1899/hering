@@ -560,6 +560,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pg-card{position:relative;padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb,6,26,46),.35);}
 .pg-pv{margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb,6,26,46),.45);font-size:11px;color:var(--txt);line-height:1.5;}
 .pg-pv-erro{color:var(--danger);border-color:rgba(255,107,107,.35);}
+.pg-pv-aviso{color:var(--warn);font-weight:600;margin-bottom:6px;line-height:1.5;}
 .pg-pv-dif{display:flex;gap:10px;flex-wrap:wrap;font-weight:700;}
 .pg-novo{color:var(--teal);} .pg-alt{color:var(--warn);} .pg-rem{color:var(--danger);}
 .pg-pv-ul{margin:6px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:3px;max-height:180px;overflow:auto;}
@@ -3167,7 +3168,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.108 · painel-dev</div>
+<div class="version">v5.109 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -10294,8 +10295,9 @@ const GXL = (()=>{
   // datas" (FERIADO, "12h - DROP 90"…). Dias seguidos com o mesmo texto na mesma linha = 1 barra (até virando a semana).
   const LINHAS_COM=[
     { id:'lancamentos', rot:'Lançamentos e datas', ok:()=>false },
-    { id:'site',        rot:'Site todo (não remarcados)', ok:s=>/^SITE TODO\b/.test(s) },
-    { id:'saldos',      rot:'Site · Saldos',      ok:s=>/^SITE\s*-?\s*TODO SALDOS\b/.test(s)||/^SITE\b.*SALDOS/.test(s) },
+    // 13/11: o time renomeou para "Site e App" (as ações valem nos dois); o leitor aceita o nome antigo e o novo
+    { id:'site',        rot:'Site e App · todo (não remarcados)', ok:s=>/^SITE( E APP)?\s*-?\s*TODO\b/.test(s) && !/SALDOS/.test(s) },
+    { id:'saldos',      rot:'Site e App · saldos', ok:s=>/^SITE\b.*SALDOS/.test(s) },
     { id:'adulto',      rot:'Saldos · Adulto',    ok:s=>/^ADULTO\b/.test(s) },
     { id:'intimates',   rot:'Saldos · Intimates', ok:s=>/^INTIMATES\b/.test(s) },
     { id:'kids',        rot:'Saldos · Kids',      ok:s=>/^KIDS\b/.test(s) },
@@ -10311,6 +10313,7 @@ const GXL = (()=>{
   function montarComercial(abas, anoMin){
     anoMin=anoMin||2026;
     const porMes=new Map(); // 'AAAA-MM' → {aba, dias: Map(iso → Map(linha → Set(txt)))}
+    const naoRec=new Map(); // rótulo da coluna B que o leitor não conhece (o conteúdo vai para a linha de cima) → abas
     for(const aba of abas){
       if(aba.oculta || ABA_FORA.test(aba.nome)) continue;
       // mês pelo número de série no topo (linhas 1–4)
@@ -10337,7 +10340,7 @@ const GXL = (()=>{
         let lin=temRotulo?'lancamentos':'geral';
         for(let r=s.r+1;r<fimR;r++){
           const row=aba.rows.get(r); if(!row) continue;
-          const rot=row.get(2); if(rot && !rot.num){ const l=linhaDeRotulo(rot.v); if(l) lin=l; }
+          const rot=row.get(2); if(rot && !rot.num){ const l=linhaDeRotulo(rot.v); if(l) lin=l; else if(/[\p{L}]/u.test(rot.v)){ const k=limpa(rot.v).slice(0,60); if(!naoRec.has(k)) naoRec.set(k,new Set()); naoRec.get(k).add(aba.nome); } }
           for(const [c,x] of row){
             if(c<3) continue;
             const txt=limpa(x.v); if(!txt || !/[\p{L}\p{N}]/u.test(txt) || /^notes?:?$/i.test(txt)) continue;
@@ -10364,7 +10367,7 @@ const GXL = (()=>{
     }
     const meses=[...porMes.keys()].sort();
     const de=meses[0]+'-01'; const ult=meses[meses.length-1]; const [ay,am]=ult.split('-').map(Number); const ate=iso(new Date(Date.UTC(ay,am,0)));
-    return { abas:[...porMes.values()].map(x=>x.aba), linhas, barras, de, ate, meses };
+    return { abas:[...porMes.values()].map(x=>x.aba), linhas, barras, de, ate, meses, naoReconhecidos:[...naoRec.entries()].map(([r,a])=>r+' ('+[...a].join(', ')+')') };
   }
   // ── prévia: compara com o que está publicado. Os dois calendários trocam TUDO pelo arquivo novo (a planilha que o time
   // mantém tem o ano inteiro); trocar só "os meses do arquivo" duplicava ou cortava barras que atravessam a virada do mês.
@@ -10387,7 +10390,7 @@ const GXL = (()=>{
 const _GANTT_SUF = /-dev\.html/.test(location.pathname) ? '_dev' : '';   // painel-dev escreve no mesmo nó que o kanban-dev lê
 const _GANTT_CALS = {
   marca:     { icone:'🎯', nome:'Calendário de Marca', sub:'Campanhas · aba HERING: Coleção sellout, Web, Redes sociais e Canais Intimates e Sports · aba KIDS: Coleção sellout, Web e Redes sociais', montar:a=>GXL.montarMarca(a), regra:'Reenviar troca o calendário inteiro.' },
-  comercial: { icone:'🛒', nome:'Calendário Comercial Digital', sub:'Uma aba por mês, de 2026 em diante: lançamentos, site, saldos, mídia, CRM e app', montar:a=>GXL.montarComercial(a, 2026), regra:'Reenviar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses).' },
+  comercial: { icone:'🛒', nome:'Calendário Comercial Digital', sub:'Uma aba por mês, de 2026 em diante: lançamentos, Site e App (todo e saldos), mídia, CRM e ações de app/site', montar:a=>GXL.montarComercial(a, 2026), regra:'Reenviar troca o calendário inteiro pelo arquivo (envie a planilha com todos os meses).' },
 };
 const _ganttCalAtual = {}, _ganttCalPrevia = {};
 const _ganttRef = tipo => window._ref(window._db, 'kanban/calendarios_gantt'+_GANTT_SUF+'/'+tipo);
@@ -10420,6 +10423,7 @@ function _pcfgGanttDesenha(){
       previa=`<div class="pg-pv">
         <div style="font-weight:700;margin-bottom:4px;">Prévia de 📄 ${esc(pv.arquivo)}${pv.abas?` <span style="font-weight:400;color:var(--txt3);">(${esc(pv.abas)})</span>`:''}</div>
         <div style="color:var(--txt2);margin-bottom:6px;">${porLinha}</div>
+        ${pv.naoRec&&pv.naoRec.length?`<div class="pg-pv-aviso" role="alert">⚠ Rótulos da coluna B que não reconheci — o conteúdo deles foi para a linha de cima: ${pv.naoRec.slice(0,8).map(r=>esc(r)).join(' · ')}${pv.naoRec.length>8?' …':''}. Confira o nome na planilha (ex.: "SITE E APP TODO", "SITE E APP - TODO SALDOS", "MÍDIA", "CRM", "Ação App").</div>`:''}
         <div class="pg-pv-dif"><span class="pg-novo">＋ ${d.novas.length} novas</span><span class="pg-alt">✎ ${d.alteradas.length} mudaram</span><span class="pg-rem">− ${d.removidas.length} saem</span><span style="color:var(--txt3);">${d.iguais} iguais</span></div>
         ${nada?'<div style="color:var(--txt3);margin-top:6px;">Nada mudou em relação ao que está publicado.</div>':`<ul class="pg-pv-ul">${ex(d.novas,'＋')}${ex(d.alteradas,'✎')}${ex(d.removidas,'−')}</ul>`}
         <div style="color:var(--txt3);font-size:10px;margin-top:6px;">${esc(c.regra)}</div>
@@ -10446,7 +10450,7 @@ async function pcfgGanttArquivo(inp){
     const abas=await GXL.ler(await f.arrayBuffer());
     const novo=_GANTT_CALS[tipo].montar(abas);
     const atual=_ganttCalAtual[tipo]&&!_ganttCalAtual[tipo]._erro?_ganttCalAtual[tipo]:null;
-    _ganttCalPrevia[tipo]={ arquivo:f.name.slice(0,200), abas:novo.abas?novo.abas.length+' abas de mês':novo.aba, mescla:GXL.mesclar(tipo, novo, atual) };
+    _ganttCalPrevia[tipo]={ arquivo:f.name.slice(0,200), abas:novo.abas?novo.abas.length+' abas de mês':novo.aba, mescla:GXL.mesclar(tipo, novo, atual), naoRec:novo.naoReconhecidos||[] };
   }catch(e){ _ganttCalPrevia[tipo]={ erro:(e&&e.message)||'Não consegui ler o arquivo.' }; }
   _pcfgGanttDesenha();
 }

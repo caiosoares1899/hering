@@ -109,6 +109,36 @@
           "$outro": { ".validate": false }
         }
       },
+      "gantt_destaques": {
+        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+        "$cal": {
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') && ($cal === 'marca' || $cal === 'comercial')",
+          ".validate": "$cal === 'marca' || $cal === 'comercial'",
+          "$id": {
+            ".validate": "newData.hasChildren(['em'])",
+            "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+            "alerta": { ".validate": "newData.isBoolean()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "em": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
+      "gantt_destaques_dev": {
+        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+        "$cal": {
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') && ($cal === 'marca' || $cal === 'comercial')",
+          ".validate": "$cal === 'marca' || $cal === 'comercial'",
+          "$id": {
+            ".validate": "newData.hasChildren(['em'])",
+            "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+            "alerta": { ".validate": "newData.isBoolean()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "em": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        }
+      },
       "campanhas_log_dev": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"

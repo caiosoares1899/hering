@@ -98,4 +98,23 @@ for (const suf of ['', '_dev']) {
     assert.equal(lê(`kanban/calendarios_gantt${suf}`, mk('vis1', 'visita@gmail.com')), false, 'visualizador do Painel não lê os calendários');
     assert.equal(lê(`kanban/calendarios_gantt${suf}`, A.arezzo), false, 'Arezzo (Microsoft) não lê');
   });
+  test(`destaques do Gantt${suf}: só ADM marca cor/⚠️; a empresa lê; formato validado`, () => {
+    reset(); const D = (c, id) => `kanban/gantt_destaques${suf}/${c}/${id}`; const d = o => Object.assign({ cor: 'red', alerta: true, porNome: 'Adm', em: 1 }, o || {});
+    assert.equal(grava(D('comercial', 'b_abc'), A.adm, d()), true, 'ADM destaca no Comercial');
+    assert.equal(grava(D('marca', 'b_abc'), A.adm, d({ alerta: false })), true, 'ADM destaca na Marca');
+    assert.equal(grava(D('comercial', 'b_abc'), A.po, d()), false, 'PO NÃO destaca');
+    assert.equal(grava(D('comercial', 'b_abc'), A.poGlobal, d()), false, 'role po NÃO destaca');
+    assert.equal(grava(D('comercial', 'b_abc'), A.membro, d()), false, 'membro NÃO destaca');
+    assert.equal(grava(D('outro', 'b_abc'), A.adm, d()), false, 'só marca|comercial');
+    assert.equal(grava(D('comercial', 'b_abc'), A.adm, d({ cor: '#ff0000' })), false, 'cor fora da paleta');
+    assert.equal(grava(D('comercial', 'b_abc'), A.adm, d({ alerta: 'sim' })), false, 'alerta tem que ser booleano');
+    assert.equal(grava(D('comercial', 'b_abc'), A.adm, d({ txt: '<img>' })), false, 'campo extra');
+    DB.kanban[`gantt_destaques${suf}`] = { comercial: { b_abc: d() } };
+    assert.equal(grava(D('comercial', 'b_abc'), A.adm, null), true, 'ADM tira o destaque');
+    assert.equal(grava(D('comercial', 'b_abc'), A.membro, null), false, 'membro NÃO tira');
+    assert.equal(lê(`kanban/gantt_destaques${suf}`, A.membro), true, 'membro lê');
+    DB.kanban.painel_viewers = { 'visita@gmail,com': true };
+    assert.equal(lê(`kanban/gantt_destaques${suf}`, mk('vis1', 'visita@gmail.com')), false, 'visualizador do Painel não lê');
+    assert.equal(lê(`kanban/gantt_destaques${suf}`, A.forasteiro), false, 'fora da Hering não lê');
+  });
 }

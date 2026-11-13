@@ -135,4 +135,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-12 · Maré › Modal do card (2ª):** o bloco "📅 Datas" ainda pareceu bagunçado ao Caio — campos novos foram para um cartão `.cl-sec` "📅 Período e hora" embaixo de Riscos (registrado em `CARD_SECTIONS`, o PO esconde por padrão) e a esquerda voltou byte a byte ao pré-1a. **Lição:** campo novo numa tela que o time já usa vai para um bloco PRÓPRIO, sem reordenar os conhecidos — mexer no que a pessoa já sabe onde está lê como bagunça. v8.30.957-dev.
 
+- **2026-11-13 · Maré › 📊 Gantt (abas + 📌 Datas-chave):** rótulo de data de 1 dia começava na borda da coluna e a linha ficava no meio do dia ("ficou torto", print do Caio) → nome centrado na linha, medido por DOM (±2 px) nas 3 abas, inclusive no Comercial largo; "Hoje" ganhou rótulo na linha 📌; destaque ⚠️ do ADM nas barras dos calendários (nó próprio, sobrevive a reenviar a planilha); filtro "mostrar só" por grupo de linhas; "Site e App". **Lição:** alinhamento se prova medindo centro × centro no DOM, não só olhando o print do caso fácil. Teste `test_gantt_ui.js`. v8.30.963-dev.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
