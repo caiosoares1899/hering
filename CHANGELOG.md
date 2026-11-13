@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📊 Gantt ao lado da ↕ Ordenação na toolbar (kanban v8.30.970-dev) — SÓ DEV — 2026-11-13
+
+Na ordem padrão da toolbar, o botão 📊 Gantt saiu do fim da fila (ao lado da 🛤️ Timeline) e foi para logo depois de ↕ Ordenação. Quem já reorganizou a barra (⌨️ Atalhos → Reorganizar) mantém a própria ordem. Ajuda do Gantt atualizada (posição do botão e 📆 Mês no parágrafo dos filtros).
+
 ### 📆 Gantt: botão Mês ao lado do De/Até (kanban v8.30.969) — PROD 13/11 — 2026-11-13
 
 Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem alterar o filtro de período. Escolha preservada nas atualizações, zerada por navegação, De/Até e limpar. Ajuda atualizada e teste Playwright em desktop/celular.
