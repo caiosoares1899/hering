@@ -119,7 +119,7 @@ Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em anda
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.969 | `kanban-dev.html` v8.30.970-dev | `mare-login` v3 · `mare-notif` v41 · `mare-metas` v19 · `mare-dicas` v17 · `mare-sonar` v8 · `mare-timer` v1 · `mare-gcal` v1 ⚠️ prod difere |
+| Maré Digital | `kanban.html` v8.30.969 | `kanban-dev.html` v8.30.971-dev | `mare-login` v3 · `mare-notif` v41 · `mare-metas` v19 · `mare-dicas` v17 · `mare-sonar` v8 · `mare-timer` v1 · `mare-gcal` v1 ⚠️ prod difere |
 | Painel | `painel.html` v5.113 · painel | `painel-dev.html` v5.113 · painel-dev | `mare-notif` v41 · `mare-metas` v19 · `mare-plantao` v5 · `mare-dicas` v17 · `mare-gxl` v2 |
 | Radar | `okr.html` v2.119 · okr | `okr-dev.html` v2.120 · okr-dev | `mare-notif` v41 · `mare-dicas` v17 · `mare-sonar` v8 |
 | Oceano | `oceano.html` v1.82 · oceano | `oceano-dev.html` v1.82 · oceano-dev | `mare-login` v3 · `mare-notif` v41 · `mare-plantao` v5 · `mare-dicas` v17 · `mare-metas` v19 · `mare-sonar` v8 |

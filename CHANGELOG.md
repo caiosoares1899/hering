@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 📊 Radar: Gantt dos calendários do Digital no Calendário + link direto okr.html?gantt (okr v2.120-dev, kanban v8.30.970-dev, mare-gcal v1) — SÓ DEV — 2026-11-13
+### 📊 Radar: Gantt dos calendários do Digital no Calendário + link direto okr.html?gantt (okr v2.120-dev, kanban v8.30.971-dev, mare-gcal v1) — SÓ DEV — 2026-11-13
 
 - **Radar → 📅 Calendário → 📊 Gantt** (ao lado de Mês e Agenda): os mesmos calendários do Maré — 🎯 Marca, 🛒 Comercial Hering, 🛍️ Marketplace e 🏷️ Outlet — na régua de 6 semanas, com ◀ Hoje ▶, 📆 Mês, filtro por grupo e os destaques ⚠️/★ do ADM. Só leitura (atualizar continua no Maré). Pedido do Caio: os líderes que não usam o Maré também enxergam.
 - **Link direto**: `okr.html?gantt` abre direto no Gantt (`?gantt=marca|comercial|mktplace|outlet` escolhe a aba).
