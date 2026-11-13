@@ -31,6 +31,8 @@
 
 ## Gantt: pedir atualização e calendários no Radar — 13/11/2026
 
+> ✅ **Os dois itens no dev em 13/11/2026**: (2) calendários no Radar (#1774) e (1) 📣 Pedir atualização — Comercial Hering = squads `app` + `site` (o Caio confirmou que "Adulto" é a Squad Site Hering), Marketplace = `mktplace`, Outlet = `outlet` (não a `outlet-crm`), Marca = Caio.
+
 Pedido explícito do Caio, com esclarecimentos na sessão Codex:
 
 1. Botão **Pedir atualização** contextual nas abas dos calendários do Gantt. Destinatários: Marketplace → pessoas da squad Marketplace; Comercial Hering → pessoas das squads Adulto e App; Outlet → pessoas da squad Outlet Comercial; Marca → Caio. Confirmar os IDs reais das squads pelo cadastro, sem inferir pelo nome visível. Deduplicar destinatários quando participarem de mais de uma squad. Não exportar cadastros ou dados pessoais. A notificação deve identificar o calendário solicitado e levar ao local de atualização. Definir proteção contra clique duplicado/repetição, usando os mecanismos existentes.
