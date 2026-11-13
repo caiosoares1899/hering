@@ -7609,7 +7609,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.970-dev</div>
+<div class="version">v8.30.971-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7965,6 +7965,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-dicas-dev.js?v=17"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
+<script src="mare-gcal-dev.js?v=1"></script>
 
 <script>
 
@@ -8890,8 +8891,8 @@ let boardView='kanban'; // 'kanban' (colunas, padrão) | 'timeline' (lista crono
 let _ganttOffsetDays=0; // deslocamento em dias (múltiplos de 28) da régua de 6 semanas do Gantt
 // 📊 Abas do Gantt (13/11/2026): 'cards' (cards da squad) | 'marca' (Calendário de Marca) | 'comercial' (Comercial Hering) | 'mktplace' (Comercial Marketplace).
 // Os calendários são publicados pelo ADM no Painel (⚙ → 📊 Gantt) em kanban/calendarios_gantt(_dev) e só são lidos quando a aba abre.
-let _ganttAba=(()=>{ try{ const v=safeLS.getItem('mare_gantt_aba'); return ['cards','marca','comercial','mktplace','outlet'].includes(v)?v:'cards'; }catch(e){ return 'cards'; } })();
-const _ganttCal={ marca:{ estado:'' , dado:null, dest:{} }, comercial:{ estado:'', dado:null, dest:{} }, mktplace:{ estado:'', dado:null, dest:{} }, outlet:{ estado:'', dado:null, dest:{} } };
+let _ganttAba=(()=>{ try{ const v=safeLS.getItem('mare_gantt_aba'); return ['cards'].concat(((window.MareGCal||{}).CALS||[]).map(c=>c.id)).includes(v)?v:'cards'; }catch(e){ return 'cards'; } })();
+const _ganttCal=Object.fromEntries(((window.MareGCal||{}).CALS||[]).map(c=>[c.id,{ estado:'', dado:null, dest:{} }]));   // um estado por calendário do mare-gcal
 // 📌 Datas-chave do Gantt (13/11/2026): eventos que a squad marca (Black Friday, Natal…) e viram faixa/linha atrás das barras nas 3 abas.
 // Da squad: kanban/squads/{sq}/gantt_marcos(_dev) — PO/Organizador/ADM criam. Globais: kanban/gantt_marcos_globais(_dev) — só ADM.
 const _ganttMc={ squad:{}, global:{}, lido:'' };
@@ -14629,54 +14630,20 @@ function ganttIrPara(iso){
   _ganttScrollPend='data'; _ganttScrollIso=iso;
   if(boardView==='gantt') renderBoard();
 }
+// Abas de calendário, nomes, grupos e cores vêm do módulo mare-gcal(-dev).js — a MESMA fonte do Radar (Calendário → 📊 Gantt).
+// Calendário novo = 1 entrada lá. Sem o módulo (rede), o Gantt fica só com os cards da squad.
+const _GCAL=window.MareGCal||{ CALS:[], NOME:{}, ROT_NOVO:{}, GRUPOS:{}, LINHA_COR:['#38b6ff'],   // reserva: as datas-chave da squad usam a paleta mesmo sem os calendários
+  CORES:{ red:'#ff6b6b', orange:'#fb923c', yellow:'#facc15', green:'#34d399', cyan:'#22d3ee', blue:'#60a5fa', purple:'#a78bfa', pink:'#f472b6' },
+  NOME_COR:{ red:'Vermelho', orange:'Laranja', yellow:'Amarelo', green:'Verde', cyan:'Ciano', blue:'Azul', purple:'Roxo', pink:'Rosa' } };
 const _GANTT_ABAS=[
   { id:'cards',     rot:'🗂 Cards da squad',      curto:'🗂 Cards' },
-  { id:'marca',     rot:'🎯 Calendário de Marca', curto:'🎯 Marca' },
-  { id:'comercial', rot:'🛒 Comercial Hering',      curto:'🛒 Hering' },
-  { id:'mktplace',  rot:'🛍️ Comercial Marketplace', curto:'🛍️ Mktplace' },
-  { id:'outlet',    rot:'🏷️ Comercial Outlet',      curto:'🏷️ Outlet' },
-];
-const _GANTT_CAL_NOME={ marca:'Calendário de Marca', comercial:'Calendário Comercial Hering', mktplace:'Calendário Comercial Marketplace', outlet:'Calendário Comercial Outlet' };
+].concat(_GCAL.CALS.map(c=>({ id:c.id, rot:c.rot, curto:c.curto })));
+const _GANTT_CAL_NOME=_GCAL.NOME;
 // 13/11: "Site todo"/"Site Saldos" viraram "Site e App" (as ações valem nos dois) — vale já para o que foi publicado antes do novo nome
-const _GANTT_ROT_NOVO={ comercial:{ site:'Site e App · todo (não remarcados)', saldos:'Site e App · saldos' } };
-// Filtro por grupo de linhas (chips na barra do De/Até): "Site e App" entra tanto em Site quanto em App.
-const _GANTT_CAL_GRUPOS={
-  comercial:[
-    { id:'site', rot:'🖥️ Site', linhas:['site','saldos','adulto','intimates','kids','sports','acao_site'] },
-    { id:'app',  rot:'📱 App',  linhas:['site','saldos','app'] },
-    { id:'crm',  rot:'✉️ CRM',  linhas:['crm'] },
-    { id:'midia',rot:'📣 Mídia',linhas:['midia'] },
-    { id:'lanc', rot:'🚀 Lançamentos e datas', linhas:['lancamentos','geral'] },
-  ],
-  // Outlet: as linhas nascem do cabeçalho da planilha (out_<nome da coluna>) — os grupos casam pelo nome (re)
-  outlet:[
-    { id:'principal', rot:'⭐ Principal',   re:/^out_acao_principal/ },
-    { id:'secundaria',rot:'Secundária',    re:/^out_acao_secundaria/ },
-    { id:'relampago', rot:'⚡ Relâmpago e ofertas do dia', re:/relampago|ofertas_do_dia/ },
-    { id:'madrugada', rot:'🌙 Madrugada',   re:/madrugada/ },
-    { id:'crm',       rot:'✉️ CRM',          re:/crm/ },
-    { id:'midia',     rot:'📣 Mídia e afiliados', re:/midia|afiliados|livelo/ },
-    { id:'extras',    rot:'Extras (reloginhos, BEON, benefícios…)', re:/extras|reloginhos|beon|beneficios/ },
-  ],
-  mktplace:[
-    { id:'amazon',  rot:'Amazon',         linhas:['mkt_amazon'] },
-    { id:'meli',    rot:'Mercado Livre',  linhas:['mkt_meli'] },
-    { id:'shopee',  rot:'Shopee',         linhas:['mkt_shopee'] },
-    { id:'dafiti',  rot:'Dafiti',         linhas:['mkt_dafiti'] },
-    { id:'tiktok',  rot:'TikTok Shop',    linhas:['mkt_tiktok'] },
-    { id:'magalu',  rot:'Magalu',         linhas:['mkt_magalu'] },
-    { id:'netshoes',rot:'Netshoes e Zattini', linhas:['mkt_netshoes','mkt_zattini'] },
-    { id:'outros',  rot:'Outros (Off Premium, Privalia, Zzmall, Posthaus, Off Hering)', linhas:['mkt_offprem','mkt_privalia','mkt_zzmall','mkt_posthaus','mkt_offhering'] },
-  ],
-  marca:[
-    { id:'colecao', rot:'👕 Coleção', linhas:['sellout','kids_sellout'] },
-    { id:'web',     rot:'🖥️ Web',     linhas:['web','kids_web'] },
-    { id:'redes',   rot:'📲 Redes',   linhas:['redes','kids_redes'] },
-    { id:'canais',  rot:'🛍️ Canais Intimates e Sports', linhas:['intimates','sports'] },
-    { id:'kids',    rot:'👶 Kids',    linhas:['kids_sellout','kids_web','kids_redes'] },
-  ],
-};
-let _ganttCalFiltro=(()=>{ try{ const v=JSON.parse(safeLS.getItem('mare_gantt_cal_filtro')||'{}'); return { marca:String(v.marca||''), comercial:String(v.comercial||''), mktplace:String(v.mktplace||''), outlet:String(v.outlet||'') }; }catch(e){ return { marca:'', comercial:'', mktplace:'', outlet:'' }; } })();
+const _GANTT_ROT_NOVO=_GCAL.ROT_NOVO;
+// Filtro por grupo de linhas (chips na barra do De/Até): definidos no mare-gcal ("Site e App" entra em Site e em App).
+const _GANTT_CAL_GRUPOS=_GCAL.GRUPOS;
+let _ganttCalFiltro=(()=>{ let v={}; try{ v=JSON.parse(safeLS.getItem('mare_gantt_cal_filtro')||'{}')||{}; }catch(e){} return Object.fromEntries(_GCAL.CALS.map(c=>[c.id,String(v[c.id]||'')])); })();   // mesma chave do Radar: o filtro escolhido vale nos dois
 function ganttCalFiltro(grupo){
   const tipo=_ganttAba; if(!_GANTT_CAL_GRUPOS[tipo]) return;
   _ganttCalFiltro[tipo]=(_ganttCalFiltro[tipo]===grupo||!_GANTT_CAL_GRUPOS[tipo].some(g=>g.id===grupo))?'':grupo;
@@ -14700,7 +14667,7 @@ function _ganttCalFiltroSync(el){
   const sig=tipo+'|'+sel; if(box.dataset.sig===sig) return; box.dataset.sig=sig;
   box.innerHTML=[{id:'',rot:'Tudo'}].concat(grupos).map(g=>'<button type="button" class="gantt-cal-fchip'+(g.id===sel?' on':'')+'" data-g="'+g.id+'" aria-pressed="'+(g.id===sel)+'" onclick="ganttCalFiltro(this.dataset.g)">'+esc(g.rot)+'</button>').join('');
 }
-const _GANTT_LINHA_COR=['#1de9b6','#38b6ff','#f472b6','#f59e0b','#a78bfa','#34d399','#fb7185','#60a5fa','#facc15','#c084fc','#2dd4bf','#94a3b8'];
+const _GANTT_LINHA_COR=_GCAL.LINHA_COR;
 // Os calendários são da empresa: a regra do banco só deixa ler quem entrou com Google @ciahering.com.br.
 // Convidado externo do squad não vê as abas (em vez de um aviso de permissão que nunca se resolveria).
 function _ganttCalPermitido(){
@@ -15066,8 +15033,8 @@ function _ganttCalCorpo(tipo, winStartIso, winEndIso, perOn, perDe, perAte){
     +'<span class="gantt-leg-item">'+(souAdm?'Toque numa barra para destacar (cor ou ⚠️)':'Toque numa barra para ler o texto inteiro')+'</span>';
   return { body:chunks.join(''), footer, leg };
 }
-const _GANTT_MC_CORES={ red:'#ff6b6b', orange:'#fb923c', yellow:'#facc15', green:'#34d399', cyan:'#22d3ee', blue:'#60a5fa', purple:'#a78bfa', pink:'#f472b6' };
-const _GANTT_MC_NOME_COR={ red:'Vermelho', orange:'Laranja', yellow:'Amarelo', green:'Verde', cyan:'Ciano', blue:'Azul', purple:'Roxo', pink:'Rosa' };
+const _GANTT_MC_CORES=_GCAL.CORES;
+const _GANTT_MC_NOME_COR=_GCAL.NOME_COR;
 const _ganttMcSuf=()=>/-dev\.html/.test(location.pathname)?'_dev':'';
 const _ganttMcRef=(escopo,id)=>window._ref(window._db, (escopo==='global' ? 'kanban/gantt_marcos_globais'+_ganttMcSuf() : 'kanban/squads/'+ACTIVE_SQUAD+'/gantt_marcos'+_ganttMcSuf())+(id?'/'+id:''));
 function _ganttMcCarregar(){
