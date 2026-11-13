@@ -119,17 +119,17 @@ Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em anda
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.973 | `kanban-dev.html` v8.30.973-dev | `mare-login` v3 · `mare-notif` v41 · `mare-metas` v19 · `mare-dicas` v17 · `mare-sonar` v8 · `mare-timer` v1 · `mare-gcal` v2 |
-| Painel | `painel.html` v5.113 · painel | `painel-dev.html` v5.113 · painel-dev | `mare-notif` v41 · `mare-metas` v19 · `mare-plantao` v5 · `mare-dicas` v17 · `mare-gxl` v2 |
-| Radar | `okr.html` v2.121 · okr | `okr-dev.html` v2.121 · okr-dev | `mare-notif` v41 · `mare-dicas` v17 · `mare-sonar` v8 |
-| Oceano | `oceano.html` v1.82 · oceano | `oceano-dev.html` v1.82 · oceano-dev | `mare-login` v3 · `mare-notif` v41 · `mare-plantao` v5 · `mare-dicas` v17 · `mare-metas` v19 · `mare-sonar` v8 |
+| Maré Digital | `kanban.html` v8.30.973 | `kanban-dev.html` v8.30.974-dev | `mare-login` v3 · `mare-notif` v42 · `mare-metas` v19 · `mare-dicas` v17 · `mare-sonar` v8 · `mare-timer` v1 · `mare-gcal` v3 |
+| Painel | `painel.html` v5.113 · painel | `painel-dev.html` v5.114 · painel-dev | `mare-notif` v42 · `mare-metas` v19 · `mare-plantao` v5 · `mare-dicas` v17 · `mare-gxl` v2 |
+| Radar | `okr.html` v2.121 · okr | `okr-dev.html` v2.122 · okr-dev | `mare-notif` v42 · `mare-dicas` v17 · `mare-sonar` v8 |
+| Oceano | `oceano.html` v1.82 · oceano | `oceano-dev.html` v1.83 · oceano-dev | `mare-login` v3 · `mare-notif` v42 · `mare-plantao` v5 · `mare-dicas` v17 · `mare-metas` v19 · `mare-sonar` v8 |
 | Escala | `escala.html` v1.11 · escala | `escala-dev.html` v1.11 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
 | Travessia | `travessia.html` — | `travessia-dev.html` — | `mare-login` v3 |
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
-### Cloud Functions por pasta (39 exports em `functions/index.js`)
+### Cloud Functions por pasta (41 exports em `functions/index.js`)
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
@@ -138,6 +138,7 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `backup/` | `weeklyBackup` · `backupCompletoSemanal` · `backupGlobalDiario` · `backupVigia` · `backupCompletoApi` |
 | `cards/` | `cardsEspelhar` · `cardsGuardiao` · `cardsEspelhoVarredura` · `guardiaoStatus` |
 | `okr/` | `sendPushOnMural` · `okrDailyScan` · `okrWeeklySnapshot` · `okrAgenteChat` |
+| `gantt/` | `ganttAvisoMudanca` · `ganttAvisoMudancaDev` |
 | `agente-agil/` | `agenteAgil` |
 | `comentarios/` | `contarComentarios` |
 | `firebase/` | `firebaseStatus` |
@@ -149,9 +150,9 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `timers/` | `timersVigia` |
 | `vtex/` | `vtexStatus` |
 
-### Nós de primeiro nível em `kanban/` nas regras do banco (55)
+### Nós de primeiro nível em `kanban/` nas regras do banco (57)
 
-`campanhas` · `campanhas_log` · `gantt_marcos_globais` · `gantt_marcos_globais_dev` · `calendarios_gantt` · `calendarios_gantt_dev` · `gantt_destaques` · `gantt_destaques_dev` · `calendarios_gantt_hist` · `calendarios_gantt_snap` · `calendarios_gantt_hist_dev` · `calendarios_gantt_snap_dev` · `campanhas_log_dev` · `dados_diarios` · `dados_diarios_dev` · `comunicados` · `feedback` · `squads_meta` · `squads` · `metas_digital` · `metas_squads` · `metas_log` · `metas_digital_dev` · `metas_squads_dev` · `metas_log_dev` · `escala` · `painel` · `okr` · `travessia` · `plantao_status` · `plantao` · `timers_ativos` · `agente_painel` · `agente_painel_dev` · `agente_painel_processed` · `agente_painel_processed_dev` · `agente_painel_uso` · `agente_painel_uso_dev` · `cards_guardiao` · `notif_feed` · `notif_feed_seen` · `vtex_saude` · `github_saude` · `firebase_saude` · `notif_config` · `painel_viewers` · `config` · `spotify_secrets` · `spotify_radio_owner_secret` · `oauth_pending` · `usuarios` · `usuarios_publicos` · `init_registry` · `presence` · `global`
+`campanhas` · `campanhas_log` · `gantt_marcos_globais` · `gantt_marcos_globais_dev` · `calendarios_gantt` · `calendarios_gantt_dev` · `gantt_destaques` · `gantt_destaques_dev` · `calendarios_gantt_hist` · `calendarios_gantt_snap` · `calendarios_gantt_hist_dev` · `gantt_inscritos` · `gantt_inscritos_dev` · `calendarios_gantt_snap_dev` · `campanhas_log_dev` · `dados_diarios` · `dados_diarios_dev` · `comunicados` · `feedback` · `squads_meta` · `squads` · `metas_digital` · `metas_squads` · `metas_log` · `metas_digital_dev` · `metas_squads_dev` · `metas_log_dev` · `escala` · `painel` · `okr` · `travessia` · `plantao_status` · `plantao` · `timers_ativos` · `agente_painel` · `agente_painel_dev` · `agente_painel_processed` · `agente_painel_processed_dev` · `agente_painel_uso` · `agente_painel_uso_dev` · `cards_guardiao` · `notif_feed` · `notif_feed_seen` · `vtex_saude` · `github_saude` · `firebase_saude` · `notif_config` · `painel_viewers` · `config` · `spotify_secrets` · `spotify_radio_owner_secret` · `oauth_pending` · `usuarios` · `usuarios_publicos` · `init_registry` · `presence` · `global`
 
 _Nó novo no banco = regra nova em `database.rules.json` (+ teste em `functions/rules/__tests__/`) e, se for dado que importa, entrada em `NOS_GLOBAIS` de `functions/backup/completo.js`._
 <!-- mapa:auto:fim -->

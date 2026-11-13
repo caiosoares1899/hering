@@ -13,7 +13,8 @@
    Leitura: a regra do banco exige login Google @ciahering.com.br (sem squad) — use permitido(user).
    Tudo o que vem do banco (texto das barras, rótulos, quem publicou, arquivo) passa por esc().
    Mudou este arquivo → bump do ?v= no kanban-dev.html (<script src>) e no okr-dev.html (_GCAL_V).
-   v2 (13/11): 🧭 Digital · dia a dia — CONSOLIDADO (aba virtual), doDia() e o painel do dia. */
+   v2 (13/11): 🧭 Digital · dia a dia — CONSOLIDADO (aba virtual), doDia() e o painel do dia.
+   v3 (13/11): 🔔 inscrição nos avisos de mudança (inscricao.ouvir/definir + botão Avisar-me no visualizador). */
 (function(){
   'use strict';
   const CALS=[
@@ -108,6 +109,15 @@
     });
   }
 
+  // ── 🔔 Inscrição nos avisos de mudança (v3, 13/11/2026): kanban/gantt_inscritos(_dev)/{cal}/{uid} = { em, onde:'mare'|'radar' }.
+  // Só a própria pessoa grava/lê a dela (regras). A função ganttAvisoMudanca avisa (sino + push) quando o calendário é publicado.
+  const inscricao={
+    ref(cal){ const u=window._currentUser; if(!u || !u.uid || !CALS.some(c=>c.id===cal)) return null; return window._ref(window._db, 'kanban/gantt_inscritos'+suf()+'/'+cal+'/'+u.uid); },
+    // cb(true|false) a cada mudança; cb(null, erro) se a leitura for negada. Devolve a função de desligar.
+    ouvir(cal, cb){ const r=inscricao.ref(cal); if(!r) return ()=>{}; try{ return window._onValue(r, snap=>cb(!!(snap&&snap.exists())), err=>cb(null, err)) || (()=>{}); }catch(e){ cb(null, e); return ()=>{}; } },
+    definir(cal, ligar, onde){ const r=inscricao.ref(cal); if(!r) return Promise.reject(new Error('sem login')); return window._set(r, ligar ? { em:Date.now(), onde:onde==='mare'?'mare':'radar' } : null); },
+  };
+
   // ── CSS do visualizador (só entra na página que monta; usa os tokens da página, com valores de reserva)
   const CSS=`
 .mgc{--mgc-title:200px;--mgc-day:30px;--mgc-surf:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));--mgc-surf2:rgba(var(--surface2-rgb,var(--ink-rgb,3,13,26)),.55);--mgc-line:rgba(56,182,255,.09);--mgc-wknd:rgba(var(--surface2-rgb,var(--ink-rgb,3,13,26)),.45);display:flex;flex-direction:column;gap:10px;min-width:0;max-width:100%;color:var(--txt);}
@@ -179,6 +189,9 @@
 .mgc-dhd.is-sel b{color:#04121f;}
 [data-theme="light"] .mgc-dhd.is-sel,[data-theme="light"] .mgc-dhd.is-sel b{color:#fff;}
 .mgc-dhd.is-clic:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.mgc-sino.on{border-color:var(--accent);color:var(--accent);}
+[data-theme="light"] .mgc-sino.on{color:var(--cyan,#065670);}
+.mgc-sino[disabled]{opacity:.6;cursor:progress;}
 .mgc-dia{border:1px solid var(--glass-b);border-radius:var(--r2,14px);background:var(--mgc-surf);padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;}
 .mgc-dia-hd{display:flex;align-items:center;gap:8px;font-size:13.5px;}
 .mgc-dia-hd .mgc-btn{margin-left:auto;}
@@ -205,6 +218,38 @@
     const db=window._db, ref=p=>window._ref(db,p), onValue=window._onValue;
     const S={ aba:ABAS.some(c=>c.id===opts.aba)?opts.aba:'comercial', off:0, mes:'', rolar:'hoje', det:'', dia:'', dados:{}, subs:[] };
     const ehCons=()=>S.aba===CONSOLIDADO.id;
+    S.insc={}; S.inscBusy=false; S.inscOuvindo=false;
+    function ouvirInsc(){
+      if(S.inscOuvindo || !permitido(window._currentUser)) return; S.inscOuvindo=true;
+      CALS.forEach(c=>{ S.subs.push(inscricao.ouvir(c.id, (on)=>{ S.insc[c.id]=on===true; if(!S.inscBusy) sinoSync(); })); });
+    }
+    const fontesSino=()=>ehCons()?CONSOLIDADO.fontes:(CALS.some(c=>c.id===S.aba)?[S.aba]:[]);
+    function sinoHtml(){
+      if(!permitido(window._currentUser) || opts.semSino) return '';
+      const fs=fontesSino(); if(!fs.length) return '';
+      const on=fs.every(f=>S.insc[f]);
+      const alvo=ehCons()?'os 3 calendários comerciais':(NOME[S.aba]||'');
+      return '<button type="button" class="mgc-btn mgc-sino'+(on?' on':'')+'" data-sino aria-pressed="'+on+'" title="'+esc(on?'Você recebe um aviso (sino e push) quando '+alvo+' for atualizado — toque para parar':'Receber um aviso (sino e push) quando '+alvo+' for atualizado')+'"'+(S.inscBusy?' disabled':'')+'>'+(on?'🔔 Avisando':'🔔 Avisar-me')+'</button>';
+    }
+    function sinoSync(){ const b=root.querySelector('.mgc-sino'); if(!b) return; const t=document.createElement('div'); t.innerHTML=sinoHtml(); const n=t.firstChild; if(n) b.replaceWith(n); }
+    async function sinoClique(){
+      if(S.inscBusy) return;
+      const fs=fontesSino(); if(!fs.length) return;
+      const ligar=!fs.every(f=>S.insc[f]);
+      // pedir o push AINDA dentro do clique (Safari/iOS só mostram o pedido de permissão com o gesto da pessoa)
+      try{ if(ligar && typeof opts.pedirPush==='function' && typeof Notification!=='undefined' && Notification.permission==='default') opts.pedirPush(); }catch(e){}
+      S.inscBusy=true; sinoSync();
+      try{
+        await Promise.all(fs.map(f=>inscricao.definir(f, ligar, opts.onde)));
+        fs.forEach(f=>{ S.insc[f]=ligar; });
+        const alvo=ehCons()?'os calendários comerciais':(NOME[S.aba]||'o calendário');
+        S.det=ligar?'🔔 Pronto: você recebe um aviso (sino'+(typeof Notification!=='undefined'&&Notification.permission==='denied'?'; o push está bloqueado neste navegador':' e push')+') quando '+alvo+' for atualizado.':'🔕 Você não recebe mais avisos de '+alvo+'.';
+      }catch(e){
+        S.det='⚠ Não consegui salvar o aviso'+(/permission|denied/i.test(String(e&&e.message||e))?' — as permissões novas do banco ainda não foram publicadas.':'. Tente de novo em instantes.');
+      }
+      S.inscBusy=false; sinoSync();
+      const d=root.querySelector('.mgc-det'); if(d) d.textContent=S.det;
+    }
     let filtro={}; try{ filtro=JSON.parse(localStorage.getItem('mare_gantt_cal_filtro')||'{}')||{}; }catch(e){}
     const salvaFiltro=()=>{ try{ localStorage.setItem('mare_gantt_cal_filtro', JSON.stringify(filtro)); }catch(e){} };
 
@@ -314,7 +359,7 @@
     }
     function desenhar(){
       if(!root.isConnected) return;
-      carregar(S.aba);
+      carregar(S.aba); ouvirInsc();
       const base=inicioPadrao(), iniDt=soma(base,S.off), fimDt=soma(iniDt,41), ini=iso(iniDt), fim=iso(fimDt);
       const hojeIso=iso(new Date()), dias=[];
       for(let i=0;i<42;i++){ const dt=soma(iniDt,i); dias.push({ dt, iso:iso(dt) }); }
@@ -335,6 +380,7 @@
           +'<button type="button" class="mgc-btn" data-nav="28" aria-label="4 semanas depois">▶</button>'
           +'<span class="mgc-range">'+esc(br(ini)+' – '+br(fim)+'/'+fimDt.getFullYear())+'</span>'
           +'<select class="mgc-mes" aria-label="Ir para o mês"><option value="">📆 Mês</option>'+MES_L.map((n,i)=>{ const v=ano+'-'+String(i+1).padStart(2,'0'); return '<option value="'+v+'"'+(S.mes===v?' selected':'')+'>'+n+' '+ano+'</option>'; }).join('')+'</select>'
+          +sinoHtml()
           +(grupos.length?'<div class="mgc-chips" role="group" aria-label="Mostrar só">'+[{id:'',rot:'Tudo'}].concat(grupos).map(x=>'<button type="button" class="mgc-chip'+(x.id===gSel?' on':'')+'" data-g="'+x.id+'" aria-pressed="'+(x.id===gSel)+'">'+esc(x.rot)+'</button>').join('')+'</div>':'')
         +'</div>'
         +'<div class="mgc-scroll" tabindex="0" aria-label="'+esc(aba.nome)+' — régua de 6 semanas"><div class="mgc-canvas">'
@@ -375,6 +421,7 @@
       const t=ev.target.closest('button,.mgc-bar,.mgc-dhd[data-dia]'); if(!t || !root.contains(t)) return;
       if(t.dataset.aba) return trocaAba(t.dataset.aba);
       if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=root.querySelector(S.dia?'.mgc-dia .mgc-btn':'.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
+      if(t.hasAttribute('data-sino')) return sinoClique();
       if(t.hasAttribute('data-dia-fechar')){ const d=S.dia; S.dia=''; desenhar(); const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.dataset.nav!=null){ const n=+t.dataset.nav; S.mes=''; return n===0?ir(0,'hoje'):ir(S.off+n,'inicio'); }
       if(t.dataset.g!=null){ const g=t.dataset.g; filtro[S.aba]=(filtro[S.aba]===g)?'':g; salvaFiltro(); S.det=''; desenhar(); const f=root.querySelector('.mgc-chip[data-g="'+(filtro[S.aba]||'')+'"]'); if(f) f.focus({preventScroll:true}); return; }
@@ -406,5 +453,5 @@
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, montar, esc, v:2 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, v:3 };
 })();

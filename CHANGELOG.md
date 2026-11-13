@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔔 Gantt: avisos de mudança nos calendários, com push (kanban v8.30.974-dev, okr v2.122-dev, painel v5.114-dev, oceano v1.83-dev, mare-gcal v3, mare-notif v42) — SÓ DEV — 2026-11-13
+
+- **🔔 Avisar-me** (pedido do Caio, com push no celular): nas abas de calendário do 📊 Gantt — no Maré (ao lado de 📤/🕘) e no Radar (barra do Gantt) — a pessoa segue o calendário; na 🧭 Digital, segue os 3 comerciais. Ao ligar, se o aparelho ainda não tem push, o pedido de permissão aparece no mesmo toque.
+- **Aviso** (tipo novo `gantt_cal`, sino + push): "📊 Comercial Outlet atualizado · Ana · ＋3 ✎1 · arquivo" — ou "voltou para uma versão anterior". Quem publicou não recebe o próprio aviso. Tocar abre o Gantt naquele calendário, no Maré ou no Radar (onde a pessoa se inscreveu); no aparelho, publicações seguidas do mesmo calendário se substituem.
+- **Link direto do Maré**: `kanban.html?gantt=outlet` (marca, comercial, mktplace, digital).
+- **Servidor**: `ganttAvisoMudanca`/`ganttAvisoMudancaDev` (functions/gantt/avisos.js), disparadas pela linha do 🕘 Histórico de cada publicação; id fixo por transação (retry não duplica); destinatário excluído ou de fora não recebe e perde a inscrição (sem recriar cadastro órfão). `gantt_cal` no PUSH_TYPES; URL e tag em common/pushUrl.js.
+- **Banco**: nó novo `kanban/gantt_inscritos(_dev)/{cal}/{uid}` — cada um grava e lê só a própria inscrição (Google @ciahering); no backup diário.
+- Testes: functions/gantt/__tests__/avisos.test.js, functions/rules/__tests__/ganttInscritosRules.test.js, docs/arezzo/testes/test_gantt_avisos.js (Maré, Radar e Painel: inscrever/desinscrever, 🧭 com os 3, link, clique no aviso, regras ainda não publicadas). **Deploy: regras primeiro, depois as 3 funções.**
+
 ### 🧭 Gantt: Digital · dia a dia — Comercial Hering, Marketplace e Outlet na mesma régua + tudo de um dia (kanban v8.30.973, okr v2.121, mare-gcal v2) — PROD 13/11 — 2026-11-13
 
 - **Maré → 📊 Gantt** e **Radar → 📅 Calendário → 📊 Gantt**: aba nova **🧭 Digital · dia a dia** (pedido do Caio, era a ideia "Gantt consolidado por dia"). Os 3 calendários comerciais na mesma régua, **um bloco por origem** (cada um com o próprio aviso: carregando, não publicado, nada nestas semanas); chips filtram por **origem** — o filtro de grupo de cada aba própria não vaza para cá.

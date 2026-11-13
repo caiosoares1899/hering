@@ -23,7 +23,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_cobranca', 'card_resgatado', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug', 'timer_criado', 'timer_zero', 'timer_esquecido', 'timer_encerrado']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_cobranca', 'card_resgatado', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug', 'timer_criado', 'timer_zero', 'timer_esquecido', 'timer_encerrado', 'gantt_cal']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -278,6 +278,13 @@ exports.guardiaoStatus = require('./cards/status').guardiaoStatus;
 // precisa estar ATIVADA no projeto; sem ela o aviso sai em inglês; interruptor só da tradução: kanban/config/vtex_traducao_off=true). Deploy isolado:
 //   firebase deploy --only functions:vtexStatus,functions:sendPushOnNotification   (o 2º por causa do tipo novo no PUSH_TYPES)
 exports.vtexStatus = require('./vtex/statusVtex').vtexStatus;
+
+// 🔔 Avisos de mudança nos calendários do Gantt (functions/gantt/avisos.js, 13/11/2026): cada publicação ou volta de versão de um calendário
+// (linha nova em kanban/calendarios_gantt_hist(_dev)/{cal}) avisa quem se inscreveu (kanban/gantt_inscritos(_dev)/{cal}/{uid}, botão 🔔 do Gantt
+// no Maré e no Radar) — tipo `gantt_cal` (sino + push, PUSH_TYPES acima), menos o próprio autor. Regras primeiro (--only database); depois:
+//   firebase deploy --only functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:sendPushOnNotification
+exports.ganttAvisoMudanca = require('./gantt/avisos').ganttAvisoMudanca;
+exports.ganttAvisoMudancaDev = require('./gantt/avisos').ganttAvisoMudancaDev;
 
 // 🐙 Status do GitHub & GitHub Pages (functions/github/statusGithub.js): a cada 5 min lê https://www.githubstatus.com/api/v2/summary.json,
 // atualiza `kanban/github_saude` (exibido na aba 🔋 Status do Painel) e, quando abre incidente ou degradação no GitHub Pages, aciona SOMENTE

@@ -22,6 +22,11 @@ function urlDoPush(notif) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(String(n.okrObjId || ''))) p.set('semana', n.okrObjId);
     return SITE_BASE_URL + 'escala.html?' + p.toString();
   }
+  // 🔔 Mudança num calendário do Gantt: abre o Gantt naquele calendário, na página onde a pessoa se inscreveu (Maré ou Radar; -dev nos testes).
+  if (type === 'gantt_cal') {
+    const cal = ['marca', 'comercial', 'mktplace', 'outlet'].includes(String(n.cal)) ? String(n.cal) : '';
+    return SITE_BASE_URL + (n.onde === 'radar' ? 'okr' : 'kanban') + (n.dev ? '-dev' : '') + '.html?gantt=' + encodeURIComponent(cal);
+  }
   // Aviso do vigia dos backups ou do monitor da VTEX (só ADMs): abre o Painel.
   if (type === 'backup_falhou' || type === 'vtex_monitor_falhou') return SITE_BASE_URL + 'painel.html';
   // Incidente ou falha de monitor do GitHub / GitHub Pages ou Firebase (só ADMs): abre o Painel direto na aba 🔋 Status.
@@ -41,6 +46,9 @@ function tagDoPush(notif, notifId) {
   const n = notif || {};
   const type = String(n.type || 'geral');
   if (n.cardId) return type + '_' + String(n.cardId);
+  // Gantt: uma tag POR CALENDÁRIO — o Outlet publica mês a mês em sequência; no aparelho fica o aviso mais novo de cada calendário
+  // (no sino continua um item por publicação).
+  if (type === 'gantt_cal') return type + '_' + String(n.cal || '');
   return type + '_' + String(notifId || '');
 }
 
