@@ -331,9 +331,11 @@
   }
 
   // Leitura persistente a um toque no celular; o texto é dado, nunca HTML.
+  // leituraFechar(): as páginas chamam ao sair do Gantt (o leitor fica no <body>, fora da régua).
+  function leituraFechar(){ document.querySelector('.mgc-leitura button[data-fechar]')?.click(); }
   function leituraAbrir(texto, origem, acao, rotulo){
     if(!window.matchMedia('(max-width:768px)').matches) return;
-    css(); document.querySelector('.mgc-leitura button[data-fechar]')?.click();
+    css(); leituraFechar();
     const box=document.createElement('section'); box.className='mgc-leitura';
     box.setAttribute('role','region'); box.setAttribute('aria-label','Campanha e período');
     const topo=document.createElement('div'); topo.className='mgc-leitura-hd';
@@ -561,7 +563,7 @@
       S.rolar='';
     }
 
-    function ir(off, rolar){ document.querySelector('.mgc-leitura button[data-fechar]')?.click(); S.off=off; S.rolar=rolar; S.det=''; desenhar(); }
+    function ir(off, rolar){ leituraFechar(); S.off=off; S.rolar=rolar; S.det=''; desenhar(); }
     function irMes(v){
       const alvo=parse(v+'-01'); if(!alvo) return;
       const base=inicioPadrao(), ini=soma(alvo,-alvo.getDay()-7);
@@ -569,7 +571,7 @@
     }
     function trocaAba(id, manual=true){
       if(!ABAS.some(c=>c.id===id) || id===S.aba) return;
-      document.querySelector('.mgc-leitura button[data-fechar]')?.click();
+      leituraFechar();
       S.aba=id; S.rolar='hoje'; S.det=''; S.dia='';
       if(typeof opts.aoTrocarAba==='function'){ try{ opts.aoTrocarAba(id, manual); }catch(e){} }
       desenhar();
@@ -614,5 +616,5 @@
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, v:7 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, leituraFechar, v:7 };
 })();

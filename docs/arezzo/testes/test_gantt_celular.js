@@ -112,6 +112,16 @@ for(const app of ['mare','radar'])for(const width of (process.env.WIDTH?[Number(
    await p.evaluate(async a=>{await window._set(window._ref(window._db,'kanban/calendarios_gantt_dev/marca'),{meta:{},linhas:{},barras:{}});if(a==='mare')ganttAba('marca');else _okrGcal.aba('marca');},app);
    await p.waitForTimeout(100);t('Estado vazio sem leitor obsoleto',await p.locator(app==='mare'?'.gantt-cal-bar':'.mgc-bar').count()===0&&await p.locator('.mgc-leitura').count()===0);
   }
+  // sair do Gantt com o leitor aberto: ele não pode sobrar sobre a outra tela (Maré → Kanban; Radar → Mês e → outra tela)
+  await p.evaluate(a=>{if(a==='mare')ganttAba('outlet');else _okrGcal.aba('outlet');},app);await p.waitForTimeout(100);
+  await (app==='mare'?p.locator('.gantt-cal-bar'):p.locator('.mgc-bar')).first().evaluate(el=>el.click());
+  t('Leitor aberto antes de sair do Gantt',await p.locator('.mgc-leitura').count()===1);
+  await p.evaluate(a=>{if(a==='mare')toggleGanttView();else _okrCalSetVista('mes');},app);
+  t('Sair do Gantt fecha o leitor',await p.locator('.mgc-leitura').count()===0);
+  if(app==='radar'){
+   await p.evaluate(()=>{_okrCalSetVista('gantt');});await p.waitForSelector('.mgc-bar');await p.locator('.mgc-bar').first().evaluate(el=>el.click());
+   await p.evaluate(()=>_okrSetView('objetivos'));t('Trocar de tela no Radar fecha o leitor',await p.locator('.mgc-leitura').count()===0);
+  }
  }
  t(`${app}/${width}/${theme} sem erros JS`,!errs.length,errs);await ctx.close();
 }
