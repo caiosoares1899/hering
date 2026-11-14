@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-14 · 🏖️ Férias F3: aviso/selo ouvia kanban/ferias_dev com sufixo fixo — no prod leria as férias de teste (kanban v8.30.983-dev, okr v2.131-dev) — 2026-11-13
+
+- **Achado na integração da F4 (Claude):** _feriasIniciar (Maré) e _okrFeriasIniciar (Radar), da F3 (#1792), chamavam MareFerias.ouvir(db, '_dev', …) com o sufixo fixo. Depois da promoção, kanban.html e okr.html ouviriam kanban/ferias_dev (as férias de teste) e o aviso '🏖️ está de férias' e o selo mostrariam dados errados no prod.
+- **Correção:** ouvir(db, undefined, …) — o módulo escolhe o sufixo pelo nome da página (-dev → _dev; prod → ''), como já faz a vista 🏖️ Férias e a 🧳 passagem.
+- **Regra para a promoção:** grep por "'_dev'" nas páginas de prod antes de subir (o promover.js não troca literais).
+
 ### 2026-11-13 · UI/UX Férias: auditoria visual e de teclado; sete achados escalados, ainda sem correção
 
 Maré/Radar dev (main 87b937c4): 37 cenários visuais e quatro verificações focadas de toque/teclado. Reproduzidos baixo contraste das datas no Maré claro/Vice, cadastro distante no celular, foco escapando da passagem e perdido nos filtros, títulos cortados e alvos pequenos; campos de 12px no Radar em tablet. Nenhuma interface alterada: módulo compartilhado exige autoria do Claude. Provas e aceite em docs/FERIAS_UI_AUDITORIA_2026-11-13.md; roteiros em docs/arezzo/testes/auditar_ferias_ui.js e auditar_ferias_ui_foco.js; console_ferias_ui.js só leitura. Regressões de calendário (28) e saída (45) aprovadas. Sem mudança de fronteira; dica não.
