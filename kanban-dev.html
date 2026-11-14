@@ -34444,7 +34444,7 @@ function _feriasIniciar(){
   if(_feriasOuvindo || !F?.permitido(window._currentUser)) return;
   _feriasOuvindo=true;
   F.configurar({uidDeInit: init => Object.entries(window._allUsersRaw||{}).find(([,u])=>u?.init===init)?.[0]||''});
-  F.ouvir(window._db, '_dev', ()=>{
+  F.ouvir(window._db, undefined, ()=>{
     renderBoard();
     if(document.getElementById('card-ov')?.classList.contains('open')) renderParticipants(editingParticipants);
   });
@@ -34515,6 +34515,7 @@ function _feriasPrepararSaida(){
   const sqNome = (typeof SQUAD_LABELS!=='undefined' && SQUAD_LABELS[ACTIVE_SQUAD]) || ACTIVE_SQUAD;
   MareFerias.passagem({
     titulo:'🧳 Preparar minha saída · '+sqNome,
+    alvo:'cada card ativo seu nesta squad (como responsável ou participante)',
     periodo:per, itens, pessoas, links,
     nota:'Seus cards de outras squads:',
     vazio:'Nenhum card ativo seu nesta squad (responsável ou participante).',

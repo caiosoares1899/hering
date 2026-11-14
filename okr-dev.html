@@ -6213,6 +6213,7 @@ function _okrFeriasPrepararSaida(){
   const kanbanPag = /-dev\.html/.test(location.pathname) ? 'kanban-dev.html' : 'kanban.html';
   F.passagem({
     titulo:'🧳 Preparar minha saída · Radar',
+    alvo:'cada Objetivo em que você é responsável e cada Marco seu em aberto',
     periodo:per, itens, pessoas,
     links:[{ texto:'🗂 Passar meus cards no Maré', href:kanbanPag+'?ferias=saida' }],
     nota:'Cards ficam no Maré:',
@@ -6276,7 +6277,7 @@ function _okrFeriasIniciar(){
     if(_okrFeriasOuvindo || !F.permitido(window._currentUser)) return;
     _okrFeriasOuvindo=true;
     F.configurar({uidDeInit: init => Object.entries(_globalUsersCache).find(([,u])=>u?.init===init)?.[0]||''});
-    F.ouvir(window._db, '_dev', ()=>renderOkrObjetivos());
+    F.ouvir(window._db, undefined, ()=>renderOkrObjetivos());
   }).catch(()=>{}); // indisponibilidade do módulo não impede trabalhar
 }
 function _okrFeriasCarregar(){
