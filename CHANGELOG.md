@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.981-dev, okr v2.129-dev, mare-ferias v3) — SÓ DEV — 2026-11-13
+### 🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.982-dev, okr v2.130-dev, mare-ferias v3) — SÓ DEV — 2026-11-13
 
 - **🏖️ Calendário geral de férias** (pedido do Caio: agenda geral do Digital + modo férias). No **Maré → 📅 Calendários → 🏖️ Férias** (por padrão as suas squads, com 🌐 Todo o Digital) e no **Radar → 📅 Calendário → 🏖️ Férias** (todo o Digital): quem está **fora agora**, as **próximas saídas** (60 dias) e as faixas do mês, com filtros por pessoa, squad e período. **Minhas férias**: cadastrar, editar e excluir os próprios períodos (excluir pede confirmação; fim antes do início é recusado; acima de 45 dias, só avisa). ADM corrige as de qualquer pessoa. Só login Google @ciahering.com.br; visualizador externo não vê.
 - **⚠️ Aviso fixo**: o cadastro **não substitui o das férias no Senior** (serve só para o time se organizar).
@@ -33,6 +33,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **Banco** (#1786, regras no ar em 13/11): nó novo `kanban/ferias(_dev)/{uid}/{id}` — todo login Google Hering lê; cada um grava/apaga só as próprias, ADM corrige; PO não. No backup diário. Provado no simulador (10 testes + 3 mutações) e no banco real (11/11).
 - **Módulo novo `mare-ferias(-dev).js`** (v3): fonte única (`ouvir`, `ausente(uid ou inicial, dia)`, `periodoDe`, `passagem`), usado pelo Maré e pelo Radar.
 - Testes: `functions/rules/__tests__/feriasRules.test.js`, `docs/arezzo/testes/test_ferias_calendario.js`, `docs/arezzo/testes/test_ferias_saida.js`. PRs #1786 (banco), #1791 (calendário), e este (🧳 + menu + Senior). Nota de desenho: `docs/ideias/modo-ferias.md`.
+
+### 2026-11-13 · SÓ DEV — 🏖️ Férias F3: aviso ao marcar alguém e selo de ausência (Maré v8.30.981-dev · Radar v2.129)
+
+Ao mencionar ou atribuir alguém de férias hoje ou com saída nos próximos 7 dias, um aviso de 6 segundos informa o período sem impedir a ação. Mensagens agrupadas e sem duplicar pessoas; selo 🏖️ apenas para quem está fora hoje. Leitura pela API MareFerias após login, Ajuda atualizada. Testes Playwright + fakefb: docs/arezzo/testes/test_ferias_aviso.js; validação ADM só leitura: docs/arezzo/testes/console_ferias_aviso.js.
 
 ### 📱 Gantt: campanhas legíveis a um toque no celular — SÓ DEV — 2026-11-13
 
