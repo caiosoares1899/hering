@@ -111,6 +111,8 @@ function startServer() {
     t('M5. lista só os cards ativos meus (responsável/participante): c1, c2, c6', JSON.stringify(keys) === '["c1","c2","c6"]', keys);
     t('M6. nada pré-marcado e Revisar travado', await p.evaluate(() => !document.querySelector('#mfer-pass-ov [aria-pressed="true"]') && document.querySelector('#mfer-pass-ov [data-pa="revisar"]').disabled));
     t('M7. título com <img onerror> aparece como texto', await p.evaluate(x => !window.__xss && document.querySelector('#mfer-pass-ov [data-key="c6"]').textContent.includes(x), XSS));
+    t('M7b. a passagem explica o que é e o que cada ação faz', await p.evaluate(() => { const e = document.querySelector('#mfer-pass-ov .mfer-pass-exp'); const x = e ? e.textContent : ''; return /O que é:/.test(x) && /cada card ativo seu nesta squad/.test(x) && /✋ Manter — o item continua com você/.test(x) && /➡️ Passar — escolha a pessoa/.test(x) && /Nada muda até você revisar e confirmar/.test(x); }));
+    t('M7c. Minhas férias explica o 🧳', /decida item a item o que passa/.test(await p.textContent('#cal-ferias .mfer-saida-exp')));
     t('M8. aviso do Senior também na passagem', /não substitui o cadastro das férias no Senior/i.test(await p.textContent('#mfer-pass-ov')));
     t('M9. link para repetir na outra squad (prf)', await p.evaluate(() => [...document.querySelectorAll('#mfer-pass-ov .mfer-pass-links a')].some(a => /[?&]squad=prf&ferias=saida$/.test(a.getAttribute('href')))));
     // fechar sem confirmar não grava
@@ -199,6 +201,7 @@ function startServer() {
     await p.click('#okr-ferias-host [data-act="saida"]'); await p.waitForTimeout(200);
     const keys = await p.evaluate(() => [...document.querySelectorAll('#mfer-pass-ov [data-key]')].map(e => e.dataset.key).sort());
     t('R3. lista Objetivos meus (o1, o2) e Marco em aberto (m1); não o concluído nem o de outra pessoa', JSON.stringify(keys) === '["m:m1","o:o1","o:o2"]', keys);
+    t('R3b. a passagem do Radar explica o que entra', /cada Objetivo em que você é responsável/.test(await p.textContent('#mfer-pass-ov .mfer-pass-exp')));
     t('R4. Objetivo travado mostra 🔒 e quem edita', /🔒 em edição por Bia Outra/.test(await p.textContent('#mfer-pass-ov [data-key="o:o2"]')));
     t('R5. link para passar os cards no Maré', await p.evaluate(() => [...document.querySelectorAll('#mfer-pass-ov .mfer-pass-links a')].some(a => a.getAttribute('href') === 'kanban-dev.html?ferias=saida')));
     for (const k of ['o:o1', 'o:o2', 'm:m1']) { await p.click(`#mfer-pass-ov [data-key="${k}"] [data-pa="passar"]`); await p.selectOption(`#mfer-pass-ov [data-key="${k}"] select`, 'bia'); }
