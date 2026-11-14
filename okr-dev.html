@@ -2103,7 +2103,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.130 · okr-dev</div>
+<div class="version">v2.131 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6274,7 +6274,7 @@ function _okrFeriasIniciar(){
     if(_okrFeriasOuvindo || !F.permitido(window._currentUser)) return;
     _okrFeriasOuvindo=true;
     F.configurar({uidDeInit: init => Object.entries(_globalUsersCache).find(([,u])=>u?.init===init)?.[0]||''});
-    F.ouvir(window._db, '_dev', ()=>renderOkrObjetivos());
+    F.ouvir(window._db, undefined, ()=>renderOkrObjetivos());
   }).catch(()=>{}); // indisponibilidade do módulo não impede trabalhar
 }
 function _okrFeriasCarregar(){

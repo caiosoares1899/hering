@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-14 · 🏖️ Férias F3: aviso/selo ouvia kanban/ferias_dev com sufixo fixo — no prod leria as férias de teste (kanban v8.30.983-dev, okr v2.131-dev) — 2026-11-13
+
+- **Achado na integração da F4 (Claude):** _feriasIniciar (Maré) e _okrFeriasIniciar (Radar), da F3 (#1792), chamavam MareFerias.ouvir(db, '_dev', …) com o sufixo fixo. Depois da promoção, kanban.html e okr.html ouviriam kanban/ferias_dev (as férias de teste) e o aviso '🏖️ está de férias' e o selo mostrariam dados errados no prod.
+- **Correção:** ouvir(db, undefined, …) — o módulo escolhe o sufixo pelo nome da página (-dev → _dev; prod → ''), como já faz a vista 🏖️ Férias e a 🧳 passagem.
+- **Regra para a promoção:** grep por "'_dev'" nas páginas de prod antes de subir (o promover.js não troca literais).
+
 ### 2026-11-13 · Gantt: na 🧭 Digital o 🔔 ligava os 3 calendários comerciais juntos — agora um sininho por calendário (kanban v8.30.975-dev, okr v2.123-dev, mare-gcal v4)
 
 **Relato do Caio (13/11):** ao ativar o aviso de um calendário comercial, todos ficavam ativos (a Marca continuava separada). **Causa:** desenho — o 🔔 da aba 🧭 Digital · dia a dia inscrevia os 3 comerciais de uma vez; depois, cada aba própria mostrava 🔔 Avisando. (Nas abas próprias o sininho já era separado: reproduzido em `docs/arezzo/testes/test_gantt_avisos.js`.) **Correção:** na 🧭 aparecem 3 sininhos (🔔 Hering · 🔔 Marketplace · 🔔 Outlet), cada um liga só o seu, com ✓ no que está ligado — Maré e Radar. Testes M6–M7c e R1b–R1c.
