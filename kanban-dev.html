@@ -34480,11 +34480,12 @@ async function _feriasAplicarCards(decisoes, pessoas){
   if(!alvos.length) return [];
   const antes = new Map(alvos.map(({c}) => [c.id, JSON.parse(JSON.stringify(c))]));
   const nome = init => (pessoas.find(p=>p.id===init)||{}).nome || init;
+  const automacoes = [];   // runAutoRules agenda ações (~1,2 s): só depois da gravação confirmada (revisão Codex #F4)
   alvos.forEach(({d, c}) => {
     if(c.owner===me){
       c.owner = d.para;
       recordHistory(c, '🏖️ passou o card para '+nome(d.para)+' antes das férias (via 🧳 Preparar minha saída)');
-      runAutoRules('assigned', c.id, d.para);
+      automacoes.push([c.id, d.para]);
     }
     if(Array.isArray(c.participants) && c.participants.includes(me)){
       const i = c.participants.indexOf(me);
@@ -34495,13 +34496,15 @@ async function _feriasAplicarCards(decisoes, pessoas){
   try{
     await fbSaveAll(undefined, alvos.map(({c}) => c.id));
   }catch(err){
-    // nada foi para o banco: devolve os cards como estavam e não avisa ninguém
-    antes.forEach((orig, id) => { const i = cards.findIndex(x => x && x.id===id); if(i>=0) cards[i] = orig; });
+    // nada foi para o banco: devolve os cards como estavam (NO MESMO objeto — preserva a __base não enumerável do merge
+    // de três vias, Armadilha 14), não dispara automação e não avisa ninguém
+    alvos.forEach(({c}) => { const orig = antes.get(c.id); if(!orig) return; Object.keys(c).forEach(k => { if(!(k in orig)) delete c[k]; }); Object.assign(c, orig); });
     try{ renderBoard(); }catch(_){}
     const msg = (err && err.message) || 'não foi possível salvar';
     return alvos.map(({d}) => ({ key:d.key, ok:false, erro:msg }));
   }
   try{ renderBoard(); }catch(_){}
+  automacoes.forEach(([id, para]) => { try{ runAutoRules('assigned', id, para); }catch(_){} });
   const porPessoa = {};
   alvos.forEach(({d, c}) => { (porPessoa[d.para] = porPessoa[d.para] || []).push(c); });
   Object.entries(porPessoa).forEach(([init, lista]) => {

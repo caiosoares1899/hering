@@ -136,11 +136,13 @@ function startServer() {
     await p.click('#mfer-pass-ov [data-pa="revisar"]');
     t('M15. revisão lista o que passa e o que fica, sem gravar', /Passar \(2\)/.test(await p.textContent('#mfer-pass-ov')) && /Ficam com você \(1\)/.test(await p.textContent('#mfer-pass-ov')) && await escritas(p, 'kanban/squads/dados/dados') === w0);
     const n0 = await p.evaluate(() => Object.keys(window.__store.kanban.usuarios.po1.notificacoes || {}).length);
+    await p.evaluate(() => { window.__autoChamadas = []; const ra = window.runAutoRules; window.runAutoRules = function(){ window.__autoChamadas.push([...arguments]); return ra.apply(this, arguments); }; });
     await p.click('#mfer-pass-ov [data-pa="aplicar"]'); await p.waitForTimeout(800);
     const st = await p.evaluate(() => { const cs = Object.values(window.__store.kanban.squads.dados.dados.cards); const g = id => cs.find(c => c && c.id === id); return { c1: g('c1'), c2: g('c2'), c6: g('c6') }; });
     t('M16. c1: responsável passou para PP, com Histórico 🏖️', st.c1.owner === 'PP' && /🏖️ passou o card para Paulo PO/.test((st.c1.history || []).slice(-1)[0]?.what || ''), st.c1);
     t('M17. c2: participação AT → PP (dono BO intacto)', st.c2.owner === 'BO' && (st.c2.participants || []).includes('PP') && !(st.c2.participants || []).includes('AT'), st.c2);
     t('M18. c6 mantido com Ana', st.c6.owner === 'AT');
+    t('M18b. automação de "atribuído" disparou 1× (c1 → PP), depois de gravar', await p.evaluate(() => JSON.stringify(window.__autoChamadas) === '[["assigned","c1","PP"]]'), await p.evaluate(() => window.__autoChamadas));
     const nots = await p.evaluate(() => Object.values(window.__store.kanban.usuarios.po1.notificacoes || {}));
     t('M19. 1 aviso só para o Paulo (2 cards no lote), tipo assigned', nots.length === n0 + 1 && nots.some(n => n.type === 'assigned' && /passou 2 cards para você/.test(n.title)), nots);
     t('M20. tela final confirma', /2 item\(ns\) passado/.test(await p.textContent('#mfer-pass-ov')));
@@ -150,14 +152,15 @@ function startServer() {
   // ═══ 2. Maré: gravação recusada desfaz e não avisa ═══
   {
     const { ctx, p, errs } = await abre('/kanban-dev.html?squad=dados', U.ana);
-    await p.evaluate(() => { window.__denySet = pa => String(pa).startsWith('kanban/squads/dados/dados'); abrirMinhasFerias(); });
+    await p.evaluate(() => { window.__c1Ref = cards.find(x => x.id === 'c1'); window.__c1TinhaBase = Object.getOwnPropertyDescriptor(window.__c1Ref, '__base') !== undefined; window.__autoChamadas = []; const ra = window.runAutoRules; window.runAutoRules = function(){ window.__autoChamadas.push([...arguments]); return ra.apply(this, arguments); }; window.__denySet = pa => String(pa).startsWith('kanban/squads/dados/dados'); abrirMinhasFerias(); });
     await p.waitForTimeout(300);
     await p.click('#cal-ferias [data-act="saida"]'); await p.waitForTimeout(150);
     await p.click('#mfer-pass-ov [data-key="c1"] [data-pa="passar"]'); await p.selectOption('#mfer-pass-ov [data-key="c1"] select', 'PP');
     await p.click('#mfer-pass-ov [data-pa="manter-resto"]'); await p.click('#mfer-pass-ov [data-pa="revisar"]');
     await p.click('#mfer-pass-ov [data-pa="aplicar"]'); await p.waitForTimeout(800);
     t('F1. falha mostra ❌ na tela', /não deu certo/.test(await p.textContent('#mfer-pass-ov')));
-    t('F2. card local voltou ao que era (owner AT)', await p.evaluate(() => cards.find(c => c.id === 'c1').owner === 'AT'));
+    t('F2. card local voltou ao que era (owner AT), no MESMO objeto (preserva __base do merge)', await p.evaluate(() => { const c = cards.find(x => x.id === 'c1'); return c.owner === 'AT' && c === window.__c1Ref && !(c.history || []).some(h => /🏖️/.test(h.what || '')) && (Object.getOwnPropertyDescriptor(c, '__base') !== undefined) === window.__c1TinhaBase; }));
+    t('F2b. nenhuma automação de "atribuído" disparou para a passagem recusada', await p.evaluate(() => window.__autoChamadas.length === 0), await p.evaluate(() => window.__autoChamadas));
     t('F3. ninguém foi avisado', await p.evaluate(() => !Object.keys(window.__store.kanban.usuarios.po1.notificacoes || {}).length));
     t('F4. sem erro JS', !errs.filter(e => !/PERMISSION_DENIED/.test(e)).length, errs);
     await ctx.close();
