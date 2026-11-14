@@ -18,7 +18,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 |---|---|---|---|
 | Antigravity | R0 | 🪟 Acabamento "vidro lapidado" (`--specular` por tema + curvas `--ease-*`) | [GUIA_UI_UX §2.4/§2.5](GUIA_UI_UX.md) · [backlog](quadro/backlog.md#vidro-lapidado) |
 | Antigravity | R2 | 🏖️ Férias F2: módulo `mare-ferias-dev.js` + vista 🏖️ Férias no Radar e no Maré | [contrato](ideias/modo-ferias.md#contrato--f2-módulo-mare-ferias-devjs--vista-️-férias-antigravity) |
-| Codex | R1 | 🏖️ Férias F3: aviso "está de férias" ao marcar alguém + selo 🏖️ (Maré e Radar) — **só depois do merge da F2** | [contrato](ideias/modo-ferias.md#contrato--f3-aviso-️-está-de-férias--selo-codex) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado

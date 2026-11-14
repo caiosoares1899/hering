@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 2026-11-13 · SÓ DEV — 🏖️ Férias F3: aviso ao marcar alguém e selo de ausência (Maré v8.30.981-dev · Radar v2.129)
+
+Ao mencionar ou atribuir alguém de férias hoje ou com saída nos próximos 7 dias, um aviso de 6 segundos informa o período sem impedir a ação. Mensagens agrupadas e sem duplicar pessoas; selo 🏖️ apenas para quem está fora hoje. Leitura pela API MareFerias após login, Ajuda atualizada. Testes Playwright + fakefb: docs/arezzo/testes/test_ferias_aviso.js; validação ADM só leitura: docs/arezzo/testes/console_ferias_aviso.js.
+
 ### 📱 Gantt: campanhas legíveis a um toque no celular — SÓ DEV — 2026-11-13
 
 Maré e Radar mantêm 42 dias e navegação. No celular, cada barra abre leitor persistente com texto completo, datas e linha, Fechar/Esc e ação Abrir card ou Destacar para ADM. Dias compactos de 48 px e barras de 44×44 px, cores dos temas e desktop preservado. Teste com baseline main, três temas, ações de 1 dia e 50 simultâneas; capturas em docs/capturas/gantt_celular/.
