@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-14 · 🏖️ /monitorarbugs do modo férias: 🧳 ignorava o campo antigo de participantes e listava Marcos de Objetivo arquivado/escondido; cadastro perdia o foco quando outra pessoa mexia nas férias (kanban v8.30.985-dev, okr v2.133-dev, mare-ferias v5) — 2026-11-13
+
+- **🧳 no Maré, campo antigo `participantes`** (técnica 2): o resto do Maré lê `card.participants || card.participantes` (passesFilter, Meu Dia, Agente), a passagem só olhava `participants` — card em que a pessoa só estava no campo antigo ficava de fora e não era passado. Agora lê como o resto e grava no MESMO campo em que a pessoa está.
+- **🧳 no Radar, Marco de Objetivo arquivado/escondido** (técnica 2, mesma classe do dailyScan de 25/09): arquivar o Objetivo não arquiva os Marcos, e Objetivo de torre escondida (modo só Hering) não está em okrObjetivos — a passagem listava esses Marcos (e passava um Marco que ninguém vê). Agora só entra Marco com Objetivo visível e ativo.
+- **Cadastro perdia o foco** (técnica 3): qualquer mudança nas férias de OUTRA pessoa redesenhava a vista inteira — quem estava digitando a observação/datas perdia o foco e o cursor. Agora o redesenho espera sair do campo.
+- Teste: test_ferias_saida.js (M5, M20b, M20c, M20d e R3 — os 3 falham na main e passam aqui).
+
 ### 2026-11-13 · Gantt: na 🧭 Digital o 🔔 ligava os 3 calendários comerciais juntos — agora um sininho por calendário (kanban v8.30.975-dev, okr v2.123-dev, mare-gcal v4)
 
 **Relato do Caio (13/11):** ao ativar o aviso de um calendário comercial, todos ficavam ativos (a Marca continuava separada). **Causa:** desenho — o 🔔 da aba 🧭 Digital · dia a dia inscrevia os 3 comerciais de uma vez; depois, cada aba própria mostrava 🔔 Avisando. (Nas abas próprias o sininho já era separado: reproduzido em `docs/arezzo/testes/test_gantt_avisos.js`.) **Correção:** na 🧭 aparecem 3 sininhos (🔔 Hering · 🔔 Marketplace · 🔔 Outlet), cada um liga só o seu, com ✓ no que está ligado — Maré e Radar. Testes M6–M7c e R1b–R1c.

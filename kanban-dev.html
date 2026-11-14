@@ -7651,7 +7651,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.982-dev</div>
+<div class="version">v8.30.985-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8008,7 +8008,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
 <script src="mare-gcal-dev.js?v=7"></script>
-<script src="mare-ferias-dev.js?v=3"></script>
+<script src="mare-ferias-dev.js?v=5"></script>
 
 <script>
 
@@ -34493,6 +34493,9 @@ function abrirMinhasFerias(){
   if(!(window.MareFerias && MareFerias.permitido(window._currentUser))){ showToast('🏖️ As férias ficam visíveis só com o login Google da Hering.'); return; }
   openCal(); changeCalView('ferias');
 }
+// Participantes do card como o resto do Maré lê: participants e, sem ele, o campo antigo participantes (passesFilter, Meu Dia, Agente).
+function _feriasPartesCampo(c){ return Array.isArray(c.participants) ? 'participants' : (Array.isArray(c.participantes) ? 'participantes' : ''); }
+function _feriasPartes(c){ const k = _feriasPartesCampo(c); return k ? c[k] : []; }
 // 🧳 Preparar minha saída (F4): os cards ATIVOS desta squad em que sou responsável ou participante, item a item.
 // A tela (MareFerias.passagem) não grava nada; _feriasAplicarCards grava num fbSaveAll só e, se ele recusar/falhar,
 // desfaz as mudanças locais e NÃO avisa ninguém. Aviso: 1 por pessoa no lote (tipo 'assigned', que já vira push).
@@ -34502,7 +34505,7 @@ function _feriasPrepararSaida(){
   const per = MareFerias.periodoDe(u.uid);
   if(!per){ showToast('🏖️ Cadastre suas férias primeiro (em Minhas férias).'); abrirMinhasFerias(); return; }
   const colNome = id => (columns.find(c=>c.id===id)||{}).name || id;
-  const itens = cards.filter(c => c && !c.archived && !_isColDone(c.col) && (c.owner===me || (Array.isArray(c.participants) && c.participants.includes(me))))
+  const itens = cards.filter(c => c && !c.archived && !_isColDone(c.col) && (c.owner===me || _feriasPartes(c).includes(me)))
     .map(c => ({ key:c.id, titulo:c.title||'(sem título)', sub:(c.owner===me?'Responsável':'Participante')+' · '+colNome(c.col) }));
   const pessoas = members.filter(m => m.uid!==u.uid && m.init!==me).map(m => ({ id:m.init, nome:m.name||m.init, uid:m.uid }))
     .sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
@@ -34532,9 +34535,10 @@ async function _feriasAplicarCards(decisoes, pessoas){
       recordHistory(c, '🏖️ passou o card para '+nome(d.para)+' antes das férias (via 🧳 Preparar minha saída)');
       automacoes.push([c.id, d.para]);
     }
-    if(Array.isArray(c.participants) && c.participants.includes(me)){
-      const i = c.participants.indexOf(me);
-      if(c.participants.includes(d.para) || c.owner===d.para) c.participants.splice(i,1); else c.participants[i] = d.para;
+    const campo = _feriasPartesCampo(c);   // grava no MESMO campo em que a pessoa está (participants ou o antigo participantes)
+    if(campo && c[campo].includes(me)){
+      const ps = c[campo], i = ps.indexOf(me);
+      if(ps.includes(d.para) || c.owner===d.para) ps.splice(i,1); else ps[i] = d.para;
       recordHistory(c, '🏖️ passou a participação para '+nome(d.para)+' antes das férias (via 🧳 Preparar minha saída)');
     }
   });
