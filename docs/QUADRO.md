@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Codex | `codex/ferias-aviso` | `kanban-dev.html` e `okr-dev.html` (pontos de disparo do aviso + selo; ver contrato F3) | 13/11/2026 |
 
 
 ## Fila
@@ -25,6 +24,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
+| Codex | 🏖️ UI/UX Férias: contraste, acesso ao cadastro, foco, títulos cortados e toque; correções no módulo compartilhado são do Claude | [auditoria](FERIAS_UI_AUDITORIA_2026-11-13.md) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
 | Claude | `test_apresentacao_live.js` falha também na `main` ("fora da sincronização, o slide do apresentador NÃO puxa a pessoa") | [escalados](quadro/escalados.md#apresentacao-live) | 09/11/2026 |
 | Claude | `test_dicas.js` desatualizado: espera 33–35 dicas no Painel, hoje são 38 (falha também na `main`); e tem caminho do Playwright/porta fixos do Linux | `docs/arezzo/testes/test_dicas.js` L133 | 13/11/2026 |
