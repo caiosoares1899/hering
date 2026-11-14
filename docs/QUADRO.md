@@ -51,6 +51,9 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
 | 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
+| 📅 Ilha: notificações do calendário num grupo à parte (como alertas de sistema e Guardião) | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
+| 🎨 Tipos de notificação mais distintos visualmente, além do emoji (Ilha e sino) | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
+| 🧩 Minhas Preferências: áreas separadas visualmente (fundo um pouco mais claro por bloco) | Claude | [backlog](quadro/backlog.md#minhas-preferencias-areas) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 👕 Camiseta Brasil da Black Friday (depende da arte; BF = 27/11) | Claude | [backlog](quadro/backlog.md#camiseta-black-friday) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |

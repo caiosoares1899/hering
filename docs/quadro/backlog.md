@@ -17,6 +17,9 @@
 |---|---|---|
 | 🏝️ **Ilha Dinâmica**: fase 0 (protótipo) e 1a (`mare-timer`) entregues; **1º teste real no Maré dev** (10/11/2026, aguardando o Caio testar); depois Oceano (lobby + host) | Claude | `docs/ideias/ilha-dinamica.md` · `docs/demo/ilha-dinamica-prototipo.html` |
 
+| 📅 **Ilha · notificações do calendário à parte** (ideia do Caio, 13/11/2026): dentro da Ilha, os avisos de calendário (reunião, evento, prazo do Radar, 🔔 Gantt, 📣 Pedir atualização) ganham o próprio grupo, separados das outras notificações, como já é feito com os alertas de sistemas e o Guardião | Claude | a desenhar: quais tipos entram (`reuniao`, `okr_reuniao`, `okr_evento`, `gantt_cal`, `gantt_pedido`…), ordem do grupo e se o sino também separa |
+| 🎨 **Tipos de notificação mais distintos** (ideia do Caio, 13/11/2026): diferenciar visualmente cada tipo além do emoji no começo da mensagem — ex.: faixa/cor lateral por família (pessoal, calendário, Radar, sistema), ícone em selo, rótulo curto do tipo | Claude | a desenhar com o `docs/GUIA_UI_UX.md` (Marine Glass, 3 temas; cor nunca como único sinal); vale para a Ilha e o sino (`mare-notif-dev.js`) |
+
 <a id="consultoria"></a>
 
 | Ideia | Dono | Onde está o desenho |
@@ -62,3 +65,10 @@
 <a id="nota-codex-radar-uiux"></a>
 
 > Rodada `codex/radar-uiux` (09/11) encerrada em 10/11: o Codex parou sem entregar (sem navegador nem git no sandbox, ~86 mil tokens; log em `~/hering-logs/delegacoes/2026-11-09-codex-radar-uiux.*`). O `prefers-reduced-motion` do Radar (linha abaixo) entra nos itens do Radar do plano da consultoria. Lição: não delegar ao Codex o que precisa de navegador.
+
+<a id="minhas-preferencias-areas"></a>
+
+| Ideia | Dono | Onde está o desenho |
+|---|---|---|
+| 🧩 **Minhas Preferências com áreas separadas** (ideia do Caio, 13/11/2026): marcar a passagem de uma área para outra no painel 👤 Minhas Preferências, no nosso estilo — clarear um pouco o fundo de cada bloco (vidro mais claro), para ficar claro onde uma área termina e a outra começa | Claude | a desenhar com o `docs/GUIA_UI_UX.md`; conferir os 3 temas e 390 px |
+
