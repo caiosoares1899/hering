@@ -10,6 +10,9 @@
      • MareFerias.periodoDe(quem)          → período atual ou próximo { uid, id, ini, fim, obs } | null
      • MareFerias.montar(root, opts)       → { destruir(), redesenhar() }
    v2 (revisão #1791): 🗑️ Excluir pede confirmação (uiConfirm da página).
+   v3 (F4, 13/11): 🧳 Preparar minha saída — MareFerias.passagem(cfg): item a item, NADA pré-marcado, "Revisar" travado até
+       tudo decidido, NADA gravado antes do ✅ final (quem grava é cfg.aplicar, da página); pronto(); sobrepoe(uid, ini, fim).
+       Aviso fixo em Minhas férias: "não substitui o cadastro das férias no Senior" (pedido do Caio).
 */
 (function(){
   'use strict';
@@ -214,6 +217,7 @@
 .mfer-lbl{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--txt2);}
 .mfer-msg{font-size:11.5px;padding:7px 10px;border-radius:8px;line-height:1.35;}
 .mfer-msg.err{background:rgba(255,95,109,.15);border:1px solid rgba(255,95,109,.4);color:var(--danger);}
+.mfer-msg.senior{background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.45);color:var(--txt);}
 .mfer-msg.warn{background:rgba(255,209,102,.15);border:1px solid rgba(255,209,102,.4);color:var(--warn);}
 .mfer-msg.ok{background:rgba(29,233,182,.15);border:1px solid rgba(29,233,182,.4);color:var(--teal);}
 .mfer-det{font-size:11.5px;color:var(--txt2);min-height:16px;}
@@ -221,6 +225,20 @@
 [data-theme="light"] .mfer-btn.on,[data-theme="light"] .mfer-btn.prim{color:#fff;}
 [data-theme="light"] .mfer-bar{background:linear-gradient(90deg,rgba(5,95,89,.14),rgba(0,95,138,.14));border-color:rgba(5,95,89,.45);color:var(--txt);}
 [data-theme="vice"] .mfer-btn.on,[data-theme="vice"] .mfer-btn.prim{color:#1a0b2e;}
+
+.mfer-pass-ov{position:fixed;inset:0;z-index:99990;background:rgba(1,8,16,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;}
+.mfer-pass{width:min(680px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));border:1px solid var(--glass-b);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;color:var(--txt);box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.mfer-pass-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mfer-pass-hd h3{margin:0;font-size:15px;font-weight:800;}
+.mfer-pass-lista{display:flex;flex-direction:column;gap:6px;}
+.mfer-pass-it{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.05);flex-wrap:wrap;}
+.mfer-pass-it.ok{border-color:rgba(29,233,182,.45);}
+.mfer-pass-acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.mfer-pass-links{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.mfer-pass-ft{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;position:sticky;bottom:-16px;background:inherit;padding:8px 0 0;}
+.mfer-pass-ft .mfer-sub{margin-right:auto;}
+a.mfer-btn{text-decoration:none;}
+@media (max-width:768px){ .mfer-pass-ov{padding:8px;align-items:flex-end;} .mfer-pass{max-height:calc(100dvh - 16px);border-radius:18px 18px 12px 12px;} .mfer-pass-acts{width:100%;} .mfer-pass-acts .mfer-sel{flex:1 1 100%;} }
 @media (max-width:960px){
   .mfer-grid-2{grid-template-columns:1fr;}
   .mfer-strips{grid-template-columns:1fr;}
@@ -546,9 +564,18 @@
             + '<div class="mfer-card">'
               + '<div class="mfer-card-hd">'
                 + '<h3 class="mfer-card-tt">🧳 Minhas férias</h3>'
-                + '<button type="button" class="mfer-btn" disabled title="Em breve (fase 4): passar cards e Objetivos antes de sair">🧳 Preparar minha saída</button>'
+                + (function(){
+                    const per = opts.uid ? periodoDe(opts.uid) : null;
+                    const pode = typeof opts.prepararSaida === 'function';
+                    if(!pode) return '';
+                    return per
+                      ? '<button type="button" class="mfer-btn prim" data-act="saida" title="Decida, item a item, o que passar para outra pessoa antes das suas férias (' + esc(brAno(per.ini) + ' a ' + brAno(per.fim)) + ')">🧳 Preparar minha saída</button>'
+                      : '<button type="button" class="mfer-btn" disabled title="Cadastre suas férias abaixo para preparar a saída">🧳 Preparar minha saída</button>';
+                  })()
               + '</div>'
               + '<p class="mfer-sub">' + (adm ? 'Você é ADM: pode cadastrar, editar ou excluir férias de qualquer pessoa.' : 'Cadastre, edite ou exclua seus períodos de férias.') + '</p>'
+              // ⚠️ pedido do Caio (13/11): este cadastro é só para o time se organizar — NÃO é a solicitação oficial de férias
+              + '<div class="mfer-msg senior mfer-senior" role="note">⚠️ <b>Este cadastro não substitui o das férias no Senior.</b> Ele serve só para o time se organizar; a solicitação oficial continua sendo feita no Senior.</div>'
               + '<div class="mfer-form">'
                 + (adm ? '<label class="mfer-lbl">Pessoa<select class="mfer-sel" data-f="alvo">'
                     + pessoas.map(p => '<option value="' + esc(p.uid) + '"' + ((S.formAlvoUid || opts.uid) === p.uid ? ' selected' : '') + '>' + esc(p.nome) + (p.uid === opts.uid ? ' (você)' : '') + '</option>').join('')
@@ -598,6 +625,7 @@
       if(act === 'cancelar'){ limparForm(); S.msg = null; desenhar(); return; }
       if(act === 'edit'){ iniciarEdicao(t.dataset.uid, t.dataset.id); return; }
       if(act === 'del'){ excluirPeriodo(t.dataset.uid, t.dataset.id); return; }
+      if(act === 'saida'){ if(typeof opts.prepararSaida === 'function') opts.prepararSaida(); return; }
     }
 
     function onInput(ev){
@@ -639,6 +667,140 @@
     };
   }
 
+  // ── 🧳 Preparar minha saída (F4) ───────────────────────────────────────────────────────────────────────────────────
+  // A tela é do módulo; QUEM GRAVA é a página (cfg.aplicar), que conhece o formato dos seus dados (card × Objetivo/Marco).
+  // cfg = { titulo, periodo:{ini,fim}, itens:[{key,titulo,sub}], pessoas:[{id,nome,uid}], vazio, links:[{texto,href}],
+  //         nota, aplicar: async (decisoes:[{key,acao:'passar'|'manter',para}]) => [{key, ok, erro}] }
+  // Regras de tela: nenhum item pré-marcado; "Revisar" só com tudo decidido (e cada "passar" com pessoa); "Manter todos
+  // os restantes" só PREENCHE escolhas; fechar/cancelar não grava nada; só o "✅ Confirmar e aplicar" chama cfg.aplicar.
+  function sobrepoe(uid, ini, fim){
+    if(!uid || !ehIso(ini) || !ehIso(fim)) return null;
+    return periodosDoUid(uid).find(p => p.ini <= fim && p.fim >= ini) || null;
+  }
+  const hrefSeguro = h => typeof h === 'string' && /^\/?([\w.-]+\/)*[\w.-]+\.html(\?[\w=&%.\-]*)?$|^\?[\w=&%.\-]*$/.test(h);
+
+  function passagem(cfg){
+    cfg = cfg || {};
+    injetarCss();
+    document.getElementById('mfer-pass-ov')?.remove();
+    const itens = Array.isArray(cfg.itens) ? cfg.itens.filter(x => x && x.key) : [];
+    const pessoas = (Array.isArray(cfg.pessoas) ? cfg.pessoas : []).filter(x => x && x.id);
+    const per = cfg.periodo || {};
+    const dec = {};   // key → { acao:'manter'|'passar', para }
+    let etapa = 'lista', resultado = [];
+    const origemFoco = document.activeElement;
+    const ov = document.createElement('div');
+    ov.id = 'mfer-pass-ov'; ov.className = 'mfer-pass-ov';
+    ov.innerHTML = '<div class="mfer-pass" role="dialog" aria-modal="true" aria-labelledby="mfer-pass-tt"></div>';
+    const box = ov.firstChild;
+    const nomeP = id => (pessoas.find(x => x.id === id) || {}).nome || id;
+    const decidido = k => { const d = dec[k]; return !!d && (d.acao === 'manter' || (d.acao === 'passar' && !!d.para)); };
+    const nDec = () => itens.filter(x => decidido(x.key)).length;
+    const linksHtml = () => (cfg.links || []).filter(l => l && hrefSeguro(l.href)).map(l => '<a class="mfer-btn" href="' + esc(l.href) + '">' + esc(l.texto) + '</a>').join('');
+    function opcoesPessoa(sel){
+      return '<option value="">Escolha a pessoa…</option>' + pessoas.map(ps => {
+        const fora = (per.ini && ps.uid) ? sobrepoe(ps.uid, per.ini, per.fim) : null;
+        return '<option value="' + esc(ps.id) + '"' + (sel === ps.id ? ' selected' : '') + '>' + esc(ps.nome) + (fora ? ' 🏖️ (também fora ' + esc(br(fora.ini) + '–' + br(fora.fim)) + ')' : '') + '</option>';
+      }).join('');
+    }
+    function desenhar(){
+      const cab = '<div class="mfer-pass-hd"><h3 id="mfer-pass-tt">' + esc(cfg.titulo || '🧳 Preparar minha saída') + '</h3>'
+        + (etapa === 'aplicando' ? '' : '<button type="button" class="mfer-btn" data-pa="fechar" aria-label="Fechar">✕</button>') + '</div>'
+        + (per.ini ? '<p class="mfer-sub">Suas férias: ' + esc(brAno(per.ini) + ' a ' + brAno(per.fim)) + '. Nada muda até você confirmar no final.</p>' : '')
+        + '<p class="mfer-sub mfer-senior">⚠️ Lembrete: isto não substitui o cadastro das férias no Senior.</p>';
+      if(!itens.length){
+        box.innerHTML = cab + '<div class="mfer-empty">' + esc(cfg.vazio || 'Nenhum item seu para passar aqui.') + '</div>'
+          + (cfg.links && cfg.links.length ? '<div class="mfer-pass-links">' + linksHtml() + '</div>' : '')
+          + '<div class="mfer-pass-ft"><button type="button" class="mfer-btn" data-pa="fechar">Fechar</button></div>';
+        return;
+      }
+      if(etapa === 'lista'){
+        const n = nDec(), tudo = n === itens.length;
+        box.innerHTML = cab
+          + '<div class="mfer-pass-lista">' + itens.map(it => {
+              const d = dec[it.key] || {};
+              return '<div class="mfer-pass-it' + (decidido(it.key) ? ' ok' : '') + '" data-key="' + esc(it.key) + '">'
+                + '<div class="mfer-item-info"><div class="mfer-item-nm" title="' + esc(it.titulo) + '">' + esc(it.titulo) + '</div>' + (it.sub ? '<div class="mfer-item-obs">' + esc(it.sub) + '</div>' : '') + '</div>'
+                + '<div class="mfer-pass-acts" role="group" aria-label="O que fazer com este item">'
+                  + '<button type="button" class="mfer-btn' + (d.acao === 'manter' ? ' on' : '') + '" data-pa="manter" aria-pressed="' + (d.acao === 'manter') + '">✋ Manter</button>'
+                  + '<button type="button" class="mfer-btn' + (d.acao === 'passar' ? ' on' : '') + '" data-pa="passar" aria-pressed="' + (d.acao === 'passar') + '">➡️ Passar</button>'
+                  + (d.acao === 'passar' ? '<select class="mfer-sel" data-pa="para" aria-label="Passar para">' + opcoesPessoa(d.para || '') + '</select>' : '')
+                + '</div></div>';
+            }).join('') + '</div>'
+          + (cfg.links && cfg.links.length ? '<div class="mfer-pass-links"><span class="mfer-sub">' + esc(cfg.nota || 'Também pode passar em:') + '</span>' + linksHtml() + '</div>' : '')
+          + '<div class="mfer-pass-ft"><span class="mfer-sub" role="status">' + n + ' de ' + itens.length + ' decididos</span>'
+            + (itens.some(it => !dec[it.key]) ? '<button type="button" class="mfer-btn" data-pa="manter-resto">✋ Manter todos os restantes</button>' : '')
+            + '<button type="button" class="mfer-btn prim" data-pa="revisar"' + (tudo ? '' : ' disabled title="Decida cada item (e escolha a pessoa de cada ➡️ Passar)"') + '>Revisar ›</button></div>';
+        return;
+      }
+      if(etapa === 'revisao' || etapa === 'aplicando'){
+        const passar = itens.filter(it => dec[it.key].acao === 'passar'), manter = itens.filter(it => dec[it.key].acao === 'manter');
+        box.innerHTML = cab
+          + '<div class="mfer-pass-lista">'
+            + (passar.length ? '<h4 class="mfer-card-tt">➡️ Passar (' + passar.length + ')</h4>' + passar.map(it => '<div class="mfer-pass-it ok"><div class="mfer-item-info"><div class="mfer-item-nm">' + esc(it.titulo) + '</div><div class="mfer-item-dt">→ ' + esc(nomeP(dec[it.key].para)) + '</div></div></div>').join('') : '')
+            + (manter.length ? '<h4 class="mfer-card-tt">✋ Ficam com você (' + manter.length + ')</h4>' + manter.map(it => '<div class="mfer-pass-it"><div class="mfer-item-info"><div class="mfer-item-nm">' + esc(it.titulo) + '</div></div></div>').join('') : '')
+          + '</div>'
+          + '<div class="mfer-pass-ft">'
+            + (etapa === 'aplicando' ? '<span class="mfer-sub" role="status">⏳ Aplicando…</span>'
+              : '<button type="button" class="mfer-btn" data-pa="voltar">‹ Voltar</button><button type="button" class="mfer-btn prim" data-pa="aplicar">' + (passar.length ? '✅ Confirmar e passar ' + passar.length : '✅ Confirmar') + '</button>')
+          + '</div>';
+        return;
+      }
+      // fim
+      const ok = resultado.filter(r => r && r.ok), err = resultado.filter(r => r && !r.ok);
+      const tit = k => (itens.find(x => x.key === k) || {}).titulo || k;
+      box.innerHTML = cab
+        + (resultado.length ? '' : '<div class="mfer-msg ok">Tudo decidido: os itens ficam com você.</div>')
+        + (ok.length ? '<div class="mfer-msg ok" role="status">✅ ' + ok.length + ' item(ns) passado(s). Quem recebeu foi avisado no sino.</div>' : '')
+        + (err.length ? '<div class="mfer-msg err" role="alert">❌ ' + err.length + ' não deu certo:<br>' + err.map(r => esc(tit(r.key)) + (r.erro ? ' — ' + esc(r.erro) : '')).join('<br>') + '</div>' : '')
+        + (cfg.links && cfg.links.length ? '<div class="mfer-pass-links"><span class="mfer-sub">' + esc(cfg.nota || 'Também pode passar em:') + '</span>' + linksHtml() + '</div>' : '')
+        + '<div class="mfer-pass-ft"><button type="button" class="mfer-btn prim" data-pa="fechar">Fechar</button></div>';
+    }
+    function fechar(){
+      if(etapa === 'aplicando') return;
+      ov.remove(); document.removeEventListener('keydown', tecla, true);
+      try{ if(origemFoco && origemFoco.isConnected) origemFoco.focus({ preventScroll: true }); }catch(e){}
+      if(typeof cfg.aoFechar === 'function'){ try{ cfg.aoFechar(etapa === 'fim'); }catch(e){} }
+    }
+    function tecla(e){ if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); fechar(); } }
+    async function aplicar(){
+      etapa = 'aplicando'; desenhar();
+      const decisoes = itens.map(it => ({ key: it.key, acao: dec[it.key].acao, para: dec[it.key].acao === 'passar' ? dec[it.key].para : '' }));
+      try{
+        const passar = decisoes.filter(d => d.acao === 'passar');
+        resultado = passar.length && typeof cfg.aplicar === 'function' ? ((await cfg.aplicar(decisoes)) || []) : [];
+      }catch(err){
+        resultado = decisoes.filter(d => d.acao === 'passar').map(d => ({ key: d.key, ok: false, erro: (err && err.message) || 'erro' }));
+      }
+      etapa = 'fim'; desenhar();
+      box.querySelector('[data-pa="fechar"]')?.focus({ preventScroll: true });
+    }
+    box.addEventListener('click', ev => {
+      const t = ev.target.closest('[data-pa]'); if(!t || t.tagName === 'SELECT') return;
+      const a = t.dataset.pa, row = t.closest('[data-key]'), k = row && row.dataset.key;
+      if(a === 'fechar') return fechar();
+      if(a === 'manter' && k){ dec[k] = { acao: 'manter', para: '' }; desenhar(); box.querySelector('[data-key="' + CSS.escape(k) + '"] [data-pa="manter"]')?.focus({ preventScroll: true }); return; }
+      if(a === 'passar' && k){ dec[k] = { acao: 'passar', para: (dec[k] && dec[k].para) || '' }; desenhar(); box.querySelector('[data-key="' + CSS.escape(k) + '"] select')?.focus({ preventScroll: true }); return; }
+      // só itens SEM escolha nenhuma; um "➡️ Passar" ainda sem pessoa continua pendente (não desfaz a intenção de passar)
+      if(a === 'manter-resto'){ itens.forEach(it => { if(!dec[it.key]) dec[it.key] = { acao: 'manter', para: '' }; }); desenhar(); return; }
+      if(a === 'revisar'){ if(nDec() === itens.length){ etapa = 'revisao'; desenhar(); box.querySelector('[data-pa="aplicar"]')?.focus({ preventScroll: true }); } return; }
+      if(a === 'voltar'){ etapa = 'lista'; desenhar(); return; }
+      if(a === 'aplicar'){ aplicar(); return; }
+    });
+    box.addEventListener('change', ev => {
+      const t = ev.target; if(t.dataset.pa !== 'para') return;
+      const k = t.closest('[data-key]')?.dataset.key; if(!k) return;
+      dec[k] = { acao: 'passar', para: t.value }; desenhar();
+      box.querySelector('[data-key="' + CSS.escape(k) + '"] select')?.focus({ preventScroll: true });
+    });
+    ov.addEventListener('click', ev => { if(ev.target === ov) fechar(); });
+    document.addEventListener('keydown', tecla, true);
+    document.body.appendChild(ov);
+    desenhar();
+    (box.querySelector('[data-pa="manter"],[data-pa="fechar"]'))?.focus({ preventScroll: true });
+    return { fechar, estado: () => ({ etapa, dec: JSON.parse(JSON.stringify(dec)) }) };
+  }
+
   window.MareFerias = {
     ouvir,
     ausente,
@@ -647,6 +809,9 @@
     configurar,
     hojeSP,
     permitido,
-    v: 2,
+    passagem,
+    sobrepoe,
+    pronto: () => ST.carregado,
+    v: 3,
   };
 })();

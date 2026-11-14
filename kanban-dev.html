@@ -7650,7 +7650,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.980-dev</div>
+<div class="version">v8.30.981-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8007,7 +8007,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
 <script src="mare-gcal-dev.js?v=7"></script>
-<script src="mare-ferias-dev.js?v=2"></script>
+<script src="mare-ferias-dev.js?v=3"></script>
 
 <script>
 
@@ -12836,6 +12836,11 @@ function openStatusMenu(){
     '<div style="border-top:1px solid var(--glass-b);margin-top:4px;padding-top:4px;">' +
     '<div onclick="openMinhasPrefs()" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);" onmouseover="this.style.background=\'rgba(56,182,255,.08)\'" onmouseout="this.style.background=\'transparent\'">' +
     '<span style="font-size:14px;">⚙️</span> Minhas Preferências</div>' +
+    // 🏖️ Minhas férias (F4, pedido do Caio 13/11): cadastro + 🧳 Preparar minha saída. Só login Google @ciahering (a regra do nó é essa).
+    ((window.MareFerias && MareFerias.permitido(window._currentUser))
+      ? '<div onclick="closeStatusMenu();abrirMinhasFerias()" id="status-menu-ferias" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);" onmouseover="this.style.background=\'rgba(56,182,255,.08)\'" onmouseout="this.style.background=\'none\'">' +
+        '<span style="font-size:14px;">🏖️</span> Minhas férias</div>'
+      : '') +
     // Só aparece pra quem logou com Google (releitura forçada da foto — ver
     // window._relerFotoGoogle(), <script type="module">).
     ((window._currentUser?.providerData||[]).some(p=>p.providerId==='google.com')
@@ -31421,7 +31426,7 @@ const HELP_CONTENT = {
     { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
     { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
     { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Abra 📅 Calendários e escolha a visão <b>👥 Escala</b> (ao lado de Tudo, Eventos e Prazos). Você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém). Também abre em tela cheia (escala-dev.html).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia (no título da coluna) pra ver o detalhe: a <b>📋 Lista</b> (plantão primeiro) ou a <b>📊 Visão Gantt</b>, e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, <b>entrada e saída</b> (opcionais) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n☕ <b>Pausas</b>: se a pessoa sai e volta no meio do expediente (almoço, consulta…), use <b>☕ Adicionar pausa (saída e volta)</b> logo abaixo da entrada/saída — até <b>3 pausas</b> por dia. Cada pausa precisa ter a volta depois da saída, ficar dentro do expediente, em ordem e sem sobrepor outra. A pausa aparece na lista do dia (☕ pausa 12:00–13:00), num ☕ na célula e abre um <b>intervalo na barra do Gantt</b>. Ao editar um dia que já tem pausa, ela vem preenchida; marcar Folga descarta a pausa.\n\n📊 <b>Visão Gantt</b>: no detalhe do dia, cada pessoa é uma linha com uma <b>barra do período</b> em que está (✅ azul-esverdeada pra escalado, 🔥 laranja pra plantão). Sem horário cadastrado a barra fica listrada ("dia todo"); só entrada ou só saída deixa a barra aberta pra um dos lados. O eixo se ajusta aos horários do dia, o <b>traço vermelho</b> marca "agora" (no dia de hoje), a linha <b>Cobertura</b> mostra quantas pessoas estão em cada hora (quem está em pausa não conta) e a folga vai numa linha à parte. A escolha Lista/Gantt fica lembrada neste aparelho.\n\n🔎 <b>Filtros</b>: o botão <b>🔎 Filtros</b> da barra (com um selo com o número de filtros ativos) abre uma <b>mini tela</b> com chips: de <b>squad</b> (na visão da squad, clicar numa troca de squad; na global, marque uma ou várias — <i>Todas</i> limpa) e de <b>subtime</b> (os que o PO cria em ⚙ Config → Subtimes; multi-seleção, <i>Todos</i> limpa). Clicar já filtra a escala por trás; <b>✕ Limpar filtros</b> zera tudo e <b>Pronto</b> (ou Esc) fecha. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads). O filtro vale também pro JPG e fica no link da página.\n\n🖼️ <b>Baixar JPG</b>: gera uma imagem da escala pra mandar no WhatsApp ou colar numa apresentação. Escolha <b>Dia, Semana ou Mês</b> e uma data de referência, confira a prévia e baixe. Vale pra squad (ou todas as squads) e respeita os filtros. No <b>Dia</b> há ainda <b>📋 Lista | 📊 Visão Gantt</b> — a imagem do Gantt traz o eixo de horas, uma barra por pessoa, as pausas tracejadas, a cobertura por hora e a folga. No detalhe de um dia, <b>🖼️ JPG do dia</b> (ou <b>JPG do Gantt</b>, se a visão for Gantt) abre direto no modo Dia.\n\n📅 <b>No mês</b>: na visão Tudo/Eventos/Prazos do Calendário, cada dia mostra a <b>sua</b> escala (✅ horário · 🔥 Plantão · 🏖️ Folga) e quantas pessoas da squad estão escaladas (👥 N · 🔥 plantão). Clique no dia pra ver quem é e use Abrir na Escala pra ir direto à semana dele. O botão <b>👥 Escala ✓</b> nas Legendas liga/desliga isso (fica lembrado neste aparelho).\n\n🔔 <b>Aviso</b>: quando PO, Organizador ou ADM cadastra (ou limpa) a escala de OUTRA pessoa, ela recebe uma notificação com o período e o tipo — clicar abre a Escala na semana certa.' },
-    { icon:'🏖️', title:'Férias do Digital', text:'Abra 📅 Calendários e escolha a visão <b>🏖️ Férias</b> (ao lado de 👥 Escala). Você vê quem está <b>fora agora</b>, as <b>próximas saídas</b> (60 dias) e as faixas do mês — por padrão das suas squads, com o botão <b>🌐 Todo o Digital</b> para ver todas. Em <b>Minhas férias</b> você cadastra, edita e exclui seus próprios períodos (apenas login Google @ciahering.com.br; ADM pode corrigir os de qualquer pessoa).' },
+    { icon:'🏖️', title:'Férias do Digital', text:'Abra 📅 Calendários e escolha a visão <b>🏖️ Férias</b> (ao lado de 👥 Escala). Você vê quem está <b>fora agora</b>, as <b>próximas saídas</b> (60 dias) e as faixas do mês — por padrão das suas squads, com o botão <b>🌐 Todo o Digital</b> para ver todas. Em <b>Minhas férias</b> você cadastra, edita e exclui seus próprios períodos (apenas login Google @ciahering.com.br; ADM pode corrigir os de qualquer pessoa). Atalho: clique no <b>seu nome</b> no topo → <b>🏖️ Minhas férias</b>.\n\n⚠️ <b>Este cadastro não substitui o das férias no Senior</b> — ele serve só para o time se organizar; a solicitação oficial continua no Senior.\n\n🧳 <b>Preparar minha saída</b> (em Minhas férias, depois de cadastrar o período): lista os cards <b>ativos desta squad</b> em que você é responsável ou participante e, para cada um, você escolhe <b>✋ Manter</b> ou <b>➡️ Passar</b> para alguém — nada vem marcado e o <b>Revisar</b> só libera com tudo decidido. Nada muda até o <b>✅ Confirmar</b> no final; quem recebe é avisado no sino (um aviso por pessoa) e o Histórico do card registra a passagem. Tem cards em outras squads? Os botões no fim da tela abrem a mesma passagem lá. A contagem de tempo do card não é pausada.' },
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
     { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
@@ -34435,8 +34440,96 @@ function _calMostrarFerias(on){
       return hit ? hit[0] : "";
     },
     isAdm: _feriasIsAdm,
+    prepararSaida: ()=>_feriasPrepararSaida(),
   });
 }
+// 🏖️ Minhas férias (menu do nome) → 📅 Calendários na visão 🏖️ Férias
+function abrirMinhasFerias(){
+  if(!(window.MareFerias && MareFerias.permitido(window._currentUser))){ showToast('🏖️ As férias ficam visíveis só com o login Google da Hering.'); return; }
+  openCal(); changeCalView('ferias');
+}
+// 🧳 Preparar minha saída (F4): os cards ATIVOS desta squad em que sou responsável ou participante, item a item.
+// A tela (MareFerias.passagem) não grava nada; _feriasAplicarCards grava num fbSaveAll só e, se ele recusar/falhar,
+// desfaz as mudanças locais e NÃO avisa ninguém. Aviso: 1 por pessoa no lote (tipo 'assigned', que já vira push).
+function _feriasPrepararSaida(){
+  const u = window._currentUser || {}, me = window._currentUserInit;
+  if(!window.MareFerias || !me) return;
+  const per = MareFerias.periodoDe(u.uid);
+  if(!per){ showToast('🏖️ Cadastre suas férias primeiro (em Minhas férias).'); abrirMinhasFerias(); return; }
+  const colNome = id => (columns.find(c=>c.id===id)||{}).name || id;
+  const itens = cards.filter(c => c && !c.archived && !_isColDone(c.col) && (c.owner===me || (Array.isArray(c.participants) && c.participants.includes(me))))
+    .map(c => ({ key:c.id, titulo:c.title||'(sem título)', sub:(c.owner===me?'Responsável':'Participante')+' · '+colNome(c.col) }));
+  const pessoas = members.filter(m => m.uid!==u.uid && m.init!==me).map(m => ({ id:m.init, nome:m.name||m.init, uid:m.uid }))
+    .sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+  const raw = (window._allUsersRaw||{})[u.uid] || {};
+  const outras = Object.keys(raw.squads||{}).filter(k => raw.squads[k]===true && k!==ACTIVE_SQUAD);
+  const links = outras.map(id => ({ texto:'🗂 '+((typeof SQUAD_LABELS!=='undefined' && SQUAD_LABELS[id]) || id), href:location.pathname+'?squad='+encodeURIComponent(id)+'&ferias=saida' }));
+  const sqNome = (typeof SQUAD_LABELS!=='undefined' && SQUAD_LABELS[ACTIVE_SQUAD]) || ACTIVE_SQUAD;
+  MareFerias.passagem({
+    titulo:'🧳 Preparar minha saída · '+sqNome,
+    periodo:per, itens, pessoas, links,
+    nota:'Seus cards de outras squads:',
+    vazio:'Nenhum card ativo seu nesta squad (responsável ou participante).',
+    aplicar: decisoes => _feriasAplicarCards(decisoes, pessoas),
+  });
+}
+async function _feriasAplicarCards(decisoes, pessoas){
+  const me = window._currentUserInit, meuNome = window._currentUser?.displayName || window._currentUser?.email || me;
+  const passar = decisoes.filter(d => d.acao==='passar' && d.para && d.para!==me);
+  const alvos = passar.map(d => ({ d, c: cards.find(x => x && x.id===d.key) })).filter(x => x.c);
+  if(!alvos.length) return [];
+  const antes = new Map(alvos.map(({c}) => [c.id, JSON.parse(JSON.stringify(c))]));
+  const nome = init => (pessoas.find(p=>p.id===init)||{}).nome || init;
+  alvos.forEach(({d, c}) => {
+    if(c.owner===me){
+      c.owner = d.para;
+      recordHistory(c, '🏖️ passou o card para '+nome(d.para)+' antes das férias (via 🧳 Preparar minha saída)');
+      runAutoRules('assigned', c.id, d.para);
+    }
+    if(Array.isArray(c.participants) && c.participants.includes(me)){
+      const i = c.participants.indexOf(me);
+      if(c.participants.includes(d.para) || c.owner===d.para) c.participants.splice(i,1); else c.participants[i] = d.para;
+      recordHistory(c, '🏖️ passou a participação para '+nome(d.para)+' antes das férias (via 🧳 Preparar minha saída)');
+    }
+  });
+  try{
+    await fbSaveAll(undefined, alvos.map(({c}) => c.id));
+  }catch(err){
+    // nada foi para o banco: devolve os cards como estavam e não avisa ninguém
+    antes.forEach((orig, id) => { const i = cards.findIndex(x => x && x.id===id); if(i>=0) cards[i] = orig; });
+    try{ renderBoard(); }catch(_){}
+    const msg = (err && err.message) || 'não foi possível salvar';
+    return alvos.map(({d}) => ({ key:d.key, ok:false, erro:msg }));
+  }
+  try{ renderBoard(); }catch(_){}
+  const porPessoa = {};
+  alvos.forEach(({d, c}) => { (porPessoa[d.para] = porPessoa[d.para] || []).push(c); });
+  Object.entries(porPessoa).forEach(([init, lista]) => {
+    const uid = getUidByInit(init); if(!uid || uid===window._currentUser?.uid) return;
+    createNotif(uid, 'assigned', '🏖️ '+meuNome+' passou '+lista.length+(lista.length>1?' cards':' card')+' para você antes das férias',
+      lista.map(c => c.title||'').join(' · ').slice(0,120), lista[0].id);
+  });
+  return alvos.map(({d}) => ({ key:d.key, ok:true }));
+}
+// 🏖️ ?ferias=1 abre Minhas férias; ?ferias=saida abre também a 🧳 passagem (link das outras squads e do Radar).
+// SÓ ABRE telas — nunca aplica nada. Espera login, cards, membros e o 1º retorno das férias (senão "nenhum card seu" falso).
+(function _feriasFromUrl(){
+  const v = String(_urlParams.get('ferias')||'');
+  if(v!=='1' && v!=='saida') return;
+  try{ const uu = new URL(location.href); uu.searchParams.delete('ferias'); history.replaceState(history.state, '', uu.pathname+uu.search+uu.hash); }catch(e){}
+  let tentativas = 0, abriu = false;
+  const tentar = () => {
+    tentativas++;
+    const pronto = window._currentUser && window._fbReady && window.MareFerias && Array.isArray(members) && members.length;
+    if(!pronto){ if(tentativas < 40) setTimeout(tentar, 400); return; }
+    if(!abriu){ abriu = true; abrirMinhasFerias(); }
+    if(v!=='saida') return;
+    if(!MareFerias.pronto()){ if(tentativas < 60) setTimeout(tentar, 300); return; }
+    if(MareFerias.periodoDe(window._currentUser.uid)) _feriasPrepararSaida();
+    else showToast('🏖️ Cadastre suas férias aqui primeiro; depois use 🧳 Preparar minha saída.');
+  };
+  setTimeout(tentar, 800);
+})();
 // 👥 Escala dentro do Calendário (2026-10-12): a página escala(-dev).html embutida (?embed=1) — é a MESMA página (squad + global + cadastro), sem cópia do código.
 // Carrega só quando a pessoa abre a visão (e recarrega se trocou de squad); no modo Escala somem o mês, os filtros e o "+ Evento", que não fazem sentido ali.
 function _calMostrarEscala(on){

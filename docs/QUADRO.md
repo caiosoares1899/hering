@@ -8,6 +8,8 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/ferias-saida` | `mare-ferias-dev.js`, `kanban-dev.html` (openStatusMenu, passagem nova, `?ferias=`), `okr-dev.html` (⋯ Mais, passagem nova), `docs/arezzo/testes/test_ferias_saida.js` | 13/11/2026 |
+| Codex | `codex/ferias-aviso` | `kanban-dev.html` e `okr-dev.html` (pontos de disparo do aviso + selo; ver contrato F3) | 13/11/2026 |
 
 
 ## Fila

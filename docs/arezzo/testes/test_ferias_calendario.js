@@ -117,9 +117,10 @@ function startServer() {
       const a = MareFerias.ausente('BO', '2026-11-13'), b = MareFerias.ausente('bia', '2026-11-13');
       return !!a && !!b && a.uid === 'bia' && a.ini === b.ini && a.fim === b.fim;
     }));
-    t('D. Botão 🧳 Preparar minha saída existe e está desabilitado (F4)', await p.evaluate(() => {
+    // F4 (13/11): sem período cadastrado o 🧳 fica desabilitado e pede o cadastro (o fluxo da passagem está em test_ferias_saida.js)
+    t('D. Botão 🧳 Preparar minha saída existe e, sem período, está desabilitado', await p.evaluate(() => {
       const btn = [...document.querySelectorAll('#okr-ferias-host button')].find(x => /Preparar minha saída/.test(x.textContent));
-      return !!btn && btn.disabled && /breve/i.test(btn.title);
+      return !!btn && btn.disabled && /Cadastre suas férias/i.test(btn.title);
     }));
     t('E. Membro comum não vê botão de editar/excluir nas férias de outra pessoa', await p.evaluate(() => {
       const acts = [...document.querySelectorAll('#okr-ferias-host [data-act="edit"], #okr-ferias-host [data-act="del"]')];
