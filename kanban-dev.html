@@ -34444,7 +34444,7 @@ function _feriasIniciar(){
   if(_feriasOuvindo || !F?.permitido(window._currentUser)) return;
   _feriasOuvindo=true;
   F.configurar({uidDeInit: init => Object.entries(window._allUsersRaw||{}).find(([,u])=>u?.init===init)?.[0]||''});
-  F.ouvir(window._db, '_dev', ()=>{
+  F.ouvir(window._db, undefined, ()=>{
     renderBoard();
     if(document.getElementById('card-ov')?.classList.contains('open')) renderParticipants(editingParticipants);
   });
