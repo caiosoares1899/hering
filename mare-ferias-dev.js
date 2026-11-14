@@ -13,6 +13,7 @@
    v3 (F4, 13/11): 🧳 Preparar minha saída — MareFerias.passagem(cfg): item a item, NADA pré-marcado, "Revisar" travado até
        tudo decidido, NADA gravado antes do ✅ final (quem grava é cfg.aplicar, da página); pronto(); sobrepoe(uid, ini, fim).
        Aviso fixo em Minhas férias: "não substitui o cadastro das férias no Senior" (pedido do Caio).
+   v4 (13/11): a 🧳 explica o que é e o que cada ação faz (pedido do Caio); cfg.alvo diz o que entra (cards × Objetivos/Marcos).
 */
 (function(){
   'use strict';
@@ -231,6 +232,11 @@
 .mfer-pass-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .mfer-pass-hd h3{margin:0;font-size:15px;font-weight:800;}
 .mfer-pass-lista{display:flex;flex-direction:column;gap:6px;}
+.mfer-pass-exp{font-size:12.5px;line-height:1.5;color:var(--txt2);background:rgba(var(--ink-rgb),.05);border:1px solid var(--glass-b);border-radius:12px;padding:10px 12px;}
+.mfer-pass-exp p{margin:0 0 6px;}
+.mfer-pass-exp p:last-child{margin:6px 0 0;}
+.mfer-pass-exp ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;}
+.mfer-pass-exp b{color:var(--txt);}
 .mfer-pass-it{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.05);flex-wrap:wrap;}
 .mfer-pass-it.ok{border-color:rgba(29,233,182,.45);}
 .mfer-pass-acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
@@ -576,6 +582,7 @@ a.mfer-btn{text-decoration:none;}
               + '<p class="mfer-sub">' + (adm ? 'Você é ADM: pode cadastrar, editar ou excluir férias de qualquer pessoa.' : 'Cadastre, edite ou exclua seus períodos de férias.') + '</p>'
               // ⚠️ pedido do Caio (13/11): este cadastro é só para o time se organizar — NÃO é a solicitação oficial de férias
               + '<div class="mfer-msg senior mfer-senior" role="note">⚠️ <b>Este cadastro não substitui o das férias no Senior.</b> Ele serve só para o time se organizar; a solicitação oficial continua sendo feita no Senior.</div>'
+              + (typeof opts.prepararSaida === 'function' ? '<p class="mfer-sub mfer-saida-exp">🧳 <b>Preparar minha saída</b>: depois de cadastrar o período, decida item a item o que <b>passa</b> para outra pessoa e o que <b>fica</b> com você durante as férias. Nada muda até você confirmar.</p>' : '')
               + '<div class="mfer-form">'
                 + (adm ? '<label class="mfer-lbl">Pessoa<select class="mfer-sel" data-f="alvo">'
                     + pessoas.map(p => '<option value="' + esc(p.uid) + '"' + ((S.formAlvoUid || opts.uid) === p.uid ? ' selected' : '') + '>' + esc(p.nome) + (p.uid === opts.uid ? ' (você)' : '') + '</option>').join('')
@@ -717,19 +724,28 @@ a.mfer-btn{text-decoration:none;}
       if(etapa === 'lista'){
         const n = nDec(), tudo = n === itens.length;
         box.innerHTML = cab
+          + '<div class="mfer-pass-exp">'
+            + '<p><b>O que é:</b> antes de sair de férias, você decide o que fazer com ' + esc(cfg.alvo || 'cada item seu') + ', para nada ficar parado enquanto você está fora.</p>'
+            + '<ul>'
+              + '<li><b>✋ Manter</b> — o item continua com você. Quem marcar você vê o aviso de que você está de férias, e seu nome ganha o selo 🏖️.</li>'
+              + '<li><b>➡️ Passar</b> — escolha a pessoa: ela vira a responsável (ou entra no seu lugar como participante), o Histórico registra a passagem e ela recebe um aviso no sino.</li>'
+              + '<li><b>✋ Manter todos os restantes</b> — marca "Manter" em tudo que você ainda não decidiu.</li>'
+            + '</ul>'
+            + '<p>Nada muda até você <b>revisar e confirmar</b> no final — pode fechar a qualquer momento.</p>'
+          + '</div>'
           + '<div class="mfer-pass-lista">' + itens.map(it => {
               const d = dec[it.key] || {};
               return '<div class="mfer-pass-it' + (decidido(it.key) ? ' ok' : '') + '" data-key="' + esc(it.key) + '">'
                 + '<div class="mfer-item-info"><div class="mfer-item-nm" title="' + esc(it.titulo) + '">' + esc(it.titulo) + '</div>' + (it.sub ? '<div class="mfer-item-obs">' + esc(it.sub) + '</div>' : '') + '</div>'
                 + '<div class="mfer-pass-acts" role="group" aria-label="O que fazer com este item">'
-                  + '<button type="button" class="mfer-btn' + (d.acao === 'manter' ? ' on' : '') + '" data-pa="manter" aria-pressed="' + (d.acao === 'manter') + '">✋ Manter</button>'
-                  + '<button type="button" class="mfer-btn' + (d.acao === 'passar' ? ' on' : '') + '" data-pa="passar" aria-pressed="' + (d.acao === 'passar') + '">➡️ Passar</button>'
+                  + '<button type="button" class="mfer-btn' + (d.acao === 'manter' ? ' on' : '') + '" data-pa="manter" aria-pressed="' + (d.acao === 'manter') + '" title="Continua com você; quem marcar você vê que está de férias">✋ Manter</button>'
+                  + '<button type="button" class="mfer-btn' + (d.acao === 'passar' ? ' on' : '') + '" data-pa="passar" aria-pressed="' + (d.acao === 'passar') + '" title="Escolha quem assume: vira responsável (ou participante no seu lugar) e é avisado no sino">➡️ Passar</button>'
                   + (d.acao === 'passar' ? '<select class="mfer-sel" data-pa="para" aria-label="Passar para">' + opcoesPessoa(d.para || '') + '</select>' : '')
                 + '</div></div>';
             }).join('') + '</div>'
           + (cfg.links && cfg.links.length ? '<div class="mfer-pass-links"><span class="mfer-sub">' + esc(cfg.nota || 'Também pode passar em:') + '</span>' + linksHtml() + '</div>' : '')
           + '<div class="mfer-pass-ft"><span class="mfer-sub" role="status">' + n + ' de ' + itens.length + ' decididos</span>'
-            + (itens.some(it => !dec[it.key]) ? '<button type="button" class="mfer-btn" data-pa="manter-resto">✋ Manter todos os restantes</button>' : '')
+            + (itens.some(it => !dec[it.key]) ? '<button type="button" class="mfer-btn" data-pa="manter-resto" title="Marca Manter em tudo que você ainda não decidiu (não grava nada)">✋ Manter todos os restantes</button>' : '')
             + '<button type="button" class="mfer-btn prim" data-pa="revisar"' + (tudo ? '' : ' disabled title="Decida cada item (e escolha a pessoa de cada ➡️ Passar)"') + '>Revisar ›</button></div>';
         return;
       }
@@ -812,6 +828,6 @@ a.mfer-btn{text-decoration:none;}
     passagem,
     sobrepoe,
     pronto: () => ST.carregado,
-    v: 3,
+    v: 4,
   };
 })();

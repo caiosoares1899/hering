@@ -7651,7 +7651,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.983-dev</div>
+<div class="version">v8.30.984-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8008,7 +8008,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
 <script src="mare-gcal-dev.js?v=7"></script>
-<script src="mare-ferias-dev.js?v=3"></script>
+<script src="mare-ferias-dev.js?v=4"></script>
 
 <script>
 
@@ -34512,6 +34512,7 @@ function _feriasPrepararSaida(){
   const sqNome = (typeof SQUAD_LABELS!=='undefined' && SQUAD_LABELS[ACTIVE_SQUAD]) || ACTIVE_SQUAD;
   MareFerias.passagem({
     titulo:'🧳 Preparar minha saída · '+sqNome,
+    alvo:'cada card ativo seu nesta squad (como responsável ou participante)',
     periodo:per, itens, pessoas, links,
     nota:'Seus cards de outras squads:',
     vazio:'Nenhum card ativo seu nesta squad (responsável ou participante).',
