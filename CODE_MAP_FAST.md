@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-13.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-14.
 > Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
@@ -98,14 +98,14 @@
 ## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 
 ### `kanban-dev.html` (141 âncoras curadas)
-- `ADM_EMAILS` (L8038) · `getEffectiveRole` (L8173) · `SQUAD_META_LIVE` (L8235) · `resolveSquadAndShow` (L12990) · `autoRegistrar` (L13527) · `_claimUserInit` (L13363)
-- `_ensureInitRegistryBackfilled` (L13406) · `doSignIn` (L12877) · `_syncAuthProfileToFirebase` (L13430) · `showApp` (L13048) · `_onRealAuthChange` (L39414) · `agentes` (L8950)
-- `allIdentities` (L8962) · `renderAgentesList` (L29284) · `fecharAddAgente` (L29325) · `salvarAgente` (L29329) · `excluirAgente` (L29356) · `CARD_SECTIONS` (L8875)
-- `openCard` (L19132) · `openAgenteHotline` (L19011) · `_applyAgenteHotlineSkin` (L18987) · `saveCard` (L19669) · `_finishCloseOv` (L38737) · `_newCardGuardOff` (L18174)
-- `fbSaveAll` (L10935) · `fbCreateCard` (L11178) · `fbSaveCard` (L11256) · `_applyCardsSync` (L11656) · `_notasUpdate` (L23710) · `_saveCardWithRetry` (L11407)
-- `saveExtraDesc` (L18731) · `openNewCard` (L19575) · `backfillFlow` (L10378) · `recordMove` (L10252) · `_reportUnexpectedCardDisappearance` (L11243) · `searchDependsCards` (L39926)
-- `_currentTheme` (L38984) · `toggleTheme` (L39046) · `toggleThemeAuto` (L39142) · `exitViceCity` (L39220) · `_isViceCityEasterEggAtivo` (L39323) · `toggleBlackFriday` (L39244)
-- `exitBlackFriday` (L39255) · `_themeBtnRightClick` (L39267) · `_isBlackFridayAtivo` (L39243) · `maybeAutoArchiveOldCards` (L17699) · `_renderArquivadosBody` (L27856) · `openArquivados` (L27921)
+- `ADM_EMAILS` (L8039) · `getEffectiveRole` (L8174) · `SQUAD_META_LIVE` (L8236) · `resolveSquadAndShow` (L12993) · `autoRegistrar` (L13530) · `_claimUserInit` (L13366)
+- `_ensureInitRegistryBackfilled` (L13409) · `doSignIn` (L12880) · `_syncAuthProfileToFirebase` (L13433) · `showApp` (L13051) · `_onRealAuthChange` (L39459) · `agentes` (L8951)
+- `allIdentities` (L8963) · `renderAgentesList` (L29288) · `fecharAddAgente` (L29329) · `salvarAgente` (L29333) · `excluirAgente` (L29360) · `CARD_SECTIONS` (L8876)
+- `openCard` (L19136) · `openAgenteHotline` (L19015) · `_applyAgenteHotlineSkin` (L18991) · `saveCard` (L19673) · `_finishCloseOv` (L38782) · `_newCardGuardOff` (L18178)
+- `fbSaveAll` (L10937) · `fbCreateCard` (L11180) · `fbSaveCard` (L11258) · `_applyCardsSync` (L11658) · `_notasUpdate` (L23714) · `_saveCardWithRetry` (L11409)
+- `saveExtraDesc` (L18735) · `openNewCard` (L19579) · `backfillFlow` (L10380) · `recordMove` (L10254) · `_reportUnexpectedCardDisappearance` (L11245) · `searchDependsCards` (L39971)
+- `_currentTheme` (L39029) · `toggleTheme` (L39091) · `toggleThemeAuto` (L39187) · `exitViceCity` (L39265) · `_isViceCityEasterEggAtivo` (L39368) · `toggleBlackFriday` (L39289)
+- `exitBlackFriday` (L39300) · `_themeBtnRightClick` (L39312) · `_isBlackFridayAtivo` (L39288) · `maybeAutoArchiveOldCards` (L17703) · `_renderArquivadosBody` (L27860) · `openArquivados` (L27925)
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
@@ -116,8 +116,8 @@
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)
-- `_okrObjUltimaAtividade` (L5368) · `_okrObjParadoDias` (L5380) · `_renderMd` (L2553) · `_okrToggleNotas` (L3935) · `loadOkrReuniaoNotas` (L3203) · `renderOkrNotas` (L3236)
-- `_okrAgendaCartoes` (L3082) · `_okrAgendaConfirmar` (L3105) · `_okrAgendaAplicar` (L3120)
+- `_okrObjUltimaAtividade` (L5400) · `_okrObjParadoDias` (L5412) · `_renderMd` (L2584) · `_okrToggleNotas` (L3967) · `loadOkrReuniaoNotas` (L3234) · `renderOkrNotas` (L3267)
+- `_okrAgendaCartoes` (L3113) · `_okrAgendaConfirmar` (L3136) · `_okrAgendaAplicar` (L3151)
 
 ### `travessia-dev.html` (9 âncoras curadas)
 - `abrirApp` (L1130) · `farol` (L450) · `termometro` (L461) · `viewBau` (L649) · `viewDiario` (L575) · `viewAval` (L704)
