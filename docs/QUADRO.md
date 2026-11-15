@@ -39,7 +39,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 |---|---|---|---|
 | Claude | 📣 Pedir atualização no Gantt: tipo `gantt_pedido` vira push (sem regra nova) | resync + `firebase deploy --project hering-onboarding --only functions:sendPushOnNotification` | 13/11/2026 |
 | Claude | 🔔 Avisos de mudança no Gantt: regras e backups **já foram** junto com o deploy da 🏖️ F1 (13/11); faltam só as funções de aviso e o push | resync + `firebase deploy --project hering-onboarding --only functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:sendPushOnNotification` | 13/11/2026 |
-| Claude | Conhecimento do Agente Ágil regenerado na promoção do Gantt de 13/11 (Digital · dia a dia, Radar Gantt) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 13/11/2026 |
+| Claude | Conhecimento do Agente Ágil regenerado nas promoções de 13/11 (Gantt) e 14/11 (🏖️ Férias + avisos/pedido/favorita do Gantt) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 13/11/2026 |
 
 ## Backlog
 
