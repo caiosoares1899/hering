@@ -35,7 +35,7 @@ const seed = () => ({ kanban: {
   usuarios_publicos: Object.fromEntries(Object.entries(U).map(([k, u]) => [k, { uid: u.uid, nome: u.nome, init: u.init, role: u.role, squads: u.squads }])),
   squads: { dados: { dados: {
     columns: [{ id: 'todo', name: 'A Fazer' }, { id: 'done', name: 'Concluído' }], tags: [],
-    cards_index: { c1: 'k1', c2: 'k2', c3: 'k3', c4: 'k4', c5: 'k5', c6: 'k6' },
+    cards_index: { c1: 'k1', c2: 'k2', c3: 'k3', c4: 'k4', c5: 'k5', c6: 'k6', c7: 'k7' },
     cards: {
       k1: card('c1', 'Campanha de Natal', 'todo', 'AT'),
       k2: card('c2', 'Relatório semanal', 'todo', 'BO', { participants: ['AT'] }),
@@ -43,6 +43,7 @@ const seed = () => ({ kanban: {
       k4: card('c4', 'Arquivado', 'todo', 'AT', { archived: true }),
       k5: card('c5', 'De outra pessoa', 'todo', 'BO'),
       k6: card('c6', XSS, 'todo', 'AT'),
+      k7: card('c7', 'Legado com participantes', 'todo', 'BO', { participantes: ['AT'] }),
     },
   } } },
   okr: {
@@ -50,10 +51,14 @@ const seed = () => ({ kanban: {
       o1: { id: 'o1', titulo: 'Crescer o app', torre: 'digital', responsaveis: ['ana', 'bia'], history: [] },
       o2: { id: 'o2', titulo: 'Objetivo travado', torre: 'digital', responsaveis: ['ana'], history: [] },
       o3: { id: 'o3', titulo: 'Não é meu', torre: 'digital', responsaveis: ['bia'], history: [] },
+      o4: { id: 'o4', titulo: 'Objetivo arquivado', torre: 'digital', responsaveis: ['bia'], arquivado: true, history: [] },
+      o5: { id: 'o5', titulo: 'Outra torre', torre: 'comercial', responsaveis: ['bia'], history: [] },
     },
     marcos: {
       m1: { id: 'm1', nome: 'Lançar versão 2', objetivoId: 'o1', responsavel: 'ana', progresso: 'em_andamento', history: [] },
       m2: { id: 'm2', nome: 'Marco concluído', objetivoId: 'o1', responsavel: 'ana', progresso: 'concluido', history: [] },
+      m3: { id: 'm3', nome: 'Marco de Objetivo arquivado', objetivoId: 'o4', responsavel: 'ana', progresso: 'em_andamento', history: [] },
+      m4: { id: 'm4', nome: 'Marco de torre escondida', objetivoId: 'o5', responsavel: 'ana', progresso: 'em_andamento', history: [] },
     },
     obj_locks: { o2: { uid: 'bia', who: 'Bia Outra', ts: FIXO_MS } },
     tags: {},
@@ -108,7 +113,7 @@ function startServer() {
     const w0 = await escritas(p, 'kanban/squads/dados/dados');
     await btn.click(); await p.waitForTimeout(200);
     const keys = await p.evaluate(() => [...document.querySelectorAll('#mfer-pass-ov [data-key]')].map(e => e.dataset.key).sort());
-    t('M5. lista só os cards ativos meus (responsável/participante): c1, c2, c6', JSON.stringify(keys) === '["c1","c2","c6"]', keys);
+    t('M5. lista só os cards ativos meus (responsável/participante, inclusive o campo antigo "participantes"): c1, c2, c6, c7', JSON.stringify(keys) === '["c1","c2","c6","c7"]', keys);
     t('M6. nada pré-marcado e Revisar travado', await p.evaluate(() => !document.querySelector('#mfer-pass-ov [aria-pressed="true"]') && document.querySelector('#mfer-pass-ov [data-pa="revisar"]').disabled));
     t('M7. título com <img onerror> aparece como texto', await p.evaluate(x => !window.__xss && document.querySelector('#mfer-pass-ov [data-key="c6"]').textContent.includes(x), XSS));
     t('M7b. a passagem explica o que é e o que cada ação faz', await p.evaluate(() => { const e = document.querySelector('#mfer-pass-ov .mfer-pass-exp'); const x = e ? e.textContent : ''; return /O que é:/.test(x) && /cada card ativo seu nesta squad/.test(x) && /✋ Manter — o item continua com você/.test(x) && /➡️ Passar — escolha a pessoa/.test(x) && /Nada muda até você revisar e confirmar/.test(x); }));
@@ -129,14 +134,14 @@ function startServer() {
     await p.click('#mfer-pass-ov [data-key="c2"] [data-pa="passar"]');
     await p.click('#mfer-pass-ov [data-pa="manter-resto"]');
     t('M13. "Manter todos os restantes" preenche só o que não tinha escolha (c6) e não grava', await p.evaluate(() => {
-      const st = document.querySelector('#mfer-pass-ov [data-key="c6"] [data-pa="manter"]').getAttribute('aria-pressed') === 'true';
+      const st = ['c6', 'c7'].every(k => document.querySelector('#mfer-pass-ov [data-key="' + k + '"] [data-pa="manter"]').getAttribute('aria-pressed') === 'true');
       const c2 = document.querySelector('#mfer-pass-ov [data-key="c2"] [data-pa="passar"]').getAttribute('aria-pressed') === 'true';
       return st && c2 && document.querySelector('#mfer-pass-ov [data-pa="revisar"]').disabled;
     }) && await escritas(p, 'kanban/squads/dados/dados') === w0);
     await p.selectOption('#mfer-pass-ov [data-key="c2"] select', 'PP');
     t('M14. tudo decidido libera Revisar', await p.evaluate(() => !document.querySelector('#mfer-pass-ov [data-pa="revisar"]').disabled));
     await p.click('#mfer-pass-ov [data-pa="revisar"]');
-    t('M15. revisão lista o que passa e o que fica, sem gravar', /Passar \(2\)/.test(await p.textContent('#mfer-pass-ov')) && /Ficam com você \(1\)/.test(await p.textContent('#mfer-pass-ov')) && await escritas(p, 'kanban/squads/dados/dados') === w0);
+    t('M15. revisão lista o que passa e o que fica, sem gravar', /Passar \(2\)/.test(await p.textContent('#mfer-pass-ov')) && /Ficam com você \(2\)/.test(await p.textContent('#mfer-pass-ov')) && await escritas(p, 'kanban/squads/dados/dados') === w0);
     const n0 = await p.evaluate(() => Object.keys(window.__store.kanban.usuarios.po1.notificacoes || {}).length);
     await p.evaluate(() => { window.__autoChamadas = []; const ra = window.runAutoRules; window.runAutoRules = function(){ window.__autoChamadas.push([...arguments]); return ra.apply(this, arguments); }; });
     await p.click('#mfer-pass-ov [data-pa="aplicar"]'); await p.waitForTimeout(800);
@@ -148,6 +153,21 @@ function startServer() {
     const nots = await p.evaluate(() => Object.values(window.__store.kanban.usuarios.po1.notificacoes || {}));
     t('M19. 1 aviso só para o Paulo (2 cards no lote), tipo assigned', nots.length === n0 + 1 && nots.some(n => n.type === 'assigned' && /passou 2 cards para você/.test(n.title)), nots);
     t('M20. tela final confirma', /2 item\(ns\) passado/.test(await p.textContent('#mfer-pass-ov')));
+    // campo antigo "participantes": passar troca Ana por Paulo no mesmo campo
+    await p.click('#mfer-pass-ov [data-pa="fechar"]');
+    await p.click('#cal-ferias [data-act="saida"]'); await p.waitForTimeout(150);
+    await p.click('#mfer-pass-ov [data-key="c7"] [data-pa="passar"]'); await p.selectOption('#mfer-pass-ov [data-key="c7"] select', 'PP');
+    await p.click('#mfer-pass-ov [data-pa="manter-resto"]'); await p.click('#mfer-pass-ov [data-pa="revisar"]'); await p.click('#mfer-pass-ov [data-pa="aplicar"]'); await p.waitForTimeout(800);
+    const c7 = await p.evaluate(() => Object.values(window.__store.kanban.squads.dados.dados.cards).find(c => c && c.id === 'c7'));
+    t('M20b. campo antigo "participantes": Ana sai, Paulo entra, Histórico 🏖️', (c7.participantes || []).includes('PP') && !(c7.participantes || []).includes('AT') && /🏖️ passou a participação/.test((c7.history || []).slice(-1)[0]?.what || ''), c7);
+    // foco: digitar no cadastro e chegar mudança de férias de OUTRA pessoa não pode tirar o foco do campo
+    await p.click('#mfer-pass-ov [data-pa="fechar"]');
+    await p.click('#cal-ferias [data-f="obs"]'); await p.keyboard.type('cobertura');
+    await p.evaluate(() => window._set(window._ref(window._db, 'kanban/ferias_dev/bia/f9'), { ini: '2026-12-10', fim: '2026-12-12', em: 1, por: 'bia' }));
+    await p.waitForTimeout(300);
+    t('M20c. mudança de férias de outra pessoa não tira o foco nem o texto de quem está digitando', await p.evaluate(() => document.activeElement && document.activeElement.matches('#cal-ferias [data-f="obs"]') && document.activeElement.value === 'cobertura'));
+    await p.evaluate(() => document.activeElement.blur()); await p.waitForTimeout(150);
+    t('M20d. ao sair do campo, a tela se atualiza com a mudança (Bia aparece no mês de dezembro? — basta o redesenho ter rodado)', await p.evaluate(() => !!document.querySelector('#cal-ferias .mfer')));
     t('M21. sem erro JS', !errs.length, errs);
     await ctx.close();
   }
@@ -200,7 +220,7 @@ function startServer() {
     t('R2. aviso do Senior no cadastro do Radar', /não substitui o das férias no Senior/i.test(await p.textContent('#okr-ferias-host .mfer-senior')));
     await p.click('#okr-ferias-host [data-act="saida"]'); await p.waitForTimeout(200);
     const keys = await p.evaluate(() => [...document.querySelectorAll('#mfer-pass-ov [data-key]')].map(e => e.dataset.key).sort());
-    t('R3. lista Objetivos meus (o1, o2) e Marco em aberto (m1); não o concluído nem o de outra pessoa', JSON.stringify(keys) === '["m:m1","o:o1","o:o2"]', keys);
+    t('R3. lista Objetivos meus (o1, o2) e Marco em aberto (m1); não o concluído, nem o de outra pessoa, nem Marco de Objetivo arquivado/escondido', JSON.stringify(keys) === '["m:m1","o:o1","o:o2"]', keys);
     t('R3b. a passagem do Radar explica o que entra', /cada Objetivo em que você é responsável/.test(await p.textContent('#mfer-pass-ov .mfer-pass-exp')));
     t('R4. Objetivo travado mostra 🔒 e quem edita', /🔒 em edição por Bia Outra/.test(await p.textContent('#mfer-pass-ov [data-key="o:o2"]')));
     t('R5. link para passar os cards no Maré', await p.evaluate(() => [...document.querySelectorAll('#mfer-pass-ov .mfer-pass-links a')].some(a => a.getAttribute('href') === 'kanban-dev.html?ferias=saida')));

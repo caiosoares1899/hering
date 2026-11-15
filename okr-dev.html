@@ -2103,7 +2103,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.132 · okr-dev</div>
+<div class="version">v2.133 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6202,7 +6202,9 @@ function _okrFeriasPrepararSaida(){
     if(o && !o.arquivado && (o.responsaveis||[]).includes(uid)) itens.push({ key:'o:'+id, titulo:'🎯 '+objNome(id), sub:'Objetivo · você é responsável'+trava(id) });
   });
   Object.entries(okrMarcos||{}).forEach(([id,m])=>{
-    if(m && !m.arquivado && m.responsavel===uid && m.progresso!=='concluido') itens.push({ key:'m:'+id, titulo:'🏁 '+String(m.nome||'Marco'), sub:'Marco de '+objNome(m.objetivoId)+trava(m.objetivoId) });
+    // Marco só entra se o Objetivo dele está visível e ativo (arquivar o Objetivo não arquiva os Marcos; torre escondida não está em okrObjetivos)
+    const om = m && okrObjetivos[m.objetivoId];
+    if(m && om && !om.arquivado && !m.arquivado && m.responsavel===uid && m.progresso!=='concluido') itens.push({ key:'m:'+id, titulo:'🏁 '+String(m.nome||'Marco'), sub:'Marco de '+objNome(m.objetivoId)+trava(m.objetivoId) });
   });
   const pessoas = Object.entries(_globalUsersCache||{})
     .filter(([id,d]) => id!==uid && d && /@ciahering\.com\.br$/i.test(String(d.email||'')))
@@ -6260,7 +6262,7 @@ async function _okrFeriasAplicar(decisoes, pessoas){
   try{ renderOkrObjetivos(); }catch(e){}
   return res;
 }
-const _FERIAS_V = 4;
+const _FERIAS_V = 5;
 let _okrFerias = null, _okrFeriasP = null;
 function _okrFeriasIsAdm(){
   const u = window._currentUser || {}, uid = u.uid;

@@ -14,6 +14,7 @@
        tudo decidido, NADA gravado antes do ✅ final (quem grava é cfg.aplicar, da página); pronto(); sobrepoe(uid, ini, fim).
        Aviso fixo em Minhas férias: "não substitui o cadastro das férias no Senior" (pedido do Caio).
    v4 (13/11): a 🧳 explica o que é e o que cada ação faz (pedido do Caio); cfg.alvo diz o que entra (cards × Objetivos/Marcos).
+   v5 (monitorarbugs 13/11): mudança de férias de outra pessoa não redesenha o cadastro enquanto se digita (espera sair do campo).
 */
 (function(){
   'use strict';
@@ -656,10 +657,17 @@ a.mfer-btn{text-decoration:none;}
       else if(t.dataset.f === 'alvo'){ S.formAlvoUid = t.value; }
     }
 
+    // Mudança nas férias de OUTRA pessoa chegando enquanto se digita no cadastro: redesenhar trocaria o campo (perde foco/cursor).
+    // Espera sair do campo e então redesenha (monitorarbugs 13/11).
+    let redesenhoPendente = false;
+    const digitando = () => { const a = document.activeElement; return !!(a && root.contains(a) && a.closest('.mfer-form') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
+    function aoMudarDados(){ if(digitando()){ redesenhoPendente = true; return; } desenhar(); }
+    function onFocusOut(){ setTimeout(() => { if(redesenhoPendente && !digitando()){ redesenhoPendente = false; desenhar(); } }, 0); }
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
     root.addEventListener('change', onChange);
-    const unsub = ouvir(db, suf, () => desenhar());
+    root.addEventListener('focusout', onFocusOut);
+    const unsub = ouvir(db, suf, aoMudarDados);
     desenhar();
 
     return {
@@ -669,6 +677,7 @@ a.mfer-btn{text-decoration:none;}
         root.removeEventListener('click', onClick);
         root.removeEventListener('input', onInput);
         root.removeEventListener('change', onChange);
+        root.removeEventListener('focusout', onFocusOut);
         root.innerHTML = '';
       },
     };
@@ -828,6 +837,6 @@ a.mfer-btn{text-decoration:none;}
     passagem,
     sobrepoe,
     pronto: () => ST.carregado,
-    v: 4,
+    v: 5,
   };
 })();
