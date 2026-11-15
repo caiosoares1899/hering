@@ -46,6 +46,7 @@
       {id:'dash-filtro', gatilho:'view:historico',  texto:'Clique numa situação (Atrasado, No prazo…) pra filtrar a tabela logo abaixo.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
       {id:'dash-contrib',gatilho:'view:historico',  texto:'Quer saber quem puxa a média pra baixo? Use 🧮 Como cada Objetivo contribui.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
       {id:'cal-dia',     gatilho:'view:calendario', texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', ajuda:'Calendário', edita:true},
+      {id:'cal-ferias',  gatilho:'view:calendario', texto:'Na vista 🏖️ Férias você vê quem está fora no Digital e cadastra seus próprios períodos.', saiba:'calendario', ajuda:'Calendário'},
       {id:'cards-carregar',gatilho:'view:cards',    texto:'Os cards só são baixados quando você clica em Carregar cards. Assim a tela abre leve.'}]},
     mare:{nome:'Maré', icone:'🌊', gatilhos:{boot:'Ao entrar', 'card-open':'Ao abrir um card', 'cfg-open':'Ao abrir as Configurações'}, dicas:[
       {id:'insistente',gatilho:'boot',     texto:'Não ouve o “ding” do sino? Ligue o modo insistente no rodapé do 🔔: a tela treme e o som se repete.', saiba:{tab:'config', q:'Notificações'}, ajuda:'Notificações'},
