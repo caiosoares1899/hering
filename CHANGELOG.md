@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.982-dev, okr v2.130-dev, mare-ferias v3) — SÓ DEV — 2026-11-13
+### 🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.982-dev, okr v2.130-dev, mare-ferias v3) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
 - **🏖️ Calendário geral de férias** (pedido do Caio: agenda geral do Digital + modo férias). No **Maré → 📅 Calendários → 🏖️ Férias** (por padrão as suas squads, com 🌐 Todo o Digital) e no **Radar → 📅 Calendário → 🏖️ Férias** (todo o Digital): quem está **fora agora**, as **próximas saídas** (60 dias) e as faixas do mês, com filtros por pessoa, squad e período. **Minhas férias**: cadastrar, editar e excluir os próprios períodos (excluir pede confirmação; fim antes do início é recusado; acima de 45 dias, só avisa). ADM corrige as de qualquer pessoa. Só login Google @ciahering.com.br; visualizador externo não vê.
 - **⚠️ Aviso fixo**: o cadastro **não substitui o das férias no Senior** (serve só para o time se organizar).
@@ -34,19 +34,19 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **Módulo novo `mare-ferias(-dev).js`** (v3): fonte única (`ouvir`, `ausente(uid ou inicial, dia)`, `periodoDe`, `passagem`), usado pelo Maré e pelo Radar.
 - Testes: `functions/rules/__tests__/feriasRules.test.js`, `docs/arezzo/testes/test_ferias_calendario.js`, `docs/arezzo/testes/test_ferias_saida.js`. PRs #1786 (banco), #1791 (calendário), e este (🧳 + menu + Senior). Nota de desenho: `docs/ideias/modo-ferias.md`.
 
-### 2026-11-13 · SÓ DEV — 🏖️ Férias F3: aviso ao marcar alguém e selo de ausência (Maré v8.30.981-dev · Radar v2.129)
+### 2026-11-13 · PROD 14/11 (kanban v8.30.984 · okr v2.132) — 🏖️ Férias F3: aviso ao marcar alguém e selo de ausência (Maré v8.30.981-dev · Radar v2.129)
 
 Ao mencionar ou atribuir alguém de férias hoje ou com saída nos próximos 7 dias, um aviso de 6 segundos informa o período sem impedir a ação. Mensagens agrupadas e sem duplicar pessoas; selo 🏖️ apenas para quem está fora hoje. Leitura pela API MareFerias após login, Ajuda atualizada. Testes Playwright + fakefb: docs/arezzo/testes/test_ferias_aviso.js; validação ADM só leitura: docs/arezzo/testes/console_ferias_aviso.js.
 
-### 📱 Gantt: campanhas legíveis a um toque no celular — SÓ DEV — 2026-11-13
+### 📱 Gantt: campanhas legíveis a um toque no celular — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
 Maré e Radar mantêm 42 dias e navegação. No celular, cada barra abre leitor persistente com texto completo, datas e linha, Fechar/Esc e ação Abrir card ou Destacar para ADM. Dias compactos de 48 px e barras de 44×44 px, cores dos temas e desktop preservado. Teste com baseline main, três temas, ações de 1 dia e 50 simultâneas; capturas em docs/capturas/gantt_celular/.
 
-### ⭐ Gantt: aba favorita sincronizada no Maré e no Radar — SÓ DEV — 2026-11-13
+### ⭐ Gantt: aba favorita sincronizada no Maré e no Radar — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
 Favoritar esta aba salva a preferência na conta para todos os aparelhos. Link direto mantém prioridade; no Radar a favorita Cards é ignorada. Resposta atrasada não desfaz troca manual; valores inválidos ignorados. Exceção administrativa de PO/ADM aceita pelo Caio e Claude, sem mudança nas regras.
 
-### 📣 Gantt: Pedir atualização de um calendário (kanban v8.30.976-dev, okr v2.124-dev, painel v5.115-dev, oceano v1.84-dev, mare-gcal v5, mare-notif v43) — SÓ DEV — 2026-11-13
+### 📣 Gantt: Pedir atualização de um calendário (kanban v8.30.976-dev, okr v2.124-dev, painel v5.115-dev, oceano v1.84-dev, mare-gcal v5, mare-notif v43) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
 - **📣 Pedir atualização** em cada aba de calendário do 📊 Gantt (Maré e Radar; não na 🧭 Digital): avisa quem cuida da planilha — **Comercial Hering** → squads APP e Site Hering; **Marketplace** → squad Marketplace; **Outlet** → squad Outlet Comercial; **Marca** → o Caio (IDs das squads conferidos em squads_meta com o Caio). Sem repetir quem está em mais de uma squad, sem quem pediu e sem conta de fora da Hering.
 - **Aviso `gantt_pedido`** (sino + push): "📣 Mel pediu para atualizar o Calendário Comercial Hering" — tocar abre o Maré **direto no 📤 Atualizar planilha** daquele calendário (`kanban.html?gantt=<cal>&atualizar=1`).
@@ -54,7 +54,7 @@ Favoritar esta aba salva a preferência na conta para todos os aparelhos. Link d
 - **Ambiente de teste (-dev)**: a caixa de notificações é a mesma do prod, então no dev o aviso vai **só para quem pediu** (testa push e clique sem incomodar ninguém); a mensagem mostra para quem iria em produção.
 - Teste: `docs/arezzo/testes/test_gantt_pedido.js` (destinatários por calendário, deduplicação, sem autor/externo, 2º pedido barrado, clique e link abrindo o 📤, Radar e Painel); push no `functions/gantt/__tests__/avisos.test.js`. **Deploy: `sendPushOnNotification`** (tipo novo no PUSH_TYPES).
 
-### 🔔 Gantt: avisos de mudança nos calendários, com push (kanban v8.30.974-dev, okr v2.122-dev, painel v5.114-dev, oceano v1.83-dev, mare-gcal v3, mare-notif v42) — SÓ DEV — 2026-11-13
+### 🔔 Gantt: avisos de mudança nos calendários, com push (kanban v8.30.974-dev, okr v2.122-dev, painel v5.114-dev, oceano v1.83-dev, mare-gcal v3, mare-notif v42) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
 - **🔔 Avisar-me** (pedido do Caio, com push no celular): nas abas de calendário do 📊 Gantt — no Maré (ao lado de 📤/🕘) e no Radar (barra do Gantt) — a pessoa segue o calendário; na 🧭 Digital, segue os 3 comerciais. Ao ligar, se o aparelho ainda não tem push, o pedido de permissão aparece no mesmo toque.
 - **Aviso** (tipo novo `gantt_cal`, sino + push): "📊 Comercial Outlet atualizado · Ana · ＋3 ✎1 · arquivo" — ou "voltou para uma versão anterior". Quem publicou não recebe o próprio aviso. Tocar abre o Gantt naquele calendário, no Maré ou no Radar (onde a pessoa se inscreveu); no aparelho, publicações seguidas do mesmo calendário se substituem.

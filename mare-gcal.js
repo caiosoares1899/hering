@@ -108,6 +108,77 @@
     });
   }
 
+  // ── 🔔 Inscrição nos avisos de mudança (v3, 13/11/2026): kanban/gantt_inscritos(_dev)/{cal}/{uid} = { em, onde:'mare'|'radar' }.
+  // Só a própria pessoa grava/lê a dela (regras). A função ganttAvisoMudanca avisa (sino + push) quando o calendário é publicado.
+  const inscricao={
+    ref(cal){ const u=window._currentUser; if(!u || !u.uid || !CALS.some(c=>c.id===cal)) return null; return window._ref(window._db, 'kanban/gantt_inscritos'+suf()+'/'+cal+'/'+u.uid); },
+    // cb(true|false) a cada mudança; cb(null, erro) se a leitura for negada. Devolve a função de desligar.
+    ouvir(cal, cb){ const r=inscricao.ref(cal); if(!r) return ()=>{}; try{ return window._onValue(r, snap=>cb(!!(snap&&snap.exists())), err=>cb(null, err)) || (()=>{}); }catch(e){ cb(null, e); return ()=>{}; } },
+    definir(cal, ligar, onde){ const r=inscricao.ref(cal); if(!r) return Promise.reject(new Error('sem login')); return window._set(r, ligar ? { em:Date.now(), onde:onde==='mare'?'mare':'radar' } : null); },
+  };
+
+  // ── 📣 Pedir atualização (13/11/2026, pedido do Caio): quem precisa do calendário atualizado avisa quem cuida da planilha.
+  // Destinatários por calendário (IDs reais das squads, conferidos em kanban/squads_meta com o Caio em 13/11/2026):
+  // Comercial Hering → squads APP + Site Hering; Marketplace → squad Marketplace; Outlet → squad Outlet Comercial; Marca → Caio.
+  const PEDIDO={
+    marca:     { emails:['caio.soares@ciahering.com.br'], quem:'o Caio' },
+    comercial: { squads:['app','site'], quem:'as squads APP e Site Hering' },
+    mktplace:  { squads:['mktplace'], quem:'a squad Marketplace' },
+    outlet:    { squads:['outlet'], quem:'a squad Outlet Comercial' },
+  };
+  const diaHoje=()=>{ const d=new Date(); return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); };
+  const pedido={
+    // Quem recebe: pessoas das squads (ou e-mails) do calendário, só contas da Hering, sem repetir e sem quem pediu. pubs = kanban/usuarios_publicos.
+    destinatarios(cal, pubs, eu){
+      const P=PEDIDO[cal]; if(!P) return [];
+      const emails=(P.emails||[]).map(e=>e.toLowerCase());
+      return Object.entries(pubs||{}).filter(([uid,u])=>{
+        if(!u || uid===eu) return false;
+        const email=String(u.email||'').toLowerCase();
+        if(!email.endsWith('@ciahering.com.br')) return false;   // os calendários são só da Hering (convidado externo nem vê)
+        if(emails.includes(email)) return true;
+        const sq=u.squads||{}; return (P.squads||[]).some(id=>sq[id]);
+      }).map(([uid])=>uid);
+    },
+    // Manda o pedido. Um aviso por pessoa, id fixo por calendário + quem pediu + dia: se a pessoa já tem o pedido de hoje, NÃO regrava (as regras
+    // já recusam criar de novo para membro; PO/ADM poderiam sobrescrever — por isso a conferência antes). Uma falha não para os demais.
+    // AMBIENTE DE TESTE (-dev): a caixa de notificações é a mesma do prod — o aviso vai SÓ para quem pediu (dá para testar push e clique
+    // sem incomodar ninguém); `producao` diz para quem iria de verdade. Devolve {enviados, ja, erros, total, teste, producao:[nomes]}.
+    async enviar(cal){
+      const u=window._currentUser; if(!u || !u.uid || !PEDIDO[cal]) throw new Error('sem login');
+      const pubs=(await window._get(window._ref(window._db, 'kanban/usuarios_publicos'))).val()||{};
+      const reais=pedido.destinatarios(cal, pubs, u.uid), teste=suf()==='_dev';
+      const producao=reais.map(id=>String((pubs[id]||{}).nome||id));
+      const uids=teste?[u.uid]:reais;
+      const meu=pubs[u.uid]||{}, nome=String(meu.nome||u.displayName||'Alguém').slice(0,60);
+      const id='gantt_pedido_'+cal+'_'+u.uid.replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)+'_'+diaHoje();
+      const aviso={ id, type:'gantt_pedido', title:('📣 '+nome+' pediu para atualizar o '+NOME[cal]).slice(0,120), sub:'Toque para abrir o 📤 Atualizar planilha do '+NOME[cal], cal, de:u.uid, dev:suf()==='_dev', read:false, ts:new Date().toISOString() };
+      let enviados=0, ja=0, erros=0;
+      for(const uid of uids){
+        const r=window._ref(window._db, 'kanban/usuarios/'+uid+'/notificacoes/'+id);
+        try{
+          if((await window._get(r)).exists()){ ja++; continue; }   // já tem o pedido de hoje: não regrava (nem para PO/ADM)
+          await window._set(r, aviso); enviados++;
+        }catch(e){ if(/permission|denied/i.test(String(e&&e.message||e))) ja++; else erros++; }
+      }
+      return { enviados, ja, erros, total:uids.length, teste, producao };
+    },
+    quem:cal=>(PEDIDO[cal]||{}).quem||'',
+    // Texto do resultado (o mesmo no Maré e no Radar)
+    resumo(cal, r){
+      const quem=pedido.quem(cal), nome=NOME[cal]||'calendário';
+      if(r.teste){
+        const lista=r.producao.length?r.producao.slice(0,6).join(', ')+(r.producao.length>6?' e mais '+(r.producao.length-6):''):'ninguém ('+quem+' ainda sem pessoas cadastradas)';
+        return '🧪 Ambiente de teste: o aviso foi só para você'+(r.ja?' (você já tinha o de hoje)':'')+'. Em produção iria para '+r.producao.length+' pessoa'+(r.producao.length===1?'':'s')+': '+lista+'.';
+      }
+      if(r.total===0) return '📣 Ninguém para avisar: '+quem+' ainda não tem pessoas cadastradas no Maré.';
+      if(!r.enviados && !r.erros) return '📣 Você já pediu a atualização do '+nome+' hoje — o aviso continua com eles.';
+      return (r.enviados?'📣 Pedido enviado para '+r.enviados+' pessoa'+(r.enviados===1?'':'s')+' ('+quem+').':'')
+        +(r.ja?' '+r.ja+' já tinha'+(r.ja===1?'':'m')+' o seu pedido de hoje.':'')
+        +(r.erros?' ⚠ Não consegui avisar '+r.erros+' — tente de novo em instantes.':'');
+    },
+  };
+
   // ── CSS do visualizador (só entra na página que monta; usa os tokens da página, com valores de reserva)
   const CSS=`
 .mgc{--mgc-title:200px;--mgc-day:30px;--mgc-surf:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));--mgc-surf2:rgba(var(--surface2-rgb,var(--ink-rgb,3,13,26)),.55);--mgc-line:rgba(56,182,255,.09);--mgc-wknd:rgba(var(--surface2-rgb,var(--ink-rgb,3,13,26)),.45);display:flex;flex-direction:column;gap:10px;min-width:0;max-width:100%;color:var(--txt);}
@@ -165,6 +236,7 @@
 .mgc-bloco{padding:7px 10px;font-size:12.5px;font-weight:800;color:var(--txt);background:var(--mgc-surf2);border-top:1px solid var(--glass-b);}
 .mgc-bloco.is-kids{margin-top:10px;}
 .mgc-vazio{padding:28px 16px;text-align:center;color:var(--txt2);font-size:13px;}
+.mgc-fav{flex:none;white-space:nowrap;border-radius:999px;}
 .mgc-det{min-height:20px;font-size:12.5px;color:var(--txt);padding:0 4px;overflow-wrap:anywhere;}
 .mgc-det:empty{display:none;}
 .mgc-pe{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--txt2);padding:0 4px;}
@@ -179,6 +251,10 @@
 .mgc-dhd.is-sel b{color:#04121f;}
 [data-theme="light"] .mgc-dhd.is-sel,[data-theme="light"] .mgc-dhd.is-sel b{color:#fff;}
 .mgc-dhd.is-clic:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.mgc-sinos{display:inline-flex;flex-wrap:wrap;gap:6px;}
+.mgc-sino.on{border-color:var(--accent);color:var(--accent);}
+[data-theme="light"] .mgc-sino.on{color:var(--cyan,#065670);}
+.mgc-sino[disabled]{opacity:.6;cursor:progress;}
 .mgc-dia{border:1px solid var(--glass-b);border-radius:var(--r2,14px);background:var(--mgc-surf);padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;}
 .mgc-dia-hd{display:flex;align-items:center;gap:8px;font-size:13.5px;}
 .mgc-dia-hd .mgc-btn{margin-left:auto;}
@@ -192,11 +268,82 @@
 @media (max-width:600px){ .mgc-aba-l{display:none;} .mgc-aba-c{display:inline;} }
 @media (max-width:768px){ .mgc{--mgc-title:118px;} .mgc.is-largo{--mgc-day:120px;} .mgc-abas{align-self:stretch;gap:2px;} .mgc-aba{flex:1 0 auto;padding:9px 8px;} .mgc-mes{margin-left:0;flex:1 1 100%;} .mgc-lin{white-space:normal;font-size:11.5px;line-height:1.2;} }
 @media (hover:none) and (pointer:coarse){ .mgc-aba,.mgc-btn,.mgc-chip,.mgc-mes,.mgc-dhd.is-clic{min-height:44px;} .mgc-mes{font-size:16px;} }
+
+.mgc-leitura-dica{display:none;}
+@media (max-width:768px){
+ .mgc-leitura-dica{display:block;font-size:12px;color:var(--txt);margin:0;}
+ .mgc{--mgc-day:48px;}
+ .mgc .mgc-bar,.mgc.is-largo .mgc-bar{min-height:44px;}
+ .mgc-leitura{position:fixed;z-index:100000;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:16px;border-radius:20px;border:1px solid var(--glass-b);background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));color:var(--txt);box-shadow:var(--specular),0 12px 40px rgba(0,0,0,.35);max-height:70dvh;display:flex;flex-direction:column;gap:12px;font-family:inherit;}
+ .mgc-leitura-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+ .mgc-leitura strong{font-size:14px;}
+ .mgc-leitura p{margin:0;font-size:16px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:42dvh;color:var(--txt);}
+ .mgc-leitura button{flex:none;min-height:44px;min-width:44px;padding:8px 12px;border:1px solid var(--glass-b);border-radius:999px;background:transparent;color:var(--txt);font-size:14px;font-weight:600;line-height:1.3;font-family:inherit;cursor:pointer;}
+ .mgc-leitura :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+}
+
 @media (prefers-reduced-motion:reduce){ .mgc-scroll{scroll-behavior:auto;} }
 `;
   function css(){
     if(document.getElementById('mgc-css')) return;
     const st=document.createElement('style'); st.id='mgc-css'; st.textContent=CSS; document.head.appendChild(st);
+  }
+
+  // ⭐ Preferência da própria conta; PO/ADM mantêm a exceção administrativa das regras.
+  function favoritaControle(opts){
+    let valor='', uid='', off=null, carregou=false, aplicada=false, tocou=false, busy=false;
+    const valida=v=>typeof v==='string' && opts.abas.includes(v)?v:'';
+    const aplicar=()=>{ if(carregou && !aplicada){ aplicada=true; if(!tocou && valor) opts.aplicar(valor); } };
+    return {
+      valor:()=>valor,
+      tocar:()=>{ tocou=true; },
+      abrir:(prioridade=false)=>{
+        tocou=prioridade; aplicada=false;
+        const u=window._currentUser;
+        if(!opts.permitido() || !u){ if(typeof off==='function') off(); off=null; uid=''; valor=''; carregou=false; return; }
+        if(uid!==u.uid){
+          if(typeof off==='function') off(); uid=u.uid; valor=''; carregou=false;
+          const dono=uid;
+          off=window._onValue(window._ref(window._db,'kanban/usuarios/'+uid+'/gantt_favorita'), snap=>{
+            if(uid!==dono || window._currentUser?.uid!==dono || !opts.permitido()) return;
+            valor=valida(snap.val()); carregou=true; aplicar(); opts.sync();
+          }, ()=>{ carregou=true; opts.sync(); });
+        }
+        aplicar(); opts.sync();
+      },
+      alternar:async(id)=>{
+        if(busy || !opts.permitido() || !valida(id)) return '';
+        const u=window._currentUser; if(!u || u.uid!==uid) return '';
+        tocou=true; busy=true;
+        try{
+          const novo=valor===id?'':id;
+          await window._set(window._ref(window._db,'kanban/usuarios/'+u.uid+'/gantt_favorita'),novo||null);
+          valor=novo; carregou=true; opts.sync();
+          return novo?'⭐ Aba favorita salva para todos os aparelhos.':'☆ Favorita removida. Ao abrir, vale a última aba deste aparelho.';
+        }finally{ busy=false; }
+      }
+    };
+  }
+
+  // Leitura persistente a um toque no celular; o texto é dado, nunca HTML.
+  // leituraFechar(): as páginas chamam ao sair do Gantt (o leitor fica no <body>, fora da régua).
+  function leituraFechar(){ document.querySelector('.mgc-leitura button[data-fechar]')?.click(); }
+  function leituraAbrir(texto, origem, acao, rotulo){
+    if(!window.matchMedia('(max-width:768px)').matches) return;
+    css(); leituraFechar();
+    const box=document.createElement('section'); box.className='mgc-leitura';
+    box.setAttribute('role','region'); box.setAttribute('aria-label','Campanha e período');
+    const topo=document.createElement('div'); topo.className='mgc-leitura-hd';
+    const tit=document.createElement('strong'); tit.textContent='📖 Campanha e período';
+    const fechar=document.createElement('button'); fechar.type='button'; fechar.dataset.fechar=''; fechar.textContent='✕ Fechar';
+    const p=document.createElement('p'); p.textContent=String(texto||''); p.tabIndex=0;
+    topo.append(tit,fechar); box.append(topo,p);
+    const encerrar=()=>{ box.remove(); document.removeEventListener('keydown',tecla,true); window.removeEventListener('resize',resize); if(origem?.isConnected) origem.focus({preventScroll:true}); };
+    const tecla=e=>{ if(e.key==='Escape'){e.preventDefault();e.stopPropagation();encerrar();} };
+    const resize=()=>{ if(!window.matchMedia('(max-width:768px)').matches) encerrar(); };
+    fechar.onclick=encerrar;
+    if(acao){ const b=document.createElement('button'); b.type='button'; b.textContent=rotulo; b.onclick=()=>{encerrar();acao();}; box.append(b); }
+    document.body.append(box); document.addEventListener('keydown',tecla,true); window.addEventListener('resize',resize); fechar.focus({preventScroll:true});
   }
 
   // ── Visualizador só de leitura. opts: { aba, aoTrocarAba(id) } → { aba(id), redesenhar(), destruir() }
@@ -205,6 +352,57 @@
     const db=window._db, ref=p=>window._ref(db,p), onValue=window._onValue;
     const S={ aba:ABAS.some(c=>c.id===opts.aba)?opts.aba:'comercial', off:0, mes:'', rolar:'hoje', det:'', dia:'', dados:{}, subs:[] };
     const ehCons=()=>S.aba===CONSOLIDADO.id;
+    S.insc={}; S.inscBusy=false; S.inscOuvindo=false;
+    function ouvirInsc(){
+      if(S.inscOuvindo || !permitido(window._currentUser)) return; S.inscOuvindo=true;
+      CALS.forEach(c=>{ S.subs.push(inscricao.ouvir(c.id, (on)=>{ S.insc[c.id]=on===true; if(!S.inscBusy) sinoSync(); })); });
+    }
+    const fontesSino=()=>ehCons()?CONSOLIDADO.fontes:(CALS.some(c=>c.id===S.aba)?[S.aba]:[]);
+    // Um sininho POR CALENDÁRIO (pedido do Caio, 13/11): na 🧭 Digital aparecem 3 (Hering · Marketplace · Outlet), cada um liga só o seu.
+    function sinoBtn(cal, curto){
+      const on=!!S.insc[cal], nome=NOME[cal]||cal;
+      return '<button type="button" class="mgc-btn mgc-sino'+(on?' on':'')+'" data-sino="'+cal+'" aria-pressed="'+on+'" title="'+esc(on?'Você recebe um aviso (sino e push) quando o '+nome+' for atualizado — toque para parar':'Receber um aviso (sino e push) quando o '+nome+' for atualizado')+'"'+(S.inscBusy?' disabled':'')+'>'
+        +(curto ? '🔔 '+esc(curto)+(on?' ✓':'') : (on?'🔔 Avisando':'🔔 Avisar-me'))+'</button>';
+    }
+    function sinoHtml(){
+      if(!permitido(window._currentUser) || opts.semSino) return '';
+      const fs=fontesSino(); if(!fs.length) return '';
+      if(ehCons()) return '<span class="mgc-sinos" role="group" aria-label="Avisos de mudança por calendário">'+fs.map(f=>sinoBtn(f, ((CONSOLIDADO.grupos.find(g=>g.id===f)||{}).rot||f).replace(/^\S+\s/,''))).join('')+'</span>';
+      return '<span class="mgc-sinos">'+sinoBtn(fs[0], '')+'</span>';
+    }
+    function pedirHtml(){
+      if(!permitido(window._currentUser) || opts.semSino || !PEDIDO[S.aba]) return '';
+      return '<button type="button" class="mgc-btn mgc-pedir" data-pedir="'+S.aba+'" title="'+esc('Avisar '+pedido.quem(S.aba)+' que o '+NOME[S.aba]+' precisa ser atualizado')+'"'+(S.pedBusy?' disabled':'')+'>📣 Pedir atualização</button>';
+    }
+    async function pedirClique(cal){
+      if(S.pedBusy || !PEDIDO[cal]) return;
+      if(!window.confirm('Avisar '+pedido.quem(cal)+' que o '+NOME[cal]+' precisa ser atualizado?\n\nEles recebem um aviso no sino (e no celular, se ativaram o push).'+(suf()==='_dev'?'\n\n🧪 Ambiente de teste: o aviso vai só para você.':''))) return;
+      S.pedBusy=true; const b=root.querySelector('.mgc-pedir'); if(b) b.disabled=true;
+      try{
+        S.det=pedido.resumo(cal, await pedido.enviar(cal));
+      }catch(e){ S.det='⚠ Não consegui enviar o pedido. Tente de novo em instantes.'; }
+      S.pedBusy=false; const b2=root.querySelector('.mgc-pedir'); if(b2) b2.disabled=false;
+      const d=root.querySelector('.mgc-det'); if(d) d.textContent=S.det;
+    }
+    function sinoSync(){ const b=root.querySelector('.mgc-sinos'); if(!b) return; const t=document.createElement('div'); t.innerHTML=sinoHtml(); const n=t.firstChild; if(n) b.replaceWith(n); }
+    async function sinoClique(cal){
+      if(S.inscBusy) return;
+      const fs=CALS.some(c=>c.id===cal)?[cal]:fontesSino(); if(!fs.length) return;
+      const ligar=!fs.every(f=>S.insc[f]);
+      // pedir o push AINDA dentro do clique (Safari/iOS só mostram o pedido de permissão com o gesto da pessoa)
+      try{ if(ligar && typeof opts.pedirPush==='function' && typeof Notification!=='undefined' && Notification.permission==='default') opts.pedirPush(); }catch(e){}
+      S.inscBusy=true; sinoSync();
+      try{
+        await Promise.all(fs.map(f=>inscricao.definir(f, ligar, opts.onde)));
+        fs.forEach(f=>{ S.insc[f]=ligar; });
+        const alvo=fs.length===1?'o '+(NOME[fs[0]]||'calendário'):'os calendários comerciais';
+        S.det=ligar?'🔔 Pronto: você recebe um aviso no sino'+(typeof Notification!=='undefined'&&Notification.permission==='denied'?' (o push está bloqueado neste navegador)':' e nos aparelhos onde você ativou o push')+' quando '+alvo+' for atualizado.':'🔕 Você não recebe mais avisos de '+alvo+'.';
+      }catch(e){
+        S.det='⚠ Não consegui salvar o aviso'+(/permission|denied/i.test(String(e&&e.message||e))?' — as permissões novas do banco ainda não foram publicadas.':'. Tente de novo em instantes.');
+      }
+      S.inscBusy=false; sinoSync();
+      const d=root.querySelector('.mgc-det'); if(d) d.textContent=S.det;
+    }
     let filtro={}; try{ filtro=JSON.parse(localStorage.getItem('mare_gantt_cal_filtro')||'{}')||{}; }catch(e){}
     const salvaFiltro=()=>{ try{ localStorage.setItem('mare_gantt_cal_filtro', JSON.stringify(filtro)); }catch(e){} };
 
@@ -314,7 +512,7 @@
     }
     function desenhar(){
       if(!root.isConnected) return;
-      carregar(S.aba);
+      carregar(S.aba); ouvirInsc();
       const base=inicioPadrao(), iniDt=soma(base,S.off), fimDt=soma(iniDt,41), ini=iso(iniDt), fim=iso(fimDt);
       const hojeIso=iso(new Date()), dias=[];
       for(let i=0;i<42;i++){ const dt=soma(iniDt,i); dias.push({ dt, iso:iso(dt) }); }
@@ -328,15 +526,17 @@
       const aba=ABAS.find(k=>k.id===S.aba);
       const rolagem=root.querySelector('.mgc-scroll'), x0=rolagem?rolagem.scrollLeft:0;
       root.innerHTML=
-        '<div class="mgc-abas" role="tablist" aria-label="Calendários">'+ABAS.map(k=>'<button type="button" role="tab" class="mgc-aba'+(k.id===S.aba?' on':'')+'" data-aba="'+k.id+'" aria-selected="'+(k.id===S.aba)+'" tabindex="'+(k.id===S.aba?0:-1)+'" aria-label="'+esc(k.nome)+'"><span class="mgc-aba-l">'+esc(k.rot)+'</span><span class="mgc-aba-c" aria-hidden="true">'+esc(k.curto)+'</span></button>').join('')+'</div>'
+        '<div class="mgc-abas" role="tablist" aria-label="Calendários">'+ABAS.map(k=>'<button type="button" role="tab" class="mgc-aba'+(k.id===S.aba?' on':'')+'" data-aba="'+k.id+'" aria-selected="'+(k.id===S.aba)+'" tabindex="'+(k.id===S.aba?0:-1)+'" aria-label="'+esc(k.nome)+'"><span class="mgc-aba-l">'+esc(k.rot)+'</span><span class="mgc-aba-c" aria-hidden="true">'+esc(k.curto)+'</span></button>').join('')+(typeof opts.aoFavoritar==='function' && permitido(window._currentUser)?'<button type="button" class="mgc-btn mgc-fav" data-favorita aria-pressed="'+(opts.favorita()===S.aba)+'" title="Escolha a aba que abre primeiro no Maré e no Radar, em todos os aparelhos">'+(opts.favorita()===S.aba?'⭐ Aba favorita':'☆ Favoritar esta aba')+'</button>':'')+'</div>'
         +'<div class="mgc-bar-top">'
           +'<button type="button" class="mgc-btn" data-nav="-28" aria-label="4 semanas antes">◀</button>'
           +'<button type="button" class="mgc-btn'+(S.off===0?' is-hoje':'')+'" data-nav="0">Hoje</button>'
           +'<button type="button" class="mgc-btn" data-nav="28" aria-label="4 semanas depois">▶</button>'
           +'<span class="mgc-range">'+esc(br(ini)+' – '+br(fim)+'/'+fimDt.getFullYear())+'</span>'
           +'<select class="mgc-mes" aria-label="Ir para o mês"><option value="">📆 Mês</option>'+MES_L.map((n,i)=>{ const v=ano+'-'+String(i+1).padStart(2,'0'); return '<option value="'+v+'"'+(S.mes===v?' selected':'')+'>'+n+' '+ano+'</option>'; }).join('')+'</select>'
+          +sinoHtml()+pedirHtml()
           +(grupos.length?'<div class="mgc-chips" role="group" aria-label="Mostrar só">'+[{id:'',rot:'Tudo'}].concat(grupos).map(x=>'<button type="button" class="mgc-chip'+(x.id===gSel?' on':'')+'" data-g="'+x.id+'" aria-pressed="'+(x.id===gSel)+'">'+esc(x.rot)+'</button>').join('')+'</div>':'')
         +'</div>'
+        +'<p class="mgc-leitura-dica">Toque numa barra para ler a campanha e as datas.</p>'
         +'<div class="mgc-scroll" tabindex="0" aria-label="'+esc(aba.nome)+' — régua de 6 semanas"><div class="mgc-canvas">'
           +'<div class="mgc-row mgc-hd"><div class="mgc-sticky"><span class="mgc-lin">'+esc(aba.curto)+'</span></div><div class="mgc-track">'
             +meses.map(ms=>{ const span=ms.f-ms.i+1; return '<div class="mgc-mhd" style="grid-row:1;grid-column:'+ms.i+'/'+(ms.f+1)+'"><span>'+esc(span<=4&&!largo?MES_C[ms.m]+' '+String(ms.y).slice(2):MES_L[ms.m]+' '+ms.y)+'</span></div>'; }).join('')
@@ -358,26 +558,31 @@
       S.rolar='';
     }
 
-    function ir(off, rolar){ S.off=off; S.rolar=rolar; S.det=''; desenhar(); }
+    function ir(off, rolar){ leituraFechar(); S.off=off; S.rolar=rolar; S.det=''; desenhar(); }
     function irMes(v){
       const alvo=parse(v+'-01'); if(!alvo) return;
       const base=inicioPadrao(), ini=soma(alvo,-alvo.getDay()-7);
       S.mes=v; ir(Math.round((ini-base)/864e5),'mes');
     }
-    function trocaAba(id){
+    function trocaAba(id, manual=true){
       if(!ABAS.some(c=>c.id===id) || id===S.aba) return;
+      leituraFechar();
       S.aba=id; S.rolar='hoje'; S.det=''; S.dia='';
-      if(typeof opts.aoTrocarAba==='function'){ try{ opts.aoTrocarAba(id); }catch(e){} }
+      if(typeof opts.aoTrocarAba==='function'){ try{ opts.aoTrocarAba(id, manual); }catch(e){} }
       desenhar();
       const b=root.querySelector('.mgc-aba[data-aba="'+id+'"]'); if(b) b.focus({preventScroll:true});
     }
     function clique(ev){
       const t=ev.target.closest('button,.mgc-bar,.mgc-dhd[data-dia]'); if(!t || !root.contains(t)) return;
+      if(t.hasAttribute('data-favorita')){ Promise.resolve(opts.aoFavoritar(S.aba)).then(msg=>{ if(msg) S.det=msg; desenhar(); }).catch(()=>{ S.det='⚠ Não consegui salvar a favorita. Tente novamente.'; desenhar(); }); return; }
       if(t.dataset.aba) return trocaAba(t.dataset.aba);
       if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=root.querySelector(S.dia?'.mgc-dia .mgc-btn':'.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
+      if(t.hasAttribute('data-sino')) return sinoClique(t.getAttribute('data-sino'));
+      if(t.hasAttribute('data-pedir')) return pedirClique(t.getAttribute('data-pedir'));
       if(t.hasAttribute('data-dia-fechar')){ const d=S.dia; S.dia=''; desenhar(); const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.dataset.nav!=null){ const n=+t.dataset.nav; S.mes=''; return n===0?ir(0,'hoje'):ir(S.off+n,'inicio'); }
       if(t.dataset.g!=null){ const g=t.dataset.g; filtro[S.aba]=(filtro[S.aba]===g)?'':g; salvaFiltro(); S.det=''; desenhar(); const f=root.querySelector('.mgc-chip[data-g="'+(filtro[S.aba]||'')+'"]'); if(f) f.focus({preventScroll:true}); return; }
+      if(t.classList.contains('mgc-bar') && window.matchMedia('(max-width:768px)').matches){ leituraAbrir(t.getAttribute('data-tip')||t.textContent,t); return; }
       if(t.classList.contains('mgc-bar')){ S.det=t.getAttribute('data-tip')||''; const d=root.querySelector('.mgc-det'); if(d) d.textContent=S.det; }
     }
     function tecla(ev){
@@ -390,7 +595,7 @@
     function muda(ev){ if(ev.target.classList.contains('mgc-mes')){ const v=ev.target.value; if(v) irMes(v); else { S.mes=''; } } }
     // Esc fecha o painel do dia ANTES de qualquer outra camada da página (captura na window, como os diálogos da casa)
     function escDia(ev){
-      if(ev.key!=='Escape' || !S.dia || !root.isConnected || root.closest('[hidden]')) return;
+      if(document.querySelector('.mgc-leitura') || ev.key!=='Escape' || !S.dia || !root.isConnected || root.closest('[hidden]')) return;
       ev.preventDefault(); ev.stopPropagation(); const d=S.dia; S.dia=''; desenhar();
       const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true});
     }
@@ -398,7 +603,7 @@
     window.addEventListener('keydown', escDia, true);
     desenhar();
     return {
-      aba:id=>trocaAba(id),
+      aba:id=>trocaAba(id, false),
       redesenhar:()=>desenhar(),
       reabrir:()=>{ S.rolar=S.mes?'mes':(S.off===0?'hoje':'inicio'); desenhar(); },   // a vista voltou a aparecer: o scroll de quando estava escondida não vale
       destruir:()=>{ window.removeEventListener('keydown', escDia, true); root.removeEventListener('click', clique); root.removeEventListener('keydown', tecla); root.removeEventListener('change', muda); S.subs.forEach(u=>{ try{ typeof u==='function'&&u(); }catch(e){} }); S.subs=[]; root.classList.remove('mgc','is-largo'); root.innerHTML=''; },
@@ -406,5 +611,5 @@
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, montar, esc, v:2 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, leituraFechar, v:7 };
 })();

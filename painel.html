@@ -3208,7 +3208,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.113 · painel</div>
+<div class="version">v5.116 · painel</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3439,10 +3439,10 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=41"></script>
+<script src="mare-notif.js?v=43"></script>
 <script src="mare-metas.js?v=19"></script>
 <script src="mare-plantao.js?v=5"></script>
-<script src="mare-dicas.js?v=17"></script>
+<script src="mare-dicas.js?v=18"></script>
 <script src="mare-gxl.js?v=2"></script>
 
 <script>
@@ -8208,7 +8208,7 @@ function loadPainelNotifs(){
     // chave por cima) -- mesmo padrão aqui: chave real sempre vence.
     const notifs = Object.entries(val).filter(([,n])=>n && (!window.MareNotif || MareNotif.viva(n))).map(([nid,n])=>({   // mesmo TTL do sino do kanban/OKR
       _kind:'notif', id:nid, noTTLDelete:!!n.noTTLDelete, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
-      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'', cal:n.cal||'', onde:n.onde||'',
     }));
     _mergePainelNotifs('notif', notifs);
   });
@@ -8342,6 +8342,10 @@ function renderPainelNotifs(){
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?evento='+encodeURIComponent(${jsq(n.okrEventoId)})+'&data='+encodeURIComponent(${jsq(n.okrEventoData||'')}));" style="cursor:pointer;"`
       : _okrAlvo
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)}));" style="cursor:pointer;"`
+      : n.type==='gantt_pedido'   // 📣 pedido de atualização: abre o Maré no 📤 daquele calendário
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(MareNotif.urlPessoal({type:'gantt_pedido',cal:${jsq(n.cal||'')}}).url);" style="cursor:pointer;"`
+      : n.type==='gantt_cal'   // 🔔 calendário do Gantt atualizado: abre o Gantt naquele calendário (Maré ou Radar, onde a pessoa se inscreveu)
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(MareNotif.urlPessoal({type:'gantt_cal',cal:${jsq(n.cal||'')},onde:${jsq(n.onde||'')}}).url);" style="cursor:pointer;"`
       : n.type==='escala'
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina('escala.html?visao=squad&squad='+encodeURIComponent(${jsq(n.squad||'')})+'&semana='+encodeURIComponent(${jsq(n.okrObjId||'')}));" style="cursor:pointer;"`
       : n.type==='meta_lembrete'
@@ -8451,6 +8455,28 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_ferias_gantt_avisos_2026_11_14',
+    titulo: '🏖️ Férias do time e avisos do Gantt no Maré',
+    corpo: '<p>Novidades no <b>Maré</b>:</p>'
+      + '<ul><li><b>🏖️ Calendário de férias</b> em <b>📅 Calendários → 🏖️ Férias</b>: quem está fora agora e as próximas saídas das suas squads (ou de todo o Digital).</li>'
+      + '<li><b>🏖️ Minhas férias</b>: clique no seu nome para cadastrar o seu período. <b>Não substitui o cadastro no Senior</b>, serve só para o time se organizar.</li>'
+      + '<li><b>🧳 Preparar minha saída</b>: antes de sair, decida card a card se mantém ou passa para alguém. Nada muda até você confirmar.</li>'
+      + '<li>Ao mencionar ou atribuir alguém que está de férias (ou sai nos próximos dias), aparece um aviso com o período, e o selo 🏖️ mostra quem está fora hoje.</li>'
+      + '<li><b>📊 Gantt</b>: <b>🔔 Avisar-me</b> para saber quando um calendário mudar, <b>📣 Pedir atualização</b> para quem cuida da planilha, <b>⭐ aba favorita</b> que abre primeiro em todos os aparelhos e leitura das campanhas a um toque no celular.</li></ul>',
+    tipo: 'novidade',
+    squad: '*'
+  },
+  {
+    id: 'seed_radar_ferias_gantt_2026_11_14',
+    titulo: '🏖️ Radar: férias do Digital e Gantt com avisos',
+    corpo: '<p>Para quem acompanha pelo <b>Radar</b>:</p>'
+      + '<ul><li>Em <b>📅 Calendário → 🏖️ Férias</b>: quem do Digital está fora agora e quem sai nos próximos 60 dias.</li>'
+      + '<li><b>🏖️ Minhas férias</b> e <b>🧳 Preparar minha saída</b> em <b>⋯ Mais</b>: passe seus Objetivos e Marcos em aberto para alguém antes de sair.</li>'
+      + '<li>No <b>📊 Gantt</b>: <b>🔔 Avisar-me</b> quando um calendário mudar, <b>📣 Pedir atualização</b> e <b>⭐ aba favorita</b>.</li></ul>',
+    tipo: 'novidade',
+    squad: '*'
+  },
   {
     id: 'seed_gantt_digital_dia_a_dia_2026_11_13',
     titulo: '🧭 Gantt: tudo do Digital num dia só',
