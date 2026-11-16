@@ -420,6 +420,13 @@ a.mfer-btn{text-decoration:none;}
       const dur = diasEntre(S.formIni, S.formFim);
       const avisoLongo = dur > AVISO_LONGO_DIAS;
       const id = (S.editId && S.editUid === alvoUid) ? S.editId : novoId();
+      // /monitorarbugs 16/11 (Codex, #1816): editar → outra sessão exclui o período → Salvar recriava o mesmo id ("editar ressuscita").
+      // ST.dados vem do listener ao vivo: se o período sendo editado sumiu, recusa e avisa em vez de gravar.
+      if(id === S.editId && !(ST.dados[alvoUid] && ST.dados[alvoUid][id])){
+        limparForm();
+        S.msg = { tipo: 'err', txt: 'Esse período foi excluído enquanto você editava — nada foi salvo. Cadastre de novo se ainda precisar.' };
+        desenhar(); return;
+      }
       const payload = { ini: S.formIni, fim: S.formFim, em: Date.now(), por: opts.uid };
       if(S.formObs) payload.obs = S.formObs;
 
