@@ -288,3 +288,7 @@ Caio confirmou o merge da #1768 e todos os deploys pendentes do Gantt: regras de
 ## Confirmação de deploy — 13/11/2026 (🏖️ Férias F1)
 
 Caio confirmou o merge da #1786 e o deploy das regras (`--only database`: nó `kanban/ferias(_dev)` e, de carona, as regras de `gantt_inscritos(_dev)` que já estavam na main) e das funções `backupGlobalDiario` e `backupCompletoSemanal`. Revisões R3: Codex (D1, sem defeito) e Antigravity (8 hipóteses rejeitadas; motor real = validar no dev).
+
+## Confirmação de deploy — 16/11/2026 (promoção #1799: Gantt + 🏖️ Férias)
+
+Caio confirmou o deploy de `ganttAvisoMudanca`, `ganttAvisoMudancaDev` e `sendPushOnNotification` (🔔 avisos de mudança e 📣 pedir atualização do Gantt, tipos `gantt_cal`/`gantt_pedido` no push) e do conhecimento do Agente Ágil regenerado em 13/11 e 14/11 (`agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO`, `okrAgenteChat`). Tags `kanban-v8.30.984`, `okr-v2.132` e `painel-v5.116` no merge da #1799 (`59818dcc`). Pendente de deploy zerado.
