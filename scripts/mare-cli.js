@@ -215,8 +215,44 @@ function normalizeCompareVer(v) {
     .trim();
 }
 
+// Git do /seatualizar (16/11/2026, pedido do Caio): fetch SEMPRE; pull só quando é seguro.
+// Decisão pura (testável): na main, limpa, só atrás → puxa (fast-forward); qualquer outro caso → só avisa.
+function gitDecisao({ branch, sujo, atras, afrente, ramoAtras }) {
+  if (branch === 'HEAD') return { acao: 'nada', msg: 'HEAD solto (detached): só atualizei o que se sabe da origem.' };
+  if (branch !== 'main') {
+    const partes = [`você está em ${branch} (não puxo fora da main)`];
+    if (ramoAtras > 0) partes.push(`⚠ o ${branch} no GitHub tem ${ramoAtras} commit(s) que o seu local não tem: rode \`git pull --ff-only\` antes de continuar`);
+    if (atras > 0) partes.push(`a main da origem está ${atras} commit(s) à frente da sua main local`);
+    return { acao: 'nada', msg: partes.join(' · ') };
+  }
+  if (!atras) return { acao: 'nada', msg: afrente ? `main ${afrente} commit(s) à frente da origem (não enviados)` : 'main em dia com a origem' };
+  if (afrente) return { acao: 'nada', msg: `⚠ main divergiu da origem (${afrente} à frente, ${atras} atrás): não puxei — resolva à mão` };
+  if (sujo) return { acao: 'nada', msg: `⚠ main ${atras} commit(s) atrás da origem, mas há alteração não commitada: não puxei` };
+  return { acao: 'pull', msg: `main estava ${atras} commit(s) atrás: puxei (fast-forward)` };
+}
+
+function gitSync() {
+  if (process.env.MARE_SEM_GIT === '1' || process.argv.includes('--sem-git')) { console.log('Git sync  : (pulado: --sem-git)'); return; }
+  const g = (...a) => spawnSync('git', a, { cwd: ROOT, encoding: 'utf8', timeout: 30000 });
+  const f = g('fetch', '--prune', '--quiet', 'origin');
+  if (f.status !== 0) { console.log(`Git sync  : ⚠ fetch falhou (sem rede?) — o resumo abaixo usa o clone local. ${String(f.stderr || '').trim().split('\n')[0]}`); return; }
+  const conta = (a, b) => { const r = g('rev-list', '--left-right', '--count', `${a}...${b}`); const [x, y] = String(r.stdout || '0 0').trim().split(/\s+/).map(Number); return r.status === 0 ? { afrente: x || 0, atras: y || 0 } : { afrente: 0, atras: 0 }; };
+  const branch = String(g('rev-parse', '--abbrev-ref', 'HEAD').stdout || '').trim();
+  const sujo = String(g('status', '--porcelain', '--untracked-files=no').stdout || '').trim().length > 0;
+  const main = conta(branch === 'main' ? 'HEAD' : 'main', 'origin/main');
+  let ramoAtras = 0;
+  if (branch !== 'main' && branch !== 'HEAD' && g('rev-parse', '--verify', '--quiet', `origin/${branch}`).status === 0) ramoAtras = conta('HEAD', `origin/${branch}`).atras;
+  const d = gitDecisao({ branch, sujo, atras: main.atras, afrente: main.afrente, ramoAtras });
+  if (d.acao === 'pull') {
+    const m = g('merge', '--ff-only', '--quiet', 'origin/main');
+    if (m.status !== 0) { console.log(`Git sync  : ⚠ o pull (fast-forward) falhou: ${String(m.stderr || '').trim().split('\n')[0]}`); return; }
+  }
+  console.log(`Git sync  : ${d.msg}`);
+}
+
 function cmdBrief() {
   console.log('=== ⚡ /seatualizar · Resumo Instantâneo (mare-cli brief) ===');
+  gitSync();
 
   // 1. Git local
   const branchRes = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT, encoding: 'utf8' });
@@ -1798,6 +1834,7 @@ module.exports = {
   generateCodeSymbols,
   cmdStatus,
   cmdBrief,
+  gitDecisao,
   cmdDaily,
   cmdBump,
   cmdLog,

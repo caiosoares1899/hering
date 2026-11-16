@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Infra: `/seatualizar` já começa com o Git em dia (`mare-cli.js brief`: fetch sempre, pull só quando é seguro) — 2026-11-16
+
+Pedido do Caio. O `brief` (passo 0 do `/seatualizar`, Claude e Antigravity) faz `git fetch --prune origin` e só puxa a `main` (fast-forward) quando está nela, limpa e só atrás. Em branch de trabalho, avisa quantos commits a `main` está à frente e, se o próprio branch no GitHub tem commit novo (conflito resolvido por outro agente), pede `git pull --ff-only`. `--sem-git`/`MARE_SEM_GIT=1` pula. Teste: `test_mare_cli_automacao.js` (`gitDecisao`).
+
 ### SÓ DEV — 🪟 Vidro lapidado: --specular e curvas --ease-* em Escala, Intake e Travessia (escala v1.12-dev) — 2026-11-16
 
 - **Escala (`escala-dev.html` v1.12-dev) e Intake (`intake-dev.html`):** declarados `--specular` (escuro/Vice e `:root[data-theme="light"]`) e as curvas `--ease-out`, `--ease-in-out`, `--ease-overshoot` no `:root`; aplicado `var(--specular)` nas superfícies de vidro, painéis, modais e caixas de mensagem (`.card`, `.scroll`, `.hoje`, `.avisos`, `.erro`, `.md`, `#toast`, `.msg`, `.who`, `.gbar`).

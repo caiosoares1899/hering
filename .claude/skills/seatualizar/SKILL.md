@@ -13,6 +13,12 @@ description: Coloca o agente (Claude ou Antigravity) 100% em dia com tudo o que 
 
 > **Para o Antigravity:** Você já recebe `AGENTS.md`, `.agents/rules/antigravity.md` e `.agents/rules/release-process.md` injetados automaticamente em `<user_rules>` — **NÃO gaste turnos relendo esses arquivos**! Faça **1 única bateria paralela de `read_file`** nos 4 alvos dinâmicos abaixo (ou rode `node scripts/mare-cli.js brief` se já for usar terminal na rotina diária):
 
+0. **Git em dia (PRIMEIRO passo, 1 comando): `node scripts/mare-cli.js brief`** (16/11/2026, pedido do Caio).
+   - Faz `git fetch --prune origin` **sempre** (não mexe em nada local; o resumo passa a ver PR mergeado e `main` à frente).
+   - **Puxa** (`merge --ff-only origin/main`) **só** se você está na `main`, sem alteração não commitada e só atrás da origem.
+   - Em qualquer outro caso **só avisa** na linha `Git sync`: branch de trabalho (`claude/…`, `antigravity/…`, `codex/…`) → "não puxo fora da main" + quantos commits a `main` da origem está à frente; **o seu branch no GitHub tem commit que o local não tem** (alguém resolveu conflito na sua PR) → rode `git pull --ff-only` **antes** de continuar; `main` divergida ou suja → resolva à mão.
+   - Sem rede: avisa e segue com o clone local. `--sem-git` (ou `MARE_SEM_GIT=1`) pula o passo.
+   - No resumo ao usuário, diga o resultado em 1 linha ("Git: main em dia" / "puxei N commits" / "não puxei porque…").
 1. **`docs/QUADRO.md` inteiro (~5 KB; o estado do dia):**
    - **`## Em andamento`:** quais arquivos estão reservados por outro agente agora? (**Proibido tocar neles** até o merge.)
    - **`## Fila`:** há contrato pronto na sua fila? (O Caio aciona com "pegue o próximo da sua fila".)
@@ -22,8 +28,7 @@ description: Coloca o agente (Claude ou Antigravity) 100% em dia com tudo o que 
    - Quais páginas estão com `-dev` à frente de `prod` (`kanban`, `painel`, `okr`, `oceano`, `escala`)?
 3. **`CHANGELOG.md` (`StartLine: 1, EndLine: 65`) e `BUGS_E_CORRECOES.md` (`StartLine: 1, EndLine: 130`):**
    - Últimas features e correções que acabaram de entrar + seção `🛡️ Armadilhas Conhecidas` (1 a 16).
-4. **`.git/HEAD` (e últimas linhas de `.git/logs/HEAD`):**
-   - Confirma branch/commit local sem rodar terminal. Se houver PR `antigravity/*` aberta sua, confira se há comentário `🔍 Revisão do Claude` antes de abrir outra frente.
+4. **Branch e PRs:** o passo 0 já mostra branch/commit. Se houver PR `antigravity/*` aberta sua, confira se há comentário `🔍 Revisão do Claude` antes de abrir outra frente.
 
 ### Ao partir para o código da tarefa:
 - Leia **`docs/CODE_SYMBOLS.md`** (e `CODE_MAP_FAST.md`) para pegar a linha exata `Lxxxx` de qualquer `<style>`, `<script>`, `const` ou função antes de abrir páginas grandes.
@@ -37,4 +42,4 @@ Entregue um resumo executivo curto e direto em 4 pontos:
 1. **🛠️ Em andamento, fila e travas (`docs/QUADRO.md`):** o que cada agente está mexendo agora, os arquivos reservados e o próximo da fila de cada um.
 2. **🚀 Últimas alterações e Versões (`version.json`):** o que entrou recentemente em `CHANGELOG.md` e `BUGS_E_CORRECOES.md`, e o que está só em `-dev` vs. igual a `prod`.
 3. **☁️ Pendente de deploy no Firebase:** itens ativos em *Pendente de deploy* no `docs/QUADRO.md`.
-4. **✅ Pronto para começar:** confirmação de contexto sincronizado e arquivos livres.
+4. **✅ Pronto para começar:** a linha do Git (em dia / puxei N / não puxei porque…), confirmação de contexto sincronizado e arquivos livres.

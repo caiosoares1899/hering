@@ -86,7 +86,7 @@ test('CLI check-script aceita --code inline e barra função inexistente ou escr
 });
 
 test('CLI brief executa sem erro e resume versões e Quadro', () => {
-  const r = spawnSync(process.execPath, [CLI_PATH, 'brief'], { cwd: ROOT, encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [CLI_PATH, 'brief'], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, MARE_SEM_GIT: '1' } });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /Resumo Instantâneo/);
   assert.match(r.stdout, /Versões\s*:/);
@@ -100,7 +100,7 @@ test('CLI brief lê as quatro seções do Quadro novo e resume linhas', (t) => {
   fs.writeFileSync(quadro, ['Em andamento', 'Fila', 'Escalado', 'Pendente de deploy', 'Backlog']
     .map((sec) => `## ${sec}\n| Item | Detalhe |\n| :--- | ---: |\n| ${sec === 'Backlog' ? 'NAO_IMPRIMIR' : 'tarefa-' + sec} | ${'x'.repeat(200)} |\n`).join('\n'));
   const r = spawnSync(process.execPath, [CLI_PATH, 'brief'], {
-    cwd: ROOT, encoding: 'utf8', env: { ...process.env, MARE_QUADRO_PATH: quadro },
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, MARE_SEM_GIT: '1', MARE_QUADRO_PATH: quadro },
   });
   assert.equal(r.status, 0, r.stderr);
   for (const sec of ['Em andamento', 'Fila', 'Escalado', 'Pendente de deploy']) {
@@ -114,11 +114,22 @@ test('CLI brief lê as quatro seções do Quadro novo e resume linhas', (t) => {
   }
 });
 
+test('brief: git só puxa na main limpa e atrás; nos outros casos só avisa (16/11)', () => {
+  const { gitDecisao } = require(CLI_PATH);
+  assert.equal(gitDecisao({ branch: 'main', sujo: false, atras: 3, afrente: 0 }).acao, 'pull');
+  assert.match(gitDecisao({ branch: 'main', sujo: false, atras: 0, afrente: 0 }).msg, /em dia/);
+  assert.equal(gitDecisao({ branch: 'main', sujo: true, atras: 3, afrente: 0 }).acao, 'nada');
+  assert.match(gitDecisao({ branch: 'main', sujo: false, atras: 2, afrente: 1 }).msg, /divergiu/);
+  const r = gitDecisao({ branch: 'antigravity/x', sujo: false, atras: 4, afrente: 0, ramoAtras: 1 });
+  assert.equal(r.acao, 'nada'); assert.match(r.msg, /não puxo fora da main/); assert.match(r.msg, /1 commit\(s\) que o seu local não tem/); assert.match(r.msg, /4 commit\(s\) à frente/);
+  assert.equal(gitDecisao({ branch: 'HEAD', atras: 5 }).acao, 'nada');
+});
+
 test('CLI brief avisa quando QUADRO.md não existe', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mare-quadro-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const r = spawnSync(process.execPath, [CLI_PATH, 'brief'], {
-    cwd: ROOT, encoding: 'utf8', env: { ...process.env, MARE_QUADRO_PATH: path.join(dir, 'ausente.md') },
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, MARE_SEM_GIT: '1', MARE_QUADRO_PATH: path.join(dir, 'ausente.md') },
   });
   assert.equal(r.status, 0, r.stderr);
   assert.ok(r.stdout.includes('⚠ docs/QUADRO.md não encontrado'));
