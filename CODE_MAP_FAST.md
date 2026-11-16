@@ -93,7 +93,8 @@
   - **L4657**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
   - **L4662**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
   - **L4667**: 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
-  - **L4671**: 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v2` prod · `v5`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-13)
+  - **L4671**: 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v7` prod · `v9`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-16)
+  - **L4676**: 🏖️ Modo Férias — `mare-ferias(-dev).js` (`v4` prod · `v5`-dev) (2026-11-16)
 
 ## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 
@@ -109,15 +110,15 @@
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
-- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11430) · `openGlobalUsersModal` (L11022) · `updateUserRole` (L10403) · `_limparHtmlStatus` (L7208) · `_linkSeguroStatus` (L7221)
-- `_statusIncidenteRecente` (L7229) · `_setStatusPill` (L7236) · `initGithubStatusMonitor` (L7191) · `loadGithubStatus` (L7245) · `renderGithubStatusUI` (L7295) · `_fbMatchServicos` (L7496)
-- `initFirebaseStatusMonitor` (L7526) · `loadFirebaseStatus` (L7540) · `renderFirebaseStatusUI` (L7607) · `loadAgentesExternosPainel` (L9495) · `renderAgentesExternosPainel` (L9507) · `criarAgenteExternoPainel` (L9575)
-- `toggleAgenteExternoSquad` (L9632) · `_fillAgentesLogSquadFilter` (L9664) · `loadAgentesTabData` (L9671) · `renderAgentesAtivosGrid` (L9695) · `renderAgentesLogCross` (L9720) · `closeAgentesHelp` (L9754)
+- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11466) · `openGlobalUsersModal` (L11058) · `updateUserRole` (L10439) · `_limparHtmlStatus` (L7244) · `_linkSeguroStatus` (L7257)
+- `_statusIncidenteRecente` (L7265) · `_setStatusPill` (L7272) · `initGithubStatusMonitor` (L7227) · `loadGithubStatus` (L7281) · `renderGithubStatusUI` (L7331) · `_fbMatchServicos` (L7532)
+- `initFirebaseStatusMonitor` (L7562) · `loadFirebaseStatus` (L7576) · `renderFirebaseStatusUI` (L7643) · `loadAgentesExternosPainel` (L9531) · `renderAgentesExternosPainel` (L9543) · `criarAgenteExternoPainel` (L9611)
+- `toggleAgenteExternoSquad` (L9668) · `_fillAgentesLogSquadFilter` (L9700) · `loadAgentesTabData` (L9707) · `renderAgentesAtivosGrid` (L9731) · `renderAgentesLogCross` (L9756) · `closeAgentesHelp` (L9790)
 - *... (+41 em docs/CODE_SYMBOLS.md)*
 
 ### `okr-dev.html` (9 âncoras curadas)
-- `_okrObjUltimaAtividade` (L5401) · `_okrObjParadoDias` (L5413) · `_renderMd` (L2585) · `_okrToggleNotas` (L3968) · `loadOkrReuniaoNotas` (L3235) · `renderOkrNotas` (L3268)
-- `_okrAgendaCartoes` (L3114) · `_okrAgendaConfirmar` (L3137) · `_okrAgendaAplicar` (L3152)
+- `_okrObjUltimaAtividade` (L5426) · `_okrObjParadoDias` (L5438) · `_renderMd` (L2610) · `_okrToggleNotas` (L3993) · `loadOkrReuniaoNotas` (L3260) · `renderOkrNotas` (L3293)
+- `_okrAgendaCartoes` (L3139) · `_okrAgendaConfirmar` (L3162) · `_okrAgendaAplicar` (L3177)
 
 ### `travessia-dev.html` (9 âncoras curadas)
 - `abrirApp` (L1131) · `farol` (L451) · `termometro` (L462) · `viewBau` (L650) · `viewDiario` (L576) · `viewAval` (L705)
