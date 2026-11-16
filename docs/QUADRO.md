@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/gantt-dia-popup` | `kanban-dev.html` (só `_gantt*`), `okr-dev.html` (só Gantt), `version.json` | 16/11/2026 |
 
 
 ## Fila

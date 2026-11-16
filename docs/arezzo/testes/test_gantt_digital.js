@@ -61,6 +61,7 @@ const seed = () => ({ kanban: {
     await p.click('.gantt-day-hd.is-clic[data-date="2026-11-13"]'); await p.waitForTimeout(250);
     let dia = await p.evaluate(() => { const d = document.getElementById('gantt-dia'); return d ? d.innerText : ''; });
     t('M8. tocar no dia 13 abre "tudo deste dia": ação de vários dias + do dia, por origem', /3 ações/.test(dia) && /AÇÃO SITE LONGA/.test(dia) && /10\/11 – 14\/11/.test(dia) && /CRM DO DIA/.test(dia) && /CUPOM AMAZON/.test(dia) && /Ainda não publicado/.test(dia), dia);
+    t('M8b. 📅 popup junto do dia clicado (no <body>, fixo, logo abaixo/acima do dia, inteiro na tela)', await p.evaluate(() => { const d = document.getElementById('gantt-dia'), SEL = '.gantt-day-hd[data-date="2026-11-13"]'; if (!d) return false; const r = d.getBoundingClientRect(), a = document.querySelector(SEL).getBoundingClientRect(); return { corpo: d.parentElement === document.body, fixo: getComputedStyle(d).position === 'fixed', perto: (Math.abs(r.top - a.bottom) <= 16 || Math.abs(r.bottom - a.top) <= 16), naTela: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, cobreX: r.left <= a.right && r.right >= a.left }; }).then(x => x && x.corpo && x.fixo && x.perto && x.naTela && x.cobreX), await p.evaluate(() => { const d = document.getElementById('gantt-dia'); return d && d.getBoundingClientRect().toJSON(); }));
     t('M9. dia escolhido destacado (aria-pressed) e foco no ✕', await p.evaluate(() => document.querySelector('.gantt-day-hd[data-date="2026-11-13"]').getAttribute('aria-pressed') === 'true' && document.activeElement && document.activeElement.closest('#gantt-dia')));
     // republicação ao vivo de uma fonte com a consolidada aberta
     await p.evaluate(suf => window._set(window._ref(window._db, 'kanban/calendarios_gantt' + suf + '/outlet'), { meta: { atualizadoEm: 1, porNome: 'X', arquivo: 'o.xlsx' }, linhas: { out_acao_principal: { rot: 'Ação principal', ordem: 0 } }, barras: { o1: { linha: 'out_acao_principal', ini: '2026-11-13', fim: '2026-11-13', txt: 'OUTLET NOVO' } } }), SUF);
@@ -75,6 +76,21 @@ const seed = () => ({ kanban: {
     // Esc fecha o painel antes de tudo
     await p.keyboard.press('Escape'); await p.waitForTimeout(150);
     t('M12. Esc fecha o painel do dia (e não sai do Gantt)', await p.evaluate(() => !document.getElementById('gantt-dia') && boardView === 'gantt'));
+    t('M12a. Esc devolve o foco ao dia', await p.evaluate(() => !!document.activeElement && document.activeElement.matches('.gantt-day-hd[data-date="2026-11-13"]')));
+    // clique fora fecha; outro dia troca o popup de lugar (sem fechar e reabrir no mesmo)
+    await p.click('.gantt-day-hd.is-clic[data-date="2026-11-13"]'); await p.waitForTimeout(200);
+    await p.click('.gantt-day-hd.is-clic[data-date="2026-11-12"]'); await p.waitForTimeout(200);
+    t('M12b. tocar em outro dia leva o popup para ele', await p.evaluate(() => { const d = document.getElementById('gantt-dia'); return !!d && document.querySelectorAll('#gantt-dia').length === 1 && /12\/11/.test(d.innerText) && document.querySelector('.gantt-day-hd[data-date="2026-11-12"]').getAttribute('aria-pressed') === 'true'; }));
+    await p.mouse.click(640, 880); await p.waitForTimeout(200);
+    t('M12c. clique fora fecha o popup', await p.evaluate(() => !document.getElementById('gantt-dia') && !_ganttDia && !document.querySelector('.gantt-day-hd[aria-pressed="true"]')));
+    await p.click('.gantt-day-hd.is-clic[data-date="2026-11-13"]'); await p.waitForTimeout(200);
+    await p.click('#gantt-dia .btn'); await p.waitForTimeout(200);
+    t('M12d. ✕ fecha o popup', await p.evaluate(() => !document.getElementById('gantt-dia') && !_ganttDia));
+    await p.click('.gantt-day-hd.is-clic[data-date="2026-11-13"]'); await p.waitForTimeout(200);
+    await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(200);
+    t('M12e. sair do Gantt não deixa o popup sobrando no Kanban', await p.evaluate(() => boardView !== 'gantt' && !document.getElementById('gantt-dia') && !document.querySelector('.mgc-diapop')));
+    await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(250);
+    t('M12f. voltar ao Gantt não reabre o popup sozinho', await p.evaluate(() => !document.getElementById('gantt-dia')));
     await p.evaluate(() => ganttAba('marca')); await p.waitForTimeout(150);
     t('M13. nas outras abas o dia não é clicável', await p.evaluate(() => !document.querySelector('.gantt-day-hd.is-clic')));
     t('M14. sem erro de JS (Maré)', errs.length === 0, errs);
@@ -89,6 +105,13 @@ const seed = () => ({ kanban: {
     await p.click('.mgc-dhd.is-clic[data-dia="2026-11-13"]'); await p.waitForTimeout(200);
     let dia = await p.evaluate(() => (document.querySelector('.mgc-dia') || {}).innerText || '');
     t('R3. painel do dia no Radar (mesma doDia do módulo)', /3 ações/.test(dia) && /CRM DO DIA/.test(dia) && /10\/11 – 14\/11/.test(dia), dia);
+    t('R3b. 📅 popup junto do dia no Radar (no <body>, fixo, inteiro na tela) e foco no ✕', await p.evaluate(() => { const d = document.querySelector('.mgc-dia'), SEL = '.mgc-dhd[data-dia="2026-11-13"]'; if (!d) return false; const r = d.getBoundingClientRect(), a = document.querySelector(SEL).getBoundingClientRect(); return { corpo: d.parentElement === document.body, fixo: getComputedStyle(d).position === 'fixed', perto: (Math.abs(r.top - a.bottom) <= 16 || Math.abs(r.bottom - a.top) <= 16), naTela: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, cobreX: r.left <= a.right && r.right >= a.left }; }).then(x => x && x.corpo && x.fixo && x.perto && x.naTela && x.cobreX) && await p.evaluate(() => !!document.activeElement && !!document.activeElement.closest('.mgc-dia')));
+    await p.click('.mgc-dia [data-dia-fechar]'); await p.waitForTimeout(150);
+    t('R3c. ✕ fecha o popup no Radar e devolve o foco ao dia', await p.evaluate(() => !document.querySelector('.mgc-dia') && document.activeElement && document.activeElement.matches('.mgc-dhd[data-dia="2026-11-13"]')));
+    await p.click('.mgc-dhd.is-clic[data-dia="2026-11-13"]'); await p.waitForTimeout(150);
+    await p.mouse.click(640, 880); await p.waitForTimeout(150);
+    t('R3d. clique fora fecha o popup no Radar', await p.evaluate(() => !document.querySelector('.mgc-dia') && !document.querySelector('.mgc-dhd[aria-pressed="true"]')));
+    await p.click('.mgc-dhd.is-clic[data-dia="2026-11-13"]'); await p.waitForTimeout(150);
     await p.keyboard.press('Escape'); await p.waitForTimeout(150);
     t('R4. Esc fecha o painel do dia', await p.evaluate(() => !document.querySelector('.mgc-dia')));
     t('R5. destaque ⚠️ do Marketplace no Radar', await p.evaluate(() => { const x = document.querySelector('.mgc-bar[data-cal="mktplace"][data-id="h1"]'); return !!x && x.classList.contains('is-alerta'); }));
@@ -101,21 +124,26 @@ const seed = () => ({ kanban: {
     { const { ctx, p, errs } = await abre(KAN, '?squad=' + SQ, { width: 390, height: 820 }, tema);
       await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); toggleGanttView(); ganttAba('digital'); }); await p.waitForTimeout(300);
       await p.evaluate(() => ganttDia('2026-11-13')); await p.waitForTimeout(200);
-      const m = await p.evaluate(() => ({ over: document.documentElement.scrollWidth - innerWidth, dia: !!document.getElementById('gantt-dia'), alvo: document.querySelector('.gantt-day-hd.is-clic').getBoundingClientRect().height }));
+      const m = await p.evaluate(() => { const d = document.getElementById('gantt-dia'), r = d && d.getBoundingClientRect(); return { over: document.documentElement.scrollWidth - innerWidth, dia: !!d, alvo: document.querySelector('.gantt-day-hd.is-clic').getBoundingClientRect().height, folha: !!r && r.left >= 11 && innerWidth - r.right >= 11 && innerHeight - r.bottom <= 14 && r.top >= 0, btn: d && d.querySelector('.btn').getBoundingClientRect().height }; });
       t(`P. Maré 390 ${tema}: sem rolagem lateral, painel aberto, dia ≥ 44 px`, m.over <= 0 && m.dia && m.alvo >= 43.5, m);
+      t(`P. Maré 390 ${tema}: popup vira folha embaixo (12 px das bordas) e ✕ ≥ 44 px`, m.folha && m.btn >= 43.5, m);
       if (cap) { fs.mkdirSync(cap, { recursive: true }); await p.evaluate(() => document.getElementById('gantt-dia').scrollIntoView()); await p.screenshot({ path: path.join(cap, `mare_digital_390_${tema}.png`) }); }
       t(`P. Maré 390 ${tema}: sem erro de JS`, errs.length === 0, errs); await ctx.close(); }
     { const { ctx, p, errs } = await abre(OKR, '?gantt=digital', { width: 390, height: 820 }, tema);
       await p.click('.mgc-dhd.is-clic[data-dia="2026-11-13"]'); await p.waitForTimeout(200);
       const m = await p.evaluate(() => ({ over: document.documentElement.scrollWidth - innerWidth, dia: !!document.querySelector('.mgc-dia'), abas: (() => { const a = document.querySelector('.mgc-abas'); return a.scrollWidth - a.clientWidth; })() }));
       t(`Q. Radar 390 ${tema}: sem rolagem lateral, painel aberto`, m.over <= 0 && m.dia, m);
+      t(`Q. Radar 390 ${tema}: popup vira folha embaixo`, await p.evaluate(() => { const r = document.querySelector('.mgc-dia').getBoundingClientRect(); return r.left >= 11 && innerWidth - r.right >= 11 && innerHeight - r.bottom <= 14 && r.top >= 0; }));
       t(`Q2. Radar 390 ${tema}: título de cada bloco visível com a régua rolada até hoje`, await p.evaluate(() => { const sc = document.querySelector('.mgc-scroll'), r = sc.getBoundingClientRect(); return sc.scrollLeft > 0 && [...document.querySelectorAll('.mgc-origem>span')].every(e => { const b = e.getBoundingClientRect(); return b.left >= r.left - 1 && b.right <= r.right + 1 && b.width > 20; }); }));
       if (cap) { await p.evaluate(() => document.querySelector('.mgc-dia').scrollIntoView()); await p.screenshot({ path: path.join(cap, `radar_digital_390_${tema}.png`) }); }
       t(`Q. Radar 390 ${tema}: sem erro de JS`, errs.length === 0, errs); await ctx.close(); }
   }
   if (cap) { const { ctx, p } = await abre(KAN, '?squad=' + SQ, { width: 1280, height: 900 });
     await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); toggleGanttView(); ganttAba('digital'); ganttDia('2026-11-13'); }); await p.waitForTimeout(300);
-    await p.screenshot({ path: path.join(cap, 'mare_digital_1280.png'), fullPage: true }); await ctx.close(); }
+    await p.screenshot({ path: path.join(cap, 'mare_digital_1280.png') }); await ctx.close();
+    for (const tema of ['dark', 'light', 'vice']) { const { ctx: c2, p: p2 } = await abre(OKR, '?gantt=digital', { width: 1280, height: 900 }, tema);
+      await p2.click('.mgc-dhd.is-clic[data-dia="2026-11-13"]'); await p2.waitForTimeout(250);
+      await p2.screenshot({ path: path.join(cap, `radar_digital_1280_${tema}.png`) }); await c2.close(); } }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nFALHOU'); process.exit(ok ? 0 : 1);
 })();
 function document_has_empty_global(txt) { return /Nada do .* nestas 6 semanas — use/.test(txt); }

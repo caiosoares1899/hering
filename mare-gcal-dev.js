@@ -18,6 +18,7 @@
    v4 (13/11): um sininho por calendário — na 🧭 Digital, 3 botões (Hering · Marketplace · Outlet).
    v5 (13/11): 📣 Pedir atualização (PEDIDO + pedido.destinatarios/enviar + botão no visualizador).
    v6 (13/11): ⭐ aba favorita sincronizada entre aparelhos.
+   v8 (16/11): 📅 o "tudo deste dia" abre num popup junto do dia clicado (diaPop/diaPopFechar; no celular, folha embaixo).
    v7 (13/11): leitor persistente e alvos44px no celular; desktop preservado. */
 (function(){
   'use strict';
@@ -287,7 +288,12 @@
  .mgc-leitura :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 }
 
-@media (prefers-reduced-motion:reduce){ .mgc-scroll{scroll-behavior:auto;} }
+/* 📅 Popup do dia (16/11): fica no <body> (fora da régua, que tem rolagem própria) e se posiciona junto do dia clicado */
+.mgc-diapop{position:fixed;z-index:9400;background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));color:var(--txt);border:1px solid var(--glass-b);border-radius:var(--r2,14px);width:min(380px,calc(100vw - 32px));max-height:min(70vh,520px);overflow:auto;overscroll-behavior:contain;box-shadow:var(--specular,none),0 12px 40px rgba(0,0,0,.35);}
+.mgc-diapop.is-novo{animation:mgcPopIn .14s ease-out;}
+@keyframes mgcPopIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+@media (max-width:768px){ .mgc-diapop{left:12px !important;right:12px;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;max-height:70dvh;border-radius:20px;} }
+@media (prefers-reduced-motion:reduce){ .mgc-scroll{scroll-behavior:auto;} .mgc-diapop.is-novo{animation:none;} }
 `;
   function css(){
     if(document.getElementById('mgc-css')) return;
@@ -349,6 +355,41 @@
     fechar.onclick=encerrar;
     if(acao){ const b=document.createElement('button'); b.type='button'; b.textContent=rotulo; b.onclick=()=>{encerrar();acao();}; box.append(b); }
     document.body.append(box); document.addEventListener('keydown',tecla,true); window.addEventListener('resize',resize); fechar.focus({preventScroll:true});
+  }
+
+  // 📅 Popup do dia (16/11, pedido do Caio): o "tudo deste dia" da 🧭 Digital abre junto do dia clicado, não no fim da página.
+  // diaPop(html, ancora, fechar, chave): html = o painel já escapado pela página; ancora = o cabeçalho do dia; fechar() = a
+  // página limpa o estado e redesenha (o popup segue o ESTADO: cada redesenho da régua chama diaPop de novo com a âncora nova).
+  // Desktop: abaixo do dia (ou acima, se não couber), sem sair da tela. Celular (≤ 768 px): folha embaixo. Clique fora fecha.
+  let _diaPop=null;
+  function diaPopFechar(){ if(!_diaPop) return; const d=_diaPop; _diaPop=null; d.off(); d.pop.remove(); }
+  function diaPop(html, ancora, fechar, chave){
+    const t=document.createElement('template'); t.innerHTML=String(html||'').trim();
+    const novo=t.content.firstElementChild;
+    if(!novo || !ancora || !ancora.isConnected){ diaPopFechar(); return null; }
+    css();
+    const mesmo=_diaPop && _diaPop.chave===chave, focoDentro=mesmo && _diaPop.pop.contains(document.activeElement);
+    diaPopFechar();
+    novo.classList.add('mgc-diapop'); if(!mesmo) novo.classList.add('is-novo');
+    novo.setAttribute('role','dialog'); novo.setAttribute('aria-modal','false');
+    document.body.appendChild(novo);
+    const pos=()=>{
+      if(!ancora.isConnected) return;
+      if(window.matchMedia('(max-width:768px)').matches){ novo.style.left=''; novo.style.top=''; novo.style.visibility=''; return; }
+      const r=ancora.getBoundingClientRect(), vw=innerWidth, vh=innerHeight, w=novo.offsetWidth, h=novo.offsetHeight, m=12;
+      novo.style.visibility=(r.width && r.bottom>0 && r.top<vh && r.right>0 && r.left<vw)?'':'hidden';   // o dia saiu de vista (rolagem): o popup some junto
+      let top=r.bottom+8; if(top+h>vh-m) top=(r.top-8-h>=m)?r.top-8-h:Math.max(m, vh-m-h);
+      novo.style.left=Math.round(Math.min(Math.max(m, r.left+r.width/2-w/2), vw-m-w))+'px';
+      novo.style.top=Math.round(top)+'px';
+    };
+    const fora=ev=>{ const a=ev.target; if(novo.contains(a) || (a.closest && a.closest('[data-dia],.gantt-day-hd.is-clic'))) return; fechar(); };
+    const clique=ev=>{ if(ev.target.closest && ev.target.closest('[data-dia-fechar]')){ ev.preventDefault(); fechar(); } };
+    window.addEventListener('scroll', pos, true); window.addEventListener('resize', pos);
+    document.addEventListener('pointerdown', fora, true); novo.addEventListener('click', clique);
+    _diaPop={ pop:novo, chave, off(){ window.removeEventListener('scroll', pos, true); window.removeEventListener('resize', pos); document.removeEventListener('pointerdown', fora, true); } };
+    pos();
+    if(focoDentro){ const b=novo.querySelector('button'); if(b) b.focus({preventScroll:true}); }
+    return novo;
   }
 
   // ── Visualizador só de leitura. opts: { aba, aoTrocarAba(id) } → { aba(id), redesenhar(), destruir() }
@@ -550,7 +591,6 @@
           +c.html
         +'</div></div>'
         +'<div class="mgc-det" role="status" aria-live="polite">'+esc(S.det)+'</div>'
-        +painelDia()
         +(c.pe?'<div class="mgc-pe">'+c.pe+'</div>':'');
       const ab=root.querySelector('.mgc-abas'), on=ab&&ab.querySelector('.mgc-aba.on');   // celular: as 5 abas rolam de lado — a ativa sempre à vista
       if(on && ab.scrollWidth>ab.clientWidth){ const l=on.offsetLeft-ab.offsetLeft; if(l<ab.scrollLeft || l+on.offsetWidth>ab.scrollLeft+ab.clientWidth) ab.scrollLeft=Math.max(0,l-8); }
@@ -561,6 +601,13 @@
       else if(S.rolar==='inicio') sc.scrollLeft=0;
       else sc.scrollLeft=x0;
       S.rolar='';
+      diaSync();
+    }
+    function diaFechar(){ const d=S.dia; S.dia=''; desenhar(); const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true}); }
+    function diaSync(){
+      const anc=S.dia && root.querySelector('.mgc-dhd[data-dia="'+S.dia+'"]');
+      if(!anc || root.closest('[hidden]')){ if(_diaPop && _diaPop.chave && _diaPop.chave.root===root) diaPopFechar(); return; }
+      diaPop(painelDia(), anc, diaFechar, S.diaChave && S.diaChave.dia===S.dia ? S.diaChave : (S.diaChave={ root, dia:S.dia }));
     }
 
     function ir(off, rolar){ leituraFechar(); S.off=off; S.rolar=rolar; S.det=''; desenhar(); }
@@ -581,10 +628,9 @@
       const t=ev.target.closest('button,.mgc-bar,.mgc-dhd[data-dia]'); if(!t || !root.contains(t)) return;
       if(t.hasAttribute('data-favorita')){ Promise.resolve(opts.aoFavoritar(S.aba)).then(msg=>{ if(msg) S.det=msg; desenhar(); }).catch(()=>{ S.det='⚠ Não consegui salvar a favorita. Tente novamente.'; desenhar(); }); return; }
       if(t.dataset.aba) return trocaAba(t.dataset.aba);
-      if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=root.querySelector(S.dia?'.mgc-dia .mgc-btn':'.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
+      if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=S.dia?document.querySelector('.mgc-diapop .mgc-btn'):root.querySelector('.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.hasAttribute('data-sino')) return sinoClique(t.getAttribute('data-sino'));
       if(t.hasAttribute('data-pedir')) return pedirClique(t.getAttribute('data-pedir'));
-      if(t.hasAttribute('data-dia-fechar')){ const d=S.dia; S.dia=''; desenhar(); const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.dataset.nav!=null){ const n=+t.dataset.nav; S.mes=''; return n===0?ir(0,'hoje'):ir(S.off+n,'inicio'); }
       if(t.dataset.g!=null){ const g=t.dataset.g; filtro[S.aba]=(filtro[S.aba]===g)?'':g; salvaFiltro(); S.det=''; desenhar(); const f=root.querySelector('.mgc-chip[data-g="'+(filtro[S.aba]||'')+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.classList.contains('mgc-bar') && window.matchMedia('(max-width:768px)').matches){ leituraAbrir(t.getAttribute('data-tip')||t.textContent,t); return; }
@@ -601,8 +647,7 @@
     // Esc fecha o painel do dia ANTES de qualquer outra camada da página (captura na window, como os diálogos da casa)
     function escDia(ev){
       if(document.querySelector('.mgc-leitura') || ev.key!=='Escape' || !S.dia || !root.isConnected || root.closest('[hidden]')) return;
-      ev.preventDefault(); ev.stopPropagation(); const d=S.dia; S.dia=''; desenhar();
-      const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true});
+      ev.preventDefault(); ev.stopPropagation(); diaFechar();
     }
     root.addEventListener('click', clique); root.addEventListener('keydown', tecla); root.addEventListener('change', muda);
     window.addEventListener('keydown', escDia, true);
@@ -611,10 +656,10 @@
       aba:id=>trocaAba(id, false),
       redesenhar:()=>desenhar(),
       reabrir:()=>{ S.rolar=S.mes?'mes':(S.off===0?'hoje':'inicio'); desenhar(); },   // a vista voltou a aparecer: o scroll de quando estava escondida não vale
-      destruir:()=>{ window.removeEventListener('keydown', escDia, true); root.removeEventListener('click', clique); root.removeEventListener('keydown', tecla); root.removeEventListener('change', muda); S.subs.forEach(u=>{ try{ typeof u==='function'&&u(); }catch(e){} }); S.subs=[]; root.classList.remove('mgc','is-largo'); root.innerHTML=''; },
+      destruir:()=>{ if(_diaPop && _diaPop.chave && _diaPop.chave.root===root) diaPopFechar(); window.removeEventListener('keydown', escDia, true); root.removeEventListener('click', clique); root.removeEventListener('keydown', tecla); root.removeEventListener('change', muda); S.subs.forEach(u=>{ try{ typeof u==='function'&&u(); }catch(e){} }); S.subs=[]; root.classList.remove('mgc','is-largo'); root.innerHTML=''; },
       _estado:S,
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, leituraFechar, v:7 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, leituraFechar, diaPop, diaPopFechar, v:8 };
 })();
