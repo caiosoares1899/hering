@@ -24,13 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🏖️ Férias: calendário em tela cheia e 🏖️ Minhas férias sob demanda (kanban v8.30.990-dev, okr v2.137-dev, mare-ferias v6) — SÓ DEV — 2026-11-16
+### 🏖️ Férias: calendário em tela cheia e 🏖️ Minhas férias sob demanda (kanban v8.30.990-dev, okr v2.138-dev, mare-ferias v6) — SÓ DEV — 2026-11-16
 
 - **Pedido do Caio:** o cadastro ocupava a coluna da direita o tempo todo e espremia o calendário — com o time cadastrando, a visão geral é o que importa.
 - **Agora:** o calendário usa a **tela toda** (Fora agora | Próximas lado a lado, faixas do mês na largura inteira) e o botão **🏖️ Minhas férias** (na barra, com o número dos seus períodos) abre o cadastro **no topo**, com o foco no Início; ✕ fecha. O atalho do menu (nome no Maré, ⋯ Mais no Radar) já abre com o cadastro aberto — no celular ele deixa de ficar a ~900–7000 px de rolagem (achado UI02 da auditoria de 13/11) e vira o 1º botão da barra.
 - **Muitos períodos:** Fora agora e Próximas mostram **1 linha por pessoa** (nome · datas · dias, observação embaixo) e rolam dentro do cartão; editar/excluir saiu dessas listas e fica em Minhas férias (o ADM escolhe a pessoa no mesmo painel e a lista ao lado vira a dela). Barras do mês um pouco mais altas (26 px).
 - De carona: datas legíveis no claro e no Vice (UI01), foco preservado ao mexer em filtros e no seletor de pessoa (UI04) e o texto dos botões azuis que sumia no *hover*.
-- Teste: `test_ferias_calendario.js` (A2, A3, O0, S2, S3; 33/33). Capturas com 40 pessoas: `docs/capturas/ferias_tela_cheia/`.
+- 🧭 **Mudança de fluxo (confirmar com o Caio):** o 🧳 Preparar minha saída agora fica dentro de Minhas férias (1 clique a mais a partir da vista) e o ADM corrige o período de outra pessoa pelo painel (Pessoa → ✏️), não mais direto nas listas.
+- Teste: `test_ferias_calendario.js` (A2, A3, E, O0, S2, S3, S4; 34/34). `auditar_ferias_ui.js` (37 cenários): foco nos filtros ✅ em todos, nenhum texto abaixo de 4,5:1 no claro/Vice, topo do cadastro constante (597 px Maré / 848 px Radar a 390 px, com a página no topo; antes 895–7312 / 1176–7593). Capturas com 40 pessoas: `docs/capturas/ferias_tela_cheia/`.
 
 ### SÓ DEV — Infra: `firebase-functions` 5.1.1 → 7.4.0 (functions/, exige deploy) — 2026-11-16
 

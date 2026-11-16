@@ -132,9 +132,10 @@ function startServer() {
       const btn = [...document.querySelectorAll('#okr-ferias-host button')].find(x => /Preparar minha saída/.test(x.textContent));
       return !!btn && btn.disabled && /Cadastre suas férias/i.test(btn.title);
     }));
-    t('E. Membro comum não vê botão de editar/excluir nas férias de outra pessoa', await p.evaluate(() => {
-      const acts = [...document.querySelectorAll('#okr-ferias-host [data-act="edit"], #okr-ferias-host [data-act="del"]')];
-      return acts.every(a => a.dataset.uid === 'ana');
+    t('E. Membro comum (painel aberto): sem seletor de pessoa, lista só "Meus períodos" e nenhum ✏️/🗑️ de outra pessoa na tela', await p.evaluate(() => {
+      const h = document.getElementById('okr-ferias-host');
+      const acts = [...h.querySelectorAll('[data-act="edit"], [data-act="del"]')];
+      return !!h.querySelector('#mfer-minhas') && !h.querySelector('[data-f="alvo"]') && /Meus períodos/.test(h.querySelector('.mfer-meus').innerText) && acts.every(a => a.dataset.uid === 'ana');
     }));
 
     // fim < ini recusado
@@ -249,6 +250,13 @@ function startServer() {
     t('S3. atalho 🏖️ Minhas férias (menu do nome) abre a vista JÁ com o cadastro aberto e o foco no Início', await p.evaluate(() => !!document.querySelector('#cal-ferias #mfer-minhas') && document.activeElement === document.querySelector('#cal-ferias [data-f="ini"]')));
     if (cap) await p.screenshot({ path: path.join(cap, 'mare_ferias_1280.png') });
     t('T. Sem erro JS (Maré desktop)', errs.length === 0, errs);
+    await ctx.close();
+  }
+  {
+    // link ?ferias=1 (vem das outras squads e do Radar): passa pelo boot, não pelo menu — tem de abrir com o cadastro aberto (UI02)
+    const { ctx, p } = await abre('/kanban-dev.html?squad=dados&ferias=1', { width: 390, height: 800 }, ANA);
+    await p.waitForSelector('#cal-ferias #mfer-minhas', { timeout: 10000 }).catch(() => {});
+    t('S4. link ?ferias=1 abre a vista com 🏖️ Minhas férias aberto, cadastro à vista no celular', await p.evaluate(() => { const i = document.querySelector('#cal-ferias [data-f="ini"]'); if (!i) return false; const r = i.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }));
     await ctx.close();
   }
 
