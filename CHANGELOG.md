@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Infra: `firebase-functions` 5.1.1 → 7.4.0 (functions/, exige deploy) — 2026-11-16
+
+Pendência desde o aviso do deploy de 18/10. O código já usava só `firebase-functions/v2/*` e `/params` (nenhum import da raiz/v1, nenhum `functions.config()`), que são as quebras grandes da 6 e da 7. **Manifesto do deploy idêntico** (`/__/functions.yaml` gerado com a 5 e com a 7: as mesmas 41 funções, mesmos gatilhos, memória, região, segredos e params). A 7 traz o **Express 5** (era 4) — os handlers `onRequest` já protegem `req.body` (`|| {}`, `?.`, zod) e o parse de corpo/query nas v2 é do runtime; teste de fumaça do wrapper `onRequest` (JSON, GET sem corpo, preflight e CORS) OK. `firebase-admin` fica na 12 (a 7 aceita 11–14). `npm test`: 1258/0.
+
 ### SÓ DEV — Infra: `/seatualizar` já começa com o Git em dia (`mare-cli.js brief`: fetch sempre, pull só quando é seguro) — 2026-11-16
 
 Pedido do Caio. O `brief` (passo 0 do `/seatualizar`, Claude e Antigravity) faz `git fetch --prune origin` e só puxa a `main` (fast-forward) quando está nela, limpa e só atrás. Em branch de trabalho, avisa quantos commits a `main` está à frente e, se o próprio branch no GitHub tem commit novo (conflito resolvido por outro agente), pede `git pull --ff-only`. `--sem-git`/`MARE_SEM_GIT=1` pula. Teste: `test_mare_cli_automacao.js` (`gitDecisao`).

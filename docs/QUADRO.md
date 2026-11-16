@@ -38,6 +38,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🔧 `firebase-functions` 5 → 7 (PR desta data): **1º uma função só** e olhar os logs; se ok, as outras 40 | resync + `firebase deploy --project hering-onboarding --only functions:githubStatus` → depois `--only functions:agenteAgil,functions:agenteAgilAnaliseDados,functions:agenteAgilAnalisePO,functions:agenteAgilDueOverdueScan,functions:agenteAgilIntake,functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilPainelChat,functions:agenteAgilPainelChatDev,functions:agenteAgilResumoMeuDia,functions:backupCompletoApi,functions:backupCompletoSemanal,functions:backupGlobalDiario,functions:backupVigia,functions:cardsEspelhar,functions:cardsEspelhoVarredura,functions:cardsGuardiao,functions:contarComentarios,functions:firebaseStatus,functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:guardiaoStatus,functions:intakeSubmit,functions:metasLembretes,functions:oceanoResumo,functions:okrAgenteChat,functions:okrDailyScan,functions:okrWeeklySnapshot,functions:sendPushOnMural,functions:sendPushOnNotification,functions:spotifyDisconnect,functions:spotifyOauthCallback,functions:spotifyPlayback,functions:spotifyRadioOwnerCallback,functions:spotifyRadioSearch,functions:spotifyRadioSuggest,functions:spotifySyncNow,functions:timersVigia,functions:vtexStatus,functions:weeklyBackup` | 16/11/2026 |
 
 ## Backlog
 
