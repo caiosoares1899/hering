@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📅 Gantt · 🧭 Digital: o "tudo deste dia" abre num popup junto do dia clicado (kanban v8.30.986-dev, okr v2.134-dev, mare-gcal v8) — SÓ DEV — 2026-11-16
+
+- **Pedido do Caio (16/11):** tocar num dia do cabeçalho na 🧭 Digital · dia a dia abria o detalhe **no fim da página**, longe do clique. Agora abre um **popup ali mesmo**, logo abaixo do dia (ou acima, se não couber), sem sair da tela — no **Maré** e no **Radar**.
+- **Celular (≤ 768 px):** o popup vira uma folha que sobe de baixo da tela (12 px das bordas, ✕ ≥ 44 px).
+- Fecha com **✕, Esc ou um toque fora**; tocar em outro dia leva o popup para ele; o foco vai para o ✕ e volta ao dia. Rolar a régua leva o popup junto (some se o dia sair de vista). Sair do Gantt (ou da vista no Radar) fecha.
+- Atualização ao vivo de um calendário com o popup aberto continua redesenhando o conteúdo (o popup segue o estado, não o DOM).
+- **Módulo `mare-gcal-dev.js` v8:** `diaPop`/`diaPopFechar` (fonte única do popup, usada pelo Maré e pelo Radar). Teste: `docs/arezzo/testes/test_gantt_digital.js` (M8b, M12a–f, R3b–d e folha no celular; os 5 novos de desktop falham na `main`). Capturas: `docs/capturas/gantt_dia_popup/`.
+
 ### 🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.982-dev, okr v2.130-dev, mare-ferias v3) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
 - **🏖️ Calendário geral de férias** (pedido do Caio: agenda geral do Digital + modo férias). No **Maré → 📅 Calendários → 🏖️ Férias** (por padrão as suas squads, com 🌐 Todo o Digital) e no **Radar → 📅 Calendário → 🏖️ Férias** (todo o Digital): quem está **fora agora**, as **próximas saídas** (60 dias) e as faixas do mês, com filtros por pessoa, squad e período. **Minhas férias**: cadastrar, editar e excluir os próprios períodos (excluir pede confirmação; fim antes do início é recusado; acima de 45 dias, só avisa). ADM corrige as de qualquer pessoa. Só login Google @ciahering.com.br; visualizador externo não vê.
