@@ -2860,6 +2860,24 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-dismiss{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:13px;padding:2px 5px;border-radius:4px;opacity:0;transition:opacity .15s,color .15s;flex-shrink:0;line-height:1;}
 .notif-item:hover .notif-dismiss{opacity:1;}
 .notif-dismiss:hover{color:var(--danger,#ef4444);opacity:1!important;}
+/* Famílias do sino e da Ilha: cor + selo + rótulo, sem animação nova. */
+.notif-item.notif-familia-item{--notif-cor:var(--accent);border-left:3px solid var(--notif-cor);}
+.notif-item[data-familia="calendario"]{--notif-cor:var(--warn);}
+.notif-item[data-familia="radar"]{--notif-cor:var(--teal);}
+.notif-item[data-familia="sistema"]{--notif-cor:var(--txt2);}
+.notif-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin-bottom:5px;}
+.notif-familia{font-size:10px;font-weight:700;color:var(--txt);border:1px solid var(--notif-cor);border-radius:var(--r);padding:2px 6px;background:var(--glass);}
+.notif-tipo{font-size:10px;color:var(--txt);overflow-wrap:anywhere;}
+.notif-familia-item .notif-title,.notif-familia-item .notif-sub{overflow-wrap:anywhere;}
+.notif-familia-item .notif-sub,.notif-familia-item .notif-time{color:var(--txt2);}
+.notif-familia-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.notif-familia-item:focus-within .notif-dismiss{opacity:1;}
+#ilha-painel .notif-familia-item{padding-left:8px;}
+.ilha-notif-grupo{font:700 12px 'Syne',sans-serif;color:var(--txt);padding:12px 8px 6px;margin:0;background:var(--glass);}
+@media (max-width:768px),(hover:none) and (pointer:coarse){
+  .notif-familia-item{min-height:44px;}
+  .notif-familia-item .notif-dismiss{min-width:44px;min-height:44px;opacity:1;}
+}
 /* 🌅 Meu Dia (Fase 5.1) */
 .meudia-sec{margin-bottom:18px;}
 /* Meu Dia: cabeçalho recolhível dos blocos de humor (04/11/2026) — alvo de toque ≥ 44 px no celular */
@@ -7651,7 +7669,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.986-dev</div>
+<div class="version">v8.30.987-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8002,7 +8020,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=43"></script>
+<script src="mare-notif-dev.js?v=44"></script>
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-dicas-dev.js?v=18"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
@@ -33509,25 +33527,28 @@ function renderNotifs(notifs){
   if(!notifs.length){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
-  list.innerHTML = notifs.map(n=>n._feed ? `
-    <div role="button" tabindex="0" class="notif-item ${n.read?'':'unread'}" data-feed-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openFeedNotif(${jsq(n.id)})">
+  list.innerHTML = notifs.map((n,ord)=>{ const v = MareNotif.aparencia(n.type); return n._feed ? `
+    <div role="button" tabindex="0" data-familia="${v.familia}" data-notif-ord="${ord}" class="notif-item notif-familia-item ${n.read?'':'unread'}" data-feed-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openFeedNotif(${jsq(n.id)})">
       <div class="notif-icon">${esc(n.icon)}</div>
       <div class="notif-body">
+        <div class="notif-meta"><span class="notif-familia">${v.icone} ${v.nome}</span><span class="notif-tipo">${esc(v.rotulo)}</span></div>
         <div class="notif-title">${esc(n.title)}</div>
         ${n.sub?`<div class="notif-sub">${esc(n.sub)}</div>`:''}
         <div class="notif-time">${timeAgo(n.ts)}${n.autor?' · '+esc(n.autor):''}</div>
       </div>
       <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissFeedNotif(${jsq(n.id)})">✕</button>
     </div>` : `
-    <div role="button" tabindex="0" class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq((n.type==='gantt_cal'||n.type==='gantt_pedido') ? (n.cal||'') : n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
+    <div role="button" tabindex="0" data-familia="${v.familia}" data-notif-ord="${ord}" class="notif-item notif-familia-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq((n.type==='gantt_cal'||n.type==='gantt_pedido') ? (n.cal||'') : n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
+        <div class="notif-meta"><span class="notif-familia">${v.icone} ${v.nome}</span><span class="notif-tipo">${esc(v.rotulo)}</span></div>
         <div class="notif-title">${esc(n.title)}</div>
         ${n.sub?`<div class="notif-sub">${esc(n.sub)}</div>`:''}
         <div class="notif-time">${timeAgo(n.ts)}</div>
       </div>
       <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissNotif(${jsq(n.id)})">✕</button>
-    </div>`).join('');
+    </div>`; }).join('');
+  _ilhaNotifGrupos(list.closest('.ilha-sino')!==null);
 }
 
 // Item do feed da torre: abre pela URL do módulo (aviso do Mural → okr(-dev).html?mural=<id>; Objetivo → ?okr=<id>) e marca como lido.
@@ -40541,6 +40562,20 @@ function _ilhaPilula(){
   const rot = [_ilha.aviso ? 'Nova notificação: '+_ilha.aviso.t : a ? ((p.privado?'Timer':a.atividade)+', '+MareTimer.estadoTxt(a)+', '+(a.status==='novo'?'':mostra.txt)) : mp ? (p.privado ? mp.nome||'Atividade' : mp.txt) : 'Ilha Dinâmica', sc && !_ilha.aviso ? 'também: '+se.textContent : '', n ? n+' não lida'+(n>1?'s':'') : ''].filter(Boolean).join(' · ');
   document.getElementById('ilha-btn').setAttribute('aria-label', rot);
 }
+// Calendário tem seção própria na Ilha; sino tradicional mantém a cronologia (16/11/2026).
+// Só move nós já renderizados: handlers, ids, lidas e destinatários continuam os mesmos.
+function _ilhaNotifGrupos(dentro){
+  const lista = document.getElementById('notif-list'); if(!lista) return;
+  lista.querySelectorAll('.ilha-notif-grupo').forEach(h=>h.remove());
+  const itens = [...lista.querySelectorAll('.notif-item')].sort((a,b)=>Number(a.dataset.notifOrd)-Number(b.dataset.notifOrd));
+  if(!dentro){ itens.forEach(n=>lista.appendChild(n)); return; }
+  [['sistema','🛡️ Operação'],['calendario','📅 Calendário'],['resto','🔔 Outras notificações']].forEach(([id,titulo])=>{
+    const grupo = itens.filter(n=>id==='resto' ? !['sistema','calendario'].includes(n.dataset.familia) : n.dataset.familia===id);
+    if(!grupo.length) return;
+    const h = document.createElement('h3'); h.className = 'ilha-notif-grupo'; h.dataset.grupo = id; h.textContent = titulo;
+    lista.appendChild(h); grupo.forEach(n=>lista.appendChild(n));
+  });
+}
 // 10/11/2026 — a Ilha substitui a entrada do sino, não suas funcionalidades.
 function _ilhaSinoLugar(dentro){
   const sino=document.getElementById('notif-panel'); if(!sino) return;
@@ -40549,14 +40584,14 @@ function _ilhaSinoLugar(dentro){
   if(menu && !menu._ilhaCasa){ menu._ilhaCasa=document.createComment('posição original do Não Perturbe'); menu.before(menu._ilhaCasa); }
   const slot=dentro && document.getElementById('ilha-sino-slot');
   if(slot){
-    notifOpen=false; sino.classList.remove('open'); sino.classList.add('ilha-sino'); slot.appendChild(sino);
+    notifOpen=false; sino.classList.remove('open'); sino.classList.add('ilha-sino'); slot.appendChild(sino); _ilhaNotifGrupos(true);
     // O painel da Ilha tem transform: menus fixed precisam ficar no body para
     // usar coordenadas da janela, como os handlers originais calculam.
     if(menu) document.body.appendChild(menu);
   } else {
     if(menu){ menu.style.display='none'; if(menu._ilhaCasa?.isConnected) menu._ilhaCasa.after(menu); }
     if(window.MareNotif?.menusFechar) MareNotif.menusFechar();
-    sino.classList.remove('ilha-sino');
+    sino.classList.remove('ilha-sino'); _ilhaNotifGrupos(false);
     if(sino._ilhaCasa.isConnected) sino._ilhaCasa.after(sino);
   }
 }
@@ -40735,7 +40770,7 @@ function _ilhaIntroPassos(){
     {t:'A pílula', h:`${pilula('<span>⏲</span><b>Revisar campanha</b><em>25:04</em><i></i><span>📅 em 12 min</span>')}
       <ul class="ii-lista"><li><b>À esquerda, a atividade principal</b> (você escolhe qual): timer, agenda, agente…</li><li><b>Ao lado, uma 2ª atividade</b> em letra menor, quando houver.</li><li><b>🔔 com número</b>: notificações não lidas. Quando chega uma nova, a pílula alarga por uns segundos mostrando de quem e onde.</li><li><b>Quando aparece</b>: <b>sempre visível</b> (padrão). Se preferir, ela pode aparecer só quando há algo acontecendo (um timer rodando, uma notificação chegando) ou só ao passar o mouse no topo. Você escolhe no próximo passo.</li></ul>`},
     {t:'Um clique abre o painel', h:`<div class="ii-estudio" aria-hidden="true"><div class="ii-trilho"><span class="on">🏝️</span><span>⏲</span><span>🔔</span><span>📅</span></div><div class="ii-centro"><div class="ii-cab">🏝️ Resumo</div><div class="ii-blocos"><span>⏲ 25:04</span><span>🔔 3 não lidas</span><span>📅 em 12 min</span><span>🤖 nada agora</span></div></div><div class="ii-trilho"><span>⭐</span><span>🚨</span><span>🎛️</span><span>⚙</span></div></div>
-      <ul class="ii-lista"><li><b>No centro, o Resumo</b>: um bloco por módulo. Clique num bloco para abrir o módulo; dá para pausar o timer ali mesmo.</li><li><b>Nas laterais, botões</b>: à esquerda o que acontece agora (Timers, Notificações, Agenda, Agente); à direita atalhos e controle (Favoritos, Serviços, Preferências, ⚙ Ajustes). No celular, ficam numa faixa embaixo.</li><li><b>📌</b> mantém aberta enquanto você usa o quadro. <b>Esc</b> ou clicar fora fecha.</li></ul>`},
+      <ul class="ii-lista"><li><b>No centro, o Resumo</b>: um bloco por módulo. Clique num bloco para abrir o módulo; dá para pausar o timer ali mesmo.</li><li><b>Nas laterais, botões</b>: à esquerda o que acontece agora (Timers, Notificações, Agenda, Agente); à direita atalhos e controle (Favoritos, Serviços, Preferências, ⚙ Ajustes). No celular, ficam numa faixa embaixo.</li><li><b>Avisos:</b> Operação aparece primeiro, depois Calendário e os demais. Cada aviso tem faixa, selo da família e rótulo do tipo; no sino fora da Ilha, a ordem continua pela data.</li><li><b>📌</b> mantém aberta enquanto você usa o quadro. <b>Esc</b> ou clicar fora fecha.</li></ul>`},
     {t:'Escolha o que aparece', h:`<p>Ligue só o que faz sentido para você. Dá para mudar quando quiser em ⚙ Ajustes da ilha.</p>
       <fieldset class="ii-modo"><legend>Quando a pílula aparece</legend>
         ${[['sempre','Sempre visível','padrão: fica no topo o tempo todo'],['acao','Só com algo acontecendo','some quando não há timer rodando nem notificação nova'],['mouse','Ao passar o mouse no topo','fica escondida até você levar o mouse lá']].filter(o=>!(o[0]==='mouse' && _ilhaCelular())).map(o=>`<label class="ii-mod"><span><b>${o[1]}</b><small>${o[2]}</small></span><input type="radio" name="ii-modo" value="${o[0]}" data-ii-modo="1"${(p.modo===o[0] || (o[0]==='acao' && p.modo==='mouse' && _ilhaCelular()))?' checked':''}></label>`).join('')}

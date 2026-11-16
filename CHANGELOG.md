@@ -24,13 +24,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 📅 Gantt · 🧭 Digital: o "tudo deste dia" abre num popup junto do dia clicado (kanban v8.30.986-dev, okr v2.134-dev, mare-gcal v8) — SÓ DEV — 2026-11-16
+### 📅 Gantt · 🧭 Digital: o "tudo deste dia" abre num popup junto do dia clicado (kanban v8.30.987-dev, okr v2.135-dev, mare-gcal v8) — SÓ DEV — 2026-11-16
 
 - **Pedido do Caio (16/11):** tocar num dia do cabeçalho na 🧭 Digital · dia a dia abria o detalhe **no fim da página**, longe do clique. Agora abre um **popup ali mesmo**, logo abaixo do dia (ou acima, se não couber), sem sair da tela — no **Maré** e no **Radar**.
 - **Celular (≤ 768 px):** o popup vira uma folha que sobe de baixo da tela (12 px das bordas, ✕ ≥ 44 px).
 - Fecha com **✕, Esc ou um toque fora**; tocar em outro dia leva o popup para ele; o foco vai para o ✕ e volta ao dia. Rolar a régua leva o popup junto (some se o dia sair de vista). Sair do Gantt (ou da vista no Radar) fecha.
 - Atualização ao vivo de um calendário com o popup aberto continua redesenhando o conteúdo (o popup segue o estado, não o DOM).
 - **Módulo `mare-gcal-dev.js` v8:** `diaPop`/`diaPopFechar` (fonte única do popup, usada pelo Maré e pelo Radar). Teste: `docs/arezzo/testes/test_gantt_digital.js` (M8b, M12a–f, R3b–d e folha no celular; os 5 novos de desktop falham na `main`). Capturas: `docs/capturas/gantt_dia_popup/`.
+
+### SÓ DEV — Ilha e sino: famílias visuais e grupo Calendário — 2026-11-16 · PR #1802
+
+No Maré dev, notificações ganham faixa lateral, selo Pessoal/Calendário/Radar/Sistema e rótulo curto a partir de MareNotif.TIPOS. Na Ilha, grupos não vazios aparecem em Operação → Calendário → demais; no sino tradicional, mantém-se a cronologia. Mesmos nós, contagem, leitura, destinos e push. Módulo mare-notif-dev v44 nas quatro páginas dev; introdução da Ilha atualizada. Teste: docs/arezzo/testes/test_ilha_notif_familias.js; roteiro ADM: console_ilha_notif_familias.js. Dica: não, mudança visível ao abrir os avisos, explicada pelos rótulos e introdução existente. Fronteira: sem mudança.
 
 ### 🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.982-dev, okr v2.130-dev, mare-ferias v3) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
