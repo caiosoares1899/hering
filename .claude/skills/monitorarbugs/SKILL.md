@@ -3052,3 +3052,5 @@ não preservar a narrativa completa de cada investigação.
 
 
 - **2026-10-31, Automações × modal do card aberto (pedido "roda /monitorarbugs nas automações"; kanban-dev v8.30.890-dev)**: 1 achado real, técnica 1/2 (comparar com o fix da coluna de 30/10, `_modalSyncCol`). Só `col` tinha linha de base; `editingTags` e `#m-owner` eram lidos na abertura e regravados pelo autosave/Salvar — Automação `add_tag`/`remove_tag`/`assign_owner` (ou outra aba) com o modal aberto era desfeita na próxima digitação. Fix: `_modalSyncCol()` sincroniza Responsável e Tags se a pessoa não mexeu (`_modalOpenOwner`/`_modalOpenTags`). Verificado só estaticamente + `node --check` (sem Playwright nesta máquina). **Lição:** ao corrigir "o modal desfaz X" para UM campo, listar todo campo que o autosave regrava do DOM/estado de abertura.
+
+- **2026-11-16, últimas entregas — Férias v6 e popup Gantt v9**: 2 bugs reproduzidos no Chromium (período apagado ressuscita ao salvar edição; popup do Radar reabre ao voltar a Hoje). Escalados ao Claude por módulos compartilhados, sem correção de produto. Prova: `test_monitorarbugs_1611.js` e `console_monitorarbugs_1611.js`.
