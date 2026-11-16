@@ -558,7 +558,10 @@
 }
 [data-theme="vice"] .hd-badge{color:var(--txt);}
 [data-theme="vice"] .col-cnt{color:var(--txt);}
-/* ── 🔥 BLACK FRIDAY (proposta em avaliação, 2026-09-15) ──────────────
+/* ── 🔥 BLACK FRIDAY (2026-09-15; padrão na semana da BF desde 16/11) ──
+   16/11/2026 (/melhoriauiux): deixou de ser "proposta em teste" — na semana
+   da Black Friday é o tema PADRÃO de todo mundo (window._bfSemanaInfo no
+   <head>). O texto abaixo é o histórico da 1ª versão.
    Pedido direto do usuário: modo de visualização especial pra época da
    Black Friday. Direção aprovada por ele num mockup à parte: preto
    dominante, vermelho só como DETALHE pontual (não "vermelho em tudo")
@@ -603,9 +606,12 @@
   --glass:rgba(26,20,19,0.66);
   --glass-b:rgba(255,43,77,0.16);
   --glass-h:rgba(255,43,77,0.10);
-  --blue:#6b625e;--accent:#b3665f;--cyan:#8f8681;--teal:#6b625e;
+  /* --teal clareado em 16/11 (/melhoriauiux): como COR DE TEXTO (+ Add, 🤖 Insights, 📅 Calendários,
+     data "no prazo") o chumbo #6b625e dava 1,3–2,3:1 sobre o fundo; #c2b8b3 passa de 4,5:1 e
+     segue neutro (sem verde). Como fundo (barra de progresso, bolinha online) continua discreto. */
+  --blue:#6b625e;--accent:#cf7f76;--cyan:#8f8681;--teal:#c2b8b3;   /* --accent #b3665f → #cf7f76: como texto (abas do Gantt, 🤖 Resumo, hoje no Calendário) ficava em 4,0:1 */
   --txt:#efe9e6;--txt2:rgba(239,233,230,0.66);--txt3:rgba(239,233,230,0.42);
-  --warn:#d9633f;--danger:#ff2b4d;
+  --warn:#ef7f57;--danger:#ff2b4d;   /* --warn #d9633f → #ef7f57: "+ Add" de Riscos e avisos davam 3,8:1 */
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:255,43,77;
 }
@@ -653,15 +659,27 @@
    clipping diferente no Chrome, não passa pelo caminho de compositor
    com o bug). Testado numa réplica isolada do CSS real simulando
    escala de tela 150% antes de aplicar aqui — renderizou limpo. */
-[data-theme="blackfriday"] .card.card-prio-critical{
-  border-color:rgba(255,43,77,.55);
-  clip-path: inset(0 round var(--r));
+[data-theme="blackfriday"] .card.card-prio-critical{ border-color:rgba(255,43,77,.55); }
+/* 16/11/2026 (/melhoriauiux): a fita era ::before — o MESMO pseudo-elemento do selo "👤 seu card"
+   (.card.card-mine::before). O CSS mescla as duas regras propriedade por propriedade: o left:9px e o
+   border-radius do selo sobreviviam, a fita virava uma pílula EM CIMA DO TÍTULO e o "seu card" sumia
+   (todo card crítico que é seu, o caso comum na semana). Agora é ::after, e só quando o canto está
+   livre: o estado REAL do card vence a decoração (♾️ Contínuo e 💤 parado também usam ::after —
+   a fita só repete o 🔥 da prioridade, que continua no card). Reset completo pra nada vazar. */
+[data-theme="blackfriday"] .card.card-prio-critical:not(.card-continuo):not(.aged-2){ clip-path: inset(0 round var(--r)); }
+[data-theme="blackfriday"] .card.card-prio-critical:not(.card-continuo):not(.aged-2)::after{
+  content:"🔥 OFERTA"; position:absolute; top:9px; right:-28px; left:auto; bottom:auto; width:110px; text-align:center;
+  transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800; line-height:normal;
+  letter-spacing:.03em; padding:3px 0; pointer-events:none; border-radius:0; box-shadow:none; opacity:1; filter:none;
 }
-[data-theme="blackfriday"] .card.card-prio-critical::before{
-  content:"🔥 OFERTA"; position:absolute; top:9px; right:-28px; width:110px; text-align:center;
-  transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
-  letter-spacing:.03em; padding:3px 0; pointer-events:none;
-}
+/* com o clip-path da fita, o selo "seu card" (top:-9px, fora do card) seria cortado — mesma saída do Contínuo */
+[data-theme="blackfriday"] .card.card-mine.card-prio-critical:not(.card-continuo):not(.aged-2)::before{ top:0; }
+/* fundo verde-água (rgba(29,233,182,…)) que sobrava em "+ Add", 🤖 Insights e na data "no prazo": neutro no BF (sem verde, contraste ≥ 4,5:1) */
+[data-theme="blackfriday"] .btn-teal,[data-theme="blackfriday"] .cl-ab,[data-theme="blackfriday"] .due-ok{ background:rgba(239,233,230,.06); border-color:rgba(239,233,230,.22); }
+/* "atrasado": o --danger puro sobre o próprio tom vermelho dava 3,5:1 em 9px */
+[data-theme="blackfriday"] .due-late{ color:#ff8295; }
+/* ação principal (💾 Salvar e afins): azul vivo destoava — vermelho é o "botão em destaque" do mockup aprovado */
+[data-theme="blackfriday"] .btn-p{ background:rgba(214,30,62,.85); border-color:var(--danger); color:#fff; }
 /* ♾️ Contínuo (2026-09-29, pedido direto: "e se colocarmos esse infinito
    como aquela faixa q vc fez pro modo black friday?") — mesma fita
    diagonal + mesmo fix de clip-path (ver comentário grande acima, causa
@@ -4647,7 +4665,37 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 // bem depois) de propósito -- precisa rodar aqui, síncrono, o mais cedo
 // possível. Mesmo try/catch de segurança (modo privado antigo do Safari
 // pode bloquear localStorage).
+// 🔥 Semana Black Friday (16/11/2026, pedido do Caio): de segunda a domingo da
+// semana da BF (horário de Brasília) o tema 🔥 é o PADRÃO de todo mundo, sem
+// gravar mare_theme — na segunda seguinte cada um volta sozinho ao seu tema.
+// Quem sai do BF (clique no 🔥) fica fora até o fim da semana
+// (mare_bf_sair_<ano>). Fonte única da janela: window._bfSemanaInfo(), usada
+// aqui e pelo <script> principal (contador, virada com a aba aberta, prefs).
+// Teste: localStorage mare_bf_semana_teste = data-limite (AAAA-MM-DD) simula
+// a semana até essa data, com chave de saída própria (_teste) — validar antes
+// não contamina a semana de verdade.
+window.BF_PADRAO_ANOS = [2026];   // anos em que o BF vira padrão (decisão do Caio — ver CHANGELOG)
+window._bfSemanaInfo = function(agoraMs){
+  const p2 = n => String(n).padStart(2,'0');
+  const isoUTC = d => d.getUTCFullYear()+'-'+p2(d.getUTCMonth()+1)+'-'+p2(d.getUTCDate());
+  const hoje = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(agoraMs==null?Date.now():agoraMs));
+  const bfDe = ano => { const p=(4-new Date(Date.UTC(ano,10,1)).getUTCDay()+7)%7; return new Date(Date.UTC(ano,10,1+p+22)); };   // sexta depois da 4ª quinta de novembro
+  let ano = +hoje.slice(0,4), bf = bfDe(ano);
+  if(hoje > isoUTC(new Date(bf.getTime()+2*864e5))) { ano++; bf = bfDe(ano); }   // semana deste ano já passou: a próxima
+  const ini = isoUTC(new Date(bf.getTime()-4*864e5)), fim = isoUTC(new Date(bf.getTime()+2*864e5));
+  let teste = '';
+  try{ teste = localStorage.getItem('mare_bf_semana_teste') || ''; }catch(e){}
+  const testeVale = /^\d{4}-\d{2}-\d{2}$/.test(teste) && hoje <= teste;
+  const real = hoje >= ini && hoje <= fim && window.BF_PADRAO_ANOS.indexOf(ano) >= 0;
+  return { hoje, ano, bf: isoUTC(bf), ini, fim, dentro: real || testeVale, teste: !real && testeVale,
+    chaveSair: 'mare_bf_sair_' + ano + (!real && testeVale ? '_teste' : '') };
+};
 (function(){
+  try{
+    const bfs = window._bfSemanaInfo();
+    window.__bfPadrao = bfs.dentro && localStorage.getItem(bfs.chaveSair) !== '1';
+    if(window.__bfPadrao){ document.documentElement.setAttribute('data-theme','blackfriday'); return; }
+  }catch(e){ window.__bfPadrao = false; }
   try{
     const auto = localStorage.getItem('mare_theme_auto')==='1';
     let t;
@@ -4663,7 +4711,8 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     }
     if(t==='light') document.documentElement.setAttribute('data-theme','light');
     else if(t==='vice') document.documentElement.setAttribute('data-theme','vice');
-    if(!auto && localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
+    else if(t==='blackfriday') document.documentElement.setAttribute('data-theme','blackfriday');   // antes sumia no F5 (só light/vice eram reaplicados)
+    if(!auto && t!=='blackfriday' && localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
   }catch(e){}
 })();
 </script>
@@ -4833,7 +4882,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
 <div id="goal-bar" class="goal-bar"><span style="opacity:.6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Objetivo</span><span id="goal-txt"></span></div>
 
-<div id="bf-countdown-bar" class="bf-countdown-bar"><span>🔥 <b id="bf-countdown-num">calculando…</b> pra Black Friday</span><span id="bf-banner-msg-wrap" style="display:none;">· <span id="bf-banner-msg"></span></span></div>
+<div id="bf-countdown-bar" class="bf-countdown-bar"><span id="bf-countdown-txt">🔥 <b>calculando…</b> pra Black Friday</span><span id="bf-banner-msg-wrap" style="display:none;">· <span id="bf-banner-msg"></span></span></div>
 
 <div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
@@ -6063,7 +6112,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <div style="margin-top:10px;" class="cfg-sec-title">Objetivo da sprint</div>
       <div class="field"><textarea class="fi fi-ta" id="cfg-sprint-goal" rows="2" placeholder="Descreva o objetivo..."></textarea></div>
       <div style="margin-top:10px;" class="cfg-sec-title">🔥 Banner do tema Black Friday (opcional)</div>
-      <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Some ao lado da contagem regressiva quando o tema 🔥 Black Friday estiver ligado (ver botão direito no botão de tema). Deixe em branco pra mostrar só a contagem.</p>
+      <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Some ao lado da contagem regressiva quando o tema 🔥 Black Friday estiver ligado (padrão de todo mundo na semana da Black Friday). Deixe em branco pra mostrar só a contagem.</p>
       <div class="field"><input class="fi" id="cfg-bf-banner-msg" type="text" maxlength="80" placeholder="Ex: Meta do squad: -40% em toda a categoria Inverno"></div>
       <div style="margin-top:10px;" class="cfg-sec-title">📥 Formulário de intake</div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;margin-bottom:4px;">
@@ -7667,7 +7716,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.991-dev</div>
+<div class="version">v8.30.992-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17186,6 +17235,7 @@ function renderMinhasPrefsBody(){
   const temaAtual = _currentTheme();
   const temaLabel = {light:'☀️ Lençóis Maranhenses (claro)', dark:'🌙 Abrolhos (escuro)', vice:'🌴 Vice City', blackfriday:'🔥 Black Friday'}[temaAtual] || temaAtual;
   const autoOn = _isThemeAutoOn();
+  const bfSemana = window._bfSemanaInfo();
   const viceDescoberto = _temasDescobertos.vice_manual===true;
   const dndOn = isDndActive();
   const timelineOn = _boardPrefsSquad.visao_inicial==='timeline';
@@ -17202,6 +17252,7 @@ function renderMinhasPrefsBody(){
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-sm" onclick="toggleTheme();renderMinhasPrefsBody();">Trocar tema</button>
         <button class="btn btn-sm" style="${autoOn?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleThemeAuto();renderMinhasPrefsBody();">🕐 ${autoOn?'Automático (ligado)':'Ligar automático'}</button>
+        ${bfSemana.dentro ? `<button class="btn btn-sm" aria-pressed="${temaAtual==='blackfriday'}" style="${temaAtual==='blackfriday'?'color:var(--danger);border-color:rgba(255,43,77,.55);':''}" onclick="toggleBlackFriday();renderMinhasPrefsBody();" title="Tema da semana da Black Friday — até ${_bfBr(bfSemana.fim)}. Depois cada um volta sozinho ao seu tema.">🔥 Black Friday${temaAtual==='blackfriday'?' (ligado)':''}</button>` : ''}
         ${viceDescoberto ? `<button class="btn btn-sm" style="${temaAtual==='vice'?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleViceCity();renderMinhasPrefsBody();" title="Você já descobriu esse tema segurando o botão 🌙/☀️ -- aqui é só um atalho.">🌴 Vice City</button>` : ''}
       </div>
     </div>
@@ -31390,6 +31441,7 @@ const HELP_CONTENT = {
     { icon:'👤', title:'Minhas Preferências', text:'Painel único reunindo toda a sua personalização pessoal do board — antes espalhada em vários lugares diferentes. Acesse clicando no seu avatar (canto superior direito) → "👤 Minhas Preferências", ou pelo botão de mesmo nome dentro de "⚙ Configurações".\n\nDo que ele cuida: 🎨 Tema (claro/escuro/automático — e um atalho "🌴 Vice City" que só aparece depois que você já descobriu esse tema escondido segurando o botão de tema), 🔍 Fonte e 📐 Densidade dos cards, 📌 Squad padrão, 🔔 Não Perturbe (atalho rápido pras mesmas opções do sino), ⌨️ acesso direto aos Atalhos de teclado, e as sugestões de "personalização baseada em rotina" (ver abaixo).\n\n💡 <b>Sugestões de rotina, agora reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e cada atalho de atribuição rápida já criado aparecem com um toggle — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo (nem torcer pra não ter clicado "Não sugerir mais" sem querer).\n\n🚫 <b>Sugestões recusadas</b>: toda vez que você clica "Não sugerir mais" numa sugestão, ela entra numa lista aqui — "🔄 Esquecer recusa" deixa o app te sugerir aquilo de novo, se o padrão de uso se repetir. Sincroniza com a sua conta (diferente de antes, quando "não sugerir mais" ficava preso só no navegador que você clicou).' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
+    { icon:'🔥', title:'Tema Black Friday (semana da Black Friday)', text:'Na <b>semana da Black Friday</b> (de segunda a domingo — em 2026, de 23/11 a 29/11) o Maré abre no tema <b>🔥 Black Friday</b> pra todo mundo: preto com vermelho de detalhe, contagem regressiva no topo ("Xd pra Black Friday", "É hoje!" na sexta), 💰 no lugar dos peixinhos e a fita <b>🔥 OFERTA</b> nos cards de prioridade Crítica (cards ♾️ Contínuos ou 💤 parados mantêm o próprio selo).\n\n<b>Prefere o seu tema?</b> Clique no 🔥 (botão de tema, lá em cima) — o seu tema volta e fica até o fim da semana. Mudou de ideia? <b>Minhas Preferências → 🔥 Black Friday</b> (ou botão direito / toque com 2 dedos no botão de tema).\n\nNada é gravado no seu tema: na segunda depois da Black Friday cada um volta sozinho ao que usava (inclusive o 🕐 Tema automático). O PO pode pôr um recado ao lado da contagem em ⚙ Configurações → "Banner do tema Black Friday".' },
     { icon:'🕐', title:'Tema automático', text:'Não quer ficar trocando de tema na mão ao longo do dia? Clique no botão 🕐, ao lado do botão de tema (🌙/☀️), pra ligar a troca sozinha — o board acompanha o horário de São Paulo: ☀️ Lençóis Maranhenses (claro) das 06h às 12h, 🌴 Vice City das 12h às 18h (o easter egg escondido virou tema oficial nesse horário) e 🌙 Abrolhos (escuro) das 18h às 06h. Clique de novo no 🕐 pra desligar.\n\nQualquer troca manual de tema (clicar no 🌙/☀️, trocar a variante do claro, ou o easter egg do Vice City) desliga o automático na hora — nesse momento você escolheu um tema por conta própria, e o app não sobrescreve isso sozinho na próxima virada de horário.\n\n💻 Diferente da maioria das outras preferências de tela, esta fica salva só NESTE navegador (não na sua conta) — se você usa o board em mais de um computador, precisa ligar em cada um separadamente.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).\n\n📈 Dados de Produção: aba ao lado da timeline, com estatísticas dos cards vinculados (status do fluxo, prioridade, responsável, squad) — mesma linguagem visual do Controle de Criativos. Tem o mesmo checkbox "🧩 Incluir supercards" pra ligar/desligar se o card container de um supercard entra na contagem total.' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
@@ -39225,6 +39277,7 @@ window.addEventListener('auth-change', ()=>{
   if(t!=='blackfriday') _recordThemeDiscovered(t);
 });
 function toggleTheme(){
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   _disableThemeAutoIfOn();
   const next = _currentTheme()==='light' ? 'dark' : 'light';
   if(next==='light') document.documentElement.setAttribute('data-theme','light');
@@ -39271,6 +39324,7 @@ function _themeBandForSaoPauloNow(){
 function _isThemeAutoOn(){ return safeLS.getItem('mare_theme_auto')==='1'; }
 let _themeAutoInterval=null;
 function _applyAutoTheme(showToastOnChange){
+  if(window.__bfPadrao){ _applyThemeAutoButtonState(); return; }   // 🔥 semana BF: o padrão vence o automático (ver _bfSemanaInfo no <head>)
   const band = _themeBandForSaoPauloNow();
   const before = _currentTheme();
   if(band==='light') document.documentElement.setAttribute('data-theme','light');
@@ -39326,6 +39380,7 @@ function toggleThemeAuto(){
     showToast('🕐 Tema automático desligado — o tema atual fica fixo até você trocar de novo.');
     return;
   }
+  _bfLargarPadrao();
   safeLS.setItem('mare_theme_auto','1');
   _applyAutoTheme(false);
   _startThemeAutoWatch();
@@ -39387,8 +39442,10 @@ function toggleViceCity(){
   // aqui também: um long-press durante a banda automática da tarde não
   // pode ser lido como "já tá no easter egg, então sai dele".
   if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
+  const bfAntes = window.__bfPadrao;
+  _bfLargarPadrao();
   _disableThemeAutoIfOn();
-  safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
+  safeLS.setItem('mare_theme_before_vice', bfAntes ? (safeLS.getItem('mare_theme')==='light'?'light':'') : (document.documentElement.getAttribute('data-theme') || ''));
   safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
   document.documentElement.setAttribute('data-theme','vice');
   document.documentElement.removeAttribute('data-theme-variant');
@@ -39411,19 +39468,47 @@ function exitViceCity(){
   _applyThemeButtonIcon();
   showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
 }
-// 🔥 Black Friday — proposta em avaliação (ver comentário grande no CSS,
-// [data-theme="blackfriday"]). Mesmo padrão de entrar/guardar/sair do
-// Vice City acima, só que via botão DIREITO no botão de tema (em vez de
-// long-press) — gesto próprio, não compete com clique/duplo-clique/
-// long-press que já fazem 3 coisas diferentes no mesmo botão. De
-// propósito NÃO grava em temasDescobertos (_recordThemeDiscovered) — é
-// um teste, não uma opção real ainda, sem sentido contar métrica disso.
-// Sem mouse (iPad) botão direito não existe — _themeBtnTouchStart()
-// abaixo usa toque com 2 dedos como equivalente, mesma lógica de "gesto
-// próprio que não compete com os outros 3 já no mesmo botão".
+// 🔥 Black Friday — tema sazonal (ver [data-theme="blackfriday"] no CSS).
+// Fora da semana da BF: entra/sai com botão DIREITO (ou toque com 2 dedos) no
+// botão de tema e fica gravado (mare_theme), como os outros temas. Na semana
+// da BF (window._bfSemanaInfo(), no <head>) ele é o PADRÃO de todo mundo sem
+// gravar nada: sair marca só mare_bf_sair_<ano> e devolve o tema da pessoa;
+// voltar (botão direito, ou 🔥 em Minhas Preferências) apaga essa marca.
+// De propósito NÃO grava em temasDescobertos (_recordThemeDiscovered).
 function _isBlackFridayAtivo(){ return _currentTheme()==='blackfriday'; }
+const _bfBr = iso => iso.slice(8,10)+'/'+iso.slice(5,7);
+// Sai do padrão da semana sem mexer na tela (o chamador aplica o tema que quiser)
+function _bfLargarPadrao(){
+  if(!window.__bfPadrao) return;
+  window.__bfPadrao = false;
+  safeLS.setItem(window._bfSemanaInfo().chaveSair, '1');
+}
+// Tema PRÓPRIO da pessoa (o que ela tinha antes do BF): automático, ou o mare_theme salvo
+function _bfAplicarTemaProprio(){
+  if(_isThemeAutoOn()){ _applyAutoTheme(false); _startThemeAutoWatch(); return _currentTheme(); }
+  let t = safeLS.getItem('mare_theme') || '', v = safeLS.getItem('mare_theme_variant') || '';
+  if(t==='blackfriday'){ t = safeLS.getItem('mare_theme_before_bf') || ''; v = safeLS.getItem('mare_theme_variant_before_bf') || ''; safeLS.setItem('mare_theme', t==='light'?'light':t==='vice'?'vice':'dark'); safeLS.setItem('mare_theme_variant', v); }
+  if(t==='light' || t==='vice') document.documentElement.setAttribute('data-theme', t);
+  else document.documentElement.removeAttribute('data-theme');
+  if(t==='light' && v==='b') document.documentElement.setAttribute('data-theme-variant','b');
+  else document.documentElement.removeAttribute('data-theme-variant');
+  _applyThemeButtonIcon();
+  return _currentTheme();
+}
+const _bfNomeTema = t => t==='light' ? '☀️ Lençóis Maranhenses' : t==='vice' ? '🌴 Vice City' : '🌙 Abrolhos';
 function toggleBlackFriday(){
   if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
+  const s = window._bfSemanaInfo();
+  if(s.dentro){
+    // volta pro padrão da semana: nada gravado em mare_theme (segunda que vem cada um volta sozinho)
+    safeLS.removeItem(s.chaveSair);
+    window.__bfPadrao = true;
+    document.documentElement.setAttribute('data-theme','blackfriday');
+    document.documentElement.removeAttribute('data-theme-variant');
+    _applyThemeButtonIcon();
+    showToast('🔥 Tema Black Friday de volta — até domingo, '+_bfBr(s.fim)+'.');
+    return;
+  }
   _disableThemeAutoIfOn();
   safeLS.setItem('mare_theme_before_bf', document.documentElement.getAttribute('data-theme') || '');
   safeLS.setItem('mare_theme_variant_before_bf', document.documentElement.getAttribute('data-theme-variant') || '');
@@ -39431,9 +39516,17 @@ function toggleBlackFriday(){
   document.documentElement.removeAttribute('data-theme-variant');
   safeLS.setItem('mare_theme','blackfriday');
   _applyThemeButtonIcon();
-  showToast('🔥 Modo Black Friday — proposta em teste (botão direito, ou toque com 2 dedos no 🔥, pra sair).');
+  showToast('🔥 Tema Black Friday (botão direito, ou toque com 2 dedos no 🔥, pra sair).');
 }
 function exitBlackFriday(){
+  if(window.__bfPadrao){
+    const s = window._bfSemanaInfo();
+    _bfLargarPadrao();
+    const t = _bfAplicarTemaProprio();
+    showToast(_bfNomeTema(t)+' — o seu tema de volta. Quer o 🔥 de novo até '+_bfBr(s.fim)+'? Minhas Preferências → 🔥 Black Friday.', 6000);
+    return;
+  }
+  { const s = window._bfSemanaInfo(); if(s.dentro) safeLS.setItem(s.chaveSair, '1'); }   // BF manual saindo DENTRO da semana: senão a virada do contador religava
   const prevTheme = safeLS.getItem('mare_theme_before_bf') || '';
   const prevVariant = safeLS.getItem('mare_theme_variant_before_bf') || '';
   if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
@@ -39461,21 +39554,37 @@ function _themeBtnTouchStart(e){
   if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
   toggleBlackFriday();
 }
-// Contador de #bf-countdown-bar (visível só com o tema ligado, ver CSS) —
-// roda sempre em segundo plano, independente do tema atual (mesmo padrão
-// de timer "vida inteira da sessão" já usado no resto do arquivo, ex.
-// _startThemeAutoWatch) — custo irrelevante, evita ter que ligar/desligar
-// o timer toda vez que a pessoa entra/sai do modo Black Friday.
+// Contador de #bf-countdown-bar (visível só com o tema ligado, ver CSS). A data
+// sai de window._bfSemanaInfo() (antes: 27/11/2026 fixo no código). Também
+// faz a VIRADA com a aba aberta: o <head> só decide no carregamento, então um
+// board aberto domingo à noite entra no BF à 00h de segunda e volta pro tema
+// da pessoa à 00h da segunda seguinte.
 function _bfUpdateCountdown(){
-  const el=document.getElementById('bf-countdown-num'); if(!el) return;
-  const target=new Date(Date.UTC(2026,10,27,3,0,0)); // Black Friday 2026 (27 de novembro)
-  const diff=target-new Date();
-  if(diff<=0){ el.textContent='chegou 🎉'; return; }
-  const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000);
-  el.textContent=d+'d '+String(h).padStart(2,'0')+'h';
+  const s = window._bfSemanaInfo();
+  if(s.dentro && !window.__bfPadrao && safeLS.getItem(s.chaveSair)!=='1' && !_isBlackFridayAtivo()){
+    window.__bfPadrao = true; document.documentElement.setAttribute('data-theme','blackfriday'); document.documentElement.removeAttribute('data-theme-variant'); _applyThemeButtonIcon();
+  } else if(!s.dentro && window.__bfPadrao){
+    window.__bfPadrao = false; _bfAplicarTemaProprio();
+  }
+  const el=document.getElementById('bf-countdown-txt'); if(!el) return;
+  const alvo = Date.parse(s.bf+'T00:00:00-03:00'), diff = alvo - Date.now();
+  let txt;
+  if(s.hoje === s.bf) txt = '🔥 <b>É hoje: Black Friday!</b>';
+  else if(diff > 0){ const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000); txt = '🔥 <b>'+d+'d '+String(h).padStart(2,'0')+'h</b> pra Black Friday'; }
+  else txt = '🔥 <b>Fim de semana da Black Friday</b> — reta final até domingo';
+  if(el.innerHTML !== txt) el.innerHTML = txt;   // só texto fixo + números (sem dado de usuário)
 }
 _bfUpdateCountdown();
 setInterval(() => { if (!document.hidden) _bfUpdateCountdown(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) _bfUpdateCountdown(); });
+// Aviso único da semana (por ano), na 1ª abertura com o padrão ligado
+setTimeout(() => {
+  if(!window.__bfPadrao) return;
+  const s = window._bfSemanaInfo(), k = 'mare_bf_aviso_' + s.ano + (s.teste ? '_teste' : '');
+  if(safeLS.getItem(k)==='1') return;
+  safeLS.setItem(k,'1');
+  showToast('🔥 Semana Black Friday: o Maré está de tema novo até domingo, '+_bfBr(s.fim)+'. Prefere o seu? Clique no 🔥 lá em cima.', 9000);
+}, 3500);
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar

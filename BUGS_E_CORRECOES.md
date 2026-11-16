@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · 🔥 Tema Black Friday: fita OFERTA sobre o título e selo "seu card" sumindo; tema perdido no F5 (kanban v8.30.992-dev) — SÓ DEV
+
+- **Fita "🔥 OFERTA" em cima do título e "👤 seu card" sumindo** (`kanban-dev.html`, CSS do tema BF): a fita usava `::before`, o mesmo pseudo-elemento do selo "seu card". O CSS mescla as duas regras propriedade por propriedade, então o `left:9px` e o `border-radius` do selo sobreviviam. Num card **crítico e seu**, a fita virava pílula sobre o título e o selo sumia. Agora a fita é `::after`, com reset completo, e só aparece quando o canto está livre: ♾️ Contínuo e 💤 parado (estados reais, também em `::after`) vencem a decoração.
+- **Tema BF sumia no F5:** o script do `<head>` só reaplicava `light`/`vice`. Agora reaplica `blackfriday`.
+- Teste: `docs/arezzo/testes/test_tema_bf.js`. kanban v8.30.992-dev (SÓ DEV).
+
 ### 2026-11-16 · Auditoria 16/11 — Férias recria período apagado; popup do Gantt Radar reabre sozinho (kanban v8.30.991-dev, okr v2.139-dev, mare-ferias v7, mare-gcal v10)
 
 Reproduzidos no Chromium com módulos reais e dados fictícios. Média: mare-ferias-dev.js/enviarForm salva com set no mesmo id sem recusar edição de período removido por outra sessão. Baixa: mare-gcal-dev.js/diaSync remove popup ao sair da janela mas preserva S.dia; avançar duas vezes e voltar a Hoje reabre o dia antigo. Ambos escalados ao Claude no Quadro por serem módulos compartilhados. Prova: docs/arezzo/testes/test_monitorarbugs_1611.js (2 falhas esperadas até correção) e console_monitorarbugs_1611.js (isolado em iframe, sem Firebase). **Correção (Claude, mesmo PR #1816):** `enviarForm()` recusa salvar a edição quando o período sumiu do listener ao vivo (`ST.dados`) e avisa "excluído enquanto você editava — nada foi salvo" (mesma regra do "editar ressuscita" do Gantt e do OKR). Em `diaSync()`, quando o dia sai da janela de 6 semanas, `S.dia` é zerado; com a aba só escondida (`[hidden]`) a seleção fica. A prova do Codex passa de 2/2 ❌ para 2/2 ✅, e as suítes de Férias e Gantt continuam verdes (`docs/arezzo/testes/test_ferias_encerrado.js` não roda nesta máquina por falta de módulo, também na main).
