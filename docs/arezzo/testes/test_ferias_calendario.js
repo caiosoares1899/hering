@@ -117,6 +117,16 @@ function startServer() {
       const a = MareFerias.ausente('BO', '2026-11-13'), b = MareFerias.ausente('bia', '2026-11-13');
       return !!a && !!b && a.uid === 'bia' && a.ini === b.ini && a.fim === b.fim;
     }));
+    // 16/11 (pedido do Caio): calendário em tela cheia; 🏖️ Minhas férias só abre pelo botão da barra (ou pelo atalho)
+    t('A2. Minhas férias fechado por padrão: sem formulário, botão 🏖️ Minhas férias na barra, listas públicas sem ✏️/🗑️', await p.evaluate(() => {
+      const h = document.getElementById('okr-ferias-host'), b = h.querySelector('.mfer-minhas-btn');
+      return !h.querySelector('#mfer-minhas') && !h.querySelector('[data-f="ini"]') && !!b && b.getAttribute('aria-expanded') === 'false' && !h.querySelector('.mfer-strips [data-act]');
+    }));
+    await p.click('#okr-ferias-host .mfer-minhas-btn'); await p.waitForTimeout(150);
+    t('A3. o botão abre o cadastro no topo, com o foco no Início', await p.evaluate(() => {
+      const h = document.getElementById('okr-ferias-host'), sec = h.querySelector('#mfer-minhas'), top = h.querySelector('.mfer-top');
+      return !!sec && top.nextElementSibling === sec && document.activeElement === h.querySelector('[data-f="ini"]') && h.querySelector('.mfer-minhas-btn').getAttribute('aria-expanded') === 'true';
+    }));
     // F4 (13/11): sem período cadastrado o 🧳 fica desabilitado e pede o cadastro (o fluxo da passagem está em test_ferias_saida.js)
     t('D. Botão 🧳 Preparar minha saída existe e, sem período, está desabilitado', await p.evaluate(() => {
       const btn = [...document.querySelectorAll('#okr-ferias-host button')].find(x => /Preparar minha saída/.test(x.textContent));
@@ -184,6 +194,7 @@ function startServer() {
     const { ctx, p } = await abre('/okr-dev.html', { width: 1280, height: 900 }, PO);
     await p.evaluate(() => { _okrSetView('calendario'); _okrCalSetVista('ferias'); });
     await p.waitForSelector('#okr-ferias-host .mfer', { timeout: 6000 });
+    await p.click('#okr-ferias-host .mfer-minhas-btn'); await p.waitForTimeout(150);   // com o painel ABERTO (é onde os controles de ADM moram)
     t('M. PO não vê seletor de pessoa nem botão de editar férias da Bia', await p.evaluate(() => !document.querySelector('#okr-ferias-host [data-f="alvo"]') && !document.querySelector('#okr-ferias-host [data-act="edit"][data-uid="bia"]')));
     await ctx.close();
   }
@@ -191,6 +202,7 @@ function startServer() {
     const { ctx, p } = await abre('/okr-dev.html', { width: 1280, height: 900 }, AL);
     await p.evaluate(() => { _okrSetView('calendario'); _okrCalSetVista('ferias'); });
     await p.waitForSelector('#okr-ferias-host .mfer', { timeout: 6000 });
+    await p.click('#okr-ferias-host .mfer-minhas-btn'); await p.waitForTimeout(150);
     t('N. Usuário só em config.adm_emails (Armadilha 9) NÃO vê controles de ADM', await p.evaluate(() => !document.querySelector('#okr-ferias-host [data-f="alvo"]') && !document.querySelector('#okr-ferias-host [data-act="edit"][data-uid="bia"]')));
     await ctx.close();
   }
@@ -198,6 +210,10 @@ function startServer() {
     const { ctx, p } = await abre('/okr-dev.html', { width: 1280, height: 900 }, ADM);
     await p.evaluate(() => { _okrSetView('calendario'); _okrCalSetVista('ferias'); });
     await p.waitForSelector('#okr-ferias-host .mfer', { timeout: 6000 });
+    await p.click('#okr-ferias-host .mfer-minhas-btn'); await p.waitForTimeout(150);
+    await p.focus('#okr-ferias-host [data-f="alvo"]'); await p.selectOption('#okr-ferias-host [data-f="alvo"]', 'bia'); await p.waitForTimeout(150);
+    { const o0 = await p.evaluate(() => ({ tx: (document.querySelector('#okr-ferias-host .mfer-meus') || {}).innerText, foco: document.activeElement === document.querySelector('#okr-ferias-host [data-f="alvo"]'), ativo: document.activeElement && (document.activeElement.dataset.f || document.activeElement.tagName) }));
+      t('O0. ADM escolhe a pessoa e a lista ao lado vira "Períodos de Bia…", com o foco ainda no seletor', /Períodos de Bia/.test(o0.tx || '') && o0.foco, o0); }
     await p.click('#okr-ferias-host [data-act="edit"][data-uid="bia"]');
     await p.fill('#okr-ferias-host [data-f="fim"]', '2026-11-22');
     await p.click('#okr-ferias-host [data-act="salvar"]');
@@ -228,6 +244,9 @@ function startServer() {
     await p.click('#cal-ferias [data-act="todo-digital"]');
     await p.waitForTimeout(150);
     t('S. Maré: chip 🌐 Todo o Digital libera todas as squads (Bia aparece)', await p.evaluate(() => /Bia Outra/.test(document.getElementById('cal-ferias').innerText)));
+    t('S2. foco continua no chip depois de redesenhar (UI04)', await p.evaluate(() => document.activeElement && document.activeElement.dataset.act === 'todo-digital'));
+    await p.evaluate(() => { abrirMinhasFerias(); }); await p.waitForTimeout(300);
+    t('S3. atalho 🏖️ Minhas férias (menu do nome) abre a vista JÁ com o cadastro aberto e o foco no Início', await p.evaluate(() => !!document.querySelector('#cal-ferias #mfer-minhas') && document.activeElement === document.querySelector('#cal-ferias [data-f="ini"]')));
     if (cap) await p.screenshot({ path: path.join(cap, 'mare_ferias_1280.png') });
     t('T. Sem erro JS (Maré desktop)', errs.length === 0, errs);
     await ctx.close();
