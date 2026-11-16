@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Ilha e sino: famílias visuais e grupo Calendário — 2026-11-16
+
+No Maré dev, notificações ganham faixa lateral, selo Pessoal/Calendário/Radar/Sistema e rótulo curto a partir de MareNotif.TIPOS. Na Ilha, grupos não vazios aparecem em Operação → Calendário → demais; no sino tradicional, mantém-se a cronologia. Mesmos nós, contagem, leitura, destinos e push. Módulo mare-notif-dev v44 nas quatro páginas dev; introdução da Ilha atualizada. Teste: docs/arezzo/testes/test_ilha_notif_familias.js; roteiro ADM: console_ilha_notif_familias.js. Dica: não, mudança visível ao abrir os avisos, explicada pelos rótulos e introdução existente. Fronteira: sem mudança.
+
 ### 🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.982-dev, okr v2.130-dev, mare-ferias v3) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13
 
 - **🏖️ Calendário geral de férias** (pedido do Caio: agenda geral do Digital + modo férias). No **Maré → 📅 Calendários → 🏖️ Férias** (por padrão as suas squads, com 🌐 Todo o Digital) e no **Radar → 📅 Calendário → 🏖️ Férias** (todo o Digital): quem está **fora agora**, as **próximas saídas** (60 dias) e as faixas do mês, com filtros por pessoa, squad e período. **Minhas férias**: cadastrar, editar e excluir os próprios períodos (excluir pede confirmação; fim antes do início é recusado; acima de 45 dias, só avisa). ADM corrige as de qualquer pessoa. Só login Google @ciahering.com.br; visualizador externo não vê.
