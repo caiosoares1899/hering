@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Ilha e sino: famílias visuais e grupo Calendário — 2026-11-16
+### SÓ DEV — Ilha e sino: famílias visuais e grupo Calendário — 2026-11-16 · PR #1802
 
 No Maré dev, notificações ganham faixa lateral, selo Pessoal/Calendário/Radar/Sistema e rótulo curto a partir de MareNotif.TIPOS. Na Ilha, grupos não vazios aparecem em Operação → Calendário → demais; no sino tradicional, mantém-se a cronologia. Mesmos nós, contagem, leitura, destinos e push. Módulo mare-notif-dev v44 nas quatro páginas dev; introdução da Ilha atualizada. Teste: docs/arezzo/testes/test_ilha_notif_familias.js; roteiro ADM: console_ilha_notif_familias.js. Dica: não, mudança visível ao abrir os avisos, explicada pelos rótulos e introdução existente. Fronteira: sem mudança.
 
