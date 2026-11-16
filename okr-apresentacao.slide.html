@@ -2388,6 +2388,15 @@ function liveRender(){
   });
 }
 setInterval(()=>{ if(!document.hidden && liveAtiva()) liveRender(); }, 15000);   // atualiza "quem está na sala" e o aviso de apresentador sem sinal
+// Ao voltar pra aba (os 2 timers acima pulam com a aba oculta): relógio, cronômetro e sala na hora, sem esperar o próximo tique (até 15 s).
+// A presença (liveBatida, 20 s) não é pausada — quem apresenta e troca de aba continua "na sala".
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden) return;
+  const c = document.getElementById('tb-clock');
+  if(c) c.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  try { _okrRenderCountdown(); } catch(_) {}
+  if(liveAtiva()) liveRender();
+});
 // laser e traços
 function liveDesenhar(){
   const cv = document.getElementById('live-canvas'); if(!cv) return;

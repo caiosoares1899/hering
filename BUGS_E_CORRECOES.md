@@ -92,6 +92,16 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Problema:** Rodada do `/otimizaçãoderotina` identificou que `okr-apresentacao.slide.html` carregava Google Fonts sem `<link rel="preconnect">` e rodava 2 `setInterval` (relógio 1 s e sala ao vivo 15 s) mesmo com a aba em segundo plano.
 - **Causa:** Falta de hints `preconnect` no `<head>` e ausência de checagem `document.hidden` nos timers periódicos.
 - **Solução:** Adicionados `<link rel="preconnect">` para `fonts.googleapis.com` e `fonts.gstatic.com` e guarda `document.hidden` nos 2 `setInterval` em `okr-apresentacao.slide.html`; baseline completo do ecossistema registrado em `.claude/skills/otimizaçãoderotina/SKILL.md`. Sinalizado para avaliação futura: `kanban/okr/agente_chat` no boot do `okr-dev.html` sem `limitToLast` (exige `.indexOn: ["ts"]` + `firebase deploy --only database`).
+- **Revisão do Claude (16/11):** como os timers pulam com a aba oculta, um `visibilitychange` atualiza relógio, cronômetro e sala na hora em que a aba volta. A presença (`liveBatida`, 20 s) segue sem pausa: quem apresenta e troca de aba continua na sala.
+
+### 2026-11-16 · 🔥 Monitor do Firebase: feed com formato mudado viraria alarme do histórico inteiro (functions/firebaseStatus) — /monitorarbugs áreas sensíveis, Black Friday
+
+- **Sintoma (latente):** o monitor do Firebase (`functions/firebase/statusFirebase.js`) lê o incidents.json, que é o HISTÓRICO inteiro de incidentes. Ele marca "aberto" qualquer item sem `end`, e `recente()` devolvia `true` quando não havia data legível. Se o Google renomear os campos de fim e de data, todo incidente antigo de RTDB/Auth/FCM/Functions/Storage/Hosting viraria "aberto e recente": sino + push para cada ADM por incidente, e o selo do Painel mostraria o RTDB fora do ar. Na Black Friday, esse alarme falso esconderia um incidente de verdade.
+- **Causa:** é a mesma classe do achado da VTEX de 13/10 (o caso padrão caía no ramo "alarma"). O GitHub não tem o problema, porque o summary.json só traz incidentes não resolvidos.
+- **Correção:** sem data legível, `recente()` → `false`. Se NENHUM incidente dos serviços usados tiver data, `parseIncidents()` → `null`, o que conta como falha do monitor (`firebase_saude.falhasSeguidas`; aviso aos ADMs após `LIMITE_FALHAS`).
+- **Teste:** `firebase/__tests__/statusFirebase.test.js` ganhou um cenário com 30 incidentes no formato mudado. Ele falha sem a correção e passa com ela.
+- **Rodada /monitorarbugs "áreas sensíveis — Black Friday" (16/11):** sem achado nos avisos do Gantt (`gantt/avisos.js` + regras `calendarios_gantt_hist`/`gantt_inscritos`), no Intake público (rate limit por transação, IP do lado direito, teto por squad), nos monitores VTEX/GitHub (as 4 correções de 13/10 replicadas), na data da Black Friday da Escala (2024–2030 conferidos) nem no Agente Ágil do Painel (uid do caminho, e-mail do Auth, cota por transação, só leitura).
+- **Deploy:** `firebase deploy --only functions:firebaseStatus`.
 
 ### 2026-11-16 · PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — Contraste do Painel e Radar: Lençóis e Vice City medidos
 
