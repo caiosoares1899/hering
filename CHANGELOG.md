@@ -30,6 +30,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **Travessia (`travessia-dev.html`):** declaradas as curvas `--ease-out`, `--ease-in-out` e `--ease-overshoot` no `:root` e aplicado `var(--specular)` em `.toast`.
 - **Conferência:** `okr-dev.html`, `painel-dev.html` e `oceano-dev.html` já tinham `--specular`, as 3 `--ease-*` e nenhuma curva `cubic-bezier` solta. Nenhum `backdrop-filter` novo. Capturas antes/depois (3 temas × 1280/390) em `docs/capturas/vidro_lapidado/`.
 
+### 📅 Gantt · 🧭 Digital: popup do dia reorganizado — calendário → linha → itens com "quando" (kanban v8.30.989-dev, okr v2.136-dev, mare-gcal v9) — SÓ DEV — 2026-11-16
+
+- **/melhoriauiux (o Caio achou o popup "desorganizado, informações jogadas"):** antes, cada ação era uma linha corrida "Linha: TEXTO (período)", o título do calendário quase igual aos itens, a linha repetida a cada ação (CRM, CRM…) e a ⚠️ ação importante da régua sumia no popup.
+- **Agora:** cabeçalho fixo com a data e "N ações em N calendários" · cada calendário como título com o total · cada linha **uma vez**, com a **bolinha da mesma cor da régua** · cada ação num bloco próprio com o **quando** à direita (**Só hoje**, **Começa hoje · até 14/11**, **Termina hoje** ou o período) · **⚠️ / ★** como na régua · calendário sem nada (ou não publicado) vira uma linha compacta no fim.
+- **Fonte única:** `MareGCal.diaHtml()` (mare-gcal-dev.js v9) — Maré e Radar desenham o mesmo popup (antes eram duas cópias). Nada mudou no que entra no dia (mesma `doDia`).
+- **Mais largo no computador** (380 → 480 px, até 80 % da altura): com 11 ações em 3 calendários o popup cabe inteiro em 1280×900 (707 px, sem rolar). O "quando" fica **sempre** na coluna da direita no computador e **sempre** embaixo do texto no celular.
+- Teste: `test_gantt_digital.js` (M8c–M8g). Validação de console: `docs/arezzo/testes/console_gantt_dia_ux.js`. Capturas antes/depois: `docs/capturas/gantt_dia_ux/`.
+
 ### 🧩 Minhas Preferências em blocos: cada área com o próprio fundo (kanban v8.30.988-dev) — SÓ DEV — 2026-11-16
 
 - **Pedido do Caio (13/11):** as áreas de 👤 Minhas Preferências (Tema, Fonte e densidade, Squad padrão, Não Perturbe, Ilha Dinâmica, Atalhos, Sugestões de rotina) ficavam numa lista corrida. Agora cada uma é um **bloco** com fundo um tom acima do painel, borda fina e 10 px entre blocos. As "Sugestões recusadas" ficam no mesmo bloco das Sugestões de rotina.
