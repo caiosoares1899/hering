@@ -71,6 +71,8 @@ const SP = s => Date.parse(s + '-03:00');   // horário de Brasília
       t('crítico + seu: "👤 seu card" continua (::before) e a fita OFERTA vai pro canto (::after no canto direito, sem pílula)', fita.mine && /seu card/.test(fita.c1before) && /OFERTA/.test(fita.c1after) && fita.c1right === '-28px' && Math.abs(fita.c1left - (fita.c1w + 28 - 110)) < 3 && fita.c1radius === '0px', fita);
       t('crítico + contínuo: o estado real (♾️ CONTÍNUO) vence a decoração', /CONTÍNUO/.test(fita.c2after), fita.c2after);
       t('crítico sozinho: fita 🔥 OFERTA', /OFERTA/.test(fita.c3after), fita.c3after);
+      const aged = await p.evaluate(() => { const c = [...document.querySelectorAll('.card')].find(x => x.textContent.includes('Crítico sozinho')); c.classList.add('aged-2'); const cs = getComputedStyle(c, '::after'); const r = { content: cs.content, op: cs.opacity }; c.classList.remove('aged-2'); return r; });
+      t('crítico + 💤 parado: o 💤 (opacidade .6) vence a fita', /💤/.test(aged.content) && aged.op === '0.6', aged);
       // automático não passa por cima
       await p.evaluate(() => { localStorage.setItem('mare_theme_auto', '1'); _applyAutoTheme(true); document.dispatchEvent(new Event('visibilitychange')); });
       t('🕐 automático (tique/visibilidade) não tira o 🔥 da semana', await tema(p) === 'blackfriday', await tema(p));
@@ -136,7 +138,11 @@ const SP = s => Date.parse(s + '-03:00');   // horário de Brasília
       await ctx.close(); }
     // celular sem rolagem lateral
     { const { ctx, p } = await abrir(SP('2026-11-24T10:00:00'), {}, 390);
-      t('390 px no 🔥: sem rolagem lateral', await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), await p.evaluate(() => document.documentElement.scrollWidth)); await ctx.close(); }
+      t('390 px no 🔥: sem rolagem lateral', await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), await p.evaluate(() => document.documentElement.scrollWidth));
+      t('390 px: o botão de tema do topo some (fica no ⋯), por isso o aviso cita "⋯ → Alternar tema"', await p.evaluate(() => getComputedStyle(document.getElementById('theme-toggle-btn')).display === 'none'), '');
+      await p.evaluate(() => _mobileThemeRowClick()); await p.waitForTimeout(300);
+      t('390 px: ⋯ → Alternar tema sai do 🔥 e marca a saída', await tema(p) !== 'blackfriday' && await ls(p, 'mare_bf_sair_2026') === '1', [await tema(p), await ls(p, 'mare_bf_sair_2026')]);
+      await ctx.close(); }
     // outras páginas não mudam
     if (PAG === 'kanban-dev') for (const pg of ['painel-dev', 'okr-dev']) {
       const ctx = await b.newContext(); await fake.install(ctx, seed(), { bf: true });

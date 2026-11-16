@@ -82,7 +82,7 @@ const srv = http.createServer((q, r) => { const f = path.join(ROOT, decodeURICom
         // telas usadas na semana (o padrão vale pra todas): fecha tudo, abre uma, mede, fecha
         const TELAS = { gantt: 'toggleGanttView()', timeline: 'toggleTimelineView()', calendario: 'openCal()', meudia: 'openMeuDia()', prefs: 'openMinhasPrefs()', sino: 'toggleNotifPanel()' };
         for (const [tela, abre] of Object.entries(TELAS)) {
-          await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); try { if (typeof boardView !== 'undefined' && boardView !== 'board') { if (boardView === 'gantt') toggleGanttView(); else if (boardView === 'timeline') toggleTimelineView(); } } catch (e) {} });
+          await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); try { closeOv('cal-ov'); } catch (e) {} try { closeOv('card-ov'); } catch (e) {} try { if (typeof boardView !== 'undefined' && boardView !== 'board') { if (boardView === 'gantt') toggleGanttView(); else if (boardView === 'timeline') toggleTimelineView(); } } catch (e) {} });
           await p.evaluate(a => { try { (0, eval)(a); } catch (e) { window.__abreErro = e.message; } }, abre); await p.waitForTimeout(900);
           res[k][tela] = await medir(p); await p.screenshot({ path: path.join(OUT, `${nome}-${tema}-${tela}.png`) });
           if (tela === 'sino') await p.evaluate(() => { try { toggleNotifPanel(); } catch (e) {} });
