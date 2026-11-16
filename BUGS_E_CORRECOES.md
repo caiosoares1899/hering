@@ -97,7 +97,7 @@ fbSaveCard sobrescreve ocupante após transação abortar por id divergente; aut
 - **`createNotif` com id fixo:** cria por transação ("só se não existe"), com o caminho antigo de reserva.
 
 **Provas:**
-- `test_cards_sensiveis_1611.js`: 4/4 com a correção (incluindo um cenário novo de relocalização), 3 falhas sem ela.
+- `docs/arezzo/testes/test_cards_sensiveis_1611.js`: 4/4 com a correção (incluindo um cenário novo de relocalização), 3 falhas sem ela.
 - Sem regressão: `test_card_conteudo_velho` 18/18, `test_guardiao_cliente`, `test_receita_cards_somem`, `test_automacao_undo_coluna`, `test_card_modal_ui`, `test_rascunho_salvar_e_continuar`. `test_notificacoes` e `test_versao_travada` têm as mesmas falhas antigas com e sem a correção.
 - **Infra:** o `runTransaction` do `docs/arezzo/testes/fakefb.js` passa a registrar `transaction` no `__log`, e `docs/arezzo/testes/test_notificacoes.js` aceita esse tipo de escrita.
 
