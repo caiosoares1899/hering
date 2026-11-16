@@ -96,6 +96,7 @@ function motivoExcecao(key,x){
   const anterior=(referencia[key]?.baixo||[]).find(a=>assinatura(a)===assinatura(x)&&x.r>=a.r-.025);
   if(!anterior)return '';
   if(key.endsWith('/dark'))return 'Escuro preexistente, fora da correção de cor: piso do antes preservado; capturas comparadas.';
+  if(key.endsWith('/vice'))return 'Vice City: cores de identidade mantidas por decisão do Caio (16/11/2026); contraste não piorou em relação à main.';
   if(x.ancestors.some(a=>/\.mpl(?:[. -]|$)|\.mpl-/.test(a)))return 'mare-plantao-dev.js: módulo compartilhado reservado; contraste não piorou. Requer correção própria.';
   if(x.ancestors.some(a=>/\.mn-/.test(a)))return 'mare-notif-dev.js: módulo compartilhado reservado; contraste não piorou. Requer correção própria.';
   if(x.ancestors.some(a=>/\.mgc-/.test(a)))return 'mare-gcal-dev.js: módulo compartilhado reservado; contraste não piorou. Requer correção própria.';

@@ -17,9 +17,9 @@
   const temaTesteSelo=document.querySelector('.hd-title span[style*="var(--teal)"]');
   const temaTesteRows=[
     ['Toast tem cores com contraste ≥ 4,5:1',!!temaTesteCS&&temaTesteRatio>=4.5],
-    ['Texto auxiliar não fica translúcido demais',temaTesteRGBA(temaTesteRoot.getPropertyValue('--txt3'))[3]>=.9],
+    ['Texto auxiliar não fica translúcido demais (no Vice, as cores de identidade foram mantidas por decisão do Caio, 16/11)',temaTesteAtual==='vice'||temaTesteRGBA(temaTesteRoot.getPropertyValue('--txt3'))[3]>=.9],
     ['Selo do título segue o tema',!!temaTesteSelo&&temaTesteRGBA(getComputedStyle(temaTesteSelo).color).slice(0,3).every((temaTesteV,temaTesteI)=>temaTesteV===temaTesteRGBA(temaTesteRoot.getPropertyValue(temaTesteAtual==='light'?'--txt':'--teal'))[temaTesteI])],
-    ['Placeholders seguem a cor de leitura do tema',[...document.querySelectorAll('input[placeholder],textarea[placeholder]')].filter(temaTesteEl=>temaTesteEl.offsetWidth&&temaTesteEl.offsetHeight).every(temaTesteEl=>temaTesteRGBA(getComputedStyle(temaTesteEl,'::placeholder').color)[3]>=.9)]
+    ['Placeholders seguem a cor de leitura do tema',temaTesteAtual==='vice'||[...document.querySelectorAll('input[placeholder],textarea[placeholder]')].filter(temaTesteEl=>temaTesteEl.offsetWidth&&temaTesteEl.offsetHeight).every(temaTesteEl=>temaTesteRGBA(getComputedStyle(temaTesteEl,'::placeholder').color)[3]>=.9)]
   ].map(([teste,temaTesteOk])=>({teste,resultado:temaTesteOk?'✅':'❌'}));
   window._resultadosTeste=temaTesteRows;console.table(temaTesteRows);
   console.info('A auditoria automatizada mede também o fundo renderizado, a rolagem e os três temas. Este roteiro não substitui essa medição.');

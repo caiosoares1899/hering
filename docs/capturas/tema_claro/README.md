@@ -70,3 +70,7 @@ ADM: selecione Lençóis ou Vice City e rode [console_temas.js](console_temas.js
 **Não verificado:** Firebase real, aparelho físico, Safari/Firefox, fontes remotas reais, modais/chat fechados, popups de módulos e vistas Gantt/Férias. Calendário segue o comportamento real: mês no desktop e agenda no celular. Não houve alteração de layout, lógica, banco, kanban, módulos compartilhados ou produção.
 
 Fronteira: sem mudança — só CSS/cores e testes locais. Dica: não, é correção.
+
+## 16/11 — Vice com as cores de identidade (decisão do Caio)
+
+As capturas `depois/*_vice.png` acima mostram a primeira versão (tons quase brancos). Por decisão do Caio, o Vice voltou às cores originais; o tema claro não mudou. Nova rodada da auditoria: exit 0, 120 registros, 0 falhas não justificadas (Vice como exceção nominal, sem piorar contra a `main`).

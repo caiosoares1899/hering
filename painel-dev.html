@@ -153,14 +153,14 @@
    usam ficariam com o azul-marinho do tema escuro, destoando do resto. */
 :root[data-theme="vice"]{
   --deep:#2f1930;--deep-rgb:47,25,48;--glass:rgba(122,74,99,0.55);--glass-b:rgba(197,97,95,0.35);
-  --blue:#e2c9ee;--accent:#ffddca;--cyan:#ffe0dc;--teal:#f1d5e7;
-  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.98);--txt3:rgba(247,232,236,0.96);
-  --warn:#ffdbb8;--danger:#ffd4d1;
+  --blue:#A084B0;--accent:#E59F7C;--cyan:#e3a3a0;--teal:#d6a3c4;   /* Vice: cores de identidade mantidas por decisão do Caio (16/11) */
+  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.82);--txt3:rgba(247,232,236,0.64);
+  --warn:#f0a36b;--danger:#f29a96;
   --ink-rgb:36,21,33;--slate-rgb:69,42,66;
   --specular:inset 0 1px 0 rgba(255,255,255,.08);
 }
 [data-theme="vice"] .ocean{
-  background:linear-gradient(rgba(var(--ink-rgb),.45),rgba(var(--ink-rgb),.45)),
+  background:
     radial-gradient(ellipse at 50% 55%,rgba(229,159,124,.35) 0%,transparent 55%),
     radial-gradient(ellipse at 20% 12%,rgba(160,132,176,.30) 0%,transparent 55%),
     radial-gradient(ellipse at 82% 18%,rgba(179,107,110,.25) 0%,transparent 55%),
@@ -1626,8 +1626,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 [data-theme="light"] :is(#lemp-btn,#kudosp-btn){color:var(--txt);background:var(--glass);}
 [data-theme="vice"] :is(#lemp-btn,#kudosp-btn){color:var(--txt);background:var(--glass);}
 [data-theme="vice"] #painel-notif-badge{color:rgb(var(--ink-rgb))!important;}
-:is([data-theme="light"],[data-theme="vice"]) :is(#ptab-okr,#ptab-escala){color:var(--accent)!important;}
-[data-theme="vice"] :is([style*="color:#38b6ff"],[style*="color:#f97316"],[style*="color:#ffb547"],[style*="color: rgb(255, 181, 71)"]){color:var(--accent)!important;}
+[data-theme="light"] :is(#ptab-okr,#ptab-escala){color:var(--accent)!important;}   /* Vice: amarelo/laranja originais (identidade, decisão do Caio 16/11) */
 [data-theme="light"] #okr-h-line text[fill*="--ating-h"],[data-theme="vice"] #okr-h-line text[fill*="--ating-h"]{fill:var(--txt);}
 [data-theme="vice"] #dev-banner{background:rgba(var(--ink-rgb),.98)!important;}
 /* A versão pode passar sobre conteúdo rolado: superfície do tema evita texto sobre texto. */
