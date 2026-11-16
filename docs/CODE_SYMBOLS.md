@@ -344,43 +344,43 @@
 - feriasRenderEvidPreview:L2163 · feriasComprimirImagem:L2174 · feriasPreencherDadosTecnicos:L2209 · feriasRenderBugsLista:L2226 · feriasProcessarSnapshotBugs:L2239 · feriasRefBugs:L2259 · feriasIniciarBugsListener:L2264 · feriasCarregarBugs:L2277 · feriasEnviarBug:L2293 · feriasRenderModal:L2375
 - abrirFerias:L2389 · feriasEnviarPergunta:L2405 · instalar:L2476 · mostrarDocumento:L2493 · iniciarSonar:L2503
 
-## `escala-dev.html` (1182 linhas · 71 funções)
-- **CSS:** L8–L178 | **JS:** L233–L1179 (module) | **Módulos:** mare-login-dev.js?v=3 (L232)
-- **Consts (43):** VERSION:L238 · firebaseConfig:L240 · fbApp:L249 · db:L250 · auth:L251 · provider:L252 · $:L257 · esc:L258 · ADM_EMAIL_FIXO:L259 · squadValido:L260 · MAX_DIAS:L261 · TIPOS:L264 · DIAS:L269 · SQUAD_FALLBACK:L271 · norm:L276 · arrDe:L277 · pad:L280 · iso:L281 · ISO_RE:L282 · addDias:L284 · diaSem:L285 · segunda:L286 · hojeISO:L287 · curto:L288 · papelNoSquad:L316 · souAdm:L317 · souDoSquad:L318 · souGestor:L319 · podeEditar:L320 · squadsEditaveis:L321 · rotuloPapel:L322 · rotuloSubs:L335 · entrada:L336 · ordTipo:L543 · hm:L544 · MAX_PAUSAS:L546 · pausaTxt:L550 · hhmm:L578 · MESES:L802 · FONTE:L803 (+3)
-- parseISO:L283 · blackFriday:L290 · proximaBF:L291 · lsGet:L311 · lsSet:L312 · isHering:L313 · membrosDoSquad:L324 · subtimesDe:L330 · membrosF:L332 · squadsEscopo:L334
-- av:L338 · chipTipo:L343 · toast:L348
-- **[Carregamento]** carregarBase:L351 · carregarJanela:L372
-- **[Render]** diasDaSemana:L388 · cabecalhoDias:L389 · coberturaDoDia:L396 · squadTemEscala:L401 · renderSquad:L403 · renderGlobal:L426 · renderHoje:L449 · renderAvisos:L460 · subtimesDoEscopo:L475 · nFiltros:L479
-- renderFiltros:L480 · pintarFiltros:L491 · abrirFiltros:L504 · render:L514 · irParaSemana:L533
-- **[Modais]** abrirOv:L536 · fecharOv:L537 · pausasDe:L547 · erroPausas:L552 · listaDia:L563 · ganttModelo:L579 · ganttDia:L608 · abrirDia:L636 · abrirCadastro:L661 · desenharCadastro:L677
-- lerForm:L718 · pintarPausas:L722 · datasDoCadastro:L728 · atualizarPrev:L736 · confirmarCadastro:L743 · avisarPessoa:L783
-- **[Baixar a escala em JPG (dia · semana · mês)]** jRR:L810 · jAjusta:L814 · jT:L815 · jNome:L819 · jNova:L824 · jPeriodo:L831 · jEscopo:L838 · jDoDia:L844 · jMoldura:L851 · jChip:L861
-- jCabDia:L867 · jSemanaSquad:L874 · jSemanaGlobal:L900 · jDia:L931 · jGantt:L955 · jMes:L995 · jVazio:L1038 · jGerar:L1042 · jBaixar:L1048 · jpgAtualizar:L1056
-- abrirJpg:L1075
-- **[Login / fluxo principal]** renderWho:L1129 · iniciar:L1144 · checarVersao:L1170 · __escala:L1178
+## `escala-dev.html` (1185 linhas · 71 funções)
+- **CSS:** L8–L181 | **JS:** L236–L1182 (module) | **Módulos:** mare-login-dev.js?v=3 (L235)
+- **Consts (43):** VERSION:L241 · firebaseConfig:L243 · fbApp:L252 · db:L253 · auth:L254 · provider:L255 · $:L260 · esc:L261 · ADM_EMAIL_FIXO:L262 · squadValido:L263 · MAX_DIAS:L264 · TIPOS:L267 · DIAS:L272 · SQUAD_FALLBACK:L274 · norm:L279 · arrDe:L280 · pad:L283 · iso:L284 · ISO_RE:L285 · addDias:L287 · diaSem:L288 · segunda:L289 · hojeISO:L290 · curto:L291 · papelNoSquad:L319 · souAdm:L320 · souDoSquad:L321 · souGestor:L322 · podeEditar:L323 · squadsEditaveis:L324 · rotuloPapel:L325 · rotuloSubs:L338 · entrada:L339 · ordTipo:L546 · hm:L547 · MAX_PAUSAS:L549 · pausaTxt:L553 · hhmm:L581 · MESES:L805 · FONTE:L806 (+3)
+- parseISO:L286 · blackFriday:L293 · proximaBF:L294 · lsGet:L314 · lsSet:L315 · isHering:L316 · membrosDoSquad:L327 · subtimesDe:L333 · membrosF:L335 · squadsEscopo:L337
+- av:L341 · chipTipo:L346 · toast:L351
+- **[Carregamento]** carregarBase:L354 · carregarJanela:L375
+- **[Render]** diasDaSemana:L391 · cabecalhoDias:L392 · coberturaDoDia:L399 · squadTemEscala:L404 · renderSquad:L406 · renderGlobal:L429 · renderHoje:L452 · renderAvisos:L463 · subtimesDoEscopo:L478 · nFiltros:L482
+- renderFiltros:L483 · pintarFiltros:L494 · abrirFiltros:L507 · render:L517 · irParaSemana:L536
+- **[Modais]** abrirOv:L539 · fecharOv:L540 · pausasDe:L550 · erroPausas:L555 · listaDia:L566 · ganttModelo:L582 · ganttDia:L611 · abrirDia:L639 · abrirCadastro:L664 · desenharCadastro:L680
+- lerForm:L721 · pintarPausas:L725 · datasDoCadastro:L731 · atualizarPrev:L739 · confirmarCadastro:L746 · avisarPessoa:L786
+- **[Baixar a escala em JPG (dia · semana · mês)]** jRR:L813 · jAjusta:L817 · jT:L818 · jNome:L822 · jNova:L827 · jPeriodo:L834 · jEscopo:L841 · jDoDia:L847 · jMoldura:L854 · jChip:L864
+- jCabDia:L870 · jSemanaSquad:L877 · jSemanaGlobal:L903 · jDia:L934 · jGantt:L958 · jMes:L998 · jVazio:L1041 · jGerar:L1045 · jBaixar:L1051 · jpgAtualizar:L1059
+- abrirJpg:L1078
+- **[Login / fluxo principal]** renderWho:L1132 · iniciar:L1147 · checarVersao:L1173 · __escala:L1181
 
-## `intake-dev.html` (493 linhas · 20 funções)
-- **CSS:** L8–L78 | **JS:** L133–L490 (module) | **Módulos:** mare-login-dev.js?v=3 (L132)
-- **Consts (14):** firebaseConfig:L139 · fbApp:L148 · db:L149 · auth:L150 · provider:L151 · FN_URL:L154 · $:L155 · esc:L156 · norm:L157 · SQUADS_DEMANDANTES:L160 · SQUAD_FALLBACK:L162 · PRIOS:L166 · LS_SQDEM:L169 · squadValido:L180
-- showMsg:L182 · clearMsg:L183 · lsGet:L184 · lsSet:L185 · isHering:L187 · arr:L190 · hojeISO:L191 · proximaSexta:L195 · camposEfetivos:L199 · tagsEspeciais:L211
-- carregarListaSquads:L214 · carregarSquadInterno:L226 · renderWho:L255 · renderSquadSlot:L272 · renderInterno:L284 · mostrar:L336 · entrar:L348 · validarInterno:L416 · avisarMembros:L432 · __intake:L489
+## `intake-dev.html` (496 linhas · 20 funções)
+- **CSS:** L8–L81 | **JS:** L136–L493 (module) | **Módulos:** mare-login-dev.js?v=3 (L135)
+- **Consts (14):** firebaseConfig:L142 · fbApp:L151 · db:L152 · auth:L153 · provider:L154 · FN_URL:L157 · $:L158 · esc:L159 · norm:L160 · SQUADS_DEMANDANTES:L163 · SQUAD_FALLBACK:L165 · PRIOS:L169 · LS_SQDEM:L172 · squadValido:L183
+- showMsg:L185 · clearMsg:L186 · lsGet:L187 · lsSet:L188 · isHering:L190 · arr:L193 · hojeISO:L194 · proximaSexta:L198 · camposEfetivos:L202 · tagsEspeciais:L214
+- carregarListaSquads:L217 · carregarSquadInterno:L229 · renderWho:L258 · renderSquadSlot:L275 · renderInterno:L287 · mostrar:L339 · entrar:L351 · validarInterno:L419 · avisarMembros:L435 · __intake:L492
 
-## `travessia-dev.html` (1164 linhas · 59 funções)
-- **CSS:** L12–L342 | **JS:** L368–L1161 (module) | **Módulos:** mare-login-dev.js?v=3 (L367)
-- **Consts (79):** firebaseConfig:L373 · fbApp:L383 · db:L384 · auth:L385 · provider:L386 · T:L393 · $:L394 · esc:L395 · _hrefOk:L396 · pad:L397 · isoDe:L398 · hojeISO:L399 · brDe:L400 · brFull:L401 · diasEntre:L402 · novoId:L403 · W:L407 · D:L408 · WABS:L409 · CAD:L424 · CAD_DIAS:L425 · TIPO_1A1:L426 · FACES:L427 · faceDe:L428 · FASES:L429 · PERGUNTAS_PADRAO:L430 · CULTURA:L438 · CULT:L445 · atIds:L446 · atChips:L447 · ultimoEncontro:L470 · viewProxima:L501 · S:L505 · nomeDe:L506 · iniDe:L507 · liderDe:L508 · liderados:L509 · timeAmpliado:L510 · ehLider:L511 · ciclosAtivos:L512 (+39)
-- _signIn:L388 · _signInIdToken:L390
-- **[utilidades]** toast:L405 · G:L406 · uiConfirm:L410 · erroAmigavel:L416 · tenta:L421
-- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L450 · termometro:L461 · proximaAcao:L475 · carregaProxima:L493
-- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L521 · carregaUm:L530 · carregaHumor:L536 · carregaDiario:L543 · carregaBau:L544 · carregaEstrelas:L545 · carregaAval:L553 · cache:L560
-- **[telas]** blocoFechamento:L564 · viewDiario:L575 · atEscolha:L595 · listaEncontros:L603 · viewFarol:L608 · sparkHumor:L614 · viewInicio:L619 · viewBau:L649
-- **[avaliação (pessoa)]** sugestoesPares:L668 · rascLer:L681 · rascGravar:L682 · rascGuardar:L683 · rascLimpar:L684 · rascStatus:L687 · avalProgresso:L688 · rascRestaurar:L692 · formResp:L699 · viewAval:L704
-- blocoAtitudes:L745 · resumoAtitudesLider:L755 · viewAtitudesTime:L764
-- **[frota (líder)]** viewFrota:L774 · viewTermometro:L793 · viewDetalhe:L808 · viewAvalLider:L823
-- **[administração (ADM e RH)]** viewAdmin:L850
-- **[montagem]** bolhas:L879 · render:L885
-- **[ações]** guardarBau:L902 · humorDisparar:L914 · humorArmar:L915 · alertaApoio:L918
-- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L1035 · demoDados:L1037
-- **[login e boot]** mostraLogin:L1096 · criarPeixes:L1112 · animAtividade:L1122 · aplicaTema:L1127 · abrirApp:L1130 · Travessia:L1159
+## `travessia-dev.html` (1165 linhas · 59 funções)
+- **CSS:** L12–L343 | **JS:** L369–L1162 (module) | **Módulos:** mare-login-dev.js?v=3 (L368)
+- **Consts (79):** firebaseConfig:L374 · fbApp:L384 · db:L385 · auth:L386 · provider:L387 · T:L394 · $:L395 · esc:L396 · _hrefOk:L397 · pad:L398 · isoDe:L399 · hojeISO:L400 · brDe:L401 · brFull:L402 · diasEntre:L403 · novoId:L404 · W:L408 · D:L409 · WABS:L410 · CAD:L425 · CAD_DIAS:L426 · TIPO_1A1:L427 · FACES:L428 · faceDe:L429 · FASES:L430 · PERGUNTAS_PADRAO:L431 · CULTURA:L439 · CULT:L446 · atIds:L447 · atChips:L448 · ultimoEncontro:L471 · viewProxima:L502 · S:L506 · nomeDe:L507 · iniDe:L508 · liderDe:L509 · liderados:L510 · timeAmpliado:L511 · ehLider:L512 · ciclosAtivos:L513 (+39)
+- _signIn:L389 · _signInIdToken:L391
+- **[utilidades]** toast:L406 · G:L407 · uiConfirm:L411 · erroAmigavel:L417 · tenta:L422
+- **[regras de negócio (puras — expostas em window.Travessia para]** farol:L451 · termometro:L462 · proximaAcao:L476 · carregaProxima:L494
+- **[leituras (sob demanda, cacheadas até o próximo salvamento)]** folgasDe:L522 · carregaUm:L531 · carregaHumor:L537 · carregaDiario:L544 · carregaBau:L545 · carregaEstrelas:L546 · carregaAval:L554 · cache:L561
+- **[telas]** blocoFechamento:L565 · viewDiario:L576 · atEscolha:L596 · listaEncontros:L604 · viewFarol:L609 · sparkHumor:L615 · viewInicio:L620 · viewBau:L650
+- **[avaliação (pessoa)]** sugestoesPares:L669 · rascLer:L682 · rascGravar:L683 · rascGuardar:L684 · rascLimpar:L685 · rascStatus:L688 · avalProgresso:L689 · rascRestaurar:L693 · formResp:L700 · viewAval:L705
+- blocoAtitudes:L746 · resumoAtitudesLider:L756 · viewAtitudesTime:L765
+- **[frota (líder)]** viewFrota:L775 · viewTermometro:L794 · viewDetalhe:L809 · viewAvalLider:L824
+- **[administração (ADM e RH)]** viewAdmin:L851
+- **[montagem]** bolhas:L880 · render:L886
+- **[ações]** guardarBau:L903 · humorDisparar:L915 · humorArmar:L916 · alertaApoio:L919
+- **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L1036 · demoDados:L1038
+- **[login e boot]** mostraLogin:L1097 · criarPeixes:L1113 · animAtividade:L1123 · aplicaTema:L1128 · abrirApp:L1131 · Travessia:L1160
 
 ## `okr-apresentacao.slide.html` (2542 linhas · 120 funções)
 - **CSS:** L9–L614 | **JS:** L758–L796 (module), L798–L2516 (classic), L2517–L2539 (classic)
