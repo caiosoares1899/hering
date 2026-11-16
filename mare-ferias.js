@@ -178,22 +178,35 @@
 .mfer-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 11px;border-radius:9px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.06);color:var(--txt);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;}
 .mfer-btn:hover:not(:disabled){border-color:var(--accent);background:rgba(var(--ink-rgb),.12);}
 .mfer-btn.on,.mfer-btn.prim{background:var(--accent);border-color:var(--accent);color:#031c2e;}
+.mfer-btn.on:hover:not(:disabled),.mfer-btn.prim:hover:not(:disabled){background:var(--accent);border-color:var(--accent);filter:brightness(1.1);}   /* hover não pode trocar o fundo (o texto escuro sumia — 16/11) */
 .mfer-btn.danger{color:var(--danger);border-color:rgba(255,95,109,.35);}
 .mfer-btn.danger:hover:not(:disabled){background:rgba(255,95,109,.15);border-color:var(--danger);}
 .mfer-btn:disabled{opacity:.48;cursor:not-allowed;}
 .mfer-inp,.mfer-sel{padding:6px 10px;border-radius:9px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.06);color:var(--txt);font-size:12px;font-family:inherit;outline:none;min-width:0;}
 .mfer-inp:focus,.mfer-sel:focus{border-color:var(--accent);}
-.mfer-grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;align-items:start;}
 .mfer-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0;}
 .mfer-card-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 .mfer-card-tt{font-size:13.5px;font-weight:700;color:var(--txt);margin:0;display:flex;align-items:center;gap:6px;}
 .mfer-sub{font-size:11.5px;color:var(--txt3);margin:0;}
-.mfer-strips{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mfer-strips{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
+.mfer-n{min-width:20px;padding:1px 7px;border-radius:999px;border:1px solid var(--glass-b);font-size:11px;font-weight:700;text-align:center;color:var(--txt);}
+.mfer-btn.prim .mfer-n,.mfer-btn.on .mfer-n{border-color:currentColor;color:inherit;}
+.mfer-ls{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:264px;overflow-y:auto;overscroll-behavior:contain;}   /* muitos períodos: rola dentro do cartão */
+.mfer-it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--glass-b);font-size:12.5px;}
+.mfer-it:last-child{border-bottom:0;}
+.mfer-it-nm{font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mfer-it-dt{font-size:12px;font-weight:600;color:var(--txt2);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.mfer-it-obs{grid-column:1/-1;font-size:11.5px;color:var(--txt2);overflow-wrap:anywhere;}
+.mfer-minhas{box-shadow:var(--specular,none),inset 0 0 0 1px var(--accent);}
+.mfer-minhas-acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.mfer-minhas-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;}
+.mfer-meus{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.mfer-h4{font-size:12.5px;}
 .mfer-lista{display:flex;flex-direction:column;gap:6px;}
 .mfer-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(var(--ink-rgb),.05);border:1px solid var(--glass-b);font-size:12px;min-width:0;}
 .mfer-item-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
 .mfer-item-nm{font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mfer-item-dt{font-size:11.5px;color:var(--teal);font-weight:600;}
+.mfer-item-dt{font-size:12px;color:var(--txt);font-weight:700;font-variant-numeric:tabular-nums;}   /* UI01: era --teal (some no claro/Vice) */
 .mfer-item-obs{font-size:11px;color:var(--txt2);overflow-wrap:anywhere;}
 .mfer-item-acts{display:flex;gap:4px;flex-shrink:0;}
 .mfer-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--glass-b);border-radius:12px;background:rgba(var(--ink-rgb),.03);}
@@ -210,7 +223,7 @@
 .mfer-cell{border-right:1px solid rgba(var(--ink-rgb),.04);min-height:34px;}
 .mfer-cell.is-wknd{background:rgba(var(--ink-rgb),.03);}
 .mfer-cell.is-hoje{background:rgba(29,233,182,.08);}
-.mfer-bar{grid-row:1;align-self:center;z-index:1;margin:4px 2px;padding:3px 7px;border-radius:999px;background:linear-gradient(90deg,rgba(29,233,182,.26),rgba(56,182,255,.26));border:1px solid rgba(29,233,182,.55);color:var(--txt);font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;text-align:left;}
+.mfer-bar{grid-row:1;align-self:center;z-index:1;margin:4px 2px;padding:5px 8px;min-height:26px;border-radius:999px;background:linear-gradient(90deg,rgba(29,233,182,.26),rgba(56,182,255,.26));border:1px solid rgba(29,233,182,.55);color:var(--txt);font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;text-align:left;}
 .mfer-bar:hover{border-color:var(--accent);filter:brightness(1.08);}
 .mfer-bar.is-hoje{background:linear-gradient(90deg,rgba(29,233,182,.4),rgba(56,182,255,.35));border-color:var(--teal);}
 .mfer-form{display:flex;flex-direction:column;gap:8px;}
@@ -246,13 +259,13 @@
 a.mfer-btn{text-decoration:none;}
 @media (max-width:768px){ .mfer-pass-ov{padding:8px;align-items:flex-end;} .mfer-pass{max-height:calc(100dvh - 16px);border-radius:18px 18px 12px 12px;} .mfer-pass-acts{width:100%;} .mfer-pass-acts .mfer-sel{flex:1 1 100%;} }
 @media (max-width:960px){
-  .mfer-grid-2{grid-template-columns:1fr;}
-  .mfer-strips{grid-template-columns:1fr;}
+  .mfer-strips,.mfer-minhas-grid{grid-template-columns:1fr;}
 }
 @media (max-width:768px){
   .mfer-btn,.mfer-inp,.mfer-sel{min-height:44px;font-size:13px;}
   .mfer-form-row{grid-template-columns:1fr;}
   .mfer-row{grid-template-columns:130px 1fr;}
+  .mfer-minhas-btn{order:-1;flex:1 1 100%;}   /* celular: o cadastro é o 1º botão da barra */
 }
 `;
     document.head.appendChild(st);
@@ -286,6 +299,7 @@ a.mfer-btn{text-decoration:none;}
       msg: null, // { tipo: 'err'|'warn'|'ok', txt }
       det: '',
       salvando: false,
+      painel: false,   // 🏖️ Minhas férias aberto (16/11: o cadastro abre sob demanda; o calendário usa a tela toda)
     };
 
     const ehAdm = () => typeof opts.isAdm === 'function' ? !!opts.isAdm() : !!opts.isAdm;
@@ -345,6 +359,7 @@ a.mfer-btn{text-decoration:none;}
     function iniciarEdicao(uid, id){
       const p = periodosDoUid(uid).find(x => x.id === id);
       if(!p) return;
+      S.painel = true;
       S.editUid = uid;
       S.editId = id;
       S.formAlvoUid = uid;
@@ -443,20 +458,35 @@ a.mfer-btn{text-decoration:none;}
       desenhar();
     }
 
-    function renderItemLista(p, mostrarNome){
+    // Lista pública (Fora agora / Próximas): 1 linha por período, sem ações — editar fica em 🏖️ Minhas férias (16/11).
+    function renderItemPublico(p){
+      const dur = diasEntre(p.ini, p.fim);
+      return '<li class="mfer-it">'
+        + '<span class="mfer-it-nm">' + esc(nomeDe(p.uid)) + '</span>'
+        + '<span class="mfer-it-dt">' + esc(br(p.ini) + ' – ' + br(p.fim)) + ' · ' + dur + 'd</span>'
+        + (p.obs ? '<span class="mfer-it-obs">' + esc(p.obs) + '</span>' : '')
+      + '</li>';
+    }
+    // Lista do painel (os seus períodos, ou os da pessoa escolhida pelo ADM): com ✏️ / 🗑️.
+    function renderItemLista(p){
       const pode = (p.uid === opts.uid) || ehAdm();
       const dur = diasEntre(p.ini, p.fim);
       return '<div class="mfer-item">'
         + '<div class="mfer-item-info">'
-          + (mostrarNome ? '<div class="mfer-item-nm">' + esc(nomeDe(p.uid)) + '</div>' : '')
           + '<div class="mfer-item-dt">' + esc(brAno(p.ini) + ' – ' + brAno(p.fim)) + ' · ' + dur + 'd</div>'
           + (p.obs ? '<div class="mfer-item-obs">' + esc(p.obs) + '</div>' : '')
         + '</div>'
         + (pode ? '<div class="mfer-item-acts">'
-            + '<button type="button" class="mfer-btn" data-act="edit" data-uid="' + esc(p.uid) + '" data-id="' + esc(p.id) + '" title="Editar período">✏️</button>'
-            + '<button type="button" class="mfer-btn danger" data-act="del" data-uid="' + esc(p.uid) + '" data-id="' + esc(p.id) + '" title="Excluir período">🗑️</button>'
+            + '<button type="button" class="mfer-btn" data-act="edit" data-uid="' + esc(p.uid) + '" data-id="' + esc(p.id) + '" aria-label="Editar período ' + esc(br(p.ini) + ' a ' + br(p.fim)) + '">✏️</button>'
+            + '<button type="button" class="mfer-btn danger" data-act="del" data-uid="' + esc(p.uid) + '" data-id="' + esc(p.id) + '" aria-label="Excluir período ' + esc(br(p.ini) + ' a ' + br(p.fim)) + '">🗑️</button>'
           + '</div>' : '')
       + '</div>';
+    }
+    // Foco preservado ao redesenhar (UI04 da auditoria de 13/11): o controle é achado pela mesma chave data-*.
+    function chaveFoco(){
+      const a = document.activeElement; if(!a || !root.contains(a)) return null;
+      for(const k of ['filtro','f','act','nav','uid']) if(a.dataset && a.dataset[k] != null) return '[data-' + k + '="' + CSS.escape(a.dataset[k]) + '"]' + (a.dataset.id ? '[data-id="' + CSS.escape(a.dataset.id) + '"]' : '');
+      return null;
     }
 
     function desenhar(){
@@ -500,6 +530,16 @@ a.mfer-btn{text-decoration:none;}
       const temMinhasSquads = minhasSquads().length > 0;
       const scrollAntes = root.querySelector('.mfer-scroll')?.scrollLeft || 0;
 
+      const alvoPainel = (adm && S.formAlvoUid) ? S.formAlvoUid : opts.uid;
+      const doAlvo = alvoPainel ? periodosDoUid(alvoPainel) : [];
+      const meuPer = opts.uid ? periodoDe(opts.uid) : null;
+      const podeSaida = typeof opts.prepararSaida === 'function';
+      const foco = chaveFoco();
+
+      const lista = (arr, vazio) => arr.length
+        ? '<ul class="mfer-ls">' + arr.slice().sort((x, y) => x.ini < y.ini ? -1 : x.ini > y.ini ? 1 : String(nomeDe(x.uid)).localeCompare(String(nomeDe(y.uid)), 'pt-BR')).map(renderItemPublico).join('') + '</ul>'
+        : '<div class="mfer-empty">' + vazio + '</div>';
+
       root.innerHTML =
         '<div class="mfer">'
           + '<div class="mfer-top">'
@@ -521,90 +561,84 @@ a.mfer-btn{text-decoration:none;}
                   + '<option value="mes"' + (S.filtroPeriodo === 'mes' ? ' selected' : '') + '>📅 Neste mês</option>'
                 + '</select>'
               + (temMinhasSquads ? '<button type="button" class="mfer-btn' + (S.todoDigital ? ' on' : '') + '" data-act="todo-digital" aria-pressed="' + S.todoDigital + '" title="Mostrar pessoas de todas as squads do Digital">🌐 Todo o Digital</button>' : '')
+              + (opts.uid ? '<button type="button" class="mfer-btn mfer-minhas-btn' + (S.painel ? ' on' : ' prim') + '" data-act="painel" aria-expanded="' + S.painel + '" aria-controls="mfer-minhas">🏖️ Minhas férias' + (minhas.length ? ' <span class="mfer-n">' + minhas.length + '</span>' : '') + '</button>' : '')
             + '</div>'
           + '</div>'
 
-          + '<div class="mfer-grid-2">'
-            + '<div style="display:flex;flex-direction:column;gap:14px;min-width:0;">'
-              + '<div class="mfer-strips">'
-                + '<div class="mfer-card">'
-                  + '<div class="mfer-card-hd"><h3 class="mfer-card-tt">🏖️ Fora agora</h3><span class="mfer-sub">' + foraAgora.length + '</span></div>'
-                  + (foraAgora.length ? '<div class="mfer-lista">' + foraAgora.map(p => renderItemLista(p, true)).join('') + '</div>'
-                      : '<div class="mfer-empty">Ninguém de férias hoje (horário de São Paulo).</div>')
-                + '</div>'
-                + '<div class="mfer-card">'
-                  + '<div class="mfer-card-hd"><h3 class="mfer-card-tt">📆 Próximas (60 dias)</h3><span class="mfer-sub">' + proximas.length + '</span></div>'
-                  + (proximas.length ? '<div class="mfer-lista">' + proximas.map(p => renderItemLista(p, true)).join('') + '</div>'
-                      : '<div class="mfer-empty">Nenhuma saída programada nos próximos 60 dias.</div>')
-                + '</div>'
-              + '</div>'
-
-              + '<div class="mfer-card">'
-                + '<div class="mfer-card-hd"><h3 class="mfer-card-tt">📅 Faixas do mês · ' + esc(MES_C[S.mes] + '/' + S.ano) + '</h3><span class="mfer-sub">' + linhasMes.length + ' pessoa(s)</span></div>'
-                + (linhasMes.length
-                  ? '<div class="mfer-scroll" tabindex="0" aria-label="Grade mensal de férias"><div class="mfer-canvas">'
-                      + '<div class="mfer-row mfer-hd"><div class="mfer-sticky">Pessoa</div><div class="mfer-track" style="grid-template-columns:repeat(' + diasMes + ',minmax(20px,1fr));">'
-                        + dias.map(x => '<div class="mfer-dhd' + (x.w === 0 || x.w === 6 ? ' is-wknd' : '') + (x.iso === hoje ? ' is-hoje' : '') + '"><span>' + DOW[x.w] + '</span><b>' + x.d + '</b></div>').join('')
-                      + '</div></div>'
-                      + linhasMes.map(row => {
-                          return '<div class="mfer-row"><div class="mfer-sticky"><span class="mfer-sticky-nm" title="' + esc(row.pessoa.nome) + '">' + esc(row.pessoa.nome) + '</span></div>'
-                            + '<div class="mfer-track" style="grid-template-columns:repeat(' + diasMes + ',minmax(20px,1fr));">'
-                              + dias.map((x, idx) => '<div class="mfer-cell' + (x.w === 0 || x.w === 6 ? ' is-wknd' : '') + (x.iso === hoje ? ' is-hoje' : '') + '" style="grid-row:1;grid-column:' + (idx + 1) + ';"></div>').join('')
-                              + row.periodos.map(p => {
-                                  const iniClip = p.ini < mesIni ? mesIni : p.ini;
-                                  const fimClip = p.fim > mesFim ? mesFim : p.fim;
-                                  const cIni = parseInt(iniClip.slice(8, 10), 10);
-                                  const cFim = parseInt(fimClip.slice(8, 10), 10);
-                                  const lbl = br(p.ini) + '–' + br(p.fim) + (p.obs ? ' · ' + p.obs : '');
-                                  const ehHoje = p.ini <= hoje && hoje <= p.fim;
-                                  return '<button type="button" class="mfer-bar' + (ehHoje ? ' is-hoje' : '') + '" data-det="' + esc(row.pessoa.nome + ' · ' + brAno(p.ini) + ' a ' + brAno(p.fim) + (p.obs ? ' · ' + p.obs : '')) + '" style="grid-column:' + cIni + '/' + (cFim + 1) + ';" title="' + esc(lbl) + '">' + esc(lbl) + '</button>';
-                                }).join('')
-                            + '</div></div>';
-                        }).join('')
-                    + '</div></div>'
-                  : '<div class="mfer-empty">Nenhuma férias registrada em ' + esc(MES_L[S.mes] + ' de ' + S.ano) + ' para os filtros atuais.</div>')
-                + '<div class="mfer-det" role="status" aria-live="polite">' + esc(S.det) + '</div>'
-              + '</div>'
-            + '</div>'
-
-            + '<div class="mfer-card">'
+          // 🏖️ Minhas férias: só quando aberto (botão da barra, atalho do menu ou ✏️ de um período). Fica no TOPO: no celular o cadastro é a 1ª coisa (UI02).
+          + (S.painel && opts.uid ? '<section class="mfer-card mfer-minhas" id="mfer-minhas" aria-label="Minhas férias">'
               + '<div class="mfer-card-hd">'
-                + '<h3 class="mfer-card-tt">🧳 Minhas férias</h3>'
-                + (function(){
-                    const per = opts.uid ? periodoDe(opts.uid) : null;
-                    const pode = typeof opts.prepararSaida === 'function';
-                    if(!pode) return '';
-                    return per
-                      ? '<button type="button" class="mfer-btn prim" data-act="saida" title="Decida, item a item, o que passar para outra pessoa antes das suas férias (' + esc(brAno(per.ini) + ' a ' + brAno(per.fim)) + ')">🧳 Preparar minha saída</button>'
-                      : '<button type="button" class="mfer-btn" disabled title="Cadastre suas férias abaixo para preparar a saída">🧳 Preparar minha saída</button>';
-                  })()
+                + '<h3 class="mfer-card-tt">🏖️ Minhas férias</h3>'
+                + '<div class="mfer-minhas-acts">'
+                  + (podeSaida ? (meuPer
+                      ? '<button type="button" class="mfer-btn" data-act="saida" title="Decida, item a item, o que passar para outra pessoa antes das suas férias (' + esc(brAno(meuPer.ini) + ' a ' + brAno(meuPer.fim)) + ')">🧳 Preparar minha saída</button>'
+                      : '<button type="button" class="mfer-btn" disabled title="Cadastre suas férias para preparar a saída">🧳 Preparar minha saída</button>') : '')
+                  + '<button type="button" class="mfer-btn" data-act="painel" aria-label="Fechar Minhas férias">✕</button>'
+                + '</div>'
               + '</div>'
-              + '<p class="mfer-sub">' + (adm ? 'Você é ADM: pode cadastrar, editar ou excluir férias de qualquer pessoa.' : 'Cadastre, edite ou exclua seus períodos de férias.') + '</p>'
               // ⚠️ pedido do Caio (13/11): este cadastro é só para o time se organizar — NÃO é a solicitação oficial de férias
               + '<div class="mfer-msg senior mfer-senior" role="note">⚠️ <b>Este cadastro não substitui o das férias no Senior.</b> Ele serve só para o time se organizar; a solicitação oficial continua sendo feita no Senior.</div>'
-              + (typeof opts.prepararSaida === 'function' ? '<p class="mfer-sub mfer-saida-exp">🧳 <b>Preparar minha saída</b>: depois de cadastrar o período, decida item a item o que <b>passa</b> para outra pessoa e o que <b>fica</b> com você durante as férias. Nada muda até você confirmar.</p>' : '')
-              + '<div class="mfer-form">'
-                + (adm ? '<label class="mfer-lbl">Pessoa<select class="mfer-sel" data-f="alvo">'
-                    + pessoas.map(p => '<option value="' + esc(p.uid) + '"' + ((S.formAlvoUid || opts.uid) === p.uid ? ' selected' : '') + '>' + esc(p.nome) + (p.uid === opts.uid ? ' (você)' : '') + '</option>').join('')
-                  + '</select></label>' : '')
-                + '<div class="mfer-form-row">'
-                  + '<label class="mfer-lbl">Início<input type="date" class="mfer-inp" data-f="ini" value="' + esc(S.formIni) + '"></label>'
-                  + '<label class="mfer-lbl">Fim<input type="date" class="mfer-inp" data-f="fim" value="' + esc(S.formFim) + '"></label>'
+              + '<div class="mfer-minhas-grid">'
+                + '<div class="mfer-form">'
+                  + (adm ? '<label class="mfer-lbl">Pessoa <span class="mfer-sub">(você é ADM: pode cuidar das férias de qualquer pessoa)</span><select class="mfer-sel" data-f="alvo">'
+                      + pessoas.map(p => '<option value="' + esc(p.uid) + '"' + ((S.formAlvoUid || opts.uid) === p.uid ? ' selected' : '') + '>' + esc(p.nome) + (p.uid === opts.uid ? ' (você)' : '') + '</option>').join('')
+                    + '</select></label>' : '')
+                  + '<div class="mfer-form-row">'
+                    + '<label class="mfer-lbl">Início<input type="date" class="mfer-inp" data-f="ini" value="' + esc(S.formIni) + '"></label>'
+                    + '<label class="mfer-lbl">Fim<input type="date" class="mfer-inp" data-f="fim" value="' + esc(S.formFim) + '"></label>'
+                  + '</div>'
+                  + '<label class="mfer-lbl">Observação (opcional, até 140)<input type="text" class="mfer-inp" data-f="obs" maxlength="140" value="' + esc(S.formObs) + '" placeholder="ex.: cobertura: Ana, meio período"></label>'
+                  + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+                    + '<button type="button" class="mfer-btn prim" data-act="salvar"' + (S.salvando ? ' disabled' : '') + '>' + (S.editId ? '💾 Salvar edição' : '➕ Adicionar férias') + '</button>'
+                    + (S.editId ? '<button type="button" class="mfer-btn" data-act="cancelar">Cancelar</button>' : '')
+                  + '</div>'
+                  + (S.msg ? '<div class="mfer-msg ' + S.msg.tipo + '" role="alert">' + esc(S.msg.txt) + '</div>' : '')
                 + '</div>'
-                + '<label class="mfer-lbl">Observação (opcional, até 140)<input type="text" class="mfer-inp" data-f="obs" maxlength="140" value="' + esc(S.formObs) + '" placeholder="ex.: cobertura: Ana, meio período"></label>'
-                + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-                  + '<button type="button" class="mfer-btn prim" data-act="salvar"' + (S.salvando ? ' disabled' : '') + '>' + (S.editId ? '💾 Salvar edição' : '➕ Adicionar férias') + '</button>'
-                  + (S.editId ? '<button type="button" class="mfer-btn" data-act="cancelar">Cancelar</button>' : '')
+                + '<div class="mfer-meus">'
+                  + '<div class="mfer-card-hd"><h4 class="mfer-card-tt mfer-h4">' + (alvoPainel === opts.uid ? 'Meus períodos' : 'Períodos de ' + esc(nomeDe(alvoPainel))) + '</h4><span class="mfer-sub">' + doAlvo.length + '</span></div>'
+                  + (doAlvo.length ? '<div class="mfer-lista">' + doAlvo.map(p => renderItemLista(p)).join('') + '</div>'
+                      : '<div class="mfer-empty">' + (alvoPainel === opts.uid ? 'Você ainda não tem férias cadastradas.' : 'Sem férias cadastradas.') + '</div>')
+                  + (podeSaida && alvoPainel === opts.uid ? '<p class="mfer-sub mfer-saida-exp">🧳 <b>Preparar minha saída</b>: depois de cadastrar o período, decida item a item o que <b>passa</b> para outra pessoa e o que <b>fica</b> com você durante as férias. Nada muda até você confirmar.</p>' : '')
                 + '</div>'
-                + (S.msg ? '<div class="mfer-msg ' + S.msg.tipo + '" role="alert">' + esc(S.msg.txt) + '</div>' : '')
               + '</div>'
-              + '<div class="mfer-card-hd" style="margin-top:4px;"><h4 class="mfer-card-tt" style="font-size:12.5px;">Meus períodos</h4><span class="mfer-sub">' + minhas.length + '</span></div>'
-              + (minhas.length ? '<div class="mfer-lista">' + minhas.map(p => renderItemLista(p, false)).join('') + '</div>'
-                  : '<div class="mfer-empty">Você ainda não tem férias cadastradas.</div>')
-            + '</div>'
+            + '</section>' : '')
+
+          + '<div class="mfer-strips">'
+            + '<section class="mfer-card"><div class="mfer-card-hd"><h3 class="mfer-card-tt">🏖️ Fora agora</h3><span class="mfer-n">' + foraAgora.length + '</span></div>'
+              + lista(foraAgora, 'Ninguém de férias hoje (horário de São Paulo).') + '</section>'
+            + '<section class="mfer-card"><div class="mfer-card-hd"><h3 class="mfer-card-tt">📆 Próximas (60 dias)</h3><span class="mfer-n">' + proximas.length + '</span></div>'
+              + lista(proximas, 'Nenhuma saída programada nos próximos 60 dias.') + '</section>'
           + '</div>'
+
+          + '<section class="mfer-card">'
+            + '<div class="mfer-card-hd"><h3 class="mfer-card-tt">📅 Faixas do mês · ' + esc(MES_C[S.mes] + '/' + S.ano) + '</h3><span class="mfer-sub">' + linhasMes.length + ' pessoa(s)</span></div>'
+            + (linhasMes.length
+              ? '<div class="mfer-scroll" tabindex="0" aria-label="Grade mensal de férias"><div class="mfer-canvas">'
+                  + '<div class="mfer-row mfer-hd"><div class="mfer-sticky">Pessoa</div><div class="mfer-track" style="grid-template-columns:repeat(' + diasMes + ',minmax(24px,1fr));">'
+                    + dias.map(x => '<div class="mfer-dhd' + (x.w === 0 || x.w === 6 ? ' is-wknd' : '') + (x.iso === hoje ? ' is-hoje' : '') + '"><span>' + DOW[x.w] + '</span><b>' + x.d + '</b></div>').join('')
+                  + '</div></div>'
+                  + linhasMes.map(row => {
+                      return '<div class="mfer-row"><div class="mfer-sticky"><span class="mfer-sticky-nm" title="' + esc(row.pessoa.nome) + '">' + esc(row.pessoa.nome) + '</span></div>'
+                        + '<div class="mfer-track" style="grid-template-columns:repeat(' + diasMes + ',minmax(24px,1fr));">'
+                          + dias.map((x, idx) => '<div class="mfer-cell' + (x.w === 0 || x.w === 6 ? ' is-wknd' : '') + (x.iso === hoje ? ' is-hoje' : '') + '" style="grid-row:1;grid-column:' + (idx + 1) + ';"></div>').join('')
+                          + row.periodos.map(p => {
+                              const iniClip = p.ini < mesIni ? mesIni : p.ini;
+                              const fimClip = p.fim > mesFim ? mesFim : p.fim;
+                              const cIni = parseInt(iniClip.slice(8, 10), 10);
+                              const cFim = parseInt(fimClip.slice(8, 10), 10);
+                              const lbl = br(p.ini) + '–' + br(p.fim) + (p.obs ? ' · ' + p.obs : '');
+                              const ehHoje = p.ini <= hoje && hoje <= p.fim;
+                              return '<button type="button" class="mfer-bar' + (ehHoje ? ' is-hoje' : '') + '" data-det="' + esc(row.pessoa.nome + ' · ' + brAno(p.ini) + ' a ' + brAno(p.fim) + (p.obs ? ' · ' + p.obs : '')) + '" style="grid-column:' + cIni + '/' + (cFim + 1) + ';" title="' + esc(lbl) + '">' + esc(lbl) + '</button>';
+                            }).join('')
+                        + '</div></div>';
+                    }).join('')
+                + '</div></div>'
+              : '<div class="mfer-empty">Nenhuma férias registrada em ' + esc(MES_L[S.mes] + ' de ' + S.ano) + ' para os filtros atuais.</div>')
+            + '<div class="mfer-det" role="status" aria-live="polite">' + esc(S.det) + '</div>'
+          + '</section>'
         + '</div>';
 
+      if(foco){ const el = root.querySelector(foco); if(el) el.focus({ preventScroll: true }); }
       const sc = root.querySelector('.mfer-scroll');
       if(sc && scrollAntes) sc.scrollLeft = scrollAntes;
     }
@@ -628,6 +662,7 @@ a.mfer-btn{text-decoration:none;}
       if(t.dataset.det){ S.det = t.dataset.det; const d = root.querySelector('.mfer-det'); if(d) d.textContent = S.det; return; }
       const act = t.dataset.act;
       if(act === 'todo-digital'){ S.todoDigital = !S.todoDigital; desenhar(); return; }
+      if(act === 'painel'){ if(S.painel) fecharPainel(); else abrirPainel(); return; }
       if(act === 'salvar'){ enviarForm(); return; }
       if(act === 'cancelar'){ limparForm(); S.msg = null; desenhar(); return; }
       if(act === 'edit'){ iniciarEdicao(t.dataset.uid, t.dataset.id); return; }
@@ -653,22 +688,41 @@ a.mfer-btn{text-decoration:none;}
       const t = ev.target;
       if(t.dataset.filtro === 'squad'){ S.filtroSquad = t.value; desenhar(); }
       else if(t.dataset.filtro === 'periodo'){ S.filtroPeriodo = t.value; desenhar(); }
-      else if(t.dataset.f === 'alvo'){ S.formAlvoUid = t.value; }
+      else if(t.dataset.f === 'alvo'){ S.formAlvoUid = t.value; desenhar(); }   // a lista ao lado passa a ser a dessa pessoa
     }
 
+    // Mudança nas férias de OUTRA pessoa chegando enquanto se digita no cadastro: redesenhar trocaria o campo (perde foco/cursor).
+    // Espera sair do campo e então redesenha (monitorarbugs 13/11).
+    let redesenhoPendente = false;
+    const digitando = () => { const a = document.activeElement; return !!(a && root.contains(a) && a.closest('.mfer-form') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
+    function aoMudarDados(){ if(digitando()){ redesenhoPendente = true; return; } desenhar(); }
+    function onFocusOut(){ setTimeout(() => { if(redesenhoPendente && !digitando()){ redesenhoPendente = false; desenhar(); } }, 0); }
+    function abrirPainel(){
+      S.painel = true; desenhar();
+      const sec = root.querySelector('#mfer-minhas'), el = root.querySelector('.mfer-inp[data-f="ini"]');
+      if(sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'nearest', behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      if(el) el.focus({ preventScroll: true });
+    }
+    function fecharPainel(){
+      S.painel = false; S.msg = null; if(S.editId) limparForm(); desenhar();
+      const b = root.querySelector('.mfer-minhas-btn'); if(b) b.focus({ preventScroll: true });
+    }
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
     root.addEventListener('change', onChange);
-    const unsub = ouvir(db, suf, () => desenhar());
+    root.addEventListener('focusout', onFocusOut);
+    const unsub = ouvir(db, suf, aoMudarDados);
     desenhar();
 
     return {
       redesenhar: () => desenhar(),
+      abrirMinhas: () => abrirPainel(),   // atalho "🏖️ Minhas férias" das páginas: abre já com o cadastro aberto
       destruir: () => {
         unsub();
         root.removeEventListener('click', onClick);
         root.removeEventListener('input', onInput);
         root.removeEventListener('change', onChange);
+        root.removeEventListener('focusout', onFocusOut);
         root.innerHTML = '';
       },
     };
@@ -828,6 +882,6 @@ a.mfer-btn{text-decoration:none;}
     passagem,
     sobrepoe,
     pronto: () => ST.carregado,
-    v: 4,
+    v: 6,
   };
 })();

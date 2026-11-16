@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🏖️ Férias: calendário em tela cheia e 🏖️ Minhas férias sob demanda (kanban v8.30.990-dev, okr v2.138-dev, mare-ferias v6) — SÓ DEV — 2026-11-16
+### 🏖️ Férias: calendário em tela cheia e 🏖️ Minhas férias sob demanda (kanban v8.30.990-dev, okr v2.138-dev, mare-ferias v6) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16
 
 - **Pedido do Caio:** o cadastro ocupava a coluna da direita o tempo todo e espremia o calendário — com o time cadastrando, a visão geral é o que importa.
 - **Agora:** o calendário usa a **tela toda** (Fora agora | Próximas lado a lado, faixas do mês na largura inteira) e o botão **🏖️ Minhas férias** (na barra, com o número dos seus períodos) abre o cadastro **no topo**, com o foco no Início; ✕ fecha. O atalho do menu (nome no Maré, ⋯ Mais no Radar) já abre com o cadastro aberto — no celular ele deixa de ficar a ~900–7000 px de rolagem (achado UI02 da auditoria de 13/11) e vira o 1º botão da barra.
@@ -33,21 +33,21 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - 🧭 **Mudança de fluxo (confirmar com o Caio):** o 🧳 Preparar minha saída agora fica dentro de Minhas férias (1 clique a mais a partir da vista) e o ADM corrige o período de outra pessoa pelo painel (Pessoa → ✏️), não mais direto nas listas.
 - Teste: `test_ferias_calendario.js` (A2, A3, E, O0, S2, S3, S4; 34/34). `auditar_ferias_ui.js` (37 cenários): foco nos filtros ✅ em todos, nenhum texto abaixo de 4,5:1 no claro/Vice, topo do cadastro constante (597 px Maré / 848 px Radar a 390 px, com a página no topo; antes 895–7312 / 1176–7593). Capturas com 40 pessoas: `docs/capturas/ferias_tela_cheia/`.
 
-### SÓ DEV — Infra: `firebase-functions` 5.1.1 → 7.4.0 (functions/, exige deploy) — 2026-11-16
+### NO AR 16/11 (deploy confirmado pelo Caio) — Infra: `firebase-functions` 5.1.1 → 7.4.0 (functions/, exige deploy) — 2026-11-16
 
 Pendência desde o aviso do deploy de 18/10. O código já usava só `firebase-functions/v2/*` e `/params` (nenhum import da raiz/v1, nenhum `functions.config()`), que são as quebras grandes da 6 e da 7. **Manifesto do deploy idêntico** (`/__/functions.yaml` gerado com a 5 e com a 7: as mesmas 41 funções, mesmos gatilhos, memória, região, segredos e params). A 7 traz o **Express 5** (era 4) — os handlers `onRequest` já protegem `req.body` (`|| {}`, `?.`, zod) e o parse de corpo/query nas v2 é do runtime; teste de fumaça do wrapper `onRequest` (JSON, GET sem corpo, preflight e CORS) OK. `firebase-admin` fica na 12 (a 7 aceita 11–14). `npm test`: 1258/0.
 
-### SÓ DEV — Infra: `/seatualizar` já começa com o Git em dia (`mare-cli.js brief`: fetch sempre, pull só quando é seguro) — 2026-11-16
+### NO AR 16/11 (ferramenta; vale no merge) — Infra: `/seatualizar` já começa com o Git em dia (`mare-cli.js brief`: fetch sempre, pull só quando é seguro) — 2026-11-16
 
 Pedido do Caio. O `brief` (passo 0 do `/seatualizar`, Claude e Antigravity) faz `git fetch --prune origin` e só puxa a `main` (fast-forward) quando está nela, limpa e só atrás. Em branch de trabalho, avisa quantos commits a `main` está à frente e, se o próprio branch no GitHub tem commit novo (conflito resolvido por outro agente), pede `git pull --ff-only`. `--sem-git`/`MARE_SEM_GIT=1` pula. Teste: `test_mare_cli_automacao.js` (`gitDecisao`).
 
-### SÓ DEV — 🪟 Vidro lapidado: --specular e curvas --ease-* em Escala, Intake e Travessia (escala v1.12-dev) — 2026-11-16
+### PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 🪟 Vidro lapidado: --specular e curvas --ease-* em Escala, Intake e Travessia (escala v1.12-dev) — 2026-11-16
 
 - **Escala (`escala-dev.html` v1.12-dev) e Intake (`intake-dev.html`):** declarados `--specular` (escuro/Vice e `:root[data-theme="light"]`) e as curvas `--ease-out`, `--ease-in-out`, `--ease-overshoot` no `:root`; aplicado `var(--specular)` nas superfícies de vidro, painéis, modais e caixas de mensagem (`.card`, `.scroll`, `.hoje`, `.avisos`, `.erro`, `.md`, `#toast`, `.msg`, `.who`, `.gbar`).
 - **Travessia (`travessia-dev.html`):** declaradas as curvas `--ease-out`, `--ease-in-out` e `--ease-overshoot` no `:root` e aplicado `var(--specular)` em `.toast`.
 - **Conferência:** `okr-dev.html`, `painel-dev.html` e `oceano-dev.html` já tinham `--specular`, as 3 `--ease-*` e nenhuma curva `cubic-bezier` solta. Nenhum `backdrop-filter` novo. Capturas antes/depois (3 temas × 1280/390) em `docs/capturas/vidro_lapidado/`.
 
-### 📅 Gantt · 🧭 Digital: popup do dia reorganizado — calendário → linha → itens com "quando" (kanban v8.30.989-dev, okr v2.136-dev, mare-gcal v9) — SÓ DEV — 2026-11-16
+### 📅 Gantt · 🧭 Digital: popup do dia reorganizado — calendário → linha → itens com "quando" (kanban v8.30.989-dev, okr v2.136-dev, mare-gcal v9) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16
 
 - **/melhoriauiux (o Caio achou o popup "desorganizado, informações jogadas"):** antes, cada ação era uma linha corrida "Linha: TEXTO (período)", o título do calendário quase igual aos itens, a linha repetida a cada ação (CRM, CRM…) e a ⚠️ ação importante da régua sumia no popup.
 - **Agora:** cabeçalho fixo com a data e "N ações em N calendários" · cada calendário como título com o total · cada linha **uma vez**, com a **bolinha da mesma cor da régua** · cada ação num bloco próprio com o **quando** à direita (**Só hoje**, **Começa hoje · até 14/11**, **Termina hoje** ou o período) · **⚠️ / ★** como na régua · calendário sem nada (ou não publicado) vira uma linha compacta no fim.
@@ -55,13 +55,13 @@ Pedido do Caio. O `brief` (passo 0 do `/seatualizar`, Claude e Antigravity) faz 
 - **Mais largo no computador** (380 → 480 px, até 80 % da altura): com 11 ações em 3 calendários o popup cabe inteiro em 1280×900 (707 px, sem rolar). O "quando" fica **sempre** na coluna da direita no computador e **sempre** embaixo do texto no celular.
 - Teste: `test_gantt_digital.js` (M8c–M8g). Validação de console: `docs/arezzo/testes/console_gantt_dia_ux.js`. Capturas antes/depois: `docs/capturas/gantt_dia_ux/`.
 
-### 🧩 Minhas Preferências em blocos: cada área com o próprio fundo (kanban v8.30.988-dev) — SÓ DEV — 2026-11-16
+### 🧩 Minhas Preferências em blocos: cada área com o próprio fundo (kanban v8.30.988-dev) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16
 
 - **Pedido do Caio (13/11):** as áreas de 👤 Minhas Preferências (Tema, Fonte e densidade, Squad padrão, Não Perturbe, Ilha Dinâmica, Atalhos, Sugestões de rotina) ficavam numa lista corrida. Agora cada uma é um **bloco** com fundo um tom acima do painel, borda fina e 10 px entre blocos. As "Sugestões recusadas" ficam no mesmo bloco das Sugestões de rotina.
 - Token novo `--bloco` no `:root` (escuro/Vice/Black Friday: branco a 4,5 %; claro: o tom da lagoa, porque a superfície já é quase branca). Nada mudou nos botões nem no que cada preferência faz.
 - Teste: `docs/arezzo/testes/test_prefs_blocos.js` (3 temas × 1280/390). Capturas: `docs/capturas/prefs_blocos/`.
 
-### 📅 Gantt · 🧭 Digital: o "tudo deste dia" abre num popup junto do dia clicado (kanban v8.30.987-dev, okr v2.135-dev, mare-gcal v8) — SÓ DEV — 2026-11-16
+### 📅 Gantt · 🧭 Digital: o "tudo deste dia" abre num popup junto do dia clicado (kanban v8.30.987-dev, okr v2.135-dev, mare-gcal v8) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16
 
 - **Pedido do Caio (16/11):** tocar num dia do cabeçalho na 🧭 Digital · dia a dia abria o detalhe **no fim da página**, longe do clique. Agora abre um **popup ali mesmo**, logo abaixo do dia (ou acima, se não couber), sem sair da tela — no **Maré** e no **Radar**.
 - **Celular (≤ 768 px):** o popup vira uma folha que sobe de baixo da tela (12 px das bordas, ✕ ≥ 44 px).
@@ -69,7 +69,7 @@ Pedido do Caio. O `brief` (passo 0 do `/seatualizar`, Claude e Antigravity) faz 
 - Atualização ao vivo de um calendário com o popup aberto continua redesenhando o conteúdo (o popup segue o estado, não o DOM).
 - **Módulo `mare-gcal-dev.js` v8:** `diaPop`/`diaPopFechar` (fonte única do popup, usada pelo Maré e pelo Radar). Teste: `docs/arezzo/testes/test_gantt_digital.js` (M8b, M12a–f, R3b–d e folha no celular; os 5 novos de desktop falham na `main`). Capturas: `docs/capturas/gantt_dia_popup/`.
 
-### SÓ DEV — Ilha e sino: famílias visuais e grupo Calendário — 2026-11-16 · PR #1802
+### PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — Ilha e sino: famílias visuais e grupo Calendário — 2026-11-16 · PR #1802
 
 No Maré dev, notificações ganham faixa lateral, selo Pessoal/Calendário/Radar/Sistema e rótulo curto a partir de MareNotif.TIPOS. Na Ilha, grupos não vazios aparecem em Operação → Calendário → demais; no sino tradicional, mantém-se a cronologia. Mesmos nós, contagem, leitura, destinos e push. Módulo mare-notif-dev v44 nas quatro páginas dev; introdução da Ilha atualizada. Teste: docs/arezzo/testes/test_ilha_notif_familias.js; roteiro ADM: console_ilha_notif_familias.js. Dica: não, mudança visível ao abrir os avisos, explicada pelos rótulos e introdução existente. Fronteira: sem mudança.
 
