@@ -300,3 +300,7 @@ Saíram do Backlog por estarem no prod desde a promoção #1799 (14/11): 🏖️
 ## Limpeza do Quadro (2ª) — 16/11/2026
 
 Feitos e fora do Quadro: popup do dia do Gantt (#1803, #1805), Minhas Preferências em blocos (#1804), famílias de notificação da Ilha (#1802, Codex), vidro lapidado em Escala/Intake/Travessia (#1806, Antigravity), Git no `/seatualizar` (#1807). O Caio validou a Ilha Dinâmica no Maré (16/11): fica no backlog só a Ilha no Oceano. **Camiseta Brasil da Black Friday cancelada** pelo Caio (16/11) — a nota `docs/ideias/camiseta-brasil-black-friday.md` fica como registro.
+
+## Confirmação de deploy — 16/11/2026 (firebase-functions 7.4.0, #1809)
+
+Caio confirmou o deploy em 2 etapas: canários `githubStatus` (agendada), `contarComentarios` (gatilho do banco) e `oceanoResumo` (HTTP) ok; depois as outras 38 funções, tudo ok. As 41 funções rodam com `firebase-functions` 7.4.0. Item do backlog "Atualizar firebase-functions" concluído. Pendente de deploy zerado.

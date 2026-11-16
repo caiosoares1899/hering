@@ -36,7 +36,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🔧 `firebase-functions` 5 → 7 (#1809): **1º três canários, um por tipo** (agendada, gatilho do banco, HTTP) e conferir os logs após um disparo real; se ok, as outras 38. Funções não reimplantadas seguem na 5.1.1. Reverter = `git revert` do merge + resync + redeploy dos mesmos nomes | resync + (1) `firebase deploy --project hering-onboarding --only functions:githubStatus,functions:contarComentarios,functions:oceanoResumo` → (2) `firebase deploy --project hering-onboarding --only functions:agenteAgil,functions:agenteAgilAnaliseDados,functions:agenteAgilAnalisePO,functions:agenteAgilDueOverdueScan,functions:agenteAgilIntake,functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilPainelChat,functions:agenteAgilPainelChatDev,functions:agenteAgilResumoMeuDia,functions:backupCompletoApi,functions:backupCompletoSemanal,functions:backupGlobalDiario,functions:backupVigia,functions:cardsEspelhar,functions:cardsEspelhoVarredura,functions:cardsGuardiao,functions:firebaseStatus,functions:ganttAvisoMudanca,functions:ganttAvisoMudancaDev,functions:guardiaoStatus,functions:intakeSubmit,functions:metasLembretes,functions:okrAgenteChat,functions:okrDailyScan,functions:okrWeeklySnapshot,functions:sendPushOnMural,functions:sendPushOnNotification,functions:spotifyDisconnect,functions:spotifyOauthCallback,functions:spotifyPlayback,functions:spotifyRadioOwnerCallback,functions:spotifyRadioSearch,functions:spotifyRadioSuggest,functions:spotifySyncNow,functions:timersVigia,functions:vtexStatus,functions:weeklyBackup` | 16/11/2026 |
 
 ## Backlog
 
@@ -50,4 +49,3 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🎨 Tema claro do Painel e do Radar (sem PR que prove que foi feito) | Claude ou Antigravity | [backlog](quadro/backlog.md#tema-claro-painel-radar) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |
-| 🔧 Atualizar `firebase-functions` (^5 → atual), com calma e testes | Claude (em andamento 16/11) | [backlog](quadro/backlog.md#firebase-functions-v6) |
