@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Codex | `codex/tema-claro-painel-radar` | `painel-dev.html`, `okr-dev.html` (só cor/contraste), `auditoria_temas.js` | 16/11/2026 |
 
 
 ## Fila
@@ -17,7 +16,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
-| Codex | R1 | 🎨 Tema claro do Painel e do Radar: provar com `auditoria_temas.js` o que já foi feito em 18/10 e corrigir o que restar (contrato colado pelo Caio em 16/11) | [auditoria](ideias/tema-claro-painel-radar-2026-10-17.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -47,6 +45,5 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🏝️ Ilha Dinâmica no Oceano (lobby + host) — o Maré foi validado pelo Caio em 16/11 | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |
-| 🎨 Tema claro do Painel e do Radar (sem PR que prove que foi feito) | Claude ou Antigravity | [backlog](quadro/backlog.md#tema-claro-painel-radar) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |

@@ -1,6 +1,6 @@
 # Tema claro do Painel e do Radar — auditoria de 17/10/2026 (fazer em 18/10)
 
-**Status (18/10): feito em `painel-dev` v5.81 e `okr-dev` v2.90 — ver `BUGS_E_CORRECOES.md` (armadilha nº 12). Falta a validação do Caio e a promoção.**
+**Status (16/11): revalidado na main `3f067720` e corrigido em Painel dev v5.118 / Radar dev v2.137. 2956 ocorrências abaixo do mínimo no claro/Vice antes; zero falhas sem justificativa depois, com 10 exceções nominadas. Escuro: 36/36 sem mudança visual (33 exatas; três diferenças mínimas de rasterização). Aguarda revisão/validação ADM e promoção. Provas: [tema_claro](../capturas/tema_claro/README.md).**
 
 **Pedido do Caio:** "tá bem ruim esse tema claro no painel e no radar" — corrigir amanhã (18/10), só nos `-dev` (`painel-dev.html`, `okr-dev.html`), e depois promover na rotina de sempre.
 
@@ -30,3 +30,13 @@
 4. Aba/botão ativo (texto `--txt` + sublinhado/realce `--accent`), `--txt2` do claro mais forte (.72 → ~.85), selos de título, dia de hoje do calendário.
 5. Vice: `--danger`/`--teal`/`--cyan` como texto mais claros; abas "Radar ↗/Escala ↗" na paleta.
 6. Rodar o `auditoria_temas.js` de novo e transformar em teste de regressão (falha se um texto novo ficar abaixo do mínimo no claro/Vice). Bump de `painel_dev`/`okr_dev`, entrada em `BUGS_E_CORRECOES.md`, teste de console em português, avaliar dica (não — é correção).
+
+## Revalidação de 16/11/2026
+
+A declaração de 18/10 acima foi substituída pela prova do estado atual; esta auditoria não reconstrói retroativamente o que estava publicado em outubro. O código já tinha tokens mais escuros e toast legível: o toast foi medido e mantido. Restavam falhas em textos auxiliares, placeholders, filtros/selos, status e números do calendário.
+
+Lençóis usa leitura mais escura, estados ativos com texto legível e correções localizadas nos usos de status sem contraste. Vice mantém o degradê/paleta, com uma camada estática do token de superfície sobre o fundo, tokens de texto mais claros e fundo legível nos cards próprios. Links Radar/Escala seguem a paleta. Foram alterados apenas cor/fundo/opacidade, sem layout nem JavaScript das páginas.
+
+As únicas exceções no claro/Vice são o selo `ligado` do módulo compartilhado de Plantão (reservado) e os dois botões de envio desabilitados (WCAG 1.4.3; estados habilitados passam). Cada combinação, razão e motivo está na [prova completa](../capturas/tema_claro/README.md). Os contrastes preexistentes do escuro são catalogados e preservados; suas capturas passam na comparação. O auditor agora retorna código não zero para regressão nova.
+
+Fronteira: sem mudança. Dica: não, correção.

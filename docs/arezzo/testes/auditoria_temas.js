@@ -2,6 +2,7 @@
 // Uso: servidor estático na raiz, porta 8941; node docs/arezzo/testes/auditoria_temas.js.
 // OUT=/tmp/auditoria guarda PNG/resultado.json. BASE_URL, CHROME e PLAYWRIGHT_MODULE são configuráveis.
 // BASELINE_SHA=<commit> mede os HTMLs da main por route, sem trocar arquivos. SELFTEST=1 testa o medidor.
+// VERIFY_RESULTS=1 reavalia medições já gravadas no OUT, sem nova varredura.
 // O padrão reprova falha nova; exceções são nominadas contra antes.json. Pixels do escuro exigem o mesmo Chromium/SO da referência.
 const os = require('os');
 const PW=process.env.PLAYWRIGHT_MODULE||(()=>{try{return require.resolve('playwright');}catch(e){return require('path').join(os.homedir(),'hering-tools/playwright/node_modules/playwright');}})();
@@ -100,6 +101,27 @@ function motivoExcecao(key,x){
   if(x.ancestors.some(a=>/\.mgc-/.test(a)))return 'mare-gcal-dev.js: módulo compartilhado reservado; contraste não piorou. Requer correção própria.';
   return '';
 }
+function compararEscuro(key,hash,buffer){
+  if(!referencia[key]?.capturaHash)return null;
+  if(hash===referencia[key].capturaHash)return {ok:true,exato:true,pixels:0,delta:0};
+  const [app,tela,w,tema]=key.split('/'),base=path.join(__dirname,'../../capturas/tema_claro/antes',`${app}_${tela}_${w}_${tema}.png`);
+  if(!fs.existsSync(base))return {ok:false,exato:false,pixels:null};
+  const a=PNG.sync.read(fs.readFileSync(base)),b=PNG.sync.read(buffer);if(a.width!==b.width||a.height!==b.height)return {ok:false,exato:false,pixels:null};
+  let pixels=0,delta=0;for(let i=0;i<a.data.length;i+=4){let mudou=false;for(let c=0;c<3;c++){const d=Math.abs(a.data[i+c]-b.data[i+c]);if(d)mudou=true;delta=Math.max(delta,d);}if(mudou)pixels++;}
+  // Tolerância somente a poucos pixels de antialiasing: nunca aceita mudança de região/cor inteira.
+  return {ok:pixels<=25&&delta<=8,exato:false,pixels,delta};
+}
+function verificarGravado(){
+  const resultado=JSON.parse(fs.readFileSync(path.join(OUT,'resultado.json'),'utf8'));let falhas=0;
+  for(const[key,r]of Object.entries(resultado)){if(!r.baixo){falhas+=(r.errs||[]).length;continue;}
+    r.baixo=r.baixo.map(x=>({...x,excecao:motivoExcecao(key,x)}));
+    console.log(key+': '+r.baixo.length+' textos abaixo do mínimo ('+r.baixo.filter(x=>!x.excecao).length+' falhas, '+r.baixo.filter(x=>x.excecao).length+' exceções); overflow='+r.overflow);
+    r.baixo.forEach(x=>console.log('  '+JSON.stringify(x)));
+    if(key.endsWith('/dark')){const [app,tela,w,tema]=key.split('/');r.comparacaoEscuro=compararEscuro(key,r.capturaHash,fs.readFileSync(path.join(OUT,`${app}_${tela}_${w}_${tema}.png`)));r.escuroIgual=!!r.comparacaoEscuro?.ok;console.log('  Escuro: '+JSON.stringify(r.comparacaoEscuro));}
+    falhas+=r.baixo.filter(x=>!x.excecao).length+(r.overflow?1:0)+(r.escuroIgual===false?1:0);
+  }
+  fs.writeFileSync(path.join(OUT,'resultado.json'),JSON.stringify(resultado,null,1));console.log('RESUMO: '+Object.values(resultado).filter(r=>r.baixo).length+' cenários; '+falhas+' falhas não justificadas.');process.exitCode=falhas?1:0;
+}
 async function autoTeste(b){
   const p=await b.newPage({viewport:{width:800,height:600}});
   await p.setContent(`<style>body{margin:0;background:white;color:black;font:16px Arial}p{margin:12px 24px}#coberto{position:absolute;top:0;margin:0;color:#aaa}.alto{height:1300px}#grad{background:linear-gradient(90deg,white,black);color:white;width:300px}input::placeholder{color:#aaa;opacity:1}</style>
@@ -116,6 +138,7 @@ async function autoTeste(b){
 }
 
 (async () => {
+  if(process.env.VERIFY_RESULTS){verificarGravado();return;}
   const timer=setTimeout(()=>{console.error('Auditoria excedeu 15 min.');process.exit(2);},900000);timer.unref();
   if(!process.env.SELFTEST){const preflight=await fetch(BASE+'/mare-notif-dev.js');if(!preflight.ok)throw new Error('Servidor local indisponível ou raiz incorreta.');}
   const b = await chromium.launch({ executablePath: CHROME });
@@ -166,7 +189,7 @@ async function autoTeste(b){
       // Neutraliza só valores dinâmicos da fixture; contraste foi medido antes, sem máscaras.
       const captura=await p.screenshot({ path: path.join(OUT, `${cfg.nome}_${nome}_${w}_${tema}.png`), animations:'disabled', mask:['.version','#firebase-status-pill-txt','#st-latencia','#st-fb-rtdb-meta'].map(x=>p.locator(x)),maskColor:'#808080' });
       r.capturaHash=require('crypto').createHash('sha256').update(PNG.sync.read(captura).data).digest('hex');
-      if(tema==='dark'&&referencia[key]?.capturaHash){r.escuroIgual=r.capturaHash===referencia[key].capturaHash;console.log('  Escuro '+(r.escuroIgual?'idêntico':'ALTERADO')+' (pixels; versão/latência neutralizadas).');}
+      if(tema==='dark'&&referencia[key]?.capturaHash){r.comparacaoEscuro=compararEscuro(key,r.capturaHash,captura);r.escuroIgual=r.comparacaoEscuro.ok;console.log('  Escuro: '+JSON.stringify(r.comparacaoEscuro));}
       Object.assign(resultado[key],r);
       fs.writeFileSync(path.join(OUT,'resultado.json'),JSON.stringify(resultado,null,1));
     }
