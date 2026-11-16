@@ -142,3 +142,5 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 - **2026-11-16 · Maré › tema 🔥 Black Friday + semana BF como padrão (23–29/11):** auditor novo `auditar_tema_bf.js` (BF × Abrolhos, 8 telas, desktop/celular). A fita OFERTA em `::before` mesclava com o selo "seu card" (pílula sobre o título); o tema sumia no F5; `--teal`/`--accent`/`--warn` como texto davam 1,3–3,8:1. Resultado: BF nunca abaixo do Abrolhos. Padrão por data no `<head>` sem gravar `mare_theme`, saída por ano, virada com a aba aberta, modo de teste com chaves próprias. **Lição:** tema sazonal com data precisa de um modo de teste que NÃO use as chaves reais, e o `fakefb` tem que neutralizar o relógio real, senão a suíte muda de tema na semana. kanban v8.30.992-dev.
 
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
+
+- **2026-11-16 · Maré, toolbar (Black Friday e três temas):** folga vertical de 4 px evita recorte de bordas/foco pelo scroll; mantém 44 px no celular. 24 cenários antes/depois; kanban v8.30.993-dev.

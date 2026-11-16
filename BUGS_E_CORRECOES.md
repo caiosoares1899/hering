@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · SÓ DEV — Toolbar: folga vertical evita recorte das bordas e do foco dos botões (tema Black Friday)
+
+Na toolbar do Maré, overflow-x:auto converte o overflow vertical em auto. No desktop os botões encostavam no limite superior e inferior do recorte; no celular faltava folga superior. Acrescentada folga de 4 px acima/abaixo (mantidos os 5 px inferiores do celular), sem mudar tamanho, ordem ou rolagem horizontal dos botões. Teste test_toolbar_ui.js: 24 cenários (0/4/54 cards, 1280/390 px, Black Friday/Abrolhos/Lençóis/Vice); baseline sem folga falha. Capturas em docs/capturas/toolbar_ui/. Sem mudança de fronteira; dica não, correção visual.
+
 ### 2026-11-16 · 🔥 Tema Black Friday: fita OFERTA sobre o título e selo "seu card" sumindo; tema perdido no F5 (kanban v8.30.992-dev) — SÓ DEV
 
 - **Fita "🔥 OFERTA" em cima do título e "👤 seu card" sumindo** (`kanban-dev.html`, CSS do tema BF): a fita usava `::before`, o mesmo pseudo-elemento do selo "seu card". O CSS mescla as duas regras propriedade por propriedade, então o `left:9px` e o `border-radius` do selo sobreviviam. Num card **crítico e seu**, a fita virava pílula sobre o título e o selo sumia. Agora a fita é `::after`, com reset completo, e só aparece quando o canto está livre: ♾️ Contínuo e 💤 parado (estados reais, também em `::after`) vencem a decoração.

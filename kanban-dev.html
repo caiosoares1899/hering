@@ -1032,7 +1032,9 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .btn-sm{padding:3px 9px;font-size:11px;}
 
 /* toolbar */
-.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
+/* 16/11/2026: overflow-x:auto também recorta o eixo vertical. A folga protege
+   bordas e foco dos botões (o corte ficava evidente no tema Black Friday). */
+.toolbar{padding-block:4px;display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
 /* ── 🔀 Reorganizar barra de ferramentas (pedido direto do usuário) —
    mesmo esqueleto visual do drag de colunas (.col-dragging/.col-drag-left/
@@ -3768,7 +3770,7 @@ input[type="date"]{-moz-appearance:textfield;}
     display:flex;flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;
     gap:4px;margin:0 -.6rem .5rem;
-    padding:0 .6rem 5px;scrollbar-width:none;
+    padding:4px .6rem 5px;scrollbar-width:none;
   }
   .toolbar::-webkit-scrollbar{display:none;}
   .toolbar .btn-sm{
@@ -7745,7 +7747,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.993-dev</div>
+<div class="version">v8.30.994-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🏢 Diretoria por pessoa: escolha no 1º acesso, edição pelo ADM no Painel e etiqueta na 👥 Equipe (kanban v8.30.993-dev, painel v5.119-dev, regras) — SÓ DEV — 2026-11-16
+### 🏢 Diretoria por pessoa: escolha no 1º acesso, edição pelo ADM no Painel e etiqueta na 👥 Equipe (kanban v8.30.994-dev, painel v5.119-dev, regras) — SÓ DEV — 2026-11-16
 
 - **Pedido do Caio:** voltar a classificar as pessoas por diretoria para a expansão do Maré a RH e CRM. Cada um escolhe no 1º acesso, o ADM edita no Painel, e o valor aparece como etiqueta na Equipe. Desenho do Codex (#1818).
 - **Maré:**
