@@ -1395,6 +1395,15 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
    cadastro) e o Esc/fechar-tudo global ('.ov.open') não pode fechá-la sem resolver a pergunta que o login está aguardando. */
 .cad-ov{position:fixed;inset:0;z-index:205;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .cad-ov.open{display:flex;}
+/* 🏢 Diretoria por pessoa (16/11/2026): escolha no 1º acesso (inscrição ou janela própria) + etiqueta neutra na 👥 Equipe.
+   Etiqueta de CONTORNO neutro, de propósito diferente das pílulas coloridas de subtime (ninguém lê "RH" como subtime). */
+.dir-ops{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dir-op{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 10px;border-radius:var(--r);border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.55);color:var(--txt);font:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+.dir-op:hover{border-color:var(--accent);}
+.dir-op[aria-pressed="true"]{border-color:var(--accent);background:rgba(56,182,255,.14);box-shadow:inset 0 0 0 1px var(--accent);}
+[data-theme="light"] .dir-op[aria-pressed="true"]{background:rgba(37,99,201,.10);}
+.dir-op:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.dir-pill{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--glass-b);color:var(--txt2);background:transparent;white-space:nowrap;}
 .panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;box-shadow:var(--specular);}
 /* Alça de arrastar do bottom-sheet do card (Fase 3.1) — só existe visualmente
    no mobile, ver @media(max-width:768px) .card-sheet-handle. */
@@ -4777,11 +4786,32 @@ window._bfSemanaInfo = function(agoraMs){
       </select>
       <div style="font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.5;">A torre define onde você cria e edita Objetivos no Radar. Dá pra mudar depois com um ADM.</div>
     </div>
+    <div class="field" id="insc-dir-wrap" style="display:none;">
+      <label class="fl" id="insc-dir-lbl">Sua diretoria</label>
+      <div class="dir-ops" role="group" aria-labelledby="insc-dir-lbl" id="insc-dir-ops"></div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.5;">Aparece ao lado do seu nome na 👥 Equipe. Depois, só um ADM muda.</div>
+    </div>
     <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong id="insc-role">Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;">
       <button class="btn" onclick="closeOv('insc-ov')">Agora não</button>
       <div id="insc-init-err" style="display:none;font-size:11px;color:var(--danger);margin-bottom:6px;"></div>
       <button class="btn btn-p" onclick="confirmarInscricao()">Confirmar inscrição</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 🏢 DIRETORIA (16/11/2026): quem já tem cadastro e ainda não escolheu. "Agora não" pergunta de novo na próxima sessão. -->
+<div class="cad-ov" id="dir-ov" role="dialog" aria-modal="true" aria-labelledby="dir-tit">
+<div class="panel" style="max-width:380px;">
+  <div class="panel-hd"><div class="panel-title" id="dir-tit">🏢 Qual é a sua diretoria?</div></div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;">O Maré está chegando a novos times. Escolha uma vez: a diretoria aparece ao lado do seu nome na 👥 Equipe. Depois, só um ADM muda.</div>
+    <div class="dir-ops" role="group" aria-labelledby="dir-tit" id="dir-ops"></div>
+    <div id="dir-err" style="display:none;font-size:11px;color:var(--danger);"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
+      <button class="btn" type="button" onclick="_dirAdiar()">Agora não</button>
+      <button class="btn btn-p" type="button" id="dir-ok" onclick="_dirConfirmar()" disabled>Confirmar</button>
     </div>
   </div>
 </div>
@@ -7716,7 +7746,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.992-dev</div>
+<div class="version">v8.30.993-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12814,6 +12844,7 @@ function openTeamList(){
             <div style="font-size:12px;color:var(--txt);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.nome||u.email)} <span style="font-size:9px;color:var(--txt3);">(${esc(u.init||'?')})</span></div>
             <div style="font-size:9px;color:${on?'var(--teal)':'var(--txt3)'};">${on?'● online':'offline'}</div>
             ${subsHtml}
+            ${_dirDe(u.diretoria) ? `<div style="margin-top:3px;"><span class="dir-pill" title="Diretoria">${_dirDe(u.diretoria).icon} ${_dirDe(u.diretoria).label}</span></div>` : ''}
           </div>
           <span style="font-size:9px;color:${roleCol[role]||roleCol.membro};border:1px solid ${roleCol[role]||roleCol.membro}55;padding:2px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">${roleLabels[role]||role}</span>
         </div>`;
@@ -13748,6 +13779,10 @@ function autoRegistrar(user){
         role: existe.role||'membro', inscrito: existe.inscrito||false,
         squads: existe.squads||null, squads_roles: existe.squads_roles||null,
       });
+      // 🏢 diretoria: espelho num update À PARTE (a regra exige igual à fonte; se um ADM trocar no meio, só a etiqueta falha,
+      // não o refresh inteiro do espelho). Sem diretoria ainda → pergunta (uma vez por sessão, quando a tela estiver livre).
+      if(_dirDe(existe.diretoria)) fbUpdate('kanban/usuarios_publicos/'+user.uid, {diretoria: existe.diretoria}).catch(()=>{});
+      else setTimeout(()=>_dirTalvezPerguntar(user, existe), 6000);
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       _logAccess(user, window._currentUserRole);
       setTimeout(_updateGcalPendingBadge, 1500);
@@ -13797,7 +13832,69 @@ function autoRegistrar(user){
 let _inscOriginalInit = '';
 // 🏛️ Torre (OKR): só a inscrição de cadastro NOVO pergunta (opts.pedirTorre). Quem já existia fica Digital (sem campo = Digital).
 let _inscPedirTorre = false;
+// ── 🏢 Diretoria por pessoa (16/11/2026; desenho em docs/ideias/diretoria-por-pessoa.md) ────────────────
+// kanban/usuarios/{uid}/diretoria (fonte; a pessoa grava a SUA só enquanto vazia, depois só ADM — database.rules.json) e o
+// espelho usuarios_publicos/{uid}/diretoria (que a 👥 Equipe lê; as regras exigem o MESMO valor da fonte). Independente da
+// torre do Radar. Só contas Google @ciahering são perguntadas (não convidado/visualizador/externo).
+const DIRETORIAS = [{id:'digital',label:'Digital',icon:'💻'},{id:'rh',label:'RH',icon:'🤝'},{id:'marca',label:'Marca',icon:'🎨'},{id:'tecnologia',label:'Tecnologia',icon:'🛠️'}];
+const _dirDe = id => DIRETORIAS.find(d=>d.id===id) || null;
+let _dirEscolha = '', _dirInscEscolha = '', _inscPedirDir = false, _dirSalvando = false, _dirPerguntadoSessao = false, _dirMinha = '';
+function _dirPerguntaPara(user, dados){
+  if(!user || !user.uid || !dados) return false;
+  if(_dirDe(dados.diretoria) || _dirMinha) return false;
+  const hering = String(user.email||'').toLowerCase().endsWith('@ciahering.com.br') && (user.providerData||[]).some(p=>p && p.providerId==='google.com');
+  return hering && !['convidado','visualizador'].includes(dados.role||'membro');
+}
+function _dirOpsHtml(sel){ return DIRETORIAS.map(d=>`<button type="button" class="dir-op" data-dir="${d.id}" aria-pressed="${sel===d.id}">${d.icon} ${d.label}</button>`).join(''); }
+function _dirLigarOps(box, onPick){
+  box.onclick = e => { const b=e.target.closest('.dir-op'); if(!b) return; box.querySelectorAll('.dir-op').forEach(x=>x.setAttribute('aria-pressed', String(x===b))); onPick(b.dataset.dir); };
+}
+// Fonte primeiro, espelho depois (a regra do espelho confere a fonte já gravada). Só mostra sucesso depois de confirmar.
+async function _dirGravar(uid, id){
+  if(!_dirDe(id)) throw new Error('diretoria inválida');
+  await fbUpdate('kanban/usuarios/'+uid, {diretoria:id});
+  if(window._currentUser && uid===window._currentUser.uid) _dirMinha = id;
+  await fbUpdate('kanban/usuarios_publicos/'+uid, {diretoria:id}).catch(e=>console.warn('[diretoria] espelho não gravou (a etiqueta volta no próximo login):', e));
+}
+function _dirAbrir(){
+  const box=document.getElementById('dir-ops'); if(!box) return;
+  _dirEscolha=''; box.innerHTML=_dirOpsHtml(''); document.getElementById('dir-ok').disabled=true; document.getElementById('dir-err').style.display='none';
+  _dirLigarOps(box, id=>{ _dirEscolha=id; document.getElementById('dir-ok').disabled=false; });
+  document.getElementById('dir-ov').classList.add('open');
+  setTimeout(()=>{ const b=box.querySelector('.dir-op'); if(b) b.focus({preventScroll:true}); }, 50);
+}
+function _dirAdiar(){ try{ sessionStorage.setItem('mare_dir_adiado','1'); }catch(e){} document.getElementById('dir-ov').classList.remove('open'); }
+async function _dirConfirmar(){
+  const user=window._currentUser; if(!user || !_dirDe(_dirEscolha) || _dirSalvando) return;
+  _dirSalvando=true; const ok=document.getElementById('dir-ok'); ok.disabled=true;
+  try{
+    await _dirGravar(user.uid, _dirEscolha);
+    document.getElementById('dir-ov').classList.remove('open');
+    showToast('🏢 Diretoria '+_dirDe(_dirEscolha).label+' registrada. Obrigado!');
+  }catch(e){
+    const err=document.getElementById('dir-err'); err.textContent='⚠ Não consegui salvar agora ('+(e?.code||e?.message||'erro')+'). Tente de novo.'; err.style.display='block'; ok.disabled=false;
+  }finally{ _dirSalvando=false; }
+}
+// Quem já tem cadastro: pergunta uma vez por sessão, sem disputar a tela com outra janela/guia/dica (espera ficar livre).
+function _dirTalvezPerguntar(user, dados, tentativa){
+  if(!_dirPerguntaPara(user, dados)) return;
+  if(_dirPerguntadoSessao) return;   // a inscrição (ou esta janela) já perguntou nesta sessão — nunca 2 janelas seguidas
+  try{ if(sessionStorage.getItem('mare_dir_adiado')==='1') return; }catch(e){}
+  const ocupado = document.querySelector('.ov.open,.cad-ov.open,#tourm-bub,#mare-dica');
+  if(ocupado){ if((tentativa||0)<24) setTimeout(()=>_dirTalvezPerguntar(user, dados, (tentativa||0)+1), 5000); return; }
+  _dirPerguntadoSessao = true;
+  _dirAbrir();
+}
+// Esc fecha a janela como "Agora não" (camada própria, em captura, antes das de baixo)
+window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const ov=document.getElementById('dir-ov'); if(!ov || !ov.classList.contains('open')) return; e.preventDefault(); e.stopPropagation(); _dirAdiar(); }, true);
 function mostrarInscricao(user,dados,opts){
+  // 🏢 diretoria na própria inscrição (quem é novo não vê duas janelas seguidas)
+  _inscPedirDir = _dirPerguntaPara(user, dados||{role:window._currentUserRole});
+  if(_inscPedirDir) _dirPerguntadoSessao = true;
+  _dirInscEscolha = '';
+  { const w=document.getElementById('insc-dir-wrap'), box=document.getElementById('insc-dir-ops');
+    if(w) w.style.display=_inscPedirDir?'':'none';
+    if(box){ box.innerHTML=_dirOpsHtml(''); _dirLigarOps(box, id=>{ _dirInscEscolha=id; document.getElementById('insc-init-err').style.display='none'; }); } }
   _inscPedirTorre = !MARE_SO_HERING && !!(opts && opts.pedirTorre);   // modo só Hering: OKR de uma torre só, nada a perguntar
   const _tw=document.getElementById('insc-torre-wrap'); if(_tw) _tw.style.display=_inscPedirTorre?'':'none';
   const _ts=document.getElementById('insc-torre'); if(_ts) _ts.value='';
@@ -13817,6 +13914,7 @@ async function confirmarInscricao(){
   if(!init){ showToast('⚠ Defina suas iniciais.'); return; }
   const _torreSel=_inscPedirTorre ? (document.getElementById('insc-torre')?.value||'') : '';
   if(_inscPedirTorre && !_torreSel){ showToast('⚠ Escolha a sua torre.'); return; }
+  if(_inscPedirDir && !_dirDe(_dirInscEscolha)){ showToast('⚠ Escolha a sua diretoria.'); return; }
   // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init) —
   // checar só `members` (squad atual) deixava passar gente de OUTRO squad
   // com a mesma sigla, sem aviso nenhum (achado real: "GS" duplicado entre
@@ -13876,6 +13974,7 @@ async function confirmarInscricao(){
   // Torre só em usuarios/{uid} (o board não lê; usuarios_publicos fica como está).
   fbUpdate('kanban/usuarios/'+user.uid, _torreSel ? {...sqUpd, torre:_torreSel} : sqUpd);
   fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
+  if(_inscPedirDir && _dirDe(_dirInscEscolha)) _dirGravar(user.uid, _dirInscEscolha).catch(e=>{ console.error('[diretoria] inscrição:', e); showToast('⚠ Não consegui salvar a diretoria agora — ela será perguntada de novo.'); });
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:_papelIns});
   window._currentUserInit=init;
@@ -31442,6 +31541,7 @@ const HELP_CONTENT = {
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
     { icon:'🔥', title:'Tema Black Friday (semana da Black Friday)', text:'Na <b>semana da Black Friday</b> (de segunda a domingo — em 2026, de 23/11 a 29/11) o Maré abre no tema <b>🔥 Black Friday</b> pra todo mundo: preto com vermelho de detalhe, contagem regressiva no topo ("Xd pra Black Friday", "É hoje!" na sexta), 💰 no lugar dos peixinhos e a fita <b>🔥 OFERTA</b> nos cards de prioridade Crítica (cards ♾️ Contínuos ou 💤 parados mantêm o próprio selo).\n\n<b>Prefere o seu tema?</b> Clique no 🔥 (botão de tema, lá em cima; no celular: <b>⋯ → Alternar tema</b>) — o seu tema volta e fica até o fim da semana. Mudou de ideia? <b>Minhas Preferências → 🔥 Black Friday</b> (ou botão direito / toque com 2 dedos no botão de tema).\n\nNada é gravado no seu tema: na segunda depois da Black Friday cada um volta sozinho ao que usava (inclusive o 🕐 Tema automático). O PO pode pôr um recado ao lado da contagem em ⚙ Configurações → "Banner do tema Black Friday".' },
+    { icon:'🏢', title:'Diretoria (Digital, RH, Marca, Tecnologia)', text:'Com o Maré chegando a novos times, cada pessoa da Hering informa a sua <b>diretoria</b>: <b>💻 Digital</b>, <b>🤝 RH</b>, <b>🎨 Marca</b> ou <b>🛠️ Tecnologia</b>.\n\n<b>Quando:</b> uma vez só — quem é novo escolhe na própria inscrição; quem já usa o Maré vê uma janela "Qual é a sua diretoria?" no próximo acesso (dá pra clicar em "Agora não" e responder na próxima vez).\n\n<b>Onde aparece:</b> como etiqueta ao lado do seu nome na <b>👥 Equipe</b> do quadro (contorno discreto, diferente das pílulas coloridas de subtime).\n\n<b>Escolheu errado?</b> Depois da 1ª escolha só um ADM muda, no Painel → 👥 Usuários. A diretoria não muda seus acessos nem o seu squad, e é diferente da "torre" do Radar.' },
     { icon:'🕐', title:'Tema automático', text:'Não quer ficar trocando de tema na mão ao longo do dia? Clique no botão 🕐, ao lado do botão de tema (🌙/☀️), pra ligar a troca sozinha — o board acompanha o horário de São Paulo: ☀️ Lençóis Maranhenses (claro) das 06h às 12h, 🌴 Vice City das 12h às 18h (o easter egg escondido virou tema oficial nesse horário) e 🌙 Abrolhos (escuro) das 18h às 06h. Clique de novo no 🕐 pra desligar.\n\nQualquer troca manual de tema (clicar no 🌙/☀️, trocar a variante do claro, ou o easter egg do Vice City) desliga o automático na hora — nesse momento você escolheu um tema por conta própria, e o app não sobrescreve isso sozinho na próxima virada de horário.\n\n💻 Diferente da maioria das outras preferências de tela, esta fica salva só NESTE navegador (não na sua conta) — se você usa o board em mais de um computador, precisa ligar em cada um separadamente.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).\n\n📈 Dados de Produção: aba ao lado da timeline, com estatísticas dos cards vinculados (status do fluxo, prioridade, responsável, squad) — mesma linguagem visual do Controle de Criativos. Tem o mesmo checkbox "🧩 Incluir supercards" pra ligar/desligar se o card container de um supercard entra na contagem total.' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },

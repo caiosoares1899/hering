@@ -3204,7 +3204,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.118 · painel-dev</div>
+<div class="version">v5.119 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -11089,7 +11089,7 @@ document.addEventListener('visibilitychange', ()=>{
 // e preferências (kanban/usuarios/{uid}/notificacoes|notif_prefs|...) NÃO casam.
 // Instalado no 1º loadGlobalUsers() porque window._set/_update só existem depois
 // que o <script type="module"> roda.
-const _GU_FIELD_RE = /\/kanban\/usuarios\/[^/]+(\/(role|squads|squads_roles|gestorOkr|torre|nome|init|foto|inscrito|email)(\/[^/]+)?)?$/;
+const _GU_FIELD_RE = /\/kanban\/usuarios\/[^/]+(\/(role|squads|squads_roles|gestorOkr|torre|diretoria|nome|init|foto|inscrito|email)(\/[^/]+)?)?$/;
 let _guWrapped = false;
 function _guWrapWrites(){
   if(_guWrapped) return; _guWrapped = true;
@@ -11163,8 +11163,18 @@ const GU_EMPRESAS = [
 // 🏛️ Torres do OKR (mesma lista de okr.html/okr-dev.html — manter igual): flag em kanban/usuarios/{uid}/torre; sem o campo = Digital.
 const GU_TORRES = [{id:'digital',label:'Digital',icon:'🛒'},{id:'comercial',label:'Comercial',icon:'🛍️'},{id:'corporativa',label:'Corporativa',icon:'🏛️'},
   {id:'geral',label:'Geral (todas)',icon:'⭐'}];   // 'geral' = ADMs de OKR: criam/editam em TODAS as torres (só vale pra pessoa, nunca pra Objetivo)
+// 🏢 Diretoria por pessoa (16/11/2026; docs/ideias/diretoria-por-pessoa.md): independente da torre do Radar. A pessoa escolhe
+// no 1º acesso ao Maré; aqui o ADM edita. Mesma lista de kanban-dev.html (DIRETORIAS) — manter igual. Sem o campo = "Não informada".
+const GU_DIRETORIAS = [{id:'digital',label:'Digital',icon:'💻'},{id:'rh',label:'RH',icon:'🤝'},{id:'marca',label:'Marca',icon:'🎨'},{id:'tecnologia',label:'Tecnologia',icon:'🛠️'}];
+function _guDiretoriaDe(u){ return GU_DIRETORIAS.some(d=>d.id===(u&&u.diretoria)) ? u.diretoria : ''; }
+// Mesmo predicado da regra do banco (role 'adm' gravado OU o e-mail do Caio) — a lista de e-mails de ADM do Painel não basta lá.
+function _guPodeEditarDiretoria(){
+  const me = window._currentUser; if(!me) return false;
+  if(String(me.email||'').toLowerCase()==='caio.soares@ciahering.com.br') return true;
+  return (_globalUsersCache[me.uid]||{}).role==='adm';
+}
 function _guTorreDe(u){ return GU_TORRES.some(t=>t.id===(u&&u.torre)) ? u.torre : 'digital'; }
-let _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false, torre:''};
+let _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false, torre:'', diretoria:''};
 function _guEmpresa(u){
   const e = String(u?.email||'').toLowerCase();
   if(e.endsWith('@ciahering.com.br')) return 'hering';
@@ -11183,12 +11193,12 @@ function _guNoSquad(u, sid){
 }
 function _guTemFiltro(){
   const q = (document.getElementById('gu-search')?.value||'').trim();
-  return !!(q || _guFilter.empresa || _guFilter.role || _guFilter.squad || _guFilter.gestorOkr || _guFilter.torre);
+  return !!(q || _guFilter.empresa || _guFilter.role || _guFilter.squad || _guFilter.gestorOkr || _guFilter.torre || _guFilter.diretoria);
 }
 function _guSetFilter(campo, valor){ _guFilter[campo] = valor; renderGlobalUsers(); }
 function _guClearFilters(){
   const inp = document.getElementById('gu-search'); if(inp) inp.value = '';
-  _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false, torre:''};
+  _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false, torre:'', diretoria:''};
   renderGlobalUsers();
 }
 function _guFiltersHtml(contagemEmpresa, totalBase){
@@ -11206,6 +11216,7 @@ function _guFiltersHtml(contagemEmpresa, totalBase){
     ${sel('role','Todos os papéis', GLOBAL_ROLES.map(r=>[r,r]))}
     ${sel('squad','Todos os squads', [...SQUADS.map(sq=>[sq.id,(sq.icon||'')+' '+sq.label]), ['__nenhum','— sem nenhum squad']])}
     ${MARE_SO_HERING ? '' : sel('torre','Todas as torres', GU_TORRES.map(t=>[t.id, t.icon+' '+t.label]))}
+    ${sel('diretoria','Todas as diretorias', [...GU_DIRETORIAS.map(d=>[d.id, d.icon+' '+d.label]), ['__nao','— Não informada']])}
     <label class="okr-stat-chip${_guFilter.gestorOkr?' active':''}" style="cursor:pointer;" title="Só quem tem a flag 🎯 Gestor OKR">
       <input type="checkbox" ${_guFilter.gestorOkr?'checked':''} onchange="_guSetFilter('gestorOkr', this.checked)" style="width:12px;height:12px;accent-color:var(--accent);"> 🎯 Gestor OKR</label>
     ${_guTemFiltro()?'<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;" onclick="_guClearFilters()">✕ Limpar filtros</button>':''}`;
@@ -11231,6 +11242,7 @@ function renderGlobalUsers(){
   if(_guFilter.squad) entries = entries.filter(([uid,u])=>_guNoSquad(u,_guFilter.squad));
   if(_guFilter.gestorOkr) entries = entries.filter(([uid,u])=>!!u.gestorOkr);
   if(_guFilter.torre) entries = entries.filter(([uid,u])=>_guTorreDe(u)===_guFilter.torre);
+  if(_guFilter.diretoria) entries = entries.filter(([uid,u])=>_guFilter.diretoria==='__nao' ? !_guDiretoriaDe(u) : _guDiretoriaDe(u)===_guFilter.diretoria);
 
   // Contagem por empresa calculada ANTES do filtro de empresa (senão os chips das outras
   // empresas zerariam assim que um fosse escolhido) — mesmo raciocínio do resumo da aba OKR.
@@ -11372,7 +11384,21 @@ function renderGlobalUsers(){
     torreSel.style.cssText = 'font-size:10px;padding:3px 6px;max-width:150px;';
     torreSel.innerHTML = GU_TORRES.map(t=>`<option value="${t.id}"${_guTorreDe(u)===t.id?' selected':''}>${t.icon} ${t.label}</option>`).join('');
     torreSel.onchange = ()=>setGlobalUserTorre(uid, torreSel.value);
-    if(!MARE_SO_HERING) squadsWrap.appendChild(torreSel);   // modo só Hering: o Radar tem uma torre só, nada a escolher (o campo gravado fica intacto)
+    if(!MARE_SO_HERING) squadsWrap.appendChild(torreSel);
+    // 🏢 Diretoria (Maré): a pessoa escolhe no 1º acesso; ADM corrige aqui. Sem o campo = "Não informada" (nunca vira Digital sozinho).
+    const dirSel = document.createElement('select');
+    dirSel.className = 'pt-filter-input';
+    dirSel.setAttribute('aria-label', 'Diretoria de '+(u.nome||u.email||'?'));
+    const _podeDir = _guPodeEditarDiretoria();
+    dirSel.disabled = !_podeDir;
+    dirSel.title = _podeDir ? 'Diretoria da pessoa (aparece na 👥 Equipe do Maré). A pessoa escolhe no 1º acesso; aqui você corrige.'
+      : 'Só um ADM com papel adm gravado no cadastro (ou o Caio) muda a diretoria — é o que as regras do banco conferem.';
+    dirSel.style.cssText = 'font-size:10px;padding:3px 6px;max-width:150px;';
+    const _dirU = _guDiretoriaDe(u);
+    dirSel.innerHTML = (_dirU ? '' : '<option value="" selected>🏢 Não informada</option>')
+      + GU_DIRETORIAS.map(d=>`<option value="${d.id}"${_dirU===d.id?' selected':''}>${d.icon} ${d.label}</option>`).join('');
+    dirSel.onchange = ()=>setGlobalUserDiretoria(uid, dirSel.value, dirSel);
+    squadsWrap.appendChild(dirSel);   // modo só Hering: o Radar tem uma torre só, nada a escolher (o campo gravado fica intacto)
 
     // Botão excluir (remove o usuário inteiro de kanban/usuarios)
     const delBtn = document.createElement('button');
@@ -11417,6 +11443,26 @@ function setGlobalUserTorre(uid, torre){
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), {torre})
     .then(()=>{ showToast('🏛️ Torre '+GU_TORRES.find(t=>t.id===torre).label+' registrada.'); })
     .catch(err=>{ showToast('Erro: '+err.message); renderGlobalUsers(); });
+}
+// Fonte primeiro (regra: só ADM com role 'adm' ou o Caio troca), espelho depois (usuarios_publicos — a regra exige o MESMO valor).
+// Sucesso só depois de confirmar; falha devolve o seletor ao valor anterior. Usuário apagado no meio não renasce (confere antes).
+async function setGlobalUserDiretoria(uid, dir, sel){
+  const antes = _guDiretoriaDe(_globalUsersCache[uid]);
+  const volta = ()=>{ if(sel) sel.value = antes; };
+  if(!GU_DIRETORIAS.some(d=>d.id===dir)){ volta(); return; }
+  if(!_guPodeEditarDiretoria()){ showToast('⚠ Só um ADM (papel adm no cadastro) ou o Caio muda a diretoria.'); volta(); return; }
+  if(sel) sel.disabled = true;
+  try{
+    const existe = (await window._get(window._ref(window._db,'kanban/usuarios/'+uid))).exists();
+    if(!existe){ showToast('⚠ Esse usuário foi excluído enquanto você editava — nada foi salvo.'); volta(); return; }
+    await window._update(window._ref(window._db,'kanban/usuarios/'+uid), {diretoria: dir});
+    if(_globalUsersCache[uid]) _globalUsersCache[uid].diretoria = dir;
+    await window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid), {diretoria: dir})
+      .catch(e=>console.warn('[diretoria] espelho não gravou (volta no próximo login da pessoa):', e));
+    const d = GU_DIRETORIAS.find(x=>x.id===dir);
+    showToast('🏢 Diretoria '+d.label+' registrada.');
+  }catch(err){ showToast('⚠ Não consegui salvar a diretoria ('+(err?.code||err?.message||'erro')+').'); volta(); }
+  finally{ if(sel) sel.disabled = !_guPodeEditarDiretoria(); }
 }
 function toggleGestorOkr(uid, checked){
   if(!_isAdmPainel()){ showToast('⚠ Só ADM altera Gestor OKR.'); renderGlobalUsers(); return; }

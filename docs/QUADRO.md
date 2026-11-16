@@ -23,7 +23,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
-| Codex | Diretoria por pessoa: Digital, RH, Marca e Tecnologia; independente do Radar. Dado novo (R3): ESCALAR AO CLAUDE; desenho pronto | [desenho](ideias/diretoria-por-pessoa.md) | 16/11/2026 |
 | Codex | 🏖️ UI/UX Férias: **UI01, UI02 e UI04 resolvidos em 16/11** (tela cheia); faltam UI03 (foco preso na 🧳), UI05 (títulos cortados na 🧳), UI06 (alvos de toque) e UI07 (fonte no tablet do Radar) — módulo é do Claude | [auditoria](FERIAS_UI_AUDITORIA_2026-11-13.md) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
 | Claude | `test_apresentacao_live.js` falha também na `main` ("fora da sincronização, o slide do apresentador NÃO puxa a pessoa") | [escalados](quadro/escalados.md#apresentacao-live) | 09/11/2026 |
@@ -39,6 +38,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 |---|---|---|---|
 | Claude | Conhecimento do Agente Ágil regenerado na promoção de 16/11 (Férias em tela cheia, Gantt, Ilha, Preferências, tema claro) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 16/11/2026 |
 | Claude | 🔥 Monitor do Firebase: feed com formato mudado não vira mais alarme do histórico inteiro (/monitorarbugs 16/11, #1815) | resync + `firebase deploy --project hering-onboarding --only functions:firebaseStatus` | 16/11/2026 |
+| Claude | 🏢 Diretoria por pessoa: regra de `usuarios/{uid}/diretoria` e do espelho em `usuarios_publicos` (só depois do merge do PR da diretoria) | resync + `firebase deploy --project hering-onboarding --only database` | 16/11/2026 |
 
 ## Backlog
 
