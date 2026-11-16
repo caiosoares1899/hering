@@ -152,7 +152,10 @@ function faseDe(inc) {
 function recente(inc, agora) {
   const refIso = (inc && (inc.atualizadoEm || inc.criadoEm)) || '';
   const ts = Date.parse(refIso);
-  if (!Number.isFinite(ts)) return true;
+  // /monitorarbugs 16/11 (mesma lição da VTEX, 13/10): o incidents.json é o HISTÓRICO inteiro, e "aberto" é só "não achei `end`".
+  // Sem data legível, não dá pra provar que é atual — nunca alarma (antes: `true`, e um feed com os campos renomeados viraria
+  // dezenas de incidentes antigos "abertos", com sino + push pros ADMs).
+  if (!Number.isFinite(ts)) return false;
   return (agora - ts) <= JANELA_RECENTE_MS;
 }
 
@@ -196,6 +199,10 @@ function parseIncidents(raw, agora = Date.now()) {
       resumo,
     });
   }
+
+  // Nenhum incidente dos serviços usados com data legível = o formato do feed mudou: conta como falha do monitor (avisa os ADMs depois de
+  // LIMITE_FALHAS ticks) em vez de interpretar o histórico às cegas.
+  if (incidentesUsados.length && !incidentesUsados.some((inc) => Number.isFinite(Date.parse(inc.atualizadoEm || inc.criadoEm || '')))) return null;
 
   // Monta o mapa dos 6 serviços que usamos a partir dos incidentes em aberto e recentes
   const RANK = { operational: 0, under_maintenance: 1, degraded_performance: 2, partial_outage: 3, major_outage: 4 };

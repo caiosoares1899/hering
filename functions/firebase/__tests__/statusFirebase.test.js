@@ -190,3 +190,24 @@ test('se todos os incidentes falharem ao gravar no banco, rodar() propaga erro e
   assert.equal(saude.falhasSeguidas, 1);
 });
 
+
+test('/monitorarbugs 16/11: feed com os campos de data/fim renomeados não vira alarme do histórico inteiro', async () => {
+  const db = novoDb();
+  // formato mudou: sem `end`, sem `begin`/`modified`, sem most_recent_update — 30 incidentes antigos de RTDB
+  const antigos = Array.from({ length: 30 }, (_, i) => ({
+    id: 'OLD_' + i, service_name: 'Realtime Database', external_desc: 'Incidente antigo ' + i,
+    finished_at: '2025-0' + ((i % 9) + 1) + '-10T10:00:00Z', status_impact: 'SERVICE_OUTAGE',
+  }));
+  const parsed = F.parseIncidents(JSON.stringify(antigos), AGORA);
+  assert.equal(parsed, null, 'formato ilegível deve contar como falha do monitor');
+  await assert.rejects(F.executar({ db, fetchImpl: resp(JSON.stringify(antigos)), agora: AGORA }), /ilegível/);
+  assert.equal((await saude(db)).falhasSeguidas, 1);
+  for (const uid of ['adm1', 'adm2']) assert.equal((await notifs(db, uid)).length, 0);
+  // um incidente sem data no meio de outros datados é só ignorado (não alarma)
+  const misto = F.parseIncidents(JSON.stringify([
+    { id: 'SEM_DATA', service_name: 'Realtime Database', external_desc: 'Sem data', status_impact: 'SERVICE_OUTAGE' },
+    { id: 'OK', service_name: 'Authentication', external_desc: 'Antigo resolvido', begin: '2026-01-01T00:00:00Z', end: '2026-01-01T02:00:00Z' },
+  ]), AGORA);
+  assert.ok(misto);
+  assert.equal(misto.rtdbAfetado, false);
+});

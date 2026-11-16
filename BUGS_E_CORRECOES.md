@@ -87,6 +87,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · 🔥 Monitor do Firebase: feed com formato mudado viraria alarme do histórico inteiro (functions/firebaseStatus) — /monitorarbugs áreas sensíveis, Black Friday
+
+- **Sintoma (latente):** o monitor do Firebase (`functions/firebase/statusFirebase.js`) lê o incidents.json, que é o HISTÓRICO inteiro de incidentes. Ele marca "aberto" qualquer item sem `end`, e `recente()` devolvia `true` quando não havia data legível. Se o Google renomear os campos de fim e de data, todo incidente antigo de RTDB/Auth/FCM/Functions/Storage/Hosting viraria "aberto e recente": sino + push para cada ADM por incidente, e o selo do Painel mostraria o RTDB fora do ar. Na Black Friday, esse alarme falso esconderia um incidente de verdade.
+- **Causa:** é a mesma classe do achado da VTEX de 13/10 (o caso padrão caía no ramo "alarma"). O GitHub não tem o problema, porque o summary.json só traz incidentes não resolvidos.
+- **Correção:** sem data legível, `recente()` → `false`. Se NENHUM incidente dos serviços usados tiver data, `parseIncidents()` → `null`, o que conta como falha do monitor (`firebase_saude.falhasSeguidas`; aviso aos ADMs após `LIMITE_FALHAS`).
+- **Teste:** `firebase/__tests__/statusFirebase.test.js` ganhou um cenário com 30 incidentes no formato mudado. Ele falha sem a correção e passa com ela.
+- **Rodada /monitorarbugs "áreas sensíveis — Black Friday" (16/11):** sem achado nos avisos do Gantt (`gantt/avisos.js` + regras `calendarios_gantt_hist`/`gantt_inscritos`), no Intake público (rate limit por transação, IP do lado direito, teto por squad), nos monitores VTEX/GitHub (as 4 correções de 13/10 replicadas), na data da Black Friday da Escala (2024–2030 conferidos) nem no Agente Ágil do Painel (uid do caminho, e-mail do Auth, cota por transação, só leitura).
+- **Deploy:** `firebase deploy --only functions:firebaseStatus`.
+
 ### 2026-11-16 · PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — Contraste do Painel e Radar: Lençóis e Vice City medidos
 
 Painel v5.118-dev e Radar v2.137-dev: corrige textos auxiliares, placeholders, selos, filtros ativos, dias do calendário e status que ainda falhavam na main 3f067720. No Vice, clareia os tokens de texto e dá contraste ao fundo e aos cards próprios, preservando a paleta e o escuro. Toast já legível foi mantido. Auditoria com Firebase falso, pixels do fundo renderizado, rolagem, fill SVG, tratamento de oclusão e saída não zero para regressões; inclui autoteste do medidor e prova antes/depois em docs/capturas/tema_claro/. Exceções nominadas: controles inativos (WCAG 1.4.3), escuro preexistente sem piora e selo ligado do módulo mare-plantao-dev.js reservado. Sem lógica, banco, módulos compartilhados ou produção. Fronteira: sem mudança. Dica: não, correção.
