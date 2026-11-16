@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · otimização: preconnect de fontes e guarda de aba oculta na apresentação do Radar
+
+- **Problema:** Rodada do `/otimizaçãoderotina` identificou que `okr-apresentacao.slide.html` carregava Google Fonts sem `<link rel="preconnect">` e rodava 2 `setInterval` (relógio 1 s e sala ao vivo 15 s) mesmo com a aba em segundo plano.
+- **Causa:** Falta de hints `preconnect` no `<head>` e ausência de checagem `document.hidden` nos timers periódicos.
+- **Solução:** Adicionados `<link rel="preconnect">` para `fonts.googleapis.com` e `fonts.gstatic.com` e guarda `document.hidden` nos 2 `setInterval` em `okr-apresentacao.slide.html`; baseline completo do ecossistema registrado em `.claude/skills/otimizaçãoderotina/SKILL.md`. Sinalizado para avaliação futura: `kanban/okr/agente_chat` no boot do `okr-dev.html` sem `limitToLast` (exige `.indexOn: ["ts"]` + `firebase deploy --only database`).
+- **Revisão do Claude (16/11):** como os timers pulam com a aba oculta, um `visibilitychange` atualiza relógio, cronômetro e sala na hora em que a aba volta. A presença (`liveBatida`, 20 s) segue sem pausa: quem apresenta e troca de aba continua na sala.
+
 ### 2026-11-16 · Auditoria 16/11 — Férias recria período apagado; popup do Gantt Radar reabre sozinho (kanban v8.30.991-dev, okr v2.139-dev, mare-ferias v7, mare-gcal v10)
 
 Reproduzidos no Chromium com módulos reais e dados fictícios. Média: mare-ferias-dev.js/enviarForm salva com set no mesmo id sem recusar edição de período removido por outra sessão. Baixa: mare-gcal-dev.js/diaSync remove popup ao sair da janela mas preserva S.dia; avançar duas vezes e voltar a Hoje reabre o dia antigo. Ambos escalados ao Claude no Quadro por serem módulos compartilhados. Prova: docs/arezzo/testes/test_monitorarbugs_1611.js (2 falhas esperadas até correção) e console_monitorarbugs_1611.js (isolado em iframe, sem Firebase). **Correção (Claude, mesmo PR #1816):** `enviarForm()` recusa salvar a edição quando o período sumiu do listener ao vivo (`ST.dados`) e avisa "excluído enquanto você editava — nada foi salvo" (mesma regra do "editar ressuscita" do Gantt e do OKR). Em `diaSync()`, quando o dia sai da janela de 6 semanas, `S.dia` é zerado; com a aba só escondida (`[hidden]`) a seleção fica. A prova do Codex passa de 2/2 ❌ para 2/2 ✅, e as suítes de Férias e Gantt continuam verdes (`docs/arezzo/testes/test_ferias_encerrado.js` não roda nesta máquina por falta de módulo, também na main).
