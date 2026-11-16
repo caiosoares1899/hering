@@ -292,3 +292,7 @@ Caio confirmou o merge da #1786 e o deploy das regras (`--only database`: nó `k
 ## Confirmação de deploy — 16/11/2026 (promoção #1799: Gantt + 🏖️ Férias)
 
 Caio confirmou o deploy de `ganttAvisoMudanca`, `ganttAvisoMudancaDev` e `sendPushOnNotification` (🔔 avisos de mudança e 📣 pedir atualização do Gantt, tipos `gantt_cal`/`gantt_pedido` no push) e do conhecimento do Agente Ágil regenerado em 13/11 e 14/11 (`agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO`, `okrAgenteChat`). Tags `kanban-v8.30.984`, `okr-v2.132` e `painel-v5.116` no merge da #1799 (`59818dcc`). Pendente de deploy zerado.
+
+## Limpeza do Quadro — 16/11/2026
+
+Saíram do Backlog por estarem no prod desde a promoção #1799 (14/11): 🏖️ Calendário geral de férias + modo férias (F1–F4; correções da #1797 no dev), 📱 Gantt no celular e ⭐ aba favorita + 🔔 avisos do Gantt (deploy confirmado em 16/11). Saiu da Fila a "Férias F2" do Antigravity (feita pelo Claude na #1791). As ideias 📅 grupo do calendário na Ilha e 🎨 tipos de notificação mais distintos foram para o Codex (`codex/ilha-notif-familias`).
