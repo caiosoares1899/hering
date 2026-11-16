@@ -116,3 +116,16 @@ Contrato do Caio exige, antes do front, provar com `functions/rules/rulesSim.js`
 **Parada prevista no contrato:** nenhuma implementação funcional ou mudança em regras. Para exclusividade estrita, Claude precisa desenhar a correção R3: `.write` em nó ancestral não pode ser restringida apenas por `.write` no filho; exclusão `null` também precisa ser protegida. Alternativamente, Caio pode esclarecer que a exceção administrativa existente é aceita e ajustar o critério antes de retomar o front R1.
 
 **Retomada autorizada pelo Caio e Claude:** outro membro comum deve ser negado; PO/ADM mantêm a exceção administrativa já existente. Preferência sem efeito de acesso, validada por lista de abas em cada app. Continua R1, sem alteração em `database.rules.json`.
+
+
+## Cards sensiveis 1611
+
+Rodada `/monitorarbugs` de 16/11/2026, Codex. ESCALAR AO CLAUDE: `kanban-dev.html` reservado no Quadro; código não alterado.
+
+- Alta (integridade), `fbSaveCard`: espelho aponta A na chave 0, mas compactação/reordenação já pôs B ali no banco. Transação encontra id divergente e aborta, porém `updates['cards/0']` permanece e o update seguinte substitui B por A. Recusar/relocalizar por identidade, nunca gravar na posição antiga após abort. Prova local: ocupante final editado; esperado outro.
+- Média, `_performAutoSave`: card em todo; escolher done e editar descrição para agendar autosave. Persiste coluna e notifica sem chamar `recordMove`: flow.log/enteredAt/firstStartAt/doneAt não acompanham. Salvar manual, arrasto e menu registram fluxo. Prova mede ausência de chamada à função canônica.
+- Média, `createNotif`: duas abas de PO/ADM leem ausente para mesmo idOverride; primeira cria, destinatário lê, resposta atrasada da segunda grava read:false. Regra permite sobrescrita por PO/ADM ou dono da caixa; membro comum em caixa alheia é barrado. Dedupe de 5 s é local. Criar condicionalmente de forma atômica; conferir permissão de leitura/transação antes de escolher solução.
+
+Revisão independente tentou refutar: confirmou os dois primeiros e qualificou o terceiro pelas regras reais. Teste Chromium com funções extraídas da página real, banco/dependências falsos: `node docs/arezzo/testes/test_cards_sensiveis_1611.js` → 3/3 falhas esperadas até correção. Console isolado/read-only: `docs/arezzo/testes/console_cards_sensiveis_1611.js`, validado por check-script. Não acessa Firebase real.
+
+Cobertura: primitivas criar/salvar/lote; autosave × Salvar e wrapper; movimentação mouse/toque/menu; criação/dedupe de notificações pessoais. Criação inspecionada sem novo defeito confirmado. Não cobre push/FCM completo, todos os produtores server-side, regras implantadas ou dados reais. Sem evidência de ocorrência em produção. Fronteira: sem alteração; bugs de integridade dentro do modelo interno aceito. ADM valida em dev após correção, nunca o agente.

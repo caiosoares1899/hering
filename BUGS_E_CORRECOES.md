@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · Auditoria de cards: três defeitos reproduzidos e escalados ao Claude, sem correção
+
+fbSaveCard sobrescreve ocupante após transação abortar por id divergente; autosave altera coluna sem recordMove; corrida entre abas PO/ADM reabre notificação lida (membro comum em caixa alheia é barrado). Reprodução Chromium em docs/arezzo/testes/test_cards_sensiveis_1611.js: três falhas esperadas. Console isolado read-only em docs/arezzo/testes/console_cards_sensiveis_1611.js. Página reservada: código intacto, sem bump. Detalhes em docs/quadro/escalados.md. Fronteira sem alteração; dica não, auditoria.
+
 ### 2026-11-16 · SÓ DEV — Toolbar: folga vertical evita recorte das bordas e do foco dos botões (tema Black Friday)
 
 Na toolbar do Maré, overflow-x:auto converte o overflow vertical em auto. No desktop os botões encostavam no limite superior e inferior do recorte; no celular faltava folga superior. Acrescentada folga de 4 px acima/abaixo (mantidos os 5 px inferiores do celular), sem mudar tamanho, ordem ou rolagem horizontal dos botões. Teste test_toolbar_ui.js: 24 cenários (0/4/54 cards, 1280/390 px, Black Friday/Abrolhos/Lençóis/Vice); baseline sem folga falha. Capturas em docs/capturas/toolbar_ui/. Sem mudança de fronteira; dica não, correção visual.
