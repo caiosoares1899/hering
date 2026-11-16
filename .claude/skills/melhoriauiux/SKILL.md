@@ -137,4 +137,6 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 - **2026-11-13 · Maré › 📊 Gantt (abas + 📌 Datas-chave):** rótulo de data de 1 dia começava na borda da coluna e a linha ficava no meio do dia ("ficou torto", print do Caio) → nome centrado na linha, medido por DOM (±2 px) nas 3 abas, inclusive no Comercial largo; "Hoje" ganhou rótulo na linha 📌; destaque ⚠️ do ADM nas barras dos calendários (nó próprio, sobrevive a reenviar a planilha); filtro "mostrar só" por grupo de linhas; "Site e App". **Lição:** alinhamento se prova medindo centro × centro no DOM, não só olhando o print do caso fácil. Teste `test_gantt_ui.js`. v8.30.963-dev.
 
+- **2026-11-16 · Gantt › popup do dia (🧭 Digital, Maré e Radar):** "desorganizado, informações jogadas" → parede de "Linha: TEXTO (período)" vira calendário → linha (bolinha da cor da régua, nome uma vez) → item com o "quando" (Só hoje / Começa hoje / Termina hoje / período), ⚠️/★ como na régua, vazio compacto no fim, cabeçalho fixo; renderizador único `MareGCal.diaHtml` (antes 2 cópias). **Lição:** dado de exemplo com 3 ações escondia o problema — com 11 ações em 3 calendários o popup virava parede de texto. kanban v8.30.989-dev, okr v2.136-dev, mare-gcal v9.
+
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).

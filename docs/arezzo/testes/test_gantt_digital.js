@@ -60,8 +60,20 @@ const seed = () => ({ kanban: {
     // painel do dia
     await p.click('.gantt-day-hd.is-clic[data-date="2026-11-13"]'); await p.waitForTimeout(250);
     let dia = await p.evaluate(() => { const d = document.getElementById('gantt-dia'); return d ? d.innerText : ''; });
-    t('M8. tocar no dia 13 abre "tudo deste dia": ação de vários dias + do dia, por origem', /3 ações/.test(dia) && /AÇÃO SITE LONGA/.test(dia) && /10\/11 – 14\/11/.test(dia) && /CRM DO DIA/.test(dia) && /CUPOM AMAZON/.test(dia) && /Ainda não publicado/.test(dia), dia);
+    t('M8. tocar no dia 13 abre "tudo deste dia": ação de vários dias + do dia, por origem', /3 ações/.test(dia) && /AÇÃO SITE LONGA/.test(dia) && /10\/11 – 14\/11/.test(dia) && /CRM DO DIA/.test(dia) && /CUPOM AMAZON/.test(dia) && /ainda não publicado/i.test(dia), dia);
     t('M8b. 📅 popup junto do dia clicado (no <body>, fixo, logo abaixo/acima do dia, inteiro na tela)', await p.evaluate(() => { const d = document.getElementById('gantt-dia'), SEL = '.gantt-day-hd[data-date="2026-11-13"]'; if (!d) return false; const r = d.getBoundingClientRect(), a = document.querySelector(SEL).getBoundingClientRect(); return { corpo: d.parentElement === document.body, fixo: getComputedStyle(d).position === 'fixed', perto: (Math.abs(r.top - a.bottom) <= 16 || Math.abs(r.bottom - a.top) <= 16), naTela: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, cobreX: r.left <= a.right && r.right >= a.left }; }).then(x => x && x.corpo && x.fixo && x.perto && x.naTela && x.cobreX), await p.evaluate(() => { const d = document.getElementById('gantt-dia'); return d && d.getBoundingClientRect().toJSON(); }));
+    // 📅 /melhoriauiux 16/11: calendário → linha (cor da régua, nome uma vez) → itens com o "quando"; ⚠️ como na régua; vazio compacto
+    const est = await p.evaluate(() => { const d = document.getElementById('gantt-dia'); const q = t => [...d.querySelectorAll('.mgc-dia-it')].find(li => li.textContent.includes(t));
+      return { fontes: [...d.querySelectorAll('.mgc-dia-fonte')].map(h => h.innerText.replace(/\s+/g, ' ')), linhas: [...d.querySelectorAll('.mgc-dia-lrot')].map(x => x.textContent),
+        cores: [...d.querySelectorAll('.mgc-dia-lrot i')].every(i => /rgb/.test(getComputedStyle(i).backgroundColor) && getComputedStyle(i).backgroundColor !== 'rgba(0, 0, 0, 0)'),
+        qSite: (q('AÇÃO SITE LONGA') || {}).querySelector?.('.mgc-dia-q').textContent, qCrm: (q('CRM DO DIA') || {}).querySelector?.('.mgc-dia-q').textContent,
+        alerta: (() => { const li = q('CUPOM AMAZON'); return !!li && li.classList.contains('is-alerta') && /⚠️/.test(li.textContent); })(),
+        vazio: [...d.querySelectorAll('.mgc-dia-vz')].map(x => x.innerText.replace(/\s+/g, ' ')), sub: d.querySelector('.mgc-dia-tit span').textContent,
+        fixo: getComputedStyle(d.querySelector('.mgc-dia-hd')).position }; });
+    t('M8c. hierarquia: 2 calendários com ações (título + total), linha uma vez com a bolinha da cor da régua', est.fontes.length === 2 && /COMERCIAL HERING 2/i.test(est.fontes[0]) && est.linhas.length === 3 && est.cores, est);
+    t('M8d. "quando" de cada item: período (10/11 – 14/11) e Só hoje', est.qSite === '10/11 – 14/11' && est.qCrm === 'Só hoje', est);
+    t('M8e. ⚠️ ação importante aparece no popup (como na régua)', est.alerta, est);
+    t('M8f. calendário sem nada vira linha compacta no fim; subtítulo conta ações e calendários; cabeçalho fixo', est.vazio.length === 1 && /Outlet.*ainda não publicado/i.test(est.vazio[0]) && est.sub === '3 ações em 2 calendários' && est.fixo === 'sticky', est);
     t('M9. dia escolhido destacado (aria-pressed) e foco no ✕', await p.evaluate(() => document.querySelector('.gantt-day-hd[data-date="2026-11-13"]').getAttribute('aria-pressed') === 'true' && document.activeElement && document.activeElement.closest('#gantt-dia')));
     // republicação ao vivo de uma fonte com a consolidada aberta
     await p.evaluate(suf => window._set(window._ref(window._db, 'kanban/calendarios_gantt' + suf + '/outlet'), { meta: { atualizadoEm: 1, porNome: 'X', arquivo: 'o.xlsx' }, linhas: { out_acao_principal: { rot: 'Ação principal', ordem: 0 } }, barras: { o1: { linha: 'out_acao_principal', ini: '2026-11-13', fim: '2026-11-13', txt: 'OUTLET NOVO' } } }), SUF);
@@ -84,7 +96,7 @@ const seed = () => ({ kanban: {
     await p.mouse.click(640, 880); await p.waitForTimeout(200);
     t('M12c. clique fora fecha o popup', await p.evaluate(() => !document.getElementById('gantt-dia') && !_ganttDia && !document.querySelector('.gantt-day-hd[aria-pressed="true"]')));
     await p.click('.gantt-day-hd.is-clic[data-date="2026-11-13"]'); await p.waitForTimeout(200);
-    await p.click('#gantt-dia .btn'); await p.waitForTimeout(200);
+    await p.click('#gantt-dia [data-dia-fechar]'); await p.waitForTimeout(200);
     t('M12d. ✕ fecha o popup', await p.evaluate(() => !document.getElementById('gantt-dia') && !_ganttDia));
     await p.click('.gantt-day-hd.is-clic[data-date="2026-11-13"]'); await p.waitForTimeout(200);
     await p.evaluate(() => toggleGanttView()); await p.waitForTimeout(200);
@@ -124,7 +136,7 @@ const seed = () => ({ kanban: {
     { const { ctx, p, errs } = await abre(KAN, '?squad=' + SQ, { width: 390, height: 820 }, tema);
       await p.evaluate(() => { document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); toggleGanttView(); ganttAba('digital'); }); await p.waitForTimeout(300);
       await p.evaluate(() => ganttDia('2026-11-13')); await p.waitForTimeout(200);
-      const m = await p.evaluate(() => { const d = document.getElementById('gantt-dia'), r = d && d.getBoundingClientRect(); return { over: document.documentElement.scrollWidth - innerWidth, dia: !!d, alvo: document.querySelector('.gantt-day-hd.is-clic').getBoundingClientRect().height, folha: !!r && r.left >= 11 && innerWidth - r.right >= 11 && innerHeight - r.bottom <= 14 && r.top >= 0, btn: d && d.querySelector('.btn').getBoundingClientRect().height }; });
+      const m = await p.evaluate(() => { const d = document.getElementById('gantt-dia'), r = d && d.getBoundingClientRect(); return { over: document.documentElement.scrollWidth - innerWidth, dia: !!d, alvo: document.querySelector('.gantt-day-hd.is-clic').getBoundingClientRect().height, folha: !!r && r.left >= 11 && innerWidth - r.right >= 11 && innerHeight - r.bottom <= 14 && r.top >= 0, btn: d && d.querySelector('[data-dia-fechar]').getBoundingClientRect().height }; });
       t(`P. Maré 390 ${tema}: sem rolagem lateral, painel aberto, dia ≥ 44 px`, m.over <= 0 && m.dia && m.alvo >= 43.5, m);
       t(`P. Maré 390 ${tema}: popup vira folha embaixo (12 px das bordas) e ✕ ≥ 44 px`, m.folha && m.btn >= 43.5, m);
       if (cap) { fs.mkdirSync(cap, { recursive: true }); await p.evaluate(() => document.getElementById('gantt-dia').scrollIntoView()); await p.screenshot({ path: path.join(cap, `mare_digital_390_${tema}.png`) }); }

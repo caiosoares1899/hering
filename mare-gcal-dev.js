@@ -19,6 +19,7 @@
    v5 (13/11): 📣 Pedir atualização (PEDIDO + pedido.destinatarios/enviar + botão no visualizador).
    v6 (13/11): ⭐ aba favorita sincronizada entre aparelhos.
    v8 (16/11): 📅 o "tudo deste dia" abre num popup junto do dia clicado (diaPop/diaPopFechar; no celular, folha embaixo).
+   v9 (16/11): 📅 popup do dia reorganizado (/melhoriauiux) — diaHtml() único p/ Maré e Radar: calendário → linha (cor da régua) → itens com "quando" (Só hoje, Termina hoje…) e ⚠️/★.
    v7 (13/11): leitor persistente e alvos44px no celular; desktop preservado. */
 (function(){
   'use strict';
@@ -104,9 +105,11 @@
   function doDia(dadosPorFonte, dia, fontes){
     return (fontes||CONSOLIDADO.fontes).map(f=>{
       const d=(dadosPorFonte||{})[f], linhas=linhasDe(f,d), itens=[];
+      const ord=Object.keys(linhas).sort((a,b)=>(linhas[a].ordem||0)-(linhas[b].ordem||0));   // a MESMA cor da linha na régua (corpo/kanban)
+      const corDe=k=>LINHA_COR[(linhas[k].ordem||ord.indexOf(k))%LINHA_COR.length];
       if(d && d.barras) for(const [id,b] of Object.entries(d.barras)){
         if(!b || !ehIso(b.ini) || !ehIso(b.fim) || b.fim<b.ini || !linhas[b.linha]) continue;
-        if(b.ini<=dia && b.fim>=dia) itens.push({ id, fonte:f, linha:b.linha, rot:String(linhas[b.linha].rot||b.linha), ordem:+linhas[b.linha].ordem||0, txt:String(b.txt||''), ini:b.ini, fim:b.fim });
+        if(b.ini<=dia && b.fim>=dia) itens.push({ id, fonte:f, linha:b.linha, rot:String(linhas[b.linha].rot||b.linha), ordem:+linhas[b.linha].ordem||0, cor:corDe(b.linha), txt:String(b.txt||''), ini:b.ini, fim:b.fim });
       }
       itens.sort((a,b)=>(a.ordem-b.ordem) || (a.ini<b.ini?-1:a.ini>b.ini?1:0));
       const c=CALS.find(x=>x.id===f)||{};
@@ -261,16 +264,32 @@
 .mgc-sino.on{border-color:var(--accent);color:var(--accent);}
 [data-theme="light"] .mgc-sino.on{color:var(--cyan,#065670);}
 .mgc-sino[disabled]{opacity:.6;cursor:progress;}
-.mgc-dia{border:1px solid var(--glass-b);border-radius:var(--r2,14px);background:var(--mgc-surf);padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;}
-.mgc-dia-hd{display:flex;align-items:center;gap:8px;font-size:13.5px;}
-.mgc-dia-hd .mgc-btn{margin-left:auto;}
-.mgc-dia-grp{display:flex;flex-direction:column;gap:3px;}
-.mgc-dia-fonte{font-size:12px;font-weight:800;color:var(--txt);}
-.mgc-dia ul{margin:0;padding:0 0 0 2px;list-style:none;display:flex;flex-direction:column;gap:3px;}
-.mgc-dia li{font-size:12.5px;line-height:1.4;color:var(--txt);overflow-wrap:anywhere;}
-.mgc-dia-lin{color:var(--txt2);font-weight:700;}
-.mgc-dia-per{color:var(--txt2);font-size:11.5px;}
-.mgc-dia-nada{font-size:12px;color:var(--txt2);}
+.mgc-dia{display:flex;flex-direction:column;padding:0 !important;color:var(--txt);font-size:13px;}
+.mgc-dia-hd{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:12px 12px 10px 16px;background:inherit;border-bottom:1px solid var(--glass-b);border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.mgc-dia-tit{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.mgc-dia-tit b{font-size:15px;line-height:1.25;}
+.mgc-dia-tit span{font-size:12px;color:var(--txt2);}
+.mgc-dia-x{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--glass-b);background:transparent;color:var(--txt);font-size:14px;line-height:1;cursor:pointer;font-family:inherit;}
+.mgc-dia-x:hover{background:var(--glass-h);}
+.mgc-dia-x:focus-visible,.mgc-dia :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.mgc-dia-corpo{display:flex;flex-direction:column;gap:14px;padding:12px 16px 14px;}
+.mgc-dia-grp{display:flex;flex-direction:column;gap:8px;}
+.mgc-dia-fonte{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--txt2);}
+.mgc-dia-n{min-width:20px;padding:1px 7px;border-radius:999px;border:1px solid var(--glass-b);font-size:11px;letter-spacing:0;text-align:center;color:var(--txt);}
+.mgc-dia-lin{display:flex;flex-direction:column;gap:4px;}
+.mgc-dia-lrot{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--txt2);}
+.mgc-dia-lrot i{flex:none;width:8px;height:8px;border-radius:50%;}
+.mgc-dia ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;}
+.mgc-dia-it{display:flex;align-items:baseline;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;padding:6px 10px;margin-left:15px;border-radius:8px;background:color-mix(in srgb,currentColor 7%,transparent);}
+.mgc-dia-txt{flex:1 1 200px;min-width:0;line-height:1.4;overflow-wrap:anywhere;}
+.mgc-dia-q{flex:none;font-size:11px;font-weight:600;color:var(--txt2);white-space:nowrap;}
+.mgc-dia-q.is-hoje{color:var(--txt);}
+.mgc-dia-it.is-alerta{box-shadow:inset 0 0 0 1px var(--danger,#ff6b6b);}
+.mgc-dia-sel{font-weight:400;}
+.mgc-dia-vzs{padding-top:10px !important;border-top:1px solid var(--glass-b);}
+.mgc-dia-vz{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--txt2);}
+.mgc-dia-vz span:first-child{font-weight:700;}
+@media (hover:none) and (pointer:coarse){ .mgc-dia-x{width:44px;height:44px;} }
 @media (max-width:600px){ .mgc-aba-l{display:none;} .mgc-aba-c{display:inline;} }
 @media (max-width:768px){ .mgc{--mgc-title:118px;} .mgc.is-largo{--mgc-day:120px;} .mgc-abas{align-self:stretch;gap:2px;} .mgc-aba{flex:1 0 auto;padding:9px 8px;} .mgc-mes{margin-left:0;flex:1 1 100%;} .mgc-lin{white-space:normal;font-size:11.5px;line-height:1.2;} }
 @media (hover:none) and (pointer:coarse){ .mgc-aba,.mgc-btn,.mgc-chip,.mgc-mes,.mgc-dhd.is-clic{min-height:44px;} .mgc-mes{font-size:16px;} }
@@ -289,7 +308,7 @@
 }
 
 /* 📅 Popup do dia (16/11): fica no <body> (fora da régua, que tem rolagem própria) e se posiciona junto do dia clicado */
-.mgc-diapop{position:fixed;z-index:9400;background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));color:var(--txt);border:1px solid var(--glass-b);border-radius:var(--r2,14px);width:min(380px,calc(100vw - 32px));max-height:min(70vh,520px);overflow:auto;overscroll-behavior:contain;box-shadow:var(--specular,none),0 12px 40px rgba(0,0,0,.35);}
+.mgc-diapop{position:fixed;z-index:9400;padding:0;background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));color:var(--txt);border:1px solid var(--glass-b);border-radius:var(--r2,14px);width:min(380px,calc(100vw - 32px));max-height:min(70vh,520px);overflow:auto;overscroll-behavior:contain;box-shadow:var(--specular,none),0 12px 40px rgba(0,0,0,.35);}
 .mgc-diapop.is-novo{animation:mgcPopIn .14s ease-out;}
 @keyframes mgcPopIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
 @media (max-width:768px){ .mgc-diapop{left:12px !important;right:12px;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;max-height:70dvh;border-radius:20px;} }
@@ -355,6 +374,45 @@
     fechar.onclick=encerrar;
     if(acao){ const b=document.createElement('button'); b.type='button'; b.textContent=rotulo; b.onclick=()=>{encerrar();acao();}; box.append(b); }
     document.body.append(box); document.addEventListener('keydown',tecla,true); window.addEventListener('resize',resize); fechar.focus({preventScroll:true});
+  }
+
+  // 📅 Conteúdo do popup do dia (v9, /melhoriauiux de 16/11): UMA função para Maré e Radar.
+  // o: { dia, grupos (de doDia), so (rótulo do filtro de origem ou ''), estado(f) → 'ok'|…, dest(f) → { idDaBarra:{cor,alerta} }, id? }
+  // Hierarquia: data (fixa no topo) → calendário (título + total) → linha (bolinha da cor da régua, nome uma vez) → itens com o "quando".
+  function quando(it, dia){
+    const dm=s=>s.slice(8,10)+'/'+s.slice(5,7);
+    if(it.ini===dia && it.fim===dia) return 'Só hoje';
+    if(it.ini===dia) return 'Começa hoje · até '+dm(it.fim);
+    if(it.fim===dia) return 'Termina hoje';
+    return dm(it.ini)+' – '+dm(it.fim);
+  }
+  function diaHtml(o){
+    const dia=o.dia, dt=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dia||''); if(!dt) return '';
+    const data=new Date(+dt[1], +dt[2]-1, +dt[3]), dow=data.toLocaleDateString('pt-BR',{weekday:'long'});
+    const dm=dt[3]+'/'+dt[2], grupos=o.grupos||[], total=grupos.reduce((n,g)=>n+g.itens.length,0), comAlgo=grupos.filter(g=>g.itens.length).length;
+    const sub=(total?total+' '+(total===1?'ação':'ações')+(comAlgo>1?' em '+comAlgo+' calendários':''):'Nada neste dia')+(o.so?' · só '+o.so:'');
+    const cheios=[], vazios=[];
+    grupos.forEach(g=>{
+      if(!g.itens.length){
+        const est=o.estado?o.estado(g.fonte):'ok', msg=!g.publicado?(est==='ok'?'ainda não publicado':'carregando…'):'nada neste dia';
+        vazios.push('<li class="mgc-dia-vz"><span>'+esc(g.rot)+'</span><span>'+msg+'</span></li>'); return;
+      }
+      const dest=(o.dest?o.dest(g.fonte):null)||{}, porLinha=[];
+      g.itens.forEach(it=>{ let l=porLinha.find(x=>x.k===it.linha); if(!l){ l={ k:it.linha, rot:it.rot, cor:it.cor, itens:[] }; porLinha.push(l); } l.itens.push(it); });
+      cheios.push('<section class="mgc-dia-grp" aria-label="'+esc(g.nome||g.rot)+'"><h3 class="mgc-dia-fonte"><span>'+esc(g.rot)+'</span><span class="mgc-dia-n" aria-label="'+g.itens.length+' '+(g.itens.length===1?'ação':'ações')+'">'+g.itens.length+'</span></h3>'
+        +porLinha.map(l=>'<div class="mgc-dia-lin"><div class="mgc-dia-lrot"><i style="background:'+esc(l.cor||'var(--accent)')+'" aria-hidden="true"></i>'+esc(l.rot)+'</div><ul>'
+          +l.itens.map(it=>{ const dz=dest[it.id]||null, al=!!(dz&&dz.alerta), q=quando(it, dia);
+            return '<li class="mgc-dia-it'+(al?' is-alerta':'')+'">'
+              +'<span class="mgc-dia-txt">'+(al?'<b class="mgc-dia-sel" aria-label="Ação importante">⚠️</b> ':dz?'<b class="mgc-dia-sel" aria-label="Destacada">★</b> ':'')+esc(it.txt)+'</span>'
+              +'<span class="mgc-dia-q'+(it.ini===dia&&it.fim===dia?' is-hoje':'')+'">'+esc(q)+'</span></li>'; }).join('')
+          +'</ul></div>').join('')
+        +'</section>');
+    });
+    return '<div class="mgc-dia"'+(o.id?' id="'+esc(o.id)+'"':'')+' role="region" aria-label="Tudo do dia '+esc(dm)+'">'
+      +'<div class="mgc-dia-hd"><div class="mgc-dia-tit"><b>📅 '+esc(dow.charAt(0).toUpperCase()+dow.slice(1))+', '+esc(dm)+'</b><span>'+esc(sub)+'</span></div>'
+      +'<button type="button" class="mgc-dia-x" data-dia-fechar aria-label="Fechar o dia">✕</button></div>'
+      +'<div class="mgc-dia-corpo">'+cheios.join('')+(vazios.length?'<ul class="mgc-dia-vzs">'+vazios.join('')+'</ul>':'')+'</div>'
+      +'</div>';
   }
 
   // 📅 Popup do dia (16/11, pedido do Caio): o "tudo deste dia" da 🧭 Digital abre junto do dia clicado, não no fim da página.
@@ -541,20 +599,10 @@
       return { html:partes.join(''), pe };
     }
     function painelDia(){
-      if(!ehCons() || !S.dia) return '';
-      const dt=parse(S.dia); if(!dt) return '';
-      const fontes=fontesVistas(), grupos=doDia(Object.fromEntries(fontes.map(f=>[f, S.dados[f]&&S.dados[f].dado])), S.dia, fontes);
-      const total=grupos.reduce((n,g)=>n+g.itens.length,0);
-      const dow=dt.toLocaleDateString('pt-BR',{weekday:'long'}), g0=CONSOLIDADO.grupos.find(x=>x.id===filtro[CONSOLIDADO.id]);
-      return '<div class="mgc-dia" role="region" aria-label="Tudo do dia '+esc(br(S.dia))+'">'
-        +'<div class="mgc-dia-hd"><b>📅 '+esc(dow.charAt(0).toUpperCase()+dow.slice(1))+', '+esc(br(S.dia))+'</b><span class="mgc-dia-per">'+total+' '+(total===1?'ação':'ações')+(g0?' · só '+esc(g0.rot):'')+'</span>'
-        +'<button type="button" class="mgc-btn" data-dia-fechar aria-label="Fechar o dia">✕</button></div>'
-        +grupos.map(g=>'<div class="mgc-dia-grp"><div class="mgc-dia-fonte">'+esc(g.rot)+' · '+g.itens.length+'</div>'
-          +(!g.publicado?'<div class="mgc-dia-nada">'+(S.dados[g.fonte]&&S.dados[g.fonte].estado==='ok'?'Ainda não publicado.':'Carregando…')+'</div>'
-            : g.itens.length?'<ul>'+g.itens.map(it=>'<li><span class="mgc-dia-lin">'+esc(it.rot)+':</span> '+esc(it.txt)+(it.ini!==it.fim?' <span class="mgc-dia-per">('+esc(br(it.ini)+' – '+br(it.fim))+')</span>':'')+'</li>').join('')+'</ul>'
-            : '<div class="mgc-dia-nada">Nada neste dia.</div>')
-          +'</div>').join('')
-        +'</div>';
+      if(!ehCons() || !S.dia || !parse(S.dia)) return '';
+      const fontes=fontesVistas(), g0=CONSOLIDADO.grupos.find(x=>x.id===filtro[CONSOLIDADO.id]);
+      return diaHtml({ dia:S.dia, grupos:doDia(Object.fromEntries(fontes.map(f=>[f, S.dados[f]&&S.dados[f].dado])), S.dia, fontes), so:g0?g0.rot:'',
+        estado:f=>S.dados[f]&&S.dados[f].estado, dest:f=>S.dados[f]&&S.dados[f].dest });
     }
     function desenhar(){
       if(!root.isConnected) return;
@@ -628,7 +676,7 @@
       const t=ev.target.closest('button,.mgc-bar,.mgc-dhd[data-dia]'); if(!t || !root.contains(t)) return;
       if(t.hasAttribute('data-favorita')){ Promise.resolve(opts.aoFavoritar(S.aba)).then(msg=>{ if(msg) S.det=msg; desenhar(); }).catch(()=>{ S.det='⚠ Não consegui salvar a favorita. Tente novamente.'; desenhar(); }); return; }
       if(t.dataset.aba) return trocaAba(t.dataset.aba);
-      if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=S.dia?document.querySelector('.mgc-diapop .mgc-btn'):root.querySelector('.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
+      if(t.dataset.dia){ S.dia=S.dia===t.dataset.dia?'':t.dataset.dia; desenhar(); const f=S.dia?document.querySelector('.mgc-diapop [data-dia-fechar]'):root.querySelector('.mgc-dhd[data-dia="'+t.dataset.dia+'"]'); if(f) f.focus({preventScroll:true}); return; }
       if(t.hasAttribute('data-sino')) return sinoClique(t.getAttribute('data-sino'));
       if(t.hasAttribute('data-pedir')) return pedirClique(t.getAttribute('data-pedir'));
       if(t.dataset.nav!=null){ const n=+t.dataset.nav; S.mes=''; return n===0?ir(0,'hoje'):ir(S.off+n,'inicio'); }
@@ -661,5 +709,5 @@
     };
   }
 
-  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, leituraFechar, diaPop, diaPopFechar, v:8 };
+  window.MareGCal={ CALS, CONSOLIDADO, ABAS, NOME, ROT_NOVO, GRUPOS, LINHA_COR, CORES, NOME_COR, LARGO, permitido, linhasDe, doDia, inscricao, montar, esc, PEDIDO, pedido, favoritaControle, leituraAbrir, leituraFechar, diaPop, diaPopFechar, diaHtml, v:9 };
 })();

@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📅 Gantt · 🧭 Digital: popup do dia reorganizado — calendário → linha → itens com "quando" (kanban v8.30.989-dev, okr v2.136-dev, mare-gcal v9) — SÓ DEV — 2026-11-16
+
+- **/melhoriauiux (o Caio achou o popup "desorganizado, informações jogadas"):** antes, cada ação era uma linha corrida "Linha: TEXTO (período)", o título do calendário quase igual aos itens, a linha repetida a cada ação (CRM, CRM…) e a ⚠️ ação importante da régua sumia no popup.
+- **Agora:** cabeçalho fixo com a data e "N ações em N calendários" · cada calendário como título com o total · cada linha **uma vez**, com a **bolinha da mesma cor da régua** · cada ação num bloco próprio com o **quando** à direita (**Só hoje**, **Começa hoje · até 14/11**, **Termina hoje** ou o período) · **⚠️ / ★** como na régua · calendário sem nada (ou não publicado) vira uma linha compacta no fim.
+- **Fonte única:** `MareGCal.diaHtml()` (mare-gcal-dev.js v9) — Maré e Radar desenham o mesmo popup (antes eram duas cópias). Nada mudou no que entra no dia (mesma `doDia`).
+- Teste: `test_gantt_digital.js` (M8c–M8f). Capturas antes/depois: `docs/capturas/gantt_dia_ux/`.
+
 ### 📅 Gantt · 🧭 Digital: o "tudo deste dia" abre num popup junto do dia clicado (kanban v8.30.987-dev, okr v2.135-dev, mare-gcal v8) — SÓ DEV — 2026-11-16
 
 - **Pedido do Caio (16/11):** tocar num dia do cabeçalho na 🧭 Digital · dia a dia abria o detalhe **no fim da página**, longe do clique. Agora abre um **popup ali mesmo**, logo abaixo do dia (ou acima, se não couber), sem sair da tela — no **Maré** e no **Radar**.
