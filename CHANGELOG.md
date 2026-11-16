@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🧩 Minhas Preferências em blocos: cada área com o próprio fundo (kanban v8.30.988-dev) — SÓ DEV — 2026-11-16
+
+- **Pedido do Caio (13/11):** as áreas de 👤 Minhas Preferências (Tema, Fonte e densidade, Squad padrão, Não Perturbe, Ilha Dinâmica, Atalhos, Sugestões de rotina) ficavam numa lista corrida. Agora cada uma é um **bloco** com fundo um tom acima do painel, borda fina e 10 px entre blocos. As "Sugestões recusadas" ficam no mesmo bloco das Sugestões de rotina.
+- Token novo `--bloco` no `:root` (escuro/Vice/Black Friday: branco a 4,5 %; claro: o tom da lagoa, porque a superfície já é quase branca). Nada mudou nos botões nem no que cada preferência faz.
+- Teste: `docs/arezzo/testes/test_prefs_blocos.js` (3 temas × 1280/390). Capturas: `docs/capturas/prefs_blocos/`.
+
 ### 📅 Gantt · 🧭 Digital: o "tudo deste dia" abre num popup junto do dia clicado (kanban v8.30.987-dev, okr v2.135-dev, mare-gcal v8) — SÓ DEV — 2026-11-16
 
 - **Pedido do Caio (16/11):** tocar num dia do cabeçalho na 🧭 Digital · dia a dia abria o detalhe **no fim da página**, longe do clique. Agora abre um **popup ali mesmo**, logo abaixo do dia (ou acima, se não couber), sem sair da tela — no **Maré** e no **Radar**.

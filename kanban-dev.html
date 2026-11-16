@@ -156,6 +156,7 @@
   --pulse-rgb:255,209,102;
   --deep-rgb:3,13,26;
   --specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --bloco:rgba(255,255,255,.045);   /* fundo de um bloco dentro de painel (Minhas Preferências, 16/11): um tom acima da superfície */
   --ease-out:cubic-bezier(.32,.72,0,1);--ease-in-out:cubic-bezier(.4,0,.2,1);--ease-overshoot:cubic-bezier(.34,1.56,.64,1);
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
@@ -229,6 +230,7 @@
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:10,77,120;
   --specular:inset 0 1px 0 rgba(255,255,255,.7);
+  --bloco:rgba(var(--surface2-rgb),.45);   /* no claro a superfície já é quase branca: o bloco ganha o tom da lagoa */
 }
 [data-theme="light"] .ocean{
   background:
@@ -1559,6 +1561,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .cfg-panel .tab-c{overflow-y:auto;flex:1;}
 .help-panel .panel-hd,.help-panel #help-tabs{flex-shrink:0;}
 .cfg-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;}
+.mp-blocos{display:flex;flex-direction:column;gap:10px;}
+.mp-bloco{background:var(--bloco);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px 12px 12px;box-shadow:var(--specular);}
+.mp-bloco>.cfg-sec-title{margin-top:0 !important;}
+.mp-bloco>:last-child{padding-bottom:0 !important;}
 .cfg-sec-title{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:8px;}
 /* Subtimes editor */
 .st-card{background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
@@ -7669,7 +7675,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.987-dev</div>
+<div class="version">v8.30.988-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17204,6 +17210,8 @@ function renderMinhasPrefsBody(){
   const atribuicoes = _boardPrefsSquad.atribuicao_rapida || [];
 
   body.innerHTML = `
+    <div class="mp-blocos">
+    <section class="mp-bloco">
     <div class="cfg-sec-title">🎨 Tema</div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;">
       <div style="font-size:12px;color:var(--txt2);">Atual: <b style="color:var(--txt);">${esc(temaLabel)}</b></div>
@@ -17213,20 +17221,26 @@ function renderMinhasPrefsBody(){
         ${viceDescoberto ? `<button class="btn btn-sm" style="${temaAtual==='vice'?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleViceCity();renderMinhasPrefsBody();" title="Você já descobriu esse tema segurando o botão 🌙/☀️ -- aqui é só um atalho.">🌴 Vice City</button>` : ''}
       </div>
     </div>
+    </section>
 
+    <section class="mp-bloco">
     <div class="cfg-sec-title">🔍 Fonte e densidade dos cards</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 0 12px;">
       ${Object.entries(FONTSIZE_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardFontSize===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardFontSize(${jsq(k)});renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
       <span style="width:1px;align-self:stretch;background:var(--glass-b);margin:0 4px;"></span>
       ${Object.entries(DENSITY_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardCardDensity===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardCardDensity(${jsq(k)});renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
     </div>
+    </section>
 
+    <section class="mp-bloco">
     <div class="cfg-sec-title">📌 Squad padrão</div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;">
       <div style="font-size:12px;color:var(--txt2);">${_isPinnedSquad() ? 'Este squad ('+esc(SQUAD_META_LIVE[ACTIVE_SQUAD]?.label||ACTIVE_SQUAD)+') está fixado como padrão.' : 'Nenhum squad fixado — abre sempre no último que você usou.'}</div>
       <button class="btn btn-sm" onclick="toggleFixarSquadPadrao();renderMinhasPrefsBody();">${_isPinnedSquad() ? '📌 Remover fixação' : '📌 Fixar este squad'}</button>
     </div>
+    </section>
 
+    <section class="mp-bloco">
     <div class="cfg-sec-title">🔔 Não Perturbe</div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 6px;">
       <div style="font-size:12px;color:var(--txt2);">${dndOn ? '🔕 Silenciado'+(_notifPrefs.dnd.label?' — '+esc(_notifPrefs.dnd.label):'') : '🔔 Notificações ativas'}</div>
@@ -17237,7 +17251,9 @@ function renderMinhasPrefsBody(){
       <button class="btn btn-sm" onclick="setDnd(true,480,'8 horas');renderMinhasPrefsBody();">Por 8 horas</button>
       <button class="btn btn-sm" onclick="setDndUntilTomorrowMorning();renderMinhasPrefsBody();">Até amanhã de manhã</button>
     </div>` : '<div style="padding-bottom:12px;"></div>'}
+    </section>
 
+    <section class="mp-bloco">
     <div class="cfg-sec-title">🏝️ Ilha Dinâmica</div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;">
       <div style="font-size:12px;color:var(--txt2);max-width:340px;line-height:1.45;">${_ilhaPrefs().on ? '<b style="color:var(--txt);">Ligada neste aparelho.</b> A pílula no topo mostra timer, notificações e o que mais você escolher.' : 'Uma pílula no topo do quadro com o que está acontecendo agora: timer, notificações, próxima reunião e mais.'}</div>
@@ -17247,12 +17263,16 @@ function renderMinhasPrefsBody(){
         <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');_ilhaIntroAbrir();">📖 Como funciona</button>
       </div>
     </div>
+    </section>
 
+    <section class="mp-bloco">
     <div class="cfg-sec-title">⌨️ Atalhos de teclado</div>
     <div style="padding:4px 0 12px;">
       <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');openAtalhos();">⌨️ Abrir Atalhos de teclado</button>
     </div>
+    </section>
 
+    <section class="mp-bloco">
     <div class="cfg-sec-title">💡 Sugestões de rotina</div>
     <div style="font-size:10.5px;color:var(--txt3);padding:0 0 8px;line-height:1.4;">O app aprende com seu uso e sugere atalhos — ligue/desligue cada um aqui a qualquer momento, sem precisar esperar a sugestão aparecer de novo.</div>
     ${_renderMinhasPrefsRotinaRow('🛤️ Timeline como visão inicial', timelineOn, `_prefsToggleTimelineInicial()`)}
@@ -17270,7 +17290,6 @@ function renderMinhasPrefsBody(){
     <div style="padding:8px 0 0;">
       <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');_prefsOpenFilters();">🔭 Ver meus presets de filtro salvos</button>
     </div>
-
     <div class="cfg-sec-title" style="margin-top:14px;">🚫 Sugestões recusadas ("não sugerir mais")</div>
     <div id="minhasprefs-recusadas">
       ${_sugestoesRecusadas.length ? _sugestoesRecusadas.map(id=>`
@@ -17279,6 +17298,8 @@ function renderMinhasPrefsBody(){
           <button class="btn btn-sm" onclick="_sugestaoEsquecerRecusa(${jsq(id)})">🔄 Esquecer recusa</button>
         </div>`).join('')
         : '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhuma sugestão recusada — tudo pode aparecer normalmente.</div>'}
+    </div>
+    </section>
     </div>
   `;
 }
