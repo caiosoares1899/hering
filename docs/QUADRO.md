@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/gantt-dia-ux` | `mare-gcal-dev.js`, `kanban-dev.html` (só `_ganttDia*`), `okr-dev.html` (só `_GCAL_V` + versão), `version.json` | 16/11/2026 |
 
 
 ## Fila
@@ -18,7 +17,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
 | Codex | R1 | 🎨 Tema claro do Painel e do Radar: provar com `auditoria_temas.js` o que já foi feito em 18/10 e corrigir o que restar (contrato colado pelo Caio em 16/11) | [auditoria](ideias/tema-claro-painel-radar-2026-10-17.md) |
-| Antigravity | R0 | 🪟 Acabamento "vidro lapidado" (`--specular` por tema + curvas `--ease-*`) | [GUIA_UI_UX §2.4/§2.5](GUIA_UI_UX.md) · [backlog](quadro/backlog.md#vidro-lapidado) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -44,12 +42,11 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | Ideia | Dono | Detalhe |
 |---|---|---|
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
-| 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
-| 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
+| 🪟 Diagrama `.arq` interativo + rodapé/mapa nas abas institucionais do Oceano (o vidro lapidado ficou pronto na #1806) | Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
+| 🏝️ Ilha Dinâmica no Oceano (lobby + host) — o Maré foi validado pelo Caio em 16/11 | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
-| 👕 Camiseta Brasil da Black Friday (depende da arte; BF = 27/11) | Claude | [backlog](quadro/backlog.md#camiseta-black-friday) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |
 | 🎨 Tema claro do Painel e do Radar (sem PR que prove que foi feito) | Claude ou Antigravity | [backlog](quadro/backlog.md#tema-claro-painel-radar) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |
-| 🔧 Atualizar `firebase-functions` (^5 → atual), com calma e testes | Claude | [backlog](quadro/backlog.md#firebase-functions-v6) |
+| 🔧 Atualizar `firebase-functions` (^5 → atual), com calma e testes | Claude (em andamento 16/11) | [backlog](quadro/backlog.md#firebase-functions-v6) |
