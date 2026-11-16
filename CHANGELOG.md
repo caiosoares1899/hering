@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 🪟 Vidro lapidado: --specular e curvas --ease-* em Escala, Intake e Travessia (escala v1.12-dev) — 2026-11-16
+
+- **Escala (`escala-dev.html` v1.12-dev) e Intake (`intake-dev.html`):** declarados `--specular` (escuro/Vice e `:root[data-theme="light"]`) e as curvas `--ease-out`, `--ease-in-out`, `--ease-overshoot` no `:root`; aplicado `var(--specular)` nas superfícies de vidro, painéis, modais e caixas de mensagem (`.card`, `.scroll`, `.hoje`, `.avisos`, `.erro`, `.md`, `#toast`, `.msg`, `.who`, `.gbar`).
+- **Travessia (`travessia-dev.html`):** declaradas as curvas `--ease-out`, `--ease-in-out` e `--ease-overshoot` no `:root` e aplicado `var(--specular)` em `.toast`.
+- **Conferência:** `okr-dev.html`, `painel-dev.html` e `oceano-dev.html` já tinham `--specular`, as 3 `--ease-*` e nenhuma curva `cubic-bezier` solta. Nenhum `backdrop-filter` novo. Capturas antes/depois (3 temas × 1280/390) em `docs/capturas/vidro_lapidado/`.
+
 ### 🧩 Minhas Preferências em blocos: cada área com o próprio fundo (kanban v8.30.988-dev) — SÓ DEV — 2026-11-16
 
 - **Pedido do Caio (13/11):** as áreas de 👤 Minhas Preferências (Tema, Fonte e densidade, Squad padrão, Não Perturbe, Ilha Dinâmica, Atalhos, Sugestões de rotina) ficavam numa lista corrida. Agora cada uma é um **bloco** com fundo um tom acima do painel, borda fina e 10 px entre blocos. As "Sugestões recusadas" ficam no mesmo bloco das Sugestões de rotina.
