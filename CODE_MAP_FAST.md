@@ -125,8 +125,8 @@
 - `viewFrota` (L775) · `guardarBau` (L903) · `demoDados` (L1038)
 
 ### `okr-apresentacao.slide.html` (12 âncoras curadas)
-- `buildSlides` (L1241) · `startListeners` (L2119) · `rebuild` (L1356) · `fitSlideContent` (L1516) · `_okrFitDetailSections` (L1777) · `objMarcos` (L920)
-- `_okrViewerKey` (L2473) · `_okrShowApp` (L2444) · `_hojeStr` (L1856) · `renderNotas` (L1896) · `_okrAgendaHoje` (L2031) · `_okrRenderCountdown` (L2060)
+- `buildSlides` (L1243) · `startListeners` (L2122) · `rebuild` (L1358) · `fitSlideContent` (L1518) · `_okrFitDetailSections` (L1779) · `objMarcos` (L922)
+- `_okrViewerKey` (L2485) · `_okrShowApp` (L2456) · `_hojeStr` (L1858) · `renderNotas` (L1898) · `_okrAgendaHoje` (L2033) · `_okrRenderCountdown` (L2062)
 
 ### `mare-notif-dev.js` (9 âncoras curadas)
 - `AREAS` (L56) · `PUSH_PADRAO` (L66) · `TIPOS` (L68) · `renderNotifCentral` (L12801) · `ncSet` (L12909) · `_ncPapelGrava` (L12895)
