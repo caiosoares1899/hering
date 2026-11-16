@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/tema-bf-semana` — 🔥 tema BF padrão 23–29/11; **promover o `kanban.html` até sáb 21/11** (validação do Caio no dev antes) | `kanban-dev.html`, `docs/arezzo/testes/fakefb.js` | 16/11/2026 |
 
 
 ## Fila

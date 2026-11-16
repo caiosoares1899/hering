@@ -24,6 +24,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔥 Semana Black Friday: tema BF como padrão de todo mundo de 23 a 29/11 + /melhoriauiux do tema (kanban v8.30.992-dev) — SÓ DEV — 2026-11-16
+
+- **Pedido do Caio:** "a partir de segunda que vem, o tema Black Friday seja o default pra todo mundo, de segunda a domingo (semana da Black)".
+- **Agora:**
+  - De **23/11 a 29/11/2026** (horário de Brasília), o Maré abre no 🔥 para todo mundo, sem gravar o tema de ninguém. Na segunda 30/11 cada um volta sozinho ao que usava, inclusive quem usa o 🕐 automático.
+  - Aba aberta vira à 00h de segunda nos dois sentidos.
+  - Quem não quiser clica no 🔥 e fica no próprio tema até domingo. Para voltar: **Minhas Preferências → 🔥 Black Friday**.
+  - Aviso único na 1ª abertura da semana; verbete novo na Ajuda.
+- **Contador:** a data deixou de ser fixa no código. Mostra "Xd pra Black Friday", depois "É hoje: Black Friday!" (sexta) e "Fim de semana da Black Friday" (sábado e domingo).
+- **/melhoriauiux do tema** (Abrolhos como referência, 8 telas × desktop/celular): o BF tinha textos cinza sobre cinza, como "+ Add", "🤖 Insights", "📅 Calendários", a data "no prazo", "atrasado" e o "+ Add" de Riscos (1,3–3,8:1). Ajustados `--teal`, `--accent`, `--warn`, "atrasado" e os fundos verde-água; "💾 Salvar" em vermelho. Resultado: em nenhuma tela o BF fica abaixo do Abrolhos. CPU em repouso igual ao Abrolhos.
+- **Só 2026** (`BF_PADRAO_ANOS`): virar padrão em outros anos é decisão a confirmar. Painel, Radar e Oceano não têm o tema e seguem como estão.
+- **Validação antes da semana:** `localStorage.mare_bf_semana_teste = 'AAAA-MM-DD'` simula a semana até essa data, com chave de saída própria (não contamina a semana real).
+- **Testes:** `test_tema_bf.js` (35/35) e `auditar_tema_bf.js`. O `fakefb.js` passou a deixar os testes fora do padrão por default, para a suíte não mudar de tema na semana.
+
 ### 🏖️ Férias: calendário em tela cheia e 🏖️ Minhas férias sob demanda (kanban v8.30.990-dev, okr v2.138-dev, mare-ferias v6) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16
 
 - **Pedido do Caio:** o cadastro ocupava a coluna da direita o tempo todo e espremia o calendário — com o time cadastrando, a visão geral é o que importa.

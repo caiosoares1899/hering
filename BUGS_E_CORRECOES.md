@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · 🔥 Tema Black Friday: fita OFERTA sobre o título e selo "seu card" sumindo; tema perdido no F5 (kanban v8.30.992-dev) — SÓ DEV
+
+- **Fita "🔥 OFERTA" em cima do título e "👤 seu card" sumindo** (`kanban-dev.html`, CSS do tema BF): a fita usava `::before`, o mesmo pseudo-elemento do selo "seu card". O CSS mescla as duas regras propriedade por propriedade, então o `left:9px` e o `border-radius` do selo sobreviviam. Num card **crítico e seu**, a fita virava pílula sobre o título e o selo sumia. Agora a fita é `::after`, com reset completo, e só aparece quando o canto está livre: ♾️ Contínuo e 💤 parado (estados reais, também em `::after`) vencem a decoração.
+- **Tema BF sumia no F5:** o script do `<head>` só reaplicava `light`/`vice`. Agora reaplica `blackfriday`.
+- Teste: `docs/arezzo/testes/test_tema_bf.js`. kanban v8.30.992-dev (SÓ DEV).
+
 ### 2026-11-16 · otimização: preconnect de fontes e guarda de aba oculta na apresentação do Radar
 
 - **Problema:** Rodada do `/otimizaçãoderotina` identificou que `okr-apresentacao.slide.html` carregava Google Fonts sem `<link rel="preconnect">` e rodava 2 `setInterval` (relógio 1 s e sala ao vivo 15 s) mesmo com a aba em segundo plano.
