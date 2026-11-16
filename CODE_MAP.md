@@ -531,7 +531,7 @@ detalhe dos 4 call sites.
   beleza, mas some ao atualizar a página" (3ª causa achada na mesma
   investigação, depois de `_saveCardWithRetry()`/`_flushAutoSave()`
   também terem sido corrigidos sem resolver o sintoma por completo):
-  `_applyCardsSync()` (L11753) reconstrói TODO o array `cards` a partir
+  `_applyCardsSync()` (L11752) reconstrói TODO o array `cards` a partir
   de `window._cardsByKey` sempre que o listener de QUALQUER OUTRO card
   dispara, protegido só por uma janela fixa de 2s desde `_lastLocalSave`
   (carimbado no INÍCIO da tentativa, não na confirmação) — sem o
@@ -613,8 +613,8 @@ detalhe dos 4 call sites.
   Realtime Database (vazia ou com `.#$/[]`) de qualquer objeto aninhado
   — Firebase rejeita a escrita MULTI-PATH INTEIRA se qualquer um dos
   dois aparecer em qualquer lugar da árvore, não só no campo tocado.
-  Causa raiz do achado de chave inválida: `backfillFlow()` (L10475) e
-  `recordMove()` (L10349) usam `card.col`/`toCol` como chave de
+  Causa raiz do achado de chave inválida: `backfillFlow()` (L10474) e
+  `recordMove()` (L10348) usam `card.col`/`toCol` como chave de
   `flow.enteredAt` — as duas agora só gravam quando o valor não é vazio
   (card criado fora do fluxo normal, sem coluna, é o único jeito
   observado de chegar nesse estado). `_stripUndefinedDeep()` continua
@@ -4666,7 +4666,7 @@ Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,n
 
 ### 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
 - **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3655/L3657, `_corCssOk()` — L3658, `_colsSegurasP()` — L3659, `_tagsSegurasP()` — L3660, `_pSafeUrl()` — L3932, `_sanitizeComunicadoHtml()` — L8946 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10295. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
-- **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10439) e `updateSquadUserRole()` (L11512) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
+- **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10439) e `updateSquadUserRole()` (L11542) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
 
 ### 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v7` prod · `v9`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-16)
 - **`mare-gcal-dev.js` (`window.MareGCal`, v9)**: `CALS` (marca, comercial, mktplace, outlet), `CONSOLIDADO` (aba virtual 🧭 Digital · dia a dia), `ABAS`, `NOME`, `ROT_NOVO`, `GRUPOS`, `LINHA_COR`, `CORES`, `NOME_COR`, `LARGO`, `permitido(u)`, `linhaNoGrupo(g,k)`, `linhasDe(id,d)`, `doDia(dadosPorFonte, dia, fontes)` (painel "tudo deste dia"), `diaHtml()` / `diaPop()` / `diaPopFechar()` (popup do dia na 🧭 Digital em `-dev`), `montar(root, opts)` (visualizador no Radar `okr(-dev).html?gantt`), `inscricao()` (nó `kanban/gantt_inscritos(_dev)/{cal}/{uid}`, botão 🔔 Avisar-me), `PEDIDO` / `pedido()` (botão 📣 Pedir atualização, aviso `gantt_pedido` com deduplicação diária).

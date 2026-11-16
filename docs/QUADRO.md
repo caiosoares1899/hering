@@ -17,6 +17,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada das regras da 🏢 diretoria (`database.rules.json`: `usuarios/$uid/diretoria` + espelho em `usuarios_publicos`) e de `diretoriaRules.test.js` — só revisar, comentar no PR; o Caio só faz merge/deploy depois | [desenho](ideias/diretoria-por-pessoa.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado

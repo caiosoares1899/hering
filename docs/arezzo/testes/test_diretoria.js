@@ -70,6 +70,9 @@ const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '✅ ' : '❌ ') 
     { const { ctx, p } = await abrir('kanban-dev', AU.ana, { extra: { ana: pessoa('ana', 'Ana Teste', 'AT', 'membro', { diretoria: 'rh', __semEspelho: true }) } });
       await p.evaluate(() => document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open'))); await p.waitForTimeout(9000);
       t('quem já tem diretoria: não é perguntado', !(await aberta(p)), '');
+      await p.evaluate(() => mostrarInscricao(window._currentUser, { init: 'AT', role: 'membro' }, {})); await p.waitForTimeout(200);
+      t('quem já tem diretoria: a inscrição (qualquer caminho) NÃO pede de novo', await p.evaluate(() => getComputedStyle(document.getElementById('insc-dir-wrap')).display === 'none'), '');
+      await p.evaluate(() => closeOv('insc-ov'));
       t('login reespelha a diretoria em usuarios_publicos (update à parte)', await db(p, 'kanban/usuarios_publicos/ana/diretoria') === 'rh', await db(p, 'kanban/usuarios_publicos/ana/diretoria'));
       await ctx.close(); }
     // 2) "Agora não" e Esc: não reabre na mesma sessão
@@ -126,10 +129,22 @@ const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '✅ ' : '❌ ') 
       if (CAP) await p.screenshot({ path: path.join(CAP, 'painel-usuarios-1280.png') });
       t('Painel: sem erro de JS', !errs.length, errs);
       await ctx.close(); }
+    // "todo mundo começa como Digital": botão do ADM preenche só quem é da Hering e ainda não tem (externo fora; quem tem não muda)
+    { const { ctx, p } = await abrir('painel-dev', AU.adm); await p.waitForTimeout(2500);
+      await p.evaluate(() => openGlobalUsersModal()); await p.waitForTimeout(1500);
+      const txt = await p.evaluate(() => (document.getElementById('gu-dir-digital') || {}).textContent || '');
+      t('Painel: botão "Marcar N sem diretoria como Digital" (4 da Hering sem diretoria; Bia já é RH; externo fora)', /Marcar 4 sem diretoria como Digital/.test(txt), txt);
+      p.once('dialog', d => d.accept());
+      await p.evaluate(() => { window.uiConfirm = async () => true; }); await p.evaluate(() => _guPreencherDigital()); await p.waitForTimeout(800);
+      const r = await p.evaluate(() => ['ana', 'adm1', 'conv', 'lst', 'bia', 'ext'].map(u => u + ':' + ((window.__store.kanban.usuarios[u] || {}).diretoria || '-') + '/' + ((window.__store.kanban.usuarios_publicos[u] || {}).diretoria || '-')).join(' '));
+      t('preenche Digital na fonte e no espelho; Bia continua RH; externo (gmail) sem diretoria', r === 'ana:digital/digital adm1:digital/digital conv:digital/digital lst:digital/digital bia:rh/rh ext:-/-', r);
+      t('depois de preencher, o botão some', await p.evaluate(() => !document.getElementById('gu-dir-digital')), '');
+      await ctx.close(); }
     { const { ctx, p } = await abrir('painel-dev', AU.lst); await p.waitForTimeout(2500);
       await p.evaluate(() => openGlobalUsersModal()); await p.waitForTimeout(1500);
       const sels = await p.evaluate(() => [...document.querySelectorAll('#global-users-list select[aria-label^="Diretoria"]')].map(s => s.disabled));
       t('Painel: ADM só pela lista de e-mails (sem role adm) vê o seletor travado, com o motivo', sels.length > 0 && sels.every(Boolean), sels);
+      t('…e não vê o botão de preencher Digital', await p.evaluate(() => !document.getElementById('gu-dir-digital')), '');
       await ctx.close(); }
   } finally { await b.close(); srv.close(); }
   console.log(falhas ? `HÁ ${falhas} FALHA(S)` : 'TUDO OK'); process.exitCode = falhas ? 1 : 0;

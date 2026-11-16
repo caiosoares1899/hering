@@ -43,6 +43,7 @@ Não alterar regras do Radar ou religar Microsoft/Arezzo. Não copiar o snapshot
 ## Decisões do Caio e implementação (16/11/2026, Claude)
 
 - **A própria pessoa escolhe no 1º acesso** (quem é novo: na inscrição; quem já tem cadastro: janela própria, com "Agora não" que pergunta de novo na próxima sessão). Só contas Google @ciahering; convidado/visualizador/externo não são perguntados.
+- **Todo mundo que já usa começa como Digital** (pedido do Caio, mesmo dia): botão do ADM no Painel preenche quem é da Hering e está sem diretoria (externos fora; quem já tem não muda). Com isso a janela de 1º acesso só aparece pra quem ficar sem (ex.: cadastro novo que fechou a inscrição sem escolher).
 - **O ADM edita no Painel → 👥 Usuários** (seletor + filtro "Não informada"). O seletor só habilita para quem as regras aceitam: `role === 'adm'` gravado ou o e-mail do Caio (a lista de e-mails de ADM do Painel não basta).
 - **Etiqueta na 👥 Equipe do Maré**, de contorno neutro (diferente das pílulas de subtime) — por isso existe o espelho `usuarios_publicos/{uid}/diretoria`, que as regras só aceitam igual à fonte e que o login regrava num `update` à parte.
 - Correção do desenho: `kanban/usuarios` já é legível por qualquer conta Google @ciahering; o motivo de usar um espelho é a 👥 Equipe ler `usuarios_publicos`, não privacidade.

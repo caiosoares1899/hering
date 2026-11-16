@@ -11217,6 +11217,7 @@ function _guFiltersHtml(contagemEmpresa, totalBase){
     ${sel('squad','Todos os squads', [...SQUADS.map(sq=>[sq.id,(sq.icon||'')+' '+sq.label]), ['__nenhum','— sem nenhum squad']])}
     ${MARE_SO_HERING ? '' : sel('torre','Todas as torres', GU_TORRES.map(t=>[t.id, t.icon+' '+t.label]))}
     ${sel('diretoria','Todas as diretorias', [...GU_DIRETORIAS.map(d=>[d.id, d.icon+' '+d.label]), ['__nao','— Não informada']])}
+    ${(()=>{ const n=_guSemDiretoriaHering().length; return (n && _guPodeEditarDiretoria()) ? `<button type="button" class="btn btn-sm" id="gu-dir-digital" style="font-size:11px;padding:4px 10px;" onclick="_guPreencherDigital()" title="Marca como 💻 Digital todas as pessoas da Hering (@ciahering) que ainda não têm diretoria. Depois você corrige quem for de outra.">🏢 Marcar ${n} sem diretoria como Digital</button>` : ''; })()}
     <label class="okr-stat-chip${_guFilter.gestorOkr?' active':''}" style="cursor:pointer;" title="Só quem tem a flag 🎯 Gestor OKR">
       <input type="checkbox" ${_guFilter.gestorOkr?'checked':''} onchange="_guSetFilter('gestorOkr', this.checked)" style="width:12px;height:12px;accent-color:var(--accent);"> 🎯 Gestor OKR</label>
     ${_guTemFiltro()?'<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;" onclick="_guClearFilters()">✕ Limpar filtros</button>':''}`;
@@ -11443,6 +11444,35 @@ function setGlobalUserTorre(uid, torre){
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), {torre})
     .then(()=>{ showToast('🏛️ Torre '+GU_TORRES.find(t=>t.id===torre).label+' registrada.'); })
     .catch(err=>{ showToast('Erro: '+err.message); renderGlobalUsers(); });
+}
+// 🏢 "Todo mundo começa como Digital" (pedido do Caio, 16/11/2026): preenche quem é da Hering e ainda não tem diretoria.
+// Externos ficam de fora (diretoria é atributo da Hering). Um a um, pelo mesmo caminho validado do seletor; nunca sobrescreve quem já tem.
+function _guSemDiretoriaHering(){
+  return Object.entries(_globalUsersCache).filter(([uid,u])=>u && String(u.email||'').toLowerCase().endsWith('@ciahering.com.br') && !_guDiretoriaDe(u)).map(([uid])=>uid);
+}
+let _guPreenchendo = false;
+async function _guPreencherDigital(){
+  if(_guPreenchendo) return;
+  if(!_guPodeEditarDiretoria()){ showToast('⚠ Só um ADM (papel adm no cadastro) ou o Caio muda a diretoria.'); return; }
+  const alvo = _guSemDiretoriaHering(); if(!alvo.length){ showToast('Todo mundo da Hering já tem diretoria.'); return; }
+  if(!await uiConfirm('Marcar '+alvo.length+' pessoa(s) da Hering sem diretoria como 💻 Digital? Quem já tem diretoria não muda. Depois você corrige quem for de outra.', {okText:'Marcar como Digital'})) return;
+  _guPreenchendo = true; const bt=document.getElementById('gu-dir-digital'); if(bt){ bt.disabled=true; bt.textContent='🏢 Marcando…'; }
+  let ok=0, falhou=0;
+  try{
+    for(const uid of alvo){
+      try{
+        const sn = await window._get(window._ref(window._db,'kanban/usuarios/'+uid));
+        const atual = sn.val();
+        if(!atual || _guDiretoriaDe(atual)){ continue; }   // apagado no meio, ou alguém escolheu enquanto isso: não mexe
+        await window._update(window._ref(window._db,'kanban/usuarios/'+uid), {diretoria:'digital'});
+        if(_globalUsersCache[uid]) _globalUsersCache[uid].diretoria = 'digital';
+        await window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid), {diretoria:'digital'}).catch(()=>{});
+        ok++;
+      }catch(e){ falhou++; console.warn('[diretoria] não marcou', uid, e); }
+    }
+  } finally { _guPreenchendo = false; }
+  showToast('🏢 '+ok+' marcada(s) como Digital'+(falhou?' · ⚠ '+falhou+' falharam (tente de novo)':'')+'.');
+  renderGlobalUsers();
 }
 // Fonte primeiro (regra: só ADM com role 'adm' ou o Caio troca), espelho depois (usuarios_publicos — a regra exige o MESMO valor).
 // Sucesso só depois de confirmar; falha devolve o seletor ao valor anterior. Usuário apagado no meio não renasce (confere antes).

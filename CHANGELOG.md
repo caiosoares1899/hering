@@ -34,6 +34,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
   - Etiqueta de contorno neutro na 👥 Equipe; verbete novo na Ajuda.
 - **Painel → 👥 Usuários:**
   - Seletor por pessoa ("Não informada" quando vazio, nunca Digital) e filtro "Não informada".
+  - **"Todo mundo começa como Digital"** (pedido do Caio): botão "🏢 Marcar N sem diretoria como Digital" para o ADM. Preenche só quem é da Hering e ainda não tem diretoria; externos ficam de fora e quem já escolheu não muda. Depois o ADM corrige quem for de outra.
   - Só habilita para quem as regras aceitam (role adm gravado ou o Caio).
 - **Banco:** `kanban/usuarios/{uid}/diretoria` ∈ digital|rh|marca|tecnologia. A pessoa grava a sua só enquanto está vazia; depois só ADM/Caio. O espelho `usuarios_publicos/{uid}/diretoria` só é aceito igual à fonte. Exige `firebase deploy --only database`.
 - **Testes:** `diretoriaRules.test.js` (5, incluindo o resíduo aceito de apagar o campo) e `test_diretoria.js` (31: janela, inscrição, convidado/externo, Equipe, 390 px nos 4 temas, Painel e trava do ADM só por lista).
