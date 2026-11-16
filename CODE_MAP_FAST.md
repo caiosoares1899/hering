@@ -93,7 +93,8 @@
   - **L4657**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
   - **L4662**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
   - **L4667**: 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
-  - **L4671**: 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v2` prod · `v5`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-13)
+  - **L4671**: 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v7` prod · `v9`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-16)
+  - **L4676**: 🏖️ Modo Férias — `mare-ferias(-dev).js` (`v4` prod · `v5`-dev) (2026-11-16)
 
 ## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 

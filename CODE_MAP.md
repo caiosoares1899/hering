@@ -20,8 +20,8 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3 classes de
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.973 e dev
-em v8.30.976-dev (📊 Gantt com 5 abas, 🔔 Avisar-me e 📣 Pedir atualização);
+DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.984 e dev
+em v8.30.989-dev (🏖️ Modo Férias e 📊 Gantt completo em prod; popup do dia, famílias visuais na Ilha/sino e Minhas Preferências em blocos em dev);
 o estado NORMAL na maior parte do tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
@@ -4668,9 +4668,12 @@ Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,n
 - **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3655/L3657, `_corCssOk()` — L3658, `_colsSegurasP()` — L3659, `_tagsSegurasP()` — L3660, `_pSafeUrl()` — L3932, `_sanitizeComunicadoHtml()` — L8946 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10295. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
 - **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10403) e `updateSquadUserRole()` (L11430) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
 
-### 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v2` prod · `v5`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-13)
-- **`mare-gcal-dev.js` (`window.MareGCal`, v5)**: `CALS` (marca, comercial, mktplace, outlet), `CONSOLIDADO` (aba virtual 🧭 Digital · dia a dia), `ABAS`, `NOME`, `ROT_NOVO`, `GRUPOS`, `LINHA_COR`, `CORES`, `NOME_COR`, `LARGO`, `permitido(u)`, `linhaNoGrupo(g,k)`, `linhasDe(id,d)`, `doDia(dadosPorFonte, dia, fontes)` (painel "tudo deste dia"), `montar(root, opts)` (visualizador no Radar `okr(-dev).html?gantt`), `inscricao()` (nó `kanban/gantt_inscritos(_dev)/{cal}/{uid}`, botão 🔔 Avisar-me), `PEDIDO` / `pedido()` (botão 📣 Pedir atualização, aviso `gantt_pedido` com deduplicação diária).
+### 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v7` prod · `v9`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-16)
+- **`mare-gcal-dev.js` (`window.MareGCal`, v9)**: `CALS` (marca, comercial, mktplace, outlet), `CONSOLIDADO` (aba virtual 🧭 Digital · dia a dia), `ABAS`, `NOME`, `ROT_NOVO`, `GRUPOS`, `LINHA_COR`, `CORES`, `NOME_COR`, `LARGO`, `permitido(u)`, `linhaNoGrupo(g,k)`, `linhasDe(id,d)`, `doDia(dadosPorFonte, dia, fontes)` (painel "tudo deste dia"), `diaHtml()` / `diaPop()` / `diaPopFechar()` (popup do dia na 🧭 Digital em `-dev`), `montar(root, opts)` (visualizador no Radar `okr(-dev).html?gantt`), `inscricao()` (nó `kanban/gantt_inscritos(_dev)/{cal}/{uid}`, botão 🔔 Avisar-me), `PEDIDO` / `pedido()` (botão 📣 Pedir atualização, aviso `gantt_pedido` com deduplicação diária).
 - **`mare-gxl-dev.js` (`window.MareGXL`, v2, sob demanda)**: `zipDir()`, `ler(buf, quer)`, `hid(s)`, `montarMarca(abas)`, `montarComercial(abas, anoMin)`, `montarMarketplace(abas)`, `montarOutlet(abas, nomeArquivo)`, `mesclar(tipo, novo, atual)`, `preparar(tipo, file, atual)`, `previaHtml(tipo, pv, acoes)`, `publicar(tipo, pv, user, extra)`, `historico(tipo)`, `restaurar(tipo, h, user, atual)` — usado pelo Maré e pelo Painel.
 - **`functions/gantt/avisos.js` (2026-11-13)**: `ganttAvisoMudanca` / `ganttAvisoMudancaDev` (`onValueCreated` em `kanban/calendarios_gantt_hist(_dev)/{cal}/{histId}`); `avisarMudanca()`, `podeReceber()` (Auth + `@ciahering` + Google + `usuarios/{uid}`), `textoDoAviso()`, `quando()`. URL e tag de `gantt_cal` / `gantt_pedido` em `common/pushUrl.js`. Testes: `functions/gantt/__tests__/avisos.test.js`, `functions/rules/__tests__/ganttInscritosRules.test.js`, `docs/arezzo/testes/test_gantt_avisos.js`, `docs/arezzo/testes/test_gantt_pedido.js`.
+
+### 🏖️ Modo Férias — `mare-ferias(-dev).js` (`v4` prod · `v5`-dev) (2026-11-16)
+- **`mare-ferias-dev.js` (`window.MareFerias`, v5)**: fonte única do Modo Férias (usado por Maré e Radar, nó `kanban/ferias(_dev)/{uid}/{id}`). API: `ouvir(db, suf, cb)`, `ausente(quem, dia)`, `periodoDe(quem, dia)`, `montar(root, opts)` (calendário geral + Minhas férias), `configurar(opts)`, `hojeSP()`, `permitido(u)`, `passagem(cfg)` (🧳 Preparar minha saída), `sobrepoe(a, b)`, `pronto()`. Regras e testes: `functions/rules/__tests__/feriasRules.test.js`, `docs/arezzo/testes/test_ferias_calendario.js`, `docs/arezzo/testes/test_ferias_saida.js`, `docs/arezzo/testes/test_ferias_aviso.js`.
 
 *Retrato do commit `925a144d` (2026-11-13).*
