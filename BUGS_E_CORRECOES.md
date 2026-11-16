@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · SÓ DEV — Contraste do Painel e Radar: Lençóis e Vice City medidos
+
+Painel v5.118-dev e Radar v2.136-dev: corrige textos auxiliares, placeholders, selos, filtros ativos, dias do calendário e status que ainda falhavam na main 3f067720. No Vice, clareia os tokens de texto e dá contraste ao fundo e aos cards próprios, preservando a paleta e o escuro. Toast já legível foi mantido. Auditoria com Firebase falso, pixels do fundo renderizado, rolagem, fill SVG, tratamento de oclusão e saída não zero para regressões; inclui autoteste do medidor e prova antes/depois em docs/capturas/tema_claro/. Exceções nominadas: controles inativos (WCAG 1.4.3), escuro preexistente sem piora e selo ligado do módulo mare-plantao-dev.js reservado. Sem lógica, banco, módulos compartilhados ou produção. Fronteira: sem mudança. Dica: não, correção.
+
 ### 2026-11-14 · 🏖️ /monitorarbugs do modo férias: 🧳 ignorava o campo antigo de participantes e listava Marcos de Objetivo arquivado/escondido; cadastro perdia o foco quando outra pessoa mexia nas férias (kanban v8.30.985-dev, okr v2.133-dev, mare-ferias v5) — 2026-11-13
 
 - **🧳 no Maré, campo antigo `participantes`** (técnica 2): o resto do Maré lê `card.participants || card.participantes` (passesFilter, Meu Dia, Agente), a passagem só olhava `participants` — card em que a pessoa só estava no campo antigo ficava de fora e não era passado. Agora lê como o resto e grava no MESMO campo em que a pessoa está.

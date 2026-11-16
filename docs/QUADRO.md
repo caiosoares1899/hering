@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Codex | `codex/tema-claro-painel-radar` | `painel-dev.html`, `okr-dev.html` (só cor/contraste), `auditoria_temas.js` | 16/11/2026 |
 
 
 ## Fila
