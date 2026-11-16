@@ -10,7 +10,10 @@
     --bg:#0b1622; --card:#101f30; --card-b:rgba(255,255,255,.08);
     --txt:#eaf2f8; --txt2:#a9bccb; --txt3:#6f8598;
     --accent:#38b6ff; --accent2:#2ecc9c; --danger:#ff5c7a;
+    --specular:inset 0 1px 0 rgba(255,255,255,.08);
+    --ease-out:cubic-bezier(.32,.72,0,1); --ease-in-out:cubic-bezier(.4,0,.2,1); --ease-overshoot:cubic-bezier(.34,1.56,.64,1);
   }
+  :root[data-theme="light"]{ --specular:inset 0 1px 0 rgba(255,255,255,.7); }
   *{box-sizing:border-box;}
   body{
     margin:0; min-height:100vh; background:linear-gradient(160deg,#0b1622,#0d2338 55%,#0b1622);
@@ -20,7 +23,7 @@
   .wrap{ width:100%; max-width:520px; }
   .card{
     background:var(--card); border:1px solid var(--card-b); border-radius:16px;
-    padding:26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+    padding:26px 24px; box-shadow:var(--specular),0 20px 60px rgba(0,0,0,.35);
   }
   h1{ font-size:19px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
   .sub{ font-size:12.5px; color:var(--txt3); margin:0 0 18px; line-height:1.5; }
@@ -42,7 +45,7 @@
     font-size:14.5px; cursor:pointer;
   }
   .btn-main:disabled{ opacity:.55; cursor:default; }
-  .msg{ margin-top:14px; font-size:13px; line-height:1.5; padding:10px 12px; border-radius:10px; display:none; }
+  .msg{ margin-top:14px; font-size:13px; line-height:1.5; padding:10px 12px; border-radius:10px; box-shadow:var(--specular); display:none; }
   .msg.ok{ display:block; background:rgba(46,204,156,.12); border:1px solid rgba(46,204,156,.35); color:#8ff0cf; }
   .msg.err{ display:block; background:rgba(255,92,122,.12); border:1px solid rgba(255,92,122,.35); color:#ffb3c1; }
   .state{ text-align:center; padding:40px 10px; color:var(--txt3); font-size:13.5px; }
@@ -50,12 +53,12 @@
 
   /* barra de login / identidade */
   .who{ display:flex; align-items:center; gap:10px; padding:9px 12px; margin:0 0 16px; border-radius:12px;
-    background:rgba(46,204,156,.08); border:1px solid rgba(46,204,156,.25); font-size:12.5px; color:var(--txt2); }
+    background:rgba(46,204,156,.08); border:1px solid rgba(46,204,156,.25); box-shadow:var(--specular); font-size:12.5px; color:var(--txt2); }
   .who img{ width:26px; height:26px; border-radius:50%; object-fit:cover; flex:none; }
   .who b{ color:var(--txt); }
   .who .lnk{ margin-left:auto; background:none; border:none; color:var(--txt3); cursor:pointer; font-size:11.5px; text-decoration:underline; padding:0; }
   .gbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; margin:0 0 16px;
-    border-radius:12px; background:rgba(56,182,255,.08); border:1px solid rgba(56,182,255,.25); font-size:12.5px; color:var(--txt2); }
+    border-radius:12px; background:rgba(56,182,255,.08); border:1px solid rgba(56,182,255,.25); box-shadow:var(--specular); font-size:12.5px; color:var(--txt2); }
   .btn-g{ flex:none; padding:8px 12px; border-radius:9px; border:1px solid rgba(56,182,255,.5); background:rgba(56,182,255,.14);
     color:var(--accent); font-weight:700; font-size:12.5px; cursor:pointer; }
 
