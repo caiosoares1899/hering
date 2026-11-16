@@ -91,6 +91,16 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 fbSaveCard sobrescreve ocupante após transação abortar por id divergente; autosave altera coluna sem recordMove; corrida entre abas PO/ADM reabre notificação lida (membro comum em caixa alheia é barrado). Reprodução Chromium em docs/arezzo/testes/test_cards_sensiveis_1611.js: três falhas esperadas. Console isolado read-only em docs/arezzo/testes/console_cards_sensiveis_1611.js. Página reservada: código intacto, sem bump. Detalhes em docs/quadro/escalados.md. Fronteira sem alteração; dica não, auditoria.
 
+### 2026-11-16 · 💾 Card de Modelo sem salvar: link sumia sem aviso e não dava pra comentar/@mencionar — agora salva e continua (kanban v8.30.995-dev) — SÓ DEV
+
+- **Relato do time:** ao usar um **card Modelo** ("+ Usar"), "como você não clicou em Salvar, não dá pra editar nada: não dá pra pôr link, comentar, marcar as pessoas".
+- **Causa:** "+ Usar" abre um **rascunho**. O card só passa a existir no 💾 Salvar, que é onde os campos obrigatórios do Modelo são conferidos. No rascunho:
+  - o comentário (e a @menção junto) era recusado com "Salve o card antes de comentar";
+  - o link sumia **sem aviso nenhum** (`attachSave()` saía calado quando não havia card).
+- **Correção ("salvar e continuar", vale para qualquer card novo):** comentar ou pôr link num rascunho chama o próprio `saveCard()`, com título, obrigatórios do board e obrigatórios do Modelo. Se o salvamento for confirmado, o modal **reabre no card de verdade** e a ação acontece nele. Se a validação barrar, nada é criado, o motivo aparece e o texto digitado fica no campo. O 💾 Salvar comum continua fechando o modal. Ajuda (Modelos) atualizada.
+- **Infra de teste:** o `onValue` do `docs/arezzo/testes/fakefb.js` devolvia um "desinscrever" que não fazia nada. Era a causa do "laço no `_checkCardLock`" registrado como armadilha de teste ao abrir um 2º card (ex.: duplicar). Agora remove o ouvinte de verdade.
+- Teste: `docs/arezzo/testes/test_rascunho_salvar_e_continuar.js` (14). kanban v8.30.995-dev (SÓ DEV).
+
 ### 2026-11-16 · SÓ DEV — Toolbar: folga vertical evita recorte das bordas e do foco dos botões (tema Black Friday)
 
 Na toolbar do Maré, overflow-x:auto converte o overflow vertical em auto. No desktop os botões encostavam no limite superior e inferior do recorte; no celular faltava folga superior. Acrescentada folga de 4 px acima/abaixo (mantidos os 5 px inferiores do celular), sem mudar tamanho, ordem ou rolagem horizontal dos botões. Teste test_toolbar_ui.js: 24 cenários (0/4/54 cards, 1280/390 px, Black Friday/Abrolhos/Lençóis/Vice); baseline sem folga falha. Capturas em docs/capturas/toolbar_ui/. Sem mudança de fronteira; dica não, correção visual.
