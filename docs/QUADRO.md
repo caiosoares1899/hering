@@ -24,7 +24,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
-| Codex | Cards: save sobrescreve ocupante após transação abortada; autosave perde flow; corrida de notificação PO/ADM reabre lida. 3 provas vermelhas; página reservada | [provas](quadro/escalados.md#cards-sensiveis-1611) | 16/11/2026 |
 | Codex | 🏖️ UI/UX Férias: **UI01, UI02 e UI04 resolvidos em 16/11** (tela cheia); faltam UI03 (foco preso na 🧳), UI05 (títulos cortados na 🧳), UI06 (alvos de toque) e UI07 (fonte no tablet do Radar) — módulo é do Claude | [auditoria](FERIAS_UI_AUDITORIA_2026-11-13.md) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
 | Claude | `test_apresentacao_live.js` falha também na `main` ("fora da sincronização, o slide do apresentador NÃO puxa a pessoa") | [escalados](quadro/escalados.md#apresentacao-live) | 09/11/2026 |

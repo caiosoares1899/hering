@@ -101,7 +101,7 @@ let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n
  // ── Maré (kanban-dev): createNotif respeita os interruptores ──
  { const ctx=await b.newContext({viewport:{width:1280,height:800}}); await fake.install(ctx,seed()); await ctx.route('https://www.google.com/s2/favicons**',r=>r.abort()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
    await p.goto('http://localhost:8941/kanban-dev.html?squad=dev'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('ana','Ana ADM')); await p.waitForTimeout(2800);
-   const gravou=async(tipo)=>{ await p.evaluate(()=>{ window.__log.length=0; }); await p.evaluate(tp=>{ _recentNotifs.clear(); createNotif('bia',tp,'t','s','c1','id_'+tp+Date.now()); },tipo); await p.waitForTimeout(250); return p.evaluate(()=>window.__log.filter(l=>/usuarios\/bia\/notificacoes\//.test(l[1])&&(l[0]==='set'||l[0]==='update')).length); };
+   const gravou=async(tipo)=>{ await p.evaluate(()=>{ window.__log.length=0; }); await p.evaluate(tp=>{ _recentNotifs.clear(); createNotif('bia',tp,'t','s','c1','id_'+tp+Date.now()); },tipo); await p.waitForTimeout(250); return p.evaluate(()=>window.__log.filter(l=>/usuarios\/bia\/notificacoes\//.test(l[1])&&(l[0]==='set'||l[0]==='update'||l[0]==='transaction')).length); };   // createNotif com id fixo cria por transação (16/11)
    const cfgSet=(tipo,v)=>p.evaluate(([tp,vv])=>window._set(window._ref(window._db,'kanban/notif_config/'+tp),vv),[tipo,v]).then(()=>p.waitForTimeout(300));
    t('Maré: createNotif grava normalmente com tudo no padrão', (await gravou('assigned'))>0);
    await cfgSet('assigned',{sino:false});   // só o sino desligado — "Card atribuído" tem push ligado por padrão

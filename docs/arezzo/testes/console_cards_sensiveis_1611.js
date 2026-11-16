@@ -27,10 +27,28 @@
     function _marcaBaseCard(){} function showToast(){} function renderBoard(){}
     window._runTransaction=async function(p,fn){var v=fn(ocupante);if(v!==undefined)ocupante=v;return {committed:v!==undefined}};
     window._update=async function(p,v){atualizacoes.push(v);if(v['cards/0'])ocupante=v['cards/0']};
+    window._get=async function(p){return {val:function(){return null}}};   // o card editado não está mais no índice
   `+trecho(' function fbSaveCard(card){','// Wrapper de fbSaveCard()'), async function(){
     const c={id:'editado',title:'Edição local',__base:{id:'editado',title:'Anterior'}};
     try { await fbSaveCard(c); } catch(e) { /* recusar é seguro */ }
     return {ok:ocupante.id==='outro',texto:'Ocupante final: '+ocupante.id+'; esperado: outro'};
+  });
+  await executar('Salvar relocaliza pelo índice e grava na chave certa', `
+    var cards=[], FB='banco-falso', _lastLocalSave=0, _hasLocalSession=false;
+    var banco={'0':{id:'outro',title:'Preservar'},'1':{id:'editado',title:'Anterior'}}, atualizacoes=[];
+    window._fbReady=true; window._cardsByKey={'0':{id:'editado'}};
+    function _recusaSeDesatualizado(){return null} function _settleCardTimeTrackingLazy(){}
+    function fb(p){return p} function _trackFbWrite(p){return p}
+    function _stripUndefinedDeep(x){return x} function _stripUndefinedMultiPath(x){return x}
+    function _marcaBaseCard(){} function showToast(){} function renderBoard(){}
+    function _mesclarCard(b,l,c){return Object.assign({},c,l)} function _camposDoBanco(){return []} function _aplicarMesclaNoCard(){}
+    window._runTransaction=async function(p,fn){var k=p.split('/').pop();var v=fn(banco[k]);if(v!==undefined)banco[k]=v;return {committed:v!==undefined}};
+    window._update=async function(p,v){atualizacoes.push(v);Object.keys(v).forEach(function(kk){var ps=kk.split('/');if(ps.length===2&&ps[0]==='cards')banco[ps[1]]=v[kk];});};
+    window._get=async function(p){return {val:function(){return String(p).endsWith('cards_index/editado')?'1':null}}};
+  `+trecho(' function fbSaveCard(card){','// Wrapper de fbSaveCard()'), async function(){
+    const c={id:'editado',title:'Edição local',__base:{id:'editado',title:'Anterior'}};
+    try { await fbSaveCard(c); } catch(e) { return {ok:false,texto:'recusou: '+e.message}; }
+    return {ok:banco['0'].id==='outro'&&banco['1'].id==='editado'&&banco['1'].title==='Edição local',texto:'chave 0: '+banco['0'].id+' · chave 1: '+banco['1'].id+'/'+banco['1'].title+'; esperado: outro · editado/Edição local'};
   });
   await executar('Autosave de coluna registra movimentação', `
     var editingId='teste', _modalOpenCol='todo', _modalOpenOwner='',_modalOpenTags='[]';
@@ -57,6 +75,7 @@
     window._fbReady=true; window._db={}; window._ref=function(db,p){return p};
     function fbGet(){return new Promise(r=>pendentes.push(r))}
     window._set=async function(p,v){notificacao=JSON.parse(JSON.stringify(v));gravacoes++};
+    window._runTransaction=function(p,fn){return new Promise(function(r){pendentes.push(function(){var v=fn(notificacao);if(v!==undefined){notificacao=JSON.parse(JSON.stringify(v));gravacoes++;}r({committed:v!==undefined});});});};
   `+trecho('function createNotif(targetUid,','// Resolve uid de um membro'), async function(){
     createNotif('destino-ficticio','mention','Teste','', 'card-ficticio','id-fixo');
     _recentNotifs.clear(); // simula outra aba, com dedupe local independente
@@ -64,7 +83,7 @@
     const vazio={exists:()=>false};
     pendentes[0](vazio); await Promise.resolve(); await Promise.resolve();
     notificacao.read=true; // pessoa lê após a primeira gravação
-    pendentes[1](vazio); await Promise.resolve(); await Promise.resolve();
+    pendentes[1](vazio); await Promise.resolve(); await Promise.resolve();   // a 2ª aba (transação no banco = vê o que já existe)
     return {ok:notificacao.read===true&&gravacoes===1,texto:'Gravações: '+gravacoes+'; lida ao final: '+notificacao.read+'; esperado: 1 e true'};
   });
   window._resultadosTeste=linhas; console.table(linhas); return linhas;

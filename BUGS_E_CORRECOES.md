@@ -87,9 +87,19 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-16 · Auditoria de cards: três defeitos reproduzidos e escalados ao Claude, sem correção
+### 2026-11-16 · Auditoria de cards: três defeitos reproduzidos (Codex) e corrigidos (Claude) — kanban v8.30.996-dev — SÓ DEV
 
 fbSaveCard sobrescreve ocupante após transação abortar por id divergente; autosave altera coluna sem recordMove; corrida entre abas PO/ADM reabre notificação lida (membro comum em caixa alheia é barrado). Reprodução Chromium em docs/arezzo/testes/test_cards_sensiveis_1611.js: três falhas esperadas. Console isolado read-only em docs/arezzo/testes/console_cards_sensiveis_1611.js. Página reservada: código intacto, sem bump. Detalhes em docs/quadro/escalados.md. Fronteira sem alteração; dica não, auditoria.
+
+**Correção (Claude, mesmo PR #1822):**
+- **`fbSaveCard`:** quando a transação vê outro card na chave do espelho, não grava mais na posição antiga. Relocaliza pelo `cards_index` e salva de novo na chave certa (com a mescla de 3 vias), ou recusa com erro se o card saiu do índice.
+- **`_performAutoSave`:** chama `recordMove(c, c.col)` quando a coluna muda, igual ao `saveCard()`.
+- **`createNotif` com id fixo:** cria por transação ("só se não existe"), com o caminho antigo de reserva.
+
+**Provas:**
+- `test_cards_sensiveis_1611.js`: 4/4 com a correção (incluindo um cenário novo de relocalização), 3 falhas sem ela.
+- Sem regressão: `test_card_conteudo_velho` 18/18, `test_guardiao_cliente`, `test_receita_cards_somem`, `test_automacao_undo_coluna`, `test_card_modal_ui`, `test_rascunho_salvar_e_continuar`. `test_notificacoes` e `test_versao_travada` têm as mesmas falhas antigas com e sem a correção.
+- **Infra:** o `runTransaction` do `docs/arezzo/testes/fakefb.js` passa a registrar `transaction` no `__log`, e `docs/arezzo/testes/test_notificacoes.js` aceita esse tipo de escrita.
 
 ### 2026-11-16 · 💾 Card de Modelo sem salvar: link sumia sem aviso e não dava pra comentar/@mencionar — agora salva e continua (kanban v8.30.995-dev) — SÓ DEV
 

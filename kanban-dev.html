@@ -7747,7 +7747,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.995-dev</div>
+<div class="version">v8.30.996-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11459,13 +11459,13 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // Sem base (card criado aqui, restaurado por desfazer…) ou se a transação não puder rodar, grava como sempre (último a gravar vence).
       const _criacao = ('cards_index/'+card.id) in updates;
       const doWrite = ()=> _trackFbWrite((async()=>{
-        let vindos = null;
+        let vindos = null, _posTrocou = false;
         if(card.__base && !_criacao){
           try{
             let merged = null;
             const r = await window._runTransaction(fb(FB+'/cards/'+key), cur=>{
               if(cur===null || cur===undefined){ merged = null; return _stripUndefinedDeep(Object.assign({}, card)); }   // sem valor em cache: devolve o nosso; o SDK refaz com o do servidor se diferir
-              if(cur.id!==card.id){ merged = null; return undefined; }                                                   // a posição trocou de dono: caminho de sempre
+              if(cur.id!==card.id){ merged = null; _posTrocou = true; return undefined; }                               // a posição trocou de dono (ver abaixo)
               merged = _mesclarCard(card.__base, card, cur); merged.updatedAt = card.updatedAt;
               return _stripUndefinedDeep(merged);
             }, { applyLocally:false });
@@ -11475,6 +11475,20 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
                 try{ if(typeof editingId!=='undefined' && editingId===card.id){ const el = document.getElementById('m-desc'); if(el && el.value===(descAntes||'') && card.desc!==descAntes) el.value = card.desc||''; } }catch(_){} } }
             }
           }catch(e){ console.warn('[fbSaveCard] merge contra o banco falhou — gravando como antes:', e); }
+        }
+        // /monitorarbugs 16/11 (Codex, #1822 — integridade): a transação viu OUTRO card na chave do espelho (compactação/
+        // reordenação já pôs B onde este aparelho achava que estava A) e abortou — mas o update abaixo gravava `cards/<chave>`
+        // mesmo assim, SUBSTITUINDO B por A. Agora: nunca grava na posição antiga; relocaliza pelo índice (fonte de verdade)
+        // e salva de novo na chave certa, ou recusa se o card não está mais no índice (foi excluído).
+        if(_posTrocou){
+          const _real = (await window._get(fb(FB+'/cards_index/'+card.id))).val();
+          if(window._cardsByKey && window._cardsByKey[key] === card) delete window._cardsByKey[key];
+          if(_real==null || String(_real)===String(key) || card.__relocado){
+            throw new Error('fbSaveCard: a posição do card mudou e não deu pra localizá-lo com segurança — nada foi gravado (recarregue a página).');
+          }
+          if(window._cardsByKey) window._cardsByKey[String(_real)] = card;
+          card.__relocado = true;
+          try{ return await fbSaveCard(card); } finally { delete card.__relocado; }
         }
         await window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
           if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
@@ -18265,6 +18279,10 @@ function _performAutoSave(){
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
+    // /monitorarbugs 16/11 (Codex, #1822): o autosave gravava a coluna nova e avisava "movido", mas nunca chamava recordMove() —
+    // flow.log/enteredAt/firstStartAt/doneAt (lead/cycle time, CFD, Throughput) ficavam cegos pra quem trocava a coluna no modal
+    // sem clicar em Salvar. Mesma linha do saveCard(), depois do Object.assign.
+    if(_prevCol!==c.col) recordMove(c, c.col);
     // ⚡ fbSaveCard() sem .catch() aqui era uma promise rejeitada e esquecida:
     // se a escrita falhasse (rede instável, sessão expirada, etc.), NADA
     // avisava — a tela continuava mostrando a edição como se tivesse salvo,
@@ -32761,9 +32779,15 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId,
     // Id determinístico (ex.: lembrete de reunião) — se a pessoa está em vários squads/abas,
     // todos calculam o MESMO id pro mesmo evento real, então só cria se ainda não existe
     // (evita duplicar a notificação e evita reabrir como "não lida" uma que já foi vista).
-    fbGet(path).then(snap=>{
+    // /monitorarbugs 16/11 (Codex, #1822): ler e depois gravar não é atômico — duas abas de PO/ADM liam "não existe", a 1ª
+    // criava, a pessoa lia, e a gravação atrasada da 2ª voltava read:false (notificação lida "reabria"). Agora cria por
+    // transação: só se ainda não existe. Sem transação disponível (ou recusada), cai no caminho antigo.
+    const _criaSeAusente = ()=> fbGet(path).then(snap=>{
       if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(_notifWarn);
     }).catch(_notifWarn);
+    if(typeof window._runTransaction==='function'){
+      window._runTransaction(window._ref(window._db,path), cur=>(cur ? undefined : notif)).catch(err=>{ _notifWarn(err); });
+    } else _criaSeAusente();
   } else {
     window._set(window._ref(window._db,path), notif).catch(_notifWarn);
   }
