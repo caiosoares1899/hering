@@ -87,9 +87,9 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-16 · Auditoria 16/11 — Férias recria período apagado; popup do Gantt Radar reabre sozinho (escalados, sem correção)
+### 2026-11-16 · Auditoria 16/11 — Férias recria período apagado; popup do Gantt Radar reabre sozinho (kanban v8.30.991-dev, okr v2.139-dev, mare-ferias v7, mare-gcal v10)
 
-Reproduzidos no Chromium com módulos reais e dados fictícios. Média: mare-ferias-dev.js/enviarForm salva com set no mesmo id sem recusar edição de período removido por outra sessão. Baixa: mare-gcal-dev.js/diaSync remove popup ao sair da janela mas preserva S.dia; avançar duas vezes e voltar a Hoje reabre o dia antigo. Ambos escalados ao Claude no Quadro por serem módulos compartilhados. Prova: docs/arezzo/testes/test_monitorarbugs_1611.js (2 falhas esperadas até correção) e console_monitorarbugs_1611.js (isolado em iframe, sem Firebase). Nenhum código de produto alterado.
+Reproduzidos no Chromium com módulos reais e dados fictícios. Média: mare-ferias-dev.js/enviarForm salva com set no mesmo id sem recusar edição de período removido por outra sessão. Baixa: mare-gcal-dev.js/diaSync remove popup ao sair da janela mas preserva S.dia; avançar duas vezes e voltar a Hoje reabre o dia antigo. Ambos escalados ao Claude no Quadro por serem módulos compartilhados. Prova: docs/arezzo/testes/test_monitorarbugs_1611.js (2 falhas esperadas até correção) e console_monitorarbugs_1611.js (isolado em iframe, sem Firebase). **Correção (Claude, mesmo PR #1816):** `enviarForm()` recusa salvar a edição quando o período sumiu do listener ao vivo (`ST.dados`) e avisa "excluído enquanto você editava — nada foi salvo" (mesma regra do "editar ressuscita" do Gantt e do OKR). Em `diaSync()`, quando o dia sai da janela de 6 semanas, `S.dia` é zerado; com a aba só escondida (`[hidden]`) a seleção fica. A prova do Codex passa de 2/2 ❌ para 2/2 ✅, e as suítes de Férias e Gantt continuam verdes (`docs/arezzo/testes/test_ferias_encerrado.js` não roda nesta máquina por falta de módulo, também na main).
 
 ### 2026-11-16 · PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — Contraste do Painel e Radar: Lençóis e Vice City medidos
 

@@ -655,7 +655,13 @@
     function diaFechar(){ const d=S.dia; S.dia=''; desenhar(); const f=root.querySelector('.mgc-dhd[data-dia="'+d+'"]'); if(f) f.focus({preventScroll:true}); }
     function diaSync(){
       const anc=S.dia && root.querySelector('.mgc-dhd[data-dia="'+S.dia+'"]');
-      if(!anc || root.closest('[hidden]')){ if(_diaPop && _diaPop.chave && _diaPop.chave.root===root) diaPopFechar(); return; }
+      if(!anc || root.closest('[hidden]')){
+        if(_diaPop && _diaPop.chave && _diaPop.chave.root===root) diaPopFechar();
+        // /monitorarbugs 16/11 (Codex, #1816): o dia saiu da janela de 6 semanas → esquece a seleção; senão voltar a Hoje reabria o popup antigo.
+        // (com a aba só escondida — [hidden] — a seleção fica, pra reabrir igual quando ela voltar)
+        if(!anc && S.dia && !root.closest('[hidden]')){ S.dia=''; S.diaChave=null; }
+        return;
+      }
       diaPop(painelDia(), anc, diaFechar, S.diaChave && S.diaChave.dia===S.dia ? S.diaChave : (S.diaChave={ root, dia:S.dia }));
     }
 
