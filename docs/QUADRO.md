@@ -8,6 +8,8 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/gantt-dia-popup` | `kanban-dev.html` (só `_gantt*`), `okr-dev.html` (só Gantt), `version.json` | 16/11/2026 |
+| Codex | `codex/ilha-notif-familias` | `kanban-dev.html` (só Ilha/sino), `mare-notif-dev.js`, linha `?v=` das páginas -dev que o carregam | 16/11/2026 |
 
 
 ## Fila
@@ -17,7 +19,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
 | Antigravity | R0 | 🪟 Acabamento "vidro lapidado" (`--specular` por tema + curvas `--ease-*`) | [GUIA_UI_UX §2.4/§2.5](GUIA_UI_UX.md) · [backlog](quadro/backlog.md#vidro-lapidado) |
-| Antigravity | R2 | 🏖️ Férias F2: módulo `mare-ferias-dev.js` + vista 🏖️ Férias no Radar e no Maré | [contrato](ideias/modo-ferias.md#contrato--f2-módulo-mare-ferias-devjs--vista-️-férias-antigravity) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -42,14 +43,9 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
-| 🏖️ Calendário geral de férias + **modo férias** — F1 (banco) no ar em 13/11; F2 na fila do Antigravity; depois F3 (Codex) e F4 (Claude) | Claude | [nota de desenho](ideias/modo-ferias.md) |
-| 📱 Gantt no celular: nenhum texto cabe, só barrinhas (Maré e Radar) | Claude | [escopo](quadro/escalados.md#gantt-celular) |
-| ⭐ Gantt: aba favorita ao abrir + 🔔 inscrição para avisos quando um calendário muda | Claude | [escopo](quadro/escalados.md#gantt-favorito-avisos) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
 | 🪟 Acabamento "vidro lapidado"; depois, diagrama `.arq` + rodapé do Oceano (com o O4) | Antigravity · Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica: 1º teste real no Maré dev (aguarda o Caio); depois Oceano | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
-| 📅 Ilha: notificações do calendário num grupo à parte (como alertas de sistema e Guardião) | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
-| 🎨 Tipos de notificação mais distintos visualmente, além do emoji (Ilha e sino) | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
 | 🧩 Minhas Preferências: áreas separadas visualmente (fundo um pouco mais claro por bloco) | Claude | [backlog](quadro/backlog.md#minhas-preferencias-areas) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 👕 Camiseta Brasil da Black Friday (depende da arte; BF = 27/11) | Claude | [backlog](quadro/backlog.md#camiseta-black-friday) |
