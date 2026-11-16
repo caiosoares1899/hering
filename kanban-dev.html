@@ -7747,7 +7747,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.994-dev</div>
+<div class="version">v8.30.995-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19854,7 +19854,7 @@ function openNewCard(col, prefillOwner, prefillTagId){
   // editingId, não por uma variável separada — nunca tiveram este bug).
   _commentCardId = null;
   const _mcl2=document.getElementById('m-comment-list');
-  if(_mcl2) _mcl2.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Salve o card para poder comentar.</div>';
+  if(_mcl2) _mcl2.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Card ainda não salvo — ao comentar, ele é salvo antes (com as mesmas checagens do 💾 Salvar).</div>';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
   _newCardGuardOff = false; // rearma a trava de _newCardHasContent() pra esta nova sessão de criação
 }
@@ -20227,14 +20227,36 @@ function saveCard(){
     _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem, ver comentário na declaração
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     _newCardGuardOff = true; // idem pra _newCardHasContent() — editingId pode continuar null aqui (ver comentário acima)
-    closeOv('card-ov');
+    // 💾 "Salvar e continuar" (16/11/2026, relato do time: "usei um card Modelo e não dava pra pôr link, comentar nem marcar
+    // ninguém sem clicar em Salvar"): comentar/pôr link num card ainda não salvo pede o salvamento (com as validações do
+    // Salvar, inclusive os obrigatórios do Modelo) e, confirmado, reabre o card JÁ DE VERDADE e completa a ação.
+    const _cont = _saveCardContinuar; _saveCardContinuar = null;
     _clearPendingRequired();
+    if(_cont && _savedNewCardId && cards.some(c=>c.id===_savedNewCardId)){
+      openCard(_savedNewCardId);
+      setTimeout(()=>{ try{ _cont(_savedNewCardId); }catch(e){ console.error('[salvar e continuar]', e); } }, 60);
+      return;
+    }
+    closeOv('card-ov');
   }).catch(err=>{
+    _saveCardContinuar = null;
     _savingCard=false;
     if(_saveBtn){ _saveBtn.disabled=false; _saveBtn.innerHTML=_saveBtn.dataset.origLabel||'💾 Salvar'; }
     console.error('[saveCard] falha ao confirmar salvamento:', err);
     showToast('⚠️ Não deu pra confirmar o salvamento (conexão instável) — o card continua aberto, tente salvar de novo.');
   });
+}
+// Card novo (rascunho, ex.: "+ Usar" de um Modelo): salva com as validações do Salvar e, confirmado, executa `acao` no card
+// já de verdade (o modal reabre nele). Validação barrou → nada é criado, o motivo aparece e o que a pessoa digitou fica no campo.
+let _saveCardContinuar = null;
+function _rascunhoSalvarE(acao, oQue){
+  if(editingId) return false;
+  if(_savingCard){ showToast('💾 Salvando o card…'); return true; }
+  _saveCardContinuar = acao;
+  saveCard();
+  if(!_savingCard){ _saveCardContinuar = null; return true; }   // validação barrou (o próprio Salvar já disse o motivo)
+  showToast('💾 Salvando o card pra '+oQue+'…');
+  return true;
 }
 async function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
@@ -31530,7 +31552,7 @@ const HELP_CONTENT = {
     { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n🖱️ <b>A barra rola sozinha perto da borda:</b> se a toolbar não cabe inteira na tela, deixe o mouse parado perto da borda esquerda ou direita (sem precisar clicar) que ela rola na direção sozinha — funciona tanto navegando normal quanto arrastando um botão durante a reorganização.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\n📅 <b>Prazo automático:</b> na mesma tela de Recorrência, ative "Definir prazo automaticamente" e diga quantos dias depois da criação o prazo deve cair — ex.: card entra toda segunda, prazo "1" deixa o vencimento pra terça seguinte. Sem isso, o card nasce sem prazo (como sempre foi).' },
-    { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
+    { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n· O card do modelo abre ainda sem salvar — já dá pra comentar (com @menção) e pôr links: ao fazer isso o card é salvo na hora (com as mesmas checagens do 💾 Salvar, inclusive os campos obrigatórios) e continua aberto pra você seguir editando\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
     { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card, ou dê um DUPLO TOQUE nele, pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá. No computador, duplo-clique no card faz a mesma coisa que clique com o botão direito.\n\n🏷️ Em squads com Submarca ativa: o "1 por coluna" vira 1 por coluna E por submarca — cada submarca pode ter seu próprio card fixado na mesma coluna, sem atrapalhar as outras.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n🔗 Copiar link sem abrir o card: no menu de contexto do card (clique direito, ou o botão "⋮" no board), tem o atalho "🔗 Copiar link do card" — copia o mesmo link, sem precisar abrir o card primeiro.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
@@ -41792,7 +41814,14 @@ function submitComment(){
   // _commentCardId resolvido (card ainda não salvo, sem id de verdade),
   // nunca escreve — evita tanto card_comments/null quanto, se algum outro
   // caminho futuro esquecer de resetar a variável, escrever no card ERRADO.
-  if(!_commentCardId){ showToast('⚠ Salve o card antes de comentar.'); return; }
+  if(!_commentCardId){
+    if(!editingId){ _rascunhoSalvarE(id=>{
+      // espera o openCard() do card novo apontar os comentários pra ele (_commentCardId) antes de publicar
+      let n=0; const vai=()=>{ if(_commentCardId!==id){ if(n++<60) setTimeout(vai,50); else showToast('⚠ O card foi salvo, mas não consegui publicar o comentário — envie de novo.'); return; }
+        const i2=document.getElementById('m-comment-inp'); if(i2) i2.value=text; submitComment(); };
+      vai(); }, 'publicar o comentário'); return; }
+    showToast('⚠ Salve o card antes de comentar.'); return;
+  }
   const comment={
     id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
     uid:user.uid,
@@ -42599,7 +42628,11 @@ function attachSave(){
   let url = _sanitizeLinkUrl(inp.value);
   if(!url) return;
   const card = editingId ? cards.find(c=>c.id===editingId) : null;
-  if(!card) return;
+  if(!card){
+    // card ainda não salvo: antes o link sumia SEM aviso nenhum — agora salva o card e põe o link nele
+    if(!editingId) _rascunhoSalvarE(()=>{ const row=document.getElementById('m-attach-inp-row'); if(row) row.style.display='flex'; const i2=document.getElementById('m-attach-url'); if(i2){ i2.value=url; attachSave(); } }, 'adicionar o link');
+    return;
+  }
   if(!card.links) card.links=[];
   // Auto-detect title
   const svc = getServiceInfo(url);
