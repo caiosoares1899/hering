@@ -3015,16 +3015,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .gantt-day-hd.is-sel .gantt-dom,.gantt-day-hd.is-sel .gantt-dow{color:#04121f;}
 [data-theme="light"] .gantt-day-hd.is-sel,[data-theme="light"] .gantt-day-hd.is-sel .gantt-dom,[data-theme="light"] .gantt-day-hd.is-sel .gantt-dow{color:#fff;}
 .gantt-day-hd.is-clic:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
-.gantt-dia{border:1px solid var(--glass-b);border-radius:var(--r2);background:rgb(var(--surface-rgb));padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--specular);}
-.gantt-dia-hd{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--txt);}
-.gantt-dia-hd .btn{margin-left:auto;}
-.gantt-dia-n,.gantt-dia-per,.gantt-dia-nada{color:var(--txt2);font-size:12px;}
-.gantt-dia-grp{display:flex;flex-direction:column;gap:3px;}
-.gantt-dia-fonte{font-size:12px;font-weight:800;color:var(--txt);}
-.gantt-dia ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;}
-.gantt-dia li{font-size:12.5px;line-height:1.4;color:var(--txt);overflow-wrap:anywhere;}
-.gantt-dia-lin{color:var(--txt2);font-weight:700;}
-@media (hover:none) and (pointer:coarse){ .gantt-day-hd.is-clic{min-height:44px;} .gantt-dia .btn{min-height:44px;min-width:44px;} }
+/* 📅 o popup do dia (.mgc-dia, .mgc-diapop) mora no mare-gcal-dev.js v9: o mesmo no Maré e no Radar */
+@media (hover:none) and (pointer:coarse){ .gantt-day-hd.is-clic{min-height:44px;} }
 .gantt-cal-bloco .gantt-grp-lbl{font-size:12.5px;letter-spacing:.02em;}
 .gantt-cal-bloco.is-kids{margin-top:14px;border-top:1px solid var(--glass-b);}
 /* 🛒🛍️ Comerciais (Hering e Marketplace) "como no Excel": dia largo e o texto inteiro dentro da barra, quebrando linha */
@@ -7675,7 +7667,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.988-dev</div>
+<div class="version">v8.30.989-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8031,7 +8023,7 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-dicas-dev.js?v=18"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
 <script src="mare-timer-dev.js?v=1"></script>
-<script src="mare-gcal-dev.js?v=8"></script>
+<script src="mare-gcal-dev.js?v=9"></script>
 <script src="mare-ferias-dev.js?v=5"></script>
 
 <script>
@@ -15237,7 +15229,7 @@ function ganttDia(iso){
   if(!_GANTT_CONS || _ganttAba!==_GANTT_CONS.id) return;
   _ganttDia = _ganttDia===iso ? '' : (/^\d{4}-\d{2}-\d{2}$/.test(iso||'')?iso:'');
   _ganttScrollPend=''; if(boardView==='gantt') renderBoard();
-  requestAnimationFrame(()=>{ const f=document.querySelector(_ganttDia?'#gantt-dia .btn':'.gantt-day-hd[data-date="'+iso+'"]'); if(f) f.focus({preventScroll:true}); });
+  requestAnimationFrame(()=>{ const f=document.querySelector(_ganttDia?'#gantt-dia [data-dia-fechar]':'.gantt-day-hd[data-date="'+iso+'"]'); if(f) f.focus({preventScroll:true}); });
 }
 let _ganttDiaChave=null;
 function _ganttDiaSync(){
@@ -15247,19 +15239,11 @@ function _ganttDiaSync(){
   G.diaPop(html, anc, ()=>{ if(_ganttDia) ganttDia(_ganttDia); }, _ganttDiaChave);
 }
 function _ganttDiaHtml(){
-  if(!_ganttDia || !_GANTT_CONS || _ganttAba!==_GANTT_CONS.id || !window.MareGCal) return '';
+  if(!_ganttDia || !_GANTT_CONS || _ganttAba!==_GANTT_CONS.id || !window.MareGCal || !MareGCal.diaHtml) return '';
   const C=_GANTT_CONS, fSel=C.fontes.includes(_ganttCalFiltro[C.id])?_ganttCalFiltro[C.id]:'', fontes=fSel?[fSel]:C.fontes;
-  const grupos=MareGCal.doDia(Object.fromEntries(fontes.map(f=>[f,(_ganttCal[f]||{}).dado])), _ganttDia, fontes);
-  const total=grupos.reduce((n,g)=>n+g.itens.length,0), dt=_ganttParseIsoLocal(_ganttDia);
-  const dow=dt?dt.toLocaleDateString('pt-BR',{weekday:'long'}):'';
-  return '<section class="gantt-dia" id="gantt-dia" aria-label="Tudo do dia '+esc(_cardPeriodoData(_ganttDia))+'">'
-    +'<div class="gantt-dia-hd"><b>📅 '+esc(dow.charAt(0).toUpperCase()+dow.slice(1))+', '+esc(_cardPeriodoData(_ganttDia))+'</b><span class="gantt-dia-n">'+total+' '+(total===1?'ação':'ações')+(fSel?' · só '+esc((C.grupos.find(x=>x.id===fSel)||{}).rot||''):'')+'</span>'
-    +'<button type="button" class="btn btn-sm" onclick="ganttDia(_ganttDia)" aria-label="Fechar o dia">✕</button></div>'
-    +grupos.map(g=>'<div class="gantt-dia-grp"><div class="gantt-dia-fonte">'+esc(g.rot)+' · '+g.itens.length+'</div>'
-      +(!g.publicado?'<div class="gantt-dia-nada">'+((_ganttCal[g.fonte]||{}).estado==='ok'?'Ainda não publicado.':'Carregando…')+'</div>'
-        : g.itens.length?'<ul>'+g.itens.map(it=>'<li><span class="gantt-dia-lin">'+esc(it.rot)+':</span> '+esc(it.txt)+(it.ini!==it.fim?' <span class="gantt-dia-per">('+esc(_cardPeriodoData(it.ini)+' – '+_cardPeriodoData(it.fim))+')</span>':'')+'</li>').join('')+'</ul>'
-        : '<div class="gantt-dia-nada">Nada neste dia.</div>')+'</div>').join('')
-    +'</section>';
+  return MareGCal.diaHtml({ id:'gantt-dia', dia:_ganttDia, so:fSel?((C.grupos.find(x=>x.id===fSel)||{}).rot||''):'',
+    grupos:MareGCal.doDia(Object.fromEntries(fontes.map(f=>[f,(_ganttCal[f]||{}).dado])), _ganttDia, fontes),
+    estado:f=>(_ganttCal[f]||{}).estado, dest:f=>(_ganttCal[f]||{}).dest });   // 📅 conteúdo único com o Radar (mare-gcal v9)
 }
 // Esc fecha o painel do dia antes de qualquer outra camada (captura na window)
 window.addEventListener('keydown', ev=>{
