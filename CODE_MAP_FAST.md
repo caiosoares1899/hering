@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-15.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-16.
 > Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
@@ -98,14 +98,14 @@
 ## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 
 ### `kanban-dev.html` (141 âncoras curadas)
-- `ADM_EMAILS` (L8039) · `getEffectiveRole` (L8174) · `SQUAD_META_LIVE` (L8236) · `resolveSquadAndShow` (L12998) · `autoRegistrar` (L13535) · `_claimUserInit` (L13371)
-- `_ensureInitRegistryBackfilled` (L13414) · `doSignIn` (L12885) · `_syncAuthProfileToFirebase` (L13438) · `showApp` (L13056) · `_onRealAuthChange` (L39560) · `agentes` (L8951)
-- `allIdentities` (L8963) · `renderAgentesList` (L29293) · `fecharAddAgente` (L29334) · `salvarAgente` (L29338) · `excluirAgente` (L29365) · `CARD_SECTIONS` (L8876)
-- `openCard` (L19141) · `openAgenteHotline` (L19020) · `_applyAgenteHotlineSkin` (L18996) · `saveCard` (L19678) · `_finishCloseOv` (L38883) · `_newCardGuardOff` (L18183)
-- `fbSaveAll` (L10937) · `fbCreateCard` (L11180) · `fbSaveCard` (L11258) · `_applyCardsSync` (L11658) · `_notasUpdate` (L23719) · `_saveCardWithRetry` (L11409)
-- `saveExtraDesc` (L18740) · `openNewCard` (L19584) · `backfillFlow` (L10380) · `recordMove` (L10254) · `_reportUnexpectedCardDisappearance` (L11245) · `searchDependsCards` (L40072)
-- `_currentTheme` (L39130) · `toggleTheme` (L39192) · `toggleThemeAuto` (L39288) · `exitViceCity` (L39366) · `_isViceCityEasterEggAtivo` (L39469) · `toggleBlackFriday` (L39390)
-- `exitBlackFriday` (L39401) · `_themeBtnRightClick` (L39413) · `_isBlackFridayAtivo` (L39389) · `maybeAutoArchiveOldCards` (L17708) · `_renderArquivadosBody` (L27865) · `openArquivados` (L27930)
+- `ADM_EMAILS` (L8057) · `getEffectiveRole` (L8192) · `SQUAD_META_LIVE` (L8254) · `resolveSquadAndShow` (L13016) · `autoRegistrar` (L13553) · `_claimUserInit` (L13389)
+- `_ensureInitRegistryBackfilled` (L13432) · `doSignIn` (L12903) · `_syncAuthProfileToFirebase` (L13456) · `showApp` (L13074) · `_onRealAuthChange` (L39581) · `agentes` (L8969)
+- `allIdentities` (L8981) · `renderAgentesList` (L29311) · `fecharAddAgente` (L29352) · `salvarAgente` (L29356) · `excluirAgente` (L29383) · `CARD_SECTIONS` (L8894)
+- `openCard` (L19159) · `openAgenteHotline` (L19038) · `_applyAgenteHotlineSkin` (L19014) · `saveCard` (L19696) · `_finishCloseOv` (L38904) · `_newCardGuardOff` (L18201)
+- `fbSaveAll` (L10955) · `fbCreateCard` (L11198) · `fbSaveCard` (L11276) · `_applyCardsSync` (L11676) · `_notasUpdate` (L23737) · `_saveCardWithRetry` (L11427)
+- `saveExtraDesc` (L18758) · `openNewCard` (L19602) · `backfillFlow` (L10398) · `recordMove` (L10272) · `_reportUnexpectedCardDisappearance` (L11263) · `searchDependsCards` (L40093)
+- `_currentTheme` (L39151) · `toggleTheme` (L39213) · `toggleThemeAuto` (L39309) · `exitViceCity` (L39387) · `_isViceCityEasterEggAtivo` (L39490) · `toggleBlackFriday` (L39411)
+- `exitBlackFriday` (L39422) · `_themeBtnRightClick` (L39434) · `_isBlackFridayAtivo` (L39410) · `maybeAutoArchiveOldCards` (L17726) · `_renderArquivadosBody` (L27883) · `openArquivados` (L27948)
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)

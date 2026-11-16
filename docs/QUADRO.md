@@ -9,7 +9,6 @@
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
 | Claude | `claude/gantt-dia-popup` | `kanban-dev.html` (só `_gantt*`), `okr-dev.html` (só Gantt), `version.json` | 16/11/2026 |
-| Codex | `codex/ilha-notif-familias` | `kanban-dev.html` (só Ilha/sino), `mare-notif-dev.js`, linha `?v=` das páginas -dev que o carregam | 16/11/2026 |
 
 
 ## Fila
