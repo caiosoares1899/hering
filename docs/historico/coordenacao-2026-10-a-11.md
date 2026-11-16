@@ -296,3 +296,7 @@ Caio confirmou o deploy de `ganttAvisoMudanca`, `ganttAvisoMudancaDev` e `sendPu
 ## Limpeza do Quadro — 16/11/2026
 
 Saíram do Backlog por estarem no prod desde a promoção #1799 (14/11): 🏖️ Calendário geral de férias + modo férias (F1–F4; correções da #1797 no dev), 📱 Gantt no celular e ⭐ aba favorita + 🔔 avisos do Gantt (deploy confirmado em 16/11). Saiu da Fila a "Férias F2" do Antigravity (feita pelo Claude na #1791). As ideias 📅 grupo do calendário na Ilha e 🎨 tipos de notificação mais distintos foram para o Codex (`codex/ilha-notif-familias`).
+
+## Limpeza do Quadro (2ª) — 16/11/2026
+
+Feitos e fora do Quadro: popup do dia do Gantt (#1803, #1805), Minhas Preferências em blocos (#1804), famílias de notificação da Ilha (#1802, Codex), vidro lapidado em Escala/Intake/Travessia (#1806, Antigravity), Git no `/seatualizar` (#1807). O Caio validou a Ilha Dinâmica no Maré (16/11): fica no backlog só a Ilha no Oceano. **Camiseta Brasil da Black Friday cancelada** pelo Caio (16/11) — a nota `docs/ideias/camiseta-brasil-black-friday.md` fica como registro.
