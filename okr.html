@@ -2127,7 +2127,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.138 · okr</div>
+<div class="version">v2.139 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6128,7 +6128,7 @@ function _okrCalSegHtml(){
 // Os MESMOS calendários do Maré (kanban/calendarios_gantt(_dev) + destaques), só leitura, pelo módulo mare-gcal(-dev).js — baixado
 // só quando a vista abre. Link direto: okr.html?gantt (ou ?gantt=marca|comercial|mktplace|outlet).
 // Leitura: a regra do banco exige login Google @ciahering.com.br (sem squad); visualizador externo e outro login não veem a vista.
-const _GCAL_V = 9;   // ?v do mare-gcal(-dev).js — subir junto quando o módulo mudar
+const _GCAL_V = 10;   // ?v do mare-gcal(-dev).js — subir junto quando o módulo mudar
 let _okrGcal = null, _okrGcalP = null, _okrGcalFav=null, _okrGcalPrioridade=false;
 let _okrGcalAba = (()=>{ try{ return localStorage.getItem('okr_gcal_aba')||''; }catch(e){ return ''; } })();
 function _okrGcalPermitido(){
@@ -6287,7 +6287,7 @@ async function _okrFeriasAplicar(decisoes, pessoas){
   try{ renderOkrObjetivos(); }catch(e){}
   return res;
 }
-const _FERIAS_V = 6;
+const _FERIAS_V = 7;
 let _okrFerias = null, _okrFeriasP = null;
 function _okrFeriasIsAdm(){
   const u = window._currentUser || {}, uid = u.uid;

@@ -87,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-16 · Auditoria de cards: três defeitos reproduzidos (Codex) e corrigidos (Claude) — kanban v8.30.996-dev — SÓ DEV
+### 2026-11-16 · Auditoria de cards: três defeitos reproduzidos (Codex) e corrigidos (Claude) — kanban v8.30.996-dev — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119)
 
 fbSaveCard sobrescreve ocupante após transação abortar por id divergente; autosave altera coluna sem recordMove; corrida entre abas PO/ADM reabre notificação lida (membro comum em caixa alheia é barrado). Reprodução Chromium em docs/arezzo/testes/test_cards_sensiveis_1611.js: três falhas esperadas. Console isolado read-only em docs/arezzo/testes/console_cards_sensiveis_1611.js. Página reservada: código intacto, sem bump. Detalhes em docs/quadro/escalados.md. Fronteira sem alteração; dica não, auditoria.
 
@@ -101,7 +101,7 @@ fbSaveCard sobrescreve ocupante após transação abortar por id divergente; aut
 - Sem regressão: `test_card_conteudo_velho` 18/18, `test_guardiao_cliente`, `test_receita_cards_somem`, `test_automacao_undo_coluna`, `test_card_modal_ui`, `test_rascunho_salvar_e_continuar`. `test_notificacoes` e `test_versao_travada` têm as mesmas falhas antigas com e sem a correção.
 - **Infra:** o `runTransaction` do `docs/arezzo/testes/fakefb.js` passa a registrar `transaction` no `__log`, e `docs/arezzo/testes/test_notificacoes.js` aceita esse tipo de escrita.
 
-### 2026-11-16 · 💾 Card de Modelo sem salvar: link sumia sem aviso e não dava pra comentar/@mencionar — agora salva e continua (kanban v8.30.995-dev) — SÓ DEV
+### 2026-11-16 · 💾 Card de Modelo sem salvar: link sumia sem aviso e não dava pra comentar/@mencionar — agora salva e continua (kanban v8.30.995-dev) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119)
 
 - **Relato do time:** ao usar um **card Modelo** ("+ Usar"), "como você não clicou em Salvar, não dá pra editar nada: não dá pra pôr link, comentar, marcar as pessoas".
 - **Causa:** "+ Usar" abre um **rascunho**. O card só passa a existir no 💾 Salvar, que é onde os campos obrigatórios do Modelo são conferidos. No rascunho:
@@ -109,17 +109,17 @@ fbSaveCard sobrescreve ocupante após transação abortar por id divergente; aut
   - o link sumia **sem aviso nenhum** (`attachSave()` saía calado quando não havia card).
 - **Correção ("salvar e continuar", vale para qualquer card novo):** comentar ou pôr link num rascunho chama o próprio `saveCard()`, com título, obrigatórios do board e obrigatórios do Modelo. Se o salvamento for confirmado, o modal **reabre no card de verdade** e a ação acontece nele. Se a validação barrar, nada é criado, o motivo aparece e o texto digitado fica no campo. O 💾 Salvar comum continua fechando o modal. Ajuda (Modelos) atualizada.
 - **Infra de teste:** o `onValue` do `docs/arezzo/testes/fakefb.js` devolvia um "desinscrever" que não fazia nada. Era a causa do "laço no `_checkCardLock`" registrado como armadilha de teste ao abrir um 2º card (ex.: duplicar). Agora remove o ouvinte de verdade.
-- Teste: `docs/arezzo/testes/test_rascunho_salvar_e_continuar.js` (14). kanban v8.30.995-dev (SÓ DEV).
+- Teste: `docs/arezzo/testes/test_rascunho_salvar_e_continuar.js` (14). kanban v8.30.995-dev · PROD 16/11 em v8.30.996.
 
-### 2026-11-16 · SÓ DEV — Toolbar: folga vertical evita recorte das bordas e do foco dos botões (tema Black Friday)
+### 2026-11-16 · PROD 16/11 (kanban v8.30.996) — Toolbar: folga vertical evita recorte das bordas e do foco dos botões (tema Black Friday)
 
 Na toolbar do Maré, overflow-x:auto converte o overflow vertical em auto. No desktop os botões encostavam no limite superior e inferior do recorte; no celular faltava folga superior. Acrescentada folga de 4 px acima/abaixo (mantidos os 5 px inferiores do celular), sem mudar tamanho, ordem ou rolagem horizontal dos botões. Teste test_toolbar_ui.js: 24 cenários (0/4/54 cards, 1280/390 px, Black Friday/Abrolhos/Lençóis/Vice); baseline sem folga falha. Capturas em docs/capturas/toolbar_ui/. Sem mudança de fronteira; dica não, correção visual.
 
-### 2026-11-16 · 🔥 Tema Black Friday: fita OFERTA sobre o título e selo "seu card" sumindo; tema perdido no F5 (kanban v8.30.992-dev) — SÓ DEV
+### 2026-11-16 · 🔥 Tema Black Friday: fita OFERTA sobre o título e selo "seu card" sumindo; tema perdido no F5 (kanban v8.30.992-dev) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119)
 
 - **Fita "🔥 OFERTA" em cima do título e "👤 seu card" sumindo** (`kanban-dev.html`, CSS do tema BF): a fita usava `::before`, o mesmo pseudo-elemento do selo "seu card". O CSS mescla as duas regras propriedade por propriedade, então o `left:9px` e o `border-radius` do selo sobreviviam. Num card **crítico e seu**, a fita virava pílula sobre o título e o selo sumia. Agora a fita é `::after`, com reset completo, e só aparece quando o canto está livre: ♾️ Contínuo e 💤 parado (estados reais, também em `::after`) vencem a decoração.
 - **Tema BF sumia no F5:** o script do `<head>` só reaplicava `light`/`vice`. Agora reaplica `blackfriday`.
-- Teste: `docs/arezzo/testes/test_tema_bf.js`. kanban v8.30.992-dev (SÓ DEV).
+- Teste: `docs/arezzo/testes/test_tema_bf.js`. kanban v8.30.992-dev · PROD 16/11 em v8.30.996.
 
 ### 2026-11-16 · otimização: preconnect de fontes e guarda de aba oculta na apresentação do Radar
 
@@ -128,7 +128,7 @@ Na toolbar do Maré, overflow-x:auto converte o overflow vertical em auto. No de
 - **Solução:** Adicionados `<link rel="preconnect">` para `fonts.googleapis.com` e `fonts.gstatic.com` e guarda `document.hidden` nos 2 `setInterval` em `okr-apresentacao.slide.html`; baseline completo do ecossistema registrado em `.claude/skills/otimizaçãoderotina/SKILL.md`. Sinalizado para avaliação futura: `kanban/okr/agente_chat` no boot do `okr-dev.html` sem `limitToLast` (exige `.indexOn: ["ts"]` + `firebase deploy --only database`).
 - **Revisão do Claude (16/11):** como os timers pulam com a aba oculta, um `visibilitychange` atualiza relógio, cronômetro e sala na hora em que a aba volta. A presença (`liveBatida`, 20 s) segue sem pausa: quem apresenta e troca de aba continua na sala.
 
-### 2026-11-16 · Auditoria 16/11 — Férias recria período apagado; popup do Gantt Radar reabre sozinho (kanban v8.30.991-dev, okr v2.139-dev, mare-ferias v7, mare-gcal v10)
+### 2026-11-16 · Auditoria 16/11 — Férias recria período apagado; popup do Gantt Radar reabre sozinho (kanban v8.30.991-dev, okr v2.139-dev, mare-ferias v7, mare-gcal v10) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119)
 
 Reproduzidos no Chromium com módulos reais e dados fictícios. Média: mare-ferias-dev.js/enviarForm salva com set no mesmo id sem recusar edição de período removido por outra sessão. Baixa: mare-gcal-dev.js/diaSync remove popup ao sair da janela mas preserva S.dia; avançar duas vezes e voltar a Hoje reabre o dia antigo. Ambos escalados ao Claude no Quadro por serem módulos compartilhados. Prova: docs/arezzo/testes/test_monitorarbugs_1611.js (2 falhas esperadas até correção) e console_monitorarbugs_1611.js (isolado em iframe, sem Firebase). **Correção (Claude, mesmo PR #1816):** `enviarForm()` recusa salvar a edição quando o período sumiu do listener ao vivo (`ST.dados`) e avisa "excluído enquanto você editava — nada foi salvo" (mesma regra do "editar ressuscita" do Gantt e do OKR). Em `diaSync()`, quando o dia sai da janela de 6 semanas, `S.dia` é zerado; com a aba só escondida (`[hidden]`) a seleção fica. A prova do Codex passa de 2/2 ❌ para 2/2 ✅, e as suítes de Férias e Gantt continuam verdes (`docs/arezzo/testes/test_ferias_encerrado.js` não roda nesta máquina por falta de módulo, também na main).
 

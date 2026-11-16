@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🏢 Diretoria por pessoa: escolha no 1º acesso, edição pelo ADM no Painel e etiqueta na 👥 Equipe (kanban v8.30.994-dev, painel v5.119-dev, regras) — SÓ DEV — 2026-11-16
+### 🏢 Diretoria por pessoa: escolha no 1º acesso, edição pelo ADM no Painel e etiqueta na 👥 Equipe (kanban v8.30.994-dev, painel v5.119-dev, regras) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119) — 2026-11-16
 
 - **Pedido do Caio:** voltar a classificar as pessoas por diretoria para a expansão do Maré a RH e CRM. Cada um escolhe no 1º acesso, o ADM edita no Painel, e o valor aparece como etiqueta na Equipe. Desenho do Codex (#1818).
 - **Maré:**
@@ -39,7 +39,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **Banco:** `kanban/usuarios/{uid}/diretoria` ∈ digital|rh|marca|tecnologia. A pessoa grava a sua só enquanto está vazia; depois só ADM/Caio. O espelho `usuarios_publicos/{uid}/diretoria` só é aceito igual à fonte. Exige `firebase deploy --only database`.
 - **Testes:** `diretoriaRules.test.js` (5, incluindo o resíduo aceito de apagar o campo) e `test_diretoria.js` (31: janela, inscrição, convidado/externo, Equipe, 390 px nos 4 temas, Painel e trava do ADM só por lista).
 
-### 🔥 Semana Black Friday: tema BF como padrão de todo mundo de 23 a 29/11 + /melhoriauiux do tema (kanban v8.30.992-dev) — SÓ DEV — 2026-11-16
+### 🔥 Semana Black Friday: tema BF como padrão de todo mundo de 23 a 29/11 + /melhoriauiux do tema (kanban v8.30.992-dev) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119) — 2026-11-16
 
 - **Pedido do Caio:** "a partir de segunda que vem, o tema Black Friday seja o default pra todo mundo, de segunda a domingo (semana da Black)".
 - **Agora:**
