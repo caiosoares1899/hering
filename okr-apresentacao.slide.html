@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" type="image/png" href="favicon-radar.png?v=2">
 <link rel="apple-touch-icon" href="favicon-radar.png?v=2">
 <title>Radar · Apresentação</title>
@@ -2077,6 +2079,7 @@ function _okrRenderCountdown(){
   }
 }
 setInterval(()=>{
+  if(document.hidden) return;
   document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   _okrRenderCountdown();
 }, 1000);
@@ -2384,7 +2387,7 @@ function liveRender(){
     if(el) el.setAttribute('data-pedido', uid);
   });
 }
-setInterval(()=>{ if(liveAtiva()) liveRender(); }, 15000);   // atualiza "quem está na sala" e o aviso de apresentador sem sinal
+setInterval(()=>{ if(!document.hidden && liveAtiva()) liveRender(); }, 15000);   // atualiza "quem está na sala" e o aviso de apresentador sem sinal
 // laser e traços
 function liveDesenhar(){
   const cv = document.getElementById('live-canvas'); if(!cv) return;

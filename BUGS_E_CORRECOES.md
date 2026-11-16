@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-16 · otimização: preconnect de fontes e guarda de aba oculta na apresentação do Radar
+
+- **Problema:** Rodada do `/otimizaçãoderotina` identificou que `okr-apresentacao.slide.html` carregava Google Fonts sem `<link rel="preconnect">` e rodava 2 `setInterval` (relógio 1 s e sala ao vivo 15 s) mesmo com a aba em segundo plano.
+- **Causa:** Falta de hints `preconnect` no `<head>` e ausência de checagem `document.hidden` nos timers periódicos.
+- **Solução:** Adicionados `<link rel="preconnect">` para `fonts.googleapis.com` e `fonts.gstatic.com` e guarda `document.hidden` nos 2 `setInterval` em `okr-apresentacao.slide.html`; baseline completo do ecossistema registrado em `.claude/skills/otimizaçãoderotina/SKILL.md`. Sinalizado para avaliação futura: `kanban/okr/agente_chat` no boot do `okr-dev.html` sem `limitToLast` (exige `.indexOn: ["ts"]` + `firebase deploy --only database`).
+
 ### 2026-11-16 · PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — Contraste do Painel e Radar: Lençóis e Vice City medidos
 
 Painel v5.118-dev e Radar v2.137-dev: corrige textos auxiliares, placeholders, selos, filtros ativos, dias do calendário e status que ainda falhavam na main 3f067720. No Vice, clareia os tokens de texto e dá contraste ao fundo e aos cards próprios, preservando a paleta e o escuro. Toast já legível foi mantido. Auditoria com Firebase falso, pixels do fundo renderizado, rolagem, fill SVG, tratamento de oclusão e saída não zero para regressões; inclui autoteste do medidor e prova antes/depois em docs/capturas/tema_claro/. Exceções nominadas: controles inativos (WCAG 1.4.3), escuro preexistente sem piora e selo ligado do módulo mare-plantao-dev.js reservado. Sem lógica, banco, módulos compartilhados ou produção. Fronteira: sem mudança. Dica: não, correção.
