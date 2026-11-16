@@ -265,23 +265,23 @@
 [data-theme="light"] .mgc-sino.on{color:var(--cyan,#065670);}
 .mgc-sino[disabled]{opacity:.6;cursor:progress;}
 .mgc-dia{display:flex;flex-direction:column;padding:0 !important;color:var(--txt);font-size:13px;}
-.mgc-dia-hd{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:12px 12px 10px 16px;background:inherit;border-bottom:1px solid var(--glass-b);border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.mgc-dia-hd{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:10px 10px 8px 14px;background:inherit;border-bottom:1px solid var(--glass-b);border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0;}
 .mgc-dia-tit{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
 .mgc-dia-tit b{font-size:15px;line-height:1.25;}
 .mgc-dia-tit span{font-size:12px;color:var(--txt2);}
 .mgc-dia-x{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--glass-b);background:transparent;color:var(--txt);font-size:14px;line-height:1;cursor:pointer;font-family:inherit;}
 .mgc-dia-x:hover{background:var(--glass-h);}
 .mgc-dia-x:focus-visible,.mgc-dia :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-.mgc-dia-corpo{display:flex;flex-direction:column;gap:14px;padding:12px 16px 14px;}
-.mgc-dia-grp{display:flex;flex-direction:column;gap:8px;}
+.mgc-dia-corpo{display:flex;flex-direction:column;gap:12px;padding:10px 14px 12px;}
+.mgc-dia-grp{display:flex;flex-direction:column;gap:6px;}
 .mgc-dia-fonte{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--txt2);}
 .mgc-dia-n{min-width:20px;padding:1px 7px;border-radius:999px;border:1px solid var(--glass-b);font-size:11px;letter-spacing:0;text-align:center;color:var(--txt);}
-.mgc-dia-lin{display:flex;flex-direction:column;gap:4px;}
+.mgc-dia-lin{display:flex;flex-direction:column;gap:3px;}
 .mgc-dia-lrot{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--txt2);}
 .mgc-dia-lrot i{flex:none;width:8px;height:8px;border-radius:50%;}
-.mgc-dia ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;}
-.mgc-dia-it{display:flex;align-items:baseline;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;padding:6px 10px;margin-left:15px;border-radius:8px;background:color-mix(in srgb,currentColor 7%,transparent);}
-.mgc-dia-txt{flex:1 1 200px;min-width:0;line-height:1.4;overflow-wrap:anywhere;}
+.mgc-dia ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;}
+.mgc-dia-it{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:2px 12px;padding:5px 10px;margin-left:15px;border-radius:8px;background:var(--glass-h);background:color-mix(in srgb,currentColor 7%,transparent);}   /* "quando" SEMPRE na coluna da direita (computador) */
+.mgc-dia-txt{min-width:0;line-height:1.35;overflow-wrap:anywhere;}
 .mgc-dia-q{flex:none;font-size:11px;font-weight:600;color:var(--txt2);white-space:nowrap;}
 .mgc-dia-q.is-hoje{color:var(--txt);}
 .mgc-dia-it.is-alerta{box-shadow:inset 0 0 0 1px var(--danger,#ff6b6b);}
@@ -290,6 +290,7 @@
 .mgc-dia-vz{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--txt2);}
 .mgc-dia-vz span:first-child{font-weight:700;}
 @media (hover:none) and (pointer:coarse){ .mgc-dia-x{width:44px;height:44px;} }
+@media (max-width:768px){ .mgc-dia-it{grid-template-columns:minmax(0,1fr);} }   /* celular: "quando" SEMPRE embaixo do texto (estreito demais p/ 2 colunas) */
 @media (max-width:600px){ .mgc-aba-l{display:none;} .mgc-aba-c{display:inline;} }
 @media (max-width:768px){ .mgc{--mgc-title:118px;} .mgc.is-largo{--mgc-day:120px;} .mgc-abas{align-self:stretch;gap:2px;} .mgc-aba{flex:1 0 auto;padding:9px 8px;} .mgc-mes{margin-left:0;flex:1 1 100%;} .mgc-lin{white-space:normal;font-size:11.5px;line-height:1.2;} }
 @media (hover:none) and (pointer:coarse){ .mgc-aba,.mgc-btn,.mgc-chip,.mgc-mes,.mgc-dhd.is-clic{min-height:44px;} .mgc-mes{font-size:16px;} }
@@ -308,7 +309,7 @@
 }
 
 /* 📅 Popup do dia (16/11): fica no <body> (fora da régua, que tem rolagem própria) e se posiciona junto do dia clicado */
-.mgc-diapop{position:fixed;z-index:9400;padding:0;background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));color:var(--txt);border:1px solid var(--glass-b);border-radius:var(--r2,14px);width:min(380px,calc(100vw - 32px));max-height:min(70vh,520px);overflow:auto;overscroll-behavior:contain;box-shadow:var(--specular,none),0 12px 40px rgba(0,0,0,.35);}
+.mgc-diapop{position:fixed;z-index:9400;padding:0;background:rgb(var(--surface-rgb,var(--slate-rgb,10,30,55)));color:var(--txt);border:1px solid var(--glass-b);border-radius:var(--r2,14px);width:min(480px,calc(100vw - 32px));max-height:min(80vh,720px);overflow:auto;overscroll-behavior:contain;box-shadow:var(--specular,none),0 12px 40px rgba(0,0,0,.35);}
 .mgc-diapop.is-novo{animation:mgcPopIn .14s ease-out;}
 @keyframes mgcPopIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
 @media (max-width:768px){ .mgc-diapop{left:12px !important;right:12px;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;max-height:70dvh;border-radius:20px;} }

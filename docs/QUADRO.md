@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/gantt-dia-ux` | `mare-gcal-dev.js`, `kanban-dev.html` (só `_ganttDia*`), `okr-dev.html` (só `_GCAL_V` + versão), `version.json` | 16/11/2026 |
 
 
 ## Fila

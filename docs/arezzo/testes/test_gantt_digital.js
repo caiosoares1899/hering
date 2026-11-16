@@ -74,6 +74,9 @@ const seed = () => ({ kanban: {
     t('M8d. "quando" de cada item: período (10/11 – 14/11) e Só hoje', est.qSite === '10/11 – 14/11' && est.qCrm === 'Só hoje', est);
     t('M8e. ⚠️ ação importante aparece no popup (como na régua)', est.alerta, est);
     t('M8f. calendário sem nada vira linha compacta no fim; subtítulo conta ações e calendários; cabeçalho fixo', est.vazio.length === 1 && /Outlet.*ainda não publicado/i.test(est.vazio[0]) && est.sub === '3 ações em 2 calendários' && est.fixo === 'sticky', est);
+    t('M8g. "quando" sempre na mesma posição (coluna da direita, topo do item) e popup sem rolagem neste caso', await p.evaluate(() => { const d = document.getElementById('gantt-dia');
+      const pos = [...d.querySelectorAll('.mgc-dia-it')].map(li => { const a = li.getBoundingClientRect(), b = li.querySelector('.mgc-dia-q').getBoundingClientRect(); return Math.round(b.right - a.right) + '/' + Math.round(b.top - a.top); });
+      return new Set(pos).size === 1 && d.scrollHeight <= d.clientHeight + 1; }));
     t('M9. dia escolhido destacado (aria-pressed) e foco no ✕', await p.evaluate(() => document.querySelector('.gantt-day-hd[data-date="2026-11-13"]').getAttribute('aria-pressed') === 'true' && document.activeElement && document.activeElement.closest('#gantt-dia')));
     // republicação ao vivo de uma fonte com a consolidada aberta
     await p.evaluate(suf => window._set(window._ref(window._db, 'kanban/calendarios_gantt' + suf + '/outlet'), { meta: { atualizadoEm: 1, porNome: 'X', arquivo: 'o.xlsx' }, linhas: { out_acao_principal: { rot: 'Ação principal', ordem: 0 } }, barras: { o1: { linha: 'out_acao_principal', ini: '2026-11-13', fim: '2026-11-13', txt: 'OUTLET NOVO' } } }), SUF);
