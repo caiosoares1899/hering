@@ -24,6 +24,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 🎨 /melhoriauiux do Maré com a referência do Arc UI: hover que não gruda no toque e números que não pulam (kanban v8.30.997-dev) — 2026-11-17
+
+- **Pedido do Caio:** rodada de UI/UX no Maré com a referência do Arc UI (uiarc.dev), que entrou no guia em #1826/#1827.
+- **Auditado renderizando** (`docs/arezzo/testes/auditar_arc_mare.js`, boot real): foco por teclado, hover no toque, números que mudam e o retorno do salvar, nos 3 temas e em desktop, tablet (834 e 1180 px) e celular.
+- **O que mudou:**
+  - **Tablet e celular:** depois de tocar num card, ele não fica mais "levantado" e aceso. No iPad o hover gruda após o toque, e o efeito só estava desligado em tela estreita. Com mouse, o card continua subindo de leve.
+  - **Contadores das colunas, métricas e selo do sino** têm largura fixa por dígito: "9 → 10" não empurra mais o vizinho.
+- **Já estava bom (sem mudança):** o anel de foco por teclado aparece em todas as paradas do Tab nos 3 temas; o efeito que "passa do ponto" só existe no pop de notificação, que é onde o guia permite.
+- Correção de passagem registrada em `BUGS_E_CORRECOES.md` (o "✓ Salvo" do salvamento automático).
+
 ### 🏢 Diretoria por pessoa: escolha no 1º acesso, edição pelo ADM no Painel e etiqueta na 👥 Equipe (kanban v8.30.994-dev, painel v5.119-dev, regras) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119) — 2026-11-16
 
 - **Pedido do Caio:** voltar a classificar as pessoas por diretoria para a expansão do Maré a RH e CRM. Cada um escolhe no 1º acesso, o ADM edita no Painel, e o valor aparece como etiqueta na Equipe. Desenho do Codex (#1818).
