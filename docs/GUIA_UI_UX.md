@@ -87,6 +87,12 @@ Fundo é sempre camadas (radial + base escura), nunca sólido. Peixinhos/bolhas 
 
 **Curvas com nome (decidido em 10/11/2026):** cada página declara no `:root` `--ease-out: cubic-bezier(.32,.72,0,1)` (entrada de bloco), `--ease-in-out: cubic-bezier(.4,0,.2,1)` (barra/anel que muda de valor) e `--ease-overshoot: cubic-bezier(.34,1.56,.64,1)` (pop de selo/contador) e usa `var(--ease-…)` em vez de repetir o número. Eram ~8 curvas soltas no repositório: a troca entra **junto** com a próxima mudança de cada tela, sem rodada própria.
 
+**Microinterações em CSS puro (inspiração [Arc UI](https://uiarc.dev), 17/11/2026):**
+- **Um gesto contínuo + causa e efeito:** cada mudança de estado faz um movimento espacial contínuo (`transform`/`opacity`), nunca fade + slide + scale em tempos separados; se não explica o que abriu ou mudou, remova.
+- **Sem overshoot em estado; saída mais rápida:** switch, barra de progresso, gaveta e painel pousam sem passar do ponto (`--ease-out` / `--ease-in-out`); `--ease-overshoot` fica só para pop de selo/contador ou celebração. Saídas fecham mais rápido que entradas (~.16–.18 s).
+- **Pressão tátil vs âncora de menu:** botão comum pode responder ao clique com `transform: scale(.97)` rápido, **exceto** o botão que ancora popover/menu (responda só com cor/fundo para o popup não posicionar sobre o alvo encolhido).
+- **Números estáveis:** contadores, relógios, percentuais e colunas numéricas usam `font-variant-numeric: tabular-nums` e largura reservada para não deslocar vizinhos ao atualizar.
+
 **Fica de fora (e por quê):** Skeleton screen `#069` com brilho correndo (loop infinito — o esqueleto **parado** pode); Stagger e Count-up em ferramenta diária (repetem a cada filtro e re-render); laços de landing (Marquee, Animated gradient, Floating, Parallax, Cursor follower, Magnetic button, 3D tilt); efeitos de vitrine (Glitch, Particles, Shatter, Page curl, Kinetic typography); os pacotes Camera e Photo (são para vídeo); instalar a skill do motion-prompt (190 nomes no contexto para usar uns 10). **Caustics/reflexo de luz animado** (scrollshaders.com, 10/11/2026): nem no `#login` do Oceano (tela que fica parada esperando o clique: animação contínua ali é GPU gasto em tela ociosa) nem na apresentação do Radar (o orçamento de GPU da troca de slide já foi medido no limite). Se quiser o clima de água, uma **textura estática** de caustics em SVG custa zero.
 
 **Tela de projeção (apresentação, slides):** texto de leitura **cresce com a tela** — use uma unidade (`--u: clamp(1px,.0732vw,1.5px)`; `font-size:calc(16*var(--u))`) em vez de px fixo; deck em Full HD com letra de 12–15 px some no projetor. Faixa colorida na borda lateral de todo cartão é sinal de "gerado": a cor do status fica no selo (cor + texto) e na barra, a moldura fica quieta.
@@ -206,7 +212,8 @@ O Maré é denso de propósito (12 px, colunas, chips) — quem trabalha 6 h por
 - Leitura em **F**: título/KPI no alto-esquerda, ação principal no fim do bloco.
 - **Ordem = prioridade** (pior primeiro em lista de risco; mais recente primeiro em feed).
 - **Mesmo componente, mesmo lugar** em todas as telas parecidas (cabeçalho, botão "+ Novo", filtros). Quem aprendeu em uma aprende em todas.
-- **Sem rolagem lateral** em lugar nenhum (o redesenho do modal do card no celular existiu por isso). Sem rolagem **dupla** (modal dentro de página que também rola).
+- **Sem rolagem lateral** em lugar nenhum (o redesenho do modal do card no celular existiu por isso). Sem rolagem **dupla** (modal dentro de página que também rola). Tabela larga rola dentro do próprio card (`overflow-x: auto` num wrapper com `min-width: 0`), nunca na página; use `width: 100%` (nunca `100vw`, que inclui a barra de rolagem).
+- **Alinhamento de bloco e um primário por superfície:** título da seção, cards e tabela compartilham a mesma borda esquerda; evite dois botões cheios disputando atenção no mesmo bloco. Erro aparece **inline** com opção de tentar de novo, carregando usa esqueleto **parado** no layout final e texto longo trunca mantendo o valor completo acessível.
 - **Largura:** conteúdo de leitura em 560–980 px; gráficos preenchem a largura disponível (o "Dados do Board" ganhou popup maior e gráficos que preenchem).
 
 ### 6.4 Exemplos de decisão de página (do repositório)
@@ -253,7 +260,7 @@ Seguimos a skill/método de **dataviz** (forma → cor → validação → marca
 ## 9. Acessibilidade e microinterações
 
 - **Teclado primeiro:** tudo que clica, tabula. Ordem de tab = ordem visual. `Enter`/`Espaço` ativam. **Esc fecha**; em modal empilhado, só o de cima responde ao Esc (registre o dono do Esc em captura + `stopPropagation`).
-- **Foco visível e preservado.** Redesenhar com `innerHTML` **perde o foco** e o texto digitado: sincronize o rascunho antes, ou atualize no lugar; e devolva o foco ao elemento certo — procurando por `data-*` (**nunca** pelo texto de um `onclick`: o `jsq()` escapa as aspas e o seletor não casa — bug real dos atalhos, 16/10).
+- **Foco visível só para teclado (`:focus-visible`), e preservado.** Não desenhe `outline`/`box-shadow` em `:focus` (suja o clique de mouse/toque); reserve o anel compartilhado para `:focus-visible` (`2px` com `var(--accent)` e `outline-offset: 2px`, ou `-2px` dentro de contêiner que recorta). Regiões carregando usam `aria-busy="true"` preservando o foco. Redesenhar com `innerHTML` **perde o foco** e o texto digitado: sincronize o rascunho antes, ou atualize no lugar; e devolva o foco ao elemento certo — procurando por `data-*` (**nunca** pelo texto de um `onclick`: o `jsq()` escapa as aspas e o seletor não casa — bug real dos atalhos, 16/10).
 - **Leitor de tela:** toast com `role="status"`; gráfico com `aria-label` ("73 % da meta"); ícone-botão com `aria-label`/texto.
 - **Não bloqueie a pessoa:** `display:flex` vence o atributo `[hidden]` → escreva `.classe[hidden]{display:none}`; modal de dentro de modal precisa de `z-index` maior.
 - **Tempo e movimento:** animação curta (≤ 250 ms para microinteração), sem piscar, e dentro de `prefers-reduced-motion`. "Modo insistente" (tremor/som) é **opt-in**, nunca padrão.
@@ -414,7 +421,7 @@ for (const [w, h, nome] of [[1280, 900, 'desktop'], [390, 800, 'celular']]) {
 | redesenho de gráfico bem-feito | Painel › Fluxo (`painel-dev.html`) e Radar › Dashboard (`okr-dev.html`) |
 | lobby/layout de produto | `oceano-dev.html` |
 | harness de teste de tela | `docs/arezzo/testes/` (`fakefb.js`, `test_menu_kanban.js`, `test_painel_fluxo.js`, `test_okr_dashboard.js`) |
-| referências externas de acabamento (curadoria 10/11/2026) | styles.refero.design (DNA de produto: luz no topo do vidro) · footer.design (mapa de rodapé) · scrolltide.co, cta.gallery, inspora.design (vitrine — usar só no regime experiência) · scrollshaders.com (descartado: animação contínua) |
+| referências externas de acabamento (curadoria 10/11 e 17/11/2026) | styles.refero.design (DNA de produto: luz no topo do vidro) · [uiarc.dev](https://uiarc.dev) (microinterações, tabelas em card, estados, `:focus-visible` e composição em produto — adaptado em HTML/CSS/JS puro, mantendo emojis semânticos, vidro e 3 temas Marine Glass) · footer.design (mapa de rodapé) · scrolltide.co, cta.gallery, inspora.design (vitrine — usar só no regime experiência) · scrollshaders.com (descartado: animação contínua) |
 | armadilhas de código | `docs/GUIA_DE_CODIGO.md`, `BUGS_E_CORRECOES.md` |
 | histórico de rodadas de UI/UX | `CHANGELOG.md` (busque "UI/UX") e `docs/changelog-archive-2026-07-a-09.md` |
 
