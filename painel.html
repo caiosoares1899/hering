@@ -3244,7 +3244,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.119 · painel</div>
+<div class="version">v5.120 · painel</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -11617,6 +11617,7 @@ function openGlobalUsersModal(){
   const _gvb=document.getElementById('gu-viewers-btn'); if(_gvb) _gvb.style.display=_isAdmPainel()?'':'none';   // só ADM gerencia visualizadores
   renderGlobalUsers();
   loadGlobalUsers(true); // tela de gestão: sempre dado fresco (re-renderiza sozinho ao chegar)
+  _guCarregarEspelhoDir();   // 🏢 confere a cópia que a 👥 Equipe do Maré lê (usuarios_publicos)
 }
 function closeGlobalUsersModal(){
   document.getElementById('global-users-ov').classList.remove('open');
@@ -11775,6 +11776,7 @@ function _guFiltersHtml(contagemEmpresa, totalBase){
     ${MARE_SO_HERING ? '' : sel('torre','Todas as torres', GU_TORRES.map(t=>[t.id, t.icon+' '+t.label]))}
     ${sel('diretoria','Todas as diretorias', [...GU_DIRETORIAS.map(d=>[d.id, d.icon+' '+d.label]), ['__nao','— Não informada']])}
     ${(()=>{ const n=_guSemDiretoriaHering().length; return (n && _guPodeEditarDiretoria()) ? `<button type="button" class="btn btn-sm" id="gu-dir-digital" style="font-size:11px;padding:4px 10px;" onclick="_guPreencherDigital()" title="Marca como 💻 Digital todas as pessoas da Hering (@ciahering) que ainda não têm diretoria. Depois você corrige quem for de outra.">🏢 Marcar ${n} sem diretoria como Digital</button>` : ''; })()}
+    ${(()=>{ const n=_guEspelhoDivergente().length; return (n && _guPodeEditarDiretoria()) ? `<button type="button" class="btn btn-sm" id="gu-dir-espelho" style="font-size:11px;padding:4px 10px;" onclick="_guCorrigirEspelho()" title="Essas pessoas têm diretoria no cadastro, mas a etiqueta não aparece na 👥 Equipe do Maré (a cópia que a Equipe lê ficou vazia ou diferente). Recopia o valor do cadastro.">🏢 Corrigir a etiqueta de ${n} na Equipe</button>` : ''; })()}
     <label class="okr-stat-chip${_guFilter.gestorOkr?' active':''}" style="cursor:pointer;" title="Só quem tem a flag 🎯 Gestor OKR">
       <input type="checkbox" ${_guFilter.gestorOkr?'checked':''} onchange="_guSetFilter('gestorOkr', this.checked)" style="width:12px;height:12px;accent-color:var(--accent);"> 🎯 Gestor OKR</label>
     ${_guTemFiltro()?'<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;" onclick="_guClearFilters()">✕ Limpar filtros</button>':''}`;
@@ -12146,7 +12148,7 @@ async function _guPreencherDigital(){
   const alvo = _guSemDiretoriaHering(); if(!alvo.length){ showToast('Todo mundo da Hering já tem diretoria.'); return; }
   if(!await uiConfirm('Marcar '+alvo.length+' pessoa(s) da Hering sem diretoria como 💻 Digital? Quem já tem diretoria não muda. Depois você corrige quem for de outra.', {okText:'Marcar como Digital'})) return;
   _guPreenchendo = true; const bt=document.getElementById('gu-dir-digital'); if(bt){ bt.disabled=true; bt.textContent='🏢 Marcando…'; }
-  let ok=0, falhou=0;
+  let ok=0, falhou=0, semEtiqueta=0;
   try{
     for(const uid of alvo){
       try{
@@ -12155,12 +12157,58 @@ async function _guPreencherDigital(){
         if(!atual || _guDiretoriaDe(atual)){ continue; }   // apagado no meio, ou alguém escolheu enquanto isso: não mexe
         await window._update(window._ref(window._db,'kanban/usuarios/'+uid), {diretoria:'digital'});
         if(_globalUsersCache[uid]) _globalUsersCache[uid].diretoria = 'digital';
-        await window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid), {diretoria:'digital'}).catch(()=>{});
         ok++;
+        if(!await _guGravarEspelhoDir(uid, 'digital')) semEtiqueta++;
       }catch(e){ falhou++; console.warn('[diretoria] não marcou', uid, e); }
     }
   } finally { _guPreenchendo = false; }
-  showToast('🏢 '+ok+' marcada(s) como Digital'+(falhou?' · ⚠ '+falhou+' falharam (tente de novo)':'')+'.');
+  showToast('🏢 '+ok+' marcada(s) como Digital'+(falhou?' · ⚠ '+falhou+' falharam (tente de novo)':'')
+    +(semEtiqueta?' · ⚠ '+semEtiqueta+' sem etiqueta na Equipe (use "Corrigir a etiqueta")':'')+'.');
+  renderGlobalUsers();
+}
+// 🏢 A 👥 Equipe do Maré lê a diretoria da CÓPIA em usuarios_publicos/{uid}, não do cadastro. Achado de 17/11/2026
+// (/monitorarbugs, 3 pessoas no squad do relato): cadastro com 'digital' e cópia vazia — o Maré antigo (antes da promoção
+// de 16/11) regravava a cópia inteira no login sem a diretoria, e só o próximo login da pessoa a repunha. O Painel mostrava
+// o cadastro, então parecia certo. Aqui o Painel confere a cópia, aponta quem diverge e recopia.
+let _guPubDir = null;   // uid → diretoria na cópia ('' se vazia); null = ainda não lido
+function _guCarregarEspelhoDir(){
+  return window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(s=>{
+    const m={}; Object.entries(s.val()||{}).forEach(([uid,u])=>{ if(u) m[uid]=String(u.diretoria||''); });
+    _guPubDir = m;
+    if(document.getElementById('global-users-ov')?.classList.contains('open')) renderGlobalUsers();
+  }).catch(e=>console.warn('[diretoria] não consegui ler a cópia da Equipe:', e));
+}
+// Só quem JÁ tem cópia (sem cópia a pessoa nem aparece na Equipe; gravar só a diretoria criaria um registro pela metade).
+function _guEspelhoDivergente(){
+  if(!_guPubDir) return [];
+  return Object.entries(_globalUsersCache).filter(([uid,u])=>_guDiretoriaDe(u) && (uid in _guPubDir) && _guPubDir[uid]!==u.diretoria).map(([uid])=>uid);
+}
+// Grava a cópia; devolve true/false (a falha não pode mais virar "sucesso" calado).
+async function _guGravarEspelhoDir(uid, dir){
+  try{
+    await window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid), {diretoria: dir});
+    if(_guPubDir && (uid in _guPubDir)) _guPubDir[uid] = dir;
+    return true;
+  }catch(e){ console.warn('[diretoria] cópia da Equipe não gravou', uid, e); return false; }
+}
+let _guCorrigindoEspelho = false;
+async function _guCorrigirEspelho(){
+  if(_guCorrigindoEspelho) return;
+  if(!_guPodeEditarDiretoria()){ showToast('⚠ Só um ADM (papel adm no cadastro) ou o Caio muda a diretoria.'); return; }
+  const alvo = _guEspelhoDivergente(); if(!alvo.length){ showToast('Todas as etiquetas da Equipe já batem com o cadastro.'); return; }
+  _guCorrigindoEspelho = true; const bt=document.getElementById('gu-dir-espelho'); if(bt){ bt.disabled=true; bt.textContent='🏢 Corrigindo…'; }
+  let ok=0, falhou=0;
+  try{
+    for(const uid of alvo){
+      // relê o cadastro: a regra exige a cópia IGUAL ao cadastro, e um ADM pode ter trocado no meio
+      let dir='';
+      try{ dir = _guDiretoriaDe({diretoria:(await window._get(window._ref(window._db,'kanban/usuarios/'+uid+'/diretoria'))).val()}); }catch(e){}
+      if(!dir){ continue; }
+      if(_globalUsersCache[uid]) _globalUsersCache[uid].diretoria = dir;
+      if(await _guGravarEspelhoDir(uid, dir)) ok++; else falhou++;
+    }
+  } finally { _guCorrigindoEspelho = false; }
+  showToast('🏢 '+ok+' etiqueta(s) corrigida(s) na Equipe'+(falhou?' · ⚠ '+falhou+' falharam (tente de novo)':'')+'.');
   renderGlobalUsers();
 }
 // Fonte primeiro (regra: só ADM com role 'adm' ou o Caio troca), espelho depois (usuarios_publicos — a regra exige o MESMO valor).
@@ -12176,10 +12224,11 @@ async function setGlobalUserDiretoria(uid, dir, sel){
     if(!existe){ showToast('⚠ Esse usuário foi excluído enquanto você editava — nada foi salvo.'); volta(); return; }
     await window._update(window._ref(window._db,'kanban/usuarios/'+uid), {diretoria: dir});
     if(_globalUsersCache[uid]) _globalUsersCache[uid].diretoria = dir;
-    await window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid), {diretoria: dir})
-      .catch(e=>console.warn('[diretoria] espelho não gravou (volta no próximo login da pessoa):', e));
+    const espelhoOk = await _guGravarEspelhoDir(uid, dir);
     const d = GU_DIRETORIAS.find(x=>x.id===dir);
-    showToast('🏢 Diretoria '+d.label+' registrada.');
+    showToast(espelhoOk ? '🏢 Diretoria '+d.label+' registrada.'
+      : '⚠ Diretoria '+d.label+' registrada no cadastro, mas a etiqueta da 👥 Equipe não gravou. Use "Corrigir a etiqueta".');
+    renderGlobalUsers();
   }catch(err){ showToast('⚠ Não consegui salvar a diretoria ('+(err?.code||err?.message||'erro')+').'); volta(); }
   finally{ if(sel) sel.disabled = !_guPodeEditarDiretoria(); }
 }

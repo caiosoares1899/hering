@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — 🎨 /melhoriauiux do Maré com a referência do Arc UI: hover que não gruda no toque e números que não pulam (kanban v8.30.999-dev) — 2026-11-17
+### 🎨 /melhoriauiux do Maré com a referência do Arc UI: hover que não gruda no toque e números que não pulam (kanban v8.30.999-dev) — PROD 17/11 (kanban v8.30.999 · painel v5.120) — 2026-11-17
 
 - **Pedido do Caio:** rodada de UI/UX no Maré com a referência do Arc UI (uiarc.dev), que entrou no guia em #1826/#1827.
 - **Auditado renderizando** (`docs/arezzo/testes/auditar_arc_mare.js`, boot real, `KANBAN_HTML=` compara com a `main`):
