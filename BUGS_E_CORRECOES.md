@@ -87,6 +87,17 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-17 · 🏢 Etiqueta de diretoria sumida na 👥 Equipe para quem tem diretoria no cadastro (painel v5.120-dev)
+
+- **Relato do Caio (print):** "nem todo mundo ganhou a badge da diretoria". O caso era o Rodrigo, que aparecia na Equipe só com a pílula do subtime.
+- **Diagnóstico com dado real** (script de console, só leitura, no squad do relato): 3 de 16 pessoas tinham `digital` em `kanban/usuarios/{uid}/diretoria` (a fonte) e a cópia `usuarios_publicos/{uid}/diretoria` vazia. A 👥 Equipe lê só a cópia; o Painel mostra a fonte, então lá parecia certo.
+- **Causa:** todo login no Maré regrava a cópia inteira (`fbSet`). A versão nova repõe a diretoria num update logo depois; o Maré de antes da promoção de 16/11 não repunha. Quem entrou no Maré antigo depois de ter a diretoria marcada perdeu a etiqueta até o próximo login. Além disso, o botão em massa (`.catch(()=>{})`) e o seletor do Painel (`console.warn`) engoliam a falha da cópia e avisavam sucesso.
+- **Correção (Painel → 👥 Usuários):**
+  - Ao abrir, o Painel lê a cópia e mostra "🏢 Corrigir a etiqueta de N na Equipe" para quem diverge. A ação relê a fonte (a regra exige a cópia igual) e recopia.
+  - Quem não tem cópia nenhuma fica de fora, para não criar registro pela metade.
+  - Seletor e botão em massa passam a avisar quando a cópia não grava.
+- Sem mudança no Maré nem nas regras. Teste: `docs/arezzo/testes/test_diretoria.js` (+8). Fronteira: sem mudança (mesma escrita e mesma regra de antes); dica não, é correção.
+
 ### 2026-11-16 · Auditoria de cards: três defeitos reproduzidos (Codex) e corrigidos (Claude) — kanban v8.30.996-dev — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119)
 
 fbSaveCard sobrescreve ocupante após transação abortar por id divergente; autosave altera coluna sem recordMove; corrida entre abas PO/ADM reabre notificação lida (membro comum em caixa alheia é barrado). Reprodução Chromium em docs/arezzo/testes/test_cards_sensiveis_1611.js: três falhas esperadas. Console isolado read-only em docs/arezzo/testes/console_cards_sensiveis_1611.js. Página reservada: código intacto, sem bump. Detalhes em docs/quadro/escalados.md. Fronteira sem alteração; dica não, auditoria.

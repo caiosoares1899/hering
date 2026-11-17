@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-16.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-17.
 > Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
@@ -110,7 +110,7 @@
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
-- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11542) · `openGlobalUsersModal` (L11058) · `updateUserRole` (L10439) · `_limparHtmlStatus` (L7244) · `_linkSeguroStatus` (L7257)
+- `getEffectiveRole` (L7177) · `updateSquadUserRole` (L11591) · `openGlobalUsersModal` (L11058) · `updateUserRole` (L10439) · `_limparHtmlStatus` (L7244) · `_linkSeguroStatus` (L7257)
 - `_statusIncidenteRecente` (L7265) · `_setStatusPill` (L7272) · `initGithubStatusMonitor` (L7227) · `loadGithubStatus` (L7281) · `renderGithubStatusUI` (L7331) · `_fbMatchServicos` (L7532)
 - `initFirebaseStatusMonitor` (L7562) · `loadFirebaseStatus` (L7576) · `renderFirebaseStatusUI` (L7643) · `loadAgentesExternosPainel` (L9531) · `renderAgentesExternosPainel` (L9543) · `criarAgenteExternoPainel` (L9611)
 - `toggleAgenteExternoSquad` (L9668) · `_fillAgentesLogSquadFilter` (L9700) · `loadAgentesTabData` (L9707) · `renderAgentesAtivosGrid` (L9731) · `renderAgentesLogCross` (L9756) · `closeAgentesHelp` (L9790)

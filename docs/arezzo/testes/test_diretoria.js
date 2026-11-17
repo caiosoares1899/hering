@@ -146,6 +146,30 @@ const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '✅ ' : '❌ ') 
       t('Painel: ADM só pela lista de e-mails (sem role adm) vê o seletor travado, com o motivo', sels.length > 0 && sels.every(Boolean), sels);
       t('…e não vê o botão de preencher Digital', await p.evaluate(() => !document.getElementById('gu-dir-digital')), '');
       await ctx.close(); }
+    // 17/11 (/monitorarbugs): cadastro com diretoria e cópia da 👥 Equipe vazia (3 pessoas reais). O Painel aponta e recopia;
+    // quem nem tem cópia fica de fora (não cria registro pela metade); falha da cópia não vira mais "sucesso" calado.
+    { const extra = { cris: pessoa('cris', 'Cris Espelho', 'CE', 'membro', { diretoria: 'digital', __semEspelho: true }),
+        dani: pessoa('dani', 'Dani Sem Copia', 'DS', 'membro', { diretoria: 'marca' }) };
+      const { ctx, p, errs } = await abrir('painel-dev', AU.adm, { extra }); await p.waitForTimeout(2500);
+      await p.evaluate(() => { delete window.__store.kanban.usuarios_publicos.dani; window.__toasts = []; const o = window.showToast; window.showToast = (m, ...r) => { window.__toasts.push(String(m)); return o && o(m, ...r); }; });
+      await p.evaluate(() => openGlobalUsersModal()); await p.waitForTimeout(1500);
+      const txt = await p.evaluate(() => (document.getElementById('gu-dir-espelho') || {}).textContent || '');
+      t('Painel: "Corrigir a etiqueta de 1 na Equipe" (Cris diverge; Dani sem cópia fica de fora)', /Corrigir a etiqueta de 1 na Equipe/.test(txt), txt);
+      await p.evaluate(() => _guCorrigirEspelho()); await p.waitForTimeout(600);
+      t('…recopia digital na cópia da Cris', await db(p, 'kanban/usuarios_publicos/cris/diretoria') === 'digital', await db(p, 'kanban/usuarios_publicos/cris/diretoria'));
+      t('…não cria cópia pela metade pra Dani', (await db(p, 'kanban/usuarios_publicos/dani')) == null, await db(p, 'kanban/usuarios_publicos/dani'));
+      t('…e o botão some', await p.evaluate(() => !document.getElementById('gu-dir-espelho')), '');
+      await p.evaluate(() => { window.__denySet = (pth) => /usuarios_publicos\//.test(pth); window.__toasts = []; });
+      await p.evaluate(async () => { await setGlobalUserDiretoria('ana', 'rh', null); });
+      const ts = await p.evaluate(() => window.__toasts.join(' | '));
+      t('seletor: cópia negada → aviso, não "registrada" calado', /etiqueta da 👥 Equipe não gravou/.test(ts) && await db(p, 'kanban/usuarios/ana/diretoria') === 'rh', ts);
+      await p.waitForTimeout(800);
+      t('…e o botão de corrigir volta a aparecer (Ana diverge)', await p.evaluate(() => /Corrigir a etiqueta de 1/.test((document.getElementById('gu-dir-espelho') || {}).textContent || '')), '');
+      await p.evaluate(() => { window.__toasts = []; window.uiConfirm = async () => true; }); await p.evaluate(() => _guPreencherDigital()); await p.waitForTimeout(800);
+      const tb = await p.evaluate(() => window.__toasts.join(' | '));
+      t('em massa: cópia negada entra no aviso ("sem etiqueta na Equipe")', /sem etiqueta na Equipe/.test(tb), tb);
+      t('Painel (espelho): sem erro de JS', !errs.length, errs);
+      await ctx.close(); }
   } finally { await b.close(); srv.close(); }
   console.log(falhas ? `HÁ ${falhas} FALHA(S)` : 'TUDO OK'); process.exitCode = falhas ? 1 : 0;
 })().catch(e => { console.error(e); process.exitCode = 1; srv.close(); });
