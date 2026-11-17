@@ -7773,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1002-dev</div>
+<div class="version">v8.30.1003-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -32554,7 +32554,7 @@ function initSuperChildren(card){
     const parent = editingSuperParent;
     if(parent){
       noteEl.style.display='block';
-      const link='<a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
+      const link='<a href="#" onclick="event.preventDefault();_navigateToCard('+jsq(parent.id)+')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
       noteEl.innerHTML = tooDeep
         ? '🧩 Este card é uma versão de '+link+' — supercard vai até 2 níveis, então uma versão não pode ter filhos próprios.'
         : '🧩 Este card é filho do supercard '+link+'.';
@@ -32657,10 +32657,10 @@ function _crvUpdateFichaSecVisibility(){
         // Versão: herda a ficha INTEIRA do criativo-pai (mesma peça).
         const parentCrv=editingSuperParent.criativo;
         const resumo=[_crvSharedSummary(parentCrv), _crvOwnSummary(parentCrv)].filter(Boolean).join(' · ');
-        childNote.innerHTML='🧩 Esta é uma versão do criativo <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> — a ficha técnica inteira vem de lá.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+        childNote.innerHTML='🧩 Esta é uma versão do criativo <a href="#" onclick="event.preventDefault();_navigateToCard('+jsq(editingSuperParent.id)+')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> — a ficha técnica inteira vem de lá.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
       } else {
         const resumo=_crvSharedSummary(childCard?.criativo);
-        childNote.innerHTML='🧩 Campanha, Funil, Etapa e Canal são definidos no supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> e valem pra todos os filhos.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+        childNote.innerHTML='🧩 Campanha, Funil, Etapa e Canal são definidos no supercard <a href="#" onclick="event.preventDefault();_navigateToCard('+jsq(editingSuperParent.id)+')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> e valem pra todos os filhos.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
       }
     } else {
       childNote.style.display='none';
@@ -32691,12 +32691,12 @@ function renderSuperChildrenList(){
         : ((relCard && submarcaAtivo) ? '<span class="minicard-sm minicard-sm-none" title="Este card ainda não tem submarca">🏷️ sem submarca</span>' : '');
       return '<div class="minicard">'
         +'<div class="minicard-left" style="background:'+colColor+';"></div>'
-        +'<div class="minicard-body" onclick="_navigateToCard(\''+esc(lc.id)+'\')">'
+        +'<div class="minicard-body" onclick="_navigateToCard('+jsq(lc.id)+')">'
           +'<div class="minicard-title">'+esc(lc.title)+'</div>'
           +'<div class="minicard-meta"><span class="minicard-col">'+esc(col?.name||lc.col)+'</span>'
           +(ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>'+_FeriasSelo(relCard?.owner):'')+smHtml+'</div>'
         +'</div>'
-        +'<button class="minicard-rm" title="Remover do supercard" onclick="event.stopPropagation();removeSuperChild(\''+esc(lc.id)+'\')">✕</button>'
+        +'<button class="minicard-rm" title="Remover do supercard" onclick="event.stopPropagation();removeSuperChild('+jsq(lc.id)+')">✕</button>'
       +'</div>';
     }).join('');
 }
@@ -37165,8 +37165,14 @@ function setFanoutTags(id, selectEl){
 // vira "{título do pai} — {sufixo}". Acrescenta aos childCardIds já
 // existentes do pai (não substitui) — dá pra aplicar mais de uma receita, ou
 // misturar com filhos adicionados na mão.
+// O teto vale também fora do modal (Automação) e antes de aplicar o modelo do pai.
+// (17/11/2026) Um pai temporário nunca pode gerar cards reais; uma versão já tem dois ancestrais ativos.
+function _superPodeGerarFilhos(parentCard){
+  if(!parentCard || parentCard._isQLTemp) return false;
+  return !cards.some(p=>!p.archived && (p.childCardIds||[]).includes(parentCard.id) && _cardIsSuperChild(p, cards));
+}
 function _applyFanoutTemplate(parentCard, tpl, whoLabel){
-  if(!parentCard || !tpl || !tpl.filhos?.length) return [];
+  if(!_superPodeGerarFilhos(parentCard) || !tpl || !tpl.filhos?.length) return [];
   const user=whoLabel||'⚙ Automação';
   // Achado real (/monitorarbugs, 2026-09-06): recordHistory() só anexa
   // init (avatar com foto real) quando NÃO recebe whoOverride — o
@@ -37269,12 +37275,14 @@ function _renderFanoutApplyList(){
   if(!ids.length){ list.innerHTML='<div style="padding:10px 14px;font-size:11px;color:var(--txt3);">Nenhuma receita com esse filtro.</div>'; return; }
   list.innerHTML=ids.map(id=>{
     const t=fanoutTemplates[id];
-    return '<div class="link-option" onclick="applyFanoutToCurrentCard(\''+esc(id)+'\')"><span style="flex:1;color:var(--txt);">🧩 '+esc(t.nome)+'</span><span class="link-option-col">'+(t.filhos||[]).length+'</span></div>';
+    return '<div class="link-option" onclick="applyFanoutToCurrentCard('+jsq(id)+')"><span style="flex:1;color:var(--txt);">🧩 '+esc(t.nome)+'</span><span class="link-option-col">'+(t.filhos||[]).length+'</span></div>';
   }).join('');
 }
 function applyFanoutToCurrentCard(templateId){
   document.getElementById('m-super-fanout-dd')?.classList.remove('show');
   if(!checkEditPermission()) return;
+  if(_editingQLItem){ showToast('⚠ Não dá pra adicionar card filho enquanto edita um Modelo/Recorrente/Agendamento — salve primeiro.'); return; }
+  if(!_superPodeGerarFilhos(_superParentBasics())){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   const tpl=fanoutTemplates[templateId]; if(!tpl) return;
   if(!tpl.filhos?.length){ showToast('Essa receita ainda não tem cards filhos configurados.'); return; }
@@ -37608,6 +37616,7 @@ const AUTO_ACTIONS = [
   // trigger que re-dispare no mesmo card não duplicar os filhos.
   { key:'apply_fanout', label:'🧩 Aplicar fan-out (criar cards filhos)', valueType:'fanout', visible:()=>Object.keys(fanoutTemplates||{}).length>0,
     run:(rule,card)=>{
+      if(!_superPodeGerarFilhos(card)) return false;
       if(card.childCardIds && card.childCardIds.length) return false;
       const tpl=fanoutTemplates[rule.actionVal]; if(!tpl||!tpl.filhos?.length) return false;
       // Modelo do card pai (ver tpl.paiModeloIdx): aqui não tem modal aberto
