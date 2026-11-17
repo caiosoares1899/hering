@@ -2605,6 +2605,9 @@ input[type="date"]{-moz-appearance:textfield;}
 .rx-picker span:hover{transform:scale(1.3);}
 .comment-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
 .comment-item{display:flex;gap:8px;}
+/* comentário mostrado na hora, ainda esperando o banco confirmar (ver submitComment) */
+.comment-item.comment-enviando{opacity:.62;}
+.cmt-enviando{color:var(--txt3);font-style:italic;font-weight:400;}
 .comment-avatar{width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.85);
   border:1px solid var(--glass-b);display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;}
@@ -7773,7 +7776,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1004-dev</div>
+<div class="version">v8.30.1005-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -41976,7 +41979,8 @@ function renderCommentList(comments){
     const item=document.createElement('div');
     // comment-agent/comment-human só têm efeito visual dentro do tema
     // #card-ov.agente-hotline (ver CSS) — inofensivo em cards normais.
-    item.className='comment-item'+(c.isAgent?' comment-agent':' comment-human');
+    const _env=!!c._enviando;   // ainda não confirmado pelo banco (ver submitComment): sem ações até confirmar
+    item.className='comment-item'+(c.isAgent?' comment-agent':' comment-human')+(_env?' comment-enviando':'');
     item.dataset.cid=c.id||'';
     const avatarHtml=c.isAgent
       ? '<span title="🤖 Agente de IA">'+esc(c.avatarEmoji||'🤖')+'</span>'
@@ -41990,24 +41994,24 @@ function renderCommentList(comments){
       : c.isSystem ? ' style="background:rgba(150,160,180,.12);border-color:rgba(150,160,180,.3);"' : '';
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const textHtml=renderMd(c.text||''); // texto rico: negrito/itálico/sublinhado/cor/links/menções (mesma engine da descrição)
-    const canDel=c.uid===window._currentUser?.uid||_isPOorOrg();
-    const canEdit=c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
+    const canDel=!_env && (c.uid===window._currentUser?.uid||_isPOorOrg());
+    const canEdit=!_env && c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
     const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
     const agentBadge = c.isAgent ? ' <span class="mention-user mention-agent" style="padding:0 6px;font-size:9px;">🤖 agente</span>' : (c.isSystem ? ' <span class="mention-user" style="padding:0 6px;font-size:9px;opacity:.7;">⚙️ sistema</span>' : '');
     item.innerHTML=
       '<div class="comment-avatar"'+avatarStyle+'>'+avatarHtml+'</div>'+
       '<div class="comment-bubble">'+
-        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+'</div>'+
+        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+(_env?' · <span class="cmt-enviando" role="status">⏳ enviando…</span>':'')+'</div>'+
         '<div class="comment-text" id="ctext-'+esc(c.id)+'">'+textHtml+'</div>'+
-        _renderReactions(c)+
-        '<div class="comment-actions">'+
+        (_env?'':_renderReactions(c))+
+        (_env?'':'<div class="comment-actions">'+
           '<button class="cmt-act-btn cmt-reply" title="Responder mencionando quem comentou">↩️ <span>Responder</span></button>'+
           '<button class="cmt-act-btn cmt-react" title="Reagir">😊 <span>Reagir</span>'+
             '<span class="rx-picker">'+_reactPicker(c)+'</span>'+
           '</button>'+
           (canEdit?'<button class="cmt-act-btn cmt-edit" title="Editar comentário">✏️ <span>Editar</span></button>':'')+
           (canDel?'<button class="cmt-act-btn cmt-del" title="Excluir comentário">🗑 <span>Excluir</span></button>':'')+
-        '</div>'+
+        '</div>')+
       '</div>';
     // Wire responder
     const replyBtn=item.querySelector('.cmt-reply');
@@ -42070,7 +42074,7 @@ function autoResizeCommentInp(ta){
   ta.style.height=Math.min(ta.scrollHeight,120)+'px';
 }
 
-function submitComment(){
+async function submitComment(){
   const inp=document.getElementById('m-comment-inp'); if(!inp) return;
   const text=inp.value.trim(); if(!text) return;
   const user=window._currentUser; if(!user) return;
@@ -42100,22 +42104,41 @@ function submitComment(){
   // comentário), depois fbSaveCard() (update incremental do card, mas ainda
   // carregando TODOS os comentários dele) — agora é 1 write pequeno,
   // desacoplado de qualquer outro campo do card.
-  if(!_commentsCache[_commentCardId]) _commentsCache[_commentCardId]={};
-  _commentsCache[_commentCardId][comment.id]=comment;
-  window._set(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+comment.id), comment)
-    .catch(err=>showToast('⚠ Erro ao salvar comentário: '+(err?.message||err)));
+  const cardId = _commentCardId;
+  const squad = ACTIVE_SQUAD;
+  const rawText = inp.value;
   inp.value=''; inp.style.height='auto';
   eocResetComment();
-  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
-  // Fire @mention notifications from comment
-  parseMentions(text, _commentCardId, comment.id);
+  // Aparece na hora como "⏳ enviando…" (sem ações) e vira comentário normal quando o banco confirma; se o banco recusar, sai da lista e o texto
+  // volta ao campo. Pedido do Caio (17/11/2026, revisão do #1837): esperar a confirmação calado deixava a lista parada e, offline, parecia perdido.
+  // A marca _enviando é só desta tela — o objeto gravado é `comment`, sem ela.
+  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
+  _commentsCache[cardId][comment.id]=Object.assign({}, comment, {_enviando:true});
+  if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  try{
+    await window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment);
+  }catch(err){
+    if(_commentsCache[cardId]) delete _commentsCache[cardId][comment.id];
+    if(ACTIVE_SQUAD===squad && _commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]||{}));
+    if(ACTIVE_SQUAD===squad && editingId===cardId && _commentCardId===cardId && !inp.value){
+      inp.value=rawText;
+      autoResizeCommentInp(inp);
+    }
+    showToast('⚠ Erro ao salvar comentário: '+(err?.message||err));
+    return;
+  }
+  if(ACTIVE_SQUAD!==squad) return;
+  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
+  _commentsCache[cardId][comment.id]=comment;
+  if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  parseMentions(text, cardId, comment.id);
   // "🤖 pensando..." — diferente de _dispatchAgenteAgilComment() (só usado
   // pelos atalhos sintéticos), aqui a pessoa digitou a @menção na mão, no
   // comentário normal — precisa da mesma detecção (ver _textMencionaAgenteAgil)
   // pra saber se isso é mesmo uma @menção real, e só se o squad tiver a
   // Cloud Function de verdade ouvindo (senão o indicador nunca resolveria
   // sozinho, só pelo timeout de segurança).
-  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(_commentCardId);
+  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(cardId);
 }
 
 function deleteComment(cid){
