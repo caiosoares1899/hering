@@ -48,12 +48,21 @@ async function espelharCard(db, squadId, cardId, agora) {
 }
 
 // ─── 2) GUARDIÃO ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-// Quem recebe o aviso: ADMs e POs da squad (usuarios_publicos tem role + squads).
+// Quem recebe o aviso: ADMs e POs da squad.
+// 🐞 /monitorarbugs 17/11/2026 (áreas sensíveis, Black Friday): olhava só o campo `role`. As funções irmãs (members.js, metas/lembretes.js, restaurarApi.js,
+// pushMural.js) e o board (getEffectiveRole) usam o papel POR SQUAD (`squads_roles[squad]`, que vence o `role`) e a lista de ADMs por e-mail
+// (`kanban/config/adm_emails`) — o ADM só-por-e-mail tem `role:'membro'` de propósito (ver BUGS 05/10). Assim, PO promovido por squad e ADM por e-mail
+// nunca recebiam "🛡️ Card restaurado" / "🚨 Muitos cards sumiram de uma vez".
+const DEFAULT_ADM_EMAILS = ['caio.soares@ciahering.com.br', 'rafael.passos@ciahering.com.br'];
 async function destinatarios(db, squadId) {
-  const pubs = (await db.ref('kanban/usuarios_publicos').get()).val() || {};
+  const [pubSnap, admSnap] = await Promise.all([db.ref('kanban/usuarios_publicos').get(), db.ref('kanban/config/adm_emails').get()]);
+  const pubs = pubSnap.val() || {};
+  const admEmails = (Array.isArray(admSnap.val()) ? admSnap.val() : DEFAULT_ADM_EMAILS).map((e) => String(e).toLowerCase());
   return Object.keys(pubs).filter((uid) => {
     const p = pubs[uid]; if (!p) return false;
-    return p.role === 'adm' || (p.role === 'po' && p.squads && p.squads[squadId]);
+    if (p.role === 'adm' || admEmails.includes(String(p.email || '').toLowerCase())) return true;
+    const papel = (p.squads_roles && p.squads_roles[squadId]) || p.role || 'membro';
+    return papel === 'po' && !!(p.squads && p.squads[squadId]);
   });
 }
 
@@ -181,12 +190,15 @@ async function verificarRemocao(db, squadId, cardId, opts) {
   // 4. restaura: pega uma posição livre no índice (mesma transação da criação de card) e regrava o card
   const card = Object.assign({}, espelho.card);
   card.history = (Array.isArray(card.history) ? card.history : []).concat([{ at: agora.toISOString(), who: '🛡️ Guardião', init: '', what: 'restaurado automaticamente — tinha sumido do quadro sem ninguém excluir' + (diag.causadoPor ? ' · ' + origemCurta(diag) : '') }]);
+  let jaVoltou = false;
   const tx = await db.ref(`${b}/cards_index`).transaction((idx) => {
     idx = idx || {};
-    if (idx[cardId] != null) return idx;   // alguém já o devolveu enquanto isso
+    jaVoltou = idx[cardId] != null;
+    if (jaVoltou) return;                  // alguém já o devolveu enquanto isso: aborta (antes regravava a cópia do espelho por cima da versão que voltou)
     const usadas = new Set(Object.values(idx).map(String)); let k = 0; while (usadas.has(String(k))) k++;
     idx[cardId] = String(k); return idx;
   });
+  if (jaVoltou || !tx.committed) return { acao: 'ignorado', motivo: 'voltou ao índice durante a restauração' };
   const pos = tx.snapshot.val()[cardId];
   const ts = agora.toISOString();
   await db.ref(`${b}/cards/${pos}`).set(card);
