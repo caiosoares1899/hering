@@ -558,7 +558,10 @@
 }
 [data-theme="vice"] .hd-badge{color:var(--txt);}
 [data-theme="vice"] .col-cnt{color:var(--txt);}
-/* ── 🔥 BLACK FRIDAY (proposta em avaliação, 2026-09-15) ──────────────
+/* ── 🔥 BLACK FRIDAY (2026-09-15; padrão na semana da BF desde 16/11) ──
+   16/11/2026 (/melhoriauiux): deixou de ser "proposta em teste" — na semana
+   da Black Friday é o tema PADRÃO de todo mundo (window._bfSemanaInfo no
+   <head>). O texto abaixo é o histórico da 1ª versão.
    Pedido direto do usuário: modo de visualização especial pra época da
    Black Friday. Direção aprovada por ele num mockup à parte: preto
    dominante, vermelho só como DETALHE pontual (não "vermelho em tudo")
@@ -603,9 +606,12 @@
   --glass:rgba(26,20,19,0.66);
   --glass-b:rgba(255,43,77,0.16);
   --glass-h:rgba(255,43,77,0.10);
-  --blue:#6b625e;--accent:#b3665f;--cyan:#8f8681;--teal:#6b625e;
+  /* --teal clareado em 16/11 (/melhoriauiux): como COR DE TEXTO (+ Add, 🤖 Insights, 📅 Calendários,
+     data "no prazo") o chumbo #6b625e dava 1,3–2,3:1 sobre o fundo; #c2b8b3 passa de 4,5:1 e
+     segue neutro (sem verde). Como fundo (barra de progresso, bolinha online) continua discreto. */
+  --blue:#6b625e;--accent:#cf7f76;--cyan:#8f8681;--teal:#c2b8b3;   /* --accent #b3665f → #cf7f76: como texto (abas do Gantt, 🤖 Resumo, hoje no Calendário) ficava em 4,0:1 */
   --txt:#efe9e6;--txt2:rgba(239,233,230,0.66);--txt3:rgba(239,233,230,0.42);
-  --warn:#d9633f;--danger:#ff2b4d;
+  --warn:#ef7f57;--danger:#ff2b4d;   /* --warn #d9633f → #ef7f57: "+ Add" de Riscos e avisos davam 3,8:1 */
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:255,43,77;
 }
@@ -653,15 +659,27 @@
    clipping diferente no Chrome, não passa pelo caminho de compositor
    com o bug). Testado numa réplica isolada do CSS real simulando
    escala de tela 150% antes de aplicar aqui — renderizou limpo. */
-[data-theme="blackfriday"] .card.card-prio-critical{
-  border-color:rgba(255,43,77,.55);
-  clip-path: inset(0 round var(--r));
+[data-theme="blackfriday"] .card.card-prio-critical{ border-color:rgba(255,43,77,.55); }
+/* 16/11/2026 (/melhoriauiux): a fita era ::before — o MESMO pseudo-elemento do selo "👤 seu card"
+   (.card.card-mine::before). O CSS mescla as duas regras propriedade por propriedade: o left:9px e o
+   border-radius do selo sobreviviam, a fita virava uma pílula EM CIMA DO TÍTULO e o "seu card" sumia
+   (todo card crítico que é seu, o caso comum na semana). Agora é ::after, e só quando o canto está
+   livre: o estado REAL do card vence a decoração (♾️ Contínuo e 💤 parado também usam ::after —
+   a fita só repete o 🔥 da prioridade, que continua no card). Reset completo pra nada vazar. */
+[data-theme="blackfriday"] .card.card-prio-critical:not(.card-continuo):not(.aged-2){ clip-path: inset(0 round var(--r)); }
+[data-theme="blackfriday"] .card.card-prio-critical:not(.card-continuo):not(.aged-2)::after{
+  content:"🔥 OFERTA"; position:absolute; top:9px; right:-28px; left:auto; bottom:auto; width:110px; text-align:center;
+  transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800; line-height:normal;
+  letter-spacing:.03em; padding:3px 0; pointer-events:none; border-radius:0; box-shadow:none; opacity:1; filter:none;
 }
-[data-theme="blackfriday"] .card.card-prio-critical::before{
-  content:"🔥 OFERTA"; position:absolute; top:9px; right:-28px; width:110px; text-align:center;
-  transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
-  letter-spacing:.03em; padding:3px 0; pointer-events:none;
-}
+/* com o clip-path da fita, o selo "seu card" (top:-9px, fora do card) seria cortado — mesma saída do Contínuo */
+[data-theme="blackfriday"] .card.card-mine.card-prio-critical:not(.card-continuo):not(.aged-2)::before{ top:0; }
+/* fundo verde-água (rgba(29,233,182,…)) que sobrava em "+ Add", 🤖 Insights e na data "no prazo": neutro no BF (sem verde, contraste ≥ 4,5:1) */
+[data-theme="blackfriday"] .btn-teal,[data-theme="blackfriday"] .cl-ab,[data-theme="blackfriday"] .due-ok{ background:rgba(239,233,230,.06); border-color:rgba(239,233,230,.22); }
+/* "atrasado": o --danger puro sobre o próprio tom vermelho dava 3,5:1 em 9px */
+[data-theme="blackfriday"] .due-late{ color:#ff8295; }
+/* ação principal (💾 Salvar e afins): azul vivo destoava — vermelho é o "botão em destaque" do mockup aprovado */
+[data-theme="blackfriday"] .btn-p{ background:rgba(214,30,62,.85); border-color:var(--danger); color:#fff; }
 /* ♾️ Contínuo (2026-09-29, pedido direto: "e se colocarmos esse infinito
    como aquela faixa q vc fez pro modo black friday?") — mesma fita
    diagonal + mesmo fix de clip-path (ver comentário grande acima, causa
@@ -1014,7 +1032,9 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .btn-sm{padding:3px 9px;font-size:11px;}
 
 /* toolbar */
-.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
+/* 16/11/2026: overflow-x:auto também recorta o eixo vertical. A folga protege
+   bordas e foco dos botões (o corte ficava evidente no tema Black Friday). */
+.toolbar{padding-block:4px;display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
 /* ── 🔀 Reorganizar barra de ferramentas (pedido direto do usuário) —
    mesmo esqueleto visual do drag de colunas (.col-dragging/.col-drag-left/
@@ -1377,6 +1397,14 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
    cadastro) e o Esc/fechar-tudo global ('.ov.open') não pode fechá-la sem resolver a pergunta que o login está aguardando. */
 .cad-ov{position:fixed;inset:0;z-index:205;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .cad-ov.open{display:flex;}
+/* 🏢 Diretoria por pessoa (16/11/2026): escolha no 1º acesso (inscrição ou janela própria) + etiqueta neutra na 👥 Equipe.
+   Etiqueta de CONTORNO neutro, de propósito diferente das pílulas coloridas de subtime (ninguém lê "RH" como subtime). */
+.dir-ops{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dir-op{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 10px;border-radius:var(--r);border:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.55);color:var(--txt);font:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+.dir-op:hover{border-color:var(--accent);}
+.dir-op[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--accent);}
+.dir-op:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.dir-pill{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--glass-b);color:var(--txt2);background:transparent;white-space:nowrap;}
 .panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;box-shadow:var(--specular);}
 /* Alça de arrastar do bottom-sheet do card (Fase 3.1) — só existe visualmente
    no mobile, ver @media(max-width:768px) .card-sheet-handle. */
@@ -3742,7 +3770,7 @@ input[type="date"]{-moz-appearance:textfield;}
     display:flex;flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;
     gap:4px;margin:0 -.6rem .5rem;
-    padding:0 .6rem 5px;scrollbar-width:none;
+    padding:4px .6rem 5px;scrollbar-width:none;
   }
   .toolbar::-webkit-scrollbar{display:none;}
   .toolbar .btn-sm{
@@ -4647,7 +4675,37 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 // bem depois) de propósito -- precisa rodar aqui, síncrono, o mais cedo
 // possível. Mesmo try/catch de segurança (modo privado antigo do Safari
 // pode bloquear localStorage).
+// 🔥 Semana Black Friday (16/11/2026, pedido do Caio): de segunda a domingo da
+// semana da BF (horário de Brasília) o tema 🔥 é o PADRÃO de todo mundo, sem
+// gravar mare_theme — na segunda seguinte cada um volta sozinho ao seu tema.
+// Quem sai do BF (clique no 🔥) fica fora até o fim da semana
+// (mare_bf_sair_<ano>). Fonte única da janela: window._bfSemanaInfo(), usada
+// aqui e pelo <script> principal (contador, virada com a aba aberta, prefs).
+// Teste: localStorage mare_bf_semana_teste = data-limite (AAAA-MM-DD) simula
+// a semana até essa data, com chave de saída própria (_teste) — validar antes
+// não contamina a semana de verdade.
+window.BF_PADRAO_ANOS = [2026];   // anos em que o BF vira padrão (decisão do Caio — ver CHANGELOG)
+window._bfSemanaInfo = function(agoraMs){
+  const p2 = n => String(n).padStart(2,'0');
+  const isoUTC = d => d.getUTCFullYear()+'-'+p2(d.getUTCMonth()+1)+'-'+p2(d.getUTCDate());
+  const hoje = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(agoraMs==null?Date.now():agoraMs));
+  const bfDe = ano => { const p=(4-new Date(Date.UTC(ano,10,1)).getUTCDay()+7)%7; return new Date(Date.UTC(ano,10,1+p+22)); };   // sexta depois da 4ª quinta de novembro
+  let ano = +hoje.slice(0,4), bf = bfDe(ano);
+  if(hoje > isoUTC(new Date(bf.getTime()+2*864e5))) { ano++; bf = bfDe(ano); }   // semana deste ano já passou: a próxima
+  const ini = isoUTC(new Date(bf.getTime()-4*864e5)), fim = isoUTC(new Date(bf.getTime()+2*864e5));
+  let teste = '';
+  try{ teste = localStorage.getItem('mare_bf_semana_teste') || ''; }catch(e){}
+  const testeVale = /^\d{4}-\d{2}-\d{2}$/.test(teste) && hoje <= teste;
+  const real = hoje >= ini && hoje <= fim && window.BF_PADRAO_ANOS.indexOf(ano) >= 0;
+  return { hoje, ano, bf: isoUTC(bf), ini, fim, dentro: real || testeVale, teste: !real && testeVale,
+    chaveSair: 'mare_bf_sair_' + ano + (!real && testeVale ? '_teste' : '') };
+};
 (function(){
+  try{
+    const bfs = window._bfSemanaInfo();
+    window.__bfPadrao = bfs.dentro && localStorage.getItem(bfs.chaveSair) !== '1';
+    if(window.__bfPadrao){ document.documentElement.setAttribute('data-theme','blackfriday'); return; }
+  }catch(e){ window.__bfPadrao = false; }
   try{
     const auto = localStorage.getItem('mare_theme_auto')==='1';
     let t;
@@ -4663,7 +4721,8 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     }
     if(t==='light') document.documentElement.setAttribute('data-theme','light');
     else if(t==='vice') document.documentElement.setAttribute('data-theme','vice');
-    if(!auto && localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
+    else if(t==='blackfriday') document.documentElement.setAttribute('data-theme','blackfriday');   // antes sumia no F5 (só light/vice eram reaplicados)
+    if(!auto && t!=='blackfriday' && localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
   }catch(e){}
 })();
 </script>
@@ -4728,11 +4787,32 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       </select>
       <div style="font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.5;">A torre define onde você cria e edita Objetivos no Radar. Dá pra mudar depois com um ADM.</div>
     </div>
+    <div class="field" id="insc-dir-wrap" style="display:none;">
+      <label class="fl" id="insc-dir-lbl">Sua diretoria</label>
+      <div class="dir-ops" role="group" aria-labelledby="insc-dir-lbl" id="insc-dir-ops"></div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.5;">Aparece ao lado do seu nome na 👥 Equipe. Depois, só um ADM muda.</div>
+    </div>
     <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong id="insc-role">Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;">
       <button class="btn" onclick="closeOv('insc-ov')">Agora não</button>
       <div id="insc-init-err" style="display:none;font-size:11px;color:var(--danger);margin-bottom:6px;"></div>
       <button class="btn btn-p" onclick="confirmarInscricao()">Confirmar inscrição</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 🏢 DIRETORIA (16/11/2026): quem já tem cadastro e ainda não escolheu. "Agora não" pergunta de novo na próxima sessão. -->
+<div class="cad-ov" id="dir-ov" role="dialog" aria-modal="true" aria-labelledby="dir-tit">
+<div class="panel" style="max-width:380px;">
+  <div class="panel-hd"><div class="panel-title" id="dir-tit">🏢 Qual é a sua diretoria?</div></div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;">O Maré está chegando a novos times. Escolha uma vez: a diretoria aparece ao lado do seu nome na 👥 Equipe. Depois, só um ADM muda.</div>
+    <div class="dir-ops" role="group" aria-labelledby="dir-tit" id="dir-ops"></div>
+    <div id="dir-err" style="display:none;font-size:11px;color:var(--danger);"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
+      <button class="btn" type="button" onclick="_dirAdiar()">Agora não</button>
+      <button class="btn btn-p" type="button" id="dir-ok" onclick="_dirConfirmar()" disabled>Confirmar</button>
     </div>
   </div>
 </div>
@@ -4833,7 +4913,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
 <div id="goal-bar" class="goal-bar"><span style="opacity:.6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Objetivo</span><span id="goal-txt"></span></div>
 
-<div id="bf-countdown-bar" class="bf-countdown-bar"><span>🔥 <b id="bf-countdown-num">calculando…</b> pra Black Friday</span><span id="bf-banner-msg-wrap" style="display:none;">· <span id="bf-banner-msg"></span></span></div>
+<div id="bf-countdown-bar" class="bf-countdown-bar"><span id="bf-countdown-txt">🔥 <b>calculando…</b> pra Black Friday</span><span id="bf-banner-msg-wrap" style="display:none;">· <span id="bf-banner-msg"></span></span></div>
 
 <div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
@@ -6063,7 +6143,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <div style="margin-top:10px;" class="cfg-sec-title">Objetivo da sprint</div>
       <div class="field"><textarea class="fi fi-ta" id="cfg-sprint-goal" rows="2" placeholder="Descreva o objetivo..."></textarea></div>
       <div style="margin-top:10px;" class="cfg-sec-title">🔥 Banner do tema Black Friday (opcional)</div>
-      <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Some ao lado da contagem regressiva quando o tema 🔥 Black Friday estiver ligado (ver botão direito no botão de tema). Deixe em branco pra mostrar só a contagem.</p>
+      <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Some ao lado da contagem regressiva quando o tema 🔥 Black Friday estiver ligado (padrão de todo mundo na semana da Black Friday). Deixe em branco pra mostrar só a contagem.</p>
       <div class="field"><input class="fi" id="cfg-bf-banner-msg" type="text" maxlength="80" placeholder="Ex: Meta do squad: -40% em toda a categoria Inverno"></div>
       <div style="margin-top:10px;" class="cfg-sec-title">📥 Formulário de intake</div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;margin-bottom:4px;">
@@ -7667,7 +7747,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.990</div>
+<div class="version">v8.30.996</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8023,8 +8103,8 @@ let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !use
 <script src="mare-dicas.js?v=18"></script>
 <script src="mare-sonar.js?v=8"></script>
 <script src="mare-timer.js?v=1"></script>
-<script src="mare-gcal.js?v=9"></script>
-<script src="mare-ferias.js?v=6"></script>
+<script src="mare-gcal.js?v=10"></script>
+<script src="mare-ferias.js?v=7"></script>
 
 <script>
 
@@ -11379,13 +11459,13 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // Sem base (card criado aqui, restaurado por desfazer…) ou se a transação não puder rodar, grava como sempre (último a gravar vence).
       const _criacao = ('cards_index/'+card.id) in updates;
       const doWrite = ()=> _trackFbWrite((async()=>{
-        let vindos = null;
+        let vindos = null, _posTrocou = false;
         if(card.__base && !_criacao){
           try{
             let merged = null;
             const r = await window._runTransaction(fb(FB+'/cards/'+key), cur=>{
               if(cur===null || cur===undefined){ merged = null; return _stripUndefinedDeep(Object.assign({}, card)); }   // sem valor em cache: devolve o nosso; o SDK refaz com o do servidor se diferir
-              if(cur.id!==card.id){ merged = null; return undefined; }                                                   // a posição trocou de dono: caminho de sempre
+              if(cur.id!==card.id){ merged = null; _posTrocou = true; return undefined; }                               // a posição trocou de dono (ver abaixo)
               merged = _mesclarCard(card.__base, card, cur); merged.updatedAt = card.updatedAt;
               return _stripUndefinedDeep(merged);
             }, { applyLocally:false });
@@ -11395,6 +11475,20 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
                 try{ if(typeof editingId!=='undefined' && editingId===card.id){ const el = document.getElementById('m-desc'); if(el && el.value===(descAntes||'') && card.desc!==descAntes) el.value = card.desc||''; } }catch(_){} } }
             }
           }catch(e){ console.warn('[fbSaveCard] merge contra o banco falhou — gravando como antes:', e); }
+        }
+        // /monitorarbugs 16/11 (Codex, #1822 — integridade): a transação viu OUTRO card na chave do espelho (compactação/
+        // reordenação já pôs B onde este aparelho achava que estava A) e abortou — mas o update abaixo gravava `cards/<chave>`
+        // mesmo assim, SUBSTITUINDO B por A. Agora: nunca grava na posição antiga; relocaliza pelo índice (fonte de verdade)
+        // e salva de novo na chave certa, ou recusa se o card não está mais no índice (foi excluído).
+        if(_posTrocou){
+          const _real = (await window._get(fb(FB+'/cards_index/'+card.id))).val();
+          if(window._cardsByKey && window._cardsByKey[key] === card) delete window._cardsByKey[key];
+          if(_real==null || String(_real)===String(key) || card.__relocado){
+            throw new Error('fbSaveCard: a posição do card mudou e não deu pra localizá-lo com segurança — nada foi gravado (recarregue a página).');
+          }
+          if(window._cardsByKey) window._cardsByKey[String(_real)] = card;
+          card.__relocado = true;
+          try{ return await fbSaveCard(card); } finally { delete card.__relocado; }
         }
         await window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
           if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
@@ -12765,6 +12859,7 @@ function openTeamList(){
             <div style="font-size:12px;color:var(--txt);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.nome||u.email)} <span style="font-size:9px;color:var(--txt3);">(${esc(u.init||'?')})</span></div>
             <div style="font-size:9px;color:${on?'var(--teal)':'var(--txt3)'};">${on?'● online':'offline'}</div>
             ${subsHtml}
+            ${_dirDe(u.diretoria) ? `<div style="margin-top:3px;"><span class="dir-pill" title="Diretoria">${_dirDe(u.diretoria).icon} ${_dirDe(u.diretoria).label}</span></div>` : ''}
           </div>
           <span style="font-size:9px;color:${roleCol[role]||roleCol.membro};border:1px solid ${roleCol[role]||roleCol.membro}55;padding:2px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">${roleLabels[role]||role}</span>
         </div>`;
@@ -13699,6 +13794,10 @@ function autoRegistrar(user){
         role: existe.role||'membro', inscrito: existe.inscrito||false,
         squads: existe.squads||null, squads_roles: existe.squads_roles||null,
       });
+      // 🏢 diretoria: espelho num update À PARTE (a regra exige igual à fonte; se um ADM trocar no meio, só a etiqueta falha,
+      // não o refresh inteiro do espelho). Sem diretoria ainda → pergunta (uma vez por sessão, quando a tela estiver livre).
+      if(_dirDe(existe.diretoria)){ _dirMinha = existe.diretoria; fbUpdate('kanban/usuarios_publicos/'+user.uid, {diretoria: existe.diretoria}).catch(()=>{}); }
+      else setTimeout(()=>_dirTalvezPerguntar(user, existe), 6000);
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       _logAccess(user, window._currentUserRole);
       setTimeout(_updateGcalPendingBadge, 1500);
@@ -13748,7 +13847,70 @@ function autoRegistrar(user){
 let _inscOriginalInit = '';
 // 🏛️ Torre (OKR): só a inscrição de cadastro NOVO pergunta (opts.pedirTorre). Quem já existia fica Digital (sem campo = Digital).
 let _inscPedirTorre = false;
+// ── 🏢 Diretoria por pessoa (16/11/2026; desenho em docs/ideias/diretoria-por-pessoa.md) ────────────────
+// kanban/usuarios/{uid}/diretoria (fonte; a pessoa grava a SUA só enquanto vazia, depois só ADM — database.rules.json) e o
+// espelho usuarios_publicos/{uid}/diretoria (que a 👥 Equipe lê; as regras exigem o MESMO valor da fonte). Independente da
+// torre do Radar. Só contas Google @ciahering são perguntadas (não convidado/visualizador/externo).
+const DIRETORIAS = [{id:'digital',label:'Digital',icon:'💻'},{id:'rh',label:'RH',icon:'🤝'},{id:'marca',label:'Marca',icon:'🎨'},{id:'tecnologia',label:'Tecnologia',icon:'🛠️'}];
+const _dirDe = id => DIRETORIAS.find(d=>d.id===id) || null;
+let _dirEscolha = '', _dirInscEscolha = '', _inscPedirDir = false, _dirSalvando = false, _dirPerguntadoSessao = false, _dirMinha = '';
+function _dirPerguntaPara(user, dados){
+  if(!user || !user.uid || !dados) return false;
+  if(_dirDe(dados.diretoria) || _dirMinha) return false;
+  const hering = String(user.email||'').toLowerCase().endsWith('@ciahering.com.br') && (user.providerData||[]).some(p=>p && p.providerId==='google.com');
+  return hering && !['convidado','visualizador'].includes(dados.role||'membro');
+}
+function _dirOpsHtml(sel){ return DIRETORIAS.map(d=>`<button type="button" class="dir-op" data-dir="${d.id}" aria-pressed="${sel===d.id}">${d.icon} ${d.label}</button>`).join(''); }
+function _dirLigarOps(box, onPick){
+  box.onclick = e => { const b=e.target.closest('.dir-op'); if(!b) return; box.querySelectorAll('.dir-op').forEach(x=>x.setAttribute('aria-pressed', String(x===b))); onPick(b.dataset.dir); };
+}
+// Fonte primeiro, espelho depois (a regra do espelho confere a fonte já gravada). Só mostra sucesso depois de confirmar.
+async function _dirGravar(uid, id){
+  if(!_dirDe(id)) throw new Error('diretoria inválida');
+  await fbUpdate('kanban/usuarios/'+uid, {diretoria:id});
+  if(window._currentUser && uid===window._currentUser.uid) _dirMinha = id;
+  await fbUpdate('kanban/usuarios_publicos/'+uid, {diretoria:id}).catch(e=>console.warn('[diretoria] espelho não gravou (a etiqueta volta no próximo login):', e));
+}
+function _dirAbrir(){
+  const box=document.getElementById('dir-ops'); if(!box) return;
+  _dirEscolha=''; box.innerHTML=_dirOpsHtml(''); document.getElementById('dir-ok').disabled=true; document.getElementById('dir-err').style.display='none';
+  _dirLigarOps(box, id=>{ _dirEscolha=id; document.getElementById('dir-ok').disabled=false; });
+  document.getElementById('dir-ov').classList.add('open');
+  setTimeout(()=>{ const b=box.querySelector('.dir-op'); if(b) b.focus({preventScroll:true}); }, 50);
+}
+function _dirAdiar(){ try{ sessionStorage.setItem('mare_dir_adiado','1'); }catch(e){} document.getElementById('dir-ov').classList.remove('open'); }
+async function _dirConfirmar(){
+  const user=window._currentUser; if(!user || !_dirDe(_dirEscolha) || _dirSalvando) return;
+  _dirSalvando=true; const ok=document.getElementById('dir-ok'); ok.disabled=true;
+  try{
+    await _dirGravar(user.uid, _dirEscolha);
+    document.getElementById('dir-ov').classList.remove('open');
+    showToast('🏢 Diretoria '+_dirDe(_dirEscolha).label+' registrada. Obrigado!');
+  }catch(e){
+    const err=document.getElementById('dir-err'); err.textContent='⚠ Não consegui salvar agora ('+(e?.code||e?.message||'erro')+'). Tente de novo.'; err.style.display='block'; ok.disabled=false;
+  }finally{ _dirSalvando=false; }
+}
+// Quem já tem cadastro: pergunta uma vez por sessão, sem disputar a tela com outra janela/guia/dica (espera ficar livre).
+function _dirTalvezPerguntar(user, dados, tentativa){
+  if(!_dirPerguntaPara(user, dados)) return;
+  if(_dirPerguntadoSessao) return;   // a inscrição (ou esta janela) já perguntou nesta sessão — nunca 2 janelas seguidas
+  try{ if(sessionStorage.getItem('mare_dir_adiado')==='1') return; }catch(e){}
+  const _tt = document.getElementById('kb-toast');
+  const ocupado = document.querySelector('.ov.open,.cad-ov.open,#tourm-bub,#mare-dica') || (_tt && _tt.style.opacity==='1');   // espera até o aviso (ex.: o da semana BF) sumir
+  if(ocupado){ if((tentativa||0)<24) setTimeout(()=>_dirTalvezPerguntar(user, dados, (tentativa||0)+1), 5000); return; }
+  _dirPerguntadoSessao = true;
+  _dirAbrir();
+}
+// Esc fecha a janela como "Agora não" (camada própria, em captura, antes das de baixo)
+window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const ov=document.getElementById('dir-ov'); if(!ov || !ov.classList.contains('open')) return; e.preventDefault(); e.stopPropagation(); _dirAdiar(); }, true);
 function mostrarInscricao(user,dados,opts){
+  // 🏢 diretoria na própria inscrição (quem é novo não vê duas janelas seguidas)
+  _inscPedirDir = _dirPerguntaPara(user, dados||{role:window._currentUserRole});
+  if(_inscPedirDir) _dirPerguntadoSessao = true;
+  _dirInscEscolha = '';
+  { const w=document.getElementById('insc-dir-wrap'), box=document.getElementById('insc-dir-ops');
+    if(w) w.style.display=_inscPedirDir?'':'none';
+    if(box){ box.innerHTML=_dirOpsHtml(''); _dirLigarOps(box, id=>{ _dirInscEscolha=id; document.getElementById('insc-init-err').style.display='none'; }); } }
   _inscPedirTorre = !MARE_SO_HERING && !!(opts && opts.pedirTorre);   // modo só Hering: OKR de uma torre só, nada a perguntar
   const _tw=document.getElementById('insc-torre-wrap'); if(_tw) _tw.style.display=_inscPedirTorre?'':'none';
   const _ts=document.getElementById('insc-torre'); if(_ts) _ts.value='';
@@ -13768,6 +13930,7 @@ async function confirmarInscricao(){
   if(!init){ showToast('⚠ Defina suas iniciais.'); return; }
   const _torreSel=_inscPedirTorre ? (document.getElementById('insc-torre')?.value||'') : '';
   if(_inscPedirTorre && !_torreSel){ showToast('⚠ Escolha a sua torre.'); return; }
+  if(_inscPedirDir && !_dirDe(_dirInscEscolha)){ showToast('⚠ Escolha a sua diretoria.'); return; }
   // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init) —
   // checar só `members` (squad atual) deixava passar gente de OUTRO squad
   // com a mesma sigla, sem aviso nenhum (achado real: "GS" duplicado entre
@@ -13827,6 +13990,7 @@ async function confirmarInscricao(){
   // Torre só em usuarios/{uid} (o board não lê; usuarios_publicos fica como está).
   fbUpdate('kanban/usuarios/'+user.uid, _torreSel ? {...sqUpd, torre:_torreSel} : sqUpd);
   fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
+  if(_inscPedirDir && _dirDe(_dirInscEscolha)) _dirGravar(user.uid, _dirInscEscolha).catch(e=>{ console.error('[diretoria] inscrição:', e); showToast('⚠ Não consegui salvar a diretoria agora — ela será perguntada de novo.'); });
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:_papelIns});
   window._currentUserInit=init;
@@ -17186,6 +17350,7 @@ function renderMinhasPrefsBody(){
   const temaAtual = _currentTheme();
   const temaLabel = {light:'☀️ Lençóis Maranhenses (claro)', dark:'🌙 Abrolhos (escuro)', vice:'🌴 Vice City', blackfriday:'🔥 Black Friday'}[temaAtual] || temaAtual;
   const autoOn = _isThemeAutoOn();
+  const bfSemana = window._bfSemanaInfo();
   const viceDescoberto = _temasDescobertos.vice_manual===true;
   const dndOn = isDndActive();
   const timelineOn = _boardPrefsSquad.visao_inicial==='timeline';
@@ -17202,6 +17367,7 @@ function renderMinhasPrefsBody(){
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-sm" onclick="toggleTheme();renderMinhasPrefsBody();">Trocar tema</button>
         <button class="btn btn-sm" style="${autoOn?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleThemeAuto();renderMinhasPrefsBody();">🕐 ${autoOn?'Automático (ligado)':'Ligar automático'}</button>
+        ${bfSemana.dentro ? `<button class="btn btn-sm" aria-pressed="${temaAtual==='blackfriday'}" style="${temaAtual==='blackfriday'?'color:var(--danger);border-color:rgba(255,43,77,.55);':''}" onclick="toggleBlackFriday();renderMinhasPrefsBody();" title="Tema da semana da Black Friday — até ${_bfBr(bfSemana.fim)}. Depois cada um volta sozinho ao seu tema.">🔥 Black Friday${temaAtual==='blackfriday'?' (ligado)':''}</button>` : ''}
         ${viceDescoberto ? `<button class="btn btn-sm" style="${temaAtual==='vice'?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleViceCity();renderMinhasPrefsBody();" title="Você já descobriu esse tema segurando o botão 🌙/☀️ -- aqui é só um atalho.">🌴 Vice City</button>` : ''}
       </div>
     </div>
@@ -18113,6 +18279,10 @@ function _performAutoSave(){
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
+    // /monitorarbugs 16/11 (Codex, #1822): o autosave gravava a coluna nova e avisava "movido", mas nunca chamava recordMove() —
+    // flow.log/enteredAt/firstStartAt/doneAt (lead/cycle time, CFD, Throughput) ficavam cegos pra quem trocava a coluna no modal
+    // sem clicar em Salvar. Mesma linha do saveCard(), depois do Object.assign.
+    if(_prevCol!==c.col) recordMove(c, c.col);
     // ⚡ fbSaveCard() sem .catch() aqui era uma promise rejeitada e esquecida:
     // se a escrita falhasse (rede instável, sessão expirada, etc.), NADA
     // avisava — a tela continuava mostrando a edição como se tivesse salvo,
@@ -19702,7 +19872,7 @@ function openNewCard(col, prefillOwner, prefillTagId){
   // editingId, não por uma variável separada — nunca tiveram este bug).
   _commentCardId = null;
   const _mcl2=document.getElementById('m-comment-list');
-  if(_mcl2) _mcl2.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Salve o card para poder comentar.</div>';
+  if(_mcl2) _mcl2.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Card ainda não salvo — ao comentar, ele é salvo antes (com as mesmas checagens do 💾 Salvar).</div>';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
   _newCardGuardOff = false; // rearma a trava de _newCardHasContent() pra esta nova sessão de criação
 }
@@ -20075,14 +20245,36 @@ function saveCard(){
     _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem, ver comentário na declaração
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     _newCardGuardOff = true; // idem pra _newCardHasContent() — editingId pode continuar null aqui (ver comentário acima)
-    closeOv('card-ov');
+    // 💾 "Salvar e continuar" (16/11/2026, relato do time: "usei um card Modelo e não dava pra pôr link, comentar nem marcar
+    // ninguém sem clicar em Salvar"): comentar/pôr link num card ainda não salvo pede o salvamento (com as validações do
+    // Salvar, inclusive os obrigatórios do Modelo) e, confirmado, reabre o card JÁ DE VERDADE e completa a ação.
+    const _cont = _saveCardContinuar; _saveCardContinuar = null;
     _clearPendingRequired();
+    if(_cont && _savedNewCardId && cards.some(c=>c.id===_savedNewCardId)){
+      openCard(_savedNewCardId);
+      setTimeout(()=>{ try{ _cont(_savedNewCardId); }catch(e){ console.error('[salvar e continuar]', e); } }, 60);
+      return;
+    }
+    closeOv('card-ov');
   }).catch(err=>{
+    _saveCardContinuar = null;
     _savingCard=false;
     if(_saveBtn){ _saveBtn.disabled=false; _saveBtn.innerHTML=_saveBtn.dataset.origLabel||'💾 Salvar'; }
     console.error('[saveCard] falha ao confirmar salvamento:', err);
     showToast('⚠️ Não deu pra confirmar o salvamento (conexão instável) — o card continua aberto, tente salvar de novo.');
   });
+}
+// Card novo (rascunho, ex.: "+ Usar" de um Modelo): salva com as validações do Salvar e, confirmado, executa `acao` no card
+// já de verdade (o modal reabre nele). Validação barrou → nada é criado, o motivo aparece e o que a pessoa digitou fica no campo.
+let _saveCardContinuar = null;
+function _rascunhoSalvarE(acao, oQue){
+  if(editingId) return false;
+  if(_savingCard){ showToast('💾 Salvando o card…'); return true; }
+  _saveCardContinuar = acao;
+  saveCard();
+  if(!_savingCard){ _saveCardContinuar = null; return true; }   // validação barrou (o próprio Salvar já disse o motivo)
+  showToast('💾 Salvando o card pra '+oQue+'…');
+  return true;
 }
 async function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
@@ -31378,7 +31570,7 @@ const HELP_CONTENT = {
     { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n🖱️ <b>A barra rola sozinha perto da borda:</b> se a toolbar não cabe inteira na tela, deixe o mouse parado perto da borda esquerda ou direita (sem precisar clicar) que ela rola na direção sozinha — funciona tanto navegando normal quanto arrastando um botão durante a reorganização.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\n📅 <b>Prazo automático:</b> na mesma tela de Recorrência, ative "Definir prazo automaticamente" e diga quantos dias depois da criação o prazo deve cair — ex.: card entra toda segunda, prazo "1" deixa o vencimento pra terça seguinte. Sem isso, o card nasce sem prazo (como sempre foi).' },
-    { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
+    { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n· O card do modelo abre ainda sem salvar — já dá pra comentar (com @menção) e pôr links: ao fazer isso o card é salvo na hora (com as mesmas checagens do 💾 Salvar, inclusive os campos obrigatórios) e continua aberto pra você seguir editando\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
     { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card, ou dê um DUPLO TOQUE nele, pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá. No computador, duplo-clique no card faz a mesma coisa que clique com o botão direito.\n\n🏷️ Em squads com Submarca ativa: o "1 por coluna" vira 1 por coluna E por submarca — cada submarca pode ter seu próprio card fixado na mesma coluna, sem atrapalhar as outras.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n🔗 Copiar link sem abrir o card: no menu de contexto do card (clique direito, ou o botão "⋮" no board), tem o atalho "🔗 Copiar link do card" — copia o mesmo link, sem precisar abrir o card primeiro.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
@@ -31390,6 +31582,8 @@ const HELP_CONTENT = {
     { icon:'👤', title:'Minhas Preferências', text:'Painel único reunindo toda a sua personalização pessoal do board — antes espalhada em vários lugares diferentes. Acesse clicando no seu avatar (canto superior direito) → "👤 Minhas Preferências", ou pelo botão de mesmo nome dentro de "⚙ Configurações".\n\nDo que ele cuida: 🎨 Tema (claro/escuro/automático — e um atalho "🌴 Vice City" que só aparece depois que você já descobriu esse tema escondido segurando o botão de tema), 🔍 Fonte e 📐 Densidade dos cards, 📌 Squad padrão, 🔔 Não Perturbe (atalho rápido pras mesmas opções do sino), ⌨️ acesso direto aos Atalhos de teclado, e as sugestões de "personalização baseada em rotina" (ver abaixo).\n\n💡 <b>Sugestões de rotina, agora reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e cada atalho de atribuição rápida já criado aparecem com um toggle — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo (nem torcer pra não ter clicado "Não sugerir mais" sem querer).\n\n🚫 <b>Sugestões recusadas</b>: toda vez que você clica "Não sugerir mais" numa sugestão, ela entra numa lista aqui — "🔄 Esquecer recusa" deixa o app te sugerir aquilo de novo, se o padrão de uso se repetir. Sincroniza com a sua conta (diferente de antes, quando "não sugerir mais" ficava preso só no navegador que você clicou).' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
+    { icon:'🔥', title:'Tema Black Friday (semana da Black Friday)', text:'Na <b>semana da Black Friday</b> (de segunda a domingo — em 2026, de 23/11 a 29/11) o Maré abre no tema <b>🔥 Black Friday</b> pra todo mundo: preto com vermelho de detalhe, contagem regressiva no topo ("Xd pra Black Friday", "É hoje!" na sexta), 💰 no lugar dos peixinhos e a fita <b>🔥 OFERTA</b> nos cards de prioridade Crítica (cards ♾️ Contínuos ou 💤 parados mantêm o próprio selo).\n\n<b>Prefere o seu tema?</b> Clique no 🔥 (botão de tema, lá em cima; no celular: <b>⋯ → Alternar tema</b>) — o seu tema volta e fica até o fim da semana. Mudou de ideia? <b>Minhas Preferências → 🔥 Black Friday</b> (ou botão direito / toque com 2 dedos no botão de tema).\n\nNada é gravado no seu tema: na segunda depois da Black Friday cada um volta sozinho ao que usava (inclusive o 🕐 Tema automático). O PO pode pôr um recado ao lado da contagem em ⚙ Configurações → "Banner do tema Black Friday".' },
+    { icon:'🏢', title:'Diretoria (Digital, RH, Marca, Tecnologia)', text:'Com o Maré chegando a novos times, cada pessoa da Hering informa a sua <b>diretoria</b>: <b>💻 Digital</b>, <b>🤝 RH</b>, <b>🎨 Marca</b> ou <b>🛠️ Tecnologia</b>.\n\n<b>Quando:</b> quem já usava o Maré começou como <b>💻 Digital</b> (o ADM corrige quem for de outra); quem é novo escolhe na própria inscrição. Se o seu cadastro estiver sem diretoria, aparece uma janela "Qual é a sua diretoria?" (dá pra clicar em "Agora não" e responder na próxima vez).\n\n<b>Onde aparece:</b> como etiqueta ao lado do seu nome na <b>👥 Equipe</b> do quadro (contorno discreto, diferente das pílulas coloridas de subtime).\n\n<b>Escolheu errado?</b> Depois da 1ª escolha só um ADM muda, no Painel → 👥 Usuários. A diretoria não muda seus acessos nem o seu squad, e é diferente da "torre" do Radar.' },
     { icon:'🕐', title:'Tema automático', text:'Não quer ficar trocando de tema na mão ao longo do dia? Clique no botão 🕐, ao lado do botão de tema (🌙/☀️), pra ligar a troca sozinha — o board acompanha o horário de São Paulo: ☀️ Lençóis Maranhenses (claro) das 06h às 12h, 🌴 Vice City das 12h às 18h (o easter egg escondido virou tema oficial nesse horário) e 🌙 Abrolhos (escuro) das 18h às 06h. Clique de novo no 🕐 pra desligar.\n\nQualquer troca manual de tema (clicar no 🌙/☀️, trocar a variante do claro, ou o easter egg do Vice City) desliga o automático na hora — nesse momento você escolheu um tema por conta própria, e o app não sobrescreve isso sozinho na próxima virada de horário.\n\n💻 Diferente da maioria das outras preferências de tela, esta fica salva só NESTE navegador (não na sua conta) — se você usa o board em mais de um computador, precisa ligar em cada um separadamente.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).\n\n📈 Dados de Produção: aba ao lado da timeline, com estatísticas dos cards vinculados (status do fluxo, prioridade, responsável, squad) — mesma linguagem visual do Controle de Criativos. Tem o mesmo checkbox "🧩 Incluir supercards" pra ligar/desligar se o card container de um supercard entra na contagem total.' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
@@ -32585,9 +32779,15 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId,
     // Id determinístico (ex.: lembrete de reunião) — se a pessoa está em vários squads/abas,
     // todos calculam o MESMO id pro mesmo evento real, então só cria se ainda não existe
     // (evita duplicar a notificação e evita reabrir como "não lida" uma que já foi vista).
-    fbGet(path).then(snap=>{
+    // /monitorarbugs 16/11 (Codex, #1822): ler e depois gravar não é atômico — duas abas de PO/ADM liam "não existe", a 1ª
+    // criava, a pessoa lia, e a gravação atrasada da 2ª voltava read:false (notificação lida "reabria"). Agora cria por
+    // transação: só se ainda não existe. Sem transação disponível (ou recusada), cai no caminho antigo.
+    const _criaSeAusente = ()=> fbGet(path).then(snap=>{
       if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(_notifWarn);
     }).catch(_notifWarn);
+    if(typeof window._runTransaction==='function'){
+      window._runTransaction(window._ref(window._db,path), cur=>(cur ? undefined : notif)).catch(err=>{ _notifWarn(err); });
+    } else _criaSeAusente();
   } else {
     window._set(window._ref(window._db,path), notif).catch(_notifWarn);
   }
@@ -39225,6 +39425,7 @@ window.addEventListener('auth-change', ()=>{
   if(t!=='blackfriday') _recordThemeDiscovered(t);
 });
 function toggleTheme(){
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   _disableThemeAutoIfOn();
   const next = _currentTheme()==='light' ? 'dark' : 'light';
   if(next==='light') document.documentElement.setAttribute('data-theme','light');
@@ -39271,6 +39472,7 @@ function _themeBandForSaoPauloNow(){
 function _isThemeAutoOn(){ return safeLS.getItem('mare_theme_auto')==='1'; }
 let _themeAutoInterval=null;
 function _applyAutoTheme(showToastOnChange){
+  if(window.__bfPadrao){ _applyThemeAutoButtonState(); return; }   // 🔥 semana BF: o padrão vence o automático (ver _bfSemanaInfo no <head>)
   const band = _themeBandForSaoPauloNow();
   const before = _currentTheme();
   if(band==='light') document.documentElement.setAttribute('data-theme','light');
@@ -39326,6 +39528,7 @@ function toggleThemeAuto(){
     showToast('🕐 Tema automático desligado — o tema atual fica fixo até você trocar de novo.');
     return;
   }
+  _bfLargarPadrao();
   safeLS.setItem('mare_theme_auto','1');
   _applyAutoTheme(false);
   _startThemeAutoWatch();
@@ -39387,8 +39590,10 @@ function toggleViceCity(){
   // aqui também: um long-press durante a banda automática da tarde não
   // pode ser lido como "já tá no easter egg, então sai dele".
   if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
+  const bfAntes = window.__bfPadrao;
+  _bfLargarPadrao();
   _disableThemeAutoIfOn();
-  safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
+  safeLS.setItem('mare_theme_before_vice', bfAntes ? (safeLS.getItem('mare_theme')==='light'?'light':'') : (document.documentElement.getAttribute('data-theme') || ''));
   safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
   document.documentElement.setAttribute('data-theme','vice');
   document.documentElement.removeAttribute('data-theme-variant');
@@ -39411,19 +39616,47 @@ function exitViceCity(){
   _applyThemeButtonIcon();
   showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
 }
-// 🔥 Black Friday — proposta em avaliação (ver comentário grande no CSS,
-// [data-theme="blackfriday"]). Mesmo padrão de entrar/guardar/sair do
-// Vice City acima, só que via botão DIREITO no botão de tema (em vez de
-// long-press) — gesto próprio, não compete com clique/duplo-clique/
-// long-press que já fazem 3 coisas diferentes no mesmo botão. De
-// propósito NÃO grava em temasDescobertos (_recordThemeDiscovered) — é
-// um teste, não uma opção real ainda, sem sentido contar métrica disso.
-// Sem mouse (iPad) botão direito não existe — _themeBtnTouchStart()
-// abaixo usa toque com 2 dedos como equivalente, mesma lógica de "gesto
-// próprio que não compete com os outros 3 já no mesmo botão".
+// 🔥 Black Friday — tema sazonal (ver [data-theme="blackfriday"] no CSS).
+// Fora da semana da BF: entra/sai com botão DIREITO (ou toque com 2 dedos) no
+// botão de tema e fica gravado (mare_theme), como os outros temas. Na semana
+// da BF (window._bfSemanaInfo(), no <head>) ele é o PADRÃO de todo mundo sem
+// gravar nada: sair marca só mare_bf_sair_<ano> e devolve o tema da pessoa;
+// voltar (botão direito, ou 🔥 em Minhas Preferências) apaga essa marca.
+// De propósito NÃO grava em temasDescobertos (_recordThemeDiscovered).
 function _isBlackFridayAtivo(){ return _currentTheme()==='blackfriday'; }
+const _bfBr = iso => iso.slice(8,10)+'/'+iso.slice(5,7);
+// Sai do padrão da semana sem mexer na tela (o chamador aplica o tema que quiser)
+function _bfLargarPadrao(){
+  if(!window.__bfPadrao) return;
+  window.__bfPadrao = false;
+  safeLS.setItem(window._bfSemanaInfo().chaveSair, '1');
+}
+// Tema PRÓPRIO da pessoa (o que ela tinha antes do BF): automático, ou o mare_theme salvo
+function _bfAplicarTemaProprio(){
+  if(_isThemeAutoOn()){ _applyAutoTheme(false); _startThemeAutoWatch(); return _currentTheme(); }
+  let t = safeLS.getItem('mare_theme') || '', v = safeLS.getItem('mare_theme_variant') || '';
+  if(t==='blackfriday'){ t = safeLS.getItem('mare_theme_before_bf') || ''; v = safeLS.getItem('mare_theme_variant_before_bf') || ''; safeLS.setItem('mare_theme', t==='light'?'light':t==='vice'?'vice':'dark'); safeLS.setItem('mare_theme_variant', v); }
+  if(t==='light' || t==='vice') document.documentElement.setAttribute('data-theme', t);
+  else document.documentElement.removeAttribute('data-theme');
+  if(t==='light' && v==='b') document.documentElement.setAttribute('data-theme-variant','b');
+  else document.documentElement.removeAttribute('data-theme-variant');
+  _applyThemeButtonIcon();
+  return _currentTheme();
+}
+const _bfNomeTema = t => t==='light' ? '☀️ Lençóis Maranhenses' : t==='vice' ? '🌴 Vice City' : '🌙 Abrolhos';
 function toggleBlackFriday(){
   if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
+  const s = window._bfSemanaInfo();
+  if(s.dentro){
+    // volta pro padrão da semana: nada gravado em mare_theme (segunda que vem cada um volta sozinho)
+    safeLS.removeItem(s.chaveSair);
+    window.__bfPadrao = true;
+    document.documentElement.setAttribute('data-theme','blackfriday');
+    document.documentElement.removeAttribute('data-theme-variant');
+    _applyThemeButtonIcon();
+    showToast('🔥 Tema Black Friday de volta — até domingo, '+_bfBr(s.fim)+'.');
+    return;
+  }
   _disableThemeAutoIfOn();
   safeLS.setItem('mare_theme_before_bf', document.documentElement.getAttribute('data-theme') || '');
   safeLS.setItem('mare_theme_variant_before_bf', document.documentElement.getAttribute('data-theme-variant') || '');
@@ -39431,9 +39664,17 @@ function toggleBlackFriday(){
   document.documentElement.removeAttribute('data-theme-variant');
   safeLS.setItem('mare_theme','blackfriday');
   _applyThemeButtonIcon();
-  showToast('🔥 Modo Black Friday — proposta em teste (botão direito, ou toque com 2 dedos no 🔥, pra sair).');
+  showToast('🔥 Tema Black Friday (botão direito, ou toque com 2 dedos no 🔥, pra sair).');
 }
 function exitBlackFriday(){
+  if(window.__bfPadrao){
+    const s = window._bfSemanaInfo();
+    _bfLargarPadrao();
+    const t = _bfAplicarTemaProprio();
+    showToast(_bfNomeTema(t)+' — o seu tema de volta. Quer o 🔥 de novo até '+_bfBr(s.fim)+'? Minhas Preferências → 🔥 Black Friday.', 6000);
+    return;
+  }
+  { const s = window._bfSemanaInfo(); if(s.dentro) safeLS.setItem(s.chaveSair, '1'); }   // BF manual saindo DENTRO da semana: senão a virada do contador religava
   const prevTheme = safeLS.getItem('mare_theme_before_bf') || '';
   const prevVariant = safeLS.getItem('mare_theme_variant_before_bf') || '';
   if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
@@ -39461,21 +39702,37 @@ function _themeBtnTouchStart(e){
   if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
   toggleBlackFriday();
 }
-// Contador de #bf-countdown-bar (visível só com o tema ligado, ver CSS) —
-// roda sempre em segundo plano, independente do tema atual (mesmo padrão
-// de timer "vida inteira da sessão" já usado no resto do arquivo, ex.
-// _startThemeAutoWatch) — custo irrelevante, evita ter que ligar/desligar
-// o timer toda vez que a pessoa entra/sai do modo Black Friday.
+// Contador de #bf-countdown-bar (visível só com o tema ligado, ver CSS). A data
+// sai de window._bfSemanaInfo() (antes: 27/11/2026 fixo no código). Também
+// faz a VIRADA com a aba aberta: o <head> só decide no carregamento, então um
+// board aberto domingo à noite entra no BF à 00h de segunda e volta pro tema
+// da pessoa à 00h da segunda seguinte.
 function _bfUpdateCountdown(){
-  const el=document.getElementById('bf-countdown-num'); if(!el) return;
-  const target=new Date(Date.UTC(2026,10,27,3,0,0)); // Black Friday 2026 (27 de novembro)
-  const diff=target-new Date();
-  if(diff<=0){ el.textContent='chegou 🎉'; return; }
-  const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000);
-  el.textContent=d+'d '+String(h).padStart(2,'0')+'h';
+  const s = window._bfSemanaInfo();
+  if(s.dentro && !window.__bfPadrao && safeLS.getItem(s.chaveSair)!=='1' && !_isBlackFridayAtivo()){
+    window.__bfPadrao = true; document.documentElement.setAttribute('data-theme','blackfriday'); document.documentElement.removeAttribute('data-theme-variant'); _applyThemeButtonIcon();
+  } else if(!s.dentro && window.__bfPadrao){
+    window.__bfPadrao = false; _bfAplicarTemaProprio();
+  }
+  const el=document.getElementById('bf-countdown-txt'); if(!el) return;
+  const alvo = Date.parse(s.bf+'T00:00:00-03:00'), diff = alvo - Date.now();
+  let txt;
+  if(s.hoje === s.bf) txt = '🔥 <b>É hoje: Black Friday!</b>';
+  else if(diff > 0){ const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000); txt = '🔥 <b>'+d+'d '+String(h).padStart(2,'0')+'h</b> pra Black Friday'; }
+  else txt = '🔥 <b>Fim de semana da Black Friday</b> — reta final até domingo';
+  if(el.innerHTML !== txt) el.innerHTML = txt;   // só texto fixo + números (sem dado de usuário)
 }
 _bfUpdateCountdown();
 setInterval(() => { if (!document.hidden) _bfUpdateCountdown(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) _bfUpdateCountdown(); });
+// Aviso único da semana (por ano), na 1ª abertura com o padrão ligado
+setTimeout(() => {
+  if(!window.__bfPadrao) return;
+  const s = window._bfSemanaInfo(), k = 'mare_bf_aviso_' + s.ano + (s.teste ? '_teste' : '');
+  if(safeLS.getItem(k)==='1') return;
+  safeLS.setItem(k,'1');
+  showToast('🔥 Semana Black Friday: o Maré está de tema novo até domingo, '+_bfBr(s.fim)+'. Prefere o seu? Clique no 🔥 lá em cima (no celular: ⋯ → Alternar tema).', 9000);
+}, 3500);
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
@@ -41581,7 +41838,14 @@ function submitComment(){
   // _commentCardId resolvido (card ainda não salvo, sem id de verdade),
   // nunca escreve — evita tanto card_comments/null quanto, se algum outro
   // caminho futuro esquecer de resetar a variável, escrever no card ERRADO.
-  if(!_commentCardId){ showToast('⚠ Salve o card antes de comentar.'); return; }
+  if(!_commentCardId){
+    if(!editingId){ _rascunhoSalvarE(id=>{
+      // espera o openCard() do card novo apontar os comentários pra ele (_commentCardId) antes de publicar
+      let n=0; const vai=()=>{ if(_commentCardId!==id){ if(n++<60) setTimeout(vai,50); else showToast('⚠ O card foi salvo, mas não consegui publicar o comentário — envie de novo.'); return; }
+        const i2=document.getElementById('m-comment-inp'); if(i2) i2.value=text; submitComment(); };
+      vai(); }, 'publicar o comentário'); return; }
+    showToast('⚠ Salve o card antes de comentar.'); return;
+  }
   const comment={
     id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
     uid:user.uid,
@@ -42388,7 +42652,11 @@ function attachSave(){
   let url = _sanitizeLinkUrl(inp.value);
   if(!url) return;
   const card = editingId ? cards.find(c=>c.id===editingId) : null;
-  if(!card) return;
+  if(!card){
+    // card ainda não salvo: antes o link sumia SEM aviso nenhum — agora salva o card e põe o link nele
+    if(!editingId) _rascunhoSalvarE(()=>{ const row=document.getElementById('m-attach-inp-row'); if(row) row.style.display='flex'; const i2=document.getElementById('m-attach-url'); if(i2){ i2.value=url; attachSave(); } }, 'adicionar o link');
+    return;
+  }
   if(!card.links) card.links=[];
   // Auto-detect title
   const svc = getServiceInfo(url);

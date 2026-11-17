@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/tema-bf-semana` — 🔥 tema BF padrão 23–29/11; **promover o `kanban.html` até sáb 21/11** (validação do Caio no dev antes) | `kanban-dev.html`, `docs/arezzo/testes/fakefb.js` | 16/11/2026 |
 
 
 ## Fila
@@ -37,7 +36,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | Conhecimento do Agente Ágil regenerado na promoção de 16/11 (Férias em tela cheia, Gantt, Ilha, Preferências, tema claro) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 16/11/2026 |
+| Claude | Conhecimento do Agente Ágil regenerado nas promoções de 16/11 (Férias em tela cheia, Gantt, Ilha, Preferências, tema claro; 2ª: tema BF da semana, diretoria, Modelo salva e continua) | resync + `firebase deploy --project hering-onboarding --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 16/11/2026 |
 | Claude | 🔥 Monitor do Firebase: feed com formato mudado não vira mais alarme do histórico inteiro (/monitorarbugs 16/11, #1815) | resync + `firebase deploy --project hering-onboarding --only functions:firebaseStatus` | 16/11/2026 |
 | Claude | 🏢 Diretoria por pessoa: regra de `usuarios/{uid}/diretoria` e do espelho em `usuarios_publicos` (só depois do merge do PR da diretoria) | resync + `firebase deploy --project hering-onboarding --only database` | 16/11/2026 |
 

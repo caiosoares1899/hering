@@ -11385,7 +11385,7 @@ function renderGlobalUsers(){
     torreSel.style.cssText = 'font-size:10px;padding:3px 6px;max-width:150px;';
     torreSel.innerHTML = GU_TORRES.map(t=>`<option value="${t.id}"${_guTorreDe(u)===t.id?' selected':''}>${t.icon} ${t.label}</option>`).join('');
     torreSel.onchange = ()=>setGlobalUserTorre(uid, torreSel.value);
-    if(!MARE_SO_HERING) squadsWrap.appendChild(torreSel);
+    if(!MARE_SO_HERING) squadsWrap.appendChild(torreSel);   // modo só Hering: o Radar tem uma torre só, nada a escolher (o campo gravado fica intacto)
     // 🏢 Diretoria (Maré): a pessoa escolhe no 1º acesso; ADM corrige aqui. Sem o campo = "Não informada" (nunca vira Digital sozinho).
     const dirSel = document.createElement('select');
     dirSel.className = 'pt-filter-input';
@@ -11399,7 +11399,7 @@ function renderGlobalUsers(){
     dirSel.innerHTML = (_dirU ? '' : '<option value="" selected>🏢 Não informada</option>')
       + GU_DIRETORIAS.map(d=>`<option value="${d.id}"${_dirU===d.id?' selected':''}>${d.icon} ${d.label}</option>`).join('');
     dirSel.onchange = ()=>setGlobalUserDiretoria(uid, dirSel.value, dirSel);
-    squadsWrap.appendChild(dirSel);   // modo só Hering: o Radar tem uma torre só, nada a escolher (o campo gravado fica intacto)
+    squadsWrap.appendChild(dirSel);
 
     // Botão excluir (remove o usuário inteiro de kanban/usuarios)
     const delBtn = document.createElement('button');
