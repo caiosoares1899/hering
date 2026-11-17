@@ -79,10 +79,38 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       await p.evaluate(() => document.getElementById('m-title').focus()); await p.keyboard.type(' (meu)'); await p.waitForTimeout(2500);
       t('card livre: digitar grava normalmente', (await banco(p)).title === 'Card da Juliana (meu)', (await banco(p)).title);
       // perdi a trava com um autosave pendente (a Juliana assumiu pelo "Pedir o card")
+      await p.evaluate(() => { window.__toasts = []; const o = showToast; showToast = (m, d) => { window.__toasts.push(m); return o(m, d); }; });
       await p.evaluate(() => document.getElementById('m-title').focus()); await p.keyboard.type(' X');
       await p.evaluate(() => window._set(window._ref(window._db, 'kanban/squads/site/dados/card_locks/c1'), { uid: 'jm', who: 'Juliana Teste', init: 'JM', ts: Date.now() + 3600e3 }));
       await p.waitForTimeout(2500);
       t('perdi a trava no meio do debounce: o autosave pendente NÃO grava por cima', (await banco(p)).title === 'Card da Juliana (meu)', (await banco(p)).title);
+      const toast = await p.evaluate(() => (window.__toasts || []).join(' | '));
+      t('…e avisa que a última alteração não foi salva', /NÃO foi salva/.test(toast), toast.slice(0, 200));
+      await ctx.close(); }
+    // liberação pelo servidor (onDisconnect): a página some sem beforeunload (iframe fechado no Oceano, celular, queda)
+    { const { ctx, p } = await abrir();
+      const LP = 'kanban/squads/site/dados/card_locks/c1';
+      await p.evaluate(() => { closeOv('card-ov'); }); await p.waitForTimeout(300);
+      await p.evaluate(() => window._remove(window._ref(window._db, 'kanban/squads/site/dados/card_locks/c1'))); await p.waitForTimeout(300);
+      await p.evaluate(() => openCard('c1')); await p.waitForTimeout(900);
+      t('ao pegar a trava, o servidor fica armado para apagá-la se a conexão cair', await p.evaluate(lp => (window.__onDisc || {})[lp] === 'remove', LP), await p.evaluate(() => window.__onDisc));
+      await p.evaluate(() => window.__simDisconnect()); await p.waitForTimeout(600);
+      const re = await p.evaluate(lp => ({ lock: lp.split('/').reduce((a, k) => a && a[k], window.__store), armado: (window.__onDisc || {})[lp] }), LP);
+      t('queda passageira: o servidor apagou e o modal reassumiu e re-armou na hora', re.lock && re.lock.uid === 'ad' && re.armado === 'remove', re);
+      // a Juliana assume (pedido vencido): minha liberação pelo servidor é cancelada
+      await p.evaluate(() => window._set(window._ref(window._db, 'kanban/squads/site/dados/card_locks/c1'), { uid: 'jm', who: 'Juliana Teste', init: 'JM', ts: Date.now() + 3600e3 })); await p.waitForTimeout(600);
+      t('perdi a trava: a minha conexão caindo não apaga a trava da Juliana', await p.evaluate(lp => !(window.__onDisc || {})[lp], LP), await p.evaluate(() => window.__onDisc));
+      await p.evaluate(() => window.__simDisconnect()); await p.waitForTimeout(300);
+      t('…a trava da Juliana continua no banco', await p.evaluate(lp => (lp.split('/').reduce((a, k) => a && a[k], window.__store) || {}).uid === 'jm', LP), '');
+      await ctx.close(); }
+    { const { ctx, p } = await abrir();
+      const LP = 'kanban/squads/site/dados/card_locks/c1';
+      await p.evaluate(() => { closeOv('card-ov'); }); await p.waitForTimeout(300);
+      await p.evaluate(() => window._remove(window._ref(window._db, 'kanban/squads/site/dados/card_locks/c1'))); await p.waitForTimeout(300);
+      await p.evaluate(() => openCard('c1')); await p.waitForTimeout(900);
+      await p.evaluate(() => closeOv('card-ov')); await p.waitForTimeout(900);
+      const fim = await p.evaluate(lp => ({ lock: lp.split('/').reduce((a, k) => a && a[k], window.__store) || null, armado: (window.__onDisc || {})[lp] || null }), LP);
+      t('fechar o card pelo ✕: trava removida e liberação pelo servidor cancelada', !fim.lock && !fim.armado, fim);
       await ctx.close(); }
   } finally { await b.close(); srv.close(); }
   console.log(falhas ? `HÁ ${falhas} FALHA(S)` : 'TUDO OK'); process.exitCode = falhas ? 1 : 0;

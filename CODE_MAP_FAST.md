@@ -100,13 +100,13 @@
 
 ### `kanban-dev.html` (141 âncoras curadas)
 - `ADM_EMAILS` (L8161) · `getEffectiveRole` (L8296) · `SQUAD_META_LIVE` (L8358) · `resolveSquadAndShow` (L13146) · `autoRegistrar` (L13683) · `_claimUserInit` (L13519)
-- `_ensureInitRegistryBackfilled` (L13562) · `doSignIn` (L13033) · `_syncAuthProfileToFirebase` (L13586) · `showApp` (L13204) · `_onRealAuthChange` (L40033) · `agentes` (L9073)
-- `allIdentities` (L9085) · `renderAgentesList` (L29697) · `fecharAddAgente` (L29738) · `salvarAgente` (L29742) · `excluirAgente` (L29769) · `CARD_SECTIONS` (L8998)
-- `openCard` (L19507) · `openAgenteHotline` (L19386) · `_applyAgenteHotlineSkin` (L19362) · `saveCard` (L20051) · `_finishCloseOv` (L39299) · `_newCardGuardOff` (L18436)
-- `fbSaveAll` (L11070) · `fbCreateCard` (L11313) · `fbSaveCard` (L11391) · `_applyCardsSync` (L11805) · `_notasUpdate` (L24123) · `_saveCardWithRetry` (L11556)
-- `saveExtraDesc` (L19094) · `openNewCard` (L19956) · `backfillFlow` (L10502) · `recordMove` (L10376) · `_reportUnexpectedCardDisappearance` (L11378) · `searchDependsCards` (L40545)
-- `_currentTheme` (L39546) · `toggleTheme` (L39608) · `toggleThemeAuto` (L39706) · `exitViceCity` (L39787) · `_isViceCityEasterEggAtivo` (L39942) · `toggleBlackFriday` (L39828)
-- `exitBlackFriday` (L39850) · `_themeBtnRightClick` (L39870) · `_isBlackFridayAtivo` (L39807) · `maybeAutoArchiveOldCards` (L17942) · `_renderArquivadosBody` (L28269) · `openArquivados` (L28334)
+- `_ensureInitRegistryBackfilled` (L13562) · `doSignIn` (L13033) · `_syncAuthProfileToFirebase` (L13586) · `showApp` (L13204) · `_onRealAuthChange` (L40050) · `agentes` (L9073)
+- `allIdentities` (L9085) · `renderAgentesList` (L29714) · `fecharAddAgente` (L29755) · `salvarAgente` (L29759) · `excluirAgente` (L29786) · `CARD_SECTIONS` (L8998)
+- `openCard` (L19524) · `openAgenteHotline` (L19403) · `_applyAgenteHotlineSkin` (L19379) · `saveCard` (L20068) · `_finishCloseOv` (L39316) · `_newCardGuardOff` (L18436)
+- `fbSaveAll` (L11070) · `fbCreateCard` (L11313) · `fbSaveCard` (L11391) · `_applyCardsSync` (L11805) · `_notasUpdate` (L24140) · `_saveCardWithRetry` (L11556)
+- `saveExtraDesc` (L19111) · `openNewCard` (L19973) · `backfillFlow` (L10502) · `recordMove` (L10376) · `_reportUnexpectedCardDisappearance` (L11378) · `searchDependsCards` (L40562)
+- `_currentTheme` (L39563) · `toggleTheme` (L39625) · `toggleThemeAuto` (L39723) · `exitViceCity` (L39804) · `_isViceCityEasterEggAtivo` (L39959) · `toggleBlackFriday` (L39845)
+- `exitBlackFriday` (L39867) · `_themeBtnRightClick` (L39887) · `_isBlackFridayAtivo` (L39824) · `maybeAutoArchiveOldCards` (L17942) · `_renderArquivadosBody` (L28286) · `openArquivados` (L28351)
 - *... (+93 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)
