@@ -7773,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1003-dev</div>
+<div class="version">v8.30.1004-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -42061,7 +42061,7 @@ function autoResizeCommentInp(ta){
   ta.style.height=Math.min(ta.scrollHeight,120)+'px';
 }
 
-function submitComment(){
+async function submitComment(){
   const inp=document.getElementById('m-comment-inp'); if(!inp) return;
   const text=inp.value.trim(); if(!text) return;
   const user=window._currentUser; if(!user) return;
@@ -42091,22 +42091,33 @@ function submitComment(){
   // comentário), depois fbSaveCard() (update incremental do card, mas ainda
   // carregando TODOS os comentários dele) — agora é 1 write pequeno,
   // desacoplado de qualquer outro campo do card.
-  if(!_commentsCache[_commentCardId]) _commentsCache[_commentCardId]={};
-  _commentsCache[_commentCardId][comment.id]=comment;
-  window._set(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+comment.id), comment)
-    .catch(err=>showToast('⚠ Erro ao salvar comentário: '+(err?.message||err)));
+  const cardId = _commentCardId;
+  const squad = ACTIVE_SQUAD;
+  const rawText = inp.value;
   inp.value=''; inp.style.height='auto';
   eocResetComment();
-  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
-  // Fire @mention notifications from comment
-  parseMentions(text, _commentCardId, comment.id);
+  try{
+    await window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment);
+  }catch(err){
+    if(ACTIVE_SQUAD===squad && editingId===cardId && _commentCardId===cardId && !inp.value){
+      inp.value=rawText;
+      autoResizeCommentInp(inp);
+    }
+    showToast('⚠ Erro ao salvar comentário: '+(err?.message||err));
+    return;
+  }
+  if(ACTIVE_SQUAD!==squad) return;
+  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
+  _commentsCache[cardId][comment.id]=comment;
+  if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  parseMentions(text, cardId, comment.id);
   // "🤖 pensando..." — diferente de _dispatchAgenteAgilComment() (só usado
   // pelos atalhos sintéticos), aqui a pessoa digitou a @menção na mão, no
   // comentário normal — precisa da mesma detecção (ver _textMencionaAgenteAgil)
   // pra saber se isso é mesmo uma @menção real, e só se o squad tiver a
   // Cloud Function de verdade ouvindo (senão o indicador nunca resolveria
   // sozinho, só pelo timeout de segurança).
-  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(_commentCardId);
+  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(cardId);
 }
 
 function deleteComment(cid){
