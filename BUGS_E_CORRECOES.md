@@ -115,6 +115,13 @@ O envio mostrava o comentário e disparava menções antes da confirmação do F
 - **Teste:** `functions/cards/__tests__/guardiao.test.js` (+2). Os dois falham no código anterior; suíte do guardião 23/23.
 - **Sem achado:** todos os caminhos de exclusão do board gravam `cards_deleted_intentionally` na mesma escrita (excluir, em massa, arquivados, Agente, órfãos do supercard), e nenhuma function apaga card. `guardiaoStatus` é agendado, não HTTP. O `oceanoResumo` usa chave em tempo constante e teto por hora em transação.
 - **Observação, não corrigida:** o Ctrl+Z que devolve um card excluído não limpa a marca `cards_deleted_intentionally`. Se esse card sumir de novo por engano, o guardião o trata como exclusão de propósito.
+### 2026-11-17 · Supercards: XSS armazenado em IDs dos links e receitas — kanban v8.30.1004-dev — SÓ DEV
+
+Confirmado: funcionário/membro com escrita em dados do squad controla card.id ou chave de config/fanout_templates; ID válido com apóstrofo escapava por esc(), mas a decodificação do atributo onclick o recompilava como JavaScript no clique de outra pessoa. Reprodução Chromium: payload executou nos três testes de clicar receita, abrir filho e remover filho. Seis sinks da mesma família (incluindo notas do pai e Ficha Técnica) passam por jsq(). Revisão independente confirmou caminho e regras; sem sondar Firebase real. Testes console_supercards_1711.js agora mostram zero execução e ID íntegro. Fronteira: dado do banco → handler inline conferida e corrigida; nenhuma permissão, regra ou nó novo. Sem evidência de exploração em produção. Dica: não, correção de segurança.
+
+### 2026-11-17 · Supercards: receita em Modelo criava órfãos e Automação ultrapassava três camadas — SÓ DEV
+
+A aplicação manual de receita não tinha o bloqueio de _editingQLItem já existente na criação rápida: filhos eram persistidos, mas o pai _isQLTemp desaparecia ao fechar/salvar o Modelo. A Automação também não conferia ancestrais e gerava quarta camada em uma versão. _superPodeGerarFilhos valida o pai no gerador e nos chamadores antes de aplicar o modelo do pai; campanha, criativo e ancestral arquivado continuam permitidos. Prova: test_supercards_1711.js e console_supercards_1711.js, com funções reais em Chromium, banco falso e boot real; três verificações isoladas e duas de boot falham na main anterior, todas passam após corrigir. Fronteira: sem mudança, restrição de hierarquia e de card temporário nos mesmos caminhos de escrita. Dica: não, correção de bug.
 
 ### 2026-11-17 · 🔒 Trava presa por até 10 min quando a página fecha sem o beforeunload (Oceano, celular, queda) — a correção do #1832 não cobria — kanban v8.30.1002-dev (SÓ DEV)
 

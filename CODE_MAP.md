@@ -1789,6 +1789,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   não tem entrada própria aqui.)
 
 ### Supercards / Ficha Técnica
+- `_superPodeGerarFilhos(parentCard)` — L37170 — recusa pai temporário e versão com dois ancestrais ativos; usado no gerador de receita e antes da mescla do modelo do pai nos caminhos manual/Automação (17/11/2026).
 - `_crvAutoTitle()` — L18662 — título automático do filho a partir da Ficha Técnica
 - `searchSuperChildren()` — L29771 — busca de cards existentes ao criar um filho
 - `_mergeModeloEmCardObj()` — L33916
