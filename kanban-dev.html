@@ -1269,11 +1269,28 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 /* /melhoriauiux 17/11 (Arc UI, guia §2.4 "hover só em mouse"): no toque (iPad/celular) o :hover gruda depois do toque —
    card, botão e evento ficavam levantados/aumentados até tocar em outro lugar. O antigo "transform:none" só valia em
    tela estreita; o tablet largo continuava com o salto. Sem mouse, nada se mexe no hover (a cor de borda continua). */
-@media (hover:none){
-  .card:hover,.squad-sel-card:hover,.ilha-tile:hover,.col-cfg-btn:hover,.cover-swatch:hover,.fab-btn:hover,.ui-modal-ok:hover,
-  .postit:hover,.kr-picker span:hover,.cal-event:hover,.mural-note:hover,.rx-picker span:hover,.fmt-color:hover,.gantt-bar:hover,
-  .camp-card:hover,.camp-grid-card:hover,.ilha-aba:hover .ilha-aba-ico,.kudos-send-btn:hover,.cal-periodo-bar:hover,
-  .camp-send-btn:hover{transform:none!important;}
+@media (hover:none) and (pointer:coarse){
+  /* "html " na frente: ganha das regras base com !important que vêm depois no arquivo (ex.: .mural-note:hover) */
+  html .card:hover,
+  html .squad-sel-card:hover,
+  html .ilha-tile:hover,
+  html .col-cfg-btn:hover,
+  html .cover-swatch:hover,
+  html .fab-btn:hover,
+  html .ui-modal-ok:hover,
+  html .postit:hover,
+  html .kr-picker span:hover,
+  html .cal-event:hover,
+  html .mural-note:hover,
+  html .rx-picker span:hover,
+  html .fmt-color:hover,
+  html .gantt-bar:hover,
+  html .camp-card:hover,
+  html .camp-grid-card:hover,
+  html .ilha-aba:hover .ilha-aba-ico,
+  html .kudos-send-btn:hover,
+  html .cal-periodo-bar:hover,
+  html .camp-send-btn:hover{transform:none!important;}
 }
 .card.archived{display:none;}
 .card-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-bottom:4px;margin-right:3px;font-weight:700;border:1px solid transparent;}
@@ -18373,7 +18390,8 @@ function _performAutoSave(){
     _asSaveP.then(()=>{
       if(editingId===c.id && _cardManualSnap && _cardManualSnap===_asManualSnap){ Object.assign(_cardManualSnap,_savedDatas); _updateSaveBtnDirtyState(); }
       const btn=document.getElementById('btn-save-card');
-      if(btn && editingId===_asCardId && !_savingCard){
+      // não diz "✓ Salvo" se ainda há campo só-manual pendente (o botão está amarelo, "Salvar alterações")
+      if(btn && editingId===_asCardId && !_savingCard && !_cardIsDirty()){
         btn.textContent='✓ Salvo';
         clearTimeout(window._asSalvoT);
         window._asSalvoT=setTimeout(()=>{ if(!_savingCard && editingId===_asCardId) _updateSaveBtnDirtyState(); },1200);

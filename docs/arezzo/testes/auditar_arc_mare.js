@@ -48,7 +48,7 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       await ctx.close();
     }
     // B) toque em tablet (sem mouse): :hover forçado pelo DevTools não pode levantar o card (no iPad o hover gruda após o toque)
-    for (const [tw, th] of [[834, 1112], [1180, 820]]) { const { ctx, p } = await abrir(tw, th, true, '');
+    for (const [tw, th, tema] of [[834, 1112, ''], [1180, 820, ''], [1180, 820, 'light'], [1180, 820, 'vice'], [1180, 820, 'blackfriday'], [390, 800, '']]) { const { ctx, p } = await abrir(tw, th, true, tema);
       const ctx2 = ctx; const cdp = await ctx2.newCDPSession(p);
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'hover', value: 'none' }, { name: 'pointer', value: 'coarse' }] });
       t('tablet: ambiente sem mouse (hover:none)', await p.evaluate(() => matchMedia('(hover:none)').matches), '');
@@ -58,7 +58,13 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       await cdp.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['hover'] });
       await p.waitForTimeout(500); // o card tem transition: ler na hora devolve o valor inicial da transição (falso verde)
       const r = await p.evaluate(() => { const c = document.querySelector('.card'); return { hover: c.matches(':hover'), transform: getComputedStyle(c).transform }; });
-      t('tablet '+tw+' px: card em :hover continua no lugar (sem translateY)', r.hover && (r.transform === 'none' || r.transform === 'matrix(1, 0, 0, 1, 0, 0)'), r);
+      t('toque '+tw+' px '+(tema||'abrolhos')+': card em :hover continua no lugar (sem translateY)', r.hover && (r.transform === 'none' || r.transform === 'matrix(1, 0, 0, 1, 0, 0)'), r);
+      // post-it do Mural: regra base com !important vem DEPOIS no arquivo — precisa perder também
+      await p.evaluate(() => { const n = document.createElement('div'); n.className = 'mural-note'; n.id = '__mn'; n.textContent = 'x'; n.style.cssText = 'position:fixed;top:0;left:0;width:60px;height:60px;'; document.body.appendChild(n); });
+      const { nodeId: mn } = await cdp.send('DOM.querySelector', { nodeId: (await cdp.send('DOM.getDocument', { depth: -1 })).root.nodeId, selector: '#__mn' });
+      await cdp.send('CSS.forcePseudoState', { nodeId: mn, forcedPseudoClasses: ['hover'] }); await p.waitForTimeout(500);
+      const mt = await p.evaluate(() => getComputedStyle(document.getElementById('__mn')).transform);
+      t('toque '+tw+' px '+(tema||'abrolhos')+': post-it do Mural não cresce no hover', mt === 'none' || mt === 'matrix(1, 0, 0, 1, 0, 0)', mt);
       await ctx.close(); }
     // B2) mouse de verdade: o hover continua levantando o card (não tiramos o efeito de quem tem mouse)
     { const { ctx, p } = await abrir(1280, 900, false, '');
@@ -81,6 +87,11 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       await p.waitForTimeout(3500);
       const fim = await p.evaluate(() => document.getElementById('btn-save-card').textContent);
       t('2 salvamentos seguidos: o botão volta a "💾 Salvar…" (não gruda em "✓ Salvo")', /^💾 Salvar/.test(fim), fim);
+      // campo só-manual pendente (prioridade) + autosave de outro campo: o botão amarelo não pode dizer "✓ Salvo"
+      await p.evaluate(() => { const pr = document.getElementById('m-priority'); pr.value = pr.value === 'high' ? 'low' : 'high'; pr.dispatchEvent(new Event('change', { bubbles: true })); });
+      await p.evaluate(() => { const d = document.getElementById('m-desc'); d.value = 'texto 4'; scheduleAutoSave(); });
+      let mentiu = false; for (let i = 0; i < 30; i++) { await p.waitForTimeout(100); if (await p.evaluate(() => document.getElementById('btn-save-card').textContent.includes('✓ Salvo'))) mentiu = true; }
+      t('com campo não salvo pendente, o autosave NÃO diz "✓ Salvo"', !mentiu, await p.evaluate(() => document.getElementById('btn-save-card').textContent));
       t('sem erro de JS (autosave)', !errs.length, errs);
       await ctx.close(); }
     // C) números que mudam com largura estável
