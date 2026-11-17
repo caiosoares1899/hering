@@ -98,6 +98,8 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
   - Queda passageira: o servidor apaga, o modal vê o nó vazio ao reconectar, reassume e re-arma.
   - `pagehide` como atalho, junto do `beforeunload`; `pageshow` (volta pelo cache do navegador) reassume.
   - Trocar de card sem fechar solta a trava do anterior.
+  - Quem perde a trava com alteração pendente vê o aviso "⚠️ X assumiu este card — sua última alteração NÃO foi salva"; o texto continua na tela.
+- **Efeito colateral aceito por enquanto (decisão do Caio pendente):** com o `onDisconnect`, uma queda rápida da conexão de quem edita libera a trava na hora. Se alguém está olhando o card em modo leitura naquele momento, assume. Antes isso levava 10 min. A alternativa é uma carência de ~60 s com a trava marcada como "desconectado" antes de liberar; ela não foi feita e não dá para testar com 2 aparelhos no Firebase falso.
 - **Teste:** `docs/arezzo/testes/test_trava_card.js` agora com 16 checagens. O `docs/arezzo/testes/fakefb.js` ganhou `onDisconnect` + `__simDisconnect()`.
 - **Lição:** teste de "fechar a página" com iframe não dispara `beforeunload`. A garantia de liberar estado ao sair precisa morar no servidor (`onDisconnect`), não num handler de saída da página.
 

@@ -79,10 +79,13 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       await p.evaluate(() => document.getElementById('m-title').focus()); await p.keyboard.type(' (meu)'); await p.waitForTimeout(2500);
       t('card livre: digitar grava normalmente', (await banco(p)).title === 'Card da Juliana (meu)', (await banco(p)).title);
       // perdi a trava com um autosave pendente (a Juliana assumiu pelo "Pedir o card")
+      await p.evaluate(() => { window.__toasts = []; const o = showToast; showToast = (m, d) => { window.__toasts.push(m); return o(m, d); }; });
       await p.evaluate(() => document.getElementById('m-title').focus()); await p.keyboard.type(' X');
       await p.evaluate(() => window._set(window._ref(window._db, 'kanban/squads/site/dados/card_locks/c1'), { uid: 'jm', who: 'Juliana Teste', init: 'JM', ts: Date.now() + 3600e3 }));
       await p.waitForTimeout(2500);
       t('perdi a trava no meio do debounce: o autosave pendente NÃO grava por cima', (await banco(p)).title === 'Card da Juliana (meu)', (await banco(p)).title);
+      const toast = await p.evaluate(() => (window.__toasts || []).join(' | '));
+      t('…e avisa que a última alteração não foi salva', /NÃO foi salva/.test(toast), toast.slice(0, 200));
       await ctx.close(); }
     // liberação pelo servidor (onDisconnect): a página some sem beforeunload (iframe fechado no Oceano, celular, queda)
     { const { ctx, p } = await abrir();

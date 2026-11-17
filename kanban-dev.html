@@ -18791,10 +18791,17 @@ function _checkCardLock(cardId){
       // DE VERDADE o próprio heartbeat aqui, senão ele continua sobrescrevendo
       // o lock de quem realmente ganhou a cada minuto, fazendo as duas pessoas
       // ficarem se travando uma à outra em loop.
+      const _eraMinha=_cardLockOwnedId===cardId;
       _cardLockOwnedId=null;
       _stopCardLockHeartbeat();
       _cancelarLiberacaoAoDesconectar(cardId); // a trava é de outra pessoa agora: minha conexão caindo não pode apagá-la
       _setCardLockUI(true, lock.who);
+      // Eu editava e outra pessoa assumiu (pedido vencido ou, desde o onDisconnect, minha conexão caiu e quem olhava o card pegou): o autosave
+      // pendente é descartado pela guarda — avisa em vez de perder em silêncio; o texto continua na tela para copiar.
+      if(_eraMinha && editingId===cardId){
+        const _pend=!!_autoSaveTimer; if(_pend){ clearTimeout(_autoSaveTimer); _autoSaveTimer=null; }
+        showToast('⚠️ '+(lock.who||'Outra pessoa')+' assumiu este card'+(_pend?' — sua última alteração NÃO foi salva (o texto continua na tela, copie antes de fechar).':'.'), _pend?9000:undefined);
+      }
     }
   };
   window._get(ref).then(snap=>{
