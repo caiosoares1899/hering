@@ -87,6 +87,23 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-17 · 🔒 A trava de edição do card só valia para o mouse: quem estava em "modo leitura" ainda gravava por cima de quem editava — kanban v8.30.1001-dev (SÓ DEV)
+
+- **Origem:** `/monitorarbugs` na trava de edição (`card_locks`), logo depois da pergunta "o bloqueio do card não deveria resolver isso?" (#1831). Pensando na Black Friday.
+- **Causa:** o "modo leitura" era só CSS (`pointer-events:none` no corpo do modal), e nenhum caminho de gravação conferia a trava.
+- **Reproduzido** (`docs/arezzo/testes/test_trava_card.js`, 5 falhas na `main`):
+  - (1) com o card travado por outra pessoa, Tab até o título e digitar: o autosave grava por cima de quem está editando;
+  - (2) ⏸ Pausar, (3) ♾️ Contínuo e (4) 📦 Arquivar, que ficam no rodapé (fora do corpo travado), mexiam no card do outro, inclusive pelos atalhos de teclado do modal (🗑 Excluir também, mesmo caminho);
+  - (5) quem tinha a trava e a perdia (pedido vencido, corrida) com um autosave pendente gravava depois de já estar em modo leitura.
+- **Correção:**
+  - `_cardTravadoAqui()` conferido em `scheduleAutoSave`/`_flushAutoSave`/`_performAutoSave`, `saveCard`, `deleteCard`, `archiveCard`, `togglePauseCard` e `toggleContinuo`, com aviso "use 🔔 Pedir o card";
+  - campo de editar não recebe foco em modo leitura.
+  - O CSS continua só como aparência.
+- **Precisa validar no banco real (o Firebase falso não reproduz):**
+  - ao fechar/recarregar a aba, `_releaseCardLock()` lia o nó no servidor antes de apagar, e a página morre antes da resposta. O card ficaria "em edição" para os outros por até 10 min, e cada promoção recarrega todas as abas.
+  - Agora o `beforeunload` remove direto. Se alguém assumiu no último instante, reassume na hora.
+- **Fora do escopo (reportado):** ações FORA do modal (menu de contexto, arrastar, em massa, Automações, Agente Ágil) não consultam a trava de propósito. Elas passam pelo merge de 3 vias e, desde o #1831, o modal aberto acompanha o que elas gravam. A mesma pessoa em duas abas continua editável nas duas (trava por usuário, de propósito).
+
 ### 2026-11-17 · 🧑‍🤝‍🧑 Duas pessoas no mesmo card: o salvamento de uma desfazia o checklist, a descrição e os participantes da outra — kanban v8.30.1000-dev (SÓ DEV)
 
 - **Origem:** `/monitorarbugs` pedido logo depois do bug do responsável (#1829), "esse tipo de erro, pensando em Black Friday": campo do modal que fica velho enquanto o card muda por baixo, e o autosave gravando o valor errado.

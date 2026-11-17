@@ -7773,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1000-dev</div>
+<div class="version">v8.30.1001-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18188,6 +18188,7 @@ function _cardDatasToSave(card){
 let _autoSaveTimer = null;
 function scheduleAutoSave(){
   if(!editingId) return; // só auto-salva cards existentes
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; } // 🔒 outra pessoa está editando (ver _cardTravadoAqui)
   // Achado real (investigação de "[card sumiu inesperadamente]" reportado
   // em produção, __qltmp__..., squad midiacriativa): editar um Modelo/
   // Recorrente/Agendamento (openQLEdit()) abre um card TEMPORÁRIO em
@@ -18238,6 +18239,7 @@ function scheduleAutoSave(){
 // modal) e no topo de openCard() (trocar de card com o modal já aberto),
 // antes de qualquer um dos dois mexer em editingId/DOM.
 function _flushAutoSave(){
+  if(_autoSaveTimer && _cardTravadoAqui()){ clearTimeout(_autoSaveTimer); _autoSaveTimer=null; return; } // perdi a trava com um autosave pendente: não grava por cima de quem assumiu
   if(_autoSaveTimer){
     clearTimeout(_autoSaveTimer);
     _autoSaveTimer = null;
@@ -18245,6 +18247,7 @@ function _flushAutoSave(){
   }
 }
 function _performAutoSave(){
+    if(_cardTravadoAqui()) return; // 🔒 a trava passou para outra pessoa durante o debounce: não grava por cima dela
     const title=document.getElementById('m-title').value.trim();
     if(!title) return;
     const td=new Date().toISOString().split('T')[0];
@@ -18672,6 +18675,23 @@ function _setCardLockUI(lockedByOther, who){
   if(body) body.classList.toggle('locked-ro', !!lockedByOther);
   if(lockedByOther && document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
+// 🔒 /monitorarbugs 17/11/2026 (trava × Black Friday): o "modo leitura" era só CSS (pointer-events:none no corpo do modal). Quem estava na leitura
+// chegava no título/descrição pelo TECLADO (Tab) e o autosave gravava por cima de quem editava; os botões do rodapé (⏸ Pausar, ♾️ Contínuo,
+// 📦 Arquivar, 🗑 Excluir), fora do corpo travado, mexiam no card do outro — inclusive pelos atalhos de teclado do modal. Agora todo caminho de
+// gravação do modal pergunta isto antes; o CSS continua só como aparência.
+function _cardTravadoAqui(cardId){
+  const ov=document.getElementById('card-ov');
+  return !!(editingId && (!cardId || cardId===editingId) && ov && ov.classList.contains('open') && document.querySelector('#card-ov .modal-body')?.classList.contains('locked-ro'));
+}
+function _avisoCardTravado(){
+  const now=Date.now(); if(window._avisoTravadoAt && now-window._avisoTravadoAt<3000) return; window._avisoTravadoAt=now;
+  showToast('🔒 '+(document.getElementById('m-lock-text')?.textContent.replace(/^🔒\s*/,'').split(' — ')[0]||'Outra pessoa está editando este card')+' — use "🔔 Pedir o card" para editar.');
+}
+// teclado: em modo leitura, campo de editar não recebe foco (pointer-events não barra o Tab)
+document.addEventListener('focusin', e=>{
+  const t=e.target; if(!t || !t.closest || !t.closest('#card-ov .modal-body.locked-ro')) return;
+  if(t.matches('input,textarea,select,[contenteditable=""],[contenteditable="true"]')){ t.blur(); _avisoCardTravado(); }
+}, true);
 function _stopCardLockHeartbeat(){ clearInterval(_cardLockHeartbeatTimer); _cardLockHeartbeatTimer=null; }
 function _startCardLockHeartbeat(cardId){
   _stopCardLockHeartbeat();
@@ -18805,7 +18825,15 @@ function _releaseCardLock(cardId){
 }
 if(!window._cardLockBeforeUnloadSet){
   window._cardLockBeforeUnloadSet=true;
-  window.addEventListener('beforeunload', ()=>{ if(_cardLockOwnedId) _releaseCardLock(_cardLockOwnedId); });
+  // Ao fechar/recarregar a aba, a página morre antes da leitura de _releaseCardLock() voltar do servidor (o listener já foi desligado): o lock
+  // ficava no banco e o card aparecia "em edição" para os outros por até 10 min (CARD_LOCK_STALE_MS) — e na Black Friday cada promoção recarrega
+  // todas as abas. Aqui remove direto: _cardLockOwnedId já reflete o dono (o listener zera quando outro assume); se alguém assumiu no último
+  // instante, o listener dele vê o nó vazio e reassume na hora (_apply(null)).
+  window.addEventListener('beforeunload', ()=>{
+    const id=_cardLockOwnedId; if(!id) return;
+    _cardLockOwnedId=null; if(_cardLockUnsub){ try{ _cardLockUnsub(); }catch(_){} _cardLockUnsub=null; } _stopCardLockHeartbeat();
+    if(window._fbReady){ try{ window._remove(window._ref(window._db, _cardLockPath(id))); }catch(_){} }
+  });
 }
 // Guarda o valor de card.col no momento em que o modal foi aberto. Usado pra
 // distinguir "usuário mudou a coluna no dropdown" de "coluna mudou em outro
@@ -20022,6 +20050,7 @@ function openNewCard(col, prefillOwner, prefillTagId){
 }
 function saveCard(){
   if(_savingCard) return; // já tem um salvamento em voo (ver comentário na declaração de _savingCard)
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; } // 🔒 ver _cardTravadoAqui
   if(!checkEditPermission()) return;
   const title=document.getElementById('m-title').value.trim();
   // ── Modo edição de item recorrente/modelo/agendamento ──
@@ -20422,6 +20451,7 @@ function _rascunhoSalvarE(acao, oQue){
   return true;
 }
 async function deleteCard(){
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; }
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   if(!await uiConfirm('Excluir "'+c.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   saveUndo('excluir card');
@@ -20430,6 +20460,7 @@ async function deleteCard(){
   fbSaveAll({['cards_deleted_intentionally/'+editingId]:true}, []); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; }
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.archived=true; c.archivedAt=new Date().toISOString(); _checkSupercardAllDone(c); fbSaveCard(c); renderBoard(); closeOv('card-ov');
 }
@@ -20456,6 +20487,7 @@ function archiveCard(){
 // fechado) é o mesmo padrão já usado por togglePinCard().
 function togglePauseCard(cardId){
   const id = cardId || editingId;
+  if(_cardTravadoAqui(id)){ _avisoCardTravado(); return; }
   if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
   const nowISO=new Date().toISOString();
   if(c.paused){
@@ -20535,6 +20567,7 @@ function _renderPauseBtn(c){
 // caso especial.
 function toggleContinuo(cardId){
   const id = cardId || editingId;
+  if(_cardTravadoAqui(id)){ _avisoCardTravado(); return; }
   if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
   c.continuo = !c.continuo;
   if(c.continuo){
