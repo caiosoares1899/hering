@@ -1142,7 +1142,7 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);border-left:3px solid var(--col-accent,transparent);border-top:3px solid var(--col-accent,transparent);border-top-left-radius:var(--r2);cursor:default;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
+.col-cnt{font-variant-numeric:tabular-nums;font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-sort-btn{transition:color .15s;}
 .col-sort-btn:hover{color:var(--teal)!important;}
@@ -1266,6 +1266,32 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .bulk-del:hover:not(:disabled){background:rgba(255,107,107,.28)!important;}
 .bulk-del:disabled{opacity:.4;cursor:not-allowed;}
 .card:hover{border-color:var(--accent);transform:translateY(-1px);}
+/* /melhoriauiux 17/11 (Arc UI, guia §2.4 "hover só em mouse"): no toque (iPad/celular) o :hover gruda depois do toque —
+   card, botão e evento ficavam levantados/aumentados até tocar em outro lugar. O antigo "transform:none" só valia em
+   tela estreita; o tablet largo continuava com o salto. Sem mouse, nada se mexe no hover (a cor de borda continua). */
+@media (hover:none) and (pointer:coarse){
+  /* "html " na frente: ganha das regras base com !important que vêm depois no arquivo (ex.: .mural-note:hover) */
+  html .card:hover,
+  html .squad-sel-card:hover,
+  html .ilha-tile:hover,
+  html .col-cfg-btn:hover,
+  html .cover-swatch:hover,
+  html .fab-btn:hover,
+  html .ui-modal-ok:hover,
+  html .postit:hover,
+  html .kr-picker span:hover,
+  html .cal-event:hover,
+  html .mural-note:hover,
+  html .rx-picker span:hover,
+  html .fmt-color:hover,
+  html .gantt-bar:hover,
+  html .camp-card:hover,
+  html .camp-grid-card:hover,
+  html .ilha-aba:hover .ilha-aba-ico,
+  html .kudos-send-btn:hover,
+  html .cal-periodo-bar:hover,
+  html .camp-send-btn:hover{transform:none!important;}
+}
 .card.archived{display:none;}
 .card-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-bottom:4px;margin-right:3px;font-weight:700;border:1px solid transparent;}
 /* Multi-tag selector no modal */
@@ -1580,7 +1606,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .met-g{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
 .met{background:rgba(var(--surface2-rgb),.7);border:1px solid var(--glass-b);border-radius:var(--r);padding:9px;}
 .met-lbl{font-size:10px;color:var(--txt2);margin-bottom:2px;}
-.met-val{font-size:20px;font-weight:700;font-family:"Syne",sans-serif;}
+.met-val{font-size:20px;font-weight:700;font-family:"Syne",sans-serif;font-variant-numeric:tabular-nums;}
 .met-sub{font-size:9px;color:var(--txt3);}
 /* config */
 .cfg-panel{max-width:820px;width:94vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
@@ -2856,7 +2882,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-badge{
   position:absolute;top:-4px;right:-4px;
   background:var(--danger);color:#fff;
-  font-size:9px;font-weight:800;border-radius:999px;
+  font-size:9px;font-weight:800;border-radius:999px;font-variant-numeric:tabular-nums;
   min-width:17px;height:17px;
   align-items:center;justify-content:center;
   padding:0 4px;pointer-events:none;
@@ -7747,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.998-dev</div>
+<div class="version">v8.30.999-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18354,12 +18380,22 @@ function _performAutoSave(){
     // nas 2 tentativas). Se falhar, o próprio aviso ⚠ de _saveCardWithRetry
     // já cobre o feedback de erro — só engole a rejeição aqui pra não gerar
     // "uncaught promise" no console.
-    const btn=document.querySelector('#card-ov .btn-p');
+    // /melhoriauiux 17/11 (Arc UI: "resultado de salvar no próprio botão"): era querySelector('#card-ov .btn-p'), que acha
+    // PRIMEIRO o "✓ Salvar impedimento" (escondido, vem antes no HTML) — o "✓ Salvo" nunca aparecia no 💾 Salvar. E 2 saves
+    // em menos de 1,2 s guardavam "✓ Salvo" como texto "original" (o botão ficava preso nele). Agora é o botão certo, e a volta
+    // recalcula o rótulo pelo estado real (Salvar / Salvar alterações), sem guardar texto antigo.
+    const _asCardId=c.id;
     const _savedDatas=Object.fromEntries(_CARD_DATAS.map(f=>[f,c[f]||'']));
     const _asManualSnap=_cardManualSnap; // uma resposta antiga não altera a base de uma reabertura
     _asSaveP.then(()=>{
       if(editingId===c.id && _cardManualSnap && _cardManualSnap===_asManualSnap){ Object.assign(_cardManualSnap,_savedDatas); _updateSaveBtnDirtyState(); }
-      if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
+      const btn=document.getElementById('btn-save-card');
+      // não diz "✓ Salvo" se ainda há campo só-manual pendente (o botão está amarelo, "Salvar alterações")
+      if(btn && editingId===_asCardId && !_savingCard && !_cardIsDirty()){
+        btn.textContent='✓ Salvo';
+        clearTimeout(window._asSalvoT);
+        window._asSalvoT=setTimeout(()=>{ if(!_savingCard && editingId===_asCardId) _updateSaveBtnDirtyState(); },1200);
+      }
     }).catch(()=>{});
 }
 // ── FIM AUTO-SAVE ──────────────────────────────────────────────────

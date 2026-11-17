@@ -24,6 +24,21 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 🎨 /melhoriauiux do Maré com a referência do Arc UI: hover que não gruda no toque e números que não pulam (kanban v8.30.999-dev) — 2026-11-17
+
+- **Pedido do Caio:** rodada de UI/UX no Maré com a referência do Arc UI (uiarc.dev), que entrou no guia em #1826/#1827.
+- **Auditado renderizando** (`docs/arezzo/testes/auditar_arc_mare.js`, boot real, `KANBAN_HTML=` compara com a `main`):
+  - foco por teclado nas 70 primeiras paradas do Tab (cabeçalho e barra), nos 3 temas, a 1280 px;
+  - hover no toque a 834, 1180 e 390 px, nos 4 temas (inclusive o 🔥);
+  - contadores e o retorno do salvamento automático, a 1280 px.
+  - A `main` falha em 13 checagens; o dev passa em todas.
+- **O que mudou:**
+  - **Tablet e celular:** depois de tocar num card ou post-it do Mural, ele não fica mais "levantado"/aumentado. No iPad o hover gruda após o toque, e o efeito só estava desligado em tela estreita. Com mouse, o card continua subindo de leve.
+  - **Contadores das colunas, métricas e selo do sino** têm largura fixa por dígito: "9 → 10" não empurra mais o vizinho.
+- **Já estava bom (sem mudança):** o anel de foco por teclado aparece em todas as paradas medidas do cabeçalho e da barra; o efeito que "passa do ponto" só existe no pop de notificação, que é onde o guia permite.
+- **Ainda não auditado** (próxima rodada): foco dentro dos cards e do modal do card, controle certo (segmentado × abas, interruptor × caixa) e "um botão principal por tela".
+- Correção de passagem registrada em `BUGS_E_CORRECOES.md` (o "✓ Salvo" do salvamento automático).
+
 ### 🏢 Diretoria por pessoa: escolha no 1º acesso, edição pelo ADM no Painel e etiqueta na 👥 Equipe (kanban v8.30.994-dev, painel v5.119-dev, regras) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119) — 2026-11-16
 
 - **Pedido do Caio:** voltar a classificar as pessoas por diretoria para a expansão do Maré a RH e CRM. Cada um escolhe no 1º acesso, o ADM edita no Painel, e o valor aparece como etiqueta na Equipe. Desenho do Codex (#1818).

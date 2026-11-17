@@ -95,6 +95,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Efeito colateral visto no histórico:** ao se reatribuir, a regra "atribuído a AD + BRIEFING OK → To Do (Design)" devolvia o card de In Progress para To Do.
 - **Correção:** `populateOwnerSelect()` guarda e devolve a seleção (e mantém a sigla se a pessoa saiu da lista); `openCard()` mantém o responsável fora do time como opção "(fora do time)".
 - Teste: `docs/arezzo/testes/test_responsavel_some.js` (8; a `main` falha em 6, inclusive "removeu responsável | definiu descrição" no histórico). Fronteira: sem mudança. Dica: não, é correção.
+### 2026-11-17 · 💾 "✓ Salvo" do salvamento automático nunca aparecia no botão Salvar do card (kanban v8.30.999-dev)
+
+- **Achado no /melhoriauiux** com a referência do Arc UI ("resultado de salvar no próprio botão").
+- **Causa:** `_performAutoSave()` procurava o botão com `querySelector('#card-ov .btn-p')`. O primeiro `.btn-p` do modal é o "✓ Salvar impedimento", escondido e anterior no HTML. O "✓ Salvo" ia para ele, e o 💾 Salvar nunca confirmava nada. Além disso, 2 salvamentos com menos de 1,2 s guardavam "✓ Salvo" como o texto original, e o botão ficava preso nele.
+- **Correção:** usa `#btn-save-card`, só mostra se o card ainda é o mesmo, sem salvamento manual em curso e sem campo só-manual pendente (botão amarelo "Salvar alterações" nunca diz "✓ Salvo"), e a volta recalcula o rótulo pelo estado real ("💾 Salvar" ou "💾 Salvar alterações").
+- Teste: `docs/arezzo/testes/auditar_arc_mare.js` (falha na `main`, passa no dev). Fronteira: sem mudança. Dica: não, é correção.
 
 ### 2026-11-17 · 🏢 Etiqueta de diretoria sumida na 👥 Equipe para quem tem diretoria no cadastro (painel v5.120-dev)
 
