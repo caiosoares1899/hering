@@ -91,6 +91,8 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 O envio mostrava o comentário e disparava menções antes da confirmação do Firebase. Agora uma rejeição restaura o texto no mesmo card se o campo estiver vazio, e só a gravação confirmada atualiza a lista e dispara menções.
 
+- **Complemento (Claude, a pedido do Caio na revisão):** esperar a confirmação calado deixava a lista parada, e offline o comentário parecia perdido. Agora ele aparece na hora, apagado e com "⏳ enviando…", sem reagir/editar/excluir. Quando o banco confirma, vira comentário normal; se o banco recusar, sai da lista e o texto volta ao campo. A marca `_enviando` só existe na tela e nunca é gravada. Teste: `docs/arezzo/testes/test_comentario_enviando.js` (10 checagens: banco lento e banco recusando).
+
 ### 2026-11-17 · ⚙ Automações de prazo e de "card parado" rodavam uma vez por navegador, não uma vez por squad — kanban v8.30.1003-dev (SÓ DEV)
 
 - **Origem:** `/monitorarbugs` em Automações, pensando na Black Friday (muitas pessoas com o board aberto ao mesmo tempo).
