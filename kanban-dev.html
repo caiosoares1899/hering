@@ -7773,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1001-dev</div>
+<div class="version">v8.30.1002-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7793,7 +7793,7 @@ window._bfSemanaInfo = function(agoraMs){
 <script src="mare-login-dev.js?v=3"></script>
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction, onDisconnect } from './vendor/firebase-10.14.1/firebase-database.js';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
@@ -7869,7 +7869,7 @@ const msPersonalProvider = new OAuthProvider('microsoft.com');
 msPersonalProvider.setCustomParameters({ tenant: 'consumers', prompt: 'select_account' });
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
-window._onValue=onValue; window._update=update; window._remove=remove;
+window._onValue=onValue; window._update=update; window._remove=remove; window._onDisconnect=onDisconnect;
 window._runTransaction=runTransaction;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._increment=increment;
@@ -18692,6 +18692,13 @@ document.addEventListener('focusin', e=>{
   const t=e.target; if(!t || !t.closest || !t.closest('#card-ov .modal-body.locked-ro')) return;
   if(t.matches('input,textarea,select,[contenteditable=""],[contenteditable="true"]')){ t.blur(); _avisoCardTravado(); }
 }, true);
+// 🔒 Liberação pelo SERVIDOR (17/11/2026, validado no banco real): fechar a página sem o beforeunload rodar — Maré aberto dentro do Oceano (iframe
+// fechado), celular que mata a aba, navegador que trava, internet que cai — deixava a trava no banco e o card "em edição" para os outros por até
+// 10 min. onDisconnect().remove() faz o servidor apagar a trava quando a conexão deste aparelho some. Queda passageira: o servidor apaga, o
+// listener deste modal vê o nó vazio ao reconectar e reassume na hora (_apply(null)) — e re-arma. Ao soltar/perder a trava, CANCELA, senão a
+// conexão caindo depois apagaria a trava de quem assumiu.
+function _armarLiberacaoAoDesconectar(cardId){ try{ if(window._onDisconnect) window._onDisconnect(window._ref(window._db,_cardLockPath(cardId))).remove().catch(()=>{}); }catch(_){} }
+function _cancelarLiberacaoAoDesconectar(cardId){ try{ if(cardId && window._onDisconnect) window._onDisconnect(window._ref(window._db,_cardLockPath(cardId))).cancel().catch(()=>{}); }catch(_){} }
 function _stopCardLockHeartbeat(){ clearInterval(_cardLockHeartbeatTimer); _cardLockHeartbeatTimer=null; }
 function _startCardLockHeartbeat(cardId){
   _stopCardLockHeartbeat();
@@ -18707,6 +18714,7 @@ function _startCardLockHeartbeat(cardId){
 // recente). Também assina o nó pra reagir se a outra pessoa soltar o lock
 // enquanto este modal segue aberto, sem precisar reabrir o card.
 function _checkCardLock(cardId){
+  if(_cardLockOwnedId && _cardLockOwnedId!==cardId) _releaseCardLock(_cardLockOwnedId); // trocou de card sem fechar (← Voltar, card vinculado): solta a trava do anterior e cancela a liberação pelo servidor dele
   if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
   _stopCardLockHeartbeat();
   _stopCardLockRequestTimers();
@@ -18765,6 +18773,7 @@ function _checkCardLock(cardId){
       // "assumindo de alguém/de ninguém" precisa mesmo de overwrite completo.
       if(isMine) fbUpdate(_cardLockPath(cardId), _cardLockPayload()).catch(()=>{});
       else fbSet(_cardLockPath(cardId), _cardLockPayload());
+      _armarLiberacaoAoDesconectar(cardId);
       _startCardLockHeartbeat(cardId);
       if(_justInherited && editingId===cardId){
         // setTimeout(0): sai da pilha de chamadas atual (estamos dentro do
@@ -18784,6 +18793,7 @@ function _checkCardLock(cardId){
       // ficarem se travando uma à outra em loop.
       _cardLockOwnedId=null;
       _stopCardLockHeartbeat();
+      _cancelarLiberacaoAoDesconectar(cardId); // a trava é de outra pessoa agora: minha conexão caindo não pode apagá-la
       _setCardLockUI(true, lock.who);
     }
   };
@@ -18815,6 +18825,7 @@ function _releaseCardLock(cardId){
   _stopCardLockRequestTimers();
   if(!cardId || _cardLockOwnedId!==cardId){ _cardLockOwnedId=null; return; }
   _cardLockOwnedId=null;
+  _cancelarLiberacaoAoDesconectar(cardId);
   if(!window._fbReady) return;
   const myUid=window._currentUser?.uid;
   const ref=window._ref(window._db, _cardLockPath(cardId));
@@ -18829,11 +18840,17 @@ if(!window._cardLockBeforeUnloadSet){
   // ficava no banco e o card aparecia "em edição" para os outros por até 10 min (CARD_LOCK_STALE_MS) — e na Black Friday cada promoção recarrega
   // todas as abas. Aqui remove direto: _cardLockOwnedId já reflete o dono (o listener zera quando outro assume); se alguém assumiu no último
   // instante, o listener dele vê o nó vazio e reassume na hora (_apply(null)).
-  window.addEventListener('beforeunload', ()=>{
+  const _soltarAoSair=()=>{
     const id=_cardLockOwnedId; if(!id) return;
     _cardLockOwnedId=null; if(_cardLockUnsub){ try{ _cardLockUnsub(); }catch(_){} _cardLockUnsub=null; } _stopCardLockHeartbeat();
     if(window._fbReady){ try{ window._remove(window._ref(window._db, _cardLockPath(id))); }catch(_){} }
-  });
+  };
+  // beforeunload não dispara quando o Maré está num iframe que é fechado (Oceano) nem quando o celular descarta a aba — pagehide dispara.
+  // Os dois são só o atalho rápido: a garantia é o onDisconnect do servidor (_armarLiberacaoAoDesconectar).
+  window.addEventListener('beforeunload', _soltarAoSair);
+  window.addEventListener('pagehide', _soltarAoSair);
+  // voltou pelo cache do navegador (bfcache) com o card aberto: o pagehide soltou a trava — reassume (ou entra em modo leitura se alguém pegou)
+  window.addEventListener('pageshow', e=>{ if(e.persisted && editingId && document.getElementById('card-ov')?.classList.contains('open')) _checkCardLock(editingId); });
 }
 // Guarda o valor de card.col no momento em que o modal foi aberto. Usado pra
 // distinguir "usuário mudou a coluna no dropdown" de "coluna mudou em outro

@@ -87,6 +87,20 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-17 · 🔒 Trava presa por até 10 min quando a página fecha sem o beforeunload (Oceano, celular, queda) — a correção do #1832 não cobria — kanban v8.30.1002-dev (SÓ DEV)
+
+- **Validação no banco real** (script de console com o card `c1792411265373_ijf`, squad dados):
+  - o card é aberto num iframe e o iframe é removido;
+  - no prod v8.30.999 e no dev v8.30.1001 (já com o #1832), a trava **continuou no banco depois de 8 s**.
+- **Por que o #1832 não resolveu:** a correção dele morava no `beforeunload`, que não dispara quando um iframe é fechado, quando o celular descarta a aba, quando o navegador trava ou quando a internet cai. O Maré aberto **dentro do Oceano** (iframe) é exatamente esse caso.
+- **Correção:**
+  - `onDisconnect().remove()` na trava: o SERVIDOR apaga a trava quando a conexão deste aparelho some, rode ou não o código da página. É armado ao pegar a trava e cancelado ao soltar ou perder, senão a minha conexão caindo apagaria a trava de quem assumiu.
+  - Queda passageira: o servidor apaga, o modal vê o nó vazio ao reconectar, reassume e re-arma.
+  - `pagehide` como atalho, junto do `beforeunload`; `pageshow` (volta pelo cache do navegador) reassume.
+  - Trocar de card sem fechar solta a trava do anterior.
+- **Teste:** `docs/arezzo/testes/test_trava_card.js` agora com 16 checagens. O `docs/arezzo/testes/fakefb.js` ganhou `onDisconnect` + `__simDisconnect()`.
+- **Lição:** teste de "fechar a página" com iframe não dispara `beforeunload`. A garantia de liberar estado ao sair precisa morar no servidor (`onDisconnect`), não num handler de saída da página.
+
 ### 2026-11-17 · 🔒 A trava de edição do card só valia para o mouse: quem estava em "modo leitura" ainda gravava por cima de quem editava — kanban v8.30.1001-dev (SÓ DEV)
 
 - **Origem:** `/monitorarbugs` na trava de edição (`card_locks`), logo depois da pergunta "o bloqueio do card não deveria resolver isso?" (#1831). Pensando na Black Friday.
@@ -99,7 +113,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
   - `_cardTravadoAqui()` conferido em `scheduleAutoSave`/`_flushAutoSave`/`_performAutoSave`, `saveCard`, `deleteCard`, `archiveCard`, `togglePauseCard` e `toggleContinuo`, com aviso "use 🔔 Pedir o card";
   - campo de editar não recebe foco em modo leitura.
   - O CSS continua só como aparência.
-- **Precisa validar no banco real (o Firebase falso não reproduz):**
+- **Validado no banco real em 17/11 — a correção deste item NÃO bastava; ver a entrada acima (v8.30.1002-dev, `onDisconnect`):**
   - ao fechar/recarregar a aba, `_releaseCardLock()` lia o nó no servidor antes de apagar, e a página morre antes da resposta. O card ficaria "em edição" para os outros por até 10 min, e cada promoção recarrega todas as abas.
   - Agora o `beforeunload` remove direto. Se alguém assumiu no último instante, reassume na hora.
 - **Fora do escopo (reportado):** ações FORA do modal (menu de contexto, arrastar, em massa, Automações, Agente Ágil) não consultam a trava de propósito. Elas passam pelo merge de 3 vias e, desde o #1831, o modal aberto acompanha o que elas gravam. A mesma pessoa em duas abas continua editável nas duas (trava por usuário, de propósito).
