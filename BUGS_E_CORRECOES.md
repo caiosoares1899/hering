@@ -87,6 +87,21 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-17 · 🧑‍🤝‍🧑 Duas pessoas no mesmo card: o salvamento de uma desfazia o checklist, a descrição e os participantes da outra — kanban v8.30.1000-dev (SÓ DEV)
+
+- **Origem:** `/monitorarbugs` pedido logo depois do bug do responsável (#1829), "esse tipo de erro, pensando em Black Friday": campo do modal que fica velho enquanto o card muda por baixo, e o autosave gravando o valor errado.
+- **Causa:** o modal lia título, descrição, Como fazer, motivo do impedimento, demandante, checklist, riscos, participantes e descrições extras **uma vez ao abrir**. Só coluna, responsável, tags e datas acompanhavam o card (`_modalSyncCol`). Quando o colega gravava, a sincronização trocava a base do merge de 3 vias (`__base`) pela versão nova, mas a tela continuava com a antiga. Na minha próxima edição de qualquer campo, o autosave gravava os valores velhos da tela, o merge entendia isso como "eu mudei" e eles venciam.
+- **Cenário reproduzido** (`docs/arezzo/testes/test_modal_campos_concorrentes.js`, 5 falhas na `main`): o colega marca o item A e reescreve a descrição; eu marco o item B → no banco A volta a desmarcado, e a descrição e o participante do colega somem, sem aviso nenhum. Com cliques no mesmo segundo (o evento do colega ainda dentro da janela de 2 s depois de um save local), o checklist inteiro de quem salvou por último vencia.
+- **Correção:**
+  - `_modalSyncCampos()`: campo em que a pessoa não mexeu desde a última gravação acompanha o card. Tem duas linhas de base, a tela e o card. Campo mexido ou com foco/edição aberta fica como está.
+  - O autosave re-sincroniza a tela depois que a gravação confirma, para mostrar o que o merge trouxe do banco.
+  - `_mesclarCard()` mescla o checklist item a item quando os três lados têm os mesmos itens. Mudança de estrutura segue a regra geral.
+- **De passagem:**
+  - O select de Canal de venda era redesenhado por listener de config a partir do card gravado, e não da tela.
+  - O Tamanho não acompanhava as tags que chegavam do banco.
+  - `populateColSelect()` (restaurar backup com o card aberto) voltava o select para a 1ª coluna, e o autosave moveria o card.
+- **Limite conhecido:** conflito de verdade no MESMO texto (os dois editando a descrição ao mesmo tempo) segue "vence quem salva por último", como antes. O mesmo vale para item acrescentado/removido no checklist enquanto o outro marca.
+
 ### 2026-11-17 · 👤 O Maré tirava o responsável do card sozinho ("removeu responsável" em nome de quem estava com o card aberto) — kanban v8.30.998-dev — PROD 17/11 (kanban v8.30.999 · painel v5.120)
 
 - **Relato (squad Mídia Criativa, time todo):** "de vez em quando ele me tira como responsável do card que eu estou fazendo, e o card fica sem dono até eu reparar".

@@ -7773,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.999-dev</div>
+<div class="version">v8.30.1000-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10907,9 +10907,20 @@ function _mesclarCard(base, ours, theirs){
       if(k==='history'){ out[k] = _unirHistorico(t,o); return; }
       if(o===undefined) delete out[k]; else out[k] = o; return;
     }
+    // 🐞 /monitorarbugs 17/11/2026 (Black Friday): duas pessoas marcando itens DIFERENTES do mesmo checklist ao mesmo tempo era "conflito no
+    // mesmo campo" e a lista inteira de quem salvava por último vencia — o item que o colega acabou de marcar voltava a desmarcado. Quando os
+    // três lados têm os mesmos itens (mesmo texto e grupo, na mesma ordem), mescla item a item; mudança de estrutura (item novo, removido,
+    // reordenado) segue a regra geral abaixo.
+    if(k==='checklist'){ const m=_mesclarChecklistPorItem(b,o,t); if(m){ out[k]=m; return; } }
     if(o===undefined) delete out[k]; else out[k] = o;         // conflito real no mesmo campo: vence quem está salvando agora
   });
   return out;
+}
+function _mesclarChecklistPorItem(b, o, t){
+  if(!Array.isArray(b) || !Array.isArray(o) || !Array.isArray(t) || b.length!==o.length || b.length!==t.length) return null;
+  const chave=x=>String((x&&x.t)||'')+'|'+String((x&&x.grp)||'default');
+  for(let i=0;i<b.length;i++){ if(chave(b[i])!==chave(o[i]) || chave(b[i])!==chave(t[i])) return null; }
+  return b.map((bi,i)=>_igual(o[i],bi) ? t[i] : o[i]);   // item que este aparelho não mexeu vale o do banco; mexido vale o daqui
 }
 // Traz pra dentro do objeto local (a mesma referência que o board/modal usam) o resultado do merge.
 function _aplicarMesclaNoCard(card, merged){
@@ -18305,6 +18316,7 @@ function _performAutoSave(){
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
+    _modalCamposRebase(c); // base dos campos = o que está sendo gravado (ver _modalSyncCampos)
     // /monitorarbugs 16/11 (Codex, #1822): o autosave gravava a coluna nova e avisava "movido", mas nunca chamava recordMove() —
     // flow.log/enteredAt/firstStartAt/doneAt (lead/cycle time, CFD, Throughput) ficavam cegos pra quem trocava a coluna no modal
     // sem clicar em Salvar. Mesma linha do saveCard(), depois do Object.assign.
@@ -18388,6 +18400,7 @@ function _performAutoSave(){
     const _savedDatas=Object.fromEntries(_CARD_DATAS.map(f=>[f,c[f]||'']));
     const _asManualSnap=_cardManualSnap; // uma resposta antiga não altera a base de uma reabertura
     _asSaveP.then(()=>{
+      if(editingId===c.id) _modalSyncCol(); // o merge de 3 vias pode ter trazido campos do banco para dentro do card: a tela acompanha os que a pessoa não mexeu
       if(editingId===c.id && _cardManualSnap && _cardManualSnap===_asManualSnap){ Object.assign(_cardManualSnap,_savedDatas); _updateSaveBtnDirtyState(); }
       const btn=document.getElementById('btn-save-card');
       // não diz "✓ Salvo" se ainda há campo só-manual pendente (o botão está amarelo, "Salvar alterações")
@@ -18827,10 +18840,66 @@ function _modalSyncCol(){
   if(so && so.value===_modalOpenOwner && (c.owner||'')!==_modalOpenOwner && [...so.options].some(o=>o.value===(c.owner||''))){ so.value=c.owner||''; _modalOpenOwner=so.value; }
   if(JSON.stringify(editingTags)===_modalOpenTags){
     const ct=getCardTags(c).slice();
-    if(JSON.stringify(ct)!==_modalOpenTags){ editingTags=ct; _modalOpenTags=JSON.stringify(ct); populateTagSelect(); }
+    if(JSON.stringify(ct)!==_modalOpenTags){ editingTags=ct; _modalOpenTags=JSON.stringify(ct); populateTagSelect(); _populateCanalVendaSelect();
+      { const _sz=SIZE_TAGS.map(t=>t.id), mt=document.getElementById('m-tamanho'); if(mt) mt.value=ct.find(id=>_sz.includes(id))||''; } }
   }
+  _modalSyncCampos(c);
 }
 let _modalOpenOwner=null, _modalOpenTags=null; // linha de base de Responsável/Tags (ver _modalSyncCol)
+// 🐞 /monitorarbugs 17/11/2026 (pensando na Black Friday: várias pessoas no mesmo card). Título, descrição, Como fazer, motivo do impedimento,
+// demandante, checklist, riscos, participantes e descrições extras eram lidos UMA vez ao abrir o modal. O colega marcava o item A do checklist,
+// o modal seguia mostrando A desmarcado e, quando eu marcava B, o autosave gravava a lista inteira da tela: no merge de 3 vias isso é conflito
+// no mesmo campo e vence quem salva por último — o A do colega voltava a desmarcado, sem aviso. Mesma regra da coluna/responsável/tags:
+// campo em que a pessoa NÃO mexeu desde a última gravação acompanha o card; campo mexido (ou com o foco/edição aberta) fica como está.
+// Duas linhas de base por campo: o que a TELA mostrava (_modalCamposBase) e o que o CARD tinha (_modalCardBase) na última abertura/gravação.
+let _modalCamposBase=null, _modalCardBase=null;
+const _MODAL_CAMPOS=['title','desc','po','blockerReason','demandante','checklist','riscos','participants','descsExtra'];
+function _modalCamposNow(){
+  const v=id=>document.getElementById(id)?.value||'';
+  return { title:v('m-title'), desc:v('m-desc'), po:v('m-po'), blockerReason:v('m-blocker-reason'), demandante:v('m-demandante'),
+    checklist:_stable([getCL(), _mCurrentGroups]), riscos:_stable(getRiscos()), participants:_stable(getParticipants()), descsExtra:_stable(editingDescs.map(d=>[d.label||'',d.text||'',d.color||''])) };
+}
+function _modalCardCampos(c){
+  return { title:c.title||'', desc:c.desc||'', po:c.po||'', blockerReason:c.blockerReason||'', demandante:c.demandante||'',
+    checklist:_stable([c.checklist||[], c.checklistGroups||null]), riscos:_stable(c.riscos||[]), participants:_stable(c.participants||[]), descsExtra:_stable(getExtraDescs(c).map(d=>[d.label||'',d.text||'',d.color||''])) };
+}
+function _modalCamposRebase(c){ if(!c) return; _modalCamposBase=_modalCamposNow(); _modalCardBase=_modalCardCampos(c); }
+function _modalCampoOcupado(f){
+  const a=document.activeElement, dentro=sel=>{ const el=document.querySelector(sel); return !!(el && a && el.contains(a)); };
+  switch(f){
+    case 'title': return a===document.getElementById('m-title');
+    case 'desc': return !!document.getElementById('desc-eoc')?.classList.contains('eoc-editing') || a===document.getElementById('m-desc');
+    case 'po': return a===document.getElementById('m-po');
+    case 'blockerReason': return a===document.getElementById('m-blocker-reason');
+    case 'demandante': return a===document.getElementById('m-demandante');
+    case 'checklist': return dentro('#m-checklist') || !!document.querySelector('#m-checklist .cl-it-edit-ta');
+    case 'riscos': return dentro('#m-riscos');
+    case 'participants': return dentro('#m-participants');
+    case 'descsExtra': return _editingDescIdx.size>0 || dentro('#extra-descs-list');
+  }
+  return false;
+}
+function _modalSyncCampos(c){
+  if(!_modalCamposBase || !_modalCardBase) return;
+  const tela=_modalCamposNow(), card=_modalCardCampos(c);
+  _MODAL_CAMPOS.forEach(f=>{
+    if(card[f]===_modalCardBase[f]) return;                       // o card não mudou neste campo
+    if(tela[f]!==_modalCamposBase[f] || _modalCampoOcupado(f)) return; // a pessoa mexeu (ou está mexendo): a escolha dela vale
+    switch(f){
+      case 'title': document.getElementById('m-title').value=c.title||''; { const d=document.getElementById('m-title-disp'); if(d) d.textContent=c.title||''; } break;
+      case 'desc': eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...'); break;
+      case 'po': document.getElementById('m-po').value=c.po||''; break;
+      case 'blockerReason': { const el=document.getElementById('m-blocker-reason'); if(el) el.value=c.blockerReason||'';
+        if(_cardManualSnap) _cardManualSnap.blockerReason=el?el.value:''; } break;
+      case 'demandante': { const el=document.getElementById('m-demandante'); if(el && [...el.options].some(o=>o.value===(c.demandante||''))) el.value=c.demandante||''; } break;
+      case 'checklist': _clGroupsInit(c); renderCL(c.checklist||[]); break;
+      case 'riscos': renderRiscos(c.riscos||[]); break;
+      case 'participants': renderParticipants(c.participants||[]); break;
+      case 'descsExtra': editingDescs=getExtraDescs(c).map(d=>({...d})); renderExtraDescs(); break;
+    }
+    _modalCamposBase[f]=_modalCamposNow()[f]; _modalCardBase[f]=card[f];
+  });
+}
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 // 📏 Altura do campo da descrição adicional (pedido do time, 06/11/2026): já vem GRANDE por padrão e, se a pessoa arrasta o cantinho para mudar, este navegador lembra e usa como
 // padrão nas próximas vezes (localStorage). Só grava quando a pessoa realmente arrasta (pointerdown → pointerup com a altura diferente) — nunca por relayout/render.
@@ -19160,7 +19229,7 @@ function populateDemandanteSelect(){
   if(u&&init&&!members.find(m=>m.init===init))
     sel.innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName||u.email||'')}</option>`;
 }
-function populateColSelect(){ document.getElementById('m-col').innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); }
+function populateColSelect(){ const sel=document.getElementById('m-col'), prev=sel.value; sel.innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); if(prev && columns.some(c=>c.id===prev)) sel.value=prev; } // preserva a escolha (restaurar backup com o card aberto voltava o select pra 1ª coluna e o autosave movia o card)
 // ── Prazo obrigatório (todo squad) com escape hatch "sem prazo definido" ──
 // Regra pedida direto: card precisa ter uma data OU marcar explicitamente
 // que não tem prazo ainda — nunca fica em branco por esquecimento. Mutuamente
@@ -19509,6 +19578,7 @@ function openCard(id){
   if(typeof toggleCommentSearch==='function') toggleCommentSearch(false, true);
   _updateAgenteThinkingBanner(); // reflete na hora se este card já estava "pensando" (ver _startAgenteAgilThinking)
   _cardManualSnap = _manualFieldsNow();
+  _modalCamposRebase(c); // linha de base dos campos que acompanham o card (ver _modalSyncCampos)
   _startDirtyWatch();
   _checkCardLock(id);
   // Inicia mention dropdowns e carrega comentários
@@ -19834,6 +19904,7 @@ function _quickAddApplyIfNew(){
 // owner/participants (cardInSubteam()), não um campo próprio do card —
 // não tem um único membro "certo" pra pré-selecionar sem chutar.
 function openNewCard(col, prefillOwner, prefillTagId){
+  _modalCamposBase=null; _modalCardBase=null; // card novo: nada a acompanhar até a 1ª gravação (ver _modalSyncCampos)
   _closeCoverMenu();
   _renderIntakeOrigem(null);
   if(!checkEditPermission()) return;
@@ -20161,6 +20232,7 @@ function saveCard(){
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
+    _modalCamposRebase(c); // ver _modalSyncCampos
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
     if(blockerMode==='tag'){
       _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
@@ -22070,7 +22142,10 @@ function _populateCanalVendaSelect(){
   const sel=document.getElementById('m-canalvenda'); if(!sel) return;
   const cvIds=CANAL_VENDA_TAGS.map(t=>t.id);
   const c=editingId?cards.find(x=>x.id===editingId):null;
-  const currentTagId=c?getCardTags(c).find(id=>cvIds.includes(id))||'':'';
+  // Com o modal aberto, a fonte é o que a TELA tem (editingTags) — não o card gravado: este select também é redesenhado por listener de config
+  // (canais visíveis/ativo) e, lendo o card, voltava a mostrar o canal antigo dentro dos 800 ms do autosave (e a validação de "canal obrigatório" lê o select).
+  const _tagsFonte=document.getElementById('card-ov')?.classList.contains('open') ? editingTags : (c?getCardTags(c):[]);
+  const currentTagId=_tagsFonte.find(id=>cvIds.includes(id))||'';
   const opts=CANAL_VENDA_TAGS.filter(cv=>_canalVendaIsVisivel(cv.id)||cv.id===currentTagId);
   sel.innerHTML='<option value="">— sem canal —</option>'+opts.map(cv=>`<option value="${cv.id}">${esc(cv.label)}</option>`).join('');
   sel.value=currentTagId;
