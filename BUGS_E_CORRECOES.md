@@ -87,7 +87,21 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-17 · 🛡 Guardião dos cards: o aviso de card restaurado/sumido não chegava ao PO por squad nem ao ADM por e-mail — `functions/cards/guardiao.js` (falta deploy de `cardsGuardiao`)
+### 2026-11-17 · ⚙ Automações de prazo e de "card parado" rodavam uma vez por navegador, não uma vez por squad — kanban v8.30.1003-dev (SÓ DEV)
+
+- **Origem:** `/monitorarbugs` em Automações, pensando na Black Friday (muitas pessoas com o board aberto ao mesmo tempo).
+- **Causa:** `checkDueNotifs()` (gatilhos "Card vence hoje"/"vencido") e `checkAgingAutomations()` ("Card parado há muito tempo") rodam 1×/dia depois das 9h, mas a única trava era o `localStorage` de CADA aparelho. Cada pessoa que abria o board naquele dia rodava as regras de novo no mesmo card.
+- **Reproduzido** (`docs/arezzo/testes/test_automacoes_varredura.js`, 3 falhas na `main`): um 2º aparelho no mesmo dia faz a regra "vence hoje → adicionar item ao checklist" gravar o item **duas vezes**.
+  - Com 10 pessoas no board são 10 itens, 10 avisos ou 10 trocas de responsável.
+  - O "card parado" só duplica com ações que não editam o card, como os avisos. As que editam mudam a idade do card.
+- **Correção:**
+  - `_reivindicarVarreduraDiaria()`: a squad disputa uma marca do dia em `dados/auto_varredura/{prazo|aging}` por transação, e só o 1º aparelho roda as Automações. Falha de rede: o aparelho não marca o dia e tenta de novo.
+  - O sino de prazo continua em cada aparelho, porque já tem id fixo por card e dia e não duplica.
+  - Sem regra mudada: o nó fica sob `dados`, que membros já gravam.
+- **Latente, não corrigido:** o bloco de WIP de `runAutoRules()` reavalia a cada evento de qualquer card e conta a coluna fixa `'progress'`. Enquanto o WIP estiver acima do limite, mandaria um comentário ao Agente Ágil por evento. Hoje é código morto (`AGENTE_AGIL_ATIVO = false`). Se for religado, precisa de intervalo mínimo e de `_flowStartColIds()`.
+- **Teste vizinho que já falhava antes:** `docs/arezzo/testes/test_ferias_saida.js` dá TimeoutError também na `main` (não é desta mudança).
+
+### 2026-11-17 · 🛡 Guardião dos cards: o aviso de card restaurado/sumido não chegava ao PO por squad nem ao ADM por e-mail — `functions/cards/guardiao.js` (deploy de `cardsGuardiao` feito em 17/11)
 
 - **Origem:** `/monitorarbugs` em áreas sensíveis, pensando na Black Friday. O guardião e os endpoints HTTP com chave nunca tinham tido rodada própria.
 - **Achado 1:** `destinatarios()` escolhia quem recebe "🛡️ Card restaurado", "🚨 Muitos cards sumiram de uma vez" e "🚨 Card sumindo de novo" **só pelo campo `role`**. Comparando com as funções irmãs (`agente-agil/members.js`, `metas/lembretes.js`, `backup/restaurarApi.js`, `okr/pushMural.js`) e com o `getEffectiveRole()` do board: o papel POR SQUAD (`squads_roles[squad]`) vence o `role`, e o ADM pode ser só por e-mail (`kanban/config/adm_emails`, com `role:'membro'` de propósito desde 05/10).
@@ -97,7 +111,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Teste:** `functions/cards/__tests__/guardiao.test.js` (+2). Os dois falham no código anterior; suíte do guardião 23/23.
 - **Sem achado:** todos os caminhos de exclusão do board gravam `cards_deleted_intentionally` na mesma escrita (excluir, em massa, arquivados, Agente, órfãos do supercard), e nenhuma function apaga card. `guardiaoStatus` é agendado, não HTTP. O `oceanoResumo` usa chave em tempo constante e teto por hora em transação.
 - **Observação, não corrigida:** o Ctrl+Z que devolve um card excluído não limpa a marca `cards_deleted_intentionally`. Se esse card sumir de novo por engano, o guardião o trata como exclusão de propósito.
-### 2026-11-17 · Supercards: XSS armazenado em IDs dos links e receitas — kanban v8.30.1003-dev — SÓ DEV
+### 2026-11-17 · Supercards: XSS armazenado em IDs dos links e receitas — kanban v8.30.1004-dev — SÓ DEV
 
 Confirmado: funcionário/membro com escrita em dados do squad controla card.id ou chave de config/fanout_templates; ID válido com apóstrofo escapava por esc(), mas a decodificação do atributo onclick o recompilava como JavaScript no clique de outra pessoa. Reprodução Chromium: payload executou nos três testes de clicar receita, abrir filho e remover filho. Seis sinks da mesma família (incluindo notas do pai e Ficha Técnica) passam por jsq(). Revisão independente confirmou caminho e regras; sem sondar Firebase real. Testes console_supercards_1711.js agora mostram zero execução e ID íntegro. Fronteira: dado do banco → handler inline conferida e corrigida; nenhuma permissão, regra ou nó novo. Sem evidência de exploração em produção. Dica: não, correção de segurança.
 

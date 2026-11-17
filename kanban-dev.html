@@ -7773,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1003-dev</div>
+<div class="version">v8.30.1004-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -34402,6 +34402,18 @@ function _pastDailyTriggerSP(){
 // atrasado). Como isso roda 1x/dia e a comparação é "due === ontem" (não
 // "due <= ontem"), due_overdue dispara só nesse 1º dia — não repete todo
 // dia enquanto o card seguir atrasado.
+// 🐞 /monitorarbugs 17/11/2026 (Automações × Black Friday): as varreduras diárias de Automação (prazo hoje/vencido e card parado) rodavam em CADA
+// navegador — a única trava era o localStorage daquele aparelho. Com 10 pessoas abrindo o board depois das 9h, cada regra "prazo vence hoje →
+// adicionar item ao checklist / avisar todos / atribuir…" rodava 10 vezes no mesmo card. Agora a squad inteira disputa uma marca do dia no banco
+// (transação): só o 1º aparelho roda as Automações. Falha de rede = não marca o aparelho, tenta de novo na próxima checagem.
+// Devolve 'ganhou' | 'perdeu' | 'erro'.
+async function _reivindicarVarreduraDiaria(nome, dia){
+  if(!window._fbReady || typeof window._runTransaction!=='function') return 'erro';
+  try{
+    const r=await window._runTransaction(window._ref(window._db, FB+'/auto_varredura/'+nome), cur=>cur===dia?undefined:dia);
+    return (r && r.committed) ? 'ganhou' : 'perdeu';
+  }catch(e){ return 'erro'; }
+}
 function checkDueNotifs(){
   const today=_todaySP();
   const lastCheck=safeLS.getItem('lastDueCheck_'+ACTIVE_SQUAD);
@@ -34409,14 +34421,22 @@ function checkDueNotifs(){
   if(!_pastDailyTriggerSP()) return; // ainda não passou das 9h (SP) hoje — tenta de novo mais tarde
   safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
   const ontemStr=_todaySP(new Date(Date.now()-86400000));
-  cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
+  const _alvos=cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col));
+  // Automações de prazo: 1 aparelho por squad por dia (ver _reivindicarVarreduraDiaria). Sem regra de prazo ativa, não disputa nada.
+  if(autoRules.some(r=>r.active && (r.trigger==='due_today'||r.trigger==='due_overdue'))){
+    _reivindicarVarreduraDiaria('prazo', today).then(res=>{
+      if(res==='erro'){ safeLS.removeItem('lastDueCheck_'+ACTIVE_SQUAD); return; }   // tenta de novo (o sino tem id fixo por card e dia: não duplica)
+      if(res!=='ganhou') return;
+      _alvos.forEach(card=>{ if(card.due===today) runAutoRules('due_today', card.id); else if(card.due===ontemStr) runAutoRules('due_overdue', card.id); });
+    });
+  }
+  _alvos.forEach(card=>{
     // Automações due_today/due_overdue (Fase 1 da revisão de Automações):
     // antes desses triggers existirem no dropdown mas nunca serem checados
     // de verdade em runAutoRules — ver AUTO_TRIGGERS. Dispara pra TODO card
     // vencendo/atrasado, mesmo sem responsável com uid (diferente da
     // notificação abaixo, que precisa de alguém pra avisar).
-    if(card.due===today) runAutoRules('due_today', card.id);
-    else if(card.due===ontemStr) runAutoRules('due_overdue', card.id);
+    // (as Automações due_today/due_overdue saíram daqui: rodam 1x por squad, logo acima)
     const uid=getUidByInit(card.owner); if(!uid) return;
     // idOverride determinístico (tipo+cardId+dia): sem isso, a corrida entre
     // abas/dispositivos que recarregam quase juntos (ex.: overlay de
@@ -34461,6 +34481,12 @@ function checkAgingAutomations(){
   // nesse dia perdia a checagem PRA SEMPRE, não só adiada.
   if(!autoRules.some(r=>r.active && r.trigger==='aging')) return;
   safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
+  _reivindicarVarreduraDiaria('aging', todayStr).then(res=>{
+    if(res==='erro'){ safeLS.removeItem('lastAgingCheck_'+ACTIVE_SQUAD); return; }   // tenta de novo na próxima checagem
+    if(res==='ganhou') _rodarAgingHoje();                         // outro aparelho da squad já rodou hoje: não repete
+  });
+}
+function _rodarAgingHoje(){
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hoje=new Date(); hoje.setHours(0,0,0,0);
   // !c.paused — achado real (/monitorarbugs, 2026-09-14): ⏸ Pausar card
