@@ -87,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-17 · Modal do card: comentário rejeitado volta ao campo
+### 2026-11-17 · Modal do card: comentário rejeitado volta ao campo — kanban v8.30.1005-dev (SÓ DEV)
 
 O envio mostrava o comentário e disparava menções antes da confirmação do Firebase. Agora uma rejeição restaura o texto no mesmo card se o campo estiver vazio, e só a gravação confirmada atualiza a lista e dispara menções.
 
