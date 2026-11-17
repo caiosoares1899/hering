@@ -7773,7 +7773,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.997-dev</div>
+<div class="version">v8.30.999-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19119,6 +19119,18 @@ function removeCardTag(id){
   scheduleAutoSave();
 }
 function populateOwnerSelect(){
+  // 🐞 17/11/2026 (relato do Mídia Criativa: "o Maré me tira como responsável do card"): o listener de usuarios_publicos
+  // chama esta função com o card ABERTO sempre que alguém entra no Maré (o login regrava o perfil). Refazer o innerHTML
+  // zerava a seleção para "— sem atribuição —" e o próximo autosave/Salvar gravava o card SEM responsável, em nome de
+  // quem estava com ele aberto. Agora a seleção atual é guardada e devolvida (e, se a pessoa saiu da lista, continua lá).
+  const _ownSel=document.getElementById('m-owner'); const _ownPrev=_ownSel?_ownSel.value:'';
+  _populateOwnerSelectOpcoes();
+  if(_ownSel && _ownPrev){
+    if(![..._ownSel.options].some(o=>o.value===_ownPrev)) _ownSel.insertAdjacentHTML('beforeend',`<option value="${esc(_ownPrev)}">${esc(_ownPrev)}</option>`);
+    _ownSel.value=_ownPrev;
+  }
+}
+function _populateOwnerSelectOpcoes(){
   document.getElementById('m-owner').innerHTML='<option value="">— sem atribuição —</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
   // Adiciona o usuário logado se não estiver na lista
   const u=window._currentUser; const init=window._currentUserInit;
@@ -19416,7 +19428,10 @@ function openCard(id){
   editingTags=getCardTags(c).slice(); populateTagSelect();
   document.getElementById('m-col').value=c.col;
   _modalOpenCol=c.col;
-  document.getElementById('m-owner').value=c.owner||'';
+  { const _os=document.getElementById('m-owner'); _os.value=c.owner||'';
+    // responsável fora da lista do time (saiu do squad / trocou de sigla): sem a opção, o campo abria vazio e a 1ª edição
+    // de qualquer outro campo apagava o dono do card. Mantém a sigla como opção para não perder o dado.
+    if(c.owner && _os.value!==c.owner){ _os.insertAdjacentHTML('beforeend',`<option value="${esc(c.owner)}">${esc(c.owner)} · (fora do time)</option>`); _os.value=c.owner; } }
   _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags);
   document.getElementById('m-demandante').value=c.demandante||'';
   _updateDescProtectedBadge();

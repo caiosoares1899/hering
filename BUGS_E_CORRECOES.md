@@ -87,7 +87,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-17 · 💾 "✓ Salvo" do salvamento automático nunca aparecia no botão Salvar do card (kanban v8.30.997-dev)
+### 2026-11-17 · 👤 O Maré tirava o responsável do card sozinho ("removeu responsável" em nome de quem estava com o card aberto) — kanban v8.30.998-dev
+
+- **Relato (squad Mídia Criativa, time todo):** "de vez em quando ele me tira como responsável do card que eu estou fazendo, e o card fica sem dono até eu reparar".
+- **Diagnóstico com dado real** (script de console no card do relato): das 8 trocas de responsável, nenhuma foi de automação (as 12 regras do board só movem card e avisam o PO). As 2 remoções (17/11 13:30 e 13:51) foram gravadas pelo navegador do próprio responsável, pelo salvamento do modal.
+- **Causa:** o listener ao vivo de `kanban/usuarios_publicos` chama `populateOwnerSelect()` com o card ABERTO sempre que qualquer perfil muda. Todo login no Maré regrava o perfil de quem entrou, então isso acontece várias vezes por dia. O `innerHTML` refeito zerava a seleção para "— sem atribuição —", e a próxima edição de qualquer campo (autosave) ou o 💾 Salvar gravava `owner:''`. **2º caminho:** responsável fora da lista do time (saiu do squad, trocou de sigla) abria o campo vazio, e a 1ª edição apagava o dono.
+- **Efeito colateral visto no histórico:** ao se reatribuir, a regra "atribuído a AD + BRIEFING OK → To Do (Design)" devolvia o card de In Progress para To Do.
+- **Correção:** `populateOwnerSelect()` guarda e devolve a seleção (e mantém a sigla se a pessoa saiu da lista); `openCard()` mantém o responsável fora do time como opção "(fora do time)".
+- Teste: `docs/arezzo/testes/test_responsavel_some.js` (8; a `main` falha em 6, inclusive "removeu responsável | definiu descrição" no histórico). Fronteira: sem mudança. Dica: não, é correção.
+### 2026-11-17 · 💾 "✓ Salvo" do salvamento automático nunca aparecia no botão Salvar do card (kanban v8.30.999-dev)
 
 - **Achado no /melhoriauiux** com a referência do Arc UI ("resultado de salvar no próprio botão").
 - **Causa:** `_performAutoSave()` procurava o botão com `querySelector('#card-ov .btn-p')`. O primeiro `.btn-p` do modal é o "✓ Salvar impedimento", escondido e anterior no HTML. O "✓ Salvo" ia para ele, e o 💾 Salvar nunca confirmava nada. Além disso, 2 salvamentos com menos de 1,2 s guardavam "✓ Salvo" como o texto original, e o botão ficava preso nele.
