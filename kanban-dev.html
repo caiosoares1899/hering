@@ -18853,19 +18853,27 @@ let _modalOpenOwner=null, _modalOpenTags=null; // linha de base de Responsável/
 // campo em que a pessoa NÃO mexeu desde a última gravação acompanha o card; campo mexido (ou com o foco/edição aberta) fica como está.
 // Duas linhas de base por campo: o que a TELA mostrava (_modalCamposBase) e o que o CARD tinha (_modalCardBase) na última abertura/gravação.
 let _modalCamposBase=null, _modalCardBase=null;
-const _MODAL_CAMPOS=['title','desc','po','blockerReason','demandante','checklist','riscos','participants','descsExtra'];
+const _MODAL_CAMPOS=['title','desc','po','blockerReason','demandante','checklist','riscos','participants','descsExtra','executorType','agentStatus','noDue','criativo','sp','priority','isOKR'];
 function _modalCamposNow(){
   const v=id=>document.getElementById(id)?.value||'';
   return { title:v('m-title'), desc:v('m-desc'), po:v('m-po'), blockerReason:v('m-blocker-reason'), demandante:v('m-demandante'),
-    checklist:_stable([getCL(), _mCurrentGroups]), riscos:_stable(getRiscos()), participants:_stable(getParticipants()), descsExtra:_stable(editingDescs.map(d=>[d.label||'',d.text||'',d.color||''])) };
+    checklist:_stable([getCL(), _mCurrentGroups]), riscos:_stable(getRiscos()), participants:_stable(getParticipants()), descsExtra:_stable(editingDescs.map(d=>[d.label||'',d.text||'',d.color||''])),
+    executorType:v('m-exectype')||'human', agentStatus:v('m-agentstatus'), noDue:!!_mNoDue, criativo:_stable(getCriativoData()),
+    sp:v('m-sp'), priority:v('m-priority'), isOKR:!!document.getElementById('m-is-okr')?.checked };
 }
 function _modalCardCampos(c){
   return { title:c.title||'', desc:c.desc||'', po:c.po||'', blockerReason:c.blockerReason||'', demandante:c.demandante||'',
-    checklist:_stable([c.checklist||[], c.checklistGroups||null]), riscos:_stable(c.riscos||[]), participants:_stable(c.participants||[]), descsExtra:_stable(getExtraDescs(c).map(d=>[d.label||'',d.text||'',d.color||''])) };
+    checklist:_stable([c.checklist||[], c.checklistGroups||null]), riscos:_stable(c.riscos||[]), participants:_stable(c.participants||[]), descsExtra:_stable(getExtraDescs(c).map(d=>[d.label||'',d.text||'',d.color||''])),
+    executorType:c.executorType||'human', agentStatus:c.agentStatus||'', noDue:!!c.noDue, criativo:_stable(c.criativo||{}),
+    sp:String(c.sp||''), priority:c.priority||'', isOKR:!!c.isOKR };
 }
 function _modalCamposRebase(c){ if(!c) return; _modalCamposBase=_modalCamposNow(); _modalCardBase=_modalCardCampos(c); }
 function _modalCampoOcupado(f){
-  const a=document.activeElement, dentro=sel=>{ const el=document.querySelector(sel); return !!(el && a && el.contains(a)); };
+  // Só conta como "mexendo" o foco em campo de DIGITAR (textarea, input de texto, contenteditable): no Chrome o clique num checkbox/botão também
+  // deixa o foco nele, e tratar isso como ocupado deixava a tela velha depois do meu próprio clique — a próxima edição devolvia o valor antigo.
+  const a=document.activeElement;
+  const digita=!!(a && (a.tagName==='TEXTAREA' || a.isContentEditable || (a.tagName==='INPUT' && !/^(checkbox|radio|button|submit|range|color|file)$/i.test(a.type||''))));
+  const dentro=sel=>{ const el=document.querySelector(sel); return !!(el && a && digita && el.contains(a)); };
   switch(f){
     case 'title': return a===document.getElementById('m-title');
     case 'desc': return !!document.getElementById('desc-eoc')?.classList.contains('eoc-editing') || a===document.getElementById('m-desc');
@@ -18876,6 +18884,8 @@ function _modalCampoOcupado(f){
     case 'riscos': return dentro('#m-riscos');
     case 'participants': return dentro('#m-participants');
     case 'descsExtra': return _editingDescIdx.size>0 || dentro('#extra-descs-list');
+    case 'criativo': return dentro('#m-criativo-sec');
+    case 'sp': return a===document.getElementById('m-sp');
   }
   return false;
 }
@@ -18891,11 +18901,21 @@ function _modalSyncCampos(c){
       case 'po': document.getElementById('m-po').value=c.po||''; break;
       case 'blockerReason': { const el=document.getElementById('m-blocker-reason'); if(el) el.value=c.blockerReason||'';
         if(_cardManualSnap) _cardManualSnap.blockerReason=el?el.value:''; } break;
-      case 'demandante': { const el=document.getElementById('m-demandante'); if(el && [...el.options].some(o=>o.value===(c.demandante||''))) el.value=c.demandante||''; } break;
+      case 'demandante': { const el=document.getElementById('m-demandante'); if(!el) break;
+        if(c.demandante && ![...el.options].some(o=>o.value===c.demandante)) el.insertAdjacentHTML('beforeend', `<option value="${esc(c.demandante)}">${esc(c.demandante)} · (fora do time)</option>`);
+        el.value=c.demandante||''; } break;
       case 'checklist': _clGroupsInit(c); renderCL(c.checklist||[]); break;
       case 'riscos': renderRiscos(c.riscos||[]); break;
       case 'participants': renderParticipants(c.participants||[]); break;
       case 'descsExtra': editingDescs=getExtraDescs(c).map(d=>({...d})); renderExtraDescs(); break;
+      case 'executorType': { const el=document.getElementById('m-exectype'); if(el){ el.value=c.executorType||'human'; updateAgentStatusVisibility(); } } break;
+      case 'agentStatus': { const el=document.getElementById('m-agentstatus'); if(el) el.value=c.agentStatus||''; } break;
+      case 'noDue': _mNoDue=!!c.noDue; _renderNoDueBtn(); break;
+      case 'criativo': setCriativoFields(c.criativo||{}); break;
+      // sp/prioridade/OKR só gravam no 💾 Salvar: acompanham o card e a base do "alterações não salvas" junto, pra não acusar mudança que não é da pessoa
+      case 'sp': { const el=document.getElementById('m-sp'); if(el){ el.value=c.sp||''; if(_cardManualSnap) _cardManualSnap.sp=el.value; } } break;
+      case 'priority': { const el=document.getElementById('m-priority'); if(el){ el.value=c.priority||''; if(_cardManualSnap) _cardManualSnap.priority=el.value; if(typeof renderSubPrioRow==='function') renderSubPrioRow(); } } break;
+      case 'isOKR': { const el=document.getElementById('m-is-okr'); if(el){ el.checked=!!c.isOKR; if(_cardManualSnap) _cardManualSnap.isOKR=el.checked; } } break;
     }
     _modalCamposBase[f]=_modalCamposNow()[f]; _modalCardBase[f]=card[f];
   });
@@ -19502,7 +19522,9 @@ function openCard(id){
     // de qualquer outro campo apagava o dono do card. Mantém a sigla como opção para não perder o dado.
     if(c.owner && _os.value!==c.owner){ _os.insertAdjacentHTML('beforeend',`<option value="${esc(c.owner)}">${esc(c.owner)} · (fora do time)</option>`); _os.value=c.owner; } }
   _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags);
-  document.getElementById('m-demandante').value=c.demandante||'';
+  { const _sd=document.getElementById('m-demandante'); // demandante de fora do time (pedido de outra área): sem a opção o select abria vazio e o 1º autosave gravava demandante:'' (2º caminho do #1829)
+    if(c.demandante && ![..._sd.options].some(o=>o.value===c.demandante)) _sd.insertAdjacentHTML('beforeend', `<option value="${esc(c.demandante)}">${esc(c.demandante)} · (fora do time)</option>`);
+    _sd.value=c.demandante||''; }
   _updateDescProtectedBadge();
   _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
