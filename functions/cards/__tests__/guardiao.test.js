@@ -182,3 +182,37 @@ test('dedo-duro: carimbo POSTERIOR ao evento não nomeia ninguém, não usa o te
   assert.equal(g.causadoPor, undefined); assert.equal(g.causaCodigo, 'carimbo_de_outra_gravacao'); assert.doesNotMatch(g.causaTexto, /antiga|cache/i);
   assert.equal(g.contexto.ultimaEscritaEstrutural.haSeg, null);
 });
+
+// 🐞 /monitorarbugs 17/11/2026 (áreas sensíveis, Black Friday): os destinatários seguiam só `role`; PO por squad e ADM por e-mail ficavam sem aviso.
+test('avisos: PO pelo papel DA SQUAD e ADM pela lista de e-mails recebem; "po" global rebaixado na squad não', async () => {
+  const d = mk();
+  const k = d._data().kanban;
+  k.config = { adm_emails: ['chefe@ciahering.com.br'] };
+  Object.assign(k.usuarios_publicos, {
+    poSq: { role: 'membro', squads: { [SQ]: true }, squads_roles: { [SQ]: 'po' } },
+    admEmail: { role: 'membro', email: 'Chefe@ciahering.com.br', squads: {} },
+    poRebaixado: { role: 'po', squads: { [SQ]: true }, squads_roles: { [SQ]: 'membro' } },
+  });
+  Object.assign(k.usuarios, { poSq: {}, admEmail: {}, poRebaixado: {} });
+  await espelharCard(d, SQ, 'c1', AGORA); apagaDoIndice(d, 'c1'); delete dados(d).cards['1'];
+  assert.equal((await rodar(d, 'c1')).acao, 'restaurado');
+  const u = d._data().kanban.usuarios;
+  assert.ok(u.poSq.notificacoes, 'PO por squads_roles recebe');
+  assert.ok(u.admEmail.notificacoes, 'ADM por e-mail recebe');
+  assert.equal(u.poRebaixado.notificacoes, undefined, 'papel da squad vence o role global');
+  assert.ok(u.adm1.notificacoes); assert.ok(u.po1.notificacoes);
+});
+
+test('card que volta ao índice DURANTE a restauração: não regrava a cópia do espelho por cima', async () => {
+  const d = mk(); await espelharCard(d, SQ, 'c1', AGORA);
+  dados(d).cards['1'] = card('c1', { title: 'versão nova que voltou' });               // o card voltou (outro aparelho) com edição mais nova
+  const real = d.ref.bind(d); let primeira = true;
+  const dd = Object.assign(Object.create(d), { ref: (p) => {
+    const r = real(p);
+    if (p === `${B}/cards_index/c1` && primeira) { primeira = false; return Object.assign(Object.create(r), { get: async () => ({ exists: () => false, val: () => null }) }); }
+    return r;
+  } });
+  const r = await rodar(dd, 'c1');
+  assert.equal(r.acao, 'ignorado');
+  assert.equal(dados(d).cards['1'].title, 'versão nova que voltou');
+});

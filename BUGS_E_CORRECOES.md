@@ -87,6 +87,17 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-17 · 🛡 Guardião dos cards: o aviso de card restaurado/sumido não chegava ao PO por squad nem ao ADM por e-mail — `functions/cards/guardiao.js` (falta deploy de `cardsGuardiao`)
+
+- **Origem:** `/monitorarbugs` em áreas sensíveis, pensando na Black Friday. O guardião e os endpoints HTTP com chave nunca tinham tido rodada própria.
+- **Achado 1:** `destinatarios()` escolhia quem recebe "🛡️ Card restaurado", "🚨 Muitos cards sumiram de uma vez" e "🚨 Card sumindo de novo" **só pelo campo `role`**. Comparando com as funções irmãs (`agente-agil/members.js`, `metas/lembretes.js`, `backup/restaurarApi.js`, `okr/pushMural.js`) e com o `getEffectiveRole()` do board: o papel POR SQUAD (`squads_roles[squad]`) vence o `role`, e o ADM pode ser só por e-mail (`kanban/config/adm_emails`, com `role:'membro'` de propósito desde 05/10).
+  - Efeito: PO promovido por squad e ADM por e-mail nunca recebiam o alerta. Justamente o caso "Nada foi restaurado sozinho — confira" (operação em massa), que precisa de gente.
+  - De quebra, um "po" global rebaixado na squad continuava recebendo.
+- **Achado 2:** se o card voltava ao índice entre a última checagem e a transação (outro aparelho regravando), a transação devolvia o índice inalterado e o código seguia regravando a cópia do espelho na posição do card. A versão mais nova, que tinha acabado de voltar, era sobrescrita. Agora a transação aborta e o guardião só registra "voltou ao índice".
+- **Teste:** `functions/cards/__tests__/guardiao.test.js` (+2). Os dois falham no código anterior; suíte do guardião 23/23.
+- **Sem achado:** todos os caminhos de exclusão do board gravam `cards_deleted_intentionally` na mesma escrita (excluir, em massa, arquivados, Agente, órfãos do supercard), e nenhuma function apaga card. `guardiaoStatus` é agendado, não HTTP. O `oceanoResumo` usa chave em tempo constante e teto por hora em transação.
+- **Observação, não corrigida:** o Ctrl+Z que devolve um card excluído não limpa a marca `cards_deleted_intentionally`. Se esse card sumir de novo por engano, o guardião o trata como exclusão de propósito.
+
 ### 2026-11-17 · 🔒 Trava presa por até 10 min quando a página fecha sem o beforeunload (Oceano, celular, queda) — a correção do #1832 não cobria — kanban v8.30.1002-dev (SÓ DEV)
 
 - **Validação no banco real** (script de console com o card `c1792411265373_ijf`, squad dados):
