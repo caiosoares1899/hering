@@ -246,18 +246,21 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .avatar img{width:100%;height:100%;object-fit:cover;}
 
 /* ── Summary ── */
-.sum-title{font-size:clamp(1.8rem,3.2vw,3rem);font-weight:800;margin-bottom:calc(30*var(--u));}
-.sum-bars{display:flex;flex-direction:column;gap:calc(18*var(--u));margin-bottom:calc(42*var(--u));max-width:min(1100px,100%);}
+.sum-title{font-size:clamp(1.8rem,3.2vw,3rem);font-weight:800;margin:0 0 calc(16*var(--u));}
+.sum-section-title{font-size:calc(16*var(--u));color:var(--txt2);margin:0 0 calc(12*var(--u));}
+.sum-bars{display:flex;flex-direction:column;gap:calc(9*var(--u));margin-bottom:calc(24*var(--u));max-width:min(940px,100%);}
 .sum-bar-row{display:flex;align-items:center;gap:14px;}
 .sum-bar-label{width:calc(230*var(--u));font-size:calc(18*var(--u));color:var(--txt2);flex-shrink:0;display:flex;align-items:center;gap:9px;}
-.sum-bar-track{flex:1;height:calc(24*var(--u));border-radius:10px;background:rgba(255,255,255,.06);overflow:hidden;}
+.sum-bar-track{flex:1;height:calc(12*var(--u));border-radius:10px;background:rgba(255,255,255,.06);overflow:hidden;}
 .sum-bar-fill{height:100%;border-radius:10px;transition:width .4s ease;}
 .sum-bar-count{width:46px;text-align:right;font-family:'Syne',sans-serif;font-weight:700;font-size:calc(22*var(--u));flex-shrink:0;}
-.sum-table{width:100%;max-width:min(1400px,100%);border-collapse:collapse;font-size:calc(17.5*var(--u));}
+.sum-table{width:100%;max-width:min(1400px,100%);border-collapse:collapse;font-size:calc(17.5*var(--u));font-variant-numeric:tabular-nums;}
 .sum-table th{text-align:left;color:var(--txt2);font-weight:700;font-size:calc(13*var(--u));text-transform:uppercase;
   letter-spacing:.04em;padding:calc(10*var(--u)) calc(14*var(--u));border-bottom:1px solid var(--glass-b);}
-.sum-table td{padding:calc(14*var(--u)) calc(14*var(--u));border-bottom:1px solid rgba(255,255,255,.05);}
+.sum-table :is(th,td):not(:first-child){text-align:right;}
+.sum-table td{padding:calc(11*var(--u)) calc(12*var(--u));border-bottom:1px solid rgba(255,255,255,.05);}
 .sum-table tr:last-child td{border-bottom:none;}
+.sum-table-wrap{max-width:100%;overflow-x:auto;}
 
 /* ── Empty state ── */
 .empty-state{margin:auto;text-align:center;color:var(--txt2);}
@@ -1330,7 +1333,7 @@ function buildSlides(){
         <div class="sum-bar-count">${n}</div>
       </div>`;
     }).join('');
-    const linhaTab = (cls, nome, st)=>`<tr class="${cls}"><td>${nome}</td><td>${st.n}</td>
+    const linhaTab = (cls, nome, st)=>`<tr class="${cls}"><td>${nome}</td><td>${st.n}</td><td>${st.c.nao_iniciado}</td>
         <td style="color:var(--teal);">${st.c.no_prazo}</td><td style="color:var(--warn);">${st.c.risco}</td>
         <td style="color:var(--danger);">${st.c.atrasado}</td><td style="color:var(--accent);">${st.c.concluido}</td><td>${st.media}%</td></tr>`;
     // Uma faixa por torre (com o subtotal) e, embaixo, as gerências dela.
@@ -1341,10 +1344,14 @@ function buildSlides(){
     }).join('');
     list.push({key:'summary', title:'Panorama geral', html:`
       <div class="slide-inner">
-        <div class="sum-title">📊 Panorama geral</div>
+        <h2 class="sum-title">📊 Panorama geral</h2>
+        <h3 class="sum-section-title">Status ${ativos.length===1?'do 1 Objetivo exibido':'dos '+ativos.length+' Objetivos exibidos'}</h3>
         <div class="sum-bars">${barsHtml}</div>
-        <table class="sum-table"><thead><tr><th>Torre / Gerência</th><th>Ativos</th><th>No prazo</th><th>Risco</th><th>Atrasado</th><th>Concluído</th><th>Média</th></tr></thead>
-        ${tableRows}</table>
+        <h3 class="sum-section-title" id="sum-por-gerencia">Comparação por gerência</h3>
+        <div class="sum-table-wrap" role="region" aria-labelledby="sum-por-gerencia" tabindex="0">
+          <table class="sum-table"><thead><tr><th scope="col">Torre / Gerência</th><th scope="col">Objetivos</th><th scope="col">Não iniciado</th><th scope="col">No prazo</th><th scope="col">Em risco</th><th scope="col">Atrasado</th><th scope="col">Concluído</th><th scope="col">Progresso médio</th></tr></thead>
+          ${tableRows}</table>
+        </div>
       </div>`});
   }
 

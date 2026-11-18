@@ -10,6 +10,18 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
     // 1) sem rolagem lateral em nenhum slide nem no detalhe
     const lateral = []; for (let i = 0; i < n; i++) { await p.evaluate(i => window._okrGoTo(i), i); await p.waitForTimeout(450); const r = await p.evaluate(() => { const d = document.documentElement; const a = document.querySelector('.slide.active'); const inn = a && a.querySelector('.slide-inner,.cover-wrap'); const rc = inn ? inn.getBoundingClientRect() : null; return { doc: d.scrollWidth - d.clientWidth, dentro: rc ? (rc.left >= -1 && rc.right <= innerWidth + 1) : true }; }); if (r.doc > 1 || !r.dentro) lateral.push([i, r]); }
     t(tag + 'nenhum slide estoura a largura (capa, torre, gerências, resumo)', !lateral.length, lateral);
+    await p.evaluate(() => window._okrGoTo(slides.findIndex(s => s.key === 'summary')));
+    const resumo = await p.evaluate(() => {
+      const slide = document.querySelector('.slide.active');
+      const table = slide.querySelector('.sum-table');
+      const colunas = [...table.querySelectorAll('th')].map(th => th.textContent.trim());
+      const linhas = [...table.querySelectorAll('tbody tr')].map(tr => [...tr.cells].slice(1, 7).map(td => Number(td.textContent)));
+      const r = table.getBoundingClientRect();
+      return { colunas, somas: linhas.every(([total, ...status]) => total === status.reduce((a, b) => a + b, 0)),
+        cabe: r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 };
+    });
+    t(tag + 'Panorama: status somam o total e tabela cabe na projeção',
+      resumo.somas && resumo.cabe && resumo.colunas.includes('Não iniciado') && resumo.colunas.includes('Progresso médio'), resumo);
     const latDet = []; for (const id of ['o0', 'o3', 'o5']) { await p.evaluate(id => window._okrOpenDetail(id), id); await p.waitForTimeout(500); const r = await p.evaluate(() => { const d = document.documentElement, m = document.querySelector('.d2-wrap').getBoundingClientRect(); return { doc: d.scrollWidth - d.clientWidth, dir: Math.round(m.right - innerWidth), baixo: Math.round(m.bottom - innerHeight) }; }); if (r.doc > 1 || r.dir > 1 || r.baixo > 1) latDet.push([id, r]); }
     t(tag + 'detalhe do Objetivo (curto, 14 marcos, título enorme) cabe na tela', !latDet.length, latDet);
     // 1b) nada escondido atrás de barra de rolagem no detalhe comum e no de 14 marcos (em Full HD a main também cabe tudo)
