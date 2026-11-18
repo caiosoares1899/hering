@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Apresentação do Radar — Panorama geral mais legível em projeção — 2026-11-18
+### SÓ DEV — Apresentação do Radar — Panorama geral mais legível em projeção (#1861) — 2026-11-18
 
 O slide explicita quantos Objetivos estão na distribuição de status. A comparação por gerência inclui Não iniciado, identifica a coluna Progresso médio e alinha os números à direita. Barras e linhas ocupam menos altura, preservando os cálculos existentes.
 
