@@ -10,8 +10,11 @@ const seed = () => ({ kanban: {
   usuarios: { ad: { nome: 'Adrian Teste', email: user.email, init: 'AD', role: 'membro', inscrito: true, squads: { site: true } } },
   usuarios_publicos: { ad: pub('Adrian Teste', 'AD') },
   config: { adm_emails: [] },
-  squads: { site: { dados: { columns: [{ id: 'todo', name: 'To Do' }], cards_index: { c1: 'k0' },
-    cards: { k0: { id: 'c1', title: 'Card', col: 'todo', owner: 'AD', updatedAt: '2026-11-17T10:00:00.000Z' } } } } } } });
+  squads: { site: { dados: { columns: [{ id: 'todo', name: 'To Do' }], cards_index: { c1: 'k0', c2: 'k1' },
+    cards: {
+      k0: { id: 'c1', title: 'Card', col: 'todo', owner: 'AD', updatedAt: '2026-11-17T10:00:00.000Z' },
+      k1: { id: 'c2', title: 'Outro card', col: 'todo', owner: 'AD', updatedAt: '2026-11-17T10:00:00.000Z' },
+    } } } } } });
 const tipos = { '.html': 'text/html', '.js': 'application/javascript', '.png': 'image/png', '.json': 'application/json', '.svg': 'image/svg+xml', '.css': 'text/css' };
 const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); if (process.env.KANBAN_HTML && /kanban-dev\.html$/.test(f)) f = process.env.KANBAN_HTML; if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': tipos[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
 let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '✅ ' : '❌ ') + n + (ok ? '' : ' → ' + JSON.stringify(d).slice(0, 300))); };
@@ -49,6 +52,66 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       t('recusado: o texto volta ao campo', await p.evaluate(() => document.getElementById('m-comment-inp').value) === 'vai ser recusado', await p.evaluate(() => document.getElementById('m-comment-inp').value));
       t('recusado: nada no banco', (await banco(p)).length === 0, await banco(p));
       t('sem erro de JS (2)', !errs.length, errs); await ctx.close(); }
+    { const { ctx, p, errs } = await abrir();
+      await p.evaluate(() => {
+        window.__setDelay = pa => /card_comments/.test(pa) ? 600 : 0;
+        window.__denySet = pa => /card_comments/.test(pa);
+        window.__mencoes = [];
+        parseMentions = (...args) => window.__mencoes.push(args);
+      });
+      await enviar(p, 'primeiro texto');
+      const cid = await p.locator('#m-comment-list .comment-item').getAttribute('data-cid');
+      const campo = p.locator('#m-comment-inp');
+      await campo.evaluate(el => { el.value = 'segundo rascunho'; });
+      await p.waitForTimeout(850);
+      const item = p.locator('#m-comment-list .comment-item').filter({ hasText: 'primeiro texto' });
+      const retry = item.getByRole('button', { name: 'Tentar novamente' });
+      t('recusa com novo rascunho: primeiro texto continua com opção de reenvio', await retry.count() === 1 && (await item.textContent()).includes('Falha ao enviar'), await lista(p));
+      t('segundo rascunho preservado, sem gravação nem menção', await campo.inputValue() === 'segundo rascunho' && (await banco(p)).length === 0 && await p.evaluate(() => window.__mencoes.length === 0), '');
+      if (await retry.count()) {
+        await p.evaluate(() => loadComments('c1'));
+        t('recarregar comentários preserva o item local sem contá-lo no índice', await retry.count() === 1 && await p.evaluate(() => !(window._commentCounts.c1 || 0)), '');
+        await p.evaluate(() => { window.__denySet = null; });
+        await retry.evaluate(el => { el.click(); el.click(); });
+        t('reenvio pendente: mantém o rascunho e aguarda confirmação para mencionar', await campo.inputValue() === 'segundo rascunho' && await p.evaluate(() => window.__mencoes.length === 0), '');
+        await p.waitForTimeout(850);
+        const db = await banco(p);
+        t('reenvio confirmado: mesmo ID, uma gravação e uma menção', db.length === 1 && db[0].id === cid && db[0].text === 'primeiro texto' && !('_enviando' in db[0]) && !('_falhou' in db[0]) && await p.evaluate(() => window.__mencoes.length === 1), db);
+        t('comentário confirmado volta às ações normais', (await lista(p)).some(x => x.txt.includes('primeiro texto') && x.acoes && !x.enviando), await lista(p));
+      }
+      t('sem erro de JS (3)', !errs.length, errs); await ctx.close(); }
+    for (const trocar of [true, false]) {
+      const { ctx, p, errs } = await abrir();
+      await p.evaluate(trocar => {
+        const set = window._set;
+        const resposta = new Promise(resolve => { window.__responderComentario = resolve; });
+        window.__denySet = pa => /card_comments/.test(pa);
+        window._set = async (ref, valor) => {
+          if (/card_comments/.test(ref.p)) await resposta;
+          return set(ref, valor);
+        };
+        document.getElementById('m-comment-inp').value = 'texto aguardando resposta';
+        window.__comentarioPendente = submitComment();
+        if (trocar) openCard('c2');
+        else closeOv('card-ov');
+      }, trocar);
+      const aberto = await p.evaluate(() => document.getElementById('card-ov').classList.contains('open') ? editingId : null);
+      t(trocar ? 'card 2 aberto antes da recusa' : 'modal fechado antes da recusa', aberto === (trocar ? 'c2' : null), aberto);
+      if (trocar) await p.waitForFunction(() => _commentCardId === 'c2');
+      await p.evaluate(async () => {
+        window.__responderComentario();
+        await window.__comentarioPendente;
+      });
+      const toast = await p.locator('#kb-toast').evaluateAll(els => els.some(el => el.style.opacity === '1' && el.textContent.includes('Não deu pra enviar o comentário')));
+      t(trocar ? 'recusa com outro card aberto mostra aviso' : 'recusa com modal fechado mostra aviso', toast, toast);
+      await p.evaluate(async () => { openCard('c1'); await loadComments('c1'); });
+      const item = p.locator('#m-comment-list .comment-item').filter({ hasText: 'texto aguardando resposta' });
+      const retry = item.getByRole('button', { name: 'Tentar novamente' });
+      t(trocar ? 'voltar ao card de origem oferece reenvio' : 'reabrir o modal oferece reenvio do texto recusado',
+        await retry.count() === 1 && (await item.textContent()).includes('Falha ao enviar'), await lista(p));
+      t('nenhum comentário gravado e nenhum erro de JS', (await banco(p)).length === 0 && !errs.length, errs);
+      await ctx.close();
+    }
   } finally { await b.close(); srv.close(); }
   console.log(falhas ? `HÁ ${falhas} FALHA(S)` : 'TUDO OK'); process.exitCode = falhas ? 1 : 0;
 })().catch(e => { console.error(e); process.exitCode = 1; srv.close(); });
