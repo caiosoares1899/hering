@@ -47,6 +47,22 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
     const semMeta = await p.locator('.d2-metrics').innerText();
     t(tag + 'sem meta numérica: exibe progresso dos marcos sem inventar atingimento',
       /Progresso dos marcos/.test(semMeta) && !/Atingimento da meta/.test(semMeta), semMeta);
+    // Concluídos recolhidos: a linha que sobra não pode ir parar no fim da tabela, e recolher tudo precisa explicar a tabela vazia (print do Caio, 18/11/2026).
+    const recolhido = await p.evaluate(async () => {
+      const espera = () => new Promise(r => setTimeout(r, 350)), guardados = JSON.parse(JSON.stringify(okrMarcos));
+      const doObjetivo = () => Object.values(okrMarcos).filter(m => m.objetivoId === 'o1').sort((a, b) => (a.prazo || '').localeCompare(b.prazo || ''));
+      doObjetivo().forEach((m, i) => { m.progresso = i ? 'concluido' : 'nao_iniciado'; });
+      _okrColapsarConcluidos = true; window._okrOpenDetail('o1'); await espera();
+      const rows = document.querySelector('.d2-table-rows'), caixa = rows.getBoundingClientRect(), visiveis = [...rows.querySelectorAll('.d2-marco-row')].filter(l => l.offsetHeight), linha = visiveis[0].getBoundingClientRect();
+      const acima = Math.round(linha.top - caixa.top), abaixo = Math.round(caixa.bottom - linha.bottom);
+      doObjetivo().forEach(m => { m.progresso = 'concluido'; });
+      window._okrOpenDetail('o1'); await espera();
+      const vazio = document.querySelector('.d2-table-rows .d2-empty')?.textContent || '';
+      _okrColapsarConcluidos = false; Object.keys(okrMarcos).forEach(k => delete okrMarcos[k]); Object.assign(okrMarcos, guardados); window._okrCloseDetail(); await espera();
+      return { visiveis: visiveis.length, acima, abaixo, vazio };
+    });
+    t(tag + 'concluídos recolhidos: a linha restante fica centralizada na tabela', recolhido.visiveis === 1 && Math.abs(recolhido.acima - recolhido.abaixo) <= 2, recolhido);
+    t(tag + 'todos os marcos recolhidos: a tabela explica por que está vazia', /concluídos/.test(recolhido.vazio) && /Mostrar concluídos/.test(recolhido.vazio), recolhido);
     // 1b) nada escondido atrás de barra de rolagem no detalhe comum e no de 14 marcos (em Full HD a main também cabe tudo)
     if (w >= 1900) { const rol = []; for (const id of ['o0', 'o1', 'o3']) { await p.evaluate(id => window._okrOpenDetail(id), id); await p.waitForTimeout(450); const r = await p.evaluate(() => [...document.querySelectorAll('.d2-left,.d2-table-rows,.d2-flist')].filter(e => e.scrollHeight > e.clientHeight + 1).map(e => e.className)); if (r.length) rol.push([id, r]); }
       t(tag + 'detalhe: nenhum conteúdo escondido atrás de rolagem (raia, marcos, listas)', !rol.length, rol); }

@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 🎬 Apresentação do Radar: com os concluídos recolhidos, o Marco restante ia parar no fim da tabela
+
+- **Relato do Caio (print):** com "Colapsar concluídos" ligado, a única linha restante da tabela de Marcos aparecia colada no fim do quadro.
+- **Causa:** a centralização usava margem automática na primeira e na última linha. Com a última linha oculta, só a margem de cima valia e empurrava a linha visível para baixo.
+- **Correção:** `okr-apresentacao.slide.html` centraliza com espaçadores que não dependem de quais linhas estão ocultas. Se todos os Marcos estiverem concluídos e recolhidos, a tabela explica por que está vazia.
+- **Teste:** `docs/arezzo/testes/test_apresentacao_ui.js` (47 verificações em 1920, 1366 e 1024 px). Contra a `main`, 6 falham.
+
 ### 2026-11-18 · Ajuda in-app (/atualizarhelpcontent): sincronização de Maré, Radar, Oceano, Painel, Dicas e Guia OKR
 
 - **Auditoria e sincronização das 4 frentes de ajuda in-app (`/atualizarhelpcontent`, SÓ DEV — exceto `guia-okr.html`, sem cópia dev):**
