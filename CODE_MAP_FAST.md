@@ -118,8 +118,8 @@
 - *[+42 no mapa completo](CODE_MAP.md)*
 
 ### `okr-dev.html` (9 âncoras verificadas)
-- [`_okrObjUltimaAtividade`](okr-dev.html#L5426) · [`_renderMd`](okr-dev.html#L2610) · [`_okrToggleNotas`](okr-dev.html#L3993) · [`_okrAgendaCartoes`](okr-dev.html#L3139) · [`_okrObjParadoDias`](okr-dev.html#L5438) · [`loadOkrReuniaoNotas`](okr-dev.html#L3260)
-- [`_okrAgendaConfirmar`](okr-dev.html#L3162) · [`renderOkrNotas`](okr-dev.html#L3293) · [`_okrAgendaAplicar`](okr-dev.html#L3177)
+- [`_okrObjUltimaAtividade`](okr-dev.html#L5431) · [`_renderMd`](okr-dev.html#L2610) · [`_okrToggleNotas`](okr-dev.html#L3996) · [`_okrAgendaCartoes`](okr-dev.html#L3139) · [`_okrObjParadoDias`](okr-dev.html#L5443) · [`loadOkrReuniaoNotas`](okr-dev.html#L3262)
+- [`_okrAgendaConfirmar`](okr-dev.html#L3162) · [`renderOkrNotas`](okr-dev.html#L3295) · [`_okrAgendaAplicar`](okr-dev.html#L3177)
 
 ### `travessia-dev.html` (9 âncoras verificadas)
 - [`abrirApp`](travessia-dev.html#L1131) · [`farol`](travessia-dev.html#L451) · [`termometro`](travessia-dev.html#L462) · [`viewBau`](travessia-dev.html#L650) · [`viewDiario`](travessia-dev.html#L576) · [`viewAval`](travessia-dev.html#L705)
