@@ -315,7 +315,7 @@ const check = (name, pass, detail) => {
         return { exists: true, tbId: btnGt.dataset.tbId, s1, s2, s3, s4 };
       });
       check(
-        label + ' botão 📊 Gantt alterna Kanban ↔ Gantt ↔ Timeline com exclusividade mútua',
+        label + ' botão 🧮 Gantt alterna Kanban ↔ Gantt ↔ Timeline com exclusividade mútua',
         toggleRes.exists &&
           toggleRes.tbId === 'gantt' &&
           toggleRes.s1.view === 'gantt' && toggleRes.s1.gtOn && toggleRes.s1.tlOff && toggleRes.s1.ganttDisp === 'flex' && toggleRes.s1.tlDisp === 'none' && toggleRes.s1.boardHidden &&
@@ -571,9 +571,9 @@ const check = (name, pass, detail) => {
 
         // HELP_CONTENT: tópico "Gantt" e menção em "Timeline"
         const boardHelp = HELP_CONTENT?.board || [];
-        const ganttHelp = boardHelp.find(h => h.title === 'Gantt' && h.icon === '📊');
+        const ganttHelp = boardHelp.find(h => h.title === 'Gantt' && h.icon === '🧮');
         const tlHelp = boardHelp.find(h => h.title === 'Timeline');
-        const helpOk = !!(ganttHelp && ganttHelp.text.includes('6 semanas') && tlHelp && tlHelp.text.includes('📊 Gantt'));
+        const helpOk = !!(ganttHelp && ganttHelp.text.includes('6 semanas') && tlHelp && tlHelp.text.includes('🧮 Gantt'));
 
         // Performance com 120+ cards + sanitização XSS
         const snapshotLen = cards.length;

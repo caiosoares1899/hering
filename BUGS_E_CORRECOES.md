@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 🧮 Toolbar do Maré: o botão do Gantt tinha o mesmo emoji de "Dados do Board" — kanban v8.30.1013-dev (SÓ DEV)
+
+- **Pedido do Caio:** os dois botões da toolbar usavam 📊, o que dificultava diferenciar um do outro.
+- **Correção:** o botão do Gantt passa a usar 🧮. A dica do período do card, a Central de Ajuda e o nome do atalho acompanham o botão. "Dados do Board" continua com 📊.
+- **Teste:** `docs/arezzo/testes/test_gantt_board.js`.
+
 ### 2026-11-18 · Comentário recusado continua disponível para reenvio quando já existe outro rascunho — kanban v8.30.1011-dev (SÓ DEV)
 
 - Se o banco recusava um comentário depois que a pessoa começava a digitar outro, o primeiro texto saía da lista e não voltava ao campo.
