@@ -304,3 +304,11 @@ Feitos e fora do Quadro: popup do dia do Gantt (#1803, #1805), Minhas Preferênc
 ## Confirmação de deploy — 16/11/2026 (firebase-functions 7.4.0, #1809)
 
 Caio confirmou o deploy em 2 etapas: canários `githubStatus` (agendada), `contarComentarios` (gatilho do banco) e `oceanoResumo` (HTTP) ok; depois as outras 38 funções, tudo ok. As 41 funções rodam com `firebase-functions` 7.4.0. Item do backlog "Atualizar firebase-functions" concluído. Pendente de deploy zerado.
+
+## Confirmação de deploy — 18/11/2026 (Quadro zerado)
+
+Caio confirmou que os 3 deploys pendentes já foram feitos; saíram de *Pendente de deploy*:
+
+- Conhecimento do Agente Ágil regenerado nas promoções de 16/11 (Férias em tela cheia, Gantt, Ilha, Preferências, tema claro; 2ª: tema BF da semana, diretoria, Modelo salva e continua)
+- 🔥 Monitor do Firebase: feed com formato mudado não vira mais alarme do histórico inteiro (/monitorarbugs 16/11, #1815)
+- 🏢 Diretoria por pessoa: regra de `usuarios/{uid}/diretoria` e do espelho em `usuarios_publicos` (só depois do merge do PR da diretoria)
