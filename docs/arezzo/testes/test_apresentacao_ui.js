@@ -24,6 +24,29 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
       resumo.somas && resumo.cabe && resumo.colunas.includes('Não iniciado') && resumo.colunas.includes('Progresso médio'), resumo);
     const latDet = []; for (const id of ['o0', 'o3', 'o5']) { await p.evaluate(id => window._okrOpenDetail(id), id); await p.waitForTimeout(500); const r = await p.evaluate(() => { const d = document.documentElement, m = document.querySelector('.d2-wrap').getBoundingClientRect(); return { doc: d.scrollWidth - d.clientWidth, dir: Math.round(m.right - innerWidth), baixo: Math.round(m.bottom - innerHeight) }; }); if (r.doc > 1 || r.dir > 1 || r.baixo > 1) latDet.push([id, r]); }
     t(tag + 'detalhe do Objetivo (curto, 14 marcos, título enorme) cabe na tela', !latDet.length, latDet);
+    await p.evaluate(() => window._okrOpenDetail('o3'));
+    const detalhe = await p.evaluate(() => {
+      const rows = document.querySelector('.d2-table-rows');
+      const header = document.querySelector('.d2-table-header');
+      const top = header.getBoundingClientRect().top;
+      rows.scrollTop = rows.scrollHeight;
+      const width = selector => document.querySelector(selector).getBoundingClientRect().width;
+      return {
+        metrics: document.querySelector('.d2-metrics')?.textContent.replace(/\s+/g, ' ').trim() || '',
+        readable: parseFloat(getComputedStyle(rows.querySelector('.d2-marco-nome')).fontSize) >= 16,
+        fixedHeader: header.getBoundingClientRect().top === top && rows.tabIndex === 0,
+        visibleRows: rows.clientHeight > 0,
+        prioritized: width('.d2-next') > width('.d2-fcol') && width('.d2-risk') > width('.d2-fcol'),
+      };
+    });
+    t(tag + 'detalhe: dois percentuais separados, prioridades maiores e cabeçalho fora da rolagem',
+      detalhe.metrics.includes('Progresso dos marcos 21% (3 de 14 concluídos)')
+      && detalhe.metrics.includes('Atingimento da meta 73%')
+      && detalhe.readable && detalhe.fixedHeader && detalhe.visibleRows && detalhe.prioritized, detalhe);
+    await p.evaluate(() => window._okrOpenDetail('o1'));
+    const semMeta = await p.locator('.d2-metrics').innerText();
+    t(tag + 'sem meta numérica: exibe progresso dos marcos sem inventar atingimento',
+      /Progresso dos marcos/.test(semMeta) && !/Atingimento da meta/.test(semMeta), semMeta);
     // 1b) nada escondido atrás de barra de rolagem no detalhe comum e no de 14 marcos (em Full HD a main também cabe tudo)
     if (w >= 1900) { const rol = []; for (const id of ['o0', 'o1', 'o3']) { await p.evaluate(id => window._okrOpenDetail(id), id); await p.waitForTimeout(450); const r = await p.evaluate(() => [...document.querySelectorAll('.d2-left,.d2-table-rows,.d2-flist')].filter(e => e.scrollHeight > e.clientHeight + 1).map(e => e.className)); if (r.length) rol.push([id, r]); }
       t(tag + 'detalhe: nenhum conteúdo escondido atrás de rolagem (raia, marcos, listas)', !rol.length, rol); }
