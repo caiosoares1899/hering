@@ -22,10 +22,11 @@ const cards = [
   { id: 'criado', col: 'done', flow: { doneAt: noon(4), log: [{ from: '—', to: 'done', at: noon(4) }] } },
   { id: 'reset', col: 'done', flow: { doneAt: noon(8), resetAt: noon(8), log: [] } },
   fim('pai', 4, { childCardIds: ['v3'] }), fim('antigo', 25), fim('hoje', 0),
-  { id: 'entre', col: 'done', flow: { doneAt: noon(4), log: [{ from: 'cancel', to: 'done', at: noon(4) }] } },
+  { id: 'vv', col: 'done', flow: { doneAt: noon(4), log: [{ from: 'progress', to: 'valid', at: noon(6) }, { from: 'valid', to: 'done', at: noon(4) }] } },
+  { id: 'em-validacao', col: 'valid', flow: { doneAt: noon(2), log: [{ from: 'progress', to: 'valid', at: noon(2) }] } },
 ];
 const seed = () => ({ kanban: { usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: ADM.email, inscrito: true, init: 'AA', role: 'adm', squads: { dados: true } } }, usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana ADM', init: 'AA' } }, config: { adm_emails: [ADM.email] },
-  squads: { dados: { dados: { columns: [{ id: 'todo', name: 'A Fazer' }, { id: 'progress', name: 'Em Progresso' }, { id: 'done', name: 'Concluído' }, { id: 'cancel', name: 'Cancelado' }], cards, flow_baseline: { at: noon(20), by: 'painel' }, config: { flow: { doneCols: ['done', 'cancel'] } } } } } } });
+  squads: { dados: { dados: { columns: [{ id: 'todo', name: 'A Fazer' }, { id: 'progress', name: 'Em Progresso' }, { id: 'valid', name: 'Validação' }, { id: 'done', name: 'Concluído' }, { id: 'cancel', name: 'Cancelado' }], cards, flow_baseline: { at: noon(20), by: 'painel' }, config: { flow: { doneCols: ['valid', 'done', 'cancel'] } } } } } } });
 (async () => {
   await new Promise(ok => srv.listen(0, '127.0.0.1', ok));
   const BASE = 'http://127.0.0.1:' + srv.address().port;
@@ -38,20 +39,24 @@ const seed = () => ({ kanban: { usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', 
       const r = await p.evaluate(fs.readFileSync(path.join(__dirname, 'console_monte_carlo_cobertura.js'), 'utf8')); await p.waitForTimeout(100);
       t('no painel-dev, que não carrega o squad, manda abrir o painel.html', r === null && avisos.some(a => a.includes('painel.html')), avisos); await ctx.close(); }
     const { ctx, p, errs } = await abrir('painel.html');
-    t('o painel.html carrega o squad com os arquivados e a data do corte', await p.evaluate(() => squadData.dados && squadData.dados.cards.length === 18 && !!squadData.dados.flowBaseline), await p.evaluate(() => Object.keys(squadData)));
+    t('o painel.html carrega o squad com os arquivados e a data do corte', await p.evaluate(() => squadData.dados && squadData.dados.cards.length === 19 && !!squadData.dados.flowBaseline), await p.evaluate(() => Object.keys(squadData)));
     await p.evaluate(() => { window.__log.length = 0; });
     const src = fs.readFileSync(path.join(__dirname, 'console_monte_carlo_cobertura.js'), 'utf8');
     const r = await p.evaluate(src);
-    const D = r.descartes;
-    t('conta as 4 entregas válidas, incluindo a arquivada', r.entregasValidas === 4 && r.cards.arquivadosEntregues === 1, r);
-    t('reabertura não vira entrega extra e fica registrada', r.reaberturasNasValidas === 1, r.reaberturasNasValidas);
-    t('card aberto e card arquivado fora do fim não contam', r.cards.arquivados === 2 && r.cards.emColunaDeFim === 15, r.cards);
-    t('cancelamento fica separado da entrega', D.cancelados === 1 && r.colunasDeFim.find(c => c.nome === 'Cancelado').contaComoEntrega === false, r.colunasDeFim);
-    t('importado, sem evento, sem data e data inválida são descartados', D.importados === 1 && D.semEventoDeEntrega === 1 && D.semData === 1 && D.dataInvalida === 1, D);
-    t('criado no fim, carimbo do reset e movido entre fins são descartados', D.criadosNoFim === 1 && D.carimboDoReset === 1 && D.movidosEntreFins === 1, D);
-    t('agregador, antes do corte, hoje e duplicado são descartados', D.agregadores === 1 && D.antesDoCorte === 1 && D.diaDeHoje === 1 && D.duplicados === 1, D);
-    t('dias sem entrega entram como zero, começando depois do corte', r.diario.length === 19 && r.diario.filter(x => x.entregas).length === 3 && r.diario.reduce((s, x) => s + x.entregas, 0) === 4, r.diario);
-    t('avisa que o histórico não atinge os pisos e que a contagem foi zerada', r.alertas.some(a => a.includes('pisos')) && r.alertas.some(a => a.includes('zerada')) && r.atende.entregas === false, r.alertas);
+    const A = r.cenarios.ultimaColuna, B = r.cenarios.primeiraChegada, C = r.descartesComuns;
+    const dias = o => Object.keys(o).sort();
+    t('Validação → Concluído conta como entrega, na data em que chegou em Concluído', A.entregasValidas === 5 && A.entregasPorDia[noon(4).slice(0, 10)] === 1, A);
+    t('card ainda em Validação não conta no cenário da última coluna', A.descartes.aindaNaoChegou === 1, A.descartes);
+    t('no outro cenário, a entrega vale a primeira chegada a uma coluna de fim', B.entregasValidas === 6 && B.entregasPorDia[noon(6).slice(0, 10)] === 1 && B.entregasPorDia[noon(2).slice(0, 10)] === 1 && !B.entregasPorDia[noon(4).slice(0, 10)], B);
+    t('a entrega arquivada é contada', A.arquivadasEntregues === 1 && B.arquivadasEntregues === 1, [A.arquivadasEntregues, B.arquivadasEntregues]);
+    t('reabertura não vira entrega extra e fica registrada', A.reaberturasNasValidas === 1, A.reaberturasNasValidas);
+    t('card aberto e card arquivado fora do fim não contam', r.cards.arquivados === 2 && r.cards.emColunaDeFim === 16, r.cards);
+    t('cancelamento fica separado da entrega', C.cancelados === 1 && r.colunasDeFim.find(c => c.nome === 'Cancelado').contaComoEntrega === false, r.colunasDeFim);
+    t('sem data, data inválida, carimbo do reset, agregador e duplicado são descartados', C.semData === 1 && C.dataInvalida === 1 && C.carimboDoReset === 1 && C.agregadores === 1 && C.duplicados === 1, C);
+    t('importado, sem evento e criado no fim são descartados', A.descartes.importados === 1 && A.descartes.semEventoDeEntrega === 1 && A.descartes.criadosNoFim === 1, A.descartes);
+    t('antes do corte e dia de hoje são descartados', A.descartes.antesDoCorte === 1 && A.descartes.diaDeHoje === 1, A.descartes);
+    t('dias sem entrega entram como zero, começando depois do corte', A.janela.diasComparaveis === 19 && A.janela.diasSemEntrega === 19 - dias(A.entregasPorDia).length, A.janela);
+    t('avisa que há dois cenários, que os pisos não foram atingidos e que a contagem foi zerada', r.alertas.some(a => a.includes('dois cenários')) && r.alertas.some(a => a.includes('pisos')) && r.alertas.some(a => a.includes('zerada')), r.alertas);
     const json = JSON.stringify(r);
     t('a saída não traz título, id de card ou pessoa', !/SEGREDO|PESSOA|ID-SECRETO|Ana ADM|ana@/.test(json), json.slice(0, 200));
     const escritas = await p.evaluate(() => window.__log.filter(l => ['set', 'update', 'remove', 'transaction'].includes(l[0])));
