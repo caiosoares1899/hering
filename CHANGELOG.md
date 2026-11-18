@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — Evolução do atingimento em neon sobre a linha d’água (#1870) — 2026-11-18
+
+A curva volta ao rosa neon, a meta vira uma linha fina em ciano com degradê azul abaixo e o painel segue a moldura Marine Glass do detalhe do Objetivo. Uma faixa mostra valor atual, distância até a meta, atingimento e período. Só o registro mais recente tem peixe e valor escrito, e a lista de registros começa recolhida. O cálculo do atingimento não muda.
+
 ### SÓ DEV — Apresentação do Radar — meta como linha d’água na Evolução do atingimento (#1868) — 2026-11-18
 
 No gráfico de Evolução da apresentação, a meta vira a superfície da água. Resultados aquém da meta ficam submersos, na meta ficam na linha e além dela ficam fora da água, com um peixe em cada registro e o lado escrito no gráfico. Em metas de redução o eixo inverte para o lado bom continuar acima da água. Datas, valores e o cálculo do atingimento não mudam.
