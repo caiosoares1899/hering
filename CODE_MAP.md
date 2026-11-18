@@ -11,7 +11,7 @@ neles pra uma edição**. O valor real deste arquivo é a lista de nomes
 (âncoras estáveis), não os números de linha em si.
 
 As âncoras do Maré apontam para `kanban-dev.html`. Produção está em
-v8.30.1005 e dev em v8.30.1013-dev neste retrato. Os dois ambientes preservam
+v8.30.1005 e dev em v8.30.1014-dev neste retrato. Os dois ambientes preservam
 identidades próprias de versão e armazenamento, favicon, logout remoto e
 imports de módulos. Para editar produção, confira a declaração no arquivo
 `kanban.html` antes de usar a linha de dev.
@@ -518,7 +518,7 @@ detalhe dos 4 call sites.
   beleza, mas some ao atualizar a página" (3ª causa achada na mesma
   investigação, depois de `_saveCardWithRetry()`/`_flushAutoSave()`
   também terem sido corrigidos sem resolver o sintoma por completo):
-  `_applyCardsSync()` (L11822) reconstrói TODO o array `cards` a partir
+  `_applyCardsSync()` (L11844) reconstrói TODO o array `cards` a partir
   de `window._cardsByKey` sempre que o listener de QUALQUER OUTRO card
   dispara, protegido só por uma janela fixa de 2s desde `_lastLocalSave`
   (carimbado no INÍCIO da tentativa, não na confirmação) — sem o
@@ -552,7 +552,7 @@ detalhe dos 4 call sites.
   persistir), afetando qualquer pessoa/squad, não só quem reportou.
   Fix: `_stripUndefinedMultiPath()` aplica `_stripUndefinedDeep()` em
   cada VALOR do update, preservando as chaves de nível superior —
-  mesmo padrão que `_notasUpdate()` (L24164) já usava certo. Trocada
+  mesmo padrão que `_notasUpdate()` (L24186) já usava certo. Trocada
   nos 3 pontos de escrita (`fbSaveAll()`/`fbCreateCard()`/
   `fbSaveCard()`). **Lição**: `_stripUndefinedDeep(val)` só deve
   receber um VALOR a ser escrito (um card, um bloco de Nota) — nunca o
@@ -560,7 +560,7 @@ detalhe dos 4 call sites.
 - `_saveCardWithRetry(card, label)` — L10373 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
   usada por `scheduleAutoSave()`/`_performAutoSave()` (L15508/L15566),
-  `saveExtraDesc()` (L19135) e a simulação de agente (re-grep `_saveCardWithRetry`).
+  `saveExtraDesc()` (L19157) e a simulação de agente (re-grep `_saveCardWithRetry`).
   **Retorna a promise de verdade desde 2026-09-21** (`/monitorarbugs`,
   relato direto de usuária — "salvo beleza, mas some ao atualizar"):
   antes era fire-and-forget, e os 3 call sites mostravam feedback de
@@ -579,7 +579,7 @@ detalhe dos 4 call sites.
   (`editingId` já aponta pro card novo). `_flushAutoSave()` cancela o
   timer e roda a escrita na hora, chamada no topo dos dois pontos acima
   — antes de qualquer um mexer em `editingId`/DOM. **Achado 2026-09-22,
-  3º ponto**: `openNewCard()` (L19997) tinha o MESMO gap — chamada por
+  3º ponto**: `openNewCard()` (L20019) tinha o MESMO gap — chamada por
   `usarQLItem()`/`_intakeCriarCard()` sem fechar `#card-ov` primeiro
   (só fecham `ql-ov`/`intake-ov`, overlays que ficam empilhados por
   cima de um card já aberto — comportamento já documentado no próprio
@@ -600,8 +600,8 @@ detalhe dos 4 call sites.
   Realtime Database (vazia ou com `.#$/[]`) de qualquer objeto aninhado
   — Firebase rejeita a escrita MULTI-PATH INTEIRA se qualquer um dos
   dois aparecer em qualquer lugar da árvore, não só no campo tocado.
-  Causa raiz do achado de chave inválida: `backfillFlow()` (L10519) e
-  `recordMove()` (L10393) usam `card.col`/`toCol` como chave de
+  Causa raiz do achado de chave inválida: `backfillFlow()` (L10541) e
+  `recordMove()` (L10415) usam `card.col`/`toCol` como chave de
   `flow.enteredAt` — as duas agora só gravam quando o valor não é vazio
   (card criado fora do fluxo normal, sem coluna, é o único jeito
   observado de chegar nesse estado). `_stripUndefinedDeep()` continua
@@ -739,7 +739,7 @@ detalhe dos 4 call sites.
 #### Semana Black Friday
 
 - `_bfSemanaInfo` — L4719: janela sazonal e data civil em São Paulo, usada já no carregamento.
-- `_bfUpdateCountdown()` — L40003: atualização do contador e troca de tema com a aba aberta.
+- `_bfUpdateCountdown()` — L40063: atualização do contador e troca de tema com a aba aberta.
 
 ### Arquivados / arquivamento automático
 - `maybeAutoArchiveOldCards()` — L15305 — roda a regra opcional de
@@ -1781,7 +1781,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   não tem entrada própria aqui.)
 
 ### Supercards / Ficha Técnica
-- `_superPodeGerarFilhos(parentCard)` — L37249 — recusa pai temporário e versão com dois ancestrais ativos; usado no gerador de receita e antes da mescla do modelo do pai nos caminhos manual/Automação (17/11/2026).
+- `_superPodeGerarFilhos(parentCard)` — L37266 — recusa pai temporário e versão com dois ancestrais ativos; usado no gerador de receita e antes da mescla do modelo do pai nos caminhos manual/Automação (17/11/2026).
 - `_crvAutoTitle()` — L18662 — título automático do filho a partir da Ficha Técnica
 - `searchSuperChildren()` — L29771 — busca de cards existentes ao criar um filho
 - `_mergeModeloEmCardObj()` — L33916
@@ -2469,7 +2469,7 @@ derivado do card mudando).
 - `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L34911/L34919/L17640 — total "efetivo até agora" (fechado + episódio aberto).
 - `_renderCardTimeInfo(c)` — L34995 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L19548).
+  bloco de Impedimento), chamado no `openCard()` (L19570).
 - Dashboards: `renderBoardDataInsights()` (L22721, seção "Tempo em
   atraso/bloqueado") e `renderCriativosDashboard()` (L19643, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao

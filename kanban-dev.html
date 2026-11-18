@@ -7778,7 +7778,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1013-dev</div>
+<div class="version">v8.30.1014-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9456,6 +9456,29 @@ function _bulkPopover(html){
   return pop;
 }
 function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
+// 🔥 /monitorarbugs 18/11/2026: exclusão recusada pelo save (sem conexão, banco não conferido) tirava o card da tela e dizia "excluído", com o card ainda no banco.
+// _tirarCards guarda onde cada card estava; _gravarExclusao só confirma depois do banco e, na recusa, devolve os cards à tela e avisa.
+function _tirarCards(ids){
+  const alvo = new Set(ids), removidos = [];
+  cards.forEach((c,i)=>{ if(c && alvo.has(c.id)) removidos.push({c,i}); });
+  cards = cards.filter(c=>!c || !alvo.has(c.id));
+  return removidos;
+}
+function _reabrirArquivadosSeAberto(){ if(document.getElementById('arch-ov')?.classList.contains('open')) openArquivados(); }   // a resposta do banco pode chegar com a lista já fechada
+function _gravarExclusao(extra, removidos, msgOk, depois){
+  return fbSaveAll(extra, []).then(()=>{
+    if(msgOk) showToast(msgOk);
+    if(depois) depois();
+    return true;
+  }, err=>{
+    console.warn('[exclusão] recusada, devolvendo os cards à tela:', err);
+    removidos.forEach(({c,i})=>{ if(!cards.some(x=>x && x.id===c.id)) cards.splice(Math.min(i,cards.length),0,c); });
+    renderBoard();
+    showToast('⚠️ Não foi possível excluir: '+(removidos.length===1?'o card continua':'os '+removidos.length+' cards continuam')+' no board. Confira a conexão e tente de novo.', 8000);
+    if(depois) depois();
+    return false;
+  });
+}
 function _bulkFinish(msg, keepSelection, extraIds){
   // touchedIds = os selecionados (todo bulk action opera sobre eles) + ids
   // extras que a própria operação criou por fora da seleção (ex.:
@@ -9848,20 +9871,19 @@ async function bulkDeleteSelected(){
   const n=selectedCards.size; if(!n) return;
   if(!await uiConfirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
   const ids=new Set(selectedCards);
-  cards=cards.filter(c=>!ids.has(c.id));
+  const _removidos=_tirarCards(ids);
   // Marca cada id excluído em cards_deleted_intentionally, na MESMA escrita
   // atômica — alimenta _intentionalDeleteIds (ver listener de /cards_index)
   // pra não disparar falso-positivo de "card sumiu sozinho".
   const _delExtra={};
   ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
-  fbSaveAll(_delExtra, []); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
+  _gravarExclusao(_delExtra, _removidos, `🗑 ${n} card${n!==1?'s':''} excluído${n!==1?'s':''}.`); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
   selectedCards.clear();
   selectMode=false;
   const btn=document.getElementById('btn-select');
   if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
   renderBoard();
   updateBulkBar();
-  showToast(`🗑 ${n} card${n!==1?'s':''} excluído${n!==1?'s':''}.`);
 }
 // Helpers de subtime
 function getSubteam(id){ return subteams.find(s=>s.id===id)||null; }
@@ -20496,9 +20518,9 @@ async function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   if(!await uiConfirm('Excluir "'+c.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   saveUndo('excluir card');
-  cards=cards.filter(x=>x.id!==editingId);
+  const _removidos=_tirarCards([editingId]);
   _stopDirtyWatch(); // já confirmou a exclusão acima; não faz sentido perguntar de novo ao fechar
-  fbSaveAll({['cards_deleted_intentionally/'+editingId]:true}, []); renderBoard(); closeOv('card-ov');
+  _gravarExclusao({['cards_deleted_intentionally/'+editingId]:true}, _removidos); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
   if(_cardTravadoAqui()){ _avisoCardTravado(); return; }
@@ -28406,11 +28428,9 @@ async function deleteSelectedArchived(){
   const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
   if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
-  const idSet=new Set(ids);
-  cards=cards.filter(c=>!idSet.has(c.id));
+  const _removidos=_tirarCards(ids);
   const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });   // sem a marca o board acusava "card sumiu sozinho" (e o save de outro aparelho poderia trazê-lo de volta)
-  fbSaveAll(_delExtra, []);
-  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  _gravarExclusao(_delExtra, _removidos, '🗑 '+ids.length+' card(s) excluído(s) permanentemente.', _reabrirArquivadosSeAberto);
   openArquivados();
 }
 async function restoreSelectedArchived(){
@@ -28480,11 +28500,9 @@ async function deleteSelectedOldCards(){
   const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
   if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
-  const idSet=new Set(ids);
-  cards=cards.filter(c=>!idSet.has(c.id));
+  const _removidos=_tirarCards(ids);
   const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
-  fbSaveAll(_delExtra, []); renderBoard();
-  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  _gravarExclusao(_delExtra, _removidos, '🗑 '+ids.length+' card(s) excluído(s) permanentemente.', renderCleanupList); renderBoard();
   renderCleanupList();
 }
 
@@ -28514,14 +28532,13 @@ async function purgeOldArchived(){
   const digitado=await uiPrompt('Isso vai excluir PERMANENTEMENTE '+alvo.length+' card(s) arquivado(s) há mais de '+years+' ano(s). Não dá pra desfazer.\n\nPra confirmar, digite EXCLUIR:', '', {title:'Excluir arquivados antigos',danger:true,okText:'Excluir'});
   if((digitado||'').trim().toUpperCase()!=='EXCLUIR'){ if(digitado!==null) showToast('Cancelado — texto não confere.'); return; }
   const ids=new Set(alvo.map(c=>c.id));
-  cards=cards.filter(c=>!ids.has(c.id));
+  const _removidos=_tirarCards(ids);
   const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
-  fbSaveAll(_delExtra, []);
-  showToast('🗑 '+alvo.length+' card(s) excluído(s) permanentemente.');
+  _gravarExclusao(_delExtra, _removidos, '🗑 '+alvo.length+' card(s) excluído(s) permanentemente.', _reabrirArquivadosSeAberto);
   openArquivados();
 }
 // ── FIM LIMPEZA DE CARDS ANTIGOS ─────────────────────────────────────
-async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll({['cards_deleted_intentionally/'+id]:true}, []); openArquivados(); }
+async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; const _removidos=_tirarCards([id]); _gravarExclusao({['cards_deleted_intentionally/'+id]:true}, _removidos, null, _reabrirArquivadosSeAberto); openArquivados(); }
 
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
@@ -30606,9 +30623,9 @@ function executeTool(name,input){
       const c=cards.find(x=>x.id===input.card_id);
       if(!c) return{ok:false,msg:'Card não encontrado'};
       const titulo=c.title;
-      cards=cards.filter(x=>x.id!==input.card_id);
-      renderBoard(); fbSaveAll({['cards_deleted_intentionally/'+input.card_id]:true}, []);
-      return{ok:true,msg:`Card "${titulo}" excluído permanentemente`};
+      const _removidos=_tirarCards([input.card_id]);
+      renderBoard(); _gravarExclusao({['cards_deleted_intentionally/'+input.card_id]:true}, _removidos);   // executeTool é síncrono: se o banco recusar, o card volta à tela com o aviso
+      return{ok:true,msg:`Exclusão do card "${titulo}" enviada`};
     }
     case 'atualizar_descricao':{
       let c=cards.find(x=>x.id===input.card_id);
@@ -39081,9 +39098,8 @@ async function ctxDelete(){
   const card=cards.find(x=>x.id===cardId); if(!card){ hideCtxMenu(); return; }
   hideCtxMenu();
   if(!await uiConfirm('Excluir "'+card.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
-  cards=cards.filter(x=>x.id!==cardId);
-  fbSaveAll({['cards_deleted_intentionally/'+cardId]:true}, []); renderBoard();
-  showToast('Card excluído');
+  const _removidos=_tirarCards([cardId]);
+  _gravarExclusao({['cards_deleted_intentionally/'+cardId]:true}, _removidos, 'Card excluído'); renderBoard();
 }
 // ═══════════════════════════════════════════════════════
 
@@ -39544,16 +39560,60 @@ if(window.visualViewport){
     return el ? el.textContent.trim() : '';
   }
   let _auShown = false, _auPollTimer = null;
+  // 🔥 /monitorarbugs 18/11/2026: o que está na tela e NÃO chegou ao banco — card novo (não tem autosave), comentário não enviado e, na sessão parada (que não pode gravar), o card com autosave pendente.
+  function _auTextoNaoSalvo(comPendente){
+    const ov = document.getElementById('card-ov');
+    if(!ov || !ov.classList.contains('open')) return '';
+    const val = id => (document.getElementById(id)?.value||'').trim(), partes = [];
+    if(!editingId || comPendente){
+      [['Título','m-title'],['Descrição','m-desc'],['Insights do PO','m-po']].forEach(([rot,id])=>{ const v = val(id); if(v) partes.push(rot+':\n'+v); });
+      try{ const itens = getCL().map(i=>i && i.t).filter(Boolean); if(itens.length) partes.push('Checklist:\n- '+itens.join('\n- ')); }catch(_){}
+    }
+    const com = val('m-comment-inp'); if(com) partes.push('Comentário não enviado:\n'+com);
+    return partes.join('\n\n');
+  }
+  // Campos que só gravam no 💾 Salvar (prioridade, pontos, OKR, impedimento, datas) ou card novo sem texto para copiar. O comentário fica de fora: ele já vai na caixa.
+  function _auCamposSemSalvar(){
+    const ov = document.getElementById('card-ov');
+    if(!ov || !ov.classList.contains('open')) return false;
+    if(!editingId) return _newCardHasContent();
+    if(!_cardManualSnap) return false;
+    const semComentario = o => { const { commentDraft, ...resto } = o; return JSON.stringify(resto); };
+    return semComentario(_manualFieldsNow()) !== semComentario(_cardManualSnap);
+  }
   function _auShowBlock(msg){
+    // Versão nova: grava o autosave pendente ANTES de travar (a tela promete que o digitado fica salvo). Sessão parada (msg) não grava: a cópia dela pode estar velha.
+    const _pendente = !_auShown && !!_autoSaveTimer;
+    const _camposSemSalvar = !_auShown && _auCamposSemSalvar();
+    if(!_auShown && !msg){ try{ _flushAutoSave(); }catch(e){ console.warn('[auto-update] autosave pendente não gravou:', e); } }
+    const _naoSalvo = _auShown ? '' : _auTextoNaoSalvo(!!msg && _pendente);
+    const _avisoCampos = _camposSemSalvar && (editingId || !_naoSalvo) ? ' Há campos deste card sem salvar (como prioridade, datas ou impedimento) e eles vão se perder ao atualizar.' : '';
     window._auStale = true;   // trava as gravações de card (ver _recusaSeDesatualizado)
     if(_auShown) return;
     _auShown = true;
     const ov = document.createElement('div');
     ov.id = '_au-block';
     ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(4,10,18,.94);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:"DM Sans",sans-serif;padding:20px;';
-    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">'+(msg?'🧊':'🔄')+'</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">'+(msg?'Sua tela ficou parada':'Versão desatualizada')+'</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">'+(msg||'Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo, e o que você já digitou fica salvo.')+'</div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
+    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">'+(msg?'🧊':'🔄')+'</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">'+(msg?'Sua tela ficou parada':'Versão desatualizada')+'</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">'+(msg||('Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo'+((_naoSalvo||_avisoCampos)?'.':', e o que você já digitou fica salvo.')))+_avisoCampos+'</div><div id="_au-block-copia" hidden style="text-align:left;margin-bottom:16px;"><label for="_au-block-texto" style="display:block;font-size:12px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:6px;">Copie antes de atualizar: este texto ainda não foi salvo</label><textarea id="_au-block-texto" readonly rows="5" style="width:100%;box-sizing:border-box;resize:vertical;background:rgba(0,0,0,.2);color:var(--txt,#e8f4fd);border:1px solid var(--glass-b,rgba(255,255,255,.2));border-radius:8px;padding:8px;font:12px/1.45 inherit;"></textarea><button id="_au-block-copiar" type="button" style="margin-top:6px;background:transparent;border:1px solid var(--accent,#38b6ff);color:var(--txt,#e8f4fd);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Copiar texto</button></div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
     document.body.appendChild(ov);
-    document.getElementById('_au-block-btn').onclick=()=>location.reload();
+    // Espera a gravação que acabou de sair (até 5 s): recarregar antes da confirmação cortaria o autosave que esta tela acabou de garantir.
+    document.getElementById('_au-block-btn').onclick=async function(){
+      this.disabled = true; this.textContent = 'Salvando…';
+      const limite = Date.now()+5000;
+      while(_pendingFbWrites>0 && Date.now()<limite) await new Promise(r=>setTimeout(r,100));
+      location.reload();
+    };
+    if(_naoSalvo){
+      const caixa = document.getElementById('_au-block-texto'), bt = document.getElementById('_au-block-copiar');
+      document.getElementById('_au-block-copia').hidden = false;
+      caixa.value = _naoSalvo;   // .value: texto puro, nunca vira HTML
+      bt.onclick = async ()=>{
+        caixa.focus(); caixa.select();
+        let ok = false;
+        try{ await navigator.clipboard.writeText(_naoSalvo); ok = true; }catch(_){ try{ ok = document.execCommand('copy'); }catch(__){} }
+        bt.textContent = ok ? '✓ Copiado' : 'Selecionado: use Ctrl+C';
+      };
+    }
   }
   let _auUltimaChecagem = 0;
   async function _auCheckVersion(){
@@ -43950,6 +44010,9 @@ async function _applyRestorePayload(payload){
     return;
   }
 
+  // 🔥 /monitorarbugs 18/11/2026: se a escrita final falhar, a aba volta ao que tinha. Antes ficava com o backup na memória, diferente do banco, e os saves seguintes partiam dele.
+  const _estadoAntes = { cards, columns, tags, agilCfg, qlItems, links, calEvents, autoRules };
+  let _gravou = false;
   try{
     // Achado real (2026-08-28, squad midiacriativa, /monitorarbugs): das 7
     // atribuições de `columns`/`tags` a partir de dado externo neste arquivo,
@@ -43979,6 +44042,7 @@ async function _applyRestorePayload(payload){
       columns, tags, agil_cfg: agilCfg, ql_items: qlItems,
       links, cal_events: calEvents, auto_rules: autoRules,
     }, undefined, { substituirTudo:true });   // restaurar backup SUBSTITUI o conjunto de cards de propósito — nada a resgatar
+    _gravou = true;
 
     applyAgilCfg();
     renderBoard();
@@ -43996,6 +44060,10 @@ async function _applyRestorePayload(payload){
     showToast('✅ Backup restaurado! '+cards.filter(c=>!c.archived).length+' cards ativos. (snapshot de segurança do estado anterior salvo em backups/'+preKey+')');
   }catch(e){
     console.error('[Restaurar backup] falhou ao gravar:', e);
+    if(!_gravou){
+      ({ cards, columns, tags, agilCfg, qlItems, links, calEvents, autoRules } = _estadoAntes);
+      try{ applyAgilCfg(); renderBoard(); populateColSelect(); }catch(_){}
+    }
     showToast('❌ Erro ao restaurar — o estado anterior está salvo em backups/'+preKey+', mas a escrita final falhou. '+(e?.message||''));
   } finally {
     if(btn){ btn.disabled=false; btn.textContent='🧯 Restaurar este backup'; }
