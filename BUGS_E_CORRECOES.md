@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 🎬 Apresentação do Radar: rodapé não toma mais a tela quando só Progressos é longo
+
+- **Relato do Caio (print):** depois da #1865, um Objetivo com Progressos longo e Riscos e Próximos passos curtos ficava com o rodapé enorme e vazio, e a coluna da esquerda sem espaço.
+- **Causa:** com os Marcos inteiros, toda a sobra de altura ia para o rodapé até caber a coluna mais alta.
+- **Correção:** em `okr-apresentacao.slide.html`, a sobra é repartida entre a coluna da esquerda e as colunas secundárias do rodapé, na proporção do que falta a cada uma. Riscos e Próximos passos curtos deixam de ocupar largura extra.
+- **Mantido:** Marcos, Riscos e Próximos passos continuam com prioridade, e a rolagem deles não aumentou.
+- **Teste:** `docs/arezzo/testes/test_apresentacao_ui.js` (51 verificações).
+
 ### 2026-11-18 · 🎬 Apresentação do Radar: com os concluídos recolhidos, o Marco restante ia parar no fim da tabela
 
 - **Relato do Caio (print):** com "Colapsar concluídos" ligado, a única linha restante da tabela de Marcos aparecia colada no fim do quadro.

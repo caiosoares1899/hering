@@ -1797,12 +1797,15 @@ window._okrOpenDetail = id => {
 // esquerda, colunas do rodapé) dentro do espaço já congelado, sem risco
 // de a divisão externa se mexer no meio do processo.
 // Divide a altura entre corpo e rodapé pelo conteúdo real (18/11/2026, pedido do Caio: a rolagem continua, só precisa ser menor, e Marcos, Riscos e Próximos passos têm prioridade).
-// O rodapé garante Riscos e Próximos passos inteiros até 40% da altura; os Marcos ficam com o resto. Só com os Marcos inteiros o rodapé cresce para Progressos e Planos, e o que restar volta para o corpo.
-function _okrDividirDetalhe({ total, marcos, prioridade, rodape }){
+// O rodapé garante Riscos e Próximos passos inteiros até 40% da altura; os Marcos ficam com o resto. Com os dois garantidos, a sobra é repartida entre a coluna da esquerda e as colunas secundárias do rodapé,
+// na proporção do que falta a cada uma: uma lista longa em Progressos não pode tomar a tela e deixar a coluna da esquerda sem espaço. O que ainda restar fica no corpo.
+function _okrDividirDetalhe({ total, marcos, prioridade, rodape, raia }){
   const alvo = Math.min(Math.round(total*0.40), prioridade);
   if(marcos + alvo > total) return { corpo: total - alvo, rodape: alvo };
-  const rodapeFinal = Math.min(total - marcos, Math.max(alvo, rodape));
-  return { corpo: total - rodapeFinal, rodape: rodapeFinal };
+  const garantido = Math.min(total - marcos, prioridade);   // Riscos e Próximos passos longos usam a sobra antes das colunas secundárias
+  const sobra = total - marcos - garantido, faltaRaia = Math.max(0, raia - marcos), faltaRodape = Math.max(0, rodape - garantido), falta = faltaRaia + faltaRodape;
+  const extraRodape = falta <= sobra ? faltaRodape : Math.round(sobra * faltaRodape / falta);
+  return { corpo: total - garantido - extraRodape, rodape: garantido + extraRodape };
 }
 function _okrMedirDivisaoDetalhe(wrapEl, dBody, dFooter){
   const gap = parseFloat(getComputedStyle(wrapEl).rowGap) || 0, filhos = [...wrapEl.children];
@@ -1812,12 +1815,17 @@ function _okrMedirDivisaoDetalhe(wrapEl, dBody, dFooter){
   colunas.forEach(col=>{ col.style.alignSelf = 'start'; col.style.height = ''; });
   dFooter.style.flex = 'none'; dFooter.style.height = 'auto';
   const alturaDe = col=>col ? col.offsetHeight : 0;
-  const prioridade = Math.max(alturaDe(dFooter.querySelector('.d2-next')), alturaDe(dFooter.querySelector('.d2-risk')));
+  const alturaPrioridade = ()=>Math.max(alturaDe(dFooter.querySelector('.d2-next')), alturaDe(dFooter.querySelector('.d2-risk')));
+  // Riscos e Próximos passos só ficam mais largos quando precisam: se forem curtos e outra coluna estiver bem mais alta, a largura extra iria para área vazia.
+  ['--d2-next-width','--d2-risk-width'].forEach(v=>dFooter.style.removeProperty(v));
+  if(Math.max(...colunas.map(alturaDe)) > alturaPrioridade()*1.3) ['--d2-next-width','--d2-risk-width'].forEach(v=>dFooter.style.setProperty(v,'1fr'));
+  const prioridade = alturaPrioridade();
   const rodape = Math.max(...colunas.map(alturaDe));
   dBody.style.flex = 'none'; dBody.style.height = '1px';
   const cs = getComputedStyle(dRight), moldura = ['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'].reduce((soma,k)=>soma+(parseFloat(cs[k])||0), 0);
   const marcos = Math.ceil(moldura + dRight.querySelector('.d2-table-header').offsetHeight + rows.scrollHeight) + 2;
-  return _okrDividirDetalhe({ total: Math.max(0, Math.round(total)), marcos, prioridade, rodape });
+  const raia = dBody.querySelector('.d2-left').scrollHeight;
+  return _okrDividirDetalhe({ total: Math.max(0, Math.round(total)), marcos, prioridade, rodape, raia });
 }
 function _okrFitDetailSections(){
   const dBody = document.querySelector('.d2-body');
