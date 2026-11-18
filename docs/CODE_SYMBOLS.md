@@ -389,22 +389,22 @@
 - **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L1036 · demoDados:L1038
 - **[login e boot]** mostraLogin:L1097 · criarPeixes:L1113 · animAtividade:L1123 · aplicaTema:L1128 · abrirApp:L1131 · Travessia:L1160
 
-## `okr-apresentacao.slide.html` (2601 linhas · 122 funções)
-- **CSS:** L11–L629 | **JS:** L773–L811 (module), L813–L2575 (classic), L2576–L2598 (classic)
-- **Consts (34):** firebaseConfig:L778 · app:L787 · db:L788 · auth:L789 · provider:L790 · OKR_GERENCIAS:L830 · OKR_STATUS:L839 · OKR_SEVERIDADE:L846 · OKR_TORRES_TODAS:L851 · MARE_SO_HERING:L859 · OKR_TORRES:L861 · _okrTorreTitulo:L862 · OKR_GERENCIAS_PADRAO:L863 · PT_PALETTE:L902 · OKR_ATING_TIPOS:L1044 · OKR_ATING_MOEDAS:L1054 · NUM:L1115 · OKR_SBAR_ORDEM:L1240 · _okrEhCampo:L1634 · NOTES_READONLY_TXT:L1944 · LIVE_PATH:L2210 · liveEu:L2212 · liveRef:L2213 · liveAtiva:L2214 · liveSouHost:L2215 · liveSouAdm:L2216 · livePodeControlar:L2217 · liveHostParado:L2218 · liveNome:L2219 · liveSlideKey:L2220 · liveDetalheAberto:L2221 · liveCtx:L2222 · liveCtxs:L2224 · liveLaserOff:L2481
-- _doLogin:L797 · _doLogout:L805 · esc:L817 · jsq:L826 · safeUrl:L827 · okrStatusInfo:L847 · _okrTorreDe:L866 · _okrGerenciasBase:L867 · okrGerenciaLabel:L875 · _okrGerRotulo:L877
-- _okrGruposGerencia:L879 · _okrTrimestresOf:L891 · _tagCor:L897 · pessoaInfo:L922 · avatarHtml:L926 · objMarcos:L935 · _okrObjetivosSorted:L942 · _okrObjetivosAtivos:L955 · _okrGerenciaObjetivos:L958 · _okrAtualizaFiltroTag:L963
-- _okrSetTag:L980 · _okrAtualizaFiltroTorre:L982 · _okrSetTorre:L992 · objStatus:L993 · _okrAtingConfigurado:L1003 · _okrAtingPctDe:L1005 · _okrAtingAtual:L1029 · _okrAtingPctObj:L1035 · _okrAtingUnidade:L1058 · _okrFmtNum:L1065
-- _okrAtingTipoIco:L1072 · _okrAtingTipoLabel:L1073 · _okrAtingDataBR:L1074 · _okrAtingLancTxt:L1075 · _okrAtingResumoHtml:L1080 · _okrAtingHistoricoHtml:L1091 · _okrAtingFmtEixo:L1105 · _okrAtingChartHtml:L1114 · _okrAtingTip:L1157 · _okrAtingTipOff:L1167
-- _okrAtingChartPanelHtml:L1171 · _okrOpenAting:L1184 · _okrCloseAting:L1191 · objProgressoPct:L1193 · objCardHtml:L1213 · _okrStatsDe:L1241 · _okrSbarHtml:L1247 · _okrLegendaHtml:L1251 · _okrGoToKey:L1254 · buildSlides:L1256
-- scheduleRebuild:L1371 · rebuild:L1375 · _zoomFitToHeight:L1452 · fitSlideContent:L1535 · render:L1559 · _okrGoTo:L1593 · _okrEntrada:L1599 · _okrDetailVizinho:L1622 · _okrNext:L1627 · _okrPrev:L1628
-- _okrFullscreen:L1629 · d2FieldList:L1683 · _okrOpenDetail:L1687 · _okrDividirDetalhe:L1802 · _okrMedirDivisaoDetalhe:L1810 · _okrFitDetailSections:L1830 · _okrCloseDetail:L1880 · _okrToggleColapsarConcluidos:L1885 · _hojeStr:L1905 · _notaDataFmt:L1909
-- _notaAvatarHtml:L1913 · _notaTempoFmt:L1919 · _notasPopulateDateSel:L1927 · _okrNotesSetViewDate:L1939 · renderNotas:L1945 · _okrToggleNotes:L1982 · _okrCloseNotes:L1993 · _okrOpenMarcoComments:L2007 · _okrCloseMarcoComments:L2041 · _okrAddNota:L2042
-- _okrDelNota:L2055 · _okrNotesKeydown:L2065 · _okrAgendaHoje:L2080 · _okrAgendaPopulateInputs:L2081 · _okrToggleAgendaCfg:L2087 · _okrCloseAgendaCfg:L2093 · _okrAgendaSalvar:L2094 · _okrAgendaLimpar:L2104 · _okrRenderCountdown:L2109 · _isAdmOkr:L2136
-- _okrResetOverlays:L2144 · _okrDenyAccess:L2159 · startListeners:L2169 · liveToast:L2225 · liveInit:L2231 · liveBatida:L2259 · _liveComecar:L2264 · _liveEncerrar:L2271 · liveAplicar:L2272 · liveAposNavegar:L2300
-- _liveSeguir:L2322 · _livePedir:L2323 · liveTrocar:L2324 · _livePassar:L2328 · _liveAceitar:L2329 · _liveRecusar:L2330 · _liveAssumir:L2331 · _livePuxarSlide:L2340 · liveDesligaFerr:L2348 · _liveFerr:L2357
-- _liveTipo:L2363 · _liveCor:L2364 · _liveLimpar:L2365 · _liveDesfazer:L2366 · _liveCopiarLink:L2375 · _livePainel:L2376 · liveParticipantes:L2380 · liveRender:L2384 · liveDesenhar:L2448 · _okrShowApp:L2503
-- _okrViewerKey:L2532 · _okrHandleAuth:L2533
+## `okr-apresentacao.slide.html` (2645 linhas · 122 funções)
+- **CSS:** L11–L641 | **JS:** L785–L823 (module), L825–L2619 (classic), L2620–L2642 (classic)
+- **Consts (35):** firebaseConfig:L790 · app:L799 · db:L800 · auth:L801 · provider:L802 · OKR_GERENCIAS:L842 · OKR_STATUS:L851 · OKR_SEVERIDADE:L858 · OKR_TORRES_TODAS:L863 · MARE_SO_HERING:L871 · OKR_TORRES:L873 · _okrTorreTitulo:L874 · OKR_GERENCIAS_PADRAO:L875 · PT_PALETTE:L914 · OKR_ATING_TIPOS:L1056 · OKR_ATING_MOEDAS:L1066 · _OKR_AGUA_LADO:L1126 · NUM:L1128 · OKR_SBAR_ORDEM:L1284 · _okrEhCampo:L1678 · NOTES_READONLY_TXT:L1988 · LIVE_PATH:L2254 · liveEu:L2256 · liveRef:L2257 · liveAtiva:L2258 · liveSouHost:L2259 · liveSouAdm:L2260 · livePodeControlar:L2261 · liveHostParado:L2262 · liveNome:L2263 · liveSlideKey:L2264 · liveDetalheAberto:L2265 · liveCtx:L2266 · liveCtxs:L2268 · liveLaserOff:L2525
+- _doLogin:L809 · _doLogout:L817 · esc:L829 · jsq:L838 · safeUrl:L839 · okrStatusInfo:L859 · _okrTorreDe:L878 · _okrGerenciasBase:L879 · okrGerenciaLabel:L887 · _okrGerRotulo:L889
+- _okrGruposGerencia:L891 · _okrTrimestresOf:L903 · _tagCor:L909 · pessoaInfo:L934 · avatarHtml:L938 · objMarcos:L947 · _okrObjetivosSorted:L954 · _okrObjetivosAtivos:L967 · _okrGerenciaObjetivos:L970 · _okrAtualizaFiltroTag:L975
+- _okrSetTag:L992 · _okrAtualizaFiltroTorre:L994 · _okrSetTorre:L1004 · objStatus:L1005 · _okrAtingConfigurado:L1015 · _okrAtingPctDe:L1017 · _okrAtingAtual:L1041 · _okrAtingPctObj:L1047 · _okrAtingUnidade:L1070 · _okrFmtNum:L1077
+- _okrAtingTipoIco:L1084 · _okrAtingTipoLabel:L1085 · _okrAtingDataBR:L1086 · _okrAtingLancTxt:L1087 · _okrAtingResumoHtml:L1092 · _okrAtingHistoricoHtml:L1103 · _okrAtingFmtEixo:L1117 · _okrAtingChartHtml:L1127 · _okrAtingTip:L1201 · _okrAtingTipOff:L1211
+- _okrAtingChartPanelHtml:L1215 · _okrOpenAting:L1228 · _okrCloseAting:L1235 · objProgressoPct:L1237 · objCardHtml:L1257 · _okrStatsDe:L1285 · _okrSbarHtml:L1291 · _okrLegendaHtml:L1295 · _okrGoToKey:L1298 · buildSlides:L1300
+- scheduleRebuild:L1415 · rebuild:L1419 · _zoomFitToHeight:L1496 · fitSlideContent:L1579 · render:L1603 · _okrGoTo:L1637 · _okrEntrada:L1643 · _okrDetailVizinho:L1666 · _okrNext:L1671 · _okrPrev:L1672
+- _okrFullscreen:L1673 · d2FieldList:L1727 · _okrOpenDetail:L1731 · _okrDividirDetalhe:L1846 · _okrMedirDivisaoDetalhe:L1854 · _okrFitDetailSections:L1874 · _okrCloseDetail:L1924 · _okrToggleColapsarConcluidos:L1929 · _hojeStr:L1949 · _notaDataFmt:L1953
+- _notaAvatarHtml:L1957 · _notaTempoFmt:L1963 · _notasPopulateDateSel:L1971 · _okrNotesSetViewDate:L1983 · renderNotas:L1989 · _okrToggleNotes:L2026 · _okrCloseNotes:L2037 · _okrOpenMarcoComments:L2051 · _okrCloseMarcoComments:L2085 · _okrAddNota:L2086
+- _okrDelNota:L2099 · _okrNotesKeydown:L2109 · _okrAgendaHoje:L2124 · _okrAgendaPopulateInputs:L2125 · _okrToggleAgendaCfg:L2131 · _okrCloseAgendaCfg:L2137 · _okrAgendaSalvar:L2138 · _okrAgendaLimpar:L2148 · _okrRenderCountdown:L2153 · _isAdmOkr:L2180
+- _okrResetOverlays:L2188 · _okrDenyAccess:L2203 · startListeners:L2213 · liveToast:L2269 · liveInit:L2275 · liveBatida:L2303 · _liveComecar:L2308 · _liveEncerrar:L2315 · liveAplicar:L2316 · liveAposNavegar:L2344
+- _liveSeguir:L2366 · _livePedir:L2367 · liveTrocar:L2368 · _livePassar:L2372 · _liveAceitar:L2373 · _liveRecusar:L2374 · _liveAssumir:L2375 · _livePuxarSlide:L2384 · liveDesligaFerr:L2392 · _liveFerr:L2401
+- _liveTipo:L2407 · _liveCor:L2408 · _liveLimpar:L2409 · _liveDesfazer:L2410 · _liveCopiarLink:L2419 · _livePainel:L2420 · liveParticipantes:L2424 · liveRender:L2428 · liveDesenhar:L2492 · _okrShowApp:L2547
+- _okrViewerKey:L2576 · _okrHandleAuth:L2577
 
 ## `mare-notif-dev.js` (956 linhas · 86 funções)
 - **JS:** L1–L956 (js)

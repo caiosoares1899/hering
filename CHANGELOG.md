@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — meta como linha d’água na Evolução do atingimento (#1868) — 2026-11-18
+
+No gráfico de Evolução da apresentação, a meta vira a superfície da água. Resultados aquém da meta ficam submersos, na meta ficam na linha e além dela ficam fora da água, com um peixe em cada registro e o lado escrito no gráfico. Em metas de redução o eixo inverte para o lado bom continuar acima da água. Datas, valores e o cálculo do atingimento não mudam.
+
 ### SÓ DEV — Apresentação do Radar — detalhe do Objetivo com menos rolagem em Marcos, Riscos e Próximos passos (#1865) — 2026-11-18
 
 A altura da tela passa a ser dividida pelo conteúdo real. Riscos e Próximos passos aparecem inteiros até 40% da altura, os Marcos ficam com o restante, e Progressos, Planos e a coluna da esquerda cedem espaço primeiro. Quando nem tudo cabe, a rolagem continua disponível. Com 14 Marcos, a rolagem da tabela cai de 195 px para 93 px em 1366 × 768 e some em 1280 × 900.
