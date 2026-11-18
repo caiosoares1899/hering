@@ -127,3 +127,30 @@ Rodada `/monitorarbugs` de 16/11/2026, Codex. ESCALAR AO CLAUDE: `kanban-dev.htm
 Revisão independente tentou refutar: confirmou os dois primeiros e qualificou o terceiro pelas regras reais. Teste Chromium com funções extraídas da página real, banco/dependências falsos: `node docs/arezzo/testes/test_cards_sensiveis_1611.js` → 3/3 falhas esperadas até correção. Console isolado/read-only: `docs/arezzo/testes/console_cards_sensiveis_1611.js`, validado por check-script. Não acessa Firebase real.
 
 Cobertura: primitivas criar/salvar/lote; autosave × Salvar e wrapper; movimentação mouse/toque/menu; criação/dedupe de notificações pessoais. Criação inspecionada sem novo defeito confirmado. Não cobre push/FCM completo, todos os produtores server-side, regras implantadas ou dados reais. Sem evidência de ocorrência em produção. Fronteira: sem alteração; bugs de integridade dentro do modelo interno aceito. ADM valida em dev após correção, nunca o agente.
+
+
+<a id="apresentacao-sem-rolagem"></a>
+
+## Apresentação do Radar sem rolagem — 18/11/2026
+
+**Escalado ao Claude.** Redesenho localizado na composição inteira do detalhe do Objetivo para quem apresenta no PC. A #1862 melhora contraste, distribuição do rodapé e leitura da tabela. O detalhe ainda reserva áreas separadas para contexto, Marcos e quatro listas do rodapé, com alturas ajustadas em `_okrFitDetailSections()`. Cada área que transborda rola por conta própria, mesmo quando outra tem espaço sobrando.
+
+**Como reproduzir.** Abrir o Objetivo `o3` de `docs/arezzo/testes/seed_apresentacao.js` no Chromium com Firebase falso a 1280 × 900. São 14 marcos, descrição longa e listas de discussão. No ensaio após a #1862, a tabela ainda rolava 60 px. A mesma tabela cabia a 1920 × 1080. Compare também 1366 × 768, com título comprido e rodapé curto e cheio.
+
+**Critérios de aceite.**
+
+- Medir o espaço e o conteúdo reais. Blocos curtos ou vazios ocupam menos espaço, e blocos cheios aproveitam a sobra. Preservar ordem de leitura e métricas.
+- Mostrar o máximo de conteúdo legível sem rolagem na página ou em painéis internos. Usar o piso atual de 16 px como ponto de partida para nomes de marcos.
+- Se tudo não couber, preservar o contexto e indicar claramente quantos itens ficaram para uma continuação. Validar com Caio a prioridade dos blocos e a navegação da continuação antes de alterar o fluxo ao vivo.
+- Comparar quantidade de conteúdo visível, fonte efetiva e ausência de overflow com dados simulados: sem marcos, 14 e 50 marcos, título longo e listas de riscos/próximos passos longas. Conferir também redimensionamento, teclado e apresentação ao vivo.
+
+<a id="apresentacao-linha-dagua"></a>
+
+### Evolução do atingimento — meta como linha d’água
+
+**Pedido do Caio para o Claude, na mesma rodada da apresentação.** Na referência visual “10 - Outubro - Se Liga no Cardume DIGITAL.jpg”, a linha pontilhada na superfície separa os pontos submersos dos pontos acima da água. No gráfico de **Evolução do atingimento** do Radar, essa linha representa a **meta do Objetivo**. Use o tratamento visual Marine Glass e mantenha a série legível no projetor. A imagem de referência não está no repositório: peça ao Caio antes de desenhar.
+
+- **Aquém da meta:** ponto submerso. **Na meta:** ponto na linha d’água. **Além da meta:** ponto acima da água. Rotule a linha com a meta e sua unidade. Use texto, além da diferença de fundo, para indicar de que lado está o resultado.
+- Preserve datas, valores registrados, unidades e cálculo oficial de atingimento. O percentual oficial é limitado a 100%, portanto a posição dos pontos deve aproveitar os valores registrados, que já são usados pelo gráfico, para mostrar a superação.
+- Para metas em que **reduzir é melhor** (tipo `abaixo` ou meta menor que o valor inicial), o lado bom segue o sentido da meta. Exemplo com meta de R$ 100: R$ 90 acima da água, R$ 100 na superfície, R$ 110 submerso. Se inverter o eixo nesses casos, deixe o sentido explícito e preserve os rótulos de valores reais.
+- Aplique primeiro ao gráfico numérico da apresentação (`_okrAtingChartHtml`). Mantenha o comportamento atual dos tipos sem série numérica comparável e a evolução sem registros. Valide cruzamentos em ambos os sentidos, ponto exatamente na meta e leitura em 1280 × 900 e Full HD.
