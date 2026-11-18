@@ -34,76 +34,89 @@
   const corteMs = d.flowBaseline && d.flowBaseline.at ? Date.parse(d.flowBaseline.at) : NaN;
   const primeiroDia = Number.isNaN(corteMs) ? soma(hoje, -HISTORICO) : [soma(dia(corteMs), 1), soma(hoje, -HISTORICO)].sort()[1];
 
-  const descartes = { cancelados: 0, semData: 0, dataInvalida: 0, carimboDoReset: 0, semEventoDeEntrega: 0, importados: 0, criadosNoFim: 0, movidosEntreFins: 0, agregadores: 0, antesDoCorte: 0, diaDeHoje: 0, foraDoHistorico: 0, duplicados: 0 };
-  const porDia = {}, porColuna = {}, vistos = new Set();
-  let emFim = 0, arquivados = 0, arquivadosEntregues = 0, reaberturas = 0, validas = 0;
+  // Dois jeitos de datar a entrega, porque o squad pode ter mais de uma coluna de fim (ex.: Validação → Concluído).
+  const ordem = id => colunas.findIndex(c => c.id === id);
+  const ultima = entrega.slice().sort((a, b) => ordem(a) - ordem(b)).pop();
+  const novoCenario = nome => ({ nome, porDia: {}, validas: 0, arquivadas: 0, reaberturas: 0, descartes: { aindaNaoChegou: 0, semEventoDeEntrega: 0, importados: 0, criadosNoFim: 0, antesDoCorte: 0, diaDeHoje: 0, foraDoHistorico: 0 } });
+  const cenarios = { ultimaColuna: novoCenario('Entrega = chegar em "' + nomeDe(ultima) + '"'), primeiraChegada: novoCenario('Entrega = chegar em qualquer coluna de fim') };
+  const comuns = { cancelados: 0, semData: 0, dataInvalida: 0, carimboDoReset: 0, agregadores: 0, duplicados: 0 };
+  const vistos = new Set();
+  let emFim = 0, arquivados = 0;
+  const registra = (cen, c, f, ev, log) => {
+    if (!ev) { cen.descartes[f.imported ? 'importados' : 'semEventoDeEntrega']++; return; }
+    if (ev.from === '—') { cen.descartes.criadosNoFim++; return; }
+    const ms = Date.parse(ev.at);
+    if (Number.isNaN(ms)) { cen.descartes.semEventoDeEntrega++; return; }
+    if (!Number.isNaN(corteMs) && ms <= corteMs) { cen.descartes.antesDoCorte++; return; }
+    const s = dia(ms);
+    if (s >= hoje) { cen.descartes.diaDeHoje++; return; }
+    if (s < primeiroDia) { cen.descartes.foraDoHistorico++; return; }
+    cen.porDia[s] = (cen.porDia[s] || 0) + 1;
+    cen.validas++;
+    if (c.archived) cen.arquivadas++;
+    cen.reaberturas += log.filter(e => e && fins.includes(e.from) && !fins.includes(e.to)).length;
+  };
 
   d.cards.forEach(c => {
     if (!c) return;
     if (c.archived) arquivados++;
-    if (vistos.has(c.id)) { descartes.duplicados++; return; }
+    if (vistos.has(c.id)) { comuns.duplicados++; return; }
     vistos.add(c.id);
     if (!fins.includes(c.col)) return;
     emFim++;
-    if (cancelamento(c.col)) { descartes.cancelados++; return; }
+    if (cancelamento(c.col)) { comuns.cancelados++; return; }
     const f = c.flow || {};
-    if (!f.doneAt) { descartes.semData++; return; }
-    const ms = Date.parse(f.doneAt);
-    if (Number.isNaN(ms)) { descartes.dataInvalida++; return; }
-    if (f.resetAt && f.doneAt === f.resetAt) { descartes.carimboDoReset++; return; }
-    const log = Array.isArray(f.log) ? f.log : [];
-    const ev = log.filter(e => e && fins.includes(e.to) && Math.abs(Date.parse(e.at) - ms) <= 1000).pop();
-    if (!ev) { descartes[f.imported ? 'importados' : 'semEventoDeEntrega']++; return; }
-    if (ev.from === '—') { descartes.criadosNoFim++; return; }
-    if (fins.includes(ev.from)) { descartes.movidosEntreFins++; return; }
-    if ((c.childCardIds || []).length) { descartes.agregadores++; return; }
-    if (!Number.isNaN(corteMs) && ms <= corteMs) { descartes.antesDoCorte++; return; }
-    const s = dia(ms);
-    if (s >= hoje) { descartes.diaDeHoje++; return; }
-    if (s < primeiroDia) { descartes.foraDoHistorico++; return; }
-    porDia[s] = (porDia[s] || 0) + 1;
-    porColuna[nomeDe(c.col)] = (porColuna[nomeDe(c.col)] || 0) + 1;
-    validas++;
-    if (c.archived) arquivadosEntregues++;
-    reaberturas += log.filter(e => e && fins.includes(e.from) && !fins.includes(e.to)).length;
+    if (!f.doneAt) { comuns.semData++; return; }
+    if (Number.isNaN(Date.parse(f.doneAt))) { comuns.dataInvalida++; return; }
+    if (f.resetAt && f.doneAt === f.resetAt) { comuns.carimboDoReset++; return; }
+    if ((c.childCardIds || []).length) { comuns.agregadores++; return; }
+    const log = (Array.isArray(f.log) ? f.log : []).filter(Boolean);
+    if (c.col === ultima) registra(cenarios.ultimaColuna, c, f, log.filter(e => e.to === ultima && e.from !== ultima).pop(), log);
+    else cenarios.ultimaColuna.descartes.aindaNaoChegou++;
+    registra(cenarios.primeiraChegada, c, f, log.filter(e => fins.includes(e.to) && !fins.includes(e.from)).pop(), log);
   });
 
-  const diario = [];
-  for (let s = primeiroDia; s < hoje; s = soma(s, 1)) diario.push({ dia: s, entregas: porDia[s] || 0, excepcional: excepcional(s) });
-  const recentes = diario.slice(-JANELA).filter(x => !x.excepcional);
-  const ocorrencias = NOMES.map((n, i) => recentes.filter(x => diaDaSemana(x.dia) === i).length);
-  const entregasJanela = recentes.reduce((t, x) => t + x.entregas, 0);
+  const resumir = cen => {
+    const diario = [];
+    for (let s = primeiroDia; s < hoje; s = soma(s, 1)) diario.push({ dia: s, entregas: cen.porDia[s] || 0, excepcional: excepcional(s) });
+    const recentes = diario.slice(-JANELA).filter(x => !x.excepcional);
+    const ocorrencias = NOMES.map((n, i) => recentes.filter(x => diaDaSemana(x.dia) === i).length);
+    const entregasJanela = recentes.reduce((t, x) => t + x.entregas, 0);
+    const semanas = [];
+    for (let s = soma(primeiroDia, (7 - diaDaSemana(primeiroDia)) % 7); soma(s, 6) < hoje; s = soma(s, 7)) {
+      const dias = diario.filter(x => x.dia >= s && x.dia <= soma(s, 6));
+      semanas.push({ inicio: s, entregas: dias.reduce((t, x) => t + x.entregas, 0), comparavel: !dias.some(x => x.excepcional) });
+    }
+    const comparaveis = semanas.filter(x => x.comparavel), total = l => l.reduce((t, x) => t + x.entregas, 0);
+    const novas = comparaveis.slice(-2), antigas = comparaveis.slice(-4, -2);
+    const razao = antigas.length === 2 && total(antigas) > 0 ? +(total(novas) / total(antigas)).toFixed(2) : null;
+    const atende = { dias: recentes.length >= PISOS.dias, entregas: entregasJanela >= PISOS.entregas, ocorrenciasPorDiaDaSemana: ocorrencias.every(n => n >= PISOS.ocorrenciasPorDiaDaSemana), ritmoEstavel: razao !== null && razao >= 0.67 && razao <= 1.5 };
+    const semEvento = cen.descartes.semEventoDeEntrega + cen.descartes.importados + cen.descartes.criadosNoFim;
+    return { nome: cen.nome, entregasValidas: cen.validas, arquivadasEntregues: cen.arquivadas, reaberturasNasValidas: cen.reaberturas, descartes: cen.descartes, semEventoConfiavelPct: Math.round(semEvento / Math.max(1, cen.validas + semEvento) * 100),
+      janela: { dias: JANELA, diasComparaveis: recentes.length, entregas: entregasJanela, diasSemEntrega: recentes.filter(x => !x.entregas).length, ocorrenciasPorDiaDaSemana: Object.fromEntries(NOMES.map((n, i) => [n, ocorrencias[i]])) },
+      atende, razaoDoRitmo: razao, semanas, entregasPorDia: cen.porDia };
+  };
+  const resultado = { ultimaColuna: resumir(cenarios.ultimaColuna), primeiraChegada: resumir(cenarios.primeiraChegada) };
 
-  const semanas = [];
-  for (let s = soma(primeiroDia, (7 - diaDaSemana(primeiroDia)) % 7); soma(s, 6) < hoje; s = soma(s, 7)) {
-    const dias = diario.filter(x => x.dia >= s && x.dia <= soma(s, 6));
-    semanas.push({ inicio: s, entregas: dias.reduce((t, x) => t + x.entregas, 0), comparavel: !dias.some(x => x.excepcional) });
-  }
-  const comparaveis = semanas.filter(x => x.comparavel), total = l => l.reduce((t, x) => t + x.entregas, 0);
-  const novas = comparaveis.slice(-2), antigas = comparaveis.slice(-4, -2);
-  const razao = antigas.length === 2 && total(antigas) > 0 ? +(total(novas) / total(antigas)).toFixed(2) : null;
-
-  const atende = { dias: recentes.length >= PISOS.dias, entregas: entregasJanela >= PISOS.entregas, ocorrenciasPorDiaDaSemana: ocorrencias.every(n => n >= PISOS.ocorrenciasPorDiaDaSemana), ritmoEstavel: razao !== null && razao >= 0.67 && razao <= 1.5 };
-  const descartadas = Object.entries(descartes).filter(([k]) => !['cancelados', 'duplicados', 'diaDeHoje', 'foraDoHistorico', 'antesDoCorte'].includes(k)).reduce((t, [, n]) => t + n, 0);
   const alertas = [];
   if (cfgFalhou) alertas.push('Não consegui ler a configuração de fluxo; usei a coluna de fim deduzida pelo Painel.');
   if (!configuradas.length) alertas.push('O squad não tem colunas de fim configuradas; confirme se a coluna deduzida é a de entrega.');
-  if (fins.length > 1) alertas.push('Há mais de uma coluna de fim; confirme quais significam entrega.');
+  if (entrega.length > 1) alertas.push('Há mais de uma coluna de fim; escolha qual dos dois cenários representa a entrega.');
   if (!Number.isNaN(corteMs) && dia(corteMs) >= soma(hoje, -JANELA)) alertas.push('A contagem de fluxo foi zerada dentro da janela de ' + JANELA + ' dias.');
-  if (emFim && descartadas / emFim > 0.2) alertas.push('Mais de 20% dos cards concluídos não têm um evento de entrega confiável.');
-  if (!atende.dias || !atende.entregas || !atende.ocorrenciasPorDiaDaSemana) alertas.push('O histórico ainda não atinge os pisos da previsão.');
-  if (razao === null) alertas.push('Ainda não há 4 semanas comparáveis para medir a estabilidade do ritmo.');
-  else if (!atende.ritmoEstavel) alertas.push('O ritmo das 2 últimas semanas mudou em relação às 2 anteriores.');
+  Object.values(resultado).forEach(r => {
+    if (r.semEventoConfiavelPct > 20) alertas.push(r.nome + ': mais de 20% das conclusões não têm um evento de entrega confiável.');
+    if (!r.atende.dias || !r.atende.entregas || !r.atende.ocorrenciasPorDiaDaSemana) alertas.push(r.nome + ': o histórico ainda não atinge os pisos da previsão.');
+    if (r.razaoDoRitmo === null) alertas.push(r.nome + ': ainda não há 4 semanas comparáveis para medir a estabilidade do ritmo.');
+    else if (!r.atende.ritmoEstavel) alertas.push(r.nome + ': o ritmo das 2 últimas semanas mudou em relação às 2 anteriores.');
+  });
 
   const resumo = {
     squad: SQUAD, geradoEm: hoje, primeiroDiaConsiderado: primeiroDia, contagemZeradaEm: Number.isNaN(corteMs) ? null : dia(corteMs),
     colunasDeFim: fins.map(id => ({ nome: nomeDe(id), contaComoEntrega: entrega.includes(id) })), origemDasColunas: configuradas.length ? 'configuração do squad' : 'deduzida pelo Painel',
-    cards: { total: vistos.size, emColunaDeFim: emFim, arquivados, arquivadosEntregues }, entregasValidas: validas, reaberturasNasValidas: reaberturas, porColuna: porColuna, descartes,
-    janela: { dias: JANELA, diasComparaveis: recentes.length, entregas: entregasJanela, diasSemEntrega: recentes.filter(x => !x.entregas).length, ocorrenciasPorDiaDaSemana: Object.fromEntries(NOMES.map((n, i) => [n, ocorrencias[i]])) },
-    pisos: PISOS, atende, razaoDoRitmo: razao, semanas, diario, alertas,
+    cards: { total: vistos.size, emColunaDeFim: emFim, arquivados }, descartesComuns: comuns, pisos: PISOS, cenarios: resultado, alertas,
   };
   window.__mcCobertura = resumo;
-  console.table(semanas);
+  console.table(resultado.ultimaColuna.semanas.map((x, i) => ({ semana: x.inicio, [nomeDe(ultima)]: x.entregas, 'qualquer coluna de fim': resultado.primeiraChegada.semanas[i].entregas })));
   console.log(alertas.length ? '⚠ ' + alertas.join('\n⚠ ') : '✅ Nenhum alerta.');
   const json = JSON.stringify(resumo);
   try { if (typeof copy === 'function') { copy(json); console.log('📋 Resultado copiado. Cole na conversa com o Claude.'); } } catch (e) {}
