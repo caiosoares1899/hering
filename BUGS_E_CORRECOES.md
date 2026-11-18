@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · Tema Black Friday manual era perdido ao fim da semana após recarregar — kanban v8.30.1014-dev (SÓ DEV)
+
+Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo manualmente como padrão sazonal. Na virada de 30/11 com a aba aberta, o contador substituía a preferência gravada. O boot preserva a escolha manual e mantém a precedência sazonal quando o automático está ligado. A regressão testa entrada na semana, recarga, virada e saída manual.
+
 ### 2026-11-18 · 🧮 Toolbar do Maré: o botão do Gantt tinha o mesmo emoji de "Dados do Board" — kanban v8.30.1013-dev (SÓ DEV)
 
 - **Pedido do Caio:** os dois botões da toolbar usavam 📊, o que dificultava diferenciar um do outro.

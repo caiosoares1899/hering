@@ -114,6 +114,20 @@ const SP = s => Date.parse(s + '-03:00');   // horário de Brasília
       await p.evaluate(() => onThemeBtnClick()); await p.waitForTimeout(400);
       t('sair do 🔥 manual volta pro Lençóis', await tema(p) === 'light', await tema(p));
       await ctx.close(); }
+    // Recarregar durante a semana não converte o tema escolhido manualmente em sazonal.
+    { const { ctx, p } = await abrir(SP('2026-11-22T23:59:00'), { mare_theme: 'light' });
+      await p.evaluate(() => toggleBlackFriday());
+      await p.clock.setFixedTime(SP('2026-11-24T10:00:00'));
+      await p.evaluate(() => _bfUpdateCountdown());
+      t('🔥 manual: a aba aberta preserva a escolha ao começar a semana', await tema(p) === 'blackfriday' && await p.evaluate(() => !window.__bfPadrao), await tema(p));
+      await recarregar(p);
+      t('🔥 manual: recarregar na semana preserva a escolha', await tema(p) === 'blackfriday' && await p.evaluate(() => !window.__bfPadrao), await tema(p));
+      await p.clock.setFixedTime(SP('2026-11-30T00:01:00'));
+      await p.evaluate(() => _bfUpdateCountdown());
+      t('🔥 manual: fim da semana mantém o tema visível e a preferência salva', await tema(p) === 'blackfriday' && await ls(p, 'mare_theme') === 'blackfriday', [await tema(p), await ls(p, 'mare_theme')]);
+      await p.evaluate(() => exitBlackFriday());
+      t('🔥 manual: sair depois da semana ainda devolve o Lençóis', await tema(p) === 'light', await tema(p));
+      await ctx.close(); }
     // virada com a aba aberta
     { const { ctx, p } = await abrir(SP('2026-11-22T23:59:00'), { mare_theme: 'light' });
       t('domingo 22/11 23:59: ainda Lençóis', await tema(p) === 'light', await tema(p));

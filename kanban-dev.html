@@ -4734,7 +4734,9 @@ window._bfSemanaInfo = function(agoraMs){
 (function(){
   try{
     const bfs = window._bfSemanaInfo();
-    window.__bfPadrao = bfs.dentro && localStorage.getItem(bfs.chaveSair) !== '1';
+    // O BF escolhido manualmente continua sendo o tema da pessoa depois da semana.
+    const bfManual = localStorage.getItem('mare_theme') === 'blackfriday' && localStorage.getItem('mare_theme_auto') !== '1';
+    window.__bfPadrao = bfs.dentro && !bfManual && localStorage.getItem(bfs.chaveSair) !== '1';
     if(window.__bfPadrao){ document.documentElement.setAttribute('data-theme','blackfriday'); return; }
   }catch(e){ window.__bfPadrao = false; }
   try{
@@ -7778,7 +7780,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1013-dev</div>
+<div class="version">v8.30.1014-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
