@@ -379,8 +379,8 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    início); as margens automáticas nas pontas centralizam só quando SOBRA espaço. */
 .d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;}
 .d2-table-rows:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px;}
-.d2-table-rows > :first-child{margin-top:auto;}
-.d2-table-rows > :last-child{margin-bottom:auto;}
+/* Espaçadores em vez de margem na primeira/última linha: com "Colapsar concluídos" essas linhas podem estar ocultas e a margem de uma só delas jogava o resto para uma ponta. */
+.d2-table-rows::before,.d2-table-rows::after{content:'';flex:1 0 0;}
 .d2-marco-row{display:flex;align-items:flex-start;padding:calc(5*var(--ud)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:max(16px,calc(15*var(--ud)));cursor:pointer;border-radius:8px;transition:background .15s;}
 .d2-marco-row:last-child{border-bottom:none;}
 .d2-marco-row:hover{background:rgba(255,255,255,.05);}
@@ -1747,7 +1747,7 @@ window._okrOpenDetail = id => {
               <span class="d2-marco-status"><span class="status-dot" style="background:${ms.dot};"></span>${esc(ms.label)}</span>
               <span class="d2-marco-prazo">${m.prazo?esc(m.prazo):'—'}</span>
             </div>`;
-          }).join(''); })() : '<div class="d2-empty">Nenhum marco cadastrado ainda.</div>'}</div>
+          }).join('') + (_okrColapsarConcluidos && concluidos===marcos.length ? '<div class="d2-empty">Todos os marcos estão concluídos. Clique em Mostrar concluídos para ver a lista.</div>' : ''); })() : '<div class="d2-empty">Nenhum marco cadastrado ainda.</div>'}</div>
         </div>
       </div>
       <div class="d2-footer">
