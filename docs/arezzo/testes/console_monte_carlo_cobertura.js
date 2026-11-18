@@ -1,5 +1,5 @@
 // 🎲 Monte Carlo · fase 0: confere se o histórico do squad piloto serve para a previsão (ver docs/ideias/monte-carlo-previsao.md).
-// Como usar: abra o painel-dev.html logado como ADM, espere os dados carregarem, cole este arquivo inteiro no Console e copie o JSON impresso.
+// Como usar: abra o painel.html (o de produção: o painel-dev só carrega os squads de teste) logado como ADM, espere os dados carregarem, cole este arquivo inteiro no Console e copie o JSON impresso.
 // Só leitura: não grava nada. Faz 1 leitura pequena (config/flow do squad); o resto usa os cards que o Painel já carregou.
 // Privacidade: a saída traz só totais e nomes de coluna. Nunca traz título, id de card ou dado de pessoa.
 (async () => {
@@ -7,7 +7,11 @@
   const PISOS = { dias: 28, entregas: 20, ocorrenciasPorDiaDaSemana: 4 };
   const EXCEPCIONAIS = [['2026-11-23', '2026-11-29'], ['2026-12-24', '2027-01-03']];   // Black Friday e fim de ano: fora do ritmo normal
   const d = (typeof squadData !== 'undefined') ? squadData[SQUAD] : null;
-  if (!d || !Array.isArray(d.cards) || !d.cards.length) { console.warn('Os cards do squad "' + SQUAD + '" ainda não carregaram. Espere o Painel terminar e rode de novo.'); return null; }
+  if (!d || !Array.isArray(d.cards) || !d.cards.length) {
+    const carrega = typeof SQUADS !== 'undefined' && SQUADS.some(s => s.id === SQUAD);
+    console.warn(carrega ? 'Os cards do squad "' + SQUAD + '" ainda não carregaram. Espere o Painel terminar e rode de novo.' : 'Esta página não carrega o squad "' + SQUAD + '". Abra o painel.html (produção) e rode de novo.');
+    return null;
+  }
 
   const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
   const dia = ms => fmt.format(new Date(ms));
