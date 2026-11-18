@@ -28,6 +28,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 | Claude | `test_dicas.js` desatualizado: espera 33–35 dicas no Painel, hoje são 38 (falha também na `main`); e tem caminho do Playwright/porta fixos do Linux | `docs/arezzo/testes/test_dicas.js` L133 | 13/11/2026 |
 | Antigravity | `database.rules.json`: `humor`/`humor_comp` da Travessia aceitam nota decimal (ex.: `1.5`); exigir inteiro | [escalados](quadro/escalados.md#travessia-humor-inteiro) | 11/11/2026 |
 | Codex | Radar: redistribuir dinamicamente o detalhe do Objetivo em projeção, com leitura sem rolagem | [escopo](quadro/escalados.md#apresentacao-sem-rolagem) | 18/11/2026 |
+| Caio | Radar: gráfico de Evolução do atingimento com a meta como linha d’água na apresentação | [escopo](quadro/escalados.md#apresentacao-linha-dagua) | 18/11/2026 |
 | Antigravity | Segurança das regras (`/auditoriaseguranca` do Painel): C1/C2 feitos; **faltam C3, C4, D7/D8**. Cuidado com externos e `painel_viewers` | [escalados](quadro/escalados.md#seguranca-regras-c3-c4) | 11/11/2026 |
 
 ## Pendente de deploy
