@@ -24,6 +24,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 🎲 Quando termina? · previsão em teste no Fluxo (painel v5.123-dev, #1853) — 2026-11-18
+
+- Na aba 🌊 Fluxo do Painel, o piloto **Quando termina?** estima a data para concluir um lote sob o selo **Estimativa em teste**. A previsão usa entregas verificáveis em Concluído, inclusive arquivadas, e roda no navegador com os dados já carregados.
+- Mostra a data P85, o P50 nos detalhes e o motivo quando o histórico ou o horizonte não permitem estimar. O piloto fica restrito a Dados e IA e ao squad de teste.
+
 ### 🎨 /melhoriauiux do modal do card: hierarquia visual e foco (kanban v8.30.1012-dev, #1842) (SÓ DEV) — 2026-11-18
 
 Moldura quieta sem botões teal concorrentes (+ Add de Participantes e 🤖 Insights discretos para destacar 💾 Salvar como primário único), remoção do backdrop-filter aninhado em #m-tag-add-list, acabamento --specular nos submenus flutuantes do modal, :focus-visible unificado nos botões do #card-ov (com outline-offset: -2px em #m-deps-menu e #m-milanote-menu) e tabular-nums em #m-atraso-info.
