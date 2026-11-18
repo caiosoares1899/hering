@@ -1303,7 +1303,7 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .m-tag-chip .x:hover{opacity:1;}
 .m-tags-add{cursor:text;}
 .m-tag-add-wrap{position:relative;}
-.m-tag-add-list{display:none;position:fixed;z-index:9300;background:rgba(var(--surface-rgb),.99);border:1px solid var(--glass-b);border-radius:10px;padding:4px;max-height:220px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.5);backdrop-filter:blur(14px);}
+.m-tag-add-list{display:none;position:fixed;z-index:9300;background:rgba(var(--surface-rgb),.99);border:1px solid var(--glass-b);border-radius:10px;padding:4px;max-height:220px;overflow-y:auto;box-shadow:var(--specular),0 10px 30px rgba(0,0,0,.5);}
 .m-tag-add-list.open{display:block;}
 .m-tag-add-item{padding:6px 9px;border-radius:7px;font-size:12px;color:var(--txt);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .m-tag-add-item:hover{background:rgba(56,182,255,.14);}
@@ -4625,9 +4625,11 @@ input[type="date"]{-moz-appearance:textfield;}
 #card-ov .cl-group-title{color:var(--txt);}
 #card-ov .cl-group-hd{min-width:0;}
 #card-ov .cl-del,#card-ov .cl-collapse-btn,#card-ov .cl-copy-all{color:var(--txt2);}
-#card-ov .panel-hd .x-btn:focus-visible,#card-ov #m-checklist :focus-visible{
+#card-ov .panel-hd .x-btn:focus-visible,#card-ov #m-checklist :focus-visible,
+#card-ov button:focus-visible{
   outline:2px solid var(--accent);outline-offset:2px;
 }
+#m-deps-menu button:focus-visible,#m-milanote-menu button:focus-visible{outline-offset:-2px;}
 @media(max-width:768px){
   #card-ov .card-attr-row{grid-template-columns:minmax(0,1fr);}
 }
@@ -5438,7 +5440,7 @@ window._bfSemanaInfo = function(agoraMs){
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
     <div id="m-cover-wrap" style="position:relative;display:inline-block;margin-right:6px;">
       <button class="x-btn" id="m-cover-btn" aria-label="Capa de cor ou imagem" onclick="toggleCoverMenu()" title="Capa de cor ou imagem">🎨</button>
-      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
+      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
         <div class="cover-swatches cover-swatches-target"></div>
         <div style="border-top:1px solid var(--glass-b);margin:9px 0 7px;padding-top:8px;">
           <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);margin-bottom:5px;">🖼️ Ou imagem (só guarda o link)</div>
@@ -5554,7 +5556,7 @@ window._bfSemanaInfo = function(agoraMs){
           <div class="field"><label class="fl">Prazo</label>
             <div style="display:flex;gap:6px;align-items:center;min-width:0;"><input class="fi" id="m-due" type="date" onchange="_onDueDateChange()" style="flex:1;min-width:0;"><button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário" aria-label="Escolher o prazo no calendário" style="margin-left:0;flex-shrink:0;">📅</button></div>
             <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
-            <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;"></div>
+            <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;font-variant-numeric:tabular-nums;"></div>
           </div>
         </div>
         <div class="card-attr-row">
@@ -5619,7 +5621,7 @@ window._bfSemanaInfo = function(agoraMs){
             <select class="fi" id="m-part-select" style="flex:1;font-size:11px;padding:5px 8px;">
               <option value="">+ Adicionar participante...</option>
             </select>
-            <button class="btn btn-sm btn-teal" onclick="addParticipant()">+ Add</button>
+            <button class="btn btn-sm" onclick="addParticipant()">+ Add</button>
           </div>
         </div>
       </div>
@@ -6041,7 +6043,7 @@ window._bfSemanaInfo = function(agoraMs){
       <button class="btn btn-sm" onclick="toggleUsarModeloMenu()" title="Aplicar um modelo salvo neste card">📥 Usar modelo</button>
       <div id="m-usarmodelo-menu" style="display:none;flex-direction:column;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:240px;max-width:280px;max-height:340px;z-index:500;">
+        box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);min-width:240px;max-width:280px;max-height:340px;z-index:500;">
         <div style="padding:8px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--glass-b);flex-shrink:0;">
           <input id="m-usarmodelo-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar modelo..." oninput="_renderUsarModeloList()" style="width:100%;">
           <select id="m-usarmodelo-f-tag" class="ql-filter-sel" onchange="_renderUsarModeloList()" style="width:100%;"></select>
@@ -6059,7 +6061,7 @@ window._bfSemanaInfo = function(agoraMs){
       </button>
       <div id="m-deps-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:200px;z-index:500;overflow:hidden;">
+        box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);min-width:200px;z-index:500;overflow:hidden;">
         <button onclick="openDependsPicker();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
           onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
           🔗 Definir dependência
@@ -6082,7 +6084,7 @@ window._bfSemanaInfo = function(agoraMs){
       </button>
       <div id="m-milanote-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:230px;z-index:500;overflow:hidden;">
+        box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);min-width:230px;z-index:500;overflow:hidden;">
         <button onclick="exportToMilanote();closeMilanoteMenu();" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
           onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
           <span>📝 Copiar resumo completo</span>
@@ -6102,7 +6104,7 @@ window._bfSemanaInfo = function(agoraMs){
          do card — ver @media(max-width:768px). No desktop o wrapper não muda
          nada (segue no mesmo lugar/fileira de sempre). -->
     <div id="modal-ft-primary">
-      <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
+      <button class="btn btn-sm" onclick="insightsCard()">🤖 Insights</button>
       <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
       <button class="btn btn-p btn-sm" id="btn-save-card" onclick="saveCard()">💾 Salvar</button>
     </div>
@@ -7776,7 +7778,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1011-dev</div>
+<div class="version">v8.30.1012-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

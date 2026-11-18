@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🎨 /melhoriauiux do modal do card: hierarquia visual e foco (kanban v8.30.1012-dev, #1842) (SÓ DEV) — 2026-11-18
+
+Moldura quieta sem botões teal concorrentes (+ Add de Participantes e 🤖 Insights discretos para destacar 💾 Salvar como primário único), remoção do backdrop-filter aninhado em #m-tag-add-list, acabamento --specular nos submenus flutuantes do modal, :focus-visible unificado nos botões do #card-ov (com outline-offset: -2px em #m-deps-menu e #m-milanote-menu) e tabular-nums em #m-atraso-info.
+
 ### 🎨 /melhoriauiux do Maré com a referência do Arc UI: hover que não gruda no toque e números que não pulam (kanban v8.30.999-dev) — PROD 17/11 (kanban v8.30.999 · painel v5.120) — 2026-11-17
 
 - **Pedido do Caio:** rodada de UI/UX no Maré com a referência do Arc UI (uiarc.dev), que entrou no guia em #1826/#1827.
