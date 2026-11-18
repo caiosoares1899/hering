@@ -46,5 +46,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🏝️ Ilha Dinâmica no Oceano (lobby + host) — o Maré foi validado pelo Caio em 16/11 | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |
+| 🧲 Ideias do Kanbanize: ícone de link, tempo por coluna, Monte Carlo, fila × ativa, causas de impedimento e ponte com a TI | Claude · ponte: Caio com a TI | [backlog](quadro/backlog.md#ideias-kanbanize) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |

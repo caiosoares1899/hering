@@ -38,6 +38,17 @@
 |---|---|---|
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias): triagem em 4 levas — Radar (🧊 deriva, notas→Próximo Passo), Escala→Kanban, Digest do Painel, fluxo do Maré; Meus Pedidos e sino com adiar ficam com o Claude | Caio escolhe a ordem; Claude/Antigravity conforme a triagem | `docs/ideias/dossie-concorrencia-2026-10.md` — **nada roda antes de 04/11** |
 
+<a id="ideias-kanbanize"></a>
+
+| Ideia | Dono | Onde está o desenho |
+|---|---|---|
+| 🔗 **Kanbanize 1 · ícone de link** (18/11/2026): reconhecer `kanbanize.com` e `businessmap.io` nos links do card. Esforço trivial: uma linha em `KNOWN_SERVICES` (`kanban-dev.html`) | Claude | comparativo Kanbanize × Oceano de 18/11/2026 |
+| ⏱️ **Kanbanize 2 · tempo por coluna no card**: barra compacta no modal mostrando onde o card passou o tempo. Esforço baixo: usa `flow.log`, que guarda só os 40 últimos movimentos. Esperar o merge da #1842, que mexe no modal | Claude | idem |
+| 🎲 **Kanbanize 3 · previsão Monte Carlo leve**: "85% de chance de concluir N itens até DD/MM", no navegador, com a vazão que o Painel já carrega. Esforço baixo. Exigir um mínimo de entregas antes de mostrar a previsão | Claude | idem |
+| 🚦 **Kanbanize 4 · coluna de fila ou ativa → eficiência de fluxo**: tipo opcional na coluna e % na aba 🌊 Fluxo do Painel. Esforço médio: vale para o histórico, mas precisa alinhar com a regra do Painel que já trata Backlog e A fazer como fila | Claude | idem |
+| 🧱 **Kanbanize 5 · categorias de impedimento**: chips rápidos ao marcar impedido e ranking de causas no Painel. Esforço médio: hoje `blockedMs` soma por card e o motivo é texto livre, então é preciso registrar a causa de cada episódio | Claude | idem |
+| 🌉 **Kanbanize 6 · ponte com a TI (webhook)**: status do chamado da TI refletido num card do Maré. Depende da TI liberar a API e cria fronteira de confiança nova: passar pelo checklist de `docs/SEGURANCA_FRONTEIRAS.md` antes de começar | Caio decide com a TI | idem |
+
 <a id="tema-claro-painel-radar"></a>
 
 | Ideia | Dono | Onde está o desenho |
