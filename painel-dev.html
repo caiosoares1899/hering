@@ -1634,7 +1634,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);}
 .flow-forecast summary{display:flex;align-items:center;cursor:pointer;text-decoration:underline;}
 .flow-forecast :is(input,select,button,summary):focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-#flow-forecast-status{font-size:14px;font-weight:600;}
+.flow-forecast-result{font-size:14px;font-weight:600;line-height:1.55;}
+.flow-forecast-badge{display:inline-block;margin-right:6px;padding:1px 8px;border:1px solid var(--glass-b);
+  border-radius:999px;background:var(--glass);color:var(--txt);font-size:11px;white-space:nowrap;}
 @media(max-width:600px){.flow-forecast form{grid-template-columns:minmax(0,1fr);}}
 
 [data-theme="light"] .pt-avatar{color:var(--txt);background:var(--glass);}
@@ -1969,14 +1971,16 @@ window.MARE_LOGIN_PELO_OCEANO = true;
         <div class="tp-chart-wrap" id="throughput-chart"></div>
         <section id="flow-forecast" class="flow-forecast" aria-labelledby="flow-forecast-title" hidden>
           <h3 id="flow-forecast-title" class="flow-card-hd">Quando termina?</h3>
-          <p class="flow-forecast-note">Estimativa em teste</p>
           <form id="flow-forecast-form">
             <label>Squad<select id="flow-forecast-squad" class="fi"></select></label>
             <label>Itens a concluir<input id="flow-forecast-count" class="fi" type="number" required min="1" step="1" inputmode="numeric"></label>
             <button class="btn btn-p" type="submit">Calcular</button>
           </form>
           <p class="flow-forecast-note">Conte os itens que o squad vai priorizar. Deixe de fora pausados, contínuos, bloqueados sem resolução prevista e supercards.</p>
-          <p id="flow-forecast-status" role="status">Escolha um squad e informe quantos itens quer planejar.</p>
+          <p class="flow-forecast-result" role="status">
+            <span id="flow-forecast-badge" class="flow-forecast-badge" hidden>Estimativa em teste</span>
+            <span id="flow-forecast-status">Escolha um squad e informe quantos itens quer planejar.</span>
+          </p>
           <details id="flow-forecast-details" hidden>
             <summary>Detalhes da estimativa</summary>
             <p id="flow-forecast-median"></p>
@@ -12228,6 +12232,7 @@ function _forecastDistributions({buckets,future}){
 let _forecastResultConfig=null;
 function _forecastReset(){
   _forecastResultConfig=null;
+  document.getElementById('flow-forecast-badge').hidden=true;
   document.getElementById('flow-forecast-details').hidden=true;
   document.getElementById('flow-forecast-status').textContent='Escolha um squad e informe quantos itens quer planejar.';
 }
@@ -12252,9 +12257,17 @@ let _forecastSuggestionReady=false;
 function _forecastConfig(data){
   return JSON.stringify([data.flowBaseline?.at,_forecastFinalColumns(data).map(c=>c.id)]);
 }
+function _forecastHasFreshData(id,today){
+  const fetchedAt=_squadDadosAt[id];
+  return !_squadDadosFailed.has(id) && !!squadData[id]?.forecastHasColumns
+    && Number.isFinite(fetchedAt) && _forecastCivil(fetchedAt)>=today;
+}
+
 function _renderFlowForecast(){
   const section=document.getElementById('flow-forecast');
   const select=document.getElementById('flow-forecast-squad');
+  const status=document.getElementById('flow-forecast-status');
+  if(!section || !select?.options || !status) return;
   const pilots=SQUADS.filter(s=>FLOW_FORECAST_PILOTS.includes(s.id) && squadVisible(s.id));
   section.hidden=!pilots.length;
   const old=select.value;
@@ -12276,7 +12289,9 @@ function _renderFlowForecast(){
   if(_forecastResultConfig!==null && (!data?.forecastHasColumns || _forecastResultConfig!==_forecastConfig(data))) _forecastReset();
   if(pilots.length && _squadDadosFailed.has(select.value)){
     _forecastReset();
-    document.getElementById('flow-forecast-status').textContent=FLOW_FORECAST_MESSAGES.data;
+    status.textContent=FLOW_FORECAST_MESSAGES.data;
+  } else if(status.textContent===FLOW_FORECAST_MESSAGES.data && _forecastHasFreshData(select.value,_forecastCivil(Date.now()))){
+    _forecastReset();
   }
 }
 
@@ -12295,7 +12310,11 @@ document.getElementById('flow-forecast-form').addEventListener('submit',event=>{
   }
   const today=_forecastCivil(Date.now());
   const data=squadData[id];
-  const sample=_forecastSample(!_squadDadosFailed.has(id) && data?.forecastHasColumns ? data : null,today);
+  if(!_forecastHasFreshData(id,today)){
+    status.textContent=FLOW_FORECAST_MESSAGES.data;
+    return;
+  }
+  const sample=_forecastSample(data,today);
   if(sample.state!=='ready'){
     status.textContent=FLOW_FORECAST_MESSAGES[sample.state];
     return;
@@ -12312,6 +12331,7 @@ document.getElementById('flow-forecast-form').addEventListener('submit',event=>{
   document.getElementById('flow-forecast-exclusions').textContent=sample.excluded+
     ' cards em Concluído ficaram fora da amostra. Só entram entregas verificáveis após o corte, em dias completos do período regular.';
   _forecastResultConfig=_forecastConfig(data);
+  document.getElementById('flow-forecast-badge').hidden=false;
   document.getElementById('flow-forecast-details').hidden=false;
 });
 

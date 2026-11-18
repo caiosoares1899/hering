@@ -185,6 +185,7 @@ async function main(){
     await clickCalculate(page,150);
     await checkMessage(page,/nos próximos 30 dias/);
     assert.ok(await page.locator('#flow-forecast-details').isHidden());
+    assert.ok(await page.locator('#flow-forecast-badge').isHidden());
     for(const [day,re] of [
       ['2026-11-18',/pausa na Black Friday/],['2027-01-07',/28 dias/],['2027-01-08',/quatro ocorrências/],
     ]){
@@ -193,7 +194,22 @@ async function main(){
       await checkMessage(page,re);
     }
 
-    await page.clock.setFixedTime(new Date('2027-01-11T13:00:00Z'));
+    await page.clock.setFixedTime(new Date('2027-01-11T23:59:00-03:00'));
+    await clickCalculate(page,5);
+    await checkMessage(page,/85% de chance/);
+    await page.clock.setFixedTime(new Date('2027-01-12T00:00:00-03:00'));
+    const beforeStale=await page.evaluate(()=>window.__log.length);
+    await clickCalculate(page,5);
+    await checkMessage(page,/Atualize o Painel/);
+    assert.ok(await page.locator('#flow-forecast-details').isHidden());
+    assert.ok(await page.locator('#flow-forecast-badge').isHidden());
+    assert.deepEqual(await page.evaluate(start=>window.__log.slice(start),beforeStale),[]);
+    await page.evaluate(()=>_pollSquadDados('dev',true));
+    await page.waitForFunction(()=>_squadDadosAt.dev===Date.now() && !_squadDadosInflight.dev);
+    await clickCalculate(page,5);
+    await checkMessage(page,/85% de chance/);
+    console.log('✅ Virada da meia-noite em São Paulo recusa dados do dia anterior sem buscar; atualizar libera o cálculo');
+
     await page.evaluate(()=>{
       window.__denyGet=p=>p.endsWith('/dev/dados/columns');
       _pollSquadDados('dev',true);
@@ -202,7 +218,8 @@ async function main(){
     await clickCalculate(page,5);
     await checkMessage(page,/Atualize o Painel/);
     await page.evaluate(()=>{window.__denyGet=null;_pollSquadDados('dev',true);});
-    await page.waitForFunction(()=>!_squadDadosFailed.has('dev'));
+    await page.waitForFunction(()=>!_squadDadosFailed.has('dev') && !_squadDadosInflight.dev);
+    assert.doesNotMatch(await page.locator(status).textContent(),/Atualize o Painel/);
     await clickCalculate(page,5);
     await checkMessage(page,/85% de chance/);
     await page.evaluate(()=>setFilter('omnichannel'));
@@ -225,11 +242,13 @@ async function main(){
           return { overflow:section.scrollWidth>section.clientWidth,
             outOfViewport:box.left<0||box.right>innerWidth,
             heights:controls.map(el=>el.getBoundingClientRect().height),
-            status:section.querySelector('[role=status]').textContent };
+            status:section.querySelector('[role=status]').textContent,
+            badge:section.querySelector('#flow-forecast-badge').getBoundingClientRect().width };
         });
         assert.ok(!layout.overflow && !layout.outOfViewport,JSON.stringify(layout));
         assert.ok(layout.heights.every(h=>h>=44),JSON.stringify(layout));
-        assert.match(layout.status,/85%/);
+        assert.match(layout.status,/Estimativa em teste\s+Pelo ritmo recente.*85%/);
+        assert.ok(layout.badge>0);
         if(process.env.CAPTURAS){
           fs.mkdirSync(process.env.CAPTURAS,{recursive:true});
           await page.locator('#flow-forecast').evaluate(el=>el.scrollIntoView({block:'center'}));

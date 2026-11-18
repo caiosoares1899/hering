@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — 🎲 Quando termina? · previsão em teste no Fluxo (painel v5.123-dev) — 2026-11-18
+### SÓ DEV — 🎲 Quando termina? · previsão em teste no Fluxo (painel v5.123-dev, #1853) — 2026-11-18
 
 - Na aba 🌊 Fluxo do Painel, o piloto **Quando termina?** estima a data para concluir um lote sob o selo **Estimativa em teste**. A previsão usa entregas verificáveis em Concluído, inclusive arquivadas, e roda no navegador com os dados já carregados.
 - Mostra a data P85, o P50 nos detalhes e o motivo quando o histórico ou o horizonte não permitem estimar. O piloto fica restrito a Dados e IA e ao squad de teste.
