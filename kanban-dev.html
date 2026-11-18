@@ -7776,7 +7776,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1005-dev</div>
+<div class="version">v8.30.1006-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -24551,7 +24551,17 @@ async function notasUndo(){
   const prev = stack.pop();
   await window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos'), prev);
 }
+// Monitor do Painel (12/11/2026): "Failed to set the innerHTML… Perhaps it was moved in a blur event handler?".
+// Redesenhar com um bloco em edição remove o textarea focado; o Chrome dispara o blur NA HORA, e onBlocoBlur()
+// redesenhava de novo por dentro — o innerHTML de fora estourava (modo livre) e o foco ia embora no meio da digitação.
+// O blur que nasce do próprio redesenho é ignorado: o redesenho de fora recoloca o foco e o cursor.
+let _notasRedesenhando = false;
 function renderNotaEditor(){
+  if(_notasRedesenhando) return;
+  _notasRedesenhando = true;
+  try { _renderNotaEditorCorpo(); } finally { _notasRedesenhando = false; }
+}
+function _renderNotaEditorCorpo(){
   const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
   if(listView) listView.style.display='none';
   if(edView) edView.style.display='flex';
@@ -24657,6 +24667,7 @@ function focarBloco(blocoId){
 // no fmt-toolbar de Descrição/Comentário) — sem isso, clicar em "B" perderia
 // a seleção de texto antes do _fmtText conseguir usá-la.
 function onBlocoBlur(blocoId){
+  if(_notasRedesenhando) return; // blur causado pelo redesenho (o textarea foi trocado), não pela pessoa saindo do campo
   if(_notasFocusedBlockId===blocoId) _notasFocusedBlockId=null;
   renderNotaEditor();
 }
