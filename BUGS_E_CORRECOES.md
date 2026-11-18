@@ -94,6 +94,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - **Mudança (pedido do Caio):** `logError()` não grava mais esse erro em `error_logs` (nem soma em `error_stats`). O aviso "⚠️ Conexão instável — recarregue" do `_checkAuthGlitch()` continua aparecendo para a pessoa, e qualquer outro erro continua sendo gravado.
 - **Teste:** `docs/arezzo/testes/test_monitor_ignora_popup_login.js` (3 checagens). Sem a mudança, a 1ª falha.
 
+### 2026-11-18 · 📝 Notas: o editor estourava e tirava o foco do campo quando a nota chegava do banco no meio da digitação — kanban v8.30.1006-dev (SÓ DEV)
+
+- **Origem:** erros abertos no 🐛 Monitor do Painel (squad dados, 12/11, 3 registros em 12 s): "Failed to set the 'innerHTML' property on 'Element': The node to be removed is no longer a child of this node. Perhaps it was moved in a 'blur' event handler?" em `renderNotaEditor` / `_renderNotasCurrentView`, vindo do `onValue` das 📝 Notas.
+- **Causa:** um snapshot das Notas (eco do próprio salvamento ou edição de outra aba/pessoa) chega enquanto a pessoa digita num bloco. `renderNotaEditor()` troca o `innerHTML` da árvore, o textarea focado sai do DOM, o Chrome dispara o `blur` na hora e `onBlocoBlur()` redesenha **de novo por dentro**. No modo livre o `innerHTML` de fora estoura; o foco sai do campo no meio da digitação.
+- **Correção:** `renderNotaEditor()` ganhou uma trava de reentrada (`_notasRedesenhando`) e `onBlocoBlur()` ignora o blur causado pelo próprio redesenho. O redesenho de fora recoloca o foco e o cursor; sair do campo de verdade continua voltando o bloco para a visualização.
+- **Teste:** `docs/arezzo/testes/test_notas_render_reentrante.js` (8 checagens, modo estruturado e livre). Sem a correção, o modo livre falha ("Failed to set the 'innerHTML'…", foco perdido).
+- **Os outros erros abertos do Monitor (não são deste PR):** `Can't find variable: _cardTravadoAqui` (Safari, 17/11, "global code") foi um script de console rodado no prod antes da promoção v8.30.1005, que criou a função. `INTERNAL ASSERTION FAILED: Pending promise was never set` (9 registros em 5 pessoas, 04–16/11) é do SDK do Firebase Auth no popup de login; o `_checkAuthGlitch` já avisa. `PERMISSION_DENIED` isolado (site, 09/11) veio sem caminho nem stack útil.
+
 ### 2026-11-17 · Modal do card: comentário rejeitado volta ao campo — kanban v8.30.1005-dev — PROD 17/11 (kanban v8.30.1005)
 
 O envio mostrava o comentário e disparava menções antes da confirmação do Firebase. Agora uma rejeição restaura o texto no mesmo card se o campo estiver vazio, e só a gravação confirmada atualiza a lista e dispara menções.
