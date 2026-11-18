@@ -7776,7 +7776,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1007-dev</div>
+<div class="version">v8.30.1008-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7925,12 +7925,10 @@ fcmIsSupported().then(supported=>{
 }).catch(()=>{});
 
 // Captura e salva o token de acesso de forma segura
+// /monitorarbugs 18/11/2026 (login Google): o login NÃO guarda mais o accessToken em gcal_token. O provider do login não tem o escopo
+// de agenda (ver o comentário do provider, acima), então o token do login dava 403 "insufficient scopes" no Google Agenda — mas, por
+// existir, o ⚙ dizia "✅ autorizada" e processGcalQueueForAdmin() pulava o pedido do escopo de verdade. Só _requestCalendarScope() grava.
 window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    safeLS.setItem('gcal_token', credential.accessToken);
-    safeLS.setItem('gcal_token_ts', String(Date.now())); // OAuth expira em ~1h
-  }
   if(insc) window._pendingInsc=true;
   safeLS.removeItem('login_popup_fail_streak'); // login popup deu certo — zera o contador do fallback de redirect (ver window._signInRedirect())
 });
@@ -7957,6 +7955,7 @@ window._signOut=(reason)=>{
   try{ clearInterval(window._heartbeat); window._heartbeat=null; }catch(e){}
   try{ if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub(); }catch(e){}
   try{ if(window._forceLogoutUnsub) window._forceLogoutUnsub(); }catch(e){}
+  try{ ['gcal_token','gcal_token_ts','gcal_token_uid'].forEach(k=>safeLS.removeItem(k)); }catch(e){}   // token da agenda sai do disco em toda saída do Maré (o dono, em _gcalToken(), cobre as saídas de outras páginas)
   signOut(auth).catch(()=>{}).finally(()=>{ location.reload(); });
 };
 // Refresh silencioso do perfil (achado real, 2026-10-01, relato direto do
@@ -8062,6 +8061,7 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   if (credential && credential.accessToken) {
     safeLS.setItem('gcal_token', credential.accessToken);
     safeLS.setItem('gcal_token_ts', String(Date.now()));
+    safeLS.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token: outra conta no mesmo navegador nunca o reaproveita (ver _gcalToken())
   }
   return credential;
 });
@@ -8117,12 +8117,7 @@ if(safeLS.getItem('mare_pending_insc')==='1'){ safeLS.removeItem('mare_pending_i
 // de window._signIn() acima (popup) — não é urgente/não compete com nada,
 // pode ficar assíncrono.
 getRedirectResult(auth).then(r=>{
-  if(!r) return; // nenhum redirect pendente (a maioria dos loads normais)
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if(credential && credential.accessToken){
-    safeLS.setItem('gcal_token', credential.accessToken);
-    safeLS.setItem('gcal_token_ts', String(Date.now()));
-  }
+  // O redirect é o do LOGIN (provider sem escopo de agenda): não guarda o accessToken em gcal_token (ver window._signIn).
 }).catch(e=>{ console.warn('[Mare] getRedirectResult() falhou:', e); });
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
@@ -8157,6 +8152,17 @@ const FB_OVERRIDE_NS = 'kanban_dev';
 // STATE
 // ═══════════════════════════════════════════════════════
 
+// Token do Google Agenda (gcal_token): só vale pra conta que o pediu. /monitorarbugs 18/11/2026 (login Google): a limpeza de 30/09 só
+// existia no "Sair" do Maré — sair pelo Oceano/Radar/Painel, por inatividade ou por logout forçado deixava o token de agenda no navegador
+// (mesma origem), e a próxima conta que entrasse o usaria. Agora o token carrega o uid de quem o pediu e é descartado se não bater.
+function _gcalTokenLimpar(){ ['gcal_token','gcal_token_ts','gcal_token_uid'].forEach(k=>safeLS.removeItem(k)); }
+function _gcalToken(){
+  const t=safeLS.getItem('gcal_token'); if(!t) return null;
+  const dono=safeLS.getItem('gcal_token_uid'), uid=window._currentUser&&window._currentUser.uid;
+  if(!uid) return null;   // ninguém logado ainda (boot): não usa, mas também não apaga o token de quem está prestes a entrar
+  if(!dono || dono!==uid){ _gcalTokenLimpar(); return null; }
+  return t;
+}
 // ── ADMs HARDCODED ───────────────────────────────────────────────
 const ADM_UIDS = {
   'caio_uid_placeholder': 'Caio Oliveira',  // substituído pelo UID real ao logar
@@ -13122,7 +13128,7 @@ function doSignInMicrosoftPessoal(insc=false){
   });
 }
 function doSignOut(){
-  safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
+  _gcalTokenLimpar(); // Limpa a credencial do calendário ao deslogar (as outras saídas são cobertas pelo dono do token, ver _gcalToken())
   if(window._signOut) window._signOut('manual'); 
 }
 
@@ -35908,7 +35914,7 @@ function renderCalendarList() {
   const statusEl = document.getElementById('cfg-gcal-auth-status');
   if (statusEl) {
     if(isAdm){
-      const hasToken = !!safeLS.getItem('gcal_token');
+      const hasToken = !!_gcalToken();
       statusEl.innerHTML = hasToken
         ? '<span style="color:var(--teal);">✅ Sua conta Google está autorizada (só admin precisa)</span>'
         : '<span style="color:var(--txt3);">🔒 Você ainda não autorizou — vai pedir ao processar solicitações</span>';
@@ -36118,7 +36124,7 @@ async function carregarTodasAgendasSquad() {
 // e pelo processamento da fila global (percorre vários squads de uma vez).
 async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
   if(!window._gcalErrors) window._gcalErrors = {};
-  const token = safeLS.getItem('gcal_token');
+  const token = _gcalToken();
   const squadFB = 'kanban/squads/'+squadId+'/dados';
 
   if (!calendarsList.length) {
@@ -36134,6 +36140,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
   const hoje = new Date();
   const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
   let todosEventosGoogle = [];
+  const _calsOk = new Set();   // agendas que responderam de verdade (ver o fim da função)
 
   await Promise.all(calendarsList.map(async (cal) => {
     const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
@@ -36146,6 +36153,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
       if(res.status===403){
         let reason='';
         try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
+        if(/insufficient/i.test(reason)){ _gcalTokenLimpar(); window._gcalErrors[cal.id] = { type:'expired', msg:'A autorização do Google Agenda não tinha o acesso à agenda — autorize de novo' }; return; }   // token sem o escopo (ex.: o do login, antes de 18/11)
         window._gcalErrors[cal.id] = { type:'forbidden', msg: reason.includes('unregistered')
           ? 'Esta agenda é pública/de sistema e não aceita login de usuário — precisa de API Key própria'
           : 'Sem permissão de acesso a esta agenda' };
@@ -36153,6 +36161,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
       }
       const data = await res.json();
       if (data.items) {
+        _calsOk.add(cal.id);
         delete window._gcalErrors[cal.id];
         data.items.forEach(item => {
           let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
@@ -36204,7 +36213,22 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
     _vistosCal.add(chave);
     return true;
   });
+  // /monitorarbugs 18/11/2026 (login Google): com TODAS as agendas falhando (token vencido, sem escopo, rede) a função gravava
+  // gcal_cache = {} por cima e devolvia ok:true — apagava os eventos do squad pra todo mundo e a fila de pedidos era limpa como
+  // se tivesse dado certo (o fix de 25/09 conferia result.ok, que nunca era false aqui). Nenhuma respondeu = não toca no cache e
+  // devolve falha; só algumas = mantém os eventos antigos das que falharam.
+  if (!_calsOk.size) {
+    _gcalWarnBanner(Object.values(window._gcalErrors).some(e=>e.type==='expired'));
+    return { ok:false, reason:'all_failed' };
+  }
+  const _calsFalha = calendarsList.map(c=>c.id).filter(id=>!_calsOk.has(id));
   const cacheObj = Object.fromEntries(todosEventosGoogleDedup.map(ev=>[ev.id, ev]));
+  if (_calsFalha.length) {
+    try {
+      const antigo = (await fbGet(squadFB+'/config/gcal_cache')).val() || {};
+      Object.entries(antigo).forEach(([id, ev]) => { if (ev && _calsFalha.includes(ev._calId) && !cacheObj[id]) cacheObj[id] = ev; });
+    } catch(e) {}
+  }
   await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), cacheObj).catch(()=>{});
   _touchGcalCacheMeta(squadFB+'/config');
 
@@ -36217,7 +36241,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
 // disparado por um clique explícito (o popup de autorização do Google exige gesto do usuário).
 async function processGcalQueueForAdmin(){
   if(!isAdmUser(window._currentUser)) return;
-  if(!safeLS.getItem('gcal_token')){
+  if(!_gcalToken()){
     try{
       showToast('🔐 Autorizando acesso ao Google Agenda...');
       await window._requestCalendarScope();
