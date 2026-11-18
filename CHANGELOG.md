@@ -24,10 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — detalhe do Objetivo mais legível em projeção (#1862) — 2026-11-18
+
+No detalhe do Objetivo, Riscos e Próximos passos ganham espaço quando preenchidos. Progresso dos marcos e Atingimento da meta aparecem separados. A tabela de Marcos mantém os nomes a partir de 16 px, com cabeçalho visível durante a rolagem e foco por teclado.
+
 ### SÓ DEV — Apresentação do Radar — Panorama geral mais legível em projeção (#1861) — 2026-11-18
 
 O slide explicita quantos Objetivos estão na distribuição de status. A comparação por gerência inclui Não iniciado, identifica a coluna Progresso médio e alinha os números à direita. Barras e linhas ocupam menos altura, preservando os cálculos existentes.
-- No detalhe do Objetivo, Riscos e Próximos passos ganham espaço quando preenchidos. Progresso dos marcos e Atingimento da meta aparecem separados. A tabela de Marcos mantém os nomes a partir de 16 px, com cabeçalho visível durante a rolagem e foco por teclado.
 
 ### SÓ DEV — 🎲 Quando termina? · previsão em teste no Fluxo (painel v5.123-dev, #1853) — 2026-11-18
 
