@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · Tema Black Friday manual era perdido ao fim da semana após recarregar — kanban v8.30.1015-dev (SÓ DEV)
+
+Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo manualmente como padrão sazonal. Na virada de 30/11 com a aba aberta, o contador substituía a preferência gravada. O boot preserva a escolha manual e mantém a precedência sazonal quando o automático está ligado. A regressão testa entrada na semana, recarga, virada e saída manual.
+
 ### 2026-11-18 · 🔥 Semana Black Friday: texto perdido ao sair versão nova, exclusão recusada que dizia ter excluído e restauração de backup pela metade — kanban v8.30.1014-dev (SÓ DEV)
 
 - **Origem:** `/monitorarbugs` em áreas sensíveis, pensando na semana da Black Friday (23 a 29/11).
