@@ -292,7 +292,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    marcar a troca de Objetivo. Só cor de fundo, como nos slides (sem backdrop-filter nem animação). */
 .detail-modal.par{background:radial-gradient(ellipse at 50% 0%,rgba(56,182,255,.24) 0%,transparent 75%),rgba(37,99,201,.24);}
 
-.d2-wrap{height:100%;display:flex;flex-direction:column;gap:16px;min-height:0;transform-origin:top center;}
+.d2-wrap{height:100%;display:flex;flex-direction:column;gap:10px;min-height:0;transform-origin:top center;}
 /* Header em grid real (não position:fixed) — título, trimestre e marca/fechar
    nunca se sobrepõem porque cada um tem sua própria coluna garantida. */
 .d2-header{display:grid;grid-template-columns:1fr auto auto;align-items:start;gap:20px;flex-shrink:0;}
@@ -350,6 +350,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   }
 .d2-footer:has(.d2-next .d2-flist){--d2-next-width:1.35fr;}
 .d2-footer:has(.d2-risk .d2-flist){--d2-risk-width:1.35fr;}
+/* Coluna secundária vazia cede largura: menos quebra de linha em Riscos e Próximos passos. */
+.d2-footer:has(.d2-prog .d2-empty){--d2-prog-width:.65fr;}
+.d2-footer:has(.d2-plan .d2-empty){--d2-plan-width:.65fr;}
 .d2-next:has(.d2-flist) h4,.d2-risk:has(.d2-flist) h4{color:var(--txt);}
 .d2-risk:has(.d2-flist) h4{color:var(--warn);}
 .d2-next .d2-flist,.d2-risk .d2-flist{color:var(--txt);}
@@ -368,10 +371,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-panel-body{font-size:calc(15*var(--ud));color:var(--txt2);line-height:1.55;}
 
 /* Mesmo motivo do .d2-panel.grow acima. */
-.d2-right{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:16px 22px;
+.d2-right{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:10px 22px;
   display:flex;flex-direction:column;min-height:0;}
 .d2-table-header{display:flex;font-size:calc(13*var(--ud));text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);
-  font-weight:700;padding-bottom:10px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+  font-weight:700;padding-bottom:6px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .d2-table-header .c-nome{flex:1;}
 .d2-table-header .c-status{width:calc(190*var(--ud));}
 .d2-table-header .c-prazo{width:calc(100*var(--ud));text-align:right;}
@@ -381,7 +384,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-table-rows:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px;}
 /* Espaçadores em vez de margem na primeira/última linha: com "Colapsar concluídos" essas linhas podem estar ocultas e a margem de uma só delas jogava o resto para uma ponta. */
 .d2-table-rows::before,.d2-table-rows::after{content:'';flex:1 0 0;}
-.d2-marco-row{display:flex;align-items:flex-start;padding:calc(5*var(--ud)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:max(16px,calc(15*var(--ud)));cursor:pointer;border-radius:8px;transition:background .15s;}
+.d2-marco-row{display:flex;align-items:flex-start;padding:calc(3*var(--ud)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:max(16px,calc(15*var(--ud)));cursor:pointer;border-radius:8px;transition:background .15s;}
 .d2-marco-row:last-child{border-bottom:none;}
 .d2-marco-row:hover{background:rgba(255,255,255,.05);}
 .d2-marco-num{width:calc(28*var(--ud));color:var(--txt2);font-size:calc(12.5*var(--ud));flex-shrink:0;}
@@ -423,13 +426,13 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    (rodapé incluído, via _okrFitDetailSections() nas colunas) encolhe a
    própria fonte igual as outras, em vez de uma ficar sempre intocada à
    custa das demais. */
-.d2-footer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,var(--d2-next-width,1fr)) minmax(0,var(--d2-risk-width,1fr)) minmax(0,1fr);gap:16px;flex:1 1 auto;min-height:0;}
+.d2-footer{display:grid;grid-template-columns:minmax(0,var(--d2-prog-width,1fr)) minmax(0,var(--d2-next-width,1fr)) minmax(0,var(--d2-risk-width,1fr)) minmax(0,var(--d2-plan-width,1fr));gap:16px;flex:1 1 auto;min-height:0;}
 /* SEM overflow:hidden aqui (mesmo motivo do .d2-right/.d2-panel.grow mais
    acima): agora que .d2-footer também é compressível (flex:1;min-height:0,
    ver comentário lá em cima), overflow:hidden zeraria a contribuição
    mínima desta coluna pro grid, deixando-a ser espremida antes do
    _okrFitDetailSections() ter a chance de medir/reagir. */
-.d2-fcol{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:16px 18px;
+.d2-fcol{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:10px 16px;
   display:flex;flex-direction:column;}
 .d2-fcol h4{font-size:calc(13.5*var(--ud));text-transform:uppercase;letter-spacing:.04em;color:var(--cyan);margin-bottom:8px;
   display:flex;align-items:center;gap:7px;flex-shrink:0;}
@@ -1751,10 +1754,10 @@ window._okrOpenDetail = id => {
         </div>
       </div>
       <div class="d2-footer">
-        <div class="d2-fcol"><h4>→ Progressos</h4>${d2FieldList(o.progressos)}</div>
+        <div class="d2-fcol d2-prog"><h4>→ Progressos</h4>${d2FieldList(o.progressos)}</div>
         <div class="d2-fcol d2-next"><h4>🕐 Próximos Passos</h4>${d2FieldList(o.proximosPassos)}</div>
         <div class="d2-fcol d2-risk"><h4>⚠️ Riscos</h4>${d2FieldList(o.riscos)}</div>
-        <div class="d2-fcol"><h4>🧮 Planos de Ação</h4>${d2FieldList(o.planosAcao)}</div>
+        <div class="d2-fcol d2-plan"><h4>🧮 Planos de Ação</h4>${d2FieldList(o.planosAcao)}</div>
       </div>
     </div>
   `;
@@ -1793,6 +1796,29 @@ window._okrOpenDetail = id => {
 // depois disso mede e ajusta cada seção (tabela de Marcos, raia
 // esquerda, colunas do rodapé) dentro do espaço já congelado, sem risco
 // de a divisão externa se mexer no meio do processo.
+// Divide a altura entre corpo e rodapé pelo conteúdo real (18/11/2026, pedido do Caio: a rolagem continua, só precisa ser menor, e Marcos, Riscos e Próximos passos têm prioridade).
+// O rodapé garante Riscos e Próximos passos inteiros até 40% da altura; os Marcos ficam com o resto. Só com os Marcos inteiros o rodapé cresce para Progressos e Planos, e o que restar volta para o corpo.
+function _okrDividirDetalhe({ total, marcos, prioridade, rodape }){
+  const alvo = Math.min(Math.round(total*0.40), prioridade);
+  if(marcos + alvo > total) return { corpo: total - alvo, rodape: alvo };
+  const rodapeFinal = Math.min(total - marcos, Math.max(alvo, rodape));
+  return { corpo: total - rodapeFinal, rodape: rodapeFinal };
+}
+function _okrMedirDivisaoDetalhe(wrapEl, dBody, dFooter){
+  const gap = parseFloat(getComputedStyle(wrapEl).rowGap) || 0, filhos = [...wrapEl.children];
+  const total = wrapEl.clientHeight - filhos.filter(el=>el!==dBody && el!==dFooter).reduce((soma,el)=>soma+el.offsetHeight, 0) - gap*(filhos.length-1);
+  const dRight = dBody.querySelector('.d2-right'), rows = dBody.querySelector('.d2-table-rows');
+  const colunas = [...dFooter.querySelectorAll('.d2-fcol')];
+  colunas.forEach(col=>{ col.style.alignSelf = 'start'; col.style.height = ''; });
+  dFooter.style.flex = 'none'; dFooter.style.height = 'auto';
+  const alturaDe = col=>col ? col.offsetHeight : 0;
+  const prioridade = Math.max(alturaDe(dFooter.querySelector('.d2-next')), alturaDe(dFooter.querySelector('.d2-risk')));
+  const rodape = Math.max(...colunas.map(alturaDe));
+  dBody.style.flex = 'none'; dBody.style.height = '1px';
+  const cs = getComputedStyle(dRight), moldura = ['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'].reduce((soma,k)=>soma+(parseFloat(cs[k])||0), 0);
+  const marcos = Math.ceil(moldura + dRight.querySelector('.d2-table-header').offsetHeight + rows.scrollHeight) + 2;
+  return _okrDividirDetalhe({ total: Math.max(0, Math.round(total)), marcos, prioridade, rodape });
+}
 function _okrFitDetailSections(){
   const dBody = document.querySelector('.d2-body');
   const dFooter = document.querySelector('.d2-footer');
@@ -1818,11 +1844,7 @@ function _okrFitDetailSections(){
   // tamanho natural dele e 30% da altura do d2-wrap. Rodapé curto continua curto; rodapé com
   // texto real nunca fica abaixo de 30% por causa dos Marcos.
   const wrapEl = dBody.parentElement;
-  dFooter.style.flex = 'none';
-  const footerNatural = dFooter.offsetHeight;
-  dFooter.style.flex = '';
-  dFooter.style.minHeight = Math.min(footerNatural, Math.round(wrapEl.clientHeight * 0.30)) + 'px';
-  const dBodyH = dBody.clientHeight, dFooterH = dFooter.clientHeight;
+  const { corpo: dBodyH, rodape: dFooterH } = _okrMedirDivisaoDetalhe(wrapEl, dBody, dFooter);
   dBody.style.flex = 'none'; dBody.style.height = dBodyH+'px';
   dFooter.style.flex = 'none'; dFooter.style.height = dFooterH+'px';
 

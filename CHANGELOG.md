@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — detalhe do Objetivo com menos rolagem em Marcos, Riscos e Próximos passos (#1865) — 2026-11-18
+
+A altura da tela passa a ser dividida pelo conteúdo real. Riscos e Próximos passos aparecem inteiros até 40% da altura, os Marcos ficam com o restante, e Progressos, Planos e a coluna da esquerda cedem espaço primeiro. Quando nem tudo cabe, a rolagem continua disponível. Com 14 Marcos, a rolagem da tabela cai de 195 px para 93 px em 1366 × 768 e some em 1280 × 900.
+
 ### SÓ DEV — Apresentação do Radar — detalhe do Objetivo mais legível em projeção (#1862) — 2026-11-18
 
 No detalhe do Objetivo, Riscos e Próximos passos ganham espaço quando preenchidos. Progresso dos marcos e Atingimento da meta aparecem separados. A tabela de Marcos mantém os nomes a partir de 16 px, com cabeçalho visível durante a rolagem e foco por teclado.
