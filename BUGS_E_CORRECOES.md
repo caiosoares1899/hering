@@ -87,6 +87,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 🔥 Semana Black Friday: texto perdido ao sair versão nova, exclusão recusada que dizia ter excluído e restauração de backup pela metade — kanban v8.30.1014-dev (SÓ DEV)
+
+- **Origem:** `/monitorarbugs` em áreas sensíveis, pensando na semana da Black Friday (23 a 29/11).
+- **Versão nova com texto na tela:** a tela "Atualizar agora" travava as gravações antes do autosave pendente e prometia que o digitado ficava salvo. O autosave pendente agora é gravado antes da trava. Card novo, comentário não enviado e, na sessão parada, o card com autosave pendente aparecem numa caixa para copiar.
+- **Exclusão recusada:** sem conexão ou sem conferir o banco, o card sumia da tela e aparecia "excluído", mas continuava no banco. Nos 8 caminhos de exclusão, a confirmação só aparece depois do banco. Na recusa, o card volta à tela com um aviso.
+- **Restauração de backup:** se a escrita final falhava, a aba ficava com o backup na memória, diferente do banco. Agora volta ao estado anterior.
+- **Teste:** `docs/arezzo/testes/test_bf_sensiveis_1811.js` (14 checagens). Contra a versão anterior, 7 falham.
+- **Sem achado:** datas e virada do tema da semana, envio de push e limpeza de tokens.
+
 ### 2026-11-18 · 🧮 Toolbar do Maré: o botão do Gantt tinha o mesmo emoji de "Dados do Board" — kanban v8.30.1013-dev (SÓ DEV)
 
 - **Pedido do Caio:** os dois botões da toolbar usavam 📊, o que dificultava diferenciar um do outro.
