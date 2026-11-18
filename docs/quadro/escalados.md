@@ -144,6 +144,16 @@ Cobertura: primitivas criar/salvar/lote; autosave × Salvar e wrapper; movimenta
 - Se tudo não couber, preservar o contexto e indicar claramente quantos itens ficaram para uma continuação. Validar com Caio a prioridade dos blocos e a navegação da continuação antes de alterar o fluxo ao vivo.
 - Comparar quantidade de conteúdo visível, fonte efetiva e ausência de overflow com dados simulados: sem marcos, 14 e 50 marcos, título longo e listas de riscos/próximos passos longas. Conferir também redimensionamento, teclado e apresentação ao vivo.
 
+### Ajuste de escopo após a #1866
+
+**O print do Caio é posterior ao merge.** O caso tem 7 Marcos, 6 itens em Progressos, 1 Próximo passo, 1 Risco e nenhum Plano de ação. Progressos fica estreito, os painéis curtos deixam uma área grande vazia abaixo do conteúdo, e o contexto à esquerda ainda rola. Reproduzir com textos fictícios de comprimentos comparáveis.
+
+A #1866 mede altura e, quando detecta desequilíbrio, volta a dividir a largura em partes iguais. A regressão hoje considera suficiente que corpo seja maior que rodapé e Progressos e Riscos tenham a mesma largura. Esse critério ainda permite o desperdício do print.
+
+**Prioridade atualizada do Caio:** recalcule largura e altura em conjunto. Use largura suficiente para os textos curtos e redistribua a sobra para as listas que mais ganham linhas legíveis. Meça as alturas novamente após a quebra de linhas. Reduza a altura dos painéis curtos e esvazie a reserva de altura dos painéis vazios; devolva a altura liberada à região de Marcos e ao contexto. Se houver disputa, aceite rolagem interna em Progressos antes de reduzir a área ou a fonte dos Marcos. Esta preferência substitui o requisito anterior de zero rolagem a qualquer custo.
+
+**Aceite do caso do print:** compare lado a lado com a versão pós-#1866 em 1280 × 900 e Full HD. Os sete Marcos ficam visíveis na fonte atual, quando couberem, e Progressos não força as outras três colunas a formar painéis altos e vazios. Meça altura ociosa nos painéis curtos e altura útil na parte de cima; confirme também o caso inverso, com Riscos e Próximos passos longos.
+
 <a id="apresentacao-linha-dagua"></a>
 
 ### Evolução do atingimento — meta como linha d’água
