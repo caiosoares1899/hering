@@ -317,8 +317,8 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .detail-next:disabled{opacity:.35;cursor:default;}
 .detail-next:disabled:hover{background:var(--glass);}
 
-.d2-legend{display:flex;gap:26px;flex-wrap:wrap;font-size:calc(15*var(--ud));color:var(--txt2);flex-shrink:0;}
-.d2-legend span{display:flex;align-items:center;gap:8px;}
+.d2-metrics{display:flex;gap:10px 26px;flex-wrap:wrap;font-size:calc(15*var(--ud));color:var(--txt2);flex-shrink:0;}
+.d2-metrics strong{color:var(--txt);margin-left:6px;font-variant-numeric:tabular-nums;}
 
 /* Corpo: rail (Objetivo/Responsável/Indicadores) + tabela de Marcos. Altura
    generosa mas ainda flexível (flex:1;min-height:0) — o rodapé (tira de 4
@@ -348,6 +348,12 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-left > .d2-panel{flex-shrink:0;}
 .d2-panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:14px 18px;
   }
+.d2-footer:has(.d2-next .d2-flist){--d2-next-width:1.35fr;}
+.d2-footer:has(.d2-risk .d2-flist){--d2-risk-width:1.35fr;}
+.d2-next:has(.d2-flist) h4,.d2-risk:has(.d2-flist) h4{color:var(--txt);}
+.d2-risk:has(.d2-flist) h4{color:var(--warn);}
+.d2-next .d2-flist,.d2-risk .d2-flist{color:var(--txt);}
+.d2-next .d2-flist > :first-child,.d2-risk .d2-flist > :first-child{margin-top:0;}
 /* SEM overflow:hidden aqui de propósito (agora que .d2-body voltou a ter
    min-height:0, achado real repetido do Round 1): com overflow!=visible,
    o navegador zera a contribuição de tamanho MÍNIMO deste item pro
@@ -372,9 +378,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 /* Rola quando não cabe. Centralizar com `justify-content:center` cortaria o topo de um conteúdo mais alto que a área (não dá pra rolar pra cima do
    início); as margens automáticas nas pontas centralizam só quando SOBRA espaço. */
 .d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;}
+.d2-table-rows:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px;}
 .d2-table-rows > :first-child{margin-top:auto;}
 .d2-table-rows > :last-child{margin-bottom:auto;}
-.d2-marco-row{display:flex;align-items:flex-start;padding:calc(5*var(--ud)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:calc(15*var(--ud));cursor:pointer;border-radius:8px;transition:background .15s;}
+.d2-marco-row{display:flex;align-items:flex-start;padding:calc(5*var(--ud)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:max(16px,calc(15*var(--ud)));cursor:pointer;border-radius:8px;transition:background .15s;}
 .d2-marco-row:last-child{border-bottom:none;}
 .d2-marco-row:hover{background:rgba(255,255,255,.05);}
 .d2-marco-num{width:calc(28*var(--ud));color:var(--txt2);font-size:calc(12.5*var(--ud));flex-shrink:0;}
@@ -393,8 +400,8 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-marco-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding-right:10px;}
 .d2-marco-nome{color:var(--txt);white-space:normal;overflow-wrap:break-word;}
 .d2-marco-desc{color:var(--txt2);font-size:calc(12.5*var(--ud));line-height:1.4;white-space:normal;overflow-wrap:break-word;}
-.d2-marco-status{width:calc(190*var(--ud));display:flex;align-items:center;gap:7px;font-size:calc(13.5*var(--ud));color:var(--txt2);flex-shrink:0;}
-.d2-marco-prazo{width:calc(100*var(--ud));text-align:right;font-size:calc(13.5*var(--ud));color:var(--txt2);flex-shrink:0;}
+.d2-marco-status{width:calc(190*var(--ud));display:flex;align-items:center;gap:7px;font-size:max(14px,calc(13.5*var(--ud)));color:var(--txt2);flex-shrink:0;}
+.d2-marco-prazo{width:calc(100*var(--ud));text-align:right;font-size:max(14px,calc(13.5*var(--ud)));color:var(--txt2);flex-shrink:0;}
 
 /* Tira de 4 colunas — Progressos/Próximos Passos/Riscos/Planos de Ação, na
    MESMA tela do Objetivo (nunca uma 2ª tela — pedido direto: "é importante
@@ -416,7 +423,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    (rodapé incluído, via _okrFitDetailSections() nas colunas) encolhe a
    própria fonte igual as outras, em vez de uma ficar sempre intocada à
    custa das demais. */
-.d2-footer{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:1 1 auto;min-height:0;}
+.d2-footer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,var(--d2-next-width,1fr)) minmax(0,var(--d2-risk-width,1fr)) minmax(0,1fr);gap:16px;flex:1 1 auto;min-height:0;}
 /* SEM overflow:hidden aqui (mesmo motivo do .d2-right/.d2-panel.grow mais
    acima): agora que .d2-footer também é compressível (flex:1;min-height:0,
    ver comentário lá em cima), overflow:hidden zeraria a contribuição
@@ -1681,7 +1688,6 @@ window._okrOpenDetail = id => {
     window._okrCloseAting?.();
   }
   _okrDetailCurrentId = id;
-  const st = okrStatusInfo(objStatus(id));
   // Mesma ordenação do painel (painel-dev.html, _okrMarcosSorted()): por
   // padrão segue como sempre foi, por prazo (texto livre); a partir do 1º
   // reordenar manual no painel, os marcos desse Objetivo ganham `ordem`
@@ -1692,6 +1698,9 @@ window._okrOpenDetail = id => {
   const marcos = temOrdem
     ? objMarcosOrdenados.sort((a,b)=>(typeof a.ordem==='number'?a.ordem:Infinity)-(typeof b.ordem==='number'?b.ordem:Infinity))
     : objMarcosOrdenados.sort((a,b)=>(a.prazo||'').localeCompare(b.prazo||''));
+  const concluidos = marcos.filter(m=>m.progresso==='concluido').length;
+  const progressoMarcos = marcos.length ? Math.round(concluidos/marcos.length*100) : null;
+  const atingimento = _okrAtingPctObj(o);
   const gerObjs = _okrGerenciaObjetivos(o.areaId||'geral', _okrTorreDe(o));
   const gerIdx = gerObjs.findIndex(x=>x.id===id);
   const nextObj = gerIdx>=0 && gerIdx<gerObjs.length-1 ? gerObjs[gerIdx+1] : null;
@@ -1704,15 +1713,16 @@ window._okrOpenDetail = id => {
         <div class="d2-trim">${_okrTrimestresOf(o).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
         <div class="d2-brand-row">
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}</div>
-          ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:calc(30*var(--ud));padding:0 calc(12*var(--ud));font-size:calc(12.5*var(--ud));" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
+          ${concluidos?`<button class="detail-next" style="height:calc(30*var(--ud));padding:0 calc(12*var(--ud));font-size:calc(12.5*var(--ud));" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
           <button class="detail-next" ${prevObj?`onclick="window._okrOpenDetail(${jsq(prevObj.id)})" title="Objetivo anterior de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`:`disabled title="Primeiro objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`}>← Anterior</button>
           <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
-          ${_okrAtingPctObj(o)!==null?`<button class="detail-next" style="height:calc(30*var(--ud));padding:0 calc(12*var(--ud));font-size:calc(12.5*var(--ud));" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
+          ${atingimento!==null?`<button class="detail-next" style="height:calc(30*var(--ud));padding:0 calc(12*var(--ud));font-size:calc(12.5*var(--ud));" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
       </div>
-      <div class="d2-legend">
-        ${OKR_STATUS.filter(s=>s.id==='no_prazo'||s.id==='risco'||s.id==='atrasado').map(s=>`<span><span class="status-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('')}
+      <div class="d2-metrics">
+        <span>Progresso dos marcos <strong>${progressoMarcos===null?'Sem marcos':progressoMarcos+'%'}</strong>${marcos.length?` (${concluidos} de ${marcos.length} concluídos)`:''}</span>
+        ${atingimento===null?'':`<span>Atingimento da meta <strong>${atingimento}%</strong></span>`}
       </div>
       <div class="d2-body">
         <div class="d2-left">
@@ -1723,9 +1733,9 @@ window._okrOpenDetail = id => {
         </div>
         <div class="d2-right">
           <div class="d2-table-header">
-            <span class="c-nome">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
+            <span class="c-nome" id="d2-marcos-titulo">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
           </div>
-          <div class="d2-table-rows">${marcos.length ? (()=>{ let _n=0; return marcos.map((m,i)=>{
+          <div class="d2-table-rows" role="region" aria-labelledby="d2-marcos-titulo" tabindex="0">${marcos.length ? (()=>{ let _n=0; return marcos.map((m,i)=>{
             const ms=okrStatusInfo(m.progresso);
             const oculto = _okrColapsarConcluidos && m.progresso==='concluido';
             return `<div class="d2-marco-row"${oculto?' style="display:none;"':''} onclick="window._okrOpenMarcoComments(${jsq(m.id)})" title="Ver comentários">
@@ -1742,8 +1752,8 @@ window._okrOpenDetail = id => {
       </div>
       <div class="d2-footer">
         <div class="d2-fcol"><h4>→ Progressos</h4>${d2FieldList(o.progressos)}</div>
-        <div class="d2-fcol"><h4>🕐 Próximos Passos</h4>${d2FieldList(o.proximosPassos)}</div>
-        <div class="d2-fcol"><h4>⚠️ Riscos</h4>${d2FieldList(o.riscos)}</div>
+        <div class="d2-fcol d2-next"><h4>🕐 Próximos Passos</h4>${d2FieldList(o.proximosPassos)}</div>
+        <div class="d2-fcol d2-risk"><h4>⚠️ Riscos</h4>${d2FieldList(o.riscos)}</div>
         <div class="d2-fcol"><h4>🧮 Planos de Ação</h4>${d2FieldList(o.planosAcao)}</div>
       </div>
     </div>
