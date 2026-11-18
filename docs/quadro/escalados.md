@@ -166,6 +166,14 @@ A #1866 mede altura e, quando detecta desequilíbrio, volta a dividir a largura 
 
 **Regressão a acrescentar.** Usar a fixture do print com 7 Marcos e textos longos, 6 Progressos, 1 Risco, 1 Próximo passo e Planos vazio. Comparar com o mesmo HTML da #1866 a 1280 × 900 e 1920 × 1080. Medir a quantidade de Marcos inteiros visíveis, tamanho efetivo da fonte, altura útil do contexto, rolagem de cada lista e altura de cada cartão em relação ao próprio conteúdo. O teste deve falhar se os cartões curtos continuarem esticados até a altura de Progressos, mesmo que o corpo seja maior que o rodapé. Cobrir também listas prioritárias longas, ausência de rodapé preenchido e troca de Objetivo ou tamanho da janela. Recalcular a partir do conteúdo natural a cada troca, com medição limitada às poucas alternativas do grid.
 
+### Revisão dos avisos de texto no formulário do Radar
+
+`okr.html` e `okr-dev.html` usam os mesmos avisos em `OKR_CHAR_LIMITS`: descrição do Objetivo 200, nome do Marco 70, descrição do Marco 110, e 90 por item em Indicadores, Progressos, Próximos passos, Riscos e Planos de ação. Título e Pilar Estratégico não têm esse aviso. O contador avisa acima do valor recomendado e o formulário aceita o texto completo. A colagem de várias linhas adiciona os itens diretamente e não mostra o aviso por item depois que eles entram na lista. A inclusão e a edição contam com `.length`, que conta unidades UTF-16: 46 emojis simples como o peixe aparecem como 92.
+
+A conta original usava colunas fixas e larguras estimadas. Na apresentação atual, com Firebase falso e textos inseridos nos elementos da tela já renderizada, 90 caracteres de texto corrido ocuparam 4 linhas em Progressos e 3 em Riscos a 1280 × 900. Em Full HD, ocuparam 3 e 2 linhas. A descrição de 200 caracteres ficou em 5 linhas nos dois tamanhos com texto corrido, e variou de 3 a 7 linhas a 1280 px em amostras sintéticas de letras estreitas e largas. A medição compara a quebra de linha na geometria já calculada; não mede a redistribuição completa após salvar.
+
+**Direcional para o Claude:** recalibrar os avisos após fechar a composição do slide. Definir primeiro um orçamento de linhas por campo e por bloco, inclusive o efeito acumulado de vários itens. Usar textos de referência (acentos, emoji, palavras longas e quebras) no Chromium a 1280 × 900 e Full HD. Preferir aviso consultivo por linha estimada ou por seção cheia, com a contagem de caracteres como referência. Mostrar a mesma orientação ao digitar, editar e colar em lote. Se o texto do contador continuar dizendo “caracteres”, alinhar o contador de ambos os caminhos a caracteres percebidos, por exemplo com `Intl.Segmenter`. Preservar texto existente e gravação integral. Conferir exatamente no limite e acima dele, além de vários itens que individualmente cabem mas juntos ocupam demais.
+
 <a id="apresentacao-linha-dagua"></a>
 
 ### Evolução do atingimento — meta como linha d’água
