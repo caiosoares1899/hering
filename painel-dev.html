@@ -3204,7 +3204,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.121 · painel-dev</div>
+<div class="version">v5.122 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3338,7 +3338,7 @@ function agIr(btn){
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, reauthenticateWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
@@ -3381,15 +3381,21 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 const calProvider = new GoogleAuthProvider();
 calProvider.setCustomParameters({ hd: 'ciahering.com.br' });
 calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    localStorage.setItem('gcal_token', credential.accessToken);
-    localStorage.setItem('gcal_token_ts', String(Date.now()));
-    localStorage.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token (ver _pcalGcalToken())
-  }
-  return credential;
-});
+// reauthenticateWithPopup, não signInWithPopup: escolher OUTRA conta no popup trocava a sessão do app em silêncio. Agora o SDK recusa com auth/user-mismatch e a sessão fica como estava.
+window._requestCalendarScope = () => {
+  const u = auth.currentUser;
+  if (!u) return Promise.reject(Object.assign(new Error('Sessão encerrada: entre de novo para autorizar a agenda.'), { code:'auth/user-signed-out' }));
+  calProvider.setCustomParameters(u.email ? { hd:'ciahering.com.br', login_hint:u.email } : { hd:'ciahering.com.br' });   // já abre na conta certa (setCustomParameters substitui tudo, por isso repete o hd)
+  return reauthenticateWithPopup(u, calProvider).then(r=>{
+    const credential = GoogleAuthProvider.credentialFromResult(r);
+    if (credential && credential.accessToken) {
+      localStorage.setItem('gcal_token', credential.accessToken);
+      localStorage.setItem('gcal_token_ts', String(Date.now()));
+      localStorage.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token (ver _pcalGcalToken())
+    }
+    return credential;
+  });
+};
 
 // Integração Arezzo (2026-10-01) — mesmo provider/parâmetros já usados em
 // kanban-dev.html (ver comentário completo lá): 'organizations' restringe
@@ -6799,6 +6805,7 @@ function _pcalGcalToken(){
   if(!dono || dono!==uid){ _pcalGcalTokenLimpar(); return null; }
   return t;
 }
+const PCAL_MSG_OUTRA_CONTA='⚠ Autorize a agenda com a mesma conta Google com que você entrou.';
 async function addPcalAgenda(){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores podem adicionar agendas globais.'); return; }
   const id=document.getElementById('pcal-agenda-id').value.trim();
@@ -6809,7 +6816,7 @@ async function addPcalAgenda(){
       showToast('🔐 Conecte sua conta Google para autorizar a leitura de agendas...');
       await window._requestCalendarScope();
     }catch(e){
-      showToast('⚠ Não foi possível autorizar o acesso ao Google Agenda.');
+      showToast(e?.code==='auth/user-mismatch'?PCAL_MSG_OUTRA_CONTA:'⚠ Não foi possível autorizar o acesso ao Google Agenda.');
       return;
     }
   }
@@ -6859,7 +6866,7 @@ async function reconectarPcalGCal(){
     showToast('🔄 Reconectado! Carregando agendas...');
     carregarPcalAgendasGlobais();
   }catch(e){
-    showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
+    showToast(e?.code==='auth/user-mismatch'?PCAL_MSG_OUTRA_CONTA:'⚠ Não foi possível reconectar: '+(e?.message||e));
   }
 }
 // Só o ADM busca da API do Google — o resultado processado fica em cache no Firebase

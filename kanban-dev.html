@@ -7776,7 +7776,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1008-dev</div>
+<div class="version">v8.30.1010-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7797,7 +7797,7 @@ window._bfSemanaInfo = function(agoraMs){
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction, onDisconnect } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, reauthenticateWithPopup, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -8056,15 +8056,21 @@ window.dispatchEvent(new Event('fb-ready'));
 // deixa só a versão de baixo (com o cleanup) valendo.
 // Pede o escopo de calendário sob demanda (só quando a pessoa conecta uma agenda) —
 // isolado do login normal pra não bloquear todo mundo se o app não estiver verificado.
-window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    safeLS.setItem('gcal_token', credential.accessToken);
-    safeLS.setItem('gcal_token_ts', String(Date.now()));
-    safeLS.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token: outra conta no mesmo navegador nunca o reaproveita (ver _gcalToken())
-  }
-  return credential;
-});
+// reauthenticateWithPopup, não signInWithPopup: escolher OUTRA conta no popup trocava a sessão do app em silêncio. Agora o SDK recusa com auth/user-mismatch e a sessão fica como estava.
+window._requestCalendarScope = () => {
+  const u = auth.currentUser;
+  if (!u) return Promise.reject(Object.assign(new Error('Sessão encerrada: entre de novo para autorizar a agenda.'), { code:'auth/user-signed-out' }));
+  calProvider.setCustomParameters(u.email ? { hd:'ciahering.com.br', login_hint:u.email } : { hd:'ciahering.com.br' });   // já abre na conta certa (setCustomParameters substitui tudo, por isso repete o hd)
+  return reauthenticateWithPopup(u, calProvider).then(r=>{
+    const credential = GoogleAuthProvider.credentialFromResult(r);
+    if (credential && credential.accessToken) {
+      safeLS.setItem('gcal_token', credential.accessToken);
+      safeLS.setItem('gcal_token_ts', String(Date.now()));
+      safeLS.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token: outra conta no mesmo navegador nunca o reaproveita (ver _gcalToken())
+    }
+    return credential;
+  });
+};
 
 // Fallback de login por redirect (achado real, 2026-09-29, relato direto de
 // usuária: popup de login travando com "Cross-Origin-Opener-Policy... would
@@ -36057,6 +36063,7 @@ function _gcalWarnBanner(show){
   const el=document.getElementById('gcal-token-warn');
   if(el) el.style.display = (show && isAdmUser(window._currentUser)) ? 'flex' : 'none';
 }
+const GCAL_MSG_OUTRA_CONTA = '⚠ Autorize a agenda com a mesma conta Google com que você entrou.';
 async function reconectarGCal(){
   try{
     await window._requestCalendarScope();
@@ -36064,7 +36071,9 @@ async function reconectarGCal(){
     showToast('🔄 Reconectado! Carregando agendas...');
     carregarTodasAgendasSquad();
   }catch(e){
-    if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+    if(e?.code === 'auth/user-mismatch'){
+      showToast(GCAL_MSG_OUTRA_CONTA);
+    } else if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
       showToast('⚠ Login cancelado ou bloqueado pelo navegador.');
     } else {
       showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
@@ -36246,7 +36255,7 @@ async function processGcalQueueForAdmin(){
       showToast('🔐 Autorizando acesso ao Google Agenda...');
       await window._requestCalendarScope();
     }catch(e){
-      showToast('⚠ Não foi possível autorizar. Tente novamente.');
+      showToast(e?.code === 'auth/user-mismatch' ? GCAL_MSG_OUTRA_CONTA : '⚠ Não foi possível autorizar. Tente novamente.');
       return;
     }
   }
