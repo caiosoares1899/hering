@@ -464,3 +464,21 @@
 - **JS:** L1–L66 (js)
 - **Consts (1):** RAIZ:L19
 - fmt:L21 · mostra:L23 · patch:L29 · caminhos:L41 · acao:L53 · MareTimer:L64
+
+## `mare-ferias-dev.js` (898 linhas · 19 funções)
+- **JS:** L1–L898 (js)
+- **Consts (6):** MES_L:L24 · MES_C:L25 · DOW:L26 · DIAS_PROXIMAS:L27 · AVISO_LONGO_DIAS:L28 · ST:L86
+- hojeSP:L35 · parseIso:L46 · addDias:L53 · diasEntre:L59 · br:L65 · brAno:L70 · permitido:L75 · novoId:L81 · configurar:L96 · resolverUid:L100
+- periodosDoUid:L112 · ouvir:L123 · ausente:L149 · periodoDe:L158 · injetarCss:L170 · montar:L278 · sobrepoe:L747 · passagem:L753 · MareFerias:L884
+
+## `mare-gcal-dev.js` (721 linhas · 14 funções)
+- **JS:** L1–L721 (js)
+- **Consts (15):** CALS:L26 · NOME:L32 · ROT_NOVO:L34 · GRUPOS:L36 · LINHA_COR:L71 · CORES:L73 · NOME_COR:L74 · LARGO:L75 · CONSOLIDADO:L79 · ABAS:L82 · MES_L:L92 · MES_C:L93 · DOW:L94 · PEDIDO:L132 · CSS:L192
+- permitido:L97 · linhaNoGrupo:L101 · linhasDe:L102 · doDia:L105 · css:L318 · favoritaControle:L324 · leituraFechar:L361 · leituraAbrir:L362 · quando:L383 · diaHtml:L390
+- diaPopFechar:L424 · diaPop:L425 · montar:L455 · MareGCal:L719
+
+## `mare-gxl-dev.js` (497 linhas · 20 funções)
+- **JS:** L1–L497 (js)
+- **Consts (14):** GXL:L21 · MAX_BARRAS:L22 · QUER:L83 · MESES:L98 · DOW:L99 · LINHAS_MARCA:L104 · LINHAS_KIDS:L112 · LINHAS_COM:L175 · ABA_FORA:L190 · MKT:L256 · ABA_MES:L271 · OUT_FORA:L337 · CALS:L410 · REGRA:L416
+- zipDir:L26 · rc:L51 · ler:L54 · hid:L97 · _colDatasAno:L119 · _barrasDaAba:L142 · montarMarca:L159 · linhaDeRotulo:L191 · montarComercial:L192 · montarMarketplace:L272
+- _slugOut:L338 · _rotOut:L339 · montarOutlet:L340 · mesclar:L387 · preparar:L426 · previaHtml:L435 · publicar:L455 · historico:L469 · restaurar:L475 · estilo:L483

@@ -584,6 +584,9 @@ const MAP_TARGET_FILES = [
   'mare-plantao-dev.js',
   'mare-sonar-dev.js',
   'mare-timer-dev.js',
+  'mare-ferias-dev.js',
+  'mare-gcal-dev.js',
+  'mare-gxl-dev.js',
 ];
 
 function escapeRegExp(str) {
@@ -609,6 +612,11 @@ function detectFileFromHeading(line) {
   if (line.includes('mare-plantao.js') || line.includes('mare-plantao-dev.js')) return 'mare-plantao-dev.js';
   if (line.includes('mare-sonar.js') || line.includes('mare-sonar-dev.js')) return 'mare-sonar-dev.js';
   if (line.includes('mare-timer.js') || line.includes('mare-timer-dev.js')) return 'mare-timer-dev.js';
+  for (const module of ['mare-ferias', 'mare-gcal', 'mare-gxl']) {
+    if ([module + '.js', module + '-dev.js', module + '(-dev).js'].some(name => line.includes(name))) {
+      return module + '-dev.js';
+    }
+  }
   if (line.includes('okr-apresentacao.slide.html')) return 'okr-apresentacao.slide.html';
   if (line.includes('kanban.html') || line.includes('kanban-dev.html')) return 'kanban-dev.html';
   if (line.includes('painel.html') || line.includes('painel-dev.html')) return 'painel-dev.html';
@@ -622,19 +630,23 @@ function detectFileFromHeading(line) {
 
 function buildSectionFileResolver(mapLines) {
   const lineToFile = new Array(mapLines.length + 1).fill(null);
+  let parentFile = null;
   let currentFile = null;
 
   for (let i = 0; i < mapLines.length; i++) {
     const line = mapLines[i];
     if (/^##\s+/.test(line)) {
       const detected = detectFileFromHeading(line);
-      currentFile = detected !== undefined ? detected : null;
+      parentFile = detected || null;
+      currentFile = parentFile;
     } else if (/^###\s+/.test(line)) {
       const detected = detectFileFromHeading(line);
       if (detected !== undefined) {
         currentFile = detected;
       } else if (/\b(?:functions\/|agent[e]?-agil\/|intake\/\s*e\s*backup\/|okr\/\s*—|spotify\/|maredigital\.html|guia-okr\.html)/.test(line)) {
         currentFile = null;
+      } else {
+        currentFile = parentFile;
       }
     }
     lineToFile[i + 1] = currentFile;
@@ -657,6 +669,7 @@ function findDecl(srcLines, name, hintLine) {
   const candidates = [];
   for (let i = 0; i < srcLines.length; i++) {
     const line = srcLines[i];
+    if (!line.includes(name)) continue;
     for (let pIdx = 0; pIdx < patterns.length; pIdx++) {
       if (patterns[pIdx].test(line)) {
         candidates.push([pIdx, i + 1]);
@@ -692,7 +705,7 @@ function generateCodeMapFast(mapLines, srcFiles) {
     if (m) {
       const level = m[1] === '##' ? '-' : '  -';
       const title = m[2].trim();
-      fastLines.push(`${level} **L${i + 1}**: ${title}`);
+      fastLines.push(`${level} [L${i + 1}](CODE_MAP.md#L${i + 1}) ${title}`);
     }
   }
 
@@ -701,10 +714,11 @@ function generateCodeMapFast(mapLines, srcFiles) {
   fastLines.push('');
 
   const lineToFile = buildSectionFileResolver(mapLines);
+  let topic = 0;
   const anchorsByFile = {};
   const seenNamesByFile = {};
   for (const f of MAP_TARGET_FILES) {
-    anchorsByFile[f] = [];
+    anchorsByFile[f] = new Map();
     seenNamesByFile[f] = new Set();
   }
 
@@ -713,9 +727,12 @@ function generateCodeMapFast(mapLines, srcFiles) {
     if (['if', 'for', 'while', 'return', 'const', 'let', 'var', 'function', 'async'].includes(fnName)) return;
     if (seenNamesByFile[file].has(fnName)) return;
     const hint = parseInt(rawLine, 10) || 1;
-    const realLine = srcFiles && srcFiles[file] ? (findDecl(srcFiles[file], fnName, hint) || hint) : hint;
+    const realLine = srcFiles[file] && findDecl(srcFiles[file], fnName, hint);
+    if (!realLine) return;
     seenNamesByFile[file].add(fnName);
-    anchorsByFile[file].push(`\`${fnName}\` (L${realLine})`);
+    const byTopic = anchorsByFile[file];
+    if (!byTopic.has(topic)) byTopic.set(topic, []);
+    byTopic.get(topic).push(`[\`${fnName}\`](${file}#L${realLine})`);
   };
 
   // Suporta `(L1234)`, `— L1234`, `— \`arq\` L1234` e tabelas `| \`fn\` | L1234 |`
@@ -726,6 +743,7 @@ function generateCodeMapFast(mapLines, srcFiles) {
   for (let i = 0; i < mapLines.length; i++) {
     const sectionFile = lineToFile[i + 1];
     const line = mapLines[i];
+    if (/^#{2,4}\s/.test(line)) topic++;
     let m;
 
     parenOrDashRe.lastIndex = 0;
@@ -750,12 +768,20 @@ function generateCodeMapFast(mapLines, srcFiles) {
   }
 
   for (const f of MAP_TARGET_FILES) {
-    const list = anchorsByFile[f];
-    if (!list || list.length === 0) continue;
+    const groups = [...anchorsByFile[f].values()];
+    const total = seenNamesByFile[f].size;
+    if (!total) continue;
     const maxItems = f === 'kanban-dev.html' ? 48 : 24;
-    const sliced = list.slice(0, maxItems);
-    const more = list.length > maxItems ? ` ... (+${list.length - maxItems} em docs/CODE_SYMBOLS.md)` : '';
-    fastLines.push(`### \`${f}\` (${list.length} âncoras curadas)`);
+    const sliced = [];
+    // Dê espaço aos demais assuntos antes de gastar o limite numa seção longa.
+    for (let depth = 0; sliced.length < Math.min(total, maxItems); depth++) {
+      for (const group of groups) {
+        if (group[depth]) sliced.push(group[depth]);
+        if (sliced.length === maxItems) break;
+      }
+    }
+    const more = total > maxItems ? `[+${total - maxItems} no mapa completo](CODE_MAP.md)` : '';
+    fastLines.push(`### \`${f}\` (${total} âncoras verificadas)`);
     for (let j = 0; j < sliced.length; j += 6) {
       fastLines.push('- ' + sliced.slice(j, j + 6).join(' · '));
     }

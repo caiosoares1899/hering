@@ -61,6 +61,23 @@ test('docs/CODE_SYMBOLS.md existe e indexa todas as páginas -dev principais e m
   }
 });
 
+test('CODE_MAP_FAST aponta para as declarações reais depois de uma seção de módulo', () => {
+  const fast = fs.readFileSync(path.join(ROOT, 'CODE_MAP_FAST.md'), 'utf8');
+  for (const [name, file] of [
+    ['addCalendarToList', 'kanban-dev.html'],
+    ['_bfSemanaInfo', 'kanban-dev.html'],
+    ['_renderFlowForecast', 'painel-dev.html'],
+  ]) {
+    const anchor = fast.split('](').findIndex(part => part.endsWith('[`' + name + '`'));
+    assert.ok(anchor >= 0, name);
+    const [target] = fast.split('](')[anchor + 1].split(')');
+    const [source, line] = target.split('#L');
+    assert.equal(source, file);
+    const declaration = fs.readFileSync(path.join(ROOT, source), 'utf8').split(/\r?\n/)[Number(line) - 1];
+    assert.match(declaration, new RegExp('(?:function |window\\.)' + name + '\\b'));
+  }
+});
+
 test('CLI slice lê trechos numerados de kanban-dev.html (> 2,6 MB) rapidamente', () => {
   const r = spawnSync(process.execPath, [CLI_PATH, 'slice', 'kanban-dev.html', '1', '5'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);

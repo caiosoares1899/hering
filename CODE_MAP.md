@@ -10,24 +10,11 @@ específico (ver rodapé) e ficam desatualizados a cada edição no arquivo —
 neles pra uma edição**. O valor real deste arquivo é a lista de nomes
 (âncoras estáveis), não os números de linha em si.
 
-`kanban.html` e `kanban-dev.html` divergem em 3 classes de divergência PERMANENTES/
-deliberadas, nunca promovidas como diff: (1) string de versão +
-`VERSION_KEY`/`FB_OVERRIDE_NS`; (2) favicon próprio de cada ambiente
-(`favicon.png` em prod / `favicon-dev.png` em dev — `link rel="icon"`,
-`apple-touch-icon`, a imagem de splash, e as 2 entradas de ícone do
-manifest — commit `ff759f8`); (3) **nova desde 2026-09-21** — a chave do
-Firebase que o listener de "Deslogar todos" escuta
-(`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
-em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3 classes de
-divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção. Nesta rodada, prod está em v8.30.984 e dev
-em v8.30.989-dev (🏖️ Modo Férias e 📊 Gantt completo em prod; popup do dia, famílias visuais na Ilha/sino e Minhas Preferências em blocos em dev);
-o estado NORMAL na maior parte do tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
-(volta a acontecer assim que o próximo commit em dev acontecer). Os
-números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
-entre os dois mostrar mais do que essas 3 divergências conhecidas + um
-lote pendente do momento, refaça o grep no arquivo específico que você
-está editando (provavelmente `kanban-dev.html`).
+As âncoras do Maré apontam para `kanban-dev.html`. Produção está em
+v8.30.1005 e dev em v8.30.1013-dev neste retrato. Os dois ambientes preservam
+identidades próprias de versão e armazenamento, favicon, logout remoto e
+imports de módulos. Para editar produção, confira a declaração no arquivo
+`kanban.html` antes de usar a linha de dev.
 `painel.html`/`painel-dev.html` **divergem de verdade** (dev tem
 instrumentação extra) — os números da seção painel abaixo são de
 `painel-dev.html` (o superset, mesmo padrão do par kanban — sempre
@@ -748,6 +735,11 @@ detalhe dos 4 call sites.
   — L36576 — mensagem do banner configurável, "peixinhos viram dinheiro"
   no fundo). `_isBlackFridayAtivo()` — L36531 — helper de estado, mesmo
   padrão de `_currentTheme()==='vice'`.
+
+#### Semana Black Friday
+
+- `_bfSemanaInfo` — L4719: janela sazonal e data civil em São Paulo, usada já no carregamento.
+- `_bfUpdateCountdown()` — L40003: atualização do contador e troca de tema com a aba aberta.
 
 ### Arquivados / arquivamento automático
 - `maybeAutoArchiveOldCards()` — L15305 — roda a regra opcional de
@@ -1789,7 +1781,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   não tem entrada própria aqui.)
 
 ### Supercards / Ficha Técnica
-- `_superPodeGerarFilhos(parentCard)` — L37170 — recusa pai temporário e versão com dois ancestrais ativos; usado no gerador de receita e antes da mescla do modelo do pai nos caminhos manual/Automação (17/11/2026).
+- `_superPodeGerarFilhos(parentCard)` — L37249 — recusa pai temporário e versão com dois ancestrais ativos; usado no gerador de receita e antes da mescla do modelo do pai nos caminhos manual/Automação (17/11/2026).
 - `_crvAutoTitle()` — L18662 — título automático do filho a partir da Ficha Técnica
 - `searchSuperChildren()` — L29771 — busca de cards existentes ao criar um filho
 - `_mergeModeloEmCardObj()` — L33916
@@ -2477,7 +2469,7 @@ derivado do card mudando).
 - `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L34911/L34919/L17640 — total "efetivo até agora" (fechado + episódio aberto).
 - `_renderCardTimeInfo(c)` — L34995 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L17014).
+  bloco de Impedimento), chamado no `openCard()` (L19548).
 - Dashboards: `renderBoardDataInsights()` (L22721, seção "Tempo em
   atraso/bloqueado") e `renderCriativosDashboard()` (L19643, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
@@ -2745,9 +2737,9 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 prioridade — `kanban-dev.html` resolve `window._currentUserRole` sempre
 como `squads_roles[ACTIVE_SQUAD] || role || 'membro'` (~8 call sites,
 `getEffectiveRole()` — L7177). Em `painel(-dev).html`,
-`updateSquadUserRole()` — L11156 (modal "👥 Global Users",
-`openGlobalUsersModal()` — L10758) já grava certo em
-`squads_roles/{squadId}`. `updateUserRole()` — L10138 / `loadPcfgUsers()`
+`updateSquadUserRole()` — L11663 (modal "👥 Global Users",
+`openGlobalUsersModal()` — L11130) já grava certo em
+`squads_roles/{squadId}`. `updateUserRole()` — L10511 / `loadPcfgUsers()`
 — L10093 (aba "👥 Usuários" do modal de Config do squad, `cfg-ov`) gravava
 no campo global até corrigido em 2026-09-21 (`/monitorarbugs` — mostrava
 o papel errado e podia ser um no-op silencioso se já existisse override
@@ -2806,7 +2798,7 @@ squad novo aparece em `SQUADS`), filtro local de 30s de timeout, pills em
 
 ### 🔋 Aba Status — Monitores do GitHub Pages e do Firebase (`painel.html` v5.68 / `painel-dev.html` v5.71, 2026-10-14)
 - **Pílulas no cabeçalho (`.refresh-bar`)**: `#github-status-pill` (`🐙 GitHub: ...`) e `#firebase-status-pill` (`🔥 Firebase: ...`) — clicáveis (abrem a aba **🔋 Status** e rolam até `#st-github-card` / `#st-firebase-card`), com consulta direta aos feeds oficiais a cada 5 min (`GITHUB_POLL_MS` / `FIREBASE_POLL_MS`) + fallback para o snapshot salvo pela Cloud Function (`kanban/github_saude` / `kanban/firebase_saude` + `kanban/github_status` / `kanban/firebase_status`).
-- **Funções (`painel-dev.html`)**: `_limparHtmlStatus()` — L7176 · `_linkSeguroStatus()` — L7189 · `_statusIncidenteRecente()` — L7197 · `_setStatusPill()` — L7204 · `initGithubStatusMonitor()` — L7159 · `loadGithubStatus()` — L7213 · `renderGithubStatusUI()` — L7263 · `_fbMatchServicos()` — L7464 · `initFirebaseStatusMonitor()` — L7494 · `loadFirebaseStatus()` — L7508 · `renderFirebaseStatusUI()` — L7575.
+- **Funções (`painel-dev.html`)**: `_limparHtmlStatus()` — L7316 · `_linkSeguroStatus()` — L7329 · `_statusIncidenteRecente()` — L7337 · `_setStatusPill()` — L7344 · `initGithubStatusMonitor()` — L7299 · `loadGithubStatus()` — L7353 · `renderGithubStatusUI()` — L7403 · `_fbMatchServicos()` — L7604 · `initFirebaseStatusMonitor()` — L7634 · `loadFirebaseStatus()` — L7648 · `renderFirebaseStatusUI()` — L7715.
 
 ### Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
 UI separada do sino do kanban (`createNotif()`/`openNotif()`, ver
@@ -3220,7 +3212,7 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   `--accent` fixo — agora usa `okrStatusInfo(status).dot`, a MESMA cor
   do dot de status, reforçando risco à distância num grid com dezenas
   de cards.
-- **🧊 Objetivo parado** (2026-10-18, okr-dev v2.93) — selo `.okr-parado-badge` no cartão (`_okrObjCardHtml()`) + chip `.okr-stat-parado` na faixa de resumo (`_okrStatsStripHtml()`) + filtro `_okrFilter.parado` (aplicado em `renderOkrObjetivos()` depois do de status, entra em `_okrTemFiltroAtivo()`/`_okrClearFilters()`). Regra pura em `_okrObjUltimaAtividade()` — L5135 (maior entre `atualizadoEm`/`criadoEm` do Objetivo, `history[].at` exceto "…apresentação", `atualizadoEm` dos Marcos (inclusive arquivados) e `criadoEm` dos lançamentos de atingimento) — e `_okrObjParadoDias()` — L5147 (null = não aplica: arquivado, concluído, meta ≥ 100 %, Perene/Manter acima/abaixo, sem data); limite `OKR_PARADO_DIAS` = 14. Só cliente. Teste: `docs/arezzo/testes/test_okr_parados.js`. Dica `parados` no `CATALOGO` do Radar.
+- **🧊 Objetivo parado** (2026-10-18, okr-dev v2.93) — selo `.okr-parado-badge` no cartão (`_okrObjCardHtml()`) + chip `.okr-stat-parado` na faixa de resumo (`_okrStatsStripHtml()`) + filtro `_okrFilter.parado` (aplicado em `renderOkrObjetivos()` depois do de status, entra em `_okrTemFiltroAtivo()`/`_okrClearFilters()`). Regra pura em `_okrObjUltimaAtividade()` — L5426 (maior entre `atualizadoEm`/`criadoEm` do Objetivo, `history[].at` exceto "…apresentação", `atualizadoEm` dos Marcos (inclusive arquivados) e `criadoEm` dos lançamentos de atingimento) — e `_okrObjParadoDias()` — L5438 (null = não aplica: arquivado, concluído, meta ≥ 100 %, Perene/Manter acima/abaixo, sem data); limite `OKR_PARADO_DIAS` = 14. Só cliente. Teste: `docs/arezzo/testes/test_okr_parados.js`. Dica `parados` no `CATALOGO` do Radar.
 - **Auditoria de UI/UX DENTRO do modal de Objetivo/Marco** (2026-10-01,
   continuação direta: "agora dentro do modal do okr") — 3 achados (ver
   `CHANGELOG.md` v3.86 · painel-dev): (1) `_okrHistorySectionHtml(entity)`
@@ -3443,7 +3435,7 @@ e `_okrToggleAgenteChat()` só chamam ela). `okrAgenteChatMsgs` (estado
 local, `loadOkrAgenteChat()`, `onValue` em `kanban/okr/agente_chat`),
 `renderOkrAgenteChat()` (lista de bolhas `.okr-comment.okr-agente-msg`,
 acento azul pra humano/teal pra agente via `.okr-agente-msg-humano`,
-texto passa por `_renderMd()` — L2517, ver seção Campanhas — desde
+texto passa por `_renderMd()` — L2610, ver seção Campanhas — desde
 2026-09-17, achado real: `**negrito**` aparecia literal),
 `_okrAgenteChatSend()` (grava `{id,uid,author,init,foto,text,ts}`, `ts`
 sempre `new Date().toISOString()`). Central geral, não presa a um
@@ -3469,9 +3461,9 @@ real entre as duas telas, sem duplicar dado). Botão `#okr-notas-btn`,
 `_okrShowNotas`/`_okrToggleNotas()` — L3100/L3766 — 4ª vista mutuamente
 exclusiva em `_okrSetView('objetivos'|'historico'|'agente'|'notas')` —
 L3711 (mesmo ponto único de decisão que já cobria as outras 3).
-`okrReuniaoNotas` (estado local, `loadOkrReuniaoNotas()` — L3109 —
+`okrReuniaoNotas` (estado local, `loadOkrReuniaoNotas()` — L3260 —
 `onValue` no node inteiro, filtra por data no cliente, mesmo padrão de
-`okrNotas` na apresentação), `renderOkrNotas()` — L3142 — reusa
+`okrNotas` na apresentação), `renderOkrNotas()` — L3293 — reusa
 `.okr-comment` (mesma bolha da Central Agente Ágil) + seletor de data
 `#okr-notas-date-sel` (`window._okrNotasSetViewDate()`). Reunião que não
 é a de hoje abre só leitura (`#okr-notas-compose` escondido,
@@ -3712,17 +3704,17 @@ painel de configuração desses agentes plugados! listar todos eles...
 setar em quais squads ele vai ficar"). Lido pelo backend em
 `kanban/config/agentesExternos/{especialista}` — ver
 `lerDescricaoEspecialista()` na seção "Cloud Functions" abaixo.
-- `loadAgentesExternosPainel()` — L9316 — registra o listener em
+- `loadAgentesExternosPainel()` — L9603 — registra o listener em
   `kanban/config/agentesExternos`, chamado no boot (`fb-ready`).
-- `renderAgentesExternosPainel()` — L9328 — lista expansível, agora
+- `renderAgentesExternosPainel()` — L9615 — lista expansível, agora
   dentro da aba própria "🤖 Agentes" (`ppane-agentes`, ver seção "Aba
   Agentes" abaixo — MOVIDA de dentro de `openCfg()`/`#cfg-ov` em
   2026-09-01, era dado GLOBAL vivendo dentro de um modal por squad);
   cada item mostra descrição (textarea) + chips de squad (`SQUADS`,
   checkbox por squad). Ganhou também um campo "🔗 Webhook de retorno"
   (`webhookUrl`, 2026-08-31 — ver entrada própria abaixo).
-- `criarAgenteExternoPainel()` — L9396 / `salvarAgenteExternoPainel(id)`
-  — L9431 / `toggleAgenteExternoSquad(id,squadId,checked)` — L9453
+- `criarAgenteExternoPainel()` — L9683 / `salvarAgenteExternoPainel(id)`
+  — L9431 / `toggleAgenteExternoSquad(id,squadId,checked)` — L9740
   (grava na hora, sem precisar de "Salvar") / `excluirAgenteExternoPainel(id)`
   — L9467. Todas as escritas gateadas por `_isAdmPainel()`. As duas do
   meio leem fresco do Firebase (`window._get`) antes de mesclar/escrever
@@ -3761,10 +3753,10 @@ merece uma aba sozinha, nao ficar dentro de outras". Consolida tudo que
 antes vivia espalhado: Agentes Externos (ver seção acima, movida pra cá),
 visão cross-squad de quem está representado no board, e o Histórico do
 Agente Ágil (que só existia por squad, dentro do próprio kanban).
-- `_fillAgentesLogSquadFilter()` — L9485 — popula o `<select>` de filtro
+- `_fillAgentesLogSquadFilter()` — L9772 — popula o `<select>` de filtro
   por squad a partir de `SQUADS` (client-side, sem leitura de Firebase),
   chamado toda vez que a aba abre (`swPtab()`).
-- `loadAgentesTabData()` — L9492 — SOB DEMANDA (botão "🔄 Atualizar", não
+- `loadAgentesTabData()` — L9779 — SOB DEMANDA (botão "🔄 Atualizar", não
   listener sempre ligado — são N squads × 2 leituras: `kanban/squads/
   {squadId}/dados/agentes` + `kanban/squads/{squadId}/dados/agente_log` —
   ambos sob `dados/`, mesmo path que `FB` já usa em kanban.html/
@@ -3772,41 +3764,48 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   `kanban/squads/{squadId}/agentes` SEM o `/dados/`, path sem regra
   nenhuma em `database.rules.json` → "Permission denied" ao vivo).
   Guarda o resultado em `_agentesTabCache` e chama os 2 renders abaixo.
-- `renderAgentesAtivosGrid(results)` — L9516 — grid por squad cruzando
+- `renderAgentesAtivosGrid(results)` — L9803 — grid por squad cruzando
   Agentes de IA do board com Agentes Externos que têm `init` (mesma
   condição que os torna selecionáveis em `kanban-dev.html`); os sem
   `init` aparecem separados como "📡 só contexto".
-- `renderAgentesLogCross()` — L9541 — mesma lógica de `renderAgenteLog()`
+- `renderAgentesLogCross()` — L9828 — mesma lógica de `renderAgenteLog()`
   (kanban.html/kanban-dev.html) mas agregando `_agentesTabCache` de
   TODOS os squads numa lista só, filtrável pelo select acima; link
   "abrir card ↗" usa `squadBoardUrl(squadId,cardId)` (já existente) pra
   abrir o board certo em nova aba. Cada item de `acoes[]` passa por
   `_renderMd()` desde 2026-09-17 (mesmo achado/fix de
   `renderAgenteLog()` — `esc()` puro mostrava `**negrito**` literal).
-- `openAgentesHelp()`/`closeAgentesHelp()` — L9574/L9575 — modal estático
+- `openAgentesHelp()`/`closeAgentesHelp()` — L9862/L9575 — modal estático
   (`agentes-help-ov`) explicando a diferença entre Agente Ágil/Agentes de
   IA no board/Agentes Externos (e os 2 sentidos de fluxo destes últimos)
   — primeiro help_content próprio do painel (não tem Central de Ajuda
   tipo `HELP_CONTENT`/Ctrl+K do kanban).
 
 ### Dashboard consolidado
-- `loadAll()` — L11452 / `renderAll()` — L11474
-- `renderPainelInsights()` — L5453 — stat cards + donuts cross-squad
+- `loadAll()` — L11966 / `renderAll()` — L11988
+- `renderPainelInsights()` — L5562 — stat cards + donuts cross-squad
   (prioridade, carga por responsável, riscos, parados, OKR por coluna,
   por submarca, por canal de venda — os 2 últimos só entram se pelo
   menos uma squad visível tiver o campo ativo, mesmo padrão de
   `renderBoardDataInsights()` em kanban-dev.html, mas agregado)
-- `renderOKR()` — L5305
+- `renderOKR()` — L5414
 - `renderBlockers()` — L12130 / `resolveAllBlockers()` — L12043 (relê
   `/cards` fresco do Firebase antes de escrever, não usa `squadData`
   cacheado pra montar o payload — ver `/monitorarbugs` 2026-09-17)
-- `renderRiscos()` — L5349
+- `renderRiscos()` — L5458
 - `renderTrend()` — L12709 / `renderColDist()` — L12734 (nulo-seguras: as seções saíram da aba Fluxo na v5.36)
 - `renderComparison()` — L11976 (1 coluna por squad, cabeçalho de `SQUADS`)
 - **Helpers do Fluxo/Visão (v5.36–v5.37):** `_sqCor(sq)` (cor do squad só se for `#hex` — nunca crua em `style`/`fill`), `_hexA(hex,a)` (hex → rgba), `_sqNome(sq)` (label sem o prefixo "Squad "), `_flowVal(v,un)` (valor + unidade pequena nos KPIs).
-- **Aba Fluxo (v5.36):** `_flowStage()` — L11676 (fila/andamento/bloqueado/concluído) · `_collectFlowCards()` — L11698 · `renderFlowMetrics()` — L11730 (KPIs) · `renderThroughputChart()` — L11772 (entregas por dia, empilhado por squad) · `renderCFD()` — L11837 ("Onde está o trabalho agora", nome mantido) · `renderAgingWip()` — L11876 · `renderFilterBar()` — L10278 (squad em `#squad-filter-bar`)
-- `loadAgentUsage()` — L5790
-- `renderGerenciaBar()` — L3690 / `gerenciaSquadIds()` — L3683 (Insights por Gerência)
+- **Aba Fluxo (v5.36):** `_flowStage()` — L11676 (fila/andamento/bloqueado/concluído) · `_collectFlowCards()` — L11698 · `renderFlowMetrics()` — L11730 (KPIs) · `renderThroughputChart()` — L11772 (entregas por dia, empilhado por squad) · `renderCFD()` — L11837 ("Onde está o trabalho agora", nome mantido) · `renderAgingWip()` — L11876 · `renderFilterBar()` — L10650 (squad em `#squad-filter-bar`)
+- `loadAgentUsage()` — L5899
+- `renderGerenciaBar()` — L3795 / `gerenciaSquadIds()` — L3788 (Insights por Gerência)
+
+### Fluxo — Quando termina? (piloto Monte Carlo, só dev)
+
+- `_renderFlowForecast()` — L12266: exibe o piloto para os squads habilitados e usa os dados já carregados.
+- `_forecastHasFreshData()` — L12260: valida a data civil do cache antes do cálculo.
+- `_forecastSample()` — L12140: extrai as entregas verificáveis do histórico dos cards.
+- `_forecastRun()` — L12210: simula a conclusão do lote para estimar P50 e P85.
 
 ### Saúde dos cards no Painel
 Aba Status: incidentes por squad, abas de ação/histórico, resolução e pulso do Guardião. A fila consolidada preserva incidentes e escreve os campos de resolução.
@@ -3832,8 +3831,8 @@ Gaveta de `painel-dev.html`, atrás de `enabled` + `painel_enabled` + `painel_ac
 
 ### Usuários
 - `_getUsuariosMap(forcar)` — `painel-dev.html` (2026-11-09, v5.96) — reaproveita `_globalUsersCache` (TTL 10 min) em `loadPcfgUsers()`/`loadSquadData()` ou força releitura hidratando o cache em `addAdmEmail()`/`removeAdmEmail()`/`addGuestByEmail()`; probe de latência de `loadFirebaseStatus()`/`loadStatusData()` lê a folha leve `kanban/config/adm_emails` (~150 B).
-- `openGlobalUsersModal()` — L10758
-- `initHiddenCols()` — L10198
+- `openGlobalUsersModal()` — L11130
+- `initHiddenCols()` — L10570
 
 ## oceano-dev.html / oceano.html (lobby da família Oceano — âncoras de dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
 - **🔔 Sino (v1.5, só dev)**: `iniciarSino()`/`sinoRender()`/`sinoToggle()`/`sinoClique()`/`sinoTudoLido()`/`sinoLimpar()` + `rotearUrl()` (notificação → `abrirApp()`); usa `MareNotif.start()/items()/urlPessoal()/urlFeed()/rodapeHtml()`; FCM por `import()` dinâmico no módulo Firebase.
@@ -3861,10 +3860,10 @@ até caber, nunca corta conteúdo). Dados ao vivo via `onValue` direto em
 edição no painel reflete aqui sem F5 (grid de cards, não o modal de
 detalhe aberto — ver nota abaixo).
 
-- `buildSlides()` — L1217 — monta a lista de slides a partir de
+- `buildSlides()` — L1243 — monta a lista de slides a partir de
   `okrObjetivos` (agrupado por `areaId||'geral'`, ordenado por
-  `titulo`). `startListeners()` — L2066 — os 4 listeners ao vivo, cada um
-  chama `scheduleRebuild()` (debounce 150ms) → `rebuild()` — L1332
+  `titulo`). `startListeners()` — L2122 — os 4 listeners ao vivo, cada um
+  chama `scheduleRebuild()` (debounce 150ms) → `rebuild()` — L1358
   (preserva o slide atual pela `key`, não pelo índice) → `render()` —
   L1515. **`_okrEntrada()`** (2026-11-09, chamada em `_okrGoTo`, nunca em `rebuild`): entrada em cascata dos blocos ao navegar (incluindo `.sleg`), crescimento das barras (`scaleX`, `.5s`) e contagem dos números da capa/torre (`.7s`), desligado sob `prefers-reduced-motion: reduce`, mais medidor de FPS com farol no canto inferior direito (`60 fps · bom` / `alerta` / `péssimo`). **`?preview=<objId>`** (2026-10-01, botão "👁" do painel-dev.html
   — ver seção OKR acima) — `_previewObjId` lê o parâmetro no boot;
@@ -3879,9 +3878,9 @@ detalhe aberto — ver nota abaixo).
   `width:%` compondo ao quadrado com a compensação). 2 chamadores, cada
   um encolhendo sua própria granularidade (nunca o slide inteiro de uma
   vez, senão uma seção curta encolhe à toa por causa de uma longa):
-  `fitSlideContent(containerEl, contentEl)` — L1491 — o carrossel de
+  `fitSlideContent(containerEl, contentEl)` — L1518 — o carrossel de
   slides (dispara no `resize` e depois que a webfont troca de verdade,
-  `document.fonts.ready`, e mede o conteúdo renderizado do slide); `_okrFitDetailSections()` — L1724 — o modal de
+  `document.fonts.ready`, e mede o conteúdo renderizado do slide); `_okrFitDetailSections()` — L1779 — o modal de
   detalhe de 1 Objetivo (trava a divisão `.d2-body`/`.d2-footer` e dá piso
   de 30% ao rodapé). **Desde 2026-10-06 NÃO usa mais `_zoomFitToHeight`
   nas seções do detalhe**: Marcos (`.d2-table-rows`), colunas do rodapé
@@ -3899,7 +3898,7 @@ detalhe aberto — ver nota abaixo).
   a pessoa já viu na grade), desabilitado no último Objetivo da gerência
   em vez de cruzar pra outra gerência sozinho (confirmado sem achado,
   `/monitorarbugs` 2026-09-11 — ver `SKILL.md` da skill monitorarbugs).
-  (2026-09-30) `objMarcos(objId)` — L896 — único choke-point de leitura
+  (2026-09-30) `objMarcos(objId)` — L922 — único choke-point de leitura
   de marcos (status/%/tabela de detalhe passam todos por ela) — ganhou
   filtro `mostrarApresentacao!==false` (campo novo em painel-dev.html,
   ver seção OKR acima), então esconder um marco lá já reflete aqui
@@ -3911,12 +3910,12 @@ detalhe aberto — ver nota abaixo).
   recebia `id` sempre por parâmetro sem persistir em lugar nenhum).
 - Login: `window._okrHandleAuth = user => {...}` — L2421 — desde
   2026-09-17 (achado de análise de segurança), checa domínio OU
-  `painel_viewers` (`_okrViewerKey()` — L2420, cache de 15min [reduzido
+  `painel_viewers` (`_okrViewerKey()` — L2485, cache de 15min [reduzido
   de 24h em 2026-09-21, `/monitorarbugs` "login e segurança" — mesmo
   achado já corrigido em `kanban-dev.html`/`painel-dev.html`] +
   3 tentativas — mesmo padrão de `painel.html`
   `_finishPainelLogin()`/`_check()`) **antes** de chamar
-  `_okrShowApp()` — L2391 — (mostra `#app`, chama `startListeners()`)
+  `_okrShowApp()` — L2456 — (mostra `#app`, chama `startListeners()`)
   — antes só checava `if(user)`, deixando `startListeners()` rodar pra
   qualquer login Google bem-sucedido e só recusando depois, se/quando
   um `onValue` batesse "permission denied". `_okrDenyAccess(msg)` —
@@ -3933,14 +3932,14 @@ detalhe aberto — ver nota abaixo).
   agora por JS puro, `hidden` toggled em `window._okrHandleAuth()`; 3ª
   rodada — segmentação por reunião, ver abaixo) — botão flutuante abre
   um painel lateral (`#notes-ov`) de anotações ao vivo, salvas em
-  `kanban/okr/reuniao_notas/{data}/{id}` (`{data}` = `_hojeStr()` — L1803
+  `kanban/okr/reuniao_notas/{data}/{id}` (`{data}` = `_hojeStr()` — L1858
   — `YYYY-MM-DD` local, 1 reunião = 1 dia; node herda `.read`/`.write` de
   `kanban/okr` — cascata do `database.rules.json`, sem entrada própria
   necessária). Seletor `#notes-date-sel` troca a reunião sendo vista
   (`window._okrNotesSetViewDate()` — L1837, `_notasPopulateDateSel()` —
   L1825 — monta as opções a partir de `Object.keys(okrNotas)` ∪ hoje).
   Reunião que não é a de hoje esconde o campo de nova anotação (`.notes-compose`
-  escondido, `.notes-readonly` visível), mas **desde 2026-10-15 (`okr v2.88`) qualquer participante autenticado (não-viewer) pode excluir (`🗑️`) suas próprias anotações em qualquer data, e ADMs (`_isAdmOkr()`, lê `kanban/adm_emails` + `ADM_EMAILS_FALLBACK`) moderam qualquer anotação**: `window._okrDelNota(id)` (confirmação em qualquer data). `renderNotas()` — L1843 — lista
+  escondido, `.notes-readonly` visível), mas **desde 2026-10-15 (`okr v2.88`) qualquer participante autenticado (não-viewer) pode excluir (`🗑️`) suas próprias anotações em qualquer data, e ADMs (`_isAdmOkr()`, lê `kanban/adm_emails` + `ADM_EMAILS_FALLBACK`) moderam qualquer anotação**: `window._okrDelNota(id)` (confirmação em qualquer data). `renderNotas()` — L1898 — lista
   cronológica do dia selecionado (mais antiga primeiro, lê como ata);
   `window._okrToggleNotes()` — L1880 — abre/fecha (sempre na reunião de
   hoje na 1ª abertura) + rola pro fim; `window._okrAddNota()` — L1940 —
@@ -3983,8 +3982,8 @@ detalhe aberto — ver nota abaixo).
   previsto. Mesma segmentação por reunião/dia dos Anotações — grava em
   `kanban/okr/reuniao_agenda/{data}` (`window._okrAgendaSalvar()` —
   L1992 — exige os 2 campos preenchidos; `window._okrAgendaLimpar()` —
-  L2002). `_okrAgendaHoje()` — L1978 — lê `okrAgendas[_hojeStr()]`;
-  `_okrRenderCountdown()` — L2007 — roda dentro do MESMO `setInterval`
+  L2002). `_okrAgendaHoje()` — L2033 — lê `okrAgendas[_hojeStr()]`;
+  `_okrRenderCountdown()` — L2062 — roda dentro do MESMO `setInterval`
   de 1s que já movia o relógio (`#tb-clock`), escreve "⏳ Xmin restantes"
   (amarelo nos últimos 5min) ou "🔴 +Xmin (atrasado)" (vermelho, depois
   do horário previsto) em `#tb-countdown`; sem `fim` configurado pra
@@ -4058,30 +4057,30 @@ A página consulta `oceanoResumo` a cada minuto quando visível; `?compacto=1` a
 - **Push com a página visível sem foco (2026-10-13, em prod desde 2026-10-14: `mare-notif.js` v31 · `kanban.html` v8.30.855)** — `MareNotif.avisoSistema(p)` (`mare-notif(-dev).js`): `document.hasFocus()` falso + permissão concedida → `reg.showNotification()` com o mesmo `tag`/ícone/`data.url` do Service Worker (`firebase-messaging-sw.js`); chamado pelo ouvinte do módulo (`rodapeRender()` → `_fcmOnMessage`) e pelo ouvinte do Maré (`fb-ready` → `tryHook`, `kanban(-dev).html`). Teste: `docs/arezzo/testes/test_push_foco.js`.
 - `pushTokens.js` (`functions/common/`, 2026-10-13) — `tokenMorto(err)` (só apaga `fcm_token` quando o FCM diz que o TOKEN morreu; `invalid-argument` de payload não apaga), `resumirFalhas()` (motivos por código pro log), `falhaGeral()` (todas as falhas por motivo que não é token morto → `console.error`); usado por `sendPushOnNotification` (`index.js`) e `sendPushOnMural` (`okr/pushMural.js`). Teste: `common/__tests__/pushTokens.test.js` (inclui o handler real com FCM falso).
 - `vtexStatus` — L280 → `vtex/statusVtex.js` (2026-10-13; deploy na máquina do usuário: `firebase deploy --only functions:vtexStatus,functions:sendPushOnNotification`) — a cada 5 min lê `status.vtex.com/feed.rss` e publica/fecha um Comunicado 🚨 + notificação `vtex_incidente` pra todos. Âncoras: `parseFeed()` (RSS do incident.io; `<b>Status: X</b>` + componentes), `faseDe()` (final · agendado · aberto · desconhecido = sem Status legível, ignorado), `linkSeguro()` (só links de status.vtex.com), `processarItem()` (1 item; `processar()` isola falha por item), `comunicadoDe()`, `notificar()`, `processar()` (estado em `kanban/vtex_status/{ULID}`, `chaveDe()` = chave segura do guid), `rodar()` (interruptor `kanban/config/vtex_status_off`). **Saúde do monitor (13/10):** `executar()` (1 tick = `rodar()` + grava `kanban/vtex_saude`; em falha conta `falhasSeguidas` e, ao chegar em `LIMITE_FALHAS`=12, `alertarMonitor()` avisa os ADMs — tipo `vtex_monitor_falhou`); selinho no Oceano: `vtexEstado()`/`vtexRender()`/`iniciarVtex()` (`oceano(-dev).html`, `#vtex-pill`, `VTEX_VELHO_MS`=20 min). Testes: `vtex/__tests__/statusVtex.test.js`, `docs/arezzo/testes/test_vtex_alerta.js`, `docs/arezzo/testes/test_vtex_selo.js`.
-- `githubStatus` (L287) & `firebaseStatus` (L294) — `functions/index.js` (2026-10-14, em prod no `painel.html` v5.68) → `github/statusGithub.js` e `firebase/statusFirebase.js` — vigias a cada 5 min (`*/5 * * * *`, Brasília) com alertas **exclusivos para ADMs** (`role === 'adm'`, sem Comunicado global). `githubStatus`: lê `githubstatus.com/api/v2/summary.json`, destaca **GitHub Pages**, grava `kanban/github_saude` + `kanban/github_status/{chave}` e dispara `github_incidente` / `github_monitor_falhou` (interruptor `kanban/config/github_status_off`). `firebaseStatus`: lê `status.firebase.google.com/incidents.json`, filtra por regex com `\b` (`SERVICOS_USADOS` / `servicosUsadosDoIncidente`) apenas os **6 serviços usados** (`Realtime Database`, `Authentication`, `Cloud Messaging`, `Cloud Functions`, `Cloud Storage`, `Hosting`), grava `kanban/firebase_saude` + `kanban/firebase_status/{chave}` e dispara `firebase_incidente` / `firebase_monitor_falhou` (interruptor `kanban/config/firebase_status_off`). No `painel.html`/`painel-dev.html`: pílulas `#github-status-pill` e `#firebase-status-pill` (`.refresh-bar`), cards `#st-github-card` e `#st-firebase-card` (aba **🔋 Status**), `initGithubStatusMonitor()`/`loadGithubStatus()`/`renderGithubStatusUI()`, `initFirebaseStatusMonitor()`/`loadFirebaseStatus()`/`renderFirebaseStatusUI()`, helpers `_limparHtmlStatus()`/`_linkSeguroStatus()`/`_statusIncidenteRecente()`/`_setStatusPill()`/`_fbMatchServicos()`.
-- `okrWeeklySnapshot` — L301 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
-- `okrAgenteChat` — L309 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=false` desde o 1º deploy, ver seção `okr/` abaixo)
-- `agenteAgilMencao` — L323 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
-- `agenteAgilMencaoDados` — L334 → mesma fábrica, squad `dados`, ativado em
+- `githubStatus` (L294) & `firebaseStatus` (L301) — `functions/index.js` (2026-10-14, em prod no `painel.html` v5.68) → `github/statusGithub.js` e `firebase/statusFirebase.js` — vigias a cada 5 min (`*/5 * * * *`, Brasília) com alertas **exclusivos para ADMs** (`role === 'adm'`, sem Comunicado global). `githubStatus`: lê `githubstatus.com/api/v2/summary.json`, destaca **GitHub Pages**, grava `kanban/github_saude` + `kanban/github_status/{chave}` e dispara `github_incidente` / `github_monitor_falhou` (interruptor `kanban/config/github_status_off`). `firebaseStatus`: lê `status.firebase.google.com/incidents.json`, filtra por regex com `\b` (`SERVICOS_USADOS` / `servicosUsadosDoIncidente`) apenas os **6 serviços usados** (`Realtime Database`, `Authentication`, `Cloud Messaging`, `Cloud Functions`, `Cloud Storage`, `Hosting`), grava `kanban/firebase_saude` + `kanban/firebase_status/{chave}` e dispara `firebase_incidente` / `firebase_monitor_falhou` (interruptor `kanban/config/firebase_status_off`). No `painel.html`/`painel-dev.html`: pílulas `#github-status-pill` e `#firebase-status-pill` (`.refresh-bar`), cards `#st-github-card` e `#st-firebase-card` (aba **🔋 Status**), `initGithubStatusMonitor()`/`loadGithubStatus()`/`renderGithubStatusUI()`, `initFirebaseStatusMonitor()`/`loadFirebaseStatus()`/`renderFirebaseStatusUI()`, helpers `_limparHtmlStatus()`/`_linkSeguroStatus()`/`_statusIncidenteRecente()`/`_setStatusPill()`/`_fbMatchServicos()`.
+- `okrWeeklySnapshot` — L308 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
+- `okrAgenteChat` — L316 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=false` desde o 1º deploy, ver seção `okr/` abaixo)
+- `agenteAgilMencao` — L330 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
+- `agenteAgilMencaoDados` — L341 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
-- `agenteAgilDueOverdueScan` — L353 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
+- `agenteAgilDueOverdueScan` — L360 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
   scan diário (`onSchedule`), item 5 do roadmap — squads `dev` **e**
   `dados` (dados adicionado 2026-08-25), cobre `due_overdue` **e**
   `due_today` (nome ficou de v1, só due_overdue/squad dev — ver seção
   abaixo)
-- `agenteAgilResumoMeuDia` — L364 → `agente-agil-orquestrador/resumoMeuDia.js`,
+- `agenteAgilResumoMeuDia` — L371 → `agente-agil-orquestrador/resumoMeuDia.js`,
   `onRequest` (não gatilho por evento) — "🤖 Resumo do Agente Ágil"
   dentro de "Meu Dia", 2026-08-25, ver seção abaixo
-- `agenteAgilIntake` — L381 → `agente-agil-orquestrador/intakeTrigger.js`,
+- `agenteAgilIntake` — L388 → `agente-agil-orquestrador/intakeTrigger.js`,
   squad `dev`, escrita real desde 2026-08-27 (rodou em modo sombra do 1º
   deploy até essa decisão) — 2º gatilho automático do orquestrador, escuta
   `agente_intake_pending/{id}` (ver `agente-agil/http.js` abaixo pro
   porquê de existir)
-- `agenteAgilAnaliseDados` — L394 → `agente-agil-orquestrador/analiseDados.js`,
+- `agenteAgilAnaliseDados` — L401 → `agente-agil-orquestrador/analiseDados.js`,
   `onRequest` (não gatilho por evento) — "🤖 Ponto de vista do Agente
   Ágil" dentro dos painéis "Dados do Board"/"Controle de Criativos",
   2026-09-01, ver seção abaixo
-- `agenteAgilAnalisePO` — L407 → `agente-agil-orquestrador/analisePO.js`,
+- `agenteAgilAnalisePO` — L414 → `agente-agil-orquestrador/analisePO.js`,
   `onRequest` (não gatilho por evento) — "🤖 Análise do board (PO)"
   dentro de "Meu Dia", 2026-09-01, ver seção abaixo
 - `contarComentarios` — L143 → `comentarios/contagem.js` (gatilho que mantém `card_comments_count/{cardId}`)
@@ -4666,7 +4665,7 @@ Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,n
 **Marcador `edita`** (v2.60): dica que manda editar/criar (6 no Radar) é filtrada em `init()` quando `isViewer` (externo só acompanha). **`controle(el)`** desenha UMA vez e só sincroniza o `checked` (foco do teclado), 1 ouvinte por elemento (`el._mdicaOuv`), `avisa()` poda ouvinte que devolve `false`. Oceano: dicas de entrada com `_lobbyVisivel()`. `renderHelp()` (kanban) ordena título-antes-de-texto na busca. **Catálogo centralizado (painel-dev v5.34):** `CATALOGO` no módulo (dados puros por app: `dicas[{id,gatilho,texto,saiba,ajuda}]`, `gatilhos` = rótulos legíveis); `MareDicas.catalogo()` + `MareDicas.minhasPrefs(user)` alimentam a aba **💡 Dicas** do Painel (`renderPcfgDicas()`, `setPcfgTab('dicas')`, `#painel-cfg-dicas`). Ganchos por página (só o que depende do estado): `OKR_DICAS_QUANDO`/`_okrDicasIniciar()` (okr-dev; gatilhos em `_okrSetView()` `view:<aba>`, `openOkrObjetivo` `obj-modal`; controle em `#okr-help-dicas`); `MARE_DICAS_QUANDO`/`_mareDicasIniciar()` (kanban-dev, antes de `loadNotifs()`; gatilhos em `openCard()`/`openCfg()`; controle em `#help-dicas-ctl`); `OCEANO_DICAS_QUANDO`/`iniciarDicas()` (oceano-dev; gatilhos `sino` em `sinoToggle()`, `perfil` em `abrirPerfil()`; controle em `#pf-dicas`). Painel e A Bordo não mostram dicas. Teste: `docs/arezzo/testes/test_dicas.js`.
 
 ### 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
-- **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3655/L3657, `_corCssOk()` — L3658, `_colsSegurasP()` — L3659, `_tagsSegurasP()` — L3660, `_pSafeUrl()` — L3932, `_sanitizeComunicadoHtml()` — L8946 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10295. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
+- **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3755/L3657, `_corCssOk()` — L3756, `_colsSegurasP()` — L3757, `_tagsSegurasP()` — L3758, `_pSafeUrl()` — L4030, `_sanitizeComunicadoHtml()` — L9167 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10601. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
 - **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10511) e `updateSquadUserRole()` (L11663) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
 
 ### 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v7` prod · `v9`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-16)
@@ -4677,4 +4676,4 @@ Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,n
 ### 🏖️ Modo Férias — `mare-ferias(-dev).js` (`v4` prod · `v5`-dev) (2026-11-16)
 - **`mare-ferias-dev.js` (`window.MareFerias`, v5)**: fonte única do Modo Férias (usado por Maré e Radar, nó `kanban/ferias(_dev)/{uid}/{id}`). API: `ouvir(db, suf, cb)`, `ausente(quem, dia)`, `periodoDe(quem, dia)`, `montar(root, opts)` (calendário geral + Minhas férias), `configurar(opts)`, `hojeSP()`, `permitido(u)`, `passagem(cfg)` (🧳 Preparar minha saída), `sobrepoe(a, b)`, `pronto()`. Regras e testes: `functions/rules/__tests__/feriasRules.test.js`, `docs/arezzo/testes/test_ferias_calendario.js`, `docs/arezzo/testes/test_ferias_saida.js`, `docs/arezzo/testes/test_ferias_aviso.js`.
 
-*Retrato do commit `925a144d` (2026-11-13).*
+*Retrato do commit `8cd4a99e` (2026-11-18).*
