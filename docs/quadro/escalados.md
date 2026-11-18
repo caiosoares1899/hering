@@ -154,6 +154,18 @@ A #1866 mede altura e, quando detecta desequilíbrio, volta a dividir a largura 
 
 **Aceite do caso do print:** compare lado a lado com a versão pós-#1866 em 1280 × 900 e Full HD. Os sete Marcos ficam visíveis na fonte atual, quando couberem, e Progressos não força as outras três colunas a formar painéis altos e vazios. Meça altura ociosa nos painéis curtos e altura útil na parte de cima; confirme também o caso inverso, com Riscos e Próximos passos longos.
 
+### Proposta de implementação para o Claude
+
+**1. Escolher a largura pelo texto renderizado.** Evoluir `_okrMedirDivisaoDetalhe()`. Testar poucas distribuições do grid, começando pela atual, uma com Progressos mais largo e outra com Próximos passos e Riscos mais largos. Um bloco vazio pode virar uma linha compacta de estado vazio fora do grid, liberando sua coluna. Para cada candidato, ler a altura natural das listas na largura real, com a fonte final, incluindo espaçamento entre itens, título e moldura. Contar itens inteiros visíveis, pois ampliar uma coluna só vale a pena se reduzir quebras e liberar altura ou expuser mais conteúdo. Em empate, manter a distribuição atual para evitar que o slide fique repaginando por diferenças mínimas.
+
+**2. Reservar altura de cima antes de expandir Progressos.** Estender `_okrDividirDetalhe()` para receber a altura dos Marcos em fonte normal, a altura do contexto e a altura medida de cada cartão do rodapé. Em cada candidato, reservar espaço para os Marcos e uma faixa que acomode Riscos e Próximos passos curtos. Usar o espaço restante para recuperar conteúdo do contexto à esquerda e expandir Progressos. Se nem os Marcos couberem na área útil, garantir uma faixa legível de Riscos e Próximos passos e entregar o restante aos Marcos. Progressos e Planos usam apenas a sobra desse orçamento. Manter o cabeçalho da tabela fora da rolagem.
+
+**3. Aplicar altura individual aos cartões.** O rodapé recebe um teto, mas cada cartão usa a menor entre sua altura natural e esse teto. Usar alinhamento pelo topo e limitar a lista interna à altura disponível depois do título e do padding. Tirar a imposição da mesma altura para todas as `.d2-fcol`. Se Progressos transbordar, ele ganha rolagem interna; Riscos com uma linha ficam com altura de uma linha mais moldura. O corpo recebe a altura que o rodapé liberar. Escolher o candidato que, nessa ordem, mostra mais Marcos inteiros, mantém os itens prioritários visíveis, revela mais contexto e reduz área vazia.
+
+**Exemplo de orçamento, com números ilustrativos.** Se houver 680 px úteis, os sete Marcos precisarem de 430 px, o contexto de 480 px, os cartões curtos de 110 px e Progressos de 310 px, reservar 480 px para cima e limitar o rodapé a 200 px. Os cartões curtos continuam com 110 px e só Progressos rola. Se uma coluna de Progressos mais larga derrubar a altura natural de 310 para 190 px, ela passa a caber inteira e devolve mais 10 px à parte de cima.
+
+**Regressão a acrescentar.** Usar a fixture do print com 7 Marcos e textos longos, 6 Progressos, 1 Risco, 1 Próximo passo e Planos vazio. Comparar com o mesmo HTML da #1866 a 1280 × 900 e 1920 × 1080. Medir a quantidade de Marcos inteiros visíveis, tamanho efetivo da fonte, altura útil do contexto, rolagem de cada lista e altura de cada cartão em relação ao próprio conteúdo. O teste deve falhar se os cartões curtos continuarem esticados até a altura de Progressos, mesmo que o corpo seja maior que o rodapé. Cobrir também listas prioritárias longas, ausência de rodapé preenchido e troca de Objetivo ou tamanho da janela. Recalcular a partir do conteúdo natural a cada troca, com medição limitada às poucas alternativas do grid.
+
 <a id="apresentacao-linha-dagua"></a>
 
 ### Evolução do atingimento — meta como linha d’água
