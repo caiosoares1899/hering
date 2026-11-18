@@ -12,6 +12,7 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
 const reg = (...v) => v.map((valor, i) => ({ id: 'l' + i, em: '2026-0' + (i + 1) + '-10', valor }));
 const casos = { sobe: { tipo: 'financeira', moeda: 'BRL', inicial: 0, meta: 100, lancamentos: reg(60, 100, 130) }, desce: { tipo: 'numero', inicial: 0, meta: 100, lancamentos: reg(130, 80) },
   reduz: { tipo: 'financeira', moeda: 'BRL', inicial: 200, meta: 100, lancamentos: reg(110, 100, 90) }, abaixo: { tipo: 'abaixo', meta: 100, lancamentos: reg(110, 90) }, manter: { tipo: 'acima', meta: 100, lancamentos: reg(90, 110) },
+  todosAcima: { tipo: 'numero', inicial: 0, meta: 100, lancamentos: reg(120, 140) }, todosAbaixo: { tipo: 'numero', inicial: 0, meta: 100, lancamentos: reg(20, 40) }, unico: { tipo: 'numero', inicial: 0, meta: 100, lancamentos: reg(40) },
   binario: { tipo: 'binario', lancamentos: [{ id: 'b', em: '2026-01-10', atingido: true, valor: 100 }] }, vazio: { tipo: 'financeira', inicial: 0, meta: 100, lancamentos: [] } };
 (async () => {
   await new Promise(ok => srv.listen(0, '127.0.0.1', ok)); const BASE = 'http://127.0.0.1:' + srv.address().port;
@@ -24,22 +25,31 @@ const casos = { sobe: { tipo: 'financeira', moeda: 'BRL', inicial: 0, meta: 100,
       const tag = `[${w}px] `;
       const ler = id => p.evaluate(async i => { window._okrOpenAting(i); await new Promise(r => setTimeout(r, 200)); const svg = document.querySelector('#ating-body svg'), linha = svg?.querySelector('.okr-agua-superficie'); const y = linha ? +linha.getAttribute('y1') : null;
         const pts = [...(svg?.querySelectorAll('.okr-ating-pt') || [])].map(g => ({ lado: g.dataset.lado, y: +g.querySelector('circle').getAttribute('cy'), tip: g.dataset.tip }));
-        const r = svg?.getBoundingClientRect(), painel = document.querySelector('.ating-panel').getBoundingClientRect(); return { y, pts, meta: svg?.querySelector('.okr-agua-meta')?.textContent || '', lados: [...(svg?.querySelectorAll('.okr-agua-lado') || [])].map(e => e.textContent), agua: !!svg?.querySelector('.okr-agua'), texto: document.getElementById('ating-body').innerText, cabe: !r || (r.left >= painel.left - 1 && r.right <= painel.right + 1) }; }, 'c_' + id);
+        const r = svg?.getBoundingClientRect(), painel = document.querySelector('.ating-panel').getBoundingClientRect(); return { y, pts, meta: svg?.querySelector('.okr-agua-meta')?.textContent || '', lados: [...document.querySelectorAll('#ating-body .okr-agua-lado')].map(e => e.textContent), peixes: svg?.querySelectorAll('.okr-agua-peixe').length || 0, valores: [...(svg?.querySelectorAll('.okr-agua-valor') || [])].map(e => e.textContent), faixa: document.querySelector('.okr-ating-faixa')?.innerText || '', regAberto: document.querySelector('.okr-ating-reg')?.open, agua: !!svg?.querySelector('.okr-agua'), texto: document.getElementById('ating-body').innerText, cabe: !r || (r.left >= painel.left - 1 && r.right <= painel.right + 1) }; }, 'c_' + id);
       const posicoes = (r, esperado) => r.pts.length === esperado.length && r.pts.every((q, i) => q.lado === esperado[i] && (esperado[i] === 'acima' ? q.y < r.y : esperado[i] === 'abaixo' ? q.y > r.y : Math.abs(q.y - r.y) < .1));
       const sobe = await ler('sobe'); t(tag + 'sobe: abaixo, na linha e acima da água', posicoes(sobe, ['abaixo', 'na', 'acima']), sobe);
-      t(tag + 'a linha mostra a meta com a unidade', /Meta: R\$\s*100/.test(sobe.meta), sobe.meta);
-      t(tag + 'o lado da meta também aparece em texto', sobe.lados.some(x => /Acima da meta/.test(x)) && sobe.lados.some(x => /Abaixo da meta/.test(x)) && /meta superada/.test(sobe.pts[2].tip), sobe);
+      t(tag + 'a linha mostra a meta com a unidade', /Meta R\$\s*100/.test(sobe.meta), sobe.meta);
+      t(tag + 'o lado da meta também aparece em texto', sobe.lados.some(x => /Acima da linha: meta superada/.test(x)) && sobe.lados.some(x => /Abaixo da linha: aquém da meta/.test(x)) && /meta superada/.test(sobe.pts[2].tip), sobe);
       t(tag + 'o gráfico cabe no painel', sobe.cabe, sobe);
+      t(tag + 'só o registro mais recente tem peixe e valor escrito', sobe.peixes === 1 && sobe.valores.length === 1 && /130/.test(sobe.valores[0]), sobe);
+      t(tag + 'a faixa mostra valor atual, distância até a meta e atingimento', /VALOR ATUAL|Valor atual/i.test(sobe.faixa) && /Superada em R\$\s*30/.test(sobe.faixa) && /100%/.test(sobe.faixa), sobe.faixa);
+      t(tag + 'Registros começam recolhidos', sobe.regAberto === false, sobe.regAberto);
       if (w === 1280 || w === 1920) await p.screenshot({ path: process.env.CAPTURA ? process.env.CAPTURA + '_' + w + '.png' : path.join(os.tmpdir(), 'linha_dagua_' + w + '.png') });
       t(tag + 'desce: cruza a linha no outro sentido', posicoes(await ler('desce'), ['acima', 'abaixo']), '');
       const reduz = await ler('reduz'); t(tag + 'meta de redução: gastar menos fica acima da água', posicoes(reduz, ['abaixo', 'na', 'acima']), reduz);
-      t(tag + 'meta de redução: o sentido fica explícito', reduz.lados.some(x => /menor é melhor/.test(x)), reduz.lados);
+      t(tag + 'meta de redução: o sentido fica explícito', reduz.lados.some(x => /menor é melhor/i.test(x)) && /Superada em R\$\s*10/.test(reduz.faixa), reduz);
       t(tag + 'manter abaixo: menor que a meta fica acima da água', posicoes(await ler('abaixo'), ['abaixo', 'acima']), '');
       t(tag + 'manter acima: maior que a meta fica acima da água', posicoes(await ler('manter'), ['abaixo', 'acima']), '');
+      t(tag + 'todos acima da meta ficam fora da água', posicoes(await ler('todosAcima'), ['acima', 'acima']), '');
+      t(tag + 'todos abaixo da meta ficam submersos', posicoes(await ler('todosAbaixo'), ['abaixo', 'abaixo']), '');
+      const unico = await ler('unico'); t(tag + 'um único registro mostra peixe e valor', unico.peixes === 1 && unico.valores.length === 1 && posicoes(unico, ['abaixo']), unico);
+      await ler('sobe'); await p.focus('.okr-ating-reg summary'); await p.keyboard.press('Enter'); await p.waitForTimeout(150);
+      t(tag + 'Registros abrem pelo teclado', await p.evaluate(() => document.querySelector('.okr-ating-reg').open && document.querySelectorAll('.okr-ating-reg .okr-ating-row').length === 3), '');
+      await p.keyboard.press('Escape'); await p.waitForTimeout(150); t(tag + 'Esc fecha o modal', await p.evaluate(() => !document.getElementById('ating-ov').classList.contains('open')), '');
       const bin = await ler('binario'); t(tag + 'Atingido/Não atingido continua sem linha d’água', !bin.agua && bin.pts.length === 1, bin);
       t(tag + 'sem registros continua com a mensagem de vazio', /Nenhum registro ainda/.test((await ler('vazio')).texto), '');
       for (const id of ['sobe', 'reduz']) { const r = await p.evaluate(async i => { window._okrOpenAting('c_' + i); await new Promise(x => setTimeout(x, 200)); const bate = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-          const peixes = [...document.querySelectorAll('#ating-body .okr-agua-peixe')].map(e => e.parentNode.getBBox && e.getBoundingClientRect()), avisos = [...document.querySelectorAll('#ating-body .okr-agua-lado')].map(e => e.getBoundingClientRect());
+          const peixes = [...document.querySelectorAll('#ating-body .okr-agua-peixe')].map(e => e.getBoundingClientRect()), avisos = [...document.querySelectorAll('#ating-body .okr-agua-meta, #ating-body .okr-agua-valor')].map(e => e.getBoundingClientRect());
           const linha = document.querySelector('#ating-body .okr-agua-superficie').getBoundingClientRect(), valores = [...document.querySelectorAll('#ating-body .okr-agua-valor')].map(e => e.getBoundingClientRect());
           return { avisoSobrePeixe: avisos.some(a => peixes.some(q => bate(a, q))), valorCruzaLinha: valores.some(v => v.top < linha.top && v.bottom > linha.bottom) }; }, id);
         t(tag + id + ': avisos e valores não ficam por cima dos peixes nem da linha', !r.avisoSobrePeixe && !r.valorCruzaLinha, r); }
