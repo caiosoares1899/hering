@@ -10,9 +10,7 @@
 
 <a id="apresentacao-live"></a>
 
-| Quem achou | O que | Como reproduzir | Data |
-|---|---|---|---|
-| Claude | `docs/arezzo/testes/test_apresentacao_live.js` falha também na `main`: "fora da sincronização, o slide do apresentador NÃO puxa a pessoa" (a pessoa fica "Acompanhando ✓" e vai junto para `ger:digital:tech`). Pode ser o teste (ordem de eventos do Firebase falso) ou o código do `liveSeguindo`: investigar antes de mexer no ao vivo. | rodar a suíte na `main` (2/2 vezes falha) | 09/11/2026 |
+**Resolvido em 18/11/2026.** O teste tinha uma expectativa anterior ao hotfix de 15/10. A pausa local se mantém enquanto não há nova navegação do apresentador ou ADM. O teste passa a cobrir essa pausa, o botão de voltar a seguir e o retorno automático quando a sala muda de slide.
 
 <a id="travessia-humor-inteiro"></a>
 
