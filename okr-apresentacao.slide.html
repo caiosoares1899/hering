@@ -1345,7 +1345,7 @@ function buildSlides(){
     list.push({key:'summary', title:'Panorama geral', html:`
       <div class="slide-inner">
         <h2 class="sum-title">📊 Panorama geral</h2>
-        <h3 class="sum-section-title">Status dos ${ativos.length} Objetivos exibidos</h3>
+        <h3 class="sum-section-title">Status ${ativos.length===1?'do 1 Objetivo exibido':'dos '+ativos.length+' Objetivos exibidos'}</h3>
         <div class="sum-bars">${barsHtml}</div>
         <h3 class="sum-section-title" id="sum-por-gerencia">Comparação por gerência</h3>
         <div class="sum-table-wrap" role="region" aria-labelledby="sum-por-gerencia" tabindex="0">
