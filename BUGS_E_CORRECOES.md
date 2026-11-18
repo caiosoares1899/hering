@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 🔐 Popup da agenda: escolher outra conta Google trocava a sessão do app em silêncio — kanban v8.30.1010-dev, painel v5.122-dev (SÓ DEV)
+
+- **Origem:** item "reportado, não corrigido" do `/monitorarbugs` do login Google (entrada logo abaixo); o Caio aprovou a correção.
+- **Causa:** `_requestCalendarScope()` usava `signInWithPopup`. Se o ADM escolhesse outra conta no popup da agenda, o app passava a rodar com essa conta.
+- **Correção:** Maré e Painel usam `reauthenticateWithPopup(auth.currentUser, calProvider)`. Conta diferente é recusada com `auth/user-mismatch`: a sessão continua a mesma, nenhum token é gravado e aparece o aviso para usar a mesma conta nos 4 pontos que pedem a autorização. O popup já abre na conta logada (`login_hint`).
+- **Limite conhecido:** com `MARE_SO_HERING` desligado, quem entra pela Microsoft não consegue autorizar a agenda com uma conta Google (antes, a sessão era trocada).
+- **Teste:** `docs/arezzo/testes/test_agenda_mesma_conta.js` (20 checagens). Contra a versão anterior, 12 falham. O `docs/arezzo/testes/fakefb.js` ganhou `reauthenticateWithPopup`, `credentialFromResult` e `currentUser`.
+
 ### 2026-11-18 · 🔐 Login Google: o token do login virava 'autorização da agenda', o token de agenda sobrevivia à troca de conta e uma busca que falhava inteira apagava as agendas do squad — kanban v8.30.1008-dev, painel v5.121-dev (SÓ DEV)
 
 - **Origem:** `/monitorarbugs` em área sensível (login Google), pensando na Black Friday.
@@ -103,7 +111,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
   - O `_signOut` central do Maré (inatividade, forçado, recusa, provedor, Sair) também tira o token do disco.
   - `_gcalToken()` (Maré) e `_pcalGcalToken()` (Painel) só devolvem o token se o dono for a conta logada; sem dono (token antigo) ou de outra conta, descartam. Cobre todas as saídas sem tocar em cada uma.
   - 403 "insufficient scopes" descarta o token e pede para autorizar de novo, em vez de "Sem permissão".
-- **Teste:** `docs/arezzo/testes/test_login_gcal_token.js` (15 checagens). Contra a `main`, 10 falham.
+- **Teste:** `docs/arezzo/testes/test_login_gcal_token.js` (12 checagens). Contra a `main`, 10 falham.
 - **Teste vizinho que já falhava antes:** `docs/arezzo/testes/test_login_oceano.js` falha em "clicar em Continuar leva à página de origem" também na `main` (não é desta mudança). Ele e o `docs/arezzo/testes/test_login_direto.js` têm o caminho do Playwright fixo do Linux.
 - **Sem achado:** `mare-login-dev.js` (confere `state`, `nonce`, `aud`, `iss`, `exp` e a idade da tentativa; `ret` só aceita caminho da própria origem); `?next=` do Oceano (lista fechada kanban/painel/okr); portão de domínio e provedor do Maré; contador do fallback por redirect (zera no sucesso).
 - **Reportado, não corrigido:** `_requestCalendarScope()` usa `signInWithPopup`. Se o ADM escolher outra conta Google no popup da agenda, a sessão do app troca de conta em silêncio. `reauthenticateWithPopup` recusaria a troca (`auth/user-mismatch`), mas muda o fluxo e fica para decisão.

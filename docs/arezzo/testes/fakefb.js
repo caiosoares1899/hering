@@ -31,14 +31,16 @@ export const runTransaction=async(r,fn)=>{ const cur=clone(getv(r.p)); const n=f
 export const query=(r,...c)=>{ const o={p:r.p}; c.forEach(x=>{ if(x&&x.__s!==undefined) o.s=x.__s; if(x&&x.__e!==undefined) o.e=x.__e; }); return o; }; export const startAt=v=>({__s:v}); export const endAt=v=>({__e:v}); export const orderByChild=()=>0; export const orderByKey=()=>{ (window.__qlog=window.__qlog||[]).push('orderByKey'); return 0; }; export const limitToLast=(n)=>{ (window.__qlog=window.__qlog||[]).push('limitToLast:'+n); return 0; }; export const equalTo=()=>0; export const onChildAdded=()=>()=>{}; export const onChildChanged=()=>()=>{}; export const onChildRemoved=()=>()=>{}; export const increment=n=>n;
 `;
   const auth=`
-export const getAuth=()=>({});
-export class GoogleAuthProvider{ setCustomParameters(){} addScope(){} static credential(t){ return {idToken:t}; } }
+const __fakeAuth={currentUser:null};
+export const getAuth=()=>__fakeAuth;
+export class GoogleAuthProvider{ setCustomParameters(p){ this.__params=p; } addScope(){} static credential(t){ return {idToken:t}; } static credentialFromResult(r){ return r&&r.__token?{accessToken:r.__token}:null; } }
 export class OAuthProvider{ constructor(id){this.id=id;} setCustomParameters(){} }
 export const signInWithPopup=async()=>{ window.__popup=(window.__popup||0)+1; };
+export const reauthenticateWithPopup=async(u,p)=>{ (window.__reauth=window.__reauth||[]).push({uid:u&&u.uid,params:p&&p.__params}); if(window.__reauthErro) throw Object.assign(new Error(window.__reauthErro),{code:window.__reauthErro}); return {user:u,__token:window.__reauthToken||'TOK_AGENDA'}; };   // window.__reauthErro = código do erro que o popup devolve (ex.: auth/user-mismatch)
 export const signInWithCredential=async(a,c)=>{ window.__cred=c; };
 export const signInWithRedirect=async()=>{}; export const getRedirectResult=async()=>null; export const reload=async()=>{}; export const updateProfile=async()=>{};
 export const signOut=async()=>{ window.__signedOut=(window.__signedOut||0)+1; if(window.__authCb) window.__authCb(null); };
-export const onAuthStateChanged=(a,cb)=>{ window.__authCb=u=>cb(u&&!u.getIdToken?Object.assign(u,{getIdToken:async()=>'fake-id-token-'+u.uid}):u); Promise.resolve().then(()=>window.__authCb(window.__initialUser||null)); };   // window.__initialUser (initScript) = a pessoa JÁ chega logada (sessão do Firebase guardada no navegador)   // o usuário real tem getIdToken() (as chamadas às Cloud Functions mandam Bearer)
+export const onAuthStateChanged=(a,cb)=>{ window.__authCb=u=>{ const x=u&&!u.getIdToken?Object.assign(u,{getIdToken:async()=>'fake-id-token-'+u.uid}):u; __fakeAuth.currentUser=x||null; window.__authCbN=(window.__authCbN||0)+1; return cb(x); }; Promise.resolve().then(()=>window.__authCb(window.__initialUser||null)); };   // window.__initialUser (initScript) = a pessoa JÁ chega logada (sessão do Firebase guardada no navegador)   // o usuário real tem getIdToken() (as chamadas às Cloud Functions mandam Bearer)
 `;
   const fbHandler=route=>{
     const u=route.request().url(); const msg="export const isSupported=async()=>true; export const getMessaging=()=>({}); export const getToken=async()=>'tok-fake'; export const deleteToken=async()=>true; export const onMessage=()=>()=>{};"; const sto="export const getStorage=()=>({}); export const ref=()=>({}); export const uploadBytes=async()=>({}); export const getDownloadURL=async()=>''; export const deleteObject=async()=>{};"; const body=u.includes('firebase-storage')?sto:u.includes('firebase-messaging')?msg:u.includes('firebase-app')?app:u.includes('firebase-database')?dbm:u.includes('firebase-auth')?auth:'';
