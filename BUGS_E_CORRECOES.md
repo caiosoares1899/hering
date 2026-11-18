@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 🎬 Apresentação do Radar: rodapé calcula largura e altura pelo conteúdo e não deixa cartões vazios
+
+- **Origem:** print do Caio e proposta da #1867. Depois da #1866, cartões curtos do rodapé ainda esticavam até a altura de Progressos.
+- **Correção:** em `okr-apresentacao.slide.html`, o detalhe testa poucas distribuições de largura do rodapé no texto real e escolhe a que esconde menos Marcos, Riscos, Próximos passos e contexto. Cada cartão fica da altura do próprio conteúdo, e a altura liberada volta para a parte de cima.
+- **Regra de disputa:** Progressos e Planos rolam antes de reduzir a área dos Marcos ou da coluna da esquerda.
+- **Teste:** `docs/arezzo/testes/test_apresentacao_ui.js`. Contra a `main`, 6 verificações falham.
+
 ### 2026-11-18 · 🎬 Apresentação do Radar: rodapé não toma mais a tela quando só Progressos é longo
 
 - **Relato do Caio (print):** depois da #1865, um Objetivo com Progressos longo e Riscos e Próximos passos curtos ficava com o rodapé enorme e vazio, e a coluna da esquerda sem espaço.
