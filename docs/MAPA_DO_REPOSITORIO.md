@@ -80,6 +80,8 @@ Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em anda
 | `ecossistema.html` · `maredigital.html` | Documentação técnica navegável (para a TI · funcional) |
 | `mare-notif.js` | Sino único, menu de produtos, tipos de notificação (há um `-dev`) |
 | `mare-dicas.js` · `mare-metas.js` · `mare-login.js` · `mare-plantao.js` | Dicas · metas · login Google direto · plantão de bugs (todos com `-dev`) |
+| `mare-sonar.js` · `mare-timer.js` | Busca unificada e timer (ambos com `-dev`) |
+| `mare-ferias.js` · `mare-gcal.js` · `mare-gxl.js` | Calendário de férias, Gantt e exportação de calendários (todos com `-dev`) |
 | `firebase-messaging-sw.js` | Service Worker (cache + push) — fica na raiz do domínio |
 | `version.json` | Versão de cada página (auto-atualização) |
 | `functions/` | ⚙️ Cloud Functions + testes (o único projeto Node) |
@@ -163,7 +165,9 @@ _Nó novo no banco = regra nova em `database.rules.json` (+ teste em `functions/
 |---|---|
 | Entender o que existe e por quê | este mapa → `ecossistema.html` |
 | Achar um arquivo | [`BIBLIOTECA.md`](BIBLIOTECA.md) |
-| Mexer numa tela | `CODE_MAP_FAST.md` (linha de cada função) → `kanban-dev.html`/… |
+| Localizar uma área funcional | [Índice rápido](../CODE_MAP_FAST.md), com links para seções e declarações selecionadas |
+| Buscar um símbolo pelo nome | [Índice de símbolos](CODE_SYMBOLS.md) ou `node scripts/mare-cli.js find <nome> --file <arquivo>` |
+| Entender como uma área funciona | [Mapa do código](../CODE_MAP.md), com contexto e pontos de entrada |
 | Entender as regras do jogo | `CLAUDE.md` → `docs/COORDENACAO_AGENTES.md` |
 | Rodar as checagens | `node scripts/checar.js` e `cd functions && npm test` |
 | Ver a segurança | `database.rules.json` + `functions/rules/__tests__/` |
