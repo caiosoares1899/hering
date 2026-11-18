@@ -389,22 +389,22 @@
 - **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L1036 · demoDados:L1038
 - **[login e boot]** mostraLogin:L1097 · criarPeixes:L1113 · animAtividade:L1123 · aplicaTema:L1128 · abrirApp:L1131 · Travessia:L1160
 
-## `okr-apresentacao.slide.html` (2593 linhas · 122 funções)
-- **CSS:** L11–L629 | **JS:** L773–L811 (module), L813–L2567 (classic), L2568–L2590 (classic)
-- **Consts (34):** firebaseConfig:L778 · app:L787 · db:L788 · auth:L789 · provider:L790 · OKR_GERENCIAS:L830 · OKR_STATUS:L839 · OKR_SEVERIDADE:L846 · OKR_TORRES_TODAS:L851 · MARE_SO_HERING:L859 · OKR_TORRES:L861 · _okrTorreTitulo:L862 · OKR_GERENCIAS_PADRAO:L863 · PT_PALETTE:L902 · OKR_ATING_TIPOS:L1044 · OKR_ATING_MOEDAS:L1054 · NUM:L1115 · OKR_SBAR_ORDEM:L1240 · _okrEhCampo:L1634 · NOTES_READONLY_TXT:L1936 · LIVE_PATH:L2202 · liveEu:L2204 · liveRef:L2205 · liveAtiva:L2206 · liveSouHost:L2207 · liveSouAdm:L2208 · livePodeControlar:L2209 · liveHostParado:L2210 · liveNome:L2211 · liveSlideKey:L2212 · liveDetalheAberto:L2213 · liveCtx:L2214 · liveCtxs:L2216 · liveLaserOff:L2473
+## `okr-apresentacao.slide.html` (2601 linhas · 122 funções)
+- **CSS:** L11–L629 | **JS:** L773–L811 (module), L813–L2575 (classic), L2576–L2598 (classic)
+- **Consts (34):** firebaseConfig:L778 · app:L787 · db:L788 · auth:L789 · provider:L790 · OKR_GERENCIAS:L830 · OKR_STATUS:L839 · OKR_SEVERIDADE:L846 · OKR_TORRES_TODAS:L851 · MARE_SO_HERING:L859 · OKR_TORRES:L861 · _okrTorreTitulo:L862 · OKR_GERENCIAS_PADRAO:L863 · PT_PALETTE:L902 · OKR_ATING_TIPOS:L1044 · OKR_ATING_MOEDAS:L1054 · NUM:L1115 · OKR_SBAR_ORDEM:L1240 · _okrEhCampo:L1634 · NOTES_READONLY_TXT:L1944 · LIVE_PATH:L2210 · liveEu:L2212 · liveRef:L2213 · liveAtiva:L2214 · liveSouHost:L2215 · liveSouAdm:L2216 · livePodeControlar:L2217 · liveHostParado:L2218 · liveNome:L2219 · liveSlideKey:L2220 · liveDetalheAberto:L2221 · liveCtx:L2222 · liveCtxs:L2224 · liveLaserOff:L2481
 - _doLogin:L797 · _doLogout:L805 · esc:L817 · jsq:L826 · safeUrl:L827 · okrStatusInfo:L847 · _okrTorreDe:L866 · _okrGerenciasBase:L867 · okrGerenciaLabel:L875 · _okrGerRotulo:L877
 - _okrGruposGerencia:L879 · _okrTrimestresOf:L891 · _tagCor:L897 · pessoaInfo:L922 · avatarHtml:L926 · objMarcos:L935 · _okrObjetivosSorted:L942 · _okrObjetivosAtivos:L955 · _okrGerenciaObjetivos:L958 · _okrAtualizaFiltroTag:L963
 - _okrSetTag:L980 · _okrAtualizaFiltroTorre:L982 · _okrSetTorre:L992 · objStatus:L993 · _okrAtingConfigurado:L1003 · _okrAtingPctDe:L1005 · _okrAtingAtual:L1029 · _okrAtingPctObj:L1035 · _okrAtingUnidade:L1058 · _okrFmtNum:L1065
 - _okrAtingTipoIco:L1072 · _okrAtingTipoLabel:L1073 · _okrAtingDataBR:L1074 · _okrAtingLancTxt:L1075 · _okrAtingResumoHtml:L1080 · _okrAtingHistoricoHtml:L1091 · _okrAtingFmtEixo:L1105 · _okrAtingChartHtml:L1114 · _okrAtingTip:L1157 · _okrAtingTipOff:L1167
 - _okrAtingChartPanelHtml:L1171 · _okrOpenAting:L1184 · _okrCloseAting:L1191 · objProgressoPct:L1193 · objCardHtml:L1213 · _okrStatsDe:L1241 · _okrSbarHtml:L1247 · _okrLegendaHtml:L1251 · _okrGoToKey:L1254 · buildSlides:L1256
 - scheduleRebuild:L1371 · rebuild:L1375 · _zoomFitToHeight:L1452 · fitSlideContent:L1535 · render:L1559 · _okrGoTo:L1593 · _okrEntrada:L1599 · _okrDetailVizinho:L1622 · _okrNext:L1627 · _okrPrev:L1628
-- _okrFullscreen:L1629 · d2FieldList:L1683 · _okrOpenDetail:L1687 · _okrDividirDetalhe:L1801 · _okrMedirDivisaoDetalhe:L1807 · _okrFitDetailSections:L1822 · _okrCloseDetail:L1872 · _okrToggleColapsarConcluidos:L1877 · _hojeStr:L1897 · _notaDataFmt:L1901
-- _notaAvatarHtml:L1905 · _notaTempoFmt:L1911 · _notasPopulateDateSel:L1919 · _okrNotesSetViewDate:L1931 · renderNotas:L1937 · _okrToggleNotes:L1974 · _okrCloseNotes:L1985 · _okrOpenMarcoComments:L1999 · _okrCloseMarcoComments:L2033 · _okrAddNota:L2034
-- _okrDelNota:L2047 · _okrNotesKeydown:L2057 · _okrAgendaHoje:L2072 · _okrAgendaPopulateInputs:L2073 · _okrToggleAgendaCfg:L2079 · _okrCloseAgendaCfg:L2085 · _okrAgendaSalvar:L2086 · _okrAgendaLimpar:L2096 · _okrRenderCountdown:L2101 · _isAdmOkr:L2128
-- _okrResetOverlays:L2136 · _okrDenyAccess:L2151 · startListeners:L2161 · liveToast:L2217 · liveInit:L2223 · liveBatida:L2251 · _liveComecar:L2256 · _liveEncerrar:L2263 · liveAplicar:L2264 · liveAposNavegar:L2292
-- _liveSeguir:L2314 · _livePedir:L2315 · liveTrocar:L2316 · _livePassar:L2320 · _liveAceitar:L2321 · _liveRecusar:L2322 · _liveAssumir:L2323 · _livePuxarSlide:L2332 · liveDesligaFerr:L2340 · _liveFerr:L2349
-- _liveTipo:L2355 · _liveCor:L2356 · _liveLimpar:L2357 · _liveDesfazer:L2358 · _liveCopiarLink:L2367 · _livePainel:L2368 · liveParticipantes:L2372 · liveRender:L2376 · liveDesenhar:L2440 · _okrShowApp:L2495
-- _okrViewerKey:L2524 · _okrHandleAuth:L2525
+- _okrFullscreen:L1629 · d2FieldList:L1683 · _okrOpenDetail:L1687 · _okrDividirDetalhe:L1802 · _okrMedirDivisaoDetalhe:L1810 · _okrFitDetailSections:L1830 · _okrCloseDetail:L1880 · _okrToggleColapsarConcluidos:L1885 · _hojeStr:L1905 · _notaDataFmt:L1909
+- _notaAvatarHtml:L1913 · _notaTempoFmt:L1919 · _notasPopulateDateSel:L1927 · _okrNotesSetViewDate:L1939 · renderNotas:L1945 · _okrToggleNotes:L1982 · _okrCloseNotes:L1993 · _okrOpenMarcoComments:L2007 · _okrCloseMarcoComments:L2041 · _okrAddNota:L2042
+- _okrDelNota:L2055 · _okrNotesKeydown:L2065 · _okrAgendaHoje:L2080 · _okrAgendaPopulateInputs:L2081 · _okrToggleAgendaCfg:L2087 · _okrCloseAgendaCfg:L2093 · _okrAgendaSalvar:L2094 · _okrAgendaLimpar:L2104 · _okrRenderCountdown:L2109 · _isAdmOkr:L2136
+- _okrResetOverlays:L2144 · _okrDenyAccess:L2159 · startListeners:L2169 · liveToast:L2225 · liveInit:L2231 · liveBatida:L2259 · _liveComecar:L2264 · _liveEncerrar:L2271 · liveAplicar:L2272 · liveAposNavegar:L2300
+- _liveSeguir:L2322 · _livePedir:L2323 · liveTrocar:L2324 · _livePassar:L2328 · _liveAceitar:L2329 · _liveRecusar:L2330 · _liveAssumir:L2331 · _livePuxarSlide:L2340 · liveDesligaFerr:L2348 · _liveFerr:L2357
+- _liveTipo:L2363 · _liveCor:L2364 · _liveLimpar:L2365 · _liveDesfazer:L2366 · _liveCopiarLink:L2375 · _livePainel:L2376 · liveParticipantes:L2380 · liveRender:L2384 · liveDesenhar:L2448 · _okrShowApp:L2503
+- _okrViewerKey:L2532 · _okrHandleAuth:L2533
 
 ## `mare-notif-dev.js` (956 linhas · 86 funções)
 - **JS:** L1–L956 (js)

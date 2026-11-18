@@ -51,6 +51,14 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
     if (w >= 1366) { await p.evaluate(() => window._okrOpenDetail('o3')); await p.waitForTimeout(500);
       const sobra = await p.evaluate(() => Object.fromEntries([['marcos', '.d2-table-rows'], ['riscos', '.d2-risk .d2-flist'], ['passos', '.d2-next .d2-flist']].map(([k, s]) => { const e = document.querySelector(s); return [k, e ? e.scrollHeight - e.clientHeight : 0]; })));
       t(tag + 'detalhe com 14 marcos: menos rolagem em Marcos e nenhuma em Riscos e Próximos passos', sobra.marcos <= (w === 1366 ? 100 : 0) && sobra.riscos <= 1 && sobra.passos <= 1, sobra); }
+    // Progressos longo com Riscos e Próximos passos curtos (print do Caio, 18/11/2026): o rodapé não pode tomar a tela e deixar a coluna da esquerda sem espaço.
+    if (w >= 1366) { const equilibrio = await p.evaluate(async () => {
+        const o = okrObjetivos.o1, antes = { progressos: o.progressos, riscos: o.riscos, proximosPassos: o.proximosPassos, planosAcao: o.planosAcao };
+        Object.assign(o, { progressos: Array(6).fill('Entrega concluída com texto suficiente para ocupar duas linhas nesta coluna'), riscos: ['Risco curto'], proximosPassos: ['Próximo passo curto'], planosAcao: [] });
+        window._okrOpenDetail('o1'); await new Promise(r => setTimeout(r, 450));
+        const larg = s => document.querySelector(s).offsetWidth, r = { corpo: document.querySelector('.d2-body').offsetHeight, rodape: document.querySelector('.d2-footer').offsetHeight, prog: larg('.d2-prog'), risco: larg('.d2-risk') };
+        Object.assign(o, antes); window._okrCloseDetail(); return r; });
+      t(tag + 'Progressos longo: o corpo fica maior que o rodapé e as colunas dividem a largura', equilibrio.corpo > equilibrio.rodape && equilibrio.prog === equilibrio.risco, equilibrio); }
     // Concluídos recolhidos: a linha que sobra não pode ir parar no fim da tabela, e recolher tudo precisa explicar a tabela vazia (print do Caio, 18/11/2026).
     const recolhido = await p.evaluate(async () => {
       const espera = () => new Promise(r => setTimeout(r, 350)), guardados = JSON.parse(JSON.stringify(okrMarcos));
