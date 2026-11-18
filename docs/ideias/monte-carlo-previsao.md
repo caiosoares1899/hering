@@ -1,6 +1,6 @@
 # Previsão Monte Carlo leve no Oceano
 
-**Proposta para decisão do Caio e revisão do Claude · 18/11/2026.** Origem na ideia Kanbanize 3 do [backlog proposto na PR #1846](https://github.com/caiosoares1899/hering/pull/1846). Leitura estática da `origin/main` em `10617b05`.
+**Desenho aprovado pelo Caio em 18/11/2026 (decisões na §10).** Origem na ideia Kanbanize 3 do [backlog](../quadro/backlog.md#ideias-kanbanize). Leitura estática da `origin/main` em `10617b05`.
 
 **Recomendação.** Começar com **Quando termina?** na aba 🌊 Fluxo do Painel, para um squad piloto e com um lote de tamanho explícito. Usar os cards já carregados para testar a qualidade da vazão. Após validar a cobertura, mostrar a previsão só ao piloto com o selo **Estimativa em teste**. Retirar o selo depois de validar a calibração. O cálculo cabe no navegador. O maior trabalho é definir o que conta como entrega e distinguir dia sem entrega de dia sem registro confiável.
 
@@ -98,12 +98,16 @@ No celular, manter título, campo numérico rotulado, resultado em texto e detal
 
 Riscos principais: viés por exclusão/reabertura, mistura de cancelamento e entrega, mudança de ritmo comercial e uso da data como compromisso. Mitigar com cobertura explícita, coluna confirmada, abstinência, escopo congelado e acompanhamento da calibração. Se a fase 0 mostrar série incompleta, adiar o percentual e decidir sobre uma fonte histórica própria antes de ampliar a interface.
 
-## 10. Decisões do Caio
+## 10. Decisões do Caio (18/11/2026)
 
-1. **Pergunta e lugar.** Aprovar **Quando termina?** na aba Fluxo do Painel, para planejamento de PO/organizador.
-2. **Piloto.** Escolher um squad com uma coluna de entrega identificável e rotina de arquivamento conhecida. Confirmar que o lote será priorizado e que ficam de fora contínuos, agregadores, pausados e bloqueados sem resolução prevista.
-3. **Dados.** Autorizar em fase posterior a conferência agregada da cobertura. Iniciar com dados já carregados. Se a cobertura falhar, decidir entre aguardar uma série prospectiva e desenhar um registro de entregas.
-4. **Quando começar e como expor.** Autorizar a fase 1 após a conferência da cobertura e a revisão do desenho. Adotar **11/01/2027** como primeira data possível para mostrar a **Estimativa em teste**, condicionada ao calendário e aos pisos da amostra. Registrar previsões e acertos desde o primeiro número. Retirar o selo só após o critério do §7.3, com a opção de adicionar squads comparáveis. Manter **Quantos cabem?** para depois.
+1. **Pergunta e lugar.** Aprovado: **Quando termina?** na aba 🌊 Fluxo do Painel, para planejamento de PO/organizador. **Quantos cabem?** fica para depois.
+2. **Piloto.** Squad **Dados e IA** (`dados`).
+3. **Dados.** Autorizada a conferência da cobertura **só com totais**, sem título, id de card ou dado de pessoa.
+4. **Exposição.** Aprovado o selo **Estimativa em teste**, com registro de previsões e acertos desde o primeiro número. Primeira data possível: **11/01/2027**, condicionada ao calendário e aos pisos da amostra.
+
+**Próximo passo: fase 0.** Rodar [`console_monte_carlo_cobertura.js`](../arezzo/testes/console_monte_carlo_cobertura.js) no Painel e analisar os totais. A fase 1 só começa se a cobertura passar.
+
+**Ainda em aberto.** O squad precisa confirmar a coluna de entrega e como opera no Carnaval (terça, 09/02/2027), que cai dentro do primeiro horizonte de previsão (12/01 a 10/02).
 
 ## Não verificado
 
