@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 📉 Radar: histórico semanal e anotações de reunião só baixam quando a tela abre — okr v2.140-dev (SÓ DEV)
+
+- **Origem:** `/otimizaçãoderotina`, Passo 4.1 (leitura do Firebase), pensando nas recargas da semana da Black Friday.
+- **Causa:** todo boot do Radar abria `kanban/okr/snapshots` (uma foto por semana) e `kanban/okr/reuniao_notas` (anotações de todas as reuniões), nós que só crescem e que só o Histórico, a aba Anotações e o detalhe do evento usam.
+- **Correção:** `loadOkrSnapshots()` e `loadOkrReuniaoNotas()` passam a rodar só quando uma dessas telas abre, uma vez por sessão e com aviso de carregamento.
+- **Teste:** `docs/arezzo/testes/test_okr_leitura_sob_demanda.js` (13 checagens). Contra a `main`, 3 falham.
+- **Não alterado:** `kanban/okr/agente_chat` continua inteiro no boot, porque limitar o histórico do chat é decisão de produto.
+
 ### 2026-11-18 · Tema Black Friday manual era perdido ao fim da semana após recarregar — kanban v8.30.1015-dev (SÓ DEV)
 
 Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo manualmente como padrão sazonal. Na virada de 30/11 com a aba aberta, o contador substituía a preferência gravada. O boot preserva a escolha manual e mantém a precedência sazonal quando o automático está ligado. A regressão testa entrada na semana, recarga, virada e saída manual.
