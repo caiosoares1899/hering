@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 🐛 Monitor do Painel: o erro interno do popup de login do Google não vira mais erro aberto — kanban v8.30.1007-dev (SÓ DEV)
+
+- **Origem:** erros abertos no 🐛 Monitor do Painel: 8 registros de `INTERNAL ASSERTION FAILED: Pending promise was never set` em 5 pessoas (04–16/11, squads outlet-crm, midiacriativa, app, prf).
+- **O que é:** erro interno do SDK do Firebase Auth (`PopupOperation.reject`) no popup de login do Google. Não há nada a corrigir no nosso código, e cada ocorrência virava um erro "novo" no Monitor.
+- **Mudança (pedido do Caio):** `logError()` não grava mais esse erro em `error_logs` (nem soma em `error_stats`). O aviso "⚠️ Conexão instável — recarregue" do `_checkAuthGlitch()` continua aparecendo para a pessoa, e qualquer outro erro continua sendo gravado.
+- **Teste:** `docs/arezzo/testes/test_monitor_ignora_popup_login.js` (3 checagens). Sem a mudança, a 1ª falha.
+
 ### 2026-11-17 · Modal do card: comentário rejeitado volta ao campo — kanban v8.30.1005-dev — PROD 17/11 (kanban v8.30.1005)
 
 O envio mostrava o comentário e disparava menções antes da confirmação do Firebase. Agora uma rejeição restaura o texto no mesmo card se o campo estiver vazio, e só a gravação confirmada atualiza a lista e dispara menções.
