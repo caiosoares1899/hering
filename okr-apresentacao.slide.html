@@ -570,6 +570,18 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .okr-ating-pt{cursor:pointer;outline:none;} .okr-ating-pt:hover .okr-ating-dot,.okr-ating-pt:focus .okr-ating-dot{r:6.8;}
 .okr-ating-tip{display:none;position:absolute;transform:translate(-50%,calc(-100% - 10px));background:rgba(3,13,26,.97);border:1px solid rgba(var(--sec-rgb,255,115,175),.65);border-radius:8px;padding:6px 10px;font-size:11.5px;line-height:1.5;color:var(--txt);white-space:pre-line;pointer-events:none;z-index:5;max-width:260px;box-shadow:0 6px 18px rgba(0,0,0,.45);}
 .okr-ating-tip.below{transform:translate(-50%,10px);}
+/* 🌊 Meta como linha d'água no gráfico de Evolução do atingimento */
+.okr-agua-superficie{stroke:#fff;stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round;}
+.okr-agua-serie{stroke:rgba(255,255,255,.8);stroke-width:1.6;stroke-dasharray:1.5 4;stroke-linecap:round;}
+.okr-agua-peixe{stroke:#04182b;stroke-width:1;transform-box:fill-box;transform-origin:center;transition:transform .15s;}
+.okr-agua-peixe.acima{fill:#7df2d3;} .okr-agua-peixe.na{fill:#fff;} .okr-agua-peixe.abaixo{fill:#ffb46b;}
+.okr-ating-pt:hover .okr-agua-peixe,.okr-ating-pt:focus .okr-agua-peixe{transform:scale(1.3);}
+.okr-ating-pt:focus-visible .okr-agua-peixe{stroke:#fff;stroke-width:1.6;}
+.okr-agua-valor,.okr-agua-meta,.okr-agua-lado{paint-order:stroke;stroke:#04182b;stroke-width:3px;stroke-linejoin:round;fill:#fff;}
+.okr-agua-valor{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;}
+.okr-agua-meta{font-size:12px;font-weight:800;}
+.okr-agua-lado{font-size:10.5px;font-weight:700;fill:#d9ecf7;}
+@media (prefers-reduced-motion:reduce){.okr-agua-peixe{transition:none;}}
 #mc-ov{position:fixed;inset:0;z-index:470;display:none;background:rgba(3,13,26,.55);}
 #mc-ov.open{display:flex;justify-content:flex-end;}
 .mc-panel{width:min(420px,92vw);height:100%;background:var(--glass);border-left:1px solid var(--glass-b);
@@ -1111,6 +1123,7 @@ function _okrAtingFmtEixo(v, un){
     return un==='PCT' ? s+' %' : s;
   }catch(e){ return String(Math.round(v)); }
 }
+const _OKR_AGUA_LADO = {acima:'Acima da linha d’água: meta superada', na:'Na linha d’água: meta atingida', abaixo:'Abaixo da linha d’água: aquém da meta'};
 function _okrAtingChartHtml(at){
   const NUM = ['financeira','porcentagem','numero','acima','abaixo'].includes(at && at.tipo);
   const un = _okrAtingUnidade(at);
@@ -1126,23 +1139,40 @@ function _okrAtingChartHtml(at){
   if(!NUM){ mn = 0; mx = 100; }
   if(mn===mx){ mn -= 1; mx += 1; }
   if(NUM){ const g=(mx-mn)*.08, nn=mn>=0; mn -= g; mx += g; if(nn && mn<0) mn = 0; }   // valores não negativos: o eixo não desce abaixo de zero
+  // 🌊 Linha d'água (pedido do Caio, 18/11/2026): com meta numérica, a meta é a superfície. O lado bom fica sempre acima da água; em meta de redução o eixo inverte e os rótulos seguem com os valores reais.
+  const agua = NUM && isFinite(meta);
+  const menorMelhor = agua && (at.tipo==='abaixo' || (at.tipo!=='acima' && meta<ini));
+  if(agua){ const folga=(mx-mn)*.2, nn=mn>=0; if(meta-mn<folga) mn = nn ? Math.max(0, meta-folga) : meta-folga; if(mx-meta<folga) mx = meta+folga; }
+  const ladoDe = v => { const d = (v-meta)*(menorMelhor?-1:1); return d>0 ? 'acima' : d<0 ? 'abaixo' : 'na'; };
   const W=560, H=270, pl=62, pr=20, pt=22, pb=44, iw=W-pl-pr, ih=H-pt-pb, n=ls.length;
   const ts = ls.map(l=>Date.parse((l.em||'')+'T00:00:00'));
   const tOk = n>1 && ts.every(isFinite) && Math.max(...ts)>Math.min(...ts);
   const tMin = tOk?Math.min(...ts):0, tMax = tOk?Math.max(...ts):1;
   const X = i => n===1 ? pl+iw/2 : pl + iw*(tOk ? (ts[i]-tMin)/(tMax-tMin) : i/(n-1));
-  const Y = v => pt + ih*(1-(v-mn)/(mx-mn));
+  const Y = v => pt + ih*(menorMelhor ? (v-mn)/(mx-mn) : 1-(v-mn)/(mx-mn));
   const fmtY = v => NUM ? _okrAtingFmtEixo(v, un) : Math.round(v)+'%';
   const ticks = [0,1,2,3].map(k=>mn+(mx-mn)*k/3);
   const grid = ticks.map(v=>`<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W-pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".12"/>
     <text x="${pl-8}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="currentColor" fill-opacity=".6">${esc(fmtY(v))}</text>`).join('');
-  const refHtml = refs.map(r=>`<line x1="${pl}" y1="${Y(r.v).toFixed(1)}" x2="${W-pr}" y2="${Y(r.v).toFixed(1)}" stroke="var(--ating-c,#ff73af)" stroke-opacity="${r.rot==='valor inicial'?'.35':'.8'}" stroke-dasharray="5 4"/>
+  const refHtml = refs.filter(r=>!agua || r.rot==='valor inicial').map(r=>`<line x1="${pl}" y1="${Y(r.v).toFixed(1)}" x2="${W-pr}" y2="${Y(r.v).toFixed(1)}" stroke="var(--ating-c,#ff73af)" stroke-opacity="${r.rot==='valor inicial'?'.35':'.8'}" stroke-dasharray="5 4"/>
     <text x="${W-pr}" y="${(Y(r.v)-4).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="var(--ating-c,#ff73af)" fill-opacity="${r.rot==='valor inicial'?'.6':'1'}">${esc(r.rot)}</text>`).join('');
   const pts = ls.map((l,i)=>[X(i), Y(ys[i])]);
-  const linha = n>1 ? `<polyline fill="none" stroke="var(--ating-c,#ff73af)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>
+  const linha = agua ? (n>1 ? `<polyline class="okr-agua-serie" fill="none" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>` : '') : n>1 ? `<polyline fill="none" stroke="var(--ating-c,#ff73af)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>
     <path d="M${pts[0][0].toFixed(1)},${(pt+ih).toFixed(1)} L${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L')} L${pts[n-1][0].toFixed(1)},${(pt+ih).toFixed(1)} Z" fill="var(--ating-c,#ff73af)" fill-opacity=".1"/>` : '';
   const ptsHtml = ls.map((l,i)=>{
-    const tip = [ _okrAtingDataBR(l.em)+' · '+_okrAtingPctDe(at,l)+'%', _okrAtingLancTxt(at,l), (l.por?'por '+l.por:'')+(l.nota?(l.por?' — ':'')+l.nota:'') ].filter(Boolean).join('\n');
+    const lado = agua ? ladoDe(ys[i]) : '';
+    const tip = [ _okrAtingDataBR(l.em)+' · '+_okrAtingPctDe(at,l)+'%', _okrAtingLancTxt(at,l), agua ? _OKR_AGUA_LADO[lado] : '', (l.por?'por '+l.por:'')+(l.nota?(l.por?' — ':'')+l.nota:'') ].filter(Boolean).join('\n');
+    if(agua){
+      const viz = pts[i+1]||pts[i-1], ang = viz ? Math.max(-25, Math.min(25, Math.atan2((viz[1]-pts[i][1])*(pts[i+1]?1:-1), Math.abs(viz[0]-pts[i][0])||1)*180/Math.PI)) : 0;
+      // Valor acima do peixe. Logo abaixo da superfície ele desce, e perto do topo vai para o lado: o número nunca cruza a linha d'água.
+      const py = pts[i][1], yM = Y(meta), mostraValor = n<=6 || i===n-1, cruzaLinha = py>yM+1 && py-26<yM, semTopo = py-24<=pt;
+      const xValor = semTopo && !cruzaLinha ? pts[i][0]-18 : pts[i][0], yValor = cruzaLinha ? py+25 : semTopo ? py+4 : py-14;
+      const ancoraValor = semTopo && !cruzaLinha ? 'end' : (i===0&&n>1?'start':(i===n-1&&n>1?'end':'middle'));
+      return `<g class="okr-ating-pt" data-lado="${lado}" tabindex="0" role="img" aria-label="${esc(tip.replace(/\n/g,'; '))}" data-tip="${esc(tip)}" onmouseenter="_okrAtingTip(this)" onfocus="_okrAtingTip(this)" onclick="_okrAtingTip(this)" onmouseleave="_okrAtingTipOff(this)" onblur="_okrAtingTipOff(this)">
+      <circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="16" fill="transparent"/>
+      <g transform="translate(${pts[i][0].toFixed(1)} ${pts[i][1].toFixed(1)}) rotate(${ang.toFixed(0)})"><path class="okr-agua-peixe ${lado}" d="M12 0C7-7-3-7-7 0L-13-6-11.5 0-13 6-7 0C-3 7 7 7 12 0Z"/><circle cx="6.5" cy="-1.5" r="1.3" fill="#04182b"/></g>
+      ${mostraValor?`<text class="okr-agua-valor" x="${xValor.toFixed(1)}" y="${yValor.toFixed(1)}" text-anchor="${ancoraValor}">${esc(fmtY(ys[i]))}</text>`:''}</g>`;
+    }
     return `<g class="okr-ating-pt" tabindex="0" role="img" aria-label="${esc(tip.replace(/\n/g,'; '))}" data-tip="${esc(tip)}" onmouseenter="_okrAtingTip(this)" onfocus="_okrAtingTip(this)" onclick="_okrAtingTip(this)" onmouseleave="_okrAtingTipOff(this)" onblur="_okrAtingTipOff(this)">
       <circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="14" fill="transparent"/>
       <circle class="okr-ating-dot" cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="4.8" fill="var(--ating-c,#ff73af)" stroke="rgba(255,255,255,.85)" stroke-width="1.4"/></g>`;
@@ -1152,7 +1182,21 @@ function _okrAtingChartHtml(at){
   let ultX = -1e9; const xl = [];
   idx.forEach((i,k)=>{ const x=X(i); if(x-ultX>=70 || k===idx.length-1){ if(k===idx.length-1 && xl.length && x-ultX<70) xl.pop(); xl.push(i); ultX=x; } });
   const xHtml = xl.map(i=>`<text x="${X(i).toFixed(1)}" y="${H-pb+18}" text-anchor="${i===0&&n>1?'start':(i===n-1&&n>1?'end':'middle')}" font-size="10" fill="currentColor" fill-opacity=".6">${esc(_okrAtingDataBR(ls[i].em))}</text>`).join('');
-  return `<svg class="okr-ating-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do atingimento ao longo do tempo" onclick="if(!event.target.closest('.okr-ating-pt'))_okrAtingTipOff(this)">${grid}${refHtml}${linha}${xHtml}${ptsHtml}</svg><div class="okr-ating-tip" role="tooltip"></div>`;
+  let aguaHtml = '';
+  if(agua){
+    const yM = Y(meta), fundo = pt+ih, rotulo = '🎯 Meta: '+fmtY(meta), larg = rotulo.length*6.6;
+    const perto = lado => pts.some(p=>Math.abs(p[1]-yM)<30 && (lado==='dir' ? p[0]>W-pr-larg-16 : p[0]<pl+larg+16));
+    const naDireita = !perto('dir') || perto('esq');
+    // Os avisos de lado trocam de canto quando um peixe passa por cima deles.
+    const canto = (y, txt) => { const l = txt.length*6, livre = !pts.some(p=>Math.abs(p[1]-y)<24 && p[0]<pl+l+26); return `<text class="okr-agua-lado" x="${livre?pl+8:W-pr-8}" y="${y}" text-anchor="${livre?'start':'end'}">${txt}</text>`; };
+    aguaHtml = `<defs><linearGradient id="okr-agua-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8fb8" stop-opacity=".5"/><stop offset="1" stop-color="#0a3a5c" stop-opacity=".78"/></linearGradient></defs>
+      <rect class="okr-agua" x="${pl}" y="${yM.toFixed(1)}" width="${iw}" height="${Math.max(0,fundo-yM).toFixed(1)}" fill="url(#okr-agua-grad)"/>
+      <line class="okr-agua-superficie" x1="${pl}" y1="${yM.toFixed(1)}" x2="${W-pr}" y2="${yM.toFixed(1)}"/>
+      ${canto(pt+13, '▲ '+(menorMelhor?'Melhor que a meta · aqui, menor é melhor':'Acima da meta'))}
+      ${canto(fundo-8, '▼ '+(menorMelhor?'Pior que a meta':'Abaixo da meta'))}
+      <text class="okr-agua-meta" x="${naDireita?W-pr-4:pl+8}" y="${(yM-6).toFixed(1)}" text-anchor="${naDireita?'end':'start'}">${esc(rotulo)}</text>`;
+  }
+  return `<svg class="okr-ating-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do atingimento ao longo do tempo${agua?', com a meta como linha d’água':''}" onclick="if(!event.target.closest('.okr-ating-pt'))_okrAtingTipOff(this)">${grid}${aguaHtml}${refHtml}${linha}${xHtml}${ptsHtml}</svg><div class="okr-ating-tip" role="tooltip"></div>`;
 }
 function _okrAtingTip(el){
   const box = el.closest('.okr-ating-chart'); if(!box) return;
