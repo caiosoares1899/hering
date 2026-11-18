@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · Comentário recusado continua disponível para reenvio quando já existe outro rascunho — kanban v8.30.1009-dev (SÓ DEV)
+
+- Se o banco recusava um comentário depois que a pessoa começava a digitar outro, o primeiro texto saía da lista e não voltava ao campo.
+- No Maré dev, o comentário recusado continua na sessão como “Falha ao enviar”, com “Tentar novamente”. O reenvio reaproveita o mesmo ID e só dispara menções depois da confirmação. Se estiver no mesmo card com o campo vazio, o primeiro envio recusado ainda devolve o texto ao campo.
+- Teste: `docs/arezzo/testes/test_comentario_enviando.js` (Chromium com Firebase simulado, incluindo releitura do card e clique duplo no reenvio).
+
 ### 2026-11-18 · 🐛 Monitor do Painel: o erro interno do popup de login do Google não vira mais erro aberto — kanban v8.30.1007-dev (SÓ DEV)
 
 - **Origem:** erros abertos no 🐛 Monitor do Painel: 8 registros de `INTERNAL ASSERTION FAILED: Pending promise was never set` em 5 pessoas (04–16/11, squads outlet-crm, midiacriativa, app, prf).

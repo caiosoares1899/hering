@@ -49,6 +49,34 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       t('recusado: o texto volta ao campo', await p.evaluate(() => document.getElementById('m-comment-inp').value) === 'vai ser recusado', await p.evaluate(() => document.getElementById('m-comment-inp').value));
       t('recusado: nada no banco', (await banco(p)).length === 0, await banco(p));
       t('sem erro de JS (2)', !errs.length, errs); await ctx.close(); }
+    { const { ctx, p, errs } = await abrir();
+      await p.evaluate(() => {
+        window.__setDelay = pa => /card_comments/.test(pa) ? 600 : 0;
+        window.__denySet = pa => /card_comments/.test(pa);
+        window.__mencoes = [];
+        parseMentions = (...args) => window.__mencoes.push(args);
+      });
+      await enviar(p, 'primeiro texto');
+      const cid = await p.locator('#m-comment-list .comment-item').getAttribute('data-cid');
+      const campo = p.locator('#m-comment-inp');
+      await campo.evaluate(el => { el.value = 'segundo rascunho'; });
+      await p.waitForTimeout(850);
+      const item = p.locator('#m-comment-list .comment-item').filter({ hasText: 'primeiro texto' });
+      const retry = item.getByRole('button', { name: 'Tentar novamente' });
+      t('recusa com novo rascunho: primeiro texto continua com opção de reenvio', await retry.count() === 1 && (await item.textContent()).includes('Falha ao enviar'), await lista(p));
+      t('segundo rascunho preservado, sem gravação nem menção', await campo.inputValue() === 'segundo rascunho' && (await banco(p)).length === 0 && await p.evaluate(() => window.__mencoes.length === 0), '');
+      if (await retry.count()) {
+        await p.evaluate(() => loadComments('c1'));
+        t('recarregar comentários preserva o item local sem contá-lo no índice', await retry.count() === 1 && await p.evaluate(() => !(window._commentCounts.c1 || 0)), '');
+        await p.evaluate(() => { window.__denySet = null; });
+        await retry.evaluate(el => { el.click(); el.click(); });
+        t('reenvio pendente: mantém o rascunho e aguarda confirmação para mencionar', await campo.inputValue() === 'segundo rascunho' && await p.evaluate(() => window.__mencoes.length === 0), '');
+        await p.waitForTimeout(850);
+        const db = await banco(p);
+        t('reenvio confirmado: mesmo ID, uma gravação e uma menção', db.length === 1 && db[0].id === cid && db[0].text === 'primeiro texto' && !('_enviando' in db[0]) && !('_falhou' in db[0]) && await p.evaluate(() => window.__mencoes.length === 1), db);
+        t('comentário confirmado volta às ações normais', (await lista(p)).some(x => x.txt.includes('primeiro texto') && x.acoes && !x.enviando), await lista(p));
+      }
+      t('sem erro de JS (3)', !errs.length, errs); await ctx.close(); }
   } finally { await b.close(); srv.close(); }
   console.log(falhas ? `HÁ ${falhas} FALHA(S)` : 'TUDO OK'); process.exitCode = falhas ? 1 : 0;
 })().catch(e => { console.error(e); process.exitCode = 1; srv.close(); });
