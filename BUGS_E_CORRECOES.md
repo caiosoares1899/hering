@@ -87,11 +87,41 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-18 · Comentário recusado continua disponível para reenvio quando já existe outro rascunho — kanban v8.30.1009-dev (SÓ DEV)
+### 2026-11-18 · Comentário recusado continua disponível para reenvio quando já existe outro rascunho — kanban v8.30.1011-dev (SÓ DEV)
 
 - Se o banco recusava um comentário depois que a pessoa começava a digitar outro, o primeiro texto saía da lista e não voltava ao campo.
-- No Maré dev, o comentário recusado continua na sessão como “Falha ao enviar”, com “Tentar novamente”. O reenvio reaproveita o mesmo ID e só dispara menções depois da confirmação. Se estiver no mesmo card com o campo vazio, o primeiro envio recusado ainda devolve o texto ao campo.
-- Teste: `docs/arezzo/testes/test_comentario_enviando.js` (Chromium com Firebase simulado, incluindo releitura do card e clique duplo no reenvio).
+- No Maré dev, o comentário recusado continua na sessão como “Falha ao enviar”, com “Tentar novamente”. O reenvio reaproveita o mesmo ID e só dispara menções depois da confirmação. A recusa sempre exibe um aviso. O primeiro envio recusado devolve o texto ao campo vazio apenas com o card de origem aberto. Ao fechar ou trocar de card, o texto fica disponível para reenvio ao voltar ao card de origem.
+- Teste: `docs/arezzo/testes/test_comentario_enviando.js` (Chromium com Firebase simulado, incluindo troca de card, fechamento e reabertura do modal, releitura e clique duplo no reenvio).
+
+### 2026-11-18 · 🔐 Popup da agenda: escolher outra conta Google trocava a sessão do app em silêncio — kanban v8.30.1010-dev, painel v5.122-dev (SÓ DEV)
+
+- **Origem:** item "reportado, não corrigido" do `/monitorarbugs` do login Google (entrada logo abaixo); o Caio aprovou a correção.
+- **Causa:** `_requestCalendarScope()` usava `signInWithPopup`. Se o ADM escolhesse outra conta no popup da agenda, o app passava a rodar com essa conta.
+- **Correção:** Maré e Painel usam `reauthenticateWithPopup(auth.currentUser, calProvider)`. Conta diferente é recusada com `auth/user-mismatch`: a sessão continua a mesma, nenhum token é gravado e aparece o aviso para usar a mesma conta nos 4 pontos que pedem a autorização. O popup já abre na conta logada (`login_hint`).
+- **Limite conhecido:** com `MARE_SO_HERING` desligado, quem entra pela Microsoft não consegue autorizar a agenda com uma conta Google (antes, a sessão era trocada).
+- **Teste:** `docs/arezzo/testes/test_agenda_mesma_conta.js` (20 checagens). Contra a versão anterior, 12 falham. O `docs/arezzo/testes/fakefb.js` ganhou `reauthenticateWithPopup`, `credentialFromResult` e `currentUser`.
+
+### 2026-11-18 · 🔐 Login Google: o token do login virava 'autorização da agenda', o token de agenda sobrevivia à troca de conta e uma busca que falhava inteira apagava as agendas do squad — kanban v8.30.1008-dev, painel v5.121-dev (SÓ DEV)
+
+- **Origem:** `/monitorarbugs` em área sensível (login Google), pensando na Black Friday.
+- **Achado A (técnica 3, o comentário do provider × o código):** o login por popup (`window._signIn`) e a volta do redirect do login (`getRedirectResult`) guardavam o accessToken do LOGIN em `gcal_token`. O próprio comentário do provider diz que o escopo de agenda não entra no login, então esse token não lê o Google Agenda.
+  - Efeito: o ⚙ dizia "✅ Sua conta Google está autorizada", `processGcalQueueForAdmin()` pulava o pedido do escopo de verdade e a API respondia 403 "insufficient authentication scopes", mostrado como "Sem permissão de acesso a esta agenda". Desde 25/09 a fila não é apagada na falha, então o pedido ficava travado até o token vencer.
+  - Só morde quem entra direto no Maré (convidado `?login=local`, fallback por redirect); o login pelo Oceano não grava o token.
+- **Achado B (técnica 1, todas as saídas da sessão):** a limpeza do `gcal_token` de 30/09 só existia no "Sair" do Maré. Sair pelo Oceano, Radar ou Painel, por inatividade, por logout forçado ou por recusa de externo/provedor deixava o token de agenda no navegador (mesma origem). A conta seguinte o usava em `_fetchAndCacheGcalForSquad()` e em `carregarPcalAgendasGlobais()`, lendo agendas com a autorização de outra pessoa.
+- **Achado C (pego ao escrever o teste de console):** com TODAS as agendas falhando (token vencido, sem escopo, rede), `_fetchAndCacheGcalForSquad()` gravava `gcal_cache = {}` por cima e devolvia `ok:true`.
+  - Efeito: os eventos do Google do squad sumiam do board de todo mundo, e a fila de pedidos era limpa como se tivesse dado certo. O fix de 25/09 confere `result.ok`, que nunca era `false` aqui.
+  - Com só uma agenda falhando, os eventos dela também sumiam. O Painel (`carregarPcalAgendasGlobais()`, agendas globais) tinha o mesmo padrão.
+- **Correção:**
+  - O login não grava mais o token; só `_requestCalendarScope()` grava, e agora com o dono (`gcal_token_uid`).
+  - Nenhuma agenda respondeu: o cache não é tocado e a função devolve `ok:false` (a fila fica para a próxima). Só algumas falharam: os eventos antigos delas continuam no cache.
+  - O `_signOut` central do Maré (inatividade, forçado, recusa, provedor, Sair) também tira o token do disco.
+  - `_gcalToken()` (Maré) e `_pcalGcalToken()` (Painel) só devolvem o token se o dono for a conta logada; sem dono (token antigo) ou de outra conta, descartam. Cobre todas as saídas sem tocar em cada uma.
+  - 403 "insufficient scopes" descarta o token e pede para autorizar de novo, em vez de "Sem permissão".
+- **Teste:** `docs/arezzo/testes/test_login_gcal_token.js` (12 checagens). Contra a `main`, 10 falham.
+- **Teste vizinho que já falhava antes:** `docs/arezzo/testes/test_login_oceano.js` falha em "clicar em Continuar leva à página de origem" também na `main` (não é desta mudança). Ele e o `docs/arezzo/testes/test_login_direto.js` têm o caminho do Playwright fixo do Linux.
+- **Sem achado:** `mare-login-dev.js` (confere `state`, `nonce`, `aud`, `iss`, `exp` e a idade da tentativa; `ret` só aceita caminho da própria origem); `?next=` do Oceano (lista fechada kanban/painel/okr); portão de domínio e provedor do Maré; contador do fallback por redirect (zera no sucesso).
+- **Reportado, não corrigido:** `_requestCalendarScope()` usa `signInWithPopup`. Se o ADM escolher outra conta Google no popup da agenda, a sessão do app troca de conta em silêncio. `reauthenticateWithPopup` recusaria a troca (`auth/user-mismatch`), mas muda o fluxo e fica para decisão.
+- **Efeito colateral aceito:** o token de agenda antigo, salvo sem dono, é descartado uma vez. O ADM autoriza a agenda de novo no próximo "Processar" (o token vence em ~1 h de qualquer jeito).
 
 ### 2026-11-18 · 🐛 Monitor do Painel: o erro interno do popup de login do Google não vira mais erro aberto — kanban v8.30.1007-dev (SÓ DEV)
 

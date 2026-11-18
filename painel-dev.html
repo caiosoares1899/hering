@@ -3204,7 +3204,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.120 · painel-dev</div>
+<div class="version">v5.122 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3338,7 +3338,7 @@ function agIr(btn){
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, reauthenticateWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
@@ -3381,14 +3381,21 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 const calProvider = new GoogleAuthProvider();
 calProvider.setCustomParameters({ hd: 'ciahering.com.br' });
 calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    localStorage.setItem('gcal_token', credential.accessToken);
-    localStorage.setItem('gcal_token_ts', String(Date.now()));
-  }
-  return credential;
-});
+// reauthenticateWithPopup, não signInWithPopup: escolher OUTRA conta no popup trocava a sessão do app em silêncio. Agora o SDK recusa com auth/user-mismatch e a sessão fica como estava.
+window._requestCalendarScope = () => {
+  const u = auth.currentUser;
+  if (!u) return Promise.reject(Object.assign(new Error('Sessão encerrada: entre de novo para autorizar a agenda.'), { code:'auth/user-signed-out' }));
+  calProvider.setCustomParameters(u.email ? { hd:'ciahering.com.br', login_hint:u.email } : { hd:'ciahering.com.br' });   // já abre na conta certa (setCustomParameters substitui tudo, por isso repete o hd)
+  return reauthenticateWithPopup(u, calProvider).then(r=>{
+    const credential = GoogleAuthProvider.credentialFromResult(r);
+    if (credential && credential.accessToken) {
+      localStorage.setItem('gcal_token', credential.accessToken);
+      localStorage.setItem('gcal_token_ts', String(Date.now()));
+      localStorage.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token (ver _pcalGcalToken())
+    }
+    return credential;
+  });
+};
 
 // Integração Arezzo (2026-10-01) — mesmo provider/parâmetros já usados em
 // kanban-dev.html (ver comentário completo lá): 'organizations' restringe
@@ -6750,7 +6757,7 @@ function renderPcalAgendasList(){
   const statusEl=document.getElementById('pcal-gcal-auth-status');
   if(statusEl){
     if(isAdm){
-      const hasToken=!!localStorage.getItem('gcal_token');
+      const hasToken=!!_pcalGcalToken();
       statusEl.innerHTML = hasToken
         ? '<span style="color:var(--teal);">✅ Sua conta Google está autorizada (só admin precisa)</span>'
         : '<span style="color:var(--txt3);">🔒 Nenhuma autorização ainda — só o admin que gerencia precisa conectar</span>';
@@ -6787,17 +6794,29 @@ function renderPcalAgendasList(){
     </div>`;
   }).join('');
 }
+// Token do Google Agenda só vale pra conta que o pediu (/monitorarbugs 18/11/2026, login Google): mesma origem do Maré, e sair por
+// qualquer página que não fosse o "Sair" do Maré deixava o token pra próxima conta. Sem dono ou de outra conta = descarta.
+function _pcalGcalTokenLimpar(){ try{ ['gcal_token','gcal_token_ts','gcal_token_uid'].forEach(k=>localStorage.removeItem(k)); }catch(e){} }
+function _pcalGcalToken(){
+  let t=null, dono=null; try{ t=localStorage.getItem('gcal_token'); dono=localStorage.getItem('gcal_token_uid'); }catch(e){ return null; }
+  if(!t) return null;
+  const uid=window._currentUser&&window._currentUser.uid;
+  if(!uid) return null;   // ninguém logado ainda (boot): não usa, mas também não apaga
+  if(!dono || dono!==uid){ _pcalGcalTokenLimpar(); return null; }
+  return t;
+}
+const PCAL_MSG_OUTRA_CONTA='⚠ Autorize a agenda com a mesma conta Google com que você entrou.';
 async function addPcalAgenda(){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores podem adicionar agendas globais.'); return; }
   const id=document.getElementById('pcal-agenda-id').value.trim();
   const label=document.getElementById('pcal-agenda-label').value.trim();
   if(!id){ showToast('⚠ Informe o ID da agenda.'); return; }
-  if(!localStorage.getItem('gcal_token')){
+  if(!_pcalGcalToken()){
     try{
       showToast('🔐 Conecte sua conta Google para autorizar a leitura de agendas...');
       await window._requestCalendarScope();
     }catch(e){
-      showToast('⚠ Não foi possível autorizar o acesso ao Google Agenda.');
+      showToast(e?.code==='auth/user-mismatch'?PCAL_MSG_OUTRA_CONTA:'⚠ Não foi possível autorizar o acesso ao Google Agenda.');
       return;
     }
   }
@@ -6847,7 +6866,7 @@ async function reconectarPcalGCal(){
     showToast('🔄 Reconectado! Carregando agendas...');
     carregarPcalAgendasGlobais();
   }catch(e){
-    showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
+    showToast(e?.code==='auth/user-mismatch'?PCAL_MSG_OUTRA_CONTA:'⚠ Não foi possível reconectar: '+(e?.message||e));
   }
 }
 // Só o ADM busca da API do Google — o resultado processado fica em cache no Firebase
@@ -6855,7 +6874,7 @@ async function reconectarPcalGCal(){
 async function carregarPcalAgendasGlobais(){
   if(!_isAdmPainel()) return; // membros comuns nunca chamam a API — só leem o cache (ver loadPcalEvents)
   if(!window._pcalGcalErrors) window._pcalGcalErrors={};
-  const token=localStorage.getItem('gcal_token');
+  const token=_pcalGcalToken();
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
     window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), {});
@@ -6870,6 +6889,7 @@ async function carregarPcalAgendasGlobais(){
   const limiteInferior=new Date(hoje.getFullYear(),hoje.getMonth()-1,1).toISOString();
   let todosEventos=[];
 
+  const _calsOk=new Set();   // agendas que responderam de verdade (ver o fim da função)
   await Promise.all(list.map(async cal=>{
     const url=`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
     try{
@@ -6881,6 +6901,7 @@ async function carregarPcalAgendasGlobais(){
       if(res.status===403){
         let reason='';
         try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
+        if(/insufficient/i.test(reason)){ _pcalGcalTokenLimpar(); window._pcalGcalErrors[cal.id]={type:'expired',msg:'A autorização do Google Agenda não tinha o acesso à agenda — autorize de novo'}; return; }
         window._pcalGcalErrors[cal.id]={type:'forbidden',msg:reason.includes('unregistered')
           ? 'Agenda pública/de sistema — precisa de API Key própria'
           : 'Sem permissão de acesso a esta agenda'};
@@ -6888,6 +6909,7 @@ async function carregarPcalAgendasGlobais(){
       }
       const data=await res.json();
       if(data.items){
+        _calsOk.add(cal.id);
         delete window._pcalGcalErrors[cal.id];
         data.items.forEach(item=>{
           if(window._pcalGcalDismissedIds && window._pcalGcalDismissedIds.has(item.id)) return;
@@ -6927,7 +6949,21 @@ async function carregarPcalAgendasGlobais(){
     vistos.add(chave);
     return true;
   });
+  // Nenhuma agenda respondeu (token vencido, sem escopo, rede): não apaga o cache global de todo mundo (/monitorarbugs 18/11/2026,
+  // mesmo achado de _fetchAndCacheGcalForSquad no Maré). Só algumas: mantém os eventos antigos das que falharam.
+  if(!_calsOk.size){
+    _pcalGcalWarnBanner(Object.values(window._pcalGcalErrors).some(e=>e.type==='expired'));
+    renderPcalAgendasList();
+    return;
+  }
+  const _calsFalha=list.map(c=>c.id).filter(id=>!_calsOk.has(id));
   const cacheObj = Object.fromEntries(todosEventosDedup.map(ev=>[ev.id, ev]));
+  if(_calsFalha.length){
+    try{
+      const antigo=(await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'))).val()||{};
+      Object.entries(antigo).forEach(([id,ev])=>{ if(ev && _calsFalha.includes(ev._calId) && !cacheObj[id]) cacheObj[id]=ev; });
+    }catch(e){}
+  }
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), cacheObj);
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta_dev'), {
     updatedAt: new Date().toISOString(),
