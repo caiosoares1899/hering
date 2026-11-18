@@ -2128,7 +2128,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.139 · okr-dev</div>
+<div class="version">v2.140 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2976,9 +2976,7 @@ function loadOkr(){
   });
   loadOkrTags();
   loadOkrGerencias();
-  loadOkrSnapshots();
-  loadOkrAgenteChat();
-  loadOkrReuniaoNotas();
+  loadOkrAgenteChat();   // snapshots e anotações da reunião só carregam quando a tela que usa abre (loadOkrSnapshots/loadOkrReuniaoNotas)
   loadOkrMural();
   loadOkrLocks();
   loadOkrCalendario();
@@ -3000,11 +2998,13 @@ let _okrShowHistorico = false;
 let _okrHistoricoObjId = '';
 
 
+// Sob demanda (/otimizaçãoderotina 18/11/2026): o nó ganha uma foto por semana e só o Histórico o lê. Idempotente: toda leitura passa por aqui.
+let _okrSnapsLigado = false, _okrSnapsPronto = false;
 function loadOkrSnapshots(){
-  window._onValue(window._ref(window._db,'kanban/okr/snapshots'), snap=>{
-    okrSnapshots = snap.val() || {};
-    if(_okrShowHistorico) renderOkrHistorico();
-  });
+  if(_okrSnapsLigado || !window._db) return;
+  _okrSnapsLigado = true;
+  const chegou = ()=>{ _okrSnapsPronto = true; if(_okrShowHistorico) renderOkrHistorico(); };
+  window._onValue(window._ref(window._db,'kanban/okr/snapshots'), snap=>{ okrSnapshots = snap.val() || {}; chegou(); }, chegou);
 }
 
 
@@ -3257,11 +3257,13 @@ let _okrNotasViewDate = null;
 let _okrNotaEditId = null;
 
 
+// Sob demanda (/otimizaçãoderotina 18/11/2026): o nó guarda as anotações de todas as reuniões e só a aba Anotações e o detalhe do evento o leem.
+let _okrNotasLigado = false, _okrNotasPronto = false;
 function loadOkrReuniaoNotas(){
-  window._onValue(window._ref(window._db,'kanban/okr/reuniao_notas'), snap=>{
-    okrReuniaoNotas = snap.val() || {};
-    if(_okrShowNotas) renderOkrNotas();
-  });
+  if(_okrNotasLigado || !window._db) return;
+  _okrNotasLigado = true;
+  const chegou = ()=>{ _okrNotasPronto = true; if(_okrShowNotas) renderOkrNotas(); if(_okrEvdId) renderOkrEventoDetalhe(); };
+  window._onValue(window._ref(window._db,'kanban/okr/reuniao_notas'), snap=>{ okrReuniaoNotas = snap.val() || {}; chegou(); }, chegou);
 }
 
 
@@ -3292,6 +3294,7 @@ function _okrNotaPodeGerenciar(n){
 
 function renderOkrNotas(){
   const list = document.getElementById('okr-notas-list'); if(!list) return;
+  loadOkrReuniaoNotas();
   const editDraft = _okrNotaEditId ? document.getElementById('okr-nota-edit-inp')?.value : null;
   _okrNotasPopulateDateSel();
   const dataAlvo = _okrNotasViewDate || _todayStr();
@@ -3311,7 +3314,7 @@ function renderOkrNotas(){
   if(delDateBtn) delDateBtn.style.display = (souAdm && notas.length > 0) ? '' : 'none';
   if(_okrNotaEditId && !notasDoDia[_okrNotaEditId]) _okrNotaEditId = null;
   if(!notas.length){
-    list.innerHTML = isHoje
+    list.innerHTML = !_okrNotasPronto ? '<div style="font-size:11px;color:var(--txt3);">Carregando anotações…</div>' : isHoje
       ? '<div style="font-size:11px;color:var(--txt3);">Nenhuma anotação ainda. Escreva a primeira aqui embaixo.</div>'
       : '<div style="font-size:11px;color:var(--txt3);">Nenhuma anotação registrada nesta reunião.</div>';
     return;
@@ -4029,6 +4032,7 @@ function _okrHistLiveSnap(){
   return {date:_todayStr(), live:true, resumoGeral:rg, objetivos:objs};
 }
 function _okrHistDatas(){
+  loadOkrSnapshots();
   const r = Object.keys(okrSnapshots||{}).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
   const hoje = _todayStr();
   // Só entra quando TRAZ novidade na visão atual: algum Objetivo com valor hoje que ainda não está (com valor) no último snapshot. Sem novidade o último snapshot segue sendo o "último" — nada muda na tela.
@@ -4217,6 +4221,7 @@ function _okrHistSpark(vals, w, h){
 function renderOkrHistorico(){
   const root = document.getElementById('okr-h-root'); if(!root) return;
   const todas = _okrHistDatas();
+  if(!_okrSnapsPronto){ root.innerHTML = '<div class="okr-h-card okr-h-vazio"><div class="okr-h-vazio-ico">📈</div><b>Carregando o histórico…</b></div>'; return; }
   const prox = _okrHistProxSexta().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
   if(!todas.length){
     root.innerHTML = `<div class="okr-h-card okr-h-vazio"><div class="okr-h-vazio-ico">📈</div><b>Ainda não há nenhum snapshot</b>
@@ -6640,6 +6645,7 @@ function _okrEvdVincular(sim){
 }
 function _okrEvdAbrirNotasDia(d){ closeOkrEvento(); _okrSetView('notas'); if(window._okrNotasSetViewDate) window._okrNotasSetViewDate(d); }
 function _okrEvdNotasHtml(ev){
+  loadOkrReuniaoNotas();
   const ro = !!window._isPainelViewer, meu = window._currentUser?.uid, d = _okrEvdData;
   const editDraft = _okrEvdNotaEditId ? document.getElementById('okr-evd-nota-edit-inp')?.value : null;
   const notas = Object.entries(_okrEvdNotas).filter(([,n])=>n).sort((a,b)=>String(a[1].ts||'').localeCompare(String(b[1].ts||'')));

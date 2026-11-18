@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · 📉 Radar: histórico semanal e anotações de reunião só baixam quando a tela abre — okr v2.140-dev (SÓ DEV)
+
+- **Origem:** `/otimizaçãoderotina`, Passo 4.1 (leitura do Firebase), pensando nas recargas da semana da Black Friday.
+- **Causa:** todo boot do Radar abria `kanban/okr/snapshots` (uma foto por semana) e `kanban/okr/reuniao_notas` (anotações de todas as reuniões), nós que só crescem e que só o Histórico, a aba Anotações e o detalhe do evento usam.
+- **Correção:** `loadOkrSnapshots()` e `loadOkrReuniaoNotas()` passam a rodar só quando uma dessas telas abre, uma vez por sessão e com aviso de carregamento.
+- **Teste:** `docs/arezzo/testes/test_okr_leitura_sob_demanda.js` (13 checagens). Contra a `main`, 3 falham.
+- **Não alterado:** `kanban/okr/agente_chat` continua inteiro no boot, porque limitar o histórico do chat é decisão de produto.
+
 ### 2026-11-18 · Apresentação ao vivo: teste passa a cobrir a retomada documentada da sala
 
 O teste da apresentação ainda esperava que a pausa local persistisse após o apresentador avançar. O hotfix de 15/10 já documenta que a sala volta a acompanhar a cada mudança de slide, detalhe ou apresentador. A suíte agora testa pausa sem navegação nova, retomada manual, retomada automática e código de saída em caso de falha. Nenhuma mudança na página publicada.

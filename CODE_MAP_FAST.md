@@ -100,14 +100,14 @@
 ## 2. Principais Âncoras Curadas por Arquivo (`-dev`)
 
 ### `kanban-dev.html` (209 âncoras verificadas)
-- [`ADM_EMAILS`](kanban-dev.html#L8178) · [`agentes`](kanban-dev.html#L9090) · [`CARD_SECTIONS`](kanban-dev.html#L9015) · [`fbSaveAll`](kanban-dev.html#L11109) · [`_reportUnexpectedCardDisappearance`](kanban-dev.html#L11417) · [`searchDependsCards`](kanban-dev.html#L40717)
-- [`_currentTheme`](kanban-dev.html#L39718) · [`_bfSemanaInfo`](kanban-dev.html#L4719) · [`maybeAutoArchiveOldCards`](kanban-dev.html#L17981) · [`_refreshComunicados`](kanban-dev.html#L44254) · [`renderHdMoreDD`](kanban-dev.html#L8529) · [`renderNormal`](kanban-dev.html#L16609)
-- [`updateMetrics`](kanban-dev.html#L17768) · [`openSearch`](kanban-dev.html#L40545) · [`_tbHandleDrop`](kanban-dev.html#L33616) · [`_sugestaoRecusarPermanente`](kanban-dev.html#L17262) · [`openMinhasPrefs`](kanban-dev.html#L17417) · [`renderCL`](kanban-dev.html#L21147)
-- [`renderCampDashboard`](kanban-dev.html#L27009) · [`_superPodeGerarFilhos`](kanban-dev.html#L37266) · [`CARD_LOCK_REQUEST_GRACE_MS`](kanban-dev.html#L18588) · [`loadNotifs`](kanban-dev.html#L33861) · [`_tmEscrever`](kanban-dev.html#L40868) · [`addCalendarToList`](kanban-dev.html#L35998)
-- [`toggleNotas`](kanban-dev.html#L24217) · [`AUTO_TRIGGERS`](kanban-dev.html#L37432) · [`blockerMode`](kanban-dev.html#L38199) · [`_cardDataCriacaoStr`](kanban-dev.html#L25419) · [`_settleBlockedTag`](kanban-dev.html#L38251) · [`excluirPadraoCard`](kanban-dev.html#L30302)
-- [`AGENTE_AGIL_MENTION_SQUADS`](kanban-dev.html#L9152) · [`_extKey`](kanban-dev.html#L43371) · [`renderIntakeBody`](kanban-dev.html#L27635) · [`exportBackupJSON`](kanban-dev.html#L43473) · [`delLink`](kanban-dev.html#L29302) · [`getEffectiveRole`](kanban-dev.html#L8313)
-- [`allIdentities`](kanban-dev.html#L9102) · [`openCard`](kanban-dev.html#L19570) · [`fbCreateCard`](kanban-dev.html#L11352) · [`toggleTheme`](kanban-dev.html#L39780) · [`_bfUpdateCountdown`](kanban-dev.html#L40063) · [`_renderArquivadosBody`](kanban-dev.html#L28343)
-- [`COMUNICADOS_POLL_MS`](kanban-dev.html#L44236) · [`renderRaiaOwner`](kanban-dev.html#L16667) · [`renderBoardDataGrid`](kanban-dev.html#L17795) · [`renderSearchResults`](kanban-dev.html#L40559) · [`SUGESTAO_TIMELINE_JANELA_SESSOES`](kanban-dev.html#L15903) · [`renderMinhasPrefsBody`](kanban-dev.html#L17422)
+- [`ADM_EMAILS`](kanban-dev.html#L8180) · [`agentes`](kanban-dev.html#L9092) · [`CARD_SECTIONS`](kanban-dev.html#L9017) · [`fbSaveAll`](kanban-dev.html#L11111) · [`_reportUnexpectedCardDisappearance`](kanban-dev.html#L11419) · [`searchDependsCards`](kanban-dev.html#L40719)
+- [`_currentTheme`](kanban-dev.html#L39720) · [`_bfSemanaInfo`](kanban-dev.html#L4719) · [`maybeAutoArchiveOldCards`](kanban-dev.html#L17983) · [`_refreshComunicados`](kanban-dev.html#L44256) · [`renderHdMoreDD`](kanban-dev.html#L8531) · [`renderNormal`](kanban-dev.html#L16611)
+- [`updateMetrics`](kanban-dev.html#L17770) · [`openSearch`](kanban-dev.html#L40547) · [`_tbHandleDrop`](kanban-dev.html#L33618) · [`_sugestaoRecusarPermanente`](kanban-dev.html#L17264) · [`openMinhasPrefs`](kanban-dev.html#L17419) · [`renderCL`](kanban-dev.html#L21149)
+- [`renderCampDashboard`](kanban-dev.html#L27011) · [`_superPodeGerarFilhos`](kanban-dev.html#L37268) · [`CARD_LOCK_REQUEST_GRACE_MS`](kanban-dev.html#L18590) · [`loadNotifs`](kanban-dev.html#L33863) · [`_tmEscrever`](kanban-dev.html#L40870) · [`addCalendarToList`](kanban-dev.html#L36000)
+- [`toggleNotas`](kanban-dev.html#L24219) · [`AUTO_TRIGGERS`](kanban-dev.html#L37434) · [`blockerMode`](kanban-dev.html#L38201) · [`_cardDataCriacaoStr`](kanban-dev.html#L25421) · [`_settleBlockedTag`](kanban-dev.html#L38253) · [`excluirPadraoCard`](kanban-dev.html#L30304)
+- [`AGENTE_AGIL_MENTION_SQUADS`](kanban-dev.html#L9154) · [`_extKey`](kanban-dev.html#L43373) · [`renderIntakeBody`](kanban-dev.html#L27637) · [`exportBackupJSON`](kanban-dev.html#L43475) · [`delLink`](kanban-dev.html#L29304) · [`getEffectiveRole`](kanban-dev.html#L8315)
+- [`allIdentities`](kanban-dev.html#L9104) · [`openCard`](kanban-dev.html#L19572) · [`fbCreateCard`](kanban-dev.html#L11354) · [`toggleTheme`](kanban-dev.html#L39782) · [`_bfUpdateCountdown`](kanban-dev.html#L40065) · [`_renderArquivadosBody`](kanban-dev.html#L28345)
+- [`COMUNICADOS_POLL_MS`](kanban-dev.html#L44238) · [`renderRaiaOwner`](kanban-dev.html#L16669) · [`renderBoardDataGrid`](kanban-dev.html#L17797) · [`renderSearchResults`](kanban-dev.html#L40561) · [`SUGESTAO_TIMELINE_JANELA_SESSOES`](kanban-dev.html#L15905) · [`renderMinhasPrefsBody`](kanban-dev.html#L17424)
 - *[+161 no mapa completo](CODE_MAP.md)*
 
 ### `painel-dev.html` (66 âncoras verificadas)
@@ -118,8 +118,8 @@
 - *[+42 no mapa completo](CODE_MAP.md)*
 
 ### `okr-dev.html` (9 âncoras verificadas)
-- [`_okrObjUltimaAtividade`](okr-dev.html#L5426) · [`_renderMd`](okr-dev.html#L2610) · [`_okrToggleNotas`](okr-dev.html#L3993) · [`_okrAgendaCartoes`](okr-dev.html#L3139) · [`_okrObjParadoDias`](okr-dev.html#L5438) · [`loadOkrReuniaoNotas`](okr-dev.html#L3260)
-- [`_okrAgendaConfirmar`](okr-dev.html#L3162) · [`renderOkrNotas`](okr-dev.html#L3293) · [`_okrAgendaAplicar`](okr-dev.html#L3177)
+- [`_okrObjUltimaAtividade`](okr-dev.html#L5431) · [`_renderMd`](okr-dev.html#L2610) · [`_okrToggleNotas`](okr-dev.html#L3996) · [`_okrAgendaCartoes`](okr-dev.html#L3139) · [`_okrObjParadoDias`](okr-dev.html#L5443) · [`loadOkrReuniaoNotas`](okr-dev.html#L3262)
+- [`_okrAgendaConfirmar`](okr-dev.html#L3162) · [`renderOkrNotas`](okr-dev.html#L3295) · [`_okrAgendaAplicar`](okr-dev.html#L3177)
 
 ### `travessia-dev.html` (9 âncoras verificadas)
 - [`abrirApp`](travessia-dev.html#L1131) · [`farol`](travessia-dev.html#L451) · [`termometro`](travessia-dev.html#L462) · [`viewBau`](travessia-dev.html#L650) · [`viewDiario`](travessia-dev.html#L576) · [`viewAval`](travessia-dev.html#L705)
