@@ -2605,6 +2605,9 @@ input[type="date"]{-moz-appearance:textfield;}
 .rx-picker span:hover{transform:scale(1.3);}
 .comment-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
 .comment-item{display:flex;gap:8px;}
+/* comentário mostrado na hora, ainda esperando o banco confirmar (ver submitComment) */
+.comment-item.comment-enviando{opacity:.62;}
+.cmt-enviando{color:var(--txt3);font-style:italic;font-weight:400;}
 .comment-avatar{width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.85);
   border:1px solid var(--glass-b);display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;}
@@ -7773,7 +7776,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.999</div>
+<div class="version">v8.30.1005</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7793,7 +7796,7 @@ window._bfSemanaInfo = function(agoraMs){
 <script src="mare-login.js?v=3"></script>
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction, onDisconnect } from './vendor/firebase-10.14.1/firebase-database.js';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
@@ -7869,7 +7872,7 @@ const msPersonalProvider = new OAuthProvider('microsoft.com');
 msPersonalProvider.setCustomParameters({ tenant: 'consumers', prompt: 'select_account' });
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
-window._onValue=onValue; window._update=update; window._remove=remove;
+window._onValue=onValue; window._update=update; window._remove=remove; window._onDisconnect=onDisconnect;
 window._runTransaction=runTransaction;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._increment=increment;
@@ -10907,9 +10910,20 @@ function _mesclarCard(base, ours, theirs){
       if(k==='history'){ out[k] = _unirHistorico(t,o); return; }
       if(o===undefined) delete out[k]; else out[k] = o; return;
     }
+    // 🐞 /monitorarbugs 17/11/2026 (Black Friday): duas pessoas marcando itens DIFERENTES do mesmo checklist ao mesmo tempo era "conflito no
+    // mesmo campo" e a lista inteira de quem salvava por último vencia — o item que o colega acabou de marcar voltava a desmarcado. Quando os
+    // três lados têm os mesmos itens (mesmo texto e grupo, na mesma ordem), mescla item a item; mudança de estrutura (item novo, removido,
+    // reordenado) segue a regra geral abaixo.
+    if(k==='checklist'){ const m=_mesclarChecklistPorItem(b,o,t); if(m){ out[k]=m; return; } }
     if(o===undefined) delete out[k]; else out[k] = o;         // conflito real no mesmo campo: vence quem está salvando agora
   });
   return out;
+}
+function _mesclarChecklistPorItem(b, o, t){
+  if(!Array.isArray(b) || !Array.isArray(o) || !Array.isArray(t) || b.length!==o.length || b.length!==t.length) return null;
+  const chave=x=>String((x&&x.t)||'')+'|'+String((x&&x.grp)||'default');
+  for(let i=0;i<b.length;i++){ if(chave(b[i])!==chave(o[i]) || chave(b[i])!==chave(t[i])) return null; }
+  return b.map((bi,i)=>_igual(o[i],bi) ? t[i] : o[i]);   // item que este aparelho não mexeu vale o do banco; mexido vale o daqui
 }
 // Traz pra dentro do objeto local (a mesma referência que o board/modal usam) o resultado do merge.
 function _aplicarMesclaNoCard(card, merged){
@@ -18177,6 +18191,7 @@ function _cardDatasToSave(card){
 let _autoSaveTimer = null;
 function scheduleAutoSave(){
   if(!editingId) return; // só auto-salva cards existentes
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; } // 🔒 outra pessoa está editando (ver _cardTravadoAqui)
   // Achado real (investigação de "[card sumiu inesperadamente]" reportado
   // em produção, __qltmp__..., squad midiacriativa): editar um Modelo/
   // Recorrente/Agendamento (openQLEdit()) abre um card TEMPORÁRIO em
@@ -18227,6 +18242,7 @@ function scheduleAutoSave(){
 // modal) e no topo de openCard() (trocar de card com o modal já aberto),
 // antes de qualquer um dos dois mexer em editingId/DOM.
 function _flushAutoSave(){
+  if(_autoSaveTimer && _cardTravadoAqui()){ clearTimeout(_autoSaveTimer); _autoSaveTimer=null; return; } // perdi a trava com um autosave pendente: não grava por cima de quem assumiu
   if(_autoSaveTimer){
     clearTimeout(_autoSaveTimer);
     _autoSaveTimer = null;
@@ -18234,6 +18250,7 @@ function _flushAutoSave(){
   }
 }
 function _performAutoSave(){
+    if(_cardTravadoAqui()) return; // 🔒 a trava passou para outra pessoa durante o debounce: não grava por cima dela
     const title=document.getElementById('m-title').value.trim();
     if(!title) return;
     const td=new Date().toISOString().split('T')[0];
@@ -18305,6 +18322,7 @@ function _performAutoSave(){
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
+    _modalCamposRebase(c); // base dos campos = o que está sendo gravado (ver _modalSyncCampos)
     // /monitorarbugs 16/11 (Codex, #1822): o autosave gravava a coluna nova e avisava "movido", mas nunca chamava recordMove() —
     // flow.log/enteredAt/firstStartAt/doneAt (lead/cycle time, CFD, Throughput) ficavam cegos pra quem trocava a coluna no modal
     // sem clicar em Salvar. Mesma linha do saveCard(), depois do Object.assign.
@@ -18388,6 +18406,7 @@ function _performAutoSave(){
     const _savedDatas=Object.fromEntries(_CARD_DATAS.map(f=>[f,c[f]||'']));
     const _asManualSnap=_cardManualSnap; // uma resposta antiga não altera a base de uma reabertura
     _asSaveP.then(()=>{
+      if(editingId===c.id) _modalSyncCol(); // o merge de 3 vias pode ter trazido campos do banco para dentro do card: a tela acompanha os que a pessoa não mexeu
       if(editingId===c.id && _cardManualSnap && _cardManualSnap===_asManualSnap){ Object.assign(_cardManualSnap,_savedDatas); _updateSaveBtnDirtyState(); }
       const btn=document.getElementById('btn-save-card');
       // não diz "✓ Salvo" se ainda há campo só-manual pendente (o botão está amarelo, "Salvar alterações")
@@ -18659,6 +18678,30 @@ function _setCardLockUI(lockedByOther, who){
   if(body) body.classList.toggle('locked-ro', !!lockedByOther);
   if(lockedByOther && document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
+// 🔒 /monitorarbugs 17/11/2026 (trava × Black Friday): o "modo leitura" era só CSS (pointer-events:none no corpo do modal). Quem estava na leitura
+// chegava no título/descrição pelo TECLADO (Tab) e o autosave gravava por cima de quem editava; os botões do rodapé (⏸ Pausar, ♾️ Contínuo,
+// 📦 Arquivar, 🗑 Excluir), fora do corpo travado, mexiam no card do outro — inclusive pelos atalhos de teclado do modal. Agora todo caminho de
+// gravação do modal pergunta isto antes; o CSS continua só como aparência.
+function _cardTravadoAqui(cardId){
+  const ov=document.getElementById('card-ov');
+  return !!(editingId && (!cardId || cardId===editingId) && ov && ov.classList.contains('open') && document.querySelector('#card-ov .modal-body')?.classList.contains('locked-ro'));
+}
+function _avisoCardTravado(){
+  const now=Date.now(); if(window._avisoTravadoAt && now-window._avisoTravadoAt<3000) return; window._avisoTravadoAt=now;
+  showToast('🔒 '+(document.getElementById('m-lock-text')?.textContent.replace(/^🔒\s*/,'').split(' — ')[0]||'Outra pessoa está editando este card')+' — use "🔔 Pedir o card" para editar.');
+}
+// teclado: em modo leitura, campo de editar não recebe foco (pointer-events não barra o Tab)
+document.addEventListener('focusin', e=>{
+  const t=e.target; if(!t || !t.closest || !t.closest('#card-ov .modal-body.locked-ro')) return;
+  if(t.matches('input,textarea,select,[contenteditable=""],[contenteditable="true"]')){ t.blur(); _avisoCardTravado(); }
+}, true);
+// 🔒 Liberação pelo SERVIDOR (17/11/2026, validado no banco real): fechar a página sem o beforeunload rodar — Maré aberto dentro do Oceano (iframe
+// fechado), celular que mata a aba, navegador que trava, internet que cai — deixava a trava no banco e o card "em edição" para os outros por até
+// 10 min. onDisconnect().remove() faz o servidor apagar a trava quando a conexão deste aparelho some. Queda passageira: o servidor apaga, o
+// listener deste modal vê o nó vazio ao reconectar e reassume na hora (_apply(null)) — e re-arma. Ao soltar/perder a trava, CANCELA, senão a
+// conexão caindo depois apagaria a trava de quem assumiu.
+function _armarLiberacaoAoDesconectar(cardId){ try{ if(window._onDisconnect) window._onDisconnect(window._ref(window._db,_cardLockPath(cardId))).remove().catch(()=>{}); }catch(_){} }
+function _cancelarLiberacaoAoDesconectar(cardId){ try{ if(cardId && window._onDisconnect) window._onDisconnect(window._ref(window._db,_cardLockPath(cardId))).cancel().catch(()=>{}); }catch(_){} }
 function _stopCardLockHeartbeat(){ clearInterval(_cardLockHeartbeatTimer); _cardLockHeartbeatTimer=null; }
 function _startCardLockHeartbeat(cardId){
   _stopCardLockHeartbeat();
@@ -18674,6 +18717,7 @@ function _startCardLockHeartbeat(cardId){
 // recente). Também assina o nó pra reagir se a outra pessoa soltar o lock
 // enquanto este modal segue aberto, sem precisar reabrir o card.
 function _checkCardLock(cardId){
+  if(_cardLockOwnedId && _cardLockOwnedId!==cardId) _releaseCardLock(_cardLockOwnedId); // trocou de card sem fechar (← Voltar, card vinculado): solta a trava do anterior e cancela a liberação pelo servidor dele
   if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
   _stopCardLockHeartbeat();
   _stopCardLockRequestTimers();
@@ -18732,6 +18776,7 @@ function _checkCardLock(cardId){
       // "assumindo de alguém/de ninguém" precisa mesmo de overwrite completo.
       if(isMine) fbUpdate(_cardLockPath(cardId), _cardLockPayload()).catch(()=>{});
       else fbSet(_cardLockPath(cardId), _cardLockPayload());
+      _armarLiberacaoAoDesconectar(cardId);
       _startCardLockHeartbeat(cardId);
       if(_justInherited && editingId===cardId){
         // setTimeout(0): sai da pilha de chamadas atual (estamos dentro do
@@ -18749,9 +18794,17 @@ function _checkCardLock(cardId){
       // DE VERDADE o próprio heartbeat aqui, senão ele continua sobrescrevendo
       // o lock de quem realmente ganhou a cada minuto, fazendo as duas pessoas
       // ficarem se travando uma à outra em loop.
+      const _eraMinha=_cardLockOwnedId===cardId;
       _cardLockOwnedId=null;
       _stopCardLockHeartbeat();
+      _cancelarLiberacaoAoDesconectar(cardId); // a trava é de outra pessoa agora: minha conexão caindo não pode apagá-la
       _setCardLockUI(true, lock.who);
+      // Eu editava e outra pessoa assumiu (pedido vencido ou, desde o onDisconnect, minha conexão caiu e quem olhava o card pegou): o autosave
+      // pendente é descartado pela guarda — avisa em vez de perder em silêncio; o texto continua na tela para copiar.
+      if(_eraMinha && editingId===cardId){
+        const _pend=!!_autoSaveTimer; if(_pend){ clearTimeout(_autoSaveTimer); _autoSaveTimer=null; }
+        showToast('⚠️ '+(lock.who||'Outra pessoa')+' assumiu este card'+(_pend?' — sua última alteração NÃO foi salva (o texto continua na tela, copie antes de fechar).':'.'), _pend?9000:undefined);
+      }
     }
   };
   window._get(ref).then(snap=>{
@@ -18782,6 +18835,7 @@ function _releaseCardLock(cardId){
   _stopCardLockRequestTimers();
   if(!cardId || _cardLockOwnedId!==cardId){ _cardLockOwnedId=null; return; }
   _cardLockOwnedId=null;
+  _cancelarLiberacaoAoDesconectar(cardId);
   if(!window._fbReady) return;
   const myUid=window._currentUser?.uid;
   const ref=window._ref(window._db, _cardLockPath(cardId));
@@ -18792,7 +18846,21 @@ function _releaseCardLock(cardId){
 }
 if(!window._cardLockBeforeUnloadSet){
   window._cardLockBeforeUnloadSet=true;
-  window.addEventListener('beforeunload', ()=>{ if(_cardLockOwnedId) _releaseCardLock(_cardLockOwnedId); });
+  // Ao fechar/recarregar a aba, a página morre antes da leitura de _releaseCardLock() voltar do servidor (o listener já foi desligado): o lock
+  // ficava no banco e o card aparecia "em edição" para os outros por até 10 min (CARD_LOCK_STALE_MS) — e na Black Friday cada promoção recarrega
+  // todas as abas. Aqui remove direto: _cardLockOwnedId já reflete o dono (o listener zera quando outro assume); se alguém assumiu no último
+  // instante, o listener dele vê o nó vazio e reassume na hora (_apply(null)).
+  const _soltarAoSair=()=>{
+    const id=_cardLockOwnedId; if(!id) return;
+    _cardLockOwnedId=null; if(_cardLockUnsub){ try{ _cardLockUnsub(); }catch(_){} _cardLockUnsub=null; } _stopCardLockHeartbeat();
+    if(window._fbReady){ try{ window._remove(window._ref(window._db, _cardLockPath(id))); }catch(_){} }
+  };
+  // beforeunload não dispara quando o Maré está num iframe que é fechado (Oceano) nem quando o celular descarta a aba — pagehide dispara.
+  // Os dois são só o atalho rápido: a garantia é o onDisconnect do servidor (_armarLiberacaoAoDesconectar).
+  window.addEventListener('beforeunload', _soltarAoSair);
+  window.addEventListener('pagehide', _soltarAoSair);
+  // voltou pelo cache do navegador (bfcache) com o card aberto: o pagehide soltou a trava — reassume (ou entra em modo leitura se alguém pegou)
+  window.addEventListener('pageshow', e=>{ if(e.persisted && editingId && document.getElementById('card-ov')?.classList.contains('open')) _checkCardLock(editingId); });
 }
 // Guarda o valor de card.col no momento em que o modal foi aberto. Usado pra
 // distinguir "usuário mudou a coluna no dropdown" de "coluna mudou em outro
@@ -18827,10 +18895,86 @@ function _modalSyncCol(){
   if(so && so.value===_modalOpenOwner && (c.owner||'')!==_modalOpenOwner && [...so.options].some(o=>o.value===(c.owner||''))){ so.value=c.owner||''; _modalOpenOwner=so.value; }
   if(JSON.stringify(editingTags)===_modalOpenTags){
     const ct=getCardTags(c).slice();
-    if(JSON.stringify(ct)!==_modalOpenTags){ editingTags=ct; _modalOpenTags=JSON.stringify(ct); populateTagSelect(); }
+    if(JSON.stringify(ct)!==_modalOpenTags){ editingTags=ct; _modalOpenTags=JSON.stringify(ct); populateTagSelect(); _populateCanalVendaSelect();
+      { const _sz=SIZE_TAGS.map(t=>t.id), mt=document.getElementById('m-tamanho'); if(mt) mt.value=ct.find(id=>_sz.includes(id))||''; } }
   }
+  _modalSyncCampos(c);
 }
 let _modalOpenOwner=null, _modalOpenTags=null; // linha de base de Responsável/Tags (ver _modalSyncCol)
+// 🐞 /monitorarbugs 17/11/2026 (pensando na Black Friday: várias pessoas no mesmo card). Título, descrição, Como fazer, motivo do impedimento,
+// demandante, checklist, riscos, participantes e descrições extras eram lidos UMA vez ao abrir o modal. O colega marcava o item A do checklist,
+// o modal seguia mostrando A desmarcado e, quando eu marcava B, o autosave gravava a lista inteira da tela: no merge de 3 vias isso é conflito
+// no mesmo campo e vence quem salva por último — o A do colega voltava a desmarcado, sem aviso. Mesma regra da coluna/responsável/tags:
+// campo em que a pessoa NÃO mexeu desde a última gravação acompanha o card; campo mexido (ou com o foco/edição aberta) fica como está.
+// Duas linhas de base por campo: o que a TELA mostrava (_modalCamposBase) e o que o CARD tinha (_modalCardBase) na última abertura/gravação.
+let _modalCamposBase=null, _modalCardBase=null;
+const _MODAL_CAMPOS=['title','desc','po','blockerReason','demandante','checklist','riscos','participants','descsExtra','executorType','agentStatus','noDue','criativo','sp','priority','isOKR'];
+function _modalCamposNow(){
+  const v=id=>document.getElementById(id)?.value||'';
+  return { title:v('m-title'), desc:v('m-desc'), po:v('m-po'), blockerReason:v('m-blocker-reason'), demandante:v('m-demandante'),
+    checklist:_stable([getCL(), _mCurrentGroups]), riscos:_stable(getRiscos()), participants:_stable(getParticipants()), descsExtra:_stable(editingDescs.map(d=>[d.label||'',d.text||'',d.color||''])),
+    executorType:v('m-exectype')||'human', agentStatus:v('m-agentstatus'), noDue:!!_mNoDue, criativo:_stable(getCriativoData()),
+    sp:v('m-sp'), priority:v('m-priority'), isOKR:!!document.getElementById('m-is-okr')?.checked };
+}
+function _modalCardCampos(c){
+  return { title:c.title||'', desc:c.desc||'', po:c.po||'', blockerReason:c.blockerReason||'', demandante:c.demandante||'',
+    checklist:_stable([c.checklist||[], c.checklistGroups||null]), riscos:_stable(c.riscos||[]), participants:_stable(c.participants||[]), descsExtra:_stable(getExtraDescs(c).map(d=>[d.label||'',d.text||'',d.color||''])),
+    executorType:c.executorType||'human', agentStatus:c.agentStatus||'', noDue:!!c.noDue, criativo:_stable(c.criativo||{}),
+    sp:String(c.sp||''), priority:c.priority||'', isOKR:!!c.isOKR };
+}
+function _modalCamposRebase(c){ if(!c) return; _modalCamposBase=_modalCamposNow(); _modalCardBase=_modalCardCampos(c); }
+function _modalCampoOcupado(f){
+  // Só conta como "mexendo" o foco em campo de DIGITAR (textarea, input de texto, contenteditable): no Chrome o clique num checkbox/botão também
+  // deixa o foco nele, e tratar isso como ocupado deixava a tela velha depois do meu próprio clique — a próxima edição devolvia o valor antigo.
+  const a=document.activeElement;
+  const digita=!!(a && (a.tagName==='TEXTAREA' || a.isContentEditable || (a.tagName==='INPUT' && !/^(checkbox|radio|button|submit|range|color|file)$/i.test(a.type||''))));
+  const dentro=sel=>{ const el=document.querySelector(sel); return !!(el && a && digita && el.contains(a)); };
+  switch(f){
+    case 'title': return a===document.getElementById('m-title');
+    case 'desc': return !!document.getElementById('desc-eoc')?.classList.contains('eoc-editing') || a===document.getElementById('m-desc');
+    case 'po': return a===document.getElementById('m-po');
+    case 'blockerReason': return a===document.getElementById('m-blocker-reason');
+    case 'demandante': return a===document.getElementById('m-demandante');
+    case 'checklist': return dentro('#m-checklist') || !!document.querySelector('#m-checklist .cl-it-edit-ta');
+    case 'riscos': return dentro('#m-riscos');
+    case 'participants': return dentro('#m-participants');
+    case 'descsExtra': return _editingDescIdx.size>0 || dentro('#extra-descs-list');
+    case 'criativo': return dentro('#m-criativo-sec');
+    case 'sp': return a===document.getElementById('m-sp');
+  }
+  return false;
+}
+function _modalSyncCampos(c){
+  if(!_modalCamposBase || !_modalCardBase) return;
+  const tela=_modalCamposNow(), card=_modalCardCampos(c);
+  _MODAL_CAMPOS.forEach(f=>{
+    if(card[f]===_modalCardBase[f]) return;                       // o card não mudou neste campo
+    if(tela[f]!==_modalCamposBase[f] || _modalCampoOcupado(f)) return; // a pessoa mexeu (ou está mexendo): a escolha dela vale
+    switch(f){
+      case 'title': document.getElementById('m-title').value=c.title||''; { const d=document.getElementById('m-title-disp'); if(d) d.textContent=c.title||''; } break;
+      case 'desc': eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...'); break;
+      case 'po': document.getElementById('m-po').value=c.po||''; break;
+      case 'blockerReason': { const el=document.getElementById('m-blocker-reason'); if(el) el.value=c.blockerReason||'';
+        if(_cardManualSnap) _cardManualSnap.blockerReason=el?el.value:''; } break;
+      case 'demandante': { const el=document.getElementById('m-demandante'); if(!el) break;
+        if(c.demandante && ![...el.options].some(o=>o.value===c.demandante)) el.insertAdjacentHTML('beforeend', `<option value="${esc(c.demandante)}">${esc(c.demandante)} · (fora do time)</option>`);
+        el.value=c.demandante||''; } break;
+      case 'checklist': _clGroupsInit(c); renderCL(c.checklist||[]); break;
+      case 'riscos': renderRiscos(c.riscos||[]); break;
+      case 'participants': renderParticipants(c.participants||[]); break;
+      case 'descsExtra': editingDescs=getExtraDescs(c).map(d=>({...d})); renderExtraDescs(); break;
+      case 'executorType': { const el=document.getElementById('m-exectype'); if(el){ el.value=c.executorType||'human'; updateAgentStatusVisibility(); } } break;
+      case 'agentStatus': { const el=document.getElementById('m-agentstatus'); if(el) el.value=c.agentStatus||''; } break;
+      case 'noDue': _mNoDue=!!c.noDue; _renderNoDueBtn(); break;
+      case 'criativo': setCriativoFields(c.criativo||{}); break;
+      // sp/prioridade/OKR só gravam no 💾 Salvar: acompanham o card e a base do "alterações não salvas" junto, pra não acusar mudança que não é da pessoa
+      case 'sp': { const el=document.getElementById('m-sp'); if(el){ el.value=c.sp||''; if(_cardManualSnap) _cardManualSnap.sp=el.value; } } break;
+      case 'priority': { const el=document.getElementById('m-priority'); if(el){ el.value=c.priority||''; if(_cardManualSnap) _cardManualSnap.priority=el.value; if(typeof renderSubPrioRow==='function') renderSubPrioRow(); } } break;
+      case 'isOKR': { const el=document.getElementById('m-is-okr'); if(el){ el.checked=!!c.isOKR; if(_cardManualSnap) _cardManualSnap.isOKR=el.checked; } } break;
+    }
+    _modalCamposBase[f]=_modalCamposNow()[f]; _modalCardBase[f]=card[f];
+  });
+}
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 // 📏 Altura do campo da descrição adicional (pedido do time, 06/11/2026): já vem GRANDE por padrão e, se a pessoa arrasta o cantinho para mudar, este navegador lembra e usa como
 // padrão nas próximas vezes (localStorage). Só grava quando a pessoa realmente arrasta (pointerdown → pointerup com a altura diferente) — nunca por relayout/render.
@@ -19160,7 +19304,7 @@ function populateDemandanteSelect(){
   if(u&&init&&!members.find(m=>m.init===init))
     sel.innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName||u.email||'')}</option>`;
 }
-function populateColSelect(){ document.getElementById('m-col').innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); }
+function populateColSelect(){ const sel=document.getElementById('m-col'), prev=sel.value; sel.innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); if(prev && columns.some(c=>c.id===prev)) sel.value=prev; } // preserva a escolha (restaurar backup com o card aberto voltava o select pra 1ª coluna e o autosave movia o card)
 // ── Prazo obrigatório (todo squad) com escape hatch "sem prazo definido" ──
 // Regra pedida direto: card precisa ter uma data OU marcar explicitamente
 // que não tem prazo ainda — nunca fica em branco por esquecimento. Mutuamente
@@ -19433,7 +19577,9 @@ function openCard(id){
     // de qualquer outro campo apagava o dono do card. Mantém a sigla como opção para não perder o dado.
     if(c.owner && _os.value!==c.owner){ _os.insertAdjacentHTML('beforeend',`<option value="${esc(c.owner)}">${esc(c.owner)} · (fora do time)</option>`); _os.value=c.owner; } }
   _modalOpenOwner=document.getElementById('m-owner').value; _modalOpenTags=JSON.stringify(editingTags);
-  document.getElementById('m-demandante').value=c.demandante||'';
+  { const _sd=document.getElementById('m-demandante'); // demandante de fora do time (pedido de outra área): sem a opção o select abria vazio e o 1º autosave gravava demandante:'' (2º caminho do #1829)
+    if(c.demandante && ![..._sd.options].some(o=>o.value===c.demandante)) _sd.insertAdjacentHTML('beforeend', `<option value="${esc(c.demandante)}">${esc(c.demandante)} · (fora do time)</option>`);
+    _sd.value=c.demandante||''; }
   _updateDescProtectedBadge();
   _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
@@ -19509,6 +19655,7 @@ function openCard(id){
   if(typeof toggleCommentSearch==='function') toggleCommentSearch(false, true);
   _updateAgenteThinkingBanner(); // reflete na hora se este card já estava "pensando" (ver _startAgenteAgilThinking)
   _cardManualSnap = _manualFieldsNow();
+  _modalCamposRebase(c); // linha de base dos campos que acompanham o card (ver _modalSyncCampos)
   _startDirtyWatch();
   _checkCardLock(id);
   // Inicia mention dropdowns e carrega comentários
@@ -19834,6 +19981,7 @@ function _quickAddApplyIfNew(){
 // owner/participants (cardInSubteam()), não um campo próprio do card —
 // não tem um único membro "certo" pra pré-selecionar sem chutar.
 function openNewCard(col, prefillOwner, prefillTagId){
+  _modalCamposBase=null; _modalCardBase=null; // card novo: nada a acompanhar até a 1ª gravação (ver _modalSyncCampos)
   _closeCoverMenu();
   _renderIntakeOrigem(null);
   if(!checkEditPermission()) return;
@@ -19929,6 +20077,7 @@ function openNewCard(col, prefillOwner, prefillTagId){
 }
 function saveCard(){
   if(_savingCard) return; // já tem um salvamento em voo (ver comentário na declaração de _savingCard)
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; } // 🔒 ver _cardTravadoAqui
   if(!checkEditPermission()) return;
   const title=document.getElementById('m-title').value.trim();
   // ── Modo edição de item recorrente/modelo/agendamento ──
@@ -20161,6 +20310,7 @@ function saveCard(){
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
+    _modalCamposRebase(c); // ver _modalSyncCampos
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
     if(blockerMode==='tag'){
       _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
@@ -20328,6 +20478,7 @@ function _rascunhoSalvarE(acao, oQue){
   return true;
 }
 async function deleteCard(){
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; }
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   if(!await uiConfirm('Excluir "'+c.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   saveUndo('excluir card');
@@ -20336,6 +20487,7 @@ async function deleteCard(){
   fbSaveAll({['cards_deleted_intentionally/'+editingId]:true}, []); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
+  if(_cardTravadoAqui()){ _avisoCardTravado(); return; }
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.archived=true; c.archivedAt=new Date().toISOString(); _checkSupercardAllDone(c); fbSaveCard(c); renderBoard(); closeOv('card-ov');
 }
@@ -20362,6 +20514,7 @@ function archiveCard(){
 // fechado) é o mesmo padrão já usado por togglePinCard().
 function togglePauseCard(cardId){
   const id = cardId || editingId;
+  if(_cardTravadoAqui(id)){ _avisoCardTravado(); return; }
   if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
   const nowISO=new Date().toISOString();
   if(c.paused){
@@ -20441,6 +20594,7 @@ function _renderPauseBtn(c){
 // caso especial.
 function toggleContinuo(cardId){
   const id = cardId || editingId;
+  if(_cardTravadoAqui(id)){ _avisoCardTravado(); return; }
   if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
   c.continuo = !c.continuo;
   if(c.continuo){
@@ -22070,7 +22224,10 @@ function _populateCanalVendaSelect(){
   const sel=document.getElementById('m-canalvenda'); if(!sel) return;
   const cvIds=CANAL_VENDA_TAGS.map(t=>t.id);
   const c=editingId?cards.find(x=>x.id===editingId):null;
-  const currentTagId=c?getCardTags(c).find(id=>cvIds.includes(id))||'':'';
+  // Com o modal aberto, a fonte é o que a TELA tem (editingTags) — não o card gravado: este select também é redesenhado por listener de config
+  // (canais visíveis/ativo) e, lendo o card, voltava a mostrar o canal antigo dentro dos 800 ms do autosave (e a validação de "canal obrigatório" lê o select).
+  const _tagsFonte=document.getElementById('card-ov')?.classList.contains('open') ? editingTags : (c?getCardTags(c):[]);
+  const currentTagId=_tagsFonte.find(id=>cvIds.includes(id))||'';
   const opts=CANAL_VENDA_TAGS.filter(cv=>_canalVendaIsVisivel(cv.id)||cv.id===currentTagId);
   sel.innerHTML='<option value="">— sem canal —</option>'+opts.map(cv=>`<option value="${cv.id}">${esc(cv.label)}</option>`).join('');
   sel.value=currentTagId;
@@ -32400,7 +32557,7 @@ function initSuperChildren(card){
     const parent = editingSuperParent;
     if(parent){
       noteEl.style.display='block';
-      const link='<a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
+      const link='<a href="#" onclick="event.preventDefault();_navigateToCard('+jsq(parent.id)+')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
       noteEl.innerHTML = tooDeep
         ? '🧩 Este card é uma versão de '+link+' — supercard vai até 2 níveis, então uma versão não pode ter filhos próprios.'
         : '🧩 Este card é filho do supercard '+link+'.';
@@ -32503,10 +32660,10 @@ function _crvUpdateFichaSecVisibility(){
         // Versão: herda a ficha INTEIRA do criativo-pai (mesma peça).
         const parentCrv=editingSuperParent.criativo;
         const resumo=[_crvSharedSummary(parentCrv), _crvOwnSummary(parentCrv)].filter(Boolean).join(' · ');
-        childNote.innerHTML='🧩 Esta é uma versão do criativo <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> — a ficha técnica inteira vem de lá.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+        childNote.innerHTML='🧩 Esta é uma versão do criativo <a href="#" onclick="event.preventDefault();_navigateToCard('+jsq(editingSuperParent.id)+')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> — a ficha técnica inteira vem de lá.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
       } else {
         const resumo=_crvSharedSummary(childCard?.criativo);
-        childNote.innerHTML='🧩 Campanha, Funil, Etapa e Canal são definidos no supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> e valem pra todos os filhos.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+        childNote.innerHTML='🧩 Campanha, Funil, Etapa e Canal são definidos no supercard <a href="#" onclick="event.preventDefault();_navigateToCard('+jsq(editingSuperParent.id)+')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> e valem pra todos os filhos.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
       }
     } else {
       childNote.style.display='none';
@@ -32537,12 +32694,12 @@ function renderSuperChildrenList(){
         : ((relCard && submarcaAtivo) ? '<span class="minicard-sm minicard-sm-none" title="Este card ainda não tem submarca">🏷️ sem submarca</span>' : '');
       return '<div class="minicard">'
         +'<div class="minicard-left" style="background:'+colColor+';"></div>'
-        +'<div class="minicard-body" onclick="_navigateToCard(\''+esc(lc.id)+'\')">'
+        +'<div class="minicard-body" onclick="_navigateToCard('+jsq(lc.id)+')">'
           +'<div class="minicard-title">'+esc(lc.title)+'</div>'
           +'<div class="minicard-meta"><span class="minicard-col">'+esc(col?.name||lc.col)+'</span>'
           +(ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>'+_FeriasSelo(relCard?.owner):'')+smHtml+'</div>'
         +'</div>'
-        +'<button class="minicard-rm" title="Remover do supercard" onclick="event.stopPropagation();removeSuperChild(\''+esc(lc.id)+'\')">✕</button>'
+        +'<button class="minicard-rm" title="Remover do supercard" onclick="event.stopPropagation();removeSuperChild('+jsq(lc.id)+')">✕</button>'
       +'</div>';
     }).join('');
 }
@@ -34248,6 +34405,18 @@ function _pastDailyTriggerSP(){
 // atrasado). Como isso roda 1x/dia e a comparação é "due === ontem" (não
 // "due <= ontem"), due_overdue dispara só nesse 1º dia — não repete todo
 // dia enquanto o card seguir atrasado.
+// 🐞 /monitorarbugs 17/11/2026 (Automações × Black Friday): as varreduras diárias de Automação (prazo hoje/vencido e card parado) rodavam em CADA
+// navegador — a única trava era o localStorage daquele aparelho. Com 10 pessoas abrindo o board depois das 9h, cada regra "prazo vence hoje →
+// adicionar item ao checklist / avisar todos / atribuir…" rodava 10 vezes no mesmo card. Agora a squad inteira disputa uma marca do dia no banco
+// (transação): só o 1º aparelho roda as Automações. Falha de rede = não marca o aparelho, tenta de novo na próxima checagem.
+// Devolve 'ganhou' | 'perdeu' | 'erro'.
+async function _reivindicarVarreduraDiaria(nome, dia){
+  if(!window._fbReady || typeof window._runTransaction!=='function') return 'erro';
+  try{
+    const r=await window._runTransaction(window._ref(window._db, FB+'/auto_varredura/'+nome), cur=>cur===dia?undefined:dia);
+    return (r && r.committed) ? 'ganhou' : 'perdeu';
+  }catch(e){ return 'erro'; }
+}
 function checkDueNotifs(){
   const today=_todaySP();
   const lastCheck=safeLS.getItem('lastDueCheck_'+ACTIVE_SQUAD);
@@ -34255,14 +34424,22 @@ function checkDueNotifs(){
   if(!_pastDailyTriggerSP()) return; // ainda não passou das 9h (SP) hoje — tenta de novo mais tarde
   safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
   const ontemStr=_todaySP(new Date(Date.now()-86400000));
-  cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
+  const _alvos=cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col));
+  // Automações de prazo: 1 aparelho por squad por dia (ver _reivindicarVarreduraDiaria). Sem regra de prazo ativa, não disputa nada.
+  if(autoRules.some(r=>r.active && (r.trigger==='due_today'||r.trigger==='due_overdue'))){
+    _reivindicarVarreduraDiaria('prazo', today).then(res=>{
+      if(res==='erro'){ safeLS.removeItem('lastDueCheck_'+ACTIVE_SQUAD); return; }   // tenta de novo (o sino tem id fixo por card e dia: não duplica)
+      if(res!=='ganhou') return;
+      _alvos.forEach(card=>{ if(card.due===today) runAutoRules('due_today', card.id); else if(card.due===ontemStr) runAutoRules('due_overdue', card.id); });
+    });
+  }
+  _alvos.forEach(card=>{
     // Automações due_today/due_overdue (Fase 1 da revisão de Automações):
     // antes desses triggers existirem no dropdown mas nunca serem checados
     // de verdade em runAutoRules — ver AUTO_TRIGGERS. Dispara pra TODO card
     // vencendo/atrasado, mesmo sem responsável com uid (diferente da
     // notificação abaixo, que precisa de alguém pra avisar).
-    if(card.due===today) runAutoRules('due_today', card.id);
-    else if(card.due===ontemStr) runAutoRules('due_overdue', card.id);
+    // (as Automações due_today/due_overdue saíram daqui: rodam 1x por squad, logo acima)
     const uid=getUidByInit(card.owner); if(!uid) return;
     // idOverride determinístico (tipo+cardId+dia): sem isso, a corrida entre
     // abas/dispositivos que recarregam quase juntos (ex.: overlay de
@@ -34307,6 +34484,12 @@ function checkAgingAutomations(){
   // nesse dia perdia a checagem PRA SEMPRE, não só adiada.
   if(!autoRules.some(r=>r.active && r.trigger==='aging')) return;
   safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
+  _reivindicarVarreduraDiaria('aging', todayStr).then(res=>{
+    if(res==='erro'){ safeLS.removeItem('lastAgingCheck_'+ACTIVE_SQUAD); return; }   // tenta de novo na próxima checagem
+    if(res==='ganhou') _rodarAgingHoje();                         // outro aparelho da squad já rodou hoje: não repete
+  });
+}
+function _rodarAgingHoje(){
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hoje=new Date(); hoje.setHours(0,0,0,0);
   // !c.paused — achado real (/monitorarbugs, 2026-09-14): ⏸ Pausar card
@@ -37011,8 +37194,14 @@ function setFanoutTags(id, selectEl){
 // vira "{título do pai} — {sufixo}". Acrescenta aos childCardIds já
 // existentes do pai (não substitui) — dá pra aplicar mais de uma receita, ou
 // misturar com filhos adicionados na mão.
+// O teto vale também fora do modal (Automação) e antes de aplicar o modelo do pai.
+// (17/11/2026) Um pai temporário nunca pode gerar cards reais; uma versão já tem dois ancestrais ativos.
+function _superPodeGerarFilhos(parentCard){
+  if(!parentCard || parentCard._isQLTemp) return false;
+  return !cards.some(p=>!p.archived && (p.childCardIds||[]).includes(parentCard.id) && _cardIsSuperChild(p, cards));
+}
 function _applyFanoutTemplate(parentCard, tpl, whoLabel){
-  if(!parentCard || !tpl || !tpl.filhos?.length) return [];
+  if(!_superPodeGerarFilhos(parentCard) || !tpl || !tpl.filhos?.length) return [];
   const user=whoLabel||'⚙ Automação';
   // Achado real (/monitorarbugs, 2026-09-06): recordHistory() só anexa
   // init (avatar com foto real) quando NÃO recebe whoOverride — o
@@ -37115,12 +37304,14 @@ function _renderFanoutApplyList(){
   if(!ids.length){ list.innerHTML='<div style="padding:10px 14px;font-size:11px;color:var(--txt3);">Nenhuma receita com esse filtro.</div>'; return; }
   list.innerHTML=ids.map(id=>{
     const t=fanoutTemplates[id];
-    return '<div class="link-option" onclick="applyFanoutToCurrentCard(\''+esc(id)+'\')"><span style="flex:1;color:var(--txt);">🧩 '+esc(t.nome)+'</span><span class="link-option-col">'+(t.filhos||[]).length+'</span></div>';
+    return '<div class="link-option" onclick="applyFanoutToCurrentCard('+jsq(id)+')"><span style="flex:1;color:var(--txt);">🧩 '+esc(t.nome)+'</span><span class="link-option-col">'+(t.filhos||[]).length+'</span></div>';
   }).join('');
 }
 function applyFanoutToCurrentCard(templateId){
   document.getElementById('m-super-fanout-dd')?.classList.remove('show');
   if(!checkEditPermission()) return;
+  if(_editingQLItem){ showToast('⚠ Não dá pra adicionar card filho enquanto edita um Modelo/Recorrente/Agendamento — salve primeiro.'); return; }
+  if(!_superPodeGerarFilhos(_superParentBasics())){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   const tpl=fanoutTemplates[templateId]; if(!tpl) return;
   if(!tpl.filhos?.length){ showToast('Essa receita ainda não tem cards filhos configurados.'); return; }
@@ -37454,6 +37645,7 @@ const AUTO_ACTIONS = [
   // trigger que re-dispare no mesmo card não duplicar os filhos.
   { key:'apply_fanout', label:'🧩 Aplicar fan-out (criar cards filhos)', valueType:'fanout', visible:()=>Object.keys(fanoutTemplates||{}).length>0,
     run:(rule,card)=>{
+      if(!_superPodeGerarFilhos(card)) return false;
       if(card.childCardIds && card.childCardIds.length) return false;
       const tpl=fanoutTemplates[rule.actionVal]; if(!tpl||!tpl.filhos?.length) return false;
       // Modelo do card pai (ver tpl.paiModeloIdx): aqui não tem modal aberto
@@ -41787,7 +41979,8 @@ function renderCommentList(comments){
     const item=document.createElement('div');
     // comment-agent/comment-human só têm efeito visual dentro do tema
     // #card-ov.agente-hotline (ver CSS) — inofensivo em cards normais.
-    item.className='comment-item'+(c.isAgent?' comment-agent':' comment-human');
+    const _env=!!c._enviando;   // ainda não confirmado pelo banco (ver submitComment): sem ações até confirmar
+    item.className='comment-item'+(c.isAgent?' comment-agent':' comment-human')+(_env?' comment-enviando':'');
     item.dataset.cid=c.id||'';
     const avatarHtml=c.isAgent
       ? '<span title="🤖 Agente de IA">'+esc(c.avatarEmoji||'🤖')+'</span>'
@@ -41801,24 +41994,24 @@ function renderCommentList(comments){
       : c.isSystem ? ' style="background:rgba(150,160,180,.12);border-color:rgba(150,160,180,.3);"' : '';
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const textHtml=renderMd(c.text||''); // texto rico: negrito/itálico/sublinhado/cor/links/menções (mesma engine da descrição)
-    const canDel=c.uid===window._currentUser?.uid||_isPOorOrg();
-    const canEdit=c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
+    const canDel=!_env && (c.uid===window._currentUser?.uid||_isPOorOrg());
+    const canEdit=!_env && c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
     const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
     const agentBadge = c.isAgent ? ' <span class="mention-user mention-agent" style="padding:0 6px;font-size:9px;">🤖 agente</span>' : (c.isSystem ? ' <span class="mention-user" style="padding:0 6px;font-size:9px;opacity:.7;">⚙️ sistema</span>' : '');
     item.innerHTML=
       '<div class="comment-avatar"'+avatarStyle+'>'+avatarHtml+'</div>'+
       '<div class="comment-bubble">'+
-        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+'</div>'+
+        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+(_env?' · <span class="cmt-enviando" role="status">⏳ enviando…</span>':'')+'</div>'+
         '<div class="comment-text" id="ctext-'+esc(c.id)+'">'+textHtml+'</div>'+
-        _renderReactions(c)+
-        '<div class="comment-actions">'+
+        (_env?'':_renderReactions(c))+
+        (_env?'':'<div class="comment-actions">'+
           '<button class="cmt-act-btn cmt-reply" title="Responder mencionando quem comentou">↩️ <span>Responder</span></button>'+
           '<button class="cmt-act-btn cmt-react" title="Reagir">😊 <span>Reagir</span>'+
             '<span class="rx-picker">'+_reactPicker(c)+'</span>'+
           '</button>'+
           (canEdit?'<button class="cmt-act-btn cmt-edit" title="Editar comentário">✏️ <span>Editar</span></button>':'')+
           (canDel?'<button class="cmt-act-btn cmt-del" title="Excluir comentário">🗑 <span>Excluir</span></button>':'')+
-        '</div>'+
+        '</div>')+
       '</div>';
     // Wire responder
     const replyBtn=item.querySelector('.cmt-reply');
@@ -41881,7 +42074,7 @@ function autoResizeCommentInp(ta){
   ta.style.height=Math.min(ta.scrollHeight,120)+'px';
 }
 
-function submitComment(){
+async function submitComment(){
   const inp=document.getElementById('m-comment-inp'); if(!inp) return;
   const text=inp.value.trim(); if(!text) return;
   const user=window._currentUser; if(!user) return;
@@ -41911,22 +42104,41 @@ function submitComment(){
   // comentário), depois fbSaveCard() (update incremental do card, mas ainda
   // carregando TODOS os comentários dele) — agora é 1 write pequeno,
   // desacoplado de qualquer outro campo do card.
-  if(!_commentsCache[_commentCardId]) _commentsCache[_commentCardId]={};
-  _commentsCache[_commentCardId][comment.id]=comment;
-  window._set(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+comment.id), comment)
-    .catch(err=>showToast('⚠ Erro ao salvar comentário: '+(err?.message||err)));
+  const cardId = _commentCardId;
+  const squad = ACTIVE_SQUAD;
+  const rawText = inp.value;
   inp.value=''; inp.style.height='auto';
   eocResetComment();
-  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
-  // Fire @mention notifications from comment
-  parseMentions(text, _commentCardId, comment.id);
+  // Aparece na hora como "⏳ enviando…" (sem ações) e vira comentário normal quando o banco confirma; se o banco recusar, sai da lista e o texto
+  // volta ao campo. Pedido do Caio (17/11/2026, revisão do #1837): esperar a confirmação calado deixava a lista parada e, offline, parecia perdido.
+  // A marca _enviando é só desta tela — o objeto gravado é `comment`, sem ela.
+  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
+  _commentsCache[cardId][comment.id]=Object.assign({}, comment, {_enviando:true});
+  if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  try{
+    await window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment);
+  }catch(err){
+    if(_commentsCache[cardId]) delete _commentsCache[cardId][comment.id];
+    if(ACTIVE_SQUAD===squad && _commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]||{}));
+    if(ACTIVE_SQUAD===squad && editingId===cardId && _commentCardId===cardId && !inp.value){
+      inp.value=rawText;
+      autoResizeCommentInp(inp);
+    }
+    showToast('⚠ Erro ao salvar comentário: '+(err?.message||err));
+    return;
+  }
+  if(ACTIVE_SQUAD!==squad) return;
+  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
+  _commentsCache[cardId][comment.id]=comment;
+  if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  parseMentions(text, cardId, comment.id);
   // "🤖 pensando..." — diferente de _dispatchAgenteAgilComment() (só usado
   // pelos atalhos sintéticos), aqui a pessoa digitou a @menção na mão, no
   // comentário normal — precisa da mesma detecção (ver _textMencionaAgenteAgil)
   // pra saber se isso é mesmo uma @menção real, e só se o squad tiver a
   // Cloud Function de verdade ouvindo (senão o indicador nunca resolveria
   // sozinho, só pelo timeout de segurança).
-  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(_commentCardId);
+  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(cardId);
 }
 
 function deleteComment(cid){

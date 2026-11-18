@@ -87,13 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-17 · Modal do card: comentário rejeitado volta ao campo — kanban v8.30.1005-dev (SÓ DEV)
+### 2026-11-17 · Modal do card: comentário rejeitado volta ao campo — kanban v8.30.1005-dev — PROD 17/11 (kanban v8.30.1005)
 
 O envio mostrava o comentário e disparava menções antes da confirmação do Firebase. Agora uma rejeição restaura o texto no mesmo card se o campo estiver vazio, e só a gravação confirmada atualiza a lista e dispara menções.
 
 - **Complemento (Claude, a pedido do Caio na revisão):** esperar a confirmação calado deixava a lista parada, e offline o comentário parecia perdido. Agora ele aparece na hora, apagado e com "⏳ enviando…", sem reagir/editar/excluir. Quando o banco confirma, vira comentário normal; se o banco recusar, sai da lista e o texto volta ao campo. A marca `_enviando` só existe na tela e nunca é gravada. Teste: `docs/arezzo/testes/test_comentario_enviando.js` (10 checagens: banco lento e banco recusando).
 
-### 2026-11-17 · ⚙ Automações de prazo e de "card parado" rodavam uma vez por navegador, não uma vez por squad — kanban v8.30.1003-dev (SÓ DEV)
+### 2026-11-17 · ⚙ Automações de prazo e de "card parado" rodavam uma vez por navegador, não uma vez por squad — kanban v8.30.1003-dev — PROD 17/11 (kanban v8.30.1005)
 
 - **Origem:** `/monitorarbugs` em Automações, pensando na Black Friday (muitas pessoas com o board aberto ao mesmo tempo).
 - **Causa:** `checkDueNotifs()` (gatilhos "Card vence hoje"/"vencido") e `checkAgingAutomations()` ("Card parado há muito tempo") rodam 1×/dia depois das 9h, mas a única trava era o `localStorage` de CADA aparelho. Cada pessoa que abria o board naquele dia rodava as regras de novo no mesmo card.
@@ -117,15 +117,15 @@ O envio mostrava o comentário e disparava menções antes da confirmação do F
 - **Teste:** `functions/cards/__tests__/guardiao.test.js` (+2). Os dois falham no código anterior; suíte do guardião 23/23.
 - **Sem achado:** todos os caminhos de exclusão do board gravam `cards_deleted_intentionally` na mesma escrita (excluir, em massa, arquivados, Agente, órfãos do supercard), e nenhuma function apaga card. `guardiaoStatus` é agendado, não HTTP. O `oceanoResumo` usa chave em tempo constante e teto por hora em transação.
 - **Observação, não corrigida:** o Ctrl+Z que devolve um card excluído não limpa a marca `cards_deleted_intentionally`. Se esse card sumir de novo por engano, o guardião o trata como exclusão de propósito.
-### 2026-11-17 · Supercards: XSS armazenado em IDs dos links e receitas — kanban v8.30.1004-dev — SÓ DEV
+### 2026-11-17 · Supercards: XSS armazenado em IDs dos links e receitas — kanban v8.30.1004-dev — PROD 17/11 (kanban v8.30.1005)
 
 Confirmado: funcionário/membro com escrita em dados do squad controla card.id ou chave de config/fanout_templates; ID válido com apóstrofo escapava por esc(), mas a decodificação do atributo onclick o recompilava como JavaScript no clique de outra pessoa. Reprodução Chromium: payload executou nos três testes de clicar receita, abrir filho e remover filho. Seis sinks da mesma família (incluindo notas do pai e Ficha Técnica) passam por jsq(). Revisão independente confirmou caminho e regras; sem sondar Firebase real. Testes console_supercards_1711.js agora mostram zero execução e ID íntegro. Fronteira: dado do banco → handler inline conferida e corrigida; nenhuma permissão, regra ou nó novo. Sem evidência de exploração em produção. Dica: não, correção de segurança.
 
-### 2026-11-17 · Supercards: receita em Modelo criava órfãos e Automação ultrapassava três camadas — SÓ DEV
+### 2026-11-17 · Supercards: receita em Modelo criava órfãos e Automação ultrapassava três camadas — PROD 17/11 (kanban v8.30.1005)
 
 A aplicação manual de receita não tinha o bloqueio de _editingQLItem já existente na criação rápida: filhos eram persistidos, mas o pai _isQLTemp desaparecia ao fechar/salvar o Modelo. A Automação também não conferia ancestrais e gerava quarta camada em uma versão. _superPodeGerarFilhos valida o pai no gerador e nos chamadores antes de aplicar o modelo do pai; campanha, criativo e ancestral arquivado continuam permitidos. Prova: test_supercards_1711.js e console_supercards_1711.js, com funções reais em Chromium, banco falso e boot real; três verificações isoladas e duas de boot falham na main anterior, todas passam após corrigir. Fronteira: sem mudança, restrição de hierarquia e de card temporário nos mesmos caminhos de escrita. Dica: não, correção de bug.
 
-### 2026-11-17 · 🔒 Trava presa por até 10 min quando a página fecha sem o beforeunload (Oceano, celular, queda) — a correção do #1832 não cobria — kanban v8.30.1002-dev (SÓ DEV)
+### 2026-11-17 · 🔒 Trava presa por até 10 min quando a página fecha sem o beforeunload (Oceano, celular, queda) — a correção do #1832 não cobria — kanban v8.30.1002-dev — PROD 17/11 (kanban v8.30.1005)
 
 - **Validação no banco real** (script de console com o card `c1792411265373_ijf`, squad dados):
   - o card é aberto num iframe e o iframe é removido;
@@ -141,7 +141,7 @@ A aplicação manual de receita não tinha o bloqueio de _editingQLItem já exis
 - **Teste:** `docs/arezzo/testes/test_trava_card.js` agora com 16 checagens. O `docs/arezzo/testes/fakefb.js` ganhou `onDisconnect` + `__simDisconnect()`.
 - **Lição:** teste de "fechar a página" com iframe não dispara `beforeunload`. A garantia de liberar estado ao sair precisa morar no servidor (`onDisconnect`), não num handler de saída da página.
 
-### 2026-11-17 · 🔒 A trava de edição do card só valia para o mouse: quem estava em "modo leitura" ainda gravava por cima de quem editava — kanban v8.30.1001-dev (SÓ DEV)
+### 2026-11-17 · 🔒 A trava de edição do card só valia para o mouse: quem estava em "modo leitura" ainda gravava por cima de quem editava — kanban v8.30.1001-dev — PROD 17/11 (kanban v8.30.1005)
 
 - **Origem:** `/monitorarbugs` na trava de edição (`card_locks`), logo depois da pergunta "o bloqueio do card não deveria resolver isso?" (#1831). Pensando na Black Friday.
 - **Causa:** o "modo leitura" era só CSS (`pointer-events:none` no corpo do modal), e nenhum caminho de gravação conferia a trava.
@@ -158,7 +158,7 @@ A aplicação manual de receita não tinha o bloqueio de _editingQLItem já exis
   - Agora o `beforeunload` remove direto. Se alguém assumiu no último instante, reassume na hora.
 - **Fora do escopo (reportado):** ações FORA do modal (menu de contexto, arrastar, em massa, Automações, Agente Ágil) não consultam a trava de propósito. Elas passam pelo merge de 3 vias e, desde o #1831, o modal aberto acompanha o que elas gravam. A mesma pessoa em duas abas continua editável nas duas (trava por usuário, de propósito).
 
-### 2026-11-17 · 🧑‍🤝‍🧑 Duas pessoas no mesmo card: o salvamento de uma desfazia o checklist, a descrição e os participantes da outra — kanban v8.30.1000-dev (SÓ DEV)
+### 2026-11-17 · 🧑‍🤝‍🧑 Duas pessoas no mesmo card: o salvamento de uma desfazia o checklist, a descrição e os participantes da outra — kanban v8.30.1000-dev — PROD 17/11 (kanban v8.30.1005)
 
 - **Origem:** `/monitorarbugs` pedido logo depois do bug do responsável (#1829), "esse tipo de erro, pensando em Black Friday": campo do modal que fica velho enquanto o card muda por baixo, e o autosave gravando o valor errado.
 - **Causa:** o modal lia título, descrição, Como fazer, motivo do impedimento, demandante, checklist, riscos, participantes, descrições extras, tipo de executor/status do agente, "sem prazo", Ficha Técnica, pontos, prioridade e OKR **uma vez ao abrir**. Só coluna, responsável, tags e datas acompanhavam o card (`_modalSyncCol`). Quando o colega gravava, a sincronização trocava a base do merge de 3 vias (`__base`) pela versão nova, mas a tela continuava com a antiga. Na minha próxima edição de qualquer campo, o autosave gravava os valores velhos da tela, o merge entendia isso como "eu mudei" e eles venciam.
