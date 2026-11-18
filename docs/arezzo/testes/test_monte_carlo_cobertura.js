@@ -8,35 +8,38 @@ const tipos = { '.html': 'text/html', '.js': 'application/javascript', '.png': '
 const srv = http.createServer((q, r) => { const f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': tipos[path.extname(f)] || 'application/octet-stream' }); r.end(d); }); });
 let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '✅ ' : '❌ ') + n + (ok ? '' : ' → ' + JSON.stringify(d).slice(0, 400))); };
 const ADM = { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana ADM', photoURL: '', providerData: [{ providerId: 'google.com' }] };
+const noon = n => { const x = new Date(); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - n); return x.toISOString(); };
+const fim = (id, n, extra) => { const at = noon(n); return Object.assign({ id, title: 'SEGREDO-TITULO', owner: 'PESSOA-X', col: 'done', flow: { doneAt: at, log: [{ from: 'progress', to: 'done', at }] } }, extra); };
+const r5 = noon(5);
+const cards = [
+  fim('ID-SECRETO-1', 3), fim('v2', 3, { archived: true }), fim('v3', 10),
+  { id: 'v4', title: 'x', col: 'done', flow: { doneAt: r5, log: [{ from: 'progress', to: 'done', at: noon(7) }, { from: 'done', to: 'progress', at: noon(6) }, { from: 'progress', to: 'done', at: r5 }] } },
+  fim('v2', 3),
+  { id: 'aberto', col: 'progress', flow: { log: [] } }, { id: 'arq-aberto', col: 'todo', archived: true, flow: { log: [] } },
+  fim('canc', 3, { col: 'cancel' }),
+  { id: 'imp', col: 'done', flow: { doneAt: noon(4), imported: true, log: [] } }, { id: 'sem-ev', col: 'done', flow: { doneAt: noon(4), log: [] } },
+  { id: 'legado', col: 'done', doneAt: noon(4) }, { id: 'ruim', col: 'done', flow: { doneAt: 'xx', log: [] } },
+  { id: 'criado', col: 'done', flow: { doneAt: noon(4), log: [{ from: '—', to: 'done', at: noon(4) }] } },
+  { id: 'reset', col: 'done', flow: { doneAt: noon(8), resetAt: noon(8), log: [] } },
+  fim('pai', 4, { childCardIds: ['v3'] }), fim('antigo', 25), fim('hoje', 0),
+  { id: 'entre', col: 'done', flow: { doneAt: noon(4), log: [{ from: 'cancel', to: 'done', at: noon(4) }] } },
+];
 const seed = () => ({ kanban: { usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: ADM.email, inscrito: true, init: 'AA', role: 'adm', squads: { dados: true } } }, usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana ADM', init: 'AA' } }, config: { adm_emails: [ADM.email] },
-  squads: { dados: { dados: { config: { flow: { doneCols: ['done', 'cancel'] } } } } } } });
+  squads: { dados: { dados: { columns: [{ id: 'todo', name: 'A Fazer' }, { id: 'progress', name: 'Em Progresso' }, { id: 'done', name: 'Concluído' }, { id: 'cancel', name: 'Cancelado' }], cards, flow_baseline: { at: noon(20), by: 'painel' }, config: { flow: { doneCols: ['done', 'cancel'] } } } } } } });
 (async () => {
   await new Promise(ok => srv.listen(0, '127.0.0.1', ok));
+  const BASE = 'http://127.0.0.1:' + srv.address().port;
   const b = await chromium.launch({ executablePath: chrome(), headless: true });
   try {
-    const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, seed());
-    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.goto('http://127.0.0.1:' + srv.address().port + '/painel-dev.html'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(u => window.__authCb(u), ADM); await p.waitForTimeout(2500);
-    await p.evaluate(() => {
-      window._pollSquadDados = () => {}; window._pollSquadSnapshots = () => {};
-      const noon = n => { const x = new Date(); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - n); return x.toISOString(); };
-      const fim = (id, n, extra) => { const at = noon(n); return Object.assign({ id, title: 'SEGREDO-TITULO', owner: 'PESSOA-X', col: 'done', flow: { doneAt: at, log: [{ from: 'progress', to: 'done', at }] } }, extra); };
-      const r5 = noon(5);
-      squadData.dados = { columns: [{ id: 'todo', name: 'A Fazer' }, { id: 'progress', name: 'Em Progresso' }, { id: 'done', name: 'Concluído' }, { id: 'cancel', name: 'Cancelado' }], flowBaseline: { at: noon(20) }, agilCfg: {}, tags: [], members: [], cards: [
-        fim('ID-SECRETO-1', 3), fim('v2', 3, { archived: true }), fim('v3', 10),
-        { id: 'v4', title: 'x', col: 'done', flow: { doneAt: r5, log: [{ from: 'progress', to: 'done', at: noon(7) }, { from: 'done', to: 'progress', at: noon(6) }, { from: 'progress', to: 'done', at: r5 }] } },
-        fim('v2', 3),
-        { id: 'aberto', col: 'progress', flow: { doneAt: null, log: [] } }, { id: 'arq-aberto', col: 'todo', archived: true, flow: { log: [] } },
-        fim('canc', 3, { col: 'cancel' }),
-        { id: 'imp', col: 'done', flow: { doneAt: noon(4), imported: true, log: [] } }, { id: 'sem-ev', col: 'done', flow: { doneAt: noon(4), log: [] } },
-        { id: 'legado', col: 'done', doneAt: noon(4) }, { id: 'ruim', col: 'done', flow: { doneAt: 'xx', log: [] } },
-        { id: 'criado', col: 'done', flow: { doneAt: noon(4), log: [{ from: '—', to: 'done', at: noon(4) }] } },
-        { id: 'reset', col: 'done', flow: { doneAt: noon(8), resetAt: noon(8), log: [] } },
-        fim('pai', 4, { childCardIds: ['v3'] }), fim('antigo', 25), fim('hoje', 0),
-        { id: 'entre', col: 'done', flow: { doneAt: noon(4), log: [{ from: 'cancel', to: 'done', at: noon(4) }] } },
-      ] };
-      window.__log.length = 0;
-    });
+    const abrir = async pagina => { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, seed());
+      const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await p.goto(BASE + '/' + pagina); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(u => window.__authCb(u), ADM); await p.waitForTimeout(3000); return { ctx, p, errs }; };
+    { const { ctx, p } = await abrir('painel-dev.html'); const avisos = []; p.on('console', m => { if (m.type() === 'warning') avisos.push(m.text()); });
+      const r = await p.evaluate(fs.readFileSync(path.join(__dirname, 'console_monte_carlo_cobertura.js'), 'utf8')); await p.waitForTimeout(100);
+      t('no painel-dev, que não carrega o squad, manda abrir o painel.html', r === null && avisos.some(a => a.includes('painel.html')), avisos); await ctx.close(); }
+    const { ctx, p, errs } = await abrir('painel.html');
+    t('o painel.html carrega o squad com os arquivados e a data do corte', await p.evaluate(() => squadData.dados && squadData.dados.cards.length === 18 && !!squadData.dados.flowBaseline), await p.evaluate(() => Object.keys(squadData)));
+    await p.evaluate(() => { window.__log.length = 0; });
     const src = fs.readFileSync(path.join(__dirname, 'console_monte_carlo_cobertura.js'), 'utf8');
     const r = await p.evaluate(src);
     const D = r.descartes;
