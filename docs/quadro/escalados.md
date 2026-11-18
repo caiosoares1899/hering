@@ -127,3 +127,19 @@ Rodada `/monitorarbugs` de 16/11/2026, Codex. ESCALAR AO CLAUDE: `kanban-dev.htm
 Revisão independente tentou refutar: confirmou os dois primeiros e qualificou o terceiro pelas regras reais. Teste Chromium com funções extraídas da página real, banco/dependências falsos: `node docs/arezzo/testes/test_cards_sensiveis_1611.js` → 3/3 falhas esperadas até correção. Console isolado/read-only: `docs/arezzo/testes/console_cards_sensiveis_1611.js`, validado por check-script. Não acessa Firebase real.
 
 Cobertura: primitivas criar/salvar/lote; autosave × Salvar e wrapper; movimentação mouse/toque/menu; criação/dedupe de notificações pessoais. Criação inspecionada sem novo defeito confirmado. Não cobre push/FCM completo, todos os produtores server-side, regras implantadas ou dados reais. Sem evidência de ocorrência em produção. Fronteira: sem alteração; bugs de integridade dentro do modelo interno aceito. ADM valida em dev após correção, nunca o agente.
+
+
+<a id="apresentacao-sem-rolagem"></a>
+
+## Apresentação do Radar sem rolagem — 18/11/2026
+
+**Escalado ao Claude.** Redesenho localizado na composição inteira do detalhe do Objetivo para quem apresenta no PC. A #1862 melhora contraste, distribuição do rodapé e leitura da tabela. O detalhe ainda reserva áreas separadas para contexto, Marcos e quatro listas do rodapé, com alturas ajustadas em `_okrFitDetailSections()`. Cada área que transborda rola por conta própria, mesmo quando outra tem espaço sobrando.
+
+**Como reproduzir.** Abrir o Objetivo `o3` de `docs/arezzo/testes/seed_apresentacao.js` no Chromium com Firebase falso a 1280 × 900. São 14 marcos, descrição longa e listas de discussão. No ensaio após a #1862, a tabela ainda rolava 60 px. A mesma tabela cabia a 1920 × 1080. Compare também 1366 × 768, com título comprido e rodapé curto e cheio.
+
+**Critérios de aceite.**
+
+- Medir o espaço e o conteúdo reais. Blocos curtos ou vazios ocupam menos espaço, e blocos cheios aproveitam a sobra. Preservar ordem de leitura e métricas.
+- Mostrar o máximo de conteúdo legível sem rolagem na página ou em painéis internos. Usar o piso atual de 16 px como ponto de partida para nomes de marcos.
+- Se tudo não couber, preservar o contexto e indicar claramente quantos itens ficaram para uma continuação. Validar com Caio a prioridade dos blocos e a navegação da continuação antes de alterar o fluxo ao vivo.
+- Comparar quantidade de conteúdo visível, fonte efetiva e ausência de overflow com dados simulados: sem marcos, 14 e 50 marcos, título longo e listas de riscos/próximos passos longas. Conferir também redimensionamento, teclado e apresentação ao vivo.
