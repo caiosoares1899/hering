@@ -47,6 +47,10 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
     const semMeta = await p.locator('.d2-metrics').innerText();
     t(tag + 'sem meta numérica: exibe progresso dos marcos sem inventar atingimento',
       /Progresso dos marcos/.test(semMeta) && !/Atingimento da meta/.test(semMeta), semMeta);
+    // Prioridades do detalhe (pedido do Caio, 18/11/2026): a rolagem continua existindo, mas fica menor em Marcos e não aparece em Riscos e Próximos passos curtos.
+    if (w >= 1366) { await p.evaluate(() => window._okrOpenDetail('o3')); await p.waitForTimeout(500);
+      const sobra = await p.evaluate(() => Object.fromEntries([['marcos', '.d2-table-rows'], ['riscos', '.d2-risk .d2-flist'], ['passos', '.d2-next .d2-flist']].map(([k, s]) => { const e = document.querySelector(s); return [k, e ? e.scrollHeight - e.clientHeight : 0]; })));
+      t(tag + 'detalhe com 14 marcos: menos rolagem em Marcos e nenhuma em Riscos e Próximos passos', sobra.marcos <= (w === 1366 ? 100 : 0) && sobra.riscos <= 1 && sobra.passos <= 1, sobra); }
     // Concluídos recolhidos: a linha que sobra não pode ir parar no fim da tabela, e recolher tudo precisa explicar a tabela vazia (print do Caio, 18/11/2026).
     const recolhido = await p.evaluate(async () => {
       const espera = () => new Promise(r => setTimeout(r, 350)), guardados = JSON.parse(JSON.stringify(okrMarcos));
