@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-18 · Apresentação ao vivo: teste passa a cobrir a retomada documentada da sala
+
+O teste da apresentação ainda esperava que a pausa local persistisse após o apresentador avançar. O hotfix de 15/10 já documenta que a sala volta a acompanhar a cada mudança de slide, detalhe ou apresentador. A suíte agora testa pausa sem navegação nova, retomada manual, retomada automática e código de saída em caso de falha. Nenhuma mudança na página publicada.
+
 ### 2026-11-18 · Tema Black Friday manual era perdido ao fim da semana após recarregar — kanban v8.30.1015-dev (SÓ DEV)
 
 Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo manualmente como padrão sazonal. Na virada de 30/11 com a aba aberta, o contador substituía a preferência gravada. O boot preserva a escolha manual e mantém a precedência sazonal quando o automático está ligado. A regressão testa entrada na semana, recarga, virada e saída manual.

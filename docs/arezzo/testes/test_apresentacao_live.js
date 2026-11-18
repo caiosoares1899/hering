@@ -1,6 +1,6 @@
 // Apresentação ao vivo (okr-apresentacao.slide.html): apresentador comanda o slide e o detalhe, quem abre acompanha, laser, caneta, passar/pedir o controle, assumir, encerrar.
 // Duas páginas na mesma máquina; o Firebase falso é por página, então "sync" copia o nó apresentacao_live de uma pra outra e dispara os ouvintes (como o banco real faria).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
+const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
 const U=(uid,n,email)=>({uid,email:email||uid+'@ciahering.com.br',displayName:n,photoURL:'',providerData:[{providerId:'google.com'}]});
 const mk=(id,t,o)=>({id,titulo:t,areaId:'geral',trimestres:['2026-Q4'],responsaveis:['ana'],tagIds:[],history:[],indicadores:['i1'],progressos:['p1'],proximosPassos:[],riscos:[],planosAcao:[],descricao:'desc '+t,torre:'digital',...o});
 const seed=()=>({kanban:{okr:{objetivos:{d1:mk('d1','Fidelidade',{areaId:'crm',ordem:0}),d2:mk('d2','Checkout',{areaId:'tech',ordem:0}),d3:mk('d3','NPS',{areaId:'cx',ordem:0})},marcos:{},tags:{},reuniao_notas:{}},
@@ -9,8 +9,8 @@ const NO='kanban/okr/apresentacao_live';
 async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((window.__store.kanban||{}).okr||{}).apresentacao_live||null));
   await to.evaluate(([n,NO])=>{ const v=JSON.parse(n), st=window.__store; st.kanban=st.kanban||{}; st.kanban.okr=st.kanban.okr||{}; if(v===null) delete st.kanban.okr.apresentacao_live; else st.kanban.okr.apresentacao_live=v;
     (window.__lis||[]).filter(l=>l.p===NO).forEach(l=>l.cb({val:()=>v===null?null:JSON.parse(JSON.stringify(v)), exists:()=>v!==null, key:'apresentacao_live'})); },[n,NO]); await to.waitForTimeout(250); }
-(async()=>{ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,300))); };
- const open=async(user,w=1280,h=800)=>{ const ctx=await b.newContext({viewport:{width:w,height:h}}); await fake.install(ctx,seed()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept()); await p.goto('http://localhost:8941/okr-apresentacao.slide.html'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(1500); return {ctx,p,errs}; };
+(async()=>{ const b=await chromium.launch({executablePath:process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,300))); };
+ const open=async(user,w=1280,h=800)=>{ const ctx=await b.newContext({viewport:{width:w,height:h}}); await fake.install(ctx,seed()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept()); await p.goto((process.env.APRESENTACAO_TEST_URL || 'http://localhost:8941') + '/okr-apresentacao.slide.html'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(1500); return {ctx,p,errs}; };
  const A=await open(U('ana','Ana ADM')), B=await open(U('eve','Eve Souza'));
  const info=p=>p.evaluate(()=>({key:slides[currentIdx].key, idx:currentIdx, det:document.getElementById('detail-ov').classList.contains('open')?_okrDetailCurrentId:'', box:document.getElementById('live-box').textContent.replace(/\s+/g,' ').trim()}));
  t('antes de apresentar: botão "Apresentar ao vivo" na barra', /Apresentar ao vivo/.test((await info(A.p)).box), await info(A.p));
@@ -22,8 +22,15 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.evaluate(()=>window._okrCloseDetail()); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('fechar o detalhe fecha pra todos', (await info(B.p)).det==='', await info(B.p));
  // acompanhante mexe sozinho -> sai da sincronização; "Voltar a seguir" volta
  await B.p.evaluate(()=>window._okrGoTo(0)); await B.p.waitForTimeout(200); const b3=await info(B.p); t('mexer nos slides por conta própria sai da sincronização (e aparece "Voltar a seguir")', b3.idx===0 && /Voltar a seguir/.test(b3.box), b3);
- await A.p.evaluate(()=>window._okrGoTo(3)); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('fora da sincronização, o slide do apresentador NÃO puxa a pessoa', (await info(B.p)).idx===0, await info(B.p));
- await B.p.evaluate(()=>window._liveSeguir()); await B.p.waitForTimeout(200); t('"Voltar a seguir" leva ao slide atual do apresentador', (await info(B.p)).idx===3, await info(B.p));
+ await sync(A.p,B.p);
+ const bPausa=await info(B.p); t('snapshot sem nova navegação preserva a pausa local', bPausa.idx===0 && /Voltar a seguir/.test(bPausa.box), bPausa);
+ await B.p.evaluate(()=>window._liveSeguir());
+ const bSeguiu=await info(B.p); t('"Voltar a seguir" retoma o slide atual imediatamente', bSeguiu.key===a2.key && /Acompanhando/.test(bSeguiu.box), bSeguiu);
+ await B.p.evaluate(()=>window._okrGoTo(0));
+ await A.p.evaluate(()=>window._okrGoTo(3));
+ await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[3].key);
+ await sync(A.p,B.p);
+ const bRetomou=await info(B.p); t('nova navegação do apresentador ressincroniza quem estava em pausa', bRetomou.idx===3 && /Acompanhando/.test(bRetomou.box), bRetomou);
  // laser
  await A.p.keyboard.press('l'); await A.p.mouse.move(640,360); await A.p.waitForTimeout(150); await A.p.mouse.move(700,400); await A.p.waitForTimeout(150); await sync(A.p,B.p);
  const lz=await B.p.evaluate(()=>{ const e=document.getElementById('live-laser'); return {d:getComputedStyle(e).display, l:e.style.left, t:e.style.top}; });
@@ -109,4 +116,4 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  { const V=await open(U('ext','Externo','ext@gmail.com')); await A.p.click('#live-box button'); await A.p.waitForTimeout(250); await sync(A.p,V.p);
    const v=await info(V.p); t('visualizador externo: vê quem apresenta e acompanha, sem botão de apresentar/pedir', /Ana ADM está apresentando/.test(v.box) && !/Pedir o controle|Apresentar ao vivo/.test(v.box), v);
    await V.ctx.close(); }
- await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();
+ await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); process.exitCode=ok?0:1; })();
