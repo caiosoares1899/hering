@@ -184,3 +184,23 @@ A conta original usava colunas fixas e larguras estimadas. Na apresentação atu
 - Preserve datas, valores registrados, unidades e cálculo oficial de atingimento. O percentual oficial é limitado a 100%, portanto a posição dos pontos deve aproveitar os valores registrados, que já são usados pelo gráfico, para mostrar a superação.
 - Para metas em que **reduzir é melhor** (tipo `abaixo` ou meta menor que o valor inicial), o lado bom segue o sentido da meta. Exemplo com meta de R$ 100: R$ 90 acima da água, R$ 100 na superfície, R$ 110 submerso. Se inverter o eixo nesses casos, deixe o sentido explícito e preserve os rótulos de valores reais.
 - Aplique primeiro ao gráfico numérico da apresentação (`_okrAtingChartHtml`). Mantenha o comportamento atual dos tipos sem série numérica comparável e a evolução sem registros. Valide cruzamentos em ambos os sentidos, ponto exatamente na meta e leitura em 1280 × 900 e Full HD.
+
+### Revisão visual da linha d’água após a #1868
+
+**Escalado ao Claude.** Redesenho do modal de Evolução na apresentação. O Caio aprovou a metáfora e pediu reorganização visual. Referência de reprodução: Objetivo com título longo, meta financeira de R$ 80 mil, valor inicial de R$ 36 mil e quatro registros fictícios de R$ 12 mil, R$ 21 mil, R$ 36 mil e R$ 51 mil, todos submersos. Boot real da apresentação com Firebase falso, código da origem em `467760a8`, 1280 × 900, Full HD e 390 × 800. A apresentação usa tema próprio.
+
+| Achado | Evidência e efeito |
+|---|---|
+| Hierarquia disputada | Resumo, barra rosa, quatro rótulos sobre pontos, três linhas com estilos marcantes e histórico repetem ou disputam a atenção com a evolução. O SVG tem 15 rótulos já com quatro registros. |
+| Marcadores pesados | Um peixe laranja e um rótulo contornado a cada registro dominam a série. O primeiro e o último peixe avançam para fora da área de plotagem. |
+| Contraste e escala | Datas e eixo ficam apagados. O SVG mede 718 × 346 px tanto em 1280 quanto em 1920. A 390 px, o SVG inteiro encolhe para 316 × 152 px, com rótulos difíceis de ler, sem overflow horizontal do documento. |
+| Dois níveis de informação competem | A lista de registros ocupa espaço vertical logo abaixo da visualização e usa uma borda colorida por linha. A projeção precisa da tendência, da meta e do valor atual antes dos detalhes de todos os registros. |
+
+**Direção de implementação.**
+
+1. Separar o título fixo “Evolução do atingimento” do nome do Objetivo em uma linha secundária. Alinhar valor atual, delta até a meta e período numa faixa curta de leitura. Reaproveitar valores existentes e manter o atingimento oficial com seu significado atual; se o delta for exibido, rotular em unidade real e conferir o sentido para “menor é melhor”. Avaliar remover a barra rosa redundante deste modal se o atingimento oficial continuar identificável no resumo.
+2. Usar a linha d’água como única referência forte no SVG, com rótulo direto da meta e fundo submerso discreto. Elevar o contraste de datas e eixo, manter grade quieta e mover “Aquém da meta / Meta superada” para uma legenda compacta fora da área de dados. Quando a referência inicial for importante, torná-la secundária e evitar ticks quase coincidentes com ela. Usar traço sólido para a série e reservar pontilhado para a meta.
+3. Usar pontos simples na série e um peixe discreto apenas no registro atual. Mostrar o valor atual junto ao ponto com margem de segurança; manter valores intermediários no foco, toque e lista. Reservar margem para primeiro e último ponto e evitar colisão com a meta, eixos ou borda. Preservar o eixo temporal, os valores reais, a semântica de igualdade e a direção de metas de redução.
+4. Tratar “Registros” como detalhe secundário, com ação explícita para expandir e navegação por teclado. Expandido, usar linhas compactas de data, valor e atingimento com números alinhados. Usar largura e altura do modal de acordo com o espaço do projetor, reservando espaço para título e controles. Em viewport estreito, reduzir ticks e rótulos explícitos com tipografia legível, preservando acesso aos dados e ao botão de fechar.
+
+**Aceite.** Comparar capturas antes/depois a 1280 × 900 e 1920 × 1080. A meta e o último valor devem ser identificáveis sem abrir Registros. Checar ausência de colisões e recortes com 1 ponto, os 4 pontos descritos, 50 registros, título longo e série que cruza a linha nos dois sentidos. Validar todos acima, todos abaixo, ponto na meta e meta de redução. Checar foco, toque, fechamento por Esc, estado vazio e 390 px. Não mudar fórmula, histórico ou dados; partir de `_okrAtingChartHtml()` e `_okrAtingChartPanelHtml()` em `okr-apresentacao.slide.html`.
