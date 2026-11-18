@@ -39572,20 +39572,37 @@ if(window.visualViewport){
     const com = val('m-comment-inp'); if(com) partes.push('Comentário não enviado:\n'+com);
     return partes.join('\n\n');
   }
+  // Campos que só gravam no 💾 Salvar (prioridade, pontos, OKR, impedimento, datas) ou card novo sem texto para copiar. O comentário fica de fora: ele já vai na caixa.
+  function _auCamposSemSalvar(){
+    const ov = document.getElementById('card-ov');
+    if(!ov || !ov.classList.contains('open')) return false;
+    if(!editingId) return _newCardHasContent();
+    if(!_cardManualSnap) return false;
+    const semComentario = o => { const { commentDraft, ...resto } = o; return JSON.stringify(resto); };
+    return semComentario(_manualFieldsNow()) !== semComentario(_cardManualSnap);
+  }
   function _auShowBlock(msg){
     // Versão nova: grava o autosave pendente ANTES de travar (a tela promete que o digitado fica salvo). Sessão parada (msg) não grava: a cópia dela pode estar velha.
     const _pendente = !_auShown && !!_autoSaveTimer;
+    const _camposSemSalvar = !_auShown && _auCamposSemSalvar();
     if(!_auShown && !msg){ try{ _flushAutoSave(); }catch(e){ console.warn('[auto-update] autosave pendente não gravou:', e); } }
     const _naoSalvo = _auShown ? '' : _auTextoNaoSalvo(!!msg && _pendente);
+    const _avisoCampos = _camposSemSalvar && (editingId || !_naoSalvo) ? ' Há campos deste card sem salvar (como prioridade, datas ou impedimento) e eles vão se perder ao atualizar.' : '';
     window._auStale = true;   // trava as gravações de card (ver _recusaSeDesatualizado)
     if(_auShown) return;
     _auShown = true;
     const ov = document.createElement('div');
     ov.id = '_au-block';
     ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(4,10,18,.94);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:"DM Sans",sans-serif;padding:20px;';
-    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">'+(msg?'🧊':'🔄')+'</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">'+(msg?'Sua tela ficou parada':'Versão desatualizada')+'</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">'+(msg||('Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo'+(_naoSalvo?'.':', e o que você já digitou fica salvo.')))+'</div><div id="_au-block-copia" hidden style="text-align:left;margin-bottom:16px;"><label for="_au-block-texto" style="display:block;font-size:12px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:6px;">Copie antes de atualizar: este texto ainda não foi salvo</label><textarea id="_au-block-texto" readonly rows="5" style="width:100%;box-sizing:border-box;resize:vertical;background:rgba(0,0,0,.2);color:var(--txt,#e8f4fd);border:1px solid var(--glass-b,rgba(255,255,255,.2));border-radius:8px;padding:8px;font:12px/1.45 inherit;"></textarea><button id="_au-block-copiar" type="button" style="margin-top:6px;background:transparent;border:1px solid var(--accent,#38b6ff);color:var(--txt,#e8f4fd);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Copiar texto</button></div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
+    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">'+(msg?'🧊':'🔄')+'</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">'+(msg?'Sua tela ficou parada':'Versão desatualizada')+'</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">'+(msg||('Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo'+((_naoSalvo||_avisoCampos)?'.':', e o que você já digitou fica salvo.')))+_avisoCampos+'</div><div id="_au-block-copia" hidden style="text-align:left;margin-bottom:16px;"><label for="_au-block-texto" style="display:block;font-size:12px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:6px;">Copie antes de atualizar: este texto ainda não foi salvo</label><textarea id="_au-block-texto" readonly rows="5" style="width:100%;box-sizing:border-box;resize:vertical;background:rgba(0,0,0,.2);color:var(--txt,#e8f4fd);border:1px solid var(--glass-b,rgba(255,255,255,.2));border-radius:8px;padding:8px;font:12px/1.45 inherit;"></textarea><button id="_au-block-copiar" type="button" style="margin-top:6px;background:transparent;border:1px solid var(--accent,#38b6ff);color:var(--txt,#e8f4fd);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Copiar texto</button></div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
     document.body.appendChild(ov);
-    document.getElementById('_au-block-btn').onclick=()=>location.reload();
+    // Espera a gravação que acabou de sair (até 5 s): recarregar antes da confirmação cortaria o autosave que esta tela acabou de garantir.
+    document.getElementById('_au-block-btn').onclick=async function(){
+      this.disabled = true; this.textContent = 'Salvando…';
+      const limite = Date.now()+5000;
+      while(_pendingFbWrites>0 && Date.now()<limite) await new Promise(r=>setTimeout(r,100));
+      location.reload();
+    };
     if(_naoSalvo){
       const caixa = document.getElementById('_au-block-texto'), bt = document.getElementById('_au-block-copiar');
       document.getElementById('_au-block-copia').hidden = false;

@@ -100,13 +100,13 @@
 
 ### `kanban-dev.html` (142 âncoras curadas)
 - `ADM_EMAILS` (L8178) · `getEffectiveRole` (L8313) · `SQUAD_META_LIVE` (L8375) · `resolveSquadAndShow` (L13185) · `autoRegistrar` (L13722) · `_claimUserInit` (L13558)
-- `_ensureInitRegistryBackfilled` (L13601) · `doSignIn` (L13072) · `_syncAuthProfileToFirebase` (L13625) · `showApp` (L13243) · `_onRealAuthChange` (L40188) · `agentes` (L9090)
+- `_ensureInitRegistryBackfilled` (L13601) · `doSignIn` (L13072) · `_syncAuthProfileToFirebase` (L13625) · `showApp` (L13243) · `_onRealAuthChange` (L40205) · `agentes` (L9090)
 - `allIdentities` (L9102) · `renderAgentesList` (L29766) · `fecharAddAgente` (L29807) · `salvarAgente` (L29811) · `excluirAgente` (L29838) · `CARD_SECTIONS` (L9015)
 - `openCard` (L19570) · `openAgenteHotline` (L19449) · `_applyAgenteHotlineSkin` (L19425) · `saveCard` (L20114) · `_finishCloseOv` (L39427) · `_newCardGuardOff` (L18475)
 - `fbSaveAll` (L11109) · `fbCreateCard` (L11352) · `fbSaveCard` (L11430) · `_applyCardsSync` (L11844) · `_notasUpdate` (L24186) · `_saveCardWithRetry` (L11595)
-- `saveExtraDesc` (L19157) · `openNewCard` (L20019) · `backfillFlow` (L10541) · `recordMove` (L10415) · `_reportUnexpectedCardDisappearance` (L11417) · `searchDependsCards` (L40700)
-- `_currentTheme` (L39701) · `toggleTheme` (L39763) · `toggleThemeAuto` (L39861) · `exitViceCity` (L39942) · `_isViceCityEasterEggAtivo` (L40097) · `toggleBlackFriday` (L39983)
-- `exitBlackFriday` (L40005) · `_themeBtnRightClick` (L40025) · `_isBlackFridayAtivo` (L39962) · `maybeAutoArchiveOldCards` (L17981) · `_renderArquivadosBody` (L28343) · `openArquivados` (L28408)
+- `saveExtraDesc` (L19157) · `openNewCard` (L20019) · `backfillFlow` (L10541) · `recordMove` (L10415) · `_reportUnexpectedCardDisappearance` (L11417) · `searchDependsCards` (L40717)
+- `_currentTheme` (L39718) · `toggleTheme` (L39780) · `toggleThemeAuto` (L39878) · `exitViceCity` (L39959) · `_isViceCityEasterEggAtivo` (L40114) · `toggleBlackFriday` (L40000)
+- `exitBlackFriday` (L40022) · `_themeBtnRightClick` (L40042) · `_isBlackFridayAtivo` (L39979) · `maybeAutoArchiveOldCards` (L17981) · `_renderArquivadosBody` (L28343) · `openArquivados` (L28408)
 - *... (+94 em docs/CODE_SYMBOLS.md)*
 
 ### `painel-dev.html` (65 âncoras curadas)

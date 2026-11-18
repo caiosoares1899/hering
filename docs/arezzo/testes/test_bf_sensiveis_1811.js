@@ -87,6 +87,29 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       const r = await p.evaluate(() => ({ txt: document.getElementById('_au-block')?.innerText || '', oculto: document.getElementById('_au-block-copia')?.hidden }));
       t('D5. sem nada pendente: mantém a mensagem normal e esconde a caixa', /fica salvo/.test(r.txt) && r.oculto === true, r);
       await ctx.close(); }
+    { const { ctx, p } = await abrir(); await novaVersao(p);
+      await p.evaluate(() => openCard('c1')); await p.waitForTimeout(900);
+      await p.evaluate(() => { const orig = window._runTransaction; window._runTransaction = async (...a) => { await new Promise(r => setTimeout(r, 900)); return orig(...a); };
+        window.addEventListener('beforeunload', () => { try { sessionStorage.setItem('pendentes_no_reload', String(_pendingFbWrites)); } catch (e) {} });
+        const el = document.getElementById('m-desc'); el.value += ' + clique imediato'; el.dispatchEvent(new Event('input', { bubbles: true })); scheduleAutoSave(); });
+      await p.evaluate(() => window._auCheckVersion());
+      const nav = p.waitForNavigation({ timeout: 9000 }); await p.click('#_au-block-btn'); await nav; await p.waitForTimeout(300);
+      t('E1. clicar em Atualizar na hora espera a gravação terminar', (await p.evaluate(() => sessionStorage.getItem('pendentes_no_reload'))) === '0', await p.evaluate(() => sessionStorage.getItem('pendentes_no_reload')));
+      await ctx.close(); }
+    { const { ctx, p } = await abrir(); await novaVersao(p);
+      await p.evaluate(() => openCard('c1')); await p.waitForTimeout(900);
+      await p.evaluate(() => { document.getElementById('m-priority').value = 'high'; });
+      await p.evaluate(() => window._auCheckVersion()); await p.waitForTimeout(500);
+      const txt = await p.evaluate(() => document.getElementById('_au-block')?.innerText || '');
+      t('E2. card existente com prioridade sem salvar: avisa e não promete', !/fica salvo/.test(txt) && /sem salvar/.test(txt), txt);
+      await ctx.close(); }
+    { const { ctx, p } = await abrir(); await novaVersao(p);
+      await p.evaluate(() => openNewCard()); await p.waitForTimeout(500);
+      await p.evaluate(() => { document.getElementById('m-priority').value = 'high'; });
+      await p.evaluate(() => window._auCheckVersion()); await p.waitForTimeout(500);
+      const txt = await p.evaluate(() => document.getElementById('_au-block')?.innerText || '');
+      t('E3. card novo só com prioridade: avisa e não promete', !/fica salvo/.test(txt) && /sem salvar/.test(txt), txt);
+      await ctx.close(); }
   } finally { await b.close(); srv.close(); }
   console.log(falhas ? `\n${falhas} falha(s)` : '\nTudo certo'); process.exit(falhas ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });
