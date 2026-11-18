@@ -2089,7 +2089,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
         <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📢 Comunicados</div>
         <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
       </div>
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos que aparecem como popup nos boards. Fase 1: popup ao abrir/recarregar o board.</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos para os squads e para o Oceano: escolha entre popup ao abrir o board, só no mural dos boards ou 🌊 só no mural do Oceano (urgentes também avisam no 🔔 sino).</div>
 
       <!-- Rascunhos 🤖 aguardando revisão — criados automaticamente ao final de sessões de dev -->
       <div id="comunicados-rascunhos-wrap" style="display:none;margin-bottom:14px;">
@@ -3072,7 +3072,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
            (sem servidor), mostra o que muda e publica em kanban/calendarios_gantt(_dev)/{marca|comercial}. O Maré mostra como abas da visão 📊 Gantt. -->
       <div id="painel-cfg-gantt" style="display:none;">
         <div class="cfg-sec">Calendários do Gantt</div>
-        <div style="font-size:10.5px;color:var(--txt3);margin-bottom:12px;line-height:1.55;">Aparecem para <b>todas as squads</b> (só quem entra com conta Hering) como abas da visão <b>📊 Gantt</b> do Maré. Envie o arquivo <b>.xlsx</b> (no Google Sheets: Arquivo → Fazer download → Microsoft Excel). Reenviar troca o calendário pelo arquivo novo: antes de publicar você vê o que é <b>novo</b>, o que <b>mudou</b> e o que <b>sai</b>. Qualquer pessoa da Hering pode atualizar — <b>aqui ou direto no 📊 Gantt do Maré</b> — e cada publicação fica no 🕘 Histórico de lá, com volta a qualquer versão.</div>
+        <div style="font-size:10.5px;color:var(--txt3);margin-bottom:12px;line-height:1.55;">Aparecem para <b>todas as squads</b> (só quem entra com conta Hering) como abas da visão <b>🧮 Gantt</b> do Maré e em <b>📅 Calendário → 📊 Gantt</b> do Radar. Envie o arquivo <b>.xlsx</b> (no Google Sheets: Arquivo → Fazer download → Microsoft Excel). Antes de publicar você vê o que é <b>novo</b>, o que <b>mudou</b> e o que <b>sai</b> (em Marca, Comercial Hering e Marketplace o envio atualiza o calendário; no Comercial Outlet troca só o mês da planilha enviada). Qualquer pessoa da Hering pode atualizar — <b>aqui ou direto no 🧮 Gantt do Maré</b> — e cada publicação fica no 🕘 Histórico de lá, com volta a qualquer versão.</div>
         <div id="pcfg-gantt-cards" style="display:flex;flex-direction:column;gap:12px;"></div>
       </div>
 
@@ -3240,7 +3240,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.123 · painel-dev</div>
+<div class="version">v5.124 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3481,7 +3481,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-notif-dev.js?v=44"></script>
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-plantao-dev.js?v=5"></script>
-<script src="mare-dicas-dev.js?v=18"></script>
+<script src="mare-dicas-dev.js?v=19"></script>
 <script src="mare-gxl-dev.js?v=2"></script>
 
 <script>
@@ -10353,7 +10353,7 @@ async function pcfgGanttArquivo(inp){
 function pcfgGanttCancelar(tipo){ delete _ganttCalPrevia[tipo]; _pcfgGanttDesenha(); }
 async function pcfgGanttPublicar(tipo){
   const pv=_ganttCalPrevia[tipo]; if(!pv||pv.erro||pv.lendo||!pv.mescla) return;
-  try{ const dado=await GXL.publicar(tipo, pv, window._currentUser||{}); _ganttCalAtual[tipo]=dado; delete _ganttCalPrevia[tipo]; showToast('✅ '+_GANTT_CALS[tipo].nome+' publicado — já aparece no 📊 Gantt do Maré (e no 🕘 Histórico)'); }
+  try{ const dado=await GXL.publicar(tipo, pv, window._currentUser||{}); _ganttCalAtual[tipo]=dado; delete _ganttCalPrevia[tipo]; showToast('✅ '+_GANTT_CALS[tipo].nome+' publicado — já aparece no 🧮 Gantt do Maré, no Radar e no 🕘 Histórico'); }
   catch(e){ showToast('❌ Não publiquei: '+(/permission/i.test(String(e&&e.message||e))?'sem permissão (só login Google da Hering; as regras novas do banco já foram publicadas?)':'falha ao gravar')); }
   _pcfgGanttDesenha();
 }
