@@ -44,7 +44,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   padding:6px 14px;font-size:11px;cursor:pointer;}
 
 /* ── App shell ── */
-body.live-bastidor :is(#topbar,#bottombar,#slides,#live-fab,#live-fpanel,#notes-fab,#detail-ov,#ating-ov,#fps-meter){display:none !important;}
+body.live-bastidor :is(#topbar,#bottombar,#slides,#live-fab,#live-passador,#live-fpanel,#notes-fab,#detail-ov,#ating-ov,#fps-meter){display:none !important;}
 #bastidor-pagina{width:min(1040px,100%);box-sizing:border-box;margin:0 auto;padding:28px 24px 40px;overflow:auto;flex:1;min-height:0;}
 /* Bastidor em aba própria (/melhoriauiux 19/11): mesma identidade dos slides — DM Sans, Syne nos títulos, vidro sem blur (fundo estático), 44 px de alvo. */
 body.live-bastidor #bastidor-espera{margin:12vh auto 16px;max-width:460px;text-align:center;font-size:16px;color:var(--txt2);}
@@ -682,11 +682,18 @@ body.live-pen #live-capture{display:block;}
 #live-fab[hidden]{display:none;}#live-fab:hover{transform:translateY(-2px);}#live-fab.on{border-color:#ff4d4d;box-shadow:0 0 0 3px rgba(255,77,77,.25),0 6px 22px rgba(0,0,0,.35);}
 #live-fpanel{position:fixed;right:28px;bottom:158px;z-index:650;width:min(290px,92vw);max-height:calc(100dvh - 174px);overflow-y:auto;background:rgba(3,13,26,.97);border:1px solid var(--glass-b);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 14px 40px rgba(0,0,0,.55);}
 #live-fpanel[hidden]{display:none;}
-body.live-tela-publico :is(#topbar,#bottombar,#live-fab,#live-fpanel,#live-toast,#notes-fab,#notes-ov,#fps-meter,#agenda-cfg-ov,.detail-next,.detail-close){display:none !important;}
+/* 🎛️ passador: botão próprio logo acima do 🎙️ (pedido do Caio, 19/11). Para quem apresenta abre o controle flutuante; para quem acompanha, pede o controle. */
+#live-passador{position:fixed;right:33px;bottom:160px;z-index:650;width:44px;height:44px;border-radius:50%;background:var(--glass);border:1px solid var(--glass-b);color:var(--txt);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(0,0,0,.35);}
+#live-passador[hidden]{display:none;}
+#live-passador:hover:not(:disabled){border-color:rgba(56,182,255,.5);}
+#live-passador:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+#live-passador:disabled{opacity:.5;cursor:default;}
+body.live-com-passador #live-fpanel{bottom:216px;max-height:calc(100dvh - 232px);}
+body.live-tela-publico :is(#topbar,#bottombar,#live-fab,#live-passador,#live-fpanel,#live-toast,#notes-fab,#notes-ov,#fps-meter,#agenda-cfg-ov,.detail-next,.detail-close){display:none !important;}
 #publico-espera{margin:auto;text-align:center;color:var(--txt);padding:24px;}
 #publico-espera[hidden],body.live-tela-publico:not(.live-ativa) #slides{display:none;}
 
-body.live-palco-limpo :is(#live-box,#live-toast,#notes-fab,#notes-ov,#fps-meter,#tb-countdown){display:none !important;}
+body.live-palco-limpo :is(#live-box,#live-passador,#live-toast,#notes-fab,#notes-ov,#fps-meter,#tb-countdown){display:none !important;}
 .lp-hd{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700;gap:8px;}
 .lp-hd button{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;}
 .lp-row{display:flex;gap:6px;}.lp-row .lp-b{flex:1;}
@@ -770,6 +777,7 @@ body.live-palco-limpo :is(#live-box,#live-toast,#notes-fab,#notes-ov,#fps-meter,
 <div id="live-laser" aria-hidden="true"></div>
 <div id="live-toast" role="status" aria-live="polite"></div>
 <button type="button" id="live-fab" hidden onclick="window._livePainel()" title="Controles da apresentação ao vivo" aria-label="Controles da apresentação ao vivo">🎙️</button>
+<button type="button" id="live-passador" hidden onclick="window._livePassadorClique()" aria-label="Abrir controle flutuante" title="Abrir controle flutuante">🎛️</button>
 <div id="live-fpanel" hidden></div>
 
 <div id="detail-ov" onclick="if(event.target===this) window._okrCloseDetail()">
@@ -2940,8 +2948,26 @@ function liveParticipantes(){
   const eu = liveEu().uid, hostUid = live && live.apresentador && live.apresentador.uid, ag = Date.now();
   return Object.entries((live && live.participantes)||{}).filter(([id,p])=>id!==eu && id!==hostUid && p && ag-(p.ts||0) < 70000).sort((a,b)=>String(a[1].nome||'').localeCompare(String(b[1].nome||''),'pt-BR'));
 }
+function liveAtualizarPassador(){
+  const bt = document.getElementById('live-passador'); if(!bt) return;
+  const ativa = liveAtiva(), host = liveSouHost();
+  const mostra = ativa && !window._okrIsViewer && !_okrTelaPublico && !_okrTelaBastidor && !!window.documentPictureInPicture?.requestWindow;
+  const pediu = mostra && !host && !!(live.pedidos && live.pedidos[liveEu().uid]);
+  const rotulo = !mostra ? '' : host ? 'Abrir controle flutuante' : pediu ? 'Pedido de controle enviado' : 'Pedir o controle para usar o controle flutuante';
+  if(bt.hidden !== !mostra) bt.hidden = !mostra;
+  document.body.classList.toggle('live-com-passador', mostra);
+  if(bt.getAttribute('aria-label') !== rotulo && rotulo){ bt.setAttribute('aria-label', rotulo); bt.title = rotulo; }
+  bt.disabled = pediu;
+}
+// Quem apresenta abre o passador; quem acompanha pede o controle (o apresentador ou o ADM libera, como no ✋ do menu).
+window._livePassadorClique = () => {
+  if(!liveAtiva() || window._okrIsViewer || _okrTelaPublico || _okrTelaBastidor) return;
+  if(liveSouHost()) window._liveAbrirControleFlutuante();
+  else if(!(live.pedidos && live.pedidos[liveEu().uid])) window._livePedir();
+};
 function liveRender(){
   liveAtualizarControleFlutuante();
+  liveAtualizarPassador();
   const box = document.getElementById('live-box'), fab = document.getElementById('live-fab'), painel = document.getElementById('live-fpanel'); if(!box || !fab || !painel) return;
   const viewer = !!window._okrIsViewer || _okrTelaPublico, eu = liveEu(), ativa = liveAtiva(), host = liveSouHost(), adm = liveSouAdm(), controla = livePodeControlar();
   const palcoLimpo = document.body.classList.contains('live-palco-limpo');
@@ -2977,9 +3003,7 @@ function liveRender(){
     if(controla){
       if(host && !palcoLimpo) p += '<button type="button" class="lp-b" onclick="window._liveCopiarTelaPublico()">Copiar link da tela para o público</button>';
       if(!palcoLimpo){
-        // A nova aba é a saída quando o navegador não tem janela flutuante (Safari, PiP bloqueado): fica fora da checagem da API.
-        const pip = !!window.documentPictureInPicture?.requestWindow;
-        if(host && pip) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>';
+        // A nova aba é a saída quando o navegador não tem janela flutuante (Safari, PiP bloqueado). O passador compacto ganhou botão próprio acima do 🎙️.
         if(adm) p += '<button type="button" class="lp-b" onclick="window._liveAbrirPaginaBastidor()">Abrir bastidor em nova aba</button>';
         if(adm) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';   // sem PiP, abre numa janela normal (#1885)
       }

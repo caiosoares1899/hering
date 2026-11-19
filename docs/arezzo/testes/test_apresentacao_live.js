@@ -54,7 +54,8 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
      await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
    };
    const comando=id=>A.p.evaluate(i=>window.documentPictureInPicture.window.document.getElementById(i).click(),id);
-   await abrirPip('🎛️ Abrir controle flutuante');
+   await A.p.getByRole('button',{name:'Abrir controle flutuante',exact:true}).click();   // botão próprio acima do 🎙️ (saiu do menu)
+   await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
    t('controle flutuante mantém só Anterior, Próximo, Abrir detalhe e Fechar detalhe', await A.p.evaluate(()=>{
      const doc=window.documentPictureInPicture.window.document;
      return [...doc.querySelectorAll('button')].map(b=>b.id).join()==='anterior,proximo,abrir-detalhe,fechar-detalhe' && [...doc.querySelectorAll('button')].every(b=>b.getBoundingClientRect().bottom<=window.documentPictureInPicture.window.innerHeight) && doc.getElementById('anterior').disabled && doc.getElementById('abrir-detalhe').disabled && !doc.getElementById('anotacao');
@@ -275,8 +276,8 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    }), '');
    await B.p.evaluate(()=>window._livePainel(true));
    t('quem recebe o controle vê o passador e o Bastidor fica reservado ao ADM',
-     await B.p.getByRole('button',{name:/Abrir controle flutuante/}).count()===1 && await B.p.getByRole('button',{name:'Abrir bastidor',exact:true}).count()===0, '');
-   await B.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
+     await B.p.getByRole('button',{name:'Abrir controle flutuante',exact:true}).isVisible() && await B.p.getByRole('button',{name:'Abrir bastidor',exact:true}).count()===0, '');
+   await B.p.getByRole('button',{name:'Abrir controle flutuante',exact:true}).click();
    await B.p.waitForFunction(()=>!!window.documentPictureInPicture.window?.document.getElementById('anterior'));
    await A.p.evaluate(()=>window.documentPictureInPicture.window.document.getElementById('retomar').click());
    await A.p.waitForFunction(()=>liveSouHost());
