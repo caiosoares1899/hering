@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Evolução da apresentação travava ao redimensionar e exibia dados antigos
+
+O modal acompanha os registros recebidos no listener existente, preserva a expansão quando possível e fecha se o objetivo for removido. O redimensionamento continua ajustando o slide quando a lista esvazia.
+
 ### 2026-11-19 · 🛟 Semana Black Friday: restaurar comentários reativava o Agente Ágil e alarmes de ADM não chegavam a quem é ADM só por e-mail (functions/backup, monitores)
 
 - **Origem:** `/monitorarbugs` em áreas sensíveis para a semana da Black Friday (23 a 29/11), cobrindo o que a rodada de 18/11 deixou de fora (backup e Service Worker).

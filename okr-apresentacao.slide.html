@@ -1266,7 +1266,20 @@ window._okrOpenAting = id => {
   document.getElementById('ating-body').innerHTML = _okrAtingChartPanelHtml(o);
   document.getElementById('ating-ov').classList.add('open');
 };
-window._okrCloseAting = () => document.getElementById('ating-ov').classList.remove('open');
+window._okrCloseAting = () => {
+  _okrAtingAbertoId = null;
+  document.getElementById('ating-ov').classList.remove('open');
+};
+function _okrAtualizarAtingAberto(){
+  const id = _okrAtingAbertoId;
+  if(!id) return;
+  if(!okrObjetivos[id]) return window._okrCloseAting();
+  const seletor = '#ating-body .okr-ating-reg';
+  const aberto = document.querySelector(seletor)?.open;
+  window._okrOpenAting(id);
+  const registros = document.querySelector(seletor);
+  if(aberto && registros) registros.open = true;
+}
 
 function objProgressoPct(objId){
   const viaAting = _okrAtingPctObj(okrObjetivos[objId]);
@@ -1650,7 +1663,7 @@ function render(){
   if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(true); }
 }
 window.addEventListener('resize', () => {
-  if(_okrAtingAbertoId && document.getElementById('ating-ov').classList.contains('open')){ const aberto = document.querySelector('.okr-ating-reg')?.open; window._okrOpenAting(_okrAtingAbertoId); if(aberto) document.querySelector('.okr-ating-reg').open = true; }
+  _okrAtualizarAtingAberto();
   fitSlideContent(document.querySelector('.slide.active'));
   if(document.getElementById('detail-ov')?.classList.contains('open')) _okrFitDetailSections();
   if(typeof liveDesenhar==='function') liveDesenhar();
@@ -2236,6 +2249,7 @@ function _isAdmOkr(){
 }
 let listenersStarted = false;
 function _okrResetOverlays(){
+  window._okrCloseAting();
   window._okrCloseNotes();
   window._okrCloseDetail?.();
   window._okrCloseAgendaCfg?.();
@@ -2264,7 +2278,16 @@ function startListeners(){
   if(listenersStarted) return;
   listenersStarted = true;
   const onErr = () => _okrDenyAccess('⚠️ Sua conta entrou, mas não tem permissão pra ver os dados do Radar (precisa ser @ciahering.com.br ou ter acesso liberado no painel).');
-  window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{ okrObjetivos = snap.val()||{}; _loaded.obj=true; scheduleRebuild(); }, onErr);
+  window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{
+    const id = _okrAtingAbertoId;
+    const anterior = okrObjetivos[id];
+    okrObjetivos = snap.val()||{};
+    _loaded.obj=true;
+    scheduleRebuild();
+    const atual = okrObjetivos[id];
+    if(id && (!atual || anterior?.titulo !== atual.titulo ||
+      JSON.stringify(anterior?.atingimento) !== JSON.stringify(atual.atingimento))) _okrAtualizarAtingAberto();
+  }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{ okrMarcos = snap.val()||{}; _loaded.marco=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{ okrTags = snap.val()||{}; _loaded.tag=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/gerencias'), snap=>{ okrGerenciasCfg = snap.val()||{}; _loaded.ger=true; scheduleRebuild(); }, ()=>{ _loaded.ger=true; scheduleRebuild(); });   // sem leitura: segue com o padrão
