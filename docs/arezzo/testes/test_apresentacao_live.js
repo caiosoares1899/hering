@@ -16,6 +16,14 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  t('antes de apresentar: botão "Apresentar ao vivo" na barra', /Apresentar ao vivo/.test((await info(A.p)).box), await info(A.p));
  await A.p.click('#live-box button'); await A.p.waitForTimeout(300); await sync(A.p,B.p);
  const a1=await info(A.p), b1=await info(B.p); t('Ana vira apresentadora; Eve vê "Ana ADM está apresentando" e acompanhando', /Parar de apresentar/.test(a1.box) && /Ana ADM está apresentando/.test(b1.box) && /Acompanhando/.test(b1.box) && !/Parar de apresentar/.test(b1.box), {a1,b1});
+ await A.p.evaluate(() => {
+   Object.defineProperty(navigator.clipboard, 'writeText', { value: async texto => { window.__conviteCopiado = texto; } });
+   window._livePainel(true);
+ });
+ await A.p.getByRole('button', { name: /Copiar convite pro chat do Meet/ }).click();
+ const convite = await A.p.evaluate(() => window.__conviteCopiado);
+ t('convite aponta só para os slides e deixa a conversa no Meet', convite === 'Abra os slides ao vivo do Radar para acompanhar no navegador: '+new URL(A.p.url()).origin+'/okr-apresentacao.slide.html\nO áudio e a conversa continuam aqui no Google Meet.', convite);
+ await A.p.evaluate(() => window._livePainel(false));
  await A.p.evaluate(()=>window._okrGoTo(2)); await A.p.waitForTimeout(250); await sync(A.p,B.p); const a2=await info(A.p), b2=await info(B.p);
  t('slide do apresentador chega no acompanhante (pela chave, não pela posição)', a2.idx===2 && b2.key===a2.key && b2.idx===2, {a2,b2});
  await A.p.evaluate(()=>window._okrOpenDetail('d2')); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('Objetivo aberto no detalhe também acompanha', (await info(B.p)).det==='d2', await info(B.p));
@@ -124,7 +132,9 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(250); t('assumir faz de Ana a apresentadora', /Parar de apresentar/.test((await info(A.p)).box), await info(A.p));
  // encerrar
  const parar = A.p.getByRole('button', { name: 'Parar de apresentar', exact: true });
- await parar.press('Enter'); await A.p.waitForTimeout(250); await sync(A.p,B.p); const b5=await info(B.p); t('encerrar apaga a sessão e avisa quem estava acompanhando', /Apresentar ao vivo/.test(b5.box) && await B.p.evaluate(()=>/terminou/.test(document.getElementById('live-toast').textContent)), b5);
+ const confirmacao = A.p.waitForEvent('dialog').then(d => d.message());
+ await parar.press('Enter');
+ t('confirmação diferencia a sessão do Radar do compartilhamento no Meet', /sessão do Radar.*compartilhamento de tela.*Google Meet/.test(await confirmacao), ''); await A.p.waitForTimeout(250); await sync(A.p,B.p); const b5=await info(B.p); t('encerrar apaga a sessão e avisa quem estava acompanhando', /Apresentar ao vivo/.test(b5.box) && await B.p.evaluate(()=>/terminou/.test(document.getElementById('live-toast').textContent)), b5);
  t('sem erro de JS nas duas telas', !A.errs.length && !B.errs.length, [A.errs,B.errs]);
  // visualizador externo: acompanha mas não apresenta nem pede controle
  { const V=await open(U('ext','Externo','ext@gmail.com')); await A.p.click('#live-box button'); await A.p.waitForTimeout(250); await sync(A.p,V.p);
