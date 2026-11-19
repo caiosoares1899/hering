@@ -46,6 +46,9 @@ const medir = p => p.evaluate(() => ({
         window.__conviteBastidor?.includes(location.origin+location.pathname) &&
         window.__conviteBastidor.includes('O áudio e a conversa continuam aqui no Google Meet.') &&
         !window.__conviteBastidor.includes('tela=publico')), '');
+      if(process.env.CAPTURA_BASTIDOR){
+        await p.screenshot({path:process.env.CAPTURA_BASTIDOR+'-'+w+'.png'});
+      }
       t(`[${w}] mostra quem apresenta`, (await texto(p, '#bastidor-quem')) === 'Você está apresentando', await texto(p, '#bastidor-quem'));
       const agora = await p.evaluate(() => slides[currentIdx].title), seguir = await p.evaluate(() => slides[currentIdx + 1]?.title || '');
       t(`[${w}] mostra o slide atual e o que vem a seguir`, (await texto(p, '#bastidor-agora')) === agora && (await texto(p, '#bastidor-seguir')) === seguir && /Slide 1 de/.test(await texto(p, '#estado')), { agora, seguir });
