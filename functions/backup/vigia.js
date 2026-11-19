@@ -14,6 +14,7 @@ const { getDatabase } = require('firebase-admin/database');
 const { getStorage } = require('firebase-admin/storage');
 const { _listActiveSquads } = require('./weeklyBackup');
 const { dataBrasilia, PREFIXO } = require('./completo');
+const { uidsDosAdms } = require('../common/admsDestino');
 
 const LIMITE_DIAS = 8;
 // O backup do QUADRO (weeklyBackup) passou a ser diário em 2026-10-28: 3 dias sem arquivo já é falha (o completo semanal segue com LIMITE_DIAS).
@@ -61,10 +62,9 @@ async function verificar({ db, bucket, agora }) {
   return { problemas, hoje };
 }
 
-// Notifica os ADMs (usuarios_publicos com role 'adm' — mesma regra do lembrete de metas pro Digital). Id fixo por dia.
-async function alertarAdms({ db, problemas, hoje, agora }) {
-  const pubs = (await db.ref('kanban/usuarios_publicos').get()).val() || {};
-  const adms = Object.keys(pubs).filter((uid) => pubs[uid] && pubs[uid].role === 'adm');
+// Notifica os ADMs (role 'adm' ou adm_emails, ver common/admsDestino.js). Id fixo por dia.
+async function alertarAdms({ db, auth, problemas, hoje, agora }) {
+  const adms = await uidsDosAdms(db, auth === undefined ? undefined : { auth });
   const id = `backup_${hoje}`;
   const sub = problemas.map((p) => p.texto).join(' · ').slice(0, 280);
   let enviados = 0;

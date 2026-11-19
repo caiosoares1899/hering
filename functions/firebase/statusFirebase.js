@@ -20,6 +20,7 @@ let onSchedule;
 try { ({ onSchedule } = require('firebase-functions/v2/scheduler')); } catch (_) { onSchedule = (_opts, fn) => fn; }
 let getDatabase;
 try { ({ getDatabase } = require('firebase-admin/database')); } catch (_) { getDatabase = () => null; }
+const { uidsDosAdms } = require('../common/admsDestino');
 
 const INCIDENTS_URL = 'https://status.firebase.google.com/incidents.json';
 const SITE = 'https://status.firebase.google.com';
@@ -263,10 +264,9 @@ function formatarNotifIncidente(inc) {
   };
 }
 
-// Notifica SOMENTE os ADMs (`kanban/usuarios_publicos/{uid}.role === 'adm'`).
-async function notificarAdms({ db, inc, chave, agora }) {
-  const pubs = (await db.ref('kanban/usuarios_publicos').get()).val() || {};
-  const adms = Object.keys(pubs).filter((uid) => pubs[uid] && pubs[uid].role === 'adm');
+// Notifica SOMENTE os ADMs (role 'adm' ou adm_emails, ver common/admsDestino.js).
+async function notificarAdms({ db, auth, inc, chave, agora }) {
+  const adms = await uidsDosAdms(db, auth === undefined ? undefined : { auth });
   const ts = new Date(agora).toISOString();
   const notifId = `firebase_${chave}`;
   const { title, sub } = formatarNotifIncidente(inc);
@@ -400,9 +400,8 @@ async function rodar({ db, fetchImpl, agora, log }) {
   return Object.assign({ valido: true, parsed }, r);
 }
 
-async function alertarMonitor({ db, falhas, erro, agora }) {
-  const pubs = (await db.ref('kanban/usuarios_publicos').get()).val() || {};
-  const adms = Object.keys(pubs).filter((uid) => pubs[uid] && pubs[uid].role === 'adm');
+async function alertarMonitor({ db, auth, falhas, erro, agora }) {
+  const adms = await uidsDosAdms(db, auth === undefined ? undefined : { auth });
   const ts = new Date(agora).toISOString();
   const id = `firebasemon_${ts.slice(0, 10)}`;
   const sub = `Sem ler o status do Firebase há ~${Math.round((falhas * 5) / 60 * 10) / 10} h (${falhas} tentativas): ${String(erro || 'resposta inválida').slice(0, 120)}.`;
