@@ -90,6 +90,7 @@ body.live-bastidor #bastidor-pagina #bastidor-encerrar:hover{background:rgba(255
 .bst-previa-objetivo{margin:0;padding:12px;border:1px solid var(--glass-b);border-radius:12px;color:var(--txt2);}
 #bastidor-pagina .bst-nav{display:flex;flex-wrap:wrap;gap:8px;}
 #bastidor-pagina .bst-nav #proximo{flex:1 1 160px;}
+#bastidor-pagina .bst-nav #bastidor-objetivo{flex:1 1 170px;width:auto;min-width:0;}
 #bastidor-pagina .bst-tempo{margin:0;font-size:15px;color:var(--txt2);font-variant-numeric:tabular-nums;}
 #bastidor-pagina .bst-dica{margin:0;font-size:13px;color:var(--txt2);}
 #bastidor-pagina .bst-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
@@ -1550,7 +1551,7 @@ function buildSlides(){
         </div>`});
       grs.forEach((gr,gi)=>{
         const g = gr.g, lista = _okrObjetivosSorted(gr.lista);
-        list.push({key:'ger:'+gr.key, title:gr.rotulo, torre:t.id, primeiroObj:lista[0]?.id||'', html:`
+        list.push({key:'ger:'+gr.key, title:gr.rotulo, torre:t.id, primeiroObj:lista[0]?.id||'', objetivos:lista.map(o=>o.id), html:`
           <div class="slide-inner t-${t.id}">
             <div class="ger-header com-torre"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="torre-chip">${t.icon?t.icon+' ':''}${esc(t.label)}</span><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
             <div class="obj-grid${lista.length>=6?' denso':''}">${lista.map(o=>objCardHtml(o)).join('')}</div>
@@ -2802,6 +2803,22 @@ function liveAtualizarPrevia(slide, objetivo){
     if(cartao.textContent !== texto) cartao.textContent = texto;
   }
 }
+function liveAtualizarEscolhaObjetivo(seletor){
+  const slide = slides[currentIdx];
+  const objetivos = (slide?.objetivos||[]).map(id=>okrObjetivos[id]).filter(Boolean);
+  const opcoes = objetivos.map(o=>[o.id,o.titulo||'Objetivo']);
+  const assinatura = JSON.stringify([slide?.key,opcoes]);
+  if(seletor.dataset.assinatura!==assinatura){
+    const anterior = seletor.dataset.slide===slide?.key ? seletor.value : '';
+    seletor.replaceChildren(...opcoes.map(([id,titulo])=>new Option(titulo,id)));
+    if(opcoes.some(([id])=>id===anterior)) seletor.value = anterior;
+    seletor.dataset.slide = slide?.key || '';
+    seletor.dataset.assinatura = assinatura;
+  }
+  seletor.hidden = objetivos.length<2;
+  seletor.disabled = !liveSouHost();
+  return seletor.value;
+}
 function liveAtualizarComandos(pip, bastidor){
   const doc = pip.document;
   const host = liveSouHost(), detalhe = !!liveDetalheAberto();
@@ -2810,7 +2827,14 @@ function liveAtualizarComandos(pip, bastidor){
   if(!doc.getElementById('bastidor-agora')) doc.getElementById('estado').textContent = objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : 'Slide '+(currentIdx+1)+' de '+slides.length;
   doc.getElementById('anterior').disabled = !host || (detalhe ? !vizinhos.anterior : currentIdx<=0);
   doc.getElementById('proximo').disabled = !host || (detalhe ? !vizinhos.proximo : currentIdx>=slides.length-1);
-  doc.getElementById('abrir-detalhe').disabled = !host || detalhe || !livePrimeiroDetalhe();
+  const seletorObjetivo = doc.getElementById('bastidor-objetivo');
+  const escolha = seletorObjetivo ? liveAtualizarEscolhaObjetivo(seletorObjetivo) : '';
+  doc.getElementById('abrir-detalhe').disabled = !host || (escolha ? escolha===objetivo?.id : detalhe || !livePrimeiroDetalhe());
+  const evolucao = doc.getElementById('controle-evolucao');
+  evolucao.hidden = _okrAtingPctObj(objetivo)===null;
+  evolucao.disabled = !host;
+  const textoEvolucao = _okrAtingAbertoId===objetivo?.id && objetivo ? 'Fechar evolução' : '📈 Evolução';
+  if(evolucao.textContent!==textoEvolucao) evolucao.textContent = textoEvolucao;
   doc.getElementById('fechar-detalhe').disabled = !host || !detalhe;
   if(!bastidor) return;
   doc.getElementById('retomar').disabled = host;
@@ -2913,6 +2937,7 @@ function liveMontarControle(pip, destino, bastidor){
     [data-live-controles] :is(button:hover:not(:disabled)){background:#194664}
     [data-live-controles] :is(button:focus-visible){outline:2px solid #7ee8ff;outline-offset:2px}
     [data-live-controles] :is(button:disabled){opacity:.55;cursor:default}
+    [data-live-controles] [hidden]{display:none !important}
   `;
   doc.head.append(estilo);
   destino.dataset.liveControles = '';
@@ -2930,6 +2955,12 @@ function liveMontarControle(pip, destino, bastidor){
     e.preventDefault();
     navegar(dir);
   });
+  const alternarEvolucao = agir(()=>{
+    const id = liveDetalheAberto();
+    if(!id || _okrAtingPctObj(okrObjetivos[id])===null) return;
+    if(_okrAtingAbertoId===id) window._okrCloseAting();
+    else window._okrOpenAting(id);
+  });
   if(pagina && bastidor){
     // Aba própria: há espaço, então mostra o que está no ar e o que vem a seguir, e separa o que é perigoso (encerrar) do resto.
     destino.innerHTML = '<header class="bst-topo"><h1>Bastidor do Radar</h1><span id="bastidor-quem" class="bst-quem" role="status"></span></header>'
@@ -2937,7 +2968,7 @@ function liveMontarControle(pip, destino, bastidor){
       + '<p id="estado" class="bst-rotulo"></p><h2 id="bastidor-agora" class="bst-agora"></h2>'
       + '<p class="bst-seguir">A seguir: <b id="bastidor-seguir"></b></p>'
       + '<nav class="bst-nav" aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-      + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button><button type="button" id="bastidor-panorama">Ir para Panorama geral</button></nav>'
+      + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button><button type="button" id="bastidor-panorama">Ir para Panorama geral</button><select id="bastidor-objetivo" aria-label="Objetivo do slide" hidden></select><button type="button" id="controle-evolucao" hidden>📈 Evolução</button></nav>'
       + '<figure id="bastidor-previa" class="bst-previa" hidden aria-label="Prévia do próximo conteúdo">'
       + '<div class="bst-previa-quadro" hidden><iframe title="Miniatura do próximo slide" sandbox="" tabindex="-1"></iframe></div>'
       + '<p class="bst-previa-objetivo" hidden></p></figure>'
@@ -2962,14 +2993,20 @@ function liveMontarControle(pip, destino, bastidor){
     }));
     doc.getElementById('anterior').addEventListener('click', agir(()=>navegar(-1)));
     doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
-    doc.getElementById('abrir-detalhe').addEventListener('click', agir(liveAbrirPrimeiroDetalhe));
+    const escolha = doc.getElementById('bastidor-objetivo');
+    escolha.addEventListener('change', liveAtualizarControleFlutuante);
+    doc.getElementById('abrir-detalhe').addEventListener('click', agir(()=>{
+      if(escolha.value) window._okrOpenDetail(escolha.value);
+      else liveAbrirPrimeiroDetalhe();
+    }));
+    doc.getElementById('controle-evolucao').addEventListener('click', alternarEvolucao);
     doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
     livePrepararBastidor(pip);
     return;
   }
   destino.innerHTML = '<h1>'+doc.title+'</h1><p id="estado" role="status"></p>'
     + '<nav aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
+    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button><button type="button" id="controle-evolucao" hidden>📈 Evolução</button></nav>';
   if(bastidor) destino.insertAdjacentHTML('beforeend',
     '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
     + (pagina ? '<button type="button" id="bastidor-copiar">Copiar link da tela para o público</button> <button type="button" id="bastidor-encerrar">Encerrar apresentação</button>' : '<button type="button" id="palco" aria-pressed="false">Palco Limpo</button>')
@@ -2980,6 +3017,7 @@ function liveMontarControle(pip, destino, bastidor){
   doc.getElementById('anterior').addEventListener('click', agir(()=>navegar(-1)));
   doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
   doc.getElementById('abrir-detalhe').addEventListener('click', agir(liveAbrirPrimeiroDetalhe));
+  doc.getElementById('controle-evolucao').addEventListener('click', alternarEvolucao);
   doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
   if(bastidor) livePrepararBastidor(pip);
 }

@@ -58,7 +58,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
    t('controle flutuante mantém só Anterior, Próximo, Abrir detalhe e Fechar detalhe', await A.p.evaluate(()=>{
      const doc=window.documentPictureInPicture.window.document;
-     return [...doc.querySelectorAll('button')].map(b=>b.id).join()==='anterior,proximo,abrir-detalhe,fechar-detalhe' && [...doc.querySelectorAll('button')].every(b=>b.getBoundingClientRect().bottom<=window.documentPictureInPicture.window.innerHeight) && doc.getElementById('anterior').disabled && doc.getElementById('abrir-detalhe').disabled && !doc.getElementById('anotacao');
+     return [...doc.querySelectorAll('button:not([hidden])')].map(b=>b.id).join()==='anterior,proximo,abrir-detalhe,fechar-detalhe' && [...doc.querySelectorAll('button:not([hidden])')].every(b=>b.getBoundingClientRect().bottom<=window.documentPictureInPicture.window.innerHeight) && doc.getElementById('anterior').disabled && doc.getElementById('abrir-detalhe').disabled && !doc.getElementById('anotacao');
    }), '');
    await comando('proximo');
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
@@ -90,6 +90,12 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
      const doc=window.documentPictureInPicture.window.document;
      return doc.getElementById('abrir-detalhe').disabled && !doc.getElementById('fechar-detalhe').disabled;
    }), '');
+   await comando('controle-evolucao');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='d2');
+   await sync(A.p,B.p);
+   t('Evolução pelo passador aparece no navegador que acompanha', await B.p.locator('#ating-ov svg').isVisible(), '');
+   await comando('controle-evolucao');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='');
    await comando('fechar-detalhe');
    await A.p.waitForFunction(()=>!window.__store.kanban.okr.apresentacao_live.detalhe);
    await A.p.evaluate(()=>window._okrGoTo(0)); await A.p.waitForTimeout(200);

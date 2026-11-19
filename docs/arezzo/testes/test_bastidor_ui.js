@@ -9,7 +9,7 @@ const U = (uid, n) => ({ uid, email: uid + '@ciahering.com.br', displayName: n, 
 const mk = (id, t, o) => ({ id, titulo: t, areaId: 'geral', trimestres: ['2026-Q4'], responsaveis: ['ana'], tagIds: [], history: [], indicadores: ['i1'], progressos: ['p1'], proximosPassos: [], riscos: [], planosAcao: [], descricao: 'desc', torre: 'digital', ...o });
 const LONGO = 'Aumentar a conversão do checkout no app e no site durante a Black Friday sem perder margem';
 const seed = () => ({ kanban: { okr: { objetivos: {
-  d1: mk('d1', 'Fidelidade', { areaId: 'crm', ordem: 0 }), d2: mk('d2', LONGO, { areaId: 'tech', ordem: 0 }),
+  d1: mk('d1', 'Fidelidade', { areaId: 'crm', ordem: 0 }), d2: mk('d2', LONGO, { areaId: 'tech', ordem: 0, atingimento:{tipo:'numero',inicial:0,meta:100,lancamentos:[{em:'2026-11-10',valor:80}]} }),
   d3: mk('d3', 'NPS', { areaId: 'cx', ordem: 0 }), d4: mk('d4', 'Pagamentos', { areaId: 'tech', ordem: 1 }) }, marcos: {}, tags: {}, reuniao_notas: {} },
   usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: 'ana@ciahering.com.br', inscrito: true, init: 'AA' } },
   usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana ADM', init: 'AA' } }, config: { adm_emails: ['ana@ciahering.com.br'] } } });
@@ -81,7 +81,20 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] Bastidor salva o horário no mesmo registro da apresentação`, await p.evaluate(()=>_okrAgendaHoje()?.inicio==='10:00'), '');
       t(`[${w}] no slide de abertura, Abrir detalhe fica desligado`, await p.locator('#abrir-detalhe').isDisabled(), '');
       await p.evaluate(() => window._okrGoTo(slides.findIndex(x => x.primeiroObj === 'd2'))); await p.waitForTimeout(400);
-      await p.getByRole('button', { name: 'Abrir detalhe', exact: true }).click(); await p.waitForTimeout(400);
+      const objetivo = p.getByRole('combobox',{name:'Objetivo do slide'});
+      await objetivo.selectOption('d4');
+      await p.getByRole('button',{name:'Abrir detalhe',exact:true}).click();
+      await p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d4');
+      t(`[${w}] escolha direta abre o Objetivo escolhido, com Evolução oculta se não há meta`,
+        (await texto(p,'#bastidor-agora'))==='Pagamentos' && !(await p.locator('#controle-evolucao').isVisible()), '');
+      await objetivo.selectOption('d2');
+      await p.getByRole('button',{name:'Abrir detalhe',exact:true}).click();
+      await p.locator('#controle-evolucao').click();
+      await p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='d2');
+      t(`[${w}] Bastidor oferece fechar a Evolução publicada`, (await texto(p,'#controle-evolucao'))==='Fechar evolução','');
+      await p.locator('#controle-evolucao').click();
+      await p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='');
+
       t(`[${w}] prévia de Objetivo usa o cartão quando há vizinho`,
         await p.locator('.bst-previa-objetivo').isVisible() && !(await quadro.isVisible()), '');
       t(`[${w}] detalhe: título do Objetivo em destaque e o próximo da gerência`, (await texto(p, '#bastidor-agora')) === LONGO && (await texto(p, '#bastidor-seguir')) === 'Pagamentos' && (await texto(p, '#estado')) === 'Detalhe do Objetivo', { a: await texto(p, '#bastidor-agora'), s: await texto(p, '#bastidor-seguir') });
