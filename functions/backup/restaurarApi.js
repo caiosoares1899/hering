@@ -93,7 +93,9 @@ async function processar({ db, bucket, decoded, corpo, agora }) {
     // Registro pra desfazer: a lista EXATA de caminhos criados (desfazer = apagar esses caminhos).
     const ts = iso.replace(/[:.]/g, '-');
     await bucket.file(`${PREFIXO}/pre-restauracao/${ts}/api-${squad}.json`).save(JSON.stringify({ squad, backup: data, por: quem.nome, areas, criados: Object.keys(caminhos) }), { contentType: 'application/json', resumable: false });
-    const ks = Object.keys(caminhos);
+    // Marcas de "já processado" vão nos primeiros lotes: com mais de LOTE caminhos, um comentário gravado num lote anterior à sua marca
+    // dispararia o agente (o gatilho é onValueCreated e só confere a marca na hora).
+    const ks = Object.keys(caminhos).sort((a, b) => Number(!a.startsWith('agente_agil_mencao_processed/')) - Number(!b.startsWith('agente_agil_mencao_processed/')));
     for (let i = 0; i < ks.length; i += LOTE) {
       const lote = {}; ks.slice(i, i + LOTE).forEach((k) => { lote[k] = caminhos[k]; });
       await db.ref(base).update(lote);

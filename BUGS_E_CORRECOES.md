@@ -91,6 +91,20 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 O modal acompanha os registros recebidos no listener existente, preserva a expansão quando possível e fecha se o objetivo for removido. O redimensionamento continua ajustando o slide quando a lista esvazia.
 
+### 2026-11-19 · 🛟 Semana Black Friday: restaurar comentários reativava o Agente Ágil e alarmes de ADM não chegavam a quem é ADM só por e-mail (functions/backup, monitores)
+
+- **Origem:** `/monitorarbugs` em áreas sensíveis para a semana da Black Friday (23 a 29/11), cobrindo o que a rodada de 18/11 deixou de fora (backup e Service Worker).
+- **Restauração de comentários pela tela 🛟 (`functions/backup/restaurarApi.js`, `functions/backup/restaurarCore.js`):** o gatilho do Agente Ágil dispara a cada comentário criado e só fica quieto se a marca de "já processado" existir. A restauração deixava comentários sem a marca em 2 casos:
+  - quando os comentários do squad inteiro tinham sumido (a área voltava de uma vez e a função não descia até os comentários);
+  - quando a restauração passava de 400 caminhos (as marcas iam no fim, num lote depois do comentário).
+  - Efeito: o agente responderia de novo, e agiria de novo, em cada menção antiga restaurada. Agora as marcas cobrem a área inteira e vão nos primeiros lotes.
+- **Alarmes "só para ADMs" (`functions/backup/vigia.js`, `functions/vtex/statusVtex.js`, `functions/github/statusGithub.js`, `functions/firebase/statusFirebase.js`):** escolhiam o destinatário só pelo `role:'adm'`. Quem é ADM só pela lista `adm_emails` nunca recebia o aviso de backup com problema, de incidente do GitHub ou do Firebase, nem de monitor da VTEX parado (mesma falha do guardião em 17/11).
+  - Correção: `functions/common/admsDestino.js` junta `role:'adm'` e `adm_emails`, convertendo cada e-mail no usuário pelo Firebase Auth. O e-mail da cópia pública não é usado, porque a própria pessoa pode editá-lo.
+- **Teste:** `functions/backup/__tests__/restaurarApi.test.js` (2 casos novos) e `functions/common/__tests__/admsDestino.test.js` (3 casos). Sem a correção, os 2 de restauração e o do vigia falham.
+- **Sem achado:** Service Worker (`firebase-messaging-sw.js`), lista de nós do backup completo × regras do banco.
+- **Reportado, não corrigido:** `agente_painel`, `agente_painel_processed` e `agente_painel_uso` (conversa do Agente no Painel) não estão no backup completo nem na lista de exclusões. O lembrete de metas sem responsável (`functions/metas/lembretes.js`) também só olha o `role`. E `functions/cards/guardiao.js` ainda acha ADM pelo e-mail da cópia pública, que a própria pessoa pode editar (só decide quem recebe o aviso de restauração).
+- **Requer deploy:** `backupCompletoApi`, `backupVigia`, `vtexStatus`, `githubStatus` e `firebaseStatus`.
+
 ### 2026-11-18 · 🎬 Apresentação do Radar: rodapé calcula largura e altura pelo conteúdo e não deixa cartões vazios
 
 - **Origem:** print do Caio e proposta da #1867. Depois da #1866, cartões curtos do rodapé ainda esticavam até a altura de Progressos.
