@@ -1859,7 +1859,8 @@ document.addEventListener('keydown', e=>{
   if(document.getElementById('detail-ov').classList.contains('open')){
     if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); window._okrCloseDetail(); }
     // ← / → passam pro Objetivo anterior/seguinte da gerência (antes não faziam nada com o detalhe aberto)
-    else if((e.key==='ArrowRight' || e.key==='ArrowLeft') && !_okrEhCampo(e.target)){ e.preventDefault(); window._okrDetailVizinho(e.key==='ArrowRight' ? 1 : -1); }
+    // PageDown/PageUp: é o que o passador físico (controle de apresentação) manda
+    else if(['ArrowRight','ArrowLeft','PageDown','PageUp'].includes(e.key) && !_okrEhCampo(e.target)){ e.preventDefault(); window._okrDetailVizinho(e.key==='ArrowRight' || e.key==='PageDown' ? 1 : -1); }
     else if(e.key.toLowerCase()==='f' && !_okrEhCampo(e.target) && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); window._okrFullscreen(); }
     return;
   }
@@ -1882,8 +1883,8 @@ document.addEventListener('keydown', e=>{
   if(_okrEhCampo(e.target)) return;   // digitando (campo de texto): espaço/setas são do campo
   // Espaço: preventDefault também impede o clique nativo do botão que está com foco (depois de clicar em ▶/◀ o foco fica nele — o Espaço avançava 2 slides: o clique + este atalho)
   if(e.key===' '){ e.preventDefault(); window._okrNext(); }
-  else if(e.key==='ArrowRight') window._okrNext();
-  else if(e.key==='ArrowLeft') window._okrPrev();
+  else if(e.key==='ArrowRight' || e.key==='PageDown'){ e.preventDefault(); window._okrNext(); }   // PageDown/PageUp: passador físico
+  else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); window._okrPrev(); }
   else if(e.key.toLowerCase()==='f') window._okrFullscreen();
 });
 
@@ -2877,6 +2878,15 @@ function liveMontarControle(pip, destino, bastidor){
   doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
   doc.getElementById('abrir-detalhe').addEventListener('click', agir(liveAbrirPrimeiroDetalhe));
   doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
+  // Depois de um clique no passador, o foco fica nesta janela: o passador físico (PageDown/PageUp) e as setas chegariam aqui e não fariam nada.
+  // Repassa só essas teclas para a mesma navegação dos botões; fora de campo de texto (o Bastidor tem a anotação).
+  doc.addEventListener('keydown', e=>{
+    if(e.ctrlKey || e.metaKey || e.altKey || _okrEhCampo(e.target)) return;
+    const dir = (e.key==='ArrowRight' || e.key==='PageDown') ? 1 : (e.key==='ArrowLeft' || e.key==='PageUp') ? -1 : 0;
+    if(!dir) return;
+    e.preventDefault();
+    agir(()=>navegar(dir))();
+  });
   if(bastidor) livePrepararBastidor(pip);
 }
 function livePrepararBastidor(pip){
