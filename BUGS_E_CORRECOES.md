@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Bastidor não respondia a setas e passador físico em aba própria
+
+A aba do Bastidor passa a usar o mesmo caminho de navegação do passador flutuante e respeita o foco nos formulários.
+
 ### 2026-11-19 · Apresentação do Radar: depois da #1894 o teste da apresentação travava e a rolagem dos Marcos voltou a crescer
 
 - **Origem:** conferência da #1895; `docs/arezzo/testes/test_apresentacao_ui.js` travava na `main` desde a #1894.

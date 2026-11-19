@@ -107,6 +107,10 @@ body.live-bastidor #bastidor-pagina #bastidor-encerrar:hover{background:rgba(255
   #bastidor-pagina textarea{min-height:76px;}
   #bastidor-pagina .bst-fim{margin-top:12px;padding-top:8px;}
 }
+@media (min-width:1100px){
+  #bastidor-pagina{width:100%;padding-inline:clamp(16px,2vw,32px);}
+  #bastidor-pagina .bst-grade{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,.9fr);}
+}
 body.live-bastidor .agenda-cfg-ov{z-index:700;background:rgba(var(--deep-rgb),.65);}
 body.live-bastidor .agenda-cfg-panel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(280px,calc(100vw - 48px));}
 body.live-bastidor #bastidor-controles{background:none;padding:0;font:15px/1.45 'DM Sans',sans-serif;}
@@ -2912,6 +2916,20 @@ function liveMontarControle(pip, destino, bastidor){
   `;
   doc.head.append(estilo);
   destino.dataset.liveControles = '';
+  const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
+  const navegar = dir => {
+    if(liveDetalheAberto()) window._okrDetailVizinho(dir);
+    else window._okrGoTo(currentIdx+dir);
+  };
+  doc.addEventListener('keydown', e=>{
+    if(e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey ||
+      !liveSouHost() || window._okrIsViewer || _okrEhCampo(e.target) || e.target?.closest?.('select') ||
+      (pagina && document.getElementById('agenda-cfg-ov').classList.contains('open'))) return;
+    const dir = (e.key==='ArrowRight' || e.key==='PageDown') ? 1 : (e.key==='ArrowLeft' || e.key==='PageUp') ? -1 : 0;
+    if(!dir) return;
+    e.preventDefault();
+    navegar(dir);
+  });
   if(pagina && bastidor){
     // Aba própria: há espaço, então mostra o que está no ar e o que vem a seguir, e separa o que é perigoso (encerrar) do resto.
     destino.innerHTML = '<header class="bst-topo"><h1>Bastidor do Radar</h1><span id="bastidor-quem" class="bst-quem" role="status"></span></header>'
@@ -2925,17 +2943,16 @@ function liveMontarControle(pip, destino, bastidor){
       + '<p class="bst-previa-objetivo" hidden></p></figure>'
       + '<div class="bst-acoes"><p id="tempo" class="bst-tempo"></p>'
       + (_okrPauta ? '<span class="bst-dica">Horário do Calendário</span>' : '<button type="button" id="bastidor-agenda">Configurar horário</button>')
-      + '</div><span id="fps" hidden></span></section>'
-      + '<section class="bst-card"><p class="bst-rotulo">Tela para o público</p><p class="bst-dica">Abra o link no computador que compartilha a tela no Meet.</p>'
-      + '<div class="bst-acoes"><button type="button" id="bastidor-copiar"><span aria-hidden="true">🖥️</span> Copiar link de projeção</button><button type="button" id="bastidor-convite"><span aria-hidden="true">💬</span> Copiar convite do Meet</button></div></section></div>'
+      + '</div><span id="fps" hidden></span></section></div>'
       + '<div class="bst-lado"><form id="anotacao" class="bst-card"><label for="rascunho" class="bst-rotulo">Anotação da reunião</label><textarea id="rascunho" rows="3" placeholder="Decisões e combinados da reunião"></textarea>'
       + '<div class="bst-acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
       + '<section class="bst-card"><label for="participante" class="bst-rotulo">Controle da apresentação</label><select id="participante"></select><p id="bastidor-dica-controle" class="bst-dica"></p>'
       + '<div class="bst-acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button><button type="button" id="retomar">Retomar controle</button></div></section>'
-      + '</div></div>'
+      + '</div>'
+      + '<section class="bst-card"><p class="bst-rotulo">Tela para o público</p><p class="bst-dica">Abra o link no computador que compartilha a tela no Meet.</p>'
+      + '<div class="bst-acoes"><button type="button" id="bastidor-copiar"><span aria-hidden="true">🖥️</span> Copiar link de projeção</button><button type="button" id="bastidor-convite"><span aria-hidden="true">💬</span> Copiar convite do Meet</button></div></section>'
+      + '</div>'
       + '<div class="bst-fim"><button type="button" id="bastidor-encerrar">Encerrar apresentação</button></div>';
-    const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
-    const navegar = dir => { if(liveDetalheAberto()) window._okrDetailVizinho(dir); else window._okrGoTo(currentIdx+dir); };
     doc.getElementById('bastidor-agenda')?.addEventListener('click', window._okrToggleAgendaCfg);
     doc.getElementById('bastidor-panorama').addEventListener('click', agir(()=>{
       const indice = slides.findIndex(s=>s.key==='summary');
@@ -2960,24 +2977,10 @@ function liveMontarControle(pip, destino, bastidor){
     + '<div class="acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
     + '<section><label for="participante">Controle da apresentação</label><select id="participante"></select>'
     + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button><button type="button" id="retomar">Retomar controle</button></div></section>');
-  const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
-  const navegar = dir => {
-    if(liveDetalheAberto()) window._okrDetailVizinho(dir);
-    else window._okrGoTo(currentIdx+dir);
-  };
   doc.getElementById('anterior').addEventListener('click', agir(()=>navegar(-1)));
   doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
   doc.getElementById('abrir-detalhe').addEventListener('click', agir(liveAbrirPrimeiroDetalhe));
   doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
-  // Depois de um clique no passador, o foco fica nesta janela: o passador físico (PageDown/PageUp) e as setas chegariam aqui e não fariam nada.
-  // Repassa só essas teclas para a mesma navegação dos botões; fora de campo de texto (o Bastidor tem a anotação).
-  doc.addEventListener('keydown', e=>{
-    if(e.ctrlKey || e.metaKey || e.altKey || _okrEhCampo(e.target)) return;
-    const dir = (e.key==='ArrowRight' || e.key==='PageDown') ? 1 : (e.key==='ArrowLeft' || e.key==='PageUp') ? -1 : 0;
-    if(!dir) return;
-    e.preventDefault();
-    agir(()=>navegar(dir))();
-  });
   if(bastidor) livePrepararBastidor(pip);
 }
 function livePrepararBastidor(pip){
