@@ -41,7 +41,7 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] Próximo coloca a prévia no ar`, (await texto(p, '#bastidor-agora'))===esperado, esperado);
       await p.locator('#anterior').click();
       await p.evaluate(()=>Object.defineProperty(navigator.clipboard,'writeText',{value:async texto=>{window.__conviteBastidor=texto;}}));
-      await p.getByRole('button',{name:'Copiar convite pro chat do Meet'}).click();
+      await p.getByRole('button',{name:'Copiar convite do Meet'}).click();
       t(`[${w}] Bastidor copia o convite com link para os slides`, await p.evaluate(()=>
         window.__conviteBastidor?.includes(location.origin+location.pathname) &&
         window.__conviteBastidor.includes('O áudio e a conversa continuam aqui no Google Meet.') &&

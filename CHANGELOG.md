@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — ícones de tela e conversa nas ações do Bastidor — 2026-11-19
+
+Monitor identifica o link da tela para o público. Balão de conversa identifica o convite para o chat do Meet.
+
 ### SÓ DEV — Radar — horário e Panorama geral no Bastidor — 2026-11-19
 
 A aba do Bastidor permite configurar o horário da reunião e ir direto ao Panorama geral. O layout de desktop ocupa menos altura e mantém a prévia ao alcance.
