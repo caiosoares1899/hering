@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — salto entre gerências no Bastidor — 2026-11-19
+
+O Bastidor separa Gerência, que navega entre slides, de Objetivo do slide, que abre um detalhe na gerência atual.
+
 ### SÓ DEV — Radar — Evolução e escolha direta de Objetivos no controle ao vivo — 2026-11-19
 
 O Bastidor permite escolher um Objetivo do slide. O Bastidor e o passador abrem e fecham Evolução para toda a sala.

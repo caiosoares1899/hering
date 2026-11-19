@@ -80,7 +80,12 @@ const medir = p => p.evaluate(() => ({
       await p.waitForFunction(()=>window.__store.kanban.okr.reuniao_agenda?.[_hojeStr()]?.fim==='11:00');
       t(`[${w}] Bastidor salva o horário no mesmo registro da apresentação`, await p.evaluate(()=>_okrAgendaHoje()?.inicio==='10:00'), '');
       t(`[${w}] no slide de abertura, Abrir detalhe fica desligado`, await p.locator('#abrir-detalhe').isDisabled(), '');
-      await p.evaluate(() => window._okrGoTo(slides.findIndex(x => x.primeiroObj === 'd2'))); await p.waitForTimeout(400);
+      const gerencia = p.getByRole('combobox',{name:'Gerência',exact:true});
+      const chave = await p.evaluate(()=>slides.find(x=>x.primeiroObj==='d2').key);
+      await gerencia.selectOption(chave);
+      await p.waitForFunction(chave=>window.__store.kanban.okr.apresentacao_live.slide===chave,chave);
+      t(`[${w}] Gerência pula direto para o slide e oferece os Objetivos dele`,
+        await gerencia.inputValue()===chave && await p.getByRole('combobox',{name:'Objetivo do slide'}).isVisible(),'');
       const objetivo = p.getByRole('combobox',{name:'Objetivo do slide'});
       await objetivo.selectOption('d4');
       await p.getByRole('button',{name:'Abrir detalhe',exact:true}).click();
@@ -103,6 +108,10 @@ const medir = p => p.evaluate(() => ({
       await p.keyboard.press('ArrowRight');
       t(`[${w}] último Objetivo desativa Próximo e esconde a prévia`,
         await p.locator('#proximo').isDisabled() && !(await p.locator('#bastidor-previa').isVisible()), '');
+      const outra = await p.evaluate(()=>slides.find(x=>x.key.startsWith('ger:') && x.key!==slides[currentIdx].key).key);
+      await gerencia.selectOption(outra);
+      await p.waitForFunction(chave=>window.__store.kanban.okr.apresentacao_live.slide===chave && !window.__store.kanban.okr.apresentacao_live.detalhe,outra);
+      t(`[${w}] trocar de Gerência fecha o detalhe que estava no ar`, await gerencia.inputValue()===outra,'');
       await p.getByRole('button',{name:'Ir para Panorama geral'}).click();
       await p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide==='summary');
       t(`[${w}] atalho fecha o detalhe e leva a sala ao Panorama geral`, (await texto(p,'#bastidor-agora'))==='Panorama geral' &&
