@@ -312,3 +312,7 @@ Caio confirmou que os 3 deploys pendentes já foram feitos; saíram de *Pendente
 - Conhecimento do Agente Ágil regenerado nas promoções de 16/11 (Férias em tela cheia, Gantt, Ilha, Preferências, tema claro; 2ª: tema BF da semana, diretoria, Modelo salva e continua)
 - 🔥 Monitor do Firebase: feed com formato mudado não vira mais alarme do histórico inteiro (/monitorarbugs 16/11, #1815)
 - 🏢 Diretoria por pessoa: regra de `usuarios/{uid}/diretoria` e do espelho em `usuarios_publicos` (só depois do merge do PR da diretoria)
+
+## Confirmação de deploy — 19/11/2026 (promoção #1871)
+
+Caio confirmou o merge da #1871 e o deploy das 5 funções do Agente Ágil (`agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO`, `okrAgenteChat`) com o conhecimento regenerado na promoção de 18/11. Tags `kanban-v8.30.1016`, `okr-v2.141`, `painel-v5.124` e `oceano-v1.88` no commit de merge. O repositório não tem `.firebaserc`: o deploy precisa de `--project hering-onboarding`.
