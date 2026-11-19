@@ -1,5 +1,5 @@
 // 🎛️ Botão próprio do passador, logo acima do 🎙️ (pedido do Caio, 19/11/2026), na apresentação ao vivo do Radar.
-// Quem apresenta: um clique abre o controle flutuante compacto (Anterior, Próximo, Fechar detalhe). Quem acompanha: o mesmo botão pede o
+// Quem apresenta: um clique abre o controle flutuante compacto (Anterior, Próximo, Abrir e Fechar detalhe). Quem acompanha: o mesmo botão pede o
 // controle, e quem apresenta (ou o ADM) libera. O botão acompanha a passagem e a retomada; a Tela para o público e o Bastidor não o mostram.
 // Precisa da janela flutuante de verdade (Document Picture-in-Picture): cada pessoa num navegador próprio, como no TESTAR_PIP=1 da suíte ao vivo.
 const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modules/playwright');
@@ -46,7 +46,7 @@ const pip = p => p.evaluate(() => { const d = window.documentPictureInPicture?.w
     await A.p.evaluate(() => window._livePainel(false));
     await A.p.getByRole('button', { name: 'Abrir controle flutuante', exact: true }).click();
     await A.p.waitForFunction(() => !!window.documentPictureInPicture?.window?.document.getElementById('proximo'), null, { timeout: 5000 });
-    t('um clique abre o passador compacto (Anterior, Próximo, Fechar detalhe)', await pip(A.p) === 'anterior,proximo,fechar-detalhe', await pip(A.p));
+    t('um clique abre o passador compacto (Anterior, Próximo, Abrir e Fechar detalhe)', await pip(A.p) === 'anterior,proximo,abrir-detalhe,fechar-detalhe', await pip(A.p));
     await A.p.evaluate(() => window._okrOpenDetail('d2')); await A.p.waitForTimeout(400);
     t('com o detalhe do Objetivo aberto, o botão continua por cima e clicável', await A.p.evaluate(() => { const b = document.getElementById('live-passador').getBoundingClientRect(); return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2)?.id === 'live-passador'; }), '');
     await A.p.evaluate(() => window.documentPictureInPicture.window.document.getElementById('proximo').click()); await A.p.waitForTimeout(400);
@@ -63,7 +63,7 @@ const pip = p => p.evaluate(() => { const d = window.documentPictureInPicture?.w
     t('e quem passou o controle perde o botão de abrir e o passador fecha', await rotulo(A.p) === 'Pedir o controle para usar o controle flutuante' && await pip(A.p) === '', { a: await rotulo(A.p), pip: await pip(A.p) });
     await B.p.getByRole('button', { name: 'Abrir controle flutuante', exact: true }).click();
     await B.p.waitForFunction(() => !!window.documentPictureInPicture?.window?.document.getElementById('proximo'), null, { timeout: 5000 });
-    t('quem recebeu abre o passador com um clique', await pip(B.p) === 'anterior,proximo,fechar-detalhe', await pip(B.p));
+    t('quem recebeu abre o passador com um clique', await pip(B.p) === 'anterior,proximo,abrir-detalhe,fechar-detalhe', await pip(B.p));
     await A.p.evaluate(() => window._liveAssumir()); await A.p.waitForTimeout(300); await sync(A.p, B.p); await B.p.waitForTimeout(300);
     t('retomar: o botão volta para quem retomou', await rotulo(A.p) === 'Abrir controle flutuante', await rotulo(A.p));
     t('retomar: o passador de quem perdeu o controle fecha e o botão volta a pedir', await pip(B.p) === '' && await rotulo(B.p) === 'Pedir o controle para usar o controle flutuante', { pip: await pip(B.p), b: await rotulo(B.p) });

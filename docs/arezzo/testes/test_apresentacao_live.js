@@ -56,9 +56,9 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    const comando=id=>A.p.evaluate(i=>window.documentPictureInPicture.window.document.getElementById(i).click(),id);
    await A.p.getByRole('button',{name:'Abrir controle flutuante',exact:true}).click();   // botão próprio acima do 🎙️ (saiu do menu)
    await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
-   t('controle flutuante mantém só Anterior, Próximo e Fechar detalhe', await A.p.evaluate(()=>{
+   t('controle flutuante mantém só Anterior, Próximo, Abrir detalhe e Fechar detalhe', await A.p.evaluate(()=>{
      const doc=window.documentPictureInPicture.window.document;
-     return doc.querySelectorAll('button').length===3 && doc.getElementById('anterior').disabled && !doc.getElementById('anotacao');
+     return [...doc.querySelectorAll('button')].map(b=>b.id).join()==='anterior,proximo,abrir-detalhe,fechar-detalhe' && [...doc.querySelectorAll('button')].every(b=>b.getBoundingClientRect().bottom<=window.documentPictureInPicture.window.innerHeight) && doc.getElementById('anterior').disabled && doc.getElementById('abrir-detalhe').disabled && !doc.getElementById('anotacao');
    }), '');
    await comando('proximo');
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
@@ -80,6 +80,19 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d2',null,{timeout:5000});
    await comando('fechar-detalhe');
    await A.p.waitForFunction(()=>!window.__store.kanban.okr.apresentacao_live.detalhe);
+   // Abrir detalhe: num slide de gerência, abre o 1º Objetivo dela (o mesmo que a grade e o Anterior/Próximo do detalhe usam)
+   await A.p.evaluate(()=>window._okrGoTo(slides.findIndex(x=>x.primeiroObj==='d2'))); await A.p.waitForTimeout(300);
+   t('no slide de uma gerência, o passador habilita Abrir detalhe', await A.p.evaluate(()=>!window.documentPictureInPicture.window.document.getElementById('abrir-detalhe').disabled), '');
+   await comando('abrir-detalhe');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d2',null,{timeout:5000});
+   await sync(A.p,B.p);
+   t('Abrir detalhe abre o 1º Objetivo da gerência para a sala toda e se desliga', (await info(B.p)).det==='d2' && await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.getElementById('abrir-detalhe').disabled && !doc.getElementById('fechar-detalhe').disabled;
+   }), '');
+   await comando('fechar-detalhe');
+   await A.p.waitForFunction(()=>!window.__store.kanban.okr.apresentacao_live.detalhe);
+   await A.p.evaluate(()=>window._okrGoTo(0)); await A.p.waitForTimeout(200);
    await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
    await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
    await abrirPip();

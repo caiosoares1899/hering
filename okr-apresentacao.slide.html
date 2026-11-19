@@ -1516,7 +1516,7 @@ function buildSlides(){
         </div>`});
       grs.forEach((gr,gi)=>{
         const g = gr.g, lista = _okrObjetivosSorted(gr.lista);
-        list.push({key:'ger:'+gr.key, title:gr.rotulo, torre:t.id, html:`
+        list.push({key:'ger:'+gr.key, title:gr.rotulo, torre:t.id, primeiroObj:lista[0]?.id||'', html:`
           <div class="slide-inner t-${t.id}">
             <div class="ger-header com-torre"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="torre-chip">${t.icon?t.icon+' ':''}${esc(t.label)}</span><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
             <div class="obj-grid${lista.length>=6?' denso':''}">${lista.map(o=>objCardHtml(o)).join('')}</div>
@@ -2718,6 +2718,9 @@ function liveAtualizarControleFlutuante(){
   if(!livePodeAbrirJanela(bastidor)){ pip.close(); return; }
   liveAtualizarComandos(pip, bastidor);
 }
+// 'Abrir detalhe' do passador: o 1º Objetivo da gerência do slide atual, na mesma ordem da grade e dos botões Anterior/Próximo do detalhe.
+const livePrimeiroDetalhe = () => { const id = slides[currentIdx]?.primeiroObj; return id && okrObjetivos[id] ? id : ''; };
+function liveAbrirPrimeiroDetalhe(){ const id = livePrimeiroDetalhe(); if(id && !liveDetalheAberto()) window._okrOpenDetail(id); }
 function liveAtualizarComandos(pip, bastidor){
   const doc = pip.document;
   const host = liveSouHost(), detalhe = !!liveDetalheAberto();
@@ -2726,6 +2729,7 @@ function liveAtualizarComandos(pip, bastidor){
   if(!doc.getElementById('bastidor-agora')) doc.getElementById('estado').textContent = objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : 'Slide '+(currentIdx+1)+' de '+slides.length;
   doc.getElementById('anterior').disabled = !host || (detalhe ? !vizinhos.anterior : currentIdx<=0);
   doc.getElementById('proximo').disabled = !host || (detalhe ? !vizinhos.proximo : currentIdx>=slides.length-1);
+  doc.getElementById('abrir-detalhe').disabled = !host || detalhe || !livePrimeiroDetalhe();
   doc.getElementById('fechar-detalhe').disabled = !host || !detalhe;
   if(!bastidor) return;
   doc.getElementById('retomar').disabled = host;
@@ -2776,7 +2780,7 @@ window._liveAbrirControleFlutuante = async (bastidor = false) => {
   let pip;
   if(api?.requestWindow){
     try{
-      pip = await api.requestWindow(bastidor ? {width:416,height:440} : {width:348,height:142});
+      pip = await api.requestWindow(bastidor ? {width:416,height:440} : {width:348,height:184});
     }catch(e){
       if(!bastidor){
         liveToast('O Chrome não abriu o controle flutuante. Use os controles na aba dos slides.');
@@ -2835,7 +2839,7 @@ function liveMontarControle(pip, destino, bastidor){
       + '<p id="estado" class="bst-rotulo"></p><h2 id="bastidor-agora" class="bst-agora"></h2>'
       + '<p class="bst-seguir">A seguir: <b id="bastidor-seguir"></b></p>'
       + '<nav class="bst-nav" aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-      + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>'
+      + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>'
       + '<p id="tempo" class="bst-tempo"></p><span id="fps" hidden></span></section>'
       + '<section class="bst-card"><p class="bst-rotulo">Tela para o público</p><p class="bst-dica">Abra o link no computador que compartilha a tela no Meet.</p>'
       + '<div class="bst-acoes"><button type="button" id="bastidor-copiar">Copiar link da tela para o público</button></div></section></div>'
@@ -2849,13 +2853,14 @@ function liveMontarControle(pip, destino, bastidor){
     const navegar = dir => { if(liveDetalheAberto()) window._okrDetailVizinho(dir); else window._okrGoTo(currentIdx+dir); };
     doc.getElementById('anterior').addEventListener('click', agir(()=>navegar(-1)));
     doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
+    doc.getElementById('abrir-detalhe').addEventListener('click', agir(liveAbrirPrimeiroDetalhe));
     doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
     livePrepararBastidor(pip);
     return;
   }
   destino.innerHTML = '<h1>'+doc.title+'</h1><p id="estado" role="status"></p>'
     + '<nav aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
+    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
   if(bastidor) destino.insertAdjacentHTML('beforeend',
     '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
     + (pagina ? '<button type="button" id="bastidor-copiar">Copiar link da tela para o público</button> <button type="button" id="bastidor-encerrar">Encerrar apresentação</button>' : '<button type="button" id="palco" aria-pressed="false">Palco Limpo</button>')
@@ -2870,6 +2875,7 @@ function liveMontarControle(pip, destino, bastidor){
   };
   doc.getElementById('anterior').addEventListener('click', agir(()=>navegar(-1)));
   doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
+  doc.getElementById('abrir-detalhe').addEventListener('click', agir(liveAbrirPrimeiroDetalhe));
   doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
   if(bastidor) livePrepararBastidor(pip);
 }

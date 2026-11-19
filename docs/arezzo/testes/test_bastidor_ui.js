@@ -37,7 +37,9 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] FPS fica fora da aba (só faz sentido no computador dos slides)`, !(await p.locator('#fps').isVisible()), '');
       t(`[${w}] Próximo é o único botão de ação principal`, await p.evaluate(() => { const cor = e => getComputedStyle(e).backgroundColor; const prox = cor(document.getElementById('proximo')); return [...document.querySelectorAll('#bastidor-controles button')].filter(e => cor(e) === prox).map(e => e.id).join() === 'proximo'; }), '');
       t(`[${w}] Encerrar fica separado, no fim`, await p.evaluate(() => !!document.querySelector('.bst-fim #bastidor-encerrar')), '');
-      await p.evaluate(() => window._okrOpenDetail('d2')); await p.waitForTimeout(400);
+      t(`[${w}] no slide de abertura, Abrir detalhe fica desligado`, await p.locator('#abrir-detalhe').isDisabled(), '');
+      await p.evaluate(() => window._okrGoTo(slides.findIndex(x => x.primeiroObj === 'd2'))); await p.waitForTimeout(400);
+      await p.getByRole('button', { name: 'Abrir detalhe', exact: true }).click(); await p.waitForTimeout(400);
       t(`[${w}] detalhe: título do Objetivo em destaque e o próximo da gerência`, (await texto(p, '#bastidor-agora')) === LONGO && (await texto(p, '#bastidor-seguir')) === 'Pagamentos' && (await texto(p, '#estado')) === 'Detalhe do Objetivo', { a: await texto(p, '#bastidor-agora'), s: await texto(p, '#bastidor-seguir') });
       let m = await medir(p);
       t(`[${w}] sem rolagem lateral com título longo e alvos de pelo menos 44 px`, !m.rolagemLateral && !m.pequenos.length, m);
