@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — convite copiável para o chat do Meet — 2026-11-19
+
+O painel ao vivo copia um convite para acompanhar os slides no navegador. A confirmação de encerramento distingue a sessão do Radar do compartilhamento de tela no Meet.
+
 ### SÓ DEV — Apresentação do Radar — gestos para laser e caneta temporária — 2026-11-19
 
 Na área livre do slide ou do detalhe, dois cliques acionam o laser e três selecionam a caneta temporária durante a sessão ao vivo.

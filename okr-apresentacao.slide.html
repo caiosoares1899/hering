@@ -2401,7 +2401,7 @@ window._liveComecar = () => {
   window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||''})
     .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
-window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a apresentação ao vivo pra todo mundo?')) return; window._remove(liveRef()).catch(()=>{}); };
+window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a sessão do Radar para todos? Para parar o compartilhamento de tela, use o controle do Google Meet.')) return; window._remove(liveRef()).catch(()=>{}); };
 function liveAplicar(forcar){
   // forcar: retomada de quem recarregou a página ou mudança ativa de slide/detalhe/apresentador vinda da sala
   if(!liveAtiva()) return;
@@ -2505,7 +2505,17 @@ window._liveDesfazer = () => {
   const ctxs = liveCtxs(), ids = Object.entries((live && live.tracos)||{}).filter(([,t])=>t && t.m!=='t' && ctxs.includes(t.k)).map(([id])=>id).sort();
   if(ids.length) window._remove(liveRef('tracos/'+ids[ids.length-1])).catch(()=>{});
 };
-window._liveCopiarLink = () => { const url = location.origin + location.pathname; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(url) : Promise.reject()).then(()=>liveToast('📋 Link copiado — mande pra quem vai receber o controle.')).catch(()=>liveToast('Copie o endereço da barra do navegador: '+url, '', 7000)); };
+window._liveCopiarConvite = async () => {
+  if(!livePodeControlar()) return;
+  const url = location.origin + location.pathname;
+  const convite = 'Abra os slides ao vivo do Radar para acompanhar no navegador: '+url+'\nO áudio e a conversa continuam aqui no Google Meet.';
+  try{
+    await navigator.clipboard.writeText(convite);
+    liveToast('📋 Convite copiado. Cole no chat do Meet.');
+  }catch(e){
+    window.prompt('Copie o convite e cole no chat do Meet:', convite);
+  }
+};
 window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? abrir : !livePainelAberto; _liveSig = ''; liveRender(); };
 // A interface só é remontada quando algo MUDOU de verdade (quem apresenta, ferramenta, quem está na sala…): os sinais de vida dos participantes chegam o tempo todo,
 // e remontar a cada um fazia o clique no nome da pessoa se perder (o botão era trocado entre o botão do mouse descer e subir).
@@ -2551,8 +2561,9 @@ function liveRender(){
       if(liveFerr==='caneta') p += '<div class="lp-seg"><button type="button" class="'+(liveTipo==='f'?'on':'')+'" onclick="window._liveTipo(\'f\')" title="O traço fica até você apagar">Fixa</button><button type="button" class="'+(liveTipo==='t'?'on':'')+'" onclick="window._liveTipo(\'t\')" title="O traço some sozinho depois de 5 s (T ou clique triplo no slide)">Temporária · 5 s</button></div>'
         + '<div class="lp-cores">'+LIVE_CORES.map(c=>'<button type="button" class="live-cor'+(c===liveCor?' on':'')+'" style="background:'+c+'" onclick="window._liveCor(\''+c+'\')" aria-label="Cor"></button>').join('')+'</div>';
       p += '<div class="lp-row"><button type="button" class="lp-b" onclick="window._liveDesfazer()" title="Desfaz o último traço fixo (Z)">↩ Desfazer</button><button type="button" class="lp-b" onclick="window._liveLimpar()" title="Apaga todos os traços">🧽 Apagar tudo</button></div>'
+        + '<button type="button" class="lp-b" onclick="window._liveCopiarConvite()">💬 Copiar convite pro chat do Meet</button>'
         + '<div class="lp-sub">Passar o controle pra…</div>'
-        + (pessoas.length ? '<div class="lp-lista">'+pessoas.map(([id,x])=>'<button type="button" onclick="window._livePassar('+jsq(id)+','+jsq(x.nome||'')+')">🤝 '+esc(x.nome||'Alguém')+'</button>').join('')+'</div>' : '<div class="lp-vazio">Ninguém mais está com a página aberta agora. Peça pra abrirem o link da apresentação (entrando com a conta da empresa) — o nome aparece aqui em instantes. Outra aba da sua própria conta não conta.</div><button type="button" class="lp-b" onclick="window._liveCopiarLink()">📋 Copiar link da apresentação</button>')
+        + (pessoas.length ? '<div class="lp-lista">'+pessoas.map(([id,x])=>'<button type="button" onclick="window._livePassar('+jsq(id)+','+jsq(x.nome||'')+')">🤝 '+esc(x.nome||'Alguém')+'</button>').join('')+'</div>' : '<div class="lp-vazio">Ninguém mais está com a página aberta agora. Peça pra abrirem o link da apresentação (entrando com a conta da empresa) — o nome aparece aqui em instantes. Outra aba da sua própria conta não conta.</div>')
         + '<button type="button" class="lp-b lp-fim" onclick="window._liveEncerrar()">⏹ Encerrar apresentação</button>';
     } else {
       p += (liveSeguindo ? '<div class="lp-vazio">Você está acompanhando o slide dele.</div>' : '<button type="button" class="lp-b" onclick="window._liveSeguir()">↩ Voltar a seguir</button>')
