@@ -2468,7 +2468,10 @@ function liveAposNavegar(){
     fecharEvolucao();
     if(estavaAberta) liveAposNavegar();
   };
-  window._okrGoTo = i => { go(i); liveAposNavegar(); };
+  window._okrGoTo = i => {
+    if(i>=0 && i<slides.length && i!==currentIdx) _okrLimparAting();
+    go(i); liveAposNavegar();
+  };
   window._okrOpenDetail = id => { op(id); liveAposNavegar(); };
   window._okrCloseDetail = () => { cl(); liveAposNavegar(); };
 })();

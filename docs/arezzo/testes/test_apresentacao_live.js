@@ -141,7 +141,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.evaluate(()=>document.querySelector('#live-toast [data-pedido] button').click()); await A.p.waitForTimeout(250); await sync(A.p,B.p);
  const a4=await info(A.p), b4=await info(B.p); t('aceitar passa o controle: Eve vira apresentadora e Ana acompanha', /Parar de apresentar/.test(b4.box) && /Eve Souza está apresentando/.test(a4.box), {a4,b4});
  t('quem recebe o controle herda o detalhe e a Evolução aberta', (await info(B.p)).det==='d2' && await evolucaoAberta(B.p), '');
- await B.p.evaluate(()=>window._okrGoTo(1)); await B.p.waitForTimeout(250); await sync(B.p,A.p); t('o novo apresentador comanda (Ana segue a Eve)', (await info(A.p)).idx===1, await info(A.p));
+ await B.p.evaluate(()=>{ window._okrCloseDetail(); window._okrGoTo(1); }); await B.p.waitForTimeout(250); await sync(B.p,A.p); t('o novo apresentador comanda (Ana segue a Eve)', (await info(A.p)).idx===1, await info(A.p));
  // apresentador some -> assumir
  await A.p.evaluate(()=>{ const s=window.__store.kanban.okr.apresentacao_live; s.atualizadoEm=Date.now()-120000; (window.__lis||[]).filter(l=>l.p==='kanban/okr/apresentacao_live').forEach(l=>l.cb({val:()=>JSON.parse(JSON.stringify(s)),exists:()=>true,key:'x'})); }); await A.p.waitForTimeout(200);
  await A.p.evaluate(()=>{ _liveSig=''; window._livePainel(true); }); await A.p.waitForTimeout(150); t('apresentador sem sinal há >90 s: o painel de quem acompanha mostra "Assumir"', await A.p.evaluate(()=>/Assumir/.test(document.getElementById('live-fpanel').textContent)), await A.p.evaluate(()=>document.getElementById('live-fpanel').textContent));
