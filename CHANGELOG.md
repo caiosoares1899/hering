@@ -24,6 +24,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — Bastidor do ADM com retomada de controle — 2026-11-19
+
+O ADM mantém o Bastidor aberto durante a troca de apresentador e retoma o controle quando precisar. Quem recebe o controle pode usar o passador compacto.
+
+### SÓ DEV — Radar — controle flutuante enxuto e bastidor como opções separadas — 2026-11-19
+
+O painel ao vivo oferece a janelinha original de navegação e uma abertura separada para o bastidor completo.
+
+### SÓ DEV — Palco Limpo mantém laser e caneta disponíveis — 2026-11-19
+
+Na aba do apresentador, o microfone abre um painel reduzido com as ferramentas de marcação. A tela remota para o público continua limpa.
+
+### SÓ DEV — Apresentação do Radar — tela para o público em outro computador — 2026-11-19
+
+O apresentador copia um link para projetar uma tela limpa em outro computador. A tela segue a sala ao vivo sem disputar o controle, inclusive com a mesma conta.
+
 ### SÓ DEV — Apresentação do Radar — bastidor com Palco Limpo — 2026-11-19
 
 O controle flutuante do Chrome reúne anotações, tempo restante, FPS, participantes e pedidos de controle. Palco Limpo oculta os controles de bastidor da aba dos slides enquanto a janela está aberta.

@@ -9,9 +9,9 @@ const NO='kanban/okr/apresentacao_live';
 async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((window.__store.kanban||{}).okr||{}).apresentacao_live||null));
   await to.evaluate(([n,NO])=>{ const v=JSON.parse(n), st=window.__store; st.kanban=st.kanban||{}; st.kanban.okr=st.kanban.okr||{}; if(v===null) delete st.kanban.okr.apresentacao_live; else st.kanban.okr.apresentacao_live=v;
     (window.__lis||[]).filter(l=>l.p===NO).forEach(l=>l.cb({val:()=>v===null?null:JSON.parse(JSON.stringify(v)), exists:()=>v!==null, key:'apresentacao_live'})); },[n,NO]); await to.waitForTimeout(250); }
-(async()=>{ const b=await chromium.launch({executablePath:process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,300))); };
- const open=async(user,w=1280,h=800)=>{ const ctx=await b.newContext({viewport:{width:w,height:h}}); await fake.install(ctx,seed()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept()); await p.goto((process.env.APRESENTACAO_TEST_URL || 'http://localhost:8941') + '/okr-apresentacao.slide.html'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(1500); return {ctx,p,errs}; };
- const A=await open(U('ana','Ana ADM')), B=await open(U('eve','Eve Souza'));
+(async()=>{ const abrirChrome=()=>chromium.launch({executablePath:process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); const b=await abrirChrome(); const remoto=process.env.TESTAR_PIP==='1' ? await abrirChrome() : b; let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,300))); };
+ const open=async(user,w=1280,h=800,url,navegador=b)=>{ const ctx=await navegador.newContext({viewport:{width:w,height:h}}); await fake.install(ctx,seed()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept()); await p.goto(url || (process.env.APRESENTACAO_TEST_URL || 'http://localhost:8941') + '/okr-apresentacao.slide.html'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(1500); return {ctx,p,errs}; };
+ const A=await open(U('ana','Ana ADM')), B=await open(U('eve','Eve Souza'),1280,800,undefined,remoto);
  const info=p=>p.evaluate(()=>({key:slides[currentIdx].key, idx:currentIdx, det:document.getElementById('detail-ov').classList.contains('open')?_okrDetailCurrentId:'', box:document.getElementById('live-box').textContent.replace(/\s+/g,' ').trim()}));
  t('antes de apresentar: botão "Apresentar ao vivo" na barra', /Apresentar ao vivo/.test((await info(A.p)).box), await info(A.p));
  await A.p.click('#live-box button'); await A.p.waitForTimeout(300); await sync(A.p,B.p);
@@ -23,25 +23,39 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.getByRole('button', { name: /Copiar convite pro chat do Meet/ }).click();
  const convite = await A.p.evaluate(() => window.__conviteCopiado);
  t('convite aponta só para os slides e deixa a conversa no Meet', convite === 'Abra os slides ao vivo do Radar para acompanhar no navegador: '+new URL(A.p.url()).origin+'/okr-apresentacao.slide.html\nO áudio e a conversa continuam aqui no Google Meet.', convite);
+ await A.p.getByRole('button',{name:'Copiar link da tela para o público'}).click();
+ const urlPublico=await A.p.evaluate(()=>window.__conviteCopiado);
+ t('link da tela para o público ativa o modo de projeção', new URL(urlPublico).searchParams.get('tela')==='publico',urlPublico);
  await A.p.evaluate(() => window._livePainel(false));
  if(process.env.TESTAR_PIP==='1'){
-   const abrirPip=async()=>{
+   const abrirPip=async(nome='Abrir bastidor')=>{
      await A.p.evaluate(()=>window._livePainel(true));
-     await A.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
+     await A.p.getByRole('button',{name:nome}).click();
      await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
    };
    const comando=id=>A.p.evaluate(i=>window.documentPictureInPicture.window.document.getElementById(i).click(),id);
-   await abrirPip();
-   t('Chrome abre janela PiP nativa com três controles', await A.p.evaluate(()=>{
+   await abrirPip('🎛️ Abrir controle flutuante');
+   t('controle flutuante mantém só Anterior, Próximo e Fechar detalhe', await A.p.evaluate(()=>{
      const doc=window.documentPictureInPicture.window.document;
-     return doc.querySelectorAll('nav button').length===3 && doc.getElementById('anterior').disabled;
+     return doc.querySelectorAll('button').length===3 && doc.getElementById('anterior').disabled && !doc.getElementById('anotacao');
    }), '');
+   await comando('proximo');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
+   await comando('anterior');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[0].key);
+   await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
+   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
+   await abrirPip();
    await comando('palco');
    t('Palco Limpo oculta bastidores e mantém os slides visíveis', await A.p.evaluate(()=>{
-     const ocultos=['live-box','live-toast','live-fab','notes-fab','fps-meter','tb-countdown'];
+     const ocultos=['live-box','live-toast','notes-fab','fps-meter','tb-countdown'];
      return ocultos.every(id=>getComputedStyle(document.getElementById(id)).display==='none') &&
        getComputedStyle(document.getElementById('slides')).display!=='none';
    }), '');
+   await A.p.locator('#live-fab').click();
+   t('Palco Limpo mantém o microfone com laser e caneta', await A.p.locator('#live-fpanel button').filter({hasText:/Laser|Caneta/}).count()===2 &&
+     await A.p.getByRole('button',{name:'Copiar link da tela para o público'}).count()===0, '');
+   await A.p.locator('#live-fab').click();
    await A.p.evaluate(()=>{
      okrAgendas[_hojeStr()]={fim:'23:59'};
      const doc=window.documentPictureInPicture.window.document;
@@ -92,14 +106,30 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await sync(A.p,B.p);
  const evolucaoAberta = p => p.evaluate(()=>document.getElementById('ating-ov').classList.contains('open') && !!document.querySelector('#ating-body svg'));
  t('abrir Evolução sincroniza o gráfico', await evolucaoAberta(B.p), '');
- const C = await open(U('late','Participante'),1024,768);
+ const C = await open(U('ana','Ana ADM'),1024,768,urlPublico);
+ t('tela para o público aguarda a sessão', await C.p.locator('#publico-espera').isVisible(), '');
  await sync(A.p,C.p);
  t('entrada tardia em outra resolução abre o detalhe e a Evolução', (await info(C.p)).det==='d2' && await evolucaoAberta(C.p), '');
+ await C.p.keyboard.press('Escape');
+ await C.p.keyboard.press('ArrowRight');
+ const publico=await C.p.evaluate(()=>{
+   window._liveAssumir();
+   window._livePedir();
+   return {
+     ocultos:['topbar','bottombar','notes-fab','live-toast','live-fab'].every(id=>getComputedStyle(document.getElementById(id)).display==='none'),
+     semGravacao:!window.__log.some(([op])=>['set','update','remove'].includes(op)),
+     semNotas:!window.__log.some(([,no])=>no==='kanban/okr/reuniao_notas'),
+     host:liveSouHost()
+   };
+ });
+ t('tela com a conta da apresentadora continua passiva e mostra só os slides', publico.ocultos && publico.semGravacao && publico.semNotas &&
+   !publico.host && (await info(C.p)).idx===2 && await evolucaoAberta(C.p), publico);
  await A.p.evaluate(()=>window._okrCloseAting());
  await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='');
  await sync(A.p,B.p);
  t('fechar Evolução deixa o detalhe aberto nas duas abas', !(await evolucaoAberta(B.p)) && (await info(B.p)).det==='d2', '');
- await C.ctx.close();
+ await sync(A.p,C.p);
+ t('tela do público fecha Evolução ao receber a navegação', !(await evolucaoAberta(C.p)) && (await info(C.p)).det==='d2', '');
  await A.p.evaluate(()=>window._okrCloseDetail()); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('fechar o detalhe fecha pra todos', (await info(B.p)).det==='', await info(B.p));
  // acompanhante mexe sozinho -> sai da sincronização; "Voltar a seguir" volta
  await B.p.evaluate(()=>window._okrGoTo(0)); await B.p.waitForTimeout(200); const b3=await info(B.p); t('mexer nos slides por conta própria sai da sincronização (e aparece "Voltar a seguir")', b3.idx===0 && /Voltar a seguir/.test(b3.box), b3);
@@ -190,11 +220,26 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.mouse.up(); await A.p.waitForTimeout(300); await sync(A.p,B.p);
  t('clicar no nome da pessoa no painel passa o controle (com sinais de vida chegando no meio do clique)', await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador.uid==='eve') && /Parar de apresentar/.test((await info(B.p)).box), await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador));
  if(process.env.TESTAR_PIP==='1'){
-   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
-   t('janela flutuante fecha se o apresentador transfere o controle', await A.p.evaluate(()=>!window.documentPictureInPicture.window), '');
+   t('ADM mantém o Bastidor aberto com Retomar controle disponível', await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window?.document;
+     return doc && !doc.getElementById('retomar').disabled && doc.getElementById('proximo').disabled;
+   }), '');
+   await B.p.evaluate(()=>window._livePainel(true));
+   t('quem recebe o controle vê o passador e o Bastidor fica reservado ao ADM',
+     await B.p.getByRole('button',{name:/Abrir controle flutuante/}).count()===1 && await B.p.getByRole('button',{name:'Abrir bastidor'}).count()===0, '');
+   await B.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
+   await B.p.waitForFunction(()=>!!window.documentPictureInPicture.window?.document.getElementById('anterior'));
+   await A.p.evaluate(()=>window.documentPictureInPicture.window.document.getElementById('retomar').click());
+   await A.p.waitForFunction(()=>liveSouHost());
+   await sync(A.p,B.p);
+   await B.p.waitForFunction(()=>!window.documentPictureInPicture.window);
+   t('Retomar controle devolve a apresentação ao ADM e fecha o passador anterior',
+     await A.p.evaluate(()=>liveSouHost() && window.documentPictureInPicture.window.document.getElementById('retomar').disabled), '');
  }
- await B.p.evaluate(()=>window._liveAssumir()); await B.p.waitForTimeout(150); await sync(B.p,A.p); await A.p.evaluate(()=>window._livePainel(false)); await B.p.evaluate(()=>window._livePainel(false));
- await B.p.evaluate(()=>window._liveEncerrar && 0); await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(200); await sync(A.p,B.p);
+ if(process.env.TESTAR_PIP!=='1'){
+   await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(200); await sync(A.p,B.p);
+ }
+ await A.p.evaluate(()=>window._livePainel(false)); await B.p.evaluate(()=>window._livePainel(false));
  // pedir / passar o controle
  await B.p.evaluate(()=>window._livePedir()); await B.p.waitForTimeout(250); await sync(B.p,A.p);
  t('pedido de controle aparece pro apresentador, com Passar/Recusar', await A.p.evaluate(()=>/Eve Souza pede o controle/.test(document.getElementById('live-toast').textContent) && !!document.querySelector('#live-toast [data-pedido] button')), 'sem pedido');
@@ -203,9 +248,6 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  // cenário real: a flag de "seguindo" da Ana estava desligada quando ela passou o controle — a tela dela (a compartilhada no Meet) tem que passar a seguir a Eve mesmo assim
  await A.p.evaluate(()=>{ liveSeguindo = false; });
  if(process.env.TESTAR_PIP==='1'){
-   await A.p.evaluate(()=>{ window._okrCloseAting(); window._livePainel(true); });
-   await A.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
-   await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('participante'));
    await A.p.evaluate(()=>{
      window._okrOpenAting('d2');
      const doc=window.documentPictureInPicture.window.document;
@@ -221,7 +263,9 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    }), '');
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='d2');
    await A.p.evaluate(()=>window.documentPictureInPicture.window.document.getElementById('passar').click());
-   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window && !document.body.classList.contains('live-palco-limpo'));
+   await A.p.waitForFunction(()=>!liveSouHost() && !!window.documentPictureInPicture.window);
+   await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
+   await A.p.waitForFunction(()=>!document.body.classList.contains('live-palco-limpo'));
  }else await A.p.evaluate(()=>document.querySelector('#live-toast [data-pedido] button').click()); await A.p.waitForTimeout(250); await sync(A.p,B.p);
  const a4=await info(A.p), b4=await info(B.p); t('aceitar passa o controle: Eve vira apresentadora e Ana acompanha', /Parar de apresentar/.test(b4.box) && /Eve Souza está apresentando/.test(a4.box), {a4,b4});
  t('quem recebe o controle herda o detalhe e a Evolução aberta', (await info(B.p)).det==='d2' && await evolucaoAberta(B.p), '');
@@ -235,9 +279,12 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const confirmacao = A.p.waitForEvent('dialog').then(d => d.message());
  await parar.press('Enter');
  t('confirmação diferencia a sessão do Radar do compartilhamento no Meet', /sessão do Radar.*compartilhamento de tela.*Google Meet/.test(await confirmacao), ''); await A.p.waitForTimeout(250); await sync(A.p,B.p); const b5=await info(B.p); t('encerrar apaga a sessão e avisa quem estava acompanhando', /Apresentar ao vivo/.test(b5.box) && await B.p.evaluate(()=>/terminou/.test(document.getElementById('live-toast').textContent)), b5);
+ await sync(A.p,C.p);
+ t('encerrar volta a tela projetada para a espera', await C.p.locator('#publico-espera').isVisible(), '');
+ await C.ctx.close();
  t('sem erro de JS nas duas telas', !A.errs.length && !B.errs.length, [A.errs,B.errs]);
  // visualizador externo: acompanha mas não apresenta nem pede controle
  { const V=await open(U('ext','Externo','ext@gmail.com')); await A.p.click('#live-box button'); await A.p.waitForTimeout(250); await sync(A.p,V.p);
    const v=await info(V.p); t('visualizador externo: vê quem apresenta e acompanha, sem botão de apresentar/pedir', /Ana ADM está apresentando/.test(v.box) && !/Pedir o controle|Apresentar ao vivo/.test(v.box), v);
    await V.ctx.close(); }
- await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); process.exitCode=ok?0:1; })();
+ if(remoto!==b) await remoto.close(); await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); process.exitCode=ok?0:1; })();
