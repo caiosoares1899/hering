@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Evolução da apresentação travava ao redimensionar e exibia dados antigos
+
+O modal acompanha os registros recebidos no listener existente, preserva a expansão quando possível e fecha se o objetivo for removido. O redimensionamento continua ajustando o slide quando a lista esvazia.
+
 ### 2026-11-18 · 🎬 Apresentação do Radar: rodapé calcula largura e altura pelo conteúdo e não deixa cartões vazios
 
 - **Origem:** print do Caio e proposta da #1867. Depois da #1866, cartões curtos do rodapé ainda esticavam até a altura de Progressos.

@@ -53,6 +53,22 @@ const casos = { sobe: { tipo: 'financeira', moeda: 'BRL', inicial: 0, meta: 100,
           const linha = document.querySelector('#ating-body .okr-agua-superficie').getBoundingClientRect(), valores = [...document.querySelectorAll('#ating-body .okr-agua-valor')].map(e => e.getBoundingClientRect());
           return { avisoSobrePeixe: avisos.some(a => peixes.some(q => bate(a, q))), valorCruzaLinha: valores.some(v => v.top < linha.top && v.bottom > linha.bottom) }; }, id);
         t(tag + id + ': avisos e valores não ficam por cima dos peixes nem da linha', !r.avisoSobrePeixe && !r.valorCruzaLinha, r); }
+      await ler('sobe');
+      const sincronizacao = await p.evaluate(async () => {
+        const ov = document.getElementById('ating-ov');
+        document.querySelector('#ating-body .okr-ating-reg').open = true;
+        const obj = window.__store.kanban.okr.objetivos.c_sobe;
+        const ref = window._ref(window._db, 'kanban/okr/objetivos/c_sobe/atingimento/lancamentos');
+        await window._set(ref, [...obj.atingimento.lancamentos, { em: '2026-04-10', valor: 150 }]);
+        const atualizado = document.querySelector('#ating-body .okr-agua-valor')?.textContent.includes('150');
+        const expandido = document.querySelector('#ating-body .okr-ating-reg')?.open;
+        await window._set(ref, []);
+        window.dispatchEvent(new Event('resize'));
+        const vazio = document.getElementById('ating-body').textContent.includes('Nenhum registro ainda');
+        await window._remove(window._ref(window._db, 'kanban/okr/objetivos/c_sobe'));
+        return { atualizado, expandido, vazio, fechado: !ov.classList.contains('open') };
+      });
+      t(tag + 'Evolução aberta acompanha registros novos, lista vazia e exclusão do objetivo', Object.values(sincronizacao).every(Boolean), sincronizacao);
       t(tag + 'nenhum erro de JavaScript', !erros.length, erros);
       await ctx.close();
     }
