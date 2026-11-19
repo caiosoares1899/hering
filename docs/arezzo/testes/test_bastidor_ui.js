@@ -31,6 +31,21 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] espera: Iniciar com alvo de 44 px e cor de ação`, await iniciar.isVisible() && await iniciar.evaluate(e => e.getBoundingClientRect().height >= 44 && getComputedStyle(e).backgroundColor !== 'rgb(239, 239, 239)'), await iniciar.evaluate(e => getComputedStyle(e).backgroundColor));
       await iniciar.click(); await p.waitForTimeout(700);
       t(`[${w}] aviso de início fala da tela para o público, não do 🎙️ da aba dos slides`, /tela para o público/.test(await texto(p, '#live-toast')) && !/canto da tela/.test(await texto(p, '#live-toast')), await texto(p, '#live-toast'));
+      const quadro = p.locator('#bastidor-previa iframe');
+      await quadro.waitFor({state:'visible'});
+      const esperado = await p.evaluate(()=>slides[currentIdx+1].title);
+      await p.frameLocator('#bastidor-previa iframe').locator('.slide.active').waitFor();
+      t(`[${w}] miniatura renderiza o HTML do próximo slide em quadro isolado`,
+        await quadro.evaluate(e=>e.getAttribute('sandbox')==='' && e.srcdoc.includes(slides[currentIdx+1].html)), esperado);
+      await p.locator('#proximo').click();
+      t(`[${w}] Próximo coloca a prévia no ar`, (await texto(p, '#bastidor-agora'))===esperado, esperado);
+      await p.locator('#anterior').click();
+      await p.evaluate(()=>Object.defineProperty(navigator.clipboard,'writeText',{value:async texto=>{window.__conviteBastidor=texto;}}));
+      await p.getByRole('button',{name:'Copiar convite pro chat do Meet'}).click();
+      t(`[${w}] Bastidor copia o convite com link para os slides`, await p.evaluate(()=>
+        window.__conviteBastidor?.includes(location.origin+location.pathname) &&
+        window.__conviteBastidor.includes('O áudio e a conversa continuam aqui no Google Meet.') &&
+        !window.__conviteBastidor.includes('tela=publico')), '');
       t(`[${w}] mostra quem apresenta`, (await texto(p, '#bastidor-quem')) === 'Você está apresentando', await texto(p, '#bastidor-quem'));
       const agora = await p.evaluate(() => slides[currentIdx].title), seguir = await p.evaluate(() => slides[currentIdx + 1]?.title || '');
       t(`[${w}] mostra o slide atual e o que vem a seguir`, (await texto(p, '#bastidor-agora')) === agora && (await texto(p, '#bastidor-seguir')) === seguir && /Slide 1 de/.test(await texto(p, '#estado')), { agora, seguir });
@@ -40,9 +55,14 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] no slide de abertura, Abrir detalhe fica desligado`, await p.locator('#abrir-detalhe').isDisabled(), '');
       await p.evaluate(() => window._okrGoTo(slides.findIndex(x => x.primeiroObj === 'd2'))); await p.waitForTimeout(400);
       await p.getByRole('button', { name: 'Abrir detalhe', exact: true }).click(); await p.waitForTimeout(400);
+      t(`[${w}] prévia de Objetivo usa o cartão quando há vizinho`,
+        await p.locator('.bst-previa-objetivo').isVisible() && !(await quadro.isVisible()), '');
       t(`[${w}] detalhe: título do Objetivo em destaque e o próximo da gerência`, (await texto(p, '#bastidor-agora')) === LONGO && (await texto(p, '#bastidor-seguir')) === 'Pagamentos' && (await texto(p, '#estado')) === 'Detalhe do Objetivo', { a: await texto(p, '#bastidor-agora'), s: await texto(p, '#bastidor-seguir') });
       let m = await medir(p);
       t(`[${w}] sem rolagem lateral com título longo e alvos de pelo menos 44 px`, !m.rolagemLateral && !m.pequenos.length, m);
+      await p.locator('#proximo').click();
+      t(`[${w}] último Objetivo desativa Próximo e esconde a prévia`,
+        await p.locator('#proximo').isDisabled() && !(await p.locator('#bastidor-previa').isVisible()), '');
       await p.evaluate(() => { window._okrCloseDetail(); const st = window.__store.kanban.okr.apresentacao_live; st.apresentador = { uid: 'eve', nome: 'Eve Souza' };
         (window.__lis || []).filter(l => l.p === 'kanban/okr/apresentacao_live').forEach(l => l.cb({ val: () => JSON.parse(JSON.stringify(st)), exists: () => true, key: 'apresentacao_live' })); });
       await p.waitForTimeout(400);

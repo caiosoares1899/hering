@@ -70,6 +70,10 @@ body.live-bastidor #bastidor-pagina #bastidor-encerrar:hover{background:rgba(255
 #bastidor-pagina .bst-agora{margin:0;font-size:24px;line-height:1.25;overflow-wrap:anywhere;}
 #bastidor-pagina .bst-seguir{margin:0;font-size:14px;color:var(--txt2);overflow-wrap:anywhere;}
 #bastidor-pagina .bst-seguir b{color:var(--txt);font-weight:600;}
+.bst-previa{margin:0;min-width:0;}
+.bst-previa-quadro{aspect-ratio:16/9;overflow:hidden;position:relative;border:1px solid var(--glass-b);border-radius:12px;background:var(--glass);}
+.bst-previa-quadro iframe{position:absolute;inset:0;width:1280px;height:720px;border:0;transform-origin:top left;transform:scale(var(--previa-escala,0));pointer-events:none;}
+.bst-previa-objetivo{margin:0;padding:12px;border:1px solid var(--glass-b);border-radius:12px;color:var(--txt2);}
 #bastidor-pagina .bst-nav{display:flex;flex-wrap:wrap;gap:8px;}
 #bastidor-pagina .bst-nav #proximo{flex:1 1 160px;}
 #bastidor-pagina .bst-tempo{margin:0;font-size:15px;color:var(--txt2);font-variant-numeric:tabular-nums;}
@@ -2722,6 +2726,36 @@ function liveAtualizarControleFlutuante(){
 // 'Abrir detalhe' do passador: o 1º Objetivo da gerência do slide atual, na mesma ordem da grade e dos botões Anterior/Próximo do detalhe.
 const livePrimeiroDetalhe = () => { const id = slides[currentIdx]?.primeiroObj; return id && okrObjetivos[id] ? id : ''; };
 function liveAbrirPrimeiroDetalhe(){ const id = livePrimeiroDetalhe(); if(id && !liveDetalheAberto()) window._okrOpenDetail(id); }
+function liveAtualizarPrevia(slide, objetivo){
+  const previa = document.getElementById('bastidor-previa');
+  if(!previa) return;
+  const quadro = previa.querySelector('.bst-previa-quadro');
+  const cartao = previa.querySelector('.bst-previa-objetivo');
+  previa.hidden = !slide && !objetivo;
+  quadro.hidden = !slide;
+  cartao.hidden = !objetivo;
+  if(slide){
+    const iframe = quadro.querySelector('iframe');
+    if(iframe._slideHtml !== slide.html || iframe._slideKey !== slide.key){
+      iframe._slideHtml = slide.html;
+      iframe._slideKey = slide.key;
+      const css = document.querySelector('head style').textContent;
+      iframe.srcdoc = '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><style>'+css
+        +'</style><body inert><div id="slides" style="position:absolute;inset:0"><section class="slide active">'+slide.html+'</section></div></body></html>';
+    }
+    if(!quadro._previaObserver){
+      quadro._previaObserver = new ResizeObserver(([entrada])=>{
+        quadro.style.setProperty('--previa-escala', String(entrada.contentRect.width/1280));
+      });
+      quadro._previaObserver.observe(quadro);
+    }
+  }
+  if(objetivo){
+    const status = okrStatusInfo(objStatus(objetivo.id)).label;
+    const texto = status+' · '+objProgressoPct(objetivo.id)+'% de progresso';
+    if(cartao.textContent !== texto) cartao.textContent = texto;
+  }
+}
 function liveAtualizarComandos(pip, bastidor){
   const doc = pip.document;
   const host = liveSouHost(), detalhe = !!liveDetalheAberto();
@@ -2764,6 +2798,7 @@ function liveAtualizarComandos(pip, bastidor){
     doc.getElementById('bastidor-quem').classList.toggle('outro', !host);
     poe('estado', objetivo ? 'Detalhe do Objetivo' : 'Slide '+(currentIdx+1)+' de '+slides.length);
     poe('bastidor-agora', objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : (slides[currentIdx]?.title||''));
+    liveAtualizarPrevia(objetivo ? null : slides[currentIdx+1], objetivo ? vizinhos.proximo : null);
     poe('bastidor-seguir', objetivo ? (vizinhos.proximo ? (vizinhos.proximo.titulo||'Próximo Objetivo') : 'último Objetivo desta gerência')
       : (slides[currentIdx+1]?.title || 'fim da apresentação'));
     poe('bastidor-dica-controle', !host ? 'A navegação volta para você ao retomar o controle.'
@@ -2841,9 +2876,12 @@ function liveMontarControle(pip, destino, bastidor){
       + '<p class="bst-seguir">A seguir: <b id="bastidor-seguir"></b></p>'
       + '<nav class="bst-nav" aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
       + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>'
+      + '<figure id="bastidor-previa" class="bst-previa" hidden aria-label="Prévia do próximo conteúdo">'
+      + '<div class="bst-previa-quadro" hidden><iframe title="Miniatura do próximo slide" sandbox="" tabindex="-1"></iframe></div>'
+      + '<p class="bst-previa-objetivo" hidden></p></figure>'
       + '<p id="tempo" class="bst-tempo"></p><span id="fps" hidden></span></section>'
       + '<section class="bst-card"><p class="bst-rotulo">Tela para o público</p><p class="bst-dica">Abra o link no computador que compartilha a tela no Meet.</p>'
-      + '<div class="bst-acoes"><button type="button" id="bastidor-copiar">Copiar link da tela para o público</button></div></section></div>'
+      + '<div class="bst-acoes"><button type="button" id="bastidor-copiar">Copiar link da tela para o público</button><button type="button" id="bastidor-convite">Copiar convite pro chat do Meet</button></div></section></div>'
       + '<div class="bst-lado"><form id="anotacao" class="bst-card"><label for="rascunho" class="bst-rotulo">Anotação da reunião</label><textarea id="rascunho" rows="3" placeholder="Decisões e combinados da reunião"></textarea>'
       + '<div class="bst-acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
       + '<section class="bst-card"><label for="participante" class="bst-rotulo">Controle da apresentação</label><select id="participante"></select><p id="bastidor-dica-controle" class="bst-dica"></p>'
@@ -2903,6 +2941,7 @@ function livePrepararBastidor(pip){
     window._livePainel(false);
   }));
   doc.getElementById('bastidor-copiar')?.addEventListener('click', agir(()=>window._liveCopiarTelaPublico()));
+  doc.getElementById('bastidor-convite')?.addEventListener('click', agir(()=>window._liveCopiarConvite()));
   doc.getElementById('bastidor-encerrar')?.addEventListener('click', agir(()=>window._liveEncerrar()));
   const seletor = doc.getElementById('participante');
   seletor.addEventListener('change', liveAtualizarControleFlutuante);
