@@ -1100,20 +1100,25 @@ let _okrFiltroTag = _okrTelaPublico ? (new URLSearchParams(location.search).get(
 // 🏛️ Filtro por torre (2026-10-07): apresentar só UMA torre (reunião da Comercial, por ex.). Também por URL: ?torre=comercial. Mesma regra da tag — vale pra
 // capa, torres, gerências, panorama e o Anterior/Próximo do detalhe, porque tudo parte de _okrObjetivosAtivos().
 let _okrFiltroTorre = (()=>{ const t = new URLSearchParams(location.search).get('torre'); return OKR_TORRES.some(x=>x.id===t) ? t : ''; })();
-const _okrPauta = (() => {
-  // O contexto da pauta fica no fragmento, fora da requisição ao GitHub Pages.
-  const params = new URLSearchParams(location.hash.slice(1));
-  const reuniao = params.get('reuniao'), data = params.get('data');
-  if(!reuniao || !/^\d{4}-\d{2}-\d{2}$/.test(data||'') || !params.has('objetivos')) return null;
+function _okrValidarPauta(pauta){
+  const {reuniao,data,inicio,fim} = pauta || {};
+  const ids = pauta?.semObjetivos===true ? [] : pauta?.ids;
+  if(typeof reuniao!=='string' || !reuniao || typeof data!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(data) ||
+    !Array.isArray(ids) || !ids.every(id=>typeof id==='string')) return null;
   const dia = new Date(data+'T00:00:00Z');
   if(!Number.isFinite(+dia) || dia.toISOString().slice(0,10)!==data) return null;
+  const hora = v => typeof v==='string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : '';
+  return {reuniao, data, ids:new Set(ids), inicio:hora(inicio), fim:hora(fim)};
+}
+let _okrPauta = (() => {
+  // O contexto da pauta fica no fragmento, fora da requisição ao GitHub Pages.
+  const params = new URLSearchParams(location.hash.slice(1));
   try{
-    const ids = JSON.parse(params.get('objetivos'));
-    if(!Array.isArray(ids) || !ids.every(id=>typeof id==='string')) return null;
-    const hora = chave => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(params.get(chave)||'') ? params.get(chave) : '';
-    return {reuniao, data, ids:new Set(ids), inicio:hora('inicio'), fim:hora('fim')};
+    return _okrValidarPauta({reuniao:params.get('reuniao'), data:params.get('data'),
+      ids:JSON.parse(params.get('objetivos')), inicio:params.get('inicio'), fim:params.get('fim')});
   }catch(e){ return null; }
 })();
+const _okrPautaSerial = pauta => pauta ? {...pauta, ids:[...pauta.ids], semObjetivos:pauta.ids.size===0} : false;
 function _okrObjetivosAtivos(ignorarTorre, ignorarTag){
   return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!_okrPauta || _okrPauta.ids.has(o.id)) && (!MARE_SO_HERING || _okrTorreDe(o)==='digital') && (ignorarTag || !_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
 }
@@ -1810,7 +1815,7 @@ function render(){
   const upd = document.getElementById('cover-updated');
   if(upd && _lastUpdate) upd.textContent = '🔄 Atualizado às ' + _lastUpdate.toLocaleTimeString('pt-BR');
   fitSlideContent(document.querySelector('.slide.active'));
-  if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(true); }
+  if(typeof _livePend!=='undefined' && _livePend && !_liveAplicando){ _livePend = false; liveAplicar(true); }
 }
 window.addEventListener('resize', () => {
   _okrAtualizarAtingAberto();
@@ -2406,11 +2411,17 @@ window._okrAgendaLimpar = () => {
   window._remove(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr())).catch(err=>console.error('[agenda] falha ao limpar:', err));
   window._okrCloseAgendaCfg();
 };
-if(_okrPauta){
+function _okrAtualizaOrigemAgenda(){
   const relogio = document.getElementById('tb-clock-wrap');
-  relogio.title = 'Horário previsto no Calendário · São Paulo';
-  relogio.style.cursor = 'default';
+  relogio.title = _okrPauta ? 'Horário previsto no Calendário · São Paulo' : 'Configurar horário da reunião';
+  relogio.style.cursor = _okrPauta ? 'default' : '';
+  const botao = document.getElementById('bastidor-agenda');
+  const origem = document.getElementById('bastidor-agenda-origem');
+  if(botao) botao.hidden = !!_okrPauta;
+  if(origem) origem.hidden = !_okrPauta;
+  if(_okrPauta) window._okrCloseAgendaCfg();
 }
+_okrAtualizaOrigemAgenda();
 const _okrRelogioSP = new Intl.DateTimeFormat('en-CA', {
   timeZone:'America/Sao_Paulo', year:'numeric', month:'2-digit', day:'2-digit',
   hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'
@@ -2570,8 +2581,12 @@ function liveInit(){
   if(_liveIniciado) return; _liveIniciado = true;
   window._onValue(window._ref(window._db, '.info/serverTimeOffset'), snap=>{ _liveOffset = Number(snap.val())||0; liveRender(); }, ()=>{});   // _okrShowApp() roda de novo a cada auth-change: sem a trava, cada um acumulava mais um ouvinte do mesmo nó
   window._onValue(liveRef(), snap=>{
-    const antes = liveAtiva(), eraHost = liveSouHost(); live = snap.val();
+    const antes = liveAtiva(), eraHost = liveSouHost(), inicioAnterior = live?.iniciadoEm; live = snap.val();
     const ativa = liveAtiva();
+    if(ativa && (!antes || inicioAnterior!==live.iniciadoEm)){
+      liveRestaurarRecorte();
+      _liveRecorteAnterior = {pauta:_okrPauta, torre:_okrFiltroTorre, tag:_okrFiltroTag};
+    }
     const navKey = ativa ? (live.slide||'')+'|'+(live.detalhe||'')+'|'+(live.evolucao||'')+'|'+(live.navId||'') : '';
     const mudouNav = ativa && navKey !== _liveUltNavKey;
     _liveUltNavKey = navKey;
@@ -2579,6 +2594,7 @@ function liveInit(){
     const mudouHost = ativa && hostUid !== _liveUltHostUid;
     _liveUltHostUid = hostUid;
     if(antes && !ativa){
+      liveRestaurarRecorte();
       if(_okrTelaPublico){ _okrLimparAting(); window._okrCloseDetail(); }
       liveToast('⏹ A apresentação ao vivo terminou.'); liveDesligaFerr(); _liveEntrou = false; }
     else if(!livePodeControlar() && (liveFerr || _liveSyncT || document.body.classList.contains('live-pen'))){ liveDesligaFerr(); }
@@ -2588,16 +2604,6 @@ function liveInit(){
     // Sempre que o apresentador ou um ADM mudar de slide/detalhe (mudouNav) ou passar/assumir o controle (mudouHost),
     // toda a sala (incluindo quem tinha saído de sincronia antes, o apresentador anterior e os ADMs) acompanha imediatamente.
     if(mudouNav || mudouHost) liveSeguindo = true;
-    if((_okrTelaPublico || _okrTelaBastidor) && ativa && typeof live.filtroTorre==='string' && typeof live.filtroTag==='string'){
-      const torre = OKR_TORRES.some(t=>t.id===live.filtroTorre) ? live.filtroTorre : '';
-      if(torre!==_okrFiltroTorre || live.filtroTag!==_okrFiltroTag){
-        _okrFiltroTorre = torre;
-        _okrFiltroTag = live.filtroTag;
-        const aplicando = _liveAplicando;
-        _liveAplicando = true;
-        try{ rebuild(false); }finally{ _liveAplicando = aplicando; }
-      }
-    }
     liveAplicar(_liveRetomar || mudouNav || mudouHost);
     if(mudouHost && antes && !entrou){
       if(liveSouHost() && !eraHost) liveToast('🎙️ Você recebeu o controle da apresentação!');
@@ -2617,10 +2623,38 @@ window._liveComecar = () => {
   if(window._okrIsViewer || _okrTelaPublico) return; const u = liveEu();
   const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:liveAgora(), atualizadoEm:liveAgora(), ...liveNavegacao(), navId, navPor:u.uid||''})
+  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:liveAgora(), atualizadoEm:liveAgora(), pauta:_okrPautaSerial(_okrPauta), ...liveNavegacao(), navId, navPor:u.uid||''})
     .then(()=>liveToast(_okrTelaBastidor ? '🎙️ Apresentação ao vivo iniciada. Copie o link da tela para o público e abra no computador que compartilha no Meet.' : '🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
 window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a sessão do Radar para todos? Para parar o compartilhamento de tela, use o controle do Google Meet.')) return; window._remove(liveRef()).catch(()=>{}); };
+let _liveRecorteAnterior = null;
+function liveDefinirRecorte({pauta, torre, tag}){
+  const mudou = _okrFiltroTorre!==torre || _okrFiltroTag!==tag ||
+    JSON.stringify(_okrPautaSerial(_okrPauta))!==JSON.stringify(_okrPautaSerial(pauta));
+  if(!mudou) return;
+  _okrPauta = pauta;
+  _okrFiltroTorre = torre;
+  _okrFiltroTag = tag;
+  _okrAtualizaOrigemAgenda();
+  _okrRenderCountdown();
+  const aplicando = _liveAplicando;
+  _liveAplicando = true;
+  try{ rebuild(false); }finally{ _liveAplicando = aplicando; }
+}
+function liveRestaurarRecorte(){
+  if(!_liveRecorteAnterior) return;
+  liveDefinirRecorte(_liveRecorteAnterior);
+  _liveRecorteAnterior = null;
+}
+function liveAplicarRecorte(){
+  const atual = {pauta:_okrPauta, torre:_okrFiltroTorre, tag:_okrFiltroTag};
+  if(!_liveRecorteAnterior) _liveRecorteAnterior = atual;
+  const pauta = live.pauta===false ? null : (_okrValidarPauta(live.pauta) || atual.pauta);
+  const torre = typeof live.filtroTorre==='string'
+    ? (OKR_TORRES.some(t=>t.id===live.filtroTorre) ? live.filtroTorre : '') : atual.torre;
+  const tag = typeof live.filtroTag==='string' ? live.filtroTag : atual.tag;
+  liveDefinirRecorte({pauta, torre, tag});
+}
 function liveAplicar(forcar){
   // forcar: retomada de quem recarregou a página ou mudança ativa de slide/detalhe/apresentador vinda da sala
   if(!liveAtiva()) return;
@@ -2628,6 +2662,8 @@ function liveAplicar(forcar){
   if(ehMeuNav) return;
   if(!forcar && !liveSeguindo) return;
   if(!forcar && (Date.now() - _liveMeuNavTs < 2000)) return;
+  _livePend = false;
+  liveAplicarRecorte();
   _liveAplicando = true;
   try{
     const i = slides.findIndex(x=>x.key===live.slide);
@@ -3021,7 +3057,7 @@ function liveMontarControle(pip, destino, bastidor){
       + '<div class="bst-previa-quadro" hidden><iframe title="Miniatura do próximo slide" sandbox="" tabindex="-1"></iframe></div>'
       + '<p class="bst-previa-objetivo" hidden></p></figure>'
       + '<div class="bst-acoes"><p id="tempo" class="bst-tempo"></p>'
-      + (_okrPauta ? '<span class="bst-dica">Horário do Calendário</span>' : '<button type="button" id="bastidor-agenda">Configurar horário</button>')
+      + '<span id="bastidor-agenda-origem" class="bst-dica" hidden>Horário do Calendário</span><button type="button" id="bastidor-agenda">Configurar horário</button>'
       + '</div><span id="fps" hidden></span></section></div>'
       + '<div class="bst-lado"><form id="anotacao" class="bst-card"><label for="rascunho" class="bst-rotulo">Anotação da reunião</label><textarea id="rascunho" rows="3" placeholder="Decisões e combinados da reunião"></textarea>'
       + '<div class="bst-acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div>'
@@ -3034,7 +3070,8 @@ function liveMontarControle(pip, destino, bastidor){
       + '<div class="bst-acoes"><button type="button" id="bastidor-copiar"><span aria-hidden="true">🖥️</span> Copiar link de projeção</button><button type="button" id="bastidor-convite"><span aria-hidden="true">💬</span> Copiar convite do Meet</button></div></section>'
       + '</div>'
       + '<div class="bst-fim"><button type="button" id="bastidor-encerrar">Encerrar apresentação</button></div>';
-    doc.getElementById('bastidor-agenda')?.addEventListener('click', window._okrToggleAgendaCfg);
+    _okrAtualizaOrigemAgenda();
+    doc.getElementById('bastidor-agenda').addEventListener('click', window._okrToggleAgendaCfg);
     doc.getElementById('bastidor-panorama').addEventListener('click', agir(()=>{
       const indice = slides.findIndex(s=>s.key==='summary');
       if(indice<0) return;
