@@ -2474,7 +2474,15 @@ const liveAtiva = () => !!(live && live.ativa && live.apresentador && live.apres
 const liveSouHost = () => !_okrTelaPublico && liveAtiva() && live.apresentador.uid === liveEu().uid;
 const liveSouAdm = () => !_okrTelaPublico && _isAdmOkr();
 const livePodeControlar = () => liveAtiva() && (liveSouHost() || liveSouAdm());
-const liveHostParado = () => liveAtiva() && (Date.now() - (live.atualizadoEm||0)) > 90000;
+// Horário do servidor (Date.now() + o desvio que o SDK mede em .info/serverTimeOffset): todo horário que outro computador compara
+// (sinal de vida, atualizadoEm, pedidos) usa ele. Com o relógio de cada um, um computador 2 min atrasado sumia de "Passar o controle pra…"
+// e um adiantado via quem apresenta "sem sinal" e ganhava o Assumir (/monitorarbugs 19/11/2026). Só o que é local (traços, travas) fica no Date.now().
+let _liveOffset = 0;
+const liveAgora = () => Date.now() + _liveOffset;
+// Janelas largas de propósito: quem acompanha costuma deixar a aba do Radar em segundo plano (está no Meet), e depois de ~5 min o Chrome
+// só acorda os timers dessa aba uma vez por minuto — o sinal de 20 s vira 1 por minuto. 70 s deixava a pessoa piscando na lista.
+const LIVE_PRESENCA_MS = 130000, LIVE_HOST_PARADO_MS = 150000;
+const liveHostParado = () => liveAtiva() && (liveAgora() - (live.atualizadoEm||0)) > LIVE_HOST_PARADO_MS;
 const liveNome = u => (u && (u.displayName || (u.email||'').split('@')[0])) || 'Alguém';
 const liveSlideKey = () => slides[currentIdx] ? slides[currentIdx].key : '';
 const liveDetalheAberto = () => document.getElementById('detail-ov').classList.contains('open') ? (_okrDetailCurrentId||'') : '';
@@ -2490,7 +2498,8 @@ function liveToast(msg, acoes, ttl){
 }
 let _liveIniciado = false, _liveRetomar = false;
 function liveInit(){
-  if(_liveIniciado) return; _liveIniciado = true;   // _okrShowApp() roda de novo a cada auth-change: sem a trava, cada um acumulava mais um ouvinte do mesmo nó
+  if(_liveIniciado) return; _liveIniciado = true;
+  window._onValue(window._ref(window._db, '.info/serverTimeOffset'), snap=>{ _liveOffset = Number(snap.val())||0; liveRender(); }, ()=>{});   // _okrShowApp() roda de novo a cada auth-change: sem a trava, cada um acumulava mais um ouvinte do mesmo nó
   window._onValue(liveRef(), snap=>{
     const antes = liveAtiva(), eraHost = liveSouHost(); live = snap.val();
     const ativa = liveAtiva();
@@ -2528,17 +2537,18 @@ function liveInit(){
     liveRender(); liveDesenhar();
   }, ()=>{});
   clearInterval(_liveHb); _liveHb = setInterval(liveBatida, 20000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) liveBatida(); });   // voltou para a aba: sinal na hora, sem esperar o timer
 }
 function liveBatida(){
   if(!liveAtiva() || window._okrIsViewer || _okrTelaPublico) return; const u = liveEu(); if(!u.uid) return;
-  const upd = {['participantes/'+u.uid]: {nome:liveNome(u), ts:Date.now()}}; if(liveSouHost()) upd.atualizadoEm = Date.now();
+  const upd = {['participantes/'+u.uid]: {nome:liveNome(u), ts:liveAgora()}}; if(liveSouHost()) upd.atualizadoEm = liveAgora();
   window._update(liveRef(), upd).catch(()=>{});
 }
 window._liveComecar = () => {
   if(window._okrIsViewer || _okrTelaPublico) return; const u = liveEu();
   const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), ...liveNavegacao(), navId, navPor:u.uid||''})
+  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:liveAgora(), atualizadoEm:liveAgora(), ...liveNavegacao(), navId, navPor:u.uid||''})
     .then(()=>liveToast(_okrTelaBastidor ? '🎙️ Apresentação ao vivo iniciada. Copie o link da tela para o público e abra no computador que compartilha no Meet.' : '🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
 window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a sessão do Radar para todos? Para parar o compartilhamento de tela, use o controle do Google Meet.')) return; window._remove(liveRef()).catch(()=>{}); };
@@ -2588,7 +2598,7 @@ function liveAposNavegar(){
       if(!livePodeControlar()) return;
       const u = liveEu(), navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
       _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-      window._update(liveRef(), {...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:Date.now()}).catch(()=>{});
+      window._update(liveRef(), {...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:liveAgora()}).catch(()=>{});
     }, 60);
   } else if(!_okrTelaPublico && liveAtiva() && liveSeguindo){ liveSeguindo = false; liveRender(); }
   liveDesenhar();
@@ -2614,9 +2624,9 @@ function liveAposNavegar(){
   window._okrCloseDetail = () => { cl(); liveAposNavegar(); };
 })();
 window._liveSeguir = () => { liveSeguindo = true; liveAplicar(true); liveRender(); };
-window._livePedir = () => { if(_okrTelaPublico || window._okrIsViewer) return; const u = liveEu(); window._set(liveRef('pedidos/'+u.uid), {nome:liveNome(u), ts:Date.now()}).then(()=>liveToast('✋ Pedido enviado — o apresentador vai ver.')).catch(()=>liveToast('⚠️ Não consegui pedir o controle.')); };
+window._livePedir = () => { if(_okrTelaPublico || window._okrIsViewer) return; const u = liveEu(); window._set(liveRef('pedidos/'+u.uid), {nome:liveNome(u), ts:liveAgora()}).then(()=>liveToast('✋ Pedido enviado — o apresentador vai ver.')).catch(()=>liveToast('⚠️ Não consegui pedir o controle.')); };
 function liveTrocar(uid, nome, email){
-  const upd = {apresentador:{uid, nome, email:email||''}, atualizadoEm:Date.now(), laser:null}; upd['pedidos/'+uid] = null;
+  const upd = {apresentador:{uid, nome, email:email||''}, atualizadoEm:liveAgora(), laser:null}; upd['pedidos/'+uid] = null;
   window._update(liveRef(), upd).catch(e=>liveToast('⚠️ Não consegui passar o controle: '+(e && e.message || e)));
 }
 window._livePassar = (uid, nome) => { if(!livePodeControlar()) return; liveTrocar(uid, nome, ''); liveDesligaFerr(); };
@@ -2627,7 +2637,7 @@ window._liveAssumir = () => {
   const u = liveEu(); if(!u.uid) return;
   const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  const upd = {apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, ...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:Date.now(), laser:null};
+  const upd = {apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, ...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:liveAgora(), laser:null};
   upd['pedidos/'+u.uid] = null;
   liveSeguindo = true;
   window._update(liveRef(), upd).then(()=>liveToast('🎙️ Você assumiu o controle da apresentação.')).catch(e=>liveToast('⚠️ Não consegui assumir o controle: '+(e && e.message || e)));
@@ -2636,7 +2646,7 @@ window._livePuxarSlide = () => {
   if(!livePodeControlar()) return;
   const u = liveEu(), navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  window._update(liveRef(), {...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:Date.now()})
+  window._update(liveRef(), {...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:liveAgora()})
     .then(()=>{ liveSeguindo = true; liveRender(); liveToast('📍 Sala sincronizada no seu slide.'); })
     .catch(e=>liveToast('⚠️ Não consegui sincronizar o slide: '+(e && e.message || e)));
 };
@@ -2994,8 +3004,8 @@ window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? ab
 // e remontar a cada um fazia o clique no nome da pessoa se perder (o botão era trocado entre o botão do mouse descer e subir).
 let _liveSig = '', livePainelAberto = false;
 function liveParticipantes(){
-  const eu = liveEu().uid, hostUid = live && live.apresentador && live.apresentador.uid, ag = Date.now();
-  return Object.entries((live && live.participantes)||{}).filter(([id,p])=>id!==eu && id!==hostUid && p && ag-(p.ts||0) < 70000).sort((a,b)=>String(a[1].nome||'').localeCompare(String(b[1].nome||''),'pt-BR'));
+  const eu = liveEu().uid, hostUid = live && live.apresentador && live.apresentador.uid, ag = liveAgora();
+  return Object.entries((live && live.participantes)||{}).filter(([id,p])=>id!==eu && id!==hostUid && p && ag-(p.ts||0) < LIVE_PRESENCA_MS).sort((a,b)=>String(a[1].nome||'').localeCompare(String(b[1].nome||''),'pt-BR'));
 }
 function liveAtualizarPassador(){
   const bt = document.getElementById('live-passador'); if(!bt) return;
@@ -3067,7 +3077,7 @@ function liveRender(){
         + '<button type="button" class="lp-b lp-fim" onclick="window._liveEncerrar()">⏹ Encerrar apresentação</button>';
     } else {
       p += (liveSeguindo ? '<div class="lp-vazio">Você está acompanhando o slide dele.</div>' : '<button type="button" class="lp-b" onclick="window._liveSeguir()">↩ Voltar a seguir</button>')
-        + (liveHostParado() ? '<button type="button" class="lp-b" onclick="window._liveAssumir()" title="O apresentador está sem sinal há mais de 90 s">🎙️ Assumir</button>' : '<button type="button" class="lp-b" onclick="window._livePedir()" '+(pediu?'disabled':'')+'>'+(pediu?'✋ Pedido enviado':'✋ Pedir o controle')+'</button>');
+        + (liveHostParado() ? '<button type="button" class="lp-b" onclick="window._liveAssumir()" title="O apresentador está sem sinal há mais de 2 min">🎙️ Assumir</button>' : '<button type="button" class="lp-b" onclick="window._livePedir()" '+(pediu?'disabled':'')+'>'+(pediu?'✋ Pedido enviado':'✋ Pedir o controle')+'</button>');
     }
     painel.innerHTML = p;
   }
