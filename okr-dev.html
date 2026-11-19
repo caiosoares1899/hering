@@ -2128,7 +2128,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.141 · okr-dev</div>
+<div class="version">v2.142 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6730,6 +6730,10 @@ function renderOkrEventoDetalhe(){
   const areas = _okrCalLista(ev.areaIds).map(a=>okrGerenciaIcon(a, ev.torre||'digital')+' '+okrGerenciaLabel(a, ev.torre||'digital'));
   const pauta = _okrCalPauta(ev, _okrEvdData), vis = _okrEvdPautaTodos ? pauta : pauta.slice(0, 5);
   const link = safeUrl(ev.link);
+  const slidesPauta = ev.tipo==='reuniao' && _okrCalOcorrencias(ev, _okrEvdData, _okrEvdData).length
+    ? new URLSearchParams({reuniao:ev.id, data:_okrEvdData, objetivos:JSON.stringify(pauta.map(p=>p.o.id)),
+      inicio:ev.diaInteiro?'':(ev.hi||''), fim:ev.diaInteiro?'':(ev.hf||'')})
+    : null;
   body.innerHTML = `
     <div class="okr-evd-tit">${esc(ev.titulo||'(sem título)')}</div>
     ${_okrCalSelos(ev, _okrEvdData)?`<div class="okr-evd-linha">${_okrCalSelos(ev, _okrEvdData)}</div>`:''}
@@ -6745,6 +6749,7 @@ function renderOkrEventoDetalhe(){
     ${pauta.length?`<div class="okr-field-label" style="margin-top:14px;">🧭 Pauta sugerida <span class="mut" style="text-transform:none;letter-spacing:0;">— ${_okrCalLista(ev.objetivoIds).length&&!_okrCalLista(ev.tagIds).length&&!_okrCalLista(ev.areaIds).length?'Objetivos vinculados':'Objetivos do escopo, do mais urgente pro menos'}</span></div>
       ${vis.map(p=>`<div class="okr-cal-pauta-row" onclick="closeOkrEvento();openOkrObjetivo(${jsq(p.o.id)})" title="Abrir o Objetivo">${okrStatusDot(p.st)}<span style="flex:1;min-width:0;">${esc(p.o.titulo||'(sem título)')}</span>${p.flags.map(f=>`<span class="okr-cal-flag${f.w?' w':''}">${esc(f.t)}</span>`).join('')}</div>`).join('')}
       ${pauta.length>vis.length?`<button type="button" class="btn btn-sm" style="margin-top:4px;" onclick="_okrEvdPautaTodos=true;renderOkrEventoDetalhe()">Mostrar todos (${pauta.length})</button>`:''}`:''}
+    ${slidesPauta?`<div class="okr-evd-acoes"><a class="btn btn-sm btn-p" href="okr-apresentacao.slide.html#${esc(slidesPauta.toString())}" target="_blank" rel="noopener noreferrer">🎥 Abrir slides da pauta</a></div>`:''}
     ${_okrEvdNotasHtml(ev)}
     ${pode?`<div class="okr-evd-acoes"><button type="button" class="btn btn-sm" onclick="openOkrEventoEditor(${jsq(ev.id)})">✏️ Editar</button><button type="button" class="btn btn-sm" style="color:var(--danger);" onclick="_okrEvExcluir(${jsq(ev.id)},${jsq(_okrEvdData)})">🗑 Excluir</button></div>`:''}`;
   if(rascunho){ const i = document.getElementById('okr-evd-notainp'); if(i) i.value = rascunho; }

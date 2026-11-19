@@ -984,8 +984,22 @@ let _okrFiltroTag = '';
 // 🏛️ Filtro por torre (2026-10-07): apresentar só UMA torre (reunião da Comercial, por ex.). Também por URL: ?torre=comercial. Mesma regra da tag — vale pra
 // capa, torres, gerências, panorama e o Anterior/Próximo do detalhe, porque tudo parte de _okrObjetivosAtivos().
 let _okrFiltroTorre = (()=>{ const t = new URLSearchParams(location.search).get('torre'); return OKR_TORRES.some(x=>x.id===t) ? t : ''; })();
+const _okrPauta = (() => {
+  // O contexto da pauta fica no fragmento, fora da requisição ao GitHub Pages.
+  const params = new URLSearchParams(location.hash.slice(1));
+  const reuniao = params.get('reuniao'), data = params.get('data');
+  if(!reuniao || !/^\d{4}-\d{2}-\d{2}$/.test(data||'') || !params.has('objetivos')) return null;
+  const dia = new Date(data+'T00:00:00Z');
+  if(!Number.isFinite(+dia) || dia.toISOString().slice(0,10)!==data) return null;
+  try{
+    const ids = JSON.parse(params.get('objetivos'));
+    if(!Array.isArray(ids) || !ids.every(id=>typeof id==='string')) return null;
+    const hora = chave => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(params.get(chave)||'') ? params.get(chave) : '';
+    return {reuniao, data, ids:new Set(ids), inicio:hora('inicio'), fim:hora('fim')};
+  }catch(e){ return null; }
+})();
 function _okrObjetivosAtivos(ignorarTorre, ignorarTag){
-  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!MARE_SO_HERING || _okrTorreDe(o)==='digital') && (ignorarTag || !_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
+  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!_okrPauta || _okrPauta.ids.has(o.id)) && (!MARE_SO_HERING || _okrTorreDe(o)==='digital') && (ignorarTag || !_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
 }
 function _okrGerenciaObjetivos(areaId, torre){
   return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId && _okrTorreDe(o)===(torre||'digital')));
@@ -1377,6 +1391,7 @@ function buildSlides(){
     <div class="cover-wrap">
       <div class="cover-ico"><img src="radar-logo.png" alt="📡"></div>
       <div class="cover-title">Radar — OKRs Hering</div>
+      ${_okrPauta?`<div class="cover-sub">Pauta de ${esc(_okrAtingDataBR(_okrPauta.data))} · ${ativos.length} objetivo(s) · <a href="okr-apresentacao.slide.html" style="color:var(--accent)">Ver todos os slides</a></div>`:''}
       <div class="cover-sub">Panorama por ${MARE_SO_HERING?'':'torre e '}gerência · ${esc(hoje)}</div>
       ${_okrFiltroTorre?`<div class="cover-sub" style="margin-top:-30px;margin-bottom:34px;">Apresentando só ${MARE_SO_HERING?'':'a torre '}${OKR_TORRES.find(t=>t.id===_okrFiltroTorre).icon} <b>${esc(OKR_TORRES.find(t=>t.id===_okrFiltroTorre).label)}</b></div>`:''}
       ${_okrFiltroTag&&okrTags[_okrFiltroTag]?`<div class="cover-sub" style="margin-top:6px;">Filtrando pela tag 🏷️ <b>${esc(okrTags[_okrFiltroTag].label||'')}</b></div>`:''}
@@ -2210,14 +2225,14 @@ function _okrAgendaPopulateInputs(){
   document.getElementById('agenda-fim').value = ag?.fim || '';
 }
 window._okrToggleAgendaCfg = () => {
-  if(window._okrIsViewer) return;   // horário da reunião é de quem organiza; visualizador só vê a contagem
+  if(window._okrIsViewer || _okrPauta) return;   // horário da reunião é de quem organiza; visualizador só vê a contagem
   const ov = document.getElementById('agenda-cfg-ov');
   if(ov.classList.contains('open')) window._okrCloseAgendaCfg();
   else { _okrAgendaPopulateInputs(); ov.classList.add('open'); }
 };
 window._okrCloseAgendaCfg = () => document.getElementById('agenda-cfg-ov').classList.remove('open');
 window._okrAgendaSalvar = () => {
-  if(window._okrIsViewer){ window._okrCloseAgendaCfg(); return; }   // visualizador não grava (regras negam)
+  if(window._okrIsViewer || _okrPauta){ window._okrCloseAgendaCfg(); return; }   // visualizador não grava (regras negam)
   const inicio = document.getElementById('agenda-inicio').value;
   const fim = document.getElementById('agenda-fim').value;
   if(!inicio || !fim) return;
@@ -2227,17 +2242,33 @@ window._okrAgendaSalvar = () => {
   window._okrCloseAgendaCfg();
 };
 window._okrAgendaLimpar = () => {
-  if(window._okrIsViewer){ window._okrCloseAgendaCfg(); return; }
+  if(window._okrIsViewer || _okrPauta){ window._okrCloseAgendaCfg(); return; }
   window._remove(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr())).catch(err=>console.error('[agenda] falha ao limpar:', err));
   window._okrCloseAgendaCfg();
 };
+if(_okrPauta){
+  const relogio = document.getElementById('tb-clock-wrap');
+  relogio.title = 'Horário previsto no Calendário · São Paulo';
+  relogio.style.cursor = 'default';
+}
+const _okrRelogioSP = new Intl.DateTimeFormat('en-CA', {
+  timeZone:'America/Sao_Paulo', year:'numeric', month:'2-digit', day:'2-digit',
+  hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'
+});
 function _okrRenderCountdown(){
   const el = document.getElementById('tb-countdown');
-  const ag = _okrAgendaHoje();
-  if(!ag || !ag.fim){ el.hidden = true; return; }
-  const hoje = _hojeStr();
-  const fimMs = new Date(hoje+'T'+ag.fim+':00').getTime();
-  const diffMin = Math.round((fimMs - Date.now())/60000);
+  const ag = _okrPauta || _okrAgendaHoje();
+  if(!ag?.fim){ el.hidden = true; return; }
+  let agora = Date.now(), fimMs;
+  if(_okrPauta){
+    const partes = _okrRelogioSP.formatToParts(new Date(agora));
+    const civil = Object.fromEntries(partes.map(p=>[p.type,p.value]));
+    agora = Date.parse(civil.year+'-'+civil.month+'-'+civil.day+'T'+civil.hour+':'+civil.minute+':'+civil.second+'Z');
+    fimMs = Date.parse(ag.data+'T'+ag.fim+':00Z');
+  }else{
+    fimMs = new Date(_hojeStr()+'T'+ag.fim+':00').getTime();
+  }
+  const diffMin = Math.round((fimMs - agora)/60000);
   el.hidden = false;
   el.classList.remove('warn','over');
   if(diffMin > 5){
@@ -2530,7 +2561,11 @@ window._liveDesfazer = () => {
 };
 window._liveCopiarConvite = async () => {
   if(!livePodeControlar()) return;
-  const url = location.origin + location.pathname;
+  const url = new URL(location.pathname, location.origin);
+  if(_okrPauta) url.hash = new URLSearchParams({
+    reuniao:_okrPauta.reuniao, data:_okrPauta.data, objetivos:JSON.stringify([..._okrPauta.ids]),
+    inicio:_okrPauta.inicio, fim:_okrPauta.fim
+  }).toString();
   const convite = 'Abra os slides ao vivo do Radar para acompanhar no navegador: '+url+'\nO áudio e a conversa continuam aqui no Google Meet.';
   try{
     await navigator.clipboard.writeText(convite);

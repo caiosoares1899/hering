@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — abrir slides da pauta pelo Calendário — 2026-11-19
+
+O detalhe da ocorrência abre os slides com os objetivos da pauta e o relógio local com o horário de São Paulo. O convite da sala conserva o mesmo recorte.
+
 ### SÓ DEV — Apresentação do Radar — Evolução sincronizada na sala ao vivo — 2026-11-19
 
 Ao abrir ou fechar Evolução, as abas que acompanham a sala mostram o mesmo estado. A navegação preserva o gráfico para quem chega depois ou recebe o controle.

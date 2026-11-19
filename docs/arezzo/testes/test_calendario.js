@@ -1,4 +1,4 @@
-const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
+const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
 const U=(uid,n)=>({uid,email:uid+'@ciahering.com.br',displayName:n,photoURL:'',providerData:[{providerId:'google.com'}]});
 const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); const add=(s,n)=>{const d=new Date(s+'T12:00:00'); d.setDate(d.getDate()+n); return d.toLocaleDateString('en-CA');};
 const ev=(id,tipo,titulo,data,extra)=>({id,tipo,titulo,data,diaInteiro:false,hi:'10:00',hf:'11:00',torre:'',areaIds:[],objetivoIds:[],tagIds:[],convidados:[],lembrar:{vespera:true,dia:true},local:'',link:'',descricao:'',rec:null,excecoes:{},criadoPor:{uid:'ana',nome:'Ana ADM'},criadoEm:'2026-10-01T10:00:00.000Z',atualizadoEm:'2026-10-01T10:00:00.000Z',...extra});
@@ -8,12 +8,63 @@ const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',areaId:
   e1:ev('e1','reuniao','Check-in global',add(hoje,0),{torre:''}), e2:ev('e2','reuniao','Reunião Digital',add(hoje,1),{torre:'digital'}), e3:ev('e3','evento','All hands',add(hoje,1),{torre:''}),
   e4:ev('e4','lembrete','Fechar mês',add(hoje,2),{torre:'digital',diaInteiro:true,hi:'',hf:''}), e5:ev('e5','reuniao','Reunião da Comercial',add(hoje,1),{torre:'comercial'}), e6:ev('e6','lembrete','Lembrete 2',add(hoje,3),{torre:'digital'})}}},
  usuarios:{ana:{uid:'ana',nome:'Ana ADM',email:'ana@ciahering.com.br',inscrito:true},bia:{uid:'bia',nome:'Bia PO',email:'bia@ciahering.com.br',inscrito:true,role:'po',gestorOkr:true}},config:{adm_emails:['ana@ciahering.com.br']}}});
-(async()=>{ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,350))); };
+(async()=>{ const b=await chromium.launch({executablePath:process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,350))); };
  const open=async(user,{hering=true,w=1280}={})=>{ const ctx=await b.newContext({viewport:{width:w,height:900}}); await fake.install(ctx,seed()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
    if(!hering) await p.route('**/okr-dev.html*', async r=>{ const res=await r.fetch(); let body=await res.text(); body=body.replace('window.MARE_SO_HERING = true;','window.MARE_SO_HERING = false;'); r.fulfill({response:res,body}); });
-   await p.goto('http://localhost:8941/okr-dev.html'+(hering?'':'?torre=digital')); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(1500); await p.evaluate(()=>{ _okrToggleCal(); _okrCalSetVista('mes'); }); await p.waitForTimeout(400); return {ctx,p,errs}; };
+   await p.goto((process.env.APRESENTACAO_TEST_URL || 'http://localhost:8941')+'/okr-dev.html'+(hering?'':'?torre=digital')); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(1500); await p.evaluate(()=>{ _okrToggleCal(); _okrCalSetVista('mes'); }); await p.waitForTimeout(400); return {ctx,p,errs}; };
  const leg=p=>p.evaluate(()=>[...document.querySelectorAll('.okr-cal-lg')].map(b=>({t:b.innerText.replace(/\s+/g,' ').trim(),off:b.classList.contains('off'),pr:b.getAttribute('aria-pressed')})));
  const itens=p=>p.evaluate(()=>[...document.querySelectorAll('.okr-cal-agday ~ .okr-cal-item .tt')].map(x=>x.innerText.trim()));
+ // O Calendário resolve a ocorrência e o Radar abre a pauta usando os mesmos dados simulados.
+ {
+   const usuario=U('ana','Ana ADM'), {ctx,p}=await open(usuario);
+   const dias=[hoje,add(hoje,7),add(hoje,14)];
+   await p.evaluate(async ([primeira,,cancelada])=>{
+     const evento=window.__store.kanban.okr.calendario.eventos.e2;
+     const ref=window._ref(window._db,'kanban/okr/calendario/eventos/e2');
+     await window._set(ref,{...evento,data:primeira,objetivoIds:['d1'],link:'https://meet.google.com/abc-defg-hij',
+       rec:{tipo:'semanal',unidade:'semana',intervalo:1},excecoes:{[cancelada]:true}});
+   },dias);
+   const hrefs=[];
+   for(const data of dias.slice(0,2)){
+     await p.evaluate(d=>openOkrEvento('e2',d),data);
+     const href=await p.getByRole('link',{name:/Abrir slides da pauta/}).getAttribute('href');
+     const url=new URL(href,p.url()), params=new URLSearchParams(url.hash.slice(1));
+     t('a ocorrência '+data+' leva sua própria data, fim e pauta, com o Meet separado',
+       params.get('data')===data && params.get('fim')==='11:00' && params.get('objetivos')==='["d1"]' &&
+       !url.href.includes('meet.google.com') && await p.locator('#okr-evd-body a[href^="https://meet.google.com/"]').count()===1,href);
+     hrefs.push(url.href);
+   }
+   await p.evaluate(d=>openOkrEvento('e2',d),dias[2]);
+   t('ocorrência cancelada não oferece slides', !(await p.getByRole('link',{name:/Abrir slides da pauta/}).count()), '');
+   const apresentacao=await b.newContext({timezoneId:'Asia/Tokyo'});
+   const dadosSlides=seed();
+   dadosSlides.kanban.okr.objetivos.d2={...dadosSlides.kanban.okr.objetivos.d1,id:'d2',titulo:'Outro objetivo Digital'};
+   await fake.install(apresentacao,dadosSlides);
+   for(const [i,url] of hrefs.entries()){
+     const slides=await apresentacao.newPage();
+     await slides.clock.setFixedTime(new Date(dias[i]+'T13:40:00Z'));
+     await slides.goto(url);
+     await slides.waitForFunction(()=>!!window.__authCb);
+     await slides.evaluate(u=>window.__authCb(u),usuario);
+     await slides.locator('.slide.active .cover-sub').filter({hasText:'Pauta de'}).waitFor();
+     await slides.waitForFunction(()=>document.getElementById('tb-countdown').textContent.includes('20min'));
+     const estado=await slides.evaluate(()=>({
+       ids:_okrObjetivosAtivos().map(o=>o.id), data:_okrPauta?.data, contador:document.getElementById('tb-countdown').textContent,
+       gravou:window.__log.some(([acao,no])=>['set','update','remove'].includes(acao)&&no.includes('reuniao_agenda'))
+     }));
+     t('slides mostram só a pauta e contam 20 min no horário de São Paulo', estado.ids.join()==='d1' && estado.data===dias[i] && /20min/.test(estado.contador) && !estado.gravou,estado);
+     if(i===1){
+       await slides.getByRole('link',{name:'Ver todos os slides'}).click();
+       await slides.waitForFunction(()=>!!window.__authCb);
+       await slides.evaluate(u=>window.__authCb(u),usuario);
+       await slides.waitForFunction(()=>_okrObjetivosAtivos().some(o=>o.id==='d2'));
+       t('Ver todos os slides limpa o recorte', await slides.evaluate(()=>!_okrPauta), '');
+     }
+     await slides.close();
+   }
+   await apresentacao.close();
+   await ctx.close();
+ }
  // ─── modo só Hering
  { const {ctx,p,errs}=await open(U('ana','Ana ADM'));
    let l=await leg(p); console.log('   legenda:',JSON.stringify(l.map(x=>x.t)));
