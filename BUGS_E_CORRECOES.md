@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Bastidor da apresentação sumia quando o navegador não oferecia a janela flutuante
+
+O ADM continua vendo Abrir bastidor e pode usar uma janela normal quando PiP estiver indisponível. O painel da apresentação rola quando a altura da janela é pequena.
+
 ### 2026-11-19 · Apresentação do Radar: o botão do controle flutuante mostrava um quadradinho no lugar do emoji
 
 - **Relato do Caio:** o botão "Abrir controle flutuante" do painel 🎙️ (#1881) aparecia com um quadradinho branco no lugar do emoji.
