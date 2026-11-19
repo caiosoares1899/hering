@@ -28,6 +28,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 Abrir controle flutuante saiu do menu 🎙️ e virou um botão 🎛️ logo acima do microfone. Para quem apresenta, um clique abre o passador compacto (Anterior, Próximo e Fechar detalhe). Para quem acompanha, o mesmo botão pede o controle, e quem apresenta ou o ADM libera. Ao liberar, o botão passa para quem recebeu; ao retomar, volta. O menu 🎙️ sobe para não encostar no botão e continua com laser e caneta. A Tela para o público e o Bastidor não mostram o botão, e ele só aparece em navegador com janela flutuante. Teste: docs/arezzo/testes/test_passador_botao.js (20 verificações no Chrome, com a janela flutuante de verdade).
 
+### SÓ DEV — Apresentação do Radar — Bastidor em aba própria mostra o que está no ar e separa o que é perigoso — 2026-11-19
+
+O Bastidor aberto em aba (okr-bastidor.html) era o bloco da janela flutuante pequena centralizado numa página larga: fonte do sistema, todos os botões iguais, Encerrar ao lado de Copiar link e o botão de iniciar no estilo cru do navegador. Agora usa a identidade dos slides em duas colunas: quem apresenta no topo, o slide ou Objetivo atual em destaque com o que vem a seguir, Próximo como ação principal e a tela para o público logo abaixo; anotação e controle ao lado. Encerrar fica sozinho no fim, em vermelho. Botões com 44 px, uma coluna no celular, linha de FPS fora da aba e aviso de início que fala da tela para o público. A janela flutuante não muda. Teste: docs/arezzo/testes/test_bastidor_ui.js (20 verificações em 1280 e 390 px; 20 falham na versão anterior).
+
 ### SÓ DEV — Radar — página do Bastidor para o Safari — 2026-11-19
 
 O ADM abre o Bastidor em uma aba normal usando okr-bastidor.html. A página reaproveita os controles da sala ao vivo sem depender de Picture-in-Picture.
