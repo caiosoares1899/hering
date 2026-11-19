@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — prévia e convite do Meet no Bastidor — 2026-11-19
+
+O Bastidor mostra a miniatura do próximo slide e um cartão do próximo Objetivo no detalhe. O convite para o chat do Meet pode ser copiado do próprio Bastidor.
+
 ### SÓ DEV — Apresentação do Radar — Abrir detalhe no passador e no Bastidor — 2026-11-19
 
 O passador compacto e o Bastidor ganharam Abrir detalhe, ao lado de Fechar detalhe. Num slide de gerência, ele abre o detalhe do 1º Objetivo dela, na ordem da grade e dos botões Anterior/Próximo do detalhe, sem precisar voltar à aba dos slides. Fica desligado fora de um slide de gerência, com o detalhe já aberto ou para quem não está apresentando. A janela compacta ficou um pouco mais alta para os quatro botões. Testes: docs/arezzo/testes/test_apresentacao_live.js (TESTAR_PIP=1) e docs/arezzo/testes/test_bastidor_ui.js.
