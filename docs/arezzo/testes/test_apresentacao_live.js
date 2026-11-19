@@ -354,4 +354,45 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  { const V=await open(U('ext','Externo','ext@gmail.com')); await A.p.click('#live-box button'); await A.p.waitForTimeout(250); await sync(A.p,V.p);
    const v=await info(V.p); t('visualizador externo: vê quem apresenta e acompanha, sem botão de apresentar/pedir', /Ana ADM está apresentando/.test(v.box) && !/Pedir o controle|Apresentar ao vivo/.test(v.box), v);
    await V.ctx.close(); }
+ // Favorito sem pauta recebe o recorte e o horário da ocorrência antes de abrir o slide.
+ {
+   const url = new URL('/okr-apresentacao.slide.html',A.p.url());
+   url.hash = new URLSearchParams({reuniao:'ritual-teste',data:'2026-11-19',objetivos:'["d2"]',inicio:'10:00',fim:'11:00'});
+   const H = await open(U('ana','Ana ADM'),1280,800,url.href);
+   const F = await open(U('eve','Eve Souza'));
+   const tempoFixo = new Date('2026-11-19T13:40:00.000Z');
+   await H.p.clock.setFixedTime(tempoFixo);
+   await F.p.clock.setFixedTime(tempoFixo);
+   await H.p.locator('#live-box button').click();
+   await H.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.pauta?.reuniao==='ritual-teste');
+   await sync(H.p,F.p);
+   const recorte = p=>p.evaluate(()=>({
+     ids:_okrObjetivosAtivos().map(o=>o.id), data:_okrPauta?.data,
+     tempo:document.getElementById('tb-countdown').textContent,
+     capa:slides.find(s=>s.key==='cover').html,
+     panorama:slides.find(s=>s.key==='summary')?.html
+   }));
+   await H.p.waitForFunction(()=>document.getElementById("tb-countdown").textContent.includes("20min"));
+   const host = await recorte(H.p), favorito = await recorte(F.p);
+   t('favorito recebe pauta, capa, panorama e hora da ocorrência', JSON.stringify(host)===JSON.stringify(favorito) &&
+     favorito.ids.join()==='d2' && !!favorito.panorama && /20min/.test(favorito.tempo), {ids:favorito.ids,tempo:favorito.tempo});
+   await H.p.evaluate(()=>window._livePassar('eve','Eve Souza'));
+   await H.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.apresentador.uid==='eve');
+   await sync(H.p,F.p);
+   t('novo apresentador conserva a pauta da sala', await F.p.evaluate(()=>liveSouHost() && _okrPauta?.ids.has('d2')), '');
+   await F.p.evaluate(()=>window._liveEncerrar());
+   await F.p.waitForFunction(()=>!window.__store.kanban.okr.apresentacao_live);
+   t('encerramento devolve o recorte com que cada aba abriu', await F.p.evaluate(()=>!_okrPauta && _okrObjetivosAtivos().length>1), '');
+   await sync(F.p,H.p);
+   t('a aba aberta pelo Calendário conserva sua pauta local após encerrar', (await recorte(H.p)).ids.join()==='d2', '');
+   await F.p.evaluate(async ()=>{
+     const host = {uid:'eve',nome:'Eve Souza'};
+     await window._set(window._ref(window._db,'kanban/okr/apresentacao_live'),
+       {ativa:true,apresentador:host,iniciadoEm:Date.now(),slide:'cover',filtroTorre:'digital',filtroTag:''});
+   });
+   await sync(F.p,H.p);
+   t('sessão legada sem pauta preserva a pauta local e aplica o filtro de torre', await H.p.evaluate(()=>
+     _okrPauta?.ids.has('d2') && _okrFiltroTorre==='digital'), '');
+   await H.ctx.close(); await F.ctx.close();
+ }
  if(remoto!==b) await remoto.close(); await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); process.exitCode=ok?0:1; })();

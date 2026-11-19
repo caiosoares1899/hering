@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — pauta e filtros sincronizados na sala ao vivo — 2026-11-19
+
+Quem abre a apresentação pelo favorito recebe a pauta e o horário da ocorrência da sala. Ao encerrar, cada tela recupera seu recorte local.
+
 ### SÓ DEV — Radar — anotações do dia no Bastidor — 2026-11-19
 
 O Bastidor exibe autor, horário e texto das notas do dia em uma lista recolhível que acompanha as atualizações da reunião.
