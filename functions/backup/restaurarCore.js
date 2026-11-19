@@ -48,8 +48,10 @@ function compararAreas(dadosBackup, atualPorArea) {
 function marcadoresDeMencao(adicionados, jaProcessados, mencionaAgente, agoraIso) {
   const out = {};
   adicionados.forEach(({ path, valor }) => {
-    const partes = path.split('/');
-    const comentarios = partes.length === 2 ? [[partes[1], valor]] : partes.length === 1 && ehObjeto(valor) ? Object.keys(valor).map((k) => [k, valor[k]]) : [];
+    const partes = path ? path.split('/') : [];
+    // path '' = a área inteira sumiu (valor = { cardId: { commentId: comentário } }); 1 parte = um card inteiro; 2 partes = um comentário.
+    const doCard = (m) => (ehObjeto(m) ? Object.keys(m).map((k) => [k, m[k]]) : []);
+    const comentarios = partes.length === 2 ? [[partes[1], valor]] : partes.length === 1 ? doCard(valor) : partes.length === 0 && ehObjeto(valor) ? Object.values(valor).flatMap(doCard) : [];
     comentarios.forEach(([id, c]) => { if (c && mencionaAgente(c.text) && !(jaProcessados && jaProcessados[id])) out[`agente_agil_mencao_processed/${id}`] = { at: agoraIso, restaurado: true }; });
   });
   return out;

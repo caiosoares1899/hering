@@ -131,3 +131,25 @@ test('núcleo: faltantes por objeto, por array com id, e valores que existem (me
   assert.equal(compararAreas({}, {}).length, AREAS_IDS.length);
   assert.deepEqual(marcadoresDeMencao([{ path: 'c1', valor: { k1: { text: '@agente agil oi' }, k2: { text: 'x' } } }], {}, mencionaAgente, 'T'), { 'agente_agil_mencao_processed/k1': { at: 'T', restaurado: true } });
 });
+
+// 19/11/2026 (/monitorarbugs BF): o gatilho do agente dispara a cada comentário criado e só fica quieto se a marca de "processado" já existir.
+test('comentários do squad inteiro sumiram: a restauração da área toda também marca as menções ao agente', async () => {
+  const d = seed(); delete d._data().kanban.squads.dados.dados.card_comments;
+  await chama(PO, { acao: 'restaurar', squad: 'dados', data: '2026-10-11', areas: ['card_comments'] }, d);
+  const dd = d._data().kanban.squads.dados.dados;
+  assert.equal(dd.card_comments.c1.k2.text, 'oi @Agente Ágil resume');
+  assert.ok(dd.agente_agil_mencao_processed.k2 && dd.agente_agil_mencao_processed.k2.restaurado === true, 'k2 menciona o agente e voltou sem marca');
+});
+
+test('restauração grande (mais de um lote): a marca do agente sai no mesmo lote do comentário ou antes', async () => {
+  const d = seed(), b = bucket(), lotes = [];
+  const arq = JSON.parse(b.arquivos['backups-completos/semanal/2026-10-11/squads/dados.json']);
+  for (let i = 0; i < 450; i++) arq.dados.card_comments.c1[`m${String(i).padStart(3, '0')}`] = { text: i === 0 ? '@Agente Ágil faz' : `c${i}`, uid: 'u' };
+  b.arquivos['backups-completos/semanal/2026-10-11/squads/dados.json'] = JSON.stringify(arq);
+  const ref0 = d.ref; d.ref = (p) => { const r = ref0(p); const up = r.update; r.update = async (patch) => { lotes.push(Object.keys(patch)); return up(patch); }; return r; };
+  await chama(PO, { acao: 'restaurar', squad: 'dados', data: '2026-10-11', areas: ['card_comments'] }, d, b);
+  const lote = (k) => lotes.findIndex((l) => l.includes(k));
+  const iMarca = lote('agente_agil_mencao_processed/m000'), iComent = lote('card_comments/c1/m000');
+  assert.ok(lotes.length > 1, 'precisa de mais de um lote'); assert.ok(iMarca >= 0 && iComent >= 0, 'as duas gravações aconteceram');
+  assert.ok(iMarca <= iComent, `marca no lote ${iMarca}, comentário no lote ${iComent}`);
+});

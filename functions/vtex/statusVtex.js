@@ -29,6 +29,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getDatabase } = require('firebase-admin/database');
 const crypto = require('crypto');
 const traducao = require('./traduzir');
+const { uidsDosAdms } = require('../common/admsDestino');
 
 const FEED_URL = 'https://status.vtex.com/feed.rss';
 const SITE = 'https://status.vtex.com/';
@@ -312,10 +313,9 @@ async function rodar({ db, fetchImpl, agora, log, traduzir }) {
   return Object.assign({ itens: itens.length }, r);
 }
 
-// Notifica os ADMs (usuarios_publicos com role 'adm') que o monitor não consegue ler o feed. Id fixo por dia (reexecutar não duplica).
-async function alertarMonitor({ db, falhas, erro, agora }) {
-  const pubs = (await db.ref('kanban/usuarios_publicos').get()).val() || {};
-  const adms = Object.keys(pubs).filter((uid) => pubs[uid] && pubs[uid].role === 'adm');
+// Notifica os ADMs (role 'adm' ou adm_emails, ver common/admsDestino.js) que o monitor não consegue ler o feed. Id fixo por dia (reexecutar não duplica).
+async function alertarMonitor({ db, auth, falhas, erro, agora }) {
+  const adms = await uidsDosAdms(db, auth === undefined ? undefined : { auth });
   const ts = new Date(agora).toISOString();
   const id = `vtexmon_${ts.slice(0, 10)}`;
   const sub = `Sem ler o status da VTEX há ~${Math.round((falhas * 5) / 60 * 10) / 10} h (${falhas} tentativas): ${String(erro || 'feed vazio').slice(0, 120)}. Os avisos automáticos de incidente estão parados.`;
