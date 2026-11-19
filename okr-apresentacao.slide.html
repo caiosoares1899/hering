@@ -617,6 +617,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 body.live-ativa .tb-live,body.live-host .tb-live{display:none;}   /* com a apresentação ao vivo na barra (#live-box), o selo estático "Ao vivo" sai; o relógio e a contagem regressiva continuam visíveis (as ferramentas estão no botão 🎙️ flutuante) */
 .tb-mid{min-width:0;}
 .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;background:rgba(255,77,77,.14);border:1px solid rgba(255,77,77,.45);color:#ff8a8a;white-space:nowrap;}
+.live-stop{font-family:inherit;cursor:pointer;}
+.live-stop:hover{background:rgba(255,77,77,.24);}
+.live-stop:focus-visible{outline:2px solid var(--accent,#7ee8ff);outline-offset:2px;}
+.live-stop-icon{width:7px;height:7px;border-radius:1px;background:currentColor;}
 .live-pill i{position:relative;width:7px;height:7px;border-radius:50%;background:#ff4d4d;}
 .live-pill i::after{content:'';position:absolute;inset:0;border-radius:50%;background:#ff4d4d;opacity:0;animation:liveAnel 1.8s ease-out 3;}   /* 3 pulsos ao entrar na sala e para: animação infinita mantém 60 quadros/s com a página parada */
 @keyframes liveAnel{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.8);opacity:0}}
@@ -2520,7 +2524,7 @@ function liveRender(){
   if(sig===_liveSig) return; _liveSig = sig;
   let h = '';
   if(!ativa) h = viewer ? '' : '<button type="button" class="tb-btn live-btn" onclick="window._liveComecar()" title="Cria uma sessão ao vivo: quem abrir esta página acompanha o seu slide, e você pode passar o controle e usar laser e caneta">🎙️ Apresentar ao vivo</button>';
-  else if(host) h = '<span class="live-pill"><i></i>Você está apresentando</span>';
+  else if(host) h = '<button type="button" class="live-pill live-stop" onclick="window._liveEncerrar()"><span class="live-stop-icon" aria-hidden="true"></span>Parar de apresentar</button>';
   else h = '<span class="live-pill"><i></i>'+esc(live.apresentador.nome||'Alguém')+' está apresentando</span>'
     + (liveSeguindo ? '<span class="live-pill" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.4);color:var(--teal);">Acompanhando ✓</span>' : '<button type="button" class="tb-btn live-btn" onclick="window._liveSeguir()" title="Volta pro slide do apresentador">↩ Voltar a seguir</button>')
     + (adm ? '<button type="button" class="tb-btn live-btn" onclick="window._liveAssumir()" title="ADM: assumir o controle da apresentação agora">👑 Assumir</button>' : '');
@@ -2542,9 +2546,9 @@ function liveRender(){
         + '</div>';
     }
     if(controla){
-      p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L)">🔴 Laser</button>'
+      p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L ou clique duplo no slide)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';
-      if(liveFerr==='caneta') p += '<div class="lp-seg"><button type="button" class="'+(liveTipo==='f'?'on':'')+'" onclick="window._liveTipo(\'f\')" title="O traço fica até você apagar">Fixa</button><button type="button" class="'+(liveTipo==='t'?'on':'')+'" onclick="window._liveTipo(\'t\')" title="O traço some sozinho depois de 5 s (tecla T)">Temporária · 5 s</button></div>'
+      if(liveFerr==='caneta') p += '<div class="lp-seg"><button type="button" class="'+(liveTipo==='f'?'on':'')+'" onclick="window._liveTipo(\'f\')" title="O traço fica até você apagar">Fixa</button><button type="button" class="'+(liveTipo==='t'?'on':'')+'" onclick="window._liveTipo(\'t\')" title="O traço some sozinho depois de 5 s (T ou clique triplo no slide)">Temporária · 5 s</button></div>'
         + '<div class="lp-cores">'+LIVE_CORES.map(c=>'<button type="button" class="live-cor'+(c===liveCor?' on':'')+'" style="background:'+c+'" onclick="window._liveCor(\''+c+'\')" aria-label="Cor"></button>').join('')+'</div>';
       p += '<div class="lp-row"><button type="button" class="lp-b" onclick="window._liveDesfazer()" title="Desfaz o último traço fixo (Z)">↩ Desfazer</button><button type="button" class="lp-b" onclick="window._liveLimpar()" title="Apaga todos os traços">🧽 Apagar tudo</button></div>'
         + '<div class="lp-sub">Passar o controle pra…</div>'
@@ -2619,6 +2623,22 @@ document.documentElement.addEventListener('mouseleave', liveLaserOff); document.
   const fim = ()=>{ if(!liveStroke) return; const id = liveStroke.id, tmp = liveStroke.m==='t'; enviar(true); if(tmp) setTimeout(()=>window._remove(liveRef('tracos/'+id)).catch(()=>{}), 5600); else liveMeus.push(id); liveStroke = null; };
   cv.addEventListener('pointerup', fim); cv.addEventListener('pointercancel', fim);
 })();
+// Aguarda o terceiro clique antes de ligar o laser. A caneta captura os
+// cliques na área de desenho, que fica fora dos atalhos para não confundir traços com gestos.
+let liveCliqueDuplo = 0;
+document.addEventListener('click', e=>{
+  clearTimeout(liveCliqueDuplo);
+  if((e.detail!==2 && e.detail!==3) || e.button!==0 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey ||
+    !livePodeControlar() || window._okrIsViewer || !(e.target instanceof Element)) return;
+  const area = e.target.closest('#slides .slide.active, #detail-ov.open #detail-modal');
+  if(!area || e.target.closest('button, a, input, textarea, select, label, summary, [role="button"], [onclick], [contenteditable]')) return;
+  if(e.detail===3){ window._liveTipo('t'); return; }
+  const contexto = liveCtx(), ferramenta = liveFerr, sessao = live.iniciadoEm, host = live.apresentador.uid;
+  liveCliqueDuplo = setTimeout(()=>{
+    if(livePodeControlar() && liveCtx()===contexto && liveFerr===ferramenta &&
+      live.iniciadoEm===sessao && live.apresentador.uid===host && area.isConnected) window._liveFerr('laser');
+  }, 400);
+});
 document.addEventListener('keydown', e=>{
   if(!livePodeControlar() || _okrEhCampo(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = (e.key||'').toLowerCase();
