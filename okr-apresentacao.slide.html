@@ -1273,7 +1273,7 @@ function _okrAtingChartPanelHtml(o){
 }
 window._okrAtingTip = _okrAtingTip; window._okrAtingTipOff = _okrAtingTipOff;   // handlers inline do gráfico (o script é um módulo)
 let _okrAtingAbertoId = null;
-window._okrOpenAting = id => {
+function _okrRenderAting(id){
   const o = okrObjetivos[id]; if(!o) return;
   const at = o.atingimento;
   _okrAtingAbertoId = id;
@@ -1281,18 +1281,20 @@ window._okrOpenAting = id => {
   document.getElementById('ating-sub').textContent = (o.titulo||'Objetivo')+(_okrAtingConfigurado(at)?' · '+_okrAtingTipoIco(at.tipo)+' '+_okrAtingTipoLabel(at.tipo):'');
   document.getElementById('ating-body').innerHTML = _okrAtingChartPanelHtml(o);
   document.getElementById('ating-ov').classList.add('open');
-};
-window._okrCloseAting = () => {
+}
+window._okrOpenAting = _okrRenderAting;
+function _okrLimparAting(){
   _okrAtingAbertoId = null;
   document.getElementById('ating-ov').classList.remove('open');
-};
+}
+window._okrCloseAting = _okrLimparAting;
 function _okrAtualizarAtingAberto(){
   const id = _okrAtingAbertoId;
   if(!id) return;
   if(!okrObjetivos[id]) return window._okrCloseAting();
   const seletor = '#ating-body .okr-ating-reg';
   const aberto = document.querySelector(seletor)?.open;
-  window._okrOpenAting(id);
+  _okrRenderAting(id);
   const registros = document.querySelector(seletor);
   if(aberto && registros) registros.open = true;
 }
@@ -2265,7 +2267,7 @@ function _isAdmOkr(){
 }
 let listenersStarted = false;
 function _okrResetOverlays(){
-  window._okrCloseAting();
+  _okrLimparAting();
   window._okrCloseNotes();
   window._okrCloseDetail?.();
   window._okrCloseAgendaCfg?.();
@@ -2352,6 +2354,7 @@ const liveHostParado = () => liveAtiva() && (Date.now() - (live.atualizadoEm||0)
 const liveNome = u => (u && (u.displayName || (u.email||'').split('@')[0])) || 'Alguém';
 const liveSlideKey = () => slides[currentIdx] ? slides[currentIdx].key : '';
 const liveDetalheAberto = () => document.getElementById('detail-ov').classList.contains('open') ? (_okrDetailCurrentId||'') : '';
+const liveNavegacao = () => ({slide:liveSlideKey(), detalhe:liveDetalheAberto(), evolucao:_okrAtingAbertoId||''});
 const liveCtx = () => { const d = liveDetalheAberto(); return d ? 'd:'+d : 's:'+liveSlideKey(); };   // onde o NOVO traço nasce
 // o que aparece: os traços do slide continuam por cima do detalhe aberto a partir dele (não somem ao entrar no Objetivo) + os traços feitos dentro do próprio detalhe
 const liveCtxs = () => { const d = liveDetalheAberto(), l = ['s:'+liveSlideKey()]; if(d) l.push('d:'+d); return l; };
@@ -2366,7 +2369,7 @@ function liveInit(){
   window._onValue(liveRef(), snap=>{
     const antes = liveAtiva(), eraHost = liveSouHost(); live = snap.val();
     const ativa = liveAtiva();
-    const navKey = ativa ? (live.slide||'')+'|'+(live.detalhe||'')+'|'+(live.navId||'') : '';
+    const navKey = ativa ? (live.slide||'')+'|'+(live.detalhe||'')+'|'+(live.evolucao||'')+'|'+(live.navId||'') : '';
     const mudouNav = ativa && navKey !== _liveUltNavKey;
     _liveUltNavKey = navKey;
     const hostUid = ativa ? live.apresentador.uid : '';
@@ -2398,7 +2401,7 @@ window._liveComecar = () => {
   if(window._okrIsViewer) return; const u = liveEu();
   const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||''})
+  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), ...liveNavegacao(), navId, navPor:u.uid||''})
     .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
 window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a sessão do Radar para todos? Para parar o compartilhamento de tela, use o controle do Google Meet.')) return; window._remove(liveRef()).catch(()=>{}); };
@@ -2428,6 +2431,12 @@ function liveAplicar(forcar){
       window._okrCloseAting?.(); window._okrCloseMarcoComments?.();
       window._okrCloseDetail();
     }
+    const evolucao = live.evolucao || '';
+    if(evolucao !== (_okrAtingAbertoId || '')){
+      if(!evolucao) window._okrCloseAting();
+      else if(okrObjetivos[evolucao] && (!live.slide || liveSlideKey()===live.slide) && liveDetalheAberto()===d) window._okrOpenAting(evolucao);
+      else _livePend = true;
+    }
   } finally { _liveAplicando = false; if(!_livePend) _liveRetomar = false; }   // retomada de quem recarregou é de uma vez só (senão cada sinal da sala puxaria o apresentador de volta)
 }
 function liveAposNavegar(){
@@ -2441,14 +2450,28 @@ function liveAposNavegar(){
       if(!livePodeControlar()) return;
       const u = liveEu(), navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
       _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-      window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||'', atualizadoEm:Date.now()}).catch(()=>{});
+      window._update(liveRef(), {...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:Date.now()}).catch(()=>{});
     }, 60);
   } else if(liveAtiva() && liveSeguindo){ liveSeguindo = false; liveRender(); }
   liveDesenhar();
 }
 (function(){
   const go = window._okrGoTo, op = window._okrOpenDetail, cl = window._okrCloseDetail;
-  window._okrGoTo = i => { go(i); liveAposNavegar(); };
+  const abrirEvolucao = window._okrOpenAting, fecharEvolucao = window._okrCloseAting;
+  window._okrOpenAting = id => {
+    const anterior = _okrAtingAbertoId;
+    abrirEvolucao(id);
+    if(anterior !== _okrAtingAbertoId) liveAposNavegar();
+  };
+  window._okrCloseAting = () => {
+    const estavaAberta = !!_okrAtingAbertoId;
+    fecharEvolucao();
+    if(estavaAberta) liveAposNavegar();
+  };
+  window._okrGoTo = i => {
+    if(i>=0 && i<slides.length && i!==currentIdx) _okrLimparAting();
+    go(i); liveAposNavegar();
+  };
   window._okrOpenDetail = id => { op(id); liveAposNavegar(); };
   window._okrCloseDetail = () => { cl(); liveAposNavegar(); };
 })();
@@ -2465,7 +2488,7 @@ window._liveAssumir = () => {
   const u = liveEu(); if(!u.uid) return;
   const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  const upd = {apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||'', atualizadoEm:Date.now(), laser:null};
+  const upd = {apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, ...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:Date.now(), laser:null};
   upd['pedidos/'+u.uid] = null;
   liveSeguindo = true;
   window._update(liveRef(), upd).then(()=>liveToast('🎙️ Você assumiu o controle da apresentação.')).catch(e=>liveToast('⚠️ Não consegui assumir o controle: '+(e && e.message || e)));
@@ -2474,7 +2497,7 @@ window._livePuxarSlide = () => {
   if(!livePodeControlar()) return;
   const u = liveEu(), navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||'', atualizadoEm:Date.now()})
+  window._update(liveRef(), {...liveNavegacao(), navId, navPor:u.uid||'', atualizadoEm:Date.now()})
     .then(()=>{ liveSeguindo = true; liveRender(); liveToast('📍 Sala sincronizada no seu slide.'); })
     .catch(e=>liveToast('⚠️ Não consegui sincronizar o slide: '+(e && e.message || e)));
 };

@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — Evolução sincronizada na sala ao vivo — 2026-11-19
+
+Ao abrir ou fechar Evolução, as abas que acompanham a sala mostram o mesmo estado. A navegação preserva o gráfico para quem chega depois ou recebe o controle.
+
 ### SÓ DEV — Apresentação do Radar — convite copiável para o chat do Meet — 2026-11-19
 
 O painel ao vivo copia um convite para acompanhar os slides no navegador. A confirmação de encerramento distingue a sessão do Radar do compartilhamento de tela no Meet.
