@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — controle flutuante enxuto e bastidor como opções separadas — 2026-11-19
+
+O painel ao vivo oferece a janelinha original de navegação e uma abertura separada para o bastidor completo.
+
 ### SÓ DEV — Palco Limpo mantém laser e caneta disponíveis — 2026-11-19
 
 Na aba do apresentador, o microfone abre um painel reduzido com as ferramentas de marcação. A tela remota para o público continua limpa.

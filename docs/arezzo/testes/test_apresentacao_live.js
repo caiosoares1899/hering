@@ -28,17 +28,24 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  t('link da tela para o público ativa o modo de projeção', new URL(urlPublico).searchParams.get('tela')==='publico',urlPublico);
  await A.p.evaluate(() => window._livePainel(false));
  if(process.env.TESTAR_PIP==='1'){
-   const abrirPip=async()=>{
+   const abrirPip=async(nome='Abrir bastidor')=>{
      await A.p.evaluate(()=>window._livePainel(true));
-     await A.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
+     await A.p.getByRole('button',{name:nome}).click();
      await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
    };
    const comando=id=>A.p.evaluate(i=>window.documentPictureInPicture.window.document.getElementById(i).click(),id);
-   await abrirPip();
-   t('Chrome abre janela PiP nativa com três controles', await A.p.evaluate(()=>{
+   await abrirPip('🎛️ Abrir controle flutuante');
+   t('controle flutuante mantém só Anterior, Próximo e Fechar detalhe', await A.p.evaluate(()=>{
      const doc=window.documentPictureInPicture.window.document;
-     return doc.querySelectorAll('nav button').length===3 && doc.getElementById('anterior').disabled;
+     return doc.querySelectorAll('button').length===3 && doc.getElementById('anterior').disabled && !doc.getElementById('anotacao');
    }), '');
+   await comando('proximo');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
+   await comando('anterior');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[0].key);
+   await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
+   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
+   await abrirPip();
    await comando('palco');
    t('Palco Limpo oculta bastidores e mantém os slides visíveis', await A.p.evaluate(()=>{
      const ocultos=['live-box','live-toast','notes-fab','fps-meter','tb-countdown'];
@@ -227,7 +234,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.evaluate(()=>{ liveSeguindo = false; });
  if(process.env.TESTAR_PIP==='1'){
    await A.p.evaluate(()=>{ window._okrCloseAting(); window._livePainel(true); });
-   await A.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
+   await A.p.getByRole('button',{name:'Abrir bastidor'}).click();
    await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('participante'));
    await A.p.evaluate(()=>{
      window._okrOpenAting('d2');

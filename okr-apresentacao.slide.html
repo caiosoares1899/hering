@@ -2642,6 +2642,7 @@ function liveAtualizarControleFlutuante(){
   doc.getElementById('anterior').disabled = detalhe || currentIdx<=0;
   doc.getElementById('proximo').disabled = detalhe || currentIdx>=slides.length-1;
   doc.getElementById('fechar-detalhe').disabled = !detalhe;
+  if(!doc.getElementById('tempo')) return;
   const tempo = document.getElementById('tb-countdown');
   doc.getElementById('tempo').textContent = tempo.hidden ? 'Sem horário de término' : tempo.textContent;
   doc.getElementById('fps').textContent = document.hidden ? 'FPS indisponível com a aba oculta' : document.querySelector('#fps-meter span').textContent;
@@ -2666,12 +2667,16 @@ function liveAtualizarControleFlutuante(){
   doc.getElementById('recusar').disabled = !seletor.value || !pedidos[seletor.value];
 
 }
-window._liveAbrirControleFlutuante = async () => {
+window._liveAbrirControleFlutuante = async (bastidor = false) => {
   const api = window.documentPictureInPicture;
-  if(!liveSouHost() || window._okrIsViewer || !api?.requestWindow || liveControleFlutuante) return;
+  if(!liveSouHost() || window._okrIsViewer || !api?.requestWindow) return;
+  if(liveControleFlutuante && !liveControleFlutuante.closed){
+    liveToast('Feche a janela atual para abrir outro controle.');
+    return;
+  }
   let pip;
   try{
-    pip = await api.requestWindow({width:416,height:440});
+    pip = await api.requestWindow(bastidor ? {width:416,height:440} : {width:348,height:142});
   }catch(e){
     liveToast('O Chrome não abriu o controle flutuante. Use os controles na aba dos slides.');
     return;
@@ -2680,7 +2685,7 @@ window._liveAbrirControleFlutuante = async () => {
   liveControleFlutuante = pip;
   const doc = pip.document;
   doc.documentElement.lang = 'pt-BR';
-  doc.title = 'Controle da apresentação do Radar';
+  doc.title = bastidor ? 'Bastidor do Radar' : 'Controle flutuante do Radar';
   const estilo = doc.createElement('style');
   estilo.textContent = `
     :root{color-scheme:dark}
@@ -2700,19 +2705,35 @@ window._liveAbrirControleFlutuante = async () => {
     button:disabled{opacity:.55;cursor:default}
   `;
   doc.head.append(estilo);
-  doc.body.innerHTML = '<h1>Apresentação do Radar</h1><p id="estado" role="status"></p>'
+  doc.body.innerHTML = '<h1>'+doc.title+'</h1><p id="estado" role="status"></p>'
     + '<nav aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>'
-    + '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
+    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
+  if(bastidor) doc.body.insertAdjacentHTML('beforeend',
+    '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
     + '<button type="button" id="palco" aria-pressed="false">Palco Limpo</button>'
     + '<form id="anotacao"><label for="rascunho">Anotação da reunião</label><textarea id="rascunho" rows="2"></textarea>'
     + '<div class="acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
     + '<section><label for="participante">Controle da apresentação</label><select id="participante"></select>'
-    + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button></div></section>';
+    + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button></div></section>');
   const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
   doc.getElementById('anterior').addEventListener('click', agir(()=>window._okrPrev()));
   doc.getElementById('proximo').addEventListener('click', agir(()=>window._okrNext()));
   doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
+  pip.addEventListener('pagehide', ()=>{
+    if(liveControleFlutuante===pip){
+      liveControleFlutuante = null;
+      if(document.body.classList.contains('live-palco-limpo')){
+        document.body.classList.remove('live-palco-limpo');
+        window._livePainel(false);
+      }
+    }
+  }, {once:true});
+  if(bastidor) livePrepararBastidor(pip, agir);
+  liveAtualizarControleFlutuante();
+  window._livePainel(false);
+};
+function livePrepararBastidor(pip, agir){
+  const doc = pip.document;
   const palco = doc.getElementById('palco');
   palco.addEventListener('click', agir(()=>{
     const ativo = document.body.classList.toggle('live-palco-limpo');
@@ -2753,20 +2774,10 @@ window._liveAbrirControleFlutuante = async () => {
     }finally{ salvar.disabled = false; }
   });
   pip.setInterval(()=>{ _okrRenderCountdown(); liveAtualizarControleFlutuante(); },1000);
-  pip.addEventListener('pagehide', ()=>{
-    inp.removeEventListener('input', copiarRascunho);
-    if(liveControleFlutuante===pip){
-      liveControleFlutuante = null;
-      if(document.body.classList.contains('live-palco-limpo')){
-        document.body.classList.remove('live-palco-limpo');
-        window._livePainel(false);
-      }
-    }
-  }, {once:true});
+  pip.addEventListener('pagehide', ()=>inp.removeEventListener('input', copiarRascunho), {once:true});
   _okrRenderCountdown();
-  liveAtualizarControleFlutuante();
-  window._livePainel(false);
-};
+}
+
 window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? abrir : !livePainelAberto; _liveSig = ''; liveRender(); };
 // A interface só é remontada quando algo MUDOU de verdade (quem apresenta, ferramenta, quem está na sala…): os sinais de vida dos participantes chegam o tempo todo,
 // e remontar a cada um fazia o clique no nome da pessoa se perder (o botão era trocado entre o botão do mouse descer e subir).
@@ -2812,7 +2823,8 @@ function liveRender(){
     if(controla){
       if(host && !palcoLimpo) p += '<button type="button" class="lp-b" onclick="window._liveCopiarTelaPublico()">Copiar link da tela para o público</button>';
       if(host && !palcoLimpo && window.documentPictureInPicture?.requestWindow){
-        p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>';
+        p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>'
+          + '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';
       }
       p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L ou clique duplo no slide)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';
