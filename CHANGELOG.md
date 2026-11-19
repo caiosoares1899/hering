@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — Abrir detalhe no passador e no Bastidor — 2026-11-19
+
+O passador compacto e o Bastidor ganharam Abrir detalhe, ao lado de Fechar detalhe. Num slide de gerência, ele abre o detalhe do 1º Objetivo dela, na ordem da grade e dos botões Anterior/Próximo do detalhe, sem precisar voltar à aba dos slides. Fica desligado fora de um slide de gerência, com o detalhe já aberto ou para quem não está apresentando. A janela compacta ficou um pouco mais alta para os quatro botões. Testes: docs/arezzo/testes/test_apresentacao_live.js (TESTAR_PIP=1) e docs/arezzo/testes/test_bastidor_ui.js.
+
 ### SÓ DEV — Apresentação do Radar — Bastidor em aba própria mostra o que está no ar e separa o que é perigoso — 2026-11-19
 
 O Bastidor aberto em aba (okr-bastidor.html) era o bloco da janela flutuante pequena centralizado numa página larga: fonte do sistema, todos os botões iguais, Encerrar ao lado de Copiar link e o botão de iniciar no estilo cru do navegador. Agora usa a identidade dos slides em duas colunas: quem apresenta no topo, o slide ou Objetivo atual em destaque com o que vem a seguir, Próximo como ação principal e a tela para o público logo abaixo; anotação e controle ao lado. Encerrar fica sozinho no fim, em vermelho. Botões com 44 px, uma coluna no celular, linha de FPS fora da aba e aviso de início que fala da tela para o público. A janela flutuante não muda. Teste: docs/arezzo/testes/test_bastidor_ui.js (20 verificações em 1280 e 390 px; 20 falham na versão anterior).
