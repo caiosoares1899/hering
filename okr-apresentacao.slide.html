@@ -643,6 +643,7 @@ body.live-pen #live-capture{display:block;}
 #live-fab[hidden]{display:none;}#live-fab:hover{transform:translateY(-2px);}#live-fab.on{border-color:#ff4d4d;box-shadow:0 0 0 3px rgba(255,77,77,.25),0 6px 22px rgba(0,0,0,.35);}
 #live-fpanel{position:fixed;right:28px;bottom:158px;z-index:650;width:min(290px,92vw);background:rgba(3,13,26,.97);border:1px solid var(--glass-b);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 14px 40px rgba(0,0,0,.55);}
 #live-fpanel[hidden]{display:none;}
+body.live-palco-limpo :is(#live-box,#live-fab,#live-fpanel,#live-toast,#notes-fab,#notes-ov,#fps-meter,#tb-countdown){display:none !important;}
 .lp-hd{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700;gap:8px;}
 .lp-hd button{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;}
 .lp-row{display:flex;gap:6px;}.lp-row .lp-b{flex:1;}
@@ -2121,6 +2122,7 @@ function renderNotas(){
     </div>`).join('');
 }
 window._okrToggleNotes = () => {
+  if(document.body.classList.contains('live-palco-limpo')) return;
   const ov = document.getElementById('notes-ov');
   if(ov.classList.contains('open')) window._okrCloseNotes();
   else {
@@ -2180,18 +2182,21 @@ window._okrOpenMarcoComments = marcoId => {
   });
 };
 window._okrCloseMarcoComments = () => { _mcCurrentId = null; document.getElementById('mc-ov').classList.remove('open'); };
+async function _okrSalvarNota(texto){
+  const usuario = window._currentUser;
+  if(!texto || !usuario || window._okrIsViewer) throw new Error('Anotação indisponível');
+  const id = 'nota_'+Date.now()+Math.random().toString(36).slice(2,6);
+  await window._set(window._ref(window._db, 'kanban/okr/reuniao_notas/'+_hojeStr()+'/'+id), {
+    texto, autorUid: usuario.uid, ts: new Date().toISOString(),
+  });
+}
 window._okrAddNota = () => {
   const inp = document.getElementById('notes-input');
   const texto = (inp.value||'').trim();
   if(!texto || !window._currentUser || window._okrIsViewer) return;   // visualizador externo só lê (as regras negam a escrita; antes o texto sumia sem aviso)
-  const hoje = _hojeStr();
-  const id = 'nota_'+Date.now()+Math.random().toString(36).slice(2,6);
-  window._set(window._ref(window._db, 'kanban/okr/reuniao_notas/'+hoje+'/'+id), {
-    texto,
-    autorUid: window._currentUser.uid,
-    ts: new Date().toISOString(),
-  }).catch(err=>{ console.error('[notas] falha ao salvar:', err); if(!inp.value) inp.value = texto; const rd = document.getElementById('notes-readonly'); if(rd){ rd.textContent = '⚠️ Não foi possível salvar a anotação — seu texto voltou pro campo. Tente de novo.'; rd.hidden = false; setTimeout(()=>{ rd.textContent = NOTES_READONLY_TXT; rd.hidden = (_notesViewDate===_hojeStr()); }, 6000); } });
+  _okrSalvarNota(texto).catch(err=>{ console.error('[notas] falha ao salvar:', err); if(!inp.value){ inp.value = texto; inp.dispatchEvent(new Event('input')); } const rd = document.getElementById('notes-readonly'); if(rd){ rd.textContent = '⚠️ Não foi possível salvar a anotação — seu texto voltou pro campo. Tente de novo.'; rd.hidden = false; setTimeout(()=>{ rd.textContent = NOTES_READONLY_TXT; rd.hidden = (_notesViewDate===_hojeStr()); }, 6000); } });
   inp.value = '';
+  inp.dispatchEvent(new Event('input'));
 };
 window._okrDelNota = id => {
   const hoje = _hojeStr();
@@ -2588,22 +2593,42 @@ function liveAtualizarControleFlutuante(){
   doc.getElementById('anterior').disabled = detalhe || currentIdx<=0;
   doc.getElementById('proximo').disabled = detalhe || currentIdx>=slides.length-1;
   doc.getElementById('fechar-detalhe').disabled = !detalhe;
+  const tempo = document.getElementById('tb-countdown');
+  doc.getElementById('tempo').textContent = tempo.hidden ? 'Sem horário de término' : tempo.textContent;
+  doc.getElementById('fps').textContent = document.hidden ? 'FPS indisponível com a aba oculta' : document.querySelector('#fps-meter span').textContent;
+  const participantes = liveParticipantes();
+  const pedidos = live.pedidos || {};
+  const seletor = doc.getElementById('participante');
+  const opcoes = participantes.map(([uid,pessoa])=>[uid, pessoa.nome || 'Participante']);
+  for(const [uid,pedido] of Object.entries(pedidos)){
+    if(uid!==liveEu().uid && !opcoes.some(([id])=>id===uid)) opcoes.push([uid,pedido.nome || 'Participante']);
+  }
+  const itens = opcoes.map(([uid,nome])=>[uid, nome+(pedidos[uid]?' · pediu o controle':'')]);
+  const assinatura = JSON.stringify(itens);
+  if(seletor.dataset.assinatura!==assinatura){
+    const anterior = seletor.value;
+    seletor.replaceChildren(new pip.Option(itens.length?'Selecione uma pessoa':'Ninguém disponível',''));
+    for(const [uid,nome] of itens) seletor.add(new pip.Option(nome,uid));
+    seletor.value = itens.some(([uid])=>uid===anterior) ? anterior : '';
+    seletor.dataset.assinatura = assinatura;
+  }
+  seletor.disabled = !itens.length;
+  doc.getElementById('passar').disabled = !seletor.value;
+  doc.getElementById('recusar').disabled = !seletor.value || !pedidos[seletor.value];
+
 }
 window._liveAbrirControleFlutuante = async () => {
   const api = window.documentPictureInPicture;
   if(!liveSouHost() || window._okrIsViewer || !api?.requestWindow || liveControleFlutuante) return;
   let pip;
   try{
-    pip = await api.requestWindow({width:348,height:142});
+    pip = await api.requestWindow({width:416,height:440});
   }catch(e){
     liveToast('O Chrome não abriu o controle flutuante. Use os controles na aba dos slides.');
     return;
   }
   if(!liveSouHost() || window._okrIsViewer){ pip.close(); return; }
   liveControleFlutuante = pip;
-  pip.addEventListener('pagehide', ()=>{
-    if(liveControleFlutuante===pip) liveControleFlutuante = null;
-  }, {once:true});
   const doc = pip.document;
   doc.documentElement.lang = 'pt-BR';
   doc.title = 'Controle da apresentação do Radar';
@@ -2613,7 +2638,13 @@ window._liveAbrirControleFlutuante = async () => {
     body{margin:0;padding:12px;box-sizing:border-box;background:#071827;color:#e8f5ff;font:14px system-ui}
     h1{margin:0 0 4px;font-size:15px}
     p{margin:0 0 12px;color:#a8c3d6}
-    nav{display:flex;flex-wrap:wrap;gap:6px}
+    nav,.acoes,.indicadores{display:flex;flex-wrap:wrap;gap:6px}
+    .indicadores{margin:10px 0;color:#a8c3d6;gap:8px 16px}
+    section,form{margin-top:12px;display:grid;gap:6px}
+    textarea,select{box-sizing:border-box;width:100%;font:inherit;color:inherit;background:#102c41;border:1px solid #397898;border-radius:8px;padding:8px}
+    textarea{resize:vertical;min-height:60px}
+    output{color:#a8c3d6;align-self:center}
+    button[aria-pressed="true"]{background:#194c55;border-color:#7ee8ff}
     button{font:inherit;color:inherit;background:#102c41;border:1px solid #397898;border-radius:8px;padding:7px 8px;cursor:pointer}
     button:hover:not(:disabled){background:#194664}
     button:focus-visible{outline:2px solid #7ee8ff;outline-offset:2px}
@@ -2622,11 +2653,64 @@ window._liveAbrirControleFlutuante = async () => {
   doc.head.append(estilo);
   doc.body.innerHTML = '<h1>Apresentação do Radar</h1><p id="estado" role="status"></p>'
     + '<nav aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
+    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>'
+    + '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
+    + '<button type="button" id="palco" aria-pressed="false">Palco Limpo</button>'
+    + '<form id="anotacao"><label for="rascunho">Anotação da reunião</label><textarea id="rascunho" rows="2"></textarea>'
+    + '<div class="acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
+    + '<section><label for="participante">Controle da apresentação</label><select id="participante"></select>'
+    + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button></div></section>';
   const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
   doc.getElementById('anterior').addEventListener('click', agir(()=>window._okrPrev()));
   doc.getElementById('proximo').addEventListener('click', agir(()=>window._okrNext()));
   doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
+  const palco = doc.getElementById('palco');
+  palco.addEventListener('click', agir(()=>{
+    const ativo = document.body.classList.toggle('live-palco-limpo');
+    palco.setAttribute('aria-pressed', String(ativo));
+    if(ativo){ window._okrCloseNotes(); window._livePainel(false); }
+  }));
+  const seletor = doc.getElementById('participante');
+  seletor.addEventListener('change', liveAtualizarControleFlutuante);
+  doc.getElementById('passar').addEventListener('click', agir(()=>{
+    const uid = seletor.value;
+    const pessoa = liveParticipantes().find(([id])=>id===uid)?.[1] || live.pedidos?.[uid];
+    if(uid && pessoa) window._livePassar(uid,pessoa.nome||'Participante');
+  }));
+  doc.getElementById('recusar').addEventListener('click', agir(()=>{
+    if(seletor.value && live.pedidos?.[seletor.value]) window._liveRecusar(seletor.value);
+  }));
+  const rascunho = doc.getElementById('rascunho');
+  const inp = document.getElementById('notes-input');
+  const copiarRascunho = ()=>{ rascunho.value = inp.value; };
+  copiarRascunho();
+  inp.addEventListener('input', copiarRascunho);
+  rascunho.addEventListener('input', ()=>{ inp.value = rascunho.value; });
+  const salvar = doc.getElementById('salvar-nota'), estado = doc.getElementById('nota-estado');
+  doc.getElementById('anotacao').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const original = rascunho.value, texto = original.trim();
+    if(!texto || salvar.disabled || !liveSouHost() || window._okrIsViewer) return;
+    salvar.disabled = true;
+    estado.textContent = 'Salvando…';
+    try{
+      await _okrSalvarNota(texto);
+      if(inp.value===original) inp.value = '';
+      if(rascunho.value===original) rascunho.value = '';
+      estado.textContent = 'Anotação salva.';
+    }catch(e){
+      estado.textContent = 'Falha ao salvar. Tente de novo.';
+    }finally{ salvar.disabled = false; }
+  });
+  pip.setInterval(()=>{ _okrRenderCountdown(); liveAtualizarControleFlutuante(); },1000);
+  pip.addEventListener('pagehide', ()=>{
+    inp.removeEventListener('input', copiarRascunho);
+    if(liveControleFlutuante===pip){
+      liveControleFlutuante = null;
+      document.body.classList.remove('live-palco-limpo');
+    }
+  }, {once:true});
+  _okrRenderCountdown();
   liveAtualizarControleFlutuante();
   window._livePainel(false);
 };

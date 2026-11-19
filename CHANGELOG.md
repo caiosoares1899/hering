@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — bastidor com Palco Limpo — 2026-11-19
+
+O controle flutuante do Chrome reúne anotações, tempo restante, FPS, participantes e pedidos de controle. Palco Limpo oculta os controles de bastidor da aba dos slides enquanto a janela está aberta.
+
 ### SÓ DEV — Apresentação do Radar — controle flutuante no Chrome — 2026-11-19
 
 Quem apresenta pode abrir uma janela flutuante com Anterior, Próximo e Fechar detalhe. A navegação continua sincronizada com a sala. A janela fecha quando o controle muda de pessoa ou a sessão termina.
