@@ -116,6 +116,14 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       await A.p.waitForTimeout(1300);
       t('relógio inválido no banco é ignorado sem erro', !A.erros.length && !(await A.p.evaluate(() => document.querySelector('#tb-countdown img'))), A.erros);
       await A.ctx.close(); }
+    // 11) sessão iniciada antes desta versão (sem `relogio`) com agenda no dia: mantém a contagem antiga
+    { const A = await open(U('ana', 'Ana ADM'), { agenda: { inicio: '10:00', fim: '11:15' } });
+      await A.p.evaluate(() => { const st = window.__store.kanban.okr; st.apresentacao_live = { ativa: true, apresentador: { uid: 'ana', nome: 'Ana ADM' }, iniciadoEm: Date.now(), atualizadoEm: Date.now(), slide: 'cover' };
+        (window.__lis || []).filter(l => l.p === 'kanban/okr/apresentacao_live').forEach(l => l.cb({ val: () => JSON.parse(JSON.stringify(st.apresentacao_live)), exists: () => true, key: 'x' })); });
+      await A.p.waitForTimeout(400);
+      t('sessão antiga, sem relógio: a contagem da agenda continua aparecendo', (await contagem(A.p)) === '⏳ 45min restantes', await contagem(A.p));
+      t('sem erro de JavaScript (sessão antiga)', !A.erros.length, A.erros);
+      await A.ctx.close(); }
   } finally { await b.close(); }
   console.log(falhas ? `\n${falhas} falha(s)` : '\nTUDO OK'); process.exit(falhas ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });
