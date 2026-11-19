@@ -11,7 +11,7 @@ const LONGO = 'Aumentar a conversão do checkout no app e no site durante a Blac
 const seed = () => ({ kanban: { okr: { objetivos: {
   d1: mk('d1', 'Fidelidade', { areaId: 'crm', ordem: 0 }), d2: mk('d2', LONGO, { areaId: 'tech', ordem: 0, atingimento:{tipo:'numero',inicial:0,meta:100,lancamentos:[{em:'2026-11-10',valor:80}]} }),
   d3: mk('d3', 'NPS', { areaId: 'cx', ordem: 0 }), d4: mk('d4', 'Pagamentos', { areaId: 'tech', ordem: 1 }) }, marcos: {}, tags: {}, reuniao_notas: {} },
-  usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: 'ana@ciahering.com.br', inscrito: true, init: 'AA' } },
+  usuarios: { ana: { uid: 'ana', nome: 'Ana ADM', email: 'ana@ciahering.com.br', inscrito: true, init: 'AA' }, eve: { uid:'eve', nome:'Eve Souza', inscrito:true } },
   usuarios_publicos: { ana: { uid: 'ana', nome: 'Ana ADM', init: 'AA' } }, config: { adm_emails: ['ana@ciahering.com.br'] } } });
 let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '✅ ' : '❌ ') + n + (ok ? '' : ' → ' + JSON.stringify(d).slice(0, 300))); };
 const texto = (p, sel) => p.evaluate(s => (document.querySelector(s)?.textContent || '').replace(/\s+/g, ' ').trim(), sel);
@@ -71,6 +71,26 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] Próximo é o único botão de ação principal`, await p.evaluate(() => { const cor = e => getComputedStyle(e).backgroundColor; const prox = cor(document.getElementById('proximo')); return [...document.querySelectorAll('#bastidor-controles button')].filter(e => cor(e) === prox).map(e => e.id).join() === 'proximo'; }), '');
       t(`[${w}] Encerrar fica separado, no fim`, await p.evaluate(() => !!document.querySelector('.bst-fim #bastidor-encerrar')), '');
       if(w>=1100) t(`Bastidor usa a largura da tela e cabe em ${w} × ${h} sem rolagem vertical`, await p.locator('#bastidor-pagina').evaluate(el=>el.scrollHeight<=el.clientHeight+1 && el.clientWidth>=innerWidth-1), '');
+      const historico = p.locator('#bastidor-notas');
+      t(`[${w}] histórico fica recolhido por padrão`, !(await historico.evaluate(el=>el.open)), '');
+      await historico.locator('summary').click();
+      await p.getByText('Nenhuma anotação hoje.',{exact:true}).waitFor();
+      t(`[${w}] histórico sinaliza quando ainda não há notas`, (await texto(p,'#bastidor-notas-lista'))==='Nenhuma anotação hoje.', '');
+      const rascunho = p.locator('#rascunho');
+      await rascunho.fill('Rascunho em andamento');
+      await p.evaluate(async ()=>{
+        const nota = {autorUid:'eve', texto:'<b>Decisão</b> registrada', ts:'2026-11-19T12:00:00Z'};
+        await window._set(window._ref(window._db,'kanban/okr/reuniao_notas/'+_hojeStr()+'/nota-teste'),nota);
+      });
+      await p.locator('#bastidor-notas-lista article').waitFor();
+      t(`[${w}] nota recebida mostra autor, horário e texto literal sem apagar rascunho`,
+        /Eve Souza · \d{2}:\d{2}/.test(await texto(p,'#bastidor-notas-lista small')) &&
+        (await texto(p,'#bastidor-notas-lista p'))==='<b>Decisão</b> registrada' &&
+        await rascunho.inputValue()==='Rascunho em andamento' &&
+        await p.locator('#bastidor-notas-lista b').count()===0, '');
+      t(`[${w}] histórico reaproveita o ouvinte de notas`, await p.evaluate(()=>
+        window.__lis.filter(l=>l.p==='kanban/okr/reuniao_notas').length===1), '');
+      await historico.locator('summary').click();
       await p.getByRole('button',{name:'Configurar horário'}).click();
       await p.keyboard.press('PageDown');
       t(`[${w}] diálogo do horário bloqueia navegação por passador`, await p.evaluate(()=>currentIdx===0),'');

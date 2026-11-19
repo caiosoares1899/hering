@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — anotações do dia no Bastidor — 2026-11-19
+
+O Bastidor exibe autor, horário e texto das notas do dia em uma lista recolhível que acompanha as atualizações da reunião.
+
 ### SÓ DEV — Radar — salto entre gerências no Bastidor — 2026-11-19
 
 O Bastidor separa Gerência, que navega entre slides, de Objetivo do slide, que abre um detalhe na gerência atual.
