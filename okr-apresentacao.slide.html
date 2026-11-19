@@ -617,6 +617,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 body.live-ativa .tb-live,body.live-host .tb-live{display:none;}   /* com a apresentação ao vivo na barra (#live-box), o selo estático "Ao vivo" sai; o relógio e a contagem regressiva continuam visíveis (as ferramentas estão no botão 🎙️ flutuante) */
 .tb-mid{min-width:0;}
 .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;background:rgba(255,77,77,.14);border:1px solid rgba(255,77,77,.45);color:#ff8a8a;white-space:nowrap;}
+.live-stop{font-family:inherit;cursor:pointer;}
+.live-stop:hover{background:rgba(255,77,77,.24);}
+.live-stop:focus-visible{outline:2px solid var(--accent,#7ee8ff);outline-offset:2px;}
+.live-stop-icon{width:7px;height:7px;border-radius:1px;background:currentColor;}
 .live-pill i{position:relative;width:7px;height:7px;border-radius:50%;background:#ff4d4d;}
 .live-pill i::after{content:'';position:absolute;inset:0;border-radius:50%;background:#ff4d4d;opacity:0;animation:liveAnel 1.8s ease-out 3;}   /* 3 pulsos ao entrar na sala e para: animação infinita mantém 60 quadros/s com a página parada */
 @keyframes liveAnel{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.8);opacity:0}}
@@ -2520,7 +2524,7 @@ function liveRender(){
   if(sig===_liveSig) return; _liveSig = sig;
   let h = '';
   if(!ativa) h = viewer ? '' : '<button type="button" class="tb-btn live-btn" onclick="window._liveComecar()" title="Cria uma sessão ao vivo: quem abrir esta página acompanha o seu slide, e você pode passar o controle e usar laser e caneta">🎙️ Apresentar ao vivo</button>';
-  else if(host) h = '<span class="live-pill"><i></i>Você está apresentando</span>';
+  else if(host) h = '<button type="button" class="live-pill live-stop" onclick="window._liveEncerrar()"><span class="live-stop-icon" aria-hidden="true"></span>Parar de apresentar</button>';
   else h = '<span class="live-pill"><i></i>'+esc(live.apresentador.nome||'Alguém')+' está apresentando</span>'
     + (liveSeguindo ? '<span class="live-pill" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.4);color:var(--teal);">Acompanhando ✓</span>' : '<button type="button" class="tb-btn live-btn" onclick="window._liveSeguir()" title="Volta pro slide do apresentador">↩ Voltar a seguir</button>')
     + (adm ? '<button type="button" class="tb-btn live-btn" onclick="window._liveAssumir()" title="ADM: assumir o controle da apresentação agora">👑 Assumir</button>' : '');

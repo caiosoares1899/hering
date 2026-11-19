@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — botão Parar de apresentar na barra — 2026-11-19
+
+Quem apresenta pode encerrar a sessão pelo botão da barra, com a mesma confirmação do painel ao vivo.
+
 ### SÓ DEV — Apresentação do Radar — horizonte marinho na Evolução do atingimento — 2026-11-19
 
 O gráfico distingue o céu da área submersa com um horizonte ciano, reflexos discretos abaixo da meta e um degradê que escurece com a profundidade. A curva e o peixe neon permanecem, e a superfície continua posicionada no valor exato da meta.

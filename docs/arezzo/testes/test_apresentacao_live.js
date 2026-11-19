@@ -15,7 +15,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const info=p=>p.evaluate(()=>({key:slides[currentIdx].key, idx:currentIdx, det:document.getElementById('detail-ov').classList.contains('open')?_okrDetailCurrentId:'', box:document.getElementById('live-box').textContent.replace(/\s+/g,' ').trim()}));
  t('antes de apresentar: botão "Apresentar ao vivo" na barra', /Apresentar ao vivo/.test((await info(A.p)).box), await info(A.p));
  await A.p.click('#live-box button'); await A.p.waitForTimeout(300); await sync(A.p,B.p);
- const a1=await info(A.p), b1=await info(B.p); t('Ana vira apresentadora; Eve vê "Ana ADM está apresentando" e acompanhando', /Você está apresentando/.test(a1.box) && /Ana ADM está apresentando/.test(b1.box) && /Acompanhando/.test(b1.box), {a1,b1});
+ const a1=await info(A.p), b1=await info(B.p); t('Ana vira apresentadora; Eve vê "Ana ADM está apresentando" e acompanhando', /Parar de apresentar/.test(a1.box) && /Ana ADM está apresentando/.test(b1.box) && /Acompanhando/.test(b1.box) && !/Parar de apresentar/.test(b1.box), {a1,b1});
  await A.p.evaluate(()=>window._okrGoTo(2)); await A.p.waitForTimeout(250); await sync(A.p,B.p); const a2=await info(A.p), b2=await info(B.p);
  t('slide do apresentador chega no acompanhante (pela chave, não pela posição)', a2.idx===2 && b2.key===a2.key && b2.idx===2, {a2,b2});
  await A.p.evaluate(()=>window._okrOpenDetail('d2')); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('Objetivo aberto no detalhe também acompanha', (await info(B.p)).det==='d2', await info(B.p));
@@ -94,7 +94,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const box=await nomeBtn.boundingBox(); await A.p.mouse.move(box.x+box.width/2, box.y+box.height/2); await A.p.mouse.down();
  await A.p.evaluate(()=>{ const s=window.__store.kanban.okr.apresentacao_live; s.participantes.eve.ts=Date.now()+1; (window.__lis||[]).filter(l=>l.p==='kanban/okr/apresentacao_live').forEach(l=>l.cb({val:()=>JSON.parse(JSON.stringify(s)),exists:()=>true,key:'x'})); });
  await A.p.mouse.up(); await A.p.waitForTimeout(300); await sync(A.p,B.p);
- t('clicar no nome da pessoa no painel passa o controle (com sinais de vida chegando no meio do clique)', await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador.uid==='eve') && /Você está apresentando/.test((await info(B.p)).box), await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador));
+ t('clicar no nome da pessoa no painel passa o controle (com sinais de vida chegando no meio do clique)', await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador.uid==='eve') && /Parar de apresentar/.test((await info(B.p)).box), await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador));
  await B.p.evaluate(()=>window._liveAssumir()); await B.p.waitForTimeout(150); await sync(B.p,A.p); await A.p.evaluate(()=>window._livePainel(false)); await B.p.evaluate(()=>window._livePainel(false));
  await B.p.evaluate(()=>window._liveEncerrar && 0); await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(200); await sync(A.p,B.p);
  // pedir / passar o controle
@@ -103,14 +103,15 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  // cenário real: a flag de "seguindo" da Ana estava desligada quando ela passou o controle — a tela dela (a compartilhada no Meet) tem que passar a seguir a Eve mesmo assim
  await A.p.evaluate(()=>{ liveSeguindo = false; });
  await A.p.evaluate(()=>document.querySelector('#live-toast [data-pedido] button').click()); await A.p.waitForTimeout(250); await sync(A.p,B.p);
- const a4=await info(A.p), b4=await info(B.p); t('aceitar passa o controle: Eve vira apresentadora e Ana acompanha', /Você está apresentando/.test(b4.box) && /Eve Souza está apresentando/.test(a4.box), {a4,b4});
+ const a4=await info(A.p), b4=await info(B.p); t('aceitar passa o controle: Eve vira apresentadora e Ana acompanha', /Parar de apresentar/.test(b4.box) && /Eve Souza está apresentando/.test(a4.box), {a4,b4});
  await B.p.evaluate(()=>window._okrGoTo(1)); await B.p.waitForTimeout(250); await sync(B.p,A.p); t('o novo apresentador comanda (Ana segue a Eve)', (await info(A.p)).idx===1, await info(A.p));
  // apresentador some -> assumir
  await A.p.evaluate(()=>{ const s=window.__store.kanban.okr.apresentacao_live; s.atualizadoEm=Date.now()-120000; (window.__lis||[]).filter(l=>l.p==='kanban/okr/apresentacao_live').forEach(l=>l.cb({val:()=>JSON.parse(JSON.stringify(s)),exists:()=>true,key:'x'})); }); await A.p.waitForTimeout(200);
  await A.p.evaluate(()=>{ _liveSig=''; window._livePainel(true); }); await A.p.waitForTimeout(150); t('apresentador sem sinal há >90 s: o painel de quem acompanha mostra "Assumir"', await A.p.evaluate(()=>/Assumir/.test(document.getElementById('live-fpanel').textContent)), await A.p.evaluate(()=>document.getElementById('live-fpanel').textContent));
- await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(250); t('assumir faz de Ana a apresentadora', /Você está apresentando/.test((await info(A.p)).box), await info(A.p));
+ await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(250); t('assumir faz de Ana a apresentadora', /Parar de apresentar/.test((await info(A.p)).box), await info(A.p));
  // encerrar
- await A.p.evaluate(()=>window._liveEncerrar()); await A.p.waitForTimeout(250); await sync(A.p,B.p); const b5=await info(B.p); t('encerrar apaga a sessão e avisa quem estava acompanhando', /Apresentar ao vivo/.test(b5.box) && await B.p.evaluate(()=>/terminou/.test(document.getElementById('live-toast').textContent)), b5);
+ const parar = A.p.getByRole('button', { name: 'Parar de apresentar', exact: true });
+ await parar.press('Enter'); await A.p.waitForTimeout(250); await sync(A.p,B.p); const b5=await info(B.p); t('encerrar apaga a sessão e avisa quem estava acompanhando', /Apresentar ao vivo/.test(b5.box) && await B.p.evaluate(()=>/terminou/.test(document.getElementById('live-toast').textContent)), b5);
  t('sem erro de JS nas duas telas', !A.errs.length && !B.errs.length, [A.errs,B.errs]);
  // visualizador externo: acompanha mas não apresenta nem pede controle
  { const V=await open(U('ext','Externo','ext@gmail.com')); await A.p.click('#live-box button'); await A.p.waitForTimeout(250); await sync(A.p,V.p);
