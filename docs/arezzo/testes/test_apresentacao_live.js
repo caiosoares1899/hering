@@ -27,10 +27,25 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const urlPublico=await A.p.evaluate(()=>window.__conviteCopiado);
  t('link da tela para o público ativa o modo de projeção', new URL(urlPublico).searchParams.get('tela')==='publico',urlPublico);
  await A.p.evaluate(() => window._livePainel(false));
+ const D=await open(U('ana','Ana ADM'),960,720,new URL('okr-bastidor.html',A.p.url()).href);
+ await D.p.evaluate(()=>Object.defineProperty(window,'documentPictureInPicture',{value:undefined,configurable:true}));
+ t('endereço do Bastidor abre aba própria e mostra a espera da sessão',
+   new URL(D.p.url()).searchParams.get('tela')==='bastidor' && await D.p.getByRole('button',{name:'Iniciar apresentação ao vivo'}).isVisible(),'');
+ await sync(A.p,D.p);
+ await D.p.getByRole('button',{name:'Salvar anotação'}).waitFor();
+ t('Bastidor em aba própria só mostra os controles e funciona sem PiP',
+   !(await D.p.locator('#slides').isVisible()) && await D.p.getByRole('button',{name:'Retomar controle'}).count()===1,'');
+ await D.p.getByRole('button',{name:/Próximo/}).click();
+ await D.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
+ await sync(D.p,B.p);
+ t('Bastidor em aba própria navega na mesma sala', (await info(B.p)).idx===1,'');
+ await sync(A.p,B.p);
+ await D.ctx.close();
+
  if(process.env.TESTAR_PIP==='1'){
    const abrirPip=async(nome='Abrir bastidor')=>{
      await A.p.evaluate(()=>window._livePainel(true));
-     await A.p.getByRole('button',{name:nome}).click();
+     await A.p.getByRole('button',{name:nome,exact:true}).click();
      await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
    };
    const comando=id=>A.p.evaluate(i=>window.documentPictureInPicture.window.document.getElementById(i).click(),id);
@@ -226,7 +241,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    }), '');
    await B.p.evaluate(()=>window._livePainel(true));
    t('quem recebe o controle vê o passador e o Bastidor fica reservado ao ADM',
-     await B.p.getByRole('button',{name:/Abrir controle flutuante/}).count()===1 && await B.p.getByRole('button',{name:'Abrir bastidor'}).count()===0, '');
+     await B.p.getByRole('button',{name:/Abrir controle flutuante/}).count()===1 && await B.p.getByRole('button',{name:'Abrir bastidor',exact:true}).count()===0, '');
    await B.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
    await B.p.waitForFunction(()=>!!window.documentPictureInPicture.window?.document.getElementById('anterior'));
    await A.p.evaluate(()=>window.documentPictureInPicture.window.document.getElementById('retomar').click());

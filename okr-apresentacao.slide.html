@@ -44,6 +44,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   padding:6px 14px;font-size:11px;cursor:pointer;}
 
 /* ── App shell ── */
+body.live-bastidor :is(#topbar,#bottombar,#slides,#live-fab,#live-fpanel,#notes-fab,#detail-ov,#ating-ov,#fps-meter){display:none !important;}
+#bastidor-pagina{width:min(620px,100%);box-sizing:border-box;margin:0 auto;padding:24px;overflow:auto;}
+#bastidor-pagina [hidden],#bastidor-pagina[hidden]{display:none !important;}
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
 #app[hidden]{display:none;}
 
@@ -712,6 +715,11 @@ body.live-palco-limpo :is(#live-box,#live-toast,#notes-fab,#notes-ov,#fps-meter,
       <button class="tb-btn" onclick="window._doLogout()" title="Sair">🚪</button>
     </div>
   </div>
+  <main id="bastidor-pagina" hidden>
+    <p id="bastidor-espera" role="status"></p>
+    <button id="bastidor-iniciar" type="button" hidden>Iniciar apresentação ao vivo</button>
+    <div id="bastidor-controles" hidden></div>
+  </main>
   <div id="publico-espera" hidden>
     <h1>Tela para o público</h1>
     <p>Aguardando uma apresentação ao vivo do Radar.</p>
@@ -990,8 +998,11 @@ function _okrObjetivosSorted(lista){
 // 🏷️ Filtro por tag (pedido do usuário, 2026-10-06: quem for preencher OUTRA apresentação com alguns dos Objetivos daqui filtra pela
 // tag combinada). Vale pra TUDO que a tela mostra — capa, grade das gerências, panorama e o Anterior/Próximo do detalhe —, então tudo
 // parte de _okrObjetivosAtivos() em vez de refiltrar `!arquivado` em cada lugar. Só em memória: reabrir a apresentação volta pra "todas".
-const _okrTelaPublico = new URLSearchParams(location.search).get('tela')==='publico';
+const _okrModoTela = new URLSearchParams(location.search).get('tela');
+const _okrTelaPublico = _okrModoTela==='publico', _okrTelaBastidor = _okrModoTela==='bastidor';
 document.body.classList.toggle('live-tela-publico', _okrTelaPublico);
+document.body.classList.toggle('live-bastidor', _okrTelaBastidor);
+if(_okrTelaBastidor) document.title = 'Bastidor do Radar';
 let _okrFiltroTag = _okrTelaPublico ? (new URLSearchParams(location.search).get('tag')||'') : '';
 // 🏛️ Filtro por torre (2026-10-07): apresentar só UMA torre (reunião da Comercial, por ex.). Também por URL: ?torre=comercial. Mesma regra da tag — vale pra
 // capa, torres, gerências, panorama e o Anterior/Próximo do detalhe, porque tudo parte de _okrObjetivosAtivos().
@@ -1777,6 +1788,7 @@ document.addEventListener('click', e=>{
   }
 }, true);
 document.addEventListener('keydown', e=>{
+  if(_okrTelaBastidor) return;
   if(_okrTelaPublico){
     if(e.key.toLowerCase()==='f' && !e.ctrlKey && !e.metaKey && !e.altKey) window._okrFullscreen();
     return;
@@ -2446,12 +2458,14 @@ function liveInit(){
     // Sempre que o apresentador ou um ADM mudar de slide/detalhe (mudouNav) ou passar/assumir o controle (mudouHost),
     // toda a sala (incluindo quem tinha saído de sincronia antes, o apresentador anterior e os ADMs) acompanha imediatamente.
     if(mudouNav || mudouHost) liveSeguindo = true;
-    if(_okrTelaPublico && ativa && typeof live.filtroTorre==='string' && typeof live.filtroTag==='string'){
+    if((_okrTelaPublico || _okrTelaBastidor) && ativa && typeof live.filtroTorre==='string' && typeof live.filtroTag==='string'){
       const torre = OKR_TORRES.some(t=>t.id===live.filtroTorre) ? live.filtroTorre : '';
       if(torre!==_okrFiltroTorre || live.filtroTag!==_okrFiltroTag){
         _okrFiltroTorre = torre;
         _okrFiltroTag = live.filtroTag;
-        rebuild(false);
+        const aplicando = _liveAplicando;
+        _liveAplicando = true;
+        try{ rebuild(false); }finally{ _liveAplicando = aplicando; }
       }
     }
     liveAplicar(_liveRetomar || mudouNav || mudouHost);
@@ -2610,7 +2624,7 @@ function liveUrlCompartilhavel(){
   return url;
 }
 window._liveCopiarTelaPublico = async () => {
-  if(!liveSouHost()) return;
+  if(!liveSouHost() && !(_okrTelaBastidor && livePodeControlar())) return;
   const url = liveUrlCompartilhavel();
   url.searchParams.set('tela','publico');
   if(_okrFiltroTorre) url.searchParams.set('torre',_okrFiltroTorre);
@@ -2634,11 +2648,31 @@ window._liveCopiarConvite = async () => {
 let liveControleFlutuante = null;
 const livePodeAbrirJanela = bastidor => liveAtiva() && !window._okrIsViewer && (bastidor ? liveSouAdm() : liveSouHost());
 function liveAtualizarControleFlutuante(){
+  if(_okrTelaBastidor){
+    const pagina = document.getElementById('bastidor-pagina');
+    const espera = document.getElementById('bastidor-espera');
+    const iniciar = document.getElementById('bastidor-iniciar');
+    const controles = document.getElementById('bastidor-controles');
+    const adm = liveSouAdm(), ativa = liveAtiva();
+    pagina.hidden = false;
+    iniciar.hidden = !adm || ativa;
+    espera.hidden = adm && ativa;
+    espera.textContent = adm ? 'Nenhuma apresentação ao vivo.' : 'O Bastidor está disponível para quem é ADM no Radar.';
+    controles.hidden = !adm || !ativa;
+    if(adm && ativa){
+      if(!controles.firstElementChild) liveMontarControle(window, controles, true);
+      liveAtualizarComandos(window, true);
+    }
+  }
   const pip = liveControleFlutuante;
   if(!pip || pip.closed) return;
   const doc = pip.document;
   const bastidor = !!doc.getElementById('retomar');
   if(!livePodeAbrirJanela(bastidor)){ pip.close(); return; }
+  liveAtualizarComandos(pip, bastidor);
+}
+function liveAtualizarComandos(pip, bastidor){
+  const doc = pip.document;
   const host = liveSouHost(), detalhe = !!liveDetalheAberto();
   doc.getElementById('estado').textContent = 'Slide '+(currentIdx+1)+' de '+slides.length;
   doc.getElementById('anterior').disabled = !host || detalhe || currentIdx<=0;
@@ -2648,7 +2682,7 @@ function liveAtualizarControleFlutuante(){
   doc.getElementById('retomar').disabled = host;
   const tempo = document.getElementById('tb-countdown');
   doc.getElementById('tempo').textContent = tempo.hidden ? 'Sem horário de término' : tempo.textContent;
-  doc.getElementById('fps').textContent = document.hidden ? 'FPS indisponível com a aba oculta' : document.querySelector('#fps-meter span').textContent;
+  doc.getElementById('fps').textContent = _okrTelaBastidor ? 'FPS disponível no computador dos slides' : document.hidden ? 'FPS indisponível com a aba oculta' : document.querySelector('#fps-meter span').textContent;
   const participantes = liveParticipantes();
   const pedidos = live.pedidos || {};
   const seletor = doc.getElementById('participante');
@@ -2686,42 +2720,7 @@ window._liveAbrirControleFlutuante = async (bastidor = false) => {
   }
   if(!livePodeAbrirJanela(bastidor)){ pip.close(); return; }
   liveControleFlutuante = pip;
-  const doc = pip.document;
-  doc.documentElement.lang = 'pt-BR';
-  doc.title = bastidor ? 'Bastidor do Radar' : 'Controle flutuante do Radar';
-  const estilo = doc.createElement('style');
-  estilo.textContent = `
-    :root{color-scheme:dark}
-    body{margin:0;padding:12px;box-sizing:border-box;background:#071827;color:#e8f5ff;font:14px system-ui}
-    h1{margin:0 0 4px;font-size:15px}
-    p{margin:0 0 12px;color:#a8c3d6}
-    nav,.acoes,.indicadores{display:flex;flex-wrap:wrap;gap:6px}
-    .indicadores{margin:10px 0;color:#a8c3d6;gap:8px 16px}
-    section,form{margin-top:12px;display:grid;gap:6px}
-    textarea,select{box-sizing:border-box;width:100%;font:inherit;color:inherit;background:#102c41;border:1px solid #397898;border-radius:8px;padding:8px}
-    textarea{resize:vertical;min-height:60px}
-    output{color:#a8c3d6;align-self:center}
-    button[aria-pressed="true"]{background:#194c55;border-color:#7ee8ff}
-    button{font:inherit;color:inherit;background:#102c41;border:1px solid #397898;border-radius:8px;padding:7px 8px;cursor:pointer}
-    button:hover:not(:disabled){background:#194664}
-    button:focus-visible{outline:2px solid #7ee8ff;outline-offset:2px}
-    button:disabled{opacity:.55;cursor:default}
-  `;
-  doc.head.append(estilo);
-  doc.body.innerHTML = '<h1>'+doc.title+'</h1><p id="estado" role="status"></p>'
-    + '<nav aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
-  if(bastidor) doc.body.insertAdjacentHTML('beforeend',
-    '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
-    + '<button type="button" id="palco" aria-pressed="false">Palco Limpo</button>'
-    + '<form id="anotacao"><label for="rascunho">Anotação da reunião</label><textarea id="rascunho" rows="2"></textarea>'
-    + '<div class="acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
-    + '<section><label for="participante">Controle da apresentação</label><select id="participante"></select>'
-    + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button><button type="button" id="retomar">Retomar controle</button></div></section>');
-  const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
-  doc.getElementById('anterior').addEventListener('click', agir(()=>window._okrPrev()));
-  doc.getElementById('proximo').addEventListener('click', agir(()=>window._okrNext()));
-  doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
+  liveMontarControle(pip, pip.document.body, bastidor);
   pip.addEventListener('pagehide', ()=>{
     if(liveControleFlutuante===pip){
       liveControleFlutuante = null;
@@ -2731,10 +2730,49 @@ window._liveAbrirControleFlutuante = async (bastidor = false) => {
       }
     }
   }, {once:true});
-  if(bastidor) livePrepararBastidor(pip);
   liveAtualizarControleFlutuante();
   window._livePainel(false);
 };
+function liveMontarControle(pip, destino, bastidor){
+  const doc = pip.document, pagina = pip===window;
+  doc.documentElement.lang = 'pt-BR';
+  doc.title = bastidor ? 'Bastidor do Radar' : 'Controle flutuante do Radar';
+  const estilo = doc.createElement('style');
+  estilo.textContent = `
+    [data-live-controles]{color-scheme:dark}
+    [data-live-controles]{margin:0;padding:12px;box-sizing:border-box;background:#071827;color:#e8f5ff;font:14px system-ui}
+    [data-live-controles] :is(h1){margin:0 0 4px;font-size:15px}
+    [data-live-controles] :is(p){margin:0 0 12px;color:#a8c3d6}
+    [data-live-controles] :is(nav,.acoes,.indicadores){display:flex;flex-wrap:wrap;gap:6px}
+    [data-live-controles] :is(.indicadores){margin:10px 0;color:#a8c3d6;gap:8px 16px}
+    [data-live-controles] :is(section,form){margin-top:12px;display:grid;gap:6px}
+    [data-live-controles] :is(textarea,select){box-sizing:border-box;width:100%;font:inherit;color:inherit;background:#102c41;border:1px solid #397898;border-radius:8px;padding:8px}
+    [data-live-controles] :is(textarea){resize:vertical;min-height:60px}
+    [data-live-controles] :is(output){color:#a8c3d6;align-self:center}
+    [data-live-controles] :is(button[aria-pressed="true"]){background:#194c55;border-color:#7ee8ff}
+    [data-live-controles] :is(button){font:inherit;color:inherit;background:#102c41;border:1px solid #397898;border-radius:8px;padding:7px 8px;cursor:pointer}
+    [data-live-controles] :is(button:hover:not(:disabled)){background:#194664}
+    [data-live-controles] :is(button:focus-visible){outline:2px solid #7ee8ff;outline-offset:2px}
+    [data-live-controles] :is(button:disabled){opacity:.55;cursor:default}
+  `;
+  doc.head.append(estilo);
+  destino.dataset.liveControles = '';
+  destino.innerHTML = '<h1>'+doc.title+'</h1><p id="estado" role="status"></p>'
+    + '<nav aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
+    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
+  if(bastidor) destino.insertAdjacentHTML('beforeend',
+    '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
+    + (pagina ? '<button type="button" id="bastidor-copiar">Copiar link da tela para o público</button> <button type="button" id="bastidor-encerrar">Encerrar apresentação</button>' : '<button type="button" id="palco" aria-pressed="false">Palco Limpo</button>')
+    + '<form id="anotacao"><label for="rascunho">Anotação da reunião</label><textarea id="rascunho" rows="2"></textarea>'
+    + '<div class="acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
+    + '<section><label for="participante">Controle da apresentação</label><select id="participante"></select>'
+    + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button><button type="button" id="retomar">Retomar controle</button></div></section>');
+  const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
+  doc.getElementById('anterior').addEventListener('click', agir(()=>window._okrPrev()));
+  doc.getElementById('proximo').addEventListener('click', agir(()=>window._okrNext()));
+  doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
+  if(bastidor) livePrepararBastidor(pip);
+}
 function livePrepararBastidor(pip){
   const doc = pip.document;
   const agir = acao => () => { if(livePodeAbrirJanela(true)) acao(); };
@@ -2742,12 +2780,14 @@ function livePrepararBastidor(pip){
     if(!liveSouHost()) window._liveAssumir();
   }));
   const palco = doc.getElementById('palco');
-  palco.addEventListener('click', agir(()=>{
+  palco?.addEventListener('click', agir(()=>{
     const ativo = document.body.classList.toggle('live-palco-limpo');
     palco.setAttribute('aria-pressed', String(ativo));
     if(ativo) window._okrCloseNotes();
     window._livePainel(false);
   }));
+  doc.getElementById('bastidor-copiar')?.addEventListener('click', agir(()=>window._liveCopiarTelaPublico()));
+  doc.getElementById('bastidor-encerrar')?.addEventListener('click', agir(()=>window._liveEncerrar()));
   const seletor = doc.getElementById('participante');
   seletor.addEventListener('change', liveAtualizarControleFlutuante);
   doc.getElementById('passar').addEventListener('click', agir(()=>{
@@ -2785,6 +2825,15 @@ function livePrepararBastidor(pip){
   _okrRenderCountdown();
 }
 
+document.getElementById('bastidor-iniciar').addEventListener('click', ()=>{
+  if(_okrTelaBastidor && liveSouAdm() && !liveAtiva()) window._liveComecar();
+});
+window._liveAbrirPaginaBastidor = () => {
+  if(!liveSouAdm()) return;
+  const url = new URL('okr-bastidor.html', location.href);
+  url.hash = liveUrlCompartilhavel().hash;
+  window.open(url.href, '_blank', 'noopener');
+};
 window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? abrir : !livePainelAberto; _liveSig = ''; liveRender(); };
 // A interface só é remontada quando algo MUDOU de verdade (quem apresenta, ferramenta, quem está na sala…): os sinais de vida dos participantes chegam o tempo todo,
 // e remontar a cada um fazia o clique no nome da pessoa se perder (o botão era trocado entre o botão do mouse descer e subir).
@@ -2831,7 +2880,8 @@ function liveRender(){
       if(host && !palcoLimpo) p += '<button type="button" class="lp-b" onclick="window._liveCopiarTelaPublico()">Copiar link da tela para o público</button>';
       if(!palcoLimpo && window.documentPictureInPicture?.requestWindow){
         if(host) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>';
-        if(adm) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';
+        if(adm) p += '<button type="button" class="lp-b" onclick="window._liveAbrirPaginaBastidor()">Abrir bastidor em nova aba</button>';
+        if(adm && window.documentPictureInPicture?.requestWindow) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';
       }
       p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L ou clique duplo no slide)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';
@@ -2928,7 +2978,7 @@ document.addEventListener('click', e=>{
   }, 400);
 });
 document.addEventListener('keydown', e=>{
-  if(!livePodeControlar() || _okrEhCampo(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if(_okrTelaBastidor || !livePodeControlar() || _okrEhCampo(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = (e.key||'').toLowerCase();
   if(k==='l'){ e.preventDefault(); window._liveFerr('laser'); }
   else if(k==='p'){ e.preventDefault(); if(liveFerr==='caneta' && liveTipo==='t'){ liveTipo = 'f'; liveRender(); } else window._liveFerr('caneta'); }
