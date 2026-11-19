@@ -98,7 +98,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
   - Correção: `functions/common/admsDestino.js` junta `role:'adm'` e `adm_emails`, convertendo cada e-mail no usuário pelo Firebase Auth. O e-mail da cópia pública não é usado, porque a própria pessoa pode editá-lo.
 - **Teste:** `functions/backup/__tests__/restaurarApi.test.js` (2 casos novos) e `functions/common/__tests__/admsDestino.test.js` (3 casos). Sem a correção, os 2 de restauração e o do vigia falham.
 - **Sem achado:** Service Worker (`firebase-messaging-sw.js`), lista de nós do backup completo × regras do banco.
-- **Reportado, não corrigido:** `agente_painel`, `agente_painel_processed` e `agente_painel_uso` (conversa do Agente no Painel) não estão no backup completo nem na lista de exclusões. O lembrete de metas sem responsável (`functions/metas/lembretes.js`) também só olha o `role`.
+- **Reportado, não corrigido:** `agente_painel`, `agente_painel_processed` e `agente_painel_uso` (conversa do Agente no Painel) não estão no backup completo nem na lista de exclusões. O lembrete de metas sem responsável (`functions/metas/lembretes.js`) também só olha o `role`. E `functions/cards/guardiao.js` ainda acha ADM pelo e-mail da cópia pública, que a própria pessoa pode editar (só decide quem recebe o aviso de restauração).
 - **Requer deploy:** `backupCompletoApi`, `backupVigia`, `vtexStatus`, `githubStatus` e `firebaseStatus`.
 
 ### 2026-11-18 · 🎬 Apresentação do Radar: rodapé calcula largura e altura pelo conteúdo e não deixa cartões vazios

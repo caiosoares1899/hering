@@ -18,7 +18,10 @@ async function uidsDosAdms(db, opts) {
   const emails = (Array.isArray(admSnap.val()) ? admSnap.val() : DEFAULT_ADM_EMAILS).map((e) => String(e || '').trim().toLowerCase()).filter(Boolean);
   if (auth) {
     await Promise.all([...new Set(emails)].map(async (email) => {
-      try { const u = await auth.getUserByEmail(email); if (u && u.uid) uids.add(u.uid); } catch (e) { /* e-mail sem conta ainda: ignora */ }
+      try { const u = await auth.getUserByEmail(email); if (u && u.uid) uids.add(u.uid); } catch (e) {
+        // e-mail sem conta ainda: ignora. Qualquer outra falha (ex.: a function sem permissão no Auth) fica no log, senão o alarme some calado.
+        if (!e || e.code !== 'auth/user-not-found') console.warn('[admsDestino] não consegui achar o ADM', email, (e && (e.code || e.message)) || e);
+      }
     }));
   }
   return [...uids];
