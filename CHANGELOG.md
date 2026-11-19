@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — horário e Panorama geral no Bastidor — 2026-11-19
+
+A aba do Bastidor permite configurar o horário da reunião e ir direto ao Panorama geral. O layout de desktop ocupa menos altura e mantém a prévia ao alcance.
+
 ### SÓ DEV — Radar — prévia e convite do Meet no Bastidor — 2026-11-19
 
 O Bastidor mostra a miniatura do próximo slide e um cartão do próximo Objetivo no detalhe. O convite para o chat do Meet pode ser copiado do próprio Bastidor.

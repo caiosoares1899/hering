@@ -84,6 +84,17 @@ body.live-bastidor #bastidor-pagina #bastidor-encerrar:hover{background:rgba(255
 #bastidor-pagina output{font-size:13px;color:var(--txt2);}
 #bastidor-pagina .bst-fim{display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--glass-b);}
 @media (max-width:820px){ #bastidor-pagina .bst-grade{grid-template-columns:minmax(0,1fr);} #bastidor-pagina{padding:18px 14px 32px;} .bst-agora{font-size:20px;} .bst-fim{justify-content:stretch;} .bst-fim button{flex:1;} }
+@media (min-width:821px){
+  #bastidor-pagina{padding:18px 24px;}
+  #bastidor-pagina .bst-topo{margin-bottom:12px;}
+  #bastidor-pagina :is(.bst-grade,.bst-lado){gap:10px;}
+  #bastidor-pagina .bst-card{padding:12px;gap:8px;}
+  #bastidor-pagina .bst-previa-quadro{width:min(100%,320px);}
+  #bastidor-pagina textarea{min-height:76px;}
+  #bastidor-pagina .bst-fim{margin-top:12px;padding-top:8px;}
+}
+body.live-bastidor .agenda-cfg-ov{z-index:700;background:rgba(var(--deep-rgb),.65);}
+body.live-bastidor .agenda-cfg-panel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(280px,calc(100vw - 48px));}
 body.live-bastidor #bastidor-controles{background:none;padding:0;font:15px/1.45 'DM Sans',sans-serif;}
 body.live-bastidor #bastidor-pagina h1,body.live-bastidor #bastidor-pagina h2{font-family:'Syne',sans-serif;}
 #bastidor-pagina [hidden],#bastidor-pagina[hidden]{display:none !important;}
@@ -1843,7 +1854,10 @@ document.addEventListener('click', e=>{
   }
 }, true);
 document.addEventListener('keydown', e=>{
-  if(_okrTelaBastidor) return;
+  if(_okrTelaBastidor){
+    if(e.key==='Escape' && document.getElementById('agenda-cfg-ov').classList.contains('open')) window._okrCloseAgendaCfg();
+    return;
+  }
   if(_okrTelaPublico){
     if(e.key.toLowerCase()==='f' && !e.ctrlKey && !e.metaKey && !e.altKey) window._okrFullscreen();
     return;
@@ -2318,15 +2332,16 @@ function _okrAgendaPopulateInputs(){
   document.getElementById('agenda-inicio').value = ag?.inicio || agora;
   document.getElementById('agenda-fim').value = ag?.fim || '';
 }
+const _okrPodeConfigurarAgenda = () => !window._okrIsViewer && !_okrPauta && (!_okrTelaBastidor || liveSouAdm());
 window._okrToggleAgendaCfg = () => {
-  if(window._okrIsViewer || _okrPauta) return;   // horário da reunião é de quem organiza; visualizador só vê a contagem
+  if(!_okrPodeConfigurarAgenda()) return;   // horário da reunião é de quem organiza; visualizador só vê a contagem
   const ov = document.getElementById('agenda-cfg-ov');
   if(ov.classList.contains('open')) window._okrCloseAgendaCfg();
   else { _okrAgendaPopulateInputs(); ov.classList.add('open'); }
 };
 window._okrCloseAgendaCfg = () => document.getElementById('agenda-cfg-ov').classList.remove('open');
 window._okrAgendaSalvar = () => {
-  if(window._okrIsViewer || _okrPauta){ window._okrCloseAgendaCfg(); return; }   // visualizador não grava (regras negam)
+  if(!_okrPodeConfigurarAgenda()){ window._okrCloseAgendaCfg(); return; }   // visualizador não grava (regras negam)
   const inicio = document.getElementById('agenda-inicio').value;
   const fim = document.getElementById('agenda-fim').value;
   if(!inicio || !fim) return;
@@ -2336,7 +2351,7 @@ window._okrAgendaSalvar = () => {
   window._okrCloseAgendaCfg();
 };
 window._okrAgendaLimpar = () => {
-  if(window._okrIsViewer || _okrPauta){ window._okrCloseAgendaCfg(); return; }
+  if(!_okrPodeConfigurarAgenda()){ window._okrCloseAgendaCfg(); return; }
   window._remove(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr())).catch(err=>console.error('[agenda] falha ao limpar:', err));
   window._okrCloseAgendaCfg();
 };
@@ -2812,6 +2827,8 @@ function liveAtualizarComandos(pip, bastidor){
     poe('estado', objetivo ? 'Detalhe do Objetivo' : 'Slide '+(currentIdx+1)+' de '+slides.length);
     poe('bastidor-agora', objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : (slides[currentIdx]?.title||''));
     liveAtualizarPrevia(objetivo ? null : slides[currentIdx+1], objetivo ? vizinhos.proximo : null);
+    const panorama = slides.findIndex(s=>s.key==='summary');
+    doc.getElementById('bastidor-panorama').disabled = !host || panorama<0 || (currentIdx===panorama && !detalhe);
     poe('bastidor-seguir', objetivo ? (vizinhos.proximo ? (vizinhos.proximo.titulo||'Próximo Objetivo') : 'último Objetivo desta gerência')
       : (slides[currentIdx+1]?.title || 'fim da apresentação'));
     poe('bastidor-dica-controle', !host ? 'A navegação volta para você ao retomar o controle.'
@@ -2888,11 +2905,13 @@ function liveMontarControle(pip, destino, bastidor){
       + '<p id="estado" class="bst-rotulo"></p><h2 id="bastidor-agora" class="bst-agora"></h2>'
       + '<p class="bst-seguir">A seguir: <b id="bastidor-seguir"></b></p>'
       + '<nav class="bst-nav" aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
-      + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>'
+      + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button><button type="button" id="bastidor-panorama">Ir para Panorama geral</button></nav>'
       + '<figure id="bastidor-previa" class="bst-previa" hidden aria-label="Prévia do próximo conteúdo">'
       + '<div class="bst-previa-quadro" hidden><iframe title="Miniatura do próximo slide" sandbox="" tabindex="-1"></iframe></div>'
       + '<p class="bst-previa-objetivo" hidden></p></figure>'
-      + '<p id="tempo" class="bst-tempo"></p><span id="fps" hidden></span></section>'
+      + '<div class="bst-acoes"><p id="tempo" class="bst-tempo"></p>'
+      + (_okrPauta ? '<span class="bst-dica">Horário do Calendário</span>' : '<button type="button" id="bastidor-agenda">Configurar horário</button>')
+      + '</div><span id="fps" hidden></span></section>'
       + '<section class="bst-card"><p class="bst-rotulo">Tela para o público</p><p class="bst-dica">Abra o link no computador que compartilha a tela no Meet.</p>'
       + '<div class="bst-acoes"><button type="button" id="bastidor-copiar">Copiar link da tela para o público</button><button type="button" id="bastidor-convite">Copiar convite pro chat do Meet</button></div></section></div>'
       + '<div class="bst-lado"><form id="anotacao" class="bst-card"><label for="rascunho" class="bst-rotulo">Anotação da reunião</label><textarea id="rascunho" rows="3" placeholder="Decisões e combinados da reunião"></textarea>'
@@ -2903,6 +2922,13 @@ function liveMontarControle(pip, destino, bastidor){
       + '<div class="bst-fim"><button type="button" id="bastidor-encerrar">Encerrar apresentação</button></div>';
     const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
     const navegar = dir => { if(liveDetalheAberto()) window._okrDetailVizinho(dir); else window._okrGoTo(currentIdx+dir); };
+    doc.getElementById('bastidor-agenda')?.addEventListener('click', window._okrToggleAgendaCfg);
+    doc.getElementById('bastidor-panorama').addEventListener('click', agir(()=>{
+      const indice = slides.findIndex(s=>s.key==='summary');
+      if(indice<0) return;
+      window._okrCloseDetail();
+      window._okrGoTo(indice);
+    }));
     doc.getElementById('anterior').addEventListener('click', agir(()=>navegar(-1)));
     doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
     doc.getElementById('abrir-detalhe').addEventListener('click', agir(liveAbrirPrimeiroDetalhe));

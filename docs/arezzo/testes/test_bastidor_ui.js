@@ -22,7 +22,7 @@ const medir = p => p.evaluate(() => ({
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   try {
-    for (const [w, h] of [[1280, 800], [390, 800]]) {
+    for (const [w, h] of [[1280, 768], [390, 800]]) {
       const ctx = await b.newContext({ viewport: { width: w, height: h } }); await fake.install(ctx, seed());
       const p = await ctx.newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
       await p.goto(BASE + '/okr-bastidor.html'); await p.waitForFunction(() => !!window.__authCb);
@@ -52,6 +52,13 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] FPS fica fora da aba (só faz sentido no computador dos slides)`, !(await p.locator('#fps').isVisible()), '');
       t(`[${w}] Próximo é o único botão de ação principal`, await p.evaluate(() => { const cor = e => getComputedStyle(e).backgroundColor; const prox = cor(document.getElementById('proximo')); return [...document.querySelectorAll('#bastidor-controles button')].filter(e => cor(e) === prox).map(e => e.id).join() === 'proximo'; }), '');
       t(`[${w}] Encerrar fica separado, no fim`, await p.evaluate(() => !!document.querySelector('.bst-fim #bastidor-encerrar')), '');
+      if(w===1280) t('Bastidor cabe em 1280 × 768 sem rolagem vertical', await p.locator('#bastidor-pagina').evaluate(el=>el.scrollHeight<=el.clientHeight+1), '');
+      await p.getByRole('button',{name:'Configurar horário'}).click();
+      await p.locator('#agenda-inicio').fill('10:00');
+      await p.locator('#agenda-fim').fill('11:00');
+      await p.locator('#agenda-cfg-ov').getByRole('button',{name:'Salvar'}).click();
+      await p.waitForFunction(()=>window.__store.kanban.okr.reuniao_agenda?.[_hojeStr()]?.fim==='11:00');
+      t(`[${w}] Bastidor salva o horário no mesmo registro da apresentação`, await p.evaluate(()=>_okrAgendaHoje()?.inicio==='10:00'), '');
       t(`[${w}] no slide de abertura, Abrir detalhe fica desligado`, await p.locator('#abrir-detalhe').isDisabled(), '');
       await p.evaluate(() => window._okrGoTo(slides.findIndex(x => x.primeiroObj === 'd2'))); await p.waitForTimeout(400);
       await p.getByRole('button', { name: 'Abrir detalhe', exact: true }).click(); await p.waitForTimeout(400);
@@ -63,6 +70,10 @@ const medir = p => p.evaluate(() => ({
       await p.locator('#proximo').click();
       t(`[${w}] último Objetivo desativa Próximo e esconde a prévia`,
         await p.locator('#proximo').isDisabled() && !(await p.locator('#bastidor-previa').isVisible()), '');
+      await p.getByRole('button',{name:'Ir para Panorama geral'}).click();
+      await p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide==='summary');
+      t(`[${w}] atalho fecha o detalhe e leva a sala ao Panorama geral`, (await texto(p,'#bastidor-agora'))==='Panorama geral' &&
+        await p.evaluate(()=>!window.__store.kanban.okr.apresentacao_live.detalhe), '');
       await p.evaluate(() => { window._okrCloseDetail(); const st = window.__store.kanban.okr.apresentacao_live; st.apresentador = { uid: 'eve', nome: 'Eve Souza' };
         (window.__lis || []).filter(l => l.p === 'kanban/okr/apresentacao_live').forEach(l => l.cb({ val: () => JSON.parse(JSON.stringify(st)), exists: () => true, key: 'apresentacao_live' })); });
       await p.waitForTimeout(400);
