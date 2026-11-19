@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Apresentação do Radar: o botão do controle flutuante mostrava um quadradinho no lugar do emoji
+
+- **Relato do Caio:** o botão "Abrir controle flutuante" do painel 🎙️ (#1881) aparecia com um quadradinho branco no lugar do emoji.
+- **Causa:** o 🪟 é do Unicode 13 (2020) e o Windows 10 não tem o desenho dele.
+- **Correção:** `okr-apresentacao.slide.html` passa a usar 🎛️, do Unicode 7. Uma varredura nas páginas do Radar não achou outro emoji acima do Unicode 12.
+
 ### 2026-11-19 · Evolução da apresentação travava ao redimensionar e exibia dados antigos
 
 O modal acompanha os registros recebidos no listener existente, preserva a expansão quando possível e fecha se o objetivo for removido. O redimensionamento continua ajustando o slide quando a lista esvazia.
