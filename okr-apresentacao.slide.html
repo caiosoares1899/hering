@@ -98,6 +98,11 @@ body.live-bastidor #bastidor-pagina #bastidor-encerrar:hover{background:rgba(255
   #bastidor-pagina .bst-lado .bst-card{gap:6px;}
 }
 #bastidor-pagina .bst-tempo{margin:0;font-size:15px;color:var(--txt2);font-variant-numeric:tabular-nums;}
+#bastidor-pagina .bst-ritmo{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;color:var(--txt);cursor:pointer;}
+#bastidor-pagina .bst-ritmo input{width:20px;height:20px;accent-color:var(--accent);}
+#bastidor-pagina .bst-ritmo:has(input:disabled){opacity:.55;cursor:default;}
+#bastidor-pagina .bst-ritmo-bloco{margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-b);}
+#bastidor-pagina #ritmo{margin:4px 0 0;font-variant-numeric:tabular-nums;}
 #bastidor-pagina .bst-dica{margin:0;font-size:13px;color:var(--txt2);}
 #bastidor-pagina .bst-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 #bastidor-pagina textarea{box-sizing:border-box;width:100%;min-height:96px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--deep-rgb),.55);font-size:16px;}
@@ -754,6 +759,15 @@ body.live-tela-publico :is(#topbar,#bottombar,#live-fab,#live-passador,#live-fpa
 #publico-espera[hidden],body.live-tela-publico:not(.live-ativa) #slides{display:none;}
 
 body.live-palco-limpo :is(#live-box,#live-passador,#live-toast,#notes-fab,#notes-ov,#fps-meter,#tb-countdown){display:none !important;}
+/* ⏳ avisos de tempo da sessão (faltam 10/5 min, tempo esgotado, ritmo): aparecem em todas as telas, inclusive a do público */
+#tempo-balao{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:640;max-width:min(560px,calc(100vw - 32px));background:rgba(3,13,26,.96);border:1px solid var(--glass-b);border-radius:18px;padding:10px 20px;font-size:15px;font-weight:600;color:var(--txt);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.45);pointer-events:none;animation:tempo-balao-entra .25s ease-out;}
+#tempo-balao[hidden]{display:none;}
+#tempo-balao.alerta{border-color:var(--warn);}#tempo-balao.fim{border-color:var(--danger);}
+body.live-tela-publico #tempo-balao{top:24px;font-size:clamp(15px,1.6vw,26px);}
+@keyframes tempo-balao-entra{from{opacity:0;transform:translate(-50%,-6px);}to{opacity:1;transform:translate(-50%,0);}}
+@media (prefers-reduced-motion:reduce){#tempo-balao{animation:none;}}
+#publico-tempo{position:fixed;right:20px;bottom:16px;z-index:630;background:rgba(3,13,26,.82);border:1px solid var(--glass-b);border-radius:999px;padding:6px 14px;font-size:clamp(13px,1.1vw,18px);color:var(--txt2);font-variant-numeric:tabular-nums;pointer-events:none;}
+#publico-tempo[hidden]{display:none;}#publico-tempo.alerta{color:var(--warn);}#publico-tempo.fim{color:var(--danger);}
 .lp-hd{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700;gap:8px;}
 .lp-hd button{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;}
 .lp-row{display:flex;gap:6px;}.lp-row .lp-b{flex:1;}
@@ -836,6 +850,8 @@ body.live-palco-limpo :is(#live-box,#live-passador,#live-toast,#notes-fab,#notes
 <div id="live-capture" aria-hidden="true"></div>
 <div id="live-laser" aria-hidden="true"></div>
 <div id="live-toast" role="status" aria-live="polite"></div>
+<div id="tempo-balao" role="status" aria-live="polite" hidden></div>
+<div id="publico-tempo" aria-hidden="true" hidden></div>
 <button type="button" id="live-fab" hidden onclick="window._livePainel()" title="Controles da apresentação ao vivo" aria-label="Controles da apresentação ao vivo">🎙️</button>
 <button type="button" id="live-passador" hidden onclick="window._livePassadorClique()" aria-label="Abrir controle flutuante" title="Abrir controle flutuante">🎛️</button>
 <div id="live-fpanel" hidden></div>
@@ -2459,6 +2475,7 @@ function _okrRenderCountdown(){
   const el = document.getElementById('tb-countdown');
   const rel = liveRelogio();
   if(rel){
+    liveAvisosTempo(rel);
     if(rel.modo==='livre'){ el.hidden = true; el.textContent = ''; return; }   // sem cronômetro
     const agora = liveAgora(), dec = Math.max(0, Math.floor((agora - rel.inicioEm)/60000));
     let txt = '⏱ ' + _liveMin(dec) + ' decorridos', cls = '';
@@ -2472,6 +2489,7 @@ function _okrRenderCountdown(){
     if(el.textContent !== txt) el.textContent = txt;
     return;
   }
+  liveAvisosTempo(null);
   const ag = _okrPauta || _okrAgendaHoje();
   if(!ag?.fim){ el.hidden = true; return; }
   let agora = Date.now(), fimMs;
@@ -2496,6 +2514,79 @@ function _okrRenderCountdown(){
     el.textContent = '🔴 +' + Math.abs(diffMin) + 'min (atrasado)';
   }
 }
+// ── ⏳ Avisos de tempo da sessão ao vivo (pedido do Caio, 19/11/2026) ──
+// Faltam 10 min, faltam 5 min e tempo esgotado: para todas as telas, uma vez por sessão e por término (ajustar o término rearma).
+// Ritmo: compara quanto da pauta já passou (slide da sala) com o tempo gasto e projeta o fim. Só depois de 3 min e de 20% da pauta.
+// Quem controla (quem apresenta, ADM, Bastidor) sempre vê; a sala (público, Palco Limpo, quem acompanha) só se o Bastidor ligar `avisos/ritmoSala`.
+const _liveAvisosVistos = new Set();
+let _liveRitmoMostrando = false, _liveRitmoUltimo = 0, _liveBalaoT = 0;
+const _liveHoraSP = ms => new Date(ms).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+function _liveAvisoNovo(chave){
+  if(_liveAvisosVistos.has(chave)) return false;
+  _liveAvisosVistos.add(chave);
+  try { const k = 'okrAvisosTempo', v = JSON.parse(sessionStorage.getItem(k) || '[]'); if(v.includes(chave)) return false; v.push(chave); sessionStorage.setItem(k, JSON.stringify(v.slice(-30))); } catch(_) {}
+  return true;
+}
+const liveRitmoNaSala = () => liveAtiva() && !!live.avisos && live.avisos.ritmoSala===true;
+function liveVeRitmo(){
+  const sala = _okrTelaPublico || document.body.classList.contains('live-palco-limpo');
+  return liveRitmoNaSala() || (!sala && livePodeControlar());
+}
+function liveRitmo(rel){
+  if(!rel || rel.modo!=='cronometro' || rel.fimEm===null || slides.length<2) return null;
+  const agora = liveAgora(), gasto = agora - rel.inicioEm, frac = Math.min(1, Math.max(0, currentIdx) / (slides.length - 1));
+  if(gasto < 3*60000 || frac < 0.2) return {cedo:true};
+  if(frac >= 1) return null;
+  const previsto = rel.inicioEm + gasto / frac;
+  return {cedo:false, previsto, atraso: Math.round((previsto - rel.fimEm)/60000), pct: Math.round(frac*100)};
+}
+function liveRitmoTexto(rel){
+  const r = liveRitmo(rel);
+  if(!rel || rel.modo!=='cronometro' || rel.fimEm===null) return 'Ritmo: só com cronômetro';
+  if(!r) return 'Ritmo: última parte da pauta';
+  if(r.cedo) return 'Ritmo: aparece depois de 20% da pauta';
+  return r.atraso > 5 ? '⚠️ Nesse ritmo, termina às ' + _liveHoraSP(r.previsto) + ' (+' + _liveMin(r.atraso) + ')'
+    : 'Ritmo: no prazo · ' + r.pct + '% da pauta · previsão ' + _liveHoraSP(r.previsto);
+}
+function liveBalao(txt, tipo){
+  const el = document.getElementById('tempo-balao'); if(!el) return;
+  el.textContent = txt; el.className = tipo || ''; el.hidden = false;
+  clearTimeout(_liveBalaoT); _liveBalaoT = setTimeout(()=>{ el.hidden = true; }, 9000);
+}
+function liveAvisosTempo(rel){
+  const selo = document.getElementById('publico-tempo');
+  const cron = !!rel && rel.modo==='cronometro' && rel.fimEm!==null;
+  const agora = liveAgora(), falta = cron ? Math.round((rel.fimEm - agora)/60000) : 0;
+  if(selo){
+    const mostra = _okrTelaPublico && cron;
+    selo.hidden = !mostra;
+    if(mostra){
+      const txt = falta > 0 ? '⏳ ' + _liveMin(falta) + ' restantes' : '🔴 +' + _liveMin(Math.abs(falta));
+      if(selo.textContent!==txt) selo.textContent = txt;
+      selo.className = falta <= 0 ? 'fim' : falta <= 5 ? 'alerta' : '';
+    }
+  }
+  if(!cron){ _liveRitmoMostrando = false; return; }
+  const sessao = String(live.sessaoId || live.iniciadoEm || '');
+  const marco = falta <= 0 ? 'fim' : falta <= 5 ? '5' : falta <= 10 ? '10' : '';
+  if(marco && _liveAvisoNovo(sessao + ':' + rel.fimEm + ':' + marco)){
+    if(marco==='fim') liveBalao('🔴 Tempo esgotado', 'fim');
+    else liveBalao('⏳ Faltam ' + falta + ' min', marco==='5' ? 'alerta' : '');
+    return;
+  }
+  const r = liveRitmo(rel);
+  const atrasado = !!r && !r.cedo && r.atraso > 5 && falta > 0 && liveVeRitmo();
+  const ocupado = !document.getElementById('tempo-balao').hidden;   // não atropela um aviso de tempo que ainda está na tela
+  if(atrasado && !_liveRitmoMostrando && !ocupado && agora - _liveRitmoUltimo > 5*60000){
+    _liveRitmoUltimo = agora;
+    liveBalao('⚠️ Nesse ritmo, terminamos às ' + _liveHoraSP(r.previsto) + ' (' + _liveMin(r.atraso) + ' depois do previsto)', 'alerta');
+  }
+  if(!ocupado || !atrasado) _liveRitmoMostrando = atrasado;
+}
+window._liveRitmoSala = ligar => {
+  if(!livePodeControlar()) return;
+  window._update(liveRef(), {'avisos/ritmoSala': !!ligar}).catch(e=>liveToast('⚠️ Não consegui mudar o aviso de ritmo: '+(e && e.message || e)));
+};
 setInterval(()=>{
   if(document.hidden) return;
   document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -3053,6 +3144,10 @@ function liveAtualizarComandos(pip, bastidor){
   doc.getElementById('retomar').disabled = host;
   const tempo = document.getElementById('tb-countdown');
   doc.getElementById('tempo').textContent = tempo.hidden ? (liveRelogio()?.modo==='livre' ? 'Sem cronômetro' : 'Sem horário de término') : tempo.textContent;
+  const relogio = liveRelogio(), ritmo = doc.getElementById('ritmo'), ritmoSala = doc.getElementById('ritmo-sala');
+  const textoRitmo = liveRitmoTexto(relogio); if(ritmo.textContent!==textoRitmo) ritmo.textContent = textoRitmo;
+  ritmoSala.checked = liveRitmoNaSala();
+  ritmoSala.disabled = !livePodeControlar() || !relogio || relogio.modo!=='cronometro';
   doc.getElementById('fps').textContent = _okrTelaBastidor ? 'FPS disponível no computador dos slides' : document.hidden ? 'FPS indisponível com a aba oculta' : document.querySelector('#fps-meter span').textContent;
   const participantes = liveParticipantes();
   const pedidos = live.pedidos || {};
@@ -3198,7 +3293,9 @@ function liveMontarControle(pip, destino, bastidor){
       + '<div class="bst-acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button><button type="button" id="retomar">Retomar controle</button></div></section>'
       + '</div>'
       + '<section class="bst-card"><p class="bst-rotulo">Tela para o público</p><p class="bst-dica">Abra o link no computador que compartilha a tela no Meet.</p>'
-      + '<div class="bst-acoes"><button type="button" id="bastidor-copiar"><span aria-hidden="true">🖥️</span> Copiar link de projeção</button><button type="button" id="bastidor-convite"><span aria-hidden="true">💬</span> Copiar convite do Meet</button></div></section>'
+      + '<div class="bst-acoes"><button type="button" id="bastidor-copiar"><span aria-hidden="true">🖥️</span> Copiar link de projeção</button><button type="button" id="bastidor-convite"><span aria-hidden="true">💬</span> Copiar convite do Meet</button></div>'
+      + '<div class="bst-ritmo-bloco"><p class="bst-rotulo">Ritmo da reunião</p><p id="ritmo" class="bst-dica" role="status"></p>'
+      + '<label class="bst-ritmo"><input type="checkbox" id="ritmo-sala"> Mostrar aviso de ritmo para a sala</label></div></section>'
       + '</div>'
       + '<div class="bst-fim"><button type="button" id="bastidor-encerrar">Encerrar apresentação</button></div>';
     _okrAtualizaOrigemAgenda();
@@ -3235,6 +3332,7 @@ function liveMontarControle(pip, destino, bastidor){
     + '<button type="button" id="proximo">Próximo →</button><button type="button" id="abrir-detalhe">Abrir detalhe</button><button type="button" id="fechar-detalhe">Fechar detalhe</button><button type="button" id="controle-evolucao" hidden>📈 Evolução</button></nav>';
   if(bastidor) destino.insertAdjacentHTML('beforeend',
     '<div class="indicadores"><span id="tempo"></span><span id="fps"></span></div>'
+    + '<p id="ritmo" role="status"></p><label><input type="checkbox" id="ritmo-sala"> Mostrar aviso de ritmo para a sala</label>'
     + (pagina ? '<button type="button" id="bastidor-copiar">Copiar link da tela para o público</button> <button type="button" id="bastidor-encerrar">Encerrar apresentação</button>' : '<button type="button" id="palco" aria-pressed="false">Palco Limpo</button>')
     + '<form id="anotacao"><label for="rascunho">Anotação da reunião</label><textarea id="rascunho" rows="2"></textarea>'
     + '<div class="acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
@@ -3253,6 +3351,8 @@ function livePrepararBastidor(pip){
   doc.getElementById('retomar').addEventListener('click', agir(()=>{
     if(!liveSouHost()) window._liveAssumir();
   }));
+  const ritmoSala = doc.getElementById('ritmo-sala');
+  ritmoSala.addEventListener('change', agir(()=>window._liveRitmoSala(ritmoSala.checked)));
   const palco = doc.getElementById('palco');
   palco?.addEventListener('click', agir(()=>{
     const ativo = document.body.classList.toggle('live-palco-limpo');

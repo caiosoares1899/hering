@@ -24,6 +24,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — avisos de tempo e de ritmo na sessão ao vivo — 2026-11-19
+
+`okr-apresentacao.slide.html`, sem par `-dev`: entra no ar no merge. Pedido do Caio. Vale para sessões iniciadas **com cronômetro**.
+- **Balões de tempo:** "⏳ Faltam N min" ao chegar a 10 e a 5 min, e "🔴 Tempo esgotado" no término. Aparecem em todas as telas: quem apresenta, quem acompanha, o Bastidor e a Tela para o público. Cada aviso aparece uma vez por sessão, mesmo recarregando. Ajustar o término em "Configurar horário" rearma os avisos.
+- **Selo de tempo na Tela para o público:** "⏳ X restantes" no canto, porque ela esconde a barra de cima.
+- **Aviso de ritmo:** "⚠️ Nesse ritmo, terminamos às HH:MM (X depois do previsto)". A previsão compara a parte da pauta que já passou (o slide da sala) com o tempo gasto. Só começa depois de 3 min e de 20% da pauta, e só avisa com mais de 5 min de atraso, no máximo a cada 5 min.
+  - O Bastidor mostra a previsão o tempo todo e tem o interruptor **Mostrar aviso de ritmo para a sala**, gravado em `apresentacao_live/avisos/ritmoSala`.
+  - Desligado (padrão), só quem controla vê o aviso de ritmo: quem apresenta, o ADM e o Bastidor. Ligado, a sala também vê: o público, o Palco Limpo e quem acompanha. Serve para quando quem passa o slide não é quem está falando.
+- O aviso de ritmo nunca cobre um aviso de tempo que ainda está na tela.
+
+Teste: `docs/arezzo/testes/test_avisos_tempo.js`.
+
 ### SÓ DEV — Apresentação do Radar — relógio opcional ao iniciar a apresentação ao vivo — 2026-11-19
 
 `okr-apresentacao.slide.html` (sem par `-dev`; entra no ar no merge). Etapa 1 do desenho do PR #1904. **Apresentar ao vivo** agora abre um diálogo com três saídas: **Iniciar com cronômetro**, **Iniciar sem cronômetro** e **Cancelar** (Esc também cancela).
