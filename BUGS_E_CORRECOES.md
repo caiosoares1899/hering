@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Apresentação do Radar: depois da #1894 o teste da apresentação travava e a rolagem dos Marcos voltou a crescer
+
+- **Origem:** conferência da #1895; `docs/arezzo/testes/test_apresentacao_ui.js` travava na `main` desde a #1894.
+- **Teste:** sem meta numérica, o bloco `.d2-metrics` deixou de existir e o teste esperava por ele até estourar o tempo, escondendo as verificações seguintes. Agora confere o progresso no cabeçalho da lista. A verificação dos concluídos recolhidos passa a esperar a linha logo abaixo do cabeçalho, como a #1894 desenhou, e não no fim da tabela.
+- **Rolagem:** a faixa de progresso da #1894 tirou altura da tabela de Marcos: com 14 Marcos em 1366 px a rolagem foi de até 100 px para 107 px. Em `okr-apresentacao.slide.html`, a faixa ficou mais baixa (número de 28 para 24 e menos espaço embaixo) e a rolagem voltou ao limite.
+- **Resultado:** a suíte roda até o fim; a única falha é a de animação infinita, que já existia.
+
 ### 2026-11-19 · 🎙️ Apresentação do Radar: quem acompanhava não aparecia em "Passar o controle pra…" (relógio de cada computador e aba em segundo plano)
 
 - **Relato do Caio:** a apresentação não estava lendo as pessoas online.

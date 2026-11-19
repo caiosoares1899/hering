@@ -45,9 +45,12 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
       && detalhe.metrics.includes('Atingimento da meta 73%')
       && detalhe.readable && detalhe.fixedHeader && detalhe.visibleRows && detalhe.prioritized, detalhe);
     await p.evaluate(() => window._okrOpenDetail('o1'));
-    const semMeta = await p.locator('.d2-metrics').innerText();
+    await p.waitForTimeout(300);
+    // #1894: o progresso dos Marcos fica no cabeçalho da lista; sem meta numérica, o bloco de atingimento não aparece.
+    const semMeta = await p.evaluate(() => ({ progresso: document.querySelector('.d2-right .d2-marcos-progresso')?.textContent.replace(/\s+/g, ' ').trim() || '',
+      detalhe: document.getElementById('detail-ov')?.textContent || '' }));
     t(tag + 'sem meta numérica: exibe progresso dos marcos sem inventar atingimento',
-      /Progresso dos marcos/.test(semMeta) && !/Atingimento da meta/.test(semMeta), semMeta);
+      /\d+%/.test(semMeta.progresso) && /marcos? conclu/.test(semMeta.progresso) && !/Atingimento da meta/.test(semMeta.detalhe), semMeta.progresso);
     // Prioridades do detalhe (pedido do Caio, 18/11/2026): a rolagem continua existindo, mas fica menor em Marcos e não aparece em Riscos e Próximos passos curtos.
     if (w >= 1366) { await p.evaluate(() => window._okrOpenDetail('o3')); await p.waitForTimeout(500);
       const sobra = await p.evaluate(() => Object.fromEntries([['marcos', '.d2-table-rows'], ['riscos', '.d2-risk .d2-flist'], ['passos', '.d2-next .d2-flist']].map(([k, s]) => { const e = document.querySelector(s); return [k, e ? e.scrollHeight - e.clientHeight : 0]; })));
@@ -81,7 +84,8 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
       _okrColapsarConcluidos = false; Object.keys(okrMarcos).forEach(k => delete okrMarcos[k]); Object.assign(okrMarcos, guardados); window._okrCloseDetail(); await espera();
       return { visiveis: visiveis.length, acima, abaixo, vazio };
     });
-    t(tag + 'concluídos recolhidos: a linha restante fica centralizada na tabela', recolhido.visiveis === 1 && Math.abs(recolhido.acima - recolhido.abaixo) <= 2, recolhido);
+    // Desde a #1894 a primeira linha fica logo abaixo do cabeçalho (sem centralizar); o relato de 18/11 era a linha ir parar no FIM da tabela.
+    t(tag + 'concluídos recolhidos: a linha restante fica logo abaixo do cabeçalho, não no fim', recolhido.visiveis === 1 && recolhido.acima <= 2 && recolhido.abaixo > recolhido.acima, recolhido);
     t(tag + 'todos os marcos recolhidos: a tabela explica por que está vazia', /concluídos/.test(recolhido.vazio) && /Mostrar concluídos/.test(recolhido.vazio), recolhido);
     // 1b) nada escondido atrás de barra de rolagem no detalhe comum e no de 14 marcos (em Full HD a main também cabe tudo)
     if (w >= 1900) { const rol = []; for (const id of ['o0', 'o1', 'o3']) { await p.evaluate(id => window._okrOpenDetail(id), id); await p.waitForTimeout(450); const r = await p.evaluate(() => [...document.querySelectorAll('.d2-left,.d2-table-rows,.d2-flist')].filter(e => e.scrollHeight > e.clientHeight + 1).map(e => e.className)); if (r.length) rol.push([id, r]); }
