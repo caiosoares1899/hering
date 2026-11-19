@@ -32,6 +32,10 @@ O Bastidor mostra a miniatura do próximo slide e um cartão do próximo Objetiv
 
 O passador compacto e o Bastidor ganharam Abrir detalhe, ao lado de Fechar detalhe. Num slide de gerência, ele abre o detalhe do 1º Objetivo dela, na ordem da grade e dos botões Anterior/Próximo do detalhe, sem precisar voltar à aba dos slides. Fica desligado fora de um slide de gerência, com o detalhe já aberto ou para quem não está apresentando. A janela compacta ficou um pouco mais alta para os quatro botões. Testes: docs/arezzo/testes/test_apresentacao_live.js (TESTAR_PIP=1) e docs/arezzo/testes/test_bastidor_ui.js.
 
+### SÓ DEV — Radar — progresso destacado junto aos Marcos — 2026-11-19
+
+O detalhe do Objetivo mostra o percentual e a contagem de concluídos no cabeçalho da lista, com a primeira linha logo abaixo. O atingimento da meta segue separado.
+
 ### SÓ DEV — Apresentação do Radar — botão próprio do passador acima do 🎙️, que também pede o controle — 2026-11-19
 
 Abrir controle flutuante saiu do menu 🎙️ e virou um botão 🎛️ logo acima do microfone. Para quem apresenta, um clique abre o passador compacto (Anterior, Próximo e Fechar detalhe). Para quem acompanha, o mesmo botão pede o controle, e quem apresenta ou o ADM libera. Ao liberar, o botão passa para quem recebeu; ao retomar, volta. O menu 🎙️ sobe para não encostar no botão e continua com laser e caneta. A Tela para o público e o Bastidor não mostram o botão, e ele só aparece em navegador com janela flutuante. Teste: docs/arezzo/testes/test_passador_botao.js (20 verificações no Chrome, com a janela flutuante de verdade).

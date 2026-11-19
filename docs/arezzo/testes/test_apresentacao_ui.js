@@ -33,6 +33,7 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
       const width = selector => document.querySelector(selector).getBoundingClientRect().width;
       return {
         metrics: document.querySelector('.d2-metrics')?.textContent.replace(/\s+/g, ' ').trim() || '',
+        progresso: document.querySelector('.d2-right .d2-marcos-progresso')?.textContent.replace(/\s+/g, ' ').trim() || '',   // #1894: o progresso dos Marcos fica no cabeçalho da lista
         readable: parseFloat(getComputedStyle(rows.querySelector('.d2-marco-nome')).fontSize) >= 16,
         fixedHeader: header.getBoundingClientRect().top === top && rows.tabIndex === 0,
         visibleRows: rows.clientHeight > 0,
@@ -40,7 +41,7 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
       };
     });
     t(tag + 'detalhe: dois percentuais separados, prioridades maiores e cabeçalho fora da rolagem',
-      detalhe.metrics.includes('Progresso dos marcos 21% (3 de 14 concluídos)')
+      /21%/.test(detalhe.progresso) && /3 de 14 marcos concluídos/.test(detalhe.progresso)
       && detalhe.metrics.includes('Atingimento da meta 73%')
       && detalhe.readable && detalhe.fixedHeader && detalhe.visibleRows && detalhe.prioritized, detalhe);
     await p.evaluate(() => window._okrOpenDetail('o1'));
