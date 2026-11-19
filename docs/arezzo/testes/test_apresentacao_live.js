@@ -36,6 +36,36 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
      const doc=window.documentPictureInPicture.window.document;
      return doc.querySelectorAll('nav button').length===3 && doc.getElementById('anterior').disabled;
    }), '');
+   await comando('palco');
+   t('Palco Limpo oculta bastidores e mantém os slides visíveis', await A.p.evaluate(()=>{
+     const ocultos=['live-box','live-toast','live-fab','notes-fab','fps-meter','tb-countdown'];
+     return ocultos.every(id=>getComputedStyle(document.getElementById(id)).display==='none') &&
+       getComputedStyle(document.getElementById('slides')).display!=='none';
+   }), '');
+   await A.p.evaluate(()=>{
+     okrAgendas[_hojeStr()]={fim:'23:59'};
+     const doc=window.documentPictureInPicture.window.document;
+     const campo=doc.getElementById('rascunho');
+     campo.value='Decisão do teste';
+     campo.dispatchEvent(new Event('input'));
+     window.__denySet=no=>no.includes('/reuniao_notas/');
+   });
+   await comando('salvar-nota');
+   await A.p.waitForFunction(()=>window.documentPictureInPicture.window.document.getElementById('nota-estado').textContent.includes('Falha'));
+   t('falha mantém o rascunho no bastidor', await A.p.evaluate(()=>window.documentPictureInPicture.window.document.getElementById('rascunho').value==='Decisão do teste'), '');
+   await A.p.evaluate(()=>{ window.__denySet=null; });
+   await comando('salvar-nota');
+   await A.p.waitForFunction(()=>window.documentPictureInPicture.window.document.getElementById('nota-estado').textContent==='Anotação salva.');
+   t('anotação do bastidor usa o mesmo registro e limpa o rascunho', await A.p.evaluate(()=>{
+     const notas=Object.values(window.__store.kanban.okr.reuniao_notas[_hojeStr()]);
+     return notas.length===1 && notas[0].texto==='Decisão do teste' && !document.getElementById('notes-input').value;
+   }), '');
+   await A.p.waitForFunction(()=>window.documentPictureInPicture.window.document.getElementById('tempo').textContent!=='Sem horário de término');
+   t('bastidor mostra relógio da reunião e FPS ou indisponibilidade', await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.getElementById('tempo').textContent===document.getElementById('tb-countdown').textContent &&
+       /fps/i.test(doc.getElementById('fps').textContent);
+   }), '');
    await comando('proximo');
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
    await sync(A.p,B.p);
@@ -50,7 +80,8 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    await sync(A.p,B.p);
    t('Fechar detalhe pela janela sincroniza o fechamento', (await info(A.p)).det==='' && (await info(B.p)).det==='', '');
    await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
-   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
+   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window && !document.body.classList.contains('live-palco-limpo'));
+   t('fechar o bastidor restaura os controles da aba', await A.p.evaluate(()=>getComputedStyle(document.getElementById('live-box')).display!=='none'), '');
    await abrirPip();
  }
  await A.p.evaluate(()=>window._okrGoTo(2)); await A.p.waitForTimeout(250); await sync(A.p,B.p); const a2=await info(A.p), b2=await info(B.p);
@@ -171,7 +202,27 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='d2');
  // cenário real: a flag de "seguindo" da Ana estava desligada quando ela passou o controle — a tela dela (a compartilhada no Meet) tem que passar a seguir a Eve mesmo assim
  await A.p.evaluate(()=>{ liveSeguindo = false; });
- await A.p.evaluate(()=>document.querySelector('#live-toast [data-pedido] button').click()); await A.p.waitForTimeout(250); await sync(A.p,B.p);
+ if(process.env.TESTAR_PIP==='1'){
+   await A.p.evaluate(()=>{ window._okrCloseAting(); window._livePainel(true); });
+   await A.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
+   await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('participante'));
+   await A.p.evaluate(()=>{
+     window._okrOpenAting('d2');
+     const doc=window.documentPictureInPicture.window.document;
+     doc.getElementById('palco').click();
+     const seletor=doc.getElementById('participante');
+     seletor.value='eve';
+     seletor.dispatchEvent(new Event('change'));
+   });
+   t('pedido aparece no bastidor com opção de recusar', await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.getElementById('participante').selectedOptions[0].textContent.includes('pediu o controle') &&
+       !doc.getElementById('recusar').disabled && getComputedStyle(document.getElementById('live-toast')).display==='none';
+   }), '');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='d2');
+   await A.p.evaluate(()=>window.documentPictureInPicture.window.document.getElementById('passar').click());
+   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window && !document.body.classList.contains('live-palco-limpo'));
+ }else await A.p.evaluate(()=>document.querySelector('#live-toast [data-pedido] button').click()); await A.p.waitForTimeout(250); await sync(A.p,B.p);
  const a4=await info(A.p), b4=await info(B.p); t('aceitar passa o controle: Eve vira apresentadora e Ana acompanha', /Parar de apresentar/.test(b4.box) && /Eve Souza está apresentando/.test(a4.box), {a4,b4});
  t('quem recebe o controle herda o detalhe e a Evolução aberta', (await info(B.p)).det==='d2' && await evolucaoAberta(B.p), '');
  await B.p.evaluate(()=>{ window._okrCloseDetail(); window._okrGoTo(1); }); await B.p.waitForTimeout(250); await sync(B.p,A.p); t('o novo apresentador comanda (Ana segue a Eve)', (await info(A.p)).idx===1, await info(A.p));
