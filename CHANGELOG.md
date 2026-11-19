@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — Bastidor aproveita a largura do desktop — 2026-11-19
+
+Em desktop, a projeção ganha uma terceira coluna, ao lado da navegação e das anotações, e reduz a altura ocupada.
+
 ### SÓ DEV — Radar — acabamento Marine Glass no Bastidor — 2026-11-19
 
 O Bastidor ganha iluminação oceânica em camadas, cartões translúcidos e mais contraste nos rótulos. O cartão do slide no ar recebe o destaque principal.

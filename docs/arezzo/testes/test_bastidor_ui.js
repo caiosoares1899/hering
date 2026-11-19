@@ -22,7 +22,7 @@ const medir = p => p.evaluate(() => ({
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   try {
-    for (const [w, h] of [[1280, 768], [390, 800]]) {
+    for (const [w, h] of [[1280, 768], [1366, 650], [390, 800]]) {
       const ctx = await b.newContext({ viewport: { width: w, height: h } }); await fake.install(ctx, seed());
       const p = await ctx.newPage(); const erros = []; p.on('pageerror', e => erros.push(e.message)); p.on('dialog', d => d.accept());
       await p.goto(BASE + '/okr-bastidor.html'); await p.waitForFunction(() => !!window.__authCb);
@@ -40,6 +40,21 @@ const medir = p => p.evaluate(() => ({
       await p.locator('#proximo').click();
       t(`[${w}] Próximo coloca a prévia no ar`, (await texto(p, '#bastidor-agora'))===esperado, esperado);
       await p.locator('#anterior').click();
+      await p.locator('#proximo').focus();
+      await p.keyboard.press('PageDown');
+      t(`[${w}] PageDown navega com foco no controle`, (await texto(p,'#bastidor-agora'))===esperado,'');
+      await p.keyboard.press('PageUp');
+      t(`[${w}] PageUp volta ao primeiro slide`, await p.evaluate(()=>currentIdx===0),'');
+      await p.locator('#rascunho').focus();
+      await p.keyboard.press('ArrowRight');
+      const camposProtegidos=await p.evaluate(()=>{
+        const select=document.getElementById('participante');
+        const evento=new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true});
+        select.dispatchEvent(evento);
+        return currentIdx===0 && !evento.defaultPrevented;
+      });
+      t(`[${w}] setas respeitam o rascunho e o seletor de participantes`,camposProtegidos,'');
+
       await p.evaluate(()=>Object.defineProperty(navigator.clipboard,'writeText',{value:async texto=>{window.__conviteBastidor=texto;}}));
       await p.getByRole('button',{name:'Copiar convite do Meet'}).click();
       t(`[${w}] Bastidor copia o convite com link para os slides`, await p.evaluate(()=>
@@ -55,8 +70,10 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] FPS fica fora da aba (só faz sentido no computador dos slides)`, !(await p.locator('#fps').isVisible()), '');
       t(`[${w}] Próximo é o único botão de ação principal`, await p.evaluate(() => { const cor = e => getComputedStyle(e).backgroundColor; const prox = cor(document.getElementById('proximo')); return [...document.querySelectorAll('#bastidor-controles button')].filter(e => cor(e) === prox).map(e => e.id).join() === 'proximo'; }), '');
       t(`[${w}] Encerrar fica separado, no fim`, await p.evaluate(() => !!document.querySelector('.bst-fim #bastidor-encerrar')), '');
-      if(w===1280) t('Bastidor cabe em 1280 × 768 sem rolagem vertical', await p.locator('#bastidor-pagina').evaluate(el=>el.scrollHeight<=el.clientHeight+1), '');
+      if(w>=1100) t(`Bastidor usa a largura da tela e cabe em ${w} × ${h} sem rolagem vertical`, await p.locator('#bastidor-pagina').evaluate(el=>el.scrollHeight<=el.clientHeight+1 && el.clientWidth>=innerWidth-1), '');
       await p.getByRole('button',{name:'Configurar horário'}).click();
+      await p.keyboard.press('PageDown');
+      t(`[${w}] diálogo do horário bloqueia navegação por passador`, await p.evaluate(()=>currentIdx===0),'');
       await p.locator('#agenda-inicio').fill('10:00');
       await p.locator('#agenda-fim').fill('11:00');
       await p.locator('#agenda-cfg-ov').getByRole('button',{name:'Salvar'}).click();
@@ -70,7 +87,7 @@ const medir = p => p.evaluate(() => ({
       t(`[${w}] detalhe: título do Objetivo em destaque e o próximo da gerência`, (await texto(p, '#bastidor-agora')) === LONGO && (await texto(p, '#bastidor-seguir')) === 'Pagamentos' && (await texto(p, '#estado')) === 'Detalhe do Objetivo', { a: await texto(p, '#bastidor-agora'), s: await texto(p, '#bastidor-seguir') });
       let m = await medir(p);
       t(`[${w}] sem rolagem lateral com título longo e alvos de pelo menos 44 px`, !m.rolagemLateral && !m.pequenos.length, m);
-      await p.locator('#proximo').click();
+      await p.keyboard.press('ArrowRight');
       t(`[${w}] último Objetivo desativa Próximo e esconde a prévia`,
         await p.locator('#proximo').isDisabled() && !(await p.locator('#bastidor-previa').isVisible()), '');
       await p.getByRole('button',{name:'Ir para Panorama geral'}).click();
