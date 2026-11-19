@@ -1622,6 +1622,23 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 [data-theme="vice"] :is(.okr-online .online-ini){color:var(--txt);background:rgba(var(--ink-rgb),.95);}
 [data-theme="vice"] :is(#dev-banner){color:var(--txt);}
 [data-theme="light"] :is(#dev-banner,#github-status-pill-txt,.cfg-sec){color:var(--txt)!important;}
+.flow-forecast[hidden], .flow-forecast [hidden]{display:none;}
+.flow-forecast{margin-top:16px;padding-top:14px;border-top:1px solid var(--glass-b);color:var(--txt);}
+.flow-forecast h3,.flow-forecast p{margin:0 0 8px;}
+.flow-forecast-note,.flow-forecast details{font-size:12px;color:var(--txt2);}
+.flow-forecast form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;margin-bottom:8px;}
+.flow-forecast label{display:grid;gap:4px;font-size:12px;}
+.flow-forecast :is(.fi,button,summary){min-height:44px;}
+.flow-forecast button{justify-content:center;}
+.flow-forecast .fi{width:100%;min-width:0;padding:6px 8px;font-size:16px;
+  border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);}
+.flow-forecast summary{display:flex;align-items:center;cursor:pointer;text-decoration:underline;}
+.flow-forecast :is(input,select,button,summary):focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.flow-forecast-result{font-size:14px;font-weight:600;line-height:1.55;}
+.flow-forecast-badge{display:inline-block;margin-right:6px;padding:1px 8px;border:1px solid var(--glass-b);
+  border-radius:999px;background:var(--glass);color:var(--txt);font-size:11px;white-space:nowrap;}
+@media(max-width:600px){.flow-forecast form{grid-template-columns:minmax(0,1fr);}}
+
 [data-theme="light"] .pt-avatar{color:var(--txt);background:var(--glass);}
 [data-theme="light"] :is(#lemp-btn,#kudosp-btn){color:var(--txt);background:var(--glass);}
 [data-theme="vice"] :is(#lemp-btn,#kudosp-btn){color:var(--txt);background:var(--glass);}
@@ -1950,6 +1967,25 @@ window.MARE_LOGIN_PELO_OCEANO = true;
         <div class="flow-card-sub" id="tp-sub">Cards concluídos por dia</div>
         <div class="wk-legend" id="tp-legend"></div>
         <div class="tp-chart-wrap" id="throughput-chart"></div>
+        <section id="flow-forecast" class="flow-forecast" aria-labelledby="flow-forecast-title" hidden>
+          <h3 id="flow-forecast-title" class="flow-card-hd">Quando termina?</h3>
+          <form id="flow-forecast-form">
+            <label>Squad<select id="flow-forecast-squad" class="fi"></select></label>
+            <label>Itens a concluir<input id="flow-forecast-count" class="fi" type="number" required min="1" step="1" inputmode="numeric"></label>
+            <button class="btn btn-p" type="submit">Calcular</button>
+          </form>
+          <p class="flow-forecast-note">Conte os itens que o squad vai priorizar. Deixe de fora pausados, contínuos, bloqueados sem resolução prevista e supercards.</p>
+          <p class="flow-forecast-result" role="status">
+            <span id="flow-forecast-badge" class="flow-forecast-badge" hidden>Estimativa em teste</span>
+            <span id="flow-forecast-status">Escolha um squad e informe quantos itens quer planejar.</span>
+          </p>
+          <details id="flow-forecast-details" hidden>
+            <summary>Detalhes da estimativa</summary>
+            <p id="flow-forecast-median"></p>
+            <p id="flow-forecast-sample"></p>
+            <p id="flow-forecast-exclusions"></p>
+          </details>
+        </section>
       </div>
       <div class="card flow-card">
         <div class="flow-card-hd">🌊 Onde está o trabalho agora</div>
@@ -2051,7 +2087,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
         <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📢 Comunicados</div>
         <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
       </div>
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos que aparecem como popup nos boards. Fase 1: popup ao abrir/recarregar o board.</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos para os squads e para o Oceano: escolha entre popup ao abrir o board, só no mural dos boards ou 🌊 só no mural do Oceano (urgentes também avisam no 🔔 sino).</div>
 
       <!-- Rascunhos 🤖 aguardando revisão — criados automaticamente ao final de sessões de dev -->
       <div id="comunicados-rascunhos-wrap" style="display:none;margin-bottom:14px;">
@@ -3076,7 +3112,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
            (sem servidor), mostra o que muda e publica em kanban/calendarios_gantt(_dev)/{marca|comercial}. O Maré mostra como abas da visão 📊 Gantt. -->
       <div id="painel-cfg-gantt" style="display:none;">
         <div class="cfg-sec">Calendários do Gantt</div>
-        <div style="font-size:10.5px;color:var(--txt3);margin-bottom:12px;line-height:1.55;">Aparecem para <b>todas as squads</b> (só quem entra com conta Hering) como abas da visão <b>📊 Gantt</b> do Maré. Envie o arquivo <b>.xlsx</b> (no Google Sheets: Arquivo → Fazer download → Microsoft Excel). Reenviar troca o calendário pelo arquivo novo: antes de publicar você vê o que é <b>novo</b>, o que <b>mudou</b> e o que <b>sai</b>. Qualquer pessoa da Hering pode atualizar — <b>aqui ou direto no 📊 Gantt do Maré</b> — e cada publicação fica no 🕘 Histórico de lá, com volta a qualquer versão.</div>
+        <div style="font-size:10.5px;color:var(--txt3);margin-bottom:12px;line-height:1.55;">Aparecem para <b>todas as squads</b> (só quem entra com conta Hering) como abas da visão <b>🧮 Gantt</b> do Maré e em <b>📅 Calendário → 📊 Gantt</b> do Radar. Envie o arquivo <b>.xlsx</b> (no Google Sheets: Arquivo → Fazer download → Microsoft Excel). Antes de publicar você vê o que é <b>novo</b>, o que <b>mudou</b> e o que <b>sai</b> (em Marca, Comercial Hering e Marketplace o envio atualiza o calendário; no Comercial Outlet troca só o mês da planilha enviada). Qualquer pessoa da Hering pode atualizar — <b>aqui ou direto no 🧮 Gantt do Maré</b> — e cada publicação fica no 🕘 Histórico de lá, com volta a qualquer versão.</div>
         <div id="pcfg-gantt-cards" style="display:flex;flex-direction:column;gap:12px;"></div>
       </div>
 
@@ -3244,7 +3280,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.120 · painel</div>
+<div class="version">v5.124 · painel</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -3378,7 +3414,7 @@ function agIr(btn){
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, reauthenticateWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
@@ -3421,14 +3457,21 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 const calProvider = new GoogleAuthProvider();
 calProvider.setCustomParameters({ hd: 'ciahering.com.br' });
 calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    localStorage.setItem('gcal_token', credential.accessToken);
-    localStorage.setItem('gcal_token_ts', String(Date.now()));
-  }
-  return credential;
-});
+// reauthenticateWithPopup, não signInWithPopup: escolher OUTRA conta no popup trocava a sessão do app em silêncio. Agora o SDK recusa com auth/user-mismatch e a sessão fica como estava.
+window._requestCalendarScope = () => {
+  const u = auth.currentUser;
+  if (!u) return Promise.reject(Object.assign(new Error('Sessão encerrada: entre de novo para autorizar a agenda.'), { code:'auth/user-signed-out' }));
+  calProvider.setCustomParameters(u.email ? { hd:'ciahering.com.br', login_hint:u.email } : { hd:'ciahering.com.br' });   // já abre na conta certa (setCustomParameters substitui tudo, por isso repete o hd)
+  return reauthenticateWithPopup(u, calProvider).then(r=>{
+    const credential = GoogleAuthProvider.credentialFromResult(r);
+    if (credential && credential.accessToken) {
+      localStorage.setItem('gcal_token', credential.accessToken);
+      localStorage.setItem('gcal_token_ts', String(Date.now()));
+      localStorage.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token (ver _pcalGcalToken())
+    }
+    return credential;
+  });
+};
 
 // Integração Arezzo (2026-10-01) — mesmo provider/parâmetros já usados em
 // kanban-dev.html (ver comentário completo lá): 'organizations' restringe
@@ -3478,7 +3521,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script src="mare-notif.js?v=44"></script>
 <script src="mare-metas.js?v=19"></script>
 <script src="mare-plantao.js?v=5"></script>
-<script src="mare-dicas.js?v=18"></script>
+<script src="mare-dicas.js?v=19"></script>
 <script src="mare-gxl.js?v=2"></script>
 
 <script>
@@ -6803,7 +6846,7 @@ function renderPcalAgendasList(){
   const statusEl=document.getElementById('pcal-gcal-auth-status');
   if(statusEl){
     if(isAdm){
-      const hasToken=!!localStorage.getItem('gcal_token');
+      const hasToken=!!_pcalGcalToken();
       statusEl.innerHTML = hasToken
         ? '<span style="color:var(--teal);">✅ Sua conta Google está autorizada (só admin precisa)</span>'
         : '<span style="color:var(--txt3);">🔒 Nenhuma autorização ainda — só o admin que gerencia precisa conectar</span>';
@@ -6840,17 +6883,29 @@ function renderPcalAgendasList(){
     </div>`;
   }).join('');
 }
+// Token do Google Agenda só vale pra conta que o pediu (/monitorarbugs 18/11/2026, login Google): mesma origem do Maré, e sair por
+// qualquer página que não fosse o "Sair" do Maré deixava o token pra próxima conta. Sem dono ou de outra conta = descarta.
+function _pcalGcalTokenLimpar(){ try{ ['gcal_token','gcal_token_ts','gcal_token_uid'].forEach(k=>localStorage.removeItem(k)); }catch(e){} }
+function _pcalGcalToken(){
+  let t=null, dono=null; try{ t=localStorage.getItem('gcal_token'); dono=localStorage.getItem('gcal_token_uid'); }catch(e){ return null; }
+  if(!t) return null;
+  const uid=window._currentUser&&window._currentUser.uid;
+  if(!uid) return null;   // ninguém logado ainda (boot): não usa, mas também não apaga
+  if(!dono || dono!==uid){ _pcalGcalTokenLimpar(); return null; }
+  return t;
+}
+const PCAL_MSG_OUTRA_CONTA='⚠ Autorize a agenda com a mesma conta Google com que você entrou.';
 async function addPcalAgenda(){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores podem adicionar agendas globais.'); return; }
   const id=document.getElementById('pcal-agenda-id').value.trim();
   const label=document.getElementById('pcal-agenda-label').value.trim();
   if(!id){ showToast('⚠ Informe o ID da agenda.'); return; }
-  if(!localStorage.getItem('gcal_token')){
+  if(!_pcalGcalToken()){
     try{
       showToast('🔐 Conecte sua conta Google para autorizar a leitura de agendas...');
       await window._requestCalendarScope();
     }catch(e){
-      showToast('⚠ Não foi possível autorizar o acesso ao Google Agenda.');
+      showToast(e?.code==='auth/user-mismatch'?PCAL_MSG_OUTRA_CONTA:'⚠ Não foi possível autorizar o acesso ao Google Agenda.');
       return;
     }
   }
@@ -6900,7 +6955,7 @@ async function reconectarPcalGCal(){
     showToast('🔄 Reconectado! Carregando agendas...');
     carregarPcalAgendasGlobais();
   }catch(e){
-    showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
+    showToast(e?.code==='auth/user-mismatch'?PCAL_MSG_OUTRA_CONTA:'⚠ Não foi possível reconectar: '+(e?.message||e));
   }
 }
 // Só o ADM busca da API do Google — o resultado processado fica em cache no Firebase
@@ -6908,7 +6963,7 @@ async function reconectarPcalGCal(){
 async function carregarPcalAgendasGlobais(){
   if(!_isAdmPainel()) return; // membros comuns nunca chamam a API — só leem o cache (ver loadPcalEvents)
   if(!window._pcalGcalErrors) window._pcalGcalErrors={};
-  const token=localStorage.getItem('gcal_token');
+  const token=_pcalGcalToken();
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
     window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), {});
@@ -6923,6 +6978,7 @@ async function carregarPcalAgendasGlobais(){
   const limiteInferior=new Date(hoje.getFullYear(),hoje.getMonth()-1,1).toISOString();
   let todosEventos=[];
 
+  const _calsOk=new Set();   // agendas que responderam de verdade (ver o fim da função)
   await Promise.all(list.map(async cal=>{
     const url=`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
     try{
@@ -6934,6 +6990,7 @@ async function carregarPcalAgendasGlobais(){
       if(res.status===403){
         let reason='';
         try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
+        if(/insufficient/i.test(reason)){ _pcalGcalTokenLimpar(); window._pcalGcalErrors[cal.id]={type:'expired',msg:'A autorização do Google Agenda não tinha o acesso à agenda — autorize de novo'}; return; }
         window._pcalGcalErrors[cal.id]={type:'forbidden',msg:reason.includes('unregistered')
           ? 'Agenda pública/de sistema — precisa de API Key própria'
           : 'Sem permissão de acesso a esta agenda'};
@@ -6941,6 +6998,7 @@ async function carregarPcalAgendasGlobais(){
       }
       const data=await res.json();
       if(data.items){
+        _calsOk.add(cal.id);
         delete window._pcalGcalErrors[cal.id];
         data.items.forEach(item=>{
           if(window._pcalGcalDismissedIds && window._pcalGcalDismissedIds.has(item.id)) return;
@@ -6980,7 +7038,21 @@ async function carregarPcalAgendasGlobais(){
     vistos.add(chave);
     return true;
   });
+  // Nenhuma agenda respondeu (token vencido, sem escopo, rede): não apaga o cache global de todo mundo (/monitorarbugs 18/11/2026,
+  // mesmo achado de _fetchAndCacheGcalForSquad no Maré). Só algumas: mantém os eventos antigos das que falharam.
+  if(!_calsOk.size){
+    _pcalGcalWarnBanner(Object.values(window._pcalGcalErrors).some(e=>e.type==='expired'));
+    renderPcalAgendasList();
+    return;
+  }
+  const _calsFalha=list.map(c=>c.id).filter(id=>!_calsOk.has(id));
   const cacheObj = Object.fromEntries(todosEventosDedup.map(ev=>[ev.id, ev]));
+  if(_calsFalha.length){
+    try{
+      const antigo=(await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache'))).val()||{};
+      Object.entries(antigo).forEach(([id,ev])=>{ if(ev && _calsFalha.includes(ev._calId) && !cacheObj[id]) cacheObj[id]=ev; });
+    }catch(e){}
+  }
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj);
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
     updatedAt: new Date().toISOString(),
@@ -8491,6 +8563,29 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_mare_seguranca_bf_2026_11_18',
+    titulo: '🛟 Maré mais seguro para a semana da Black Friday',
+    corpo: '<p>Novidades no <b>Maré</b>:</p>'
+      + '<ul><li><b>Versão nova sem perder texto:</b> ao clicar em Atualizar agora, o que está pendente é salvo antes. Se algo não puder ser salvo, o texto aparece numa caixa para você copiar.</li>'
+      + '<li><b>Comentário que falhou:</b> fica no card com a opção <b>Tentar novamente</b>.</li>'
+      + '<li><b>Excluir card:</b> a confirmação só aparece depois de gravar. Se a exclusão falhar, o card volta para o quadro com um aviso.</li>'
+      + '<li><b>🧮 Gantt:</b> o botão ganhou ícone próprio e não se confunde mais com 📊 Dados do Board.</li>'
+      + '<li><b>Card e Notas:</b> a tela do card está mais limpa, e as Notas não tiram mais o cursor do lugar enquanto você digita.</li></ul>',
+    tipo: 'novidade',
+    squad: '*'
+  },
+  {
+    id: 'seed_radar_apresentacao_2026_11_18',
+    titulo: '🌊 Radar: apresentação mais fácil de ler e meta na linha d’água',
+    corpo: '<p>Para quem acompanha pelo <b>Radar</b>:</p>'
+      + '<ul><li><b>Detalhe do Objetivo:</b> Marcos, Riscos e Próximos passos ganham prioridade na tela, com menos rolagem.</li>'
+      + '<li><b>Evolução do atingimento:</b> a meta virou a linha d’água do gráfico, e fica fácil ver se o resultado está acima ou abaixo dela.</li>'
+      + '<li><b>Panorama geral:</b> status e comparação por gerência mais legíveis na projeção.</li>'
+      + '<li><b>Abertura mais leve:</b> o Histórico e as Anotações carregam quando você abre essas telas.</li></ul>',
+    tipo: 'novidade',
+    squad: '*'
+  },
   {
     id: 'seed_mare_ferias_ilha_gantt_2026_11_16',
     titulo: '🏖️ Férias em tela cheia, avisos mais claros e o dia do Gantt num popup',
@@ -10827,7 +10922,7 @@ async function pcfgGanttArquivo(inp){
 function pcfgGanttCancelar(tipo){ delete _ganttCalPrevia[tipo]; _pcfgGanttDesenha(); }
 async function pcfgGanttPublicar(tipo){
   const pv=_ganttCalPrevia[tipo]; if(!pv||pv.erro||pv.lendo||!pv.mescla) return;
-  try{ const dado=await GXL.publicar(tipo, pv, window._currentUser||{}); _ganttCalAtual[tipo]=dado; delete _ganttCalPrevia[tipo]; showToast('✅ '+_GANTT_CALS[tipo].nome+' publicado — já aparece no 📊 Gantt do Maré (e no 🕘 Histórico)'); }
+  try{ const dado=await GXL.publicar(tipo, pv, window._currentUser||{}); _ganttCalAtual[tipo]=dado; delete _ganttCalPrevia[tipo]; showToast('✅ '+_GANTT_CALS[tipo].nome+' publicado — já aparece no 🧮 Gantt do Maré, no Radar e no 🕘 Histórico'); }
   catch(e){ showToast('❌ Não publiquei: '+(/permission/i.test(String(e&&e.message||e))?'sem permissão (só login Google da Hering; as regras novas do banco já foram publicadas?)':'falha ao gravar')); }
   _pcfgGanttDesenha();
 }
@@ -12353,6 +12448,7 @@ function _applySquadDados(sqId, val){
     // — mesma ideia de submarcaAtivo acima, pro donut "Por canal de venda".
     canalVendaAtivo: !!val.config?.canal_venda_ativo,
     flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
+    forecastHasColumns: !!val.columns,
     lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
     cal_events: _prev.cal_events,
     // Achado real (usuário: "timeline em painel ta sem foto das pessoas")
@@ -12405,6 +12501,7 @@ const _CC_DELTA_MAX_STALE = 200;          // mudou muito? mais barato/seguro bai
 const _cardsCache = {};        // sqId -> {byId:{id:card}, ua:{id:updatedAt}, fullAt}
 const _cardsNoDelta = {};      // sqId -> true: tem card que o índice não rastreia
 const _squadDadosInflight = {}, _squadDadosAt = {}, _squadDadosRerunFull = {};
+const _squadDadosFailed = new Set();
 let _ccDbP = null;
 function _ccDb(){
   if(_ccDbP) return _ccDbP;
@@ -12437,6 +12534,7 @@ async function _ccClearAll(){
   for(const k in _cardsCache) delete _cardsCache[k];
   for(const k in _cardsNoDelta) delete _cardsNoDelta[k];
   for(const k in _squadDadosAt) delete _squadDadosAt[k];
+  _squadDadosFailed.clear();
   for(const k in _ccSaveTimers) clearTimeout(_ccSaveTimers[k]);
   try{ const db = await _ccDb(); if(db) db.transaction('s','readwrite').objectStore('s').clear(); }catch(e){}
 }
@@ -12545,9 +12643,13 @@ function _pollSquadDados(sqId, full){
     .then(({modo, tr, val})=>{
       _dbgTrack('poll:squads/'+sqId+'/dados'+(modo==='delta'?'(delta)':''), tr);
       _squadDadosAt[sqId] = Date.now();
+      _squadDadosFailed.delete(sqId);
       _applySquadDados(sqId, val);
     })
-    .catch(()=>{})
+    .catch(()=>{
+      _squadDadosFailed.add(sqId);
+      _renderFlowForecast();
+    })
     .finally(()=>{
       _squadDadosInflight[sqId] = false;
       if(_squadDadosRerunFull[sqId]){ _squadDadosRerunFull[sqId] = false; _pollSquadDados(sqId, true); }
@@ -12599,6 +12701,7 @@ function renderAll(){
   updateTimestamp();
   renderSquadCards();
   renderConsolidated();
+  _renderFlowForecast();
   renderComparison();
   renderBlockers();
   renderColDist();
@@ -12712,6 +12815,238 @@ function renderConsolidated(){
 // ═══════════════════════════════════════════════════════════════════
 let FLOW_WINDOW = 14; // dias
 const DAY_MS = 86400000;
+
+const FLOW_FORECAST_PILOTS = ['dados', 'dev'];
+const FLOW_FORECAST_START = '2026-11-30';
+const FLOW_FORECAST_PAUSES = [['2026-11-23', '2026-11-29'], ['2026-12-24', '2027-01-03']];
+const FLOW_FORECAST_CARNIVAL = ['2027-02-08', '2027-02-10'];
+const FLOW_FORECAST_TZ = new Intl.DateTimeFormat('en-CA', {
+  timeZone:'America/Sao_Paulo', year:'numeric', month:'2-digit', day:'2-digit',
+});
+const FLOW_FORECAST_MESSAGES = {
+  data:'Não foi possível calcular com os dados atuais. Atualize o Painel e tente de novo.',
+  column:'A previsão precisa de exatamente uma coluna chamada Concluído.',
+  blocked:'A previsão pausa na Black Friday e no fim de ano. Tente após o período.',
+  days:'Ainda não temos histórico suficiente para estimar a data. São necessários 28 dias completos.',
+  deliveries:'Ainda não temos histórico suficiente para estimar a data. São necessárias 20 entregas.',
+  weekdays:'Ainda não temos histórico suficiente para estimar a data. São necessárias quatro ocorrências de cada dia da semana.',
+  rhythm:'O ritmo mudou nas últimas semanas. Espere acumular entregas no novo ritmo para estimar uma data.',
+  horizon:'Com este ritmo, ainda não dá para estimar uma data para esse lote nos próximos 30 dias.',
+};
+
+function _forecastDate(day, offset = 0){
+  return new Date(Date.parse(day+'T00:00:00Z')+offset*DAY_MS);
+}
+function _forecastDay(day, offset){ return _forecastDate(day, offset).toISOString().slice(0,10); }
+function _forecastWeekday(day){ return _forecastDate(day).getUTCDay(); }
+function _forecastIn(day, [start, end]){ return day>=start && day<=end; }
+function _forecastPaused(day){ return FLOW_FORECAST_PAUSES.some(range=>_forecastIn(day, range)); }
+function _forecastCivil(ms){ return FLOW_FORECAST_TZ.format(ms); }
+function _forecastLabel(day, full=false){
+  const [y,m,d]=day.split('-');
+  return d+'/'+m+(full ? '/'+y : '');
+}
+
+function _forecastFinalColumns(data){ return data.columns.filter(c=>c?.name==='Concluído'); }
+
+function _forecastSample(data, today){
+  if(!data || !Array.isArray(data.cards) || !Array.isArray(data.columns) || data.forecastHasColumns===false) return {state:'data'};
+  const finalColumns=_forecastFinalColumns(data);
+  if(finalColumns.length!==1 || !finalColumns[0].id) return {state:'column'};
+  const done=finalColumns[0].id;
+  const cutoff=Date.parse(data.flowBaseline?.at);
+  if(data.flowBaseline && !Number.isFinite(cutoff)) return {state:'data'};
+
+  const future=Array.from({length:30}, (_,i)=>_forecastDay(today,i+1));
+  if(_forecastPaused(today) || future.some(_forecastPaused)) return {state:'blocked'};
+
+  const first=[FLOW_FORECAST_START,_forecastDay(today,-56)];
+  if(Number.isFinite(cutoff)) first.push(_forecastDay(_forecastCivil(cutoff),1));
+  const daily=new Map();
+  for(let day=first.sort().pop();day<today;day=_forecastDay(day,1)){
+    if(!_forecastPaused(day) && !_forecastIn(day,FLOW_FORECAST_CARNIVAL)) daily.set(day,0);
+  }
+
+  const seen=new Set();
+  let excluded=0, archived=0;
+  for(const card of data.cards){
+    if(!card?.id || seen.has(card.id)) continue;
+    seen.add(card.id);
+    const aggregate=(card.childCardIds||[]).length;
+    if(card.col!==done) continue;
+    const f=card.flow||{};
+    const log=Array.isArray(f.log) ? f.log : [];
+    const event=log.findLast(e=>e && e.to===done && e.from!==done);
+    const ms=Date.parse(event?.at);
+    if(aggregate || card.continuo || !Number.isFinite(Date.parse(f.doneAt)) || !event?.from || event.from==='—'
+      || !Number.isFinite(ms) || ms===Date.parse(f.resetAt) || Date.parse(f.doneAt)===Date.parse(f.resetAt) || ms<=cutoff){
+      excluded++;
+      continue;
+    }
+    const day=_forecastCivil(ms);
+    if(!daily.has(day)){ excluded++; continue; }
+    daily.set(day,daily.get(day)+1);
+    if(card.archived) archived++;
+  }
+
+  const buckets=Array.from({length:7},()=>[]);
+  const weeks=[];
+  let deliveries=0;
+  for(const [day,count] of daily){
+    buckets[_forecastWeekday(day)].push(count);
+    deliveries+=count;
+    if(_forecastWeekday(day)!==1) continue;
+    const week=Array.from({length:7},(_,i)=>daily.get(_forecastDay(day,i)));
+    if(week.every(Number.isFinite)) weeks.push(week.reduce((sum,n)=>sum+n,0));
+  }
+  const previous=weeks.at(-4)+weeks.at(-3);
+  const ratio=(weeks.at(-2)+weeks.at(-1))/previous;
+  let state='ready';
+  if(daily.size<28) state='days';
+  else if(deliveries<20) state='deliveries';
+  else if(buckets.some(days=>days.length<4)) state='weekdays';
+  else if(!Number.isFinite(ratio) || ratio<0.67 || ratio>1.5) state='rhythm';
+  return {state,buckets,future,days:daily.size,deliveries,archived,excluded,ratio};
+}
+
+// PRNG local com semente estável. A série e o calendário definem as trajetórias, independentemente de N.
+function _forecastRandom(key){
+  let seed=2166136261;
+  for(const char of key) seed=Math.imul(seed^char.charCodeAt(0),16777619);
+  return ()=>{
+    seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+    return seed/4294967296;
+  };
+}
+
+function _forecastRun(distributions, target, random, runs=5000){
+  const finishes=new Uint32Array(distributions.length);
+  for(let i=0;i<runs;i++){
+    let count=0, finished=false;
+    distributions.forEach((values,day)=>{
+      count+=values[Math.floor(random()*values.length)];
+      if(!finished && count>=target){ finishes[day]++; finished=true; }
+    });
+  }
+  let cumulative=0, p50=null, p85=null;
+  finishes.forEach((count,day)=>{
+    cumulative+=count;
+    if(p50===null && cumulative>=runs*0.5) p50=day;
+    if(p85===null && cumulative>=runs*0.85) p85=day;
+  });
+  return {p50,p85};
+}
+
+function _forecastDistributions({buckets,future}){
+  return future.map(day=>_forecastIn(day,FLOW_FORECAST_CARNIVAL) ? [0] : buckets[_forecastWeekday(day)]);
+}
+
+let _forecastResultConfig=null;
+function _forecastReset(){
+  _forecastResultConfig=null;
+  document.getElementById('flow-forecast-badge').hidden=true;
+  document.getElementById('flow-forecast-details').hidden=true;
+  document.getElementById('flow-forecast-status').textContent='Escolha um squad e informe quantos itens quer planejar.';
+}
+
+function _forecastSuggest(){
+  _forecastReset();
+  const id=document.getElementById('flow-forecast-squad').value;
+  const input=document.getElementById('flow-forecast-count');
+  const data=squadData[id];
+  input.value='';
+  if(!data?.forecastHasColumns || _squadDadosFailed.has(id)) return;
+  const finals=_forecastFinalColumns(data);
+  if(finals.length!==1) return;
+  const pending=new Set(data.columns.filter(c=>c.id!==finals[0].id && !/cancel|descart|reprov/i.test(c.name)).map(c=>c.id));
+  const eligible=data.cards.filter(c=>c && pending.has(c.col) && !c.archived && !c.continuo && !c.paused
+    && !(c.childCardIds||[]).length && ((data.blockerMode||'col')==='col' ? c.col!=='blocker' : !c.blocker)).length;
+  input.value=eligible||'';
+  if(!eligible) document.getElementById('flow-forecast-status').textContent='Nenhum item elegível neste recorte.';
+}
+
+let _forecastSuggestionReady=false;
+function _forecastConfig(data){
+  return JSON.stringify([data.flowBaseline?.at,_forecastFinalColumns(data).map(c=>c.id)]);
+}
+function _forecastHasFreshData(id,today){
+  const fetchedAt=_squadDadosAt[id];
+  return !_squadDadosFailed.has(id) && !!squadData[id]?.forecastHasColumns
+    && Number.isFinite(fetchedAt) && _forecastCivil(fetchedAt)>=today;
+}
+
+function _renderFlowForecast(){
+  const section=document.getElementById('flow-forecast');
+  const select=document.getElementById('flow-forecast-squad');
+  const status=document.getElementById('flow-forecast-status');
+  if(!section || !select?.options || !status) return;
+  const pilots=SQUADS.filter(s=>FLOW_FORECAST_PILOTS.includes(s.id) && squadVisible(s.id));
+  section.hidden=!pilots.length;
+  const old=select.value;
+  if([...select.options].map(o=>o.value).join()!==pilots.map(s=>s.id).join()){
+    select.replaceChildren(...pilots.map(s=>{
+      const option=document.createElement('option');
+      option.value=s.id;
+      option.textContent=s.label;
+      return option;
+    }));
+    if(pilots.some(s=>s.id===old)) select.value=old;
+    else { _forecastSuggestionReady=!!squadData[select.value]; _forecastSuggest(); }
+  }
+  if(!_forecastSuggestionReady && squadData[select.value]){
+    _forecastSuggestionReady=true;
+    if(!document.getElementById('flow-forecast-count').value) _forecastSuggest();
+  }
+  const data=squadData[select.value];
+  if(_forecastResultConfig!==null && (!data?.forecastHasColumns || _forecastResultConfig!==_forecastConfig(data))) _forecastReset();
+  if(pilots.length && _squadDadosFailed.has(select.value)){
+    _forecastReset();
+    status.textContent=FLOW_FORECAST_MESSAGES.data;
+  } else if(status.textContent===FLOW_FORECAST_MESSAGES.data && _forecastHasFreshData(select.value,_forecastCivil(Date.now()))){
+    _forecastReset();
+  }
+}
+
+document.getElementById('flow-forecast-squad').addEventListener('change',_forecastSuggest);
+document.getElementById('flow-forecast-count').addEventListener('input',_forecastReset);
+document.getElementById('flow-forecast-form').addEventListener('submit',event=>{
+  event.preventDefault();
+  const id=document.getElementById('flow-forecast-squad').value;
+  if(!FLOW_FORECAST_PILOTS.includes(id) || !SQUADS.some(s=>s.id===id && squadVisible(id))) return;
+  const n=document.getElementById('flow-forecast-count').valueAsNumber;
+  _forecastReset();
+  const status=document.getElementById('flow-forecast-status');
+  if(!Number.isSafeInteger(n) || n<1){
+    status.textContent='Informe um número inteiro de itens maior que zero.';
+    return;
+  }
+  const today=_forecastCivil(Date.now());
+  const data=squadData[id];
+  if(!_forecastHasFreshData(id,today)){
+    status.textContent=FLOW_FORECAST_MESSAGES.data;
+    return;
+  }
+  const sample=_forecastSample(data,today);
+  if(sample.state!=='ready'){
+    status.textContent=FLOW_FORECAST_MESSAGES[sample.state];
+    return;
+  }
+  const distributions=_forecastDistributions(sample);
+  const result=_forecastRun(distributions,n,_forecastRandom(JSON.stringify([id,today,distributions])));
+  if(result.p85===null){ status.textContent=FLOW_FORECAST_MESSAGES.horizon; return; }
+  status.textContent='Pelo ritmo recente deste squad, estimamos 85% de chance de concluir '+n+
+    (n===1 ? ' item até ' : ' itens até ')+_forecastLabel(sample.future[result.p85])+
+    ', se o escopo e a prioridade do lote forem mantidos.';
+  document.getElementById('flow-forecast-median').textContent='P50 · metade das simulações conclui até '+_forecastLabel(sample.future[result.p50])+'.';
+  document.getElementById('flow-forecast-sample').textContent='Data-base '+_forecastLabel(today,true)+' · '+sample.deliveries+
+    ' entregas observadas em '+sample.days+' dias, incluindo '+sample.archived+' arquivadas.';
+  document.getElementById('flow-forecast-exclusions').textContent=sample.excluded+
+    ' cards em Concluído ficaram fora da amostra. Só entram entregas verificáveis após o corte, em dias completos do período regular.';
+  _forecastResultConfig=_forecastConfig(data);
+  document.getElementById('flow-forecast-badge').hidden=false;
+  document.getElementById('flow-forecast-details').hidden=false;
+});
+
 
 function setFlowWindow(d){
   FLOW_WINDOW = d;

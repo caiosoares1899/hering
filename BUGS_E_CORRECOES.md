@@ -111,12 +111,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ### 2026-11-18 · Ajuda in-app (/atualizarhelpcontent): sincronização de Maré, Radar, Oceano, Painel, Dicas e Guia OKR
 
-- **Auditoria e sincronização das 4 frentes de ajuda in-app (`/atualizarhelpcontent`, SÓ DEV — exceto `guia-okr.html`, sem cópia dev):**
+- **Auditoria e sincronização das 4 frentes de ajuda in-app (`/atualizarhelpcontent`, PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)):**
   - **Maré (`kanban-dev.html` `v8.30.1016-dev`), Dicas (`mare-dicas-dev.js?v=19`) e Painel (`painel-dev.html` `v5.124 · painel-dev`):** atualizado o botão e atalho `🧮 Gantt` (ao lado de `↕ Ordenação`, exibindo apenas cards com período `Início + Fim` e os calendários do Digital); adicionados os grupos de filtro de `🛍️ Comercial Marketplace` e `🏷️ Comercial Outlet` na ajuda do Gantt; incluída `🏝️ Ilha Dinâmica` em `Minhas Preferências` e removidos os rótulos temporários `(opcional no dev)` e `(proposta em teste)` do modo `🔥 Black Friday`; documentadas as 4 famílias visuais de avisos no sino (`👤 Pessoal`, `📅 Calendário`, `🎯 Radar`, `🛡️ Sistema`), a liberação imediata da trava `🔒` ao fechar aba/desconectar (`onDisconnect`), o estado `⏳ enviando…` / `Tentar novamente` nos comentários, a varredura diária de automações por squad e as ações `🛒 Definir canal` e `🧩 Aplicar fan-out` em `HELP_CONTENT.automacoes`; alinhados os textos inline de `📢 Comunicados` e `⚙ → 📊 Gantt` no Painel e as dicas `gantt` / `gantt-abas` em `mare-dicas-dev.js`.
   - **Radar (`okr-dev.html` `v2.141 · okr-dev`) e `guia-okr.html`:** adicionados `🏖️ Minhas férias` em `#okr-more-btn` / `#hlp-cabecalho` e o filtro `🎬 apresentação` em `#hlp-filtros`; corrigido o escopo de permissão para **Arquivar Objetivo** (restrito a ADM, enquanto Marcos seguem arquiváveis por quem edita o Objetivo) em `#hlp-faq7`, `#hlp-arquivar`, `#hlp-menu`, `_okrHelpEuHtml` e Slide 11 do `guia-okr.html`; protegidos os links `data-go="torres"` com `.okr-so-hering-esconde` quando `MARE_SO_HERING = true`; expandidos `#hlp-calendario`, `#hlp-sino`, `_okrHelpEuHtml` e os Slides 4, 13a, 13 e 13b do `guia-okr.html` (preservando todos os GIFs/imagens base64 intactos).
   - **Oceano (`oceano-dev.html` `v1.88 · oceano-dev`):** adicionada a pergunta `id:'ferias'` no `FAQ`, alinhado `id:'gantt'` (`🧮 Gantt` no Maré vs. `📊 Gantt` no Radar, `📤` + `🕘 Histórico` e `⭐ Favoritar`), desfeita a contradição de `id:'entrada'` com `id:'porta'` sobre a 1ª abertura do dia com sessão ativa, corrigido `id:'contato'` para apontar a `Conheça o Oceano` e atualizado o resumo da `Travessia` em `PROD.travessia`.
 
-### 2026-11-18 · 📉 Radar: histórico semanal e anotações de reunião só baixam quando a tela abre — okr v2.140-dev (SÓ DEV)
+### 2026-11-18 · 📉 Radar: histórico semanal e anotações de reunião só baixam quando a tela abre — okr v2.140-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - **Origem:** `/otimizaçãoderotina`, Passo 4.1 (leitura do Firebase), pensando nas recargas da semana da Black Friday.
 - **Causa:** todo boot do Radar abria `kanban/okr/snapshots` (uma foto por semana) e `kanban/okr/reuniao_notas` (anotações de todas as reuniões), nós que só crescem e que só o Histórico, a aba Anotações e o detalhe do evento usam.
@@ -128,11 +128,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 O teste da apresentação ainda esperava que a pausa local persistisse após o apresentador avançar. O hotfix de 15/10 já documenta que a sala volta a acompanhar a cada mudança de slide, detalhe ou apresentador. A suíte agora testa pausa sem navegação nova, retomada manual, retomada automática e código de saída em caso de falha. Nenhuma mudança na página publicada.
 
-### 2026-11-18 · Tema Black Friday manual era perdido ao fim da semana após recarregar — kanban v8.30.1015-dev (SÓ DEV)
+### 2026-11-18 · Tema Black Friday manual era perdido ao fim da semana após recarregar — kanban v8.30.1015-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo manualmente como padrão sazonal. Na virada de 30/11 com a aba aberta, o contador substituía a preferência gravada. O boot preserva a escolha manual e mantém a precedência sazonal quando o automático está ligado. A regressão testa entrada na semana, recarga, virada e saída manual.
 
-### 2026-11-18 · 🔥 Semana Black Friday: texto perdido ao sair versão nova, exclusão recusada que dizia ter excluído e restauração de backup pela metade — kanban v8.30.1014-dev (SÓ DEV)
+### 2026-11-18 · 🔥 Semana Black Friday: texto perdido ao sair versão nova, exclusão recusada que dizia ter excluído e restauração de backup pela metade — kanban v8.30.1014-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - **Origem:** `/monitorarbugs` em áreas sensíveis, pensando na semana da Black Friday (23 a 29/11).
 - **Versão nova com texto na tela:** a tela "Atualizar agora" travava as gravações antes do autosave pendente e prometia que o digitado ficava salvo. O autosave pendente agora é gravado antes da trava, e o botão espera essa gravação terminar (até 5 s) antes de recarregar. Card novo, comentário não enviado e, na sessão parada, o card com autosave pendente aparecem numa caixa para copiar. Campos que só gravam no 💾 Salvar (prioridade, datas, impedimento) ganham um aviso, e a tela só promete que está salvo quando está.
@@ -141,19 +141,19 @@ Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo man
 - **Teste:** `docs/arezzo/testes/test_bf_sensiveis_1811.js` (17 checagens). Contra a `main`, 11 falham.
 - **Sem achado:** datas e virada do tema da semana, envio de push e limpeza de tokens.
 
-### 2026-11-18 · 🧮 Toolbar do Maré: o botão do Gantt tinha o mesmo emoji de "Dados do Board" — kanban v8.30.1013-dev (SÓ DEV)
+### 2026-11-18 · 🧮 Toolbar do Maré: o botão do Gantt tinha o mesmo emoji de "Dados do Board" — kanban v8.30.1013-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - **Pedido do Caio:** os dois botões da toolbar usavam 📊, o que dificultava diferenciar um do outro.
 - **Correção:** o botão do Gantt passa a usar 🧮. A dica do período do card, a Central de Ajuda e o nome do atalho acompanham o botão. "Dados do Board" continua com 📊.
 - **Teste:** `docs/arezzo/testes/test_gantt_board.js`.
 
-### 2026-11-18 · Comentário recusado continua disponível para reenvio quando já existe outro rascunho — kanban v8.30.1011-dev (SÓ DEV)
+### 2026-11-18 · Comentário recusado continua disponível para reenvio quando já existe outro rascunho — kanban v8.30.1011-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - Se o banco recusava um comentário depois que a pessoa começava a digitar outro, o primeiro texto saía da lista e não voltava ao campo.
 - No Maré dev, o comentário recusado continua na sessão como “Falha ao enviar”, com “Tentar novamente”. O reenvio reaproveita o mesmo ID e só dispara menções depois da confirmação. A recusa sempre exibe um aviso. O primeiro envio recusado devolve o texto ao campo vazio apenas com o card de origem aberto. Ao fechar ou trocar de card, o texto fica disponível para reenvio ao voltar ao card de origem.
 - Teste: `docs/arezzo/testes/test_comentario_enviando.js` (Chromium com Firebase simulado, incluindo troca de card, fechamento e reabertura do modal, releitura e clique duplo no reenvio).
 
-### 2026-11-18 · 🔐 Popup da agenda: escolher outra conta Google trocava a sessão do app em silêncio — kanban v8.30.1010-dev, painel v5.122-dev (SÓ DEV)
+### 2026-11-18 · 🔐 Popup da agenda: escolher outra conta Google trocava a sessão do app em silêncio — kanban v8.30.1010-dev, painel v5.122-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - **Origem:** item "reportado, não corrigido" do `/monitorarbugs` do login Google (entrada logo abaixo); o Caio aprovou a correção.
 - **Causa:** `_requestCalendarScope()` usava `signInWithPopup`. Se o ADM escolhesse outra conta no popup da agenda, o app passava a rodar com essa conta.
@@ -161,7 +161,7 @@ Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo man
 - **Limite conhecido:** com `MARE_SO_HERING` desligado, quem entra pela Microsoft não consegue autorizar a agenda com uma conta Google (antes, a sessão era trocada).
 - **Teste:** `docs/arezzo/testes/test_agenda_mesma_conta.js` (20 checagens). Contra a versão anterior, 12 falham. O `docs/arezzo/testes/fakefb.js` ganhou `reauthenticateWithPopup`, `credentialFromResult` e `currentUser`.
 
-### 2026-11-18 · 🔐 Login Google: o token do login virava 'autorização da agenda', o token de agenda sobrevivia à troca de conta e uma busca que falhava inteira apagava as agendas do squad — kanban v8.30.1008-dev, painel v5.121-dev (SÓ DEV)
+### 2026-11-18 · 🔐 Login Google: o token do login virava 'autorização da agenda', o token de agenda sobrevivia à troca de conta e uma busca que falhava inteira apagava as agendas do squad — kanban v8.30.1008-dev, painel v5.121-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - **Origem:** `/monitorarbugs` em área sensível (login Google), pensando na Black Friday.
 - **Achado A (técnica 3, o comentário do provider × o código):** o login por popup (`window._signIn`) e a volta do redirect do login (`getRedirectResult`) guardavam o accessToken do LOGIN em `gcal_token`. O próprio comentário do provider diz que o escopo de agenda não entra no login, então esse token não lê o Google Agenda.
@@ -183,14 +183,14 @@ Ao recarregar entre 23 e 29/11, o boot tratava o tema Black Friday já salvo man
 - **Reportado, não corrigido:** `_requestCalendarScope()` usa `signInWithPopup`. Se o ADM escolher outra conta Google no popup da agenda, a sessão do app troca de conta em silêncio. `reauthenticateWithPopup` recusaria a troca (`auth/user-mismatch`), mas muda o fluxo e fica para decisão.
 - **Efeito colateral aceito:** o token de agenda antigo, salvo sem dono, é descartado uma vez. O ADM autoriza a agenda de novo no próximo "Processar" (o token vence em ~1 h de qualquer jeito).
 
-### 2026-11-18 · 🐛 Monitor do Painel: o erro interno do popup de login do Google não vira mais erro aberto — kanban v8.30.1007-dev (SÓ DEV)
+### 2026-11-18 · 🐛 Monitor do Painel: o erro interno do popup de login do Google não vira mais erro aberto — kanban v8.30.1007-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - **Origem:** erros abertos no 🐛 Monitor do Painel: 8 registros de `INTERNAL ASSERTION FAILED: Pending promise was never set` em 5 pessoas (04–16/11, squads outlet-crm, midiacriativa, app, prf).
 - **O que é:** erro interno do SDK do Firebase Auth (`PopupOperation.reject`) no popup de login do Google. Não há nada a corrigir no nosso código, e cada ocorrência virava um erro "novo" no Monitor.
 - **Mudança (pedido do Caio):** `logError()` não grava mais esse erro em `error_logs` (nem soma em `error_stats`). O aviso "⚠️ Conexão instável — recarregue" do `_checkAuthGlitch()` continua aparecendo para a pessoa, e qualquer outro erro continua sendo gravado.
 - **Teste:** `docs/arezzo/testes/test_monitor_ignora_popup_login.js` (3 checagens). Sem a mudança, a 1ª falha.
 
-### 2026-11-18 · 📝 Notas: o editor estourava e tirava o foco do campo quando a nota chegava do banco no meio da digitação — kanban v8.30.1006-dev (SÓ DEV)
+### 2026-11-18 · 📝 Notas: o editor estourava e tirava o foco do campo quando a nota chegava do banco no meio da digitação — kanban v8.30.1006-dev — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88)
 
 - **Origem:** erros abertos no 🐛 Monitor do Painel (squad dados, 12/11, 3 registros em 12 s): "Failed to set the 'innerHTML' property on 'Element': The node to be removed is no longer a child of this node. Perhaps it was moved in a 'blur' event handler?" em `renderNotaEditor` / `_renderNotasCurrentView`, vindo do `onValue` das 📝 Notas.
 - **Causa:** um snapshot das Notas (eco do próprio salvamento ou edição de outra aba/pessoa) chega enquanto a pessoa digita num bloco. `renderNotaEditor()` troca o `innerHTML` da árvore, o textarea focado sai do DOM, o Chrome dispara o `blur` na hora e `onBlocoBlur()` redesenha **de novo por dentro**. No modo livre o `innerHTML` de fora estoura; o foco sai do campo no meio da digitação.
