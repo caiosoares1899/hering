@@ -2517,7 +2517,7 @@ function _okrRenderCountdown(){
 // ── ⏳ Avisos de tempo da sessão ao vivo (pedido do Caio, 19/11/2026) ──
 // Faltam 10 min, faltam 5 min e tempo esgotado: para todas as telas, uma vez por sessão e por término (ajustar o término rearma).
 // Ritmo: compara quanto da pauta já passou (slide da sala) com o tempo gasto e projeta o fim. Só depois de 3 min e de 20% da pauta.
-// Quem controla (quem apresenta, ADM, Bastidor) sempre vê; a sala (público, Palco Limpo, quem acompanha) só se o Bastidor ligar `avisos/ritmoSala`.
+// O balão de ritmo aparece no Bastidor; nas outras telas (slides, público, quem acompanha) só se o Bastidor ligar `avisos/ritmoSala`.
 const _liveAvisosVistos = new Set();
 let _liveRitmoMostrando = false, _liveRitmoUltimo = 0, _liveBalaoT = 0;
 const _liveHoraSP = ms => new Date(ms).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
@@ -2528,13 +2528,12 @@ function _liveAvisoNovo(chave){
   return true;
 }
 const liveRitmoNaSala = () => liveAtiva() && !!live.avisos && live.avisos.ritmoSala===true;
-function liveVeRitmo(){
-  const sala = _okrTelaPublico || document.body.classList.contains('live-palco-limpo');
-  return liveRitmoNaSala() || (!sala && livePodeControlar());
-}
+// Desligado: só o Bastidor vê o balão. A aba dos slides costuma ser a tela compartilhada no Meet (mesma conta do ADM), então conta como sala.
+const liveVeRitmo = () => liveRitmoNaSala() || (_okrTelaBastidor && liveSouAdm());
 function liveRitmo(rel){
   if(!rel || rel.modo!=='cronometro' || rel.fimEm===null || slides.length<2) return null;
-  const agora = liveAgora(), gasto = agora - rel.inicioEm, frac = Math.min(1, Math.max(0, currentIdx) / (slides.length - 1));
+  const naSala = live && live.slide ? slides.findIndex(s=>s.key===live.slide) : -1;   // o slide da sala, não o que esta tela está olhando
+  const agora = liveAgora(), gasto = agora - rel.inicioEm, frac = Math.min(1, Math.max(0, naSala>=0 ? naSala : currentIdx) / (slides.length - 1));
   if(gasto < 3*60000 || frac < 0.2) return {cedo:true};
   if(frac >= 1) return null;
   const previsto = rel.inicioEm + gasto / frac;

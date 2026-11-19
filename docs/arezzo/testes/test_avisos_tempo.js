@@ -76,7 +76,8 @@ const quando = async (min, ...ps) => { for (const p of ps) await p.clock.setFixe
       await A.p.evaluate(i => window._okrGoTo(i), alvo); await A.p.waitForTimeout(300); await sync(A.p, E.p, P.p, D.p);
       await quando(30, A.p, E.p, P.p, D.p);
       const pct = await A.p.evaluate(() => currentIdx / (slides.length - 1));
-      t('quem apresenta vê o aviso de ritmo', /^⚠️ Nesse ritmo, terminamos às /.test(await balao(A.p)), { b: await balao(A.p), pct });
+      t('Bastidor vê o aviso de ritmo', /^⚠️ Nesse ritmo, terminamos às /.test(await balao(D.p)), { b: await balao(D.p), pct });
+      t('com o interruptor desligado, a aba dos slides (mesma conta, tela do Meet) não mostra o ritmo', !(await balao(A.p)), await balao(A.p));
       t('Bastidor mostra a previsão de término', /^⚠️ Nesse ritmo, termina às \d\d:\d\d/.test(await D.p.textContent('#ritmo')), await D.p.textContent('#ritmo'));
       t('com o interruptor desligado, o público não vê o ritmo', !(await balao(P.p)), await balao(P.p));
       t('nem quem só acompanha', !(await balao(E.p)), await balao(E.p));
@@ -86,6 +87,10 @@ const quando = async (min, ...ps) => { for (const p of ps) await p.clock.setFixe
       await sync(D.p, A.p, E.p, P.p); await P.p.waitForTimeout(1300);
       t('ligado: a Tela para o público mostra o aviso de ritmo', /^⚠️ Nesse ritmo/.test(await balao(P.p)), await balao(P.p));
       t('ligado: quem acompanha também', /^⚠️ Nesse ritmo/.test(await balao(E.p)), await balao(E.p));
+      t('ligado: e a aba dos slides', /^⚠️ Nesse ritmo/.test(await balao(A.p)), await balao(A.p));
+      const ritmoD = await D.p.textContent('#ritmo');
+      await E.p.evaluate(() => { liveSeguindo = false; window._okrGoTo(0); }); await E.p.waitForTimeout(300);
+      t('o ritmo usa o slide da sala, não o que cada tela está olhando', await E.p.evaluate(() => liveRitmoTexto(liveRelogio())) === ritmoD, [await E.p.evaluate(() => liveRitmoTexto(liveRelogio())), ritmoD]);
       await quando(52, A.p, D.p);
       await D.p.waitForTimeout(1300);
       t('com aviso de tempo e de ritmo ao mesmo tempo, o de tempo fica na tela (Bastidor)', (await balao(D.p)) === '⏳ Faltam 8 min', await balao(D.p));
