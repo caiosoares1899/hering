@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — Evolução e escolha direta de Objetivos no controle ao vivo — 2026-11-19
+
+O Bastidor permite escolher um Objetivo do slide. O Bastidor e o passador abrem e fecham Evolução para toda a sala.
+
 ### SÓ DEV — Radar — Bastidor aproveita a largura do desktop — 2026-11-19
 
 Em desktop, a projeção ganha uma terceira coluna, ao lado da navegação e das anotações, e reduz a altura ocupada.
