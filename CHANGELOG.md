@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — botão próprio do passador acima do 🎙️, que também pede o controle — 2026-11-19
+
+Abrir controle flutuante saiu do menu 🎙️ e virou um botão 🎛️ logo acima do microfone. Para quem apresenta, um clique abre o passador compacto (Anterior, Próximo e Fechar detalhe). Para quem acompanha, o mesmo botão pede o controle, e quem apresenta ou o ADM libera. Ao liberar, o botão passa para quem recebeu; ao retomar, volta. O menu 🎙️ sobe para não encostar no botão e continua com laser e caneta. A Tela para o público e o Bastidor não mostram o botão, e ele só aparece em navegador com janela flutuante. Teste: docs/arezzo/testes/test_passador_botao.js (20 verificações no Chrome, com a janela flutuante de verdade).
+
 ### SÓ DEV — Radar — página do Bastidor para o Safari — 2026-11-19
 
 O ADM abre o Bastidor em uma aba normal usando okr-bastidor.html. A página reaproveita os controles da sala ao vivo sem depender de Picture-in-Picture.
