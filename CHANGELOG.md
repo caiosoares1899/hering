@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — controle flutuante no Chrome — 2026-11-19
+
+Quem apresenta pode abrir uma janela flutuante com Anterior, Próximo e Fechar detalhe. A navegação continua sincronizada com a sala. A janela fecha quando o controle muda de pessoa ou a sessão termina.
+
 ### SÓ DEV — Radar — abrir slides da pauta pelo Calendário — 2026-11-19
 
 O detalhe da ocorrência abre os slides com os objetivos da pauta e o relógio local com o horário de São Paulo. O convite da sala conserva o mesmo recorte.

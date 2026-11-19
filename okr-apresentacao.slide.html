@@ -1690,6 +1690,7 @@ function render(){
   document.getElementById('tb-bar-fill').style.width = slides.length ? ((currentIdx+1)/slides.length*100)+'%' : '0%';
   document.getElementById('btn-prev').disabled = currentIdx<=0;
   document.getElementById('btn-next').disabled = currentIdx>=slides.length-1;
+  liveAtualizarControleFlutuante();
   const upd = document.getElementById('cover-updated');
   if(upd && _lastUpdate) upd.textContent = '🔄 Atualizado às ' + _lastUpdate.toLocaleTimeString('pt-BR');
   fitSlideContent(document.querySelector('.slide.active'));
@@ -2298,6 +2299,7 @@ function _isAdmOkr(){
 }
 let listenersStarted = false;
 function _okrResetOverlays(){
+  liveControleFlutuante?.close();
   _okrLimparAting();
   window._okrCloseNotes();
   window._okrCloseDetail?.();
@@ -2471,6 +2473,7 @@ function liveAplicar(forcar){
   } finally { _liveAplicando = false; if(!_livePend) _liveRetomar = false; }   // retomada de quem recarregou é de uma vez só (senão cada sinal da sala puxaria o apresentador de volta)
 }
 function liveAposNavegar(){
+  liveAtualizarControleFlutuante();
   if(_liveAplicando){ liveDesenhar(); return; }
   if(livePodeControlar()){
     liveSeguindo = true;
@@ -2574,6 +2577,59 @@ window._liveCopiarConvite = async () => {
     window.prompt('Copie o convite e cole no chat do Meet:', convite);
   }
 };
+let liveControleFlutuante = null;
+function liveAtualizarControleFlutuante(){
+  const pip = liveControleFlutuante;
+  if(!pip || pip.closed) return;
+  if(!liveSouHost() || window._okrIsViewer){ pip.close(); return; }
+  const detalhe = !!liveDetalheAberto();
+  const doc = pip.document;
+  doc.getElementById('estado').textContent = 'Slide '+(currentIdx+1)+' de '+slides.length;
+  doc.getElementById('anterior').disabled = detalhe || currentIdx<=0;
+  doc.getElementById('proximo').disabled = detalhe || currentIdx>=slides.length-1;
+  doc.getElementById('fechar-detalhe').disabled = !detalhe;
+}
+window._liveAbrirControleFlutuante = async () => {
+  const api = window.documentPictureInPicture;
+  if(!liveSouHost() || window._okrIsViewer || !api?.requestWindow || liveControleFlutuante) return;
+  let pip;
+  try{
+    pip = await api.requestWindow({width:348,height:142});
+  }catch(e){
+    liveToast('O Chrome não abriu o controle flutuante. Use os controles na aba dos slides.');
+    return;
+  }
+  if(!liveSouHost() || window._okrIsViewer){ pip.close(); return; }
+  liveControleFlutuante = pip;
+  pip.addEventListener('pagehide', ()=>{
+    if(liveControleFlutuante===pip) liveControleFlutuante = null;
+  }, {once:true});
+  const doc = pip.document;
+  doc.documentElement.lang = 'pt-BR';
+  doc.title = 'Controle da apresentação do Radar';
+  const estilo = doc.createElement('style');
+  estilo.textContent = `
+    :root{color-scheme:dark}
+    body{margin:0;padding:12px;box-sizing:border-box;background:#071827;color:#e8f5ff;font:14px system-ui}
+    h1{margin:0 0 4px;font-size:15px}
+    p{margin:0 0 12px;color:#a8c3d6}
+    nav{display:flex;flex-wrap:wrap;gap:6px}
+    button{font:inherit;color:inherit;background:#102c41;border:1px solid #397898;border-radius:8px;padding:7px 8px;cursor:pointer}
+    button:hover:not(:disabled){background:#194664}
+    button:focus-visible{outline:2px solid #7ee8ff;outline-offset:2px}
+    button:disabled{opacity:.55;cursor:default}
+  `;
+  doc.head.append(estilo);
+  doc.body.innerHTML = '<h1>Apresentação do Radar</h1><p id="estado" role="status"></p>'
+    + '<nav aria-label="Navegação dos slides"><button type="button" id="anterior">← Anterior</button>'
+    + '<button type="button" id="proximo">Próximo →</button><button type="button" id="fechar-detalhe">Fechar detalhe</button></nav>';
+  const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
+  doc.getElementById('anterior').addEventListener('click', agir(()=>window._okrPrev()));
+  doc.getElementById('proximo').addEventListener('click', agir(()=>window._okrNext()));
+  doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
+  liveAtualizarControleFlutuante();
+  window._livePainel(false);
+};
 window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? abrir : !livePainelAberto; _liveSig = ''; liveRender(); };
 // A interface só é remontada quando algo MUDOU de verdade (quem apresenta, ferramenta, quem está na sala…): os sinais de vida dos participantes chegam o tempo todo,
 // e remontar a cada um fazia o clique no nome da pessoa se perder (o botão era trocado entre o botão do mouse descer e subir).
@@ -2583,6 +2639,7 @@ function liveParticipantes(){
   return Object.entries((live && live.participantes)||{}).filter(([id,p])=>id!==eu && id!==hostUid && p && ag-(p.ts||0) < 70000).sort((a,b)=>String(a[1].nome||'').localeCompare(String(b[1].nome||''),'pt-BR'));
 }
 function liveRender(){
+  liveAtualizarControleFlutuante();
   const box = document.getElementById('live-box'), fab = document.getElementById('live-fab'), painel = document.getElementById('live-fpanel'); if(!box || !fab || !painel) return;
   const viewer = !!window._okrIsViewer, eu = liveEu(), ativa = liveAtiva(), host = liveSouHost(), adm = liveSouAdm(), controla = livePodeControlar();
   const pessoas = ativa && controla ? liveParticipantes() : [];
@@ -2614,6 +2671,9 @@ function liveRender(){
         + '</div>';
     }
     if(controla){
+      if(host && window.documentPictureInPicture?.requestWindow){
+        p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🪟 Abrir controle flutuante</button>';
+      }
       p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L ou clique duplo no slide)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';
       if(liveFerr==='caneta') p += '<div class="lp-seg"><button type="button" class="'+(liveTipo==='f'?'on':'')+'" onclick="window._liveTipo(\'f\')" title="O traço fica até você apagar">Fixa</button><button type="button" class="'+(liveTipo==='t'?'on':'')+'" onclick="window._liveTipo(\'t\')" title="O traço some sozinho depois de 5 s (T ou clique triplo no slide)">Temporária · 5 s</button></div>'

@@ -24,6 +24,35 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const convite = await A.p.evaluate(() => window.__conviteCopiado);
  t('convite aponta só para os slides e deixa a conversa no Meet', convite === 'Abra os slides ao vivo do Radar para acompanhar no navegador: '+new URL(A.p.url()).origin+'/okr-apresentacao.slide.html\nO áudio e a conversa continuam aqui no Google Meet.', convite);
  await A.p.evaluate(() => window._livePainel(false));
+ if(process.env.TESTAR_PIP==='1'){
+   const abrirPip=async()=>{
+     await A.p.evaluate(()=>window._livePainel(true));
+     await A.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
+     await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
+   };
+   const comando=id=>A.p.evaluate(i=>window.documentPictureInPicture.window.document.getElementById(i).click(),id);
+   await abrirPip();
+   t('Chrome abre janela PiP nativa com três controles', await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.querySelectorAll('nav button').length===3 && doc.getElementById('anterior').disabled;
+   }), '');
+   await comando('proximo');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
+   await sync(A.p,B.p);
+   t('Próximo na janela flutuante navega nas duas abas', (await info(A.p)).idx===1 && (await info(B.p)).idx===1, '');
+   await comando('anterior');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[0].key);
+   t('Anterior na janela flutuante volta ao primeiro slide', (await info(A.p)).idx===0, '');
+   await A.p.evaluate(()=>window._okrOpenDetail('d2'));
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d2');
+   await comando('fechar-detalhe');
+   await A.p.waitForFunction(()=>!window.__store.kanban.okr.apresentacao_live.detalhe);
+   await sync(A.p,B.p);
+   t('Fechar detalhe pela janela sincroniza o fechamento', (await info(A.p)).det==='' && (await info(B.p)).det==='', '');
+   await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
+   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
+   await abrirPip();
+ }
  await A.p.evaluate(()=>window._okrGoTo(2)); await A.p.waitForTimeout(250); await sync(A.p,B.p); const a2=await info(A.p), b2=await info(B.p);
  t('slide do apresentador chega no acompanhante (pela chave, não pela posição)', a2.idx===2 && b2.key===a2.key && b2.idx===2, {a2,b2});
  await A.p.evaluate(()=>window._okrOpenDetail('d2')); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('Objetivo aberto no detalhe também acompanha', (await info(B.p)).det==='d2', await info(B.p));
@@ -129,6 +158,10 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.evaluate(()=>{ const s=window.__store.kanban.okr.apresentacao_live; s.participantes.eve.ts=Date.now()+1; (window.__lis||[]).filter(l=>l.p==='kanban/okr/apresentacao_live').forEach(l=>l.cb({val:()=>JSON.parse(JSON.stringify(s)),exists:()=>true,key:'x'})); });
  await A.p.mouse.up(); await A.p.waitForTimeout(300); await sync(A.p,B.p);
  t('clicar no nome da pessoa no painel passa o controle (com sinais de vida chegando no meio do clique)', await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador.uid==='eve') && /Parar de apresentar/.test((await info(B.p)).box), await A.p.evaluate(()=>window.__store.kanban.okr.apresentacao_live.apresentador));
+ if(process.env.TESTAR_PIP==='1'){
+   await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
+   t('janela flutuante fecha se o apresentador transfere o controle', await A.p.evaluate(()=>!window.documentPictureInPicture.window), '');
+ }
  await B.p.evaluate(()=>window._liveAssumir()); await B.p.waitForTimeout(150); await sync(B.p,A.p); await A.p.evaluate(()=>window._livePainel(false)); await B.p.evaluate(()=>window._livePainel(false));
  await B.p.evaluate(()=>window._liveEncerrar && 0); await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(200); await sync(A.p,B.p);
  // pedir / passar o controle
