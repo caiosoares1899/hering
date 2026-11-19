@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · 🎙️ Apresentação do Radar: quem acompanhava não aparecia em "Passar o controle pra…" (relógio de cada computador e aba em segundo plano)
+
+- **Relato do Caio:** a apresentação não estava lendo as pessoas online.
+- **Causa 1 (relógio):** cada pessoa gravava o sinal de vida com o relógio do próprio computador, e quem apresenta comparava com o seu. Um computador mais de 70 s atrasado nunca entrava na lista; um adiantado via quem apresenta "sem sinal" (mais de 90 s) e ganhava o botão Assumir, e quem já tinha saído continuava na lista.
+- **Causa 2 (aba em segundo plano):** quem acompanha deixa a aba do Radar atrás do Meet; depois de ~5 min o Chrome só acorda os timers dessa aba uma vez por minuto, e o sinal de 20 s ficava no limite da janela de 70 s.
+- **Correção:** `okr-apresentacao.slide.html` usa o horário do servidor (`.info/serverTimeOffset`) em tudo que outro computador compara (sinal de vida, `atualizadoEm`, pedidos, início). Janela de presença de 130 s e de "sem sinal" de 150 s, e um sinal na hora em que a aba volta a ficar visível. Traços e travas continuam no relógio local.
+- **Teste:** `docs/arezzo/testes/test_live_relogio.js` (10 verificações com o relógio 2 min atrasado e adiantado; 3 falham na versão anterior).
+
 ### 2026-11-19 · 🎛️ Apresentação do Radar: passador físico e setas não funcionavam depois de clicar no passador, e PageDown/PageUp nunca funcionaram
 
 - **Origem:** `/monitorarbugs` com foco no passador, antes da reunião de 19/11 às 14h.
