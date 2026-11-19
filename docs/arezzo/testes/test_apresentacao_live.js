@@ -3,7 +3,7 @@
 const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
 const U=(uid,n,email)=>({uid,email:email||uid+'@ciahering.com.br',displayName:n,photoURL:'',providerData:[{providerId:'google.com'}]});
 const mk=(id,t,o)=>({id,titulo:t,areaId:'geral',trimestres:['2026-Q4'],responsaveis:['ana'],tagIds:[],history:[],indicadores:['i1'],progressos:['p1'],proximosPassos:[],riscos:[],planosAcao:[],descricao:'desc '+t,torre:'digital',...o});
-const seed=()=>({kanban:{okr:{objetivos:{d1:mk('d1','Fidelidade',{areaId:'crm',ordem:0}),d2:mk('d2','Checkout',{areaId:'tech',ordem:0}),d3:mk('d3','NPS',{areaId:'cx',ordem:0})},marcos:{},tags:{},reuniao_notas:{}},
+const seed=()=>({kanban:{okr:{objetivos:{d1:mk('d1','Fidelidade',{areaId:'crm',ordem:0}),d2:mk('d2','Checkout',{areaId:'tech',ordem:0,atingimento:{tipo:'numero',inicial:0,meta:100,lancamentos:[{em:'2026-11-10',valor:80}]}}),d3:mk('d3','NPS',{areaId:'cx',ordem:0})},marcos:{},tags:{},reuniao_notas:{}},
  usuarios:{ana:{uid:'ana',nome:'Ana ADM',email:'ana@ciahering.com.br',inscrito:true,init:'AA'},eve:{uid:'eve',nome:'Eve',email:'eve@ciahering.com.br',inscrito:true,init:'EV'}},usuarios_publicos:{ana:{uid:'ana',nome:'Ana ADM',init:'AA'}},config:{adm_emails:['ana@ciahering.com.br']},painel_viewers:{'ext@gmail,com':true}}});
 const NO='kanban/okr/apresentacao_live';
 async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((window.__store.kanban||{}).okr||{}).apresentacao_live||null));
@@ -27,6 +27,19 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.evaluate(()=>window._okrGoTo(2)); await A.p.waitForTimeout(250); await sync(A.p,B.p); const a2=await info(A.p), b2=await info(B.p);
  t('slide do apresentador chega no acompanhante (pela chave, não pela posição)', a2.idx===2 && b2.key===a2.key && b2.idx===2, {a2,b2});
  await A.p.evaluate(()=>window._okrOpenDetail('d2')); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('Objetivo aberto no detalhe também acompanha', (await info(B.p)).det==='d2', await info(B.p));
+ await A.p.evaluate(()=>window._okrOpenAting('d2'));
+ await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='d2');
+ await sync(A.p,B.p);
+ const evolucaoAberta = p => p.evaluate(()=>document.getElementById('ating-ov').classList.contains('open') && !!document.querySelector('#ating-body svg'));
+ t('abrir Evolução sincroniza o gráfico', await evolucaoAberta(B.p), '');
+ const C = await open(U('late','Participante'),1024,768);
+ await sync(A.p,C.p);
+ t('entrada tardia em outra resolução abre o detalhe e a Evolução', (await info(C.p)).det==='d2' && await evolucaoAberta(C.p), '');
+ await A.p.evaluate(()=>window._okrCloseAting());
+ await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='');
+ await sync(A.p,B.p);
+ t('fechar Evolução deixa o detalhe aberto nas duas abas', !(await evolucaoAberta(B.p)) && (await info(B.p)).det==='d2', '');
+ await C.ctx.close();
  await A.p.evaluate(()=>window._okrCloseDetail()); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('fechar o detalhe fecha pra todos', (await info(B.p)).det==='', await info(B.p));
  // acompanhante mexe sozinho -> sai da sincronização; "Voltar a seguir" volta
  await B.p.evaluate(()=>window._okrGoTo(0)); await B.p.waitForTimeout(200); const b3=await info(B.p); t('mexer nos slides por conta própria sai da sincronização (e aparece "Voltar a seguir")', b3.idx===0 && /Voltar a seguir/.test(b3.box), b3);
@@ -121,10 +134,13 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  // pedir / passar o controle
  await B.p.evaluate(()=>window._livePedir()); await B.p.waitForTimeout(250); await sync(B.p,A.p);
  t('pedido de controle aparece pro apresentador, com Passar/Recusar', await A.p.evaluate(()=>/Eve Souza pede o controle/.test(document.getElementById('live-toast').textContent) && !!document.querySelector('#live-toast [data-pedido] button')), 'sem pedido');
+ await A.p.evaluate(()=>{ window._okrOpenDetail('d2'); window._okrOpenAting('d2'); });
+ await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.evolucao==='d2');
  // cenário real: a flag de "seguindo" da Ana estava desligada quando ela passou o controle — a tela dela (a compartilhada no Meet) tem que passar a seguir a Eve mesmo assim
  await A.p.evaluate(()=>{ liveSeguindo = false; });
  await A.p.evaluate(()=>document.querySelector('#live-toast [data-pedido] button').click()); await A.p.waitForTimeout(250); await sync(A.p,B.p);
  const a4=await info(A.p), b4=await info(B.p); t('aceitar passa o controle: Eve vira apresentadora e Ana acompanha', /Parar de apresentar/.test(b4.box) && /Eve Souza está apresentando/.test(a4.box), {a4,b4});
+ t('quem recebe o controle herda o detalhe e a Evolução aberta', (await info(B.p)).det==='d2' && await evolucaoAberta(B.p), '');
  await B.p.evaluate(()=>window._okrGoTo(1)); await B.p.waitForTimeout(250); await sync(B.p,A.p); t('o novo apresentador comanda (Ana segue a Eve)', (await info(A.p)).idx===1, await info(A.p));
  // apresentador some -> assumir
  await A.p.evaluate(()=>{ const s=window.__store.kanban.okr.apresentacao_live; s.atualizadoEm=Date.now()-120000; (window.__lis||[]).filter(l=>l.p==='kanban/okr/apresentacao_live').forEach(l=>l.cb({val:()=>JSON.parse(JSON.stringify(s)),exists:()=>true,key:'x'})); }); await A.p.waitForTimeout(200);
