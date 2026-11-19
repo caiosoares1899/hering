@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — horizonte marinho na Evolução do atingimento — 2026-11-19
+
+O gráfico distingue o céu da área submersa com um horizonte ciano, reflexos discretos abaixo da meta e um degradê que escurece com a profundidade. A curva e o peixe neon permanecem, e a superfície continua posicionada no valor exato da meta.
+
 ### Apresentação do Radar — Evolução do atingimento em neon sobre a linha d’água (#1870) — PROD 18/11 (no ar desde o merge) — 2026-11-18
 
 A curva volta ao rosa neon, a meta vira uma linha fina em ciano com degradê azul abaixo e o painel segue a moldura Marine Glass do detalhe do Objetivo. Uma faixa mostra valor atual, distância até a meta, atingimento e período. Só o registro mais recente tem peixe e valor escrito, e a lista de registros começa recolhida. O cálculo do atingimento não muda.
