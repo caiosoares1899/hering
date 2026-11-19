@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Passador flutuante não navegava entre detalhes de Objetivos
+
+As setas usam a mesma ordenação e os mesmos limites dos botões do detalhe. A troca de Objetivo é enviada pela navegação ao vivo existente.
+
 ### 2026-11-19 · Apresentação do Radar: o botão do controle flutuante mostrava um quadradinho no lugar do emoji
 
 - **Relato do Caio:** o botão "Abrir controle flutuante" do painel 🎙️ (#1881) aparecia com um quadradinho branco no lugar do emoji.

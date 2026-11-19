@@ -1768,10 +1768,16 @@ function _okrEntrada(dir){
   _okrContaRaf = requestAnimationFrame(passo);
 }
 // Objetivo vizinho DENTRO da mesma gerência (mesma lista e ordem dos botões "← Anterior"/"Próximo →" do detalhe). Nas pontas não faz nada (o botão fica desabilitado).
+function _okrDetailVizinhos(o){
+  if(!o) return {indice:-1, anterior:null, proximo:null};
+  const lista = _okrGerenciaObjetivos(o.areaId||'geral', _okrTorreDe(o));
+  const indice = lista.findIndex(x=>x.id===o.id);
+  return {indice, anterior:indice>0 ? lista[indice-1] : null, proximo:indice>=0 ? lista[indice+1] : null};
+}
 window._okrDetailVizinho = dir => {
-  const o = okrObjetivos[_okrDetailCurrentId]; if(!o) return;
-  const lista = _okrGerenciaObjetivos(o.areaId||'geral', _okrTorreDe(o)), i = lista.findIndex(x=>x.id===_okrDetailCurrentId), alvo = lista[i+dir];
-  if(i>=0 && alvo) window._okrOpenDetail(alvo.id);
+  const {anterior, proximo} = _okrDetailVizinhos(okrObjetivos[_okrDetailCurrentId]);
+  const alvo = dir<0 ? anterior : proximo;
+  if(alvo) window._okrOpenDetail(alvo.id);
 };
 window._okrNext = () => window._okrGoTo(currentIdx+1);
 window._okrPrev = () => window._okrGoTo(currentIdx-1);
@@ -1864,10 +1870,7 @@ window._okrOpenDetail = id => {
   const concluidos = marcos.filter(m=>m.progresso==='concluido').length;
   const progressoMarcos = marcos.length ? Math.round(concluidos/marcos.length*100) : null;
   const atingimento = _okrAtingPctObj(o);
-  const gerObjs = _okrGerenciaObjetivos(o.areaId||'geral', _okrTorreDe(o));
-  const gerIdx = gerObjs.findIndex(x=>x.id===id);
-  const nextObj = gerIdx>=0 && gerIdx<gerObjs.length-1 ? gerObjs[gerIdx+1] : null;
-  const prevObj = gerIdx>0 ? gerObjs[gerIdx-1] : null;
+  const {indice:gerIdx, anterior:prevObj, proximo:nextObj} = _okrDetailVizinhos(o);
   document.getElementById('detail-modal').classList.toggle('par', gerIdx % 2 === 1);   // alterna a cor a cada Objetivo (ver .detail-modal.par)
   document.getElementById('detail-modal').innerHTML = `
     <div class="d2-wrap" id="d2-wrap">
@@ -2674,9 +2677,11 @@ function liveAtualizarControleFlutuante(){
 function liveAtualizarComandos(pip, bastidor){
   const doc = pip.document;
   const host = liveSouHost(), detalhe = !!liveDetalheAberto();
-  doc.getElementById('estado').textContent = 'Slide '+(currentIdx+1)+' de '+slides.length;
-  doc.getElementById('anterior').disabled = !host || detalhe || currentIdx<=0;
-  doc.getElementById('proximo').disabled = !host || detalhe || currentIdx>=slides.length-1;
+  const objetivo = detalhe ? okrObjetivos[_okrDetailCurrentId] : null;
+  const vizinhos = _okrDetailVizinhos(objetivo);
+  doc.getElementById('estado').textContent = objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : 'Slide '+(currentIdx+1)+' de '+slides.length;
+  doc.getElementById('anterior').disabled = !host || (detalhe ? !vizinhos.anterior : currentIdx<=0);
+  doc.getElementById('proximo').disabled = !host || (detalhe ? !vizinhos.proximo : currentIdx>=slides.length-1);
   doc.getElementById('fechar-detalhe').disabled = !host || !detalhe;
   if(!bastidor) return;
   doc.getElementById('retomar').disabled = host;
@@ -2768,8 +2773,12 @@ function liveMontarControle(pip, destino, bastidor){
     + '<section><label for="participante">Controle da apresentação</label><select id="participante"></select>'
     + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button><button type="button" id="retomar">Retomar controle</button></div></section>');
   const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
-  doc.getElementById('anterior').addEventListener('click', agir(()=>window._okrPrev()));
-  doc.getElementById('proximo').addEventListener('click', agir(()=>window._okrNext()));
+  const navegar = dir => {
+    if(liveDetalheAberto()) window._okrDetailVizinho(dir);
+    else window._okrGoTo(currentIdx+dir);
+  };
+  doc.getElementById('anterior').addEventListener('click', agir(()=>navegar(-1)));
+  doc.getElementById('proximo').addEventListener('click', agir(()=>navegar(1)));
   doc.getElementById('fechar-detalhe').addEventListener('click', agir(()=>window._okrCloseDetail()));
   if(bastidor) livePrepararBastidor(pip);
 }

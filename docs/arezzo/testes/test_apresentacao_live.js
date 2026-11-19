@@ -3,7 +3,7 @@
 const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
 const U=(uid,n,email)=>({uid,email:email||uid+'@ciahering.com.br',displayName:n,photoURL:'',providerData:[{providerId:'google.com'}]});
 const mk=(id,t,o)=>({id,titulo:t,areaId:'geral',trimestres:['2026-Q4'],responsaveis:['ana'],tagIds:[],history:[],indicadores:['i1'],progressos:['p1'],proximosPassos:[],riscos:[],planosAcao:[],descricao:'desc '+t,torre:'digital',...o});
-const seed=()=>({kanban:{okr:{objetivos:{d1:mk('d1','Fidelidade',{areaId:'crm',ordem:0}),d2:mk('d2','Checkout',{areaId:'tech',ordem:0,atingimento:{tipo:'numero',inicial:0,meta:100,lancamentos:[{em:'2026-11-10',valor:80}]}}),d3:mk('d3','NPS',{areaId:'cx',ordem:0})},marcos:{},tags:{},reuniao_notas:{}},
+const seed=()=>({kanban:{okr:{objetivos:{d1:mk('d1','Fidelidade',{areaId:'crm',ordem:0}),d2:mk('d2','Checkout',{areaId:'tech',ordem:0,atingimento:{tipo:'numero',inicial:0,meta:100,lancamentos:[{em:'2026-11-10',valor:80}]}}),d3:mk('d3','NPS',{areaId:'cx',ordem:0}),d4:mk('d4','Pagamentos',{areaId:'tech',ordem:1})},marcos:{},tags:{},reuniao_notas:{}},
  usuarios:{ana:{uid:'ana',nome:'Ana ADM',email:'ana@ciahering.com.br',inscrito:true,init:'AA'},eve:{uid:'eve',nome:'Eve',email:'eve@ciahering.com.br',inscrito:true,init:'EV'}},usuarios_publicos:{ana:{uid:'ana',nome:'Ana ADM',init:'AA'}},config:{adm_emails:['ana@ciahering.com.br']},painel_viewers:{'ext@gmail,com':true}}});
 const NO='kanban/okr/apresentacao_live';
 async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((window.__store.kanban||{}).okr||{}).apresentacao_live||null));
@@ -58,6 +58,22 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
    await comando('anterior');
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[0].key);
+   await A.p.evaluate(()=>window._okrOpenDetail('d2'));
+   t('no primeiro Objetivo, passador habilita só Próximo', await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.getElementById('anterior').disabled && !doc.getElementById('proximo').disabled;
+   }), '');
+   await comando('proximo');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d4',null,{timeout:5000});
+   await sync(A.p,B.p);
+   t('Próximo abre o Objetivo vizinho e sincroniza o detalhe', (await info(B.p)).det==='d4' && await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.getElementById('proximo').disabled && !doc.getElementById('anterior').disabled;
+   }), '');
+   await comando('anterior');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d2',null,{timeout:5000});
+   await comando('fechar-detalhe');
+   await A.p.waitForFunction(()=>!window.__store.kanban.okr.apresentacao_live.detalhe);
    await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
    await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
    await abrirPip();
