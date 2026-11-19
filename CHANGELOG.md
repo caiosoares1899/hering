@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — acabamento Marine Glass no Bastidor — 2026-11-19
+
+O Bastidor ganha iluminação oceânica em camadas, cartões translúcidos e mais contraste nos rótulos. O cartão do slide no ar recebe o destaque principal.
+
 ### SÓ DEV — Radar — ícones de tela e conversa nas ações do Bastidor — 2026-11-19
 
 Monitor identifica o link da tela para o público. Balão de conversa identifica o convite para o chat do Meet.
