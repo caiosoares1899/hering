@@ -29,7 +29,7 @@ const pos = p => p.evaluate(() => ({ idx: currentIdx, key: slides[currentIdx]?.k
     const S = await open('/okr-apresentacao.slide.html');   // computador dos slides (Meet)
     const D = await open('/okr-bastidor.html');              // computador do ADM
     const P = await open('/okr-apresentacao.slide.html?tela=publico');
-    await D.p.getByRole('button', { name: 'Iniciar apresentação ao vivo' }).click(); await D.p.waitForTimeout(400);
+    await D.p.getByRole('button', { name: 'Iniciar apresentação ao vivo' }).click(); await D.p.click('#inicio-sem'); await D.p.waitForTimeout(400);
     await sync(D.p, S.p, P.p);
     // 1) os slides avançam no computador do Meet (teclado/clique lá)
     await S.p.evaluate(() => { window._okrGoTo(2); }); await S.p.waitForTimeout(400); await sync(S.p, D.p, P.p);

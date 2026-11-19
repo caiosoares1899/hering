@@ -24,6 +24,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — relógio opcional ao iniciar a apresentação ao vivo — 2026-11-19
+
+`okr-apresentacao.slide.html` (sem par `-dev`; entra no ar no merge). Etapa 1 do desenho do PR #1904. **Apresentar ao vivo** agora abre um diálogo com três saídas: **Iniciar com cronômetro**, **Iniciar sem cronômetro** e **Cancelar** (Esc também cancela).
+- **Com cronômetro:** o término vem sugerido pela ocorrência do Calendário do dia ou pela agenda configurada para hoje, e pode ser editado. Também dá para informar só a duração. Começar atrasado não prorroga o término. A barra mostra "⏱ X decorridos · ⏳ Y restantes".
+- **Sem cronômetro:** a sessão grava `modo: 'livre'` e a barra não mostra contagem, mesmo com agenda no dia. **Mudança de comportamento:** antes a contagem da agenda aparecia sempre.
+- O relógio fica na própria sessão (`apresentacao_live/relogio`: `modo`, `inicioEm`, `fimEm`, `origem`), em horário do servidor. Por isso vale igual para todas as telas, para o Bastidor, depois de passar ou retomar o controle e depois de recarregar. "Configurar horário" no meio da sessão ajusta o término.
+- O início usa transação: se outra pessoa iniciou enquanto o diálogo estava aberto, a sessão dela não é sobrescrita. O clique duplo inicia uma vez só.
+- Valores fora do formato no banco são ignorados na leitura. Não há regra nem função nova.
+
+Teste: `docs/arezzo/testes/test_relogio_reuniao.js`. As outras suítes da apresentação passaram a escolher a opção no diálogo.
+
 ### SÓ DEV — Radar — pauta e filtros sincronizados na sala ao vivo — 2026-11-19
 
 Quem abre a apresentação pelo favorito recebe a pauta e o horário da ocorrência da sala. Ao encerrar, cada tela recupera seu recorte local.

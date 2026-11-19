@@ -29,7 +29,7 @@ const medir = p => p.evaluate(() => ({
       await p.evaluate(x => window.__authCb(x), U('ana', 'Ana ADM')); await p.waitForTimeout(1500);
       const iniciar = p.getByRole('button', { name: 'Iniciar apresentação ao vivo' });
       t(`[${w}] espera: Iniciar com alvo de 44 px e cor de ação`, await iniciar.isVisible() && await iniciar.evaluate(e => e.getBoundingClientRect().height >= 44 && getComputedStyle(e).backgroundColor !== 'rgb(239, 239, 239)'), await iniciar.evaluate(e => getComputedStyle(e).backgroundColor));
-      await iniciar.click(); await p.waitForTimeout(700);
+      await iniciar.click(); await p.click('#inicio-sem'); await p.waitForTimeout(700);
       t(`[${w}] aviso de início fala da tela para o público, não do 🎙️ da aba dos slides`, /tela para o público/.test(await texto(p, '#live-toast')) && !/canto da tela/.test(await texto(p, '#live-toast')), await texto(p, '#live-toast'));
       const quadro = p.locator('#bastidor-previa iframe');
       await quadro.waitFor({state:'visible'});

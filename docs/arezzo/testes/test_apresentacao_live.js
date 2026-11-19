@@ -14,7 +14,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const A=await open(U('ana','Ana ADM')), B=await open(U('eve','Eve Souza'),1280,800,undefined,remoto);
  const info=p=>p.evaluate(()=>({key:slides[currentIdx].key, idx:currentIdx, det:document.getElementById('detail-ov').classList.contains('open')?_okrDetailCurrentId:'', box:document.getElementById('live-box').textContent.replace(/\s+/g,' ').trim()}));
  t('antes de apresentar: botão "Apresentar ao vivo" na barra', /Apresentar ao vivo/.test((await info(A.p)).box), await info(A.p));
- await A.p.click('#live-box button'); await A.p.waitForTimeout(300); await sync(A.p,B.p);
+ await A.p.click('#live-box button'); await A.p.fill('#inicio-duracao','45'); await A.p.click('#inicio-com'); await A.p.waitForTimeout(300); await sync(A.p,B.p);
  const a1=await info(A.p), b1=await info(B.p); t('Ana vira apresentadora; Eve vê "Ana ADM está apresentando" e acompanhando', /Parar de apresentar/.test(a1.box) && /Ana ADM está apresentando/.test(b1.box) && /Acompanhando/.test(b1.box) && !/Parar de apresentar/.test(b1.box), {a1,b1});
  await A.p.evaluate(() => {
    Object.defineProperty(navigator.clipboard, 'writeText', { value: async texto => { window.__conviteCopiado = texto; } });
@@ -351,7 +351,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await C.ctx.close();
  t('sem erro de JS nas duas telas', !A.errs.length && !B.errs.length, [A.errs,B.errs]);
  // visualizador externo: acompanha mas não apresenta nem pede controle
- { const V=await open(U('ext','Externo','ext@gmail.com')); await A.p.click('#live-box button'); await A.p.waitForTimeout(250); await sync(A.p,V.p);
+ { const V=await open(U('ext','Externo','ext@gmail.com')); await A.p.click('#live-box button'); await A.p.click('#inicio-sem'); await A.p.waitForTimeout(250); await sync(A.p,V.p);
    const v=await info(V.p); t('visualizador externo: vê quem apresenta e acompanha, sem botão de apresentar/pedir', /Ana ADM está apresentando/.test(v.box) && !/Pedir o controle|Apresentar ao vivo/.test(v.box), v);
    await V.ctx.close(); }
  // Favorito sem pauta recebe o recorte e o horário da ocorrência antes de abrir o slide.
@@ -363,7 +363,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    const tempoFixo = new Date('2026-11-19T13:40:00.000Z');
    await H.p.clock.setFixedTime(tempoFixo);
    await F.p.clock.setFixedTime(tempoFixo);
-   await H.p.locator('#live-box button').click();
+   await H.p.locator('#live-box button').click(); await H.p.click('#inicio-com');   // término sugerido pela ocorrência do Calendário (11:00)
    await H.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.pauta?.reuniao==='ritual-teste');
    await sync(H.p,F.p);
    const recorte = p=>p.evaluate(()=>{

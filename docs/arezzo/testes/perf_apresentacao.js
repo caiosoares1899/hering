@@ -26,7 +26,7 @@ const DPR = Number(process.argv[3] || 2);
   R['detalhe aberto'] = await janela(3000, 'null');
   // Cenário real de quem apresenta: sessão "Apresentar ao vivo" ligada (apresentador), parado e com o laser seguindo o mouse.
   await p.evaluate(() => { window._okrCloseDetail(); window._okrGoTo(2); }); await p.waitForTimeout(500);
-  p.on('dialog', d => d.accept()); await p.click('#live-box button'); await p.waitForTimeout(6500);   // espera os 3 pulsos de entrada acabarem
+  p.on('dialog', d => d.accept()); await p.click('#live-box button'); await p.click('#inicio-sem'); await p.waitForTimeout(6500);   // espera os 3 pulsos de entrada acabarem
   R['AO VIVO ligado, parado'] = await janela(3000, 'null');
   await p.keyboard.press('l'); await p.mouse.move(400, 400);
   const mexe = (async () => { for (let i = 0; i < 60; i++) { await p.mouse.move(400 + (i % 30) * 20, 400 + Math.sin(i) * 120); await p.waitForTimeout(50); } })();

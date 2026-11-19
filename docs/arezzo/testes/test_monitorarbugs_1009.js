@@ -11,7 +11,7 @@ const NO='kanban/okr/apresentacao_live';
  { const {ctx,p}=await open('okr-apresentacao.slide.html',U('ana','Ana ADM')); await p.evaluate(x=>window.__authCb(x),U('ana','Ana ADM')); await p.evaluate(x=>window.__authCb(x),U('ana','Ana ADM')); await p.waitForTimeout(300);
    t('login refirado 3x: só 1 ouvinte do nó da apresentação ao vivo', (await p.evaluate(NO=>window.__lis.filter(l=>l.p===NO).length,NO))===1, await p.evaluate(NO=>window.__lis.filter(l=>l.p===NO).length,NO)); await ctx.close(); }
  // 2) apresentador que recarrega volta pra posição da sessão (1x só, sem puxar depois)
- { const {ctx,p}=await open('okr-apresentacao.slide.html',U('ana','Ana ADM')); await p.evaluate(()=>window._okrGoTo(3)); await p.click('#live-box button'); await p.waitForTimeout(300); await p.evaluate(()=>window._okrGoTo(3)); await p.waitForTimeout(300);
+ { const {ctx,p}=await open('okr-apresentacao.slide.html',U('ana','Ana ADM')); await p.evaluate(()=>window._okrGoTo(3)); await p.click('#live-box button'); await p.click('#inicio-sem'); await p.waitForTimeout(300); await p.evaluate(()=>window._okrGoTo(3)); await p.waitForTimeout(300);
    const sess=await p.evaluate(()=>JSON.stringify(window.__store.kanban.okr.apresentacao_live));
    const st=seed(); st.kanban.okr.apresentacao_live=JSON.parse(sess); const k=JSON.parse(sess).slide;
    const R=await open('okr-apresentacao.slide.html',U('ana','Ana ADM'),st);
