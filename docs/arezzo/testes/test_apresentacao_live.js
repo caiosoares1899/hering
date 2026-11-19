@@ -274,6 +274,17 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.evaluate(()=>{ const s=window.__store.kanban.okr.apresentacao_live; s.atualizadoEm=Date.now()-120000; (window.__lis||[]).filter(l=>l.p==='kanban/okr/apresentacao_live').forEach(l=>l.cb({val:()=>JSON.parse(JSON.stringify(s)),exists:()=>true,key:'x'})); }); await A.p.waitForTimeout(200);
  await A.p.evaluate(()=>{ _liveSig=''; window._livePainel(true); }); await A.p.waitForTimeout(150); t('apresentador sem sinal há >90 s: o painel de quem acompanha mostra "Assumir"', await A.p.evaluate(()=>/Assumir/.test(document.getElementById('live-fpanel').textContent)), await A.p.evaluate(()=>document.getElementById('live-fpanel').textContent));
  await A.p.evaluate(()=>window._liveAssumir()); await A.p.waitForTimeout(250); t('assumir faz de Ana a apresentadora', /Parar de apresentar/.test((await info(A.p)).box), await info(A.p));
+ // Sem a API de PiP, o ADM ainda abre o Bastidor em uma janela normal.
+ await A.p.evaluate(()=>{
+   Object.defineProperty(window,'documentPictureInPicture',{value:undefined,configurable:true});
+   window._livePainel(true);
+ });
+ const proximaJanela=A.p.waitForEvent('popup');
+ await A.p.getByRole('button',{name:'Abrir bastidor'}).click();
+ const bastidorAlternativo=await proximaJanela;
+ await bastidorAlternativo.getByRole('button',{name:'Salvar anotação'}).waitFor();
+ t('Bastidor abre em janela normal sem suporte a PiP', await bastidorAlternativo.getByRole('heading',{name:'Bastidor do Radar'}).isVisible(), '');
+ await bastidorAlternativo.close();
  // encerrar
  const parar = A.p.getByRole('button', { name: 'Parar de apresentar', exact: true });
  const confirmacao = A.p.waitForEvent('dialog').then(d => d.message());
