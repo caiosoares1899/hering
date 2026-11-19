@@ -29,11 +29,21 @@ const casos = { sobe: { tipo: 'financeira', moeda: 'BRL', inicial: 0, meta: 100,
       const posicoes = (r, esperado) => r.pts.length === esperado.length && r.pts.every((q, i) => q.lado === esperado[i] && (esperado[i] === 'acima' ? q.y < r.y : esperado[i] === 'abaixo' ? q.y > r.y : Math.abs(q.y - r.y) < .1));
       const sobe = await ler('sobe'); t(tag + 'sobe: abaixo, na linha e acima da água', posicoes(sobe, ['abaixo', 'na', 'acima']), sobe);
       t(tag + 'a linha mostra a meta com a unidade', /Meta R\$\s*100/.test(sobe.meta), sobe.meta);
-      t(tag + 'o lado da meta também aparece em texto', sobe.lados.some(x => /Acima da linha: meta superada/.test(x)) && sobe.lados.some(x => /Abaixo da linha: aquém da meta/.test(x)) && /meta superada/.test(sobe.pts[2].tip), sobe);
+      t(tag + 'o lado da meta também aparece em texto', sobe.lados.some(x => /Acima da superfície: meta superada/.test(x)) && sobe.lados.some(x => /Submerso: aquém da meta/.test(x)) && /meta superada/.test(sobe.pts[2].tip), sobe);
       t(tag + 'o gráfico cabe no painel', sobe.cabe, sobe);
       t(tag + 'só o registro mais recente tem peixe e valor escrito', sobe.peixes === 1 && sobe.valores.length === 1 && /130/.test(sobe.valores[0]), sobe);
       t(tag + 'a faixa mostra valor atual, distância até a meta e atingimento', /VALOR ATUAL|Valor atual/i.test(sobe.faixa) && /Superada em R\$\s*30/.test(sobe.faixa) && /100%/.test(sobe.faixa), sobe.faixa);
       t(tag + 'Registros começam recolhidos', sobe.regAberto === false, sobe.regAberto);
+      const horizonte = await p.evaluate(() => {
+        const svg = document.querySelector('.okr-agua-svg');
+        const ceu = svg.querySelector('.okr-agua-ceu');
+        const agua = svg.querySelector('.okr-agua');
+        const nivel = Number(svg.querySelector('.okr-agua-superficie').getAttribute('y1'));
+        return Boolean(ceu && agua && Number(agua.getAttribute('y')) === nivel
+          && Math.abs(Number(ceu.getAttribute('y')) + Number(ceu.getAttribute('height')) - nivel) < 0.1
+          && svg.querySelectorAll('g[clip-path="url(#okr-agua-recorte)"] path').length === 3);
+      });
+      t(tag + 'céu e água se encontram na meta e as ondas ficam submersas', horizonte, '');
       if (w === 1280 || w === 1920) await p.screenshot({ path: process.env.CAPTURA ? process.env.CAPTURA + '_' + w + '.png' : path.join(os.tmpdir(), 'linha_dagua_' + w + '.png') });
       t(tag + 'desce: cruza a linha no outro sentido', posicoes(await ler('desce'), ['acima', 'abaixo']), '');
       const reduz = await ler('reduz'); t(tag + 'meta de redução: gastar menos fica acima da água', posicoes(reduz, ['abaixo', 'na', 'acima']), reduz);
