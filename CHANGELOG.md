@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Radar — página do Bastidor para o Safari — 2026-11-19
+
+O ADM abre o Bastidor em uma aba normal usando okr-bastidor.html. A página reaproveita os controles da sala ao vivo sem depender de Picture-in-Picture.
+
 ### SÓ DEV — Radar — Bastidor do ADM com retomada de controle — 2026-11-19
 
 O ADM mantém o Bastidor aberto durante a troca de apresentador e retoma o controle quando precisar. Quem recebe o controle pode usar o passador compacto.

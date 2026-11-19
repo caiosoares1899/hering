@@ -3,7 +3,7 @@
 const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
 const U=(uid,n,email)=>({uid,email:email||uid+'@ciahering.com.br',displayName:n,photoURL:'',providerData:[{providerId:'google.com'}]});
 const mk=(id,t,o)=>({id,titulo:t,areaId:'geral',trimestres:['2026-Q4'],responsaveis:['ana'],tagIds:[],history:[],indicadores:['i1'],progressos:['p1'],proximosPassos:[],riscos:[],planosAcao:[],descricao:'desc '+t,torre:'digital',...o});
-const seed=()=>({kanban:{okr:{objetivos:{d1:mk('d1','Fidelidade',{areaId:'crm',ordem:0}),d2:mk('d2','Checkout',{areaId:'tech',ordem:0,atingimento:{tipo:'numero',inicial:0,meta:100,lancamentos:[{em:'2026-11-10',valor:80}]}}),d3:mk('d3','NPS',{areaId:'cx',ordem:0})},marcos:{},tags:{},reuniao_notas:{}},
+const seed=()=>({kanban:{okr:{objetivos:{d1:mk('d1','Fidelidade',{areaId:'crm',ordem:0}),d2:mk('d2','Checkout',{areaId:'tech',ordem:0,atingimento:{tipo:'numero',inicial:0,meta:100,lancamentos:[{em:'2026-11-10',valor:80}]}}),d3:mk('d3','NPS',{areaId:'cx',ordem:0}),d4:mk('d4','Pagamentos',{areaId:'tech',ordem:1})},marcos:{},tags:{},reuniao_notas:{}},
  usuarios:{ana:{uid:'ana',nome:'Ana ADM',email:'ana@ciahering.com.br',inscrito:true,init:'AA'},eve:{uid:'eve',nome:'Eve',email:'eve@ciahering.com.br',inscrito:true,init:'EV'}},usuarios_publicos:{ana:{uid:'ana',nome:'Ana ADM',init:'AA'}},config:{adm_emails:['ana@ciahering.com.br']},painel_viewers:{'ext@gmail,com':true}}});
 const NO='kanban/okr/apresentacao_live';
 async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((window.__store.kanban||{}).okr||{}).apresentacao_live||null));
@@ -27,10 +27,30 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const urlPublico=await A.p.evaluate(()=>window.__conviteCopiado);
  t('link da tela para o público ativa o modo de projeção', new URL(urlPublico).searchParams.get('tela')==='publico',urlPublico);
  await A.p.evaluate(() => window._livePainel(false));
+ // Sem janela flutuante (Safari, PiP bloqueado): o ADM ainda precisa do botão da nova aba no menu 🎙️.
+ await A.p.evaluate(()=>{ window.__pipOriginal=Object.getOwnPropertyDescriptor(window,'documentPictureInPicture'); Object.defineProperty(window,'documentPictureInPicture',{value:undefined,configurable:true}); _liveSig=''; window._livePainel(true); });
+ await A.p.waitForTimeout(100);
+ t('sem janela flutuante, o menu 🎙️ do ADM oferece o Bastidor em nova aba', await A.p.getByRole('button',{name:'Abrir bastidor em nova aba'}).count()===1, await A.p.evaluate(()=>document.getElementById('live-fpanel')?.textContent.replace(/\s+/g,' ').slice(0,300)));
+ await A.p.evaluate(()=>{ if(window.__pipOriginal) Object.defineProperty(window,'documentPictureInPicture',window.__pipOriginal); else delete window.documentPictureInPicture; _liveSig=''; window._livePainel(false); });
+ const D=await open(U('ana','Ana ADM'),960,720,new URL('okr-bastidor.html',A.p.url()).href);
+ await D.p.evaluate(()=>Object.defineProperty(window,'documentPictureInPicture',{value:undefined,configurable:true}));
+ t('endereço do Bastidor abre aba própria e mostra a espera da sessão',
+   new URL(D.p.url()).searchParams.get('tela')==='bastidor' && await D.p.getByRole('button',{name:'Iniciar apresentação ao vivo'}).isVisible(),'');
+ await sync(A.p,D.p);
+ await D.p.getByRole('button',{name:'Salvar anotação'}).waitFor();
+ t('Bastidor em aba própria só mostra os controles e funciona sem PiP',
+   !(await D.p.locator('#slides').isVisible()) && await D.p.getByRole('button',{name:'Retomar controle'}).count()===1,'');
+ await D.p.getByRole('button',{name:/Próximo/}).click();
+ await D.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
+ await sync(D.p,B.p);
+ t('Bastidor em aba própria navega na mesma sala', (await info(B.p)).idx===1,'');
+ await sync(A.p,B.p);
+ await D.ctx.close();
+
  if(process.env.TESTAR_PIP==='1'){
    const abrirPip=async(nome='Abrir bastidor')=>{
      await A.p.evaluate(()=>window._livePainel(true));
-     await A.p.getByRole('button',{name:nome}).click();
+     await A.p.getByRole('button',{name:nome,exact:true}).click();
      await A.p.waitForFunction(()=>!!window.documentPictureInPicture?.window?.document.getElementById('proximo'),null,{timeout:5000});
    };
    const comando=id=>A.p.evaluate(i=>window.documentPictureInPicture.window.document.getElementById(i).click(),id);
@@ -43,6 +63,22 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[1].key);
    await comando('anterior');
    await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[0].key);
+   await A.p.evaluate(()=>window._okrOpenDetail('d2'));
+   t('no primeiro Objetivo, passador habilita só Próximo', await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.getElementById('anterior').disabled && !doc.getElementById('proximo').disabled;
+   }), '');
+   await comando('proximo');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d4',null,{timeout:5000});
+   await sync(A.p,B.p);
+   t('Próximo abre o Objetivo vizinho e sincroniza o detalhe', (await info(B.p)).det==='d4' && await A.p.evaluate(()=>{
+     const doc=window.documentPictureInPicture.window.document;
+     return doc.getElementById('proximo').disabled && !doc.getElementById('anterior').disabled;
+   }), '');
+   await comando('anterior');
+   await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.detalhe==='d2',null,{timeout:5000});
+   await comando('fechar-detalhe');
+   await A.p.waitForFunction(()=>!window.__store.kanban.okr.apresentacao_live.detalhe);
    await A.p.evaluate(()=>window.documentPictureInPicture.window.close());
    await A.p.waitForFunction(()=>!window.documentPictureInPicture.window);
    await abrirPip();
@@ -226,7 +262,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    }), '');
    await B.p.evaluate(()=>window._livePainel(true));
    t('quem recebe o controle vê o passador e o Bastidor fica reservado ao ADM',
-     await B.p.getByRole('button',{name:/Abrir controle flutuante/}).count()===1 && await B.p.getByRole('button',{name:'Abrir bastidor'}).count()===0, '');
+     await B.p.getByRole('button',{name:/Abrir controle flutuante/}).count()===1 && await B.p.getByRole('button',{name:'Abrir bastidor',exact:true}).count()===0, '');
    await B.p.getByRole('button',{name:/Abrir controle flutuante/}).click();
    await B.p.waitForFunction(()=>!!window.documentPictureInPicture.window?.document.getElementById('anterior'));
    await A.p.evaluate(()=>window.documentPictureInPicture.window.document.getElementById('retomar').click());
@@ -280,7 +316,7 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    window._livePainel(true);
  });
  const proximaJanela=A.p.waitForEvent('popup');
- await A.p.getByRole('button',{name:'Abrir bastidor'}).click();
+ await A.p.getByRole('button',{name:'Abrir bastidor',exact:true}).click();
  const bastidorAlternativo=await proximaJanela;
  await bastidorAlternativo.getByRole('button',{name:'Salvar anotação'}).waitFor();
  t('Bastidor abre em janela normal sem suporte a PiP', await bastidorAlternativo.getByRole('heading',{name:'Bastidor do Radar'}).isVisible(), '');

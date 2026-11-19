@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · Passador flutuante não navegava entre detalhes de Objetivos
+
+As setas usam a mesma ordenação e os mesmos limites dos botões do detalhe. A troca de Objetivo é enviada pela navegação ao vivo existente.
+
+Na revisão (Claude): o botão **Abrir bastidor em nova aba** só aparecia quando o navegador tinha janela flutuante, justamente o caso em que a nova aba não é necessária. Agora ele aparece para o ADM em qualquer navegador; só o controle flutuante e o Bastidor em janela flutuante dependem da API. Teste em `docs/arezzo/testes/test_apresentacao_live.js`, que falha no código anterior.
+
 ### 2026-11-19 · Bastidor da apresentação sumia quando o navegador não oferecia a janela flutuante
 
 O ADM continua vendo Abrir bastidor e pode usar uma janela normal quando PiP estiver indisponível. O painel da apresentação rola quando a altura da janela é pequena.
