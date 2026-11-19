@@ -412,17 +412,18 @@ body.live-bastidor #bastidor-pagina h1,body.live-bastidor #bastidor-pagina h2{fo
 /* Mesmo motivo do .d2-panel.grow acima. */
 .d2-right{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:10px 22px;
   display:flex;flex-direction:column;min-height:0;}
+.d2-marcos-top{flex:none;min-width:0;}
+.d2-marcos-progresso{display:flex;flex-wrap:wrap;align-items:center;gap:4px calc(14*var(--ud));padding:calc(3*var(--ud)) 0 calc(9*var(--ud));color:var(--txt2);font-size:calc(14*var(--ud));}
+.d2-marcos-progresso strong{color:var(--txt);font-size:calc(28*var(--ud));line-height:1;font-variant-numeric:tabular-nums;}
+.d2-marcos-trilho{flex:1 1 84px;background:var(--glass-b);height:5px;border-radius:99px;overflow:hidden;}
+.d2-marcos-trilho i{display:block;height:100%;background:var(--accent);border-radius:inherit;}
 .d2-table-header{display:flex;font-size:calc(13*var(--ud));text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);
   font-weight:700;padding-bottom:6px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .d2-table-header .c-nome{flex:1;}
 .d2-table-header .c-status{width:calc(190*var(--ud));}
 .d2-table-header .c-prazo{width:calc(100*var(--ud));text-align:right;}
-/* Rola quando não cabe. Centralizar com `justify-content:center` cortaria o topo de um conteúdo mais alto que a área (não dá pra rolar pra cima do
-   início); as margens automáticas nas pontas centralizam só quando SOBRA espaço. */
 .d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;}
 .d2-table-rows:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px;}
-/* Espaçadores em vez de margem na primeira/última linha: com "Colapsar concluídos" essas linhas podem estar ocultas e a margem de uma só delas jogava o resto para uma ponta. */
-.d2-table-rows::before,.d2-table-rows::after{content:'';flex:1 0 0;}
 .d2-marco-row{display:flex;align-items:flex-start;padding:calc(3*var(--ud)) 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:max(16px,calc(15*var(--ud)));cursor:pointer;border-radius:8px;transition:background .15s;}
 .d2-marco-row:last-child{border-bottom:none;}
 .d2-marco-row:hover{background:rgba(255,255,255,.05);}
@@ -1931,10 +1932,7 @@ window._okrOpenDetail = id => {
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
       </div>
-      <div class="d2-metrics">
-        <span>Progresso dos marcos <strong>${progressoMarcos===null?'Sem marcos':progressoMarcos+'%'}</strong>${marcos.length?` (${concluidos} de ${marcos.length} ${marcos.length===1?'concluído':'concluídos'})`:''}</span>
-        ${atingimento===null?'':`<span>Atingimento da meta <strong>${atingimento}%</strong></span>`}
-      </div>
+      ${atingimento===null?'':`<div class="d2-metrics"><span>Atingimento da meta <strong>${atingimento}%</strong></span></div>`}
       <div class="d2-body">
         <div class="d2-left">
           ${o.pilar?`<div class="d2-panel"><div class="d2-panel-label">Pilar Estratégico</div><div class="d2-panel-body">${esc(o.pilar)}</div></div>`:''}
@@ -1943,8 +1941,13 @@ window._okrOpenDetail = id => {
           <div class="d2-panel grow"><div class="d2-panel-label">Indicadores de Entrega</div>${d2FieldList(o.indicadores)}</div>
         </div>
         <div class="d2-right">
-          <div class="d2-table-header">
-            <span class="c-nome" id="d2-marcos-titulo">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
+          <div class="d2-marcos-top">
+            <div class="d2-marcos-progresso">
+              ${progressoMarcos===null?'Sem marcos':`<strong>${progressoMarcos}%</strong><span>${concluidos} de ${marcos.length} ${marcos.length===1?'marco concluído':'marcos concluídos'}</span><span class="d2-marcos-trilho" aria-hidden="true"><i style="width:${progressoMarcos}%"></i></span>`}
+            </div>
+            <div class="d2-table-header">
+              <span class="c-nome" id="d2-marcos-titulo">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
+            </div>
           </div>
           <div class="d2-table-rows" role="region" aria-labelledby="d2-marcos-titulo" tabindex="0">${marcos.length ? (()=>{ let _n=0; return marcos.map((m,i)=>{
             const ms=okrStatusInfo(m.progresso);
@@ -2034,7 +2037,7 @@ function _okrMedirDivisaoDetalhe(wrapEl, dBody, dFooter){
   dFooter.style.flex = 'none'; dFooter.style.height = 'auto';
   dBody.style.flex = 'none'; dBody.style.height = '1px';
   const cs = getComputedStyle(dRight), moldura = ['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'].reduce((soma,k)=>soma+(parseFloat(cs[k])||0), 0);
-  const marcos = Math.ceil(moldura + dRight.querySelector('.d2-table-header').offsetHeight + rows.scrollHeight) + 2;
+  const marcos = Math.ceil(moldura + dRight.querySelector('.d2-marcos-top').offsetHeight + rows.scrollHeight) + 2;
   const raia = dBody.querySelector('.d2-left').scrollHeight;
   // Testa cada distribuição na largura real e fica com a que, nesta ordem, esconde menos Marcos, Riscos e Próximos passos, coluna da esquerda, Progressos e Planos e, por último, deixa menos área vazia.
   const cheias = colunas.map(col=>!!col.querySelector('.d2-flist'));
