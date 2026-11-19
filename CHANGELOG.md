@@ -24,32 +24,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Apresentação do Radar — Evolução do atingimento em neon sobre a linha d’água (#1870) — 2026-11-18
+### Apresentação do Radar — Evolução do atingimento em neon sobre a linha d’água (#1870) — PROD 18/11 (no ar desde o merge) — 2026-11-18
 
 A curva volta ao rosa neon, a meta vira uma linha fina em ciano com degradê azul abaixo e o painel segue a moldura Marine Glass do detalhe do Objetivo. Uma faixa mostra valor atual, distância até a meta, atingimento e período. Só o registro mais recente tem peixe e valor escrito, e a lista de registros começa recolhida. O cálculo do atingimento não muda.
 
-### SÓ DEV — Apresentação do Radar — meta como linha d’água na Evolução do atingimento (#1868) — 2026-11-18
+### Apresentação do Radar — meta como linha d’água na Evolução do atingimento (#1868) — PROD 18/11 (no ar desde o merge) — 2026-11-18
 
 No gráfico de Evolução da apresentação, a meta vira a superfície da água. Resultados aquém da meta ficam submersos, na meta ficam na linha e além dela ficam fora da água, com um peixe em cada registro e o lado escrito no gráfico. Em metas de redução o eixo inverte para o lado bom continuar acima da água. Datas, valores e o cálculo do atingimento não mudam.
 
-### SÓ DEV — Apresentação do Radar — detalhe do Objetivo com menos rolagem em Marcos, Riscos e Próximos passos (#1865) — 2026-11-18
+### Apresentação do Radar — detalhe do Objetivo com menos rolagem em Marcos, Riscos e Próximos passos (#1865) — PROD 18/11 (no ar desde o merge) — 2026-11-18
 
 A altura da tela passa a ser dividida pelo conteúdo real. Riscos e Próximos passos aparecem inteiros até 40% da altura, os Marcos ficam com o restante, e Progressos, Planos e a coluna da esquerda cedem espaço primeiro. Quando nem tudo cabe, a rolagem continua disponível. Com 14 Marcos, a rolagem da tabela cai de 195 px para 93 px em 1366 × 768 e some em 1280 × 900.
 
-### SÓ DEV — Apresentação do Radar — detalhe do Objetivo mais legível em projeção (#1862) — 2026-11-18
+### Apresentação do Radar — detalhe do Objetivo mais legível em projeção (#1862) — PROD 18/11 (no ar desde o merge) — 2026-11-18
 
 No detalhe do Objetivo, Riscos e Próximos passos ganham espaço quando preenchidos. Progresso dos marcos e Atingimento da meta aparecem separados. A tabela de Marcos mantém os nomes a partir de 16 px, com cabeçalho visível durante a rolagem e foco por teclado.
 
-### SÓ DEV — Apresentação do Radar — Panorama geral mais legível em projeção (#1861) — 2026-11-18
+### Apresentação do Radar — Panorama geral mais legível em projeção (#1861) — PROD 18/11 (no ar desde o merge) — 2026-11-18
 
 O slide explicita quantos Objetivos estão na distribuição de status. A comparação por gerência inclui Não iniciado, identifica a coluna Progresso médio e alinha os números à direita. Barras e linhas ocupam menos altura, preservando os cálculos existentes.
 
-### SÓ DEV — 🎲 Quando termina? · previsão em teste no Fluxo (painel v5.123-dev, #1853) — 2026-11-18
+### 🎲 Quando termina? · previsão em teste no Fluxo (painel v5.123-dev, #1853) — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88) — 2026-11-18
 
 - Na aba 🌊 Fluxo do Painel, o piloto **Quando termina?** estima a data para concluir um lote sob o selo **Estimativa em teste**. A previsão usa entregas verificáveis em Concluído, inclusive arquivadas, e roda no navegador com os dados já carregados.
 - Mostra a data P85, o P50 nos detalhes e o motivo quando o histórico ou o horizonte não permitem estimar. O piloto fica restrito a Dados e IA e ao squad de teste.
 
-### 🎨 /melhoriauiux do modal do card: hierarquia visual e foco (kanban v8.30.1012-dev, #1842) (SÓ DEV) — 2026-11-18
+### 🎨 /melhoriauiux do modal do card: hierarquia visual e foco (kanban v8.30.1012-dev, #1842) — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88) — 2026-11-18
 
 Moldura quieta sem botões teal concorrentes (+ Add de Participantes e 🤖 Insights discretos para destacar 💾 Salvar como primário único), remoção do backdrop-filter aninhado em #m-tag-add-list, acabamento --specular nos submenus flutuantes do modal, :focus-visible unificado nos botões do #card-ov (com outline-offset: -2px em #m-deps-menu e #m-milanote-menu) e tabular-nums em #m-atraso-info.
 

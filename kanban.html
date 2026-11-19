@@ -1303,7 +1303,7 @@ html:has(.login-ov.open) .fish-ltr,html:has(.login-ov.open) .fish-rtl,html:has(.
 .m-tag-chip .x:hover{opacity:1;}
 .m-tags-add{cursor:text;}
 .m-tag-add-wrap{position:relative;}
-.m-tag-add-list{display:none;position:fixed;z-index:9300;background:rgba(var(--surface-rgb),.99);border:1px solid var(--glass-b);border-radius:10px;padding:4px;max-height:220px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.5);backdrop-filter:blur(14px);}
+.m-tag-add-list{display:none;position:fixed;z-index:9300;background:rgba(var(--surface-rgb),.99);border:1px solid var(--glass-b);border-radius:10px;padding:4px;max-height:220px;overflow-y:auto;box-shadow:var(--specular),0 10px 30px rgba(0,0,0,.5);}
 .m-tag-add-list.open{display:block;}
 .m-tag-add-item{padding:6px 9px;border-radius:7px;font-size:12px;color:var(--txt);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .m-tag-add-item:hover{background:rgba(56,182,255,.14);}
@@ -4625,9 +4625,11 @@ input[type="date"]{-moz-appearance:textfield;}
 #card-ov .cl-group-title{color:var(--txt);}
 #card-ov .cl-group-hd{min-width:0;}
 #card-ov .cl-del,#card-ov .cl-collapse-btn,#card-ov .cl-copy-all{color:var(--txt2);}
-#card-ov .panel-hd .x-btn:focus-visible,#card-ov #m-checklist :focus-visible{
+#card-ov .panel-hd .x-btn:focus-visible,#card-ov #m-checklist :focus-visible,
+#card-ov button:focus-visible{
   outline:2px solid var(--accent);outline-offset:2px;
 }
+#m-deps-menu button:focus-visible,#m-milanote-menu button:focus-visible{outline-offset:-2px;}
 @media(max-width:768px){
   #card-ov .card-attr-row{grid-template-columns:minmax(0,1fr);}
 }
@@ -4732,7 +4734,9 @@ window._bfSemanaInfo = function(agoraMs){
 (function(){
   try{
     const bfs = window._bfSemanaInfo();
-    window.__bfPadrao = bfs.dentro && localStorage.getItem(bfs.chaveSair) !== '1';
+    // O BF escolhido manualmente continua sendo o tema da pessoa depois da semana.
+    const bfManual = localStorage.getItem('mare_theme') === 'blackfriday' && localStorage.getItem('mare_theme_auto') !== '1';
+    window.__bfPadrao = bfs.dentro && !bfManual && localStorage.getItem(bfs.chaveSair) !== '1';
     if(window.__bfPadrao){ document.documentElement.setAttribute('data-theme','blackfriday'); return; }
   }catch(e){ window.__bfPadrao = false; }
   try{
@@ -4895,7 +4899,7 @@ window._bfSemanaInfo = function(agoraMs){
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
     <button id="tb-timers" class="btn btn-sm" onclick="tmAlternarPop(event)" aria-haspopup="true" aria-expanded="false" aria-label="Meus timers" title="Seus timers e cronômetros" style="padding:5px 9px;">⏲<span class="tm-badge" id="tb-timers-n" style="display:none"></span></button>
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" ontouchstart="_themeBtnTouchStart(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito (ou toque com 2 dedos): 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" ontouchstart="_themeBtnTouchStart(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito (ou toque com 2 dedos): 🔥 modo Black Friday (padrão na semana da Black Friday). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -5066,7 +5070,7 @@ window._bfSemanaInfo = function(agoraMs){
       </button>
     </div>
   </div>
-  <button class="btn btn-sm" data-tb-id="gantt" onclick="toggleGanttView()" id="btn-gantt" aria-pressed="false" title="Campanhas e entregas no tempo: barras de Início → Fim e marcos ◆ de Prazo">📊 Gantt</button>
+  <button class="btn btn-sm" data-tb-id="gantt" onclick="toggleGanttView()" id="btn-gantt" aria-pressed="false" title="Campanhas e calendários do Digital no tempo: barras de Início → Fim (com ◆ de Prazo)">🧮 Gantt</button>
   <div style="position:relative;" id="fontsize-menu-wrap" data-tb-id="fonte">
     <button class="btn btn-sm" onclick="toggleFontSizeMenu()" id="btn-fontsize" title="Tamanho da fonte e densidade dos cards do board — preferência salva na sua conta">🔍 <span id="btn-fontsize-lbl">Fonte</span><span id="btn-density-lbl"></span></button>
     <div id="fontsize-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
@@ -5438,7 +5442,7 @@ window._bfSemanaInfo = function(agoraMs){
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
     <div id="m-cover-wrap" style="position:relative;display:inline-block;margin-right:6px;">
       <button class="x-btn" id="m-cover-btn" aria-label="Capa de cor ou imagem" onclick="toggleCoverMenu()" title="Capa de cor ou imagem">🎨</button>
-      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
+      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
         <div class="cover-swatches cover-swatches-target"></div>
         <div style="border-top:1px solid var(--glass-b);margin:9px 0 7px;padding-top:8px;">
           <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);margin-bottom:5px;">🖼️ Ou imagem (só guarda o link)</div>
@@ -5554,7 +5558,7 @@ window._bfSemanaInfo = function(agoraMs){
           <div class="field"><label class="fl">Prazo</label>
             <div style="display:flex;gap:6px;align-items:center;min-width:0;"><input class="fi" id="m-due" type="date" onchange="_onDueDateChange()" style="flex:1;min-width:0;"><button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário" aria-label="Escolher o prazo no calendário" style="margin-left:0;flex-shrink:0;">📅</button></div>
             <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
-            <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;"></div>
+            <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;font-variant-numeric:tabular-nums;"></div>
           </div>
         </div>
         <div class="card-attr-row">
@@ -5619,7 +5623,7 @@ window._bfSemanaInfo = function(agoraMs){
             <select class="fi" id="m-part-select" style="flex:1;font-size:11px;padding:5px 8px;">
               <option value="">+ Adicionar participante...</option>
             </select>
-            <button class="btn btn-sm btn-teal" onclick="addParticipant()">+ Add</button>
+            <button class="btn btn-sm" onclick="addParticipant()">+ Add</button>
           </div>
         </div>
       </div>
@@ -5666,7 +5670,7 @@ window._bfSemanaInfo = function(agoraMs){
              Prioridade). O PO pode esconder este cartão num Padrão de card (CARD_SECTIONS 'periodo'). -->
         <div class="cl-sec" id="m-periodo-sec">
           <div class="cl-hd-row"><div class="cl-hd">📅 Período e hora</div></div>
-          <div class="m-per-dica">Quando a campanha ou coleção está no ar — preencha Início <b>e</b> Fim (aparece no 📅 Calendário e no 📊 Gantt) — e a hora da entrega do Prazo.</div>
+          <div class="m-per-dica">Quando a campanha ou coleção está no ar — preencha Início <b>e</b> Fim (aparece no 📅 Calendário e no 🧮 Gantt) — e a hora da entrega do Prazo.</div>
           <div class="m-per-grid">
             <div class="m-datas-cel"><label class="fl" for="m-inicio">Início</label><input class="fi" id="m-inicio" type="date" onchange="_onCardPeriodoChange()"></div>
             <div class="m-datas-cel"><label class="fl" for="m-fim">Fim</label><input class="fi" id="m-fim" type="date" onchange="_onCardPeriodoChange()"></div>
@@ -6041,7 +6045,7 @@ window._bfSemanaInfo = function(agoraMs){
       <button class="btn btn-sm" onclick="toggleUsarModeloMenu()" title="Aplicar um modelo salvo neste card">📥 Usar modelo</button>
       <div id="m-usarmodelo-menu" style="display:none;flex-direction:column;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:240px;max-width:280px;max-height:340px;z-index:500;">
+        box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);min-width:240px;max-width:280px;max-height:340px;z-index:500;">
         <div style="padding:8px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--glass-b);flex-shrink:0;">
           <input id="m-usarmodelo-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar modelo..." oninput="_renderUsarModeloList()" style="width:100%;">
           <select id="m-usarmodelo-f-tag" class="ql-filter-sel" onchange="_renderUsarModeloList()" style="width:100%;"></select>
@@ -6059,7 +6063,7 @@ window._bfSemanaInfo = function(agoraMs){
       </button>
       <div id="m-deps-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:200px;z-index:500;overflow:hidden;">
+        box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);min-width:200px;z-index:500;overflow:hidden;">
         <button onclick="openDependsPicker();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
           onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
           🔗 Definir dependência
@@ -6082,7 +6086,7 @@ window._bfSemanaInfo = function(agoraMs){
       </button>
       <div id="m-milanote-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:230px;z-index:500;overflow:hidden;">
+        box-shadow:var(--specular),0 8px 32px rgba(0,0,0,.5);min-width:230px;z-index:500;overflow:hidden;">
         <button onclick="exportToMilanote();closeMilanoteMenu();" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
           onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
           <span>📝 Copiar resumo completo</span>
@@ -6102,7 +6106,7 @@ window._bfSemanaInfo = function(agoraMs){
          do card — ver @media(max-width:768px). No desktop o wrapper não muda
          nada (segue no mesmo lugar/fileira de sempre). -->
     <div id="modal-ft-primary">
-      <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
+      <button class="btn btn-sm" onclick="insightsCard()">🤖 Insights</button>
       <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
       <button class="btn btn-p btn-sm" id="btn-save-card" onclick="saveCard()">💾 Salvar</button>
     </div>
@@ -7776,7 +7780,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1005</div>
+<div class="version">v8.30.1016</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7797,7 +7801,7 @@ window._bfSemanaInfo = function(agoraMs){
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction, onDisconnect } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, reauthenticateWithPopup, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -7925,12 +7929,10 @@ fcmIsSupported().then(supported=>{
 }).catch(()=>{});
 
 // Captura e salva o token de acesso de forma segura
+// /monitorarbugs 18/11/2026 (login Google): o login NÃO guarda mais o accessToken em gcal_token. O provider do login não tem o escopo
+// de agenda (ver o comentário do provider, acima), então o token do login dava 403 "insufficient scopes" no Google Agenda — mas, por
+// existir, o ⚙ dizia "✅ autorizada" e processGcalQueueForAdmin() pulava o pedido do escopo de verdade. Só _requestCalendarScope() grava.
 window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    safeLS.setItem('gcal_token', credential.accessToken);
-    safeLS.setItem('gcal_token_ts', String(Date.now())); // OAuth expira em ~1h
-  }
   if(insc) window._pendingInsc=true;
   safeLS.removeItem('login_popup_fail_streak'); // login popup deu certo — zera o contador do fallback de redirect (ver window._signInRedirect())
 });
@@ -7957,6 +7959,7 @@ window._signOut=(reason)=>{
   try{ clearInterval(window._heartbeat); window._heartbeat=null; }catch(e){}
   try{ if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub(); }catch(e){}
   try{ if(window._forceLogoutUnsub) window._forceLogoutUnsub(); }catch(e){}
+  try{ ['gcal_token','gcal_token_ts','gcal_token_uid'].forEach(k=>safeLS.removeItem(k)); }catch(e){}   // token da agenda sai do disco em toda saída do Maré (o dono, em _gcalToken(), cobre as saídas de outras páginas)
   signOut(auth).catch(()=>{}).finally(()=>{ location.reload(); });
 };
 // Refresh silencioso do perfil (achado real, 2026-10-01, relato direto do
@@ -8057,14 +8060,21 @@ window.dispatchEvent(new Event('fb-ready'));
 // deixa só a versão de baixo (com o cleanup) valendo.
 // Pede o escopo de calendário sob demanda (só quando a pessoa conecta uma agenda) —
 // isolado do login normal pra não bloquear todo mundo se o app não estiver verificado.
-window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    safeLS.setItem('gcal_token', credential.accessToken);
-    safeLS.setItem('gcal_token_ts', String(Date.now()));
-  }
-  return credential;
-});
+// reauthenticateWithPopup, não signInWithPopup: escolher OUTRA conta no popup trocava a sessão do app em silêncio. Agora o SDK recusa com auth/user-mismatch e a sessão fica como estava.
+window._requestCalendarScope = () => {
+  const u = auth.currentUser;
+  if (!u) return Promise.reject(Object.assign(new Error('Sessão encerrada: entre de novo para autorizar a agenda.'), { code:'auth/user-signed-out' }));
+  calProvider.setCustomParameters(u.email ? { hd:'ciahering.com.br', login_hint:u.email } : { hd:'ciahering.com.br' });   // já abre na conta certa (setCustomParameters substitui tudo, por isso repete o hd)
+  return reauthenticateWithPopup(u, calProvider).then(r=>{
+    const credential = GoogleAuthProvider.credentialFromResult(r);
+    if (credential && credential.accessToken) {
+      safeLS.setItem('gcal_token', credential.accessToken);
+      safeLS.setItem('gcal_token_ts', String(Date.now()));
+      safeLS.setItem('gcal_token_uid', (r.user&&r.user.uid)||'');   // dono do token: outra conta no mesmo navegador nunca o reaproveita (ver _gcalToken())
+    }
+    return credential;
+  });
+};
 
 // Fallback de login por redirect (achado real, 2026-09-29, relato direto de
 // usuária: popup de login travando com "Cross-Origin-Opener-Policy... would
@@ -8117,19 +8127,14 @@ if(safeLS.getItem('mare_pending_insc')==='1'){ safeLS.removeItem('mare_pending_i
 // de window._signIn() acima (popup) — não é urgente/não compete com nada,
 // pode ficar assíncrono.
 getRedirectResult(auth).then(r=>{
-  if(!r) return; // nenhum redirect pendente (a maioria dos loads normais)
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if(credential && credential.accessToken){
-    safeLS.setItem('gcal_token', credential.accessToken);
-    safeLS.setItem('gcal_token_ts', String(Date.now()));
-  }
+  // O redirect é o do LOGIN (provider sem escopo de agenda): não guarda o accessToken em gcal_token (ver window._signIn).
 }).catch(e=>{ console.warn('[Mare] getRedirectResult() falhou:', e); });
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif.js?v=44"></script>
 <script src="mare-metas.js?v=19"></script>
-<script src="mare-dicas.js?v=18"></script>
+<script src="mare-dicas.js?v=19"></script>
 <script src="mare-sonar.js?v=8"></script>
 <script src="mare-timer.js?v=1"></script>
 <script src="mare-gcal.js?v=10"></script>
@@ -8157,6 +8162,17 @@ const FB_OVERRIDE_NS = 'kanban';
 // STATE
 // ═══════════════════════════════════════════════════════
 
+// Token do Google Agenda (gcal_token): só vale pra conta que o pediu. /monitorarbugs 18/11/2026 (login Google): a limpeza de 30/09 só
+// existia no "Sair" do Maré — sair pelo Oceano/Radar/Painel, por inatividade ou por logout forçado deixava o token de agenda no navegador
+// (mesma origem), e a próxima conta que entrasse o usaria. Agora o token carrega o uid de quem o pediu e é descartado se não bater.
+function _gcalTokenLimpar(){ ['gcal_token','gcal_token_ts','gcal_token_uid'].forEach(k=>safeLS.removeItem(k)); }
+function _gcalToken(){
+  const t=safeLS.getItem('gcal_token'); if(!t) return null;
+  const dono=safeLS.getItem('gcal_token_uid'), uid=window._currentUser&&window._currentUser.uid;
+  if(!uid) return null;   // ninguém logado ainda (boot): não usa, mas também não apaga o token de quem está prestes a entrar
+  if(!dono || dono!==uid){ _gcalTokenLimpar(); return null; }
+  return t;
+}
 // ── ADMs HARDCODED ───────────────────────────────────────────────
 const ADM_UIDS = {
   'caio_uid_placeholder': 'Caio Oliveira',  // substituído pelo UID real ao logar
@@ -9442,6 +9458,29 @@ function _bulkPopover(html){
   return pop;
 }
 function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
+// 🔥 /monitorarbugs 18/11/2026: exclusão recusada pelo save (sem conexão, banco não conferido) tirava o card da tela e dizia "excluído", com o card ainda no banco.
+// _tirarCards guarda onde cada card estava; _gravarExclusao só confirma depois do banco e, na recusa, devolve os cards à tela e avisa.
+function _tirarCards(ids){
+  const alvo = new Set(ids), removidos = [];
+  cards.forEach((c,i)=>{ if(c && alvo.has(c.id)) removidos.push({c,i}); });
+  cards = cards.filter(c=>!c || !alvo.has(c.id));
+  return removidos;
+}
+function _reabrirArquivadosSeAberto(){ if(document.getElementById('arch-ov')?.classList.contains('open')) openArquivados(); }   // a resposta do banco pode chegar com a lista já fechada
+function _gravarExclusao(extra, removidos, msgOk, depois){
+  return fbSaveAll(extra, []).then(()=>{
+    if(msgOk) showToast(msgOk);
+    if(depois) depois();
+    return true;
+  }, err=>{
+    console.warn('[exclusão] recusada, devolvendo os cards à tela:', err);
+    removidos.forEach(({c,i})=>{ if(!cards.some(x=>x && x.id===c.id)) cards.splice(Math.min(i,cards.length),0,c); });
+    renderBoard();
+    showToast('⚠️ Não foi possível excluir: '+(removidos.length===1?'o card continua':'os '+removidos.length+' cards continuam')+' no board. Confira a conexão e tente de novo.', 8000);
+    if(depois) depois();
+    return false;
+  });
+}
 function _bulkFinish(msg, keepSelection, extraIds){
   // touchedIds = os selecionados (todo bulk action opera sobre eles) + ids
   // extras que a própria operação criou por fora da seleção (ex.:
@@ -9834,20 +9873,19 @@ async function bulkDeleteSelected(){
   const n=selectedCards.size; if(!n) return;
   if(!await uiConfirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
   const ids=new Set(selectedCards);
-  cards=cards.filter(c=>!ids.has(c.id));
+  const _removidos=_tirarCards(ids);
   // Marca cada id excluído em cards_deleted_intentionally, na MESMA escrita
   // atômica — alimenta _intentionalDeleteIds (ver listener de /cards_index)
   // pra não disparar falso-positivo de "card sumiu sozinho".
   const _delExtra={};
   ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
-  fbSaveAll(_delExtra, []); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
+  _gravarExclusao(_delExtra, _removidos, `🗑 ${n} card${n!==1?'s':''} excluído${n!==1?'s':''}.`); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
   selectedCards.clear();
   selectMode=false;
   const btn=document.getElementById('btn-select');
   if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
   renderBoard();
   updateBulkBar();
-  showToast(`🗑 ${n} card${n!==1?'s':''} excluído${n!==1?'s':''}.`);
 }
 // Helpers de subtime
 function getSubteam(id){ return subteams.find(s=>s.id===id)||null; }
@@ -13122,7 +13160,7 @@ function doSignInMicrosoftPessoal(insc=false){
   });
 }
 function doSignOut(){
-  safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
+  _gcalTokenLimpar(); // Limpa a credencial do calendário ao deslogar (as outras saídas são cobertas pelo dono do token, ver _gcalToken())
   if(window._signOut) window._signOut('manual'); 
 }
 
@@ -20482,9 +20520,9 @@ async function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   if(!await uiConfirm('Excluir "'+c.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   saveUndo('excluir card');
-  cards=cards.filter(x=>x.id!==editingId);
+  const _removidos=_tirarCards([editingId]);
   _stopDirtyWatch(); // já confirmou a exclusão acima; não faz sentido perguntar de novo ao fechar
-  fbSaveAll({['cards_deleted_intentionally/'+editingId]:true}, []); renderBoard(); closeOv('card-ov');
+  _gravarExclusao({['cards_deleted_intentionally/'+editingId]:true}, _removidos); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
   if(_cardTravadoAqui()){ _avisoCardTravado(); return; }
@@ -24551,7 +24589,17 @@ async function notasUndo(){
   const prev = stack.pop();
   await window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos'), prev);
 }
+// Monitor do Painel (12/11/2026): "Failed to set the innerHTML… Perhaps it was moved in a blur event handler?".
+// Redesenhar com um bloco em edição remove o textarea focado; o Chrome dispara o blur NA HORA, e onBlocoBlur()
+// redesenhava de novo por dentro — o innerHTML de fora estourava (modo livre) e o foco ia embora no meio da digitação.
+// O blur que nasce do próprio redesenho é ignorado: o redesenho de fora recoloca o foco e o cursor.
+let _notasRedesenhando = false;
 function renderNotaEditor(){
+  if(_notasRedesenhando) return;
+  _notasRedesenhando = true;
+  try { _renderNotaEditorCorpo(); } finally { _notasRedesenhando = false; }
+}
+function _renderNotaEditorCorpo(){
   const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
   if(listView) listView.style.display='none';
   if(edView) edView.style.display='flex';
@@ -24657,6 +24705,7 @@ function focarBloco(blocoId){
 // no fmt-toolbar de Descrição/Comentário) — sem isso, clicar em "B" perderia
 // a seleção de texto antes do _fmtText conseguir usá-la.
 function onBlocoBlur(blocoId){
+  if(_notasRedesenhando) return; // blur causado pelo redesenho (o textarea foi trocado), não pela pessoa saindo do campo
   if(_notasFocusedBlockId===blocoId) _notasFocusedBlockId=null;
   renderNotaEditor();
 }
@@ -28381,11 +28430,9 @@ async function deleteSelectedArchived(){
   const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
   if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
-  const idSet=new Set(ids);
-  cards=cards.filter(c=>!idSet.has(c.id));
+  const _removidos=_tirarCards(ids);
   const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });   // sem a marca o board acusava "card sumiu sozinho" (e o save de outro aparelho poderia trazê-lo de volta)
-  fbSaveAll(_delExtra, []);
-  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  _gravarExclusao(_delExtra, _removidos, '🗑 '+ids.length+' card(s) excluído(s) permanentemente.', _reabrirArquivadosSeAberto);
   openArquivados();
 }
 async function restoreSelectedArchived(){
@@ -28455,11 +28502,9 @@ async function deleteSelectedOldCards(){
   const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
   if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
-  const idSet=new Set(ids);
-  cards=cards.filter(c=>!idSet.has(c.id));
+  const _removidos=_tirarCards(ids);
   const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
-  fbSaveAll(_delExtra, []); renderBoard();
-  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  _gravarExclusao(_delExtra, _removidos, '🗑 '+ids.length+' card(s) excluído(s) permanentemente.', renderCleanupList); renderBoard();
   renderCleanupList();
 }
 
@@ -28489,14 +28534,13 @@ async function purgeOldArchived(){
   const digitado=await uiPrompt('Isso vai excluir PERMANENTEMENTE '+alvo.length+' card(s) arquivado(s) há mais de '+years+' ano(s). Não dá pra desfazer.\n\nPra confirmar, digite EXCLUIR:', '', {title:'Excluir arquivados antigos',danger:true,okText:'Excluir'});
   if((digitado||'').trim().toUpperCase()!=='EXCLUIR'){ if(digitado!==null) showToast('Cancelado — texto não confere.'); return; }
   const ids=new Set(alvo.map(c=>c.id));
-  cards=cards.filter(c=>!ids.has(c.id));
+  const _removidos=_tirarCards(ids);
   const _delExtra={}; ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
-  fbSaveAll(_delExtra, []);
-  showToast('🗑 '+alvo.length+' card(s) excluído(s) permanentemente.');
+  _gravarExclusao(_delExtra, _removidos, '🗑 '+alvo.length+' card(s) excluído(s) permanentemente.', _reabrirArquivadosSeAberto);
   openArquivados();
 }
 // ── FIM LIMPEZA DE CARDS ANTIGOS ─────────────────────────────────────
-async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll({['cards_deleted_intentionally/'+id]:true}, []); openArquivados(); }
+async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; const _removidos=_tirarCards([id]); _gravarExclusao({['cards_deleted_intentionally/'+id]:true}, _removidos, null, _reabrirArquivadosSeAberto); openArquivados(); }
 
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
@@ -30581,9 +30625,9 @@ function executeTool(name,input){
       const c=cards.find(x=>x.id===input.card_id);
       if(!c) return{ok:false,msg:'Card não encontrado'};
       const titulo=c.title;
-      cards=cards.filter(x=>x.id!==input.card_id);
-      renderBoard(); fbSaveAll({['cards_deleted_intentionally/'+input.card_id]:true}, []);
-      return{ok:true,msg:`Card "${titulo}" excluído permanentemente`};
+      const _removidos=_tirarCards([input.card_id]);
+      renderBoard(); _gravarExclusao({['cards_deleted_intentionally/'+input.card_id]:true}, _removidos);   // executeTool é síncrono: se o banco recusar, o card volta à tela com o aviso
+      return{ok:true,msg:`Exclusão do card "${titulo}" enviada`};
     }
     case 'atualizar_descricao':{
       let c=cards.find(x=>x.id===input.card_id);
@@ -31766,15 +31810,15 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Sonar (Ctrl+K)', text:'O <b>Sonar</b> é a busca do Oceano. Pressione <b>Ctrl+K</b> (ou <b>Cmd+K</b> no Mac) ou clique em 🔍 no header. Primeiro vêm os <b>cards deste board</b> (título, descrição, Insights do PO e responsável, sem se importar com acento), com o botão <b>Ver N cards no board</b> para filtrar o quadro. Embaixo, o resto do Oceano: <b>Objetivos e Marcos do Radar</b> (abrem no Radar), <b>Buscar nos cards de outro squad</b> (abre aquele board com a busca já preenchida) e os tópicos da <b>Ajuda</b>. Use as setas ↑↓ e Enter para abrir; Ctrl+Enter abre o card em aba nova; Esc fecha. Começar com <b>r:</b> (Radar), <b>s:</b> (squads) ou <b>a:</b> (Ajuda) troca a aba. Os Objetivos do Radar ficam guardados no aparelho por até 3 h; para buscar de novo, digite <b>atualizar</b> e escolha <b>Atualizar o Radar</b>. Com um card aberto, Ctrl+K busca nos comentários do card. No lobby do Oceano, o mesmo Sonar também acha produtos e links.\n\n🗂️ <b>Abas e prefixos:</b> navegue entre <b>Tudo · 1 Este board · 2 Radar · 3 Squads · 4 Ajuda</b> (com a caixa vazia, as teclas <b>1–4</b> trocam de aba e <b>Tab</b> avança) ou digite os prefixos <b>b:</b>, <b>r:</b>, <b>s:</b> e <b>a:</b> para ir direto à aba correspondente. <b>Ctrl+Enter</b> (ou <b>⌘+Enter</b>) abre o item selecionado em uma nova aba.\n\n🙋 <b>Filtro "meus" / "minhas":</b> digite <b>meus</b> (ou <b>minhas</b>, <b>meu</b>, <b>minha</b>) sozinho ou junto com outro termo para filtrar apenas os cards deste board em que você é responsável ou participante — oferecendo <b>Destacar meus N cards no board</b> (quando digitado sozinho) ou <b>Ver N cards no board</b> (combinado com texto). Na aba/seção do <b>Radar</b>, traz os Objetivos e Marcos em que você é responsável.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
-    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.\n\n📊 <b>Quer ver campanhas e coleções em barras no tempo?</b> Ao lado de "🛤️ Timeline" fica o botão <b>"📊 Gantt"</b> (as duas visões são exclusivas entre si): enquanto a Timeline lista pendências por vencimento, o Gantt desenha a barra de <b>Início → Fim</b> e o marco <b>◆</b> do <b>Prazo</b> numa régua de 6 semanas — veja o tópico "Gantt".' },
-    { icon:'📊', title:'Gantt', text:'Botão <b>"📊 Gantt"</b> na toolbar, logo ao lado de "↕ Ordenação", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram só os cards ativos com <b>período</b> — <b>Início + Fim</b> (as campanhas, que atravessam vários dias). Card que só tem <b>Prazo</b> (termina num dia) fica de fora e aparece no <b>📅 Calendário</b> e na <b>🛤️ Timeline</b>; o rodapé conta quantos ficaram de fora. Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) quando o card com período também tem prazo (<b>Fim ≠ Prazo</b>).\n\n⭐ <b>Favoritar esta aba</b> (fim da barra de abas): a aba favorita é a que abre primeiro no Gantt, no Maré e no Radar, em qualquer aparelho — um link direto (<code>?gantt=…</code>) passa na frente; sem favorita, abre a última aba usada no aparelho.\n\n📣 <b>Pedir atualização</b> (nas abas de calendário): avisa quem cuida da planilha que ela precisa ser atualizada — Comercial Hering: squads APP e Site Hering; Marketplace: squad Marketplace; Outlet: squad Outlet Comercial; Marca: o Caio. Eles recebem um aviso no sino (e no celular) que abre direto o 📤 Atualizar planilha. Um pedido por calendário por dia.\n\n🔔 <b>Avisar-me</b> (nas abas de calendário, ao lado de 📤/🕘): você recebe um aviso no sino <b>e no celular (push)</b> quando aquele calendário for atualizado — quem atualizou e o que mudou (＋ novas · ✎ mudaram · − saíram). Cada calendário tem o seu 🔔 — na aba 🧭 Digital aparecem os 3 comerciais lado a lado (🔔 Hering · 🔔 Marketplace · 🔔 Outlet), cada um ligando só o seu. Tocar no aviso abre o Gantt naquele calendário; o link direto é <code>kanban.html?gantt=outlet</code> (ou marca, comercial, mktplace, digital).\n\n🧭 <b>Digital · dia a dia</b> (última aba): os calendários <b>Comercial Hering</b>, <b>Marketplace</b> e <b>Outlet</b> na mesma régua, um bloco por origem — os chips filtram por origem. <b>Toque num dia</b> do cabeçalho e um <b>popup abre ali mesmo</b> com <b>tudo o que acontece nele</b> (inclusive ações de vários dias), agrupado por calendário — no celular, ele sobe de baixo da tela; tocar em outro dia leva o popup para ele, e Esc, ✕ ou um toque fora fecha. A planilha de cada um continua sendo atualizada na aba dele.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📆 Mês</b> (escolha um mês do ano e a régua vai direto para ele, sem filtrar nada) e <b>De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo período ou prazo cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card. Nome que não cabe na barra? <b>Passe o mouse</b> (ou chegue pelo Tab) e um <b>balão</b> mostra o nome inteiro e as datas — vale também para os calendários e as datas-chave.\n\n📱 <b>No celular</b>: toque numa barra para ler a campanha e as datas inteiras numa área de leitura; <b>Abrir card</b> abre o card e, nos calendários, o ADM usa <b>Destacar ação</b>. Fechar ou Esc volta à régua.\n\n🗂 <b>Abas: Cards, 🎯 Calendário de Marca, 🛒 Comercial Hering, 🛍️ Comercial Marketplace, 🏷️ Comercial Outlet e 🧭 Digital · dia a dia</b>: no topo do Gantt, além dos cards da squad, há as abas com os calendários da empresa, iguais para <b>todas as squads</b>. O <b>Calendário de Marca</b> mostra as campanhas nas linhas <b>Coleção sellout</b>, <b>Web</b>, <b>Redes sociais</b> e <b>Canais Intimates</b> e <b>Sports</b> (site e CRM), e logo abaixo, num bloco à parte, as do <b>👶 Hering Kids</b> (Coleção sellout, Web e Redes sociais); o <b>Comercial Hering</b> mostra as ações do mês por linha (<b>Lançamentos e datas</b>, Site e App, Saldos, Mídia, CRM, App…) e o <b>Comercial Marketplace</b>, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes…) e o <b>Comercial Outlet</b>, uma linha por tipo de ação (principal, secundária, madrugada, mídia…) — o Outlet vem <b>uma planilha por mês</b>: publicar troca só aquele mês e os anteriores continuam; os três comerciais <b>em colunas largas e com o texto inteiro</b>, como as células da planilha — role para o lado para ver os outros dias; o texto acompanha a rolagem. Barras que se cruzam na mesma linha descem para uma faixa de baixo. <b>Toque numa barra</b> para ler o texto inteiro com as datas. Nessas abas valem <b>◀ Hoje ▶</b>, o <b>📆 Mês</b> e o <b>📅 De … até …</b>; os filtros de pessoa/tag/submarca/canal são só dos cards. <b>Qualquer pessoa da Hering atualiza</b> os calendários ali mesmo: <b>📤 Atualizar planilha</b> (ao lado dos filtros) → escolha o .xlsx → veja o que <b>entra</b>, <b>muda</b> e <b>sai</b> → <b>Publicar</b> (vale para todas as squads). O <b>🕘 Histórico</b> mostra quem atualizou, quando e com qual arquivo — e <b>↩ Voltar para esta versão</b> desfaz uma atualização errada (a volta também fica registrada). O rodapé diz quando e por quem foi a última atualização. A aba escolhida fica guardada neste aparelho.\n\n📌 <b>Datas-chave</b>: logo abaixo dos dias, a linha <b>📌 Datas-chave</b> mostra os eventos que a squad marcou (Black Friday, Natal, um lançamento…). Cada uma vira uma <b>faixa colorida</b> atrás das barras (ou uma <b>linha</b>, se for um dia só), em todas as abas — ajuda a ler o que acontece em volta da data. <b>PO, Organizador ou ADM</b> criam no <b>＋</b> ao lado de "📌 Datas-chave" (nome, início, fim opcional e cor) e tocam num nome para editar ou excluir; quem não edita vê o nome e o período ao tocar. O <b>ADM</b> pode marcar uma data para <b>🌐 todas as squads</b>. A linha também mostra o rótulo <b>Hoje</b>, centrado na linha do dia.\n\n⚠️ <b>Destaques e filtro nos calendários</b>: nas abas de Marca e Comercial, barras com <b>⚠️</b> e cor forte são <b>ações importantes</b> marcadas por um ADM — valem para todas as squads; o <b>ADM</b> toca numa barra para escolher a cor e o ⚠️ (ou tirar o destaque). Os botões acima do De/Até mostram <b>só um grupo de linhas</b>: no Comercial, <b>🖥️ Site</b>, <b>📱 App</b>, <b>✉️ CRM</b>, <b>📣 Mídia</b> e <b>🚀 Lançamentos e datas</b> (as linhas <b>Site e App</b> entram em Site e em App); na Marca, Coleção, Web, Redes, Canais e Kids. <b>✕ Limpar filtros</b> volta para Tudo.' },
+    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.\n\n🧮 <b>Quer ver campanhas e coleções em barras no tempo?</b> Ao lado de "↕ Ordenação" fica o botão <b>"🧮 Gantt"</b> (Timeline e Gantt são exclusivos entre si): enquanto a Timeline lista pendências por vencimento, o Gantt desenha os cards com período (<b>Início → Fim</b>, mais o marco <b>◆</b> de <b>Prazo</b> quando houver) e os calendários do Digital numa régua de 6 semanas — veja o tópico "Gantt".' },
+    { icon:'🧮', title:'Gantt', text:'Botão <b>"🧮 Gantt"</b> na toolbar, logo ao lado de "↕ Ordenação", troca o board por uma régua cronológica de <b>6 semanas</b> (começando no domingo da semana passada) — ideal para enxergar campanhas, coleções e entregas atravessando o mês. Timeline e Gantt são exclusivos entre si: ligar um desliga o outro, e clicar de novo no botão ativo volta para o Kanban de colunas.\n\n📏 <b>Barras de período e marcos de prazo</b>: entram só os cards ativos com <b>período</b> — <b>Início + Fim</b> (as campanhas, que atravessam vários dias). Card que só tem <b>Prazo</b> (termina num dia) fica de fora e aparece no <b>📅 Calendário</b> e na <b>🛤️ Timeline</b>; o rodapé conta quantos ficaram de fora. Cada card ocupa uma linha com as <b>datas</b> fixas à esquerda: o período vira uma barra <b>Início → Fim</b> com o <b>nome do card</b> dentro (barra curta: nome ao lado) na <b>cor da 1ª tag</b> (sem tag: barra neutra tracejada), com avatares na ponta, <b>✓</b> quando concluído e setas <b>◂ / ▸</b> quando ultrapassa a janela de 6 semanas. Já o <b>Prazo</b> aparece como marco <b>◆</b> no dia exato (com a <b>hora do prazo</b> quando houver) quando o card com período também tem prazo (<b>Fim ≠ Prazo</b>).\n\n⭐ <b>Favoritar esta aba</b> (fim da barra de abas): a aba favorita é a que abre primeiro no Gantt, no Maré e no Radar, em qualquer aparelho — um link direto (<code>?gantt=…</code>) passa na frente; sem favorita, abre a última aba usada no aparelho.\n\n📣 <b>Pedir atualização</b> (nas abas de calendário): avisa quem cuida da planilha que ela precisa ser atualizada — Comercial Hering: squads APP e Site Hering; Marketplace: squad Marketplace; Outlet: squad Outlet Comercial; Marca: o Caio. Eles recebem um aviso no sino (e no celular) que abre direto o 📤 Atualizar planilha. Um pedido por calendário por dia.\n\n🔔 <b>Avisar-me</b> (nas abas de calendário, ao lado de 📤/🕘): você recebe um aviso no sino <b>e no celular (push)</b> quando aquele calendário for atualizado — quem atualizou e o que mudou (＋ novas · ✎ mudaram · − saíram). Cada calendário tem o seu 🔔 — na aba 🧭 Digital aparecem os 3 comerciais lado a lado (🔔 Hering · 🔔 Marketplace · 🔔 Outlet), cada um ligando só o seu. Tocar no aviso abre o Gantt naquele calendário; o link direto é <code>kanban.html?gantt=outlet</code> (ou marca, comercial, mktplace, digital).\n\n🧭 <b>Digital · dia a dia</b> (última aba): os calendários <b>Comercial Hering</b>, <b>Marketplace</b> e <b>Outlet</b> na mesma régua, um bloco por origem — os chips filtram por origem. <b>Toque num dia</b> do cabeçalho e um <b>popup abre ali mesmo</b> com <b>tudo o que acontece nele</b> (inclusive ações de vários dias), agrupado por calendário — no celular, ele sobe de baixo da tela; tocar em outro dia leva o popup para ele, e Esc, ✕ ou um toque fora fecha. A planilha de cada um continua sendo atualizada na aba dele.\n\n🏷️ <b>Agrupamento e navegação</b>: as linhas são agrupadas pela <b>1ª tag</b> do card ("Sem tag" fica por último) e ordenadas por data inicial/prazo e título. Use <b>◀ / Hoje / ▶</b> no topo para avançar ou voltar de 4 em 4 semanas; fins de semana ficam sombreados e uma linha vertical destaca o dia de <b>hoje</b>.\n\n🔎 <b>Filtros e leitura</b>: a barra logo abaixo do topo filtra por <b>pessoa</b>, <b>tag</b>, <b>submarca</b> e <b>canal</b> (quando ligados no squad) e tem <b>📆 Mês</b> (escolha um mês do ano e a régua vai direto para ele, sem filtrar nada) e <b>De … até …</b>: só o <b>De</b> leva a régua até a data; <b>De e Até</b> mostram só os cards cujo <b>período</b> (Início → Fim) cai no intervalo (o rodapé diz quantos ficaram de fora) — são os MESMOS filtros do board (o que você escolher aqui vale no quadro e no 🔭 Filtros, e vice-versa; <b>✕ Limpar filtros</b> zera todos). Todos os <b>🔭 Filtros</b> do board e o destaque <b>💡 Meus cards</b> valem igualmente no Gantt. A visão é somente leitura (sem arrastar datas): clique ou pressione <b>Enter / Espaço</b> em qualquer linha ou barra para abrir o card. Nome que não cabe na barra? <b>Passe o mouse</b> (ou chegue pelo Tab) e um <b>balão</b> mostra o nome inteiro e as datas — vale também para os calendários e as datas-chave.\n\n📱 <b>No celular</b>: toque numa barra para ler a campanha e as datas inteiras numa área de leitura; <b>Abrir card</b> abre o card e, nos calendários, o ADM usa <b>Destacar ação</b>. Fechar ou Esc volta à régua.\n\n🗂 <b>Abas: Cards, 🎯 Calendário de Marca, 🛒 Comercial Hering, 🛍️ Comercial Marketplace, 🏷️ Comercial Outlet e 🧭 Digital · dia a dia</b>: no topo do Gantt, além dos cards da squad, há as abas com os calendários da empresa, iguais para <b>todas as squads</b>. O <b>Calendário de Marca</b> mostra as campanhas nas linhas <b>Coleção sellout</b>, <b>Web</b>, <b>Redes sociais</b> e <b>Canais Intimates</b> e <b>Sports</b> (site e CRM), e logo abaixo, num bloco à parte, as do <b>👶 Hering Kids</b> (Coleção sellout, Web e Redes sociais); o <b>Comercial Hering</b> mostra as ações do mês por linha (<b>Lançamentos e datas</b>, Site e App, Saldos, Mídia, CRM, App…) e o <b>Comercial Marketplace</b>, uma linha por marketplace (Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes…) e o <b>Comercial Outlet</b>, uma linha por tipo de ação (principal, secundária, madrugada, mídia…) — o Outlet vem <b>uma planilha por mês</b>: publicar troca só aquele mês e os anteriores continuam; os três comerciais <b>em colunas largas e com o texto inteiro</b>, como as células da planilha — role para o lado para ver os outros dias; o texto acompanha a rolagem. Barras que se cruzam na mesma linha descem para uma faixa de baixo. <b>Toque numa barra</b> para ler o texto inteiro com as datas. Nessas abas valem <b>◀ Hoje ▶</b>, o <b>📆 Mês</b> e o <b>📅 De … até …</b>; os filtros de pessoa/tag/submarca/canal são só dos cards. <b>Qualquer pessoa da Hering atualiza</b> os calendários ali mesmo: <b>📤 Atualizar planilha</b> (ao lado dos filtros) → escolha o .xlsx → veja o que <b>entra</b>, <b>muda</b> e <b>sai</b> → <b>Publicar</b> (vale para todas as squads). O <b>🕘 Histórico</b> mostra quem atualizou, quando e com qual arquivo — e <b>↩ Voltar para esta versão</b> desfaz uma atualização errada (a volta também fica registrada). O rodapé diz quando e por quem foi a última atualização. A aba escolhida fica guardada neste aparelho.\n\n📌 <b>Datas-chave</b>: logo abaixo dos dias, a linha <b>📌 Datas-chave</b> mostra os eventos que a squad marcou (Black Friday, Natal, um lançamento…). Cada uma vira uma <b>faixa colorida</b> atrás das barras (ou uma <b>linha</b>, se for um dia só), em todas as abas — ajuda a ler o que acontece em volta da data. <b>PO, Organizador ou ADM</b> criam no <b>＋</b> ao lado de "📌 Datas-chave" (nome, início, fim opcional e cor) e tocam num nome para editar ou excluir; quem não edita vê o nome e o período ao tocar. O <b>ADM</b> pode marcar uma data para <b>🌐 todas as squads</b>. A linha também mostra o rótulo <b>Hoje</b>, centrado na linha do dia.\n\n⚠️ <b>Destaques e filtro nos calendários</b>: nas abas dos calendários, barras com <b>⚠️</b> e cor forte são <b>ações importantes</b> marcadas por um ADM — valem para todas as squads; o <b>ADM</b> toca numa barra para escolher a cor e o ⚠️ (ou tirar o destaque). Os botões acima do De/Até mostram <b>só um grupo de linhas</b>: no Comercial Hering, <b>🖥️ Site</b>, <b>📱 App</b>, <b>✉️ CRM</b>, <b>📣 Mídia</b> e <b>🚀 Lançamentos e datas</b> (as linhas <b>Site e App</b> entram em Site e em App); na Marca, Coleção, Web, Redes, Canais e Kids; no Marketplace, Amazon, Mercado Livre, Shopee, Dafiti, TikTok Shop, Magalu, Netshoes e Zattini e Outros; e no Outlet, Principal, Secundária, Relâmpago, Madrugada, CRM, Mídia e afiliados e Extras. <b>✕ Limpar filtros</b> volta para Tudo.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação (mais antigos primeiro) — a ordem em que os cards foram criados, do mais antigo pro mais novo; no mesmo dia vale a hora da criação.\n🕐 Data de criação (mais recentes primeiro) — o inverso: os cards criados por último aparecem no topo. Card sem data de criação (legado/importado) fica no final nos dois sentidos.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).\n\n🔴 <b>Ativar "Atrasados" automaticamente num horário</b>: se você costuma abrir cards atrasados sempre no mesmo intervalo de 2h do dia, o app pode sugerir ativar o filtro "Atrasados" sozinho quando você abre o board dentro desse horário — só na primeira vez que você abre o board naquele dia, nunca liga/desliga sozinho no meio da sessão. Sugestão opcional, mesmas 3 respostas de sempre (aceitar/agora não/não sugerir mais).' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.\n\n📌 <b>Fixar na toolbar principal</b>: se você usa "💡 Meus cards" na maioria das vezes que abre o board, o app pode sugerir sozinho fixar um atalho pra ele lá em cima, direto na barra de ferramentas (mesma ação, sem precisar abrir Filtros primeiro) — é só uma sugestão opcional (aceite/adie/recuse), nunca muda a tela sem você confirmar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'⎋', title:'Esc fecha a tela aberta', text:'Aperte Esc pra fechar rapidinho qualquer tela aberta no momento — 📊 Dados do Board, ❓ Central de Ajuda, 🎬 Controle de Criativos, o modal do card, e por aí vai — sem precisar procurar o ✕ ou clicar fora. Mesma trava de segurança de sempre: se o card tiver alteração não salva, Esc pede confirmação antes de fechar, igual clicar no ✕ já fazia.\n\nDentro de um campo com seu próprio uso pro Esc (ex.: limpar o texto de uma busca, cancelar a edição de um item, fechar um dropdown de @menção), o Esc cuida disso primeiro — só fecha a tela inteira se apertar de novo (ou se aquele campo não tiver mais nada pra "desfazer" com Esc).' },
-    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n👤 <b>Atribuir a alguém (dinâmica)</b>: se você atribui cards à mesma pessoa com frequência, o app pode sugerir criar essa ação — aceitar já leva direto pra esta tela, na aba certa, faltando só apertar a combinação que preferir. Aparece na lista só depois de aceita (nunca por padrão).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
+    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🧮 Gantt, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n👤 <b>Atribuir a alguém (dinâmica)</b>: se você atribui cards à mesma pessoa com frequência, o app pode sugerir criar essa ação — aceitar já leva direto pra esta tela, na aba certa, faltando só apertar a combinação que preferir. Aparece na lista só depois de aceita (nunca por padrão).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
     { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n🖱️ <b>A barra rola sozinha perto da borda:</b> se a toolbar não cabe inteira na tela, deixe o mouse parado perto da borda esquerda ou direita (sem precisar clicar) que ela rola na direção sozinha — funciona tanto navegando normal quanto arrastando um botão durante a reorganização.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\n📅 <b>Prazo automático:</b> na mesma tela de Recorrência, ative "Definir prazo automaticamente" e diga quantos dias depois da criação o prazo deve cair — ex.: card entra toda segunda, prazo "1" deixa o vencimento pra terça seguinte. Sem isso, o card nasce sem prazo (como sempre foi).' },
@@ -31787,7 +31831,7 @@ const HELP_CONTENT = {
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em "📦 Arquivar" no modal (o mesmo botão vira "♻️ Restaurar" quando o card já está arquivado). Para ver arquivados, clique em Arquivados na toolbar. Clique no <b>título</b> de um card da lista pra abrir o modal normal e ver o conteúdo (descrição, checklist, histórico...) sem precisar restaurar antes — ele continua arquivado até alguém clicar em "Restaurar" (na lista ou dentro do próprio modal, que já mostra o botão certo pro estado atual). A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que sinaliza cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição/comentário). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.\n\n<b>Nunca arquiva sozinho sem alguém ver antes:</b> quando existem cards batendo com a regra, o primeiro PO/Organizador/ADM que abrir o board no dia vê uma tela com a lista inteira, cada card com checkbox (desmarque quem não deve ser arquivado agora) e dois botões — "✅ Confirmar arquivamento" ou "⏭ Agora não". Clicar em "Agora não" passa a decisão pra próxima pessoa elegível que abrir o board (mesmo dia); ninguém é incomodado 2x no mesmo dia. Se ninguém confirmar, a lista continua pendente e acumula com os novos candidatos do dia seguinte, até alguém revisar.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
-    { icon:'👤', title:'Minhas Preferências', text:'Painel único reunindo toda a sua personalização pessoal do board — antes espalhada em vários lugares diferentes. Acesse clicando no seu avatar (canto superior direito) → "👤 Minhas Preferências", ou pelo botão de mesmo nome dentro de "⚙ Configurações".\n\nDo que ele cuida: 🎨 Tema (claro/escuro/automático — e um atalho "🌴 Vice City" que só aparece depois que você já descobriu esse tema escondido segurando o botão de tema), 🔍 Fonte e 📐 Densidade dos cards, 📌 Squad padrão, 🔔 Não Perturbe (atalho rápido pras mesmas opções do sino), ⌨️ acesso direto aos Atalhos de teclado, e as sugestões de "personalização baseada em rotina" (ver abaixo).\n\n💡 <b>Sugestões de rotina, agora reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e cada atalho de atribuição rápida já criado aparecem com um toggle — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo (nem torcer pra não ter clicado "Não sugerir mais" sem querer).\n\n🚫 <b>Sugestões recusadas</b>: toda vez que você clica "Não sugerir mais" numa sugestão, ela entra numa lista aqui — "🔄 Esquecer recusa" deixa o app te sugerir aquilo de novo, se o padrão de uso se repetir. Sincroniza com a sua conta (diferente de antes, quando "não sugerir mais" ficava preso só no navegador que você clicou).' },
+    { icon:'👤', title:'Minhas Preferências', text:'Painel único reunindo toda a sua personalização pessoal do board — antes espalhada em vários lugares diferentes. Acesse clicando no seu avatar (canto superior direito) → "👤 Minhas Preferências", ou pelo botão de mesmo nome dentro de "⚙ Configurações".\n\nDo que ele cuida: 🎨 Tema (claro/escuro/automático, 🌴 Vice City depois de descoberto e, na semana da Black Friday, interruptor do 🔥 modo Black Friday), 🔍 Fonte e 📐 Densidade dos cards, 📌 Squad padrão, 🏝️ Ilha Dinâmica, 🔔 Não Perturbe (atalho rápido pras mesmas opções do sino), ⌨️ acesso direto aos Atalhos de teclado, e as sugestões de "personalização baseada em rotina" (ver abaixo).\n\n💡 <b>Sugestões de rotina, agora reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e cada atalho de atribuição rápida já criado aparecem com um toggle — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo (nem torcer pra não ter clicado "Não sugerir mais" sem querer).\n\n🚫 <b>Sugestões recusadas</b>: toda vez que você clica "Não sugerir mais" numa sugestão, ela entra numa lista aqui — "🔄 Esquecer recusa" deixa o app te sugerir aquilo de novo, se o padrão de uso se repetir. Sincroniza com a sua conta (diferente de antes, quando "não sugerir mais" ficava preso só no navegador que você clicou).' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
     { icon:'🔥', title:'Tema Black Friday (semana da Black Friday)', text:'Na <b>semana da Black Friday</b> (de segunda a domingo — em 2026, de 23/11 a 29/11) o Maré abre no tema <b>🔥 Black Friday</b> pra todo mundo: preto com vermelho de detalhe, contagem regressiva no topo ("Xd pra Black Friday", "É hoje!" na sexta), 💰 no lugar dos peixinhos e a fita <b>🔥 OFERTA</b> nos cards de prioridade Crítica (cards ♾️ Contínuos ou 💤 parados mantêm o próprio selo).\n\n<b>Prefere o seu tema?</b> Clique no 🔥 (botão de tema, lá em cima; no celular: <b>⋯ → Alternar tema</b>) — o seu tema volta e fica até o fim da semana. Mudou de ideia? <b>Minhas Preferências → 🔥 Black Friday</b> (ou botão direito / toque com 2 dedos no botão de tema).\n\nNada é gravado no seu tema: na segunda depois da Black Friday cada um volta sozinho ao que usava (inclusive o 🕐 Tema automático). O PO pode pôr um recado ao lado da contagem em ⚙ Configurações → "Banner do tema Black Friday".' },
@@ -31819,7 +31863,7 @@ const HELP_CONTENT = {
     { icon:'🔒', title:'Card travado (duas pessoas no mesmo card)', text:'Se você abre um card que outra pessoa já está editando naquele momento, ele abre em modo leitura — um aviso "🔒 [nome] está editando este card agora" aparece no topo. Dá pra ler tudo, abrir anexos e clicar em links/menções de card normalmente; só a edição fica bloqueada até a outra pessoa salvar e sair (ou o lock expirar sozinho por inatividade).\n\n🔔 Pedir o card: se você só precisa dar uma olhada rápida ou realmente precisa editar na hora, clique em "🔔 Pedir o card" no aviso. Quem está editando recebe um alerta com 5 minutos pra salvar e sair (ou clicar em "✅ Liberar agora"); se ninguém fizer nada no prazo, o card salva e libera sozinho — e quem pediu já vê o card atualizado automaticamente, sem precisar reabrir.' },
     { icon:'🏷', title:'Múltiplas tags por card', text:'Um card pode ter mais de uma tag ao mesmo tempo. Adicione quantas precisar no campo Tags. Na raia por tag, cards com várias tags aparecem em cada linha correspondente.' },
     { icon:'🎨', title:'Capa do card (cor ou imagem)', text:'Botão 🎨 no topo do card abre o menu de capa: uma cor sólida (organização visual, tipo Trello) OU uma imagem — cole a URL de uma imagem, ou clique em "🔗 Usar 1º link" pra usar o primeiro link já salvo em 🔗 Anexos.\n\nCor e imagem são exclusivas — escolher uma limpa a outra. O app só guarda o ENDEREÇO da imagem (nunca faz upload nem guarda o arquivo) — se o link cair ou for removido, a capa some sozinha sem quebrar nada.\n\n📐 Dimensão ideal da imagem: a capa é uma faixa BEM larga e baixa (na prática, ~4:1 — algo tipo 1000×250px funciona bem), e a imagem é cortada (não espremida) pra caber nesse espaço, sempre mantendo o centro. Por isso:\n\n✅ Funciona bem: banner largo com o assunto centralizado (logo, produto, texto) e bastante fundo de cor uniforme ao redor — o corte nas bordas/topo/base não perde nada importante.\n\n❌ Não funciona bem: foto quadrada ou de retrato (celular, pessoa, produto de perto) — o corte automático mostra só uma faixinha fina do meio, perdendo a maior parte da imagem.\n\nSe a imagem original não é larga o suficiente, uma alternativa rápida é colocá-la centralizada num fundo sólido bem mais largo (ex.: numa ferramenta de edição, ou pedindo pro Criação já exportar nesse formato) antes de usar como capa.\n\n🖼️ Sem onde hospedar a imagem? Suba em <b>postimages.org</b> ou <b>imgbb.com</b> — sem precisar de conta, sem custo, e o site já entrega um link direto pronto pra colar aqui como capa.\n\n🔗 Link do Google Drive: o board tenta converter automaticamente o link normal de "Compartilhar" pro formato de imagem direta, mas na prática <b>geralmente não funciona nas contas da Hering</b> — a política da empresa bloqueia a permissão "Qualquer pessoa com o link pode ver" que a imagem precisa ter pra carregar fora do Drive. Se tentar e não carregar, é isso — use postimages.org/imgbb.com em vez disso.' },
-    { icon:'💬', title:'Comentários', text:'Adicione comentários no card para registrar discussões, decisões e atualizações. Use @ para mencionar membros. O histórico de comentários fica salvo no Firebase.\n\nCada comentário tem um botão <b>↩ Responder</b>: clique nele pra abrir a caixa de comentário já com "@" + o nome de quem comentou preenchido automaticamente, prontinho pra continuar digitando — a pessoa mencionada recebe notificação no sino 🔔, igual qualquer outra menção.\n\n🔍 <b>Buscar comentários no card (Ctrl+K)</b>: clique em "🔍 Buscar" no cabeçalho da seção de comentários (ou pressione <b>Ctrl+K</b> com o card aberto) para filtrar os comentários daquele card por texto, @autor ou data (ex.: 15/10), com destaque amarelo nos trechos encontrados.' },
+    { icon:'💬', title:'Comentários', text:'Adicione comentários no card para registrar discussões, decisões e atualizações. Use @ para mencionar membros. Enquanto grava no Firebase o comentário aparece com <b>⏳ enviando…</b>; se a internet falhar, fica marcado com <b>Falha ao enviar</b> e botão <b>Tentar novamente</b> sem perder o texto.\n\nCada comentário tem um botão <b>↩ Responder</b>: clique nele pra abrir a caixa de comentário já com "@" + o nome de quem comentou preenchido automaticamente, prontinho pra continuar digitando — a pessoa mencionada recebe notificação no sino 🔔, igual qualquer outra menção.\n\n🔍 <b>Buscar comentários no card (Ctrl+K)</b>: clique em "🔍 Buscar" no cabeçalho da seção de comentários (ou pressione <b>Ctrl+K</b> com o card aberto) para filtrar os comentários daquele card por texto, @autor ou data (ex.: 15/10), com destaque amarelo nos trechos encontrados.' },
     { icon:'📋', title:'Salvar como modelo', text:'Clique no ícone 📋 no rodapé de qualquer card para salvá-lo como modelo. O modelo copia tag, descrição, PO, checklist (desmarcado) e riscos.' },
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
     { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.\n\n📆 <b>Prazo do card (opcional):</b> na mesma tela, dá pra definir de já um prazo pro card — uma data fixa, diferente da data de entrada. Deixe em branco pro card nascer sem prazo, como sempre foi.' },
@@ -31838,7 +31882,7 @@ const HELP_CONTENT = {
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
     { icon:'♾️', title:'Contínuo (demanda sem data de finalização)', text:'No rodapé do card, o botão "♾️ Contínuo" marca um card como demanda que nunca fecha de propósito — ex.: "Melhorias Maré Digital" ou "Ajuste recorrentes de IA" na squad dados, que sempre voltam a ter trabalho e nunca teriam uma data de finalização real.\n\nUm card assim, se contasse normal nas métricas de fluxo, distorceria elas pra sempre: parado eternamente numa coluna, ele infla o 📈 CFD indefinidamente, nunca deixa o 📉 Burndown chegar perto de zero, e puxa a média de cycle time/lead time/gargalo por coluna pra cima sem representar trabalho de verdade parado. Marcar como Contínuo tira o card dessas contas (CFD, Burndown, ⏱ Relatório de Tempo) e também do alarme visual de "card parado" (esmaecimento no board, badge "⏳ parado nesta coluna") — mesma suspensão que o ⏸ Pausar já tem, mesmo motivo: intencionalmente sem se mexer não é abandono.\n\nContinua contando normal no WIP (ocupa capacidade real de alguém) e no Throughput, se algum dia chegar numa coluna de Concluído.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "Marcar como Contínuo"/"Remover Contínuo" — sem precisar abrir o modal primeiro. O card ganha uma fita diagonal "♾️ CONTÍNUO" no canto, mesmo estilo da fita "🔥 OFERTA" do tema Black Friday.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um — no Controle de Criativos, a lista de bloqueados também mostra o motivo do impedimento embaixo do título, quando a pessoa preencheu um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
-    { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
+    { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha na hora quando quem editava fecha o card, fecha a aba/Oceano ou perde a conexão, e também após alguns minutos sem atividade como segurança extra.' },
     { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (as 11 opções fixas — Adulto, Kids, Sports, Intimates e Teen em Comercial/Cadastro, mais a transversal "Geral" para demandas que valem para todas as submarcas; ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. <b>Um card pode ter mais de uma submarca</b> (ex.: um pedido que vale para Adulto e Kids): no card aberto, escolha uma na lista "+ Adicionar submarca…" e repita para as outras; o ✕ no chip tira. Nos gráficos e contagens por submarca o card conta <b>em cada uma</b> das que ele tem; no filtro de Submarca ele aparece em qualquer uma delas. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
   ],
   agente: [
@@ -31869,7 +31913,7 @@ const HELP_CONTENT = {
     { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é o próprio Demandante, ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca ou Canal: se o squad usa o campo Submarca ou o campo Canal (ver dicas em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial" ou label "Shopee") ela vincula direto na tag fixa correspondente — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca ou um canal por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n🛟 <b>Backup completo do banco</b> (feito pela squad de desenvolvimento, fora do board): além do quadro, guarda comentários dos cards, as configurações do squad, intake, Radar, Metas, Escala e os cadastros das pessoas — toda semana (tudo) e todo dia (o que é mais sensível a perda). Esse backup <b>não aparece na tela 🧯 Restaurar backup</b> (que é só do quadro). Pra trazer de volta o que sumiu das outras áreas, use, logo abaixo, <b>🛟 Backup completo (nuvem)</b> (só ADM, PO e Organizador): <b>☁️ Ver backups disponíveis</b> → escolha a data → <b>🔍 Comparar com hoje</b> mostra, por área (💬 comentários dos cards, ⚙️ configurações do squad, 📥 pedidos de intake, 👥 subtimes, ⭐ estrelas), quantos itens sumiram → marque o que quer e <b>🧯 Restaurar as áreas marcadas</b>. Só volta <b>o que sumiu</b>: o que existe hoje nunca é sobrescrito, e a lista do que foi criado fica guardada pra desfazer. Se um backup falhar, os ADMs recebem um aviso 🛟 no sino.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
-    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.\n\n🏝️ <b>Ilha Dinâmica (opcional no dev)</b>: ao ligar as notificações na Ilha, a aba Notificações traz o mesmo sino completo: lista, marcar todas, remover um aviso, Limpar antigas, som, push neste aparelho, Não Perturbe e Modo insistente. Para gerenciar push já permitido pelo navegador, clique em Gerenciar push neste aparelho (se estiver desligado, reativa; se estiver ligado, pede confirmação para desligar).\n\n🗓️🐟 <b>Escala e Metas</b>: quando PO, Organizador ou ADM cadastra ou limpa a <b>sua escala</b>, chega o aviso "🗓️ Sua escala foi cadastrada/removida" (clicar abre a Escala na semana certa). E, se a sua squad tem uma meta com <b>⏰ lembrete de preenchimento</b>, chega o aviso "🐟 Atualize a meta" nos horários combinados (clicar abre a aba Dados). Os dois tipos também estão no 🔔 Notificações do Painel e respeitam o seu Não Perturbe.\n\n⏲ <b>Timer e Produtividade</b>: chegam 4 avisos — "alguém criou uma atividade pra você" (só quando é outra pessoa que cria), "atividade encerrada" com o tempo registrado (vai pra quem criou a atividade), "o tempo do seu Timer acabou" (em até 1 minuto, mesmo com a aba fechada) e "segue em andamento" quando uma atividade fica rodando sem pausa por 4 horas (repete aos 8 e 12). Clicar abre o card. O ADM liga/desliga cada um no Painel → 🔔 Notificações.\n\n🚨 <b>Incidente na VTEX</b>: o Maré acompanha sozinho a página de status da VTEX (status.vtex.com). Quando há um incidente ou uma manutenção <b>em andamento</b>, aparece um <b>popup 🚨</b> para todo mundo (reaparece até o incidente acabar) e chega uma notificação 🚨 no sino e no celular. Quando a VTEX marca como resolvido, o aviso some sozinho. Manutenção só agendada aparece como aviso comum, sem push. No Oceano há também um selinho <b>VTEX</b> no topo (azul = normal, vermelho = incidente, cinza = sem leitura). O ADM pode desligar esse tipo no Painel → 🔔 Notificações.\n\n🫨 <b>Modo insistente</b> (opcional, desligado por padrão): se você nem sempre ouve o "ding", abra o 🔔 e use o botão <b>🫨 Modo insistente</b> no rodapé. Ligado, quando chega um aviso <b>importante</b> (os mesmos que viram push) a <b>tela treme</b> (como o zumbido do MSN) e, se você não estiver olhando a janela, o <b>som se repete a cada 30 s</b> (até 5 vezes) e o <b>título da aba pisca</b> — tudo para assim que você volta à janela ou mexe em algo. Dá para escolher cada item e usar <b>▶ Testar agora</b>. Respeita o 🔇 e o 🔕 Não Perturbe, e não treme se o seu sistema pede "reduzir movimento". A escolha acompanha a sua conta em todos os aparelhos.' },
+    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.\n\n🏷️ <b>Famílias visuais no sino</b>: cada aviso traz um selo curto de origem (<b>👤 Pessoal</b>, <b>📅 Calendário</b>, <b>🎯 Radar</b> ou <b>🛡️ Sistema</b>) para diferenciar de relance o que é card/menção/férias, agenda ou atualização dos <b>📊 calendários do Gantt</b> (🔔 Avisar-me e 📣 Pedir atualização), entregas/OKRs do Radar ou comunicados do sistema.\n\n🏝️ <b>Ilha Dinâmica</b>: ao ligar as notificações na Ilha (em 👤 Minhas Preferências ou ⏲ Timers), a aba Notificações traz o mesmo sino completo: lista, marcar todas, remover um aviso, Limpar antigas, som, push neste aparelho, Não Perturbe e Modo insistente. Para gerenciar push já permitido pelo navegador, clique em Gerenciar push neste aparelho (se estiver desligado, reativa; se estiver ligado, pede confirmação para desligar).\n\n🗓️🐟 <b>Escala e Metas</b>: quando PO, Organizador ou ADM cadastra ou limpa a <b>sua escala</b>, chega o aviso "🗓️ Sua escala foi cadastrada/removida" (clicar abre a Escala na semana certa). E, se a sua squad tem uma meta com <b>⏰ lembrete de preenchimento</b>, chega o aviso "🐟 Atualize a meta" nos horários combinados (clicar abre a aba Dados). Os dois tipos também estão no 🔔 Notificações do Painel e respeitam o seu Não Perturbe.\n\n⏲ <b>Timer e Produtividade</b>: chegam 4 avisos — "alguém criou uma atividade pra você" (só quando é outra pessoa que cria), "atividade encerrada" com o tempo registrado (vai pra quem criou a atividade), "o tempo do seu Timer acabou" (em até 1 minuto, mesmo com a aba fechada) e "segue em andamento" quando uma atividade fica rodando sem pausa por 4 horas (repete aos 8 e 12). Clicar abre o card. O ADM liga/desliga cada um no Painel → 🔔 Notificações.\n\n🚨 <b>Incidente na VTEX</b>: o Maré acompanha sozinho a página de status da VTEX (status.vtex.com). Quando há um incidente ou uma manutenção <b>em andamento</b>, aparece um <b>popup 🚨</b> para todo mundo (reaparece até o incidente acabar) e chega uma notificação 🚨 no sino e no celular. Quando a VTEX marca como resolvido, o aviso some sozinho. Manutenção só agendada aparece como aviso comum, sem push. No Oceano há também um selinho <b>VTEX</b> no topo (azul = normal, vermelho = incidente, cinza = sem leitura). O ADM pode desligar esse tipo no Painel → 🔔 Notificações.\n\n🫨 <b>Modo insistente</b> (opcional, desligado por padrão): se você nem sempre ouve o "ding", abra o 🔔 e use o botão <b>🫨 Modo insistente</b> no rodapé. Ligado, quando chega um aviso <b>importante</b> (os mesmos que viram push) a <b>tela treme</b> (como o zumbido do MSN) e, se você não estiver olhando a janela, o <b>som se repete a cada 30 s</b> (até 5 vezes) e o <b>título da aba pisca</b> — tudo para assim que você volta à janela ou mexe em algo. Dá para escolher cada item e usar <b>▶ Testar agora</b>. Respeita o 🔇 e o 🔕 Não Perturbe, e não treme se o seu sistema pede "reduzir movimento". A escolha acompanha a sua conta em todos os aparelhos.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
     { icon:'🔧', title:'Worker e Firebase', text:'O Firebase armazena todos os dados em tempo real e raramente precisa ser alterado após o setup inicial.\n\n⚠️ A aba Worker é resquício do painel de chat antigo do Agente Ágil (desativado — ver dica "Ações que o agente pode executar"), que dependia de um proxy Cloudflare externo pra falar com a API da Anthropic. O Agente Ágil atual (por @menção) não usa Worker nenhum — roda direto em Cloud Functions.' },
   ],
@@ -31959,12 +32003,14 @@ Onde configurar: ⚡ Automações → "+ Nova regra" — liberado pra qualquer p
 <div>🏷 <b>Remover tag</b></div>
 <div>👤 <b>Atribuir responsável</b></div>
 <div>🏷️ <b>Adicionar submarca</b> <span style="font-size:10px;color:var(--txt3);">— soma a submarca às que o card já tem (não tira nenhuma); só aparece se o squad usa o campo Submarca</span></div>
-<div>👕 <b>Definir tamanho</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Tamanho</span></div>
+<div>🛒 <b>Definir canal</b> <span style="font-size:10px;color:var(--txt3);">— troca o canal do card; só aparece se o squad usa o campo Canal</span></div>
+<div>👕 <b>Definir tamanho</b> <span style="font-size:10px;color:var(--txt3);">— troca o tamanho do card; só aparece se o squad usa o campo Tamanho</span></div>
 <div>📢 <b>Definir demandante</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Demandante</span></div>
 <div>📐 <b>Definir padrão de card</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se existir algum Padrão criado</span></div>
 <div>🎨 <b>Definir capa de cor</b></div>
 <div>🎯 <b>Marcar como OKR</b></div>
 <div>☑️ <b>Adicionar item de checklist</b> <span style="font-size:10px;color:var(--txt3);">— pede um texto livre, ex.: "Revisar com o time"; o texto é escaneado por @menção igual qualquer outro lugar do app, então "Avisar @fulano" já notifica @fulano no sino 🔔 quando a regra dispara</span></div>
+<div>🧩 <b>Aplicar fan-out (criar cards filhos)</b> <span style="font-size:10px;color:var(--txt3);">— cria os cards filhos de uma receita de Supercard automaticamente (propagando Ficha Técnica quando houver); só aparece se existir alguma receita de fan-out criada</span></div>
 <div>🤖 <b>Notificar Agente Ágil</b> <span style="font-size:10px;color:var(--txt3);">— só aparece nos squads onde o Agente Ágil já responde de verdade (dev e dados hoje)</span></div>
 <div>📣 <b>Notificar todos</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span> <span style="font-size:10px;color:var(--txt3);">— posta um comentário "@todos" no card e avisa todo mundo do squad no sino 🔔, disponível em qualquer squad</span></div>
 <div>📣 <b>Notificar PO/Organizador</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span> <span style="font-size:10px;color:var(--txt3);">— igual "Notificar todos", mas só avisa quem tem o papel PO ou Organizador neste squad; se não houver ninguém com esses papéis, não posta nada</span></div>
@@ -32063,7 +32109,7 @@ Regras que você já tinha criado antes continuam funcionando sem precisar recri
 
 <div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Posso ter mais de uma ação na mesma regra?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Sim. Escolha a ação, clique "+ Ação" (vira um chip), escolha a próxima e repita. Se esquecer de clicar "+ Ação" e for direto em "Adicionar regra", a ação selecionada na hora vira a única da regra — nada trava.</div></div>
 
-<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Criei uma regra com "Card vence hoje" mas ela não disparou. O que fazer?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Esse gatilho (e "Card atrasado") roda 1x por dia, não na hora exata — o check acontece alguns segundos depois de abrir/recarregar o board. Se já rodou hoje nesse navegador, só dispara de novo amanhã.</div></div>
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Criei uma regra com "Card vence hoje" mas ela não disparou. O que fazer?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Esse gatilho (e "Card atrasado") roda 1x por dia, não na hora exata — o check acontece alguns segundos depois de abrir/recarregar o board. Se a varredura diária já rodou hoje na squad, só dispara de novo amanhã.</div></div>
 
 <div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Dá pra combinar mais de uma condição (E) na mesma regra?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Por enquanto só uma condição extra por regra, e só por tag. Combine com múltiplas ações pra cobrir cenários mais ricos.</div></div>
 
@@ -33072,7 +33118,7 @@ const ATALHO_ACOES = {
   // ── 🗂️ Board (globais — funcionam em qualquer lugar do board) ──
   dashboard:   { label:'📊 Dados do Board',         tipo:'global', run:()=>openBoardData() },
   timeline:    { label:'🛤️ Timeline',               tipo:'global', run:()=>toggleTimelineView() },
-  gantt:       { label:'📊 Gantt',                  tipo:'global', run:()=>toggleGanttView() },
+  gantt:       { label:'🧮 Gantt',                  tipo:'global', run:()=>toggleGanttView() },
   criativos:   { label:'🎬 Controle de Criativos',   tipo:'global', run:()=>openCriativos(), visivel:()=>criativosAtivo },
   ajuda:       { label:'❓ Central de Ajuda',         tipo:'global', run:()=>openHelp() },
   tema:        { label:'🌙 Alternar tema',           tipo:'global', run:()=>onThemeBtnClick() },
@@ -35897,7 +35943,7 @@ function renderCalendarList() {
   const statusEl = document.getElementById('cfg-gcal-auth-status');
   if (statusEl) {
     if(isAdm){
-      const hasToken = !!safeLS.getItem('gcal_token');
+      const hasToken = !!_gcalToken();
       statusEl.innerHTML = hasToken
         ? '<span style="color:var(--teal);">✅ Sua conta Google está autorizada (só admin precisa)</span>'
         : '<span style="color:var(--txt3);">🔒 Você ainda não autorizou — vai pedir ao processar solicitações</span>';
@@ -36040,6 +36086,7 @@ function _gcalWarnBanner(show){
   const el=document.getElementById('gcal-token-warn');
   if(el) el.style.display = (show && isAdmUser(window._currentUser)) ? 'flex' : 'none';
 }
+const GCAL_MSG_OUTRA_CONTA = '⚠ Autorize a agenda com a mesma conta Google com que você entrou.';
 async function reconectarGCal(){
   try{
     await window._requestCalendarScope();
@@ -36047,7 +36094,9 @@ async function reconectarGCal(){
     showToast('🔄 Reconectado! Carregando agendas...');
     carregarTodasAgendasSquad();
   }catch(e){
-    if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+    if(e?.code === 'auth/user-mismatch'){
+      showToast(GCAL_MSG_OUTRA_CONTA);
+    } else if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
       showToast('⚠ Login cancelado ou bloqueado pelo navegador.');
     } else {
       showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
@@ -36107,7 +36156,7 @@ async function carregarTodasAgendasSquad() {
 // e pelo processamento da fila global (percorre vários squads de uma vez).
 async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
   if(!window._gcalErrors) window._gcalErrors = {};
-  const token = safeLS.getItem('gcal_token');
+  const token = _gcalToken();
   const squadFB = 'kanban/squads/'+squadId+'/dados';
 
   if (!calendarsList.length) {
@@ -36123,6 +36172,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
   const hoje = new Date();
   const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
   let todosEventosGoogle = [];
+  const _calsOk = new Set();   // agendas que responderam de verdade (ver o fim da função)
 
   await Promise.all(calendarsList.map(async (cal) => {
     const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
@@ -36135,6 +36185,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
       if(res.status===403){
         let reason='';
         try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
+        if(/insufficient/i.test(reason)){ _gcalTokenLimpar(); window._gcalErrors[cal.id] = { type:'expired', msg:'A autorização do Google Agenda não tinha o acesso à agenda — autorize de novo' }; return; }   // token sem o escopo (ex.: o do login, antes de 18/11)
         window._gcalErrors[cal.id] = { type:'forbidden', msg: reason.includes('unregistered')
           ? 'Esta agenda é pública/de sistema e não aceita login de usuário — precisa de API Key própria'
           : 'Sem permissão de acesso a esta agenda' };
@@ -36142,6 +36193,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
       }
       const data = await res.json();
       if (data.items) {
+        _calsOk.add(cal.id);
         delete window._gcalErrors[cal.id];
         data.items.forEach(item => {
           let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
@@ -36193,7 +36245,22 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
     _vistosCal.add(chave);
     return true;
   });
+  // /monitorarbugs 18/11/2026 (login Google): com TODAS as agendas falhando (token vencido, sem escopo, rede) a função gravava
+  // gcal_cache = {} por cima e devolvia ok:true — apagava os eventos do squad pra todo mundo e a fila de pedidos era limpa como
+  // se tivesse dado certo (o fix de 25/09 conferia result.ok, que nunca era false aqui). Nenhuma respondeu = não toca no cache e
+  // devolve falha; só algumas = mantém os eventos antigos das que falharam.
+  if (!_calsOk.size) {
+    _gcalWarnBanner(Object.values(window._gcalErrors).some(e=>e.type==='expired'));
+    return { ok:false, reason:'all_failed' };
+  }
+  const _calsFalha = calendarsList.map(c=>c.id).filter(id=>!_calsOk.has(id));
   const cacheObj = Object.fromEntries(todosEventosGoogleDedup.map(ev=>[ev.id, ev]));
+  if (_calsFalha.length) {
+    try {
+      const antigo = (await fbGet(squadFB+'/config/gcal_cache')).val() || {};
+      Object.entries(antigo).forEach(([id, ev]) => { if (ev && _calsFalha.includes(ev._calId) && !cacheObj[id]) cacheObj[id] = ev; });
+    } catch(e) {}
+  }
   await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), cacheObj).catch(()=>{});
   _touchGcalCacheMeta(squadFB+'/config');
 
@@ -36206,12 +36273,12 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
 // disparado por um clique explícito (o popup de autorização do Google exige gesto do usuário).
 async function processGcalQueueForAdmin(){
   if(!isAdmUser(window._currentUser)) return;
-  if(!safeLS.getItem('gcal_token')){
+  if(!_gcalToken()){
     try{
       showToast('🔐 Autorizando acesso ao Google Agenda...');
       await window._requestCalendarScope();
     }catch(e){
-      showToast('⚠ Não foi possível autorizar. Tente novamente.');
+      showToast(e?.code === 'auth/user-mismatch' ? GCAL_MSG_OUTRA_CONTA : '⚠ Não foi possível autorizar. Tente novamente.');
       return;
     }
   }
@@ -36366,6 +36433,10 @@ function logError(msg, source='', line=0, col=0, err=null){
   // Ignora erros gerados pelo próprio logError (Firebase write errors)
   const msgStr=String(msg||'');
   if(msgStr.includes('[Firebase write]')||msgStr.includes('error_logs')||msgStr.includes('error_stats')) return;
+  // Monitor do Painel (18/11/2026, pedido do Caio): "INTERNAL ASSERTION FAILED: Pending promise was never set" é do SDK do
+  // Firebase Auth no popup de login do Google (PopupOperation.reject) — 8 registros em 5 pessoas (04–16/11), nada a corrigir do
+  // nosso lado. Continua avisando a pessoa (_checkAuthGlitch, acima); só não vira mais erro aberto no Monitor.
+  if((msgStr+' '+(err&&err.message||'')).includes('Pending promise was never set')) return;
   if(window._errorLogDisabled) return;
   window._loggingError=true;
   try{
@@ -39031,9 +39102,8 @@ async function ctxDelete(){
   const card=cards.find(x=>x.id===cardId); if(!card){ hideCtxMenu(); return; }
   hideCtxMenu();
   if(!await uiConfirm('Excluir "'+card.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
-  cards=cards.filter(x=>x.id!==cardId);
-  fbSaveAll({['cards_deleted_intentionally/'+cardId]:true}, []); renderBoard();
-  showToast('Card excluído');
+  const _removidos=_tirarCards([cardId]);
+  _gravarExclusao({['cards_deleted_intentionally/'+cardId]:true}, _removidos, 'Card excluído'); renderBoard();
 }
 // ═══════════════════════════════════════════════════════
 
@@ -39494,16 +39564,60 @@ if(window.visualViewport){
     return el ? el.textContent.trim() : '';
   }
   let _auShown = false, _auPollTimer = null;
+  // 🔥 /monitorarbugs 18/11/2026: o que está na tela e NÃO chegou ao banco — card novo (não tem autosave), comentário não enviado e, na sessão parada (que não pode gravar), o card com autosave pendente.
+  function _auTextoNaoSalvo(comPendente){
+    const ov = document.getElementById('card-ov');
+    if(!ov || !ov.classList.contains('open')) return '';
+    const val = id => (document.getElementById(id)?.value||'').trim(), partes = [];
+    if(!editingId || comPendente){
+      [['Título','m-title'],['Descrição','m-desc'],['Insights do PO','m-po']].forEach(([rot,id])=>{ const v = val(id); if(v) partes.push(rot+':\n'+v); });
+      try{ const itens = getCL().map(i=>i && i.t).filter(Boolean); if(itens.length) partes.push('Checklist:\n- '+itens.join('\n- ')); }catch(_){}
+    }
+    const com = val('m-comment-inp'); if(com) partes.push('Comentário não enviado:\n'+com);
+    return partes.join('\n\n');
+  }
+  // Campos que só gravam no 💾 Salvar (prioridade, pontos, OKR, impedimento, datas) ou card novo sem texto para copiar. O comentário fica de fora: ele já vai na caixa.
+  function _auCamposSemSalvar(){
+    const ov = document.getElementById('card-ov');
+    if(!ov || !ov.classList.contains('open')) return false;
+    if(!editingId) return _newCardHasContent();
+    if(!_cardManualSnap) return false;
+    const semComentario = o => { const { commentDraft, ...resto } = o; return JSON.stringify(resto); };
+    return semComentario(_manualFieldsNow()) !== semComentario(_cardManualSnap);
+  }
   function _auShowBlock(msg){
+    // Versão nova: grava o autosave pendente ANTES de travar (a tela promete que o digitado fica salvo). Sessão parada (msg) não grava: a cópia dela pode estar velha.
+    const _pendente = !_auShown && !!_autoSaveTimer;
+    const _camposSemSalvar = !_auShown && _auCamposSemSalvar();
+    if(!_auShown && !msg){ try{ _flushAutoSave(); }catch(e){ console.warn('[auto-update] autosave pendente não gravou:', e); } }
+    const _naoSalvo = _auShown ? '' : _auTextoNaoSalvo(!!msg && _pendente);
+    const _avisoCampos = _camposSemSalvar && (editingId || !_naoSalvo) ? ' Há campos deste card sem salvar (como prioridade, datas ou impedimento) e eles vão se perder ao atualizar.' : '';
     window._auStale = true;   // trava as gravações de card (ver _recusaSeDesatualizado)
     if(_auShown) return;
     _auShown = true;
     const ov = document.createElement('div');
     ov.id = '_au-block';
     ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(4,10,18,.94);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:"DM Sans",sans-serif;padding:20px;';
-    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">'+(msg?'🧊':'🔄')+'</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">'+(msg?'Sua tela ficou parada':'Versão desatualizada')+'</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">'+(msg||'Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo, e o que você já digitou fica salvo.')+'</div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
+    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(var(--surface-rgb),.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">'+(msg?'🧊':'🔄')+'</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">'+(msg?'Sua tela ficou parada':'Versão desatualizada')+'</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">'+(msg||('Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo'+((_naoSalvo||_avisoCampos)?'.':', e o que você já digitou fica salvo.')))+_avisoCampos+'</div><div id="_au-block-copia" hidden style="text-align:left;margin-bottom:16px;"><label for="_au-block-texto" style="display:block;font-size:12px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:6px;">Copie antes de atualizar: este texto ainda não foi salvo</label><textarea id="_au-block-texto" readonly rows="5" style="width:100%;box-sizing:border-box;resize:vertical;background:rgba(0,0,0,.2);color:var(--txt,#e8f4fd);border:1px solid var(--glass-b,rgba(255,255,255,.2));border-radius:8px;padding:8px;font:12px/1.45 inherit;"></textarea><button id="_au-block-copiar" type="button" style="margin-top:6px;background:transparent;border:1px solid var(--accent,#38b6ff);color:var(--txt,#e8f4fd);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Copiar texto</button></div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
     document.body.appendChild(ov);
-    document.getElementById('_au-block-btn').onclick=()=>location.reload();
+    // Espera a gravação que acabou de sair (até 5 s): recarregar antes da confirmação cortaria o autosave que esta tela acabou de garantir.
+    document.getElementById('_au-block-btn').onclick=async function(){
+      this.disabled = true; this.textContent = 'Salvando…';
+      const limite = Date.now()+5000;
+      while(_pendingFbWrites>0 && Date.now()<limite) await new Promise(r=>setTimeout(r,100));
+      location.reload();
+    };
+    if(_naoSalvo){
+      const caixa = document.getElementById('_au-block-texto'), bt = document.getElementById('_au-block-copiar');
+      document.getElementById('_au-block-copia').hidden = false;
+      caixa.value = _naoSalvo;   // .value: texto puro, nunca vira HTML
+      bt.onclick = async ()=>{
+        caixa.focus(); caixa.select();
+        let ok = false;
+        try{ await navigator.clipboard.writeText(_naoSalvo); ok = true; }catch(_){ try{ ok = document.execCommand('copy'); }catch(__){} }
+        bt.textContent = ok ? '✓ Copiado' : 'Selecionado: use Ctrl+C';
+      };
+    }
   }
   let _auUltimaChecagem = 0;
   async function _auCheckVersion(){
@@ -40718,6 +40832,8 @@ function openDependsOnCard(){
 // some do card na próxima vez que ele for salvo.
 let _commentCardId = null;
 let _commentsCache = {}; // cardId -> {commentId: commentObj}
+// Envios locais ficam separados do cache para sobreviver à releitura do banco.
+const _commentEnvios = new Map();
 function _sortedComments(map){
   return Object.values(map||{}).filter(Boolean).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
 }
@@ -41955,6 +42071,12 @@ function onCommentSearchInput(val){
 }
 
 function renderCommentList(comments){
+  const uid = window._currentUser?.uid;
+  const locais = Array.from(_commentEnvios.values()).filter(e=>e.cardId===_commentCardId && e.comment.uid===uid);
+  if(locais.length){
+    const idsLocais = new Set(locais.map(e=>e.comment.id));
+    comments = _sortedComments([...comments.filter(c=>!idsLocais.has(c.id)), ...locais.map(e=>e.comment)]);
+  }
   const list=document.getElementById('m-comment-list'); if(!list) return;
   list.innerHTML='';
   if(!comments.length){
@@ -41979,7 +42101,10 @@ function renderCommentList(comments){
     const item=document.createElement('div');
     // comment-agent/comment-human só têm efeito visual dentro do tema
     // #card-ov.agente-hotline (ver CSS) — inofensivo em cards normais.
-    const _env=!!c._enviando;   // ainda não confirmado pelo banco (ver submitComment): sem ações até confirmar
+    const envio = _commentEnvios.get(c.id);
+    const local = envio?.cardId===_commentCardId && envio.comment.uid===uid;
+    const _env = local && envio.enviando;
+    const falhou = local && !envio.enviando;
     item.className='comment-item'+(c.isAgent?' comment-agent':' comment-human')+(_env?' comment-enviando':'');
     item.dataset.cid=c.id||'';
     const avatarHtml=c.isAgent
@@ -41994,17 +42119,18 @@ function renderCommentList(comments){
       : c.isSystem ? ' style="background:rgba(150,160,180,.12);border-color:rgba(150,160,180,.3);"' : '';
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const textHtml=renderMd(c.text||''); // texto rico: negrito/itálico/sublinhado/cor/links/menções (mesma engine da descrição)
-    const canDel=!_env && (c.uid===window._currentUser?.uid||_isPOorOrg());
-    const canEdit=!_env && c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
+    const canDel=!local && (c.uid===window._currentUser?.uid||_isPOorOrg());
+    const canEdit=!local && c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
     const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
     const agentBadge = c.isAgent ? ' <span class="mention-user mention-agent" style="padding:0 6px;font-size:9px;">🤖 agente</span>' : (c.isSystem ? ' <span class="mention-user" style="padding:0 6px;font-size:9px;opacity:.7;">⚙️ sistema</span>' : '');
     item.innerHTML=
       '<div class="comment-avatar"'+avatarStyle+'>'+avatarHtml+'</div>'+
       '<div class="comment-bubble">'+
-        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+(_env?' · <span class="cmt-enviando" role="status">⏳ enviando…</span>':'')+'</div>'+
+        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+(_env?' · <span class="cmt-enviando" role="status">⏳ enviando…</span>':falhou?' · <span role="status" style="color:var(--danger)">Falha ao enviar</span>':'')+'</div>'+
         '<div class="comment-text" id="ctext-'+esc(c.id)+'">'+textHtml+'</div>'+
-        (_env?'':_renderReactions(c))+
-        (_env?'':'<div class="comment-actions">'+
+        (local?'':_renderReactions(c))+
+        (falhou?'<button type="button" class="cmt-act-btn cmt-retry">Tentar novamente</button>':'')+
+        (local?'':'<div class="comment-actions">'+
           '<button class="cmt-act-btn cmt-reply" title="Responder mencionando quem comentou">↩️ <span>Responder</span></button>'+
           '<button class="cmt-act-btn cmt-react" title="Reagir">😊 <span>Reagir</span>'+
             '<span class="rx-picker">'+_reactPicker(c)+'</span>'+
@@ -42013,6 +42139,8 @@ function renderCommentList(comments){
           (canDel?'<button class="cmt-act-btn cmt-del" title="Excluir comentário">🗑 <span>Excluir</span></button>':'')+
         '</div>')+
       '</div>';
+    const retryBtn=item.querySelector('.cmt-retry');
+    if(retryBtn) retryBtn.onclick=()=>_enviarComentario(envio);
     // Wire responder
     const replyBtn=item.querySelector('.cmt-reply');
     if(replyBtn) replyBtn.onclick=()=>replyToComment(c.id);
@@ -42105,40 +42233,50 @@ async function submitComment(){
   // carregando TODOS os comentários dele) — agora é 1 write pequeno,
   // desacoplado de qualquer outro campo do card.
   const cardId = _commentCardId;
-  const squad = ACTIVE_SQUAD;
   const rawText = inp.value;
   inp.value=''; inp.style.height='auto';
   eocResetComment();
-  // Aparece na hora como "⏳ enviando…" (sem ações) e vira comentário normal quando o banco confirma; se o banco recusar, sai da lista e o texto
-  // volta ao campo. Pedido do Caio (17/11/2026, revisão do #1837): esperar a confirmação calado deixava a lista parada e, offline, parecia perdido.
-  // A marca _enviando é só desta tela — o objeto gravado é `comment`, sem ela.
-  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
-  _commentsCache[cardId][comment.id]=Object.assign({}, comment, {_enviando:true});
-  if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  const envio = {cardId, comment, enviando:false};
+  _commentEnvios.set(comment.id, envio);
+  return _enviarComentario(envio, {inp, rawText});
+}
+
+async function _enviarComentario(envio, rascunho){
+  const {cardId, comment} = envio;
+  if(envio.enviando || _commentEnvios.get(comment.id)!==envio || comment.uid!==window._currentUser?.uid) return;
+  envio.enviando = true;
+  const mesmoCardAberto = ()=>_commentCardId===cardId && editingId===cardId
+    && document.getElementById('card-ov')?.classList.contains('open')
+    && window._currentUser?.uid===comment.uid;
+  if(mesmoCardAberto()) renderCommentList(_sortedComments(_commentsCache[cardId]||{}));
   try{
     await window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment);
-  }catch(err){
-    if(_commentsCache[cardId]) delete _commentsCache[cardId][comment.id];
-    if(ACTIVE_SQUAD===squad && _commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]||{}));
-    if(ACTIVE_SQUAD===squad && editingId===cardId && _commentCardId===cardId && !inp.value){
-      inp.value=rawText;
-      autoResizeCommentInp(inp);
+  }catch{
+    envio.enviando = false;
+    if(mesmoCardAberto()){
+      if(rascunho && !rascunho.inp.value){
+        _commentEnvios.delete(comment.id);
+        rascunho.inp.value = rascunho.rawText;
+        autoResizeCommentInp(rascunho.inp);
+      }
+      renderCommentList(_sortedComments(_commentsCache[cardId]||{}));
     }
-    showToast('⚠ Erro ao salvar comentário: '+(err?.message||err));
+    showToast('⚠ Não deu pra enviar o comentário. Tente novamente.');
     return;
   }
-  if(ACTIVE_SQUAD!==squad) return;
+  _commentEnvios.delete(comment.id);
+  if(window._currentUser?.uid!==comment.uid) return;
   if(!_commentsCache[cardId]) _commentsCache[cardId]={};
   _commentsCache[cardId][comment.id]=comment;
-  if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
-  parseMentions(text, cardId, comment.id);
+  if(mesmoCardAberto()) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  parseMentions(comment.text, cardId, comment.id);
   // "🤖 pensando..." — diferente de _dispatchAgenteAgilComment() (só usado
   // pelos atalhos sintéticos), aqui a pessoa digitou a @menção na mão, no
   // comentário normal — precisa da mesma detecção (ver _textMencionaAgenteAgil)
   // pra saber se isso é mesmo uma @menção real, e só se o squad tiver a
   // Cloud Function de verdade ouvindo (senão o indicador nunca resolveria
   // sozinho, só pelo timeout de segurança).
-  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(cardId);
+  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(comment.text)) _startAgenteAgilThinking(cardId);
 }
 
 function deleteComment(cid){
@@ -43876,6 +44014,9 @@ async function _applyRestorePayload(payload){
     return;
   }
 
+  // 🔥 /monitorarbugs 18/11/2026: se a escrita final falhar, a aba volta ao que tinha. Antes ficava com o backup na memória, diferente do banco, e os saves seguintes partiam dele.
+  const _estadoAntes = { cards, columns, tags, agilCfg, qlItems, links, calEvents, autoRules };
+  let _gravou = false;
   try{
     // Achado real (2026-08-28, squad midiacriativa, /monitorarbugs): das 7
     // atribuições de `columns`/`tags` a partir de dado externo neste arquivo,
@@ -43905,6 +44046,7 @@ async function _applyRestorePayload(payload){
       columns, tags, agil_cfg: agilCfg, ql_items: qlItems,
       links, cal_events: calEvents, auto_rules: autoRules,
     }, undefined, { substituirTudo:true });   // restaurar backup SUBSTITUI o conjunto de cards de propósito — nada a resgatar
+    _gravou = true;
 
     applyAgilCfg();
     renderBoard();
@@ -43922,6 +44064,10 @@ async function _applyRestorePayload(payload){
     showToast('✅ Backup restaurado! '+cards.filter(c=>!c.archived).length+' cards ativos. (snapshot de segurança do estado anterior salvo em backups/'+preKey+')');
   }catch(e){
     console.error('[Restaurar backup] falhou ao gravar:', e);
+    if(!_gravou){
+      ({ cards, columns, tags, agilCfg, qlItems, links, calEvents, autoRules } = _estadoAntes);
+      try{ applyAgilCfg(); renderBoard(); populateColSelect(); }catch(_){}
+    }
     showToast('❌ Erro ao restaurar — o estado anterior está salvo em backups/'+preKey+', mas a escrita final falhou. '+(e?.message||''));
   } finally {
     if(btn){ btn.disabled=false; btn.textContent='🧯 Restaurar este backup'; }

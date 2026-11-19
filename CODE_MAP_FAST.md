@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-18.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-19.
 > Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
@@ -126,8 +126,8 @@
 - [`viewFrota`](travessia-dev.html#L775) · [`guardarBau`](travessia-dev.html#L903) · [`demoDados`](travessia-dev.html#L1038)
 
 ### `okr-apresentacao.slide.html` (12 âncoras verificadas)
-- [`buildSlides`](okr-apresentacao.slide.html#L1300) · [`startListeners`](okr-apresentacao.slide.html#L2228) · [`rebuild`](okr-apresentacao.slide.html#L1419) · [`fitSlideContent`](okr-apresentacao.slide.html#L1579) · [`_okrFitDetailSections`](okr-apresentacao.slide.html#L1889) · [`objMarcos`](okr-apresentacao.slide.html#L947)
-- [`_okrViewerKey`](okr-apresentacao.slide.html#L2591) · [`_okrShowApp`](okr-apresentacao.slide.html#L2562) · [`_hojeStr`](okr-apresentacao.slide.html#L1964) · [`renderNotas`](okr-apresentacao.slide.html#L2004) · [`_okrAgendaHoje`](okr-apresentacao.slide.html#L2139) · [`_okrRenderCountdown`](okr-apresentacao.slide.html#L2168)
+- [`buildSlides`](okr-apresentacao.slide.html#L1334) · [`startListeners`](okr-apresentacao.slide.html#L2263) · [`rebuild`](okr-apresentacao.slide.html#L1453) · [`fitSlideContent`](okr-apresentacao.slide.html#L1613) · [`_okrFitDetailSections`](okr-apresentacao.slide.html#L1924) · [`objMarcos`](okr-apresentacao.slide.html#L963)
+- [`_okrViewerKey`](okr-apresentacao.slide.html#L2626) · [`_okrShowApp`](okr-apresentacao.slide.html#L2597) · [`_hojeStr`](okr-apresentacao.slide.html#L1999) · [`renderNotas`](okr-apresentacao.slide.html#L2039) · [`_okrAgendaHoje`](okr-apresentacao.slide.html#L2174) · [`_okrRenderCountdown`](okr-apresentacao.slide.html#L2203)
 
 ### `mare-notif-dev.js` (3 âncoras verificadas)
 - [`AREAS`](mare-notif-dev.js#L56) · [`PUSH_PADRAO`](mare-notif-dev.js#L66) · [`TIPOS`](mare-notif-dev.js#L68)
