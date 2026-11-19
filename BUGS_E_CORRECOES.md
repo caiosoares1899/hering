@@ -91,6 +91,8 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 As setas usam a mesma ordenação e os mesmos limites dos botões do detalhe. A troca de Objetivo é enviada pela navegação ao vivo existente.
 
+Na revisão (Claude): o botão **Abrir bastidor em nova aba** só aparecia quando o navegador tinha janela flutuante, justamente o caso em que a nova aba não é necessária. Agora ele aparece para o ADM em qualquer navegador; só o controle flutuante e o Bastidor em janela flutuante dependem da API. Teste em `docs/arezzo/testes/test_apresentacao_live.js`, que falha no código anterior.
+
 ### 2026-11-19 · Apresentação do Radar: o botão do controle flutuante mostrava um quadradinho no lugar do emoji
 
 - **Relato do Caio:** o botão "Abrir controle flutuante" do painel 🎙️ (#1881) aparecia com um quadradinho branco no lugar do emoji.

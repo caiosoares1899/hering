@@ -2887,10 +2887,12 @@ function liveRender(){
     }
     if(controla){
       if(host && !palcoLimpo) p += '<button type="button" class="lp-b" onclick="window._liveCopiarTelaPublico()">Copiar link da tela para o público</button>';
-      if(!palcoLimpo && window.documentPictureInPicture?.requestWindow){
-        if(host) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>';
+      if(!palcoLimpo){
+        // A nova aba é justamente a saída quando o navegador não tem janela flutuante (Safari, PiP bloqueado): fica fora da checagem da API.
+        const pip = !!window.documentPictureInPicture?.requestWindow;
+        if(host && pip) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>';
         if(adm) p += '<button type="button" class="lp-b" onclick="window._liveAbrirPaginaBastidor()">Abrir bastidor em nova aba</button>';
-        if(adm && window.documentPictureInPicture?.requestWindow) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';
+        if(adm && pip) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';
       }
       p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L ou clique duplo no slide)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';

@@ -27,6 +27,11 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  const urlPublico=await A.p.evaluate(()=>window.__conviteCopiado);
  t('link da tela para o público ativa o modo de projeção', new URL(urlPublico).searchParams.get('tela')==='publico',urlPublico);
  await A.p.evaluate(() => window._livePainel(false));
+ // Sem janela flutuante (Safari, PiP bloqueado): o ADM ainda precisa do botão da nova aba no menu 🎙️.
+ await A.p.evaluate(()=>{ window.__pipOriginal=Object.getOwnPropertyDescriptor(window,'documentPictureInPicture'); Object.defineProperty(window,'documentPictureInPicture',{value:undefined,configurable:true}); _liveSig=''; window._livePainel(true); });
+ await A.p.waitForTimeout(100);
+ t('sem janela flutuante, o menu 🎙️ do ADM oferece o Bastidor em nova aba', await A.p.getByRole('button',{name:'Abrir bastidor em nova aba'}).count()===1, await A.p.evaluate(()=>document.getElementById('live-fpanel')?.textContent.replace(/\s+/g,' ').slice(0,300)));
+ await A.p.evaluate(()=>{ if(window.__pipOriginal) Object.defineProperty(window,'documentPictureInPicture',window.__pipOriginal); else delete window.documentPictureInPicture; _liveSig=''; window._livePainel(false); });
  const D=await open(U('ana','Ana ADM'),960,720,new URL('okr-bastidor.html',A.p.url()).href);
  await D.p.evaluate(()=>Object.defineProperty(window,'documentPictureInPicture',{value:undefined,configurable:true}));
  t('endereço do Bastidor abre aba própria e mostra a espera da sessão',
