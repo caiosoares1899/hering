@@ -2632,17 +2632,20 @@ window._liveCopiarConvite = async () => {
   }
 };
 let liveControleFlutuante = null;
+const livePodeAbrirJanela = bastidor => liveAtiva() && !window._okrIsViewer && (bastidor ? liveSouAdm() : liveSouHost());
 function liveAtualizarControleFlutuante(){
   const pip = liveControleFlutuante;
   if(!pip || pip.closed) return;
-  if(!liveSouHost() || window._okrIsViewer){ pip.close(); return; }
-  const detalhe = !!liveDetalheAberto();
   const doc = pip.document;
+  const bastidor = !!doc.getElementById('retomar');
+  if(!livePodeAbrirJanela(bastidor)){ pip.close(); return; }
+  const host = liveSouHost(), detalhe = !!liveDetalheAberto();
   doc.getElementById('estado').textContent = 'Slide '+(currentIdx+1)+' de '+slides.length;
-  doc.getElementById('anterior').disabled = detalhe || currentIdx<=0;
-  doc.getElementById('proximo').disabled = detalhe || currentIdx>=slides.length-1;
-  doc.getElementById('fechar-detalhe').disabled = !detalhe;
-  if(!doc.getElementById('tempo')) return;
+  doc.getElementById('anterior').disabled = !host || detalhe || currentIdx<=0;
+  doc.getElementById('proximo').disabled = !host || detalhe || currentIdx>=slides.length-1;
+  doc.getElementById('fechar-detalhe').disabled = !host || !detalhe;
+  if(!bastidor) return;
+  doc.getElementById('retomar').disabled = host;
   const tempo = document.getElementById('tb-countdown');
   doc.getElementById('tempo').textContent = tempo.hidden ? 'Sem horário de término' : tempo.textContent;
   doc.getElementById('fps').textContent = document.hidden ? 'FPS indisponível com a aba oculta' : document.querySelector('#fps-meter span').textContent;
@@ -2669,7 +2672,7 @@ function liveAtualizarControleFlutuante(){
 }
 window._liveAbrirControleFlutuante = async (bastidor = false) => {
   const api = window.documentPictureInPicture;
-  if(!liveSouHost() || window._okrIsViewer || !api?.requestWindow) return;
+  if(!livePodeAbrirJanela(bastidor) || !api?.requestWindow) return;
   if(liveControleFlutuante && !liveControleFlutuante.closed){
     liveToast('Feche a janela atual para abrir outro controle.');
     return;
@@ -2681,7 +2684,7 @@ window._liveAbrirControleFlutuante = async (bastidor = false) => {
     liveToast('O Chrome não abriu o controle flutuante. Use os controles na aba dos slides.');
     return;
   }
-  if(!liveSouHost() || window._okrIsViewer){ pip.close(); return; }
+  if(!livePodeAbrirJanela(bastidor)){ pip.close(); return; }
   liveControleFlutuante = pip;
   const doc = pip.document;
   doc.documentElement.lang = 'pt-BR';
@@ -2714,7 +2717,7 @@ window._liveAbrirControleFlutuante = async (bastidor = false) => {
     + '<form id="anotacao"><label for="rascunho">Anotação da reunião</label><textarea id="rascunho" rows="2"></textarea>'
     + '<div class="acoes"><button type="submit" id="salvar-nota">Salvar anotação</button><output id="nota-estado" role="status"></output></div></form>'
     + '<section><label for="participante">Controle da apresentação</label><select id="participante"></select>'
-    + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button></div></section>');
+    + '<div class="acoes"><button type="button" id="passar">Passar controle</button><button type="button" id="recusar">Recusar pedido</button><button type="button" id="retomar">Retomar controle</button></div></section>');
   const agir = acao => () => { if(liveSouHost() && !window._okrIsViewer) acao(); };
   doc.getElementById('anterior').addEventListener('click', agir(()=>window._okrPrev()));
   doc.getElementById('proximo').addEventListener('click', agir(()=>window._okrNext()));
@@ -2728,12 +2731,16 @@ window._liveAbrirControleFlutuante = async (bastidor = false) => {
       }
     }
   }, {once:true});
-  if(bastidor) livePrepararBastidor(pip, agir);
+  if(bastidor) livePrepararBastidor(pip);
   liveAtualizarControleFlutuante();
   window._livePainel(false);
 };
-function livePrepararBastidor(pip, agir){
+function livePrepararBastidor(pip){
   const doc = pip.document;
+  const agir = acao => () => { if(livePodeAbrirJanela(true)) acao(); };
+  doc.getElementById('retomar').addEventListener('click', agir(()=>{
+    if(!liveSouHost()) window._liveAssumir();
+  }));
   const palco = doc.getElementById('palco');
   palco.addEventListener('click', agir(()=>{
     const ativo = document.body.classList.toggle('live-palco-limpo');
@@ -2761,7 +2768,7 @@ function livePrepararBastidor(pip, agir){
   doc.getElementById('anotacao').addEventListener('submit', async e=>{
     e.preventDefault();
     const original = rascunho.value, texto = original.trim();
-    if(!texto || salvar.disabled || !liveSouHost() || window._okrIsViewer) return;
+    if(!texto || salvar.disabled || !livePodeAbrirJanela(true)) return;
     salvar.disabled = true;
     estado.textContent = 'Salvando…';
     try{
@@ -2822,9 +2829,9 @@ function liveRender(){
     }
     if(controla){
       if(host && !palcoLimpo) p += '<button type="button" class="lp-b" onclick="window._liveCopiarTelaPublico()">Copiar link da tela para o público</button>';
-      if(host && !palcoLimpo && window.documentPictureInPicture?.requestWindow){
-        p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>'
-          + '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';
+      if(!palcoLimpo && window.documentPictureInPicture?.requestWindow){
+        if(host) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante()">🎛️ Abrir controle flutuante</button>';
+        if(adm) p += '<button type="button" class="lp-b" onclick="window._liveAbrirControleFlutuante(true)">Abrir bastidor</button>';
       }
       p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L ou clique duplo no slide)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';
