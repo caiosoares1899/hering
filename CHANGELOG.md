@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Apresentação do Radar — gestos para laser e caneta temporária — 2026-11-19
+
+Na área livre do slide ou do detalhe, dois cliques acionam o laser e três selecionam a caneta temporária durante a sessão ao vivo.
+
 ### SÓ DEV — Apresentação do Radar — botão Parar de apresentar na barra — 2026-11-19
 
 Quem apresenta pode encerrar a sessão pelo botão da barra, com a mesma confirmação do painel ao vivo.

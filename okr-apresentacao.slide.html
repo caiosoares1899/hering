@@ -2546,9 +2546,9 @@ function liveRender(){
         + '</div>';
     }
     if(controla){
-      p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L)">🔴 Laser</button>'
+      p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L ou clique duplo no slide)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';
-      if(liveFerr==='caneta') p += '<div class="lp-seg"><button type="button" class="'+(liveTipo==='f'?'on':'')+'" onclick="window._liveTipo(\'f\')" title="O traço fica até você apagar">Fixa</button><button type="button" class="'+(liveTipo==='t'?'on':'')+'" onclick="window._liveTipo(\'t\')" title="O traço some sozinho depois de 5 s (tecla T)">Temporária · 5 s</button></div>'
+      if(liveFerr==='caneta') p += '<div class="lp-seg"><button type="button" class="'+(liveTipo==='f'?'on':'')+'" onclick="window._liveTipo(\'f\')" title="O traço fica até você apagar">Fixa</button><button type="button" class="'+(liveTipo==='t'?'on':'')+'" onclick="window._liveTipo(\'t\')" title="O traço some sozinho depois de 5 s (T ou clique triplo no slide)">Temporária · 5 s</button></div>'
         + '<div class="lp-cores">'+LIVE_CORES.map(c=>'<button type="button" class="live-cor'+(c===liveCor?' on':'')+'" style="background:'+c+'" onclick="window._liveCor(\''+c+'\')" aria-label="Cor"></button>').join('')+'</div>';
       p += '<div class="lp-row"><button type="button" class="lp-b" onclick="window._liveDesfazer()" title="Desfaz o último traço fixo (Z)">↩ Desfazer</button><button type="button" class="lp-b" onclick="window._liveLimpar()" title="Apaga todos os traços">🧽 Apagar tudo</button></div>'
         + '<div class="lp-sub">Passar o controle pra…</div>'
@@ -2623,6 +2623,22 @@ document.documentElement.addEventListener('mouseleave', liveLaserOff); document.
   const fim = ()=>{ if(!liveStroke) return; const id = liveStroke.id, tmp = liveStroke.m==='t'; enviar(true); if(tmp) setTimeout(()=>window._remove(liveRef('tracos/'+id)).catch(()=>{}), 5600); else liveMeus.push(id); liveStroke = null; };
   cv.addEventListener('pointerup', fim); cv.addEventListener('pointercancel', fim);
 })();
+// Aguarda o terceiro clique antes de ligar o laser. A caneta captura os
+// cliques na área de desenho, que fica fora dos atalhos para não confundir traços com gestos.
+let liveCliqueDuplo = 0;
+document.addEventListener('click', e=>{
+  clearTimeout(liveCliqueDuplo);
+  if((e.detail!==2 && e.detail!==3) || e.button!==0 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey ||
+    !livePodeControlar() || window._okrIsViewer || !(e.target instanceof Element)) return;
+  const area = e.target.closest('#slides .slide.active, #detail-ov.open #detail-modal');
+  if(!area || e.target.closest('button, a, input, textarea, select, label, summary, [role="button"], [onclick], [contenteditable]')) return;
+  if(e.detail===3){ window._liveTipo('t'); return; }
+  const contexto = liveCtx(), ferramenta = liveFerr, sessao = live.iniciadoEm, host = live.apresentador.uid;
+  liveCliqueDuplo = setTimeout(()=>{
+    if(livePodeControlar() && liveCtx()===contexto && liveFerr===ferramenta &&
+      live.iniciadoEm===sessao && live.apresentador.uid===host && area.isConnected) window._liveFerr('laser');
+  }, 400);
+});
 document.addEventListener('keydown', e=>{
   if(!livePodeControlar() || _okrEhCampo(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = (e.key||'').toLowerCase();

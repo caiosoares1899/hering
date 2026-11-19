@@ -31,6 +31,19 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.slide===slides[3].key);
  await sync(A.p,B.p);
  const bRetomou=await info(B.p); t('nova navegação do apresentador ressincroniza quem estava em pausa', bRetomou.idx===3 && /Acompanhando/.test(bRetomou.box), bRetomou);
+ // Gestos na margem do slide, fora dos cartões e botões.
+ await B.p.mouse.click(8,400,{clickCount:3});
+ t('quem acompanha não ativa ferramentas por clique triplo', await B.p.evaluate(()=>!liveFerr), '');
+ await A.p.mouse.dblclick(8,400);
+ await A.p.waitForFunction(()=>liveFerr==='laser');
+ t('clique duplo liga o laser', await A.p.evaluate(()=>liveFerr==='laser'), '');
+ await A.p.keyboard.press('Escape');
+ await A.p.mouse.click(8,400,{clickCount:3});
+ await A.p.waitForTimeout(450);
+ t('clique triplo liga só a caneta temporária', await A.p.evaluate(()=>liveFerr==='caneta' && liveTipo==='t'), '');
+ await A.p.keyboard.press('Escape');
+ await A.p.evaluate(()=>window._liveTipo('f'));
+ await A.p.keyboard.press('Escape');
  // laser
  await A.p.keyboard.press('l'); await A.p.mouse.move(640,360); await A.p.waitForTimeout(150); await A.p.mouse.move(700,400); await A.p.waitForTimeout(150); await sync(A.p,B.p);
  const lz=await B.p.evaluate(()=>{ const e=document.getElementById('live-laser'); return {d:getComputedStyle(e).display, l:e.style.left, t:e.style.top}; });
