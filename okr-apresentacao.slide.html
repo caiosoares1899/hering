@@ -2715,7 +2715,7 @@ function liveAtualizarComandos(pip, bastidor){
   const host = liveSouHost(), detalhe = !!liveDetalheAberto();
   const objetivo = detalhe ? okrObjetivos[_okrDetailCurrentId] : null;
   const vizinhos = _okrDetailVizinhos(objetivo);
-  doc.getElementById('estado').textContent = objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : 'Slide '+(currentIdx+1)+' de '+slides.length;
+  if(!doc.getElementById('bastidor-agora')) doc.getElementById('estado').textContent = objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : 'Slide '+(currentIdx+1)+' de '+slides.length;
   doc.getElementById('anterior').disabled = !host || (detalhe ? !vizinhos.anterior : currentIdx<=0);
   doc.getElementById('proximo').disabled = !host || (detalhe ? !vizinhos.proximo : currentIdx>=slides.length-1);
   doc.getElementById('fechar-detalhe').disabled = !host || !detalhe;
@@ -2744,16 +2744,17 @@ function liveAtualizarComandos(pip, bastidor){
   doc.getElementById('passar').disabled = !seletor.value;
   doc.getElementById('recusar').disabled = !seletor.value || !pedidos[seletor.value];
   if(pip===window && doc.getElementById('bastidor-agora')){
+    // Roda a cada segundo: só reescreve o que mudou (o selo é role="status" e seria relido pelo leitor de tela a cada segundo).
+    const poe = (id, v) => { const e = doc.getElementById(id); if(e.textContent!==v) e.textContent = v; };
     const ap = live.apresentador || {};
-    const quem = doc.getElementById('bastidor-quem');
-    quem.textContent = host ? 'Você está apresentando' : (ap.nome||'Outra pessoa')+' está apresentando';
-    quem.classList.toggle('outro', !host);
-    doc.getElementById('estado').textContent = objetivo ? 'Detalhe do Objetivo' : 'Slide '+(currentIdx+1)+' de '+slides.length;
-    doc.getElementById('bastidor-agora').textContent = objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : (slides[currentIdx]?.title||'');
-    doc.getElementById('bastidor-seguir').textContent = objetivo ? (vizinhos.proximo ? (vizinhos.proximo.titulo||'Próximo Objetivo') : 'último Objetivo desta gerência')
-      : (slides[currentIdx+1]?.title || 'fim da apresentação');
-    doc.getElementById('bastidor-dica-controle').textContent = !host ? 'A navegação volta para você ao retomar o controle.'
-      : itens.length ? 'Escolha quem recebe o controle.' : 'Quando alguém abrir os slides, o nome aparece aqui.';
+    poe('bastidor-quem', host ? 'Você está apresentando' : (ap.nome||'Outra pessoa')+' está apresentando');
+    doc.getElementById('bastidor-quem').classList.toggle('outro', !host);
+    poe('estado', objetivo ? 'Detalhe do Objetivo' : 'Slide '+(currentIdx+1)+' de '+slides.length);
+    poe('bastidor-agora', objetivo ? (objetivo.titulo||'Detalhe do Objetivo') : (slides[currentIdx]?.title||''));
+    poe('bastidor-seguir', objetivo ? (vizinhos.proximo ? (vizinhos.proximo.titulo||'Próximo Objetivo') : 'último Objetivo desta gerência')
+      : (slides[currentIdx+1]?.title || 'fim da apresentação'));
+    poe('bastidor-dica-controle', !host ? 'A navegação volta para você ao retomar o controle.'
+      : itens.length ? 'Escolha quem recebe o controle.' : 'Quando alguém abrir os slides, o nome aparece aqui.');
   }
 
 }
