@@ -87,6 +87,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-19 · 🎛️ Apresentação do Radar: passador físico e setas não funcionavam depois de clicar no passador, e PageDown/PageUp nunca funcionaram
+
+- **Origem:** `/monitorarbugs` com foco no passador, antes da reunião de 19/11 às 14h.
+- **Causa 1:** depois de um clique no passador (janela flutuante), o foco fica nessa janela. Setas e PageDown/PageUp chegavam lá e não faziam nada; o passador físico e o teclado paravam até alguém clicar de volta na aba dos slides.
+- **Causa 2:** a aba dos slides só aceitava Espaço e setas. A maioria dos passadores físicos manda PageDown/PageUp.
+- **Correção:** `okr-apresentacao.slide.html` aceita PageDown/PageUp no slide e no detalhe do Objetivo. A janela flutuante (passador e Bastidor) repassa setas e PageDown/PageUp para a mesma navegação dos botões, fora da caixa de anotação.
+- **Teste:** `docs/arezzo/testes/test_passador_teclas.js` (10 verificações; 6 falham na versão anterior).
+- **Sem achado:** Próximo com a Evolução ou os comentários do Marco abertos fecha o painel e troca de Objetivo; Objetivo novo no meio da reunião atualiza o passador.
+
 ### 2026-11-19 · Passador flutuante não navegava entre detalhes de Objetivos
 
 As setas usam a mesma ordenação e os mesmos limites dos botões do detalhe. A troca de Objetivo é enviada pela navegação ao vivo existente.
