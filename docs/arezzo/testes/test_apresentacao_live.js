@@ -366,16 +366,21 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
    await H.p.locator('#live-box button').click();
    await H.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.pauta?.reuniao==='ritual-teste');
    await sync(H.p,F.p);
-   const recorte = p=>p.evaluate(()=>({
-     ids:_okrObjetivosAtivos().map(o=>o.id), data:_okrPauta?.data,
-     tempo:document.getElementById('tb-countdown').textContent,
-     capa:slides.find(s=>s.key==='cover').html,
-     panorama:slides.find(s=>s.key==='summary')?.html
-   }));
+   const recorte = p=>p.evaluate(()=>{
+     const textoSlide = (key, seletor) => {
+       const slide = slides.find(s=>s.key===key);
+       return new DOMParser().parseFromString(slide?.html||'','text/html').querySelector(seletor)?.textContent;
+     };
+     return {
+       ids:_okrObjetivosAtivos().map(o=>o.id), data:_okrPauta?.data,
+       tempo:document.getElementById('tb-countdown').textContent,
+       capa:textoSlide('cover','.ck-hero'), panorama:textoSlide('summary','.sum-section-title')
+     };
+   });
    await H.p.waitForFunction(()=>document.getElementById("tb-countdown").textContent.includes("20min"));
    const host = await recorte(H.p), favorito = await recorte(F.p);
    t('favorito recebe pauta, capa, panorama e hora da ocorrência', JSON.stringify(host)===JSON.stringify(favorito) &&
-     favorito.ids.join()==='d2' && !!favorito.panorama && /20min/.test(favorito.tempo), {ids:favorito.ids,tempo:favorito.tempo});
+     favorito.ids.join()==='d2' && !!favorito.panorama && /20min/.test(favorito.tempo), {host,favorito});
    await H.p.evaluate(()=>window._livePassar('eve','Eve Souza'));
    await H.p.waitForFunction(()=>window.__store.kanban.okr.apresentacao_live.apresentador.uid==='eve');
    await sync(H.p,F.p);
