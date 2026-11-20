@@ -124,6 +124,22 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       t('sessão antiga, sem relógio: a contagem da agenda continua aparecendo', (await contagem(A.p)) === '⏳ 45min restantes', await contagem(A.p));
       t('sem erro de JavaScript (sessão antiga)', !A.erros.length, A.erros);
       await A.ctx.close(); }
+    // 12) Bastidor › Configurar horário (relato do Caio, 20/11: "clico e nada acontece")
+    { const D = await open(U('ana', 'Ana ADM'), { caminho: '/okr-apresentacao.slide.html?tela=bastidor' });
+      await D.p.click('#bastidor-iniciar'); await D.p.click('#inicio-sem'); await D.p.waitForTimeout(500);
+      await D.p.click('#bastidor-agenda'); await D.p.waitForTimeout(200);
+      t('Bastidor: Configurar horário abre a janela', await D.p.evaluate(() => document.getElementById('agenda-cfg-ov').classList.contains('open')), '');
+      await D.p.fill('#agenda-fim', ''); await D.p.click('.ac-salvar'); await D.p.waitForTimeout(200);
+      t('Salvar sem término avisa o que falta e não fecha', /término previsto/.test(await D.p.textContent('#agenda-erro')) && await D.p.evaluate(() => document.getElementById('agenda-cfg-ov').classList.contains('open') && document.activeElement.id === 'agenda-fim'), await D.p.textContent('#agenda-erro'));
+      await D.p.fill('#agenda-fim', '11:20'); await D.p.click('.ac-salvar'); await D.p.waitForTimeout(500);
+      const s = await sessao(D.p);
+      t('sessão sem cronômetro: informar o término liga o cronômetro', s.relogio.modo === 'cronometro' && s.relogio.fimEm === SP('11:20') && s.relogio.inicioEm === AGORA.getTime(), s.relogio);
+      t('o Bastidor passa a mostrar o tempo restante', /50min restantes/.test(await D.p.textContent('#tempo')), await D.p.textContent('#tempo'));
+      t('e avisa que o cronômetro foi ligado', /Cronômetro ligado: término às 11:20/.test(await D.p.textContent('#live-toast')), await D.p.textContent('#live-toast'));
+      await D.p.click('#bastidor-agenda'); await D.p.waitForTimeout(200);
+      t('reabrir limpa o aviso anterior', (await D.p.textContent('#agenda-erro')) === '', await D.p.textContent('#agenda-erro'));
+      t('sem erro de JavaScript (Bastidor)', !D.erros.length, D.erros);
+      await D.ctx.close(); }
   } finally { await b.close(); }
   console.log(falhas ? `\n${falhas} falha(s)` : '\nTUDO OK'); process.exit(falhas ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });
