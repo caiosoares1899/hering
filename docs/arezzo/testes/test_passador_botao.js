@@ -32,7 +32,7 @@ const pip = p => p.evaluate(() => { const d = window.documentPictureInPicture?.w
   try {
     const A = await open(navs[0], U('ana', 'Ana ADM')), B = await open(navs[1], U('eve', 'Eve Souza'));
     t('antes da sessão ao vivo, o botão não aparece', await rotulo(A.p) === '(escondido)', await rotulo(A.p));
-    await A.p.click('#live-box button'); await A.p.waitForTimeout(300); await sync(A.p, B.p);
+    await A.p.click('#live-box button'); await A.p.click('#inicio-sem'); await A.p.waitForTimeout(300); await sync(A.p, B.p);
     t('quem apresenta vê o botão "Abrir controle flutuante"', await rotulo(A.p) === 'Abrir controle flutuante', await rotulo(A.p));
     const geo = await A.p.evaluate(() => { const r = id => document.getElementById(id).getBoundingClientRect(); const b = r('live-passador'), f = r('live-fab'); return { acima: b.bottom <= f.top, alinhado: Math.abs((b.left + b.right) / 2 - (f.left + f.right) / 2) < 2, alvo: b.height >= 44 }; });
     t('fica logo acima do 🎙️, centrado e com 44 px', geo.acima && geo.alinhado && geo.alvo, geo);

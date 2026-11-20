@@ -126,8 +126,8 @@
 - [`viewFrota`](travessia-dev.html#L775) · [`guardarBau`](travessia-dev.html#L903) · [`demoDados`](travessia-dev.html#L1038)
 
 ### `okr-apresentacao.slide.html` (12 âncoras verificadas)
-- [`buildSlides`](okr-apresentacao.slide.html#L1334) · [`startListeners`](okr-apresentacao.slide.html#L2263) · [`rebuild`](okr-apresentacao.slide.html#L1453) · [`fitSlideContent`](okr-apresentacao.slide.html#L1613) · [`_okrFitDetailSections`](okr-apresentacao.slide.html#L1924) · [`objMarcos`](okr-apresentacao.slide.html#L963)
-- [`_okrViewerKey`](okr-apresentacao.slide.html#L2626) · [`_okrShowApp`](okr-apresentacao.slide.html#L2597) · [`_hojeStr`](okr-apresentacao.slide.html#L1999) · [`renderNotas`](okr-apresentacao.slide.html#L2039) · [`_okrAgendaHoje`](okr-apresentacao.slide.html#L2174) · [`_okrRenderCountdown`](okr-apresentacao.slide.html#L2203)
+- [`buildSlides`](okr-apresentacao.slide.html#L1527) · [`startListeners`](okr-apresentacao.slide.html#L2542) · [`rebuild`](okr-apresentacao.slide.html#L1647) · [`fitSlideContent`](okr-apresentacao.slide.html#L1807) · [`_okrFitDetailSections`](okr-apresentacao.slide.html#L2140) · [`objMarcos`](okr-apresentacao.slide.html#L1105)
+- [`_okrViewerKey`](okr-apresentacao.slide.html#L3513) · [`_okrShowApp`](okr-apresentacao.slide.html#L3484) · [`_hojeStr`](okr-apresentacao.slide.html#L2215) · [`renderNotas`](okr-apresentacao.slide.html#L2273) · [`_okrAgendaHoje`](okr-apresentacao.slide.html#L2412) · [`_okrRenderCountdown`](okr-apresentacao.slide.html#L2458)
 
 ### `mare-notif-dev.js` (3 âncoras verificadas)
 - [`AREAS`](mare-notif-dev.js#L56) · [`PUSH_PADRAO`](mare-notif-dev.js#L66) · [`TIPOS`](mare-notif-dev.js#L68)

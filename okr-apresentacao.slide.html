@@ -127,6 +127,17 @@ body.live-bastidor #bastidor-pagina #bastidor-encerrar:hover{background:rgba(255
   #bastidor-pagina .bst-grade{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,.9fr);}
 }
 body.live-bastidor .agenda-cfg-ov{z-index:700;background:rgba(var(--deep-rgb),.65);}
+/* 🎙️ Iniciar a apresentação ao vivo: com cronômetro, sem cronômetro ou cancelar (#1904, etapa 1) */
+.agenda-cfg-ov.inicio-ov{z-index:720;background:rgba(var(--deep-rgb),.65);}
+.inicio-ov .agenda-cfg-panel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(340px,calc(100vw - 32px));}
+.inicio-ov .inicio-dica{margin:0 0 8px;font-size:12.5px;color:var(--txt2);line-height:1.4;}
+.inicio-ov .inicio-erro{margin:6px 0 0;font-size:12.5px;color:var(--danger);min-height:1em;}
+.inicio-ov .inicio-erro:empty{display:none;}
+.inicio-ov .inicio-acoes{display:grid;gap:8px;margin-top:12px;}
+.inicio-ov .inicio-acoes button{min-height:44px;border-radius:10px;border:1px solid var(--glass-b);background:rgba(56,182,255,.08);color:var(--txt);font:600 13px 'DM Sans',sans-serif;cursor:pointer;}
+.inicio-ov .inicio-acoes button:disabled{opacity:.5;cursor:default;}
+.inicio-ov .inicio-acoes #inicio-com{background:var(--accent);border-color:var(--accent);color:var(--deep);}
+.inicio-ov .inicio-acoes button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 body.live-bastidor .agenda-cfg-panel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(280px,calc(100vw - 48px));}
 body.live-bastidor #bastidor-controles{background:none;padding:0;font:15px/1.45 'DM Sans',sans-serif;}
 body.live-bastidor #bastidor-pagina h1,body.live-bastidor #bastidor-pagina h2{font-family:'Syne',sans-serif;}
@@ -854,6 +865,22 @@ body.live-palco-limpo :is(#live-box,#live-passador,#live-toast,#notes-fab,#notes
     </div>
   </div>
 </div>
+<div class="agenda-cfg-ov inicio-ov" id="inicio-ov" onclick="if(event.target===this) window._liveFecharInicio()">
+  <div class="agenda-cfg-panel" role="dialog" aria-modal="true" aria-labelledby="inicio-titulo">
+    <div class="agenda-cfg-hd"><span id="inicio-titulo">🎙️ Apresentar ao vivo</span><button type="button" aria-label="Cancelar" onclick="window._liveFecharInicio()">✕</button></div>
+    <p class="inicio-dica" id="inicio-origem"></p>
+    <label for="inicio-fim">Término previsto</label>
+    <input type="time" id="inicio-fim">
+    <label for="inicio-duracao">ou duração (minutos)</label>
+    <input type="number" id="inicio-duracao" min="5" max="480" step="5" inputmode="numeric">
+    <p class="inicio-erro" id="inicio-erro" role="alert"></p>
+    <div class="inicio-acoes">
+      <button type="button" id="inicio-com" onclick="window._liveIniciar(true)">Iniciar com cronômetro</button>
+      <button type="button" id="inicio-sem" onclick="window._liveIniciar(false)">Iniciar sem cronômetro</button>
+      <button type="button" id="inicio-cancelar" onclick="window._liveFecharInicio()">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Sibling de #app/#detail-ov de propósito, NÃO dentro de #app — achado
      real (print do usuário: botão sumia/aparecia quebrado dentro do
@@ -915,7 +942,7 @@ body.live-palco-limpo :is(#live-box,#live-passador,#live-toast,#notes-fab,#notes
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, remove, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, remove, get, update, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -935,7 +962,7 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 // Mesmo padrão de exposição de kanban.html/painel.html (window._db/_ref/_onValue/...)
 // — deixa a página testável com o mesmo mock de Firebase já usado nos testes
 // Playwright do resto do repo, em vez de import direto do SDK espalhado pelo código.
-window._db = db; window._ref = ref; window._onValue = onValue; window._set = set; window._remove = remove; window._get = get; window._update = update;
+window._db = db; window._ref = ref; window._onValue = onValue; window._set = set; window._remove = remove; window._get = get; window._update = update; window._runTransaction = runTransaction;
 
 window._doLogin = () => {
   document.getElementById('login-err').hidden = true;
@@ -1892,6 +1919,7 @@ document.addEventListener('click', e=>{
   }
 }, true);
 document.addEventListener('keydown', e=>{
+  if(document.getElementById('inicio-ov').classList.contains('open')){ if(e.key==='Escape'){ e.preventDefault(); window._liveFecharInicio(); } return; }
   if(_okrTelaBastidor){
     if(e.key==='Escape' && document.getElementById('agenda-cfg-ov').classList.contains('open')) window._okrCloseAgendaCfg();
     return;
@@ -2404,6 +2432,7 @@ window._okrAgendaSalvar = () => {
   window._set(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr()), {
     inicio, fim, ts: new Date().toISOString(),
   }).catch(err=>console.error('[agenda] falha ao salvar:', err));
+  liveAjustarTermino(fim);
   window._okrCloseAgendaCfg();
 };
 window._okrAgendaLimpar = () => {
@@ -2428,6 +2457,21 @@ const _okrRelogioSP = new Intl.DateTimeFormat('en-CA', {
 });
 function _okrRenderCountdown(){
   const el = document.getElementById('tb-countdown');
+  const rel = liveRelogio();
+  if(rel){
+    if(rel.modo==='livre'){ el.hidden = true; el.textContent = ''; return; }   // sem cronômetro
+    const agora = liveAgora(), dec = Math.max(0, Math.floor((agora - rel.inicioEm)/60000));
+    let txt = '⏱ ' + _liveMin(dec) + ' decorridos', cls = '';
+    if(rel.fimEm!==null){
+      const falta = Math.round((rel.fimEm - agora)/60000);
+      if(falta > 5) txt += ' · ⏳ ' + _liveMin(falta) + ' restantes';
+      else if(falta > 0){ txt += ' · ⏳ ' + falta + 'min restantes'; cls = 'warn'; }
+      else { txt += ' · 🔴 +' + _liveMin(Math.abs(falta)) + ' (atrasado)'; cls = 'over'; }
+    }
+    el.hidden = false; el.classList.remove('warn','over'); if(cls) el.classList.add(cls);
+    if(el.textContent !== txt) el.textContent = txt;
+    return;
+  }
   const ag = _okrPauta || _okrAgendaHoje();
   if(!ag?.fim){ el.hidden = true; return; }
   let agora = Date.now(), fimMs;
@@ -2559,6 +2603,80 @@ const livePodeControlar = () => liveAtiva() && (liveSouHost() || liveSouAdm());
 // e um adiantado via quem apresenta "sem sinal" e ganhava o Assumir (/monitorarbugs 19/11/2026). Só o que é local (traços, travas) fica no Date.now().
 let _liveOffset = 0;
 const liveAgora = () => Date.now() + _liveOffset;
+// ── ⏱ Relógio da sessão ao vivo (#1904, etapa 1) ──
+// Fica na própria sessão (apresentacao_live/relogio) e vale para a sala inteira: troca de apresentador, recarga e outras telas.
+// {modo:'cronometro'|'livre', inicioEm, fimEm|null, origem:'calendario'|'agenda'|'manual'}, tudo em horário do servidor.
+// "livre" = sem cronômetro (testes); fica fora do histórico da previsão (etapa 3). Começar atrasado não muda fimEm.
+// Qualquer conta da empresa grava apresentacao_live (regra antiga): por isso tudo é conferido na leitura.
+const _okrHojeSP = () => { const c = Object.fromEntries(_okrRelogioSP.formatToParts(new Date(liveAgora())).map(p=>[p.type,p.value])); return c.year+'-'+c.month+'-'+c.day; };
+const _okrHoraSP = (data, hhmm) => /^\d{4}-\d{2}-\d{2}$/.test(data||'') && /^([01]\d|2[0-3]):[0-5]\d$/.test(hhmm||'') ? Date.parse(data+'T'+hhmm+':00-03:00') : NaN;   // Brasil sem horário de verão desde 2019
+function liveRelogio(){
+  if(!liveAtiva() || !live.relogio || typeof live.relogio!=='object') return null;
+  const r = live.relogio, modo = r.modo==='cronometro' || r.modo==='livre' ? r.modo : null;
+  if(!modo) return null;
+  const inicioEm = Number.isFinite(r.inicioEm) ? r.inicioEm : Number.isFinite(live.iniciadoEm) ? live.iniciadoEm : null;
+  if(inicioEm===null) return null;
+  return {modo, inicioEm, fimEm: modo==='cronometro' && Number.isFinite(r.fimEm) ? r.fimEm : null,
+    origem: ['calendario','agenda','manual'].includes(r.origem) ? r.origem : 'manual'};
+}
+const _liveMin = m => m>=60 ? Math.floor(m/60)+'h'+String(m%60).padStart(2,'0') : m+'min';
+let _liveSugestao = {fim:'', origem:'manual'}, _liveIniciando = false;
+function liveSugestaoTermino(){
+  const hoje = _okrHojeSP();
+  if(_okrPauta && _okrPauta.fim){
+    if(_okrPauta.data===hoje) return {fim:_okrPauta.fim, origem:'calendario', dica:'Término da ocorrência do Calendário. Você pode ajustar antes de iniciar.'};
+    return {fim:'', origem:'manual', dica:'A pauta é de '+_okrPauta.data.split('-').reverse().join('/')+'. Informe o término de hoje ou a duração.'};
+  }
+  const ag = _okrAgendaHoje();
+  if(ag && ag.fim) return {fim:ag.fim, origem:'agenda', dica:'Término configurado para hoje. Você pode ajustar antes de iniciar.'};
+  return {fim:'', origem:'manual', dica:'Informe o término ou a duração para iniciar com cronômetro.'};
+}
+window._liveAbrirInicio = () => {
+  if(window._okrIsViewer || _okrTelaPublico || liveAtiva()) return;
+  _liveSugestao = liveSugestaoTermino();
+  document.getElementById('inicio-origem').textContent = _liveSugestao.dica;
+  document.getElementById('inicio-fim').value = _liveSugestao.fim;
+  document.getElementById('inicio-duracao').value = '';
+  document.getElementById('inicio-erro').textContent = '';
+  document.getElementById('inicio-ov').classList.add('open');
+  document.getElementById('inicio-com').focus();
+};
+window._liveFecharInicio = () => { if(!_liveIniciando) document.getElementById('inicio-ov').classList.remove('open'); };
+function liveLerTermino(){
+  const fim = document.getElementById('inicio-fim').value, dur = Number(document.getElementById('inicio-duracao').value), agora = liveAgora();
+  if(fim){
+    const ms = _okrHoraSP(_okrHojeSP(), fim);
+    if(!Number.isFinite(ms)) return {erro:'Horário de término inválido.'};
+    if(ms <= agora) return {erro:'Esse término já passou. Ajuste o horário ou informe a duração.'};
+    return {fimEm:ms, origem: fim===_liveSugestao.fim ? _liveSugestao.origem : 'manual'};
+  }
+  if(dur > 0 && dur <= 600) return {fimEm: agora + Math.round(dur)*60000, origem:'manual'};
+  return {erro:'Informe o término ou a duração para iniciar com cronômetro.'};
+}
+window._liveIniciar = async comCronometro => {
+  if(_liveIniciando) return;
+  const erro = document.getElementById('inicio-erro');
+  let relogio = {modo:'livre', fimEm:null, origem:'manual'};
+  if(comCronometro){ const t = liveLerTermino(); if(t.erro){ erro.textContent = t.erro; return; } relogio = {modo:'cronometro', fimEm:t.fimEm, origem:t.origem}; }
+  _liveIniciando = true; erro.textContent = '';
+  document.querySelectorAll('#inicio-ov .inicio-acoes button').forEach(b=>b.disabled = true);
+  try{
+    const iniciou = await window._liveComecar({relogio});
+    _liveIniciando = false;
+    if(iniciou || liveAtiva()) window._liveFecharInicio();
+    else erro.textContent = 'Não consegui iniciar. Tente de novo.';
+  }finally{
+    _liveIniciando = false;
+    document.querySelectorAll('#inicio-ov .inicio-acoes button').forEach(b=>b.disabled = false);
+  }
+};
+// "Configurar horário" no meio de uma sessão cronometrada ajusta o término dela (senão a contagem da sessão ignoraria a mudança).
+function liveAjustarTermino(fim){
+  const r = liveRelogio();
+  if(!r || r.modo!=='cronometro' || !livePodeControlar()) return;
+  const ms = _okrHoraSP(_okrHojeSP(), fim);
+  if(Number.isFinite(ms)) window._update(liveRef(), {'relogio/fimEm':ms, 'relogio/origem':'manual'}).catch(()=>{});
+}
 // Janelas largas de propósito: quem acompanha costuma deixar a aba do Radar em segundo plano (está no Meet), e depois de ~5 min o Chrome
 // só acorda os timers dessa aba uma vez por minuto — o sinal de 20 s vira 1 por minuto. 70 s deixava a pessoa piscando na lista.
 const LIVE_PRESENCA_MS = 130000, LIVE_HOST_PARADO_MS = 150000;
@@ -2619,12 +2737,25 @@ function liveBatida(){
   const upd = {['participantes/'+u.uid]: {nome:liveNome(u), ts:liveAgora()}}; if(liveSouHost()) upd.atualizadoEm = liveAgora();
   window._update(liveRef(), upd).catch(()=>{});
 }
-window._liveComecar = () => {
-  if(window._okrIsViewer || _okrTelaPublico) return; const u = liveEu();
+// Chamada pelo diálogo de início (ou direto, sem argumentos = sem cronômetro). Transação: se outra pessoa iniciou enquanto o diálogo
+// estava aberto (dois ADMs, Bastidor e slides na mesma conta), não sobrescreve a sessão dela. Devolve true se esta aba iniciou.
+window._liveComecar = async (opcoes) => {
+  if(window._okrIsViewer || _okrTelaPublico) return false; const u = liveEu();
+  const agora = liveAgora(), rel = (opcoes && opcoes.relogio) || {modo:'livre', fimEm:null, origem:'manual'};
   const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+  const sessao = {ativa:true, sessaoId: agora.toString(36)+'_'+Math.random().toString(36).slice(2,8),
+    apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:agora, atualizadoEm:agora,
+    relogio:{modo: rel.modo==='cronometro' ? 'cronometro' : 'livre', inicioEm:agora, fimEm: rel.modo==='cronometro' && Number.isFinite(rel.fimEm) ? rel.fimEm : null, origem: rel.origem||'manual'},
+    pauta:_okrPautaSerial(_okrPauta), ...liveNavegacao(), navId, navPor:u.uid||''};
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
-  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:liveAgora(), atualizadoEm:liveAgora(), pauta:_okrPautaSerial(_okrPauta), ...liveNavegacao(), navId, navPor:u.uid||''})
-    .then(()=>liveToast(_okrTelaBastidor ? '🎙️ Apresentação ao vivo iniciada. Copie o link da tela para o público e abra no computador que compartilha no Meet.' : '🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
+  let iniciou = false;
+  try{
+    const r = await window._runTransaction(liveRef(), cur => (cur && cur.ativa) ? undefined : sessao);
+    iniciou = !!(r && r.committed);
+  }catch(e){ liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)); return false; }
+  if(!iniciou){ liveToast('🎙️ Outra pessoa acabou de iniciar a apresentação ao vivo. Você está acompanhando.'); return false; }
+  liveToast(_okrTelaBastidor ? '🎙️ Apresentação ao vivo iniciada. Copie o link da tela para o público e abra no computador que compartilha no Meet.' : '🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500);
+  return true;
 };
 window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a sessão do Radar para todos? Para parar o compartilhamento de tela, use o controle do Google Meet.')) return; window._remove(liveRef()).catch(()=>{}); };
 let _liveRecorteAnterior = null;
@@ -2921,7 +3052,7 @@ function liveAtualizarComandos(pip, bastidor){
   if(!bastidor) return;
   doc.getElementById('retomar').disabled = host;
   const tempo = document.getElementById('tb-countdown');
-  doc.getElementById('tempo').textContent = tempo.hidden ? 'Sem horário de término' : tempo.textContent;
+  doc.getElementById('tempo').textContent = tempo.hidden ? (liveRelogio()?.modo==='livre' ? 'Sem cronômetro' : 'Sem horário de término') : tempo.textContent;
   doc.getElementById('fps').textContent = _okrTelaBastidor ? 'FPS disponível no computador dos slides' : document.hidden ? 'FPS indisponível com a aba oculta' : document.querySelector('#fps-meter span').textContent;
   const participantes = liveParticipantes();
   const pedidos = live.pedidos || {};
@@ -3170,7 +3301,7 @@ function livePrepararBastidor(pip){
 }
 
 document.getElementById('bastidor-iniciar').addEventListener('click', ()=>{
-  if(_okrTelaBastidor && liveSouAdm() && !liveAtiva()) window._liveComecar();
+  if(_okrTelaBastidor && liveSouAdm() && !liveAtiva()) window._liveAbrirInicio();
 });
 window._liveAbrirPaginaBastidor = () => {
   if(!liveSouAdm()) return;
@@ -3204,6 +3335,7 @@ window._livePassadorClique = () => {
   else if(!(live.pedidos && live.pedidos[liveEu().uid])) window._livePedir();
 };
 function liveRender(){
+  try { _okrRenderCountdown(); } catch(_) {}   // o relógio da sessão (com/sem cronômetro, término ajustado) vale na hora, sem esperar o tique de 1 s
   liveAtualizarControleFlutuante();
   liveAtualizarPassador();
   const box = document.getElementById('live-box'), fab = document.getElementById('live-fab'), painel = document.getElementById('live-fpanel'); if(!box || !fab || !painel) return;
@@ -3215,7 +3347,7 @@ function liveRender(){
   const sig = JSON.stringify([ativa, host, adm, viewer, ativa&&live.apresentador.uid, ativa&&live.apresentador.nome, liveSeguindo, liveFerr, liveTipo, liveCor, pediu, ativa&&liveHostParado(), pessoas.map(x=>x[0]+x[1].nome), pedidos.map(x=>x[0]), livePainelAberto, palcoLimpo]);
   if(sig===_liveSig) return; _liveSig = sig;
   let h = '';
-  if(!ativa) h = viewer ? '' : '<button type="button" class="tb-btn live-btn" onclick="window._liveComecar()" title="Cria uma sessão ao vivo: quem abrir esta página acompanha o seu slide, e você pode passar o controle e usar laser e caneta">🎙️ Apresentar ao vivo</button>';
+  if(!ativa) h = viewer ? '' : '<button type="button" class="tb-btn live-btn" onclick="window._liveAbrirInicio()" title="Cria uma sessão ao vivo: quem abrir esta página acompanha o seu slide, e você pode passar o controle e usar laser e caneta">🎙️ Apresentar ao vivo</button>';
   else if(host) h = '<button type="button" class="live-pill live-stop" onclick="window._liveEncerrar()"><span class="live-stop-icon" aria-hidden="true"></span>Parar de apresentar</button>';
   else h = '<span class="live-pill"><i></i>'+esc(live.apresentador.nome||'Alguém')+' está apresentando</span>'
     + (liveSeguindo ? '<span class="live-pill" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.4);color:var(--teal);">Acompanhando ✓</span>' : '<button type="button" class="tb-btn live-btn" onclick="window._liveSeguir()" title="Volta pro slide do apresentador">↩ Voltar a seguir</button>')

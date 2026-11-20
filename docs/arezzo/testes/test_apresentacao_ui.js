@@ -113,7 +113,7 @@ const { chromium } = require(process.env.PW_MODULE || '/opt/node22/lib/node_modu
     t(tag + 'sem erro de JS', !errs.length, errs); await ctx.close(); }
   // 6) sessão "Apresentar ao vivo" ligada (o cenário de quem apresenta): depois dos 3 pulsos de entrada, nada anima para sempre
   { const ctx = await b.newContext({ viewport: { width: 1366, height: 768 } }); await fake.install(ctx, JSON.parse(JSON.stringify(dados))); const p = await ctx.newPage(); p.on('dialog', d => d.accept()); await p.goto('http://localhost:8941/okr-apresentacao.slide.html'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana', photoURL: '', providerData: [{ providerId: 'google.com' }] }); await p.waitForTimeout(1800);
-    await p.click('#live-box button'); await p.waitForTimeout(6800);
+    await p.click('#live-box button'); await p.click('#inicio-sem'); await p.waitForTimeout(6800);
     const pulsa = await p.evaluate(() => /Você está apresentando/.test(document.getElementById('live-box').textContent));
     const inf = await p.evaluate(() => document.getAnimations().filter(a => a.effect && a.effect.getComputedTiming().iterations === Infinity).map(a => (a.effect.target && a.effect.target.className) || '?'));
     const css = await p.evaluate(() => { const r = [...document.styleSheets].flatMap(s => [...s.cssRules]).find(x => x.name === 'liveAnel'); return r ? r.cssText : ''; });
