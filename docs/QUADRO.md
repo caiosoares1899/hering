@@ -30,6 +30,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 | Codex | Radar: recalcular espaço do detalhe após #1866, reduzir vazios no rodapé e preservar Marcos; Progressos pode rolar | [escopo](quadro/escalados.md#apresentacao-sem-rolagem) | 18/11/2026 |
 | Caio | Radar: gráfico de Evolução do atingimento com a meta como linha d’água na apresentação | [escopo](quadro/escalados.md#apresentacao-linha-dagua) | 18/11/2026 |
 | Antigravity | Segurança das regras (`/auditoriaseguranca` do Painel): C1/C2 feitos; **faltam C3, C4, D7/D8**. Cuidado com externos e `painel_viewers` | [escalados](quadro/escalados.md#seguranca-regras-c3-c4) | 11/11/2026 |
+| Codex | Radar: relógio opcional, encerramento após sala vazia e previsão de tempo por pauta | [desenho](quadro/escalados.md#radar-tempo-da-reuniao) | 19/11/2026 |
 
 ## Pendente de deploy
 
