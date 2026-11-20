@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-20 · Radar › Bastidor — Configurar horário parecia não fazer nada (Salvar calado sem término; sessão sem cronômetro ignorava o horário)
+
+- **Arquivo:** `okr-apresentacao.slide.html`, sem par `-dev`: entra no ar no merge. Relato do Caio: no Bastidor, "Configurar horário" parecia quebrado ("clico e nada acontece").
+- **Causa 1:** `_okrAgendaSalvar()` saía calada quando o início ou o término estava vazio. O término vem vazio quando não há agenda no dia, então clicar em Salvar não fazia nada nem dizia o porquê. Agora a janela mostra "Informe o início e o término previsto." (`#agenda-erro`) e põe o foco no campo que falta.
+- **Causa 2 (regressão do #1905):** numa sessão iniciada "sem cronômetro", `liveAjustarTermino()` só ajustava sessões com cronômetro. O horário era salvo na agenda e o Bastidor continuava mostrando "Sem cronômetro". Agora, informar o término numa sessão sem cronômetro liga o cronômetro (`relogio/modo: 'cronometro'` e `fimEm`) e avisa com "⏱ Cronômetro ligado: término às HH:MM". Falha de gravação também passou a avisar; antes era engolida.
+- **Teste:** `docs/arezzo/testes/test_relogio_reuniao.js`, caso 12, que clica no botão real do Bastidor.
+
 ### 2026-11-19 · Bastidor não respondia a setas e passador físico em aba própria
 
 A aba do Bastidor passa a usar o mesmo caminho de navegação do passador flutuante e respeita o foco nos formulários.

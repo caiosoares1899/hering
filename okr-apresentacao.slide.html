@@ -171,6 +171,8 @@ body.live-bastidor #bastidor-pagina h1,body.live-bastidor #bastidor-pagina h2{fo
    escapavam do closest() esperado). */
 .agenda-cfg-ov{position:fixed;inset:0;z-index:20;display:none;background:transparent;}
 .agenda-cfg-ov.open{display:block;}
+.agenda-erro{margin:6px 0 0;font-size:12.5px;color:var(--danger);}
+.agenda-erro:empty{display:none;}
 .agenda-cfg-panel{position:absolute;top:58px;left:22px;background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;backdrop-filter:blur(18px);
   padding:14px 16px;width:220px;box-shadow:0 10px 30px rgba(0,0,0,.4);}
 .agenda-cfg-hd{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px;}
@@ -859,6 +861,7 @@ body.live-palco-limpo :is(#live-box,#live-passador,#live-toast,#notes-fab,#notes
     <input type="time" id="agenda-inicio">
     <label for="agenda-fim">Término previsto</label>
     <input type="time" id="agenda-fim">
+    <p class="agenda-erro" id="agenda-erro" role="alert"></p>
     <div class="agenda-cfg-actions">
       <button type="button" class="ac-limpar" onclick="window._okrAgendaLimpar()">Limpar</button>
       <button type="button" class="ac-salvar" onclick="window._okrAgendaSalvar()">Salvar</button>
@@ -2415,6 +2418,7 @@ function _okrAgendaPopulateInputs(){
   const agora = new Date().toTimeString().slice(0,5);
   document.getElementById('agenda-inicio').value = ag?.inicio || agora;
   document.getElementById('agenda-fim').value = ag?.fim || '';
+  document.getElementById('agenda-erro').textContent = '';
 }
 const _okrPodeConfigurarAgenda = () => !window._okrIsViewer && !_okrPauta && (!_okrTelaBastidor || liveSouAdm());
 window._okrToggleAgendaCfg = () => {
@@ -2428,7 +2432,11 @@ window._okrAgendaSalvar = () => {
   if(!_okrPodeConfigurarAgenda()){ window._okrCloseAgendaCfg(); return; }   // visualizador não grava (regras negam)
   const inicio = document.getElementById('agenda-inicio').value;
   const fim = document.getElementById('agenda-fim').value;
-  if(!inicio || !fim) return;
+  if(!inicio || !fim){   // antes saía calado: o clique em Salvar parecia não fazer nada
+    document.getElementById('agenda-erro').textContent = 'Informe o início e o término previsto.';
+    document.getElementById(inicio ? 'agenda-fim' : 'agenda-inicio').focus();
+    return;
+  }
   window._set(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr()), {
     inicio, fim, ts: new Date().toISOString(),
   }).catch(err=>console.error('[agenda] falha ao salvar:', err));
@@ -2671,11 +2679,18 @@ window._liveIniciar = async comCronometro => {
   }
 };
 // "Configurar horário" no meio de uma sessão cronometrada ajusta o término dela (senão a contagem da sessão ignoraria a mudança).
+// Configurar horário durante a sessão ajusta o término dela. Em sessão sem cronômetro, informar o término liga o cronômetro
+// (antes o horário era salvo e nada mudava na tela: "Sem cronômetro" continuava, e o botão parecia quebrado).
 function liveAjustarTermino(fim){
   const r = liveRelogio();
-  if(!r || r.modo!=='cronometro' || !livePodeControlar()) return;
+  if(!r || !livePodeControlar()) return;
   const ms = _okrHoraSP(_okrHojeSP(), fim);
-  if(Number.isFinite(ms)) window._update(liveRef(), {'relogio/fimEm':ms, 'relogio/origem':'manual'}).catch(()=>{});
+  if(!Number.isFinite(ms)) return;
+  const upd = {'relogio/fimEm':ms, 'relogio/origem':'manual'};
+  if(r.modo!=='cronometro') upd['relogio/modo'] = 'cronometro';
+  window._update(liveRef(), upd)
+    .then(()=>{ if(r.modo!=='cronometro') liveToast('⏱ Cronômetro ligado: término às '+fim+'.'); })
+    .catch(e=>liveToast('⚠️ Não consegui ajustar o horário da sessão: '+(e && e.message || e)));
 }
 // Janelas largas de propósito: quem acompanha costuma deixar a aba do Radar em segundo plano (está no Meet), e depois de ~5 min o Chrome
 // só acorda os timers dessa aba uma vez por minuto — o sinal de 20 s vira 1 por minuto. 70 s deixava a pessoa piscando na lista.
