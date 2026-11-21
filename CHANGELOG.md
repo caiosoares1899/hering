@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — Apresentação do Radar — relógio opcional ao iniciar a apresentação ao vivo — 2026-11-19
+### Apresentação do Radar — relógio opcional ao iniciar a apresentação ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 `okr-apresentacao.slide.html` (sem par `-dev`; entra no ar no merge). Etapa 1 do desenho do PR #1904. **Apresentar ao vivo** agora abre um diálogo com três saídas: **Iniciar com cronômetro**, **Iniciar sem cronômetro** e **Cancelar** (Esc também cancela).
 - **Com cronômetro:** o término vem sugerido pela ocorrência do Calendário do dia ou pela agenda configurada para hoje, e pode ser editado. Também dá para informar só a duração. Começar atrasado não prorroga o término. A barra mostra "⏱ X decorridos · ⏳ Y restantes".
@@ -35,107 +35,107 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 Teste: `docs/arezzo/testes/test_relogio_reuniao.js`. As outras suítes da apresentação passaram a escolher a opção no diálogo.
 
-### SÓ DEV — Radar — pauta e filtros sincronizados na sala ao vivo — 2026-11-19
+### Radar — pauta e filtros sincronizados na sala ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Quem abre a apresentação pelo favorito recebe a pauta e o horário da ocorrência da sala. Ao encerrar, cada tela recupera seu recorte local.
 
-### SÓ DEV — Radar — anotações do dia no Bastidor — 2026-11-19
+### Radar — anotações do dia no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O Bastidor exibe autor, horário e texto das notas do dia em uma lista recolhível que acompanha as atualizações da reunião.
 
-### SÓ DEV — Radar — salto entre gerências no Bastidor — 2026-11-19
+### Radar — salto entre gerências no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O Bastidor separa Gerência, que navega entre slides, de Objetivo do slide, que abre um detalhe na gerência atual.
 
-### SÓ DEV — Radar — Evolução e escolha direta de Objetivos no controle ao vivo — 2026-11-19
+### Radar — Evolução e escolha direta de Objetivos no controle ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O Bastidor permite escolher um Objetivo do slide. O Bastidor e o passador abrem e fecham Evolução para toda a sala.
 
-### SÓ DEV — Radar — Bastidor aproveita a largura do desktop — 2026-11-19
+### Radar — Bastidor aproveita a largura do desktop — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Em desktop, a projeção ganha uma terceira coluna, ao lado da navegação e das anotações, e reduz a altura ocupada.
 
-### SÓ DEV — Radar — acabamento Marine Glass no Bastidor — 2026-11-19
+### Radar — acabamento Marine Glass no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O Bastidor ganha iluminação oceânica em camadas, cartões translúcidos e mais contraste nos rótulos. O cartão do slide no ar recebe o destaque principal.
 
-### SÓ DEV — Radar — ícones de tela e conversa nas ações do Bastidor — 2026-11-19
+### Radar — ícones de tela e conversa nas ações do Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Monitor identifica o link da tela para o público. Balão de conversa identifica o convite para o chat do Meet.
 
-### SÓ DEV — Radar — horário e Panorama geral no Bastidor — 2026-11-19
+### Radar — horário e Panorama geral no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 A aba do Bastidor permite configurar o horário da reunião e ir direto ao Panorama geral. O layout de desktop ocupa menos altura e mantém a prévia ao alcance.
 
-### SÓ DEV — Radar — prévia e convite do Meet no Bastidor — 2026-11-19
+### Radar — prévia e convite do Meet no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O Bastidor mostra a miniatura do próximo slide e um cartão do próximo Objetivo no detalhe. O convite para o chat do Meet pode ser copiado do próprio Bastidor.
 
-### SÓ DEV — Apresentação do Radar — Abrir detalhe no passador e no Bastidor — 2026-11-19
+### Apresentação do Radar — Abrir detalhe no passador e no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O passador compacto e o Bastidor ganharam Abrir detalhe, ao lado de Fechar detalhe. Num slide de gerência, ele abre o detalhe do 1º Objetivo dela, na ordem da grade e dos botões Anterior/Próximo do detalhe, sem precisar voltar à aba dos slides. Fica desligado fora de um slide de gerência, com o detalhe já aberto ou para quem não está apresentando. A janela compacta ficou um pouco mais alta para os quatro botões. Testes: docs/arezzo/testes/test_apresentacao_live.js (TESTAR_PIP=1) e docs/arezzo/testes/test_bastidor_ui.js.
 
-### SÓ DEV — Radar — progresso destacado junto aos Marcos — 2026-11-19
+### Radar — progresso destacado junto aos Marcos — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O detalhe do Objetivo mostra o percentual e a contagem de concluídos no cabeçalho da lista, com a primeira linha logo abaixo. O atingimento da meta segue separado.
 
-### SÓ DEV — Apresentação do Radar — botão próprio do passador acima do 🎙️, que também pede o controle — 2026-11-19
+### Apresentação do Radar — botão próprio do passador acima do 🎙️, que também pede o controle — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Abrir controle flutuante saiu do menu 🎙️ e virou um botão 🎛️ logo acima do microfone. Para quem apresenta, um clique abre o passador compacto (Anterior, Próximo e Fechar detalhe). Para quem acompanha, o mesmo botão pede o controle, e quem apresenta ou o ADM libera. Ao liberar, o botão passa para quem recebeu; ao retomar, volta. O menu 🎙️ sobe para não encostar no botão e continua com laser e caneta. A Tela para o público e o Bastidor não mostram o botão, e ele só aparece em navegador com janela flutuante. Teste: docs/arezzo/testes/test_passador_botao.js (20 verificações no Chrome, com a janela flutuante de verdade).
 
-### SÓ DEV — Apresentação do Radar — Bastidor em aba própria mostra o que está no ar e separa o que é perigoso — 2026-11-19
+### Apresentação do Radar — Bastidor em aba própria mostra o que está no ar e separa o que é perigoso — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O Bastidor aberto em aba (okr-bastidor.html) era o bloco da janela flutuante pequena centralizado numa página larga: fonte do sistema, todos os botões iguais, Encerrar ao lado de Copiar link e o botão de iniciar no estilo cru do navegador. Agora usa a identidade dos slides em duas colunas: quem apresenta no topo, o slide ou Objetivo atual em destaque com o que vem a seguir, Próximo como ação principal e a tela para o público logo abaixo; anotação e controle ao lado. Encerrar fica sozinho no fim, em vermelho. Botões com 44 px, uma coluna no celular, linha de FPS fora da aba e aviso de início que fala da tela para o público. A janela flutuante não muda. Teste: docs/arezzo/testes/test_bastidor_ui.js (20 verificações em 1280 e 390 px; 20 falham na versão anterior).
 
-### SÓ DEV — Radar — página do Bastidor para o Safari — 2026-11-19
+### Radar — página do Bastidor para o Safari — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O ADM abre o Bastidor em uma aba normal usando okr-bastidor.html. A página reaproveita os controles da sala ao vivo sem depender de Picture-in-Picture.
 
-### SÓ DEV — Radar — Bastidor do ADM com retomada de controle — 2026-11-19
+### Radar — Bastidor do ADM com retomada de controle — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O ADM mantém o Bastidor aberto durante a troca de apresentador e retoma o controle quando precisar. Quem recebe o controle pode usar o passador compacto.
 
-### SÓ DEV — Radar — controle flutuante enxuto e bastidor como opções separadas — 2026-11-19
+### Radar — controle flutuante enxuto e bastidor como opções separadas — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O painel ao vivo oferece a janelinha original de navegação e uma abertura separada para o bastidor completo.
 
-### SÓ DEV — Palco Limpo mantém laser e caneta disponíveis — 2026-11-19
+### Palco Limpo mantém laser e caneta disponíveis — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Na aba do apresentador, o microfone abre um painel reduzido com as ferramentas de marcação. A tela remota para o público continua limpa.
 
-### SÓ DEV — Apresentação do Radar — tela para o público em outro computador — 2026-11-19
+### Apresentação do Radar — tela para o público em outro computador — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O apresentador copia um link para projetar uma tela limpa em outro computador. A tela segue a sala ao vivo sem disputar o controle, inclusive com a mesma conta.
 
-### SÓ DEV — Apresentação do Radar — bastidor com Palco Limpo — 2026-11-19
+### Apresentação do Radar — bastidor com Palco Limpo — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O controle flutuante do Chrome reúne anotações, tempo restante, FPS, participantes e pedidos de controle. Palco Limpo oculta os controles de bastidor da aba dos slides enquanto a janela está aberta.
 
-### SÓ DEV — Apresentação do Radar — controle flutuante no Chrome — 2026-11-19
+### Apresentação do Radar — controle flutuante no Chrome — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Quem apresenta pode abrir uma janela flutuante com Anterior, Próximo e Fechar detalhe. A navegação continua sincronizada com a sala. A janela fecha quando o controle muda de pessoa ou a sessão termina.
 
-### SÓ DEV — Radar — abrir slides da pauta pelo Calendário — 2026-11-19
+### Radar — abrir slides da pauta pelo Calendário (#1880) — PROD 21/11 (okr v2.142) — 2026-11-19
 
 O detalhe da ocorrência abre os slides com os objetivos da pauta e o relógio local com o horário de São Paulo. O convite da sala conserva o mesmo recorte.
 
-### SÓ DEV — Apresentação do Radar — Evolução sincronizada na sala ao vivo — 2026-11-19
+### Apresentação do Radar — Evolução sincronizada na sala ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Ao abrir ou fechar Evolução, as abas que acompanham a sala mostram o mesmo estado. A navegação preserva o gráfico para quem chega depois ou recebe o controle.
 
-### SÓ DEV — Apresentação do Radar — convite copiável para o chat do Meet — 2026-11-19
+### Apresentação do Radar — convite copiável para o chat do Meet — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O painel ao vivo copia um convite para acompanhar os slides no navegador. A confirmação de encerramento distingue a sessão do Radar do compartilhamento de tela no Meet.
 
-### SÓ DEV — Apresentação do Radar — gestos para laser e caneta temporária — 2026-11-19
+### Apresentação do Radar — gestos para laser e caneta temporária — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Na área livre do slide ou do detalhe, dois cliques acionam o laser e três selecionam a caneta temporária durante a sessão ao vivo.
 
-### SÓ DEV — Apresentação do Radar — botão Parar de apresentar na barra — 2026-11-19
+### Apresentação do Radar — botão Parar de apresentar na barra — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 Quem apresenta pode encerrar a sessão pelo botão da barra, com a mesma confirmação do painel ao vivo.
 
-### SÓ DEV — Apresentação do Radar — horizonte marinho na Evolução do atingimento — 2026-11-19
+### Apresentação do Radar — horizonte marinho na Evolução do atingimento — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 O gráfico distingue o céu da área submersa com um horizonte ciano, reflexos discretos abaixo da meta e um degradê que escurece com a profundidade. A curva e o peixe neon permanecem, e a superfície continua posicionada no valor exato da meta.
 
