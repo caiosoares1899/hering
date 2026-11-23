@@ -405,7 +405,7 @@ function cabecalhoDias(dias, bf) {
   const hj = hojeISO();
   return dias.map((d, i) => {
     const s = iso(d), cls = ['dia', s === hj ? 'hj' : '', i >= 5 ? 'fds' : '', ehBF(s, bf) ? 'bfdia' : ''].filter(Boolean).join(' ');
-    return '<th class="' + cls + '" data-dia="' + s + '" title="Ver quem está nesse dia">' + DIAS[i] + '<br>' + curto(d) + (ehBF(s, bf) ? '<span class="bfmark">🔥 BLACK FRIDAY</span>' : '') + '</th>';
+    return '<th class="' + cls + '" data-dia="' + s + '" title="Ver quem está nesse dia">' + DIAS[i] + '<br>' + curto(d) + (ehBF(s, bf) ? '<span class="bfmark">' + (s === iso(bf) ? '🔥 BLACK FRIDAY' : '🔥 VÉSPERA DA BF') + '</span>' : '') + '</th>';
   }).join('');
 }
 function coberturaDoDia(sq, data) {
@@ -769,7 +769,7 @@ function atualizarPrev() {
   const m = membrosDoSquad(cad.sq).find(x => x.uid === cad.uid);
   if (r.erro) { el.className = 'prev ruim'; el.textContent = r.erro; return; }
   el.className = 'prev';
-  el.textContent = TIPOS[cad.t].emoji + ' ' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ' de ' + TIPOS[cad.t].nome.toLowerCase() + ' · ' + ((m && m.nome) || 'você') + ' · de ' + curto(parseISO(r.datas[0])) + ' a ' + curto(parseISO(r.datas[r.datas.length - 1]));
+  el.textContent = TIPOS[cad.t].emoji + ' ' + TIPOS[cad.t].nome + ' · ' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ' · ' + ((m && m.nome) || 'você') + ' · de ' + curto(parseISO(r.datas[0])) + ' a ' + curto(parseISO(r.datas[r.datas.length - 1]));
 }
 async function confirmarCadastro(limpar) {
   if (gravando) return;
@@ -899,7 +899,7 @@ function jCabDia(x, d, i, px, py, w, h, bf) {
   const s = iso(d), hj = s === hojeISO();
   if (hj) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(56,182,255,.16)'); else if (i >= 5) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(255,255,255,.03)');
   jT(x, DIAS[i], px + w / 2, py + h / 2 - 9, { s: 13.5, w: 700, c: hj ? JC.accent : JC.txt, a: 'center' });
-  jT(x, curto(d) + (ehBF(s, bf) ? '  🔥 BF' : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: ehBF(s, bf) ? JC.warn : JC.txt2, a: 'center' });
+  jT(x, curto(d) + (ehBF(s, bf) ? (s === iso(bf) ? '  🔥 BF' : '  🔥 véspera') : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: ehBF(s, bf) ? JC.warn : JC.txt2, a: 'center' });
 }
 
 function jSemanaSquad(per, dd, esc) {
@@ -1055,7 +1055,7 @@ function jMes(per, dd, esc) {
       const px = L + i * dW + 3, w = dW - 6, dt = iso(z.d), fora = z.ls === null, hj = dt === hojeISO();
       jRR(x, px, y + 3, w, r.h - 6, 10, fora ? 'rgba(255,255,255,.012)' : (i >= 5 ? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.06)'), hj ? JC.accent : (ehBF(dt, bf) ? JC.warn : (fora ? null : 'rgba(255,255,255,.06)')));
       jT(x, String(z.d.getDate()), px + 10, y + 19, { s: 14, w: 700, c: fora ? JC.txt3 : (hj ? JC.accent : JC.txt) });
-      if (ehBF(dt, bf)) jT(x, '🔥 BF', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
+      if (ehBF(dt, bf)) jT(x, dt === iso(bf) ? '🔥 BF' : '🔥 véspera', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
       (z.ls || []).forEach((ln, k) => {
         const ly = y + 38 + k * LH;
         if (ln.r) { jT(x, ln.r, px + w - 10, ly, { s: 11.5, w: 700, c: ln.c, a: 'right' }); jT(x, ln.l, px + 10, ly, { s: 12, w: ln.w, c: ln.c, max: w - 20 - x.measureText(ln.r).width - 8 }); }

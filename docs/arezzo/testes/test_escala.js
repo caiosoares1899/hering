@@ -123,7 +123,7 @@ const seed = () => ({ kanban: {
     await p.click('[data-t="plant"]'); await p.fill('#c-n', 'Black Friday'); await p.click('#c-salvar'); await p.waitForTimeout(500);
     const st = await store(p); const k = Object.keys(st).filter(d => d >= bf.de && st[d].dados?.bru?.t === 'plant');
     t('PO grava a escala do Bruno (por = PO), 7 dias', k.length === 7 && k.every(d => st[d].dados.bru.por === 'pau' && st[d].dados.bru.n === 'Black Friday'), k.length);
-    t('a tela pulou pra semana da Black Friday e marca a sexta', (await p.evaluate(() => window.__escala.estado)).semana === bf.de && /BLACK FRIDAY/i.test(await p.evaluate(() => document.querySelector('th.bfdia')?.innerText || '')), await p.evaluate(() => window.__escala.estado));
+    t('a tela pulou pra semana da Black Friday e marca a sexta', (await p.evaluate(() => window.__escala.estado)).semana === bf.de && /BLACK FRIDAY/i.test(await p.evaluate(() => [...document.querySelectorAll('th.bfdia')].map(x => x.innerText).join(' '))), await p.evaluate(() => window.__escala.estado));
     await ctx.close(); }
 
   // ── Organizador de OUTRA squad / ADM ──
@@ -181,7 +181,7 @@ const seed = () => ({ kanban: {
     t('▶ avança uma semana e esvazia a tela (dados da outra semana não ficam)', (await p.evaluate(() => window.__escala.estado)).semana === D(7) && !(await p.evaluate(() => document.querySelector('#view .ct'))), await p.evaluate(() => window.__escala.estado));
     await p.click('#b-hoje'); await p.waitForTimeout(200); t('Hoje volta pra semana atual', (await p.evaluate(() => window.__escala.estado)).semana === D(0), 0);
     await p.click('#b-bf'); await p.waitForTimeout(200);
-    t('🔥 Black Friday pula pra semana dela e marca o dia', /BLACK FRIDAY/i.test(await p.evaluate(() => document.querySelector('th.bfdia')?.innerText || '')), await p.evaluate(() => window.__escala.estado));
+    t('🔥 Black Friday pula pra semana dela e marca o dia', /BLACK FRIDAY/i.test(await p.evaluate(() => [...document.querySelectorAll('th.bfdia')].map(x => x.innerText).join(' '))), await p.evaluate(() => window.__escala.estado));
     await ctx.close(); }
   { // corrida: leitura lenta da semana A termina DEPOIS da leitura rápida da semana B
     let n = 0;

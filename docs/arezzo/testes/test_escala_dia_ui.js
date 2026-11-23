@@ -49,7 +49,7 @@ const seed = () => ({ kanban: {
     await p.click('#c-dsem [data-ds="2"]');
     t('desmarcar Qua leva o "De" para a quinta', (await val(p, 'c-de')) === D(3) && (await val(p, 'c-ate')) === D(3), [await val(p, 'c-de'), await val(p, 'c-ate')]);
     await p.click('[data-t="plant"]');
-    t('prévia diz o tipo escolhido', /🔥 1 dia de plantão/.test(await txt(p, '#c-prev')), await txt(p, '#c-prev'));
+    t('prévia diz o tipo escolhido', /🔥 Plantão · 1 dia ·/.test(await txt(p, '#c-prev')), await txt(p, '#c-prev'));
     t('🗑 Limpar período longe do botão principal (depois do espaço)', await p.evaluate(() => { const a = [...document.querySelectorAll('.md .acoes > *')].map(x => x.id || x.className); return a.indexOf('grow') < a.indexOf('c-limpar') && a.indexOf('c-salvar') < a.indexOf('grow'); }), 0);
     await p.keyboard.press('Escape');
     // período maior que uma semana não mexe nas datas
@@ -68,7 +68,8 @@ const seed = () => ({ kanban: {
     t('sem erro de JS (dia, membro)', !errs.length, errs); await ctx.close(); }
 
   // ── PO: ✏️ em todo mundo; quinta e sexta da Black Friday em laranja ──
-  { const bf = bfDe(new Date().getFullYear()); const semBF = add(bf, -((bf.getDay() + 6) % 7));
+  { const h = new Date(); let bf = bfDe(h.getFullYear()); if (add(bf, 7) < h) bf = bfDe(h.getFullYear() + 1);   // mesma virada do proximaBF()
+    const semBF = add(bf, -((bf.getDay() + 6) % 7));
     const { ctx, p, errs } = await open(PAU, '?squad=dados&semana=' + D(0));
     await p.click('th.dia[data-dia="' + D(0) + '"]'); await p.waitForSelector('.lista-dia');
     t('PO: ✏️ em todas as linhas', (await p.evaluate(() => document.querySelectorAll('[data-edit]').length)) === 2, 0);
@@ -79,6 +80,8 @@ const seed = () => ({ kanban: {
     const o2 = await open(PAU, '?squad=dados&semana=' + iso(semBF));
     const marc = await o2.p.evaluate(() => [...document.querySelectorAll('th.dia.bfdia')].map(x => x.dataset.dia));
     t('semana da BF: quinta e sexta marcadas em laranja', marc.join() === [iso(add(bf, -1)), iso(bf)].join(), marc);
+    const rot = await o2.p.evaluate(() => [...document.querySelectorAll('th.dia.bfdia .bfmark')].map(x => x.textContent));
+    t('rótulos: a quinta é "véspera", só a sexta diz BLACK FRIDAY', /VÉSPERA/.test(rot[0] || '') && /BLACK FRIDAY/.test(rot[1] || '') && !/BLACK FRIDAY/.test(rot[0] || ''), rot);
     t('sem erro de JS (PO)', !errs.length && !o2.errs.length, errs.concat(o2.errs)); await o2.ctx.close(); }
 
   // ── celular com toque: alvos e rolagem ──
