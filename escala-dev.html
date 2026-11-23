@@ -140,7 +140,7 @@
   .ct.folga{ color:#b7c6d4; background:rgba(138,160,180,.12); border-color:rgba(138,160,180,.35); font-weight:500; }
   .cob td, .cob th{ background:rgba(255,255,255,.025); font-size:12px; }
   .atd td, .atd th{ background:rgba(56,182,255,.06); font-size:12px; } .atd-h{ color:#8fd3ff; font-weight:700; white-space:nowrap; } .atd-h small{ display:block; color:var(--txt3); font-weight:400; font-size:10.5px; }
-  .atd-g{ display:block; font-size:11px; font-weight:700; color:#8fd3ff; margin-bottom:3px; white-space:nowrap; }
+  #b-atd[aria-pressed="true"]{ border-color:var(--accent); background:rgba(56,182,255,.14); }
   .atd-dia{ margin:6px 0 10px; padding:8px 12px; border-radius:10px; background:rgba(56,182,255,.08); border:1px solid rgba(56,182,255,.25); font-size:13px; }
   .cob .ok{ color:#8ff0cf; font-weight:700; } .cob .zero{ color:var(--warn); font-weight:700; } .cob .nada{ color:var(--txt3); }
   .gdia{ width:100%; border:1px solid transparent; background:none; border-radius:9px; min-height:44px; padding:4px; cursor:pointer; color:var(--txt2); }
@@ -235,6 +235,7 @@
         <button type="button" class="btn bf" id="b-bf" title="Pula pra semana da Black Friday">🔥 Black Friday</button>
       </div>
       <span class="grow"></span>
+      <button type="button" class="btn" id="b-atd" aria-pressed="false" title="Mostra o horário de atendimento humano do CX (e quando é só a Herica, a IA)" hidden>🎧 Atendimento CX</button>
       <button type="button" class="btn" id="b-filtros" title="Filtrar por squad, subtime, tipo e horário" hidden>🔎 Filtros<span class="fbadge" id="f-badge" hidden></span></button>
       <button type="button" class="btn" id="b-jpg" title="Baixar a escala em imagem JPG (dia, semana ou mês)">🖼️ Baixar JPG</button>
       <button type="button" class="btn primary" id="b-cad">➕ Cadastrar escala</button>
@@ -262,7 +263,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.16 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.17 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -320,16 +321,17 @@ function ehBF(s, bf) { return s === iso(bf) || s === iso(addDias(bf, -1)) || s =
 // 🎧 Horário de atendimento humano do CX (do time, não de uma pessoa) — pedido do Caio para a Black Friday 2026.
 // Fim antes do início = vira a madrugada do dia seguinte. Para mudar/acrescentar: uma linha aqui (data → [início, fim]).
 const ATENDIMENTO_CX = { '2026-11-25': ['08:00', '03:00'], '2026-11-26': ['06:00', '03:00'], '2026-11-27': ['06:00', '22:00'] };
-const ehSquadCX = s => !!s && (s.id === 'cx' || norm(s.label) === 'cx' || /^cx\b/i.test(String(s.label || '')));
+// Não há squad de CX no Maré: o horário vale para todo mundo, mas só aparece com o botão 🎧 Atendimento CX ligado (lembrado por navegador).
+let verAtend = false;
 const _hAtd = t => String(+t.slice(0, 2)) + 'h' + (t.slice(3) !== '00' ? t.slice(3) : '');
-function atendDia(sqId, data) {
-  const a = ATENDIMENTO_CX[data]; if (!a || !ehSquadCX(squads.find(x => x.id === sqId))) return null;
+function atendDia(data) {
+  const a = verAtend && ATENDIMENTO_CX[data]; if (!a) return null;
   const vira = a[1] <= a[0], prox = vira ? curto(addDias(parseISO(data), 1)) : '';
   return { curto: _hAtd(a[0]) + '–' + _hAtd(a[1]), vira, prox, longo: 'das ' + _hAtd(a[0]) + ' às ' + _hAtd(a[1]) + (vira ? ' da manhã (' + prox + ')' : '') };
 }
 // Trechos do dia (0–24h) com e sem atendimento humano: a madrugada que sobra do dia anterior conta; o resto é só a Herica (a IA de atendimento).
-function atendSegs(sqId, data) {
-  if (!ehSquadCX(squads.find(x => x.id === sqId))) return null;
+function atendSegs(data, sempre) {
+  if (!verAtend && !sempre) return null;
   const hoje = ATENDIMENTO_CX[data], ant = ATENDIMENTO_CX[iso(addDias(parseISO(data), -1))], m = t => +t.slice(0, 2) * 60 + +t.slice(3), hum = [];
   if (ant && m(ant[1]) <= m(ant[0])) hum.push([0, m(ant[1])]);
   if (hoje) { const a = m(hoje[0]), b = m(hoje[1]); hum.push([a, b <= a ? 1440 : b]); }
@@ -340,6 +342,13 @@ function atendSegs(sqId, data) {
   return segs;
 }
 const HERICA = '🤖 Atendimento exclusivo Herica';
+const semanaTemAtend = () => Array.from({ length: 7 }, (_, i) => iso(addDias(semana, i))).some(d => atendSegs(d, true));
+// Linha 🎧 no topo da grade (squad e todas as squads).
+function linhaAtendHtml(dias) {
+  if (!dias.some(d => atendDia(iso(d)))) return '';
+  return '<tr class="atd"><th class="pess">🎧 Atendimento humano CX <small style="color:var(--txt3);font-weight:400">fora disso, 🤖 Herica</small></th>' + dias.map(d => { const a = atendDia(iso(d));
+    return '<td>' + (a ? '<span class="atd-h" title="Atendimento humano ' + esc(a.longo) + '">' + esc(a.curto) + (a.vira ? '<small>até a madrugada de ' + esc(a.prox) + '</small>' : '') + '</span>' : '<span style="color:var(--txt3)">–</span>') + '</td>'; }).join('') + '</tr>';
+}
 function proximaBF() { const h = new Date(); let bf = blackFriday(h.getFullYear()); if (addDias(bf, 7) < h) bf = blackFriday(h.getFullYear() + 1); return bf; }
 
 // ── estado ──
@@ -470,11 +479,7 @@ function renderSquad() {
   const ms = membrosF(squad);
   if (!ms.length) return '<div class="state">' + (filtro.subs.length ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad ainda.') + '</div>';
   let h = '<table class="grid"><thead><tr><th class="pess">Pessoa</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>';
-  if (dias.some(d => atendDia(squad, iso(d)))) {
-    h += '<tr class="atd"><th class="pess">🎧 Atendimento humano <small style="color:var(--txt3);font-weight:400">(horário do time)</small></th>';
-    dias.forEach(d => { const a = atendDia(squad, iso(d)); h += '<td>' + (a ? '<span class="atd-h" title="Atendimento humano ' + esc(a.longo) + '">' + esc(a.curto) + (a.vira ? '<small>até a madrugada de ' + esc(a.prox) + '</small>' : '') + '</span>' : '<span class="nada" style="color:var(--txt3)">–</span>') + '</td>'; });
-    h += '</tr>';
-  }
+  h += linhaAtendHtml(dias);
   ms.forEach(m => {
     h += '<tr><th class="pess"><div class="pnome">' + av(m) + '<div><b>' + esc(m.nome) + (m.uid === user.uid ? ' <span style="color:var(--accent);font-weight:500">(você)</span>' : '') + '</b><small>' + (m.init ? '@' + esc(m.init) : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : '') + '</small></div></div></th>';
     dias.forEach((d, i) => {
@@ -509,7 +514,7 @@ function renderGlobal() {
   const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
   const lista = squadsEscopo().filter(s => membrosF(s.id).length);
   if (!lista.length) return '<div class="state">' + (filtro.subs.length ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.') + '</div>';
-  let h = '<table class="grid"><thead><tr><th class="pess">Squad</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>';
+  let h = '<table class="grid"><thead><tr><th class="pess">Squad</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>' + linhaAtendHtml(dias);
   lista.forEach(s => {
     const ms = membrosF(s.id), tem = squadTemEscala(s.id, dias);
     h += '<tr><th class="pess sqn"><span class="nm">' + esc(s.emoji + ' ' + s.label) + '</span><small>' + ms.length + ' pessoa' + (ms.length > 1 ? 's' : '') + (tem ? '' : ' · <span class="semescala">' + 'sem escala cadastrada' + '</span>') + '</small><button type="button" class="vlink" data-ver="' + esc(s.id) + '">ver squad ›</button></th>';
@@ -518,9 +523,8 @@ function renderGlobal() {
       ms.forEach(m => { const e = entradaF(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
       trab.sort((a, b) => (a.e.t === 'plant' ? 0 : 1) - (b.e.t === 'plant' ? 0 : 1));
       const vazio = tem && i < 5 && !trab.length;
-      const atd = atendDia(s.id, dt);
-      const tip = (atd ? 'Atendimento humano ' + atd.longo + '\n' : '') + (trab.length ? trab.map(x => x.m.nome + ' · ' + rotuloTurno(x.e) + (x.e.t === 'plant' ? ' (plantão)' : '')).join('\n') : (vazio ? 'Ninguém escalado neste dia útil' : ''));
-      h += '<td class="' + (dt === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (ehBF(dt, bf) ? 'bfdia' : '') + '"><button type="button" class="gdia' + (vazio ? ' vazio' : '') + '" data-gd="' + dt + '" data-gs="' + esc(s.id) + '" title="' + esc(tip) + '">' + (atd ? '<span class="atd-g">🎧 ' + esc(atd.curto) + '</span>' : '') +
+      const tip = (trab.length ? trab.map(x => x.m.nome + ' · ' + rotuloTurno(x.e) + (x.e.t === 'plant' ? ' (plantão)' : '')).join('\n') : (vazio ? 'Ninguém escalado neste dia útil' : ''));
+      h += '<td class="' + (dt === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (ehBF(dt, bf) ? 'bfdia' : '') + '"><button type="button" class="gdia' + (vazio ? ' vazio' : '') + '" data-gd="' + dt + '" data-gs="' + esc(s.id) + '" title="' + esc(tip) + '">' +
         (trab.length ? turnosHtml(trab) + '<span class="n">' + trab.length + ' no dia' + (folga.length ? ' · ' + folga.length + ' de folga' : '') + '</span>' : (vazio ? '⚠️ 0' : '<span style="color:var(--txt3)">–</span>')) + '</button></td>';
     });
     h += '</tr>';
@@ -603,6 +607,7 @@ function abrirFiltros() {
 }
 function render() {
   if (!user) return;
+  $('b-atd').hidden = !semanaTemAtend(); $('b-atd').setAttribute('aria-pressed', String(verAtend));
   $('v-squad').setAttribute('aria-selected', visao === 'squad'); $('v-global').setAttribute('aria-selected', visao === 'global');
   const sel = $('sel-squad'); sel.hidden = visao !== 'squad';
   sel.innerHTML = squads.map(s => '<option value="' + esc(s.id) + '"' + (s.id === squad ? ' selected' : '') + '>' + esc(s.emoji + ' ' + s.label) + '</option>').join('');
@@ -704,19 +709,18 @@ function ganttModelo(grupos, diaTodo) {
   return { ini, fim, span, N, ticks, cob, blocos, folgas };
 }
 function ganttDia(data, grupos, multi) {
-  const M = ganttModelo(grupos, grupos.some(g => atendSegs(g.s.id, data))), { ini, span, N } = M, pc = m => Math.max(0, Math.min(100, (m - ini) / span * 100));
+  const as = atendSegs(data), M = ganttModelo(grupos, !!as), { ini, span, N } = M, pc = m => Math.max(0, Math.min(100, (m - ini) / span * 100));
   const grade = 'background-image:linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:calc(100% / ' + N + ') 100%;';
   const ticks = M.ticks.map(t => '<span style="left:' + pc(t) + '%">' + String(Math.floor(t / 60)).padStart(2, '0') + 'h</span>').join('');
   const agoraMin = (() => { if (data !== hojeISO()) return null; const n = new Date(), m = n.getHours() * 60 + n.getMinutes(); return m >= ini && m <= M.fim ? m : null; })();
   const agora = agoraMin == null ? '' : '<i class="gt-agora" style="left:' + pc(agoraMin) + '%" title="Agora"></i>';
   let h = '<div class="gt"><div class="gt-in"><div class="gt-row"><span></span><div class="gt-ax">' + ticks + '</div></div>';
+  if (as) h += '<div class="gt-row gt-atd"><div class="who2"><b>🎧 Atendimento CX</b></div><div class="gt-tr" style="' + grade + '">' + agora + as.map(([a, b, hum]) => {
+    const left = pc(a), w = pc(b) - left, tip = (hum ? '🎧 Atendimento humano' : HERICA) + ' · ' + hhmm(a) + '–' + hhmm(b);
+    return w > 0 ? '<div class="gt-bar ' + (hum ? 'atdh' : 'herica') + '" style="left:' + left + '%;width:' + w + '%" title="' + esc(tip) + '">' + esc(w > 22 ? (hum ? '🎧 Humano' : HERICA) : w > 6 ? (hum ? '🎧' : '🤖 Herica') : '') + '</div>' : '';
+  }).join('') + '</div></div>';
   M.blocos.forEach(({ g, linhas }) => {
     if (multi) h += '<div class="gt-sq">' + esc(g.s.emoji + ' ' + g.s.label) + '</div>';
-    const as = atendSegs(g.s.id, data);
-    if (as) h += '<div class="gt-row gt-atd"><div class="who2"><b>🎧 Atendimento</b></div><div class="gt-tr" style="' + grade + '">' + agora + as.map(([a, b, hum]) => {
-      const left = pc(a), w = pc(b) - left, tip = (hum ? '🎧 Atendimento humano' : HERICA) + ' · ' + hhmm(a) + '–' + hhmm(b);
-      return w > 0 ? '<div class="gt-bar ' + (hum ? 'atdh' : 'herica') + '" style="left:' + left + '%;width:' + w + '%" title="' + esc(tip) + '">' + esc(w > 22 ? (hum ? '🎧 Humano' : HERICA) : w > 6 ? (hum ? '🎧' : '🤖 Herica') : '') + '</div>' : '';
-    }).join('') + '</div></div>';
     linhas.forEach(l => {
       const t = TIPOS[l.e.t], pa = pausaTxt(l.e);
       const tip = l.m.nome + ' · ' + t.emoji + ' ' + t.nome + (l.e.i || l.e.f ? ' · ' + (l.e.i || '…') + '–' + (l.e.f || '…') : ' · dia todo') + (pa ? ' · pausa ' + pa : '') + (l.e.n ? ' · ' + l.e.n : '');
@@ -745,7 +749,7 @@ function abrirDia(data, sqUnico, modo) {
   grupos.forEach(g => g.itens.forEach(x => { if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init); }));   // quem está em duas squads entra uma vez só
   const multi = !sqUnico;
   let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : (sqs[0] ? ' — ' + esc(sqs[0].emoji + ' ' + sqs[0].label) : '')) + (filtro.hora ? ' · às ' + esc(filtro.hora) : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
-  sqs.forEach(s => { const a = atendDia(s.id, data); if (a) h += '<p class="atd-dia">🎧 <b>Atendimento humano' + (multi ? ' — ' + esc(s.label) : '') + ':</b> ' + esc(a.longo) + ' · fora disso, ' + HERICA.replace('🤖 A', '🤖 a') + '</p>'; });
+  { const a = atendDia(data); if (a) h += '<p class="atd-dia">🎧 <b>Atendimento humano CX:</b> ' + esc(a.longo) + ' · fora disso, ' + HERICA.replace('🤖 A', '🤖 a') + '</p>'; else if (atendSegs(data)) h += '<p class="atd-dia">🎧 <b>Atendimento humano CX:</b> só na madrugada (até ' + esc(hhmm(atendSegs(data)[0][1])) + ') · depois, ' + HERICA.replace('🤖 A', '🤖 a') + '</p>'; }
   h += '<div class="seg dmodo" id="d-modo" role="tablist"><button type="button" data-dm="lista" role="tab" aria-selected="' + (diaModo === 'lista') + '">📋 Lista</button><button type="button" data-dm="gantt" role="tab" aria-selected="' + (diaModo === 'gantt') + '">📊 Visão Gantt</button></div>';
   h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.' + (squadsEditaveis().length ? '<br><span style="font-size:12.5px">Use <b>➕ Cadastrar escala</b> aqui embaixo para incluir a sua.</span>' : '') + '</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
   h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + (squadsEditaveis().length ? '<button type="button" class="btn primary" id="d-cad">➕ Cadastrar escala</button>' : '') + (grupos.length ? '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button>' : '') + '<span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
@@ -1007,7 +1011,7 @@ function jCabDia(x, d, i, px, py, w, h, bf) {
 function jSemanaSquad(per, dd, esc) {
   const sq = esc.lista[0]; if (!sq) return jVazio(per, esc, 'Nenhuma squad selecionada.');
   const ms = membrosF(sq.id), dias = Array.from({ length: 7 }, (_, i) => addDias(per.a, i)), bf = proximaBF();
-  const atds = dias.map(d => atendDia(sq.id, iso(d))), ah = atds.some(Boolean) ? 40 : 0;   // 🎧 linha do atendimento humano (CX)
+  const atds = dias.map(d => atendDia(iso(d))), ah = atds.some(Boolean) ? 40 : 0;   // 🎧 linha do atendimento humano (CX)
   const L = 28, nW = 220, dW = 150, W = L * 2 + nW + dW * 7, topo0 = 84, topo = topo0 + ah, hh = 52, rh = 54, ch = 40, n = Math.max(ms.length, 1);
   const H = topo + hh + n * rh + ch + 52;
   const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
@@ -1016,7 +1020,7 @@ function jSemanaSquad(per, dd, esc) {
   if (ah) {
     const ya = topo0 + hh;
     jRR(x, L, ya + 2, W - L * 2, ah - 4, 10, 'rgba(56,182,255,.10)');
-    jT(x, '🎧 Atendimento humano', L + 12, ya + ah / 2, { s: 13, w: 700, c: JC.accent, max: nW - 20 });
+    jT(x, '🎧 Atendimento CX', L + 12, ya + ah / 2, { s: 13, w: 700, c: JC.accent, max: nW - 20 });
     atds.forEach((a, i) => { if (a) jT(x, a.curto + (a.vira ? ' (madrugada)' : ''), L + nW + i * dW + dW / 2, ya + ah / 2, { s: 13, w: 700, c: JC.accent, a: 'center', max: dW - 10 }); });
   }
   if (!ms.length) jT(x, filtro.subs.length ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad.', W / 2, topo + hh + rh / 2, { s: 14, c: JC.txt3, a: 'center' });
@@ -1049,16 +1053,22 @@ function jSemanaGlobal(per, dd, esc) {
       if (mais) ls.push({ s: '+' + (t.trab.length - (MAXN - 1)) + ' pessoas', c: JC.txt2, w: 500 });
       if (t.folga.length) ls.push({ s: t.folga.length + ' de folga', c: JC.txt3, w: 400 });
       if (!t.trab.length && tem && i < 5) ls.unshift({ s: '⚠ ninguém', c: JC.danger, w: 700 });
-      const atd = atendDia(s.id, iso(d)); if (atd) ls.unshift({ s: '🎧 ' + atd.curto, c: JC.accent, w: 700 });
       return ls;
     });
     return { s, cel, h: Math.max(60, 20 + Math.max(...cel.map(l => l.length), 1) * LH) };
   });
-  const H = topo + hh + linhas.reduce((a, l) => a + l.h, 0) + 52;
+  const atds = dias.map(d => atendDia(iso(d))), ah = atds.some(Boolean) ? 40 : 0;   // 🎧 linha do atendimento humano (CX)
+  const H = topo + hh + ah + linhas.reduce((a, l) => a + l.h, 0) + 52;
   const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
   jT(x, 'Squad', L + 10, topo + hh / 2, { s: 12, w: 700, c: JC.txt3 });
   dias.forEach((d, i) => jCabDia(x, d, i, L + nW + i * dW, topo, dW, hh, bf));
   let y = topo + hh;
+  if (ah) {
+    jRR(x, L, y + 2, W - L * 2, ah - 4, 10, 'rgba(56,182,255,.10)');
+    jT(x, '🎧 Atendimento CX', L + 12, y + ah / 2, { s: 13, w: 700, c: JC.accent, max: nW - 20 });
+    atds.forEach((a, i) => { if (a) jT(x, a.curto + (a.vira ? ' (madrugada)' : ''), L + nW + i * dW + dW / 2, y + ah / 2, { s: 13, w: 700, c: JC.accent, a: 'center', max: dW - 10 }); });
+    y += ah;
+  }
   linhas.forEach((l, r) => {
     jRR(x, L, y + 2, W - L * 2, l.h - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
     jT(x, l.s.label, L + 12, y + 22, { s: 14.5, w: 700, max: nW - 20 });
@@ -1097,7 +1107,7 @@ function jGantt(per, dd, esc) {
   const dt = iso(per.a), W = 1000, L = 28, nW = 170, bx = L + nW + 12, bw = W - bx - L, topo = 84, ah = 26, rh = 36, sh = 30, multi = esc.lista.length > 1;
   const grupos = esc.lista.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: jEnt(dd, dt, s.id, m.uid) })).filter(z => z.e) })).filter(g => g.itens.length);
   if (!grupos.length) { const { c, x } = jNova(860, 240); jMoldura(x, 860, 240, esc, per); jT(x, 'Ninguém com escala cadastrada neste dia.', 430, 130, { s: 14.5, c: JC.txt3, a: 'center' }); return c; }
-  const M = ganttModelo(grupos, grupos.some(g => atendSegs(g.s.id, dt))), nl = M.blocos.reduce((a, b) => a + b.linhas.length + (atendSegs(b.g.s.id, dt) ? 1 : 0), 0), ns = multi ? M.blocos.length : 0;
+  const as = atendSegs(dt), M = ganttModelo(grupos, !!as), nl = M.blocos.reduce((a, b) => a + b.linhas.length, 0) + (as ? 1 : 0), ns = multi ? M.blocos.length : 0;
   const todos = M.blocos.reduce((a, b) => a.concat(b.linhas.map(l => l.m.nome)), []);
   const H = topo + ah + nl * rh + ns * sh + 12 + 34 + (M.folgas.length ? 34 : 0) + 52;
   const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
@@ -1108,18 +1118,17 @@ function jGantt(per, dd, esc) {
   for (let k = 0; k <= M.N; k++) { const gx = Math.round(bx + k * bw / M.N) + .5; x.beginPath(); x.moveTo(gx, y0 - 4); x.lineTo(gx, yFim); x.stroke(); }
   M.ticks.forEach(t => jT(x, String(Math.floor(t / 60)).padStart(2, '0') + 'h', px(t), topo + ah / 2, { s: 11.5, c: JC.txt3, a: 'center' }));
   let y = y0, r = 0;
-  M.blocos.forEach(({ g, linhas }) => {
-    if (multi) { jT(x, g.s.label, L, y + sh / 2 + 4, { s: 14, w: 700, c: JC.accent }); y += sh; }
-    const as = atendSegs(g.s.id, dt);
-    if (as) {
+  if (as) {
       jRR(x, L, y + 2, W - L * 2, rh - 4, 9, 'rgba(56,182,255,.08)');
-      jT(x, '🎧 Atendimento', L + 10, y + rh / 2, { s: 13.5, w: 700, c: JC.accent, max: nW - 16 });
+      jT(x, '🎧 Atendimento CX', L + 10, y + rh / 2, { s: 13.5, w: 700, c: JC.accent, max: nW - 16 });
       as.forEach(([a, b, hum]) => { const bx1 = px(a), w = px(b) - bx1; if (w <= 0) return;
         jRR(x, bx1, y + 7, w, rh - 14, 6, hum ? JC.accent : '#b9a3ff');
         const rot = w > 190 ? (hum ? '🎧 Humano' : HERICA) : w > 60 ? (hum ? '🎧 Humano' : '🤖 Herica') : '';
         if (rot) jT(x, rot, bx1 + w / 2, y + rh / 2, { s: 11.5, w: 700, c: '#04141f', a: 'center', max: w - 8 }); });
       y += rh; r++;
-    }
+  }
+  M.blocos.forEach(({ g, linhas }) => {
+    if (multi) { jT(x, g.s.label, L, y + sh / 2 + 4, { s: 14, w: 700, c: JC.accent }); y += sh; }
     linhas.forEach(l => {
       const t = JC[l.e.t] || JC.trab;
       jRR(x, L, y + 2, W - L * 2, rh - 4, 9, r++ % 2 ? 'rgba(255,255,255,.02)' : 'rgba(255,255,255,.045)');
@@ -1255,6 +1264,8 @@ $('b-bf').onclick = () => irParaSemana(proximaBF());
 $('b-cad').onclick = () => abrirCadastro();
 $('b-jpg').onclick = () => abrirJpg();
 $('b-filtros').onclick = abrirFiltros;
+verAtend = lsGet('escala_atend') === '1';
+$('b-atd').onclick = () => { verAtend = !verAtend; lsSet('escala_atend', verAtend ? '1' : '0'); render(); };
 $('fhora').addEventListener('click', e => { if (e.target.closest('#fhora-x')) { filtro.hora = ''; render(); } });
 $('ov').addEventListener('click', e => {
   const ft = e.target.closest('#f-tipos [data-ftipo]');
