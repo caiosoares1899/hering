@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Escala — 🎧 horário de atendimento humano do CX na semana da Black Friday — SÓ DEV (escala v1.16-dev) — 2026-11-23
+
+Pedido do Caio. Horário do time (não de uma pessoa) fixo na página (ATENDIMENTO_CX): 25/11 das 8h às 3h da manhã, 26/11 das 6h às 3h da manhã, 27/11 das 6h às 22h. Aparece no squad CX como linha 🎧 Atendimento humano na grade, selo na visão de todas as squads, linha no resumo do dia e nos JPGs da semana. O squad é reconhecido pelo id 'cx' ou pelo nome começando por CX. No 📊 Visão Gantt do dia do CX, uma linha 🎧 Atendimento de 0h a 24h: o trecho humano em azul e o resto como **🤖 Atendimento exclusivo Herica** (a IA de atendimento), contando a madrugada que sobra do dia anterior; o mesmo no JPG do Gantt. Sem regra nem nó novo no banco. Teste: docs/arezzo/testes/test_escala_atendimento_cx.js. Dica: não — a linha aparece sozinha na grade do CX.
+
 ### Menu de apps (⋮⋮⋮) — 🗓️ Escala na semana da Black Friday (#1913) — PROD 23/11 (mare-notif v45 · kanban v8.30.1019 · painel v5.125 · okr v2.143 · oceano v1.90) — 2026-11-23
 
 mare-notif-dev v45 (pedido do Caio). Na semana da Black Friday (segunda a domingo; 23–29/11 em 2026) o menu de produtos ganha o quadrado **🗓️ Escala · 🔥 Semana da Black Friday**, com borda laranja, ao lado de Maré, Painel, Radar e A Bordo. Some sozinho depois do domingo e volta na semana da BF do ano seguinte. Abre a Escala em aba nova (inclusive de dentro do Oceano). Visualizador externo não vê. Páginas com o módulo: kanban-dev v8.30.1019-dev, painel-dev v5.125, okr-dev v2.143, oceano-dev v1.90. Teste em `test_menu_kanban.js`; o `fakefb.js` desliga o tile (`mare_apps_bf_teste`) para as suítes não mudarem nesta semana. Dica: não — é sazonal e aparece no menu que todo mundo já usa.
