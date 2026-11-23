@@ -1,0 +1,31 @@
+// 🗓️ Escala (escala-dev.html) — 🎧 horário de atendimento humano do CX na semana da Black Friday 2026 (pedido do Caio, 23/11/2026).
+// É do time (ATENDIMENTO_CX na página), não de uma pessoa: linha na grade do CX, selo na visão de todas as squads e no resumo do dia.
+// PAGE=escala.html testa a prod depois da promoção.
+const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake = require('./fakefb.js');
+const PAGE = process.env.PAGE || 'escala-dev.html';
+const G = (uid, nome) => ({ uid, email: uid + '@ciahering.com.br', displayName: nome, photoURL: '', providerData: [{ providerId: 'google.com' }] });
+const pub = (uid, nome, init, sq) => ({ uid, nome, init, email: uid + '@ciahering.com.br', role: 'membro', squads: { [sq]: true }, squads_roles: { [sq]: 'membro' } });
+const seed = () => ({ kanban: {
+  squads_meta: { cx: { label: 'CX', emoji: '🎧' } },
+  usuarios_publicos: { ana: pub('ana', 'Ana Lima', 'AL', 'cx'), bru: pub('bru', 'Bruno Reis', 'BR', 'dados') },
+  escala: { '2026-11-25': { cx: { ana: { t: 'trab', i: '08:00', f: '17:00', por: 'ana', ts: 1 } } } },
+}});
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] }); let ok = true;
+  const t = (n, c, d) => { if (!c) ok = false; console.log((c ? '✅ ' : '❌ ') + n + (c ? '' : '  ← ' + JSON.stringify(d))); };
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, seed());
+  const p = await ctx.newPage(); fake.hookFiltros(p); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  const abrir = async qs => { await p.goto('http://localhost:8941/' + PAGE + qs); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), G('ana', 'Ana Lima')); await p.waitForTimeout(600); };
+  await abrir('?squad=cx&semana=2026-11-23');
+  const linha = await p.$$eval('tr.atd td', a => a.map(x => x.innerText.replace(/\s+/g, ' ').trim()));
+  t('grade do CX: linha 🎧 com 8h–3h (qua), 6h–3h (qui), 6h–22h (sex) e nada nos outros dias',
+    linha[2].startsWith('8h–3h') && /madrugada de 26\/11/.test(linha[2]) && linha[3].startsWith('6h–3h') && linha[4] === '6h–22h' && linha[0] === '–' && linha[5] === '–', linha);
+  await p.click('th.dia[data-dia="2026-11-25"]'); await p.waitForSelector('.md');
+  t('resumo do dia diz o atendimento humano', /Atendimento humano:\s*das 8h às 3h da manhã \(26\/11\)/.test(await p.textContent('.atd-dia')), await p.textContent('.atd-dia').catch(() => ''));
+  await p.keyboard.press('Escape');
+  await abrir('?squad=dados&semana=2026-11-23');
+  t('outra squad não ganha a linha', !(await p.$('tr.atd')), 0);
+  t('semana sem horário não ganha a linha', await (async () => { await abrir('?squad=cx&semana=2026-11-30'); return !(await p.$('tr.atd')); })(), 0);
+  t('sem erro de JS', !errs.length, errs);
+  await b.close(); console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1);
+})();
