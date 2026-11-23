@@ -1,5 +1,5 @@
 // 🗓️ Escala (escala-dev.html) — resumo do dia e cadastro (pedidos do time + /melhoriauiux, 23/11/2026):
-// ➕ Cadastrar no resumo do dia, ✏️ por pessoa, dias da semana movendo De/Até, quinta da Black Friday em laranja,
+// ➕ Cadastrar no resumo do dia, ✏️ por pessoa, dias da semana movendo De/Até, quarta–sexta da Black Friday em laranja,
 // título/botão de edição, tipo na prévia, foco devolvido, alvos de toque e sem rolagem lateral.
 // PAGE=escala.html testa a prod depois da promoção.
 const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake = require('./fakefb.js');
@@ -79,9 +79,9 @@ const seed = () => ({ kanban: {
     await ctx.close();
     const o2 = await open(PAU, '?squad=dados&semana=' + iso(semBF));
     const marc = await o2.p.evaluate(() => [...document.querySelectorAll('th.dia.bfdia')].map(x => x.dataset.dia));
-    t('semana da BF: quinta e sexta marcadas em laranja', marc.join() === [iso(add(bf, -1)), iso(bf)].join(), marc);
+    t('semana da BF: quarta, quinta e sexta marcadas em laranja', marc.join() === [iso(add(bf, -2)), iso(add(bf, -1)), iso(bf)].join(), marc);
     const rot = await o2.p.evaluate(() => [...document.querySelectorAll('th.dia.bfdia .bfmark')].map(x => x.textContent));
-    t('rótulos: a quinta é "véspera", só a sexta diz BLACK FRIDAY', /VÉSPERA/.test(rot[0] || '') && /BLACK FRIDAY/.test(rot[1] || '') && !/BLACK FRIDAY/.test(rot[0] || ''), rot);
+    t('rótulos: quarta e quinta "esquenta", só a sexta diz BLACK FRIDAY', /ESQUENTA/.test(rot[0] || '') && /ESQUENTA/.test(rot[1] || '') && /BLACK FRIDAY/.test(rot[2] || '') && !/BLACK FRIDAY/.test((rot[0] || '') + (rot[1] || '')), rot);
     t('sem erro de JS (PO)', !errs.length && !o2.errs.length, errs.concat(o2.errs)); await o2.ctx.close(); }
 
   // ── celular com toque: alvos e rolagem ──

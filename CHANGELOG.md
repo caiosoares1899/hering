@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Escala — mesma escala para várias pessoas, filtro por tipo, horários na visão de todas as squads e quarta a sexta da BF — 2026-11-23
+
+escala-dev v1.15 (lista do time).
+- **👥 Mesma escala para várias pessoas:** no cadastro, PO, Organizador e ADM marcam as pessoas a mais (ou **Toda a squad**) e a escala vai igual para todas; a prévia e o aviso de gravado contam as pessoas, e cada uma recebe o aviso de sempre.
+- **🔎 Filtros › Tipo:** só ✅ Escalado, só 🔥 Plantão ou só 🏖️ Folga (vários ao mesmo tempo); vale para grade, resumo do dia, avisos e JPG, e vai para o link (`f_tipo`).
+- **🌐 Todas as squads:** cada dia mostra um bloco por horário ("09:00–18:00", "Dia todo"…) com as fotos de quem está nele; plantão primeiro; até 3 blocos e "+N horários" (o detalhe do dia mostra tudo).
+- **Black Friday:** quarta, quinta e sexta em laranja; quarta e quinta com "🔥 ESQUENTA BF", só a sexta diz BLACK FRIDAY.
+- Ajuda do Maré (Escala) em dia → kanban-dev v8.30.1018-dev. Teste `test_escala_lote_tipo.js`. Dica: não — a Escala não carrega o módulo de dicas; está na Ajuda do Maré.
+
 ### Oceano — atalho 🗓️ Escala na linha de atalhos (#1911) — PROD 23/11 (oceano v1.89) — 2026-11-23
 
 oceano-dev (pedido do time). Na linha **Atalhos** da tela inicial entra **🗓️ Escala · quem trabalha quando**, para quem usa o Maré; abre a Escala em aba nova (como o "Abrir Escala" da Ajuda). Teste em `test_oceano.js`. Dica: não — o atalho aparece sozinho na linha que a pessoa já usa.
