@@ -36,6 +36,9 @@
   .btn.primary{ background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04141f; font-weight:700; border:none; }
   .btn.danger{ border-color:rgba(255,92,122,.4); color:#ffb3c1; background:rgba(255,92,122,.08); }
   .btn:disabled{ opacity:.55; cursor:default; }
+  .btn.ico{ padding:6px 9px; font-size:13px; line-height:1; background:none; }
+  .md h2:focus{ outline:none; }
+  .btn:focus-visible, .chip:focus-visible, .seg button:focus-visible, .cel:focus-visible, .gdia:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .who{ display:flex; align-items:center; gap:10px; padding:6px 12px; border-radius:12px; background:rgba(46,204,156,.08); border:1px solid rgba(46,204,156,.25); font-size:12.5px; color:var(--txt2); }
   .who img{ width:24px; height:24px; border-radius:50%; object-fit:cover; }
   .who b{ color:var(--txt); }
@@ -177,6 +180,13 @@
   .ver{ margin-top:26px; text-align:center; font-size:11px; color:var(--txt3); }
   body.embed{ padding:10px 14px 24px; min-height:100vh; }
   body.embed .top, body.embed .ver{ display:none; }
+  /* toque (celular e iPad): alvos de 44 px e campos de 16 px (o iOS não dá zoom ao focar) */
+  @media (hover:none) and (pointer:coarse){
+    .btn, .chip, .seg button{ min-height:44px; }
+    .dsem .chip{ width:44px; }
+    .btn.ico{ min-width:44px; }
+    select, input[type=text], input[type=date], input[type=time]{ font-size:16px; min-height:44px; }
+  }
   @media (max-width:640px){ .row2{ grid-template-columns:1fr; } .nav .lbl{ min-width:120px; } .grid th.pess{ min-width:150px; } .btn{ white-space:nowrap; } }
 </style>
 </head>
@@ -538,8 +548,13 @@ function render() {
 function irParaSemana(d) { semana = segunda(d); dados = {}; carregarJanela(); render(); }
 
 // ═══ Modais ═══
-function abrirOv(html) { const ov = $('ov'); ov.innerHTML = '<div class="md" role="dialog" aria-modal="true">' + html + '</div>'; ov.hidden = false; }
-function fecharOv() { $('ov').hidden = true; $('ov').innerHTML = ''; }
+let ovVoltar = null;   // quem abriu o modal recebe o foco de volta ao fechar (teclado)
+function abrirOv(html) {
+  const ov = $('ov'); if (ov.hidden) ovVoltar = document.activeElement;
+  ov.innerHTML = '<div class="md" role="dialog" aria-modal="true" aria-labelledby="ov-t">' + html + '</div>'; ov.hidden = false;
+  const h2 = ov.querySelector('h2'); if (h2) { h2.id = 'ov-t'; h2.tabIndex = -1; h2.focus({ preventScroll: true }); }
+}
+function fecharOv() { $('ov').hidden = true; $('ov').innerHTML = ''; if (ovVoltar && ovVoltar.isConnected && ovVoltar.focus) ovVoltar.focus({ preventScroll: true }); ovVoltar = null; }
 $('ov').addEventListener('mousedown', e => { if (e.target === $('ov')) fecharOv(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').hidden) fecharOv(); });
 
@@ -570,7 +585,7 @@ function listaDia(grupos, multi) {
   grupos.forEach(g => {
     h += '<ul class="lista-dia">' + (multi ? '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(g.s.emoji + ' ' + g.s.label) + '</li>' : '');
     g.itens.forEach(x => {
-      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (pausaTxt(x.e) ? ' · ☕ pausa ' + esc(pausaTxt(x.e)) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
+      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (pausaTxt(x.e) ? ' · ☕ pausa ' + esc(pausaTxt(x.e)) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + (podeEditar(g.s.id, x.m.uid) ? '<button type="button" class="btn ico" data-edit="' + esc(x.m.uid) + '" data-esq="' + esc(g.s.id) + '" aria-label="Editar a escala de ' + esc(x.m.nome) + ' neste dia" title="Editar este dia">✏️</button>' : '') + '</li>';
     });
     h += '</ul>';
   });
@@ -646,16 +661,17 @@ function abrirDia(data, sqUnico, modo) {
   const menc = [];
   grupos.forEach(g => g.itens.forEach(x => { if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init); }));   // quem está em duas squads entra uma vez só
   const multi = !sqUnico;
-  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
+  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : (sqs[0] ? ' — ' + esc(sqs[0].emoji + ' ' + sqs[0].label) : '')) + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
   h += '<div class="seg dmodo" id="d-modo" role="tablist"><button type="button" data-dm="lista" role="tab" aria-selected="' + (diaModo === 'lista') + '">📋 Lista</button><button type="button" data-dm="gantt" role="tab" aria-selected="' + (diaModo === 'gantt') + '">📊 Visão Gantt</button></div>';
-  h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
-  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + (squadsEditaveis().length ? '<button type="button" class="btn primary" id="d-cad">➕ Cadastrar escala</button>' : '') + '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
+  h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.' + (squadsEditaveis().length ? '<br><span style="font-size:12.5px">Use <b>➕ Cadastrar escala</b> aqui embaixo para incluir a sua.</span>' : '') + '</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
+  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + (squadsEditaveis().length ? '<button type="button" class="btn primary" id="d-cad">➕ Cadastrar escala</button>' : '') + (grupos.length ? '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button>' : '') + '<span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
   abrirOv(h);
   $('ov').querySelector('.md').classList.toggle('gantt', diaModo === 'gantt');
   $('d-fechar').onclick = fecharOv;
-  $('d-jpg').onclick = () => abrirJpg('dia', data, diaModo);
+  if ($('d-jpg')) $('d-jpg').onclick = () => abrirJpg('dia', data, diaModo);
+  $('ov').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => abrirCadastro({ sq: b.dataset.esq, uid: b.dataset.edit, data }));
   if ($('d-cad')) $('d-cad').onclick = () => abrirCadastro({ sq: sqUnico, data });   // já vem com este dia em De/Até e o dia da semana marcado
-  $('d-modo').onclick = e => { const b = e.target.closest('[data-dm]'); if (b && b.dataset.dm !== diaModo) abrirDia(data, sqUnico, b.dataset.dm); };
+  $('d-modo').onclick = e => { const b = e.target.closest('[data-dm]'); if (b && b.dataset.dm !== diaModo) { abrirDia(data, sqUnico, b.dataset.dm); const a = $('ov').querySelector('[data-dm="' + diaModo + '"]'); if (a) a.focus(); } };
   if ($('d-menc')) $('d-menc').onclick = async () => {
     const txt = menc.join(' ');
     try { await navigator.clipboard.writeText(txt); toast('Menções copiadas: ' + txt); } catch (e) { toast('Copie manualmente: ' + txt); }
@@ -676,7 +692,7 @@ function abrirCadastro(pre) {
     sq, uid: pre.uid || user.uid,
     de: unico ? pre.data : iso(semana), ate: unico ? pre.data : iso(dFim),
     dsem: unico ? new Set([diaSem(parseISO(pre.data))]) : new Set([0, 1, 2, 3, 4]),
-    t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '', p: ex ? pausasDe(ex) : [],
+    edita: !!ex, t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '', p: ex ? pausasDe(ex) : [],
   };
   desenharCadastro(editaveis);
 }
@@ -685,7 +701,7 @@ function desenharCadastro(editaveis) {
   if (!gestor) cad.uid = user.uid;
   const ms = membrosDoSquad(cad.sq);
   if (gestor && ms.length && !ms.find(m => m.uid === cad.uid)) cad.uid = ms[0].uid;   // ex.: ADM abrindo uma squad onde não está inscrito — a pessoa mostrada tem que ser a gravada
-  const h = '<h2>➕ Cadastrar escala</h2><p class="sub">' + (gestor ? 'Você é gestor desta squad: pode cadastrar a sua e a de qualquer pessoa.' : 'Cadastre os seus dias. (PO, Organizador e ADM da squad também podem cadastrar pelas outras pessoas.)') + '</p>' +
+  const h = '<h2>' + (cad.edita ? '✏️ Editar escala' : '➕ Cadastrar escala') + '</h2><p class="sub">' + (gestor ? 'Você é gestor desta squad: pode cadastrar a sua e a de qualquer pessoa.' : 'Cadastre os seus dias. (PO, Organizador e ADM da squad também podem cadastrar pelas outras pessoas.)') + '</p>' +
     '<label for="c-sq">Squad</label><select id="c-sq">' + editaveis.map(s => '<option value="' + esc(s.id) + '"' + (s.id === cad.sq ? ' selected' : '') + '>' + esc(s.emoji + ' ' + s.label) + '</option>').join('') + '</select>' +
     '<label for="c-uid">Pessoa</label>' + (gestor
       ? '<select id="c-uid">' + ms.map(m => '<option value="' + esc(m.uid) + '"' + (m.uid === cad.uid ? ' selected' : '') + '>' + esc(m.nome + (m.uid === user.uid ? ' (você)' : '')) + '</option>').join('') + '</select>'
@@ -698,11 +714,11 @@ function desenharCadastro(editaveis) {
       '<div class="lb">☕ Pausas no dia <span class="opt">(opcional)</span></div><div id="c-pausas"></div><button type="button" class="btn" id="c-addp">☕ Adicionar pausa (saída e volta)</button><p class="sub" style="margin:6px 0 0">Se a pessoa sai e volta no meio do expediente, a barra da Visão Gantt fica com um intervalo.</p></div>' +
     '<label for="c-n">Observação <span class="opt">(opcional)</span></label><input type="text" id="c-n" maxlength="140" value="' + esc(cad.n) + '" placeholder="Ex.: sobreaviso até 23h, lançamento da campanha…">' +
     '<div class="prev" id="c-prev"></div><div class="msg err" id="c-msg" hidden></div>' +
-    '<div class="acoes"><button type="button" class="btn primary" id="c-salvar">Cadastrar</button><button type="button" class="btn danger" id="c-limpar" title="Apaga a escala já cadastrada nesses dias">🗑 Limpar período</button><span class="grow"></span><button type="button" class="btn" id="c-cancelar">Cancelar</button></div>';
+    '<div class="acoes"><button type="button" class="btn primary" id="c-salvar">' + (cad.edita ? 'Salvar' : 'Cadastrar') + '</button><span class="grow"></span><button type="button" class="btn danger" id="c-limpar" title="Apaga a escala já cadastrada nesses dias">🗑 Limpar período</button><button type="button" class="btn" id="c-cancelar">Cancelar</button></div>';
   abrirOv(h);
   atualizarPrev(); pintarPausas();
   const o = $('ov');
-  $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); };
+  $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); $('c-sq').focus(); };
   if (gestor) $('c-uid').onchange = e => { cad.uid = e.target.value; atualizarPrev(); };
   ['c-de', 'c-ate'].forEach(id => { $(id).oninput = () => { lerForm(); atualizarPrev(); }; });
   ['c-i', 'c-f', 'c-n'].forEach(id => { $(id).oninput = () => { lerForm(); }; });
@@ -716,7 +732,7 @@ function desenharCadastro(editaveis) {
     atualizarPrev();
   });
   o.querySelectorAll('[data-ds]').forEach(b => b.onclick = () => { const i = Number(b.dataset.ds); lerForm(); if (cad.dsem.has(i)) cad.dsem.delete(i); else cad.dsem.add(i); b.setAttribute('aria-pressed', cad.dsem.has(i)); ajustarPeriodoAosDias(); atualizarPrev(); });
-  o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; });
+  o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; atualizarPrev(); });
   $('c-cancelar').onclick = fecharOv;
   $('c-salvar').onclick = () => confirmarCadastro(false);
   $('c-limpar').onclick = () => confirmarCadastro(true);
@@ -753,7 +769,7 @@ function atualizarPrev() {
   const m = membrosDoSquad(cad.sq).find(x => x.uid === cad.uid);
   if (r.erro) { el.className = 'prev ruim'; el.textContent = r.erro; return; }
   el.className = 'prev';
-  el.textContent = r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ' · ' + ((m && m.nome) || 'você') + ' · de ' + curto(parseISO(r.datas[0])) + ' a ' + curto(parseISO(r.datas[r.datas.length - 1]));
+  el.textContent = TIPOS[cad.t].emoji + ' ' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ' de ' + TIPOS[cad.t].nome.toLowerCase() + ' · ' + ((m && m.nome) || 'você') + ' · de ' + curto(parseISO(r.datas[0])) + ' a ' + curto(parseISO(r.datas[r.datas.length - 1]));
 }
 async function confirmarCadastro(limpar) {
   if (gravando) return;
@@ -785,7 +801,7 @@ async function confirmarCadastro(limpar) {
     await carregarJanela();
   } catch (e) {
     gravando = false;
-    if ($('c-salvar')) { $('c-salvar').disabled = false; $('c-limpar').disabled = false; $('c-salvar').textContent = 'Cadastrar'; }
+    if ($('c-salvar')) { $('c-salvar').disabled = false; $('c-limpar').disabled = false; $('c-salvar').textContent = cad.edita ? 'Salvar' : 'Cadastrar'; }
     const negado = e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
     if ($('c-msg')) { $('c-msg').textContent = negado ? '⚠️ Sem permissão pra gravar. Você só edita a sua própria escala (e precisa estar inscrito na squad) — PO, Organizador e ADM editam a de todos. Se for o seu caso e mesmo assim negou, as regras do banco podem não estar publicadas: avise o ADM.' : '⚠️ Não deu pra gravar agora (conexão). Tente de novo.'; $('c-msg').hidden = false; }
     return;

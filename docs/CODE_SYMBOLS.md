@@ -351,20 +351,20 @@
 - feriasRenderEvidPreview:L2164 · feriasComprimirImagem:L2175 · feriasPreencherDadosTecnicos:L2210 · feriasRenderBugsLista:L2227 · feriasProcessarSnapshotBugs:L2240 · feriasRefBugs:L2260 · feriasIniciarBugsListener:L2265 · feriasCarregarBugs:L2278 · feriasEnviarBug:L2294 · feriasRenderModal:L2376
 - abrirFerias:L2390 · feriasEnviarPergunta:L2406 · instalar:L2477 · mostrarDocumento:L2494 · iniciarSonar:L2504
 
-## `escala-dev.html` (1197 linhas · 73 funções)
-- **CSS:** L8–L181 | **JS:** L236–L1194 (module) | **Módulos:** mare-login-dev.js?v=3 (L235)
-- **Consts (43):** VERSION:L241 · firebaseConfig:L243 · fbApp:L252 · db:L253 · auth:L254 · provider:L255 · $:L260 · esc:L261 · ADM_EMAIL_FIXO:L262 · squadValido:L263 · MAX_DIAS:L264 · TIPOS:L267 · DIAS:L272 · SQUAD_FALLBACK:L274 · norm:L279 · arrDe:L280 · pad:L283 · iso:L284 · ISO_RE:L285 · addDias:L287 · diaSem:L288 · segunda:L289 · hojeISO:L290 · curto:L291 · papelNoSquad:L321 · souAdm:L322 · souDoSquad:L323 · souGestor:L324 · podeEditar:L325 · squadsEditaveis:L326 · rotuloPapel:L327 · rotuloSubs:L340 · entrada:L341 · ordTipo:L548 · hm:L549 · MAX_PAUSAS:L551 · pausaTxt:L555 · hhmm:L583 · MESES:L817 · FONTE:L818 (+3)
-- parseISO:L286 · blackFriday:L293 · ehBF:L295 · proximaBF:L296 · lsGet:L316 · lsSet:L317 · isHering:L318 · membrosDoSquad:L329 · subtimesDe:L335 · membrosF:L337
-- squadsEscopo:L339 · av:L343 · chipTipo:L348 · toast:L353
-- **[Carregamento]** carregarBase:L356 · carregarJanela:L377
-- **[Render]** diasDaSemana:L393 · cabecalhoDias:L394 · coberturaDoDia:L401 · squadTemEscala:L406 · renderSquad:L408 · renderGlobal:L431 · renderHoje:L454 · renderAvisos:L465 · subtimesDoEscopo:L480 · nFiltros:L484
-- renderFiltros:L485 · pintarFiltros:L496 · abrirFiltros:L509 · render:L519 · irParaSemana:L538
-- **[Modais]** abrirOv:L541 · fecharOv:L542 · pausasDe:L552 · erroPausas:L557 · listaDia:L568 · ganttModelo:L584 · ganttDia:L613 · abrirDia:L641 · abrirCadastro:L667 · desenharCadastro:L683
-- ajustarPeriodoAosDias:L726 · lerForm:L733 · pintarPausas:L737 · datasDoCadastro:L743 · atualizarPrev:L751 · confirmarCadastro:L758 · avisarPessoa:L798
-- **[Baixar a escala em JPG (dia · semana · mês)]** jRR:L825 · jAjusta:L829 · jT:L830 · jNome:L834 · jNova:L839 · jPeriodo:L846 · jEscopo:L853 · jDoDia:L859 · jMoldura:L866 · jChip:L876
-- jCabDia:L882 · jSemanaSquad:L889 · jSemanaGlobal:L915 · jDia:L946 · jGantt:L970 · jMes:L1010 · jVazio:L1053 · jGerar:L1057 · jBaixar:L1063 · jpgAtualizar:L1071
-- abrirJpg:L1090
-- **[Login / fluxo principal]** renderWho:L1144 · iniciar:L1159 · checarVersao:L1185 · __escala:L1193
+## `escala-dev.html` (1213 linhas · 73 funções)
+- **CSS:** L8–L191 | **JS:** L246–L1210 (module) | **Módulos:** mare-login-dev.js?v=3 (L245)
+- **Consts (43):** VERSION:L251 · firebaseConfig:L253 · fbApp:L262 · db:L263 · auth:L264 · provider:L265 · $:L270 · esc:L271 · ADM_EMAIL_FIXO:L272 · squadValido:L273 · MAX_DIAS:L274 · TIPOS:L277 · DIAS:L282 · SQUAD_FALLBACK:L284 · norm:L289 · arrDe:L290 · pad:L293 · iso:L294 · ISO_RE:L295 · addDias:L297 · diaSem:L298 · segunda:L299 · hojeISO:L300 · curto:L301 · papelNoSquad:L331 · souAdm:L332 · souDoSquad:L333 · souGestor:L334 · podeEditar:L335 · squadsEditaveis:L336 · rotuloPapel:L337 · rotuloSubs:L350 · entrada:L351 · ordTipo:L563 · hm:L564 · MAX_PAUSAS:L566 · pausaTxt:L570 · hhmm:L598 · MESES:L833 · FONTE:L834 (+3)
+- parseISO:L296 · blackFriday:L303 · ehBF:L305 · proximaBF:L306 · lsGet:L326 · lsSet:L327 · isHering:L328 · membrosDoSquad:L339 · subtimesDe:L345 · membrosF:L347
+- squadsEscopo:L349 · av:L353 · chipTipo:L358 · toast:L363
+- **[Carregamento]** carregarBase:L366 · carregarJanela:L387
+- **[Render]** diasDaSemana:L403 · cabecalhoDias:L404 · coberturaDoDia:L411 · squadTemEscala:L416 · renderSquad:L418 · renderGlobal:L441 · renderHoje:L464 · renderAvisos:L475 · subtimesDoEscopo:L490 · nFiltros:L494
+- renderFiltros:L495 · pintarFiltros:L506 · abrirFiltros:L519 · render:L529 · irParaSemana:L548
+- **[Modais]** abrirOv:L552 · fecharOv:L557 · pausasDe:L567 · erroPausas:L572 · listaDia:L583 · ganttModelo:L599 · ganttDia:L628 · abrirDia:L656 · abrirCadastro:L683 · desenharCadastro:L699
+- ajustarPeriodoAosDias:L742 · lerForm:L749 · pintarPausas:L753 · datasDoCadastro:L759 · atualizarPrev:L767 · confirmarCadastro:L774 · avisarPessoa:L814
+- **[Baixar a escala em JPG (dia · semana · mês)]** jRR:L841 · jAjusta:L845 · jT:L846 · jNome:L850 · jNova:L855 · jPeriodo:L862 · jEscopo:L869 · jDoDia:L875 · jMoldura:L882 · jChip:L892
+- jCabDia:L898 · jSemanaSquad:L905 · jSemanaGlobal:L931 · jDia:L962 · jGantt:L986 · jMes:L1026 · jVazio:L1069 · jGerar:L1073 · jBaixar:L1079 · jpgAtualizar:L1087
+- abrirJpg:L1106
+- **[Login / fluxo principal]** renderWho:L1160 · iniciar:L1175 · checarVersao:L1201 · __escala:L1209
 
 ## `intake-dev.html` (496 linhas · 20 funções)
 - **CSS:** L8–L81 | **JS:** L136–L493 (module) | **Módulos:** mare-login-dev.js?v=3 (L135)

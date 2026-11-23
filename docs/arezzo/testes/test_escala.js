@@ -95,7 +95,7 @@ const seed = () => ({ kanban: {
   { const { ctx, p } = await open(ANA, '?squad=dados');
     await p.click('#b-cad'); await p.waitForTimeout(150);
     const f = await p.evaluate(() => ({ de: document.getElementById('c-de').value, ate: document.getElementById('c-ate').value, ds: [...document.querySelectorAll('#c-dsem .chip[aria-pressed="true"]')].map(x => x.textContent).join(), prev: document.getElementById('c-prev').innerText, uid: document.getElementById('c-uid').disabled, sq: [...document.querySelectorAll('#c-sq option')].map(o => o.textContent.trim()) }));
-    t('botão Cadastrar: semana visível, seg–sex marcados, prévia de 5 dias, pessoa fixa em mim', f.de === D(0) && f.ate === D(6) && f.ds === 'Seg,Ter,Qua,Qui,Sex' && /^5 dias/.test(f.prev) && f.uid, f);
+    t('botão Cadastrar: semana visível, seg–sex marcados, prévia de 5 dias, pessoa fixa em mim', f.de === D(0) && f.ate === D(6) && f.ds === 'Seg,Ter,Qua,Qui,Sex' && /\b5 dias/.test(f.prev) && f.uid, f);
     t('só lista squads em que eu estou inscrita', f.sq.length === 2 && f.sq.some(x => /Dados/.test(x)) && f.sq.some(x => /Dev/.test(x)) && !f.sq.some(x => /Vazia/.test(x)), f.sq);
     await p.fill('#c-de', D(10)); await p.fill('#c-ate', D(2)); await p.evaluate(() => document.getElementById('c-de').dispatchEvent(new Event('input')));
     t('período invertido: prévia avisa', /antes da inicial/.test(await txt(p, '#c-prev')), await txt(p, '#c-prev'));
@@ -119,7 +119,7 @@ const seed = () => ({ kanban: {
     await p.selectOption('#c-uid', 'bru'); await p.click('[data-atalho="bf"]');
     const bf = await p.evaluate(() => ({ de: document.getElementById('c-de').value, ate: document.getElementById('c-ate').value, ds: document.querySelectorAll('#c-dsem .chip[aria-pressed="true"]').length, prev: document.getElementById('c-prev').innerText }));
     const hoje = new Date(); let bfd = new Date(hoje.getFullYear(), 10, 1); bfd = new Date(hoje.getFullYear(), 10, 1 + ((4 - bfd.getDay() + 7) % 7) + 21 + 1); if (new Date(bfd.getFullYear(), bfd.getMonth(), bfd.getDate() + 7) < hoje) { bfd = new Date(hoje.getFullYear() + 1, 10, 1); bfd = new Date(hoje.getFullYear() + 1, 10, 1 + ((4 - bfd.getDay() + 7) % 7) + 21 + 1); }
-    t('atalho "Semana da Black Friday": 7 dias, semana que contém a Black Friday (sexta)', bf.ds === 7 && bf.de <= iso(bfd) && iso(bfd) <= bf.ate && /^7 dias/.test(bf.prev), [bf, iso(bfd)]);
+    t('atalho "Semana da Black Friday": 7 dias, semana que contém a Black Friday (sexta)', bf.ds === 7 && bf.de <= iso(bfd) && iso(bfd) <= bf.ate && /\b7 dias/.test(bf.prev), [bf, iso(bfd)]);
     await p.click('[data-t="plant"]'); await p.fill('#c-n', 'Black Friday'); await p.click('#c-salvar'); await p.waitForTimeout(500);
     const st = await store(p); const k = Object.keys(st).filter(d => d >= bf.de && st[d].dados?.bru?.t === 'plant');
     t('PO grava a escala do Bruno (por = PO), 7 dias', k.length === 7 && k.every(d => st[d].dados.bru.por === 'pau' && st[d].dados.bru.n === 'Black Friday'), k.length);
