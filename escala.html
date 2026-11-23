@@ -36,6 +36,9 @@
   .btn.primary{ background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04141f; font-weight:700; border:none; }
   .btn.danger{ border-color:rgba(255,92,122,.4); color:#ffb3c1; background:rgba(255,92,122,.08); }
   .btn:disabled{ opacity:.55; cursor:default; }
+  .btn.ico{ padding:6px 9px; font-size:13px; line-height:1; background:none; }
+  .md h2:focus{ outline:none; }
+  .btn:focus-visible, .chip:focus-visible, .seg button:focus-visible, .cel:focus-visible, .gdia:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .who{ display:flex; align-items:center; gap:10px; padding:6px 12px; border-radius:12px; background:rgba(46,204,156,.08); border:1px solid rgba(46,204,156,.25); font-size:12.5px; color:var(--txt2); }
   .who img{ width:24px; height:24px; border-radius:50%; object-fit:cover; }
   .who b{ color:var(--txt); }
@@ -68,6 +71,9 @@
   .fgrp-t{ margin:16px 0 0; font-size:11px; color:var(--txt3); letter-spacing:.06em; text-transform:uppercase; }
   .fgrp-t[hidden]{ display:none; }
   .fchip{ padding:6px 12px !important; font-size:12.5px !important; }
+  #f-hora{ width:auto; padding:6px 10px; }
+  .fhora{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 12px; padding:9px 14px; border-radius:12px; background:rgba(56,182,255,.08); border:1px solid rgba(56,182,255,.3); box-shadow:var(--specular); font-size:13px; color:var(--txt2); }
+  .fhora b{ color:var(--txt); }
   /* visão Gantt do dia: uma linha por pessoa, barra do horário que ela está */
   .md.gantt{ max-width:900px; }
   .dmodo{ margin:8px 0 2px; }
@@ -177,6 +183,13 @@
   .ver{ margin-top:26px; text-align:center; font-size:11px; color:var(--txt3); }
   body.embed{ padding:10px 14px 24px; min-height:100vh; }
   body.embed .top, body.embed .ver{ display:none; }
+  /* toque (celular e iPad): alvos de 44 px e campos de 16 px (o iOS não dá zoom ao focar) */
+  @media (hover:none) and (pointer:coarse){
+    .btn, .chip, .seg button{ min-height:44px; }
+    .dsem .chip{ width:44px; }
+    .btn.ico{ min-width:44px; }
+    select, input[type=text], input[type=date], input[type=time]{ font-size:16px; min-height:44px; }
+  }
   @media (max-width:640px){ .row2{ grid-template-columns:1fr; } .nav .lbl{ min-width:120px; } .grid th.pess{ min-width:150px; } .btn{ white-space:nowrap; } }
 </style>
 </head>
@@ -212,12 +225,13 @@
         <button type="button" class="btn bf" id="b-bf" title="Pula pra semana da Black Friday">🔥 Black Friday</button>
       </div>
       <span class="grow"></span>
-      <button type="button" class="btn" id="b-filtros" title="Filtrar por squad e subtime" hidden>🔎 Filtros<span class="fbadge" id="f-badge" hidden></span></button>
+      <button type="button" class="btn" id="b-filtros" title="Filtrar por squad, subtime e horário" hidden>🔎 Filtros<span class="fbadge" id="f-badge" hidden></span></button>
       <button type="button" class="btn" id="b-jpg" title="Baixar a escala em imagem JPG (dia, semana ou mês)">🖼️ Baixar JPG</button>
       <button type="button" class="btn primary" id="b-cad">➕ Cadastrar escala</button>
     </div>
     <div id="erro" class="erro" hidden></div>
     <div id="hoje" class="hoje" hidden></div>
+    <div id="fhora" class="fhora" hidden></div>
     <div id="view" class="scroll"></div>
     <div id="avisos" class="avisos" hidden></div>
     <div class="legenda">
@@ -238,7 +252,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.12 · escala', VERSION_KEY = 'escala';
+const VERSION = 'v1.14 · escala', VERSION_KEY = 'escala';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -291,6 +305,8 @@ const hojeISO = () => iso(new Date());
 const curto = d => pad(d.getDate()) + '/' + pad(d.getMonth() + 1);
 // Black Friday = sexta depois da 4ª quinta de novembro.
 function blackFriday(ano) { const p = (4 - new Date(ano, 10, 1).getDay() + 7) % 7; return new Date(ano, 10, 1 + p + 21 + 1); }
+// A quinta (véspera) também conta: o time trabalha a virada de quinta pra sexta e na sexta quase não há escala.
+function ehBF(s, bf) { return s === iso(bf) || s === iso(addDias(bf, -1)); }
 function proximaBF() { const h = new Date(); let bf = blackFriday(h.getFullYear()); if (addDias(bf, 7) < h) bf = blackFriday(h.getFullYear() + 1); return bf; }
 
 // ── estado ──
@@ -303,7 +319,7 @@ let squad = '';
 let semana = segunda(new Date());
 let dados = {};             // escala da janela: { 'YYYY-MM-DD': { squadId: { uid: entry } } }
 let cfgSquad = {};          // por squad: { subtimes:[{name,members:[init]}] } — lido de kanban/squads/{sq}/dados/subtimes
-let filtro = { subs: [], sqs: [] };   // filtros da tela: subtimes (por nome, vários) e — só na visão global — squads (ids; vazio = todas)
+let filtro = { subs: [], sqs: [], hora: '' };   // filtros da tela: subtimes (por nome, vários) e — só na visão global — squads (ids; vazio = todas)
 let erroLeitura = '';       // '' | 'regras' | 'rede'
 let carregando = false;     // leitura da janela em andamento (a tabela fica esmaecida em vez de mostrar dados de outra semana)
 let janelaSeq = 0;          // só a última leitura da janela escreve no estado
@@ -337,6 +353,18 @@ function membrosF(sq) { const ms = membrosDoSquad(sq); return filtro.subs.length
 function squadsEscopo() { return visao === 'global' ? (filtro.sqs.length ? squads.filter(s => filtro.sqs.includes(s.id)) : squads) : squads.filter(s => s.id === squad); }
 const rotuloSubs = () => filtro.subs.join(', ');
 const entrada = (data, sq, uid) => (((dados[data] || {})[sq] || {})[uid]) || null;
+// Filtro de horário: "quem está trabalhando às HH:MM". Folga sai; sem horário cadastrado conta como o dia todo;
+// só entrada (ou só saída) vale a partir dela (ou até ela); pausa naquele horário conta como fora.
+function cobreHora(e) {
+  if (!filtro.hora) return true;
+  if (!e || e.t === 'folga') return false;
+  const h = hm(filtro.hora), a = hm(e.i), b = hm(e.f);
+  if (a != null && h < a) return false;
+  if (b != null && h >= b) return false;
+  return !pausasDe(e).some(([pa, pb]) => hm(pa) <= h && h < hm(pb));
+}
+// O que a TELA mostra (com o filtro de horário). O cadastro continua lendo `entrada` (o dado real).
+const entradaF = (data, sq, uid) => { const e = entrada(data, sq, uid); return e && cobreHora(e) ? e : null; };
 
 function av(m, extra) {
   const ini = esc((m.init || m.nome || '?').slice(0, 2).toUpperCase());
@@ -392,16 +420,16 @@ function diasDaSemana() { return Array.from({ length: 7 }, (_, i) => addDias(sem
 function cabecalhoDias(dias, bf) {
   const hj = hojeISO();
   return dias.map((d, i) => {
-    const s = iso(d), cls = ['dia', s === hj ? 'hj' : '', i >= 5 ? 'fds' : '', s === iso(bf) ? 'bfdia' : ''].filter(Boolean).join(' ');
-    return '<th class="' + cls + '" data-dia="' + s + '" title="Ver quem está nesse dia">' + DIAS[i] + '<br>' + curto(d) + (s === iso(bf) ? '<span class="bfmark">🔥 BLACK FRIDAY</span>' : '') + '</th>';
+    const s = iso(d), cls = ['dia', s === hj ? 'hj' : '', i >= 5 ? 'fds' : '', ehBF(s, bf) ? 'bfdia' : ''].filter(Boolean).join(' ');
+    return '<th class="' + cls + '" data-dia="' + s + '" title="Ver quem está nesse dia">' + DIAS[i] + '<br>' + curto(d) + (ehBF(s, bf) ? '<span class="bfmark">' + (s === iso(bf) ? '🔥 BLACK FRIDAY' : '🔥 VÉSPERA DA BF') + '</span>' : '') + '</th>';
   }).join('');
 }
 function coberturaDoDia(sq, data) {
   let n = 0, p = 0;
-  membrosF(sq).forEach(m => { const e = entrada(data, sq, m.uid); if (e && (e.t === 'trab' || e.t === 'plant')) { n++; if (e.t === 'plant') p++; } });
+  membrosF(sq).forEach(m => { const e = entradaF(data, sq, m.uid); if (e && (e.t === 'trab' || e.t === 'plant')) { n++; if (e.t === 'plant') p++; } });
   return { n, p };
 }
-function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m => entrada(iso(d), sq, m.uid))); }
+function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m => entradaF(iso(d), sq, m.uid))); }
 
 function renderSquad() {
   const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
@@ -411,8 +439,8 @@ function renderSquad() {
   ms.forEach(m => {
     h += '<tr><th class="pess"><div class="pnome">' + av(m) + '<div><b>' + esc(m.nome) + (m.uid === user.uid ? ' <span style="color:var(--accent);font-weight:500">(você)</span>' : '') + '</b><small>' + (m.init ? '@' + esc(m.init) : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : '') + '</small></div></div></th>';
     dias.forEach((d, i) => {
-      const s = iso(d), e = entrada(s, squad, m.uid), pode = podeEditar(squad, m.uid);
-      h += '<td class="' + (s === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (s === iso(bf) ? 'bfdia' : '') + '"><button type="button" class="cel' + (pode ? ' edit' : '') + '" data-u="' + esc(m.uid) + '" data-d="' + s + '"' + (pode ? '' : ' tabindex="-1"') + '>' +
+      const s = iso(d), e = entradaF(s, squad, m.uid), pode = podeEditar(squad, m.uid);
+      h += '<td class="' + (s === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (ehBF(s, bf) ? 'bfdia' : '') + '"><button type="button" class="cel' + (pode ? ' edit' : '') + '" data-u="' + esc(m.uid) + '" data-d="' + s + '"' + (pode ? '' : ' tabindex="-1"') + '>' +
         (e ? chipTipo(e) : (pode ? '<span class="ghost">＋</span>' : '')) + '</button></td>';
     });
     h += '</tr>';
@@ -436,11 +464,11 @@ function renderGlobal() {
     h += '<tr><th class="pess sqn"><span class="nm">' + esc(s.emoji + ' ' + s.label) + '</span><small>' + ms.length + ' pessoa' + (ms.length > 1 ? 's' : '') + (tem ? '' : ' · <span class="semescala">' + 'sem escala cadastrada' + '</span>') + '</small><button type="button" class="vlink" data-ver="' + esc(s.id) + '">ver squad ›</button></th>';
     dias.forEach((d, i) => {
       const dt = iso(d), trab = [], folga = [];
-      ms.forEach(m => { const e = entrada(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
+      ms.forEach(m => { const e = entradaF(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
       trab.sort((a, b) => (a.e.t === 'plant' ? 0 : 1) - (b.e.t === 'plant' ? 0 : 1));
       const vazio = tem && i < 5 && !trab.length;
       const tip = trab.length ? trab.map(x => x.m.nome + (x.e.t === 'plant' ? ' (plantão)' : '')).join(', ') : (vazio ? 'Ninguém escalado neste dia útil' : '');
-      h += '<td class="' + (dt === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (dt === iso(bf) ? 'bfdia' : '') + '"><button type="button" class="gdia' + (vazio ? ' vazio' : '') + '" data-gd="' + dt + '" data-gs="' + esc(s.id) + '" title="' + esc(tip) + '">' +
+      h += '<td class="' + (dt === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (ehBF(dt, bf) ? 'bfdia' : '') + '"><button type="button" class="gdia' + (vazio ? ' vazio' : '') + '" data-gd="' + dt + '" data-gs="' + esc(s.id) + '" title="' + esc(tip) + '">' +
         (trab.length ? '<span class="avs">' + trab.slice(0, 4).map(x => av(x.m, x.e.t === 'plant' ? 'plant' : '')).join('') + (trab.length > 4 ? '<span class="av mais">+' + (trab.length - 4) + '</span>' : '') + '</span>' +
           '<span class="n">' + trab.length + (folga.length ? ' · ' + folga.length + ' de folga' : '') + '</span>' : (vazio ? '⚠️ 0' : '<span style="color:var(--txt3)">–</span>')) + '</button></td>';
     });
@@ -454,7 +482,7 @@ function renderHoje() {
   if (!dias.includes(hj)) { box.hidden = true; return; }
   const sqs = visao === 'global' ? squadsEscopo().map(s => s.id) : [squad];
   const plant = [], trab = new Set();
-  sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entrada(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
+  sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entradaF(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
   const uniq = []; plant.forEach(m => { if (!uniq.find(x => x.uid === m.uid)) uniq.push(m); });
   box.innerHTML = '<span>Hoje, <b>' + curto(new Date()) + '</b></span><span>✅ <b>' + trab.size + '</b> escalado' + (trab.size === 1 ? '' : 's') + '</span>' +
     '<span>🔥 Plantão: ' + (uniq.length ? '<span class="avs">' + uniq.slice(0, 6).map(m => av(m, 'plant')).join('') + '</span> ' + esc(uniq.slice(0, 3).map(m => m.nome.split(' ')[0]).join(', ')) + (uniq.length > 3 ? ' +' + (uniq.length - 3) : '') : '<span style="color:var(--txt3)">ninguém</span>') + '</span>';
@@ -469,7 +497,7 @@ function renderAvisos() {
     if (dd.length) furos.push('<b>' + esc(s.label) + '</b>: ' + dd.join(', '));
   });
   if (!furos.length) { box.hidden = true; return; }
-  box.innerHTML = '⚠️ Dias úteis sem ninguém escalado — ' + furos.join(' · ');
+  box.innerHTML = '⚠️ Dias úteis sem ninguém escalado' + (filtro.hora ? ' às ' + esc(filtro.hora) : '') + ' — ' + furos.join(' · ');
   box.hidden = false;
 }
 // Filtros: um botão "🔎 Filtros" na barra (com o número de filtros ativos) que abre uma mini tela com os chips — a escala não perde espaço.
@@ -479,16 +507,16 @@ function subtimesDoEscopo() {
   const subs = new Map(); squadsEscopo().forEach(x => ((cfgSquad[x.id] || {}).subtimes || []).forEach(st => { if (!subs.has(norm(st.name))) subs.set(norm(st.name), st.name); }));
   return subs;
 }
-function nFiltros() { return filtro.subs.length + (visao === 'global' ? filtro.sqs.length : 0); }
+function nFiltros() { return filtro.subs.length + (visao === 'global' ? filtro.sqs.length : 0) + (filtro.hora ? 1 : 0); }
 function renderFiltros() {
   filtro.sqs = filtro.sqs.filter(id => squads.some(x => x.id === id));
   const subs = subtimesDoEscopo();
   filtro.subs = filtro.subs.filter(n => subs.has(norm(n)));   // subtime que sumiu do escopo deixa de filtrar
   const n = nFiltros(), b = $('b-filtros');
-  b.hidden = !(squads.length > 1 || subs.size);   // uma squad só e sem nenhum subtime: o botão some
+  b.hidden = false;   // o horário vale pra qualquer squad: o botão fica sempre
   $('f-badge').hidden = !n; $('f-badge').textContent = n; b.classList.toggle('on', n > 0);
-  const nomes = (visao === 'global' ? filtro.sqs.map(id => (squads.find(x => x.id === id) || {}).label) : []).concat(filtro.subs).filter(Boolean);
-  b.title = n ? 'Filtros ativos: ' + nomes.join(', ') : 'Filtrar por squad e subtime';
+  const nomes = (visao === 'global' ? filtro.sqs.map(id => (squads.find(x => x.id === id) || {}).label) : []).concat(filtro.subs).concat(filtro.hora ? ['🕒 às ' + filtro.hora] : []).filter(Boolean);
+  b.title = n ? 'Filtros ativos: ' + nomes.join(', ') : 'Filtrar por squad, subtime e horário';
   if ($('f-sqs')) pintarFiltros();   // a mini tela está aberta: acompanha o que mudou na página
 }
 function pintarFiltros() {
@@ -501,6 +529,8 @@ function pintarFiltros() {
   const sbEl = $('f-subs');
   sbEl.hidden = $('f-subs-t').hidden = !lista.length;
   if (lista.length) sbEl.innerHTML = chip('data-fsub', '', 'Todos', !filtro.subs.length) + lista.map(n => chip('data-fsub', n, esc(n), filtro.subs.some(f => norm(f) === norm(n)))).join('');
+  const fi = $('f-hora'); if (fi && document.activeElement !== fi) fi.value = filtro.hora;
+  $('f-hora-g').querySelector('[data-fh=""]').setAttribute('aria-pressed', !filtro.hora);
   $('f-limpar').disabled = !nFiltros();
   $('f-fechar').textContent = nFiltros() ? 'Pronto (' + nFiltros() + ')' : 'Pronto';
 }
@@ -508,11 +538,15 @@ function abrirFiltros() {
   abrirOv('<h2>🔎 Filtros</h2><p class="sub">' + (visao === 'global' ? 'Escolha quais squads e subtimes aparecem. Vale também pro JPG.' : 'Troque de squad ou escolha só um subtime. Vale também pro JPG.') + '</p>' +
     '<div class="fgrp-t" id="f-sqs-t">Squad</div><div class="fgrp" id="f-sqs" role="group" aria-label="Filtrar por squad"></div>' +
     '<div class="fgrp-t" id="f-subs-t">Subtime</div><div class="fgrp" id="f-subs" role="group" aria-label="Filtrar por subtime"></div>' +
+    '<div class="fgrp-t">Horário</div><div class="fgrp" id="f-hora-g" role="group" aria-label="Filtrar por horário"><input type="time" id="f-hora" aria-label="Quem está trabalhando às"><button type="button" class="chip fchip" data-fh="agora">Agora</button><button type="button" class="chip fchip" data-fh="">Qualquer horário</button></div>' +
+    '<p class="sub" style="margin:6px 0 0">Mostra só quem está trabalhando nesse horário. Sem horário cadastrado conta como o dia todo.</p>' +
     '<div class="acoes"><button type="button" class="btn" id="f-limpar">✕ Limpar filtros</button><span class="grow"></span><button type="button" class="btn primary" id="f-fechar">Pronto</button></div>');
   $('ov').firstElementChild.classList.add('mini');
   pintarFiltros();
   $('f-fechar').onclick = fecharOv;
-  $('f-limpar').onclick = () => { filtro = { subs: [], sqs: [] }; render(); };
+  $('f-hora').onchange = e => { const v = e.target.value; filtro.hora = /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : ''; render(); };
+  $('f-hora-g').onclick = e => { const c = e.target.closest('[data-fh]'); if (!c) return; const n = new Date(); filtro.hora = c.dataset.fh === 'agora' ? pad(n.getHours()) + ':' + pad(n.getMinutes()) : ''; $('f-hora').value = filtro.hora; render(); };
+  $('f-limpar').onclick = () => { filtro = { subs: [], sqs: [], hora: '' }; render(); };
 }
 function render() {
   if (!user) return;
@@ -526,18 +560,25 @@ function render() {
   else if (erroLeitura === 'rede') { er.hidden = false; er.textContent = '⚠️ Não deu pra carregar a escala agora (conexão). Tente a semana de novo em instantes.'; }
   else er.hidden = true;
   renderFiltros();
+  const fh = $('fhora'); fh.hidden = !filtro.hora;
+  if (filtro.hora) fh.innerHTML = '🕒 Mostrando só quem está trabalhando às <b>' + esc(filtro.hora) + '</b> (folga e pausa ficam de fora). <button type="button" class="vlink" id="fhora-x">Ver o dia todo</button>';
   $('view').innerHTML = visao === 'squad' ? renderSquad() : renderGlobal();
   $('view').style.opacity = carregando ? '.45' : '';
   renderHoje(); renderAvisos();
   $('b-cad').disabled = !squadsEditaveis().length;
   $('b-cad').title = $('b-cad').disabled ? 'Você precisa estar inscrito em uma squad (entre uma vez no Maré) pra cadastrar escala' : '';
-  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.subs.length) u.searchParams.set('f_sub', filtro.subs.join(',')); else u.searchParams.delete('f_sub'); if (visao === 'global' && filtro.sqs.length) u.searchParams.set('f_sq', filtro.sqs.join(',')); else u.searchParams.delete('f_sq'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.subs.length) u.searchParams.set('f_sub', filtro.subs.join(',')); else u.searchParams.delete('f_sub'); if (visao === 'global' && filtro.sqs.length) u.searchParams.set('f_sq', filtro.sqs.join(',')); else u.searchParams.delete('f_sq'); if (filtro.hora) u.searchParams.set('f_hora', filtro.hora); else u.searchParams.delete('f_hora'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
 }
 function irParaSemana(d) { semana = segunda(d); dados = {}; carregarJanela(); render(); }
 
 // ═══ Modais ═══
-function abrirOv(html) { const ov = $('ov'); ov.innerHTML = '<div class="md" role="dialog" aria-modal="true">' + html + '</div>'; ov.hidden = false; }
-function fecharOv() { $('ov').hidden = true; $('ov').innerHTML = ''; }
+let ovVoltar = null;   // quem abriu o modal recebe o foco de volta ao fechar (teclado)
+function abrirOv(html) {
+  const ov = $('ov'); if (ov.hidden) ovVoltar = document.activeElement;
+  ov.innerHTML = '<div class="md" role="dialog" aria-modal="true" aria-labelledby="ov-t">' + html + '</div>'; ov.hidden = false;
+  const h2 = ov.querySelector('h2'); if (h2) { h2.id = 'ov-t'; h2.tabIndex = -1; h2.focus({ preventScroll: true }); }
+}
+function fecharOv() { $('ov').hidden = true; $('ov').innerHTML = ''; if (ovVoltar && ovVoltar.isConnected && ovVoltar.focus) ovVoltar.focus({ preventScroll: true }); ovVoltar = null; }
 $('ov').addEventListener('mousedown', e => { if (e.target === $('ov')) fecharOv(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').hidden) fecharOv(); });
 
@@ -568,7 +609,7 @@ function listaDia(grupos, multi) {
   grupos.forEach(g => {
     h += '<ul class="lista-dia">' + (multi ? '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(g.s.emoji + ' ' + g.s.label) + '</li>' : '');
     g.itens.forEach(x => {
-      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (pausaTxt(x.e) ? ' · ☕ pausa ' + esc(pausaTxt(x.e)) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
+      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (pausaTxt(x.e) ? ' · ☕ pausa ' + esc(pausaTxt(x.e)) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + (podeEditar(g.s.id, x.m.uid) ? '<button type="button" class="btn ico" data-edit="' + esc(x.m.uid) + '" data-esq="' + esc(g.s.id) + '" aria-label="Editar a escala de ' + esc(x.m.nome) + ' neste dia" title="Editar este dia">✏️</button>' : '') + '</li>';
     });
     h += '</ul>';
   });
@@ -640,19 +681,21 @@ function abrirDia(data, sqUnico, modo) {
   const d = parseISO(data); if (!d) return;
   if (modo) { diaModo = modo; lsSet('escala_dia_modo', modo); }
   const sqs = sqUnico ? squads.filter(s => s.id === sqUnico) : squadsEscopo().filter(s => membrosF(s.id).length);
-  const grupos = sqs.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: entrada(data, s.id, m.uid) })).filter(x => x.e).sort((a, b) => ordTipo[a.e.t] - ordTipo[b.e.t]) })).filter(g => g.itens.length);
+  const grupos = sqs.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: entradaF(data, s.id, m.uid) })).filter(x => x.e).sort((a, b) => ordTipo[a.e.t] - ordTipo[b.e.t]) })).filter(g => g.itens.length);
   const menc = [];
   grupos.forEach(g => g.itens.forEach(x => { if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init); }));   // quem está em duas squads entra uma vez só
   const multi = !sqUnico;
-  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
+  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : (sqs[0] ? ' — ' + esc(sqs[0].emoji + ' ' + sqs[0].label) : '')) + (filtro.hora ? ' · às ' + esc(filtro.hora) : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
   h += '<div class="seg dmodo" id="d-modo" role="tablist"><button type="button" data-dm="lista" role="tab" aria-selected="' + (diaModo === 'lista') + '">📋 Lista</button><button type="button" data-dm="gantt" role="tab" aria-selected="' + (diaModo === 'gantt') + '">📊 Visão Gantt</button></div>';
-  h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
-  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
+  h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.' + (squadsEditaveis().length ? '<br><span style="font-size:12.5px">Use <b>➕ Cadastrar escala</b> aqui embaixo para incluir a sua.</span>' : '') + '</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
+  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + (squadsEditaveis().length ? '<button type="button" class="btn primary" id="d-cad">➕ Cadastrar escala</button>' : '') + (grupos.length ? '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button>' : '') + '<span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
   abrirOv(h);
   $('ov').querySelector('.md').classList.toggle('gantt', diaModo === 'gantt');
   $('d-fechar').onclick = fecharOv;
-  $('d-jpg').onclick = () => abrirJpg('dia', data, diaModo);
-  $('d-modo').onclick = e => { const b = e.target.closest('[data-dm]'); if (b && b.dataset.dm !== diaModo) abrirDia(data, sqUnico, b.dataset.dm); };
+  if ($('d-jpg')) $('d-jpg').onclick = () => abrirJpg('dia', data, diaModo);
+  $('ov').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => abrirCadastro({ sq: b.dataset.esq, uid: b.dataset.edit, data }));
+  if ($('d-cad')) $('d-cad').onclick = () => abrirCadastro({ sq: sqUnico, data });   // já vem com este dia em De/Até e o dia da semana marcado
+  $('d-modo').onclick = e => { const b = e.target.closest('[data-dm]'); if (b && b.dataset.dm !== diaModo) { abrirDia(data, sqUnico, b.dataset.dm); const a = $('ov').querySelector('[data-dm="' + diaModo + '"]'); if (a) a.focus(); } };
   if ($('d-menc')) $('d-menc').onclick = async () => {
     const txt = menc.join(' ');
     try { await navigator.clipboard.writeText(txt); toast('Menções copiadas: ' + txt); } catch (e) { toast('Copie manualmente: ' + txt); }
@@ -673,7 +716,7 @@ function abrirCadastro(pre) {
     sq, uid: pre.uid || user.uid,
     de: unico ? pre.data : iso(semana), ate: unico ? pre.data : iso(dFim),
     dsem: unico ? new Set([diaSem(parseISO(pre.data))]) : new Set([0, 1, 2, 3, 4]),
-    t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '', p: ex ? pausasDe(ex) : [],
+    edita: !!ex, t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '', p: ex ? pausasDe(ex) : [],
   };
   desenharCadastro(editaveis);
 }
@@ -682,7 +725,7 @@ function desenharCadastro(editaveis) {
   if (!gestor) cad.uid = user.uid;
   const ms = membrosDoSquad(cad.sq);
   if (gestor && ms.length && !ms.find(m => m.uid === cad.uid)) cad.uid = ms[0].uid;   // ex.: ADM abrindo uma squad onde não está inscrito — a pessoa mostrada tem que ser a gravada
-  const h = '<h2>➕ Cadastrar escala</h2><p class="sub">' + (gestor ? 'Você é gestor desta squad: pode cadastrar a sua e a de qualquer pessoa.' : 'Cadastre os seus dias. (PO, Organizador e ADM da squad também podem cadastrar pelas outras pessoas.)') + '</p>' +
+  const h = '<h2>' + (cad.edita ? '✏️ Editar escala' : '➕ Cadastrar escala') + '</h2><p class="sub">' + (gestor ? 'Você é gestor desta squad: pode cadastrar a sua e a de qualquer pessoa.' : 'Cadastre os seus dias. (PO, Organizador e ADM da squad também podem cadastrar pelas outras pessoas.)') + '</p>' +
     '<label for="c-sq">Squad</label><select id="c-sq">' + editaveis.map(s => '<option value="' + esc(s.id) + '"' + (s.id === cad.sq ? ' selected' : '') + '>' + esc(s.emoji + ' ' + s.label) + '</option>').join('') + '</select>' +
     '<label for="c-uid">Pessoa</label>' + (gestor
       ? '<select id="c-uid">' + ms.map(m => '<option value="' + esc(m.uid) + '"' + (m.uid === cad.uid ? ' selected' : '') + '>' + esc(m.nome + (m.uid === user.uid ? ' (você)' : '')) + '</option>').join('') + '</select>'
@@ -695,11 +738,11 @@ function desenharCadastro(editaveis) {
       '<div class="lb">☕ Pausas no dia <span class="opt">(opcional)</span></div><div id="c-pausas"></div><button type="button" class="btn" id="c-addp">☕ Adicionar pausa (saída e volta)</button><p class="sub" style="margin:6px 0 0">Se a pessoa sai e volta no meio do expediente, a barra da Visão Gantt fica com um intervalo.</p></div>' +
     '<label for="c-n">Observação <span class="opt">(opcional)</span></label><input type="text" id="c-n" maxlength="140" value="' + esc(cad.n) + '" placeholder="Ex.: sobreaviso até 23h, lançamento da campanha…">' +
     '<div class="prev" id="c-prev"></div><div class="msg err" id="c-msg" hidden></div>' +
-    '<div class="acoes"><button type="button" class="btn primary" id="c-salvar">Cadastrar</button><button type="button" class="btn danger" id="c-limpar" title="Apaga a escala já cadastrada nesses dias">🗑 Limpar período</button><span class="grow"></span><button type="button" class="btn" id="c-cancelar">Cancelar</button></div>';
+    '<div class="acoes"><button type="button" class="btn primary" id="c-salvar">' + (cad.edita ? 'Salvar' : 'Cadastrar') + '</button><span class="grow"></span><button type="button" class="btn danger" id="c-limpar" title="Apaga a escala já cadastrada nesses dias">🗑 Limpar período</button><button type="button" class="btn" id="c-cancelar">Cancelar</button></div>';
   abrirOv(h);
   atualizarPrev(); pintarPausas();
   const o = $('ov');
-  $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); };
+  $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); $('c-sq').focus(); };
   if (gestor) $('c-uid').onchange = e => { cad.uid = e.target.value; atualizarPrev(); };
   ['c-de', 'c-ate'].forEach(id => { $(id).oninput = () => { lerForm(); atualizarPrev(); }; });
   ['c-i', 'c-f', 'c-n'].forEach(id => { $(id).oninput = () => { lerForm(); }; });
@@ -712,11 +755,20 @@ function desenharCadastro(editaveis) {
     if (a === 'bf') { cad.dsem = new Set([0, 1, 2, 3, 4, 5, 6]); o.querySelectorAll('[data-ds]').forEach(x => x.setAttribute('aria-pressed', 'true')); }   // Black Friday: a semana inteira conta
     atualizarPrev();
   });
-  o.querySelectorAll('[data-ds]').forEach(b => b.onclick = () => { const i = Number(b.dataset.ds); if (cad.dsem.has(i)) cad.dsem.delete(i); else cad.dsem.add(i); b.setAttribute('aria-pressed', cad.dsem.has(i)); atualizarPrev(); });
-  o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; });
+  o.querySelectorAll('[data-ds]').forEach(b => b.onclick = () => { const i = Number(b.dataset.ds); lerForm(); if (cad.dsem.has(i)) cad.dsem.delete(i); else cad.dsem.add(i); b.setAttribute('aria-pressed', cad.dsem.has(i)); ajustarPeriodoAosDias(); atualizarPrev(); });
+  o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; atualizarPrev(); });
   $('c-cancelar').onclick = fecharOv;
   $('c-salvar').onclick = () => confirmarCadastro(false);
   $('c-limpar').onclick = () => confirmarCadastro(true);
+}
+// Período dentro de uma semana só (ex.: aberto a partir de um dia): marcar/desmarcar dia da semana leva De/Até
+// pro primeiro e o último dia marcado daquela semana. Período maior que uma semana fica como a pessoa escreveu.
+function ajustarPeriodoAosDias() {
+  const a = parseISO(cad.de), b = parseISO(cad.ate);
+  if (!a || !b || b < a || iso(segunda(a)) !== iso(segunda(b)) || !cad.dsem.size) return;
+  const ds = [...cad.dsem].sort((x, y) => x - y), seg = segunda(a);
+  cad.de = iso(addDias(seg, ds[0])); cad.ate = iso(addDias(seg, ds[ds.length - 1]));
+  $('c-de').value = cad.de; $('c-ate').value = cad.ate;
 }
 function lerForm() {
   cad.de = $('c-de').value; cad.ate = $('c-ate').value; cad.i = $('c-i') ? $('c-i').value : ''; cad.f = $('c-f') ? $('c-f').value : ''; cad.n = $('c-n') ? $('c-n').value.trim() : '';
@@ -741,7 +793,7 @@ function atualizarPrev() {
   const m = membrosDoSquad(cad.sq).find(x => x.uid === cad.uid);
   if (r.erro) { el.className = 'prev ruim'; el.textContent = r.erro; return; }
   el.className = 'prev';
-  el.textContent = r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ' · ' + ((m && m.nome) || 'você') + ' · de ' + curto(parseISO(r.datas[0])) + ' a ' + curto(parseISO(r.datas[r.datas.length - 1]));
+  el.textContent = TIPOS[cad.t].emoji + ' ' + TIPOS[cad.t].nome + ' · ' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ' · ' + ((m && m.nome) || 'você') + ' · de ' + curto(parseISO(r.datas[0])) + ' a ' + curto(parseISO(r.datas[r.datas.length - 1]));
 }
 async function confirmarCadastro(limpar) {
   if (gravando) return;
@@ -773,7 +825,7 @@ async function confirmarCadastro(limpar) {
     await carregarJanela();
   } catch (e) {
     gravando = false;
-    if ($('c-salvar')) { $('c-salvar').disabled = false; $('c-limpar').disabled = false; $('c-salvar').textContent = 'Cadastrar'; }
+    if ($('c-salvar')) { $('c-salvar').disabled = false; $('c-limpar').disabled = false; $('c-salvar').textContent = cad.edita ? 'Salvar' : 'Cadastrar'; }
     const negado = e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
     if ($('c-msg')) { $('c-msg').textContent = negado ? '⚠️ Sem permissão pra gravar. Você só edita a sua própria escala (e precisa estar inscrito na squad) — PO, Organizador e ADM editam a de todos. Se for o seu caso e mesmo assim negou, as regras do banco podem não estar publicadas: avise o ADM.' : '⚠️ Não deu pra gravar agora (conexão). Tente de novo.'; $('c-msg').hidden = false; }
     return;
@@ -843,7 +895,7 @@ function jEscopo() {
   const s1 = squads.find(s => s.id === squad);
   return { lista, nome: visao === 'global' ? (filtro.sqs.length ? squadsEscopo().map(x => x.label).join(' + ') : 'Todas as squads') : (s1 ? s1.label : squad) };
 }
-const jEnt = (dd, data, sq, uid) => (((dd[data] || {})[sq] || {})[uid]) || null;
+const jEnt = (dd, data, sq, uid) => { const e = (((dd[data] || {})[sq] || {})[uid]) || null; return e && cobreHora(e) ? e : null; };
 function jDoDia(dd, sq, dt) {
   const ms = membrosF(sq), trab = [], folga = [];
   ms.forEach(m => { const e = jEnt(dd, dt, sq, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
@@ -855,7 +907,7 @@ function jMoldura(x, W, H, esc, per) {
   jT(x, 'Escala — ' + esc.nome, 28, 32, { s: 24, w: 700, max: W - 340 });
   jT(x, per.titulo, W - 28, 32, { s: 18, w: 700, c: JC.accent, a: 'right' });
   const gerado = new Date();
-  jT(x, (filtro.subs.length ? 'Subtime: ' + rotuloSubs() : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')), 28, 58, { s: 12.5, c: JC.txt2 });
+  jT(x, (filtro.subs.length ? 'Subtime: ' + rotuloSubs() : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')) + (filtro.hora ? ' · quem está às ' + filtro.hora : ''), 28, 58, { s: 12.5, c: JC.txt2 });
   [['trab', 'Escalado'], ['plant', 'Plantão'], ['folga', 'Folga']].reduce((px, [t, nome]) => {
     jRR(x, px, H - 36, 14, 14, 4, JC[t].bg, JC[t].c); jT(x, nome, px + 20, H - 29, { s: 12, c: JC.txt2 }); return px + 20 + x.measureText(nome).width + 22;
   }, 28);
@@ -871,7 +923,7 @@ function jCabDia(x, d, i, px, py, w, h, bf) {
   const s = iso(d), hj = s === hojeISO();
   if (hj) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(56,182,255,.16)'); else if (i >= 5) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(255,255,255,.03)');
   jT(x, DIAS[i], px + w / 2, py + h / 2 - 9, { s: 13.5, w: 700, c: hj ? JC.accent : JC.txt, a: 'center' });
-  jT(x, curto(d) + (s === iso(bf) ? '  🔥 BF' : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: s === iso(bf) ? JC.warn : JC.txt2, a: 'center' });
+  jT(x, curto(d) + (ehBF(s, bf) ? (s === iso(bf) ? '  🔥 BF' : '  🔥 véspera') : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: ehBF(s, bf) ? JC.warn : JC.txt2, a: 'center' });
 }
 
 function jSemanaSquad(per, dd, esc) {
@@ -1025,9 +1077,9 @@ function jMes(per, dd, esc) {
   dados2.forEach(r => {
     r.cel.forEach((z, i) => {
       const px = L + i * dW + 3, w = dW - 6, dt = iso(z.d), fora = z.ls === null, hj = dt === hojeISO();
-      jRR(x, px, y + 3, w, r.h - 6, 10, fora ? 'rgba(255,255,255,.012)' : (i >= 5 ? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.06)'), hj ? JC.accent : (dt === iso(bf) ? JC.warn : (fora ? null : 'rgba(255,255,255,.06)')));
+      jRR(x, px, y + 3, w, r.h - 6, 10, fora ? 'rgba(255,255,255,.012)' : (i >= 5 ? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.06)'), hj ? JC.accent : (ehBF(dt, bf) ? JC.warn : (fora ? null : 'rgba(255,255,255,.06)')));
       jT(x, String(z.d.getDate()), px + 10, y + 19, { s: 14, w: 700, c: fora ? JC.txt3 : (hj ? JC.accent : JC.txt) });
-      if (dt === iso(bf)) jT(x, '🔥 BF', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
+      if (ehBF(dt, bf)) jT(x, dt === iso(bf) ? '🔥 BF' : '🔥 véspera', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
       (z.ls || []).forEach((ln, k) => {
         const ly = y + 38 + k * LH;
         if (ln.r) { jT(x, ln.r, px + w - 10, ly, { s: 11.5, w: 700, c: ln.c, a: 'right' }); jT(x, ln.l, px + 10, ly, { s: 12, w: ln.w, c: ln.c, max: w - 20 - x.measureText(ln.r).width - 8 }); }
@@ -1079,7 +1131,7 @@ function abrirJpg(modo, refISO, estilo) {
   const sem = diasDaSemana().map(iso);
   jpg = { modo: modo || 'semana', estilo: estilo || diaModo, ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), canvas: null, nome: '' };
   const sc = jEscopo();
-  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.subs.length ? ' · subtime <b>' + esc(rotuloSubs()) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
+  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.subs.length ? ' · subtime <b>' + esc(rotuloSubs()) + '</b>' : '') + (filtro.hora ? ' · quem está às <b>' + esc(filtro.hora) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
     '<div class="seg" id="j-modo" role="tablist"><button type="button" data-m="dia">Dia</button><button type="button" data-m="semana">Semana</button><button type="button" data-m="mes">Mês</button></div>' +
     '<div class="seg" id="j-estilo" role="tablist" style="margin-top:8px" hidden><button type="button" data-e="lista">📋 Lista</button><button type="button" data-e="gantt">📊 Visão Gantt</button></div>' +
     '<div style="display:flex;gap:10px;align-items:center;margin:12px 0 4px;flex-wrap:wrap"><input type="date" id="j-ref" style="max-width:180px" aria-label="Data de referência"><b id="j-per" style="font-size:14px"></b></div>' +
@@ -1107,6 +1159,7 @@ $('b-bf').onclick = () => irParaSemana(proximaBF());
 $('b-cad').onclick = () => abrirCadastro();
 $('b-jpg').onclick = () => abrirJpg();
 $('b-filtros').onclick = abrirFiltros;
+$('fhora').addEventListener('click', e => { if (e.target.closest('#fhora-x')) { filtro.hora = ''; render(); } });
 $('ov').addEventListener('click', e => {
   const pop = e.target.closest('#f-sqs, #f-subs'); if (!pop) return;
   const sq = e.target.closest('[data-fsq]'), sb = e.target.closest('[data-fsub]');
@@ -1157,7 +1210,7 @@ async function iniciar() {
   squad = [qs, ls].find(x => x && squads.find(s => s.id === x)) || (meus[0] && meus[0].id) || (squads[0] && squads[0].id) || '';
   visao = q.get('visao') === 'global' || (!meus.length && !qs) ? 'global' : 'squad';
   const sm = parseISO(q.get('semana') || ''); if (sm) semana = segunda(sm);
-  filtro = { subs: (q.get('f_sub') || '').split(',').map(x => x.trim()).filter(Boolean), sqs: (q.get('f_sq') || '').split(',').map(x => x.trim()).filter(Boolean) };
+  filtro = { subs: (q.get('f_sub') || '').split(',').map(x => x.trim()).filter(Boolean), sqs: (q.get('f_sq') || '').split(',').map(x => x.trim()).filter(Boolean), hora: /^([01]\d|2[0-3]):[0-5]\d$/.test(q.get('f_hora') || '') ? q.get('f_hora') : '' };
   $('loading').hidden = true; $('app').hidden = false;
   await carregarJanela();
 }

@@ -87,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-23 · Escala › Cadastro — marcar dia da semana não mudava De/Até
+### 2026-11-23 · Escala › Cadastro — marcar dia da semana não mudava De/Até (#1908) — PROD 23/11 (escala v1.14)
 
 escala-dev v1.13. Com o cadastro aberto a partir de um dia (De = Até = 25/11, Qua), marcar Qui deixava o período em 25/11–25/11 e a quinta não entrava. Agora, quando De e Até caem na mesma semana, marcar ou desmarcar um dia leva De/Até para o primeiro e o último dia marcado daquela semana (`ajustarPeriodoAosDias`). Período maior que uma semana continua como a pessoa escreveu.
 
