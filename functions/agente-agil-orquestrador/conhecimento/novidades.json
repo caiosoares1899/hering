@@ -1,5 +1,20 @@
 [
  {
+  "data": "2026-11-23",
+  "titulo": "Oceano — atalho 🗓️ Escala na linha de atalhos (#1911) — PROD 23/11 (oceano v1.89) — 2026-11-23",
+  "texto": "oceano-dev (pedido do time). Na linha Atalhos da tela inicial entra 🗓️ Escala · quem trabalha quando, para quem usa o Maré; abre a Escala em aba nova (como o \"Abrir Escala\" da Ajuda). Teste em test_oceano.js. Dica: não — o atalho aparece sozinho na linha que a pessoa já usa."
+ },
+ {
+  "data": "2026-11-23",
+  "titulo": "Escala — 🕒 filtro por horário (#1909) — PROD 23/11 (escala v1.14 · kanban v8.30.1017) — 2026-11-23",
+  "texto": "escala-dev v1.14 (pedido do time). Em 🔎 Filtros entra o grupo Horário: escolha uma hora (ou Agora) e a grade, o resumo do dia, a faixa \"Hoje\", os avisos de dia sem ninguém e o JPG mostram só quem está trabalhando naquele horário. Folga sai; quem não tem horário cadastrado conta como o dia todo; pausa naquele horário conta como fora. Uma faixa avisa o filtro ativo, com Ver o dia todo; o horário vai para o link (f_hora). O botão 🔎 Filtros passa a aparecer sempre (antes sumia com uma squad só e sem subtime). Teste test_escala_filtro_hora.js. Dica: não — a Escala não carrega o módulo de dicas; o filtro entrou na Ajuda do Maré (Escala)."
+ },
+ {
+  "data": "2026-11-23",
+  "titulo": "Escala — Cadastrar escala direto do dia e quinta da Black Friday em laranja (#1908) — PROD 23/11 (escala v1.14) — 2026-11-23",
+  "texto": "escala-dev v1.13 (pedido do time).\n- O resumo do dia (clique no cabeçalho do dia) ganhou ➕ Cadastrar escala, que abre o cadastro já com aquele dia em De/Até e o dia da semana marcado. Só aparece para quem pode cadastrar em alguma squad.\n- A quinta antes da Black Friday também fica em laranja, com o selo \"🔥 VÉSPERA DA BF\" (só a sexta diz BLACK FRIDAY), na grade, na visão de todas as squads e no JPG: o time trabalha a virada de quinta pra sexta, e na sexta quase não há escala. Dica: não, porque o botão aparece no próprio resumo do dia e a cor não pede explicação.\n- Rodada de UI/UX (resumo do dia e cadastro): o resumo diz de qual squad é; o dia vazio explica como cadastrar e não oferece mais um JPG vazio; cada pessoa da lista ganha ✏️ (só quem pode editar aquela escala), que abre o cadastro dela naquele dia; o cadastro aberto sobre um dia já preenchido vira ✏️ Editar escala / Salvar; a prévia diz o tipo (\"🔥 Plantão · 3 dias · …\"); 🗑 Limpar período saiu do lado do botão principal; o foco entra no modal e volta para onde estava ao fechar; no toque (celular/iPad), botões e dias da semana com 44 px e campos com 16 px (sem o zoom do iOS). Teste test_escala_dia_ui.js."
+ },
+ {
   "data": "2026-11-19",
   "titulo": "Apresentação do Radar — relógio opcional ao iniciar a apresentação ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19",
   "texto": "okr-apresentacao.slide.html (sem par -dev; entra no ar no merge). Etapa 1 do desenho do PR #1904. Apresentar ao vivo agora abre um diálogo com três saídas: Iniciar com cronômetro, Iniciar sem cronômetro e Cancelar (Esc também cancela).\n- Com cronômetro: o término vem sugerido pela ocorrência do Calendário do dia ou pela agenda configurada para hoje, e pode ser editado. Também dá para informar só a duração. Começar atrasado não prorroga o término. A barra mostra \"⏱ X decorridos · ⏳ Y restantes\".\n- Sem cronômetro: a sessão grava modo: 'livre' e a barra não mostra contagem, mesmo com agenda no dia. Mudança de comportamento: antes a contagem da agenda aparecia sempre.\n- O relógio fica na própria sessão (apresentacao_live/relogio: modo, inicioEm, fimEm, origem), em horário do servidor. Por isso vale igual para todas as telas, para o Bastidor, depois de passar ou retomar o controle e depois de recarregar. \"Configurar horário\" no meio da sessão ajusta o término.\n- O início usa transação: se outra pessoa iniciou enquanto o diálogo estava aberto, a sessão dela não é sobrescrita. O clique duplo inicia uma vez só.\n- Valores fora do formato no banco são ignorados na leitura. Não há regra nem função nova.\nTeste: docs/arezzo/testes/test_relogio_reuniao.js. As outras suítes da apresentação passaram a escolher a opção no diálogo."
@@ -133,20 +148,5 @@
   "data": "2026-11-19",
   "titulo": "Apresentação do Radar — horizonte marinho na Evolução do atingimento — PROD 21/11 (no ar desde o merge) — 2026-11-19",
   "texto": "O gráfico distingue o céu da área submersa com um horizonte ciano, reflexos discretos abaixo da meta e um degradê que escurece com a profundidade. A curva e o peixe neon permanecem, e a superfície continua posicionada no valor exato da meta."
- },
- {
-  "data": "2026-11-18",
-  "titulo": "Apresentação do Radar — Evolução do atingimento em neon sobre a linha d’água (#1870) — PROD 18/11 (no ar desde o merge) — 2026-11-18",
-  "texto": "A curva volta ao rosa neon, a meta vira uma linha fina em ciano com degradê azul abaixo e o painel segue a moldura Marine Glass do detalhe do Objetivo. Uma faixa mostra valor atual, distância até a meta, atingimento e período. Só o registro mais recente tem peixe e valor escrito, e a lista de registros começa recolhida. O cálculo do atingimento não muda."
- },
- {
-  "data": "2026-11-18",
-  "titulo": "Apresentação do Radar — meta como linha d’água na Evolução do atingimento (#1868) — PROD 18/11 (no ar desde o merge) — 2026-11-18",
-  "texto": "No gráfico de Evolução da apresentação, a meta vira a superfície da água. Resultados aquém da meta ficam submersos, na meta ficam na linha e além dela ficam fora da água, com um peixe em cada registro e o lado escrito no gráfico. Em metas de redução o eixo inverte para o lado bom continuar acima da água. Datas, valores e o cálculo do atingimento não mudam."
- },
- {
-  "data": "2026-11-18",
-  "titulo": "Apresentação do Radar — detalhe do Objetivo com menos rolagem em Marcos, Riscos e Próximos passos (#1865) — PROD 18/11 (no ar desde o merge) — 2026-11-18",
-  "texto": "A altura da tela passa a ser dividida pelo conteúdo real. Riscos e Próximos passos aparecem inteiros até 40% da altura, os Marcos ficam com o restante, e Progressos, Planos e a coluna da esquerda cedem espaço primeiro. Quando nem tudo cabe, a rolagem continua disponível. Com 14 Marcos, a rolagem da tabela cai de 195 px para 93 px em 1366 × 768 e some em 1280 × 900."
  }
 ]
