@@ -18,6 +18,14 @@ const seed=role=>({kanban:{usuarios:{eve:{uid:'eve',nome:'Eve',email:'eve@ciaher
    t(`${nome}: aba Hering lista os links (sem o javascript:), por cima do board e dentro da tela`, h2.links==='Portal RH,ServiceDesk' && h2.topo && h2.dentro, h2);
    await p.keyboard.press('Escape'); await p.waitForTimeout(150); t(`${nome}: Esc fecha o menu`, await p.evaluate(()=>getComputedStyle(document.getElementById('mn-apps-pop')).display==='none'), 'aberto');
    t(`${nome}: sem erro de JS`, !errs.length, errs); await ctx.close(); }
+ { const {ctx,p}=await open('membro',1280,800);   // 🗓️ Escala sazonal (semana da Black Friday, 23/11/2026)
+   const datas=await p.evaluate(()=>['2026-11-22T23:00','2026-11-23T00:01','2026-11-29T23:00','2026-11-30T00:01','2027-11-22T10:00'].map(d=>MareNotif.semanaBF(new Date(d))).join());
+   t('semana da BF: seg 23/11 a dom 29/11 de 2026 (e 22–28/11 em 2027)', datas==='false,true,true,false,true', datas);
+   t('fora do teste (fakefb desliga): sem tile da Escala', !(await p.evaluate(()=>{ document.getElementById('mn-apps-btn').click(); return [...document.querySelectorAll('#mn-apps-pop .mn-app-n')].some(x=>x.textContent==='Escala'); })), 0);
+   await p.keyboard.press('Escape'); await p.evaluate(()=>localStorage.setItem('mare_apps_bf_teste','1')); await p.click('#mn-apps-btn'); await p.waitForTimeout(200);
+   const e=await p.evaluate(()=>{ const a=[...document.querySelectorAll('#mn-apps-pop a.mn-app')].find(x=>/Escala/.test(x.textContent)); return a ? {href:a.getAttribute('href'), app:a.hasAttribute('data-app'), alvo:a.target} : null; });
+   t('na semana da BF: tile 🗓️ Escala abre a Escala em aba nova (link comum, sem data-app)', e && /^escala(-dev)?\.html$/.test(e.href) && !e.app && e.alvo==='_blank', e);
+   await ctx.close(); }
  for(const role of ['adm','po']){ const {ctx,p}=await open(role,1280,800); await p.click('#mn-apps-btn'); await p.waitForTimeout(250);
    t(`papel ${role}: aba Produtos inclui o Painel`, (await p.evaluate(()=>[...document.querySelectorAll('#mn-apps-pop .mn-app-n')].map(x=>x.textContent).join()))==='Maré Digital,Painel,Radar,A Bordo', 'tiles'); await ctx.close(); }
  { const {ctx,p}=await open('membro',1280,800); const r=await p.evaluate(async()=>{ openHelp(); await new Promise(r=>setTimeout(r,400)); return /Menu de produtos \(⋮⋮⋮\) e a página Oceano/.test(document.body.innerText); }); t('Central de Ajuda tem a entrada "Menu de produtos e a página Oceano"', r, r);
