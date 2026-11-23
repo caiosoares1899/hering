@@ -71,6 +71,9 @@
   .fgrp-t{ margin:16px 0 0; font-size:11px; color:var(--txt3); letter-spacing:.06em; text-transform:uppercase; }
   .fgrp-t[hidden]{ display:none; }
   .fchip{ padding:6px 12px !important; font-size:12.5px !important; }
+  #f-hora{ width:auto; padding:6px 10px; }
+  .fhora{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 12px; padding:9px 14px; border-radius:12px; background:rgba(56,182,255,.08); border:1px solid rgba(56,182,255,.3); box-shadow:var(--specular); font-size:13px; color:var(--txt2); }
+  .fhora b{ color:var(--txt); }
   /* visão Gantt do dia: uma linha por pessoa, barra do horário que ela está */
   .md.gantt{ max-width:900px; }
   .dmodo{ margin:8px 0 2px; }
@@ -222,12 +225,13 @@
         <button type="button" class="btn bf" id="b-bf" title="Pula pra semana da Black Friday">🔥 Black Friday</button>
       </div>
       <span class="grow"></span>
-      <button type="button" class="btn" id="b-filtros" title="Filtrar por squad e subtime" hidden>🔎 Filtros<span class="fbadge" id="f-badge" hidden></span></button>
+      <button type="button" class="btn" id="b-filtros" title="Filtrar por squad, subtime e horário" hidden>🔎 Filtros<span class="fbadge" id="f-badge" hidden></span></button>
       <button type="button" class="btn" id="b-jpg" title="Baixar a escala em imagem JPG (dia, semana ou mês)">🖼️ Baixar JPG</button>
       <button type="button" class="btn primary" id="b-cad">➕ Cadastrar escala</button>
     </div>
     <div id="erro" class="erro" hidden></div>
     <div id="hoje" class="hoje" hidden></div>
+    <div id="fhora" class="fhora" hidden></div>
     <div id="view" class="scroll"></div>
     <div id="avisos" class="avisos" hidden></div>
     <div class="legenda">
@@ -248,7 +252,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.13 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.14 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -315,7 +319,7 @@ let squad = '';
 let semana = segunda(new Date());
 let dados = {};             // escala da janela: { 'YYYY-MM-DD': { squadId: { uid: entry } } }
 let cfgSquad = {};          // por squad: { subtimes:[{name,members:[init]}] } — lido de kanban/squads/{sq}/dados/subtimes
-let filtro = { subs: [], sqs: [] };   // filtros da tela: subtimes (por nome, vários) e — só na visão global — squads (ids; vazio = todas)
+let filtro = { subs: [], sqs: [], hora: '' };   // filtros da tela: subtimes (por nome, vários) e — só na visão global — squads (ids; vazio = todas)
 let erroLeitura = '';       // '' | 'regras' | 'rede'
 let carregando = false;     // leitura da janela em andamento (a tabela fica esmaecida em vez de mostrar dados de outra semana)
 let janelaSeq = 0;          // só a última leitura da janela escreve no estado
@@ -349,6 +353,18 @@ function membrosF(sq) { const ms = membrosDoSquad(sq); return filtro.subs.length
 function squadsEscopo() { return visao === 'global' ? (filtro.sqs.length ? squads.filter(s => filtro.sqs.includes(s.id)) : squads) : squads.filter(s => s.id === squad); }
 const rotuloSubs = () => filtro.subs.join(', ');
 const entrada = (data, sq, uid) => (((dados[data] || {})[sq] || {})[uid]) || null;
+// Filtro de horário: "quem está trabalhando às HH:MM". Folga sai; sem horário cadastrado conta como o dia todo;
+// só entrada (ou só saída) vale a partir dela (ou até ela); pausa naquele horário conta como fora.
+function cobreHora(e) {
+  if (!filtro.hora) return true;
+  if (!e || e.t === 'folga') return false;
+  const h = hm(filtro.hora), a = hm(e.i), b = hm(e.f);
+  if (a != null && h < a) return false;
+  if (b != null && h >= b) return false;
+  return !pausasDe(e).some(([pa, pb]) => hm(pa) <= h && h < hm(pb));
+}
+// O que a TELA mostra (com o filtro de horário). O cadastro continua lendo `entrada` (o dado real).
+const entradaF = (data, sq, uid) => { const e = entrada(data, sq, uid); return e && cobreHora(e) ? e : null; };
 
 function av(m, extra) {
   const ini = esc((m.init || m.nome || '?').slice(0, 2).toUpperCase());
@@ -410,10 +426,10 @@ function cabecalhoDias(dias, bf) {
 }
 function coberturaDoDia(sq, data) {
   let n = 0, p = 0;
-  membrosF(sq).forEach(m => { const e = entrada(data, sq, m.uid); if (e && (e.t === 'trab' || e.t === 'plant')) { n++; if (e.t === 'plant') p++; } });
+  membrosF(sq).forEach(m => { const e = entradaF(data, sq, m.uid); if (e && (e.t === 'trab' || e.t === 'plant')) { n++; if (e.t === 'plant') p++; } });
   return { n, p };
 }
-function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m => entrada(iso(d), sq, m.uid))); }
+function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m => entradaF(iso(d), sq, m.uid))); }
 
 function renderSquad() {
   const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
@@ -423,7 +439,7 @@ function renderSquad() {
   ms.forEach(m => {
     h += '<tr><th class="pess"><div class="pnome">' + av(m) + '<div><b>' + esc(m.nome) + (m.uid === user.uid ? ' <span style="color:var(--accent);font-weight:500">(você)</span>' : '') + '</b><small>' + (m.init ? '@' + esc(m.init) : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : '') + '</small></div></div></th>';
     dias.forEach((d, i) => {
-      const s = iso(d), e = entrada(s, squad, m.uid), pode = podeEditar(squad, m.uid);
+      const s = iso(d), e = entradaF(s, squad, m.uid), pode = podeEditar(squad, m.uid);
       h += '<td class="' + (s === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (ehBF(s, bf) ? 'bfdia' : '') + '"><button type="button" class="cel' + (pode ? ' edit' : '') + '" data-u="' + esc(m.uid) + '" data-d="' + s + '"' + (pode ? '' : ' tabindex="-1"') + '>' +
         (e ? chipTipo(e) : (pode ? '<span class="ghost">＋</span>' : '')) + '</button></td>';
     });
@@ -448,7 +464,7 @@ function renderGlobal() {
     h += '<tr><th class="pess sqn"><span class="nm">' + esc(s.emoji + ' ' + s.label) + '</span><small>' + ms.length + ' pessoa' + (ms.length > 1 ? 's' : '') + (tem ? '' : ' · <span class="semescala">' + 'sem escala cadastrada' + '</span>') + '</small><button type="button" class="vlink" data-ver="' + esc(s.id) + '">ver squad ›</button></th>';
     dias.forEach((d, i) => {
       const dt = iso(d), trab = [], folga = [];
-      ms.forEach(m => { const e = entrada(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
+      ms.forEach(m => { const e = entradaF(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
       trab.sort((a, b) => (a.e.t === 'plant' ? 0 : 1) - (b.e.t === 'plant' ? 0 : 1));
       const vazio = tem && i < 5 && !trab.length;
       const tip = trab.length ? trab.map(x => x.m.nome + (x.e.t === 'plant' ? ' (plantão)' : '')).join(', ') : (vazio ? 'Ninguém escalado neste dia útil' : '');
@@ -466,7 +482,7 @@ function renderHoje() {
   if (!dias.includes(hj)) { box.hidden = true; return; }
   const sqs = visao === 'global' ? squadsEscopo().map(s => s.id) : [squad];
   const plant = [], trab = new Set();
-  sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entrada(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
+  sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entradaF(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
   const uniq = []; plant.forEach(m => { if (!uniq.find(x => x.uid === m.uid)) uniq.push(m); });
   box.innerHTML = '<span>Hoje, <b>' + curto(new Date()) + '</b></span><span>✅ <b>' + trab.size + '</b> escalado' + (trab.size === 1 ? '' : 's') + '</span>' +
     '<span>🔥 Plantão: ' + (uniq.length ? '<span class="avs">' + uniq.slice(0, 6).map(m => av(m, 'plant')).join('') + '</span> ' + esc(uniq.slice(0, 3).map(m => m.nome.split(' ')[0]).join(', ')) + (uniq.length > 3 ? ' +' + (uniq.length - 3) : '') : '<span style="color:var(--txt3)">ninguém</span>') + '</span>';
@@ -481,7 +497,7 @@ function renderAvisos() {
     if (dd.length) furos.push('<b>' + esc(s.label) + '</b>: ' + dd.join(', '));
   });
   if (!furos.length) { box.hidden = true; return; }
-  box.innerHTML = '⚠️ Dias úteis sem ninguém escalado — ' + furos.join(' · ');
+  box.innerHTML = '⚠️ Dias úteis sem ninguém escalado' + (filtro.hora ? ' às ' + esc(filtro.hora) : '') + ' — ' + furos.join(' · ');
   box.hidden = false;
 }
 // Filtros: um botão "🔎 Filtros" na barra (com o número de filtros ativos) que abre uma mini tela com os chips — a escala não perde espaço.
@@ -491,16 +507,16 @@ function subtimesDoEscopo() {
   const subs = new Map(); squadsEscopo().forEach(x => ((cfgSquad[x.id] || {}).subtimes || []).forEach(st => { if (!subs.has(norm(st.name))) subs.set(norm(st.name), st.name); }));
   return subs;
 }
-function nFiltros() { return filtro.subs.length + (visao === 'global' ? filtro.sqs.length : 0); }
+function nFiltros() { return filtro.subs.length + (visao === 'global' ? filtro.sqs.length : 0) + (filtro.hora ? 1 : 0); }
 function renderFiltros() {
   filtro.sqs = filtro.sqs.filter(id => squads.some(x => x.id === id));
   const subs = subtimesDoEscopo();
   filtro.subs = filtro.subs.filter(n => subs.has(norm(n)));   // subtime que sumiu do escopo deixa de filtrar
   const n = nFiltros(), b = $('b-filtros');
-  b.hidden = !(squads.length > 1 || subs.size);   // uma squad só e sem nenhum subtime: o botão some
+  b.hidden = false;   // o horário vale pra qualquer squad: o botão fica sempre
   $('f-badge').hidden = !n; $('f-badge').textContent = n; b.classList.toggle('on', n > 0);
-  const nomes = (visao === 'global' ? filtro.sqs.map(id => (squads.find(x => x.id === id) || {}).label) : []).concat(filtro.subs).filter(Boolean);
-  b.title = n ? 'Filtros ativos: ' + nomes.join(', ') : 'Filtrar por squad e subtime';
+  const nomes = (visao === 'global' ? filtro.sqs.map(id => (squads.find(x => x.id === id) || {}).label) : []).concat(filtro.subs).concat(filtro.hora ? ['🕒 às ' + filtro.hora] : []).filter(Boolean);
+  b.title = n ? 'Filtros ativos: ' + nomes.join(', ') : 'Filtrar por squad, subtime e horário';
   if ($('f-sqs')) pintarFiltros();   // a mini tela está aberta: acompanha o que mudou na página
 }
 function pintarFiltros() {
@@ -513,6 +529,8 @@ function pintarFiltros() {
   const sbEl = $('f-subs');
   sbEl.hidden = $('f-subs-t').hidden = !lista.length;
   if (lista.length) sbEl.innerHTML = chip('data-fsub', '', 'Todos', !filtro.subs.length) + lista.map(n => chip('data-fsub', n, esc(n), filtro.subs.some(f => norm(f) === norm(n)))).join('');
+  const fi = $('f-hora'); if (fi && document.activeElement !== fi) fi.value = filtro.hora;
+  $('f-hora-g').querySelector('[data-fh=""]').setAttribute('aria-pressed', !filtro.hora);
   $('f-limpar').disabled = !nFiltros();
   $('f-fechar').textContent = nFiltros() ? 'Pronto (' + nFiltros() + ')' : 'Pronto';
 }
@@ -520,11 +538,15 @@ function abrirFiltros() {
   abrirOv('<h2>🔎 Filtros</h2><p class="sub">' + (visao === 'global' ? 'Escolha quais squads e subtimes aparecem. Vale também pro JPG.' : 'Troque de squad ou escolha só um subtime. Vale também pro JPG.') + '</p>' +
     '<div class="fgrp-t" id="f-sqs-t">Squad</div><div class="fgrp" id="f-sqs" role="group" aria-label="Filtrar por squad"></div>' +
     '<div class="fgrp-t" id="f-subs-t">Subtime</div><div class="fgrp" id="f-subs" role="group" aria-label="Filtrar por subtime"></div>' +
+    '<div class="fgrp-t">Horário</div><div class="fgrp" id="f-hora-g" role="group" aria-label="Filtrar por horário"><input type="time" id="f-hora" aria-label="Quem está trabalhando às"><button type="button" class="chip fchip" data-fh="agora">Agora</button><button type="button" class="chip fchip" data-fh="">Qualquer horário</button></div>' +
+    '<p class="sub" style="margin:6px 0 0">Mostra só quem está trabalhando nesse horário. Sem horário cadastrado conta como o dia todo.</p>' +
     '<div class="acoes"><button type="button" class="btn" id="f-limpar">✕ Limpar filtros</button><span class="grow"></span><button type="button" class="btn primary" id="f-fechar">Pronto</button></div>');
   $('ov').firstElementChild.classList.add('mini');
   pintarFiltros();
   $('f-fechar').onclick = fecharOv;
-  $('f-limpar').onclick = () => { filtro = { subs: [], sqs: [] }; render(); };
+  $('f-hora').onchange = e => { const v = e.target.value; filtro.hora = /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : ''; render(); };
+  $('f-hora-g').onclick = e => { const c = e.target.closest('[data-fh]'); if (!c) return; const n = new Date(); filtro.hora = c.dataset.fh === 'agora' ? pad(n.getHours()) + ':' + pad(n.getMinutes()) : ''; $('f-hora').value = filtro.hora; render(); };
+  $('f-limpar').onclick = () => { filtro = { subs: [], sqs: [], hora: '' }; render(); };
 }
 function render() {
   if (!user) return;
@@ -538,12 +560,14 @@ function render() {
   else if (erroLeitura === 'rede') { er.hidden = false; er.textContent = '⚠️ Não deu pra carregar a escala agora (conexão). Tente a semana de novo em instantes.'; }
   else er.hidden = true;
   renderFiltros();
+  const fh = $('fhora'); fh.hidden = !filtro.hora;
+  if (filtro.hora) fh.innerHTML = '🕒 Mostrando só quem está trabalhando às <b>' + esc(filtro.hora) + '</b> (folga e pausa ficam de fora). <button type="button" class="vlink" id="fhora-x">Ver o dia todo</button>';
   $('view').innerHTML = visao === 'squad' ? renderSquad() : renderGlobal();
   $('view').style.opacity = carregando ? '.45' : '';
   renderHoje(); renderAvisos();
   $('b-cad').disabled = !squadsEditaveis().length;
   $('b-cad').title = $('b-cad').disabled ? 'Você precisa estar inscrito em uma squad (entre uma vez no Maré) pra cadastrar escala' : '';
-  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.subs.length) u.searchParams.set('f_sub', filtro.subs.join(',')); else u.searchParams.delete('f_sub'); if (visao === 'global' && filtro.sqs.length) u.searchParams.set('f_sq', filtro.sqs.join(',')); else u.searchParams.delete('f_sq'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.subs.length) u.searchParams.set('f_sub', filtro.subs.join(',')); else u.searchParams.delete('f_sub'); if (visao === 'global' && filtro.sqs.length) u.searchParams.set('f_sq', filtro.sqs.join(',')); else u.searchParams.delete('f_sq'); if (filtro.hora) u.searchParams.set('f_hora', filtro.hora); else u.searchParams.delete('f_hora'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
 }
 function irParaSemana(d) { semana = segunda(d); dados = {}; carregarJanela(); render(); }
 
@@ -657,11 +681,11 @@ function abrirDia(data, sqUnico, modo) {
   const d = parseISO(data); if (!d) return;
   if (modo) { diaModo = modo; lsSet('escala_dia_modo', modo); }
   const sqs = sqUnico ? squads.filter(s => s.id === sqUnico) : squadsEscopo().filter(s => membrosF(s.id).length);
-  const grupos = sqs.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: entrada(data, s.id, m.uid) })).filter(x => x.e).sort((a, b) => ordTipo[a.e.t] - ordTipo[b.e.t]) })).filter(g => g.itens.length);
+  const grupos = sqs.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: entradaF(data, s.id, m.uid) })).filter(x => x.e).sort((a, b) => ordTipo[a.e.t] - ordTipo[b.e.t]) })).filter(g => g.itens.length);
   const menc = [];
   grupos.forEach(g => g.itens.forEach(x => { if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init); }));   // quem está em duas squads entra uma vez só
   const multi = !sqUnico;
-  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : (sqs[0] ? ' — ' + esc(sqs[0].emoji + ' ' + sqs[0].label) : '')) + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
+  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : (sqs[0] ? ' — ' + esc(sqs[0].emoji + ' ' + sqs[0].label) : '')) + (filtro.hora ? ' · às ' + esc(filtro.hora) : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
   h += '<div class="seg dmodo" id="d-modo" role="tablist"><button type="button" data-dm="lista" role="tab" aria-selected="' + (diaModo === 'lista') + '">📋 Lista</button><button type="button" data-dm="gantt" role="tab" aria-selected="' + (diaModo === 'gantt') + '">📊 Visão Gantt</button></div>';
   h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.' + (squadsEditaveis().length ? '<br><span style="font-size:12.5px">Use <b>➕ Cadastrar escala</b> aqui embaixo para incluir a sua.</span>' : '') + '</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
   h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + (squadsEditaveis().length ? '<button type="button" class="btn primary" id="d-cad">➕ Cadastrar escala</button>' : '') + (grupos.length ? '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button>' : '') + '<span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
@@ -871,7 +895,7 @@ function jEscopo() {
   const s1 = squads.find(s => s.id === squad);
   return { lista, nome: visao === 'global' ? (filtro.sqs.length ? squadsEscopo().map(x => x.label).join(' + ') : 'Todas as squads') : (s1 ? s1.label : squad) };
 }
-const jEnt = (dd, data, sq, uid) => (((dd[data] || {})[sq] || {})[uid]) || null;
+const jEnt = (dd, data, sq, uid) => { const e = (((dd[data] || {})[sq] || {})[uid]) || null; return e && cobreHora(e) ? e : null; };
 function jDoDia(dd, sq, dt) {
   const ms = membrosF(sq), trab = [], folga = [];
   ms.forEach(m => { const e = jEnt(dd, dt, sq, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
@@ -883,7 +907,7 @@ function jMoldura(x, W, H, esc, per) {
   jT(x, 'Escala — ' + esc.nome, 28, 32, { s: 24, w: 700, max: W - 340 });
   jT(x, per.titulo, W - 28, 32, { s: 18, w: 700, c: JC.accent, a: 'right' });
   const gerado = new Date();
-  jT(x, (filtro.subs.length ? 'Subtime: ' + rotuloSubs() : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')), 28, 58, { s: 12.5, c: JC.txt2 });
+  jT(x, (filtro.subs.length ? 'Subtime: ' + rotuloSubs() : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')) + (filtro.hora ? ' · quem está às ' + filtro.hora : ''), 28, 58, { s: 12.5, c: JC.txt2 });
   [['trab', 'Escalado'], ['plant', 'Plantão'], ['folga', 'Folga']].reduce((px, [t, nome]) => {
     jRR(x, px, H - 36, 14, 14, 4, JC[t].bg, JC[t].c); jT(x, nome, px + 20, H - 29, { s: 12, c: JC.txt2 }); return px + 20 + x.measureText(nome).width + 22;
   }, 28);
@@ -1107,7 +1131,7 @@ function abrirJpg(modo, refISO, estilo) {
   const sem = diasDaSemana().map(iso);
   jpg = { modo: modo || 'semana', estilo: estilo || diaModo, ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), canvas: null, nome: '' };
   const sc = jEscopo();
-  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.subs.length ? ' · subtime <b>' + esc(rotuloSubs()) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
+  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.subs.length ? ' · subtime <b>' + esc(rotuloSubs()) + '</b>' : '') + (filtro.hora ? ' · quem está às <b>' + esc(filtro.hora) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
     '<div class="seg" id="j-modo" role="tablist"><button type="button" data-m="dia">Dia</button><button type="button" data-m="semana">Semana</button><button type="button" data-m="mes">Mês</button></div>' +
     '<div class="seg" id="j-estilo" role="tablist" style="margin-top:8px" hidden><button type="button" data-e="lista">📋 Lista</button><button type="button" data-e="gantt">📊 Visão Gantt</button></div>' +
     '<div style="display:flex;gap:10px;align-items:center;margin:12px 0 4px;flex-wrap:wrap"><input type="date" id="j-ref" style="max-width:180px" aria-label="Data de referência"><b id="j-per" style="font-size:14px"></b></div>' +
@@ -1135,6 +1159,7 @@ $('b-bf').onclick = () => irParaSemana(proximaBF());
 $('b-cad').onclick = () => abrirCadastro();
 $('b-jpg').onclick = () => abrirJpg();
 $('b-filtros').onclick = abrirFiltros;
+$('fhora').addEventListener('click', e => { if (e.target.closest('#fhora-x')) { filtro.hora = ''; render(); } });
 $('ov').addEventListener('click', e => {
   const pop = e.target.closest('#f-sqs, #f-subs'); if (!pop) return;
   const sq = e.target.closest('[data-fsq]'), sb = e.target.closest('[data-fsub]');
@@ -1185,7 +1210,7 @@ async function iniciar() {
   squad = [qs, ls].find(x => x && squads.find(s => s.id === x)) || (meus[0] && meus[0].id) || (squads[0] && squads[0].id) || '';
   visao = q.get('visao') === 'global' || (!meus.length && !qs) ? 'global' : 'squad';
   const sm = parseISO(q.get('semana') || ''); if (sm) semana = segunda(sm);
-  filtro = { subs: (q.get('f_sub') || '').split(',').map(x => x.trim()).filter(Boolean), sqs: (q.get('f_sq') || '').split(',').map(x => x.trim()).filter(Boolean) };
+  filtro = { subs: (q.get('f_sub') || '').split(',').map(x => x.trim()).filter(Boolean), sqs: (q.get('f_sq') || '').split(',').map(x => x.trim()).filter(Boolean), hora: /^([01]\d|2[0-3]):[0-5]\d$/.test(q.get('f_hora') || '') ? q.get('f_hora') : '' };
   $('loading').hidden = true; $('app').hidden = false;
   await carregarJanela();
 }
