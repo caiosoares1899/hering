@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Menu de apps (⋮⋮⋮) — 🗓️ Escala na semana da Black Friday — 2026-11-23
+
+mare-notif-dev v45 (pedido do Caio). Na semana da Black Friday (segunda a domingo; 23–29/11 em 2026) o menu de produtos ganha o quadrado **🗓️ Escala · 🔥 Semana da Black Friday**, com borda laranja, ao lado de Maré, Painel, Radar e A Bordo. Some sozinho depois do domingo e volta na semana da BF do ano seguinte. Abre a Escala em aba nova (inclusive de dentro do Oceano). Visualizador externo não vê. Páginas com o módulo: kanban-dev v8.30.1019-dev, painel-dev v5.125, okr-dev v2.143, oceano-dev v1.90. Teste em `test_menu_kanban.js`; o `fakefb.js` desliga o tile (`mare_apps_bf_teste`) para as suítes não mudarem nesta semana. Dica: não — é sazonal e aparece no menu que todo mundo já usa.
+
 ### SÓ DEV — Escala — mesma escala para várias pessoas, filtro por tipo, horários na visão de todas as squads e quarta a sexta da BF — 2026-11-23
 
 escala-dev v1.15 (lista do time).
