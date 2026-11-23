@@ -121,11 +121,11 @@ Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em anda
 
 | Produto | Prod (versão) | Dev (versão) | Módulos que a página carrega (`?v=` no dev) |
 |---|---|---|---|
-| Maré Digital | `kanban.html` v8.30.1016 | `kanban-dev.html` v8.30.1017-dev | `mare-login` v3 · `mare-notif` v44 · `mare-metas` v19 · `mare-dicas` v19 · `mare-sonar` v8 · `mare-timer` v1 · `mare-gcal` v10 · `mare-ferias` v7 |
+| Maré Digital | `kanban.html` v8.30.1017 | `kanban-dev.html` v8.30.1017-dev | `mare-login` v3 · `mare-notif` v44 · `mare-metas` v19 · `mare-dicas` v19 · `mare-sonar` v8 · `mare-timer` v1 · `mare-gcal` v10 · `mare-ferias` v7 |
 | Painel | `painel.html` v5.124 · painel | `painel-dev.html` v5.124 · painel-dev | `mare-notif` v44 · `mare-metas` v19 · `mare-plantao` v5 · `mare-dicas` v19 · `mare-gxl` v2 |
 | Radar | `okr.html` v2.142 · okr | `okr-dev.html` v2.142 · okr-dev | `mare-notif` v44 · `mare-dicas` v19 · `mare-sonar` v8 |
-| Oceano | `oceano.html` v1.88 · oceano | `oceano-dev.html` v1.89 · oceano-dev | `mare-login` v3 · `mare-notif` v44 · `mare-plantao` v5 · `mare-dicas` v19 · `mare-metas` v19 · `mare-sonar` v8 |
-| Escala | `escala.html` v1.12 · escala | `escala-dev.html` v1.14 · escala-dev | `mare-login` v3 |
+| Oceano | `oceano.html` v1.89 · oceano | `oceano-dev.html` v1.89 · oceano-dev | `mare-login` v3 · `mare-notif` v44 · `mare-plantao` v5 · `mare-dicas` v19 · `mare-metas` v19 · `mare-sonar` v8 |
+| Escala | `escala.html` v1.14 · escala | `escala-dev.html` v1.14 · escala-dev | `mare-login` v3 |
 | Intake | `intake.html` — | `intake-dev.html` — | `mare-login` v3 |
 | Travessia | `travessia.html` — | `travessia-dev.html` — | `mare-login` v3 |
 
