@@ -102,6 +102,38 @@ let falhas = 0; const t = (n, ok, d) => { if (!ok) falhas++; console.log((ok ? '
       const s = await sessao(A.p);
       t('não sobrescreve uma sessão iniciada por outra pessoa enquanto o diálogo estava aberto', s.sessaoId === 'outra' && s.apresentador.uid === 'eve', s);
       await A.ctx.close(); }
+    // O SDK publica a escrita local antes do commit por padrão. Um update no mesmo nó aborta essa transação.
+    { const A = await open(U('ana', 'Ana ADM'));
+      await A.p.evaluate(caminho => {
+        const transacao = window._runTransaction, atualizar = window._update;
+        let pendente = false, cancelada = false;
+        window._update = (ref, dados) => {
+          if (pendente && ref.p === caminho) {
+            cancelada = true;
+            return Promise.resolve();
+          }
+          return atualizar(ref, dados);
+        };
+        window._runTransaction = async (ref, preparar, opcoes) => {
+          if (ref.p === caminho && opcoes?.applyLocally !== false) {
+            const publicar = valor => window.__lis.filter(l => l.p === caminho)
+              .forEach(l => l.cb({ val: () => valor }));
+            pendente = true;
+            publicar(preparar(null));
+            pendente = false;
+            if (cancelada) {
+              publicar(null);
+              throw new Error('set');
+            }
+          }
+          return transacao(ref, preparar);
+        };
+      }, NO);
+      await abrir(A.p); await A.p.click('#inicio-sem'); await A.p.waitForTimeout(400);
+      t('iniciar ao vivo confirma a sala antes de gravar presença',
+        !!(await sessao(A.p))?.participantes?.ana && !(await A.p.locator('#inicio-ov').isVisible()),
+        await A.p.textContent('#inicio-erro'));
+      await A.ctx.close(); }
     // 9) clique duplo inicia uma vez só
     { const A = await open(U('ana', 'Ana ADM'));
       await abrir(A.p); await A.p.fill('#inicio-duracao', '30');

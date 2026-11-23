@@ -2750,7 +2750,8 @@ window._liveComecar = async (opcoes) => {
   _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
   let iniciou = false;
   try{
-    const r = await window._runTransaction(liveRef(), cur => (cur && cur.ativa) ? undefined : sessao);
+    // O ouvinte grava presença ao entrar. Publicar antes do commit faria esse update cancelar a transação.
+    const r = await window._runTransaction(liveRef(), cur => (cur && cur.ativa) ? undefined : sessao, {applyLocally:false});
     iniciou = !!(r && r.committed);
   }catch(e){ liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)); return false; }
   if(!iniciou){ liveToast('🎙️ Outra pessoa acabou de iniciar a apresentação ao vivo. Você está acompanhando.'); return false; }
