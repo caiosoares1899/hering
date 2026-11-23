@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Escala — mesma escala para várias pessoas, filtro por tipo, horários na visão de todas as squads e quarta a sexta da BF — 2026-11-23
+
+escala-dev v1.15 (lista do time).
+- **👥 Mesma escala para várias pessoas:** no cadastro, PO, Organizador e ADM marcam as pessoas a mais (ou **Toda a squad**) e a escala vai igual para todas; a prévia e o aviso de gravado contam as pessoas, e cada uma recebe o aviso de sempre.
+- **🔎 Filtros › Tipo:** só ✅ Escalado, só 🔥 Plantão ou só 🏖️ Folga (vários ao mesmo tempo); vale para grade, resumo do dia, avisos e JPG, e vai para o link (`f_tipo`).
+- **🌐 Todas as squads:** cada dia mostra um bloco por horário ("09:00–18:00", "Dia todo"…) com as fotos de quem está nele; plantão primeiro; até 3 blocos e "+N horários" (o detalhe do dia mostra tudo).
+- **Black Friday:** quarta, quinta e sexta em laranja; quarta e quinta com "🔥 ESQUENTA BF", só a sexta diz BLACK FRIDAY.
+- Ajuda do Maré (Escala) em dia → kanban-dev v8.30.1018-dev. Teste `test_escala_lote_tipo.js`. Dica: não — a Escala não carrega o módulo de dicas; está na Ajuda do Maré.
+
 ### SÓ DEV — Escala — 🕒 filtro por horário — 2026-11-23
 
 escala-dev v1.14 (pedido do time). Em **🔎 Filtros** entra o grupo **Horário**: escolha uma hora (ou **Agora**) e a grade, o resumo do dia, a faixa "Hoje", os avisos de dia sem ninguém e o JPG mostram só quem está trabalhando naquele horário. Folga sai; quem não tem horário cadastrado conta como o dia todo; pausa naquele horário conta como fora. Uma faixa avisa o filtro ativo, com **Ver o dia todo**; o horário vai para o link (`f_hora`). O botão 🔎 Filtros passa a aparecer sempre (antes sumia com uma squad só e sem subtime). Teste `test_escala_filtro_hora.js`. Dica: não — a Escala não carrega o módulo de dicas; o filtro entrou na Ajuda do Maré (Escala).
