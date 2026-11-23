@@ -1,0 +1,680 @@
+<!doctype html>
+<!-- PROTÓTIPO ISOLADO (23/11/2026). Dados fictícios, sem Firebase, sem login. Plano: docs/ideias/cardume.md -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cardume · Oceano</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Marine Glass: tokens dos três temas de oceano-dev.html. */
+:root{
+  --deep:#030d1a;--deep-rgb:3,13,26;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
+  --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
+  --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:10px;--r2:14px;
+  --ink-rgb:3,13,26;--slate-rgb:10,30,55;
+  --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;
+  --shadow:0 10px 34px rgba(0,0,0,.35);
+  --specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --ease-out:cubic-bezier(.32,.72,0,1);--ease-in-out:cubic-bezier(.4,0,.2,1);--ease-overshoot:cubic-bezier(.34,1.56,.64,1);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;
+}
+:root[data-theme="light"]{
+  --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
+  --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#0a8f86;
+  --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
+  --warn:#c98a10;--danger:#F15B6C;--ok:#1f9d55;--ink-rgb:251,253,255;--slate-rgb:235,245,250;--shadow:0 10px 30px rgba(7,70,110,.22);--specular:inset 0 1px 0 rgba(255,255,255,.7);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+}
+:root[data-theme="sunset"]{
+  --deep:#1a1530;--deep-rgb:26,21,48;--glass:rgba(38,28,58,0.62);--glass-b:rgba(255,176,110,0.26);
+  --blue:#c4642f;--accent:#ffb36b;--cyan:#ffd2a1;--teal:#ffcf6e;
+  --txt:#fdf1e4;--txt2:rgba(253,241,228,0.72);--txt3:rgba(253,241,228,0.46);
+  --ink-rgb:26,21,48;--slate-rgb:48,34,66;--specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --ocean:radial-gradient(ellipse 80% 45% at 50% 38%,rgba(255,160,70,.5) 0%,rgba(255,120,60,.16) 45%,transparent 70%),linear-gradient(180deg,#141d3f 0%,#2a2a55 22%,#7a4a56 38%,#d98a58 47%,#1b4a63 48.4%,#0d2f4b 62%,#071c33 100%);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--deep); }
+body { margin: 0; color: var(--txt); font: 14px/1.5 var(--ff); background: var(--ocean) fixed; }
+h1, h2, p { margin: 0; }
+h1, h2 { font-family: var(--ff-d); line-height: 1.2; }
+h1 { font-size: 28px; }
+h2 { font-size: 20px; overflow-wrap: anywhere; }
+button, select, textarea { color: inherit; font: inherit; border: 1px solid var(--glass-b); border-radius: var(--r); background: rgb(var(--ink-rgb)); }
+button, select { min-height: 44px; min-width: 44px; padding: 6px 12px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.shell { max-width: 1440px; height: 100vh; height: 100dvh; margin: auto; padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+.topo { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 20px; }
+.marca { display: flex; align-items: center; gap: 12px; }
+.marca-icone { display: grid; place-items: center; width: 48px; height: 48px; font-size: 23px; border: 1px solid var(--glass-b); border-radius: var(--r2); background: var(--glass); box-shadow: var(--specular); }
+.contexto, .subtitulo { color: var(--txt2); font-size: 12px; }
+[data-theme="light"] .contexto { color: var(--txt); }
+.controles { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12px; }
+.controles label { display: flex; align-items: center; gap: 6px; }
+.app { display: grid; grid-template-columns: 180px minmax(0, 1fr) minmax(245px, 29%); flex: 1; min-height: 0; border: 1px solid var(--glass-b); border-radius: 20px; overflow: hidden; background: var(--glass); box-shadow: var(--shadow), var(--specular); backdrop-filter: blur(12px); }
+.painel { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: rgba(var(--ink-rgb), .82); }
+.lateral { padding: 18px 12px; border-right: 1px solid var(--glass-b); overflow: auto; }
+.lateral h2 { font-size: 15px; margin: 2px 8px 12px; }
+.canal { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-bottom: 5px; text-align: left; background: transparent; border-color: transparent; font-weight: 700; }
+.canal[aria-current="true"] { color: var(--accent); background: rgba(var(--slate-rgb), .85); border-color: var(--glass-b); }
+.selo, .chip { display: inline-block; padding: 2px 7px; border-radius: 999px; background: rgba(var(--slate-rgb), .9); border: 1px solid var(--glass-b); font-size: 11px; line-height: 1.4; color: var(--txt); }
+.selo.mencao { background: var(--accent); color: rgb(var(--ink-rgb)); font-weight: 800; }
+.cabecalho { padding: 12px 16px; min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--glass-b); }
+.conversa .cabecalho { justify-content: flex-start; }
+.thread { border-left: 1px solid var(--glass-b); background: rgba(var(--slate-rgb), .78); }
+.thread-vazia { margin: auto; padding: 22px; text-align: center; }
+.thread-vazia h2 { margin: 8px 0; }
+.thread-vazia p { color: var(--txt2); }
+.thread-ativa { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.voltar-canais { display: none; }
+.log { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 8px 16px 16px; }
+.dia { display: flex; align-items: center; gap: 12px; margin: 12px 0; font-size: 12px; color: var(--txt2); }
+.dia::before, .dia::after { content: ''; flex: 1; height: 1px; background: var(--glass-b); }
+.grupo { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; margin: 12px 0; }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--glass-b); border-radius: 11px; background: rgb(var(--slate-rgb)); color: var(--cyan); font-weight: 800; font-size: 11px; }
+.avatar[data-pessoa="ana"], .avatar[data-pessoa="voce"] { color: var(--teal); }
+[data-theme="light"] .avatar[data-pessoa] { color: var(--cyan); }
+.autor { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 7px; margin-bottom: 2px; }
+.mensagem { position: relative; margin-bottom: 4px; }
+.mensagem-linha { display: flex; align-items: baseline; gap: 7px; }
+.mensagem p { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.hora, .editada { color: var(--txt2); font-size: 11px; white-space: nowrap; }
+.hora { margin-left: auto; font-variant-numeric: tabular-nums; }
+.propria .mensagem-linha { align-items: center; }
+.previa { display: grid; gap: 3px; width: min(100%, 380px); margin-top: 7px; padding: 10px 12px; text-align: left; border-left: 3px solid var(--accent); background: rgba(var(--slate-rgb), .85); overflow-wrap: anywhere; }
+.previa[aria-expanded="true"] { border-color: var(--accent); }
+.previa-meta { font-size: 12px; color: var(--txt2); }
+.contador { font-size: 12px; font-weight: 700; color: var(--accent); }
+.rodape { position: relative; padding: 10px 14px; border-top: 1px solid var(--glass-b); }
+.compositor, .acoes { display: flex; align-items: flex-end; gap: 6px; }
+.acoes { flex-wrap: wrap; align-items: center; padding: 4px 0; }
+textarea { width: 100%; min-width: 0; min-height: 44px; padding: 8px 10px; font-size: 16px; resize: vertical; max-height: 25vh; }
+.enviar { flex: none; white-space: nowrap; padding-inline: 14px; background: var(--accent); color: rgb(var(--ink-rgb)); font-weight: 800; }
+.ajuda, .digitando { margin-top: 3px; color: var(--txt2); font-size: 12px; }
+.digitando { position: absolute; bottom: 100%; left: 14px; z-index: 1; border-radius: var(--r); background: rgb(var(--ink-rgb)); padding: 3px 8px; }
+.digitando span { display: inline-block; animation: pulsar 1s alternate infinite; }
+@keyframes pulsar { from { opacity: .5; } to { opacity: 1; } }
+.sugestoes { position: absolute; z-index: 2; bottom: 100%; left: 14px; right: 14px; max-height: 38vh; overflow: auto; padding: 5px; border: 1px solid var(--glass-b); border-radius: var(--r); background: rgb(var(--ink-rgb)); box-shadow: var(--shadow); }
+.sugestao { display: block; width: 100%; text-align: left; margin-bottom: 2px; }
+.sugestao[aria-selected="true"] { border-color: var(--accent); background: rgb(var(--slate-rgb)); }
+.status-agente { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+@media (max-width: 899px) {
+  .shell { padding: 10px; gap: 8px; }
+  .marca-icone { width: 40px; height: 40px; }
+  h1 { font-size: 25px; }
+  .controles { gap: 4px 8px; }
+  .controles button, .controles select { padding-inline: 7px; }
+  .app { grid-template-columns: minmax(0, 1fr); border-radius: var(--r2); }
+  .app[data-tela="canais"] > :not(.lateral),
+  .app[data-tela="conversa"] > :not(.conversa),
+  .app[data-tela="thread"] > :not(.thread) { display: none; }
+  .voltar-canais { display: inline-block; }
+  .lateral, .thread { border: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .digitando span { animation: none; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topo">
+    <div class="marca">
+      <span class="marca-icone" aria-hidden="true">🐟</span>
+      <div><p class="contexto">Oceano</p><h1>Cardume</h1></div>
+    </div>
+    <div class="controles" aria-label="Controles do protótipo">
+      <span>Protótipo</span>
+      <label>Tema
+        <select id="tema">
+          <option value="abrolhos">Abrolhos</option>
+          <option value="lencois">Lençóis</option>
+          <option value="entardecer">Entardecer</option>
+        </select>
+      </label>
+      <button id="simular" type="button">Simular mensagem nova</button>
+    </div>
+  </header>
+
+  <main class="app" data-tela="canais">
+    <nav class="painel lateral" aria-labelledby="canais-titulo">
+      <h2 id="canais-titulo">Canais</h2>
+      <div id="canais"></div>
+    </nav>
+
+    <section class="painel conversa" aria-labelledby="canal-titulo">
+      <header class="cabecalho">
+        <button type="button" class="voltar-canais" aria-label="Voltar aos canais">←</button>
+        <div><h2 id="canal-titulo" tabindex="-1"></h2><p class="subtitulo" id="canal-subtitulo"></p></div>
+      </header>
+      <div class="log" id="mensagens" role="log" aria-label="Mensagens do canal" aria-live="polite" tabindex="0"></div>
+      <div class="rodape">
+        <div class="digitando" id="digitando" role="status" hidden>🤖 Agente Ágil digitando<span>…</span></div>
+        <div class="sugestoes" id="sugestoes" role="listbox" aria-label="Sugestões de escrita" hidden></div>
+        <form class="compositor" id="compositor">
+          <textarea id="mensagem" rows="1" aria-label="Mensagem do canal" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…"></textarea>
+          <button class="enviar" type="submit">Enviar</button>
+        </form>
+        <p class="ajuda" id="ajuda">@ para mencionar · / para comandos</p>
+      </div>
+    </section>
+
+    <aside class="painel thread" id="thread" aria-label="Thread do card">
+      <div class="thread-vazia" id="thread-vazia">
+        <span aria-hidden="true">💬</span>
+        <h2>Thread do card</h2>
+        <p>Abra uma prévia para ver os comentários do card.</p>
+      </div>
+      <div class="thread-ativa" id="thread-ativa" hidden>
+        <header class="cabecalho">
+          <div><p class="subtitulo">Thread do card</p><h2 id="thread-titulo"></h2></div>
+          <button type="button" id="fechar-thread" aria-label="Fechar thread">←</button>
+        </header>
+        <div class="log" id="comentarios" role="log" aria-label="Comentários do card" aria-live="polite" tabindex="0"></div>
+        <div class="rodape">
+          <form class="compositor" id="responder">
+            <textarea id="resposta" rows="1" aria-label="Resposta na thread" placeholder="Responda na thread…"></textarea>
+            <button class="enviar" type="submit">Responder</button>
+          </form>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  const $ = seletor => document.querySelector(seletor);
+  const app = $('.app');
+  const log = $('#mensagens');
+  const comentarios = $('#comentarios');
+  const entrada = $('#mensagem');
+  const resposta = $('#resposta');
+  const sugestoes = $('#sugestoes');
+
+  const pessoas = {
+    ana: { nome: 'Ana Lima', avatar: 'AL', escala: '✅ trabalhando' },
+    bruno: { nome: 'Bruno Reis', avatar: 'BR', escala: '🔥 plantão' },
+    paulo: { nome: 'Paulo PO', avatar: 'PP', escala: '✅ trabalhando' },
+    carla: { nome: 'Carla Dias', avatar: 'CD', escala: '🏖 folga' },
+    voce: { nome: 'Você', avatar: 'VC', escala: '✅ trabalhando' },
+    agente: { nome: '🤖 Agente Ágil', avatar: '🤖' }
+  };
+  const mensagens = (dia, linhas) => linhas.map(([autor, hora, texto, card]) => ({ dia, autor, hora, texto, card }));
+  const cardReceita = {
+    titulo: 'Validar base de receita',
+    coluna: 'Em andamento',
+    responsavel: 'Ana Lima',
+    prazo: '25/11/2026',
+    comentarios: mensagens('Hoje', [
+      ['ana', '09:18', 'Separei as amostras de loja e e-commerce.'],
+      ['bruno', '09:24', 'Vou conferir se os pedidos cancelados ficaram fora do total.'],
+      ['paulo', '09:32', 'Fechamos a validação depois da conferência do Bruno.']
+    ])
+  };
+  const canais = {
+    dados: {
+      descricao: 'Squad piloto · Dados',
+      membros: ['ana', 'bruno', 'paulo', 'carla'],
+      naoLidas: 0,
+      mensagens: [
+        ...mensagens('Ontem', [
+          ['carla', '14:10', 'Deixei os números da semana na pasta do time.'],
+          ['carla', '14:11', 'A aba de devoluções já está revisada.'],
+          ['bruno', '14:22', 'Boa! Vou cruzar com a amostra de lojas.'],
+          ['ana', '14:39', 'Achei duas datas fora do período. Vou ajustar o filtro.'],
+          ['paulo', '15:05', 'Vamos usar a mesma janela de datas do relatório semanal.'],
+          ['ana', '16:42', 'Filtro ajustado. Amanhã fecho a conferência.'],
+          ['carla', '17:08', 'Amanhã estou de folga. Deixei as notas com a Ana.']
+        ]),
+        ...mensagens('Hoje', [
+          ['bruno', '08:45', 'Bom dia! Estou de plantão hoje.'],
+          ['paulo', '08:52', 'Prioridade de hoje é fechar o número de receita.'],
+          ['paulo', '08:54', 'Podemos deixar devoluções para a próxima rodada.'],
+          ['ana', '09:02', 'Já comecei a conferir a amostra.'],
+          ['bruno', '09:09', 'Me chama quando chegar nos pedidos cancelados.'],
+          ['ana', '09:16', 'Deixei a conferência neste card. Os detalhes estão na thread.', cardReceita],
+          ['paulo', '09:37', 'Depois da validação, fecho o resumo para o time.'],
+          ['bruno', '09:41', 'Combinado. Aviso aqui quando terminar.']
+        ])
+      ]
+    },
+    prf: {
+      descricao: 'Squad PRF', membros: ['paulo', 'ana'], naoLidas: 2,
+      mensagens: mensagens('Hoje', [
+        ['paulo', '08:30', 'Organizei a pauta da semana com as prioridades.'],
+        ['ana', '08:46', 'Incluí os indicadores pendentes de revisão.']
+      ])
+    },
+    cx: {
+      descricao: 'Squad CX', membros: ['bruno', 'carla'], naoLidas: 1,
+      mensagens: mensagens('Hoje', [
+        ['carla', '08:20', 'O mapa de dúvidas da semana está pronto.'],
+        ['bruno', '09:05', 'Vou agrupar os retornos por assunto antes da reunião.']
+      ])
+    }
+  };
+
+  const comandos = [
+    { nome: '/card criar', descricao: 'Criar um card com o título informado' },
+    { nome: '/quem', descricao: 'Ver quem está trabalhando hoje' },
+    { nome: '/resumo', descricao: 'Resumir o canal em três linhas' }
+  ];
+  let canalAtivo = 'dados';
+  let thread = null;
+  let acaoAberta = null;
+  let autocomplete = null;
+  let simulacoes = 0;
+  const botoesCanais = new Map();
+  const digitandoPorCanal = new Map();
+
+  function elemento(tag, classe, texto) {
+    const no = document.createElement(tag);
+    if (classe) no.className = classe;
+    if (texto !== undefined) no.textContent = texto;
+    return no;
+  }
+
+  function botao(texto, classe, clicar) {
+    const no = elemento('button', classe, texto);
+    no.type = 'button';
+    no.addEventListener('click', clicar);
+    return no;
+  }
+
+  function novaMensagem(autor, texto) {
+    const hora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+    return { dia: 'Hoje', autor, hora, texto };
+  }
+
+  function fimDoLog(destino) {
+    destino.scrollTop = destino.scrollHeight;
+  }
+
+  function atualizarCanais() {
+    for (const [nome, canal] of Object.entries(canais)) {
+      const { item, selo } = botoesCanais.get(nome);
+      item.setAttribute('aria-current', String(nome === canalAtivo));
+      const rotulo = canal.naoLidas === 1 ? '1 não lida' : canal.naoLidas + ' não lidas';
+      item.setAttribute('aria-label', '# ' + nome + ', ' + rotulo + (canal.mencao ? ', com menção a você' : ''));
+      selo.textContent = canal.mencao ? '@ ' + canal.naoLidas : canal.naoLidas;
+      selo.classList.toggle('mencao', Boolean(canal.mencao));
+      selo.hidden = !canal.naoLidas;
+    }
+  }
+
+  function mostrarCanal(nome, focar = false) {
+    fecharAcao(false);
+    fecharSugestoes();
+    fecharThread(false);
+    if (nome !== canalAtivo) entrada.value = '';
+    canalAtivo = nome;
+    const canal = canais[nome];
+    canal.naoLidas = 0;
+    canal.mencao = false;
+    app.dataset.tela = 'conversa';
+    $('#canal-titulo').textContent = '# ' + nome;
+    $('#canal-subtitulo').textContent = canal.descricao;
+    renderizarLog(log, canal.mensagens);
+    atualizarCanais();
+    atualizarDigitando();
+    if (focar) $('#canal-titulo').focus();
+  }
+
+  function renderizarLog(destino, lista) {
+    destino.replaceChildren();
+    lista.forEach((msg, indice) => anexarMensagem(destino, lista, msg, lista[indice - 1]));
+    fimDoLog(destino);
+  }
+
+  function anexarMensagem(destino, lista, msg, anterior) {
+    if (anterior?.dia !== msg.dia) destino.append(elemento('div', 'dia', msg.dia));
+    if (anterior?.autor !== msg.autor || anterior?.dia !== msg.dia) {
+      const pessoa = pessoas[msg.autor];
+      const grupo = elemento('div', 'grupo');
+      const avatar = elemento('span', 'avatar', pessoa.avatar);
+      avatar.dataset.pessoa = msg.autor;
+      avatar.setAttribute('aria-hidden', 'true');
+      const corpo = elemento('div', 'corpo');
+      const autor = elemento('div', 'autor');
+      autor.append(elemento('strong', '', pessoa.nome));
+      if (pessoa.escala) autor.append(elemento('span', 'chip', pessoa.escala));
+      corpo.append(autor);
+      grupo.append(avatar, corpo);
+      destino.append(grupo);
+    }
+    const artigo = elemento('article', 'mensagem' + (msg.autor === 'voce' ? ' propria' : ''));
+    const linha = elemento('div', 'mensagem-linha');
+    const texto = elemento('p', '', msg.texto);
+    const editada = elemento('span', 'editada', '(editada)');
+    editada.hidden = !msg.editada;
+    const hora = elemento('time', 'hora', msg.hora);
+    hora.dateTime = msg.hora;
+    linha.append(texto, editada, hora);
+    if (msg.autor === 'voce') {
+      const menu = botao('⋯', '', () => abrirAcoes({ lista, destino, msg, artigo, texto, editada, menu }));
+      menu.setAttribute('aria-label', 'Ações da mensagem');
+      menu.setAttribute('aria-expanded', 'false');
+      linha.append(menu);
+    }
+    artigo.append(linha);
+    if (msg.card) artigo.append(previa(msg.card));
+    if (msg.escala) {
+      const chips = elemento('div', 'status-agente');
+      for (const pessoa of msg.escala) chips.append(elemento('span', 'chip', pessoa.nome + ' · ' + pessoa.escala));
+      artigo.append(chips);
+    }
+    destino.lastElementChild.querySelector('.corpo').append(artigo);
+  }
+
+  function adicionar(destino, lista, msg) {
+    const anterior = lista.at(-1);
+    lista.push(msg);
+    if (!destino) return;
+    anexarMensagem(destino, lista, msg, anterior);
+    fimDoLog(destino);
+  }
+
+  function contador(card) {
+    return '💬 ' + card.comentarios.length + ' na thread';
+  }
+
+  function previa(card) {
+    const selo = elemento('span', 'contador', contador(card));
+    const item = botao('', 'previa', () => abrirThread(card, item, selo));
+    const aberto = thread?.card === card;
+    item.setAttribute('aria-expanded', String(aberto));
+    item.setAttribute('aria-controls', 'thread');
+    if (aberto) Object.assign(thread, { origem: item, selo });
+    item.append(
+      elemento('strong', '', card.titulo),
+      elemento('span', 'previa-meta', card.coluna + ' · ' + card.responsavel + ' · Prazo ' + card.prazo),
+      selo
+    );
+    return item;
+  }
+
+  function abrirThread(card, origem, selo) {
+    fecharAcao(false);
+    fecharSugestoes();
+    fecharThread(false);
+    thread = { card, origem, selo };
+    origem.setAttribute('aria-expanded', 'true');
+    $('#thread-vazia').hidden = true;
+    $('#thread-ativa').hidden = false;
+    $('#thread-titulo').textContent = card.titulo;
+    app.dataset.tela = 'thread';
+    renderizarLog(comentarios, card.comentarios);
+    $('#fechar-thread').focus();
+  }
+
+  function fecharThread(devolverFoco = true) {
+    if (!thread) return;
+    if (comentarios.contains(acaoAberta?.painel)) fecharAcao(false);
+    const { origem } = thread;
+    thread = null;
+    origem.setAttribute('aria-expanded', 'false');
+    $('#thread-vazia').hidden = false;
+    $('#thread-ativa').hidden = true;
+    resposta.value = '';
+    app.dataset.tela = 'conversa';
+    if (devolverFoco) origem.focus();
+  }
+
+  function fecharAcao(devolverFoco = true) {
+    if (!acaoAberta) return;
+    const { painel, menu } = acaoAberta;
+    painel.remove();
+    menu.setAttribute('aria-expanded', 'false');
+    acaoAberta = null;
+    if (devolverFoco) menu.focus();
+  }
+
+  function abrirAcoes(contexto) {
+    const { artigo, menu } = contexto;
+    const mesmoMenu = acaoAberta?.menu === menu;
+    fecharAcao(false);
+    if (mesmoMenu) return;
+    const painel = elemento('div', 'acoes');
+    painel.setAttribute('role', 'group');
+    painel.setAttribute('aria-label', 'Ações da mensagem');
+    const editar = botao('✏️ Editar', '', () => editarMensagem(contexto, painel));
+    const apagar = botao('🗑 Apagar', '', () => confirmarExclusao(contexto, painel));
+    painel.append(editar, apagar);
+    artigo.append(painel);
+    acaoAberta = { painel, menu };
+    menu.setAttribute('aria-expanded', 'true');
+    editar.focus();
+  }
+
+  function editarMensagem({ msg, texto, editada }, painel) {
+    const campo = elemento('textarea');
+    campo.rows = 2;
+    campo.value = msg.texto;
+    campo.setAttribute('aria-label', 'Editar mensagem');
+    const salvar = () => {
+      const valor = campo.value.trim();
+      if (!valor) return campo.focus();
+      if (valor !== msg.texto) {
+        msg.texto = valor;
+        msg.editada = true;
+        texto.textContent = valor;
+        editada.hidden = false;
+      }
+      fecharAcao();
+    };
+    campo.addEventListener('keydown', evento => enviarComEnter(evento, salvar));
+    painel.replaceChildren(campo, botao('Salvar', '', salvar), botao('Cancelar', '', () => fecharAcao()));
+    campo.focus();
+  }
+
+  function confirmarExclusao({ lista, destino, msg }, painel) {
+    const cancelar = botao('Cancelar', '', () => fecharAcao());
+    painel.replaceChildren(elemento('span', '', 'Apagar esta mensagem?'), cancelar, botao('Confirmar exclusão', '', () => {
+      fecharAcao(false);
+      lista.splice(lista.indexOf(msg), 1);
+      if (destino === comentarios && thread) thread.selo.textContent = contador(thread.card);
+      renderizarLog(destino, lista);
+      (destino === log ? entrada : resposta).focus();
+    }));
+    cancelar.focus();
+  }
+
+  function enviarComEnter(evento, enviar) {
+    if (evento.key !== 'Enter' || evento.shiftKey || evento.isComposing) return;
+    evento.preventDefault();
+    enviar();
+  }
+
+  function fecharSugestoes() {
+    autocomplete = null;
+    sugestoes.hidden = true;
+    sugestoes.replaceChildren();
+    entrada.removeAttribute('aria-activedescendant');
+  }
+
+  function atualizarSugestoes() {
+    fecharSugestoes();
+    if (entrada.selectionStart !== entrada.selectionEnd) return;
+    const antes = entrada.value.slice(0, entrada.selectionStart);
+    const depois = entrada.value.slice(entrada.selectionEnd);
+    const mencao = antes.match(/(?:^|\s)@([\p{L} \t]*)$/u);
+    const comando = antes.match(/^\/[a-z ]*$/i);
+    let itens;
+    let inicio;
+    let fim = entrada.selectionEnd;
+    if (mencao) {
+      inicio = antes.lastIndexOf('@');
+      fim += depois.match(/^[\p{L}]*/u)[0].length;
+      const busca = mencao[1].toLocaleLowerCase('pt-BR');
+      itens = canais[canalAtivo].membros.map(chave => pessoas[chave].nome)
+        .filter(nome => nome.toLocaleLowerCase('pt-BR').startsWith(busca))
+        .map(nome => ({ rotulo: '@' + nome, valor: '@' + nome + ' ' }));
+    } else if (comando && !depois) {
+      inicio = 0;
+      itens = comandos.filter(item => item.nome.startsWith(antes.toLowerCase()))
+        .map(item => ({ rotulo: item.nome + ' · ' + item.descricao, valor: item.nome + ' ' }));
+    }
+    if (!itens?.length) return;
+    autocomplete = { itens, inicio, fim, selecionada: 0 };
+    sugestoes.hidden = false;
+    itens.forEach((item, indice) => {
+      const opcao = botao(item.rotulo, 'sugestao', () => escolherSugestao(indice));
+      opcao.id = 'sugestao-' + indice;
+      opcao.tabIndex = -1;
+      opcao.setAttribute('role', 'option');
+      opcao.addEventListener('mousedown', evento => evento.preventDefault());
+      sugestoes.append(opcao);
+    });
+    destacarSugestao();
+  }
+
+  function destacarSugestao() {
+    const indice = autocomplete.selecionada;
+    [...sugestoes.children].forEach((opcao, atual) => opcao.setAttribute('aria-selected', String(atual === indice)));
+    entrada.setAttribute('aria-activedescendant', sugestoes.children[indice].id);
+    sugestoes.children[indice].scrollIntoView({ block: 'nearest' });
+  }
+
+  function escolherSugestao(indice) {
+    const { itens, inicio, fim } = autocomplete;
+    entrada.setRangeText(itens[indice].valor, inicio, fim, 'end');
+    fecharSugestoes();
+    entrada.focus();
+  }
+
+  function atualizarDigitando() {
+    $('#digitando').hidden = !digitandoPorCanal.get(canalAtivo);
+  }
+
+  function prepararResposta(nomeCanal, texto) {
+    const canal = canais[nomeCanal];
+    const criar = texto.match(/^\/card\s+criar\s+([\s\S]+)$/i);
+    let msg;
+    if (criar) {
+      msg = novaMensagem('agente', 'Criei um card para a squad.');
+      msg.card = { titulo: criar[1].trim(), coluna: 'A fazer', responsavel: 'Você', prazo: 'A definir', comentarios: [] };
+    } else if (texto.toLowerCase() === '/quem') {
+      msg = novaMensagem('agente', 'Hoje na Escala da squad');
+      msg.escala = canal.membros.map(chave => pessoas[chave]).filter(pessoa => !pessoa.escala.startsWith('🏖'));
+    } else if (texto.toLowerCase() === '/resumo') {
+      msg = novaMensagem('agente', '• O time alinhou a prioridade da semana.\n• A revisão ficou com quem está trabalhando hoje.\n• O próximo passo é compartilhar o resultado no canal.');
+    }
+    if (!msg) return;
+    digitandoPorCanal.set(nomeCanal, (digitandoPorCanal.get(nomeCanal) || 0) + 1);
+    atualizarDigitando();
+    setTimeout(() => {
+      const ativo = nomeCanal === canalAtivo;
+      adicionar(ativo ? log : null, canal.mensagens, msg);
+      if (!ativo) canal.naoLidas++;
+      digitandoPorCanal.set(nomeCanal, digitandoPorCanal.get(nomeCanal) - 1);
+      atualizarDigitando();
+      atualizarCanais();
+    }, 600);
+  }
+
+  function enviarMensagem() {
+    const texto = entrada.value.trim();
+    if (!texto) return;
+    entrada.value = '';
+    fecharSugestoes();
+    adicionar(log, canais[canalAtivo].mensagens, novaMensagem('voce', texto));
+    prepararResposta(canalAtivo, texto);
+  }
+
+  function enviarResposta() {
+    const texto = resposta.value.trim();
+    if (!thread || !texto) return;
+    resposta.value = '';
+    adicionar(comentarios, thread.card.comentarios, novaMensagem('voce', texto));
+    thread.selo.textContent = contador(thread.card);
+  }
+
+  for (const nome of Object.keys(canais)) {
+    const item = botao('# ' + nome, 'canal', () => mostrarCanal(nome, true));
+    const selo = elemento('span', 'selo');
+    selo.setAttribute('aria-hidden', 'true');
+    item.append(selo);
+    $('#canais').append(item);
+    botoesCanais.set(nome, { item, selo });
+  }
+
+  $('.voltar-canais').addEventListener('click', () => {
+    fecharAcao(false);
+    fecharSugestoes();
+    app.dataset.tela = 'canais';
+    botoesCanais.get(canalAtivo).item.focus();
+  });
+  $('#fechar-thread').addEventListener('click', () => fecharThread());
+
+  $('#tema').addEventListener('change', evento => {
+    const tema = { lencois: 'light', entardecer: 'sunset' }[evento.target.value];
+    if (tema) document.documentElement.dataset.theme = tema;
+    else document.documentElement.removeAttribute('data-theme');
+  });
+
+  $('#simular').addEventListener('click', () => {
+    const outros = Object.keys(canais).filter(nome => nome !== canalAtivo);
+    const canal = canais[outros[simulacoes % outros.length]];
+    const mencao = simulacoes % 2 === 0;
+    simulacoes++;
+    adicionar(null, canal.mensagens, novaMensagem(canal.membros[0],
+      mencao ? '@você, pode conferir as notas quando tiver um minuto?' : 'Deixei a pauta atualizada para a squad.'));
+    canal.naoLidas++;
+    canal.mencao ||= mencao;
+    atualizarCanais();
+  });
+
+  entrada.addEventListener('input', atualizarSugestoes);
+  entrada.addEventListener('blur', evento => {
+    if (!sugestoes.contains(evento.relatedTarget)) fecharSugestoes();
+  });
+  entrada.addEventListener('keydown', evento => {
+    if (evento.isComposing) return;
+    const comandoCompleto = /^\/(quem|resumo)\s*$/i.test(entrada.value);
+    if (autocomplete && ['ArrowDown', 'ArrowUp'].includes(evento.key)) {
+      evento.preventDefault();
+      const { itens, selecionada } = autocomplete;
+      const direcao = evento.key === 'ArrowDown' ? 1 : -1;
+      autocomplete.selecionada = (selecionada + direcao + itens.length) % itens.length;
+      destacarSugestao();
+    } else if (autocomplete && !evento.shiftKey &&
+      (evento.key === 'Tab' || (evento.key === 'Enter' && !comandoCompleto))) {
+      evento.preventDefault();
+      escolherSugestao(autocomplete.selecionada);
+    } else {
+      enviarComEnter(evento, enviarMensagem);
+    }
+  });
+
+  resposta.addEventListener('keydown', evento => enviarComEnter(evento, enviarResposta));
+  $('#compositor').addEventListener('submit', evento => {
+    evento.preventDefault();
+    enviarMensagem();
+    entrada.focus();
+  });
+  $('#responder').addEventListener('submit', evento => {
+    evento.preventDefault();
+    enviarResposta();
+    resposta.focus();
+  });
+  document.addEventListener('keydown', evento => {
+    if (evento.key !== 'Escape' || evento.isComposing) return;
+    if (autocomplete) {
+      fecharSugestoes();
+      entrada.focus();
+    } else if (acaoAberta) fecharAcao();
+    else if (thread) fecharThread();
+    else return;
+    evento.preventDefault();
+  });
+
+  mostrarCanal(canalAtivo);
+  app.dataset.tela = 'canais';
+})();
+</script>
+</body>
+</html>
