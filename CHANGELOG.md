@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Oceano — atalho 🗓️ Escala na linha de atalhos — 2026-11-23
+
+oceano-dev (pedido do time). Na linha **Atalhos** da tela inicial entra **🗓️ Escala · quem trabalha quando**, para quem usa o Maré; abre a Escala em aba nova (como o "Abrir Escala" da Ajuda). Teste em `test_oceano.js`. Dica: não — o atalho aparece sozinho na linha que a pessoa já usa.
+
 ### SÓ DEV — Escala — 🕒 filtro por horário — 2026-11-23
 
 escala-dev v1.14 (pedido do time). Em **🔎 Filtros** entra o grupo **Horário**: escolha uma hora (ou **Agora**) e a grade, o resumo do dia, a faixa "Hoje", os avisos de dia sem ninguém e o JPG mostram só quem está trabalhando naquele horário. Folga sai; quem não tem horário cadastrado conta como o dia todo; pausa naquele horário conta como fora. Uma faixa avisa o filtro ativo, com **Ver o dia todo**; o horário vai para o link (`f_hora`). O botão 🔎 Filtros passa a aparecer sempre (antes sumia com uma squad só e sem subtime). Teste `test_escala_filtro_hora.js`. Dica: não — a Escala não carrega o módulo de dicas; o filtro entrou na Ajuda do Maré (Escala).
