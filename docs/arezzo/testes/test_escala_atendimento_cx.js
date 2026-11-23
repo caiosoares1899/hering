@@ -8,7 +8,7 @@ const pub = (uid, nome, init, sq) => ({ uid, nome, init, email: uid + '@ciaherin
 const seed = () => ({ kanban: {
   squads_meta: { cx: { label: 'CX', emoji: '🎧' } },
   usuarios_publicos: { ana: pub('ana', 'Ana Lima', 'AL', 'cx'), bru: pub('bru', 'Bruno Reis', 'BR', 'dados') },
-  escala: { '2026-11-25': { cx: { ana: { t: 'trab', i: '08:00', f: '17:00', por: 'ana', ts: 1 } } } },
+  escala: { '2026-11-25': { cx: { ana: { t: 'trab', i: '08:00', f: '17:00', por: 'ana', ts: 1 } } }, '2026-11-27': { cx: { ana: { t: 'plant', i: '06:00', f: '22:00', por: 'ana', ts: 1 } } } },
 }});
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] }); let ok = true;
@@ -22,6 +22,14 @@ const seed = () => ({ kanban: {
     linha[2].startsWith('8h–3h') && /madrugada de 26\/11/.test(linha[2]) && linha[3].startsWith('6h–3h') && linha[4] === '6h–22h' && linha[0] === '–' && linha[5] === '–', linha);
   await p.click('th.dia[data-dia="2026-11-25"]'); await p.waitForSelector('.md');
   t('resumo do dia diz o atendimento humano', /Atendimento humano:\s*das 8h às 3h da manhã \(26\/11\)/.test(await p.textContent('.atd-dia')), await p.textContent('.atd-dia').catch(() => ''));
+  await p.click('#d-modo [data-dm="gantt"]'); await p.waitForSelector('.gt-atd');
+  const bars = await p.$$eval('.gt-atd .gt-bar', a => a.map(x => [x.classList.contains('herica') ? 'herica' : 'humano', x.title]));
+  t('Gantt de 25/11: Herica de 0h a 8h (com 🤖) e humano de 8h até 24h', bars.length === 2 && bars[0][0] === 'herica' && /🤖 Atendimento exclusivo Herica · 00:00–08:00/.test(bars[0][1]) && bars[1][0] === 'humano' && /08:00–24:00/.test(bars[1][1]), bars);
+  t('Gantt do dia com atendimento vai de 00h a 24h', /^00h/.test(await p.textContent('.gt-ax span:first-child')) && /^24h/.test(await p.textContent('.gt-ax span:last-child')), 0);
+  await p.keyboard.press('Escape');
+  await p.click('th.dia[data-dia="2026-11-27"]'); await p.waitForSelector('.gt-atd');
+  const b27 = await p.$$eval('.gt-atd .gt-bar', a => a.map(x => x.classList.contains('herica') ? 'H' : 'h').join(''));
+  t('27/11: humano (madrugada do dia 26) · Herica 3h–6h · humano 6h–22h · Herica depois das 22h', b27 === 'hHhH', b27);
   await p.keyboard.press('Escape');
   await abrir('?squad=dados&semana=2026-11-23');
   t('outra squad não ganha a linha', !(await p.$('tr.atd')), 0);

@@ -26,7 +26,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ### Escala — 🎧 horário de atendimento humano do CX na semana da Black Friday — SÓ DEV (escala v1.16-dev) — 2026-11-23
 
-Pedido do Caio. Horário do time (não de uma pessoa) fixo na página (ATENDIMENTO_CX): 25/11 das 8h às 3h da manhã, 26/11 das 6h às 3h da manhã, 27/11 das 6h às 22h. Aparece no squad CX como linha 🎧 Atendimento humano na grade, selo na visão de todas as squads, linha no resumo do dia e nos JPGs da semana. O squad é reconhecido pelo id 'cx' ou pelo nome começando por CX. Sem regra nem nó novo no banco. Teste: docs/arezzo/testes/test_escala_atendimento_cx.js. Dica: não — a linha aparece sozinha na grade do CX.
+Pedido do Caio. Horário do time (não de uma pessoa) fixo na página (ATENDIMENTO_CX): 25/11 das 8h às 3h da manhã, 26/11 das 6h às 3h da manhã, 27/11 das 6h às 22h. Aparece no squad CX como linha 🎧 Atendimento humano na grade, selo na visão de todas as squads, linha no resumo do dia e nos JPGs da semana. O squad é reconhecido pelo id 'cx' ou pelo nome começando por CX. No 📊 Visão Gantt do dia do CX, uma linha 🎧 Atendimento de 0h a 24h: o trecho humano em azul e o resto como **🤖 Atendimento exclusivo Herica** (a IA de atendimento), contando a madrugada que sobra do dia anterior; o mesmo no JPG do Gantt. Sem regra nem nó novo no banco. Teste: docs/arezzo/testes/test_escala_atendimento_cx.js. Dica: não — a linha aparece sozinha na grade do CX.
 
 ### Menu de apps (⋮⋮⋮) — 🗓️ Escala na semana da Black Friday (#1913) — PROD 23/11 (mare-notif v45 · kanban v8.30.1019 · painel v5.125 · okr v2.143 · oceano v1.90) — 2026-11-23
 
