@@ -238,7 +238,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.12 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.13 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -291,6 +291,8 @@ const hojeISO = () => iso(new Date());
 const curto = d => pad(d.getDate()) + '/' + pad(d.getMonth() + 1);
 // Black Friday = sexta depois da 4ª quinta de novembro.
 function blackFriday(ano) { const p = (4 - new Date(ano, 10, 1).getDay() + 7) % 7; return new Date(ano, 10, 1 + p + 21 + 1); }
+// A quinta (véspera) também conta: o time trabalha a virada de quinta pra sexta e na sexta quase não há escala.
+function ehBF(s, bf) { return s === iso(bf) || s === iso(addDias(bf, -1)); }
 function proximaBF() { const h = new Date(); let bf = blackFriday(h.getFullYear()); if (addDias(bf, 7) < h) bf = blackFriday(h.getFullYear() + 1); return bf; }
 
 // ── estado ──
@@ -392,8 +394,8 @@ function diasDaSemana() { return Array.from({ length: 7 }, (_, i) => addDias(sem
 function cabecalhoDias(dias, bf) {
   const hj = hojeISO();
   return dias.map((d, i) => {
-    const s = iso(d), cls = ['dia', s === hj ? 'hj' : '', i >= 5 ? 'fds' : '', s === iso(bf) ? 'bfdia' : ''].filter(Boolean).join(' ');
-    return '<th class="' + cls + '" data-dia="' + s + '" title="Ver quem está nesse dia">' + DIAS[i] + '<br>' + curto(d) + (s === iso(bf) ? '<span class="bfmark">🔥 BLACK FRIDAY</span>' : '') + '</th>';
+    const s = iso(d), cls = ['dia', s === hj ? 'hj' : '', i >= 5 ? 'fds' : '', ehBF(s, bf) ? 'bfdia' : ''].filter(Boolean).join(' ');
+    return '<th class="' + cls + '" data-dia="' + s + '" title="Ver quem está nesse dia">' + DIAS[i] + '<br>' + curto(d) + (ehBF(s, bf) ? '<span class="bfmark">🔥 BLACK FRIDAY</span>' : '') + '</th>';
   }).join('');
 }
 function coberturaDoDia(sq, data) {
@@ -412,7 +414,7 @@ function renderSquad() {
     h += '<tr><th class="pess"><div class="pnome">' + av(m) + '<div><b>' + esc(m.nome) + (m.uid === user.uid ? ' <span style="color:var(--accent);font-weight:500">(você)</span>' : '') + '</b><small>' + (m.init ? '@' + esc(m.init) : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : '') + '</small></div></div></th>';
     dias.forEach((d, i) => {
       const s = iso(d), e = entrada(s, squad, m.uid), pode = podeEditar(squad, m.uid);
-      h += '<td class="' + (s === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (s === iso(bf) ? 'bfdia' : '') + '"><button type="button" class="cel' + (pode ? ' edit' : '') + '" data-u="' + esc(m.uid) + '" data-d="' + s + '"' + (pode ? '' : ' tabindex="-1"') + '>' +
+      h += '<td class="' + (s === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (ehBF(s, bf) ? 'bfdia' : '') + '"><button type="button" class="cel' + (pode ? ' edit' : '') + '" data-u="' + esc(m.uid) + '" data-d="' + s + '"' + (pode ? '' : ' tabindex="-1"') + '>' +
         (e ? chipTipo(e) : (pode ? '<span class="ghost">＋</span>' : '')) + '</button></td>';
     });
     h += '</tr>';
@@ -440,7 +442,7 @@ function renderGlobal() {
       trab.sort((a, b) => (a.e.t === 'plant' ? 0 : 1) - (b.e.t === 'plant' ? 0 : 1));
       const vazio = tem && i < 5 && !trab.length;
       const tip = trab.length ? trab.map(x => x.m.nome + (x.e.t === 'plant' ? ' (plantão)' : '')).join(', ') : (vazio ? 'Ninguém escalado neste dia útil' : '');
-      h += '<td class="' + (dt === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (dt === iso(bf) ? 'bfdia' : '') + '"><button type="button" class="gdia' + (vazio ? ' vazio' : '') + '" data-gd="' + dt + '" data-gs="' + esc(s.id) + '" title="' + esc(tip) + '">' +
+      h += '<td class="' + (dt === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (ehBF(dt, bf) ? 'bfdia' : '') + '"><button type="button" class="gdia' + (vazio ? ' vazio' : '') + '" data-gd="' + dt + '" data-gs="' + esc(s.id) + '" title="' + esc(tip) + '">' +
         (trab.length ? '<span class="avs">' + trab.slice(0, 4).map(x => av(x.m, x.e.t === 'plant' ? 'plant' : '')).join('') + (trab.length > 4 ? '<span class="av mais">+' + (trab.length - 4) + '</span>' : '') + '</span>' +
           '<span class="n">' + trab.length + (folga.length ? ' · ' + folga.length + ' de folga' : '') + '</span>' : (vazio ? '⚠️ 0' : '<span style="color:var(--txt3)">–</span>')) + '</button></td>';
     });
@@ -647,11 +649,12 @@ function abrirDia(data, sqUnico, modo) {
   let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
   h += '<div class="seg dmodo" id="d-modo" role="tablist"><button type="button" data-dm="lista" role="tab" aria-selected="' + (diaModo === 'lista') + '">📋 Lista</button><button type="button" data-dm="gantt" role="tab" aria-selected="' + (diaModo === 'gantt') + '">📊 Visão Gantt</button></div>';
   h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
-  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
+  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + (squadsEditaveis().length ? '<button type="button" class="btn primary" id="d-cad">➕ Cadastrar escala</button>' : '') + '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
   abrirOv(h);
   $('ov').querySelector('.md').classList.toggle('gantt', diaModo === 'gantt');
   $('d-fechar').onclick = fecharOv;
   $('d-jpg').onclick = () => abrirJpg('dia', data, diaModo);
+  if ($('d-cad')) $('d-cad').onclick = () => abrirCadastro({ sq: sqUnico, data });   // já vem com este dia em De/Até e o dia da semana marcado
   $('d-modo').onclick = e => { const b = e.target.closest('[data-dm]'); if (b && b.dataset.dm !== diaModo) abrirDia(data, sqUnico, b.dataset.dm); };
   if ($('d-menc')) $('d-menc').onclick = async () => {
     const txt = menc.join(' ');
@@ -712,11 +715,20 @@ function desenharCadastro(editaveis) {
     if (a === 'bf') { cad.dsem = new Set([0, 1, 2, 3, 4, 5, 6]); o.querySelectorAll('[data-ds]').forEach(x => x.setAttribute('aria-pressed', 'true')); }   // Black Friday: a semana inteira conta
     atualizarPrev();
   });
-  o.querySelectorAll('[data-ds]').forEach(b => b.onclick = () => { const i = Number(b.dataset.ds); if (cad.dsem.has(i)) cad.dsem.delete(i); else cad.dsem.add(i); b.setAttribute('aria-pressed', cad.dsem.has(i)); atualizarPrev(); });
+  o.querySelectorAll('[data-ds]').forEach(b => b.onclick = () => { const i = Number(b.dataset.ds); lerForm(); if (cad.dsem.has(i)) cad.dsem.delete(i); else cad.dsem.add(i); b.setAttribute('aria-pressed', cad.dsem.has(i)); ajustarPeriodoAosDias(); atualizarPrev(); });
   o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; });
   $('c-cancelar').onclick = fecharOv;
   $('c-salvar').onclick = () => confirmarCadastro(false);
   $('c-limpar').onclick = () => confirmarCadastro(true);
+}
+// Período dentro de uma semana só (ex.: aberto a partir de um dia): marcar/desmarcar dia da semana leva De/Até
+// pro primeiro e o último dia marcado daquela semana. Período maior que uma semana fica como a pessoa escreveu.
+function ajustarPeriodoAosDias() {
+  const a = parseISO(cad.de), b = parseISO(cad.ate);
+  if (!a || !b || b < a || iso(segunda(a)) !== iso(segunda(b)) || !cad.dsem.size) return;
+  const ds = [...cad.dsem].sort((x, y) => x - y), seg = segunda(a);
+  cad.de = iso(addDias(seg, ds[0])); cad.ate = iso(addDias(seg, ds[ds.length - 1]));
+  $('c-de').value = cad.de; $('c-ate').value = cad.ate;
 }
 function lerForm() {
   cad.de = $('c-de').value; cad.ate = $('c-ate').value; cad.i = $('c-i') ? $('c-i').value : ''; cad.f = $('c-f') ? $('c-f').value : ''; cad.n = $('c-n') ? $('c-n').value.trim() : '';
@@ -871,7 +883,7 @@ function jCabDia(x, d, i, px, py, w, h, bf) {
   const s = iso(d), hj = s === hojeISO();
   if (hj) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(56,182,255,.16)'); else if (i >= 5) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(255,255,255,.03)');
   jT(x, DIAS[i], px + w / 2, py + h / 2 - 9, { s: 13.5, w: 700, c: hj ? JC.accent : JC.txt, a: 'center' });
-  jT(x, curto(d) + (s === iso(bf) ? '  🔥 BF' : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: s === iso(bf) ? JC.warn : JC.txt2, a: 'center' });
+  jT(x, curto(d) + (ehBF(s, bf) ? '  🔥 BF' : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: ehBF(s, bf) ? JC.warn : JC.txt2, a: 'center' });
 }
 
 function jSemanaSquad(per, dd, esc) {
@@ -1025,9 +1037,9 @@ function jMes(per, dd, esc) {
   dados2.forEach(r => {
     r.cel.forEach((z, i) => {
       const px = L + i * dW + 3, w = dW - 6, dt = iso(z.d), fora = z.ls === null, hj = dt === hojeISO();
-      jRR(x, px, y + 3, w, r.h - 6, 10, fora ? 'rgba(255,255,255,.012)' : (i >= 5 ? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.06)'), hj ? JC.accent : (dt === iso(bf) ? JC.warn : (fora ? null : 'rgba(255,255,255,.06)')));
+      jRR(x, px, y + 3, w, r.h - 6, 10, fora ? 'rgba(255,255,255,.012)' : (i >= 5 ? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.06)'), hj ? JC.accent : (ehBF(dt, bf) ? JC.warn : (fora ? null : 'rgba(255,255,255,.06)')));
       jT(x, String(z.d.getDate()), px + 10, y + 19, { s: 14, w: 700, c: fora ? JC.txt3 : (hj ? JC.accent : JC.txt) });
-      if (dt === iso(bf)) jT(x, '🔥 BF', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
+      if (ehBF(dt, bf)) jT(x, '🔥 BF', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
       (z.ls || []).forEach((ln, k) => {
         const ly = y + 38 + k * LH;
         if (ln.r) { jT(x, ln.r, px + w - 10, ly, { s: 11.5, w: 700, c: ln.c, a: 'right' }); jT(x, ln.l, px + 10, ly, { s: 12, w: ln.w, c: ln.c, max: w - 20 - x.measureText(ln.r).width - 8 }); }

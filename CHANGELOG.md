@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Escala — Cadastrar escala direto do dia e quinta da Black Friday em laranja — 2026-11-23
+
+escala-dev v1.13 (pedido do time).
+- O resumo do dia (clique no cabeçalho do dia) ganhou **➕ Cadastrar escala**, que abre o cadastro já com aquele dia em De/Até e o dia da semana marcado. Só aparece para quem pode cadastrar em alguma squad.
+- A **quinta antes da Black Friday** também fica em laranja com o selo 🔥, na grade, na visão de todas as squads e no JPG: o time trabalha a virada de quinta pra sexta, e na sexta quase não há escala. Dica: não, porque o botão aparece no próprio resumo do dia e a cor não pede explicação.
+
 ### Apresentação do Radar — relógio opcional ao iniciar a apresentação ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19
 
 `okr-apresentacao.slide.html` (sem par `-dev`; entra no ar no merge). Etapa 1 do desenho do PR #1904. **Apresentar ao vivo** agora abre um diálogo com três saídas: **Iniciar com cronômetro**, **Iniciar sem cronômetro** e **Cancelar** (Esc também cancela).
