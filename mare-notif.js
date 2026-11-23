@@ -750,7 +750,17 @@
     {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, img:'favicon-painel-v2.png?v=3'},   // logo do Painel (a ponte de comando) — a mesma da aba do navegador
     {id:'okr',    nome:'Radar',        sub:'Objetivos e OKRs',    href:PAGES.okr, img:'favicon-radar.png'},   // logo do Radar (peixinhos no radar) — a mesma da aba do navegador
     {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas',         href:'onboarding.html', img:'favicon-bordo-v2.png?v=3'},   // logo do A Bordo (o convés) — a mesma da aba do navegador
+    // 🗓️ Escala — SAZONAL (pedido do time, 23/11/2026): só na semana da Black Friday (seg–dom). Não é produto com aba no Oceano:
+    // o tile é um link comum (sem data-app), então abre em aba nova até de dentro do iframe do Oceano.
+    {id:'escala', nome:'Escala', sub:'🔥 Semana da Black Friday', href:PAGES.escala, ext:true, g:['#ff9f43','#ff5e62'],
+      glifo:'<rect x="11" y="14" width="26" height="23" rx="4"/><path d="M11 21h26M18 10v7M30 10v7"/><path d="M18 28l4 4 8-8"/>'},
   ];
+  // Semana da Black Friday (segunda a domingo da sexta depois da 4ª quinta de novembro) — mesma conta da escala-dev.html.
+  function semanaBF(agora){
+    const h = agora || new Date(), a = h.getFullYear(), p = (4 - new Date(a, 10, 1).getDay() + 7) % 7;
+    const bf = new Date(a, 10, 1 + p + 21 + 1), seg = new Date(a, 10, bf.getDate() - 4), fim = new Date(a, 10, bf.getDate() + 2, 23, 59, 59);
+    return h >= seg && h <= fim;
+  }
   const APP_OCEANO = APPS.find(a=>a.id==='oceano');
   const appsSt = {opts:null, uso:{}, aberto:false, tab:'produtos', links:{hering:null, meus:null}};
   // ── LINKS: abas "Hering" (links importantes, cadastrados por ADM no Painel → ⚙ Configurações → 🔗 Links: kanban/config/links_hering) e
@@ -792,6 +802,10 @@
     if(a.id==='painel') return !!(c.viewer || c.adm || c.uso.painel);
     if(a.id==='okr') return true;
     if(a.id==='oceano') return !c.viewer;   // o lobby é só pra conta Google @ciahering
+    if(a.id==='escala'){   // sazonal: só na semana da Black Friday. Teste: localStorage mare_apps_bf_teste = '1' liga / '0' desliga (o fakefb desliga)
+      let f = null; try{ f = localStorage.getItem('mare_apps_bf_teste'); }catch(e){}
+      return !c.viewer && (f==='1' ? true : f==='0' ? false : semanaBF());
+    }
     return !c.viewer;   // Maré Digital e A Bordo: só gente da empresa
   }
   function appsCtx(){
@@ -819,7 +833,7 @@
     } else {
       corpo = '<div class="mn-apps-grid">' + lista.map(a=>{
           const eh = a.id===aqui;
-          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app" role="menuitem" data-app="'+esc(a.id)+'" href="'+esc(a.href)+'" target="_blank" rel="noopener">')
+          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app'+(a.ext ? ' mn-app-bf' : '')+'" role="menuitem"'+(a.ext ? '' : ' data-app="'+esc(a.id)+'"')+' href="'+esc(a.href)+'" target="_blank" rel="noopener">')
             + appsLogo(a) + '<span class="mn-app-n">'+esc(a.nome)+'</span><span class="mn-app-s">'+(eh ? 'você está aqui' : esc(a.sub))+'</span>'
             + (eh ? '</div>' : '</a>');
         }).join('') + '</div>';
@@ -944,11 +958,11 @@
       + 'a.mn-app:hover,a.mn-app:focus-visible{background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.35);outline:none;}'
       + '.mn-app-aqui{background:rgba(255,255,255,.05);border-color:var(--glass-b,rgba(255,255,255,.15));cursor:default;}'
       + '.mn-app-n{font-size:12.5px;font-weight:600;color:var(--txt,#e8f4ff);}'
-      + '.mn-app-s{font-size:10px;color:var(--txt3,#8fa);}';
+      + '.mn-app-s{font-size:10px;color:var(--txt3,#8fa);}.mn-app-bf{box-shadow:inset 0 0 0 1px rgba(255,159,67,.45);}.mn-app-bf .mn-app-s{color:#ffb070;}';
     (document.head || document.documentElement).appendChild(el);
   })();
 
-  window.MareNotif = {TIPOS, FAMILIAS, aparencia, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, dismiss, clearRead, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
+  window.MareNotif = {semanaBF, TIPOS, FAMILIAS, aparencia, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, dismiss, clearRead, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
     appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, avisoSistema, insistente, insistenteMenu, insistenteSet, insistenteParar, insistenteTestar, insRender, insEstado: ()=>Object.assign({}, ins), dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
