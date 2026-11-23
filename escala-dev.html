@@ -625,7 +625,7 @@ function render() {
   renderHoje(); renderAvisos();
   $('b-cad').disabled = !squadsEditaveis().length;
   $('b-cad').title = $('b-cad').disabled ? 'Você precisa estar inscrito em uma squad (entre uma vez no Maré) pra cadastrar escala' : '';
-  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.subs.length) u.searchParams.set('f_sub', filtro.subs.join(',')); else u.searchParams.delete('f_sub'); if (visao === 'global' && filtro.sqs.length) u.searchParams.set('f_sq', filtro.sqs.join(',')); else u.searchParams.delete('f_sq'); if (filtro.hora) u.searchParams.set('f_hora', filtro.hora); else u.searchParams.delete('f_hora'); if (filtro.tipos.length) u.searchParams.set('f_tipo', filtro.tipos.join(',')); else u.searchParams.delete('f_tipo'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.subs.length) u.searchParams.set('f_sub', filtro.subs.join(',')); else u.searchParams.delete('f_sub'); if (visao === 'global' && filtro.sqs.length) u.searchParams.set('f_sq', filtro.sqs.join(',')); else u.searchParams.delete('f_sq'); if (filtro.hora) u.searchParams.set('f_hora', filtro.hora); else u.searchParams.delete('f_hora'); if (filtro.tipos.length) u.searchParams.set('f_tipo', filtro.tipos.join(',')); else u.searchParams.delete('f_tipo'); if (verAtend && semanaTemAtend()) u.searchParams.set('atend', '1'); else u.searchParams.delete('atend'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
 }
 function irParaSemana(d) { semana = segunda(d); dados = {}; carregarJanela(); render(); }
 
@@ -1319,6 +1319,7 @@ async function iniciar() {
   squad = [qs, ls].find(x => x && squads.find(s => s.id === x)) || (meus[0] && meus[0].id) || (squads[0] && squads[0].id) || '';
   visao = q.get('visao') === 'global' || (!meus.length && !qs) ? 'global' : 'squad';
   const sm = parseISO(q.get('semana') || ''); if (sm) semana = segunda(sm);
+  if (q.get('atend') === '1' || q.get('atend') === '0') { verAtend = q.get('atend') === '1'; lsSet('escala_atend', verAtend ? '1' : '0'); }   // link com o 🎧 já ligado (ou desligado)
   filtro = { subs: (q.get('f_sub') || '').split(',').map(x => x.trim()).filter(Boolean), sqs: (q.get('f_sq') || '').split(',').map(x => x.trim()).filter(Boolean), hora: /^([01]\d|2[0-3]):[0-5]\d$/.test(q.get('f_hora') || '') ? q.get('f_hora') : '', tipos: (q.get('f_tipo') || '').split(',').filter(x => ['trab', 'plant', 'folga'].includes(x)) };
   $('loading').hidden = true; $('app').hidden = false;
   await carregarJanela();

@@ -26,7 +26,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ### Escala — 🎧 botão Atendimento CX para todo mundo — SÓ DEV (escala v1.17-dev) — 2026-11-23
 
-escala-dev v1.17 (pedido do Caio). Não há squad de CX no Maré, então o horário do atendimento humano deixou de depender de um squad: nas semanas com horário cadastrado aparece o botão **🎧 Atendimento CX** na barra; ligado (lembrado por navegador), qualquer squad e **Todas as squads** ganham a linha 🎧 no topo da grade, o resumo do dia diz o horário, o 📊 Visão Gantt ganha a linha 0–24h com **🤖 Atendimento exclusivo Herica** fora do horário humano, e os JPGs (semana e Gantt) acompanham. Desligado, nada muda. Teste: `test_escala_atendimento_cx.js`. Dica: não — o botão está na barra, só nessa semana.
+escala-dev v1.17 (pedido do Caio). Não há squad de CX no Maré, então o horário do atendimento humano deixou de depender de um squad: nas semanas com horário cadastrado aparece o botão **🎧 Atendimento CX** na barra; ligado (lembrado por navegador), qualquer squad e **Todas as squads** ganham a linha 🎧 no topo da grade, o resumo do dia diz o horário, o 📊 Visão Gantt ganha a linha 0–24h com **🤖 Atendimento exclusivo Herica** fora do horário humano, e os JPGs (semana e Gantt) acompanham. Desligado, nada muda. Link com o botão já ligado: `?visao=global&semana=2026-11-23&atend=1` (o `atend` acompanha a URL). Teste: `test_escala_atendimento_cx.js`. Dica: não — o botão está na barra, só nessa semana.
 
 ### Escala — 🎧 horário de atendimento humano do CX na semana da Black Friday — SÓ DEV (escala v1.16-dev) — 2026-11-23
 

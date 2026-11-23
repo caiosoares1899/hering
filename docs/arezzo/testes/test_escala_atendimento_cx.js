@@ -40,6 +40,8 @@ const seed = () => ({ kanban: {
   t('desligar tira a linha', !(await p.$('tr.atd')), 0);
   await abrir('?squad=dados&semana=2026-11-30');
   t('semana sem horário: o botão nem aparece', !(await p.isVisible('#b-atd')), 0);
+  await abrir('?visao=global&semana=2026-11-23&atend=1');
+  t('link com atend=1 abre Todas as squads já com o 🎧 ligado', (await p.getAttribute('#b-atd', 'aria-pressed')) === 'true' && !!(await p.$('tr.atd')) && (await p.getAttribute('#v-global', 'aria-selected')) === 'true', 0);
   t('sem erro de JS', !errs.length, errs);
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1);
 })();
