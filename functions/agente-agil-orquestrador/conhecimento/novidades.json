@@ -1,5 +1,140 @@
 [
  {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — relógio opcional ao iniciar a apresentação ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "okr-apresentacao.slide.html (sem par -dev; entra no ar no merge). Etapa 1 do desenho do PR #1904. Apresentar ao vivo agora abre um diálogo com três saídas: Iniciar com cronômetro, Iniciar sem cronômetro e Cancelar (Esc também cancela).\n- Com cronômetro: o término vem sugerido pela ocorrência do Calendário do dia ou pela agenda configurada para hoje, e pode ser editado. Também dá para informar só a duração. Começar atrasado não prorroga o término. A barra mostra \"⏱ X decorridos · ⏳ Y restantes\".\n- Sem cronômetro: a sessão grava modo: 'livre' e a barra não mostra contagem, mesmo com agenda no dia. Mudança de comportamento: antes a contagem da agenda aparecia sempre.\n- O relógio fica na própria sessão (apresentacao_live/relogio: modo, inicioEm, fimEm, origem), em horário do servidor. Por isso vale igual para todas as telas, para o Bastidor, depois de passar ou retomar o controle e depois de recarregar. \"Configurar horário\" no meio da sessão ajusta o término.\n- O início usa transação: se outra pessoa iniciou enquanto o diálogo estava aberto, a sessão dela não é sobrescrita. O clique duplo inicia uma vez só.\n- Valores fora do formato no banco são ignorados na leitura. Não há regra nem função nova.\nTeste: docs/arezzo/testes/test_relogio_reuniao.js. As outras suítes da apresentação passaram a escolher a opção no diálogo."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — pauta e filtros sincronizados na sala ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Quem abre a apresentação pelo favorito recebe a pauta e o horário da ocorrência da sala. Ao encerrar, cada tela recupera seu recorte local."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — anotações do dia no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O Bastidor exibe autor, horário e texto das notas do dia em uma lista recolhível que acompanha as atualizações da reunião."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — salto entre gerências no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O Bastidor separa Gerência, que navega entre slides, de Objetivo do slide, que abre um detalhe na gerência atual."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — Evolução e escolha direta de Objetivos no controle ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O Bastidor permite escolher um Objetivo do slide. O Bastidor e o passador abrem e fecham Evolução para toda a sala."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — Bastidor aproveita a largura do desktop — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Em desktop, a projeção ganha uma terceira coluna, ao lado da navegação e das anotações, e reduz a altura ocupada."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — acabamento Marine Glass no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O Bastidor ganha iluminação oceânica em camadas, cartões translúcidos e mais contraste nos rótulos. O cartão do slide no ar recebe o destaque principal."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — ícones de tela e conversa nas ações do Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Monitor identifica o link da tela para o público. Balão de conversa identifica o convite para o chat do Meet."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — horário e Panorama geral no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "A aba do Bastidor permite configurar o horário da reunião e ir direto ao Panorama geral. O layout de desktop ocupa menos altura e mantém a prévia ao alcance."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — prévia e convite do Meet no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O Bastidor mostra a miniatura do próximo slide e um cartão do próximo Objetivo no detalhe. O convite para o chat do Meet pode ser copiado do próprio Bastidor."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — Abrir detalhe no passador e no Bastidor — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O passador compacto e o Bastidor ganharam Abrir detalhe, ao lado de Fechar detalhe. Num slide de gerência, ele abre o detalhe do 1º Objetivo dela, na ordem da grade e dos botões Anterior/Próximo do detalhe, sem precisar voltar à aba dos slides. Fica desligado fora de um slide de gerência, com o detalhe já aberto ou para quem não está apresentando. A janela compacta ficou um pouco mais alta para os quatro botões. Testes: docs/arezzo/testes/test_apresentacao_live.js (TESTAR_PIP=1) e docs/arezzo/testes/test_bastidor_ui.js."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — progresso destacado junto aos Marcos — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O detalhe do Objetivo mostra o percentual e a contagem de concluídos no cabeçalho da lista, com a primeira linha logo abaixo. O atingimento da meta segue separado."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — botão próprio do passador acima do 🎙️, que também pede o controle — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Abrir controle flutuante saiu do menu 🎙️ e virou um botão 🎛️ logo acima do microfone. Para quem apresenta, um clique abre o passador compacto (Anterior, Próximo e Fechar detalhe). Para quem acompanha, o mesmo botão pede o controle, e quem apresenta ou o ADM libera. Ao liberar, o botão passa para quem recebeu; ao retomar, volta. O menu 🎙️ sobe para não encostar no botão e continua com laser e caneta. A Tela para o público e o Bastidor não mostram o botão, e ele só aparece em navegador com janela flutuante. Teste: docs/arezzo/testes/test_passador_botao.js (20 verificações no Chrome, com a janela flutuante de verdade)."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — Bastidor em aba própria mostra o que está no ar e separa o que é perigoso — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O Bastidor aberto em aba (okr-bastidor.html) era o bloco da janela flutuante pequena centralizado numa página larga: fonte do sistema, todos os botões iguais, Encerrar ao lado de Copiar link e o botão de iniciar no estilo cru do navegador. Agora usa a identidade dos slides em duas colunas: quem apresenta no topo, o slide ou Objetivo atual em destaque com o que vem a seguir, Próximo como ação principal e a tela para o público logo abaixo; anotação e controle ao lado. Encerrar fica sozinho no fim, em vermelho. Botões com 44 px, uma coluna no celular, linha de FPS fora da aba e aviso de início que fala da tela para o público. A janela flutuante não muda. Teste: docs/arezzo/testes/test_bastidor_ui.js (20 verificações em 1280 e 390 px; 20 falham na versão anterior)."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — página do Bastidor para o Safari — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O ADM abre o Bastidor em uma aba normal usando okr-bastidor.html. A página reaproveita os controles da sala ao vivo sem depender de Picture-in-Picture."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — Bastidor do ADM com retomada de controle — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O ADM mantém o Bastidor aberto durante a troca de apresentador e retoma o controle quando precisar. Quem recebe o controle pode usar o passador compacto."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — controle flutuante enxuto e bastidor como opções separadas — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O painel ao vivo oferece a janelinha original de navegação e uma abertura separada para o bastidor completo."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Palco Limpo mantém laser e caneta disponíveis — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Na aba do apresentador, o microfone abre um painel reduzido com as ferramentas de marcação. A tela remota para o público continua limpa."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — tela para o público em outro computador — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O apresentador copia um link para projetar uma tela limpa em outro computador. A tela segue a sala ao vivo sem disputar o controle, inclusive com a mesma conta."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — bastidor com Palco Limpo — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O controle flutuante do Chrome reúne anotações, tempo restante, FPS, participantes e pedidos de controle. Palco Limpo oculta os controles de bastidor da aba dos slides enquanto a janela está aberta."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — controle flutuante no Chrome — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Quem apresenta pode abrir uma janela flutuante com Anterior, Próximo e Fechar detalhe. A navegação continua sincronizada com a sala. A janela fecha quando o controle muda de pessoa ou a sessão termina."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Radar — abrir slides da pauta pelo Calendário (#1880) — PROD 21/11 (okr v2.142) — 2026-11-19",
+  "texto": "O detalhe da ocorrência abre os slides com os objetivos da pauta e o relógio local com o horário de São Paulo. O convite da sala conserva o mesmo recorte."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — Evolução sincronizada na sala ao vivo — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Ao abrir ou fechar Evolução, as abas que acompanham a sala mostram o mesmo estado. A navegação preserva o gráfico para quem chega depois ou recebe o controle."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — convite copiável para o chat do Meet — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O painel ao vivo copia um convite para acompanhar os slides no navegador. A confirmação de encerramento distingue a sessão do Radar do compartilhamento de tela no Meet."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — gestos para laser e caneta temporária — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Na área livre do slide ou do detalhe, dois cliques acionam o laser e três selecionam a caneta temporária durante a sessão ao vivo."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — botão Parar de apresentar na barra — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "Quem apresenta pode encerrar a sessão pelo botão da barra, com a mesma confirmação do painel ao vivo."
+ },
+ {
+  "data": "2026-11-19",
+  "titulo": "Apresentação do Radar — horizonte marinho na Evolução do atingimento — PROD 21/11 (no ar desde o merge) — 2026-11-19",
+  "texto": "O gráfico distingue o céu da área submersa com um horizonte ciano, reflexos discretos abaixo da meta e um degradê que escurece com a profundidade. A curva e o peixe neon permanecem, e a superfície continua posicionada no valor exato da meta."
+ },
+ {
   "data": "2026-11-18",
   "titulo": "Apresentação do Radar — Evolução do atingimento em neon sobre a linha d’água (#1870) — PROD 18/11 (no ar desde o merge) — 2026-11-18",
   "texto": "A curva volta ao rosa neon, a meta vira uma linha fina em ciano com degradê azul abaixo e o painel segue a moldura Marine Glass do detalhe do Objetivo. Uma faixa mostra valor atual, distância até a meta, atingimento e período. Só o registro mais recente tem peixe e valor escrito, e a lista de registros começa recolhida. O cálculo do atingimento não muda."
@@ -13,140 +148,5 @@
   "data": "2026-11-18",
   "titulo": "Apresentação do Radar — detalhe do Objetivo com menos rolagem em Marcos, Riscos e Próximos passos (#1865) — PROD 18/11 (no ar desde o merge) — 2026-11-18",
   "texto": "A altura da tela passa a ser dividida pelo conteúdo real. Riscos e Próximos passos aparecem inteiros até 40% da altura, os Marcos ficam com o restante, e Progressos, Planos e a coluna da esquerda cedem espaço primeiro. Quando nem tudo cabe, a rolagem continua disponível. Com 14 Marcos, a rolagem da tabela cai de 195 px para 93 px em 1366 × 768 e some em 1280 × 900."
- },
- {
-  "data": "2026-11-18",
-  "titulo": "Apresentação do Radar — detalhe do Objetivo mais legível em projeção (#1862) — PROD 18/11 (no ar desde o merge) — 2026-11-18",
-  "texto": "No detalhe do Objetivo, Riscos e Próximos passos ganham espaço quando preenchidos. Progresso dos marcos e Atingimento da meta aparecem separados. A tabela de Marcos mantém os nomes a partir de 16 px, com cabeçalho visível durante a rolagem e foco por teclado."
- },
- {
-  "data": "2026-11-18",
-  "titulo": "Apresentação do Radar — Panorama geral mais legível em projeção (#1861) — PROD 18/11 (no ar desde o merge) — 2026-11-18",
-  "texto": "O slide explicita quantos Objetivos estão na distribuição de status. A comparação por gerência inclui Não iniciado, identifica a coluna Progresso médio e alinha os números à direita. Barras e linhas ocupam menos altura, preservando os cálculos existentes."
- },
- {
-  "data": "2026-11-18",
-  "titulo": "🎲 Quando termina? · previsão em teste no Fluxo (painel v5.123-dev, #1853) — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88) — 2026-11-18",
-  "texto": "- Na aba 🌊 Fluxo do Painel, o piloto Quando termina? estima a data para concluir um lote sob o selo Estimativa em teste. A previsão usa entregas verificáveis em Concluído, inclusive arquivadas, e roda no navegador com os dados já carregados.\n- Mostra a data P85, o P50 nos detalhes e o motivo quando o histórico ou o horizonte não permitem estimar. O piloto fica restrito a Dados e IA e ao squad de teste."
- },
- {
-  "data": "2026-11-18",
-  "titulo": "🎨 /melhoriauiux do modal do card: hierarquia visual e foco (kanban v8.30.1012-dev, #1842) — PROD 18/11 (kanban v8.30.1016 · okr v2.141 · painel v5.124 · oceano v1.88) — 2026-11-18",
-  "texto": "Moldura quieta sem botões teal concorrentes (+ Add de Participantes e 🤖 Insights discretos para destacar 💾 Salvar como primário único), remoção do backdrop-filter aninhado em #m-tag-add-list, acabamento --specular nos submenus flutuantes do modal, :focus-visible unificado nos botões do #card-ov (com outline-offset: -2px em #m-deps-menu e #m-milanote-menu) e tabular-nums em #m-atraso-info."
- },
- {
-  "data": "2026-11-17",
-  "titulo": "🎨 /melhoriauiux do Maré com a referência do Arc UI: hover que não gruda no toque e números que não pulam (kanban v8.30.999-dev) — PROD 17/11 (kanban v8.30.999 · painel v5.120) — 2026-11-17",
-  "texto": "- Pedido do Caio: rodada de UI/UX no Maré com a referência do Arc UI (uiarc.dev), que entrou no guia em #1826/#1827.\n- Auditado renderizando (docs/arezzo/testes/auditar_arc_mare.js, boot real, KANBAN_HTML= compara com a main):\n  - foco por teclado nas 70 primeiras paradas do Tab (cabeçalho e barra), nos 3 temas, a 1280 px;\n  - hover no toque a 834, 1180 e 390 px, nos 4 temas (inclusive o 🔥);\n  - contadores e o retorno do salvamento automático, a 1280 px.\n  - A main falha em 13 checagens; o dev passa em todas.\n- O que mudou:\n  - Tablet e celular: depois de tocar num card ou post-it do Mural, ele não fica mais \"levantado\"/aumentado. No iPad o hover gruda após o toque, e o efeito só estava desligado em tela estreita. Com mouse, o card continua subindo de leve.\n  - Contadores das colunas, métricas e selo do sino têm largura fixa por dígito: \"9 → 10\" não empurra mais o vizinho.\n- Já estava bom (sem mudança): o anel de foco por teclado aparece em todas as paradas medidas do cabeçalho e da barra; o efeito que \"passa do ponto\" só existe no pop de notificação, que é onde o guia permite.\n- Ainda não auditado (próxima rodada): foco dentro dos cards e do modal do card, controle certo (segmentado × abas, interruptor × caixa) e \"um botão principal por tela\".\n- Correção de passagem registrada em BUGS_E_CORRECOES.md (o \"✓ Salvo\" do salvamento automático)."
- },
- {
-  "data": "2026-11-16",
-  "titulo": "🏢 Diretoria por pessoa: escolha no 1º acesso, edição pelo ADM no Painel e etiqueta na 👥 Equipe (kanban v8.30.994-dev, painel v5.119-dev, regras) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119) — 2026-11-16",
-  "texto": "- Pedido do Caio: voltar a classificar as pessoas por diretoria para a expansão do Maré a RH e CRM. Cada um escolhe no 1º acesso, o ADM edita no Painel, e o valor aparece como etiqueta na Equipe. Desenho do Codex .\n- Maré:\n  - Quem é novo escolhe a diretoria na própria inscrição (obrigatório).\n  - Quem já usa vê a janela \"🏢 Qual é a sua diretoria?\" uma vez, quando a tela está livre. \"Agora não\" ou Esc pergunta de novo na próxima sessão.\n  - Só contas Google @ciahering; convidado e externo não são perguntados.\n  - Etiqueta de contorno neutro na 👥 Equipe; verbete novo na Ajuda.\n- Painel → 👥 Usuários:\n  - Seletor por pessoa (\"Não informada\" quando vazio, nunca Digital) e filtro \"Não informada\".\n  - \"Todo mundo começa como Digital\" (pedido do Caio): botão \"🏢 Marcar N sem diretoria como Digital\" para o ADM. Preenche só quem é da Hering e ainda não tem diretoria; externos ficam de fora e quem já escolheu não muda. Depois o ADM corrige quem for de outra.\n  - Só habilita para quem as regras aceitam (role adm gravado ou o Caio).\n- Banco: kanban/usuarios/{uid}/diretoria ∈ digital|rh|marca|tecnologia. A pessoa grava a sua só enquanto está vazia; depois só ADM/Caio. O espelho usuarios_publicos/{uid}/diretoria só é aceito igual à fonte. Exige firebase deploy --only database.\n- Testes: diretoriaRules.test.js (5, incluindo o resíduo aceito de apagar o campo) e test_diretoria.js (31: janel"
- },
- {
-  "data": "2026-11-16",
-  "titulo": "🔥 Semana Black Friday: tema BF como padrão de todo mundo de 23 a 29/11 + /melhoriauiux do tema (kanban v8.30.992-dev) — PROD 16/11 (kanban v8.30.996 · okr v2.139 · painel v5.119) — 2026-11-16",
-  "texto": "- Pedido do Caio: \"a partir de segunda que vem, o tema Black Friday seja o default pra todo mundo, de segunda a domingo (semana da Black)\".\n- Agora:\n  - De 23/11 a 29/11/2026 (horário de Brasília), o Maré abre no 🔥 para todo mundo, sem gravar o tema de ninguém. Na segunda 30/11 cada um volta sozinho ao que usava, inclusive quem usa o 🕐 automático.\n  - Aba aberta vira à 00h de segunda nos dois sentidos.\n  - Quem não quiser clica no 🔥 e fica no próprio tema até domingo. Para voltar: Minhas Preferências → 🔥 Black Friday.\n  - Aviso único na 1ª abertura da semana; verbete novo na Ajuda.\n- Contador: a data deixou de ser fixa no código. Mostra \"Xd pra Black Friday\", depois \"É hoje: Black Friday!\" (sexta) e \"Fim de semana da Black Friday\" (sábado e domingo).\n- /melhoriauiux do tema (Abrolhos como referência, 8 telas × desktop/celular): o BF tinha textos cinza sobre cinza, como \"+ Add\", \"🤖 Insights\", \"📅 Calendários\", a data \"no prazo\", \"atrasado\" e o \"+ Add\" de Riscos (1,3–3,8:1). Ajustados --teal, --accent, --warn, \"atrasado\" e os fundos verde-água; \"💾 Salvar\" em vermelho. Resultado: em nenhuma tela o BF fica abaixo do Abrolhos. CPU em repouso igual ao Abrolhos.\n- Só 2026 (BF_PADRAO_ANOS): virar padrão em outros anos é decisão a confirmar. Painel, Radar e Oceano não têm o tema e seguem como estão.\n- Validação antes da semana: localStorage.mare_bf_semana_teste = 'AAAA-MM-DD' simu"
- },
- {
-  "data": "2026-11-16",
-  "titulo": "🏖️ Férias: calendário em tela cheia e 🏖️ Minhas férias sob demanda (kanban v8.30.990-dev, okr v2.138-dev, mare-ferias v6) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16",
-  "texto": "- Pedido do Caio: o cadastro ocupava a coluna da direita o tempo todo e espremia o calendário — com o time cadastrando, a visão geral é o que importa.\n- Agora: o calendário usa a tela toda (Fora agora | Próximas lado a lado, faixas do mês na largura inteira) e o botão 🏖️ Minhas férias (na barra, com o número dos seus períodos) abre o cadastro no topo, com o foco no Início; ✕ fecha. O atalho do menu (nome no Maré, ⋯ Mais no Radar) já abre com o cadastro aberto — no celular ele deixa de ficar a ~900–7000 px de rolagem (achado UI02 da auditoria de 13/11) e vira o 1º botão da barra.\n- Muitos períodos: Fora agora e Próximas mostram 1 linha por pessoa (nome · datas · dias, observação embaixo) e rolam dentro do cartão; editar/excluir saiu dessas listas e fica em Minhas férias (o ADM escolhe a pessoa no mesmo painel e a lista ao lado vira a dela). Barras do mês um pouco mais altas (26 px).\n- De carona: datas legíveis no claro e no Vice (UI01), foco preservado ao mexer em filtros e no seletor de pessoa (UI04) e o texto dos botões azuis que sumia no *hover*.\n- 🧭 Mudança de fluxo (confirmar com o Caio): o 🧳 Preparar minha saída agora fica dentro de Minhas férias (1 clique a mais a partir da vista) e o ADM corrige o período de outra pessoa pelo painel (Pessoa → ✏️), não mais direto nas listas.\n- Teste: test_ferias_calendario.js (A2, A3, E, O0, S2, S3, S4; 34/34). auditar_ferias_ui.js (3"
- },
- {
-  "data": "2026-11-16",
-  "titulo": "NO AR 16/11 (deploy confirmado pelo Caio) — Infra: `firebase-functions` 5.1.1 → 7.4.0 (functions/, exige deploy) — 2026-11-16",
-  "texto": "Pendência desde o aviso do deploy de 18/10. O código já usava só firebase-functions/v2/* e /params (nenhum import da raiz/v1, nenhum functions.config()), que são as quebras grandes da 6 e da 7. Manifesto do deploy idêntico (/__/functions.yaml gerado com a 5 e com a 7: as mesmas 41 funções, mesmos gatilhos, memória, região, segredos e params). A 7 traz o Express 5 (era 4) — os handlers onRequest já protegem req.body (|| {}, ?., zod) e o parse de corpo/query nas v2 é do runtime; teste de fumaça do wrapper onRequest (JSON, GET sem corpo, preflight e CORS) OK. firebase-admin fica na 12 (a 7 aceita 11–14). npm test: 1258/0."
- },
- {
-  "data": "2026-11-16",
-  "titulo": "NO AR 16/11 (ferramenta; vale no merge) — Infra: `/seatualizar` já começa com o Git em dia (`mare-cli.js brief`: fetch sempre, pull só quando é seguro) — 2026-11-16",
-  "texto": "Pedido do Caio. O brief (passo 0 do /seatualizar, Claude e Antigravity) faz git fetch --prune origin e só puxa a main (fast-forward) quando está nela, limpa e só atrás. Em branch de trabalho, avisa quantos commits a main está à frente e, se o próprio branch no GitHub tem commit novo (conflito resolvido por outro agente), pede git pull --ff-only. --sem-git/MARE_SEM_GIT=1 pula. Teste: test_mare_cli_automacao.js (gitDecisao)."
- },
- {
-  "data": "2026-11-16",
-  "titulo": "PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 🪟 Vidro lapidado: --specular e curvas --ease-* em Escala, Intake e Travessia (escala v1.12-dev) — 2026-11-16",
-  "texto": "- Escala (escala-dev.html v1.12-dev) e Intake (intake-dev.html): declarados --specular (escuro/Vice e :root[data-theme=\"light\"]) e as curvas --ease-out, --ease-in-out, --ease-overshoot no :root; aplicado var(--specular) nas superfícies de vidro, painéis, modais e caixas de mensagem (.card, .scroll, .hoje, .avisos, .erro, .md, #toast, .msg, .who, .gbar).\n- Travessia (travessia-dev.html): declaradas as curvas --ease-out, --ease-in-out e --ease-overshoot no :root e aplicado var(--specular) em .toast.\n- Conferência: okr-dev.html, painel-dev.html e oceano-dev.html já tinham --specular, as 3 --ease-* e nenhuma curva cubic-bezier solta. Nenhum backdrop-filter novo. Capturas antes/depois (3 temas × 1280/390) em docs/capturas/vidro_lapidado/."
- },
- {
-  "data": "2026-11-16",
-  "titulo": "📅 Gantt · 🧭 Digital: popup do dia reorganizado — calendário → linha → itens com \"quando\" (kanban v8.30.989-dev, okr v2.136-dev, mare-gcal v9) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16",
-  "texto": "- /melhoriauiux (o Caio achou o popup \"desorganizado, informações jogadas\"): antes, cada ação era uma linha corrida \"Linha: TEXTO (período)\", o título do calendário quase igual aos itens, a linha repetida a cada ação (CRM, CRM…) e a ⚠️ ação importante da régua sumia no popup.\n- Agora: cabeçalho fixo com a data e \"N ações em N calendários\" · cada calendário como título com o total · cada linha uma vez, com a bolinha da mesma cor da régua · cada ação num bloco próprio com o quando à direita (Só hoje, Começa hoje · até 14/11, Termina hoje ou o período) · ⚠️ / ★ como na régua · calendário sem nada (ou não publicado) vira uma linha compacta no fim.\n- Fonte única: MareGCal.diaHtml() (mare-gcal-dev.js v9) — Maré e Radar desenham o mesmo popup (antes eram duas cópias). Nada mudou no que entra no dia (mesma doDia).\n- Mais largo no computador (380 → 480 px, até 80 % da altura): com 11 ações em 3 calendários o popup cabe inteiro em 1280×900 (707 px, sem rolar). O \"quando\" fica sempre na coluna da direita no computador e sempre embaixo do texto no celular.\n- Teste: test_gantt_digital.js (M8c–M8g). Validação de console: docs/arezzo/testes/console_gantt_dia_ux.js. Capturas antes/depois: docs/capturas/gantt_dia_ux/."
- },
- {
-  "data": "2026-11-16",
-  "titulo": "🧩 Minhas Preferências em blocos: cada área com o próprio fundo (kanban v8.30.988-dev) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16",
-  "texto": "- Pedido do Caio (13/11): as áreas de 👤 Minhas Preferências (Tema, Fonte e densidade, Squad padrão, Não Perturbe, Ilha Dinâmica, Atalhos, Sugestões de rotina) ficavam numa lista corrida. Agora cada uma é um bloco com fundo um tom acima do painel, borda fina e 10 px entre blocos. As \"Sugestões recusadas\" ficam no mesmo bloco das Sugestões de rotina.\n- Token novo --bloco no :root (escuro/Vice/Black Friday: branco a 4,5 %; claro: o tom da lagoa, porque a superfície já é quase branca). Nada mudou nos botões nem no que cada preferência faz.\n- Teste: docs/arezzo/testes/test_prefs_blocos.js (3 temas × 1280/390). Capturas: docs/capturas/prefs_blocos/."
- },
- {
-  "data": "2026-11-16",
-  "titulo": "📅 Gantt · 🧭 Digital: o \"tudo deste dia\" abre num popup junto do dia clicado (kanban v8.30.987-dev, okr v2.135-dev, mare-gcal v8) — PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — 2026-11-16",
-  "texto": "- Pedido do Caio (16/11): tocar num dia do cabeçalho na 🧭 Digital · dia a dia abria o detalhe no fim da página, longe do clique. Agora abre um popup ali mesmo, logo abaixo do dia (ou acima, se não couber), sem sair da tela — no Maré e no Radar.\n- Celular (≤ 768 px): o popup vira uma folha que sobe de baixo da tela (12 px das bordas, ✕ ≥ 44 px).\n- Fecha com ✕, Esc ou um toque fora; tocar em outro dia leva o popup para ele; o foco vai para o ✕ e volta ao dia. Rolar a régua leva o popup junto (some se o dia sair de vista). Sair do Gantt (ou da vista no Radar) fecha.\n- Atualização ao vivo de um calendário com o popup aberto continua redesenhando o conteúdo (o popup segue o estado, não o DOM).\n- Módulo mare-gcal-dev.js v8: diaPop/diaPopFechar (fonte única do popup, usada pelo Maré e pelo Radar). Teste: docs/arezzo/testes/test_gantt_digital.js (M8b, M12a–f, R3b–d e folha no celular; os 5 novos de desktop falham na main). Capturas: docs/capturas/gantt_dia_popup/."
- },
- {
-  "data": "2026-11-16",
-  "titulo": "PROD 16/11 (kanban v8.30.990 · okr v2.138 · painel v5.118 · oceano v1.87 · escala v1.12) — Ilha e sino: famílias visuais e grupo Calendário — 2026-11-16 · PR #1802",
-  "texto": "No Maré dev, notificações ganham faixa lateral, selo Pessoal/Calendário/Radar/Sistema e rótulo curto a partir de MareNotif.TIPOS. Na Ilha, grupos não vazios aparecem em Operação → Calendário → demais; no sino tradicional, mantém-se a cronologia. Mesmos nós, contagem, leitura, destinos e push. Módulo mare-notif-dev v44 nas quatro páginas dev; introdução da Ilha atualizada. Teste: docs/arezzo/testes/test_ilha_notif_familias.js; roteiro ADM: console_ilha_notif_familias.js. Dica: não, mudança visível ao abrir os avisos, explicada pelos rótulos e introdução existente. Fronteira: sem mudança."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "🏖️ Férias: calendário geral + Minhas férias + 🧳 Preparar minha saída (kanban v8.30.982-dev, okr v2.130-dev, mare-ferias v3) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13",
-  "texto": "- 🏖️ Calendário geral de férias (pedido do Caio: agenda geral do Digital + modo férias). No Maré → 📅 Calendários → 🏖️ Férias (por padrão as suas squads, com 🌐 Todo o Digital) e no Radar → 📅 Calendário → 🏖️ Férias (todo o Digital): quem está fora agora, as próximas saídas (60 dias) e as faixas do mês, com filtros por pessoa, squad e período. Minhas férias: cadastrar, editar e excluir os próprios períodos (excluir pede confirmação; fim antes do início é recusado; acima de 45 dias, só avisa). ADM corrige as de qualquer pessoa. Só login Google @ciahering.com.br; visualizador externo não vê.\n- ⚠️ Aviso fixo: o cadastro não substitui o das férias no Senior (serve só para o time se organizar).\n- 🏖️ Minhas férias no menu: clique no seu nome no Maré (desktop e celular) ou ⋯ Mais no Radar.\n- 🧳 Preparar minha saída (com período cadastrado): item a item, ✋ Manter ou ➡️ Passar para alguém — nada vem marcado, o Revisar só libera com tudo decidido, \"Manter todos os restantes\" só preenche, e nada muda até o ✅ Confirmar. Maré: os cards ativos da squad aberta em que você é responsável ou participante (Histórico do card registra; automações de \"atribuído\" rodam como sempre; botões para repetir nas suas outras squads). Radar: seus Objetivos e Marcos em aberto; Objetivo que outra pessoa está editando (🔒) não é passado e aparece explicado. Quem recebe ganha um aviso no sino por lote (com pu"
- },
- {
-  "data": "2026-11-13",
-  "titulo": "2026-11-13 · PROD 14/11 (kanban v8.30.984 · okr v2.132) — 🏖️ Férias F3: aviso ao marcar alguém e selo de ausência (Maré v8.30.981-dev · Radar v2.129)",
-  "texto": "Ao mencionar ou atribuir alguém de férias hoje ou com saída nos próximos 7 dias, um aviso de 6 segundos informa o período sem impedir a ação. Mensagens agrupadas e sem duplicar pessoas; selo 🏖️ apenas para quem está fora hoje. Leitura pela API MareFerias após login, Ajuda atualizada. Testes Playwright + fakefb: docs/arezzo/testes/test_ferias_aviso.js; validação ADM só leitura: docs/arezzo/testes/console_ferias_aviso.js."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "📱 Gantt: campanhas legíveis a um toque no celular — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13",
-  "texto": "Maré e Radar mantêm 42 dias e navegação. No celular, cada barra abre leitor persistente com texto completo, datas e linha, Fechar/Esc e ação Abrir card ou Destacar para ADM. Dias compactos de 48 px e barras de 44×44 px, cores dos temas e desktop preservado. Teste com baseline main, três temas, ações de 1 dia e 50 simultâneas; capturas em docs/capturas/gantt_celular/."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "⭐ Gantt: aba favorita sincronizada no Maré e no Radar — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13",
-  "texto": "Favoritar esta aba salva a preferência na conta para todos os aparelhos. Link direto mantém prioridade; no Radar a favorita Cards é ignorada. Resposta atrasada não desfaz troca manual; valores inválidos ignorados. Exceção administrativa de PO/ADM aceita pelo Caio e Claude, sem mudança nas regras."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "📣 Gantt: Pedir atualização de um calendário (kanban v8.30.976-dev, okr v2.124-dev, painel v5.115-dev, oceano v1.84-dev, mare-gcal v5, mare-notif v43) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13",
-  "texto": "- 📣 Pedir atualização em cada aba de calendário do 📊 Gantt (Maré e Radar; não na 🧭 Digital): avisa quem cuida da planilha — Comercial Hering → squads APP e Site Hering; Marketplace → squad Marketplace; Outlet → squad Outlet Comercial; Marca → o Caio (IDs das squads conferidos em squads_meta com o Caio). Sem repetir quem está em mais de uma squad, sem quem pediu e sem conta de fora da Hering.\n- Aviso gantt_pedido (sino + push): \"📣 Mel pediu para atualizar o Calendário Comercial Hering\" — tocar abre o Maré direto no 📤 Atualizar planilha daquele calendário (kanban.html?gantt=<cal>&atualizar=1).\n- Um pedido por pessoa, por calendário, por dia: id fixo; antes de gravar confere se a pessoa já tem o pedido de hoje e não regrava (as regras já recusam criar de novo para membro; PO/ADM poderiam sobrescrever — a conferência cobre). Uma falha não interrompe os demais. Sem regra nova.\n- Ambiente de teste (-dev): a caixa de notificações é a mesma do prod, então no dev o aviso vai só para quem pediu (testa push e clique sem incomodar ninguém); a mensagem mostra para quem iria em produção.\n- Teste: docs/arezzo/testes/test_gantt_pedido.js (destinatários por calendário, deduplicação, sem autor/externo, 2º pedido barrado, clique e link abrindo o 📤, Radar e Painel); push no functions/gantt/__tests__/avisos.test.js. Deploy: sendPushOnNotification (tipo novo no PUSH_TYPES)."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "🔔 Gantt: avisos de mudança nos calendários, com push (kanban v8.30.974-dev, okr v2.122-dev, painel v5.114-dev, oceano v1.83-dev, mare-gcal v3, mare-notif v42) — PROD 14/11 (kanban v8.30.984 · okr v2.132 · painel v5.116 · oceano v1.86) — 2026-11-13",
-  "texto": "- 🔔 Avisar-me (pedido do Caio, com push no celular): nas abas de calendário do 📊 Gantt — no Maré (ao lado de 📤/🕘) e no Radar (barra do Gantt) — a pessoa segue o calendário; na 🧭 Digital, segue os 3 comerciais. Ao ligar, se o aparelho ainda não tem push, o pedido de permissão aparece no mesmo toque.\n- Aviso (tipo novo gantt_cal, sino + push): \"📊 Comercial Outlet atualizado · Ana · ＋3 ✎1 · arquivo\" — ou \"voltou para uma versão anterior\". Quem publicou não recebe o próprio aviso. Tocar abre o Gantt naquele calendário, no Maré ou no Radar (onde a pessoa se inscreveu); no aparelho, publicações seguidas do mesmo calendário se substituem.\n- Link direto do Maré: kanban.html?gantt=outlet (marca, comercial, mktplace, digital).\n- Servidor: ganttAvisoMudanca/ganttAvisoMudancaDev (functions/gantt/avisos.js), disparadas pela linha do 🕘 Histórico de cada publicação; id fixo por transação (retry não duplica); destinatário excluído ou de fora não recebe e perde a inscrição (sem recriar cadastro órfão). gantt_cal no PUSH_TYPES; URL e tag em common/pushUrl.js.\n- Banco: nó novo kanban/gantt_inscritos(_dev)/{cal}/{uid} — cada um grava e lê só a própria inscrição (Google @ciahering); no backup diário.\n- Testes: functions/gantt/__tests__/avisos.test.js, functions/rules/__tests__/ganttInscritosRules.test.js, docs/arezzo/testes/test_gantt_avisos.js (Maré, Radar e Painel: inscrever/desinscrever, "
- },
- {
-  "data": "2026-11-13",
-  "titulo": "🧭 Gantt: Digital · dia a dia — Comercial Hering, Marketplace e Outlet na mesma régua + tudo de um dia (kanban v8.30.973, okr v2.121, mare-gcal v2) — PROD 13/11 — 2026-11-13",
-  "texto": "- Maré → 📊 Gantt e Radar → 📅 Calendário → 📊 Gantt: aba nova 🧭 Digital · dia a dia (pedido do Caio, era a ideia \"Gantt consolidado por dia\"). Os 3 calendários comerciais na mesma régua, um bloco por origem (cada um com o próprio aviso: carregando, não publicado, nada nestas semanas); chips filtram por origem — o filtro de grupo de cada aba própria não vaza para cá.\n- Toque num dia do cabeçalho: painel \"tudo deste dia\" com cada ação que cobre o dia (inclusive as de vários dias, com o período), agrupada por calendário; Esc ou ✕ fecha; respeita o filtro de origem. Redesenha ao vivo quando qualquer um dos 3 é republicado.\n- Destaques ⚠️/★ continuam do calendário de origem. Sem 📤/🕘 na consolidada (cada planilha se atualiza na sua aba). Radar: okr.html?gantt=digital.\n- mare-gcal v2: CONSOLIDADO (aba virtual, fora de CALS/regras) e doDia() — a mesma função alimenta o painel nos dois apps.\n- Teste: docs/arezzo/testes/test_gantt_digital.js (Maré e Radar: blocos, filtro que não vaza, painel com ação de vários dias, republicação ao vivo, destaque, XSS, Esc, ?gantt=digital, 390 px × 3 temas). Promoção: kanban, okr e mare-gcal juntos."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "📊 Gantt dos cards: só cards com período (Início + Fim) (kanban v8.30.972-dev → PROD 13/11 em v8.30.973) — 2026-11-13",
-  "texto": "Decisão do Caio (13/11): o Gantt é das campanhas, que atravessam vários dias. Card que só tem prazo (termina num dia) sai do Gantt e fica no 📅 Calendário e na 🛤️ Timeline; o rodapé diz quantos ficaram de fora e onde vê-los. O ◆ do prazo continua aparecendo nos cards com período. Filtro De/Até passa a olhar só o período. Ajuda do Gantt atualizada."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "📊 Radar: Gantt dos calendários do Digital no Calendário + link direto okr.html?gantt (okr v2.120-dev, kanban v8.30.971-dev, mare-gcal v1 → PROD 13/11 em kanban v8.30.973 · okr v2.121) — 2026-11-13",
-  "texto": "- Radar → 📅 Calendário → 📊 Gantt (ao lado de Mês e Agenda): os mesmos calendários do Maré — 🎯 Marca, 🛒 Comercial Hering, 🛍️ Marketplace e 🏷️ Outlet — na régua de 6 semanas, com ◀ Hoje ▶, 📆 Mês, filtro por grupo e os destaques ⚠️/★ do ADM. Só leitura (atualizar continua no Maré). Pedido do Caio: os líderes que não usam o Maré também enxergam.\n- Link direto: okr.html?gantt abre direto no Gantt (?gantt=marca|comercial|mktplace|outlet escolhe a aba).\n- Acesso: só login Google @ciahering.com.br (a regra do banco já era essa, sem squad); visualizador externo e outro login não veem a vista. Sem deploy.\n- Módulo novo mare-gcal(-dev).js: fonte única da configuração dos calendários (abas, nomes, grupos, cores) — o Maré passou a ler dele — e o visualizador do Radar, baixado só quando a vista abre.\n- Teste: test_radar_gantt.js (link, 4 abas, Mês, Hoje/◀▶, filtro, destaque, XSS, sem acesso, 390 px × 3 temas); suítes do Gantt do Maré seguem verdes.\n- Promoção: kanban, okr e mare-gcal sobem JUNTOS (o kanban carrega o módulo na abertura; sem ele, o Gantt do Maré fica só com os cards da squad). Na promoção: guia-okr.html (passo do Calendário) e npm run conhecimento (Ajuda do Radar → Agente; deploy das funções)."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "📊 Gantt ao lado da ↕ Ordenação na toolbar (kanban v8.30.970-dev → PROD 13/11 em v8.30.973) — 2026-11-13",
-  "texto": "Na ordem padrão da toolbar, o botão 📊 Gantt saiu do fim da fila (ao lado da 🛤️ Timeline) e foi para logo depois de ↕ Ordenação. Quem já reorganizou a barra (⌨️ Atalhos → Reorganizar) mantém a própria ordem. Ajuda do Gantt atualizada (posição do botão e 📆 Mês no parágrafo dos filtros)."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "📆 Gantt: botão Mês ao lado do De/Até (kanban v8.30.969) — PROD 13/11 — 2026-11-13",
-  "texto": "Seletor com os 12 meses do ano corrente nas cinco abas: navega pela régua sem alterar o filtro de período. Escolha preservada nas atualizações, zerada por navegação, De/Até e limpar. Ajuda atualizada e teste Playwright em desktop/celular."
- },
- {
-  "data": "2026-11-13",
-  "titulo": "🏷️ Gantt: aba Comercial Outlet — uma planilha por mês, publicar só acrescenta/troca aquele mês (kanban v8.30.969, painel v5.113, mare-gxl v2) — PROD 13/11 — 2026-11-13",
-  "texto": "- Leitor (mare-gxl v2): planilha mensal do Outlet (\"Outlet | Calendário Novembro 2026.xlsx\"). Aba CALENDÁRIO: um dia por linha, uma coluna por tipo de ação — os nomes das linhas vêm do cabeçalho da própria planilha (Ação principal, Ação secundária, Relâmpago, Madrugada, CRM, Ofertas do dia, Reloginhos e headers, Extras, BEON, Mídia 01/02/perene, Afiliados, Livelo, Benefícios…; coluna nova aparece sozinha). Colunas de número (Meta, Share, Captado, Margem, Faturado) e as outras abas (receita, kits, resumos) ficam de fora. Dias seguidos com o mesmo texto = 1 barra.\n- Mês: do nome do arquivo; sem ele, das datas de outra aba — sempre conferido pelo dia da semana da planilha (senão recusa e pede o mês no nome).\n- Mês a mês: publicar o Outlet troca só o mês do arquivo — os meses anteriores continuam (\"só criar mais um mês\"); republicar um mês substitui só ele. Histórico e ↩ voltar funcionam igual.\n- Maré → 📊 Gantt: aba 🏷️ Comercial Outlet (larga, texto inteiro, 📤/🕘, filtro: Principal · Secundária · Relâmpago e ofertas · Madrugada · CRM · Mídia e afiliados · Extras). Painel: 4º cartão.\n- Planilha real (fora do repo): novembro/2026, 32 barras, mês descoberto também sem o nome. Sem deploy (as regras já aceitavam outlet).\n- Testes: test_painel_gantt_calendarios.js (O1–O5: mês a mês, mês pelas datas, métricas fora), test_gantt_atualizar.js (N–P: Outlet pelo Maré, novembro + dezembro), "
  }
 ]
