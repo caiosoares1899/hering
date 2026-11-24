@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Cardume v0.7: link do card some do texto quando o chip carrega (SÓ DEV) — 2026-11-24
+
+Pedido do Caio ao ver o chip: link de card no fim da linha, com o título já carregado, sai do texto e fica só o chip (como no Slack). Link no meio da frase, sem acesso, inexistente ou de outra origem continua no texto; editar mostra o texto original.
+
 ### 🐟 Maré Digital — Ver conversa no Cardume (SÓ DEV) — 2026-11-24
 
 Comentários registrados a partir do Cardume no Kanban dev agora têm um link que abre a mensagem original. Editar o comentário ou duplicar o card mantém o vínculo.
