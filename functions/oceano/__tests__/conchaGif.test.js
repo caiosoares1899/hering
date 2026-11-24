@@ -114,6 +114,10 @@ test('invólucro: auth, membro da Concha, entrada, limites, cache e erro sem vaz
   assert.equal(r2.status, 200); assert.equal(chamadas, 1, 'cache: mesma busca não chama a KLIPY de novo');
   assert.equal(est.kanban.cardume.gif_uso._casa.n, 1, 'cache não conta no teto da casa');
   assert.equal(est.kanban.cardume.gif_uso.ana.n, 2, 'mas conta no limite da pessoa');
+  let alta = 0; const fAlta = async url => { if (/\/gifs\/trending\?/.test(url)) alta++; return { ok: true, json: async () => resposta([item(8)]) }; };
+  await chamar({ q: '~alta', estado: membro(), fetchImpl: fAlta });
+  const rAlta = await chamar({ q: '', estado: membro(), fetchImpl: fAlta });
+  assert.equal(alta, 1, 'a busca "~alta" não ocupa o cache de em alta (achado do Antigravity)'); assert.equal(rAlta.corpo.itens[0].id, '8');
   est.kanban.cardume.gif_uso.ana.n = core.LIMITE_PESSOA_H;
   assert.equal((await chamar({ q: 'outra', estado: est, fetchImpl: ok })).corpo.erro, 'limite_pessoa');
   const est2 = membro(); est2.kanban.cardume.gif_uso = { _casa: { h: core.horaChave(), n: core.TETO_CASA_H } };

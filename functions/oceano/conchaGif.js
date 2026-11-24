@@ -40,7 +40,7 @@ async function tratar(req, res, deps = {}) {
     const meus = (await db.ref('kanban/cardume/meus/' + uid).get()).val() || {};
     if (!Object.values(meus).some(v => v === true)) return erro(403, 'fora_da_concha');
     if (!(await contarNaHora(db, 'kanban/cardume/gif_uso/' + uid, core.LIMITE_PESSOA_H))) return erro(429, 'limite_pessoa');
-    const chaveCache = (q || '~alta') + '|' + pagina;
+    const chaveCache = (q ? 'b:' + q : 'a:') + '|' + pagina;   // prefixos distintos: nenhuma busca colide com a chave de "em alta" (achado do Antigravity na #1947)
     const emCache = core.doCache(chaveCache);
     if (emCache) return res.status(200).json(emCache);
     if (!(await contarNaHora(db, 'kanban/cardume/gif_uso/_casa', core.TETO_CASA_H))) return erro(429, 'limite_casa');
