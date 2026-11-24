@@ -30,7 +30,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(800);
   const ed = '[data-msg="-Nm1"] .editor textarea';
 
-  await p.hover('[data-msg="-Nm1"]'); await p.click('[data-msg="-Nm1"] >> text=Editar'); await p.waitForTimeout(150);
+  await p.hover('[data-msg="-Nm1"]'); await p.click('[data-msg="-Nm1"] [aria-label="Editar"]'); await p.waitForTimeout(150);
   await p.focus(ed); await p.keyboard.press('End'); await p.keyboard.type(' @Br');
   await p.waitForTimeout(150);
   const lista = await p.$$eval('#sug-ed .sugestao', xs => xs.map(x => x.textContent));

@@ -44,7 +44,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
       return { lateral: document.documentElement.scrollWidth > innerWidth, alfa: a, blur: getComputedStyle(document.getElementById('app')).backdropFilter, bodyBg: getComputedStyle(document.body).backgroundImage };
     });
     t(`${tema} ${w}px: sem rolagem lateral e sem erro de JS`, !r.lateral && !errs.length, { r, errs });
-    t(`${tema} ${w}px: a conversa é vidro (translúcida, o mar aparece) e o .app desfoca`, r.alfa < .5 && /blur/.test(r.blur) && r.bodyBg === 'none', r);
+    t(`${tema} ${w}px: a conversa é vidro (translúcida, o mar aparece) e o .app NÃO desfoca (desfoque sobre peixes = ~3× o custo de pintura do Maré)`, r.alfa < (tema === 'lencois' ? .8 : .5) && !/blur/.test(r.blur || '') && r.bodyBg === 'none', r);
     const [nf, nb] = await peixes(p);
     t(`${tema} ${w}px: peixes e bolhas como no Oceano (${w < 769 ? '4 e 8' : '8 e 16'})`, w < 769 ? nf === 4 && nb === 8 : nf === 8 && nb === 16, [nf, nb]);
     await ctx.close();
@@ -68,6 +68,16 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
     await p.mouse.move(5, 5); await p.waitForTimeout(250);
     await p.evaluate(() => document.querySelector('[data-msg="-Nx1"] .acoes-msg button').focus()); await p.waitForTimeout(250);
     t('pelo teclado (Tab) as ações são alcançáveis e aparecem (antes ficavam em display:none)', await op() === '1' && await p.evaluate(() => document.activeElement.closest('.acoes-msg') !== null), await op());
+    // a pílula nunca cobre texto: nem o da própria mensagem (linha curta e longa), nem o da seguinte; e a 1ª do canal não é cortada no topo
+    const cruza = async id => p.evaluate(i => {
+      const m = document.querySelector('[data-msg="' + i + '"]'), pl = m.querySelector('.acoes-msg').getBoundingClientRect();
+      const textos = [...document.querySelectorAll('.msg .texto, .autor')].map(e => e.getBoundingClientRect());
+      const log = document.getElementById('log').getBoundingClientRect();
+      const bate = r => !(r.right <= pl.left || r.left >= pl.right || r.bottom <= pl.top || r.top >= pl.bottom);
+      return { cruza: textos.filter(bate).length, cortada: pl.top < log.top, pl: [pl.left, pl.top, pl.width, pl.height] };
+    }, id);
+    for (const id of ['-Nx0', '-Nx1', '-Nx2', '-Nx3']) { await p.hover('[data-msg="' + id + '"]'); await p.waitForTimeout(200); const r = await cruza(id); t(`pílula de ${id} não cobre nenhum texto nem é cortada`, !r.cruza && !r.cortada, r); }
+    t('na pílula só o ícone aparece; o nome acessível é o rótulo', await p.evaluate(() => { const b = document.querySelector('[data-msg="-Nx1"] .acoes-msg button'); return getComputedStyle(b.querySelector('.rot')).display === 'none' && b.getAttribute('aria-label') === 'Responder'; }), 0);
     t('HTML no texto aparece como texto', /<b>até<\/b>/.test(await p.textContent('[data-msg="-Nx3"] .texto')), await p.textContent('[data-msg="-Nx3"] .texto'));
     await ctx.close(); }
 
@@ -88,6 +98,18 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
     t('…e o ↩️ Responder funciona pelo toque', await p.isVisible('#resp-barra') && /Bruno Reis/.test(await p.textContent('#resp-barra')), 0);
     t('ajuda do campo fala de toque, não de Enter/Shift', await p.isVisible('.so-toque') && !(await p.isVisible('.so-teclado')), 0);
     t('celular sem rolagem lateral nem erro de JS', !(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)) && !errs.length, errs);
+    await ctx.close(); }
+
+  // ── iPad deitado (≥ 900 px, toque): o :hover gruda depois do toque — quem mostra as ações é o toque, com 44 px e rótulo ──
+  { const { ctx, p, errs } = await abrir({ viewport: { width: 1112, height: 834 }, hasTouch: true, isMobile: true }, { peixes: 'off' });
+    const vis = id => p.evaluate(i => { const a = document.querySelector('[data-msg="' + i + '"] .acoes-msg'); const c = getComputedStyle(a); return c.display !== 'none' && c.opacity !== '0'; }, id);
+    t('iPad deitado: nenhuma ação à mostra em repouso', !(await vis('-Nx1')), 0);
+    await p.tap('[data-msg="-Nx1"] .texto'); await p.waitForTimeout(150);
+    const r = await p.evaluate(() => [...document.querySelectorAll('[data-msg="-Nx1"] .acoes-msg button')].map(x => [x.getBoundingClientRect().height, getComputedStyle(x.querySelector('.rot')).display]));
+    t('iPad deitado: tocar mostra as ações com rótulo e ≥ 44 px', await vis('-Nx1') && r.length && r.every(([h, d]) => h >= 44 && d !== 'none'), r);
+    await p.tap('[data-msg="-Nx1"] .texto'); await p.waitForTimeout(150);
+    t('iPad deitado: tocar de novo esconde (o hover grudado não segura)', !(await vis('-Nx1')), 0);
+    t('iPad deitado: sem rolagem lateral nem erro de JS', !(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)) && !errs.length, errs);
     await ctx.close(); }
 
   await b.close();

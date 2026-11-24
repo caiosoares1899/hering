@@ -18,13 +18,14 @@
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
   --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:10px;--r2:14px;
   --ink-rgb:3,13,26;--slate-rgb:10,30,55;
+  --accent-txt:var(--accent);   /* destaque usado como TEXTO pequeno (menção, link) */
   --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;
   --shadow:0 10px 34px rgba(0,0,0,.35);--specular:inset 0 1px 0 rgba(255,255,255,.08);
   --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;
 }
 :root[data-theme="light"]{
   --deep:#0F87C4;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
-  --accent:#0077AD;--cyan:#065670;--teal:#0a8f86;
+  --accent:#0077AD;--accent-txt:#00577f;--cyan:#065670;--teal:#0a8f86;
   --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
   --warn:#9a6a08;--danger:#c8323f;--ok:#1f7d45;--ink-rgb:251,253,255;--slate-rgb:235,245,250;--shadow:0 10px 30px rgba(7,70,110,.22);--specular:inset 0 1px 0 rgba(255,255,255,.7);
   --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
@@ -85,10 +86,11 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .cartao{max-width:420px;margin:8vh auto;padding:22px;border:1px solid var(--glass-b);border-radius:20px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);display:grid;gap:12px;}
 .cartao p{color:var(--txt2);}
 .erro{color:var(--danger);}
-.app{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(250px,26%);flex:1;min-height:0;border:1px solid var(--glass-b);border-radius:20px;overflow:hidden;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(250px,26%);flex:1;min-height:0;border:1px solid var(--glass-b);border-radius:20px;overflow:hidden;background:var(--glass);box-shadow:var(--shadow),var(--specular);}   /* SEM backdrop-filter: o .app cobre a tela toda e, com peixes nadando atrás, o desfoque era refeito a cada quadro (medido: ~1.600 ms/s de raster × ~480 sem, ≈ o Maré com peixes). O mar é degradê suave: o desfoque quase não mudava o visual */
 .app.sem-lado{grid-template-columns:230px minmax(0,1fr);}
 .painel{min-width:0;min-height:0;display:flex;flex-direction:column;background:transparent;}
-.conversa{background:rgba(var(--ink-rgb),.3);}   /* a conversa um tom mais funda que as laterais: o olho vai para ela */
+.conversa{background:rgba(var(--ink-rgb),.3);}
+[data-theme="light"] .conversa{background:rgba(var(--ink-rgb),.78);}   /* Lençóis: o mar claro atrás baixava o --accent (menção/link) para ~3,2:1 — vidro mais encorpado, não texto mais escuro (MARINE_GLASS §11) */   /* a conversa um tom mais funda que as laterais: o olho vai para ela */
 .lateral{padding:12px 10px;border-right:1px solid var(--glass-b);overflow:auto;}
 .canal{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:3px;text-align:left;background:transparent;border-color:transparent;box-shadow:none;font-weight:600;min-height:38px;}
 .canal .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -111,6 +113,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .autor{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;}
 .autor b{font-weight:700;}
 .msg{position:relative;padding:2px 6px;margin:0 -6px;border-radius:8px;}
+@media (hover:hover) and (min-width:900px){.msg{padding-right:152px;}}   /* vão da pílula: o texto nunca fica embaixo dela (linha de ~75 caracteres a 1280, boa de ler) */
 .msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
 .b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;box-shadow:none;font-weight:700;}
 .b-mencoes[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.7);box-shadow:var(--specular);}
@@ -120,12 +123,15 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .mencao-item{display:grid;gap:2px;width:100%;text-align:left;margin:6px 0;padding:10px 12px;background:rgba(var(--slate-rgb),.6);}
 .mencao-item.nova{border-color:var(--accent);}
 .mencao-item .sub{color:var(--txt2);overflow-wrap:anywhere;}
-.msg:hover,.msg:focus-within,.msg.tocada{background:rgba(var(--slate-rgb),.4);}
+.msg:focus-within,.msg.tocada{background:rgba(var(--slate-rgb),.4);}
+@media (hover:hover){.msg:hover{background:rgba(var(--slate-rgb),.4);}}
 .msg .texto{overflow-wrap:anywhere;white-space:pre-wrap;}
 .msg .texto p{margin:0;}
-.msg .acoes-msg{position:absolute;right:8px;top:-20px;z-index:2;display:flex;gap:2px;padding:3px;border:1px solid var(--glass-b);border-radius:999px;background:rgba(var(--ink-rgb),.94);box-shadow:var(--shadow),var(--specular);opacity:0;pointer-events:none;transition:opacity .12s;}
-.msg:hover .acoes-msg,.msg:focus-within .acoes-msg,.msg.tocada .acoes-msg{opacity:1;pointer-events:auto;}
-.acoes-msg button{min-height:28px;padding:2px 10px;font-size:12px;border-color:transparent;border-radius:999px;background:transparent;box-shadow:none;white-space:nowrap;}
+.msg .acoes-msg{position:absolute;right:4px;top:0;z-index:2;display:flex;gap:2px;padding:2px;border:1px solid var(--glass-b);border-radius:999px;background:rgba(var(--ink-rgb),.94);box-shadow:var(--shadow),var(--specular);opacity:0;pointer-events:none;transition:opacity .12s;}
+.msg:focus-within .acoes-msg,.msg.tocada .acoes-msg{opacity:1;pointer-events:auto;}
+@media (hover:hover){.msg:hover .acoes-msg{opacity:1;pointer-events:auto;}}   /* no iPad o :hover gruda depois do toque — lá quem mostra é o .tocada */
+.acoes-msg button{min-height:26px;min-width:32px;padding:1px 6px;font-size:14px;line-height:1;border-color:transparent;border-radius:999px;background:transparent;box-shadow:none;white-space:nowrap;}
+.acoes-msg .rot{display:none;}
 .acoes-msg button:hover{background:rgba(var(--slate-rgb),.9);border-color:var(--glass-b);}
 .hora,.editada{color:var(--txt2);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;}
 .apagada{color:var(--txt2);font-style:italic;}
@@ -141,14 +147,14 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .reg-item .subtitulo{display:block;overflow-wrap:anywhere;}
 .aviso-reg{padding:8px 10px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);font-size:13px;}
 .prev-reg{margin:0;max-height:20vh;overflow:auto;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.45 ui-monospace,Menlo,monospace;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;}
-.mencao{color:var(--accent);font-weight:700;}
+.mencao{color:var(--accent-txt);font-weight:700;}
 .mencao.eu{background:rgba(255,209,102,.18);color:var(--warn);border-radius:4px;padding:0 3px;}
 .texto code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:5px;padding:0 4px;}
 .texto pre{margin:4px 0;padding:8px 10px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;overflow:auto;white-space:pre;}
 .texto pre code{background:none;border:0;padding:0;}
 .texto blockquote{margin:2px 0;padding-left:10px;border-left:3px solid var(--glass-b);color:var(--txt2);}
 .texto ul{margin:2px 0;padding-left:20px;}
-.texto a{color:var(--accent);}
+.texto a{color:var(--accent-txt);}
 .desfazer{display:flex;align-items:center;gap:8px;color:var(--txt2);font-style:italic;}
 .editor{display:grid;gap:6px;margin:4px 0;position:relative;}
 .sug-editor{left:0;right:0;}
@@ -197,7 +203,7 @@ button.msg-gif{cursor:pointer;}
 .pessoa .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pessoa button{min-height:30px;padding:2px 8px;font-size:12px;}
 .acoes-lado{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
-.ov{position:fixed;inset:0;z-index:50;background:rgba(var(--ink-rgb),.4);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;}
+.ov{position:fixed;inset:0;z-index:50;background:rgba(var(--ink-rgb),.5);display:grid;place-items:center;padding:16px;}
 [data-theme="light"] .ov{background:rgba(7,40,60,.3);}
 .md{width:min(460px,100%);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--glass-b);border-radius:18px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:grid;gap:12px;}
 .md>h2{font-family:var(--ff-d);}
@@ -206,6 +212,13 @@ button.msg-gif{cursor:pointer;}
 .radio{display:flex!important;grid-auto-flow:column;align-items:flex-start;gap:8px!important;color:var(--txt)!important;}
 .radio input{width:auto;min-height:0;margin-top:4px;}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;max-width:90vw;padding:10px 16px;border-radius:999px;background:rgba(var(--ink-rgb),.9);border:1px solid var(--glass-b);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+@media (max-width:899px),(hover:none) and (pointer:coarse){
+  .msg{padding-right:6px;}
+  .msg .acoes-msg{position:static;display:none;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin-top:4px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;opacity:1;pointer-events:auto;}
+  .msg.tocada .acoes-msg,.msg:focus-within .acoes-msg{display:flex;}
+  .acoes-msg button{min-height:44px;padding:4px 12px;font-size:13px;border-color:var(--glass-b);border-radius:var(--r);background:rgba(var(--slate-rgb),.6);}
+  .acoes-msg .rot{display:inline;}
+}
 #versao-aviso{position:fixed;left:0;right:0;top:0;z-index:90;text-align:center;background:#12314a;color:#e8f4fd;border-bottom:1px solid rgba(56,182,255,.4);padding:8px;font-size:13px;}
 @media (max-width:899px){
   .shell{padding:8px;gap:8px;}
@@ -214,10 +227,6 @@ button.msg-gif{cursor:pointer;}
   .app[data-tela="canais"]>:not(.lateral),.app[data-tela="conversa"]>:not(.conversa),.app[data-tela="lado"]>:not(.lado){display:none;}
   .voltar{display:inline-block;}
   .lateral,.lado{border:0;}
-  .msg .acoes-msg{position:static;display:none;flex-wrap:wrap;justify-content:flex-end;margin-top:4px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;opacity:1;pointer-events:auto;}
-  .msg.tocada .acoes-msg,.msg:focus-within .acoes-msg{display:flex;}
-  .msg:hover:not(.tocada):not(:focus-within){background:transparent;}
-  .acoes-msg button{min-height:44px;padding:4px 12px;font-size:13px;border-color:var(--glass-b);background:rgba(var(--slate-rgb),.6);}
 }
 </style>
 </head>
@@ -654,6 +663,10 @@ function renderMsgs() {
 function vazio(icone, txt) { const v = el('div', 'vazio'); if (icone) v.append(el('span', '', icone)); v.append(el('p', '', txt)); return v; }
 const TOQUE = matchMedia('(hover: none), (max-width: 899px)');
 let msgTocada = '';   // mensagem com as ações à mostra no celular
+function acaoBtn(cls, ic, rot, nome) {   // ícone + rótulo; na pílula do computador só o ícone aparece (nome acessível e dica = rótulo)
+  const b = el('button', cls); b.type = 'button'; b.append(el('span', 'ic', ic), el('span', 'rot', ' ' + rot));
+  b.setAttribute('aria-label', nome || rot); b.title = nome || rot; return b;
+}
 function renderMsg(m) {
   const box = el('div', 'msg' + (destaque.id === m.id && Date.now() < destaque.ate ? ' destaque' : '')); box.dataset.msg = m.id;
   const pend = pendentes.get(m.id);
@@ -673,11 +686,11 @@ function renderMsg(m) {
   const c = canais[atual], ativo = !vencido(c);
   const meu = m.uid === user.uid;
   const ac = el('div', 'acoes-msg');
-  if (ativo && souMembro(atual)) { const rb = el('button', '', '↩️ Responder'); rb.type = 'button'; rb.onclick = () => responderA(m); ac.append(rb); }
-  if (souMembro(atual) || souAdm()) { const r = el('button', '', '📝 No card'); r.type = 'button'; r.title = 'Registrar no card do Maré'; r.setAttribute('aria-label', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
+  if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
+  if (souMembro(atual) || souAdm()) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
-    if (meu && typeof m.texto === 'string') { const e = el('button', '', '✏️ Editar'); e.type = 'button'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
-    const x = el('button', 'perigo', '🗑 Apagar'); x.type = 'button'; x.onclick = () => apagar(m); ac.append(x);
+    if (meu && typeof m.texto === 'string') { const e = acaoBtn('', '✏️', 'Editar'); e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
+    const x = acaoBtn('perigo', '🗑', 'Apagar'); x.onclick = () => apagar(m); ac.append(x);
   }
   if (ac.childNodes.length) {
     box.append(ac);

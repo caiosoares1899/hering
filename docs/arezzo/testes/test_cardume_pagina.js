@@ -95,17 +95,17 @@ function conferirEscritas(escritas, quem) {
   t('Shift+Enter quebra linha sem enviar', (await p.inputValue('#entrada')) === 'linha 1\n', await p.inputValue('#entrada'));
   await p.fill('#entrada', '');
   // editar a primeira
-  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] >> text=Editar');
+  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] [aria-label="Editar"]');
   await p.fill('[data-msg="' + k + '"] textarea', 'Bom dia, time! (corrigido)'); await p.press('[data-msg="' + k + '"] textarea', 'Enter'); await p.waitForTimeout(150);
   s = await store(p);
   t('editar grava texto + editado (servidor) e mostra "(editada)"', ler(s, 'kanban/cardume/msgs/dados/' + k + '/texto') === 'Bom dia, time! (corrigido)' && typeof ler(s, 'kanban/cardume/msgs/dados/' + k + '/editado') === 'number' && /\(editada\)/.test(await p.textContent('[data-msg="' + k + '"]')), ler(s, 'kanban/cardume/msgs/dados/' + k));
   // apagar e desfazer
-  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] >> text=Apagar');
+  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] [aria-label="Apagar"]');
   t('apagar mostra "mensagem apagada · Desfazer"', /mensagem apagada/.test(await p.textContent('[data-msg="' + k + '"]')) && await p.isVisible('[data-msg="' + k + '"] >> text=Desfazer'), 0);
   await p.click('[data-msg="' + k + '"] >> text=Desfazer'); await p.waitForTimeout(5300);
   s = await store(p);
   t('Desfazer dentro de 5 s: nada é apagado no banco', ler(s, 'kanban/cardume/msgs/dados/' + k + '/texto') === 'Bom dia, time! (corrigido)', ler(s, 'kanban/cardume/msgs/dados/' + k));
-  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] >> text=Apagar'); await p.waitForTimeout(5400);
+  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] [aria-label="Apagar"]'); await p.waitForTimeout(5400);
   s = await store(p); const tomb = ler(s, 'kanban/cardume/msgs/dados/' + k);
   t('depois de 5 s: grava só {uid, ts, apagada} — o texto sai do banco', tomb && tomb.apagada === true && !('texto' in tomb) && Object.keys(tomb).sort().join() === 'apagada,ts,uid', tomb);
 
@@ -181,7 +181,7 @@ function conferirEscritas(escritas, quem) {
     t('Enter duas vezes durante o envio grava uma mensagem só', depois.length === antes + 1 && depois.filter(m => m.texto === 'uma vez só').length === 1, depois.length - antes);
     // editor preservado quando chega mensagem de outra pessoa
     const minha = Object.entries(ler(await store(D.p), 'kanban/cardume/msgs/dados')).find(([, m]) => m.texto === 'uma vez só')[0];
-    await D.p.hover('[data-msg="' + minha + '"]'); await D.p.click('[data-msg="' + minha + '"] >> text=Editar');
+    await D.p.hover('[data-msg="' + minha + '"]'); await D.p.click('[data-msg="' + minha + '"] [aria-label="Editar"]');
     await D.p.fill('[data-msg="' + minha + '"] textarea', 'editando com calma');
     await escrever(D.p, 'kanban/cardume/msgs/dados/zzOutra1', { uid: 'cai', ts: Date.now(), texto: 'chegou outra' }); await D.p.waitForTimeout(150);
     t('mensagem nova chegando não apaga o que está sendo editado', (await D.p.inputValue('[data-msg="' + minha + '"] textarea')) === 'editando com calma', await D.p.inputValue('[data-msg="' + minha + '"] textarea').catch(() => 'sumiu'));

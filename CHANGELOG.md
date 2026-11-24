@@ -24,9 +24,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🐚 Concha no Marine Glass: mar com peixes, vidro de verdade e ações da mensagem que não poluem o celular (SÓ DEV, cardume v0.18) — 2026-11-24
+### 🐚 Concha no Marine Glass: mar com peixes atrás do vidro, ações da mensagem sem cobrir texto e celular limpo (SÓ DEV, cardume v0.18) — 2026-11-24
 
-Rodada /melhoriauiux "vidro e mar". Antes: painéis 82 % opacos sobre fundo sem peixes ("tema escuro com vidro por cima", erro listado no MARINE_GLASS), botões e campos em bloco sólido, ações da mensagem por cima do texto no computador e 4 botões em TODA mensagem no celular. Agora: camada do mar com bolhas e os 3 peixes oficiais do Oceano, na preferência 🐟 que a pessoa escolheu lá (Desligados/Poucos/Como no Maré; reduzir movimento começa sem), pausando com a aba escondida, a janela sem foco ou 60 s parado; conversa e laterais translúcidas (o horizonte do Entardecer aparece pelo vidro); botões, barra de formatação, campo, modal e aviso em vidro; ações numa pílula flutuante que o Tab alcança (🐞 antes display:none, fora do teclado); no celular as ações aparecem só na mensagem tocada, com alvos de 44 px, e a ajuda do campo fala de toque. Teste test_concha_ui.js (35; na main, 13 falham).
+Rodada /melhoriauiux "vidro e mar". Antes: painéis 82 % opacos sobre fundo sem peixes ("tema escuro com vidro por cima", erro listado no MARINE_GLASS), botões e campos em bloco sólido, ações da mensagem por cima do texto no computador e 4 botões em TODA mensagem no celular.
+Agora:
+- Mar: camada própria com bolhas e os 3 peixes oficiais do Oceano, na preferência 🐟 escolhida lá (Desligados/Poucos/Como no Maré; "reduzir movimento" começa sem), pausando com a aba escondida, a janela sem foco ou 60 s parado. A conversa é vidro translúcido: os peixes passam atrás das mensagens (inclusive no Abrolhos) e o horizonte do Entardecer aparece.
+- Custo: o painel grande NÃO desfoca — desfoque sobre peixes nadando custava ~1.600 ms/s de raster (3× o Maré com peixes); sem ele, ~480, no nível do Maré (`perf_concha.js`, headless, comparativo). Modal e aviso seguem com desfoque; nenhum vidro dentro de vidro.
+- Contraste: pior pixel do fundo (peixes e horizonte inclusos) ≥ 4,5:1 nos 3 temas (`contraste_concha.js`); no Lençóis, menção/link ganham o token `--accent-txt` (4,43 na main → 6,77) e a conversa fica 78 % opaca.
+- Ações da mensagem: no computador, pílula só com ícones (nome acessível = rótulo) num vão reservado à direita — nunca cobre texto (linha de ~75 caracteres a 1280) e o Tab alcança (🐞 antes display:none). No toque (celular e iPad deitado), aparecem só na mensagem tocada, com rótulo e 44 px; o :hover grudado do iPad não segura mais. A ajuda do campo fala de toque.
+- Vidro: botões, barra de formatação, campo, janelinhas de @/emoji/GIF, modal e aviso.
+Teste test_concha_ui.js (44; sabotagens de vão, teclado e iPad falham como devem). Prints em docs/capturas/concha-ui/.
 
 ### 🐚 Concha: ↩️ Responder com citação e aviso para quem foi respondido (SÓ DEV, cardume v0.15) — 2026-11-24
 
