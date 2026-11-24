@@ -267,7 +267,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.15 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.16 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -511,7 +511,7 @@ function abrirCanal(id, foco) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   if (atual !== id) {
     if (atual) lsSet(chaveRascunho(atual), entrada.value);
-    parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+    parar('msgs'); parar('membros'); parar('admins'); pararCitacoes(); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
     entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
   }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
@@ -676,13 +676,26 @@ function avisarMencoes(canal, msgId, uids, resposta) {   // resposta = aviso de 
 
 // ═══ ↩️ Responder (etapa 4) — a mensagem guarda só o id da original (`resp`); a citação é montada na tela (some se a original for apagada) ═══
 let respondendo = null;   // { canal, id, uid }
+const citVivas = {};      // 'canal/id' → {quem, tr} das originais fora das 50 (escuta viva, encerrada ao trocar de canal)
+function pararCitacoes() { parar('cit'); Object.keys(citVivas).forEach(k => delete citVivas[k]); }
 const resumoMsg = m => !m ? '' : m.apagada ? '(mensagem apagada)' : String(m.texto || (m.gif ? '[GIF' + (m.gif.t ? ': ' + m.gif.t : '') + ']' : '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 140);
 function citacao(canal, id) {
   const o = msgs.find(x => x.id === id);
   const b = el('button', 'citacao'); b.type = 'button';
   let quem = '', tr;
   if (o) { quem = o.apagada ? '' : nomePessoa(o.uid); tr = resumoMsg(o); }
-  else { tr = trechoDe(canal, id); if (tr == null) tr = '…'; }
+  else {   // fora das 50 carregadas: ESCUTA a original enquanto o canal está aberto (apagar/editar atualiza a citação; achado do Codex na #1959)
+    const k = canal + '/' + id, v = citVivas[k];
+    if (v === undefined) {
+      citVivas[k] = null;
+      ouvir('cit:' + k, ref(db, B + 'msgs/' + canal + '/' + id), s => {
+        const m = s.val(), nv = { quem: m && !m.apagada ? nomePessoa(m.uid) : '', tr: m ? resumoMsg(m) : '(mensagem apagada)' };
+        const ant = citVivas[k];
+        if (!ant || ant.quem !== nv.quem || ant.tr !== nv.tr) { citVivas[k] = nv; if (atual === canal && !vendoMencoes) renderMsgs(); }
+      }, () => { citVivas[k] = { quem: '', tr: '(sem acesso)' }; });
+    }
+    if (v) { quem = v.quem; tr = v.tr; } else tr = '…';
+  }
   b.append(el('span', '', '↩️'));
   if (quem) b.append(el('b', '', quem));
   b.append(el('span', 'sub', tr || '…'));
@@ -1258,7 +1271,7 @@ function limparSessao() {
   Object.keys(canais).forEach(k => delete canais[k]); Object.keys(ultimas).forEach(k => delete ultimas[k]);
   Object.keys(infoCards).forEach(k => delete infoCards[k]);   // o acesso aos cards é da conta
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
-  cancelarResposta(false);
+  cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
