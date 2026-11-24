@@ -128,7 +128,8 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .texto ul{margin:2px 0;padding-left:20px;}
 .texto a{color:var(--accent);}
 .desfazer{display:flex;align-items:center;gap:8px;color:var(--txt2);font-style:italic;}
-.editor{display:grid;gap:6px;margin:4px 0;}
+.editor{display:grid;gap:6px;margin:4px 0;position:relative;}
+.sug-editor{left:0;right:0;}
 .editor .linha{display:flex;gap:6px;justify-content:flex-end;}
 .rodape{position:relative;padding:8px 14px 10px;border-top:1px solid var(--glass-b);}
 .barra-fmt{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;}
@@ -259,7 +260,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.13 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.14 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -607,10 +608,14 @@ function renderMsg(m) {
 }
 function editor(m) {
   const f = el('form', 'editor'); const t = el('textarea'); t.value = m.texto || ''; t.maxLength = 4000; t.setAttribute('aria-label', 'Editar mensagem');
+  const sb = el('div', 'sugestoes sug-editor'); sb.id = 'sug-ed'; sb.hidden = true; sb.setAttribute('role', 'listbox'); sb.setAttribute('aria-label', 'Pessoas para mencionar');
+  t.setAttribute('aria-autocomplete', 'list'); t.setAttribute('aria-controls', 'sug-ed'); f.append(sb);
+  t.addEventListener('input', () => atualizarSug(t, sb));   // @ no editor também abre a lista de pessoas do canal
+  t.addEventListener('blur', () => setTimeout(() => { if (sug && sug.t === t) fecharSug(); }, 150));
   const l = el('div', 'linha'); const c = el('button', '', 'Cancelar'); c.type = 'button'; const s = el('button', 'primary', 'Salvar'); s.type = 'submit';
   l.append(c, s); f.append(t, l);
   c.onclick = () => { editando = ''; rascunhoEdicao = null; renderMsgs(); };
-  t.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); editando = ''; rascunhoEdicao = null; renderMsgs(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } });
+  t.addEventListener('keydown', e => { if (teclaSug(e, t)) return; if (e.key === 'Escape') { e.preventDefault(); editando = ''; rascunhoEdicao = null; renderMsgs(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } });
   f.onsubmit = async e => {
     e.preventDefault(); const txt = t.value.trim();
     if (!txt) { toast('A mensagem não pode ficar vazia. Para tirar, use 🗑 Apagar.'); return; }
@@ -878,21 +883,33 @@ document.addEventListener('visibilitychange', marcarLido);
 const entrada = $('entrada');
 function ajustarAltura() { entrada.style.height = 'auto'; entrada.style.height = Math.min(entrada.scrollHeight, window.innerHeight * 0.3) + 'px'; }
 let sug = null;
-function fecharSug() { sug = null; $('sugestoes').hidden = true; $('sugestoes').replaceChildren(); entrada.removeAttribute('aria-activedescendant'); }
-function atualizarSug() {
+function fecharSug() {
+  if (sug && sug.t) sug.t.removeAttribute('aria-activedescendant');
+  sug = null; entrada.removeAttribute('aria-activedescendant');
+  document.querySelectorAll('.sugestoes').forEach(b => { b.hidden = true; b.replaceChildren(); });
+}
+// t = o campo (compositor ou editor), box = a lista dele
+function atualizarSug(t = entrada, box = $('sugestoes')) {
   fecharSug();
-  const antes = entrada.value.slice(0, entrada.selectionStart);
+  const antes = t.value.slice(0, t.selectionStart);
   const m = antes.match(/(?:^|\s)@([\p{L} ]{0,30})$/u); if (!m) return;
   const busca = m[1].toLocaleLowerCase('pt-BR');
   const itens = Object.keys(membrosAtual).filter(u => u !== user.uid).map(u => ({ uid: u, nome: nomePessoa(u) })).filter(p => p.nome.toLocaleLowerCase('pt-BR').startsWith(busca) || p.nome.toLocaleLowerCase('pt-BR').split(' ').some(w => w.startsWith(busca))).slice(0, 8);
   if (!itens.length) return;
-  sug = { itens, ini: antes.lastIndexOf('@'), sel: 0 };
-  const box = $('sugestoes');
-  itens.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = 'sug-' + i; o.setAttribute('role', 'option'); o.append(document.createTextNode('@' + p.nome)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
+  sug = { itens, ini: antes.lastIndexOf('@'), sel: 0, t, box };
+  itens.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = box.id + '-' + i; o.setAttribute('role', 'option'); o.append(document.createTextNode('@' + p.nome)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
   box.hidden = false; destacarSug();
 }
-function destacarSug() { [...$('sugestoes').children].forEach((o, i) => o.setAttribute('aria-selected', String(i === sug.sel))); entrada.setAttribute('aria-activedescendant', 'sug-' + sug.sel); }
-function escolherSug(i) { const p = sug.itens[i]; entrada.setRangeText('@' + p.nome + ' ', sug.ini, entrada.selectionStart, 'end'); fecharSug(); entrada.focus(); }
+function destacarSug() { [...sug.box.children].forEach((o, i) => o.setAttribute('aria-selected', String(i === sug.sel))); sug.t.setAttribute('aria-activedescendant', sug.box.id + '-' + sug.sel); }
+function escolherSug(i) { const p = sug.itens[i], t = sug.t; t.setRangeText('@' + p.nome + ' ', sug.ini, t.selectionStart, 'end'); fecharSug(); t.focus(); t.dispatchEvent(new Event('input')); }
+// setas, Enter/Tab e Esc na lista — devolve true se tratou
+function teclaSug(e, t) {
+  if (!sug || sug.t !== t) return false;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sug.sel = (sug.sel + (e.key === 'ArrowDown' ? 1 : -1) + sug.itens.length) % sug.itens.length; destacarSug(); return true; }
+  if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); escolherSug(sug.sel); return true; }
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fecharSug(); return true; }
+  return false;
+}
 function envolver(marca) {
   const a = entrada.selectionStart, b = entrada.selectionEnd, sel = entrada.value.slice(a, b) || 'texto';
   entrada.setRangeText(marca + sel + marca, a, b, 'select');
@@ -904,11 +921,7 @@ function prefixarLinha(pre) {
 }
 entrada.addEventListener('input', () => { ajustarAltura(); atualizarSug(); if (atual) lsSet(chaveRascunho(atual), entrada.value); });
 entrada.addEventListener('keydown', e => {
-  if (sug) {
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sug.sel = (sug.sel + (e.key === 'ArrowDown' ? 1 : -1) + sug.itens.length) % sug.itens.length; destacarSug(); return; }
-    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); escolherSug(sug.sel); return; }
-    if (e.key === 'Escape') { e.preventDefault(); fecharSug(); return; }
-  }
+  if (teclaSug(e, entrada)) return;
   if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); envolver('**'); return; }
   if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); envolver('_'); return; }
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); enviar(); }
