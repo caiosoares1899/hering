@@ -32,6 +32,16 @@ function urlDoPush(notif) {
     const cal = ['marca', 'comercial', 'mktplace', 'outlet'].includes(String(n.cal)) ? String(n.cal) : '';
     return SITE_BASE_URL + 'kanban' + (n.dev ? '-dev' : '') + '.html?gantt=' + encodeURIComponent(cal) + '&atualizar=1';
   }
+  // 🐟 Menção no Cardume: abre o canal direto na mensagem. Ids validados (o nó vem do navegador de quem mencionou).
+  // Enquanto o Cardume só existe no dev, a notificação leva `dev: true` e o push abre o cardume-dev.html.
+  if (type === 'cardume_mencao') {
+    const ok = v => /^[A-Za-z0-9_-]{1,64}$/.test(String(v || ''));
+    const p = new URLSearchParams();
+    if (ok(n.cardume)) p.set('c', String(n.cardume));
+    if (ok(n.cardumeMsg)) p.set('m', String(n.cardumeMsg));
+    const qs = p.toString();
+    return SITE_BASE_URL + (n.dev === false ? 'cardume' : 'cardume-dev') + '.html' + (qs ? '?' + qs : '');
+  }
   // Aviso do vigia dos backups ou do monitor da VTEX (só ADMs): abre o Painel.
   if (type === 'backup_falhou' || type === 'vtex_monitor_falhou') return SITE_BASE_URL + 'painel.html';
   // Incidente ou falha de monitor do GitHub / GitHub Pages ou Firebase (só ADMs): abre o Painel direto na aba 🔋 Status.
