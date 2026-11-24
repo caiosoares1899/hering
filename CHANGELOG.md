@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐟 Maré Digital — Ver conversa no Cardume (SÓ DEV) — 2026-11-24
+
+Comentários registrados a partir do Cardume no Kanban dev agora têm um link que abre a mensagem original. Editar o comentário ou duplicar o card mantém o vínculo.
+
 ### Cardume v0.6: prévia do card colado e 📝 Registrar no card (SÓ DEV) — 2026-11-24
 
 Etapa 3 (parte do Cardume). Link de card do Maré colado na conversa vira um chip com o título e a squad (lido uma vez por sessão; 'sem acesso' e 'não encontrado' quando for o caso). Em qualquer mensagem, '📝 No card' abre um painel para marcar até 20 mensagens e escolher o card (os citados na conversa ou um link colado); antes de gravar, o aviso diz que qualquer pessoa da Hering pode abrir o card (premissa medida no simulador: kanban/squads/{sq}/dados é lido por toda conta Google @ciahering). Grava em card_comments no formato do Maré, com cardume:{c,m} para o 'Ver conversa no Cardume' (lado do Maré, Codex). As @menções copiadas perdem o @, para não acionar o Agente Ágil (detectaMencao) nem parecer menção. Testes: test_cardume_card.js (21) e cardumeCardRules.test.js.

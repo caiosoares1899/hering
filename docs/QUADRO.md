@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude · Codex | `claude/cardume-card` · `codex/kanban-ver-conversa` | `cardume-dev.html` (etapa 3) · `kanban-dev.html` (Ver conversa no Cardume) | 24/11/2026 |
+| Codex | `codex/kanban-ver-conversa` | `kanban-dev.html` (🐟 Ver conversa no Cardume) | 24/11/2026 |
 
 
 ## Fila
@@ -40,7 +40,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐟 Cardume etapa 4 (#1932 + frescor do push, PR seguinte): regras de `kanban/cardume/mencoes` **primeiro**, depois o push com prova de origem — só depois do merge das duas | `firebase deploy --only database` e depois `firebase deploy --only functions:sendPushOnNotification` | 24/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na 2ª promoção de 23/11 (Escala v1.15, menu de apps) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na promoção de 23/11 (Escala, Oceano e Ajuda do Maré) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
