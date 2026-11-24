@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-24 · Concha: @ ao editar uma mensagem não abria a lista de pessoas (SÓ DEV, cardume v0.14)
+
+Relato do Caio. O autocompletar de @menção estava preso ao compositor (entrada). Agora vale para o campo em uso: o editor ganha a própria lista (sug-ed), com setas/Enter/Tab e Esc fechando só a lista (o 2º Esc cancela a edição). Teste: test_concha_mencao_edicao.js (11, sabotagem confirmada). Observação: editar e incluir uma @menção não avisa a pessoa (o aviso nasce só no envio; as regras aceitam o registro de menção só para mensagem com menos de 60 s) — fica no backlog se o Caio quiser.
+
 ### 2026-11-24 · 🔒 Leitura ampla de kanban/usuarios, fase A: espelho de torre/Gestor OKR validado e createNotif sem ler a caixa de outra pessoa (SÓ DEV + regras)
 
 Desenho: docs/ideias/usuarios-leitura-fechar.md. (1) Regras: usuarios_publicos/$uid ganha torre e gestorOkr, validados iguais ao cadastro (o espelho é gravável pela própria pessoa e o Radar mostra controles pelo gestorOkr dos outros). (2) Regras: notificação de outra pessoa não é regravada nem por PO/ADM — .validate em notificacoes/$notifId (o .write do $uid libera PO/ADM em cascata, então a trava tinha de ser no .validate); regravar reabria um aviso lido. (3) kanban-dev createNotif: para outra pessoa grava direto (sem get/transação na caixa dela) e trata PERMISSION_DENIED como 'já existe'; para a própria segue a transação. Testes: usuariosFaseARules.test.js (sabotagem confirmada), test_createnotif_sem_ler.js (7, sabotagem confirmada).
