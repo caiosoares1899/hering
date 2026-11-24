@@ -198,3 +198,84 @@ Push e sino: `cardume(-dev).html?mencao=<ref>`; a página resolve no índice pri
 - **O título do card**, escrito por outra pessoa, chega ao Cardume só por `textContent`.
 - **O link do card colado:** só esta origem; `squad` e `card` validados pelo `ID_RE` antes de qualquer leitura.
 - **Texto do canal privado indo para um público maior:** só por ação explícita, com o aviso de quem lê (decisão do Caio). O `text` passa pelo `renderMd` do Maré, o mesmo caminho de qualquer comentário.
+
+
+## GIF na 🐚 Concha — desenho de 24/11/2026 (R3)
+
+Pedido do Caio. A pesquisa do Codex está no #1945. **Decisão do Caio:** a busca passa por uma **função no servidor**, e a chave da KLIPY fica num secret. API conferida em `docs.klipy.com/*.md`:
+- **Busca:** `GET https://api.klipy.com/api/v1/{app_key}/gifs/search?q&page&per_page(8–50)&locale&content_filter(off|low|medium|high)&format_filter`.
+- **Em alta:** `…/gifs/trending` (mesmos parâmetros, sem `q`).
+- **Item:** `{id(número), slug, title, type, file:{hd|md|sm|xs:{gif|webp|jpg|mp4|webm:{url,width,height,size}}}}`. Um item com `type: "ad"` é anúncio.
+- **Imagens:** vêm só de `static.klipy.com`, `static1.klipy.com` e `static2.klipy.com`.
+- **Atribuição obrigatória:** o campo de busca diz **"Search KLIPY"**.
+- **Opcionais:** `customer_id` e o aviso de compartilhamento (`share`). **Não usamos**, por privacidade.
+
+### Função `conchaGifBusca` (`functions/oceano/conchaGif.js` + núcleo puro `conchaGifCore.js`)
+- **Formato:** `onRequest` + `Authorization: Bearer <idToken>`, o padrão do projeto, como a `spotifyRadioSearch` (nenhuma página carrega o SDK de Functions). CORS fixo na origem do Pages. `// AUTH:` declarado.
+- **Quem pode:** `contaDaEmpresa(decoded)` (domínio, e-mail verificado e Google) **e** ser membro de pelo menos um canal da Concha (`kanban/cardume/meus/{uid}` com algum `true`, a mesma régua de quem usa a página).
+- **Entrada:** `q` (0–50 caracteres; vazio = em alta) e `pagina` (1–5). Nada mais da requisição chega à KLIPY.
+- **Saída da KLIPY:** `content_filter=high`, `locale=br`, `format_filter=gif,webp`, `per_page=24`. Sem `customer_id`.
+- **Resposta normalizada:** `[{id, t (título ≤ 100), p (prévia xs/sm), u (md), w, h}]`.
+  - Descarta anúncio e qualquer item cujas URLs não passem em `^https://static[12]?\.klipy\.com/[A-Za-z0-9/_.-]{1,300}$`.
+  - Números entre 1 e 4096.
+- **Limites** (transação em `kanban/cardume/gif_uso`):
+  - 60 buscas por pessoa por hora;
+  - **teto da casa: 90 por hora** enquanto for a chave de teste, que aceita 100 por hora. Ao passar o teto, devolve 429 com mensagem clara.
+  - O nó é **fechado** a leitura e escrita pelo navegador; só o Admin SDK grava.
+- **Falha:** se a KLIPY cair ou estourar o tempo (6 s), devolve 502 e a página diz "GIF indisponível agora". **Nunca** devolve o erro cru da KLIPY nem a chave.
+
+### Ajustes da revisão (advisor, antes do código)
+- **Peso para quem vê:** cada membro baixa o GIF. Por isso, prefere-se **webp**, escolhe-se a versão mais leve com largura entre 200 e 400 px (pelo campo `size`) e itens acima de **2,5 MB** são descartados.
+- **Movimento reduzido:** guardar `s` (o quadro parado em jpg, mesmo host). Com `prefers-reduced-motion`, a mensagem mostra o quadro parado e anima ao clicar.
+- **Cota:**
+  - cache **na memória da função** por `(q, página)`: 10 min para busca e 30 min para em alta. **Só busca nova conta** no teto da casa.
+  - cache **por sessão na página**;
+  - mínimo de **2 letras** para buscar.
+- **Chave:** está no caminho da URL. Ela é montada num único ponto e **nunca** vai para log, erro ou resposta; um teste com `fetch` falso que lança erro contendo a URL garante isso.
+- **Privacidade, nos dois sentidos:** a busca vai para a KLIPY **e** a CDN da KLIPY vê o IP de quem **vê** o GIF. O painel diz as duas coisas.
+- **Rede:** o navegador de quem vê baixa de `static*.klipy.com`. O Caio confere na rede da empresa, com o FortiGate, antes do piloto.
+
+### Contrato da mensagem (`kanban/cardume/msgs/{c}/{k}`)
+- **Campo novo, opcional:** `gif: {u, s?, w, h, t?}`.
+  - `u` (animado) e `s` (quadro parado) passam na mesma regex de host; `w` e `h` são números entre 1 e 4096; `t` é texto de até 100 caracteres.
+  - Qualquer outro filho é recusado.
+- **Criar:** a mensagem precisa de `texto` **ou** `gif` (GIF sem legenda vale).
+- **Imutável:** o `gif` só entra na criação. Editar não pode pôr, tirar nem trocar o GIF; só a legenda (`texto`) muda.
+- **Apagar:** o registro de apagada (`{uid, ts, apagada}`) **não** pode levar o `gif`.
+- **A URL vai no banco, mas só de host fixo.** Guardar só o id exigiria uma consulta à KLIPY por mensagem exibida, para cada pessoa. O risco é o mesmo de guardar o id: em ambos os casos alguém pode apontar para qualquer mídia da KLIPY fora do filtro de conteúdo, e nada de fora da KLIPY passa.
+
+### Página (`cardume-dev.html`)
+- **Botão GIF** ao lado do 😀. Ele abre um painel com:
+  - o campo "Search KLIPY", com busca 400 ms depois da última tecla;
+  - os GIFs em alta ao abrir;
+  - a grade de prévias (`<img>` com `loading=lazy`, `referrerPolicy=no-referrer`, `alt` = título);
+  - a marca "Powered by KLIPY".
+- **Ao escolher:** o GIF fica no compositor com ✕. O Enviar grava `{uid, ts, texto?, gif}` + `ultima`, como hoje.
+- **Pendências canceladas:** trocar de canal ou de conta limpa o GIF escolhido e descarta a busca em andamento.
+- **Mensagem:** a imagem só aparece se `u` passar na regex. É montada por propriedades do DOM, sem `innerHTML`, com no máximo 240 px e com `alt`.
+- **Usos do texto:**
+  - 📝 Registrar no card escreve `[GIF: título]`;
+  - o trecho da aba @ Menções mostra "GIF";
+  - a @menção é lida só no `texto`.
+
+### Testes
+- **Regras** (`cardumeRules.test.js`), com sabotagem:
+  - criar com GIF, com e sem legenda;
+  - host de fora, `javascript:`, `w` de 0 ou 99999, campo extra;
+  - pôr, trocar ou tirar o GIF ao editar;
+  - apagar mantendo o GIF;
+  - nem texto nem GIF.
+- **Núcleo da função:** descarta anúncio e host ruim, codifica o `q`, usa os parâmetros fixos e aplica os dois limites por hora.
+- **Página:** a busca é interceptada pelo Playwright. Cobre escolher e enviar (cada escrita conferida nas regras), a renderização segura, a troca de canal cancelando, a API fora do ar e o celular.
+
+### Fronteira (checklist `docs/SEGURANCA_FRONTEIRAS.md`)
+- **Função nova (`onRequest`):** autenticada, com dois limites, entrada mínima, chave em secret e saída normalizada.
+- **Campo novo no banco:** validado por regex de host e imutável.
+- **Mídia externa no DOM:** só de host fixo, por propriedade.
+- **Privacidade:** a busca digitada vai para a KLIPY, de fora da empresa. O painel diz isso ("a busca vai para a KLIPY"). Nenhum id de pessoa sai.
+
+### Para o Caio (antes do deploy)
+1. **Criar o app** no `partner.klipy.com` e **desligar os anúncios** da chave em *Update App Details*.
+2. `firebase functions:secrets:set KLIPY_API_KEY` no Mac.
+3. **Deploy**, nesta ordem: regras primeiro (`--only database`), depois `--only functions:conchaGifBusca`.
+4. **Antes de promover:** pedir a chave de produção (sem limite) e confirmar o preço do uso interno.

@@ -136,11 +136,24 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .compositor{display:flex;align-items:flex-end;gap:6px;}
 textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;resize:none;max-height:30vh;}
 .ajuda{margin-top:3px;color:var(--txt2);font-size:12px;}
-.sugestoes,.emojis{position:absolute;z-index:3;bottom:100%;left:14px;right:14px;max-height:40vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgb(var(--ink-rgb));box-shadow:var(--shadow);}
+.sugestoes,.emojis,.gifs{position:absolute;z-index:3;bottom:100%;left:14px;right:14px;max-height:40vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgb(var(--ink-rgb));box-shadow:var(--shadow);}
 .sugestao{display:block;width:100%;text-align:left;margin-bottom:2px;min-height:36px;}
 .sugestao[aria-selected="true"]{border-color:var(--accent);background:rgb(var(--slate-rgb));}
 .emojis{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:2px;right:auto;width:min(360px,calc(100% - 28px));}
 .emojis input{grid-column:1/-1;margin-bottom:4px;}
+.gifs{display:flex;flex-direction:column;gap:6px;right:auto;width:min(420px,calc(100% - 28px));}
+.gif-estado{margin:0;color:var(--txt2);font-size:12px;min-height:1em;}
+.gif-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px;overflow:auto;max-height:min(46vh,360px);}
+.gif-op{padding:0;min-height:0;height:96px;overflow:hidden;border-radius:10px;background:rgba(var(--slate-rgb),.7);}
+.gif-op img{width:100%;height:100%;object-fit:cover;display:block;}
+.gif-cartao{display:grid;place-items:center;width:100%;height:100%;min-height:72px;padding:6px;font-size:12px;color:var(--txt2);text-align:center;overflow-wrap:anywhere;background:rgba(var(--slate-rgb),.85);border-radius:10px;}
+.gif-rodape{margin:0;color:var(--txt3,var(--txt2));font-size:11px;}
+.b-gif{font-weight:800;font-size:11px;letter-spacing:.03em;}
+.gif-escolhido{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:6px;border:1px dashed var(--glass-b);border-radius:12px;}
+.gif-escolhido img{max-height:90px;max-width:140px;border-radius:8px;}
+.msg-gif{display:block;padding:0;margin:4px 0;border:0;background:none;min-height:0;width:min(240px,100%);}
+.msg-gif img{display:block;width:100%;height:auto;max-height:320px;object-fit:contain;border-radius:10px;}
+button.msg-gif{cursor:pointer;}
 .emojis button{min-height:38px;padding:0;font-size:20px;background:transparent;border-color:transparent;}
 .emojis button:hover,.emojis button:focus-visible{border-color:var(--accent);}
 .emojis .rot{grid-column:1/-1;font-size:11px;color:var(--txt2);margin:2px 4px;}
@@ -213,6 +226,7 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
       <div class="rodape" id="rodape" hidden>
         <div class="sugestoes" id="sugestoes" role="listbox" aria-label="Pessoas para mencionar" hidden></div>
         <div class="emojis" id="emojis" role="dialog" aria-label="Emojis" hidden></div>
+        <div class="gifs" id="gifs" role="dialog" aria-label="GIFs" hidden></div>
         <div class="barra-fmt" role="toolbar" aria-label="Formatação">
           <button type="button" data-fmt="**" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button>
           <button type="button" data-fmt="_" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button>
@@ -221,7 +235,9 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
           <button type="button" data-lista="- " title="Lista" aria-label="Lista">•</button>
           <button type="button" data-lista="> " title="Citação" aria-label="Citação">❝</button>
           <button type="button" id="b-emoji" title="Emoji" aria-label="Emoji" aria-expanded="false">😀</button>
+          <button type="button" id="b-gif" class="b-gif" title="GIF" aria-label="GIF" aria-expanded="false">GIF</button>
         </div>
+        <div class="gif-escolhido" id="gif-escolhido" hidden></div>
         <form class="compositor" id="compositor">
           <textarea id="entrada" rows="1" aria-label="Mensagem" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…" maxlength="4000"></textarea>
           <button class="primary" type="submit" id="b-enviar">Enviar</button>
@@ -243,7 +259,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.9 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.10 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -488,7 +504,7 @@ function abrirCanal(id, foco) {
   if (atual !== id) {
     if (atual) lsSet(chaveRascunho(atual), entrada.value);
     parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
-    entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false);
+    entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif();
   }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
   atual = id; lsSet('cardume_canal', id);
@@ -572,6 +588,7 @@ function renderMsg(m) {
     const b = el('button', 'lnk', 'Desfazer'); b.type = 'button'; b.onclick = () => desfazer(m.id); d.append(b); box.append(d); return box;
   }
   if (editando === m.id) { box.append(editor(m)); return box; }
+  const gg = m.gif && renderGif(m.gif); if (gg) box.append(gg);
   const ks = cardsNoTexto(m.texto);
   const visivel = ks.length ? semLinkDeCard(m.texto || '') : (m.texto || '');
   if (visivel.trim()) box.append(renderTexto(visivel));
@@ -582,7 +599,7 @@ function renderMsg(m) {
   const ac = el('div', 'acoes-msg');
   if (souMembro(atual) || souAdm()) { const r = el('button', '', '📝 No card'); r.type = 'button'; r.title = 'Registrar no card do Maré'; r.setAttribute('aria-label', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
-    if (meu) { const e = el('button', '', '✏️ Editar'); e.type = 'button'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
+    if (meu && typeof m.texto === 'string') { const e = el('button', '', '✏️ Editar'); e.type = 'button'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
     const x = el('button', 'perigo', '🗑 Apagar'); x.type = 'button'; x.onclick = () => apagar(m); ac.append(x);
   }
   if (ac.childNodes.length) box.append(ac);
@@ -607,8 +624,8 @@ function editor(m) {
 
 // ═══ Escrever ═══
 async function enviar() {
-  const t = $('entrada'), bruto = t.value, txt = bruto.trim(), id = atual;
-  if (!txt || !id || enviando) return;
+  const t = $('entrada'), bruto = t.value, txt = bruto.trim(), id = atual, gif = gifEscolhido;
+  if ((!txt && !gif) || !id || enviando) return;
   if (txt.length > 4000) { toast('Mensagem longa demais (máx. 4000 caracteres).'); return; }
   const k = push(ref(db, B + 'msgs/' + id)).key;
   const ts = serverTimestamp();
@@ -616,7 +633,9 @@ async function enviar() {
   enviando = true; $('b-enviar').disabled = true;
   try {
     // contrato com as regras: a mensagem e o marcador de não lidas no MESMO update, com o mesmo serverTimestamp
-    await update(ref(db), { [B + 'msgs/' + id + '/' + k]: { uid: user.uid, ts, texto: txt }, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } });
+    const corpo = { uid: user.uid, ts }; if (txt) corpo.texto = txt; if (gif) corpo.gif = Object.assign({}, gif);   // GIF sem legenda vale (regras: texto OU gif)
+    await update(ref(db), { [B + 'msgs/' + id + '/' + k]: corpo, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } });
+    if (gif && gifEscolhido === gif) limparGif();
     avisarMencoes(id, k, avisar);
     if (atual === id && t.value === bruto) { t.value = ''; ajustarAltura(); }
     lsSet(chaveRascunho(id), atual === id ? t.value : '');
@@ -654,7 +673,7 @@ async function mostrarAntiga(canal, msgId) {
     if (!m || m.apagada) { toast('Essa mensagem foi apagada.'); return; }
     const cab = el('div', 'autor'); cab.append(el('b', '', nomePessoa(m.uid)), el('span', 'hora', new Date(m.ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })));
     const x = el('button', 'lnk', 'fechar'); x.type = 'button'; x.onclick = () => { f.hidden = true; f.replaceChildren(); }; cab.append(x);
-    f.append(el('p', 'subtitulo', 'Mensagem mais antiga (fora das últimas ' + LIMITE + ')'), cab, renderTexto(m.texto || '')); f.hidden = false;
+    f.append(el('p', 'subtitulo', 'Mensagem mais antiga (fora das últimas ' + LIMITE + ')'), cab); const g0 = m.gif && renderGif(m.gif); if (g0) f.append(g0); if (m.texto) f.append(renderTexto(m.texto)); f.hidden = false;
   } catch (e) { toast('Não deu para abrir essa mensagem.'); }
 }
 // ═══ Cards do Maré (etapa 3, docs/ideias/cardume-v0-banco.md › "Etapa 3") ═══
@@ -721,14 +740,14 @@ const semArroba = s => String(s || '').replace(/(^|[^\p{L}\p{N}._%+-])[@＠](?=[
 const dataHora = ts => new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '');
 function textoRegistro(canal, lista) {
   let t = '🐚 Da Concha · #' + nomeCanal(canal) + '\n';
-  for (const x of lista) t += '\n**' + nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ' + String(x.texto || '').trim();
+  for (const x of lista) t += '\n**' + nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ' + (rotuloGif(x) + String(x.texto || '')).trim();
   t = semArroba(t);
   return t.length > 8000 ? t.slice(0, 7999) + '…' : t;
 }
 const MAX_REG = 20;
 function modalRegistrar(m0) {
   const canal = atual;
-  const lista = msgs.filter(x => !x.apagada && !pendentes.has(x.id) && typeof x.texto === 'string');
+  const lista = msgs.filter(x => !x.apagada && !pendentes.has(x.id) && (typeof x.texto === 'string' || (x.gif && typeof x.gif === 'object')));
   const i0 = Math.max(0, lista.findIndex(x => x.id === m0.id));
   const janela = lista.slice(Math.max(0, i0 - 10), i0 + 11);
   const citados = [];
@@ -741,7 +760,7 @@ function modalRegistrar(m0) {
   const caixa = el('div', 'lista-reg'); caixa.setAttribute('role', 'group'); caixa.setAttribute('aria-label', 'Mensagens');
   janela.forEach(x => {
     const l = el('label', 'reg-item'); const cb = el('input'); cb.type = 'checkbox'; cb.value = x.id; cb.checked = x.id === m0.id;
-    const tx = el('span'); const resumo = String(x.texto).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim();
+    const tx = el('span'); const resumo = (rotuloGif(x) + String(x.texto || '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim();
     tx.append(el('b', '', nomePessoa(x.uid) + ' · ' + dataHora(x.ts)), el('span', 'subtitulo', resumo.length > 140 ? resumo.slice(0, 140) + '…' : resumo));
     l.append(cb, tx); caixa.append(l);
   });
@@ -803,7 +822,7 @@ function modalRegistrar(m0) {
 const trechos = {};   // 'c/m' → texto (lido da própria mensagem, com acesso de membro)
 function trechoDe(c, m) {
   const k = c + '/' + m;
-  if (!(k in trechos)) { trechos[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); trechos[k] = !v ? '(mensagem apagada)' : v.apagada ? '(mensagem apagada)' : String(v.texto || '').replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160); if (vendoMencoes) renderMsgs(); }).catch(() => { trechos[k] = '(sem acesso a este canal)'; if (vendoMencoes) renderMsgs(); }); }
+  if (!(k in trechos)) { trechos[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); trechos[k] = !v ? '(mensagem apagada)' : v.apagada ? '(mensagem apagada)' : String(v.texto || (v.gif ? '[GIF]' : '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160); if (vendoMencoes) renderMsgs(); }).catch(() => { trechos[k] = '(sem acesso a este canal)'; if (vendoMencoes) renderMsgs(); }); }
   return trechos[k];
 }
 function abrirMencao(rec) {
@@ -905,6 +924,7 @@ document.querySelector('.barra-fmt').addEventListener('click', e => {
 const EMOJIS = [['😀','sorriso'],['😂','risada'],['🙂','ok'],['😉','piscada'],['😍','amei'],['🤔','pensando'],['😅','ufa'],['😬','eita'],['😢','triste'],['😴','sono'],['🙏','obrigado por favor'],['👍','joinha sim'],['👎','não'],['👏','palmas'],['🙌','viva'],['💪','força'],['👀','olhando'],['🤝','combinado'],['✅','feito ok'],['❌','não erro'],['⚠️','atenção'],['🚨','urgente alerta'],['🔥','fogo'],['🚀','lançou'],['🎉','festa'],['💡','ideia'],['📌','fixar'],['📊','dados gráfico'],['📈','subiu'],['📉','caiu'],['🐛','bug'],['🛠️','conserto'],['⏰','prazo'],['📅','data'],['☕','café'],['🐟','peixe cardume'],['🌊','onda oceano'],['❤️','coração'],['💙','azul'],['⭐','estrela'],['🖤','black friday preto'],['🛒','compra'],['💰','dinheiro'],['🤖','robô']];
 function recentes() { try { return JSON.parse(lsGet('cardume_emojis') || '[]').filter(x => typeof x === 'string').slice(0, 8); } catch (e) { return []; } }
 function abrirEmojis() {
+  fecharGifs(false);
   const box = $('emojis'); box.replaceChildren();
   const busca = el('input'); busca.type = 'search'; busca.placeholder = 'Buscar emoji…'; busca.setAttribute('aria-label', 'Buscar emoji'); box.append(busca);
   const grade = el('div'); grade.style.display = 'contents'; box.append(grade);
@@ -920,6 +940,104 @@ function botaoEmoji(x, n) { const b = el('button', '', x); b.type = 'button'; b.
 function fecharEmojis(foco) { $('emojis').hidden = true; $('b-emoji').setAttribute('aria-expanded', 'false'); if (foco) entrada.focus(); }
 $('b-emoji').onclick = () => { if ($('emojis').hidden) abrirEmojis(); else fecharEmojis(true); };
 document.addEventListener('click', e => { if (!$('emojis').hidden && !e.target.closest('#emojis') && !e.target.closest('#b-emoji')) fecharEmojis(false); });
+
+// ═══ 🎞️ GIF (KLIPY), pela função conchaGifBusca — docs/ideias/cardume-v0-banco.md › "GIF na Concha" ═══
+// A chave da KLIPY fica no servidor. A página só manda a busca (com o token da pessoa) e recebe itens já filtrados; mesmo assim, só mostra e grava
+// mídia de host fixo da KLIPY (GIF_RE = a regex das regras do banco). Atribuição exigida pela KLIPY: placeholder "Search KLIPY".
+const GIF_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/conchaGifBusca';
+const GIF_RE = /^https:\/\/static[12]?\.klipy\.com\/[A-Za-z0-9/_.-]{1,300}$/;
+const gifOk = u => typeof u === 'string' && GIF_RE.test(u);
+const dimOk = n => typeof n === 'number' && Number.isFinite(n) && n >= 1 && n <= 4096;
+const menosMovimento = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const rotuloGif = x => (x && x.gif && typeof x.gif === 'object') ? '[GIF' + (x.gif.t ? ': ' + String(x.gif.t).slice(0, 100) : '') + '] ' : '';
+let gifEscolhido = null, gifBuscaVez = 0, gifTimer = 0;
+const gifCache = new Map();   // busca → itens (por sessão; a função também tem cache)
+const ERRO_GIF = {
+  limite_pessoa: 'Você buscou muitos GIFs nesta hora. Tente daqui a pouco.',
+  limite_casa: 'Os GIFs da Concha bateram o limite desta hora. Tente daqui a pouco.',
+  fora_da_concha: 'Entre num canal da Concha para buscar GIFs.',
+  busca_invalida: 'Busque com 2 a 50 letras.',
+};
+// Imagem do GIF respeitando o movimento reduzido: anima direto; ou mostra o quadro parado (s); ou, sem quadro parado, um cartão sem imagem.
+// `clicavel` = o próprio elemento anima ao clicar (na mensagem). Devolve {el, img|null}.
+function imagemGif(g, alt) {
+  const reduz = menosMovimento();
+  if (reduz && !gifOk(g.s)) { const c = el('span', 'gif-cartao', '▶ ' + alt); return { el: c, img: null }; }
+  const im = document.createElement('img'); im.src = reduz ? g.s : g.u; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.alt = alt;
+  return { el: im, img: im };
+}
+function renderGif(g) {
+  if (!g || typeof g !== 'object' || !gifOk(g.u) || !dimOk(g.w) || !dimOk(g.h)) return null;
+  const alt = 'GIF' + (g.t ? ': ' + String(g.t).slice(0, 100) : '');
+  const reduz = menosMovimento();
+  const caixa = el(reduz ? 'button' : 'div', 'msg-gif');
+  const { el: vis, img } = imagemGif(g, alt);
+  if (img) { img.width = g.w; img.height = g.h; img.style.aspectRatio = g.w + ' / ' + g.h; }   // reserva o espaço: a conversa não pula quando o GIF chega
+  if (reduz) {   // movimento reduzido: nada anima sem a pessoa pedir
+    caixa.type = 'button'; caixa.title = 'Animar o GIF'; caixa.setAttribute('aria-label', 'Animar o ' + alt);
+    caixa.onclick = () => {
+      const im = img || document.createElement('img');
+      im.src = g.u; im.alt = alt; im.referrerPolicy = 'no-referrer'; im.width = g.w; im.height = g.h; im.style.aspectRatio = g.w + ' / ' + g.h;
+      if (!img) caixa.replaceChildren(im);
+      caixa.removeAttribute('title');
+    };
+  }
+  caixa.append(vis); return caixa;
+}
+async function buscarGifs(q) {
+  if (gifCache.has(q)) return gifCache.get(q);
+  const tok = await user.getIdToken();
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
+  let r; try { r = await fetch(GIF_URL + '?q=' + encodeURIComponent(q) + '&p=1', { headers: { Authorization: 'Bearer ' + tok }, signal: ctl.signal }); } finally { clearTimeout(timer); }
+  let j = null; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) { const e = new Error('gif'); e.codigo = (j && typeof j.erro === 'string' && j.erro) || 'falhou'; throw e; }
+  const itens = (j && Array.isArray(j.itens) ? j.itens : []).filter(i => i && gifOk(i.u) && gifOk(i.p) && dimOk(i.w) && dimOk(i.h))
+    .map(i => ({ u: i.u, p: i.p, s: gifOk(i.s) ? i.s : '', w: Math.round(i.w), h: Math.round(i.h), t: String(i.t || '').slice(0, 100) }));
+  gifCache.set(q, itens); return itens;
+}
+function abrirGifs() {
+  fecharEmojis(false);
+  const box = $('gifs'); box.replaceChildren();
+  const busca = el('input'); busca.type = 'search'; busca.placeholder = 'Search KLIPY'; busca.maxLength = 50; busca.setAttribute('aria-label', 'Buscar GIF (Search KLIPY)');
+  const estado = el('p', 'gif-estado'); estado.setAttribute('aria-live', 'polite');
+  const grade = el('div', 'gif-grade');
+  box.append(busca, estado, grade, el('p', 'gif-rodape', 'Powered by KLIPY · a busca e quem vê o GIF passam pela KLIPY, fora da Hering.'));
+  const canal = atual;
+  const carregar = async () => {
+    const q = busca.value.replace(/\s+/g, ' ').trim().toLowerCase(), vez = ++gifBuscaVez;
+    if (q.length === 1) { estado.textContent = 'Digite pelo menos 2 letras.'; return; }
+    estado.textContent = 'Buscando…';
+    try {
+      const itens = await buscarGifs(q);
+      if (vez !== gifBuscaVez || $('gifs').hidden || atual !== canal) return;   // trocou de canal, fechou ou digitou de novo: descarta
+      grade.replaceChildren();
+      estado.textContent = itens.length ? (q ? '' : 'Em alta') : 'Nenhum GIF encontrado.';
+      itens.forEach(i => {
+        const b = el('button', 'gif-op'); b.type = 'button'; b.setAttribute('aria-label', 'Escolher GIF: ' + (i.t || 'sem título'));
+        // movimento reduzido: quadro parado ou cartão; senão a prévia animada
+        b.append(menosMovimento() ? imagemGif(i, i.t || 'GIF').el : imagemGif({ u: i.p, s: i.s }, '').el);
+        b.onclick = () => escolherGif(i); grade.append(b);
+      });
+    } catch (e) {
+      if (vez !== gifBuscaVez) return;
+      estado.textContent = ERRO_GIF[e && e.codigo] || 'GIF indisponível agora. Tente de novo em instantes.';
+    }
+  };
+  busca.oninput = () => { clearTimeout(gifTimer); gifBuscaVez++; grade.replaceChildren(); estado.textContent = ''; gifTimer = setTimeout(carregar, 400); };   // resultado velho não fica clicável sob a busca nova
+  busca.onkeydown = e => { if (e.key === 'Escape') { e.preventDefault(); fecharGifs(true); } };
+  box.hidden = false; $('b-gif').setAttribute('aria-expanded', 'true'); busca.focus(); carregar();
+}
+function fecharGifs(foco) { gifBuscaVez++; clearTimeout(gifTimer); $('gifs').hidden = true; $('b-gif').setAttribute('aria-expanded', 'false'); if (foco) entrada.focus(); }
+function escolherGif(i) { gifEscolhido = { u: i.u, w: i.w, h: i.h, t: i.t }; if (i.s) gifEscolhido.s = i.s; fecharGifs(true); mostrarGifEscolhido(); }
+function mostrarGifEscolhido() {
+  const b = $('gif-escolhido'); b.replaceChildren(); b.hidden = !gifEscolhido; if (!gifEscolhido) return;
+  const im = imagemGif(gifEscolhido, 'GIF' + (gifEscolhido.t ? ': ' + gifEscolhido.t : '')).el;
+  const x = el('button', 'lnk', '✕ tirar'); x.type = 'button'; x.setAttribute('aria-label', 'Tirar o GIF'); x.onclick = () => { limparGif(); entrada.focus(); };
+  b.append(im, el('span', 'subtitulo', 'GIF escolhido · Enviar manda junto (a legenda é opcional)'), x);
+}
+function limparGif() { gifEscolhido = null; mostrarGifEscolhido(); }
+$('b-gif').onclick = () => { if ($('gifs').hidden) abrirGifs(); else fecharGifs(true); };
+document.addEventListener('click', e => { if (!$('gifs').hidden && !e.target.closest('#gifs') && !e.target.closest('#b-gif')) fecharGifs(false); });
 // Colar: só texto puro por enquanto (colar com formatação fica para o próximo PR — backlog #cardume-texto)
 
 // ═══ Painel de detalhes: membros, gestão, entrar/sair, editar o temático ═══
@@ -1087,6 +1205,7 @@ function limparSessao() {
   eu = {}; pub = {}; meta = {}; meus = {}; abertos = {}; lidas = {}; msgs = []; membrosAtual = {}; adminsAtual = {};
   Object.keys(canais).forEach(k => delete canais[k]); Object.keys(ultimas).forEach(k => delete ultimas[k]);
   Object.keys(infoCards).forEach(k => delete infoCards[k]);   // o acesso aos cards é da conta
+  limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }

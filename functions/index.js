@@ -252,6 +252,11 @@ exports.backupCompletoApi = require('./backup/restaurarApi').backupCompletoApi;
 //   firebase deploy --only functions:oceanoResumo
 exports.oceanoResumo = require('./oceano/resumo').oceanoResumo;
 
+// 🐚 GIF na Concha (24/11/2026, functions/oceano/conchaGif.js): busca na KLIPY pelo servidor (a chave fica no secret KLIPY_API_KEY).
+// idToken @ciahering + membro da Concha; 60 buscas/h por pessoa e 90 buscas novas/h na casa (kanban/cardume/gif_uso). Desenho: docs/ideias/cardume-v0-banco.md.
+// Antes do 1º deploy: firebase functions:secrets:set KLIPY_API_KEY. Deploy isolado: firebase deploy --only functions:conchaGifBusca
+exports.conchaGifBusca = require('./oceano/conchaGif').conchaGifBusca;
+
 // 🎯 OKR — scan diário (prazo de marco chegando, período de editar, véspera
 // de reunião — ver functions/okr/dailyScan.js). Roda sozinho, sem depender
 // de ninguém abrir o painel. Lê kanban/painel/config/gcal_cache (mesmo
