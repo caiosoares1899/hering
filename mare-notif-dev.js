@@ -721,7 +721,7 @@
 
   // ══ 🔔 SINO UNIFICADO (componente) ══ docs/ideias/sino-unificado.md — fase 1 (24/11/2026): o mesmo Sino em todos os apps, com os layouts por
   // família do Maré (👤 Pessoal · 📅 Calendário · 🎯 Radar · 🛡️ Sistema). A página só entrega o botão e, se quiser, trata cliques por dentro.
-  //   MareNotif.sino(botao, {user, isAdm?, toast?, abrir?(item)→true se tratou, filtro?(item)→false esconde, aoAbrir?(), aoMudar?(itens), painel?:true (mostra SO_PAINEL)})
+  //   MareNotif.sino(botao, {user, isAdm?, toast?, abrir?(item)→true se tratou, filtro?(item)→false esconde, aoAbrir?(), aoMudar?(itens), isViewer?:false, notaRodape?:texto, painel?:true (mostra SO_PAINEL)})
   // Fontes: as PESSOAIS (kanban/usuarios/{uid}/notificacoes, as 80 mais recentes, viva()) + o FEED da torre (items()), sem duplicar (o "lido" da pessoal vence).
   // SEGURANÇA: qualquer conta da Hering grava nas notificações de outra (e no feed) — título, subtítulo, autor e ícone são texto de terceiros:
   // o painel é montado só com createElement/textContent (nunca innerHTML com dado); o destino do clique vem de urlPessoal()/urlFeed() (já validados).
@@ -757,6 +757,7 @@
     novas(nao.map(i=>i.k+':'+i.id), nao.map(i=>i.tipo));
     try{ if(o.aoMudar) o.aoMudar(itens); }catch(e){}
     if(!sinoSt.aberto) return;   // a lista só é desenhada com o painel aberto
+    sinoPosicionar();   // cabe na tela mesmo se a janela mudou sem o evento de resize ter chegado (giro do celular, zoom)
     const pop = sinoSt.pop, foco = document.activeElement && pop.contains(document.activeElement) ? (document.activeElement.dataset.mnId || '') : '';
     pop.replaceChildren();
     const hd = sinoEl('div', 'mn-sino-hd'); hd.append(sinoEl('h2', '', '🔔 Notificações'));
@@ -784,6 +785,7 @@
     });
     pop.append(lista);
     const ft = document.createElement('div'); ft.innerHTML = rodapeHtml('<button type="button" class="mn-link mn-sino-limpar">Limpar antigas</button>');   // HTML fixo do módulo, sem dado
+    if(o.notaRodape) ft.firstChild.append(sinoEl('div', 'mn-sino-nota', o.notaRodape));
     pop.append(ft.firstChild); const lp = pop.querySelector('.mn-sino-limpar'); if(lp) lp.onclick = sinoLimpar;
     rodapeRender();
     if(foco){ const f = pop.querySelector('[data-mn-id="'+CSS.escape(foco)+'"]'); if(f) f.focus(); }
@@ -856,8 +858,10 @@
       document.addEventListener('keydown', e=>{ if(e.key==='Escape' && sinoSt.aberto){ e.preventDefault(); sinoFechar(); } });
       window.addEventListener('resize', ()=>{ if(sinoSt.aberto) sinoPosicionar(); });
     }
-    start({user, isViewer:false, isAdm:opts.isAdm || (()=>false), toast:opts.toast, onChange:sinoRender});
-    if(sinoSt.ouvindo !== user.uid){
+    const isViewer = !!opts.isViewer;
+    if(isViewer) sinoSt.pessoais = [];
+    start({user, isViewer, isAdm:opts.isAdm || (()=>false), toast:opts.toast, onChange:sinoRender});
+    if(!isViewer && sinoSt.ouvindo !== user.uid){
       sinoSt.ouvindo = user.uid;
       const W = window;
       W._onValue(W._query(W._ref(W._db, 'kanban/usuarios/'+user.uid+'/notificacoes'), W._orderByChild('ts'), W._limitToLast(80)), snap=>{
@@ -1130,6 +1134,7 @@
     el.textContent = '.mn-sino-btn{position:relative;}'
       + '.mn-sino-n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--danger,#ef4444);color:#fff;font:700 10px/18px system-ui,sans-serif;text-align:center;pointer-events:none;}'
       + '.mn-sino-pop{position:fixed;z-index:70;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:16px;background:rgb(var(--ink-rgb,3,13,26));color:var(--txt,#e8f4fd);box-shadow:var(--shadow,0 10px 34px rgba(0,0,0,.35));font:13px/1.45 var(--ff,system-ui,sans-serif);}'
+      + '.mn-sino-nota{font-size:10px;color:var(--txt3,#8fa);overflow-wrap:anywhere;}'
       + '.mn-sino-pop[hidden]{display:none!important;}'
       + '.mn-sino-hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--glass-b,rgba(255,255,255,.15));}'
       + '.mn-sino-hd h2{flex:1;margin:0;font:700 15px/1.2 var(--ff-d,var(--ff,system-ui,sans-serif));outline:none;}'
