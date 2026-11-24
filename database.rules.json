@@ -1072,7 +1072,7 @@
             ],
             "$msgId": {
               ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ((!data.exists() && newData.exists() && root.child('kanban/cardume/membros/' + $squad + '/' + auth.uid).val() === true) || (data.exists() && newData.exists() && data.child('apagada').val() !== true && ((data.child('uid').val() === auth.uid && root.child('kanban/cardume/membros/' + $squad + '/' + auth.uid).val() === true) || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))) || (data.exists() && !newData.exists() && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')))",
-              ".validate": "$squad.matches(/^[A-Za-z0-9_-]{1,64}$/) && $msgId.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['uid','ts']) && newData.hasChild('card') === newData.hasChild('cardSq') && ((!data.exists() && newData.child('uid').val() === auth.uid && newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000 && newData.hasChild('texto') && !newData.hasChild('editado') && !newData.hasChild('apagada')) || (data.exists() && data.child('uid').val() === auth.uid && newData.child('uid').val() === data.child('uid').val() && newData.child('ts').val() === data.child('ts').val() && newData.hasChild('texto') && newData.child('editado').isNumber() && newData.child('editado').val() <= now && newData.child('editado').val() > now - 60000 && !newData.hasChild('apagada') && newData.child('card').val() === data.child('card').val() && newData.child('cardSq').val() === data.child('cardSq').val()) || (data.exists() && (data.child('uid').val() === auth.uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')) && newData.child('uid').val() === data.child('uid').val() && newData.child('ts').val() === data.child('ts').val() && newData.child('apagada').val() === true && !newData.hasChild('texto') && !newData.hasChild('card') && !newData.hasChild('cardSq') && !newData.hasChild('editado')))",
+              ".validate": "$squad.matches(/^[A-Za-z0-9_-]{1,64}$/) && $msgId.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['uid','ts']) && newData.hasChild('card') === newData.hasChild('cardSq') && ((!data.exists() && newData.child('uid').val() === auth.uid && newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000 && newData.hasChild('texto') && !newData.hasChild('editado') && !newData.hasChild('apagada')) || (data.exists() && data.child('uid').val() === auth.uid && newData.child('uid').val() === data.child('uid').val() && newData.child('ts').val() === data.child('ts').val() && newData.hasChild('texto') && newData.child('editado').isNumber() && newData.child('editado').val() >= data.child('ts').val() && newData.child('editado').val() <= now && newData.child('editado').val() > now - 60000 && !newData.hasChild('apagada') && newData.child('card').val() === data.child('card').val() && newData.child('cardSq').val() === data.child('cardSq').val()) || (data.exists() && (data.child('uid').val() === auth.uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')) && newData.child('uid').val() === data.child('uid').val() && newData.child('ts').val() === data.child('ts').val() && newData.child('apagada').val() === true && !newData.hasChild('texto') && !newData.hasChild('card') && !newData.hasChild('cardSq') && !newData.hasChild('editado')))",
               "uid": {
                 ".validate": "(data.exists() && newData.val() === data.val()) || (!data.exists() && newData.isString() && newData.val() === auth.uid)"
               },
@@ -1089,7 +1089,7 @@
                 ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,64}$/) && (!data.parent().exists() || newData.val() === data.val())"
               },
               "editado": {
-                ".validate": "newData.isNumber() && data.parent().exists() && newData.val() <= now && newData.val() > now - 60000"
+                ".validate": "newData.isNumber() && data.parent().exists() && newData.val() <= now && newData.val() > now - 60000 && newData.val() >= data.parent().child('ts').val()"
               },
               "apagada": {
                 ".validate": "newData.val() === true && !newData.parent().hasChild('texto') && !newData.parent().hasChild('card') && !newData.parent().hasChild('cardSq') && !newData.parent().hasChild('editado')"
@@ -1125,7 +1125,8 @@
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
             "$squad": {
               ".validate": "$squad.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.isNumber()"
-            }
+            },
+            ".validate": "newData.hasChildren()"
           }
         },
         "config": {

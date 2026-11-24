@@ -92,6 +92,8 @@ test('editar: só o autor, só o texto, com marca de editado', () => {
   assert.equal(grava(M('m1'), A.bru, ed()), false, 'outro membro não edita');
   assert.equal(grava(M('m1'), A.adm, ed()), false, 'ADM não reescreve o texto de ninguém');
   assert.equal(grava(M('m1'), A.ana, ed({ editado: undefined })), false, 'edição sem marca');
+  assert.equal(grava(M('m1'), A.ana, ed({ editado: orig.ts - 1 })), false, 'editado antes da própria mensagem (auditoria do Antigravity)');
+  assert.equal(grava(M('m1') + '/editado', A.ana, orig.ts - 1), false, 'nem gravando só o filho');
   assert.equal(grava(M('m1'), A.ana, ed({ ts: Date.now() })), false, 'não muda a hora');
   assert.equal(grava(M('m1'), A.ana, ed({ uid: 'bru' })), false, 'não muda o autor');
   assert.equal(grava(M('m1'), A.ana, ed({ card: 'c2' })), false, 'não troca o card citado');
@@ -143,6 +145,7 @@ test('lidas: só o próprio lê e grava', () => {
   assert.equal(lê(L, A.bru), false);
   assert.equal(grava(L + '/dados', A.bru, Date.now()), false);
   assert.equal(grava(L + '/dados', A.ana, 'ontem'), false, 'tem de ser número');
+  assert.equal(grava(L, A.ana, 5), false, 'lidas/{uid} é um objeto, não um número solto');
 });
 
 test('config: todo mundo da Hering lê, só ADM muda a retenção (7 a 3650 dias)', () => {
