@@ -61,6 +61,17 @@ Entregue ao Codex em 23/11/2026 por `scripts/delegar.sh cardume-prototipo` (cóp
 | 7 | Piloto `dados` (1–2 semanas, no dev) | medir o critério de sucesso, mensagens/dia, quem usa, banda | — · Caio e time | — |
 | 8 | Ajuda, dica e prod | Ajuda, dica, `/subirproprod`, aviso no Mural/WhatsApp, tag `cardume-v1.0` | R0 · Antigravity · Claude | PR de promoção |
 
+### `@card:` e `@objetivo:` sem pesar no banco (desenho de 24/11/2026)
+Item do backlog: `docs/quadro/backlog.md#cardume-citar`. Princípio: **não ler nada novo do banco para citar**; reaproveitar o que já está no aparelho da pessoa (o `localStorage` é da mesma origem para todas as páginas do Oceano).
+
+- **`@objetivo:` usa o cache do Sonar.** O `mare-sonar` já lê `kanban/okr/objetivos` + `marcos` (~390 KB em prod) **só quando a busca pede o Radar** e guarda a versão enxuta (`id`, título, período, responsáveis) por 3 h em `oceano_sonar_radar[_dev]`, compartilhada entre as páginas. O Cardume lê esse cache. Se ele estiver vencido, faz a mesma leitura e grava no mesmo formato, ou carrega o próprio `mare-sonar`: no máximo **uma leitura a cada 3 h por aparelho**, e nenhuma se a pessoa usou o `Ctrl+K`. Mesma régua de visibilidade do Sonar (arquivado e `MARE_SO_HERING`).
+- **`@card:` usa um índice enxuto deixado pelo Maré.** Cada card no banco é um objeto grande, e não existe lista só de títulos. Mas o Maré já tem os cards da squad aberta em memória: ao carregar ou mudar o board, ele grava `oceano_cards_<squad>[_dev]` = `{t: quando, v: [{id, t: título (até 200), c: coluna}]}`, com cerca de 40 KB para 500 cards (**zero leitura a mais**). O Cardume oferece os cards das squads com índice no aparelho, e o mais recente vem primeiro.
+  - **Não cobre** squad que a pessoa nunca abriu no Maré naquele aparelho. Nesse caso, colar o link continua valendo (o chip da v0.6).
+  - **Validade:** o índice fica até 7 dias; o título exibido no chip continua vindo da leitura do card (v0.6), então título velho no índice não engana.
+- **Se o piloto pedir cobertura total:** uma função mantém `kanban/squads/{sq}/dados/cards_titulos/{id}: "título"`, disparada só quando o título muda (`cards/{k}/title`), com leitura única por squad e sessão (~60 B por card). **Precisa** de regra nova (leitura igual à de `dados`, escrita só do servidor), teste no simulador e revisão.
+- **Descartado:** consulta por prefixo (`orderByChild('title').startAt(q)`). Devolve os cards inteiros, distingue maiúscula de minúscula, só casa o início do título e exige `.indexOn` novo.
+- **Fronteira:** título vindo do cache é texto de terceiros e entra só por `textContent`. O cache é do aparelho e pode ter sido mexido, então os ids passam pelo `ID_RE` antes de virar link ou leitura, e o texto gravado na mensagem guarda só o link/id.
+
 ### Depois do piloto (fila, por ordem)
 1. **Escala no canal:** "quem está na escala hoje" no topo; horário ou férias ao lado do nome na @menção.
 2. **Sonar (`Ctrl+K`):** achar canais (barato). Busca **dentro das mensagens** pede desenho próprio (o RTDB não busca texto).
