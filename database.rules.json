@@ -1386,7 +1386,7 @@
             ".indexOn": ["ts"],
             "$notifId": {
               ".write": "auth != null && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm') || (!data.exists() && newData.child('type').isString() && newData.child('type').val() !== 'painel_broadcast' && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads').exists())))",
-              ".validate": "auth.uid === $uid || !data.exists() || (newData.child('read').val() === data.child('read').val() && newData.child('ts').val() === data.child('ts').val() && newData.child('type').val() === data.child('type').val() && newData.child('title').val() === data.child('title').val())"
+              ".validate": "auth.uid === $uid || !data.exists() || data.child('read').val() !== true || newData.child('read').val() === true"
             }
           }
         }

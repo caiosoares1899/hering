@@ -3,7 +3,8 @@
 // 🔒 Fechar a leitura ampla de kanban/usuarios — fase A (docs/ideias/usuarios-leitura-fechar.md, 24/11/2026).
 // (1) O diretório público (kanban/usuarios_publicos) ganha `torre` e `gestorOkr`, validados IGUAIS ao cadastro (estado pós-escrita, como a
 //     `diretoria`): o espelho é gravável pela própria pessoa, e o Radar mostra controles pelo gestorOkr dos outros — não pode mentir.
-// (2) Notificação de OUTRA pessoa: PO/ADM criam ou apagam, mas não regravam uma que existe (reabria um aviso lido). Com isso o createNotif
+// (2) Notificação de OUTRA pessoa: ninguém além da dona transforma uma LIDA em não lida (nem PO/ADM — reabria o aviso). Atualizar uma ainda
+//     não lida segue valendo para PO/ADM (Travessia, Gantt e Plantão usam id fixo por dia/status). Com isso o createNotif
 //     do Maré pode criar com id fixo sem LER a caixa do destinatário — que deixará de ser legível na fase C.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -48,7 +49,7 @@ test('espelho do Gestor OKR: só verdadeiro quando o cadastro diz; só o ADM lig
   assert.equal(up(A.adm, { 'kanban/usuarios/ana/gestorOkr': null, 'kanban/usuarios_publicos/ana/gestorOkr': null }), true, 'ADM desliga nos dois');
 });
 
-test('notificação de outra pessoa: cria, apaga, mas não regrava (nem PO/ADM)', () => {
+test('notificação de outra pessoa: cria e apaga; ninguém além da dona reabre uma lida (nem PO/ADM)', () => {
   reset();
   assert.equal(grava(N('ana', 'n1'), A.po, notif({ read: false })), false, 'PO regravando uma lida (reabriria)');
   assert.equal(grava(N('ana', 'n1'), A.adm, notif({ read: false })), false, 'ADM também não');
@@ -56,6 +57,9 @@ test('notificação de outra pessoa: cria, apaga, mas não regrava (nem PO/ADM)'
   assert.equal(up(A.ana, { [N('ana', 'n1') + '/read']: false }), true, 'a dona pode marcar como não lida');
   assert.equal(grava(N('ana', 'n1'), A.bru, notif({ read: false })), false, 'membro comum também não (já era assim)');
   assert.equal(grava(N('ana', 'n2'), A.po, notif({ id: 'n2' })), true, 'PO cria nova');
+  DB.kanban.usuarios.ana.notificacoes.n9 = notif({ id: 'n9', read: false });
+  assert.equal(grava(N('ana', 'n9'), A.po, notif({ id: 'n9', read: false, title: 'atualizado' })), true, 'PO atualiza uma ainda NÃO lida (id fixo por dia/status)');
+  assert.equal(grava(N('ana', 'n1'), A.po, notif({ read: true, title: 'mesma, lida' })), true, 'regravar mantendo lida não reabre: aceito');
   assert.equal(grava(N('ana', 'n2'), A.po, notif({ id: 'n2', type: 'painel_broadcast' })), true, 'PO cria comunicado (painel_broadcast)');
   assert.equal(grava(N('ana', 'n2'), A.bru, notif({ id: 'n2', type: 'painel_broadcast' })), false, 'membro comum não cria comunicado');
   assert.equal(grava(N('ana', 'n2'), A.bru, notif({ id: 'n2' })), true, 'membro comum cria nova');

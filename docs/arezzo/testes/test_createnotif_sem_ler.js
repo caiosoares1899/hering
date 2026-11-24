@@ -4,6 +4,9 @@
 // Rodar na raiz: python3 -m http.server 8941  →  node docs/arezzo/testes/test_createnotif_sem_ler.js
 const fs = require('node:fs'), path = require('node:path'), home = require('node:os').homedir();
 const fake = require('./fakefb.js');
+const { update: regras } = require('../../../functions/rules/rulesSim.js');
+const RULES = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../database.rules.json'), 'utf8'));
+const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_provider: 'google.com' } } });
 const base = process.env.BASE_URL || 'http://127.0.0.1:8941';
 const U = (uid, n) => ({ uid, email: uid + '@ciahering.com.br', displayName: n, photoURL: '', providerData: [{ providerId: 'google.com' }] });
 const seed = () => ({ kanban: {
@@ -57,6 +60,10 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   await p.waitForTimeout(300);
   const l3 = await p.evaluate(() => window.__log.filter(l => /usuarios\/ana\/notificacoes\/fixo2/.test(l[1])).map(l => l[0]));
   t('para a própria pessoa: segue a transação (lê a própria caixa)', l3.includes('transaction'), l3);
+  // as REGRAS REAIS (não a recusa simulada acima): 1ª gravação para a Bia passa; a 2ª, depois de ela ler, é recusada (não reabre)
+  const esc = (await p.evaluate(() => window.__escritas || [])).filter(e => /^kanban\/usuarios\/bia\/notificacoes\/fixo1$/.test(e.p));
+  const real = Date.now; const veredito = esc.map(e => { Date.now = () => e.t; try { return regras(RULES, e.antes, authDe(U('ana', 'Ana ADM')), { [e.p]: e.v }); } finally { Date.now = real; } });
+  t('regras reais: criar para a Bia passa; regravar depois de ela ler é recusado', veredito.length === 2 && veredito[0] === true && veredito[1] === false, veredito);
   t('sem erro de JS', !errs.length, errs);
   await b.close();
   console.log(ok ? `TUDO OK (${total} verificações)` : 'FALHOU');
