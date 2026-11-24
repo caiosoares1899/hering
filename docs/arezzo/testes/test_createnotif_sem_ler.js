@@ -33,7 +33,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
       const eu = 'ana';   // quem está logada neste teste
       if (m[1] === eu || v === null) return false;
       const atual = ((((window.__store.kanban || {}).usuarios || {})[m[1]] || {}).notificacoes || {})[m[2]];
-      return !!atual;
+      return !!atual && (atual.noTTLDelete === true || (atual.read === true && !(v && v.read === true)));   // espelha a regra (o veredito real vem no fim)
     };
   });
   await ctx.route('https://www.google.com/s2/favicons**', r => r.abort());
@@ -48,6 +48,11 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   const l1 = await log();
   t('para outra pessoa: grava direto, sem get nem transação na caixa dela', l1.includes('set') && !l1.includes('get') && !l1.includes('transaction'), l1);
   t('a notificação foi criada não lida', (await ler('kanban/usuarios/bia/notificacoes/fixo1/read')) === false, await ler('kanban/usuarios/bia/notificacoes/fixo1'));
+  const ts1 = await ler('kanban/usuarios/bia/notificacoes/fixo1/ts');
+  await p.waitForTimeout(20);
+  await p.evaluate(() => { window.__log.length = 0; _recentNotifs.clear(); createNotif('bia', 'mention', '@BS (outro texto)', 'x', 'c1', 'fixo1'); });   // ex.: PO salva o card de novo, a @menção antiga continua lá
+  await p.waitForTimeout(300);
+  t('id fixo ainda NÃO lido: chamar de novo não regrava (nem a hora nem o texto)', (await ler('kanban/usuarios/bia/notificacoes/fixo1/ts')) === ts1 && (await ler('kanban/usuarios/bia/notificacoes/fixo1/title')) === '@BS', await ler('kanban/usuarios/bia/notificacoes/fixo1'));
   await p.evaluate(() => { window.__store.kanban.usuarios.bia.notificacoes.fixo1.read = true; });   // a Bia leu (no aparelho dela)
   await p.evaluate(() => { window.__log.length = 0; _recentNotifs.clear(); createNotif('bia', 'mention', '@BS', 'x', 'c1', 'fixo1'); });
   await p.waitForTimeout(300);
@@ -63,7 +68,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   // as REGRAS REAIS (não a recusa simulada acima): 1ª gravação para a Bia passa; a 2ª, depois de ela ler, é recusada (não reabre)
   const esc = (await p.evaluate(() => window.__escritas || [])).filter(e => /^kanban\/usuarios\/bia\/notificacoes\/fixo1$/.test(e.p));
   const real = Date.now; const veredito = esc.map(e => { Date.now = () => e.t; try { return regras(RULES, e.antes, authDe(U('ana', 'Ana ADM')), { [e.p]: e.v }); } finally { Date.now = real; } });
-  t('regras reais: criar para a Bia passa; regravar depois de ela ler é recusado', veredito.length === 2 && veredito[0] === true && veredito[1] === false, veredito);
+  t('regras reais: criar passa; regravar o id fixo é recusado — ainda não lida E depois de lida', veredito.length === 3 && veredito[0] === true && veredito[1] === false && veredito[2] === false, veredito);
   t('sem erro de JS', !errs.length, errs);
   await b.close();
   console.log(ok ? `TUDO OK (${total} verificações)` : 'FALHOU');

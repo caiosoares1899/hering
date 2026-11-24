@@ -48,7 +48,7 @@
 - [ ] **A3:** carga inicial rodada pelo ADM, com o espelho completo conferido.
 - [ ] **B4 e B5:** Radar e Painel lendo o diretório, **promovidos** (`okr.html` e `painel.html`).
 - [ ] **B7:** o pedido de atualização do Gantt (`mare-gcal.js`) sem ler a notificação de terceiros, promovido.
-- [ ] **Ajuste de A1 (24/11, revisão):** a trava das notificações ficou **estreita**. Ninguém além da dona transforma uma notificação **lida** em não lida, e PO/ADM ainda atualizam uma não lida. Travessia (`apoio_{pessoa}_{dia}`), Gantt (`gantt_pedido_…_{dia}`) e Plantão (`nf_bug_{bug}_{status}`) usam id fixo e foram conferidos (dev e prod).
+- [ ] **Ajuste de A1 (24/11, revisão):** a trava das notificações ficou **estreita**. Ninguém além da dona transforma uma notificação **lida** em não lida, e PO/ADM ainda atualizam uma não lida. Travessia (`apoio_{pessoa}_{dia}`), Gantt (`gantt_pedido_…_{dia}`) e Plantão (`nf_bug_{bug}_{status}`) usam id fixo e foram conferidos (dev e prod). **Revisão do Codex (#1955):** (P1) a notificação de id fixo do Maré (`noTTLDelete: true`) é **só criar**: nem PO/ADM a regravam, mesmo não lida, que é o "só cria se não existe" da transação antiga, agora na regra. (P2) o Plantão (desligado desde 03/11) reusa `nf_bug_{bug}_{status}`: **se for religado**, cada aviso novo precisa de id próprio (`…_{número}`, que o filtro do Oceano já aceita), senão o segundo "sendo tratado" depois do primeiro lido é recusado. (P2) **As regras sobem antes do merge**, a partir da branch, porque o merge publica o Maré dev na hora.
 
 **Fase C — fechar** (só depois de A e B no ar **e validados no prod**, porque as páginas de prod também leem o nó)
 8. Regra do nó-pai só para ADM, com testes no simulador:

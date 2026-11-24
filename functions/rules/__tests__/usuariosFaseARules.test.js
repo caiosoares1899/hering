@@ -63,6 +63,10 @@ test('notificação de outra pessoa: cria e apaga; ninguém além da dona reabre
   assert.equal(grava(N('ana', 'n2'), A.po, notif({ id: 'n2', type: 'painel_broadcast' })), true, 'PO cria comunicado (painel_broadcast)');
   assert.equal(grava(N('ana', 'n2'), A.bru, notif({ id: 'n2', type: 'painel_broadcast' })), false, 'membro comum não cria comunicado');
   assert.equal(grava(N('ana', 'n2'), A.bru, notif({ id: 'n2' })), true, 'membro comum cria nova');
+  DB.kanban.usuarios.ana.notificacoes.fixo = notif({ id: 'fixo', read: false, noTTLDelete: true });
+  assert.equal(grava(N('ana', 'fixo'), A.po, notif({ id: 'fixo', read: false, noTTLDelete: true, ts: '2026-11-24T11:00:00.000Z' })), false, 'id fixo do Maré (noTTLDelete): só cria, nem PO/ADM regrava, mesmo não lida (achado do Codex P1)');
+  assert.equal(up(A.adm, { [N('ana', 'fixo') + '/ts']: '2026-11-24T11:00:00.000Z' }), false, 'nem só um campo');
+  assert.equal(grava(N('ana', 'fixo'), A.ana, notif({ id: 'fixo', read: true, noTTLDelete: true })), true, 'a dona marca a dela');
   assert.equal(grava(N('ana', 'n1'), A.adm, null), true, 'ADM apaga');
   assert.equal(grava(N('ana', 'n1'), A.ana, notif({ read: false })), true, 'a dona mexe na própria');
   assert.equal(grava(N('ana', 'n1') + '/read', A.ana, true), true, 'a dona marca como lida');
