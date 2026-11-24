@@ -54,8 +54,8 @@ Entregue ao Codex em 23/11/2026 por `scripts/delegar.sh cardume-prototipo` (cóp
 | 1 | Regras dos canais oficiais | `kanban/cardume`, privado, membros por ADM ou PO/Org da squad | R3 · Claude | ✅ #1921 + #1922, deploy em 24/11 |
 | 1b | **Canais temáticos/temporários** | qualquer pessoa cria; aberto ou só convidados; data de fim → só leitura → limpeza | R3 · Claude | PR · 2 revisões · `firebase deploy --only database` |
 | 2 | Página `cardume-dev.html` | a tela do protótipo ligada ao banco: canais, mensagens, editar, apagar com 5 s de desfazer, não lidas, gestão de membros | R2 · Claude | PR · `version.json` `cardume_dev`, Biblioteca, `promover.js`, `mapa.js` |
-| 3 | Card ↔ conversa | prévia do card colado; **📝 Registrar no card**; **Ver conversa no Cardume** no Maré com link para a mensagem | R2 · Claude | PR |
-| 4 | Menções, respostas e push | aba **Menções e respostas**, link direto para a mensagem, push de @menção e resposta, **silenciar canal** (respeita o Não Perturbe) | R3 · Claude | PR · `MareNotif.TIPOS` + `PUSH_TYPES` · deploy de `sendPushOnNotification` |
+| 3 | Card ↔ conversa | prévia do card colado; **📝 Registrar no card**; **Ver conversa no Cardume** no Maré com link para a mensagem | R2 · Claude | ✅ #1935 + #1936 + #1937, validada em 24/11 |
+| 4 | Menções, respostas e push | aba **Menções e respostas**, link direto para a mensagem, push de @menção e resposta, **silenciar canal** (respeita o Não Perturbe) | R3 · Claude | ✅ #1932 + #1933, deploy e teste com duas contas em 24/11 (respostas e silenciar ficam no backlog) |
 | 5 | Entradas | cartão no menu de apps do Oceano e atalho no Maré | R1 · Codex | PR |
 | 6 | Limpeza e backup | `cardumeLimpeza` (90 dias; canal temático vencido sai inteiro) e backup semanal | R3 · Claude | PR · deploy da função |
 | 7 | Piloto `dados` (1–2 semanas, no dev) | medir o critério de sucesso, mensagens/dia, quem usa, banda | — · Caio e time | — |
