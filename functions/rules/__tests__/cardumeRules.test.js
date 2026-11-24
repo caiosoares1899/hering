@@ -58,7 +58,7 @@ test('membros: membro e ADM veem a lista do canal; ninguém se adiciona sozinho'
   assert.equal(grava('kanban/cardume/canais/prf', A.adm, { nome: 'prf', html: '<b>' }), false, 'campo extra no canal');
 });
 
-test('manutenção como no Maré: ADM, e PO/Organizador DA squad põem e tiram pessoas', () => {
+test('manutenção: ADM, ou PO/Organizador DA squad (papel por squad, sem cair no papel global), põem e tiram pessoas', () => {
   const P = 'kanban/cardume/membros/dados/';
   const com = (uid, extra) => { reset(); DB.kanban.usuarios[uid] = Object.assign({ role: 'membro', squads: { dados: true } }, extra); };
   const quem = mk('ze', 'ze@ciahering.com.br');
@@ -70,7 +70,7 @@ test('manutenção como no Maré: ADM, e PO/Organizador DA squad põem e tiram p
   com('ze', { squads_roles: { dados: 'organizador' } });
   assert.equal(grava(P + 'gil', quem, true), true, 'Organizador da squad põe');
   com('ze', { role: 'po' });
-  assert.equal(grava(P + 'gil', quem, true), true, 'PO global que está na squad (sem papel por squad) põe, como no Maré');
+  assert.equal(grava(P + 'gil', quem, true), false, 'PO global na squad SEM papel por squad não põe (decisão do Caio, 24/11: exige PO/Org DA squad)');
   com('ze', { role: 'po', squads_roles: { dados: 'membro' } });
   assert.equal(grava(P + 'gil', quem, true), false, 'papel POR SQUAD manda: membro da squad não põe, mesmo sendo PO global');
   com('ze', { squads_roles: { dados: 'membro' } });
