@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐟 Cardume — atalhos no Oceano e no menu de apps — SÓ DEV — 2026-11-24
+
+O Cardume (Conversa do time) abre em aba nova pela linha de atalhos do Oceano e pela aba Produtos do menu ⋮⋮⋮. As duas entradas aparecem apenas nas páginas -dev.
+
 ### Cardume — página do chat do time ligada ao banco — SÓ DEV (cardume v0.1-dev) — 2026-11-24
 
 Primeira página do 🐟 Cardume (cardume-dev.html), para o piloto da squad dados. Canais das squads (privados; o ADM ativa e quem administra põe as pessoas) e canais temáticos (qualquer pessoa cria; aberto ou só convidados; data de fim deixa só leitura). Mandar, editar, apagar com 5 s para desfazer, não lidas, @menção, formatação básica (negrito, itálico, riscado, código, lista, citação, links https) e emojis. Toda escrita segue o contrato das regras (docs/ideias/cardume-v0-banco.md) e o teste confere cada uma contra as regras reais. Fora desta versão: #card e conversa do card (etapa 3), push de menção (etapa 4), entrada no Oceano (etapa 5).

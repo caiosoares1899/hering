@@ -778,7 +778,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif-dev.js?v=45"></script>
+<script src="mare-notif-dev.js?v=46"></script>
 <script src="mare-plantao-dev.js?v=5"></script>
 <script src="mare-dicas-dev.js?v=19"></script>
 <script src="mare-metas-dev.js?v=19"></script>
@@ -787,7 +787,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.90 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.91 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1297,6 +1297,7 @@ a=>{
   if(visivel(APP('kanban'))) (perfilFb.squads||[]).forEach(sq=>at.push({app:'kanban', url:P('kanban')+'?squad='+encodeURIComponent(sq), txt:'Maré · '+sq}));
   // 🗓️ Escala (pedido do time, 23/11/2026): página própria, abre em aba nova (como o "Abrir Escala" da Ajuda)
   if(visivel(APP('kanban'))) at.push({ext:true, ic:'🗓️', url:P('escala'), txt:'Escala · quem trabalha quando'});
+  if(IS_DEV) at.push({ext:true, ic:'🐟', url:'cardume-dev.html', txt:'Cardume'});
   at.push({app:'okr', url:P('okr')+'?okr=notas', txt:'Radar · Anotações da reunião'}, {app:'okr', url:P('okr')+'?okr=chat', txt:'Radar · Perguntar ao Agente Ágil'});
   $('#atalhos').innerHTML = at.map(x=>x.ext ? '<a class="atalho-ext" href="'+esc(x.url)+'" target="_blank" rel="noopener" aria-label="'+esc(x.txt)+' (abre em aba nova)"><span aria-hidden="true">'+x.ic+'</span>'+esc(x.txt)+' <span aria-hidden="true" style="opacity:.6">↗</span></a>' : '<button type="button" data-app="'+x.app+'" data-url="'+esc(x.url)+'">'+logoQuad(APP(x.app),'-s').replace('class="tile-logo"','class="tile-logo" style="width:16px;height:16px;border-radius:4px;box-shadow:none"')+esc(x.txt)+'</button>').join('');
   $('#atalhos-wrap').style.display = at.length ? 'block' : 'none';
