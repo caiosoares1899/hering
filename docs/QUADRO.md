@@ -8,7 +8,6 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/concha-gif` | `cardume-dev.html` (GIF), `database.rules.json` (`gif`, `gif_uso`), `functions/oceano/conchaGif*.js` | 24/11/2026 |
 
 
 ## Fila
@@ -42,7 +41,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐚 GIF na Concha (KLIPY): regras do campo `gif` e do `gif_uso` **primeiro**; depois o secret e a função. Antes: criar o app no partner.klipy.com e **desligar os anúncios** da chave | `firebase deploy --only database` → `firebase functions:secrets:set KLIPY_API_KEY` → `firebase deploy --only functions:conchaGifBusca` | 24/11/2026 |
 | Claude | 🐚 Concha: o push de menção diz "🐚 Concha" (título montado no servidor, `functions/common/cardumePush.js`) — só depois do merge do PR do nome | `firebase deploy --only functions:sendPushOnNotification` | 24/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
