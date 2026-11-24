@@ -20,6 +20,12 @@
 | 📅 **Ilha · notificações do calendário à parte** (ideia do Caio, 13/11/2026): dentro da Ilha, os avisos de calendário (reunião, evento, prazo do Radar, 🔔 Gantt, 📣 Pedir atualização) ganham o próprio grupo, separados das outras notificações, como já é feito com os alertas de sistemas e o Guardião | Claude | a desenhar: quais tipos entram (`reuniao`, `okr_reuniao`, `okr_evento`, `gantt_cal`, `gantt_pedido`…), ordem do grupo e se o sino também separa |
 | 🎨 **Tipos de notificação mais distintos** (ideia do Caio, 13/11/2026): diferenciar visualmente cada tipo além do emoji no começo da mensagem — ex.: faixa/cor lateral por família (pessoal, calendário, Radar, sistema), ícone em selo, rótulo curto do tipo | Claude | a desenhar com o `docs/GUIA_UI_UX.md` (Marine Glass, 3 temas; cor nunca como único sinal); vale para a Ilha e o sino (`mare-notif-dev.js`) |
 
+<a id="cardume-texto"></a>
+
+| Ideia | Dono | Onde está o desenho |
+|---|---|---|
+| 🐟 **Cardume · escrever melhor** (ideia do Caio, 24/11/2026): **enriquecimento de texto** (negrito, itálico, riscado, `código`, bloco de código, lista, citação, link — por atalho `Ctrl+B/I`, barrinha discreta e Markdown digitado); **botão de emoji** (seletor leve, recentes, busca por nome; `:nome:` digitado); **colar formatação** (colar do Word/Docs/e-mail mantém negrito, listas e links, convertidos para o mesmo Markdown — nunca o HTML colado); **mencionar cards** (`#` abre o autocompletar dos cards das squads da pessoa e vira a prévia do card). Encaixe sugerido: formatação básica, emoji e `#card` já na **etapa 2/3** do v0 (o `#card` é o começo do critério de sucesso do piloto); colar formatação logo depois | Claude | `docs/ideias/cardume.md` (plano). **Fronteira:** o texto é guardado como Markdown e renderizado **nó a nó no DOM** (`createElement`/`textContent`), nunca `innerHTML`; colar = HTML lido só para extrair a estrutura e descartado; link só `https:` (e os do Oceano); `#card` validado pelo mesmo `^[A-Za-z0-9_-]{1,64}$` das regras e aberto só se a pessoa enxerga o card |
+
 <a id="consultoria"></a>
 
 | Ideia | Dono | Onde está o desenho |
