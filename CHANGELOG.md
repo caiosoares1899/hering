@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔔 Sino unificado — fase 3 no Radar (SÓ DEV) — 2026-11-24
+
+O Radar usa o Sino compartilhado com layouts por família, deduplicação de feed e pessoais e rotas internas preservadas. No modo visualização, só o feed é carregado e a nota aparece no rodapé. Módulo ?v=51 nas cinco páginas dev.
+
 ### 🔔 Sino unificado — fase 2 no Oceano (SÓ DEV) — 2026-11-24
 
 Oceano dev usa o mesmo painel da Concha, com famílias e rótulos por tipo, selo de não lidas, remoção individual e rodapé compartilhado. Preserva o roteamento de produtos, o filtro do Assistente Férias e o gatilho da dica ao abrir. Cache do mare-notif dev atualizado para ?v=50.

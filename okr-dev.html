@@ -1532,14 +1532,6 @@ body{min-height:100vh;}
 .okr-mural-act:hover{color:var(--accent);}
 .okr-bell{position:relative;}
 .okr-bell-n{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;border-radius:999px;background:#ff6b6b;color:#fff;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box;}
-.okr-bell-drop{display:none;position:fixed;z-index:400;flex-direction:column;max-height:min(70vh,520px);background:rgba(var(--deep-rgb),.97);border:1px solid var(--glass-b);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);}
-.okr-bell-hd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--glass-b);font-size:12px;font-weight:700;color:var(--txt);}
-.okr-bell-list{overflow-y:auto;padding:8px;}
-.okr-bell-it{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:9px;margin-bottom:5px;background:rgba(var(--slate-rgb),.4);border:1px solid var(--glass-b);cursor:pointer;}
-.okr-bell-it:hover{border-color:var(--accent);}
-.okr-bell-it .t{font-size:11px;color:var(--txt);line-height:1.4;}
-.okr-bell-it .s{font-size:10px;color:var(--txt3);margin-top:2px;}
-.okr-bell-it .w{font-size:9px;color:var(--txt3);margin-top:3px;}
 .okr-bell-dot{width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;margin-top:5px;}
 .okr-mention{color:var(--accent);font-weight:700;background:rgba(56,182,255,.12);border-radius:4px;padding:0 3px;}
 .okr-mencao-sug{position:absolute;left:0;right:0;bottom:100%;margin-bottom:4px;z-index:50;background:rgba(var(--deep-rgb),.98);border:1px solid var(--glass-b);border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden;display:none;}
@@ -1707,7 +1699,7 @@ window.MARE_SO_HERING = true;
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <span id="mare-apps-slot" style="display:inline-flex;"></span>
       <button type="button" id="okr-mural-btn" class="btn okr-bell" onclick="openOkrMural()" title="Mural do Radar — avisos por torre" aria-label="Mural do Radar">📢<span class="okr-bell-n" id="okr-mural-n"></span></button>
-      <button type="button" id="okr-bell-btn" class="btn okr-bell" onclick="_okrBellToggle(event)" title="Notificações do Radar: avisos do Mural, Objetivos novos, Marcos concluídos, menções e prazos" aria-label="Notificações do Radar">🔔<span class="okr-bell-n" id="okr-bell-n"></span></button>
+      <button type="button" id="okr-bell-btn" class="btn okr-bell" title="Notificações do Radar: avisos do Mural, Objetivos novos, Marcos concluídos, menções e prazos" aria-label="Notificações do Radar">🔔</button>
       <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
         <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
@@ -1720,7 +1712,6 @@ window.MARE_SO_HERING = true;
   <div id="okr-online" class="okr-online"></div>
 
   <!-- 🔔 Notificações do OKR (dropdown do sino do cabeçalho) -->
-  <div id="okr-bell-drop" class="okr-bell-drop"></div>
 
   <!-- 🏛️ Tela inicial: um botão por torre + visão global (ver _okrRenderHome()) e, dentro de uma torre, a barra de navegação entre elas (_okrRenderNav()) -->
   <div id="okr-home" style="display:none;"></div>
@@ -2128,7 +2119,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.148 · okr-dev</div>
+<div class="version">v2.149 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2179,7 +2170,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=50"></script>
+<script src="mare-notif-dev.js?v=51"></script>
 <script src="mare-dicas-dev.js?v=19"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
 
@@ -3461,7 +3452,7 @@ const OKR_MURAL_TIPOS = {
 };
 function _okrMuralTipo(t){ return OKR_MURAL_TIPOS[t] || OKR_MURAL_TIPOS.aviso; }
 let okrMural = {}, _okrMuralLoaded = false;
-let _okrNotifPessoais = [];
+let _okrSino = null;
 let _okrMuralSaving = false, _okrMuralEditId = null, _okrMuralDraft = null, _okrMuralPopId = null;
 
 function _okrRel(ts){
@@ -3547,7 +3538,7 @@ function _okrMuralRender(){
        : '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:24px 0;">Nenhum aviso no momento.</div>');
 }
 // Tudo que depende de mural/feed/torre da pessoa: redesenha quando algum deles (ou a lista de usuários) muda.
-function _okrExtrasRender(){ _okrMuralRender(); _okrBellRender(); }
+function _okrExtrasRender(){ _okrMuralRender(); _okrSino?.render(); }
 
 // ── Publicar / editar ──
 function openOkrMuralModal(id){
@@ -3628,9 +3619,9 @@ async function okrMuralArquivar(id){
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
   if(MareNotif.menusFechar()){ e.preventDefault(); e.stopPropagation(); return; }   // menu do Não Perturbe aberto: fecha só ele
-  const pop = document.getElementById('okr-mural-pop-ov'), drop = document.getElementById('okr-bell-drop'), mod = document.getElementById('okr-mural-ov'), lst = document.getElementById('okr-mural-list-ov');
+  const pop = document.getElementById('okr-mural-pop-ov'), mod = document.getElementById('okr-mural-ov'), lst = document.getElementById('okr-mural-list-ov');
   if(pop && pop.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); _okrMuralPopFecha(); }
-  else if(drop && drop.style.display==='flex'){ e.preventDefault(); e.stopPropagation(); drop.style.display = 'none'; }
+  else if(_okrSino?.fechar()){ e.preventDefault(); e.stopImmediatePropagation(); }
   else if(mod && mod.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrMuralModal(); }
   else if(lst && lst.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrMural(); }
 }, true);
@@ -3738,94 +3729,30 @@ function loadOkrFeed(){
   const u = window._currentUser; if(!u) return;
   _okrDicasIniciar(u);
   MareNotif.appsMontar({user:u, aqui:'okr', isViewer:!!window._isPainelViewer, isAdm:()=>isAdmUser(window._currentUser), slot:'#mare-apps-slot', btnClass:'btn'});   // 🔲 produtos do Oceano (abre em aba nova)
-  MareNotif.start({
-    user:u, isViewer:!!window._isPainelViewer, isAdm:()=>isAdmUser(window._currentUser), onChange:_okrBellRender,
-    // Feed: o aviso abre aqui mesmo; Objetivo também (senão o módulo navega pela URL)
-    abrirFeed:it=>{ if(it.eventoId){ _okrAbrirEvento(it.eventoId, it.evData); return true; } if(it.muralId){ _okrMuralAbrir(it.muralId); return true; } if(it.objId){ _okrIrParaObjetivo(it.objId); return true; } return false; },
-  });
-  if(window._isPainelViewer) return;   // externo não lê kanban/usuarios: sem notificações pessoais
-  window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
-    // TODOS os tipos (card, Kudos, reunião, intake…), não só os okr_* — o sino é o mesmo em qualquer página; só 'rascunho' é exclusivo do painel
-    _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))   // mesmo TTL do sino do kanban
-      .map(([id,n])=>({id, noTTLDelete:!!n.noTTLDelete, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||'', cal:n.cal||'', onde:n.onde||''}));   // cal/onde: aviso 🔔 do Gantt (gantt_cal)
-    _okrBellRender();
+  const isViewer = !!window._isPainelViewer;
+  _okrSino = MareNotif.sino(document.getElementById('okr-bell-btn'), {
+    user:u, isViewer, isAdm:()=>isAdmUser(window._currentUser), toast:showToast,
+    abrir:_okrAbrirDoSino, aoMudar:_okrMuralBadge,
+    notaRodape:isViewer ? '👁 Modo visualização: avisos e novidades das torres. Menções e prazos são só pra quem tem usuário.' : '',
   });
 }
 
-// ── 🔔 Sino ──
-function _okrBellItens(){
-  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor, tipo:i.tipo}));
-  _okrNotifPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read, tipo:n.type}));
-  return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
-}
-function _okrBellRender(){
-  const itens = _okrBellItens(), n = itens.filter(i=>i.unread).length;
-  const b = document.getElementById('okr-bell-n');
-  if(b){ if(n>0){ b.textContent = n>99?'99+':String(n); b.style.display='flex'; } else b.style.display='none'; }
-  _okrMuralBadge();
-  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id), itens.filter(i=>i.unread).map(i=>i.tipo));   // som quando chega uma notificação nova (respeita 🔇 e o Não Perturbe)
-  const drop = document.getElementById('okr-bell-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
-  drop.innerHTML = `<div class="okr-bell-hd"><span>🔔 Notificações</span><span style="flex:1;"></span>${n?'<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 10px;" onclick="_okrBellTudoLido()">✓ Marcar tudo como lido</button>':''}</div>
-    <div class="okr-bell-list">${itens.length ? itens.slice(0,50).map(i=>`<div class="okr-bell-it" onclick="_okrBellClick(${jsq(i.k)},${jsq(i.id)})"><span style="font-size:14px;flex-shrink:0;">${esc(i.icon)}</span><div style="flex:1;min-width:0;"><div class="t">${esc(i.title)}</div>${i.sub?`<div class="s">${esc(i.sub)}</div>`:''}<div class="w">${esc(_okrRel(i.ts))}${i.autor?' · '+esc(i.autor):''}</div></div>${i.unread?'<span class="okr-bell-dot"></span>':''}</div>`).join('')
-      : '<div style="font-size:11px;color:var(--txt3);padding:24px 12px;text-align:center;">Nada por aqui ainda.</div>'}
-      ${window._isPainelViewer?'<div style="font-size:10px;color:var(--txt3);text-align:center;padding:4px 8px 8px;">👁 Modo visualização: avisos e novidades das torres. Menções e prazos são só pra quem tem usuário.</div>':''}</div>
-    ${MareNotif.rodapeHtml(window._isPainelViewer ? '' : '<button type="button" class="mn-link" onclick="_okrBellLimpar()">Limpar antigas</button>')}`;
-  MareNotif.rodapeRender();
-}
-// "Limpar antigas": remove as notificações PESSOAIS já lidas, numa escrita só (o feed da torre é compartilhado e não se apaga — o que foi lido já fica sem destaque).
-function _okrBellLimpar(){
-  const u = window._currentUser; if(!u || window._isPainelViewer) return;
-  // noTTLDelete (id determinístico): apagar a chave deixaria o createNotif recriá-la como NÃO lida — marca read+dismissed e mantém o nó (viva() esconde). As demais saem como sempre.
-  const up = {}; _okrNotifPessoais.filter(n=>n.read).forEach(n=>{ if(n.noTTLDelete){ up[n.id+'/read'] = true; up[n.id+'/dismissed'] = true; } else up[n.id] = null; });
-  const qP = _okrNotifPessoais.filter(n=>n.read).length;
-  const nFeed = (window.MareNotif && MareNotif.clearRead) ? MareNotif.clearRead() : 0;   // eventos do Feed da Torre (já lidos) também saem
-  const q = qP + nFeed;
-  if(!q){ showToast('Nenhuma notificação lida para remover.'); return; }
-  const ok = ()=>showToast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.');
-  if(!qP){ ok(); return; }
-  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), up).then(ok)
-    .catch(()=>showToast('⚠ Não consegui remover as notificações. Tente de novo.'));
-}
-function _okrBellToggle(e){
-  if(e) e.stopPropagation();
-  const drop = document.getElementById('okr-bell-drop'), btn = document.getElementById('okr-bell-btn'); if(!drop||!btn) return;
-  if(drop.style.display==='flex'){ drop.style.display='none'; return; }
-  const r = btn.getBoundingClientRect(), w = Math.min(380, window.innerWidth-16);
-  drop.style.top = (r.bottom+6)+'px'; drop.style.left = Math.max(8, r.right-w)+'px'; drop.style.width = w+'px'; drop.style.display = 'flex';
-  _okrBellRender();
-}
-document.addEventListener('click', e=>{
-  const drop = document.getElementById('okr-bell-drop'); if(!drop || drop.style.display!=='flex') return;
-  if((e.composedPath ? e.composedPath() : []).some(el=>el===drop || el===document.getElementById('okr-bell-btn'))) return;   // composedPath: o item clicado pode já ter sido trocado pelo redesenho da lista
-  drop.style.display = 'none';
-});
-function _okrBellTudoLido(){
-  const u = window._currentUser; if(!u) return;
-  MareNotif.markAll();
-  if(!window._isPainelViewer){
-    const up = {}; _okrNotifPessoais.filter(n=>!n.read).forEach(n=>{ up[n.id+'/read'] = true; });
-    if(Object.keys(up).length) window._update(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), up).catch(()=>{});
-    _okrNotifPessoais = _okrNotifPessoais.map(n=>({...n, read:true}));
+function _okrAbrirDoSino(item){
+  const n = item.raw;
+  if(item.k==='feed'){
+    if(n.eventoId) _okrAbrirEvento(n.eventoId, n.evData);
+    else if(n.muralId) _okrMuralAbrir(n.muralId);
+    else if(n.objId) _okrIrParaObjetivo(n.objId);
+    else return false;
+  } else {
+    if(n.okrEventoId) _okrAbrirEvento(n.okrEventoId, n.okrEventoData);
+    else if(n.type==='gantt_cal') _okrAbrirGantt(String(n.cal||''));
+    else if(n.type==='okr_agente') _okrIrParaChat();
+    else if(n.type==='okr_mencao') _okrIrParaNotas(n.okrNotaData);
+    else if(String(n.type||'').startsWith('okr_') && n.okrObjId) _okrIrParaObjetivo(n.okrObjId);
+    else return false;
   }
-  _okrBellRender();
-}
-function _okrBellClick(k, id){
-  const drop = document.getElementById('okr-bell-drop'); if(drop) drop.style.display = 'none';
-  if(k==='p'){
-    const n = _okrNotifPessoais.find(x=>x.id===id); if(!n) return;
-    let w = Promise.resolve();
-    if(!n.read){ n.read = true; w = window._set(window._ref(window._db,'kanban/usuarios/'+window._currentUser.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
-    _okrBellRender();
-    if(n.okrEventoId) return _okrAbrirEvento(n.okrEventoId, n.okrEventoData);
-    if(n.type==='gantt_cal') return _okrAbrirGantt(String(n.cal||''));   // 🔔 calendário do Gantt atualizado: abre aqui mesmo, no Calendário → 📊 Gantt
-    if(n.type==='okr_agente') return _okrIrParaChat();
-    if(n.type==='okr_mencao') return _okrIrParaNotas(n.okrNotaData);
-    if(n.type.startsWith('okr_') && n.okrObjId) return _okrIrParaObjetivo(n.okrObjId);
-    const alvo = MareNotif.urlPessoal(n);   // card, Kudos, reunião, intake… vivem em outras páginas: o roteador compartilhado sabe pra onde ir
-    if(alvo){ if(alvo.externo) window.open(alvo.url,'_blank','noopener'); else MareNotif.abrirPagina(alvo.url); }   // outra página do Maré Digital abre em aba nova (o "lido" termina de gravar aqui mesmo)
-    return;
-  }
-  MareNotif.abrirFeed(id); _okrBellRender();
+  return true;
 }
 // ✅ Marco concluído — vale pra torre do Objetivo dele (pelo modal do Marco e pelo menu de contexto).
 function _okrFeedMarcoConcluido(m){
