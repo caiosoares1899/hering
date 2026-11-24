@@ -26,6 +26,12 @@
 |---|---|---|
 | 🐟 **Cardume · escrever melhor** (ideia do Caio, 24/11/2026): **enriquecimento de texto** (negrito, itálico, riscado, `código`, bloco de código, lista, citação, link — por atalho `Ctrl+B/I`, barrinha discreta e Markdown digitado); **botão de emoji** (seletor leve, recentes, busca por nome; `:nome:` digitado); **colar formatação** (colar do Word/Docs/e-mail mantém negrito, listas e links, convertidos para o mesmo Markdown — nunca o HTML colado); **mencionar cards** (`#` abre o autocompletar dos cards das squads da pessoa e vira a prévia do card). Encaixe sugerido: formatação básica, emoji e `#card` já na **etapa 2/3** do v0 (o `#card` é o começo do critério de sucesso do piloto); colar formatação logo depois | Claude | `docs/ideias/cardume.md` (plano). **Fronteira:** o texto é guardado como Markdown e renderizado **nó a nó no DOM** (`createElement`/`textContent`), nunca `innerHTML`; colar = HTML lido só para extrair a estrutura e descartado; link só `https:` (e os do Oceano); `#card` validado pelo mesmo `^[A-Za-z0-9_-]{1,64}$` das regras e aberto só se a pessoa enxerga o card |
 
+<a id="cardume-interacoes"></a>
+
+| Ideia | Dono | Onde está o desenho |
+|---|---|---|
+| 🐟 **Cardume · reagir e responder** (ideia do Caio, 24/11/2026): **reagir a uma mensagem com emoji** (👍 ❤️ 😂 🎉… — contador por emoji, clicar no seu tira a reação, passar o mouse mostra quem reagiu; usa o mesmo seletor de emojis do compositor) e **responder a uma mensagem** (botão "↩️ Responder" na mensagem: a resposta mostra o trecho citado de quem respondeu, e clicar na citação leva à mensagem original; base para uma futura conversa em fio). | Claude | `docs/ideias/cardume.md` (plano). **Banco (R3, regras + testes + 2 revisões):** reação = nó novo `reacoes/{canal}/{msgId}/{emoji}/{uid}: true` (só membro, só a própria reação, emoji de uma lista fechada; a limpeza apaga junto com a mensagem); responder = campo `resp` na mensagem com o id da original (validado pelo `ID_RE`), sem copiar o texto dela para o banco (a citação é montada na tela e some se a original for apagada). **Fronteira:** quem reagiu aparece só para membros do canal |
+
 <a id="consultoria"></a>
 
 | Ideia | Dono | Onde está o desenho |
