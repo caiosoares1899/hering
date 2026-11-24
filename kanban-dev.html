@@ -7782,7 +7782,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1027-dev</div>
+<div class="version">v8.30.1028-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13805,7 +13805,7 @@ function autoRegistrar(user){
       // cards já tinham sido disparados antes (→ permission_denied, board vazio até o 1º F5). Recarrega UMA vez.
       // Também recarrega/redireciona se o squad escolhido não é o da URL. Domínio confiável lê por domínio, não precisa.
       if(_regOk && (_sqAlvo!==ACTIVE_SQUAD || !_isTrustedDomainEmail(user.email))){
-        try{ await fbSet('kanban/usuarios_publicos/'+user.uid,{
+        try{ await fbUpdate('kanban/usuarios_publicos/'+user.uid,{
           nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
           role:_roleGravar, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles }); }catch(e){}
         try{ safeLS.setItem('cad_welcome', newRole); safeLS.setItem('cad_insc','1'); }catch(e){}
@@ -13816,7 +13816,7 @@ function autoRegistrar(user){
       // Espelha só os campos leves em usuarios_publicos/{uid} — node magro que
       // qualquer board pode escutar em tempo real (onValue) sem baixar
       // notificações/tokens de push de todo mundo (ver kanban/usuarios).
-      fbSet('kanban/usuarios_publicos/'+user.uid,{
+      fbUpdate('kanban/usuarios_publicos/'+user.uid,{
         nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
         role:_roleGravar, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles,
       });
@@ -13867,8 +13867,8 @@ function autoRegistrar(user){
       // condição específica muda abaixo (foto, virar ADM, migração de squad).
       // Sem isso, gente que já tinha conta e nunca disparou nenhuma dessas
       // condições ficaria pra sempre sem entrada no node leve — sumindo da
-      // lista de membros/menções em qualquer board.
-      fbSet('kanban/usuarios_publicos/'+user.uid, {
+      // lista de membros/menções em qualquer board. Update preserva torre e Gestor OKR no espelho.
+      fbUpdate('kanban/usuarios_publicos/'+user.uid, {
         nome: existe.nome||user.displayName||'', email: existe.email||user.email||'',
         init: existe.init||'', foto: existe.foto||user.photoURL||'',
         role: existe.role||'membro', inscrito: existe.inscrito||false,
@@ -14067,9 +14067,19 @@ async function confirmarInscricao(){
   // as regras negam a mudança de role global por quem não é po/adm — o update INTEIRO (iniciais incluídas) era recusado.
   if(!window._currentUserRole) sqUpd.role='membro';
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
-  // Torre só em usuarios/{uid} (o board não lê; usuarios_publicos fica como está).
-  fbUpdate('kanban/usuarios/'+user.uid, _torreSel ? {...sqUpd, torre:_torreSel} : sqUpd);
-  fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
+  if(_torreSel){
+    const cadastro = 'usuarios/'+user.uid+'/';
+    const espelho = 'usuarios_publicos/'+user.uid+'/';
+    const upd = {[cadastro+'torre']:_torreSel, [espelho+'torre']:_torreSel};
+    for(const [campo, valor] of Object.entries(sqUpd)){
+      upd[cadastro+campo] = valor;
+      upd[espelho+campo] = valor;
+    }
+    fbUpdate('kanban', upd);
+  } else {
+    fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
+    fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
+  }
   if(_inscPedirDir && _dirDe(_dirInscEscolha)) _dirGravar(user.uid, _dirInscEscolha).catch(e=>{ console.error('[diretoria] inscrição:', e); showToast('⚠ Não consegui salvar a diretoria agora — ela será perguntada de novo.'); });
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:_papelIns});

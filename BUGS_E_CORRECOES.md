@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-24 · Maré, Radar e Painel: Torre e Gestor OKR no diretório público (SÓ DEV)
+
+Os quatro fluxos gravam cadastro e espelho no mesmo update. Desligar Gestor OKR apaga o campo nos dois nós. O login do Maré preserva esses campos ao atualizar o diretório.
+
 ### 2026-11-24 · Concha: @ ao editar uma mensagem não abria a lista de pessoas (SÓ DEV, cardume v0.14)
 
 Relato do Caio. O autocompletar de @menção estava preso ao compositor (entrada). Agora vale para o campo em uso: o editor ganha a própria lista (sug-ed), com setas/Enter/Tab e Esc fechando só a lista (o 2º Esc cancela a edição). Teste: test_concha_mencao_edicao.js (11, sabotagem confirmada). Observação: editar e incluir uma @menção não avisa a pessoa (o aviso nasce só no envio; as regras aceitam o registro de menção só para mensagem com menos de 60 s) — fica no backlog se o Caio quiser.

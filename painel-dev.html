@@ -3240,7 +3240,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.131 · painel-dev</div>
+<div class="version">v5.132 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -11168,9 +11168,14 @@ function _guWrapWrites(){
   if(_guWrapped) return; _guWrapped = true;
   ['_set','_update'].forEach(n=>{
     const orig = window[n]; if(typeof orig!=='function') return;
-    window[n] = function(ref){
+    window[n] = function(ref, valores){
       const r = orig.apply(this, arguments);
-      try{ if(_GU_FIELD_RE.test(String(ref))) Promise.resolve(r).then(_guRefreshSoon).catch(()=>{}); }catch(e){}
+      try{
+        const caminho = String(ref);
+        const multipath = n==='_update' && caminho.endsWith('/kanban') &&
+          Object.keys(valores).some(campo=>_GU_FIELD_RE.test(caminho+'/'+campo));
+        if(_GU_FIELD_RE.test(caminho) || multipath) Promise.resolve(r).then(_guRefreshSoon).catch(()=>{});
+      }catch(e){}
       return r;
     };
   });
@@ -11515,7 +11520,10 @@ function setGlobalUserTorre(uid, torre){
   if(MARE_SO_HERING){ showToast('ℹ️ O Radar está em modo "só Hering" (uma torre só) — a torre da pessoa não muda nada agora.'); return; }
   if(!GU_TORRES.some(t=>t.id===torre)) return;
   if(!_isAdmPainel()){ showToast('⚠ Só ADM muda a torre de uma pessoa.'); renderGlobalUsers(); return; }
-  window._update(window._ref(window._db,'kanban/usuarios/'+uid), {torre})
+  window._update(window._ref(window._db,'kanban'), {
+    ['usuarios/'+uid+'/torre']:torre,
+    ['usuarios_publicos/'+uid+'/torre']:torre,
+  })
     .then(()=>{ showToast('🏛️ Torre '+GU_TORRES.find(t=>t.id===torre).label+' registrada.'); })
     .catch(err=>{ showToast('Erro: '+err.message); renderGlobalUsers(); });
 }
@@ -11617,7 +11625,11 @@ async function setGlobalUserDiretoria(uid, dir, sel){
 }
 function toggleGestorOkr(uid, checked){
   if(!_isAdmPainel()){ showToast('⚠ Só ADM altera Gestor OKR.'); renderGlobalUsers(); return; }
-  window._update(window._ref(window._db,'kanban/usuarios/'+uid), {gestorOkr: checked?true:null})
+  const valor = checked ? true : null;
+  window._update(window._ref(window._db,'kanban'), {
+    ['usuarios/'+uid+'/gestorOkr']:valor,
+    ['usuarios_publicos/'+uid+'/gestorOkr']:valor,
+  })
     .then(()=>{ showToast(checked?'🎯 Agora é Gestor OKR.':'Deixou de ser Gestor OKR.'); })
     .catch(err=>{ showToast('Erro: '+err.message); renderGlobalUsers(); });
 }
