@@ -8,7 +8,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const { check, validate } = require('../rulesSim');
+const { check, validate, update } = require('../rulesSim');
 
 const RULES = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', 'database.rules.json'), 'utf8'));
 const mk = (uid, email, prov) => ({ uid, token: { email, firebase: { sign_in_provider: prov || 'google.com' } } });
@@ -197,4 +197,122 @@ test('gravar direto num campo filho não fura as regras da mensagem nem do marca
   assert.equal(grava(U + '/id', A.ana, 'm2'), false, 'trocar o id sem a hora bater');
   assert.equal(grava(U + '/uid', A.bru, 'bru'), false, 'outro membro assumir o marcador');
   assert.equal(grava(U + '/ts', A.ana, null), false, 'apagar um pedaço do marcador');
+});
+
+// ───────────── Canais temáticos e temporários (etapa 1b, 24/11/2026) ─────────────
+// Criar/entrar/sair são update() multi-caminho (canal + membros + espelhos `meus`/`abertos`): o simulador aplica tudo num estado-depois.
+const up = (ator, mapa) => update(RULES, DB, ator, mapa);
+const C = id => `kanban/cardume/canais/${id}`, MB = (id, u) => `kanban/cardume/membros/${id}/${u}`;
+const MEU = (u, id) => `kanban/cardume/meus/${u}/${id}`, AB = id => `kanban/cardume/abertos/${id}`;
+const tema = o => Object.assign({ nome: 'Black Friday', tipo: 'tema', dono: 'gil', acesso: 'aberto', criado: Date.now() }, o || {});
+const criar = (ator, id, canal) => {
+  const m = { [C(id)]: canal, [MB(id, ator.uid)]: true, [MEU(ator.uid, id)]: true };
+  if (canal.acesso === 'aberto') m[AB(id)] = { nome: canal.nome };
+  return up(ator, m);
+};
+const existe = (id, canal, membros) => {
+  DB.kanban.cardume.canais[id] = canal;
+  DB.kanban.cardume.membros[id] = membros || { [canal.dono]: true };
+  if (canal.acesso === 'aberto') DB.kanban.cardume.abertos = Object.assign(DB.kanban.cardume.abertos || {}, { [id]: { nome: canal.nome } });
+};
+
+test('temático: qualquer pessoa da Hering cria, num update só, sendo a dona', () => {
+  reset();
+  assert.equal(criar(A.gil, 't-black-friday', tema()), true, 'aberto, com espelhos');
+  assert.equal(criar(A.gil, 't-comercial', tema({ nome: 'Comercial', acesso: 'convite' })), true, 'só convidados');
+  assert.equal(criar(A.gil, 't-bf26', tema({ fim: Date.now() + 7 * 864e5 })), true, 'temporário, com fim');
+  assert.equal(criar(A.forasteiro, 't-black-friday', tema({ dono: 'out1' })), false, 'conta de fora não cria');
+  assert.equal(criar(A.gil, 't-black-friday', tema({ dono: 'ana' })), false, 'dona forjada');
+  assert.equal(criar(A.gil, 'black-friday', tema()), false, 'sem o prefixo t-');
+  assert.equal(criar(A.gil, 't-Black', tema()), false, 'id com maiúscula');
+  assert.equal(criar(A.gil, 't-bf26', tema({ tipo: 'oficial' })), false, 'tipo errado');
+  assert.equal(criar(A.gil, 't-bf26', tema({ acesso: 'secreto' })), false, 'acesso inválido');
+  assert.equal(criar(A.gil, 't-bf26', tema({ criado: Date.now() - 3600000 })), false, 'data de criação forjada');
+  assert.equal(criar(A.gil, 't-bf26', tema({ fim: Date.now() + 400 * 864e5 })), false, 'fim depois de 1 ano');
+  assert.equal(criar(A.gil, 't-bf26', tema({ html: 'x' })), false, 'campo extra');
+  DB.kanban.squads_meta = { 't-ops': { nome: 'Ops' } };
+  assert.equal(criar(A.gil, 't-ops', tema()), false, 'não pode ter o id de uma squad existente');
+  assert.equal(grava(C('dados'), A.gil, { nome: 'dados' }), false, 'canal oficial só o ADM cria');
+});
+
+test('temático: membros sem o canal no mesmo update, ou tomando a dona de um canal existente, falha inteiro', () => {
+  reset(); existe('t-bf', tema({ dono: 'ana' }), { ana: true });
+  assert.equal(up(A.gil, { [MB('t-xx', 'gil')]: true, [MEU('gil', 't-xx')]: true }), false, 'membros de canal que não existe');
+  assert.equal(up(A.gil, { [C('t-bf') + '/dono']: 'gil', [MB('t-bf', 'gil')]: true }), false, 'trocar a dona e se pôr dentro');
+  assert.equal(up(A.gil, { [C('t-bf')]: tema({ dono: 'gil', criado: DB.kanban.cardume.canais['t-bf'].criado }), [MB('t-bf', 'gil')]: true }), false, 'sobrescrever o canal inteiro');
+});
+
+test('temático: entrar sozinho só no aberto e não vencido; sair sempre', () => {
+  reset(); existe('t-bf', tema()); existe('t-com', tema({ nome: 'Comercial', acesso: 'convite' }));
+  existe('t-velho', tema({ nome: 'Velho', criado: Date.now() - 10 * 864e5, fim: Date.now() - 864e5 }));
+  assert.equal(up(A.ana, { [MB('t-bf', 'ana')]: true, [MEU('ana', 't-bf')]: true }), true, 'entra no aberto');
+  assert.equal(up(A.ana, { [MB('t-com', 'ana')]: true, [MEU('ana', 't-com')]: true }), false, 'não entra no só convidados');
+  assert.equal(up(A.ana, { [MB('t-velho', 'ana')]: true, [MEU('ana', 't-velho')]: true }), false, 'não entra em canal vencido');
+  assert.equal(up(A.ana, { [MB('t-bf', 'bru')]: true }), false, 'não põe outra pessoa no aberto');
+  assert.equal(up(A.gil, { [MB('t-bf', 'gil')]: null, [MEU('gil', 't-bf')]: null }), true, 'sai do canal');
+  assert.equal(up(A.ana, { [MB('dados', 'ana')]: null, [MEU('ana', 'dados')]: null }), true, 'sai até do oficial');
+  assert.equal(up(A.gil, { [MB('dados', 'gil')]: true }), false, 'não entra sozinho no oficial');
+});
+
+test('temático: dona, co-admin e ADM administram; PO de squad não vira gestor de temático', () => {
+  reset(); existe('t-com', tema({ nome: 'Comercial', acesso: 'convite' }));
+  assert.equal(up(A.gil, { [MB('t-com', 'ana')]: true, [MEU('ana', 't-com')]: true }), true, 'dona convida');
+  assert.equal(up(A.gil, { 'kanban/cardume/admins/t-com/bru': true }), true, 'dona indica co-admin');
+  assert.equal(up(A.ana, { 'kanban/cardume/admins/t-com/ana': true }), false, 'membro não se faz co-admin');
+  DB.kanban.cardume.admins = { 't-com': { bru: true } };
+  assert.equal(up(A.bru, { [MB('t-com', 'ana')]: true, [MEU('ana', 't-com')]: true }), true, 'co-admin convida');
+  assert.equal(up(A.bru, { 'kanban/cardume/admins/t-com/ana': true }), false, 'co-admin não indica outro co-admin');
+  assert.equal(up(A.adm, { [MB('t-com', 'ana')]: true }), true, 'ADM convida');
+  const ze = mk('ze', 'ze@ciahering.com.br');
+  DB.kanban.usuarios.ze = { role: 'po', squads: { 't-com': true }, squads_roles: { 't-com': 'po' } };
+  assert.equal(up(ze, { [MB('t-com', 'ze')]: true }), false, 'PO "da squad t-com" não manda no temático t-com');
+  assert.equal(up(A.ana, { [C('t-com') + '/nome']: 'Comercial 2' }), false, 'membro não renomeia');
+  assert.equal(up(A.gil, { [C('t-com') + '/nome']: 'Comercial 2' }), true, 'dona renomeia');
+  assert.equal(up(A.gil, { [C('t-com') + '/dono']: 'ana' }), false, 'dona não passa o canal adiante (dono imutável)');
+  assert.equal(up(A.gil, { [C('t-com')]: Object.assign({}, DB.kanban.cardume.canais['t-com'], { dono: 'ana' }) }), false, 'nem regravando o canal inteiro');
+  assert.equal(up(A.gil, { [C('t-com') + '/tipo']: 'oficial' }), false, 'tipo imutável');
+  assert.equal(up(A.gil, { [C('t-com') + '/criado']: DB.kanban.cardume.canais['t-com'].criado - 5000 }), false, 'criado imutável');
+  assert.equal(up(A.gil, { [C('t-com')]: null }), false, 'dona não apaga o nó (arquiva com fim)');
+  assert.equal(up(A.adm, { [C('t-com')]: null }), true, 'ADM apaga');
+});
+
+test('temático vencido: vira só leitura (mensagem, edição, apagar e não lidas param)', () => {
+  reset(); const criado = Date.now() - 10 * 864e5;
+  existe('t-velho', tema({ criado, fim: Date.now() - 864e5 }), { gil: true });
+  const ts = Date.now() - 2 * 864e5;
+  DB.kanban.cardume.msgs['t-velho'] = { m1: { uid: 'gil', ts, texto: 'antiga' } };
+  const MV = id => `kanban/cardume/msgs/t-velho/${id}`;
+  assert.equal(lê('kanban/cardume/msgs/t-velho', A.gil), true, 'membro ainda lê');
+  assert.equal(grava(MV('m2'), A.gil, { uid: 'gil', ts: Date.now(), texto: 'oi' }), false, 'não manda mensagem');
+  assert.equal(grava(MV('m1'), A.gil, { uid: 'gil', ts, texto: 'editada', editado: Date.now() }), false, 'não edita');
+  assert.equal(grava(MV('m1') + '/texto', A.gil, 'só o filho'), false, 'nem pelo filho');
+  assert.equal(grava(MV('m1'), A.gil, { uid: 'gil', ts, apagada: true }), false, 'não apaga');
+  assert.equal(grava(MV('m1'), A.adm, { uid: 'gil', ts, apagada: true }), true, 'ADM ainda modera');
+  assert.equal(up(A.gil, { 'kanban/cardume/ultima/t-velho': { ts, uid: 'gil', id: 'm1' } }), false, 'não acende não lidas');
+  assert.equal(up(A.gil, { [C('t-velho') + '/fim']: criado + 30 * 864e5 }), true, 'a dona pode reabrir adiando o fim');
+});
+
+test('temático: só convidados é invisível para quem não é membro; aberto aparece', () => {
+  reset(); existe('t-bf', tema()); existe('t-com', tema({ nome: 'Comercial', acesso: 'convite' }), { gil: true, ana: true });
+  assert.equal(lê(C('t-bf'), A.bru), true, 'aberto: qualquer pessoa da Hering vê');
+  assert.equal(lê(C('t-com'), A.bru), false, 'convite: quem não é membro não vê nem o nome');
+  assert.equal(lê(C('t-com'), A.ana), true, 'membro vê');
+  assert.equal(lê(C('t-com'), A.adm), true, 'ADM vê');
+  assert.equal(lê('kanban/cardume/canais', A.ana), false, 'ninguém lê a lista inteira de canais');
+  assert.equal(lê('kanban/cardume/abertos', A.bru), true, 'a lista de abertos é pública na Hering');
+  assert.equal(lê('kanban/cardume/abertos', A.forasteiro), false);
+  assert.equal(lê(C('dados'), A.gil), true, 'oficial: o nome é visível na Hering');
+  assert.equal(lê('kanban/cardume/msgs/t-com', A.bru), false, 'mensagens do convite: só membros');
+});
+
+test('espelhos não mentem: abertos só para tema aberto com o mesmo nome; meus só para quem é membro', () => {
+  reset(); existe('t-bf', tema()); existe('t-com', tema({ nome: 'Comercial', acesso: 'convite' }));
+  assert.equal(up(A.ana, { [AB('t-com')]: { nome: 'Comercial' } }), false, 'pôr convite na lista pública');
+  assert.equal(up(A.ana, { [AB('t-bf')]: { nome: 'Outro nome' } }), false, 'nome diferente do canal');
+  assert.equal(up(A.ana, { [AB('t-bf')]: null }), false, 'tirar da lista um aberto ativo');
+  assert.equal(up(A.gil, { [C('t-bf') + '/acesso']: 'convite', [AB('t-bf')]: null }), true, 'virar convite e sair da lista juntos');
+  assert.equal(up(A.ana, { [MEU('ana', 't-com')]: true }), false, '"meus" sem ser membro');
+  assert.equal(up(A.ana, { [MEU('ana', 'dados')]: true }), true, '"meus" de quem é membro');
+  assert.equal(up(A.bru, { [MEU('ana', 'dados')]: null }), false, 'apagar o "meus" de quem continua membro');
+  assert.equal(lê('kanban/cardume/meus/ana', A.bru), false, 'só a própria pessoa lê os seus canais');
 });
