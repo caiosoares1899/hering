@@ -227,3 +227,11 @@ A conta original usava colunas fixas e larguras estimadas. Na apresentação atu
 **Aceite.** Ocorrência com início atrasado, sessão sem cronômetro, troca de apresentador, cinco minutos de ausência, retorno que cancela o fechamento e sessão nova que não é afetada por verificação antiga. Para a previsão, testar dois dias com pautas diferentes, capa e Panorama presentes, dia sem um bloco opcional, detalhes de Objetivo pulados e amostra insuficiente.
 
 **Responsável.** Encaminhar o desenho da presença, do estado do relógio e da persistência de durações ao Claude. Essa fronteira envolve dados da sala e verificação no servidor. Fazer nota de desenho e revisão de regras antes da implementação. Validar no Chrome e no Safari em uma reunião real antes de ativar o encerramento automático.
+
+<a id="usuarios-leitura-ampla"></a>
+
+## `kanban/usuarios` legível por toda a Hering — 24/11/2026
+
+| Quem achou | O que | Como reproduzir | Data |
+|---|---|---|---|
+| Codex (revisão da #1931) · confirmado pelo Claude | `database.rules.json` dá `.read` em `kanban/usuarios` (nó-pai) a **qualquer conta Google @ciahering**; o `.read` de `$uid` (só o dono) não restringe nada porque a leitura desce em cascata. Com isso, **toda a Hering lê** `notificacoes`, `fcm_tokens`, `notif_prefs`, papéis e squads de todo mundo. Já expõe conteúdo sensível: `travessia_apoio` grava "🫶 {nome} marcou que não está bem hoje" na notificação da liderança (`travessia-dev.html` L922). O Cardume deixou de pôr qualquer coisa privada na notificação (índice próprio `kanban/cardume/mencoes`). **Correção:** tirar o `.read` do nó-pai e dar leitura só ao que precisa ser público (provavelmente via `usuarios_publicos`), conferindo antes quem lê `kanban/usuarios` inteiro (Painel 👥, Escala, Intake…) — R3 do Maré inteiro, 2 revisões, simulador | `functions/rules/rulesSim.js`: `check(RULES, DB, 'read', 'kanban/usuarios/ana/notificacoes', <qualquer conta @ciahering google>)` → `true` | 24/11/2026 |
