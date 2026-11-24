@@ -26,7 +26,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ### Cardume — @menção avisa no sino e no celular; aba @ Menções — SÓ DEV (cardume v0.4-dev) — 2026-11-24
 
-Etapa 4 do Cardume. Mencionar alguém do canal (@Nome) gera um aviso 🐟 no sino do Oceano/Maré e push no celular (tipo novo cardume_mencao); clicar abre o canal direto na mensagem, destacada. Na página, a aba @ Menções lista onde te mencionaram, com as novas em destaque. Só avisa quem é membro do canal, nunca quem escreveu. Silenciar canal fica para quando houver aviso por mensagem comum.
+Etapa 4 do Cardume. Mencionar alguém do canal (@Nome) gera um aviso 🐟 no sino do Oceano/Maré e push no celular (tipo novo cardume_mencao); clicar abre o canal direto na mensagem, destacada. Na página, a aba @ Menções lista onde te mencionaram, com as novas em destaque. Só avisa quem é membro do canal, nunca quem escreveu. O aviso do sino é genérico ("fulano te mencionou no Cardume"): o canal e a mensagem ficam num índice privado da pessoa, e o push só sai se esse índice confirmar a menção. Silenciar canal fica para quando houver aviso por mensagem comum.
 
 ### 🐟 Cardume — atalhos no Oceano e no menu de apps — SÓ DEV — 2026-11-24
 

@@ -115,7 +115,7 @@
       quem:'Quem está executando a atividade.', onde:'Servidor: timersVigia (functions/timers/vigia.js). Clicar abre o card.'},
     {id:'cardume_mencao', familia:'pessoal', rotulo:'Cardume', area:'board', fonte:'pessoal', nome:'Menção no Cardume (@)', pushPossivel:true,
       quando:'Alguém escreve @seu nome numa mensagem de um canal do 🐟 Cardume em que você está.',
-      quem:'A pessoa mencionada, se for membro do canal (nunca quem escreveu).', onde:'Cardume (cardume-dev.html → avisarMencoes()). Clicar abre o canal direto na mensagem.'},
+      quem:'A pessoa mencionada, se for membro do canal (nunca quem escreveu).', onde:'Cardume (cardume-dev.html → avisarMencoes()). O aviso é genérico (sem canal nem trecho); clicar abre o canal direto na mensagem. Só vira push com o registro privado da menção (functions/common/cardumePush.js).'},
     {id:'escala', familia:'calendario', rotulo:'Escala', area:'agenda', fonte:'pessoal', nome:'Sua escala foi cadastrada', pushPossivel:true,
       quando:'PO, Organizador ou ADM cadastra (ou limpa) a escala de trabalho/plantão/folga de OUTRA pessoa — uma notificação por cadastro, com o período e o tipo. Quem cadastra a própria escala não se avisa.',
       quem:'A pessoa dona da escala.', onde:'Escala (escala-dev.html → avisarPessoa()). Clicar abre a Escala na semana cadastrada.'},
@@ -391,8 +391,8 @@
     if(t==='github_incidente' || t==='github_monitor_falhou' || t==='firebase_incidente' || t==='firebase_monitor_falhou') return {url:PAGES.painel+'?tab=status'};   // incidente/monitor do GitHub ou Firebase (só ADMs): abre a aba 🔋 Status do Painel
     if(t==='backup_falhou' || t==='vtex_monitor_falhou') return {url:PAGES.painel};   // aviso pros ADMs: abre o Painel
     if(t==='travessia_apoio') return {url:PAGES.travessia+'?tab=frota'};   // abre a Frota (termômetro do time) na Travessia
-    if(t==='cardume_mencao'){ const ok=v=>/^[A-Za-z0-9_-]{1,64}$/.test(String(v||'')); if(!ok(n.cardume)) return null;   // 🐟 abre o canal na mensagem (ids validados: o aviso vem do navegador de quem mencionou)
-      return {url:(n.dev===false ? PAGES.cardume : 'cardume-dev.html')+'?c='+n.cardume+(ok(n.cardumeMsg)?'&m='+n.cardumeMsg:'')}; }
+    if(t==='cardume_mencao'){ const r=String(n.cardumeRef||''); if(!/^[A-Za-z0-9_-]{1,64}$/.test(r)) return null;   // 🐟 aviso genérico: o Cardume resolve o id no índice PRIVADO da menção (nada do canal fica na notificação, que a empresa toda lê)
+      return {url:(n.dev===false ? PAGES.cardume : 'cardume-dev.html')+'?mencao='+r}; }
     if(t==='escala') return {url:PAGES.escala+'?visao=squad'+(n.squad?'&squad='+encodeURIComponent(n.squad):'')+(/^\d{4}-\d{2}-\d{2}$/.test(n.okrObjId||'')?'&semana='+n.okrObjId:'')};   // abre a Escala na semana cadastrada
     if(t==='meta_lembrete') return {url:PAGES.kanban+'?'+(n.squad?'squad='+encodeURIComponent(n.squad)+'&':'')+'dados='+(n.okrObjId==='digital'?'digital':'squad')};   // abre a aba 📊 Dados (Squad ou Digital) do Maré
     if(t==='reuniao') return /^https?:\/\//i.test(String(n.meetingLink||'')) ? {url:n.meetingLink, externo:true} : null;   // só http(s): um javascript: gravado na notificação viraria XSS no window.open
