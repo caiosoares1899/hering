@@ -46,10 +46,10 @@ test('vtex_monitor_falhou (aviso aos ADMs) abre o Painel; vtex_incidente cai no 
   assert.equal(urlDoPush({ type: 'firebase_monitor_falhou' }), SITE_BASE_URL + 'painel.html?tab=status');
 });
 
-test('🐟 cardume_mencao abre o canal na mensagem (dev enquanto não houver prod); ids estranhos não entram na URL', () => {
-  assert.equal(urlDoPush({ type: 'cardume_mencao', cardume: 'dados', cardumeMsg: '-Nabc_1', dev: true }), SITE_BASE_URL + 'cardume-dev.html?c=dados&m=-Nabc_1');
-  assert.equal(urlDoPush({ type: 'cardume_mencao', cardume: 't-bf-2026-k3f9', cardumeMsg: 'm1' }), SITE_BASE_URL + 'cardume-dev.html?c=t-bf-2026-k3f9&m=m1');
-  assert.equal(urlDoPush({ type: 'cardume_mencao', cardume: 'dados', cardumeMsg: 'm1', dev: false }), SITE_BASE_URL + 'cardume.html?c=dados&m=m1');
-  assert.equal(urlDoPush({ type: 'cardume_mencao', cardume: 'x"><script>', cardumeMsg: 'javascript:alert(1)' }), SITE_BASE_URL + 'cardume-dev.html');
+test('🐟 cardume_mencao abre o Cardume pelo id do registro privado (nada do canal na URL)', () => {
+  assert.equal(urlDoPush({ type: 'cardume_mencao', cardumeRef: 'x1', dev: true }), SITE_BASE_URL + 'cardume-dev.html?mencao=x1');
+  assert.equal(urlDoPush({ type: 'cardume_mencao', cardumeRef: 'x1' }), SITE_BASE_URL + 'cardume-dev.html?mencao=x1');
+  assert.equal(urlDoPush({ type: 'cardume_mencao', cardumeRef: 'x1', dev: false }), SITE_BASE_URL + 'cardume.html?mencao=x1');
+  assert.equal(urlDoPush({ type: 'cardume_mencao', cardumeRef: 'javascript:alert(1)', cardume: 'dados' }), SITE_BASE_URL + 'cardume-dev.html');
   assert.notEqual(tagDoPush({ type: 'cardume_mencao' }, 'n1'), tagDoPush({ type: 'cardume_mencao' }, 'n2'), 'duas menções seguidas não se substituem no aparelho');
 });

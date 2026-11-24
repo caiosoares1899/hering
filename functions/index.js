@@ -23,6 +23,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
+const { mencaoValida } = require('./common/cardumePush');
 const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_cobranca', 'card_resgatado', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug', 'timer_criado', 'timer_zero', 'timer_esquecido', 'timer_encerrado', 'gantt_cal', 'gantt_pedido', 'cardume_mencao']);
 
 exports.sendPushOnNotification = onValueCreated(
@@ -51,6 +52,12 @@ exports.sendPushOnNotification = onValueCreated(
         console.log(`[push] ${uid}: tipo '${notif.type}' ${typeof cfg.push === 'boolean' ? 'desligado pelo ADM na Central de Notificações' : 'fora de PUSH_TYPES'}, não enviando.`);
         return;
       }
+    }
+
+    // 🐟 Cardume: a notificação de menção só vira push com prova de origem (registro privado em kanban/cardume/mencoes apontando para ela).
+    if (notif.type === 'cardume_mencao' && !(await mencaoValida(db, uid, notif, event.params.notifId))) {
+      console.log(`[push] ${uid}: cardume_mencao sem registro de menção que confira — não enviando.`);
+      return;
     }
 
     // Checa Não Perturbe
