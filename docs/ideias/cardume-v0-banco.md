@@ -21,16 +21,22 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 | Nó | Conteúdo | Lê | Escreve |
 |---|---|---|---|
 | `kanban/cardume/canais/{squad}` | `{nome}` — canais que existem | logado Hering | ADM |
-| `kanban/cardume/membros/{squad}/{uid}` | `true` | o próprio uid (para saber se está no canal) · ADM | ADM |
+| `kanban/cardume/membros/{squad}/{uid}` | `true` | membros do canal (para a @menção e a lista) · ADM | ADM |
 | `kanban/cardume/msgs/{squad}/{msgId}` | `uid`, `texto` (1–4000), `ts` (servidor), `card?` (`^[A-Za-z0-9_-]{1,64}$`), `cardSq?` (idem), `editado?` (servidor), `apagada?` (`true`) | membro · ADM | ver abaixo |
 | `kanban/cardume/ultima/{squad}` | `{ts, uid}` da última mensagem (para não lidas) | membro · ADM | membro, junto com a mensagem |
 | `kanban/cardume/lidas/{uid}/{squad}` | `ts` do último lido | o próprio | o próprio |
 | `kanban/cardume/config/retencao_dias` | número (padrão 90) | logado Hering | ADM |
 
+**Sem nó `_dev`** (de propósito): o piloto no `cardume-dev.html` já é uso real, e a página de produção vai ler o mesmo nó, sem migração.
+
+**Membro** = está em `membros/{squad}` **e** entrou com Google `@ciahering.com.br` (uma conta de fora posta na lista por engano continua barrada).
+
+**Hora:** `ts`/`editado` vêm do `serverTimestamp()`; a regra aceita até 60 s antes de `now` (o simulador não congela o relógio) e nunca o futuro.
+
 `msgId` = chave do `push()` (já vem em ordem de tempo; leitura por `limitToLast(50)` sem índice). `ts` tem `.indexOn` para a limpeza.
 
 ### Regras de `msgs/{squad}/{msgId}`
-- **Criar:** não existe ainda · autor é membro · `uid === auth.uid` · `ts === now` · `texto` string de 1 a 4000 · sem `apagada`/`editado`.
+- **Criar:** não existe ainda · autor é membro · `uid === auth.uid` · `ts` do servidor · `texto` string de 1 a 4000 · sem `apagada`/`editado`.
 - **Editar o texto:** só o autor · `uid` e `ts` não mudam · `editado === now` · mensagem não apagada.
 - **Apagar (tombstone):** o autor ou o ADM grava `{uid, ts, apagada: true}` **sem `texto` nem `card`** (o texto sai do banco de verdade). Apagada é final: nada mais muda nela.
 - **Remover o nó** (`null`): só o ADM. A limpeza automática usa o Admin SDK (passa por fora das regras).
@@ -39,10 +45,14 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 ### ADM
 `root.child('kanban/usuarios/'+auth.uid+'/role').val() === 'adm'` ou o e-mail do Caio — o mesmo critério das regras de hoje. O ADM lê todos os canais e pode apagar (moderação), mas só **escreve mensagem** em canal do qual é membro.
 
-## Limpeza (etapa nova, R3 de `functions/`)
-`cardumeLimpeza` (`onSchedule`, 1×/dia, madrugada): para cada canal, remove `msgs` com `ts` anterior a `retencao_dias` (padrão **90 dias**, ajustável pelo ADM). Deploy: `firebase deploy --only functions:cardumeLimpeza`.
+Campo desconhecido em qualquer nó (`$outro`) é recusado; o "tombstone sem texto" é checado no nível da mensagem (`!hasChild('texto')`), porque a regra de um filho ausente não roda.
 
-## Testes no simulador (`functions/rules/__tests__/cardumeRules.test.js`)
+## Limpeza e backup (PR separado, R3 de `functions/`)
+`cardumeLimpeza` (`onSchedule`, 1×/dia, madrugada): para cada canal, remove `msgs` com `ts` anterior a `retencao_dias` (padrão **90 dias**, ajustável pelo ADM). Deploy: `firebase deploy --only functions:cardumeLimpeza`.
+**Backup:** `cardume` entra em `NOS_GLOBAIS` (`functions/backup/completo.js`) **só no semanal**, como a Travessia — conversa privada; quem administra o projeto lê o bucket. A confirmar com o Caio no PR da limpeza.
+
+## Testes no simulador (`functions/rules/__tests__/cardumeRules.test.js`, 9 testes)
+Conferidos contra 5 regras sabotadas de propósito (leitura aberta, sem `$outro`, membro se adicionando, tombstone com texto, sem checar a hora): cada uma derruba um teste.
 1. Membro lê e escreve no canal; não membro da Hering **não lê nem escreve**; ADM lê sem ser membro; forasteiro/Arezzo não lê.
 2. Ninguém se adiciona em `membros`; só ADM.
 3. Forjar `uid`, `ts` fora de `now`, texto vazio ou > 4000, `card` com caractere estranho → falha.

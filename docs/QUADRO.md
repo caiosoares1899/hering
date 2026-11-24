@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/cardume-regras` | `database.rules.json`, `functions/rules/__tests__/cardumeRules.test.js` | 24/11/2026 |
 
 
 ## Fila

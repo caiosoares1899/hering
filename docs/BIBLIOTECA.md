@@ -133,6 +133,7 @@ Todos têm par `-dev`/prod e são chamados com `?v=N` (ao mudar o módulo, **bum
 | `ideias/cronograma-oceano.html` | Cronograma visual do plano da consultoria (8 sprints, gates, prompts para copiar); publicado em `…/hering/docs/ideias/cronograma-oceano.html`. O que se marca nele fica só no navegador; o registro oficial é o card do squad dados |
 | `ideias/consultoria-oceano-2026-11-09.md` | Consultoria de produto de Radar, Travessia e lobby (09/11/2026): 21 propostas, decisões do Caio, desenho das partes difíceis e o prompt-base do plano em sprints |
 | `ideias/ilha-dinamica.md` | 🏝️ Ilha Dinâmica (10/11/2026): conceito, decisões do Caio, modos de exibição, fases (protótipo → `mare-timer` → ilha no Oceano), custo e fronteira |
+| `ideias/cardume-v0-banco.md` | 🐟 Cardume v0 — nota de desenho do banco (24/11/2026): canais privados com membros geridos pelo ADM, mensagem apagada, retenção, regras e testes |
 | `ideias/cardume.md` | 🐟 Cardume (23/11/2026): chat do time dentro do Oceano (canal = squad, thread = card), decisões do Caio, escopo v0/v1, dados, fronteira e fases |
 | `demo/ilha-dinamica-prototipo.html` | Protótipo isolado da Ilha Dinâmica (dados fictícios, 3 temas, desktop/celular; teste `arezzo/testes/test_ilha_prototipo.js`) — não é carregado por nenhuma página publicada |
 | `demo/cardume-prototipo.html` | Protótipo isolado do 🐟 Cardume (dados fictícios, 3 temas, desktop/celular; teste `arezzo/testes/test_cardume_prototipo.js`) — não é carregado por nenhuma página publicada |
