@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/cardume-regras` | `database.rules.json`, `functions/rules/__tests__/cardumeRules.test.js` | 24/11/2026 |
+| Claude | `claude/cardume-tematicos` | `database.rules.json`, `functions/rules/__tests__/cardumeRules.test.js`, `docs/ideias/cardume-v0-banco.md` | 24/11/2026 |
 
 
 ## Fila
@@ -39,7 +39,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐟 Cardume v0: regras de `kanban/cardume` (#1921) — só depois da auditoria do Antigravity e do OK do Caio | `firebase deploy --only database` | 24/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na 2ª promoção de 23/11 (Escala v1.15, menu de apps) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na promoção de 23/11 (Escala, Oceano e Ajuda do Maré) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
@@ -55,6 +54,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |
 | 🧲 Ideias do Kanbanize: ícone de link, tempo por coluna, Monte Carlo, fila × ativa, causas de impedimento e ponte com a TI | Claude · ponte: Caio com a TI | [backlog](quadro/backlog.md#ideias-kanbanize) |
-| 🐟 Cardume: chat do time no Oceano (canal = squad, thread = card); piloto `dados`; protótipo pronto, próximo: v0 (R3) | Claude | [ideia](ideias/cardume.md) |
+| 🐟 Cardume: chat do time no Oceano (canal = squad, thread = card); piloto `dados`; regras dos canais oficiais no ar (24/11); próximo: canais temáticos (R3) | Claude | [ideia](ideias/cardume.md) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |
