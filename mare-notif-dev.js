@@ -721,7 +721,7 @@
 
   // ══ 🔔 SINO UNIFICADO (componente) ══ docs/ideias/sino-unificado.md — fase 1 (24/11/2026): o mesmo Sino em todos os apps, com os layouts por
   // família do Maré (👤 Pessoal · 📅 Calendário · 🎯 Radar · 🛡️ Sistema). A página só entrega o botão e, se quiser, trata cliques por dentro.
-  //   MareNotif.sino(botao, {user, isAdm?, toast?, abrir?(item)→true se tratou, filtro?(item)→false esconde, aoMudar?(itens), painel?:true (mostra SO_PAINEL)})
+  //   MareNotif.sino(botao, {user, isAdm?, toast?, abrir?(item)→true se tratou, filtro?(item)→false esconde, aoAbrir?(), aoMudar?(itens), painel?:true (mostra SO_PAINEL)})
   // Fontes: as PESSOAIS (kanban/usuarios/{uid}/notificacoes, as 80 mais recentes, viva()) + o FEED da torre (items()), sem duplicar (o "lido" da pessoal vence).
   // SEGURANÇA: qualquer conta da Hering grava nas notificações de outra (e no feed) — título, subtítulo, autor e ícone são texto de terceiros:
   // o painel é montado só com createElement/textContent (nunca innerHTML com dado); o destino do clique vem de urlPessoal()/urlFeed() (já validados).
@@ -831,7 +831,12 @@
     p.style.left = Math.max(8, Math.min(r.right-larg, window.innerWidth-larg-8))+'px';
     p.style.maxHeight = Math.max(240, window.innerHeight-r.bottom-24)+'px';
   }
-  function sinoAbrir(){ sinoSt.aberto = true; sinoSt.pop.hidden = false; sinoSt.btn.setAttribute('aria-expanded', 'true'); sinoPosicionar(); sinoRender(); const h = sinoSt.pop.querySelector('h2'); if(h){ h.tabIndex = -1; h.focus(); } }
+  function sinoAbrir(){
+    sinoSt.aberto = true; sinoSt.pop.hidden = false; sinoSt.btn.setAttribute('aria-expanded', 'true');
+    sinoPosicionar(); sinoRender();
+    const h = sinoSt.pop.querySelector('h2'); if(h){ h.tabIndex = -1; h.focus(); }
+    try{ if(sinoSt.opts.aoAbrir) sinoSt.opts.aoAbrir(); }catch(e){}
+  }
   function sinoFechar(devolverFoco){
     if(!sinoSt.aberto) return false;
     sinoSt.aberto = false; sinoSt.pop.hidden = true; sinoSt.btn.setAttribute('aria-expanded', 'false'); menusFechar();
