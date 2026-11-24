@@ -32,6 +32,12 @@
 |---|---|---|
 | 🐟 **Cardume · reagir e responder** (ideia do Caio, 24/11/2026): **reagir a uma mensagem com emoji** (👍 ❤️ 😂 🎉… — contador por emoji, clicar no seu tira a reação, passar o mouse mostra quem reagiu; usa o mesmo seletor de emojis do compositor) e **responder a uma mensagem** (botão "↩️ Responder" na mensagem: a resposta mostra o trecho citado de quem respondeu, e clicar na citação leva à mensagem original; base para uma futura conversa em fio). | Claude | `docs/ideias/cardume.md` (plano). **Banco (R3, regras + testes + 2 revisões):** reação = nó novo `reacoes/{canal}/{msgId}/{emoji}/{uid}: true` (só membro, só a própria reação, emoji de uma lista fechada; a limpeza apaga junto com a mensagem); responder = campo `resp` na mensagem com o id da original (validado pelo `ID_RE`), sem copiar o texto dela para o banco (a citação é montada na tela e some se a original for apagada). **Fronteira:** quem reagiu aparece só para membros do canal |
 
+<a id="cardume-citar"></a>
+
+| Ideia | Dono | Onde está o desenho |
+|---|---|---|
+| 🐟 **Cardume · `@card:` e `@objetivo:`** (ideia do Caio, 24/11/2026, para depois): digitar **`@card:`** abre o autocompletar dos cards (pelo título, das squads da pessoa) e **`@objetivo:`** abre o dos **objetivos do Radar**; o escolhido vira um chip na mensagem (🗂 título · squad / 🎯 objetivo · torre), que abre o card no Maré ou o objetivo no Radar (`okr(-dev).html?okr=<id>`). Junta e substitui o "`#` para mencionar cards" de [escrever melhor](#cardume-texto); o chip do card já existe (v0.6, link colado). | Claude | `docs/ideias/cardume.md`. **Banda:** buscar por título exige a lista de cards ou de objetivos; usar o que já é leve (índice de títulos, ou só os cards/objetivos citados e os recentes da pessoa) e medir antes de abrir. **Banco:** só leitura, sem regra nova (objetivos em `kanban/okr/objetivos`, cards em `kanban/squads/{sq}/dados`; conferir no simulador quem lê cada um, como na etapa 3). **Fronteira:** título de card e de objetivo entram só por `textContent`; os ids passam pelo `ID_RE` antes de virar link ou leitura; o texto gravado guarda só o link/id, nunca o título copiado |
+
 <a id="cardume-avisos"></a>
 
 | Ideia | Dono | Onde está o desenho |
