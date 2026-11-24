@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔔 Sino unificado — fase 2 no Oceano (SÓ DEV) — 2026-11-24
+
+Oceano dev usa o mesmo painel da Concha, com famílias e rótulos por tipo, selo de não lidas, remoção individual e rodapé compartilhado. Preserva o roteamento de produtos, o filtro do Assistente Férias e o gatilho da dica ao abrir. Cache do mare-notif dev atualizado para ?v=50.
+
 ### 🐚 GIF na Concha, pela KLIPY com a chave no servidor (SÓ DEV, cardume v0.10, função conchaGifBusca) — 2026-11-24
 
 Botão GIF ao lado do 😀: busca na KLIPY ('Search KLIPY', GIFs em alta ao abrir), escolhe, envia com ou sem legenda. A busca passa pela função conchaGifBusca (idToken @ciahering + membro da Concha; 60 buscas/h por pessoa e 90 buscas novas/h na casa, cache de 10–30 min; chave no secret KLIPY_API_KEY, nunca em log; filtro de conteúdo high; anúncios descartados; nenhum id de pessoa vai para a KLIPY). A mensagem guarda gif {u, s?, w, h, t?} só de static[12].klipy.com (regras: só na criação, imutável, apagar não guarda); quem prefere menos movimento vê o quadro parado e anima ao clicar. Desenho: docs/ideias/cardume-v0-banco.md › GIF na Concha. Testes: cardumeRules (gif e gif_uso, com sabotagem), conchaGif.test.js (chave não vaza), test_concha_gif.js (27).

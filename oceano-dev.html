@@ -77,7 +77,7 @@ button{font-family:inherit;}
 [data-theme="light"] .bubble{border-color:rgba(0,35,55,.3);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.75),rgba(255,255,255,.18));}
 .fish-ltr,.fish-rtl,.bubble{will-change:transform;}
 [data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble,[data-anim-paused] .porthole,[data-anim-paused] .vtex-pill.alerta::before,[data-anim-paused] .mural-novos::before{animation-play-state:paused!important;}
-[data-anim-paused] .topo,[data-anim-paused] .vidro,[data-anim-paused] .tile,[data-anim-paused] .ferias-banner,[data-anim-paused] .sino-drop,[data-anim-paused] .ov,[data-anim-paused] #login{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+[data-anim-paused] .topo,[data-anim-paused] .vidro,[data-anim-paused] .tile,[data-anim-paused] .ferias-banner,[data-anim-paused] .ov,[data-anim-paused] #login{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
 [data-host-ativo] .fish-wrap,[data-host-ativo] .bubble-wrap{display:none!important;}
 @media (prefers-reduced-motion:reduce){.fish-ltr,.fish-rtl,.bubble,.porthole,.vtex-pill.alerta::before,.mural-novos::before{animation:none!important;}}
 
@@ -129,16 +129,6 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 @keyframes vtexp{50%{box-shadow:0 0 0 7px rgba(255,107,107,0);}}
 @media (max-width:560px){.vtex-pill .vtex-tx{display:none;}.vtex-pill{padding:8px;}}
 @media (prefers-reduced-motion:reduce){.vtex-pill.alerta::before{animation:none;}}
-.sino{position:relative;}
-.sino-n{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;border-radius:999px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box;font-family:var(--ff-b,inherit);}
-.sino-drop{display:none;position:fixed;z-index:100;flex-direction:column;max-height:min(70vh,540px);background:rgba(var(--deep-rgb),.97);border:1px solid var(--glass-b);border-radius:14px;box-shadow:var(--specular),0 14px 44px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
-.sino-hd{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--glass-b);font-size:13px;font-weight:700;color:var(--txt);}
-.sino-list{overflow-y:auto;padding:8px;}
-.sino-it{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-bottom:5px;background:rgba(var(--slate-rgb,10,37,64),.4);border:1px solid var(--glass-b);cursor:pointer;}
-.sino-it:hover,.sino-it:focus-visible{border-color:var(--accent);outline:none;}
-.sino-it .t{font-size:12px;color:var(--txt);line-height:1.4;}.sino-it .s{font-size:11px;color:var(--txt3,var(--txt2));margin-top:2px;}.sino-it .w{font-size:10px;color:var(--txt3,var(--txt2));margin-top:3px;}
-.sino-dot{width:8px;height:8px;border-radius:999px;background:var(--cyan);flex-shrink:0;margin-top:5px;}
-.sino-vazio{font-size:12px;color:var(--txt3,var(--txt2));padding:26px 12px;text-align:center;}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--cyan);}
 .chip.ok{color:var(--ok);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.1);}
 .chip.dev{color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.1);}
@@ -569,7 +559,7 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
       <button class="ibtn" id="btn-instalar" type="button" style="display:none;" title="Instala o Oceano como aplicativo — um só pra todos os produtos">📲 <span>Instalar</span></button>
       <button class="ibtn" id="btn-sonar" type="button" aria-haspopup="dialog" title="Sonar: busca em todo o Oceano (Ctrl+K)" aria-label="Sonar: buscar em todo o Oceano">🔍 <span class="eu-nome" style="max-width:none;">Sonar</span><span class="kbd sonar-kbd" id="sonar-kbd">Ctrl K</span></button>
       <button class="ibtn" id="btn-ajuda" type="button" title="Ajuda e perguntas frequentes">❓ <span class="eu-nome" style="max-width:none;">Ajuda</span></button>
-      <button class="ibtn sino" id="btn-sino" type="button" aria-haspopup="true" aria-expanded="false" title="Notificações" aria-label="Notificações">🔔<span class="sino-n" id="sino-n" aria-hidden="true"></span></button>
+      <button class="ibtn sino" id="btn-sino" type="button" aria-haspopup="true" aria-expanded="false" title="Notificações" aria-label="Notificações">🔔</button>
       <button class="eu" id="btn-eu" type="button" aria-haspopup="dialog" title="Meu perfil e preferências"><span id="eu-av"></span><span class="eu-nome" id="eu-nome"></span><span aria-hidden="true">⚙</span></button>
     </div>
   </div>
@@ -737,7 +727,6 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
   <div class="modal-bd" id="ferias-bd"></div>
 </div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<div class="sino-drop" id="sino-drop" role="dialog" aria-label="Notificações"></div>
 
 <script src="mare-login-dev.js?v=3"></script>
 <script type="module">
@@ -778,7 +767,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif-dev.js?v=49"></script>
+<script src="mare-notif-dev.js?v=50"></script>
 <script src="mare-plantao-dev.js?v=5"></script>
 <script src="mare-dicas-dev.js?v=19"></script>
 <script src="mare-metas-dev.js?v=19"></script>
@@ -787,7 +776,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.94 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.95 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -934,7 +923,7 @@ async function iniciarSessao(){
   aplicarPrefs();
   try{ const sn = await window._get(window._ref(window._db,'kanban/config/adm_emails')); const l = sn && sn.exists() ? sn.val() : []; const arr = Array.isArray(l) ? l : Object.values(l||{}); ehAdm = arr.map(x=>String(x).toLowerCase()).includes(String(U.email).toLowerCase()); }catch(e){}
   if(perfilFb.role==='adm' || String(U.email).toLowerCase()===CONTATO.email) ehAdm = true;
-  renderEu(); renderTudo(); sinoRender();
+  renderEu(); renderTudo(); if(sinoApi) sinoApi.render();
   carregarLinks();
   iniciarMural();
   iniciarMetasOceano();
@@ -1159,81 +1148,40 @@ const _avMudou = ()=>{ if(muralEscolha===null) muralAberto = avLargo.matches; mu
 if(avLargo.addEventListener) avLargo.addEventListener('change', _avMudou); else if(avLargo.addListener) avLargo.addListener(_avMudou);
 
 // ── 🔔 Sino (o mesmo das outras páginas: feed da torre + notificações pessoais; o módulo compartilhado cuida de lido/som/Não Perturbe/push) ──
-let sinoPessoais = [], sinoIniciado = false;
+let sinoApi = null;
 function rotearUrl(url){   // abre a página do Maré dentro do Oceano (ou em aba nova, conforme "Como abrir os produtos")
   const base = String(url||'').split(/[?#]/)[0], app = APPS.find(a=>a.href===base);
   if(app) abrirApp(app.id, false, url); else MareNotif.abrirPagina(url);
 }
-function sinoItens(){
-  const vistos = new Set(), out = [];
-  MareNotif.items().forEach(i=>{
-    if(String(i.id||'').startsWith('nf_bug_') || i.tipo==='ferias_bug_status'){
-      if(!U || typeof feriasBugsLista==='undefined' || !feriasBugsLista.length) return;
-      const m = /^nf_bug_(bug_ferias_[0-9A-Za-z_]+?)_(em_analise|resolvido|pendente_monitorarbugs)(?:_\d+)?$/.exec(i.id);
-      const b = m && feriasBugsLista.find(x=>x.id===m[1] || String(x.id||'').replace(/^bug_ferias_/,'')===String(m[1]).replace(/^bug_ferias_/,''));
-      if(!b || ((b.uid || b.email) && !feriasBugEhMeu(b) && !ehAdm)) return;
-    }
-    const np = sinoPessoais.find(x=>x.id===i.id);
-    vistos.add(i.id);
-    out.push({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:Boolean(i.unread && (!np || !np.read)), autor:i.autor, tipo:i.tipo});
-  });
-  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type) && !vistos.has(n.id)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:n.icon||(n.raw&&n.raw.icone)||MareNotif.ICONS[n.type]||'🔔', title:n.title||(n.raw&&(n.raw.titulo||n.raw.cardTitulo))||'', sub:n.sub||(n.raw&&(n.raw.msg||n.raw.text||n.raw.texto))||'', unread:!n.read, autor:(n.raw&&(n.raw.autor||n.raw.autorNome))||'', tipo:n.type}));
-  return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+function avisoDeBugFerias(item){
+  return String(item.id||'').startsWith('nf_bug_') || item.tipo==='ferias_bug_status'
+    || (item.k==='pessoal' && (item.raw.bugId || item.raw.tipo==='ferias_bug_status'));
+}
+function filtrarSino(item){
+  if(!avisoDeBugFerias(item)) return true;
+  if(!U || !feriasBugsLista.length) return false;
+  const m = /^nf_bug_(bug_ferias_[0-9A-Za-z_]+?)_(em_analise|resolvido|pendente_monitorarbugs)(?:_\d+)?$/.exec(item.id);
+  const b = m && feriasBugsLista.find(x=>x.id===m[1] || String(x.id||'').replace(/^bug_ferias_/,'')===String(m[1]).replace(/^bug_ferias_/,''));
+  if(!b || ((b.uid || b.email) && !feriasBugEhMeu(b) && !ehAdm)) return false;
+  return true;
+}
+function abrirDoSino(item){
+  if(avisoDeBugFerias(item)){ abrirFerias('bugs'); return true; }
+  if(item.k==='feed'){
+    const url = MareNotif.urlFeed(item.raw);
+    if(url) rotearUrl(url);
+    return true;
+  }
+  const alvo = MareNotif.urlPessoal(item.raw);
+  if(alvo){
+    if(alvo.externo) window.open(alvo.url, '_blank', 'noopener');
+    else rotearUrl(alvo.url);
+  }
+  return true;
 }
 function tempoRel(ts){ const t = new Date(ts).getTime(); if(isNaN(t)) return ''; const m = Math.round((Date.now()-t)/60000); if(m<1) return 'agora'; if(m<60) return 'há '+m+' min'; const h = Math.round(m/60); if(h<24) return 'há '+h+' h'; const d = Math.round(h/24); return d===1 ? 'ontem' : 'há '+d+' dias'; }
-function sinoRender(){
-  if(!window.MareNotif) return;
-  const itens = sinoItens(), n = itens.filter(i=>i.unread).length, b = $('#sino-n');
-  if(b){ if(n>0){ b.textContent = n>99 ? '99+' : String(n); b.style.display = 'flex'; } else b.style.display = 'none'; }
-  $('#btn-sino').title = n ? 'Notificações ('+n+' não lida'+(n>1?'s':'')+')' : 'Notificações';
-  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id), itens.filter(i=>i.unread).map(i=>i.tipo));   // som quando chega uma nova (respeita 🔇 e o Não Perturbe)
-  const drop = $('#sino-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
-  drop.innerHTML = '<div class="sino-hd"><span>🔔 Notificações</span><span style="flex:1"></span>'+(n ? '<button type="button" class="btn sm" id="sino-tudo">✓ Marcar tudo como lido</button>' : '')+'</div>'
-    + '<div class="sino-list">'+(itens.length ? itens.slice(0,50).map(i=>'<div class="sino-it" role="button" tabindex="0" data-k="'+i.k+'" data-id="'+esc(i.id)+'"><span style="font-size:15px;flex-shrink:0;">'+esc(i.icon)+'</span><div style="flex:1;min-width:0;"><div class="t">'+esc(i.title)+'</div>'+(i.sub?'<div class="s">'+esc(i.sub)+'</div>':'')+'<div class="w">'+esc(tempoRel(i.ts))+(i.autor?' · '+esc(i.autor):'')+'</div></div>'+(i.unread?'<span class="sino-dot" title="Não lida"></span>':'')+'</div>').join('') : '<div class="sino-vazio">Nada por aqui ainda.</div>')+'</div>'
-    + MareNotif.rodapeHtml('<button type="button" class="mn-link" id="sino-limpar">Limpar antigas</button>');
-  MareNotif.rodapeRender();
-}
-function sinoFecha(){ const d = $('#sino-drop'); if(d && d.style.display==='flex'){ d.style.display = 'none'; $('#btn-sino').setAttribute('aria-expanded','false'); return true; } return false; }
-function sinoToggle(e){
-  if(e) e.stopPropagation();
-  const drop = $('#sino-drop'), btn = $('#btn-sino'); if(!drop || !window.MareNotif) return;
-  if(sinoFecha()) return;
-  try{ window.MareDicas && MareDicas.gatilho('sino'); }catch(err){}
-  const r = btn.getBoundingClientRect(), w = Math.min(390, window.innerWidth-16);
-  drop.style.top = (r.bottom+8)+'px'; drop.style.left = Math.max(8, Math.min(r.right-w, window.innerWidth-w-8))+'px'; drop.style.width = w+'px'; drop.style.display = 'flex';
-  btn.setAttribute('aria-expanded','true'); sinoRender();
-}
-function sinoTudoLido(){
-  MareNotif.markAll();
-  const up = {}; sinoPessoais.filter(n=>!n.read).forEach(n=>{ up[n.id+'/read'] = true; });
-  if(Object.keys(up).length) window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), up).catch(()=>{});
-  sinoPessoais = sinoPessoais.map(n=>({...n, read:true})); sinoRender();
-}
-function sinoLimpar(){
-  // noTTLDelete (id determinístico): apagar a chave deixaria o createNotif recriá-la como NÃO lida — marca read+dismissed e mantém o nó (viva() esconde). As demais saem como sempre.
-  const up = {}; sinoPessoais.filter(n=>n.read).forEach(n=>{ if(n.noTTLDelete){ up[n.id+'/read'] = true; up[n.id+'/dismissed'] = true; } else up[n.id] = null; });
-  const qP = sinoPessoais.filter(n=>n.read).length;
-  const nFeed = (window.MareNotif && MareNotif.clearRead) ? MareNotif.clearRead() : 0;
-  const q = qP + nFeed;
-  if(!q){ toast('Nenhuma notificação lida para remover.'); return; }
-  const ok = ()=>toast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.');
-  if(!qP){ ok(); return; }
-  window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), up).then(ok).catch(()=>toast('⚠️ Não consegui remover as notificações. Tente de novo.'));
-}
-function sinoClique(k, id){
-  sinoFecha();
-  const np = sinoPessoais.find(x=>x.id===id);
-  if(np && !np.read){ np.read = true; window._set(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
-  if(k==='f'){ MareNotif.abrirFeed(id); sinoRender(); return; }
-  if(!np) return;
-  sinoRender();
-  if(String(id||'').startsWith('nf_bug_') || np.type==='ferias_bug_status' || (np.raw && (np.raw.bugId || np.raw.tipo==='ferias_bug_status'))){ abrirFerias('bugs'); return; }
-  const alvo = MareNotif.urlPessoal(np.raw);   // card, Kudos, reunião, intake, OKR…: o roteador compartilhado sabe pra onde ir
-  if(!alvo) return;
-  if(alvo.externo) window.open(alvo.url, '_blank', 'noopener'); else rotearUrl(alvo.url);
-}
 // ── 💡 Dicas (mini popups) do Oceano — módulo mare-dicas(-dev).js: o CATÁLOGO vive lá (o Painel lista tudo). Aqui só o que depende do estado da página.
-//    gatilhos: 'boot' (ao entrar, 1 por visita), 'sino' em sinoToggle(), 'perfil' em abrirPerfil(). "Saiba mais" abre a pergunta da Ajuda (faq-<id>).
+//    gatilhos: 'boot' (ao entrar, 1 por visita), 'sino' no aoAbrir do Sino, 'perfil' em abrirPerfil(). "Saiba mais" abre a pergunta da Ajuda (faq-<id>).
 // as dicas de ENTRADA falam do lobby: com um produto aberto aqui dentro (app instalado abrindo no último produto, ou clique rápido) elas cobririam o produto
 const _lobbyVisivel = ()=>!document.getElementById('host').classList.contains('on');
 const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone() && _lobbyVisivel(), menu:_lobbyVisivel, aqui:_lobbyVisivel, sonar:_lobbyVisivel};
@@ -1243,28 +1191,12 @@ function iniciarDicas(){
   setTimeout(()=>MareDicas.gatilho('boot'), 4500);
 }
 function iniciarSino(){
-  if(sinoIniciado || !window.MareNotif || !U) return; sinoIniciado = true;
-  MareNotif.start({user:U, isViewer:false, isAdm:()=>ehAdm, onChange:sinoRender, toast,
-    abrirFeed:it=>{ if(it && (String(it.id||'').startsWith('nf_bug_') || it.tipo==='ferias_bug_status')){ abrirFerias('bugs'); return true; } const u = MareNotif.urlFeed(it); if(u) rotearUrl(u); return true; }});   // aviso do Mural/Objetivo/Marco abre o Radar aqui dentro; aviso de bug abre o Assistente Férias
-  window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
-    // TODOS os tipos (card, Kudos, reunião, intake, OKR…) — só 'rascunho' é exclusivo do painel; mesmo TTL do sino do kanban
-    sinoPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))
-      .map(([id,n])=>({id, noTTLDelete:!!n.noTTLDelete, type:n.type||n.tipo||'', icon:n.icone||'', title:n.title||n.titulo||'', sub:n.sub||n.msg||n.text||'', ts:n.ts||'', read:!!n.read, raw:n}));
-    sinoRender();
-  }, ()=>{});
-  sinoRender();
+  if(sinoApi || !window.MareNotif || !U) return;
+  sinoApi = MareNotif.sino($('#btn-sino'), {
+    user:U, isAdm:()=>ehAdm, toast, filtro:filtrarSino, abrir:abrirDoSino,
+    aoAbrir:()=>{ if(window.MareDicas) MareDicas.gatilho('sino'); }
+  });
 }
-$('#btn-sino').addEventListener('click', sinoToggle);
-$('#sino-drop').addEventListener('click', e=>{
-  e.stopPropagation();
-  if(e.target.closest('#sino-tudo')){ sinoTudoLido(); return; }
-  if(e.target.closest('#sino-limpar')){ sinoLimpar(); return; }
-  const it = e.target.closest('.sino-it'); if(it) sinoClique(it.dataset.k, it.dataset.id);
-});
-$('#sino-drop').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.classList && e.target.classList.contains('sino-it')){ e.preventDefault(); sinoClique(e.target.dataset.k, e.target.dataset.id); } });
-document.addEventListener('click', e=>{ const d = $('#sino-drop'); if(!d || d.style.display!=='flex') return; if((e.composedPath ? e.composedPath() : []).some(el=>el===d || el===$('#btn-sino'))) return; sinoFecha(); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && sinoFecha()){ e.preventDefault(); e.stopImmediatePropagation(); $('#btn-sino').focus(); } }, true);
-window.addEventListener('resize', sinoFecha);
 
 // ── Quem vê o quê (vitrine, não segurança — igual ao menu de 9 pontinhos) ──
 function visivel(a){ if(a.id==='painel') return !!(ehAdm || usoApps.painel); return true; }
@@ -2247,7 +2179,7 @@ function feriasProcessarSnapshotBugs(val){
     .sort((a,b)=>(Number(b.criadoEm)||0)-(Number(a.criadoEm)||0) || String(b.ts||'').localeCompare(String(a.ts||'')));
   feriasRenderBugsLista();
   feriasRenderBanner();
-  if(typeof sinoRender === 'function') sinoRender();
+  if(sinoApi) sinoApi.render();
   if(U && window._db){
     feriasBugsLista.slice(0, 10).forEach(b=>{
       if(b && b.id && (!b.kanbanCardId || !b.kanbanColId || Number(b.kanbanSchemaV || 0) < 3) && !_feriasRetroSyncIds.has(b.id)){
