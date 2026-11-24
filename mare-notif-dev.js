@@ -757,6 +757,7 @@
     novas(nao.map(i=>i.k+':'+i.id), nao.map(i=>i.tipo));
     try{ if(o.aoMudar) o.aoMudar(itens); }catch(e){}
     if(!sinoSt.aberto) return;   // a lista só é desenhada com o painel aberto
+    sinoPosicionar();   // cabe na tela mesmo se a janela mudou sem o evento de resize ter chegado (giro do celular, zoom)
     const pop = sinoSt.pop, foco = document.activeElement && pop.contains(document.activeElement) ? (document.activeElement.dataset.mnId || '') : '';
     pop.replaceChildren();
     const hd = sinoEl('div', 'mn-sino-hd'); hd.append(sinoEl('h2', '', '🔔 Notificações'));

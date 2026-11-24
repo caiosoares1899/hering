@@ -145,6 +145,7 @@ async function conferirTemas(page) {
   const fundos = new Set();
   await page.setViewportSize({ width: 390, height: 800 });
   await abrirSino(page);
+  await page.waitForFunction(p => { const r = document.querySelector(p).getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; }, painel);   // o resize chega assíncrono
   for (const tema of ['', 'light', 'vice']) {
     const medidas = await page.evaluate(({ tema, painel }) => {
       if (tema) document.documentElement.setAttribute('data-theme', tema);
