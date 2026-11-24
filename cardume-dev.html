@@ -214,7 +214,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.1 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.2 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -260,6 +260,11 @@ let atual = '';                // canal aberto
 let msgs = [];                 // mensagens do canal aberto (ordenadas por ts)
 let membrosAtual = {}, adminsAtual = {};
 let carregandoMsgs = false;
+let enviando = false;          // trava de envio (Enter e botão)
+let rascunhoEdicao = null;     // { id, valor, ini, fim } — preserva o editor quando chega mensagem nova
+const chaveRascunho = id => 'cardume_rascunho_' + (user ? user.uid : '') + '_' + id;
+// No celular a conversa pode estar escondida (lista ou detalhes à frente): aí não marca como lido nem esconde o ponto.
+const conversaVisivel = () => !document.hidden && (!window.matchMedia('(max-width: 899px)').matches || $('app').dataset.tela === 'conversa');
 let editando = '';             // id da mensagem em edição
 const pendentes = new Map();   // msgId → { canal, msg, timer } (apagar com 5 s para desfazer; sobrevive à troca de canal)
 let verLado = lsGet('cardume_lado') !== '0';
@@ -385,7 +390,7 @@ function iniciarOuvintes() {
   ouvir('meus', ref(db, B + 'meus/' + uid), s => {
     const antes = meus; meus = s.val() || {};
     sincronizarCanais(); renderLista();
-    if (atual && antes[atual] === true && meus[atual] !== true) { toast('Você não está mais em ' + nomeCanal(atual) + '.'); abrirCanal(atual); }
+    if (atual && (antes[atual] === true) !== (meus[atual] === true)) { if (antes[atual] === true) toast('Você não está mais em ' + nomeCanal(atual) + '.'); abrirCanal(atual); }
   }, () => {});
   ouvir('abertos', ref(db, B + 'abertos'), s => { abertos = s.val() || {}; sincronizarCanais(); renderLista(); }, () => {});
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
@@ -393,7 +398,7 @@ function iniciarOuvintes() {
 }
 
 // ═══ Lista de canais ═══
-const naoLido = id => { const u = ultimas[id]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > (lidas[id] || 0) && id !== atual; };
+const naoLido = id => { const u = ultimas[id]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > (lidas[id] || 0) && (id !== atual || !conversaVisivel()); };
 function renderLista() {
   const box = $('lista-canais'); box.replaceChildren();
   const ids = idsConhecidos();
@@ -421,11 +426,15 @@ $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[
 
 // ═══ Canal aberto ═══
 function abrirCanal(id, foco) {
-  if (atual !== id) { parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; }
+  if (atual !== id) {
+    if (atual) lsSet(chaveRascunho(atual), entrada.value);
+    parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+    entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false);
+  }
   atual = id; lsSet('cardume_canal', id);
   const u = new URL(location.href); u.searchParams.set('c', id); history.replaceState(null, '', u);
   $('app').dataset.tela = 'conversa';
-  renderLista(); renderCabecalho();
+  renderLista(); renderCabecalho(); marcarLido();
   const membro = souMembro(id);
   if (membro || souAdm()) {
     carregandoMsgs = true; renderMsgs();
@@ -461,6 +470,8 @@ function rotuloDia(ts) {
   return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
 }
 function renderMsgs() {
+  const ed = editando && document.querySelector('[data-msg="' + editando + '"] textarea');
+  if (ed) rascunhoEdicao = { id: editando, valor: ed.value, ini: ed.selectionStart, fim: ed.selectionEnd, foco: document.activeElement === ed };
   const log = $('log'), noFim = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
   log.replaceChildren();
   const id = atual, c = canais[id];
@@ -485,6 +496,8 @@ function renderMsgs() {
     }
     grupo._corpo.append(renderMsg(m)); ult = m;
   });
+  const ed2 = editando && document.querySelector('[data-msg="' + editando + '"] textarea');
+  if (ed2 && rascunhoEdicao && rascunhoEdicao.id === editando) { ed2.value = rascunhoEdicao.valor; if (rascunhoEdicao.foco) { ed2.focus(); ed2.setSelectionRange(rascunhoEdicao.ini, rascunhoEdicao.fim); } }
   if (noFim || !renderMsgs._ja) log.scrollTop = log.scrollHeight;
   renderMsgs._ja = true;
 }
@@ -514,14 +527,14 @@ function editor(m) {
   const f = el('form', 'editor'); const t = el('textarea'); t.value = m.texto || ''; t.maxLength = 4000; t.setAttribute('aria-label', 'Editar mensagem');
   const l = el('div', 'linha'); const c = el('button', '', 'Cancelar'); c.type = 'button'; const s = el('button', 'primary', 'Salvar'); s.type = 'submit';
   l.append(c, s); f.append(t, l);
-  c.onclick = () => { editando = ''; renderMsgs(); };
-  t.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); editando = ''; renderMsgs(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } });
+  c.onclick = () => { editando = ''; rascunhoEdicao = null; renderMsgs(); };
+  t.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); editando = ''; rascunhoEdicao = null; renderMsgs(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } });
   f.onsubmit = async e => {
     e.preventDefault(); const txt = t.value.trim();
     if (!txt) { toast('A mensagem não pode ficar vazia. Para tirar, use 🗑 Apagar.'); return; }
     if (txt === m.texto) { editando = ''; renderMsgs(); return; }
     s.disabled = true;
-    try { await update(ref(db, B + 'msgs/' + atual + '/' + m.id), { texto: txt, editado: serverTimestamp() }); editando = ''; renderMsgs(); }
+    try { await update(ref(db, B + 'msgs/' + atual + '/' + m.id), { texto: txt, editado: serverTimestamp() }); editando = ''; rascunhoEdicao = null; renderMsgs(); }
     catch (err) { s.disabled = false; falhou('salvar a edição', err); }
   };
   return f;
@@ -529,18 +542,19 @@ function editor(m) {
 
 // ═══ Escrever ═══
 async function enviar() {
-  const t = $('entrada'), txt = t.value.trim(), id = atual;
-  if (!txt || !id) return;
+  const t = $('entrada'), bruto = t.value, txt = bruto.trim(), id = atual;
+  if (!txt || !id || enviando) return;
   if (txt.length > 4000) { toast('Mensagem longa demais (máx. 4000 caracteres).'); return; }
   const k = push(ref(db, B + 'msgs/' + id)).key;
   const ts = serverTimestamp();
-  $('b-enviar').disabled = true;
+  enviando = true; $('b-enviar').disabled = true;
   try {
     // contrato com as regras: a mensagem e o marcador de não lidas no MESMO update, com o mesmo serverTimestamp
     await update(ref(db), { [B + 'msgs/' + id + '/' + k]: { uid: user.uid, ts, texto: txt }, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } });
-    t.value = ''; ajustarAltura(); lsSet('cardume_rascunho_' + id, '');
+    if (atual === id && t.value === bruto) { t.value = ''; ajustarAltura(); }
+    lsSet(chaveRascunho(id), atual === id ? t.value : '');
   } catch (e) { falhou('enviar a mensagem', e); }
-  finally { $('b-enviar').disabled = false; t.focus(); }
+  finally { enviando = false; $('b-enviar').disabled = false; t.focus(); }
 }
 function apagar(m) {
   const canal = atual;
@@ -557,7 +571,7 @@ function apagar(m) {
 function desfazer(id) { const p = pendentes.get(id); if (!p) return; clearTimeout(p.timer); pendentes.delete(id); renderMsgs(); }
 // Marca como lido (só sobe; um write por mudança, com respiro).
 function marcarLido() {
-  const id = atual; if (!id || !souMembro(id) || document.hidden || !msgs.length) return;
+  const id = atual; if (!id || !souMembro(id) || !conversaVisivel() || !msgs.length) return;
   const ts = msgs[msgs.length - 1].ts;
   if (ts <= (lidas[id] || 0)) return;
   clearTimeout(marcarLido._t);
@@ -593,7 +607,7 @@ function prefixarLinha(pre) {
   const a = entrada.selectionStart, ini = entrada.value.lastIndexOf('\n', a - 1) + 1;
   entrada.setRangeText(pre, ini, ini, 'end'); entrada.focus();
 }
-entrada.addEventListener('input', () => { ajustarAltura(); atualizarSug(); if (atual) lsSet('cardume_rascunho_' + atual, entrada.value); });
+entrada.addEventListener('input', () => { ajustarAltura(); atualizarSug(); if (atual) lsSet(chaveRascunho(atual), entrada.value); });
 entrada.addEventListener('keydown', e => {
   if (sug) {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sug.sel = (sug.sel + (e.key === 'ArrowDown' ? 1 : -1) + sug.itens.length) % sug.itens.length; destacarSug(); return; }
@@ -639,7 +653,7 @@ function renderLado() {
   $('b-lado').setAttribute('aria-pressed', String(!lado.hidden));
   lado.replaceChildren(); if (!id) return;
   const c = canais[id], g = gestor(id), membro = souMembro(id);
-  const cab = el('header', 'cabecalho'); const v = el('button', 'voltar', '←'); v.type = 'button'; v.setAttribute('aria-label', 'Voltar à conversa'); v.onclick = () => { $('app').dataset.tela = 'conversa'; };
+  const cab = el('header', 'cabecalho'); const v = el('button', 'voltar', '←'); v.type = 'button'; v.setAttribute('aria-label', 'Voltar à conversa'); v.onclick = () => { $('app').dataset.tela = 'conversa'; renderLista(); marcarLido(); };
   const tt = el('div', 'grow'); tt.append(el('p', 'subtitulo', 'Detalhes'), el('h2', '', nomeCanal(id))); cab.append(v, tt); lado.append(cab);
   const s = el('section');
   // ativar canal oficial (ADM)
@@ -691,7 +705,7 @@ function renderLado() {
   lado.append(s);
 }
 $('b-lado').onclick = () => { verLado = $('lado').hidden; lsSet('cardume_lado', verLado ? '1' : '0'); if (window.matchMedia('(max-width: 899px)').matches) { verLado = true; renderLado(); $('app').dataset.tela = 'lado'; return; } renderLado(); };
-$('b-voltar').onclick = () => { $('app').dataset.tela = 'canais'; };
+$('b-voltar').onclick = () => { $('app').dataset.tela = 'canais'; renderLista(); };
 
 // Pares que as regras exigem no MESMO update (docs/ideias/cardume-v0-banco.md › Contratos)
 const parMembro = (id, uid, v) => ({ [B + 'membros/' + id + '/' + uid]: v, [B + 'meus/' + uid + '/' + id]: v });
@@ -791,8 +805,16 @@ $('btn-google').onclick = async () => {
     if (!isHering(r.user)) { await signOut(auth); m.textContent = '⚠️ Use a conta @ciahering.com.br.'; m.hidden = false; }
   } catch (e) { if (e && e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') { m.textContent = '⚠️ Não deu pra entrar agora. Tente de novo.'; m.hidden = false; } }
 };
-async function iniciar() {
+function limparSessao() {
   Object.keys(ouvintes).forEach(k => { ouvintes[k](); delete ouvintes[k]; });
+  pendentes.forEach(p => clearTimeout(p.timer)); pendentes.clear();   // apagar pendente da conta anterior = não apaga (lado seguro)
+  eu = {}; pub = {}; meta = {}; meus = {}; abertos = {}; lidas = {}; msgs = []; membrosAtual = {}; adminsAtual = {};
+  Object.keys(canais).forEach(k => delete canais[k]); Object.keys(ultimas).forEach(k => delete ultimas[k]);
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug();
+  $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
+}
+async function iniciar() {
+  limparSessao();
   renderWho();
   if (!user) { $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
   $('login').hidden = true; $('loading').hidden = false; $('app').hidden = true;
@@ -803,7 +825,6 @@ async function iniciar() {
   iniciarOuvintes(); renderLista();
   const q = new URLSearchParams(location.search).get('c') || lsGet('cardume_canal') || '';
   if (ID_RE.test(q)) abrirCanal(q); else { renderCabecalho(); renderMsgs(); renderLado(); }
-  if (atual) { const r = lsGet('cardume_rascunho_' + atual); if (r) { entrada.value = r; ajustarAltura(); } }
 }
 onAuthStateChanged(auth, u => {
   const novo = isHering(u) ? u : null;

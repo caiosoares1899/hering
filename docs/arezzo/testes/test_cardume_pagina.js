@@ -128,6 +128,58 @@ function conferirEscritas(escritas, quem) {
   t('sem erro de JS (Ana)', !B.errs.length, B.errs);
   const estado2 = await store(q); await B.ctx.close();
 
+  // ── 5b. Achados do Codex na #1926 ──
+  const BRU = G('bru', 'bru@ciahering.com.br', 'Bruno Reis');
+  const escrever = async (pg, caminho, v) => pg.evaluate(async ([c, x]) => { const m = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js'); await m.set(m.ref({}, c), x); }, [caminho, v]);
+  { // link direto ?c=dados como membro não ADM: a conversa carrega quando o "meus" chega
+    const D = await abrir(ANA, estado2, '?c=dados'); await D.p.waitForTimeout(300);
+    t('link ?c= abre a conversa já carregada (membro não ADM)', /Cheguei|BF|corrigido|importante/.test(await D.p.textContent('#log')) && await D.p.isVisible('#entrada'), await D.p.textContent('#log'));
+    // rascunho por canal: texto do canal A não vai para o canal B
+    await D.p.fill('#entrada', 'rascunho só da dados'); await D.p.dispatchEvent('#entrada', 'input');
+    await D.p.click('[data-canal="' + tid + '"]'); await D.p.waitForTimeout(200);
+    t('trocar de canal troca o rascunho (o do outro não fica no campo)', (await D.p.inputValue('#entrada')) === '', await D.p.inputValue('#entrada'));
+    await D.p.press('#entrada', 'Enter'); await D.p.waitForTimeout(150);
+    const sT = await store(D.p);
+    t('Enter com campo vazio no canal B não envia o texto do A', !Object.values(ler(sT, 'kanban/cardume/msgs/' + tid) || {}).some(m => m.texto === 'rascunho só da dados'), 0);
+    await D.p.click('[data-canal="dados"]'); await D.p.waitForTimeout(200);
+    t('voltar ao canal A restaura o rascunho dele', (await D.p.inputValue('#entrada')) === 'rascunho só da dados', await D.p.inputValue('#entrada'));
+    // Enter duas vezes com a rede lenta: uma mensagem só
+    await D.p.evaluate(() => { window.__setDelay = () => 400; });
+    const antes = Object.keys(ler(await store(D.p), 'kanban/cardume/msgs/dados') || {}).length;
+    await D.p.fill('#entrada', 'uma vez só'); await D.p.press('#entrada', 'Enter'); await D.p.press('#entrada', 'Enter'); await D.p.waitForTimeout(700);
+    await D.p.evaluate(() => { window.__setDelay = null; });
+    const depois = Object.values(ler(await store(D.p), 'kanban/cardume/msgs/dados') || {});
+    t('Enter duas vezes durante o envio grava uma mensagem só', depois.length === antes + 1 && depois.filter(m => m.texto === 'uma vez só').length === 1, depois.length - antes);
+    // editor preservado quando chega mensagem de outra pessoa
+    const minha = Object.entries(ler(await store(D.p), 'kanban/cardume/msgs/dados')).find(([, m]) => m.texto === 'uma vez só')[0];
+    await D.p.hover('[data-msg="' + minha + '"]'); await D.p.click('[data-msg="' + minha + '"] >> text=Editar');
+    await D.p.fill('[data-msg="' + minha + '"] textarea', 'editando com calma');
+    await escrever(D.p, 'kanban/cardume/msgs/dados/zzOutra1', { uid: 'cai', ts: Date.now(), texto: 'chegou outra' }); await D.p.waitForTimeout(150);
+    t('mensagem nova chegando não apaga o que está sendo editado', (await D.p.inputValue('[data-msg="' + minha + '"] textarea')) === 'editando com calma', await D.p.inputValue('[data-msg="' + minha + '"] textarea').catch(() => 'sumiu'));
+    // troca de conta na mesma aba: nada do canal privado fica na tela
+    await D.p.evaluate(() => window.__authCb(null)); await D.p.waitForTimeout(150);
+    await D.p.evaluate(x => window.__authCb(x), BRU); await D.p.waitForTimeout(400);
+    const tela = await D.p.evaluate(() => ({ log: document.getElementById('log').textContent, lado: document.getElementById('lado').textContent, lista: document.getElementById('lista-canais').textContent, entrada: document.getElementById('entrada').value }));
+    t('trocar de conta não mostra mensagens nem membros do canal anterior', !/chegou outra|uma vez só|Ana Lima/.test(tela.log + tela.lado) && !tela.entrada, tela);
+    t('sem erro de JS (achados)', !D.errs.length, D.errs);
+    await D.ctx.close();
+  }
+  { // celular: com a lista à frente, mensagem nova não é marcada como lida e o ponto aparece
+    const M = await abrir(ANA, estado2, '', { width: 390, height: 800 });
+    await M.p.click('[data-canal="dados"]'); await M.p.waitForTimeout(1000);
+    await M.p.click('#b-voltar'); await M.p.waitForTimeout(100);
+    const lidoAntes = ler(await store(M.p), 'kanban/cardume/lidas/ana/dados');
+    const ts = Date.now() + 5;
+    await escrever(M.p, 'kanban/cardume/msgs/dados/zzNova2', { uid: 'cai', ts, texto: 'nova enquanto na lista' });
+    await escrever(M.p, 'kanban/cardume/ultima/dados', { uid: 'cai', ts, id: 'zzNova2' }); await M.p.waitForTimeout(1100);
+    t('celular na lista: não marca como lida a mensagem que a pessoa não viu', ler(await store(M.p), 'kanban/cardume/lidas/ana/dados') === lidoAntes, [lidoAntes, ts]);
+    t('celular na lista: o ponto de não lido aparece', await M.p.evaluate(() => document.querySelector('[data-canal="dados"]').classList.contains('nao-lido')), 0);
+    await M.p.click('[data-canal="dados"]'); await M.p.waitForTimeout(1100);
+    t('celular: abrir a conversa marca como lida', ler(await store(M.p), 'kanban/cardume/lidas/ana/dados') === ts, ler(await store(M.p), 'kanban/cardume/lidas/ana/dados'));
+    t('sem erro de JS (celular, lidas)', !M.errs.length, M.errs);
+    await M.ctx.close();
+  }
+
   // ── 6. Celular: uma coluna por vez, sem rolagem lateral ──
   const C = await abrir(ANA, estado2, '', { width: 390, height: 800 });
   const sobra = await C.p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
