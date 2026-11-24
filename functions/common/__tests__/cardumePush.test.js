@@ -5,7 +5,7 @@ const { mencionadosNoTexto, mencaoConfere, mencaoValida } = require('../cardumeP
 const nomes = { ana: 'Ana Lima', ann: 'Ana', bru: 'Bruno Reis', cai: 'Caio Soares' };
 const membros = { ana: true, ann: true, bru: true, cai: true };
 const notif = { type: 'cardume_mencao', cardumeRef: 'x1', title: 'texto do navegador', sub: 'qualquer coisa' };
-const rec = { c: 'dados', m: '-Nmsg1', de: 'cai', ts: 1, n: 'n123' };
+const rec = { c: 'dados', m: '-Nmsg1', de: 'cai', ts: Date.now(), n: 'n123' };
 const msg = { uid: 'cai', ts: 1, texto: 'oi @Ana Lima, tudo certo?' };
 const arvore = { kanban: { cardume: { mencoes: { ana: { x1: rec } }, msgs: { dados: { '-Nmsg1': msg } }, membros: { dados: membros } },
   usuarios_publicos: Object.fromEntries(Object.entries(nomes).map(([u, n]) => [u, { nome: n }])) } };
@@ -29,6 +29,10 @@ test('push só se o registro aponta para ESTA notificação E a mensagem mencion
   assert.equal(mencaoConfere(notif, 'n123', 'ana', rec, Object.assign({}, msg, { uid: 'bru' }), membros, nomes), false, 'mensagem de outra pessoa');
   assert.equal(mencaoConfere(notif, 'n123', 'ana', rec, { uid: 'cai', ts: 1, apagada: true }, membros, nomes), false, 'mensagem apagada');
   assert.equal(mencaoConfere(notif, 'n123', 'ana', rec, msg, Object.assign({}, membros, { ana: null }), nomes), false, 'saiu do canal');
+  assert.equal(mencaoConfere(notif, 'n123', 'ana', Object.assign({}, rec, { lida: true }), msg, membros, nomes), false, 'registro já lido (replay depois de limpar o Sino)');
+  assert.equal(mencaoConfere(notif, 'n123', 'ana', Object.assign({}, rec, { ts: Date.now() - 6 * 60 * 1000 }), msg, membros, nomes), false, 'registro velho (replay tardio)');
+  assert.equal(mencaoConfere(notif, 'n123', 'ana', Object.assign({}, rec, { ts: Date.now() - 4 * 60 * 1000 }), msg, membros, nomes), true, 'dentro da janela');
+  assert.equal(mencaoConfere(notif, 'n123', 'ana', Object.assign({}, rec, { ts: undefined }), msg, membros, nomes), false, 'sem ts');
   assert.equal(mencaoConfere({ type: 'mention', cardumeRef: 'x1' }, 'n123', 'ana', rec, msg, membros, nomes), false, 'outro tipo');
 });
 
