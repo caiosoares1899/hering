@@ -154,3 +154,21 @@ test('config: todo mundo da Hering lê, só ADM muda a retenção (7 a 3650 dias
   assert.equal(grava(C, A.adm, 1), false);
   assert.equal(grava('kanban/cardume/config/outra', A.adm, 1), false);
 });
+
+test('gravar direto num campo filho não fura as regras da mensagem nem do marcador', () => {
+  reset(); const ts = Date.now() - 5000; põe('m1', msg({ ts })); põe('m2', msg({ ts: ts + 1 })); põe('b1', msg({ uid: 'bru', ts }));
+  assert.equal(grava(M('m1') + '/uid', A.ana, 'bru'), false, 'passar a própria mensagem para outra pessoa');
+  assert.equal(grava(M('m1') + '/ts', A.ana, Date.now()), false, 'mudar a hora');
+  assert.equal(grava(M('m1') + '/texto', A.ana, 'trocado sem marca de editado'), false, 'editar texto sem "editado"');
+  assert.equal(grava(M('m1') + '/card', A.ana, 'c9'), false, 'pendurar um card depois');
+  assert.equal(grava(M('m1') + '/apagada', A.ana, true), false, '"apagada" mantendo o texto');
+  assert.equal(grava(M('m1') + '/html', A.ana, '<b>'), false, 'campo novo');
+  assert.equal(grava(M('b1') + '/texto', A.ana, 'mexendo na do Bruno'), false, 'texto alheio');
+  DB.kanban.cardume.ultima = { dados: { ts, uid: 'ana', id: 'm1' } };
+  const U = 'kanban/cardume/ultima/dados';
+  assert.equal(grava(U + '/ts', A.ana, Date.now()), false, 'acender não lidas sem mensagem');
+  assert.equal(grava(U + '/id', A.ana, 'b1'), false, 'apontar para a mensagem de outro');
+  assert.equal(grava(U + '/id', A.ana, 'm2'), false, 'trocar o id sem a hora bater');
+  assert.equal(grava(U + '/uid', A.bru, 'bru'), false, 'outro membro assumir o marcador');
+  assert.equal(grava(U + '/ts', A.ana, null), false, 'apagar um pedaço do marcador');
+});
