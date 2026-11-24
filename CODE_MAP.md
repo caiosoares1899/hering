@@ -552,7 +552,7 @@ detalhe dos 4 call sites.
   persistir), afetando qualquer pessoa/squad, não só quem reportou.
   Fix: `_stripUndefinedMultiPath()` aplica `_stripUndefinedDeep()` em
   cada VALOR do update, preservando as chaves de nível superior —
-  mesmo padrão que `_notasUpdate()` (L24190) já usava certo. Trocada
+  mesmo padrão que `_notasUpdate()` (L24200) já usava certo. Trocada
   nos 3 pontos de escrita (`fbSaveAll()`/`fbCreateCard()`/
   `fbSaveCard()`). **Lição**: `_stripUndefinedDeep(val)` só deve
   receber um VALOR a ser escrito (um card, um bloco de Nota) — nunca o
@@ -560,7 +560,7 @@ detalhe dos 4 call sites.
 - `_saveCardWithRetry(card, label)` — L10373 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
   usada por `scheduleAutoSave()`/`_performAutoSave()` (L15508/L15566),
-  `saveExtraDesc()` (L19161) e a simulação de agente (re-grep `_saveCardWithRetry`).
+  `saveExtraDesc()` (L19171) e a simulação de agente (re-grep `_saveCardWithRetry`).
   **Retorna a promise de verdade desde 2026-09-21** (`/monitorarbugs`,
   relato direto de usuária — "salvo beleza, mas some ao atualizar"):
   antes era fire-and-forget, e os 3 call sites mostravam feedback de
@@ -579,7 +579,7 @@ detalhe dos 4 call sites.
   (`editingId` já aponta pro card novo). `_flushAutoSave()` cancela o
   timer e roda a escrita na hora, chamada no topo dos dois pontos acima
   — antes de qualquer um mexer em `editingId`/DOM. **Achado 2026-09-22,
-  3º ponto**: `openNewCard()` (L20023) tinha o MESMO gap — chamada por
+  3º ponto**: `openNewCard()` (L20033) tinha o MESMO gap — chamada por
   `usarQLItem()`/`_intakeCriarCard()` sem fechar `#card-ov` primeiro
   (só fecham `ql-ov`/`intake-ov`, overlays que ficam empilhados por
   cima de um card já aberto — comportamento já documentado no próprio
@@ -2469,7 +2469,7 @@ derivado do card mudando).
 - `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L34911/L34919/L17640 — total "efetivo até agora" (fechado + episódio aberto).
 - `_renderCardTimeInfo(c)` — L34995 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L19574).
+  bloco de Impedimento), chamado no `openCard()` (L19584).
 - Dashboards: `renderBoardDataInsights()` (L22721, seção "Tempo em
   atraso/bloqueado") e `renderCriativosDashboard()` (L19643, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
@@ -4666,7 +4666,7 @@ Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,n
 
 ### 🛡️ Painel — Sanitização DOM/CSS e trava C1/C2 de papéis (`painel-dev.html` v5.100–v5.102, 2026-11-11)
 - **Sanitizadores DOM/CSS (`painel-dev.html`)**: `safeUrl()` / `_hrefOk()` — L3755/L3657, `_corCssOk()` — L3756, `_colsSegurasP()` — L3757, `_tagsSegurasP()` — L3758, `_pSafeUrl()` — L4030, `_sanitizeComunicadoHtml()` — L9167 (`DOMParser` inerte com whitelist estrita de tags e `href`), `_sqCorOk()` — L10601. Teste: `docs/arezzo/testes/test_painel_dom_xss.js`.
-- **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10511) e `updateSquadUserRole()` (L11663) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
+- **Travas de papel (`C1/C2`)**: `updateUserRole()` (L10511) e `updateSquadUserRole()` (L11675) impedem PO de conceder `role === 'adm'` e exigem inscrição no squad-alvo; no servidor, `database.rules.json` + `functions/rules/__tests__/papelRules.test.js` garantem a mesma fronteira.
 
 ### 📊 Gantt dos calendários — `mare-gcal(-dev).js` (`v7` prod · `v9`-dev) & `mare-gxl(-dev).js` (`v2`) (2026-11-16)
 - **`mare-gcal-dev.js` (`window.MareGCal`, v9)**: `CALS` (marca, comercial, mktplace, outlet), `CONSOLIDADO` (aba virtual 🧭 Digital · dia a dia), `ABAS`, `NOME`, `ROT_NOVO`, `GRUPOS`, `LINHA_COR`, `CORES`, `NOME_COR`, `LARGO`, `permitido(u)`, `linhaNoGrupo(g,k)`, `linhasDe(id,d)`, `doDia(dadosPorFonte, dia, fontes)` (painel "tudo deste dia"), `diaHtml()` / `diaPop()` / `diaPopFechar()` (popup do dia na 🧭 Digital em `-dev`), `montar(root, opts)` (visualizador no Radar `okr(-dev).html?gantt`), `inscricao()` (nó `kanban/gantt_inscritos(_dev)/{cal}/{uid}`, botão 🔔 Avisar-me), `PEDIDO` / `pedido()` (botão 📣 Pedir atualização, aviso `gantt_pedido` com deduplicação diária).

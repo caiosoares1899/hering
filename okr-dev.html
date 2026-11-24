@@ -2119,7 +2119,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.149 · okr-dev</div>
+<div class="version">v2.150 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7005,7 +7005,10 @@ function _okrAbrirPromptTorre(){
 async function _okrDefinirMinhaTorre(id){
   const u = window._currentUser; if(!u || !_okrTorreValida(id)) return;
   try{
-    await window._update(window._ref(window._db,'kanban/usuarios/'+u.uid), {torre:id});
+    await window._update(window._ref(window._db,'kanban'), {
+      ['usuarios/'+u.uid+'/torre']:id,
+      ['usuarios_publicos/'+u.uid+'/torre']:id,
+    });
   }catch(e){ showToast('⚠ Não consegui gravar a sua torre ('+(e?.code||e?.message||'erro')+'). Tente de novo.'); return; }
   _globalUsersCache[u.uid] = {...(_globalUsersCache[u.uid]||{}), torre:id};
   document.getElementById('okr-torre-ov')?.remove();
