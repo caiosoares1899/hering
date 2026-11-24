@@ -1385,7 +1385,8 @@
           "notificacoes": {
             ".indexOn": ["ts"],
             "$notifId": {
-              ".write": "auth != null && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm') || (!data.exists() && newData.child('type').isString() && newData.child('type').val() !== 'painel_broadcast' && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads').exists())))"
+              ".write": "auth != null && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm') || (!data.exists() && newData.child('type').isString() && newData.child('type').val() !== 'painel_broadcast' && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads').exists())))",
+              ".validate": "auth.uid === $uid || !data.exists() || (data.child('noTTLDelete').val() !== true && (data.child('read').val() !== true || newData.child('read').val() === true))"
             }
           }
         }
@@ -1394,7 +1395,9 @@
         ".read": "auth != null",
         "$uid": {
           ".write": "auth != null && (auth.uid === $uid || ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
-          "diretoria": { ".validate": "newData.isString() && newData.val() === newData.parent().parent().parent().child('usuarios').child($uid).child('diretoria').val()" }
+          "diretoria": { ".validate": "newData.isString() && newData.val() === newData.parent().parent().parent().child('usuarios').child($uid).child('diretoria').val()" },
+          "torre": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_-]{1,40}$/) && newData.val() === newData.parent().parent().parent().child('usuarios').child($uid).child('torre').val()" },
+          "gestorOkr": { ".validate": "newData.val() === true && newData.parent().parent().parent().child('usuarios').child($uid).child('gestorOkr').val() === true" }
         }
       },
       "init_registry": {

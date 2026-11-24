@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-24 · 🔒 Leitura ampla de kanban/usuarios, fase A: espelho de torre/Gestor OKR validado e createNotif sem ler a caixa de outra pessoa (SÓ DEV + regras)
+
+Desenho: docs/ideias/usuarios-leitura-fechar.md. (1) Regras: usuarios_publicos/$uid ganha torre e gestorOkr, validados iguais ao cadastro (o espelho é gravável pela própria pessoa e o Radar mostra controles pelo gestorOkr dos outros). (2) Regras: notificação de outra pessoa não é regravada nem por PO/ADM — .validate em notificacoes/$notifId (o .write do $uid libera PO/ADM em cascata, então a trava tinha de ser no .validate); regravar reabria um aviso lido. (3) kanban-dev createNotif: para outra pessoa grava direto (sem get/transação na caixa dela) e trata PERMISSION_DENIED como 'já existe'; para a própria segue a transação. Testes: usuariosFaseARules.test.js (sabotagem confirmada), test_createnotif_sem_ler.js (7, sabotagem confirmada).
+
 ### 2026-11-24 · Cardume: push de menção recusa registro lido ou com mais de 5 min (functions, vale no deploy)
 
 Achado da auditoria do Antigravity na #1932 (baixa): o nó do Sino é legível por toda a Hering, então quem anotou (notifId, cardumeRef) podia recriar a notificação depois de a pessoa limpá-la e disparar um push repetido. mencaoConfere (functions/common/cardumePush.js) agora exige registro não lido e ts dentro de 5 min (FRESCOR_MS). Sem texto injetável antes nem agora (texto montado no servidor). Testes: lido, velho, dentro da janela, sem ts; sabotagem confirmada.
