@@ -21,8 +21,8 @@
   const FEED = 'kanban/notif_feed', SEEN = 'kanban/notif_feed_seen', FEED_LIMIT = 60;
   const IS_DEV = /-dev\.html/.test(location.pathname);
   const PAGES = IS_DEV
-    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html', escala:'escala-dev.html', travessia:'travessia-dev.html'}
-    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html', escala:'escala.html', travessia:'travessia.html'};
+    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html', escala:'escala-dev.html', travessia:'travessia-dev.html', cardume:'cardume-dev.html'}
+    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html', escala:'escala.html', travessia:'travessia.html', cardume:'cardume.html'};
 
   // Ícone de cada tipo (pessoais + feed). As páginas podem ter o próprio mapa; este é o de referência.
   const ICONS = {
@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍', gantt_cal:'📊', gantt_pedido:'📣',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_cobranca:'📦', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', cardume_mencao:'🐟', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -63,7 +63,7 @@
     {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
   ];
   // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
-  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_cobranca','card_resgatado','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou','timer_criado','timer_zero','timer_esquecido','timer_encerrado','gantt_cal','gantt_pedido']);
+  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_cobranca','card_resgatado','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','plantao_bug','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou','timer_criado','timer_zero','timer_esquecido','timer_encerrado','gantt_cal','gantt_pedido','cardume_mencao']);
   // fonte: 'pessoal' = notificação gravada na caixa de cada pessoa (kanban/usuarios/{uid}/notificacoes); 'feed' = evento único da torre (kanban/notif_feed).
   const TIPOS = [
     // ── Cards do board ──
@@ -113,6 +113,9 @@
     {id:'timer_esquecido', familia:'pessoal', rotulo:'Timer rodando', area:'prazos', fonte:'pessoal', nome:'Timer esquecido rodando', pushPossivel:true,
       quando:'Uma atividade segue rodando, sem pausa, há 4 horas — e de novo aos 8 e 12 horas (depois disso para de avisar). Pausar e retomar reinicia a contagem.',
       quem:'Quem está executando a atividade.', onde:'Servidor: timersVigia (functions/timers/vigia.js). Clicar abre o card.'},
+    {id:'cardume_mencao', familia:'pessoal', rotulo:'Cardume', area:'board', fonte:'pessoal', nome:'Menção no Cardume (@)', pushPossivel:true,
+      quando:'Alguém escreve @seu nome numa mensagem de um canal do 🐟 Cardume em que você está.',
+      quem:'A pessoa mencionada, se for membro do canal (nunca quem escreveu).', onde:'Cardume (cardume-dev.html → avisarMencoes()). Clicar abre o canal direto na mensagem.'},
     {id:'escala', familia:'calendario', rotulo:'Escala', area:'agenda', fonte:'pessoal', nome:'Sua escala foi cadastrada', pushPossivel:true,
       quando:'PO, Organizador ou ADM cadastra (ou limpa) a escala de trabalho/plantão/folga de OUTRA pessoa — uma notificação por cadastro, com o período e o tipo. Quem cadastra a própria escala não se avisa.',
       quem:'A pessoa dona da escala.', onde:'Escala (escala-dev.html → avisarPessoa()). Clicar abre a Escala na semana cadastrada.'},
@@ -388,6 +391,8 @@
     if(t==='github_incidente' || t==='github_monitor_falhou' || t==='firebase_incidente' || t==='firebase_monitor_falhou') return {url:PAGES.painel+'?tab=status'};   // incidente/monitor do GitHub ou Firebase (só ADMs): abre a aba 🔋 Status do Painel
     if(t==='backup_falhou' || t==='vtex_monitor_falhou') return {url:PAGES.painel};   // aviso pros ADMs: abre o Painel
     if(t==='travessia_apoio') return {url:PAGES.travessia+'?tab=frota'};   // abre a Frota (termômetro do time) na Travessia
+    if(t==='cardume_mencao'){ const ok=v=>/^[A-Za-z0-9_-]{1,64}$/.test(String(v||'')); if(!ok(n.cardume)) return null;   // 🐟 abre o canal na mensagem (ids validados: o aviso vem do navegador de quem mencionou)
+      return {url:(n.dev===false ? PAGES.cardume : 'cardume-dev.html')+'?c='+n.cardume+(ok(n.cardumeMsg)?'&m='+n.cardumeMsg:'')}; }
     if(t==='escala') return {url:PAGES.escala+'?visao=squad'+(n.squad?'&squad='+encodeURIComponent(n.squad):'')+(/^\d{4}-\d{2}-\d{2}$/.test(n.okrObjId||'')?'&semana='+n.okrObjId:'')};   // abre a Escala na semana cadastrada
     if(t==='meta_lembrete') return {url:PAGES.kanban+'?'+(n.squad?'squad='+encodeURIComponent(n.squad)+'&':'')+'dados='+(n.okrObjId==='digital'?'digital':'squad')};   // abre a aba 📊 Dados (Squad ou Digital) do Maré
     if(t==='reuniao') return /^https?:\/\//i.test(String(n.meetingLink||'')) ? {url:n.meetingLink, externo:true} : null;   // só http(s): um javascript: gravado na notificação viraria XSS no window.open

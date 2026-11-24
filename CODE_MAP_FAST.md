@@ -1,6 +1,6 @@
 # CODE_MAP_FAST.md — Índice Compacto de Navegação Rápida
 
-> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-23.
+> Gerado automaticamente por `node scripts/mare-cli.js map` em 2026-11-24.
 > Para o índice **completo** de todos os `<style>`, `<script>`, `const`s e funções de cada página `-dev` e módulo `mare-*-dev.js`, consulte [`docs/CODE_SYMBOLS.md`](docs/CODE_SYMBOLS.md).
 
 ## 1. Sumário de Seções (`CODE_MAP.md`)
@@ -127,7 +127,7 @@
 
 ### `okr-apresentacao.slide.html` (12 âncoras verificadas)
 - [`buildSlides`](okr-apresentacao.slide.html#L1527) · [`startListeners`](okr-apresentacao.slide.html#L2542) · [`rebuild`](okr-apresentacao.slide.html#L1647) · [`fitSlideContent`](okr-apresentacao.slide.html#L1807) · [`_okrFitDetailSections`](okr-apresentacao.slide.html#L2140) · [`objMarcos`](okr-apresentacao.slide.html#L1105)
-- [`_okrViewerKey`](okr-apresentacao.slide.html#L3513) · [`_okrShowApp`](okr-apresentacao.slide.html#L3484) · [`_hojeStr`](okr-apresentacao.slide.html#L2215) · [`renderNotas`](okr-apresentacao.slide.html#L2273) · [`_okrAgendaHoje`](okr-apresentacao.slide.html#L2412) · [`_okrRenderCountdown`](okr-apresentacao.slide.html#L2458)
+- [`_okrViewerKey`](okr-apresentacao.slide.html#L3514) · [`_okrShowApp`](okr-apresentacao.slide.html#L3485) · [`_hojeStr`](okr-apresentacao.slide.html#L2215) · [`renderNotas`](okr-apresentacao.slide.html#L2273) · [`_okrAgendaHoje`](okr-apresentacao.slide.html#L2412) · [`_okrRenderCountdown`](okr-apresentacao.slide.html#L2458)
 
 ### `mare-notif-dev.js` (3 âncoras verificadas)
 - [`AREAS`](mare-notif-dev.js#L56) · [`PUSH_PADRAO`](mare-notif-dev.js#L66) · [`TIPOS`](mare-notif-dev.js#L68)
