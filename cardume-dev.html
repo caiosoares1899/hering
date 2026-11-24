@@ -86,7 +86,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .cartao{max-width:420px;margin:8vh auto;padding:22px;border:1px solid var(--glass-b);border-radius:20px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);display:grid;gap:12px;}
 .cartao p{color:var(--txt2);}
 .erro{color:var(--danger);}
-.app{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(250px,26%);flex:1;min-height:0;border:1px solid var(--glass-b);border-radius:20px;overflow:hidden;background:var(--glass);box-shadow:var(--shadow),var(--specular);}   /* SEM backdrop-filter: o .app cobre a tela toda e, com peixes nadando atrás, o desfoque era refeito a cada quadro (medido: ~1.600 ms/s de raster × ~480 sem, ≈ o Maré com peixes). O mar é degradê suave: o desfoque quase não mudava o visual */
+.app{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(250px,26%);flex:1;min-height:0;border:1px solid var(--glass-b);border-radius:20px;overflow:hidden;background:var(--glass);box-shadow:var(--shadow),var(--specular);}   /* SEM backdrop-filter: o .app cobre a tela toda e, com peixes nadando atrás, o desfoque era refeito a cada quadro (medido: ~1.600 ms/s de raster × ~600 sem, na faixa do Maré com peixes ~535). O mar é degradê suave: o desfoque quase não mudava o visual */
 .app.sem-lado{grid-template-columns:230px minmax(0,1fr);}
 .painel{min-width:0;min-height:0;display:flex;flex-direction:column;background:transparent;}
 .conversa{background:rgba(var(--ink-rgb),.3);}
