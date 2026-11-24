@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Codex | `codex/kanban-ver-conversa` | `kanban-dev.html` (🐟 Ver conversa no Cardume) | 24/11/2026 |
+| Claude | `claude/sino-unificado` (fase 1) | `mare-notif-dev.js` (componente do Sino), `cardume-dev.html` + `?v=` das páginas que carregam o módulo | 24/11/2026 |
 
 
 ## Fila
@@ -55,6 +55,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |
 | 🧲 Ideias do Kanbanize: ícone de link, tempo por coluna, Monte Carlo, fila × ativa, causas de impedimento e ponte com a TI | Claude · ponte: Caio com a TI | [backlog](quadro/backlog.md#ideias-kanbanize) |
-| 🐟 Cardume: chat do time no Oceano (canal = squad, thread = card); piloto `dados`; regras (oficiais + temáticos) no ar em 24/11; etapa 4 (menções + push) em deploy; próximas ideias: [escrever melhor](quadro/backlog.md#cardume-texto), [reagir e responder](quadro/backlog.md#cardume-interacoes), [aviso de mensagem nova com 🔕 silenciar](quadro/backlog.md#cardume-avisos) | Claude | [ideia](ideias/cardume.md) |
+| 🐟 Cardume: chat do time no Oceano (canal = squad, thread = card); piloto `dados`; regras (oficiais + temáticos) no ar em 24/11; etapas 3 (card ↔ conversa) e 4 (menções + push) validadas pelo Caio em 24/11; próximas ideias: [escrever melhor](quadro/backlog.md#cardume-texto), [reagir e responder](quadro/backlog.md#cardume-interacoes), [aviso de mensagem nova com 🔕 silenciar](quadro/backlog.md#cardume-avisos) | Claude | [ideia](ideias/cardume.md) |
+| 🔔 **Sino unificado:** um Sino só (componente no `mare-notif`) com os layouts por família do Maré, em todos os apps; fase 1 = Cardume, depois Oceano → Radar → Painel → Maré | Claude · Codex | [plano](ideias/sino-unificado.md) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |
