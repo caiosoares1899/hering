@@ -1,0 +1,142 @@
+// 🐟 Cardume (cardume-dev.html) — etapa 2: a página ligada ao banco (fakefb) + CADA escrita da página conferida contra as regras reais (rulesSim.update).
+// Rodar na raiz: python3 -m http.server 8941  →  node docs/arezzo/testes/test_cardume_pagina.js
+// BASE_URL, CHROME e PLAYWRIGHT_MODULE substituem os caminhos (padrão: ~/hering-tools do Mac). PAGE=cardume.html testa a prod quando existir.
+const fs = require('node:fs'), path = require('node:path'), home = require('node:os').homedir();
+const fake = require('./fakefb.js');
+const { update: regras } = require('../../../functions/rules/rulesSim.js');
+const RULES = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../database.rules.json'), 'utf8'));
+const base = process.env.BASE_URL || 'http://127.0.0.1:8941';
+const PAGE = process.env.PAGE || 'cardume-dev.html';
+const G = (uid, email, nome) => ({ uid, email, displayName: nome, photoURL: '', providerData: [{ providerId: 'google.com' }] });
+const CAIO = G('cai', 'caio.soares@ciahering.com.br', 'Caio Soares'), ANA = G('ana', 'ana@ciahering.com.br', 'Ana Lima');
+const pub = (uid, nome, init, sq) => ({ uid, nome, init, email: uid + '@ciahering.com.br', squads: sq ? { [sq]: true } : {} });
+const seed = () => ({ kanban: {
+  squads_meta: { dados: { label: 'Dados', emoji: '📊' } },
+  usuarios: { cai: { role: 'adm', squads: { dados: true } }, ana: { role: 'membro', squads: { dados: true } } },
+  usuarios_publicos: { cai: Object.assign(pub('cai', 'Caio Soares', 'CS', 'dados'), { email: 'caio.soares@ciahering.com.br' }), ana: pub('ana', 'Ana Lima', 'AL', 'dados'), bru: pub('bru', 'Bruno Reis', 'BR', 'dados') },
+} });
+let ok = true, total = 0;
+const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : '❌ ') + n + (c ? '' : '  ← ' + JSON.stringify(d).slice(0, 500))); };
+const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_provider: 'google.com' } } });
+// Repete cada escrita registrada pelo fakefb contra as regras, com o estado de ANTES e o relógio daquele momento.
+function conferirEscritas(escritas, quem) {
+  const real = Date.now; const ruins = [];
+  for (const e of escritas) {
+    const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([k, v]) => [(e.p ? e.p + '/' : '') + k, v]));
+    Date.now = () => e.t;
+    let r; try { r = regras(RULES, e.antes, authDe(quem), mapa); } finally { Date.now = real; }
+    if (!r) ruins.push({ tipo: e.tipo, caminhos: Object.keys(mapa) });
+  }
+  return ruins;
+}
+
+(async () => {
+  const { chromium } = require(process.env.PLAYWRIGHT_MODULE || path.join(home, 'hering-tools/playwright/node_modules/playwright'));
+  const chromeRoot = path.join(home, 'hering-tools/chrome');
+  const chrome = process.env.CHROME || (fs.existsSync(chromeRoot) ? path.join(chromeRoot, fs.readdirSync(chromeRoot).find(n => n.startsWith('mac_arm-')), 'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing') : undefined);
+  const b = await chromium.launch(chrome ? { executablePath: chrome } : {});
+  const abrir = async (user, store, qs, vp) => {
+    const ctx = await b.newContext({ viewport: vp || { width: 1280, height: 860 } }); await fake.install(ctx, store);
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
+    await p.goto(base + '/' + PAGE + (qs || '')); await p.waitForFunction(() => !!window.__authCb);
+    await p.evaluate(x => window.__authCb(x), user); await p.waitForTimeout(400); return { ctx, p, errs };
+  };
+  const store = p => p.evaluate(() => JSON.parse(JSON.stringify(window.__store)));
+  const escritas = p => p.evaluate(() => window.__escritas || []);
+  const ler = (s, caminho) => caminho.split('/').reduce((a, k) => (a == null ? undefined : a[k]), s);
+  const enviar = async (p, txt) => { await p.fill('#entrada', txt); await p.press('#entrada', 'Enter'); await p.waitForTimeout(150); };
+
+  // ── 1. ADM ativa o canal da squad e põe gente ──
+  const A = await abrir(CAIO, seed());
+  const p = A.p;
+  t('ADM vê a squad sem canal', await p.isVisible('[data-canal="dados"]') && /ativar/.test(await p.textContent('[data-canal="dados"]')), await p.textContent('#lista-canais'));
+  await p.click('[data-canal="dados"]');
+  await p.click('#lado >> text=Ativar canal da squad'); await p.waitForTimeout(150);
+  let s = await store(p);
+  t('ativar cria canais/dados com o nome da squad', ler(s, 'kanban/cardume/canais/dados/nome') === 'Dados', ler(s, 'kanban/cardume/canais'));
+  await p.fill('#lado input[type="search"]', 'Caio'); await p.click('#lado .pessoa button:has-text("Adicionar")'); await p.waitForTimeout(120);
+  await p.fill('#lado input[type="search"]', 'Ana'); await p.click('#lado .pessoa button:has-text("Adicionar")'); await p.waitForTimeout(120);
+  s = await store(p);
+  t('adicionar grava membros + meus (par exigido pelas regras)', ler(s, 'kanban/cardume/membros/dados/ana') === true && ler(s, 'kanban/cardume/meus/ana/dados') === true && ler(s, 'kanban/cardume/meus/cai/dados') === true, ler(s, 'kanban/cardume'));
+  t('compositor aparece para quem é membro', await p.isVisible('#entrada'), 0);
+
+  // ── 2. Mandar, formatar, mencionar, editar, apagar ──
+  await enviar(p, 'Bom dia, time!');
+  s = await store(p);
+  const ms = ler(s, 'kanban/cardume/msgs/dados') || {}; const k = Object.keys(ms)[0], ult = ler(s, 'kanban/cardume/ultima/dados');
+  t('enviar grava a mensagem e o "ultima" com o MESMO ts', !!k && ult && ult.id === k && ult.ts === ms[k].ts && typeof ms[k].ts === 'number', { ms, ult });
+  t('mensagem aparece na conversa', /Bom dia, time!/.test(await p.textContent('#log')), 0);
+  await enviar(p, '**importante** e _leve_ ~~velho~~ `cod` <img src=x onerror="window.__xss=1"> https://exemplo.com/a javascript:alert(1)');
+  const fmt = await p.evaluate(() => { const m = [...document.querySelectorAll('#log .msg')].pop(); return { strong: !!m.querySelector('strong'), em: !!m.querySelector('em'), s: !!m.querySelector('s'), code: !!m.querySelector('code'), img: !!m.querySelector('img'), links: [...m.querySelectorAll('a')].map(a => a.href), xss: !!window.__xss, txt: m.textContent }; });
+  t('formatação vira negrito/itálico/riscado/código', fmt.strong && fmt.em && fmt.s && fmt.code, fmt);
+  t('HTML na mensagem aparece como texto (sem <img>, sem script)', !fmt.img && !fmt.xss && /<img src=x/.test(fmt.txt), fmt);
+  t('só link https vira link; javascript: fica texto', fmt.links.length === 1 && fmt.links[0] === 'https://exemplo.com/a', fmt.links);
+  await p.fill('#entrada', 'oi @An'); await p.dispatchEvent('#entrada', 'input'); await p.waitForTimeout(80);
+  t('@ abre o autocompletar com quem é do canal', await p.isVisible('#sugestoes') && /Ana Lima/.test(await p.textContent('#sugestoes')), 0);
+  await p.press('#entrada', 'Enter');
+  t('Enter escolhe a pessoa (não envia)', (await p.inputValue('#entrada')) === 'oi @Ana Lima ', await p.inputValue('#entrada'));
+  await p.press('#entrada', 'Enter'); await p.waitForTimeout(150);
+  t('menção renderizada destacada', await p.evaluate(() => [...document.querySelectorAll('#log .mencao')].some(x => x.textContent === '@Ana Lima')), 0);
+  await p.fill('#entrada', 'linha 1'); await p.press('#entrada', 'Shift+Enter');
+  t('Shift+Enter quebra linha sem enviar', (await p.inputValue('#entrada')) === 'linha 1\n', await p.inputValue('#entrada'));
+  await p.fill('#entrada', '');
+  // editar a primeira
+  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] >> text=Editar');
+  await p.fill('[data-msg="' + k + '"] textarea', 'Bom dia, time! (corrigido)'); await p.press('[data-msg="' + k + '"] textarea', 'Enter'); await p.waitForTimeout(150);
+  s = await store(p);
+  t('editar grava texto + editado (servidor) e mostra "(editada)"', ler(s, 'kanban/cardume/msgs/dados/' + k + '/texto') === 'Bom dia, time! (corrigido)' && typeof ler(s, 'kanban/cardume/msgs/dados/' + k + '/editado') === 'number' && /\(editada\)/.test(await p.textContent('[data-msg="' + k + '"]')), ler(s, 'kanban/cardume/msgs/dados/' + k));
+  // apagar e desfazer
+  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] >> text=Apagar');
+  t('apagar mostra "mensagem apagada · Desfazer"', /mensagem apagada/.test(await p.textContent('[data-msg="' + k + '"]')) && await p.isVisible('[data-msg="' + k + '"] >> text=Desfazer'), 0);
+  await p.click('[data-msg="' + k + '"] >> text=Desfazer'); await p.waitForTimeout(5300);
+  s = await store(p);
+  t('Desfazer dentro de 5 s: nada é apagado no banco', ler(s, 'kanban/cardume/msgs/dados/' + k + '/texto') === 'Bom dia, time! (corrigido)', ler(s, 'kanban/cardume/msgs/dados/' + k));
+  await p.hover('[data-msg="' + k + '"]'); await p.click('[data-msg="' + k + '"] >> text=Apagar'); await p.waitForTimeout(5400);
+  s = await store(p); const tomb = ler(s, 'kanban/cardume/msgs/dados/' + k);
+  t('depois de 5 s: grava só {uid, ts, apagada} — o texto sai do banco', tomb && tomb.apagada === true && !('texto' in tomb) && Object.keys(tomb).sort().join() === 'apagada,ts,uid', tomb);
+
+  // ── 3. Criar um temático aberto ──
+  await p.click('#b-novo'); await p.fill('.md input:not([type])', 'Black Friday 2026');
+  await p.click('.md >> text=Criar canal'); await p.waitForTimeout(200);
+  s = await store(p);
+  const tid = Object.keys(ler(s, 'kanban/cardume/canais') || {}).find(x => x.startsWith('t-'));
+  t('criar temático: id t-…-sufixo, canal + eu membro + meus + abertos', !!tid && /^t-black-friday-2026-[a-z0-9]{4}$/.test(tid) && ler(s, 'kanban/cardume/canais/' + tid + '/dono') === 'cai' && ler(s, 'kanban/cardume/membros/' + tid + '/cai') === true && ler(s, 'kanban/cardume/meus/cai/' + tid) === true && ler(s, 'kanban/cardume/abertos/' + tid + '/nome') === 'Black Friday 2026', { tid, c: ler(s, 'kanban/cardume/canais/' + tid) });
+  await enviar(p, 'Canal da BF no ar 🖤');
+  t('sem erro de JS (ADM)', !A.errs.length, A.errs);
+
+  // ── 4. Todas as escritas do ADM passam nas regras ──
+  const ruinsA = conferirEscritas(await escritas(p), CAIO);
+  t('CADA escrita da página (ADM) passa nas regras reais do banco', !ruinsA.length, ruinsA);
+  const estado = await store(p); await A.ctx.close();
+
+  // ── 5. Ana: não lidas, ler, entrar no aberto ──
+  const B = await abrir(ANA, estado);
+  const q = B.p;
+  t('Ana vê # Dados com ponto de não lido', await q.evaluate(() => { const x = document.querySelector('[data-canal="dados"]'); return !!x && x.classList.contains('nao-lido'); }), await q.textContent('#lista-canais'));
+  await q.click('[data-canal="dados"]'); await q.waitForTimeout(1100);
+  s = await store(q);
+  t('abrir marca como lido (lidas = ts da última)', typeof ler(s, 'kanban/cardume/lidas/ana/dados') === 'number' && ler(s, 'kanban/cardume/lidas/ana/dados') === ler(s, 'kanban/cardume/ultima/dados/ts'), ler(s, 'kanban/cardume/lidas'));
+  t('Ana vê "mensagem apagada" no lugar do texto', /mensagem apagada/.test(await q.textContent('#log')), 0);
+  t('Ana não tem 🗑 na mensagem de outra pessoa', await q.evaluate(() => ![...document.querySelectorAll('#log .msg')].some(m => /Apagar/.test(m.textContent) && !/Ana/.test(m.closest('.grupo').textContent))), 0);
+  t('o temático aberto aparece em "Abertos para entrar"', await q.isVisible('[data-canal="' + tid + '"]'), await q.textContent('#lista-canais'));
+  await q.click('[data-canal="' + tid + '"]'); await q.click('#log >> text=Entrar no canal'); await q.waitForTimeout(200);
+  s = await store(q);
+  t('entrar grava membros + meus da Ana', ler(s, 'kanban/cardume/membros/' + tid + '/ana') === true && ler(s, 'kanban/cardume/meus/ana/' + tid) === true, 0);
+  await enviar(q, 'Cheguei!');
+  const ruinsB = conferirEscritas(await escritas(q), ANA);
+  t('CADA escrita da página (Ana) passa nas regras reais do banco', !ruinsB.length, ruinsB);
+  t('sem erro de JS (Ana)', !B.errs.length, B.errs);
+  const estado2 = await store(q); await B.ctx.close();
+
+  // ── 6. Celular: uma coluna por vez, sem rolagem lateral ──
+  const C = await abrir(ANA, estado2, '', { width: 390, height: 800 });
+  const sobra = await C.p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  t('celular: sem rolagem lateral, começa na lista de canais', sobra <= 0 && (await C.p.getAttribute('#app', 'data-tela')) === 'canais' || sobra <= 0, { sobra, tela: await C.p.getAttribute('#app', 'data-tela') });
+  await C.p.click('[data-canal="dados"]');
+  t('celular: tocar no canal abre a conversa', (await C.p.getAttribute('#app', 'data-tela')) === 'conversa' && await C.p.isVisible('#log'), 0);
+  t('sem erro de JS (celular)', !C.errs.length, C.errs);
+  await C.ctx.close();
+
+  await b.close();
+  console.log(`\n${ok ? 'TUDO OK' : 'HÁ FALHAS'} (${total} verificações)`); process.exit(ok ? 0 : 1);
+})().catch(e => { console.error('❌ erro no teste', e); process.exit(1); });

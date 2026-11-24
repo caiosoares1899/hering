@@ -375,7 +375,7 @@ function idsConhecidos() {
 // Liga (uma vez) o ouvinte de cada canal conhecido e, se sou membro, do "ultima" dele.
 function sincronizarCanais() {
   idsConhecidos().forEach(id => {
-    if (!ouvintes['canal:' + id]) ouvir('canal:' + id, ref(db, B + 'canais/' + id), s => { canais[id] = s.val(); renderLista(); if (id === atual) renderCabecalho(); }, () => { canais[id] = null; renderLista(); });
+    if (!ouvintes['canal:' + id]) ouvir('canal:' + id, ref(db, B + 'canais/' + id), s => { canais[id] = s.val(); renderLista(); if (id === atual) { renderCabecalho(); renderMsgs(); renderLado(); } }, () => { canais[id] = null; renderLista(); });
     if (souMembro(id) && !ouvintes['ultima:' + id]) ouvir('ultima:' + id, ref(db, B + 'ultima/' + id), s => { ultimas[id] = s.val(); renderLista(); }, () => {});
     if (!souMembro(id) && ouvintes['ultima:' + id]) { ouvintes['ultima:' + id](); delete ouvintes['ultima:' + id]; }
   });
