@@ -49,13 +49,36 @@ test('membros: membro e ADM veem a lista do canal; ninguém se adiciona sozinho'
   assert.equal(lê('kanban/cardume/membros/dados', A.gil), false);
   assert.equal(grava('kanban/cardume/membros/dados/gil', A.gil, true), false, 'gil não se põe no canal');
   assert.equal(grava('kanban/cardume/membros/dados/gil', A.ana, true), false, 'membro não põe ninguém');
-  assert.equal(grava('kanban/cardume/membros/dados/gil', A.bru, true), false, 'PO também não (papel global)');
+  assert.equal(grava('kanban/cardume/membros/dados/gil', A.bru, true), false, 'PO global que não está na squad não põe');
   assert.equal(grava('kanban/cardume/membros/dados/gil', A.adm, true), true, 'ADM põe');
   assert.equal(grava('kanban/cardume/membros/dados/ana', A.adm, null), true, 'ADM tira');
   assert.equal(grava('kanban/cardume/membros/dados/gil', A.adm, 'sim'), false, 'valor tem de ser true');
   assert.equal(grava('kanban/cardume/canais/prf', A.ana, { nome: 'prf' }), false, 'só ADM cria canal');
   assert.equal(grava('kanban/cardume/canais/prf', A.adm, { nome: 'prf' }), true);
   assert.equal(grava('kanban/cardume/canais/prf', A.adm, { nome: 'prf', html: '<b>' }), false, 'campo extra no canal');
+});
+
+test('manutenção como no Maré: ADM, e PO/Organizador DA squad põem e tiram pessoas', () => {
+  const P = 'kanban/cardume/membros/dados/';
+  const com = (uid, extra) => { reset(); DB.kanban.usuarios[uid] = Object.assign({ role: 'membro', squads: { dados: true } }, extra); };
+  const quem = mk('ze', 'ze@ciahering.com.br');
+  com('ze', { squads_roles: { dados: 'po' } });
+  assert.equal(grava(P + 'gil', quem, true), true, 'PO da squad põe');
+  assert.equal(grava(P + 'ana', quem, null), true, 'PO da squad tira');
+  assert.equal(lê('kanban/cardume/membros/dados', quem), true, 'PO da squad vê a lista mesmo sem estar no canal');
+  assert.equal(lê('kanban/cardume/msgs/dados', quem), false, '...mas não lê as mensagens enquanto não se puser no canal');
+  com('ze', { squads_roles: { dados: 'organizador' } });
+  assert.equal(grava(P + 'gil', quem, true), true, 'Organizador da squad põe');
+  com('ze', { role: 'po' });
+  assert.equal(grava(P + 'gil', quem, true), true, 'PO global que está na squad (sem papel por squad) põe, como no Maré');
+  com('ze', { role: 'po', squads_roles: { dados: 'membro' } });
+  assert.equal(grava(P + 'gil', quem, true), false, 'papel POR SQUAD manda: membro da squad não põe, mesmo sendo PO global');
+  com('ze', { squads_roles: { dados: 'membro' } });
+  assert.equal(grava(P + 'ze', quem, true), false, 'membro que se marcou na squad não se põe no canal');
+  com('ze', { squads: { prf: true }, squads_roles: { prf: 'po' } });
+  assert.equal(grava(P + 'gil', quem, true), false, 'PO de outra squad não mexe no canal da dados');
+  com('ze', { squads_roles: { dados: 'po' } });
+  assert.equal(grava('kanban/cardume/membros/prf/gil', quem, true), false, 'nem o PO da dados mexe no canal da prf');
 });
 
 test('membro com e-mail Hering mas sem login Google não entra (porta só Hering)', () => {

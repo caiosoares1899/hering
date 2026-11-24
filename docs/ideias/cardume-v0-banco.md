@@ -13,7 +13,7 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 ## Achado que muda o desenho
 `kanban/usuarios/{uid}/squads/{id}` **não serve** para privacidade: a regra deixa qualquer conta `@ciahering.com.br` gravar `true` em qualquer squad no próprio nó (é assim que a pessoa entra numa squad hoje). Canal "privado" por esse campo seria privado só de fachada.
 
-**Então o Cardume tem a própria lista de membros**, que só o ADM edita: `kanban/cardume/membros/{squad}/{uid}`. No piloto o ADM adiciona as pessoas da `dados`; uma tela de gestão (ADM marca quem está em cada canal, partindo da lista da squad) entra na etapa 2.
+**Então o Cardume tem a própria lista de membros**, mantida com a mesma regra de manutenção do Maré: ADM, ou PO/Organizador da squad (o papel não é self-service: só ADM ou PO atribuem): `kanban/cardume/membros/{squad}/{uid}`. No piloto o ADM adiciona as pessoas da `dados`; uma tela de gestão (ADM marca quem está em cada canal, partindo da lista da squad) entra na etapa 2.
 
 **Conversa do card:** os comentários dos cards (`squads/{sq}/dados/card_comments`) já são legíveis por qualquer pessoa da Hering. O canal privado guarda só a **referência** ao card; a conversa do card segue a regra do card (aberta à empresa). Quem abre a conversa de um card no Cardume vê um aviso discreto: "a conversa do card é visível para quem vê o card".
 
@@ -21,7 +21,7 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 | Nó | Conteúdo | Lê | Escreve |
 |---|---|---|---|
 | `kanban/cardume/canais/{squad}` | `{nome}` — canais que existem | logado Hering | ADM |
-| `kanban/cardume/membros/{squad}/{uid}` | `true` | membros do canal (para a @menção e a lista) · ADM | ADM |
+| `kanban/cardume/membros/{squad}/{uid}` | `true` | membros do canal (para a @menção e a lista) · quem faz a manutenção | **como no Maré** (decisão do Caio, 24/11): ADM, ou PO/Organizador **da squad** (papel por squad; sem ele, o papel global de quem está na squad) |
 | `kanban/cardume/msgs/{squad}/{msgId}` | `uid`, `texto` (1–4000), `ts` (servidor), `card?` (`^[A-Za-z0-9_-]{1,64}$`), `cardSq?` (idem), `editado?` (servidor), `apagada?` (`true`) | membro · ADM | ver abaixo |
 | `kanban/cardume/ultima/{squad}` | `{ts, uid, id}` da última mensagem (para não lidas) | membro · ADM | membro, no **mesmo update** da mensagem: `id` aponta para uma mensagem dele, não apagada, com o mesmo `ts`; nunca volta no tempo; só o ADM apaga |
 | `kanban/cardume/lidas/{uid}/{squad}` | `ts` do último lido | o próprio | o próprio |
