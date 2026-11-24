@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-24 · Cardume — squad Dados não aparecia para ativar — SÓ DEV (cardume v0.3-dev)
+
+Reportado pelo Caio no 1º teste real (24/11): a lista 'Squads sem canal (ADM)' só mostrava squads de squads_meta, e as squads originais (dados, prf, midiacriativa, dev, gestao) nunca ganharam entrada lá. Mesma armadilha já resolvida na Escala/Intake com SQUAD_FALLBACK, que agora o Cardume também usa. A lista também mostra o nome completo ao passar o mouse. O teste passou a semear squads_meta sem a dados, como na produção.
+
 ### 2026-11-24 · Cardume — 6 achados do Codex na v0.1 — SÓ DEV (cardume v0.2-dev)
 
 Revisão do Codex na #1926 (já mergeada). (1) Link ?c= como membro não ADM abria a conversa vazia: o canal era aberto antes do 1º snapshot de meus; agora reabre quando a associação muda. (2) Trocar de conta na mesma aba deixava canal, mensagens e membros da sessão anterior em memória: limparSessao() zera tudo e cancela apagamentos pendentes. (3) O rascunho de um canal podia ser enviado em outro e era compartilhado entre contas: rascunho por conta+canal, trocado a cada mudança de canal. (4) Enter duas vezes com rede lenta duplicava a mensagem: trava de envio e só limpa o campo se o texto ainda é o enviado. (5) Mensagem nova chegando apagava o texto em edição: o editor é preservado entre renders. (6) No celular, com a lista à frente, a mensagem era marcada como lida e o ponto sumia: marcar lido e o ponto consideram a conversa visível. Teste: 12 verificações novas em test_cardume_pagina.js (43 no total); 8 delas falham contra a v0.1.

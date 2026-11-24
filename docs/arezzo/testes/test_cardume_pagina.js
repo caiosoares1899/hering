@@ -11,7 +11,7 @@ const G = (uid, email, nome) => ({ uid, email, displayName: nome, photoURL: '', 
 const CAIO = G('cai', 'caio.soares@ciahering.com.br', 'Caio Soares'), ANA = G('ana', 'ana@ciahering.com.br', 'Ana Lima');
 const pub = (uid, nome, init, sq) => ({ uid, nome, init, email: uid + '@ciahering.com.br', squads: sq ? { [sq]: true } : {} });
 const seed = () => ({ kanban: {
-  squads_meta: { dados: { label: 'Dados', emoji: '📊' } },
+  squads_meta: { app: { label: 'Squad APP', emoji: '📱' } },   // como na produção: a dados (original) NÃO está em squads_meta
   usuarios: { cai: { role: 'adm', squads: { dados: true } }, ana: { role: 'membro', squads: { dados: true } } },
   usuarios_publicos: { cai: Object.assign(pub('cai', 'Caio Soares', 'CS', 'dados'), { email: 'caio.soares@ciahering.com.br' }), ana: pub('ana', 'Ana Lima', 'AL', 'dados'), bru: pub('bru', 'Bruno Reis', 'BR', 'dados') },
 } });
@@ -49,6 +49,7 @@ function conferirEscritas(escritas, quem) {
   // ── 1. ADM ativa o canal da squad e põe gente ──
   const A = await abrir(CAIO, seed());
   const p = A.p;
+  t('squad original (fora do squads_meta) aparece para o ADM ativar', await p.isVisible('[data-canal="dados"]') && await p.isVisible('[data-canal="app"]'), await p.textContent('#lista-canais'));
   t('ADM vê a squad sem canal', await p.isVisible('[data-canal="dados"]') && /ativar/.test(await p.textContent('[data-canal="dados"]')), await p.textContent('#lista-canais'));
   await p.click('[data-canal="dados"]');
   await p.click('#lado >> text=Ativar canal da squad'); await p.waitForTimeout(150);

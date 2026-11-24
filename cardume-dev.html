@@ -214,7 +214,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.2 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.3 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -237,6 +237,11 @@ const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const TEMA_RE = /^t-[a-z0-9-]{3,60}$/;
 const ehTema = id => /^t-/.test(id);
 const B = 'kanban/cardume/';
+// Squads originais nunca ganharam entrada em squads_meta (mesmo mapa da Escala/Intake/Cloud Function).
+const SQUAD_FALLBACK = {
+  dados: { label: 'Dados', emoji: '📊' }, prf: { label: 'Marketing de Performance', emoji: '📱' },
+  midiacriativa: { label: 'Mídia Criativa', emoji: '🎨' }, dev: { label: 'Dev', emoji: '🧪' }, gestao: { label: 'Gestão', emoji: '🏛' },
+};
 const LIMITE = 50;
 const DESFAZER_MS = 5000;
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -366,7 +371,7 @@ async function carregarBase() {
     get(ref(db, 'kanban/squads_meta')).then(s => s.val() || {}).catch(() => ({})),
   ]);
   if (!user || user.uid !== uid) return false;
-  eu = u; pub = p; meta = m;
+  eu = u; pub = p; meta = Object.assign({}, SQUAD_FALLBACK, m);
   if (!pub[uid]) pub[uid] = { nome: user.displayName || user.email, foto: user.photoURL || '' };
   return true;
 }
@@ -410,7 +415,7 @@ function renderLista() {
   const botao = (id, prefixo, extra) => {
     const b = el('button', 'canal' + (naoLido(id) ? ' nao-lido' : '')); b.type = 'button'; b.dataset.canal = id;
     b.setAttribute('aria-current', String(id === atual));
-    const n = el('span', 'nome', prefixo + nomeCanal(id)); b.append(n);
+    const n = el('span', 'nome', prefixo + nomeCanal(id)); b.title = nomeCanal(id); b.append(n);
     if (extra) b.append(el('span', 'chip', extra));
     else if (naoLido(id)) { const p = el('span', 'ponto'); b.append(p); }
     b.setAttribute('aria-label', prefixo + nomeCanal(id) + (naoLido(id) ? ', mensagens novas' : '') + (extra ? ', ' + extra : ''));
