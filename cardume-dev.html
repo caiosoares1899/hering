@@ -237,7 +237,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.6 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.7 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -564,8 +564,9 @@ function renderMsg(m) {
     const b = el('button', 'lnk', 'Desfazer'); b.type = 'button'; b.onclick = () => desfazer(m.id); d.append(b); box.append(d); return box;
   }
   if (editando === m.id) { box.append(editor(m)); return box; }
-  box.append(renderTexto(m.texto || ''));
   const ks = cardsNoTexto(m.texto);
+  const visivel = ks.length ? semLinkDeCard(m.texto || '') : (m.texto || '');
+  if (visivel.trim()) box.append(renderTexto(visivel));
   if (ks.length) { const w = el('div', 'cards-msg'); ks.forEach(k => w.append(chipCard(k))); box.append(w); }
   if (m.editado) box.append(el('span', 'editada', '(editada)'));
   const c = canais[atual], ativo = !vencido(c);
@@ -684,6 +685,18 @@ function lerCard(k) {
   }).catch(e => { info.estado = negado(e) ? 'sem' : 'erro'; return info; })
     .then(i => { if (atual && !vendoMencoes) renderMsgs(); return i; });
   return info.p;
+}
+// Link de card no fim da linha, com o chip já mostrando o título, sai do texto (como no Slack): fica só o chip.
+// Link no meio da frase, sem acesso, inexistente ou ainda carregando continua no texto.
+function semLinkDeCard(txt) {
+  return String(txt).split('\n').map(l => {
+    const re = /https:\/\/[^\s<>"']+/g; let x, corte = -1;
+    while ((x = re.exec(l))) {
+      const k = cardDeLink(x[0].replace(/[.,!?:;)]+$/, '')), i = k && infoCards[k.sq + '/' + k.id];
+      if (i && i.estado === 'ok' && /^[\s.,!?:;)]*$/.test(l.slice(x.index + x[0].length))) corte = x.index;
+    }
+    return corte < 0 ? l : l.slice(0, corte).replace(/\s+$/, '');
+  }).join('\n').replace(/\n+$/, '');
 }
 function chipCard(k) {
   const info = infoCards[k.sq + '/' + k.id]; if (!info) lerCard(k);

@@ -24,8 +24,10 @@ const seed = () => ({ kanban: {
       '-Nm3': msg('ana', 7, 'Link falso https://evil.example/hering/kanban.html?squad=dados&opencard=c1'),
       '-Nm4': msg('bru', 6, '@Agente Ágil resume isso, @Ana Lima decide. Meu e-mail: bru@ciahering.com.br'),
       '-Nm5': msg('ana', 5, 'Fechado: vamos com a versão B.'),
+      '-Nm6': msg('ana', 4, MARE + 'kanban.html?squad=dados&opencard=c1'),
+      '-Nm7': msg('ana', 3, 'No meio ' + MARE + 'kanban.html?squad=dados&opencard=c1 da frase'),
     } },
-    ultima: { dados: { ts: agora - 5 * 60000, uid: 'ana', id: '-Nm5' } },
+    ultima: { dados: { ts: agora - 3 * 60000, uid: 'ana', id: '-Nm7' } },
   },
   squads: {
     dados: { dados: { cards_index: { c1: '0' }, cards: { 0: { id: 'c1', title: 'Painel de vendas' } } } },
@@ -67,12 +69,18 @@ function conferirEscritas(escritas, quem) {
   const m2 = cs.filter(c => c.msg === '-Nm2');
   t('formato ?card= do kanban-dev também vale; sem acesso → "card sem acesso"', m2.some(c => /card sem acesso/.test(c.txt) && c.href === MARE + 'kanban-dev.html?squad=prf&opencard=c9') && !m2.some(c => /Segredo/.test(c.txt)), m2);
   t('card que não existe → "card não encontrado"', m2.some(c => /card não encontrado/.test(c.txt)), m2);
+  const txt = id => p.evaluate(i => { const e = document.querySelector('[data-msg="' + i + '"] .texto'); return e ? e.textContent : ''; }, id);
+  t('link do card no fim da linha some do texto quando o chip carregou', (await txt('-Nm1')).trim() === 'Olha esse card:', await txt('-Nm1'));
+  t('link sem acesso / inexistente continua no texto', /kanban-dev\.html\?card=c9/.test(await txt('-Nm2')) && /opencard=c404/.test(await txt('-Nm2')), await txt('-Nm2'));
+  t('mensagem só com o link: fica só o chip', !(await p.$('[data-msg="-Nm6"] .texto')) && (await p.$$('[data-msg="-Nm6"] .card-chip')).length === 1, await txt('-Nm6'));
+  t('link no meio da frase continua no texto', /opencard=c1 da frase/.test(await txt('-Nm7')), await txt('-Nm7'));
+  t('link de outra origem continua no texto', /evil\.example/.test(await txt('-Nm3')), await txt('-Nm3'));
   t('link de outra origem não vira chip', !cs.some(c => c.msg === '-Nm3'), cs);
 
   // ── 📝 Registrar no card ──
   await p.hover('[data-msg="-Nm4"]'); await p.click('[data-msg="-Nm4"] button[aria-label="Registrar no card do Maré"]'); await p.waitForTimeout(300);
   t('abre o modal com a mensagem marcada', await p.isVisible('.md.registrar') && await p.isChecked('.md.registrar input[value="-Nm4"]'), 0);
-  t('mensagens apagadas não entram na lista; as outras, sim', (await p.locator('.md.registrar .reg-item').count()) === 5, await p.locator('.md.registrar .reg-item').count());
+  t('mensagens apagadas não entram na lista; as outras, sim', (await p.locator('.md.registrar .reg-item').count()) === 7, await p.locator('.md.registrar .reg-item').count());
   t('card citado na conversa já vem escolhido', /Painel de vendas/.test(await p.evaluate(() => { const s = document.querySelector('.md.registrar select'); return s.options[s.selectedIndex].text; })), 0);
   await p.waitForTimeout(200);
   const aviso = await p.textContent('.md.registrar .aviso-reg');
