@@ -118,3 +118,10 @@ Criar temático (aberto e convite) · id sem `t-` ou de squad existente falha ·
 | renomear ou mudar `acesso`/`fim` | `canais/{c}/…` + `abertos/{c}` (pôr, atualizar o nome ou tirar, conforme o estado final) |
 
 **Etapa 6 — `cardumeLimpeza` é o único jeito de um temático sumir.** Ao apagar um temático (vencido há mais de `retencao_dias`), remove **junto**: `canais/{c}`, `membros/{c}`, `admins/{c}`, `msgs/{c}`, `ultima/{c}`, `abertos/{c}` e, para cada membro, `meus/{uid}/{c}` e `lidas/{uid}/{c}`. Só bloquear escrita não basta: membros que sobram ainda leriam mensagens que sobram. **Apagar à mão no Console segue a mesma lista.**
+
+## Auditoria do Antigravity (#1924, commit 73692bbb) — respostas
+- **(média) Oráculo de membros em `meus`:** quem era de fora gravava `meus/{outra}/{canal}` e, pela resposta, descobria se ela era membro de um canal privado. → `meus/{uid}/{canal}` só é gravado pela **própria pessoa** ou por quem **administra** o canal.
+- **(baixa) Co-admin tirava a dona:** → nos temáticos, só a própria dona (saindo) ou o ADM tiram a dona.
+- **(baixa, simulador):** `update()` recusa caminho + descendente no mesmo `mapa` (o RTDB recusa) e usa um `now` único por operação.
+- **Aceito (registrado):** tentar **criar** um id `t-…` que já existe falha, então dá para "testar" se um id existe (nunca o nome nem os membros). A página gera ids com sufixo aleatório (`t-black-friday-k3f9`), o que torna isso inútil na prática.
+- **A confirmar na etapa 2:** o `newData.parent()…` até a raiz num `update()` real (o primeiro envio confere).

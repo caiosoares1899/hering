@@ -67,6 +67,14 @@ function validate(rules, db, path, auth, newVal, dbAfterMulti){
 // se todos os caminhos passarem (.write em cascata + .validate). Não muda `check`/`validate`.
 function update(rules, db, auth, mapa){
   const ps=Object.keys(mapa); if(!ps.length) return false;
+  // RTDB recusa um update com um caminho e um descendente dele ao mesmo tempo (auditoria do Antigravity, #1924)
+  const norm=ps.map(p=>segs(p).join('/'));
+  if(norm.some((a,i)=>norm.some((b,j)=>i!==j&&(a===b||b.startsWith(a+'/'))))) return false;
+  // um único `now` para a operação inteira, como no servidor
+  const t=Date.now(), real=Date.now; Date.now=()=>t;
+  try{ return updateUmNow(rules, db, auth, mapa, ps); } finally{ Date.now=real; }
+}
+function updateUmNow(rules, db, auth, mapa, ps){
   let dbAfter=db; for(const p of ps) dbAfter=setAt(dbAfter,p,mapa[p]===undefined?null:mapa[p]);
   dbAfter=podar(dbAfter)||{};   // no RTDB, objeto vazio não existe
   return ps.every(p=>check(rules,db,'write',p,auth,mapa[p],dbAfter) && validate(rules,db,p,auth,mapa[p],dbAfter) && ancestrais(rules,db,dbAfter,p,auth));

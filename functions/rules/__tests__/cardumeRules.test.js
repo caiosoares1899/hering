@@ -354,3 +354,16 @@ test('enviar = mensagem + marcador de não lidas num update só (o que a página
     assert.equal(up(A.gil, { [`kanban/cardume/msgs/${c}/m7`]: { uid: 'gil', ts, texto: 'oi' }, [`kanban/cardume/ultima/${c}`]: { ts, uid: 'gil', id: 'm7' } }), false, 'não membro não envia em ' + c);
   }
 });
+
+test('achados do Antigravity (#1924): sem oráculo de membros; co-admin não tira a dona; simulador como o RTDB', () => {
+  reset(); existe('t-segredo', tema({ nome: 'Segredo', acesso: 'convite', dono: 'gil' }), { gil: true, ana: true });
+  DB.kanban.cardume.meus = { ana: { 't-segredo': true } };
+  assert.equal(up(A.bru, { [MEU('ana', 't-segredo')]: true }), false, 'quem é de fora não grava o "meus" de outra pessoa (não descobre quem é membro)');
+  assert.equal(up(A.bru, { [MEU('ana', 't-outro')]: null }), false, 'nem apaga o "meus" alheio');
+  assert.equal(up(A.ana, { [MEU('ana', 't-segredo')]: true }), true, 'a própria pessoa mantém o seu');
+  DB.kanban.cardume.admins = { 't-segredo': { ana: true } };
+  assert.equal(up(A.ana, { [MB('t-segredo', 'gil')]: null, [MEU('gil', 't-segredo')]: null }), false, 'co-admin não tira a dona');
+  assert.equal(up(A.adm, { [MB('t-segredo', 'gil')]: null, [MEU('gil', 't-segredo')]: null }), true, 'o ADM tira');
+  assert.equal(up(A.gil, { [MB('t-segredo', 'gil')]: null, [MEU('gil', 't-segredo')]: null }), true, 'a dona sai sozinha');
+  assert.equal(up(A.adm, { 'kanban/cardume/config': { retencao_dias: 90 }, 'kanban/cardume/config/retencao_dias': 90 }), false, 'caminho + descendente no mesmo update: o RTDB recusa');
+});
