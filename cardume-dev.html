@@ -267,7 +267,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.16 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.17 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -901,7 +901,7 @@ function renderMencoes(log) {
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
   if (atual) lsSet(chaveRascunho(atual), entrada.value);
-  parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = '';
+  parar('msgs'); parar('membros'); parar('admins'); pararCitacoes(); cancelarResposta(false); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = '';
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
 }
