@@ -34,6 +34,8 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 | Antigravity | Segurança das regras (`/auditoriaseguranca` do Painel): C1/C2 feitos; **faltam C3, C4, D7/D8**. Cuidado com externos e `painel_viewers` | [escalados](quadro/escalados.md#seguranca-regras-c3-c4) | 11/11/2026 |
 | Codex | Radar: relógio opcional, encerramento após sala vazia e previsão de tempo por pauta | [desenho](quadro/escalados.md#radar-tempo-da-reuniao) | 19/11/2026 |
 
+| Codex → Claude | GIFs com KLIPY no Cardume dev. Piloto na squad Dados, com novo campo de mensagem e validação das regras (R3) | [desenho](quadro/escalados.md#gifs-no-cardume-com-klipy) | 24/11/2026 |
+
 ## Pendente de deploy
 
 Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para trás acrescenta a linha com o comando completo; quando o Caio confirma, a linha sai daqui e a confirmação vai para o histórico.
