@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/cardume-tematicos` | `database.rules.json`, `functions/rules/__tests__/cardumeRules.test.js`, `docs/ideias/cardume-v0-banco.md` | 24/11/2026 |
+| Claude | `claude/cardume-pagina` | `cardume-dev.html`, `docs/arezzo/testes/fakefb.js`, `docs/arezzo/testes/test_cardume_pagina.js`, `scripts/checar.js` | 24/11/2026 |
 
 
 ## Fila
@@ -54,6 +54,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |
 | 🧲 Ideias do Kanbanize: ícone de link, tempo por coluna, Monte Carlo, fila × ativa, causas de impedimento e ponte com a TI | Claude · ponte: Caio com a TI | [backlog](quadro/backlog.md#ideias-kanbanize) |
-| 🐟 Cardume: chat do time no Oceano (canal = squad, thread = card); piloto `dados`; regras dos canais oficiais no ar (24/11); próximo: canais temáticos (R3) | Claude | [ideia](ideias/cardume.md) |
+| 🐟 Cardume: chat do time no Oceano (canal = squad, thread = card); piloto `dados`; regras (oficiais + temáticos) no ar em 24/11; etapa 2: `cardume-dev.html` v0.1 em PR | Claude | [ideia](ideias/cardume.md) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |

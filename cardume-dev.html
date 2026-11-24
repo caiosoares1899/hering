@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cardume dev · Oceano</title>
+<link rel="icon" href="favicon-dev.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>(function(){ try{ var o=JSON.parse(localStorage.getItem('oceano_prefs')||'null'), t=(o&&o.tema)||(localStorage.getItem('mare_theme')==='light'?'lencois':'abrolhos'); var d=document.documentElement; if(t==='lencois') d.setAttribute('data-theme','light'); else if(t==='entardecer') d.setAttribute('data-theme','sunset'); }catch(e){} })();</script>
+<style>
+/* 🐟 Cardume (dev) — chat do time dentro do Oceano. Plano: docs/ideias/cardume.md · banco e regras: docs/ideias/cardume-v0-banco.md
+   Visual do protótipo (docs/demo/cardume-prototipo.html), tokens Marine Glass dos 3 temas do Oceano.
+   SEGURANÇA: todo texto de mensagem/nome entra no DOM por createElement/textContent (nunca innerHTML com dado). */
+:root{
+  --deep:#030d1a;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
+  --accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
+  --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:10px;--r2:14px;
+  --ink-rgb:3,13,26;--slate-rgb:10,30,55;
+  --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;
+  --shadow:0 10px 34px rgba(0,0,0,.35);--specular:inset 0 1px 0 rgba(255,255,255,.08);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;
+}
+:root[data-theme="light"]{
+  --deep:#0F87C4;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
+  --accent:#0077AD;--cyan:#065670;--teal:#0a8f86;
+  --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
+  --warn:#9a6a08;--danger:#c8323f;--ok:#1f7d45;--ink-rgb:251,253,255;--slate-rgb:235,245,250;--shadow:0 10px 30px rgba(7,70,110,.22);--specular:inset 0 1px 0 rgba(255,255,255,.7);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+}
+:root[data-theme="sunset"]{
+  --deep:#1a1530;--glass:rgba(38,28,58,0.62);--glass-b:rgba(255,176,110,0.26);
+  --accent:#ffb36b;--cyan:#ffd2a1;--teal:#ffcf6e;
+  --txt:#fdf1e4;--txt2:rgba(253,241,228,0.72);--txt3:rgba(253,241,228,0.46);
+  --ink-rgb:26,21,48;--slate-rgb:48,34,66;
+  --ocean:radial-gradient(ellipse 80% 45% at 50% 38%,rgba(255,160,70,.5) 0%,rgba(255,120,60,.16) 45%,transparent 70%),linear-gradient(180deg,#141d3f 0%,#2a2a55 22%,#7a4a56 38%,#d98a58 47%,#1b4a63 48.4%,#0d2f4b 62%,#071c33 100%);
+}
+*{box-sizing:border-box;}
+[hidden]{display:none!important;}
+html{background:var(--deep);}
+body{margin:0;color:var(--txt);font:14px/1.5 var(--ff);background:var(--ocean) fixed;}
+h1,h2,h3,p{margin:0;}
+h1,h2,h3{font-family:var(--ff-d);line-height:1.2;}
+h1{font-size:26px;} h2{font-size:18px;overflow-wrap:anywhere;} h3{font-size:13px;color:var(--txt2);font-family:var(--ff);text-transform:uppercase;letter-spacing:.04em;margin:14px 8px 6px;}
+button,select,textarea,input{color:inherit;font:inherit;border:1px solid var(--glass-b);border-radius:var(--r);background:rgb(var(--ink-rgb));}
+button,select{min-height:40px;padding:6px 12px;cursor:pointer;}
+button:hover,select:hover{border-color:var(--accent);}
+button:disabled{opacity:.5;cursor:default;}
+input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.primary{background:var(--accent);color:rgb(var(--ink-rgb));font-weight:800;border-color:var(--accent);}
+.lnk{background:none;border:0;min-height:0;padding:0 2px;color:var(--accent);text-decoration:underline;}
+.perigo{color:var(--danger);}
+.shell{max-width:1440px;height:100vh;height:100dvh;margin:auto;padding:14px 22px 20px;display:flex;flex-direction:column;gap:12px;}
+.topo{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 20px;}
+.marca{display:flex;align-items:center;gap:12px;}
+.marca-icone{display:grid;place-items:center;width:44px;height:44px;font-size:22px;border:1px solid var(--glass-b);border-radius:var(--r2);background:var(--glass);box-shadow:var(--specular);}
+.contexto,.subtitulo{color:var(--txt2);font-size:12px;}
+.devtag{font:700 11px var(--ff);color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:1px 7px;vertical-align:middle;}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;}
+.who img{width:28px;height:28px;border-radius:50%;}
+.state{margin:auto;color:var(--txt2);}
+.cartao{max-width:420px;margin:8vh auto;padding:22px;border:1px solid var(--glass-b);border-radius:20px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);display:grid;gap:12px;}
+.cartao p{color:var(--txt2);}
+.erro{color:var(--danger);}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(250px,26%);flex:1;min-height:0;border:1px solid var(--glass-b);border-radius:20px;overflow:hidden;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);}
+.app.sem-lado{grid-template-columns:230px minmax(0,1fr);}
+.painel{min-width:0;min-height:0;display:flex;flex-direction:column;background:rgba(var(--ink-rgb),.82);}
+.lateral{padding:12px 10px;border-right:1px solid var(--glass-b);overflow:auto;}
+.canal{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:3px;text-align:left;background:transparent;border-color:transparent;font-weight:600;min-height:38px;}
+.canal .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.canal[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.85);border-color:var(--glass-b);}
+.canal.nao-lido .nome{font-weight:800;color:var(--txt);}
+.ponto{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;}
+.chip{display:inline-block;padding:1px 7px;border-radius:999px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);font-size:11px;line-height:1.5;color:var(--txt2);}
+.novo-canal{width:100%;margin-top:8px;}
+.cabecalho{padding:10px 14px;min-height:60px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--glass-b);}
+.cabecalho .grow{flex:1;min-width:0;}
+.voltar{display:none;}
+.log{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:6px 16px 14px;}
+.vazio{margin:auto;padding:24px;text-align:center;color:var(--txt2);display:grid;gap:10px;justify-items:center;}
+.dia{display:flex;align-items:center;gap:12px;margin:12px 0;font-size:12px;color:var(--txt2);}
+.dia::before,.dia::after{content:'';flex:1;height:1px;background:var(--glass-b);}
+.grupo{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;margin:10px 0;}
+.avatar{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--glass-b);border-radius:11px;background:rgb(var(--slate-rgb));color:var(--cyan);font-weight:800;font-size:11px;overflow:hidden;}
+.avatar img{width:100%;height:100%;object-fit:cover;}
+.autor{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;}
+.autor b{font-weight:700;}
+.msg{position:relative;padding:2px 64px 2px 0;border-radius:8px;}
+.msg:hover,.msg:focus-within{background:rgba(var(--slate-rgb),.45);}
+.msg .texto{overflow-wrap:anywhere;white-space:pre-wrap;}
+.msg .texto p{margin:0;}
+.msg .acoes-msg{position:absolute;right:4px;top:0;display:none;gap:4px;}
+.msg:hover .acoes-msg,.msg:focus-within .acoes-msg{display:flex;}
+.acoes-msg button{min-height:28px;padding:2px 8px;font-size:12px;}
+.hora,.editada{color:var(--txt2);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.apagada{color:var(--txt2);font-style:italic;}
+.mencao{color:var(--accent);font-weight:700;}
+.mencao.eu{background:rgba(255,209,102,.18);color:var(--warn);border-radius:4px;padding:0 3px;}
+.texto code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:5px;padding:0 4px;}
+.texto pre{margin:4px 0;padding:8px 10px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;overflow:auto;white-space:pre;}
+.texto pre code{background:none;border:0;padding:0;}
+.texto blockquote{margin:2px 0;padding-left:10px;border-left:3px solid var(--glass-b);color:var(--txt2);}
+.texto ul{margin:2px 0;padding-left:20px;}
+.texto a{color:var(--accent);}
+.desfazer{display:flex;align-items:center;gap:8px;color:var(--txt2);font-style:italic;}
+.editor{display:grid;gap:6px;margin:4px 0;}
+.editor .linha{display:flex;gap:6px;justify-content:flex-end;}
+.rodape{position:relative;padding:8px 14px 10px;border-top:1px solid var(--glass-b);}
+.barra-fmt{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;}
+.barra-fmt button{min-height:32px;min-width:34px;padding:2px 8px;font-size:13px;}
+.compositor{display:flex;align-items:flex-end;gap:6px;}
+textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;resize:none;max-height:30vh;}
+.ajuda{margin-top:3px;color:var(--txt2);font-size:12px;}
+.sugestoes,.emojis{position:absolute;z-index:3;bottom:100%;left:14px;right:14px;max-height:40vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgb(var(--ink-rgb));box-shadow:var(--shadow);}
+.sugestao{display:block;width:100%;text-align:left;margin-bottom:2px;min-height:36px;}
+.sugestao[aria-selected="true"]{border-color:var(--accent);background:rgb(var(--slate-rgb));}
+.emojis{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:2px;right:auto;width:min(360px,calc(100% - 28px));}
+.emojis input{grid-column:1/-1;margin-bottom:4px;}
+.emojis button{min-height:38px;padding:0;font-size:20px;background:transparent;border-color:transparent;}
+.emojis button:hover,.emojis button:focus-visible{border-color:var(--accent);}
+.emojis .rot{grid-column:1/-1;font-size:11px;color:var(--txt2);margin:2px 4px;}
+.lado{border-left:1px solid var(--glass-b);background:rgba(var(--slate-rgb),.78);overflow:auto;padding:0 0 14px;}
+.lado section{padding:0 14px;}
+.lado p{color:var(--txt2);font-size:13px;}
+.pessoa{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.pessoa .avatar{width:28px;height:28px;border-radius:9px;font-size:10px;}
+.pessoa .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pessoa button{min-height:30px;padding:2px 8px;font-size:12px;}
+.acoes-lado{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
+.ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;}
+.md{width:min(460px,100%);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--glass-b);border-radius:18px;background:rgb(var(--ink-rgb));box-shadow:var(--shadow);display:grid;gap:12px;}
+.md label{display:grid;gap:4px;font-size:13px;color:var(--txt2);}
+.md .linha{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+.radio{display:flex!important;grid-auto-flow:column;align-items:flex-start;gap:8px!important;color:var(--txt)!important;}
+.radio input{width:auto;min-height:0;margin-top:4px;}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;max-width:90vw;padding:10px 16px;border-radius:12px;background:rgb(var(--ink-rgb));border:1px solid var(--glass-b);box-shadow:var(--shadow);}
+#versao-aviso{position:fixed;left:0;right:0;top:0;z-index:90;text-align:center;background:#12314a;color:#e8f4fd;border-bottom:1px solid rgba(56,182,255,.4);padding:8px;font-size:13px;}
+@media (max-width:899px){
+  .shell{padding:8px;gap:8px;}
+  h1{font-size:22px;}
+  .app,.app.sem-lado{grid-template-columns:minmax(0,1fr);border-radius:var(--r2);}
+  .app[data-tela="canais"]>:not(.lateral),.app[data-tela="conversa"]>:not(.conversa),.app[data-tela="lado"]>:not(.lado){display:none;}
+  .voltar{display:inline-block;}
+  .lateral,.lado{border:0;}
+  .msg{padding-right:0;}
+  .msg .acoes-msg{position:static;display:flex;justify-content:flex-end;}
+}
+</style>
+</head>
+<body>
+<div id="versao-aviso" hidden>Há uma versão nova do Cardume. <button class="primary" type="button" onclick="location.reload()">Atualizar</button></div>
+<div class="shell">
+  <header class="topo">
+    <div class="marca">
+      <span class="marca-icone" aria-hidden="true">🐟</span>
+      <div><p class="contexto">Oceano</p><h1>Cardume <span class="devtag">dev</span></h1></div>
+    </div>
+    <div id="who-slot"></div>
+  </header>
+
+  <div id="loading" class="state">Carregando…</div>
+
+  <div id="login" class="cartao" hidden>
+    <h2>Entre para conversar com o time</h2>
+    <p>Canais das squads e canais temáticos, dentro do Oceano. Use a conta <b>@ciahering.com.br</b>.</p>
+    <button class="primary" id="btn-google" type="button">🔐 Entrar com Google</button>
+    <p class="erro" id="login-msg" hidden></p>
+  </div>
+
+  <main id="app" class="app" data-tela="canais" hidden>
+    <nav class="painel lateral" aria-label="Canais">
+      <div id="lista-canais"></div>
+      <button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button>
+    </nav>
+
+    <section class="painel conversa" aria-labelledby="canal-titulo">
+      <header class="cabecalho">
+        <button type="button" class="voltar" id="b-voltar" aria-label="Voltar aos canais">←</button>
+        <div class="grow"><h2 id="canal-titulo" tabindex="-1">Cardume</h2><p class="subtitulo" id="canal-sub"></p></div>
+        <button type="button" id="b-lado" aria-label="Detalhes do canal" aria-pressed="false">ℹ️</button>
+      </header>
+      <div class="log" id="log" role="log" aria-label="Mensagens do canal" aria-live="polite" tabindex="0"></div>
+      <div class="rodape" id="rodape" hidden>
+        <div class="sugestoes" id="sugestoes" role="listbox" aria-label="Pessoas para mencionar" hidden></div>
+        <div class="emojis" id="emojis" role="dialog" aria-label="Emojis" hidden></div>
+        <div class="barra-fmt" role="toolbar" aria-label="Formatação">
+          <button type="button" data-fmt="**" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button>
+          <button type="button" data-fmt="_" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button>
+          <button type="button" data-fmt="~~" title="Riscado" aria-label="Riscado"><s>S</s></button>
+          <button type="button" data-fmt="`" title="Código" aria-label="Código">&lt;/&gt;</button>
+          <button type="button" data-lista="- " title="Lista" aria-label="Lista">•</button>
+          <button type="button" data-lista="> " title="Citação" aria-label="Citação">❝</button>
+          <button type="button" id="b-emoji" title="Emoji" aria-label="Emoji" aria-expanded="false">😀</button>
+        </div>
+        <form class="compositor" id="compositor">
+          <textarea id="entrada" rows="1" aria-label="Mensagem" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…" maxlength="4000"></textarea>
+          <button class="primary" type="submit" id="b-enviar">Enviar</button>
+        </form>
+        <p class="ajuda" id="ajuda">Enter envia · Shift+Enter quebra linha · @ menciona · **negrito** _itálico_ `código`</p>
+      </div>
+    </section>
+
+    <aside class="painel lado" id="lado" aria-label="Detalhes do canal" hidden></aside>
+  </main>
+</div>
+<div class="ov" id="ov" hidden></div>
+<div id="toast" role="status" hidden></div>
+
+<script src="mare-login-dev.js?v=3"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const VERSION = 'v0.1 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const firebaseConfig = {
+  apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURLcardume_dev')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectIdcardume_dev')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBucketcardume_dev')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderIdcardume_dev')|| '122502391131',
+  appId:             localStorage.getItem('fb_appIdcardume_dev')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const auth = getAuth(fbApp);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+
+const $ = id => document.getElementById(id);
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const ADM_EMAIL_FIXO = 'caio.soares@ciahering.com.br';   // mesmo e-mail que as regras tratam como ADM
+const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+const TEMA_RE = /^t-[a-z0-9-]{3,60}$/;
+const ehTema = id => /^t-/.test(id);
+const B = 'kanban/cardume/';
+const LIMITE = 50;
+const DESFAZER_MS = 5000;
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 4200); }
+const negado = e => !!e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
+function falhou(acao, e) { toast(negado(e) ? `Não deu para ${acao}: sem permissão.` : `Não deu para ${acao}. Confira a conexão e tente de novo.`); console.warn('[cardume]', acao, e); }
+
+// ═══ Estado ═══
+let user = null, authPronto = false;
+let eu = {};                   // kanban/usuarios/{uid} (role, squads, squads_roles) — espelha as regras
+let pub = {};                  // kanban/usuarios_publicos (nomes, iniciais, foto)
+let meta = {};                 // squads_meta (rótulos)
+let meus = {};                 // meus/{uid}: canais em que sou membro
+let abertos = {};              // abertos: temáticos abertos (lista pública)
+let lidas = {};                // lidas/{uid}
+const canais = {};             // id → dados de canais/{id} (null = não existe / sem acesso)
+const ultimas = {};            // id → ultima/{id}
+const ouvintes = {};           // chave → unsubscribe
+let atual = '';                // canal aberto
+let msgs = [];                 // mensagens do canal aberto (ordenadas por ts)
+let membrosAtual = {}, adminsAtual = {};
+let carregandoMsgs = false;
+let editando = '';             // id da mensagem em edição
+const pendentes = new Map();   // msgId → { canal, msg, timer } (apagar com 5 s para desfazer; sobrevive à troca de canal)
+let verLado = lsGet('cardume_lado') !== '0';
+
+const souAdm = () => !!user && (eu.role === 'adm' || user.email === ADM_EMAIL_FIXO);
+const papelSq = sq => (eu.squads_roles || {})[sq];
+const gestorOficial = sq => souAdm() || (!ehTema(sq) && (eu.squads || {})[sq] === true && ['po', 'organizador'].includes(papelSq(sq)));
+function gestor(id) {
+  if (souAdm()) return true;
+  if (!ehTema(id)) return gestorOficial(id);
+  const c = canais[id];
+  return !!c && (c.dono === user.uid || (id === atual && adminsAtual[user.uid] === true));
+}
+const souMembro = id => meus[id] === true;
+const vencido = c => !!c && typeof c.fim === 'number' && c.fim <= Date.now();
+function nomeCanal(id) {
+  const c = canais[id];
+  if (c && c.nome) return c.nome;
+  if (abertos[id] && abertos[id].nome) return abertos[id].nome;
+  return (meta[id] && meta[id].label) || id;
+}
+const nomePessoa = uid => (pub[uid] && (pub[uid].nome || pub[uid].displayName)) || 'Alguém';
+function iniciais(uid) { const p = pub[uid]; if (p && p.init) return String(p.init).slice(0, 3); return nomePessoa(uid).split(/\s+/).map(x => x[0] || '').join('').slice(0, 2).toUpperCase(); }
+function avatar(uid, cls) {
+  const a = el('span', 'avatar' + (cls ? ' ' + cls : ''));
+  const foto = pub[uid] && pub[uid].foto;
+  if (typeof foto === 'string' && /^https:\/\//.test(foto)) { const i = document.createElement('img'); i.src = foto; i.alt = ''; i.referrerPolicy = 'no-referrer'; a.append(i); }
+  else a.textContent = iniciais(uid);
+  a.setAttribute('aria-hidden', 'true');
+  return a;
+}
+function ouvir(chave, r, cb, aoNegar) {
+  if (ouvintes[chave]) ouvintes[chave]();
+  ouvintes[chave] = onValue(r, cb, e => { delete ouvintes[chave]; if (aoNegar) aoNegar(e); });
+}
+function parar(prefixo) { Object.keys(ouvintes).forEach(k => { if (k === prefixo || k.startsWith(prefixo + ':')) { ouvintes[k](); delete ouvintes[k]; } }); }
+
+// ═══ Texto formatado → DOM (sem innerHTML) ═══
+// Subconjunto de Markdown: **negrito**, _itálico_ / *itálico*, ~~riscado~~, `código`, ```bloco```, "> citação", "- lista", links https e @menções.
+function linkSeguro(u) { try { const x = new URL(u); return x.protocol === 'https:' ? x.href : null; } catch (e) { return null; } }
+function inline(txt, destino) {
+  const re = /(\*\*([^*\n]+)\*\*)|(~~([^~\n]+)~~)|(`([^`\n]+)`)|((?:^|(?<=[\s(]))[_*]([^_*\n]+)[_*](?=$|[\s).,!?:;]))|(https:\/\/[^\s<>"']+)|(@[\p{L}][\p{L}.'-]*(?: [\p{L}][\p{L}.'-]*){0,3})/gu;
+  let i = 0, m;
+  while ((m = re.exec(txt))) {
+    if (m.index > i) destino.append(document.createTextNode(txt.slice(i, m.index)));
+    if (m[1]) { const b = el('strong'); inline(m[2], b); destino.append(b); }
+    else if (m[3]) { const s = el('s'); inline(m[4], s); destino.append(s); }
+    else if (m[5]) destino.append(el('code', '', m[6]));
+    else if (m[7]) { const e = el('em'); inline(m[8], e); destino.append(e); }
+    else if (m[9]) {
+      let url = m[9].replace(/[.,!?:;)]+$/, ''); const sobra = m[9].slice(url.length);
+      const ok = linkSeguro(url);
+      if (ok) { const a = el('a', '', url); a.href = ok; a.target = '_blank'; a.rel = 'noopener noreferrer'; destino.append(a); } else destino.append(document.createTextNode(url));
+      if (sobra) destino.append(document.createTextNode(sobra));
+    }
+    else if (m[10]) {
+      const cand = mencaoDe(m[10]);
+      if (cand) { destino.append(el('span', 'mencao' + (cand.uid === user.uid ? ' eu' : ''), '@' + cand.nome)); const resto = m[10].slice(1 + cand.nome.length); if (resto) destino.append(document.createTextNode(resto)); }
+      else destino.append(document.createTextNode(m[10]));
+    }
+    i = re.lastIndex;
+  }
+  if (i < txt.length) destino.append(document.createTextNode(txt.slice(i)));
+}
+// "@Ana Lima e" → a pessoa cujo nome é o maior prefixo (só membros do canal aberto)
+function mencaoDe(s) {
+  const t = s.slice(1).toLocaleLowerCase('pt-BR');
+  let melhor = null;
+  Object.keys(membrosAtual).forEach(uid => { const n = nomePessoa(uid); const nl = n.toLocaleLowerCase('pt-BR'); if ((t === nl || t.startsWith(nl + ' ') || t.startsWith(nl)) && (!melhor || n.length > melhor.nome.length)) melhor = { uid, nome: n }; });
+  return melhor;
+}
+function renderTexto(txt) {
+  const box = el('div', 'texto');
+  const linhas = String(txt).split('\n');
+  for (let i = 0; i < linhas.length; i++) {
+    const l = linhas[i];
+    if (/^```/.test(l)) {   // bloco de código até o próximo ```
+      const corpo = []; i++;
+      while (i < linhas.length && !/^```/.test(linhas[i])) corpo.push(linhas[i++]);
+      const pre = el('pre'); pre.append(el('code', '', corpo.join('\n'))); box.append(pre); continue;
+    }
+    if (/^> /.test(l)) { const q = el('blockquote'); inline(l.slice(2), q); box.append(q); continue; }
+    if (/^[-•] /.test(l)) {
+      const ul = el('ul');
+      while (i < linhas.length && /^[-•] /.test(linhas[i])) { const li = el('li'); inline(linhas[i].slice(2), li); ul.append(li); i++; }
+      i--; box.append(ul); continue;
+    }
+    const p = el('p'); inline(l, p); if (!l) p.append(document.createTextNode('​')); box.append(p);
+  }
+  return box;
+}
+
+// ═══ Carregar ═══
+async function carregarBase() {
+  const uid = user.uid;
+  const [u, p, m] = await Promise.all([
+    get(ref(db, 'kanban/usuarios/' + uid)).then(s => s.val() || {}).catch(() => ({})),
+    get(ref(db, 'kanban/usuarios_publicos')).then(s => s.val() || {}).catch(() => ({})),
+    get(ref(db, 'kanban/squads_meta')).then(s => s.val() || {}).catch(() => ({})),
+  ]);
+  if (!user || user.uid !== uid) return false;
+  eu = u; pub = p; meta = m;
+  if (!pub[uid]) pub[uid] = { nome: user.displayName || user.email, foto: user.photoURL || '' };
+  return true;
+}
+function idsConhecidos() {
+  const ids = new Set(Object.keys(meus).filter(k => meus[k] === true));
+  Object.keys(abertos).forEach(k => ids.add(k));
+  Object.keys(eu.squads || {}).filter(sq => (eu.squads || {})[sq] === true && ID_RE.test(sq)).forEach(sq => ids.add(sq));
+  if (souAdm()) Object.keys(meta).filter(sq => ID_RE.test(sq)).forEach(sq => ids.add(sq));
+  return [...ids].filter(id => ID_RE.test(id));
+}
+// Liga (uma vez) o ouvinte de cada canal conhecido e, se sou membro, do "ultima" dele.
+function sincronizarCanais() {
+  idsConhecidos().forEach(id => {
+    if (!ouvintes['canal:' + id]) ouvir('canal:' + id, ref(db, B + 'canais/' + id), s => { canais[id] = s.val(); renderLista(); if (id === atual) { renderCabecalho(); renderMsgs(); renderLado(); } }, () => { canais[id] = null; renderLista(); });
+    if (souMembro(id) && !ouvintes['ultima:' + id]) ouvir('ultima:' + id, ref(db, B + 'ultima/' + id), s => { ultimas[id] = s.val(); renderLista(); }, () => {});
+    if (!souMembro(id) && ouvintes['ultima:' + id]) { ouvintes['ultima:' + id](); delete ouvintes['ultima:' + id]; }
+  });
+}
+function iniciarOuvintes() {
+  const uid = user.uid;
+  ouvir('meus', ref(db, B + 'meus/' + uid), s => {
+    const antes = meus; meus = s.val() || {};
+    sincronizarCanais(); renderLista();
+    if (atual && antes[atual] === true && meus[atual] !== true) { toast('Você não está mais em ' + nomeCanal(atual) + '.'); abrirCanal(atual); }
+  }, () => {});
+  ouvir('abertos', ref(db, B + 'abertos'), s => { abertos = s.val() || {}; sincronizarCanais(); renderLista(); }, () => {});
+  ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
+  sincronizarCanais();
+}
+
+// ═══ Lista de canais ═══
+const naoLido = id => { const u = ultimas[id]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > (lidas[id] || 0) && id !== atual; };
+function renderLista() {
+  const box = $('lista-canais'); box.replaceChildren();
+  const ids = idsConhecidos();
+  const oficiais = ids.filter(id => !ehTema(id) && canais[id] && (souMembro(id) || gestorOficial(id)));
+  const temas = ids.filter(id => ehTema(id) && canais[id] && souMembro(id));
+  const descobrir = ids.filter(id => ehTema(id) && abertos[id] && !souMembro(id));
+  const semCanal = souAdm() ? ids.filter(id => !ehTema(id) && canais[id] === null && meta[id]) : [];
+  const sec = (titulo, lista, fn) => { if (!lista.length) return; box.append(el('h3', '', titulo)); lista.sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR')).forEach(id => box.append(fn(id))); };
+  const botao = (id, prefixo, extra) => {
+    const b = el('button', 'canal' + (naoLido(id) ? ' nao-lido' : '')); b.type = 'button'; b.dataset.canal = id;
+    b.setAttribute('aria-current', String(id === atual));
+    const n = el('span', 'nome', prefixo + nomeCanal(id)); b.append(n);
+    if (extra) b.append(el('span', 'chip', extra));
+    else if (naoLido(id)) { const p = el('span', 'ponto'); b.append(p); }
+    b.setAttribute('aria-label', prefixo + nomeCanal(id) + (naoLido(id) ? ', mensagens novas' : '') + (extra ? ', ' + extra : ''));
+    return b;
+  };
+  sec('Squads', oficiais, id => botao(id, '# ', souMembro(id) ? '' : 'gerir'));
+  sec('Temáticos', temas, id => botao(id, (canais[id] && canais[id].acesso === 'convite' ? '🔒 ' : '# '), vencido(canais[id]) ? 'arquivado' : ''));
+  sec('Abertos para entrar', descobrir, id => botao(id, '# ', 'entrar'));
+  sec('Squads sem canal (ADM)', semCanal, id => botao(id, '＋ ', 'ativar'));
+  if (!box.children.length) box.append(el('p', 'subtitulo', 'Você ainda não está em nenhum canal. Peça a quem administra a sua squad para te adicionar, ou crie um canal temático.'));
+}
+$('lista-canais').addEventListener('click', e => { const b = e.target.closest('[data-canal]'); if (b) abrirCanal(b.dataset.canal, true); });
+
+// ═══ Canal aberto ═══
+function abrirCanal(id, foco) {
+  if (atual !== id) { parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; }
+  atual = id; lsSet('cardume_canal', id);
+  const u = new URL(location.href); u.searchParams.set('c', id); history.replaceState(null, '', u);
+  $('app').dataset.tela = 'conversa';
+  renderLista(); renderCabecalho();
+  const membro = souMembro(id);
+  if (membro || souAdm()) {
+    carregandoMsgs = true; renderMsgs();
+    ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(LIMITE)), s => {
+      const v = s.val() || {};
+      msgs = Object.keys(v).map(k => Object.assign({ id: k }, v[k])).filter(m => m && typeof m.ts === 'number').sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
+      carregandoMsgs = false; renderMsgs(); marcarLido();
+    }, e => { carregandoMsgs = false; msgs = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
+  } else { msgs = []; carregandoMsgs = false; renderMsgs(); }
+  if (membro || gestor(id)) {
+    ouvir('membros', ref(db, B + 'membros/' + id), s => { membrosAtual = s.val() || {}; renderLado(); renderMsgs(); }, () => { membrosAtual = {}; renderLado(); });
+    if (ehTema(id)) ouvir('admins', ref(db, B + 'admins/' + id), s => { adminsAtual = s.val() || {}; renderLado(); }, () => {});
+  }
+  renderLado();
+  if (foco) $('canal-titulo').focus();
+}
+function renderCabecalho() {
+  const id = atual, c = canais[id];
+  $('canal-titulo').textContent = id ? (ehTema(id) && c && c.acesso === 'convite' ? '🔒 ' : '# ') + nomeCanal(id) : 'Cardume';
+  const sub = [];
+  if (id && !ehTema(id)) sub.push('Canal oficial da squad · privado');
+  if (c && ehTema(id)) { sub.push(c.acesso === 'convite' ? 'Só convidados' : 'Aberto a toda a Hering'); if (typeof c.fim === 'number') sub.push((vencido(c) ? 'Arquivado em ' : 'Até ') + new Date(c.fim).toLocaleDateString('pt-BR')); }
+  $('canal-sub').textContent = sub.join(' · ');
+  const podeEscrever = id && souMembro(id) && !vencido(c) && (!ehTema(id) || !!c);
+  $('rodape').hidden = !podeEscrever;
+  $('b-lado').hidden = !id;
+}
+const hhmm = ts => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+function rotuloDia(ts) {
+  const d = new Date(ts), h = new Date(), o = new Date(h.getFullYear(), h.getMonth(), h.getDate() - 1);
+  if (d.toDateString() === h.toDateString()) return 'Hoje';
+  if (d.toDateString() === o.toDateString()) return 'Ontem';
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
+}
+function renderMsgs() {
+  const log = $('log'), noFim = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+  log.replaceChildren();
+  const id = atual, c = canais[id];
+  if (!id) { log.append(vazio('🐟', 'Escolha um canal à esquerda.')); return; }
+  if (!souMembro(id) && !souAdm()) {
+    if (ehTema(id) && abertos[id] && !vencido(c)) { const v = vazio('👋', 'Este canal é aberto a toda a Hering.'); const b = el('button', 'primary', 'Entrar no canal'); b.type = 'button'; b.onclick = () => entrar(id); v.append(b); log.append(v); }
+    else if (gestorOficial(id)) { const v = vazio('🛠️', 'Você administra este canal, mas não está nele. Abra ℹ️ Detalhes para pôr pessoas (inclusive você).'); log.append(v); }
+    else log.append(vazio('🔒', 'Você não está neste canal.'));
+    return;
+  }
+  if (carregandoMsgs) { log.append(vazio('', 'Carregando mensagens…')); return; }
+  if (!msgs.length) { log.append(vazio('💬', vencido(c) ? 'Canal arquivado, sem mensagens.' : 'Nenhuma mensagem ainda. Diga oi! 👋')); return; }
+  if (msgs.length >= LIMITE) log.append(el('p', 'subtitulo', 'Mostrando as últimas ' + LIMITE + ' mensagens.'));
+  let dia = '', ult = null, grupo = null;
+  msgs.forEach(m => {
+    const d = rotuloDia(m.ts);
+    if (d !== dia) { dia = d; log.append(el('div', 'dia', d)); ult = null; }
+    if (!ult || ult.uid !== m.uid || m.ts - ult.ts > 5 * 60000 || ult.apagada) {
+      grupo = el('div', 'grupo'); grupo.append(avatar(m.uid));
+      const corpo = el('div'); const a = el('div', 'autor'); a.append(el('b', '', nomePessoa(m.uid)), el('span', 'hora', hhmm(m.ts))); corpo.append(a);
+      grupo.append(corpo); grupo._corpo = corpo; log.append(grupo);
+    }
+    grupo._corpo.append(renderMsg(m)); ult = m;
+  });
+  if (noFim || !renderMsgs._ja) log.scrollTop = log.scrollHeight;
+  renderMsgs._ja = true;
+}
+function vazio(icone, txt) { const v = el('div', 'vazio'); if (icone) v.append(el('span', '', icone)); v.append(el('p', '', txt)); return v; }
+function renderMsg(m) {
+  const box = el('div', 'msg'); box.dataset.msg = m.id;
+  const pend = pendentes.get(m.id);
+  if (m.apagada) { box.append(el('p', 'apagada', 'mensagem apagada')); return box; }
+  if (pend) {
+    const d = el('div', 'desfazer'); d.append(el('span', '', 'mensagem apagada'));
+    const b = el('button', 'lnk', 'Desfazer'); b.type = 'button'; b.onclick = () => desfazer(m.id); d.append(b); box.append(d); return box;
+  }
+  if (editando === m.id) { box.append(editor(m)); return box; }
+  box.append(renderTexto(m.texto || ''));
+  if (m.editado) box.append(el('span', 'editada', '(editada)'));
+  const c = canais[atual], ativo = !vencido(c);
+  const meu = m.uid === user.uid;
+  if (ativo && (meu || souAdm())) {
+    const ac = el('div', 'acoes-msg');
+    if (meu) { const e = el('button', '', '✏️ Editar'); e.type = 'button'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
+    const x = el('button', 'perigo', '🗑 Apagar'); x.type = 'button'; x.onclick = () => apagar(m); ac.append(x);
+    box.append(ac);
+  }
+  return box;
+}
+function editor(m) {
+  const f = el('form', 'editor'); const t = el('textarea'); t.value = m.texto || ''; t.maxLength = 4000; t.setAttribute('aria-label', 'Editar mensagem');
+  const l = el('div', 'linha'); const c = el('button', '', 'Cancelar'); c.type = 'button'; const s = el('button', 'primary', 'Salvar'); s.type = 'submit';
+  l.append(c, s); f.append(t, l);
+  c.onclick = () => { editando = ''; renderMsgs(); };
+  t.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); editando = ''; renderMsgs(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } });
+  f.onsubmit = async e => {
+    e.preventDefault(); const txt = t.value.trim();
+    if (!txt) { toast('A mensagem não pode ficar vazia. Para tirar, use 🗑 Apagar.'); return; }
+    if (txt === m.texto) { editando = ''; renderMsgs(); return; }
+    s.disabled = true;
+    try { await update(ref(db, B + 'msgs/' + atual + '/' + m.id), { texto: txt, editado: serverTimestamp() }); editando = ''; renderMsgs(); }
+    catch (err) { s.disabled = false; falhou('salvar a edição', err); }
+  };
+  return f;
+}
+
+// ═══ Escrever ═══
+async function enviar() {
+  const t = $('entrada'), txt = t.value.trim(), id = atual;
+  if (!txt || !id) return;
+  if (txt.length > 4000) { toast('Mensagem longa demais (máx. 4000 caracteres).'); return; }
+  const k = push(ref(db, B + 'msgs/' + id)).key;
+  const ts = serverTimestamp();
+  $('b-enviar').disabled = true;
+  try {
+    // contrato com as regras: a mensagem e o marcador de não lidas no MESMO update, com o mesmo serverTimestamp
+    await update(ref(db), { [B + 'msgs/' + id + '/' + k]: { uid: user.uid, ts, texto: txt }, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } });
+    t.value = ''; ajustarAltura(); lsSet('cardume_rascunho_' + id, '');
+  } catch (e) { falhou('enviar a mensagem', e); }
+  finally { $('b-enviar').disabled = false; t.focus(); }
+}
+function apagar(m) {
+  const canal = atual;
+  const timer = setTimeout(async () => {
+    pendentes.delete(m.id);
+    try { await set(ref(db, B + 'msgs/' + canal + '/' + m.id), { uid: m.uid, ts: m.ts, apagada: true }); }
+    catch (e) { falhou('apagar a mensagem', e); }
+    if (canal === atual) renderMsgs();
+  }, DESFAZER_MS);
+  pendentes.set(m.id, { canal, timer });
+  renderMsgs();
+  const b = document.querySelector('[data-msg="' + m.id + '"] .lnk'); if (b) b.focus();
+}
+function desfazer(id) { const p = pendentes.get(id); if (!p) return; clearTimeout(p.timer); pendentes.delete(id); renderMsgs(); }
+// Marca como lido (só sobe; um write por mudança, com respiro).
+function marcarLido() {
+  const id = atual; if (!id || !souMembro(id) || document.hidden || !msgs.length) return;
+  const ts = msgs[msgs.length - 1].ts;
+  if (ts <= (lidas[id] || 0)) return;
+  clearTimeout(marcarLido._t);
+  marcarLido._t = setTimeout(() => { if (atual === id && ts > (lidas[id] || 0)) set(ref(db, B + 'lidas/' + user.uid + '/' + id), ts).catch(() => {}); }, 800);
+}
+document.addEventListener('visibilitychange', marcarLido);
+
+// Compositor: Enter envia; Ctrl+B/I; @ menciona; rascunho por canal
+const entrada = $('entrada');
+function ajustarAltura() { entrada.style.height = 'auto'; entrada.style.height = Math.min(entrada.scrollHeight, window.innerHeight * 0.3) + 'px'; }
+let sug = null;
+function fecharSug() { sug = null; $('sugestoes').hidden = true; $('sugestoes').replaceChildren(); entrada.removeAttribute('aria-activedescendant'); }
+function atualizarSug() {
+  fecharSug();
+  const antes = entrada.value.slice(0, entrada.selectionStart);
+  const m = antes.match(/(?:^|\s)@([\p{L} ]{0,30})$/u); if (!m) return;
+  const busca = m[1].toLocaleLowerCase('pt-BR');
+  const itens = Object.keys(membrosAtual).filter(u => u !== user.uid).map(u => ({ uid: u, nome: nomePessoa(u) })).filter(p => p.nome.toLocaleLowerCase('pt-BR').startsWith(busca) || p.nome.toLocaleLowerCase('pt-BR').split(' ').some(w => w.startsWith(busca))).slice(0, 8);
+  if (!itens.length) return;
+  sug = { itens, ini: antes.lastIndexOf('@'), sel: 0 };
+  const box = $('sugestoes');
+  itens.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = 'sug-' + i; o.setAttribute('role', 'option'); o.append(document.createTextNode('@' + p.nome)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
+  box.hidden = false; destacarSug();
+}
+function destacarSug() { [...$('sugestoes').children].forEach((o, i) => o.setAttribute('aria-selected', String(i === sug.sel))); entrada.setAttribute('aria-activedescendant', 'sug-' + sug.sel); }
+function escolherSug(i) { const p = sug.itens[i]; entrada.setRangeText('@' + p.nome + ' ', sug.ini, entrada.selectionStart, 'end'); fecharSug(); entrada.focus(); }
+function envolver(marca) {
+  const a = entrada.selectionStart, b = entrada.selectionEnd, sel = entrada.value.slice(a, b) || 'texto';
+  entrada.setRangeText(marca + sel + marca, a, b, 'select');
+  entrada.setSelectionRange(a + marca.length, a + marca.length + sel.length); entrada.focus();
+}
+function prefixarLinha(pre) {
+  const a = entrada.selectionStart, ini = entrada.value.lastIndexOf('\n', a - 1) + 1;
+  entrada.setRangeText(pre, ini, ini, 'end'); entrada.focus();
+}
+entrada.addEventListener('input', () => { ajustarAltura(); atualizarSug(); if (atual) lsSet('cardume_rascunho_' + atual, entrada.value); });
+entrada.addEventListener('keydown', e => {
+  if (sug) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sug.sel = (sug.sel + (e.key === 'ArrowDown' ? 1 : -1) + sug.itens.length) % sug.itens.length; destacarSug(); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); escolherSug(sug.sel); return; }
+    if (e.key === 'Escape') { e.preventDefault(); fecharSug(); return; }
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); envolver('**'); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); envolver('_'); return; }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); enviar(); }
+});
+entrada.addEventListener('blur', () => setTimeout(fecharSug, 150));
+$('compositor').addEventListener('submit', e => { e.preventDefault(); enviar(); });
+document.querySelector('.barra-fmt').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.fmt) envolver(b.dataset.fmt); else if (b.dataset.lista) prefixarLinha(b.dataset.lista);
+});
+
+// Emojis: lista curta embutida (sem biblioteca) + recentes por navegador
+const EMOJIS = [['😀','sorriso'],['😂','risada'],['🙂','ok'],['😉','piscada'],['😍','amei'],['🤔','pensando'],['😅','ufa'],['😬','eita'],['😢','triste'],['😴','sono'],['🙏','obrigado por favor'],['👍','joinha sim'],['👎','não'],['👏','palmas'],['🙌','viva'],['💪','força'],['👀','olhando'],['🤝','combinado'],['✅','feito ok'],['❌','não erro'],['⚠️','atenção'],['🚨','urgente alerta'],['🔥','fogo'],['🚀','lançou'],['🎉','festa'],['💡','ideia'],['📌','fixar'],['📊','dados gráfico'],['📈','subiu'],['📉','caiu'],['🐛','bug'],['🛠️','conserto'],['⏰','prazo'],['📅','data'],['☕','café'],['🐟','peixe cardume'],['🌊','onda oceano'],['❤️','coração'],['💙','azul'],['⭐','estrela'],['🖤','black friday preto'],['🛒','compra'],['💰','dinheiro'],['🤖','robô']];
+function recentes() { try { return JSON.parse(lsGet('cardume_emojis') || '[]').filter(x => typeof x === 'string').slice(0, 8); } catch (e) { return []; } }
+function abrirEmojis() {
+  const box = $('emojis'); box.replaceChildren();
+  const busca = el('input'); busca.type = 'search'; busca.placeholder = 'Buscar emoji…'; busca.setAttribute('aria-label', 'Buscar emoji'); box.append(busca);
+  const grade = el('div'); grade.style.display = 'contents'; box.append(grade);
+  const desenhar = () => {
+    grade.replaceChildren(); const q = busca.value.trim().toLocaleLowerCase('pt-BR');
+    const r = recentes(); if (!q && r.length) { grade.append(el('span', 'rot', 'Recentes')); r.forEach(x => grade.append(botaoEmoji(x, ''))); grade.append(el('span', 'rot', 'Todos')); }
+    EMOJIS.filter(([, n]) => !q || n.includes(q)).forEach(([x, n]) => grade.append(botaoEmoji(x, n)));
+  };
+  busca.oninput = desenhar; busca.onkeydown = e => { if (e.key === 'Escape') { e.preventDefault(); fecharEmojis(true); } };
+  desenhar(); box.hidden = false; $('b-emoji').setAttribute('aria-expanded', 'true'); busca.focus();
+}
+function botaoEmoji(x, n) { const b = el('button', '', x); b.type = 'button'; b.setAttribute('aria-label', n || x); b.onclick = () => { entrada.setRangeText(x, entrada.selectionStart, entrada.selectionEnd, 'end'); lsSet('cardume_emojis', JSON.stringify([x].concat(recentes().filter(y => y !== x)).slice(0, 8))); fecharEmojis(true); }; return b; }
+function fecharEmojis(foco) { $('emojis').hidden = true; $('b-emoji').setAttribute('aria-expanded', 'false'); if (foco) entrada.focus(); }
+$('b-emoji').onclick = () => { if ($('emojis').hidden) abrirEmojis(); else fecharEmojis(true); };
+document.addEventListener('click', e => { if (!$('emojis').hidden && !e.target.closest('#emojis') && !e.target.closest('#b-emoji')) fecharEmojis(false); });
+// Colar: só texto puro por enquanto (colar com formatação fica para o próximo PR — backlog #cardume-texto)
+
+// ═══ Painel de detalhes: membros, gestão, entrar/sair, editar o temático ═══
+function renderLado() {
+  const lado = $('lado'), id = atual;
+  lado.hidden = !id || !verLado; $('app').classList.toggle('sem-lado', lado.hidden);
+  $('b-lado').setAttribute('aria-pressed', String(!lado.hidden));
+  lado.replaceChildren(); if (!id) return;
+  const c = canais[id], g = gestor(id), membro = souMembro(id);
+  const cab = el('header', 'cabecalho'); const v = el('button', 'voltar', '←'); v.type = 'button'; v.setAttribute('aria-label', 'Voltar à conversa'); v.onclick = () => { $('app').dataset.tela = 'conversa'; };
+  const tt = el('div', 'grow'); tt.append(el('p', 'subtitulo', 'Detalhes'), el('h2', '', nomeCanal(id))); cab.append(v, tt); lado.append(cab);
+  const s = el('section');
+  // ativar canal oficial (ADM)
+  if (!ehTema(id) && c === null && souAdm()) {
+    s.append(el('p', '', 'A squad ainda não tem canal no Cardume.'));
+    const b = el('button', 'primary', 'Ativar canal da squad'); b.type = 'button'; b.onclick = () => ativarOficial(id); s.append(el('div', 'acoes-lado')); s.lastChild.append(b);
+    lado.append(s); return;
+  }
+  const ac = el('div', 'acoes-lado');
+  if (ehTema(id) && !membro && abertos[id] && !vencido(c)) { const b = el('button', 'primary', 'Entrar no canal'); b.type = 'button'; b.onclick = () => entrar(id); ac.append(b); }
+  if (membro) { const b = el('button', '', 'Sair do canal'); b.type = 'button'; b.onclick = () => sair(id); ac.append(b); }
+  if (g && ehTema(id) && c) { const b = el('button', '', '⚙️ Editar canal'); b.type = 'button'; b.onclick = () => modalCanal(id); ac.append(b); }
+  if (ac.children.length) s.append(ac);
+  if (ehTema(id) && c && c.dono) s.append(el('p', '', 'Criado por ' + nomePessoa(c.dono) + (c.acesso === 'convite' ? ' · só convidados' : ' · aberto')));
+  // membros
+  const uids = Object.keys(membrosAtual).filter(u => membrosAtual[u] === true);
+  if (membro || g) {
+    s.append(el('h3', '', 'Membros (' + uids.length + ')'));
+    uids.sort((a, b) => nomePessoa(a).localeCompare(nomePessoa(b), 'pt-BR')).forEach(u => {
+      const linha = el('div', 'pessoa'); linha.append(avatar(u));
+      const n = el('span', 'grow', nomePessoa(u)); linha.append(n);
+      if (ehTema(id) && c && c.dono === u) linha.append(el('span', 'chip', 'dona'));
+      else if (adminsAtual[u] === true) linha.append(el('span', 'chip', 'admin'));
+      const podeTirar = g && u !== user.uid && !(ehTema(id) && c && c.dono === u && !souAdm());
+      if (podeTirar) { const x = el('button', '', 'Tirar'); x.type = 'button'; x.setAttribute('aria-label', 'Tirar ' + nomePessoa(u) + ' do canal'); x.onclick = () => tirar(id, u); linha.append(x); }
+      if (ehTema(id) && c && (c.dono === user.uid || souAdm()) && u !== c.dono) {
+        const a = el('button', '', adminsAtual[u] === true ? 'Tirar admin' : 'Fazer admin'); a.type = 'button'; a.onclick = () => alternarAdmin(id, u); linha.append(a);
+      }
+      s.append(linha);
+    });
+    if (g && !vencido(c)) {
+      s.append(el('h3', '', 'Adicionar pessoa'));
+      const busca = el('input'); busca.type = 'search'; busca.placeholder = 'Nome da pessoa…'; busca.setAttribute('aria-label', 'Buscar pessoa para adicionar'); s.append(busca);
+      const res = el('div'); s.append(res);
+      const des = () => {
+        res.replaceChildren(); const q = busca.value.trim().toLocaleLowerCase('pt-BR');
+        let lista = Object.keys(pub).filter(u => ID_RE.test(u) && membrosAtual[u] !== true && /@ciahering\.com\.br$/i.test(pub[u].email || ''));
+        if (!ehTema(id) && !q) lista = lista.filter(u => pub[u].squads && pub[u].squads[id]);   // oficial: sugere quem é da squad
+        if (q) lista = lista.filter(u => nomePessoa(u).toLocaleLowerCase('pt-BR').includes(q));
+        lista.sort((a, b) => nomePessoa(a).localeCompare(nomePessoa(b), 'pt-BR')).slice(0, 12).forEach(u => {
+          const l = el('div', 'pessoa'); l.append(avatar(u), el('span', 'grow', nomePessoa(u)));
+          const b = el('button', '', 'Adicionar'); b.type = 'button'; b.setAttribute('aria-label', 'Adicionar ' + nomePessoa(u)); b.onclick = () => adicionar(id, u); l.append(b); res.append(l);
+        });
+        if (!res.children.length) res.append(el('p', '', q ? 'Ninguém encontrado.' : 'Digite um nome.'));
+      };
+      busca.oninput = des; des();
+    }
+  }
+  lado.append(s);
+}
+$('b-lado').onclick = () => { verLado = $('lado').hidden; lsSet('cardume_lado', verLado ? '1' : '0'); if (window.matchMedia('(max-width: 899px)').matches) { verLado = true; renderLado(); $('app').dataset.tela = 'lado'; return; } renderLado(); };
+$('b-voltar').onclick = () => { $('app').dataset.tela = 'canais'; };
+
+// Pares que as regras exigem no MESMO update (docs/ideias/cardume-v0-banco.md › Contratos)
+const parMembro = (id, uid, v) => ({ [B + 'membros/' + id + '/' + uid]: v, [B + 'meus/' + uid + '/' + id]: v });
+async function adicionar(id, uid) { try { await update(ref(db), parMembro(id, uid, true)); toast(nomePessoa(uid) + ' entrou em ' + nomeCanal(id) + '.'); } catch (e) { falhou('adicionar a pessoa', e); } }
+async function tirar(id, uid) { if (!confirm('Tirar ' + nomePessoa(uid) + ' de ' + nomeCanal(id) + '?')) return; try { await update(ref(db), parMembro(id, uid, null)); } catch (e) { falhou('tirar a pessoa', e); } }
+async function entrar(id) { try { await update(ref(db), parMembro(id, user.uid, true)); abrirCanal(id); } catch (e) { falhou('entrar no canal', e); } }
+async function sair(id) {
+  if (!confirm('Sair de ' + nomeCanal(id) + '?' + (ehTema(id) && canais[id] && canais[id].acesso === 'convite' ? ' Para voltar, alguém que administra terá de te adicionar.' : ''))) return;
+  try { await update(ref(db), parMembro(id, user.uid, null)); } catch (e) { falhou('sair do canal', e); }
+}
+async function alternarAdmin(id, uid) { try { await set(ref(db, B + 'admins/' + id + '/' + uid), adminsAtual[uid] === true ? null : true); } catch (e) { falhou('mudar o admin', e); } }
+async function ativarOficial(sq) {
+  const nome = ((meta[sq] && meta[sq].label) || sq).slice(0, 40);
+  try { await set(ref(db, B + 'canais/' + sq), { nome }); toast('Canal de ' + nome + ' ativado. Agora adicione as pessoas.'); abrirCanal(sq); } catch (e) { falhou('ativar o canal', e); }
+}
+
+// ═══ Criar / editar canal temático ═══
+const slug = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+const sufixo = () => Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x').padEnd(4, 'x');
+function fimDoDia(iso) { const [a, m, d] = iso.split('-').map(Number); return new Date(a, m - 1, d, 23, 59, 59).getTime(); }
+function fecharModal() { const ov = $('ov'); ov.hidden = true; ov.replaceChildren(); if (fecharModal._volta) fecharModal._volta.focus(); }
+function modalCanal(id) {
+  const c = id ? canais[id] : null;
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  const h = el('h2', '', c ? '⚙️ Editar canal' : '➕ Novo canal temático'); h.id = 'md-t'; f.append(h);
+  if (!c) f.append(el('p', 'subtitulo', 'Para um assunto ou um período (ex.: Black Friday, Comercial). Você fica como dona e administra.'));
+  const ln = el('label', '', 'Nome'); const nome = el('input'); nome.maxLength = 40; nome.required = true; nome.value = c ? c.nome : ''; ln.append(nome); f.append(ln);
+  const acs = el('fieldset'); acs.style.cssText = 'border:0;padding:0;margin:0;display:grid;gap:6px;'; acs.append(el('legend', 'subtitulo', 'Quem pode entrar'));
+  const radio = (v, t, d) => { const l = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = 'acesso'; r.value = v; r.checked = (c ? c.acesso : 'aberto') === v; const tx = el('span'); tx.append(el('b', '', t), document.createElement('br'), el('span', 'subtitulo', d)); l.append(r, tx); return l; };
+  acs.append(radio('aberto', 'Aberto', 'Aparece na lista; qualquer pessoa da Hering entra sozinha.'), radio('convite', 'Só convidados', 'Só quem você adicionar vê e entra.'));
+  f.append(acs);
+  const lf = el('label', '', 'Data de fim (opcional — depois dela o canal fica só leitura)'); const fim = el('input'); fim.type = 'date';
+  if (c && typeof c.fim === 'number') { const d = new Date(c.fim); fim.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  lf.append(fim); f.append(lf);
+  const err = el('p', 'erro'); err.hidden = true; f.append(err);
+  const l = el('div', 'linha');
+  if (c && !vencido(c)) { const arq = el('button', 'perigo', 'Arquivar agora'); arq.type = 'button'; arq.onclick = () => salvarCanal(id, c, nome.value, c.acesso, Math.max(c.criado + 1, Date.now() - 120000), err, true); l.append(arq); }   // 2 min no passado: o relógio do navegador pode estar atrás do servidor
+  const can = el('button', '', 'Cancelar'); can.type = 'button'; can.onclick = fecharModal;
+  const ok = el('button', 'primary', c ? 'Salvar' : 'Criar canal'); ok.type = 'submit'; l.append(can, ok); f.append(l);
+  f.onsubmit = e => {
+    e.preventDefault();
+    const acesso = f.querySelector('input[name="acesso"]:checked').value;
+    const fimTs = fim.value ? fimDoDia(fim.value) : null;
+    if (c) salvarCanal(id, c, nome.value, acesso, fimTs, err, false); else criarCanal(nome.value, acesso, fimTs, err);
+  };
+  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
+  ov.append(f); nome.focus();
+}
+$('b-novo').onclick = () => modalCanal('');
+function erroModal(err, msg) { err.textContent = msg; err.hidden = false; }
+async function criarCanal(nomeTxt, acesso, fimTs, err) {
+  const nome = nomeTxt.trim().slice(0, 40), base = slug(nome);
+  if (!nome) return erroModal(err, 'Dê um nome ao canal.');
+  if (fimTs && fimTs <= Date.now()) return erroModal(err, 'A data de fim precisa ser hoje ou depois.');
+  if (fimTs && fimTs > Date.now() + 365 * 864e5) return erroModal(err, 'O canal pode durar no máximo 1 ano.');
+  const id = 't-' + (base.length >= 2 ? base + '-' : '') + sufixo();
+  if (!TEMA_RE.test(id)) return erroModal(err, 'Use letras ou números no nome.');
+  const canal = { nome, tipo: 'tema', dono: user.uid, acesso, criado: serverTimestamp() };
+  if (fimTs) canal.fim = fimTs;
+  // um update só: canal + eu como membro + "meus" (+ lista pública se aberto) — exigido pelas regras
+  const mapa = Object.assign({ [B + 'canais/' + id]: canal }, parMembro(id, user.uid, true));
+  if (acesso === 'aberto') mapa[B + 'abertos/' + id] = { nome };
+  try { await update(ref(db), mapa); fecharModal(); toast('Canal ' + nome + ' criado.'); abrirCanal(id, true); }
+  catch (e) { negado(e) ? erroModal(err, 'Sem permissão para criar o canal.') : erroModal(err, 'Não deu para criar agora. Tente de novo.'); console.warn('[cardume] criar', e); }
+}
+async function salvarCanal(id, c, nomeTxt, acesso, fimTs, err, arquivar) {
+  const nome = nomeTxt.trim().slice(0, 40);
+  if (!nome) return erroModal(err, 'Dê um nome ao canal.');
+  if (fimTs && fimTs <= c.criado) return erroModal(err, 'A data de fim precisa ser depois da criação.');
+  if (fimTs && fimTs > c.criado + 365 * 864e5) return erroModal(err, 'O canal pode durar no máximo 1 ano desde a criação.');
+  if (arquivar && !confirm('Arquivar ' + nome + '? Ninguém mais escreve; as mensagens somem na limpeza.')) return;
+  const ativo = !(fimTs && fimTs <= Date.now());
+  // canal + lista pública no mesmo update (as regras conferem o estado final da lista)
+  const mapa = { [B + 'canais/' + id + '/nome']: nome, [B + 'canais/' + id + '/acesso']: acesso, [B + 'canais/' + id + '/fim']: fimTs || null };
+  mapa[B + 'abertos/' + id] = (acesso === 'aberto' && ativo) ? { nome } : null;
+  try { await update(ref(db), mapa); fecharModal(); toast(arquivar ? 'Canal arquivado.' : 'Canal salvo.'); }
+  catch (e) { negado(e) ? erroModal(err, 'Sem permissão para mudar o canal.') : erroModal(err, 'Não deu para salvar agora.'); console.warn('[cardume] salvar canal', e); }
+}
+
+// ═══ Login / fluxo principal ═══
+function isHering(u) { return !!(u && /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com')); }
+function renderWho() {
+  const slot = $('who-slot'); slot.replaceChildren(); if (!user) return;
+  const w = el('div', 'who');
+  if (user.photoURL && /^https:\/\//.test(user.photoURL)) { const i = document.createElement('img'); i.src = user.photoURL; i.alt = ''; i.referrerPolicy = 'no-referrer'; w.append(i); }
+  w.append(el('b', '', user.displayName || user.email));
+  const s = el('button', 'lnk', 'sair'); s.type = 'button'; s.onclick = () => signOut(auth); w.append(s);
+  slot.append(w);
+}
+$('btn-google').onclick = async () => {
+  const m = $('login-msg'); m.hidden = true;
+  if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; }
+  try {
+    const r = await signInWithPopup(auth, provider);
+    if (!isHering(r.user)) { await signOut(auth); m.textContent = '⚠️ Use a conta @ciahering.com.br.'; m.hidden = false; }
+  } catch (e) { if (e && e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') { m.textContent = '⚠️ Não deu pra entrar agora. Tente de novo.'; m.hidden = false; } }
+};
+async function iniciar() {
+  Object.keys(ouvintes).forEach(k => { ouvintes[k](); delete ouvintes[k]; });
+  renderWho();
+  if (!user) { $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
+  $('login').hidden = true; $('loading').hidden = false; $('app').hidden = true;
+  const meu = user.uid;
+  const ok = await carregarBase();
+  if (!ok || !user || user.uid !== meu) return;
+  $('loading').hidden = true; $('app').hidden = false;
+  iniciarOuvintes(); renderLista();
+  const q = new URLSearchParams(location.search).get('c') || lsGet('cardume_canal') || '';
+  if (ID_RE.test(q)) abrirCanal(q); else { renderCabecalho(); renderMsgs(); renderLado(); }
+  if (atual) { const r = lsGet('cardume_rascunho_' + atual); if (r) { entrada.value = r; ajustarAltura(); } }
+}
+onAuthStateChanged(auth, u => {
+  const novo = isHering(u) ? u : null;
+  const mudou = (novo && novo.uid) !== (user && user.uid);
+  user = novo;
+  if (!authPronto || mudou) { authPronto = true; iniciar(); }
+});
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').hidden) fecharModal(); });
+
+// Atualização: avisa quando o version.json aponta uma versão nova.
+async function checarVersao() {
+  if (document.hidden) return;
+  try { const v = await (await fetch('version.json?_=' + Date.now(), { cache: 'no-store' })).json(); if (v[VERSION_KEY] && v[VERSION_KEY] !== VERSION) $('versao-aviso').hidden = false; } catch (e) {}
+}
+setTimeout(checarVersao, 4000); setInterval(checarVersao, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checarVersao(); });
+
+// Gancho só para testes automatizados (somente leitura).
+window.__cardume = { get estado() { return { atual, meus: Object.keys(meus), msgs: msgs.length, souAdm: souAdm(), pendentes: pendentes.size, versao: VERSION }; } };
+</script>
+</body>
+</html>
