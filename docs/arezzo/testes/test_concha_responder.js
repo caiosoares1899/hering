@@ -82,6 +82,9 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await responder('-Nm1'); await p.click('[data-canal="prf"]'); await p.waitForTimeout(250);
   t('trocar de canal cancela a resposta', await p.isHidden('#resp-barra'), 0);
   await p.click('[data-canal="dados"]'); await p.waitForTimeout(400);
+  await responder('-Nm1'); await p.click('#b-mencoes'); await p.waitForTimeout(250);
+  t('abrir @ Menções cancela a resposta e solta a escuta das citações (auditoria do Antigravity na #1959)', await p.isHidden('#resp-barra') && await p.evaluate(() => !(window.__lis || []).some(l => /msgs\/dados\/-Nold$/.test(l.p))), await p.evaluate(() => (window.__lis || []).map(l => l.p)));
+  await p.click('[data-canal="dados"]'); await p.waitForTimeout(400);
   // original apagada
   await responder('-Nm3'); await p.fill('#entrada', 'respondendo a Carla'); await p.press('#entrada', 'Enter'); await p.waitForTimeout(400);
   const rc = (await minhas()).pop();
