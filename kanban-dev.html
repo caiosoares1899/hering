@@ -7782,7 +7782,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1026-dev</div>
+<div class="version">v8.30.1027-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -33041,7 +33041,13 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId,
     const _criaSeAusente = ()=> fbGet(path).then(snap=>{
       if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(_notifWarn);
     }).catch(_notifWarn);
-    if(typeof window._runTransaction==='function'){
+    // 🔒 Para OUTRA pessoa (24/11/2026, docs/ideias/usuarios-leitura-fechar.md › B6): sem ler a caixa dela — a transação lia, e a caixa alheia
+    // deixa de ser legível na fase C. Grava direto: as regras só aceitam CRIAR (quem não é o dono não regrava uma existente — nem PO/ADM),
+    // então "já existe" volta como PERMISSION_DENIED, que aqui é o resultado esperado e fica em silêncio.
+    const _meu = window._currentUser && window._currentUser.uid;
+    if(targetUid !== _meu){
+      window._set(window._ref(window._db,path), notif).catch(err=>{ if(!/permission/i.test(String(err && (err.code || err.message) || err))) _notifWarn(err); });
+    } else if(typeof window._runTransaction==='function'){
       window._runTransaction(window._ref(window._db,path), cur=>(cur ? undefined : notif)).catch(err=>{ _notifWarn(err); });
     } else _criaSeAusente();
   } else {
