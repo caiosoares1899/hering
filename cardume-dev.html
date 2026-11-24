@@ -57,6 +57,8 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .marca{display:flex;align-items:center;gap:12px;}
 .marca-icone{display:grid;place-items:center;width:44px;height:44px;font-size:22px;border:1px solid var(--glass-b);border-radius:var(--r2);background:var(--glass);box-shadow:var(--specular);}
 .contexto,.subtitulo{color:var(--txt2);font-size:12px;}
+.topo-dir{display:flex;align-items:center;gap:10px;}
+.b-sino{min-width:44px;min-height:44px;padding:0;font-size:18px;border-radius:var(--r2);background:var(--glass);box-shadow:var(--specular);}
 .devtag{font:700 11px var(--ff);color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:1px 7px;vertical-align:middle;}
 .who{display:flex;align-items:center;gap:8px;font-size:13px;}
 .who img{width:28px;height:28px;border-radius:50%;}
@@ -178,7 +180,10 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
       <span class="marca-icone" aria-hidden="true">🐟</span>
       <div><p class="contexto">Oceano</p><h1>Cardume <span class="devtag">dev</span></h1></div>
     </div>
-    <div id="who-slot"></div>
+    <div class="topo-dir">
+      <button type="button" id="b-sino" class="b-sino" hidden aria-label="Notificações">🔔</button>
+      <div id="who-slot"></div>
+    </div>
   </header>
 
   <div id="loading" class="state">Carregando…</div>
@@ -232,12 +237,13 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 <div id="toast" role="status" hidden></div>
 
 <script src="mare-login-dev.js?v=3"></script>
+<script src="mare-notif-dev.js?v=48"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.7 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.8 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -249,6 +255,8 @@ const firebaseConfig = {
 };
 const fbApp = initializeApp(firebaseConfig);
 const db = getDatabase(fbApp);
+// 🔔 o Sino unificado (mare-notif-dev.js) usa o Firebase da página por estes nomes, como no Oceano e no Maré
+Object.assign(window, { _db: db, _ref: ref, _get: get, _set: set, _update: update, _onValue: onValue, _query: query, _orderByChild: orderByChild, _limitToLast: limitToLast });
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
@@ -800,6 +808,7 @@ function trechoDe(c, m) {
 }
 function abrirMencao(rec) {
   if (!rec.lida) set(ref(db, B + 'mencoes/' + user.uid + '/' + rec._k + '/lida'), true).catch(() => {});
+  if (sinoApi && ID_RE.test(String(rec.n || ''))) sinoApi.marcarLida(String(rec.n));   // uma contagem só: a menção aberta pela aba também sai do Sino
   alvoMsg = String(rec.m); abrirCanal(String(rec.c), true);
 }
 function renderMencoes(log) {
@@ -1081,16 +1090,34 @@ function limparSessao() {
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
+// 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.
+// A menção do Cardume clicada no Sino abre aqui mesmo (sem recarregar) e marca também a aba @ Menções.
+let sinoApi = null, sinoUid = '';
+function abrirDoSino(i) {
+  if (i.k !== 'pessoal' || i.tipo !== 'cardume_mencao') return false;
+  const r = String((i.raw && i.raw.cardumeRef) || ''); if (!ID_RE.test(r)) return false;
+  const rec = mencoes.find(x => x._k === r);
+  if (rec) { abrirMencao(rec); return true; }
+  const nao = () => toast('Menção não encontrada (pode ter sido apagada).');
+  get(ref(db, B + 'mencoes/' + user.uid + '/' + r)).then(s => { const v = s.val(); if (v && ID_RE.test(String(v.c || '')) && ID_RE.test(String(v.m || ''))) abrirMencao(Object.assign({ _k: r }, v)); else nao(); }).catch(nao);
+  return true;
+}
+function ligarSino() {
+  if (!window.MareNotif || !MareNotif.sino) return;
+  sinoUid = user.uid; $('b-sino').hidden = false;
+  sinoApi = MareNotif.sino($('b-sino'), { user, isAdm: souAdm, toast, abrir: abrirDoSino });
+}
 async function iniciar() {
   limparSessao();
   renderWho();
-  if (!user) { $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
+  if (!user) { $('b-sino').hidden = true; if (window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
+  if (sinoUid && sinoUid !== user.uid) { location.reload(); return; }   // o Sino (mare-notif) vale para UMA conta por página: trocar de conta recarrega
   $('login').hidden = true; $('loading').hidden = false; $('app').hidden = true;
   const meu = user.uid;
   const ok = await carregarBase();
   if (!ok || !user || user.uid !== meu) return;
   $('loading').hidden = true; $('app').hidden = false;
-  iniciarOuvintes(); renderLista();
+  iniciarOuvintes(); renderLista(); ligarSino();
   const qp = new URLSearchParams(location.search), q = qp.get('c') || lsGet('cardume_canal') || '';
   if (ID_RE.test(qp.get('m') || '')) alvoMsg = qp.get('m');
   const refMencao = qp.get('mencao') || '';

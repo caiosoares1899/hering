@@ -718,6 +718,153 @@
   document.addEventListener('click', e=>{ if(!e.target.closest || (!e.target.closest('.mn-dnd-menu') && !e.target.closest('.mn-dnd-btn'))) menusFechar(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && menusFechar()){ e.preventDefault(); e.stopImmediatePropagation(); } }, true);   // Esc fecha o menu antes de fechar o painel do sino
 
+
+  // ══ 🔔 SINO UNIFICADO (componente) ══ docs/ideias/sino-unificado.md — fase 1 (24/11/2026): o mesmo Sino em todos os apps, com os layouts por
+  // família do Maré (👤 Pessoal · 📅 Calendário · 🎯 Radar · 🛡️ Sistema). A página só entrega o botão e, se quiser, trata cliques por dentro.
+  //   MareNotif.sino(botao, {user, isAdm?, toast?, abrir?(item)→true se tratou, filtro?(item)→false esconde, aoMudar?(itens), painel?:true (mostra SO_PAINEL)})
+  // Fontes: as PESSOAIS (kanban/usuarios/{uid}/notificacoes, as 80 mais recentes, viva()) + o FEED da torre (items()), sem duplicar (o "lido" da pessoal vence).
+  // SEGURANÇA: qualquer conta da Hering grava nas notificações de outra (e no feed) — título, subtítulo, autor e ícone são texto de terceiros:
+  // o painel é montado só com createElement/textContent (nunca innerHTML com dado); o destino do clique vem de urlPessoal()/urlFeed() (já validados).
+  const sinoSt = {btn:null, pop:null, badge:null, opts:null, pessoais:[], aberto:false, ouvindo:''};
+  function sinoTempo(ts){
+    const t = new Date(ts).getTime(); if(isNaN(t)) return '';
+    const m = Math.round((Date.now()-t)/60000); if(m<1) return 'agora'; if(m<60) return 'há '+m+' min';
+    const h = Math.round(m/60); if(h<24) return 'há '+h+' h';
+    const d = Math.round(h/24); return d<7 ? 'há '+d+(d>1?' dias':' dia') : new Date(t).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+  }
+  function sinoItens(){
+    const o = sinoSt.opts || {}, vistos = new Set(), out = [];
+    items().forEach(i=>{
+      const np = sinoSt.pessoais.find(x=>x.id===i.id); vistos.add(i.id);
+      out.push({k:'feed', id:i.id, tipo:i.tipo, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, autor:i.autor, unread:Boolean(i.unread && (!np || !np.read)), raw:i});
+    });
+    sinoSt.pessoais.forEach(n=>{
+      if(vistos.has(n.id) || !sinoLigado(n.type)) return;
+      const icon = iconeSeguro(n.icone) || ICONS[n.type] || '🔔';
+      let title = String(n.title||n.titulo||'Notificação'); if(title.indexOf(icon+' ')===0) title = title.slice(icon.length+1);   // "🐟 Fulano…" com o ícone 🐟 ao lado repetia
+      out.push({k:'pessoal', id:n.id, tipo:n.type||'', ts:n.ts||'', icon, title, sub:String(n.sub||''), autor:'', unread:!n.read, raw:n});
+    });
+    return out.filter(i=>{ try{ return !o.filtro || o.filtro(i) !== false; }catch(e){ return true; } })
+      .sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+  }
+  function sinoEl(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt!=null) e.textContent = txt; return e; }
+  function sinoRender(){
+    const o = sinoSt.opts; if(!o || !sinoSt.btn) return;
+    const itens = sinoItens(), nao = itens.filter(i=>i.unread);
+    const b = sinoSt.badge; b.textContent = nao.length>99 ? '99+' : String(nao.length); b.hidden = !nao.length;
+    sinoSt.btn.setAttribute('aria-label', nao.length ? 'Notificações, '+nao.length+' não lida'+(nao.length>1?'s':'') : 'Notificações');
+    sinoSt.btn.classList.toggle('mn-sino-tem', nao.length>0);
+    novas(nao.map(i=>i.k+':'+i.id), nao.map(i=>i.tipo));
+    try{ if(o.aoMudar) o.aoMudar(itens); }catch(e){}
+    if(!sinoSt.aberto) return;   // a lista só é desenhada com o painel aberto
+    const pop = sinoSt.pop, foco = document.activeElement && pop.contains(document.activeElement) ? (document.activeElement.dataset.mnId || '') : '';
+    pop.replaceChildren();
+    const hd = sinoEl('div', 'mn-sino-hd'); hd.append(sinoEl('h2', '', '🔔 Notificações'));
+    if(nao.length){ const t = sinoEl('button', 'mn-sino-tudo', '✓ Marcar tudo como lido'); t.type = 'button'; t.onclick = sinoTudo; hd.append(t); }
+    pop.append(hd);
+    const lista = sinoEl('div', 'mn-sino-lista'); lista.setAttribute('role', 'list');
+    if(!itens.length) lista.append(sinoEl('p', 'mn-sino-vazio', 'Tudo em dia! 🎉'));
+    itens.slice(0, 50).forEach(i=>{
+      const v = aparencia(i.tipo);
+      const it = sinoEl('div', 'mn-sino-it'+(i.unread?' mn-nao-lida':'')); it.dataset.familia = v.familia; it.dataset.mnId = i.k+':'+i.id;
+      it.setAttribute('role', 'listitem'); it.tabIndex = 0;
+      it.append(sinoEl('span', 'mn-sino-ic', i.icon));
+      const corpo = sinoEl('div', 'mn-sino-corpo');
+      const meta = sinoEl('div', 'mn-sino-meta'); meta.append(sinoEl('span', 'mn-sino-fam', v.icone+' '+v.nome), sinoEl('span', 'mn-sino-tipo', v.rotulo));
+      corpo.append(meta, sinoEl('div', 'mn-sino-tit', i.title));
+      if(i.sub) corpo.append(sinoEl('div', 'mn-sino-sub', i.sub));
+      corpo.append(sinoEl('div', 'mn-sino-hora', sinoTempo(i.ts)+(i.autor?' · '+i.autor:'')+(i.unread?' · nova':'')));
+      it.append(corpo);
+      const x = sinoEl('button', 'mn-sino-x', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Remover: '+i.title); x.dataset.mnId = 'x:'+i.k+':'+i.id;
+      x.onclick = e=>{ e.stopPropagation(); sinoRemover(i); };
+      it.append(x);
+      it.onclick = ()=>sinoAbrirItem(i);
+      it.onkeydown = e=>{ if(e.target===it && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); sinoAbrirItem(i); } };
+      lista.append(it);
+    });
+    pop.append(lista);
+    const ft = document.createElement('div'); ft.innerHTML = rodapeHtml('<button type="button" class="mn-link mn-sino-limpar">Limpar antigas</button>');   // HTML fixo do módulo, sem dado
+    pop.append(ft.firstChild); const lp = pop.querySelector('.mn-sino-limpar'); if(lp) lp.onclick = sinoLimpar;
+    rodapeRender();
+    if(foco){ const f = pop.querySelector('[data-mn-id="'+CSS.escape(foco)+'"]'); if(f) f.focus(); }
+  }
+  const sinoNotif = id => window._ref(window._db, 'kanban/usuarios/'+st.uid+'/notificacoes/'+id);
+  function sinoLer(i){
+    if(i.k==='pessoal'){ if(!i.raw.read){ i.raw.read = true; window._update(sinoNotif(i.id), {read:true}).catch(()=>{}); } return Promise.resolve(); }
+    return markOne(i.id);
+  }
+  function sinoAbrirItem(i){
+    const o = sinoSt.opts || {};
+    sinoLer(i); sinoFechar(false);
+    try{ if(o.abrir && o.abrir(i) === true) return; }catch(e){ console.warn('[MareNotif] abrir:', e); }
+    if(i.k==='feed'){ const u = urlFeed(i.raw); if(u) abrirPagina(u); return; }
+    const u = urlPessoal(i.raw);
+    if(u && u.url) abrirPagina(u.url);
+  }
+  function sinoRemover(i){
+    if(i.k==='feed') dismiss(i.id);
+    else{
+      sinoSt.pessoais = sinoSt.pessoais.filter(n=>n.id!==i.id);
+      (i.raw.noTTLDelete ? window._update(sinoNotif(i.id), {read:true, dismissed:true}) : window._set(sinoNotif(i.id), null)).catch(()=>toast('⚠️ Não consegui remover a notificação.'));
+    }
+    sinoRender();
+    const p = sinoSt.aberto && sinoSt.pop.querySelector('.mn-sino-it'); (p || sinoSt.btn).focus();   // o foco não se perde com o item removido
+  }
+  function sinoTudo(){
+    const up = {}; sinoSt.pessoais.forEach(n=>{ if(!n.read){ n.read = true; up[n.id+'/read'] = true; } });
+    if(Object.keys(up).length) window._update(window._ref(window._db, 'kanban/usuarios/'+st.uid+'/notificacoes'), up).catch(()=>{});
+    markAll(); sinoRender();
+  }
+  // "Limpar antigas": as pessoais já lidas saem numa escrita só (noTTLDelete vira read + dismissed — apagar deixaria o createNotif recriar como não lida); as do feed, por clearRead().
+  function sinoLimpar(){
+    const lidas = sinoSt.pessoais.filter(n=>n.read), up = {};
+    lidas.forEach(n=>{ if(n.noTTLDelete){ up[n.id+'/read'] = true; up[n.id+'/dismissed'] = true; } else up[n.id] = null; });
+    const nFeed = clearRead(), q = lidas.length + nFeed;
+    if(!q){ toast('Nenhuma notificação lida para remover.'); return; }
+    sinoSt.pessoais = sinoSt.pessoais.filter(n=>!n.read);
+    if(lidas.length) window._update(window._ref(window._db, 'kanban/usuarios/'+st.uid+'/notificacoes'), up).catch(()=>toast('⚠️ Não consegui remover as notificações. Tente de novo.'));
+    toast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.'); sinoRender();
+  }
+  function sinoPosicionar(){
+    const r = sinoSt.btn.getBoundingClientRect(), p = sinoSt.pop, larg = Math.min(380, window.innerWidth-16);
+    p.style.width = larg+'px'; p.style.top = (r.bottom+8)+'px';
+    p.style.left = Math.max(8, Math.min(r.right-larg, window.innerWidth-larg-8))+'px';
+    p.style.maxHeight = Math.max(240, window.innerHeight-r.bottom-24)+'px';
+  }
+  function sinoAbrir(){ sinoSt.aberto = true; sinoSt.pop.hidden = false; sinoSt.btn.setAttribute('aria-expanded', 'true'); sinoPosicionar(); sinoRender(); const h = sinoSt.pop.querySelector('h2'); if(h){ h.tabIndex = -1; h.focus(); } }
+  function sinoFechar(devolverFoco){
+    if(!sinoSt.aberto) return false;
+    sinoSt.aberto = false; sinoSt.pop.hidden = true; sinoSt.btn.setAttribute('aria-expanded', 'false'); menusFechar();
+    if(devolverFoco !== false) sinoSt.btn.focus();
+    return true;
+  }
+  function sino(botao, opts){
+    const user = opts && opts.user; if(!botao || !user || !user.uid) return null;
+    sinoSt.btn = botao; sinoSt.opts = opts;
+    if(!sinoSt.badge){
+      sinoSt.badge = sinoEl('span', 'mn-sino-n'); sinoSt.badge.hidden = true; sinoSt.badge.setAttribute('aria-hidden', 'true'); botao.append(sinoSt.badge);
+      botao.classList.add('mn-sino-btn'); botao.setAttribute('aria-haspopup', 'dialog'); botao.setAttribute('aria-expanded', 'false');
+      sinoSt.pop = sinoEl('div', 'mn-sino-pop'); sinoSt.pop.hidden = true; sinoSt.pop.setAttribute('role', 'dialog'); sinoSt.pop.setAttribute('aria-label', 'Notificações');
+      document.body.append(sinoSt.pop);
+      botao.addEventListener('click', e=>{ e.stopPropagation(); if(!sinoFechar()) sinoAbrir(); });
+      document.addEventListener('click', e=>{ if(sinoSt.aberto && !sinoSt.pop.contains(e.target) && !e.target.closest('.mn-dnd-menu')) sinoFechar(false); });
+      document.addEventListener('keydown', e=>{ if(e.key==='Escape' && sinoSt.aberto){ e.preventDefault(); sinoFechar(); } });
+      window.addEventListener('resize', ()=>{ if(sinoSt.aberto) sinoPosicionar(); });
+    }
+    start({user, isViewer:false, isAdm:opts.isAdm || (()=>false), toast:opts.toast, onChange:sinoRender});
+    if(sinoSt.ouvindo !== user.uid){
+      sinoSt.ouvindo = user.uid;
+      const W = window;
+      W._onValue(W._query(W._ref(W._db, 'kanban/usuarios/'+user.uid+'/notificacoes'), W._orderByChild('ts'), W._limitToLast(80)), snap=>{
+        sinoSt.pessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && typeof n==='object' && (opts.painel || !SO_PAINEL.has(n.type)) && viva(n))
+          .map(([id,n])=>Object.assign({}, n, {id}));
+        sinoRender();
+      }, err=>console.warn('[MareNotif] sino: notificações indisponíveis', err && err.message));
+    }
+    sinoRender();
+    return {render:sinoRender, fechar:sinoFechar, itens:sinoItens, marcarLida:id=>{ const n = sinoSt.pessoais.find(x=>x.id===id); if(n && !n.read){ n.read = true; window._update(sinoNotif(id), {read:true}).catch(()=>{}); sinoRender(); } }};
+  }
+
   (function css(){
     if(document.getElementById('mn-css')) return;
     const el = document.createElement('style'); el.id = 'mn-css';
@@ -970,8 +1117,38 @@
     (document.head || document.documentElement).appendChild(el);
   })();
 
+
+  // CSS do Sino unificado: os layouts por família vieram do Maré (kanban-dev.html, .notif-familia-item). Variáveis com reserva — cada página tem as suas.
+  (function cssSino(){
+    if(document.getElementById('mn-sino-css')) return;
+    const el = document.createElement('style'); el.id = 'mn-sino-css';
+    el.textContent = '.mn-sino-btn{position:relative;}'
+      + '.mn-sino-n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--danger,#ef4444);color:#fff;font:700 10px/18px system-ui,sans-serif;text-align:center;pointer-events:none;}'
+      + '.mn-sino-pop{position:fixed;z-index:70;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:16px;background:rgb(var(--ink-rgb,3,13,26));color:var(--txt,#e8f4fd);box-shadow:var(--shadow,0 10px 34px rgba(0,0,0,.35));font:13px/1.45 var(--ff,system-ui,sans-serif);}'
+      + '.mn-sino-pop[hidden]{display:none!important;}'
+      + '.mn-sino-hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--glass-b,rgba(255,255,255,.15));}'
+      + '.mn-sino-hd h2{flex:1;margin:0;font:700 15px/1.2 var(--ff-d,var(--ff,system-ui,sans-serif));outline:none;}'
+      + '.mn-sino-tudo{min-height:32px;padding:4px 10px;font-size:12px;border-radius:8px;cursor:pointer;color:inherit;background:transparent;border:1px solid var(--glass-b,rgba(255,255,255,.15));}'
+      + '.mn-sino-lista{flex:1;overflow:auto;}'
+      + '.mn-sino-vazio{margin:0;padding:28px 14px;text-align:center;color:var(--txt2,#bcd);}'
+      + '.mn-sino-it{--mn-cor:var(--accent,#38b6ff);display:flex;gap:10px;align-items:flex-start;min-height:44px;padding:10px 8px 10px 11px;border-left:3px solid var(--mn-cor);border-bottom:1px solid var(--glass-b,rgba(255,255,255,.08));cursor:pointer;}'
+      + '.mn-sino-it[data-familia="calendario"]{--mn-cor:var(--warn,#ffd166);}.mn-sino-it[data-familia="radar"]{--mn-cor:var(--teal,#2ecc9c);}.mn-sino-it[data-familia="sistema"]{--mn-cor:var(--txt2,#9ab);}'
+      + '.mn-sino-it:hover{background:rgba(56,182,255,.08);}.mn-sino-it.mn-nao-lida{background:rgba(56,182,255,.07);}'
+      + '.mn-sino-it:focus-visible{outline:2px solid var(--accent,#38b6ff);outline-offset:-2px;}'
+      + '.mn-sino-ic{font-size:17px;line-height:1.3;flex-shrink:0;}.mn-sino-corpo{flex:1;min-width:0;}'
+      + '.mn-sino-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin-bottom:4px;}'
+      + '.mn-sino-fam{font-size:10px;font-weight:700;border:1px solid var(--mn-cor);border-radius:8px;padding:1px 6px;background:var(--glass,rgba(255,255,255,.04));}'
+      + '.mn-sino-tipo{font-size:10px;overflow-wrap:anywhere;}'
+      + '.mn-sino-tit{font-weight:600;overflow-wrap:anywhere;}.mn-nao-lida .mn-sino-tit{font-weight:800;}'
+      + '.mn-sino-sub,.mn-sino-hora{font-size:12px;color:var(--txt2,#bcd);overflow-wrap:anywhere;}.mn-sino-hora{font-size:11px;margin-top:2px;}'
+      + '.mn-sino-x{flex-shrink:0;min-width:32px;min-height:32px;padding:0;border:0;border-radius:8px;background:none;color:var(--txt2,#bcd);cursor:pointer;font-size:13px;opacity:.55;}'
+      + '.mn-sino-x:hover,.mn-sino-x:focus-visible{opacity:1;color:var(--danger,#ef4444);}'
+      + '@media (pointer:coarse){.mn-sino-x{min-width:44px;min-height:44px;opacity:1;}.mn-sino-tudo{min-height:44px;}}'
+      + '@media (prefers-reduced-motion:no-preference){.mn-sino-btn.mn-sino-tem .mn-sino-n{animation:mnSinoPop .25s ease-out;}@keyframes mnSinoPop{from{transform:scale(.6)}to{transform:scale(1)}}}';
+    (document.head || document.documentElement).appendChild(el);
+  })();
   window.MareNotif = {semanaBF, TIPOS, FAMILIAS, aparencia, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, dismiss, clearRead, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
-    appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, avisoSistema, insistente, insistenteMenu, insistenteSet, insistenteParar, insistenteTestar, insRender, insEstado: ()=>Object.assign({}, ins), dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
+    appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, avisoSistema, insistente, insistenteMenu, insistenteSet, insistenteParar, insistenteTestar, insRender, insEstado: ()=>Object.assign({}, ins), sino, sinoFechar, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
 })();

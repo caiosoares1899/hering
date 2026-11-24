@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔔 Sino unificado — fase 1: componente MareNotif.sino() e o Sino no Cardume (SÓ DEV, cardume v0.8, mare-notif ?v=48) — 2026-11-24
+
+Um Sino só para todos os apps (docs/ideias/sino-unificado.md). O mare-notif-dev.js ganha MareNotif.sino(botão, opções): selo, painel com os layouts por família do Maré (👤 Pessoal · 📅 Calendário · 🎯 Radar · 🛡️ Sistema), notificações pessoais + feed da torre sem duplicar, marcar lida, ✕, marcar tudo, limpar antigas, som, Não Perturbe e insistente. Montado só com createElement/textContent (texto de terceiros). O Cardume é o primeiro a usar: Sino no topo; a menção clicada no Sino abre a conversa ali mesmo, e abrir uma menção (pelo Sino ou pela aba @ Menções) marca as duas como lidas. Próximas fases: Oceano, Radar, Painel e Maré. Teste: test_sino_cardume.js (27).
+
 ### Cardume v0.7: link do card some do texto quando o chip carrega (SÓ DEV) — 2026-11-24
 
 Pedido do Caio ao ver o chip: link de card no fim da linha, com o título já carregado, sai do texto e fica só o chip (como no Slack). Link no meio da frase, sem acesso, inexistente ou de outra origem continua no texto; editar mostra o texto original.
