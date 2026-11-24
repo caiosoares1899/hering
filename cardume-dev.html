@@ -1020,7 +1020,8 @@ function abrirGifs() {
       });
     } catch (e) {
       if (vez !== gifBuscaVez) return;
-      estado.textContent = ERRO_GIF[e && e.codigo] || 'GIF indisponível agora. Tente de novo em instantes.';
+      const cod = e && typeof e.codigo === 'string' && /^[a-z_]{1,30}$/.test(e.codigo) ? e.codigo : (e && e.name === 'AbortError' ? 'tempo' : 'rede');
+      estado.textContent = ERRO_GIF[cod] || ('GIF indisponível agora. Tente de novo em instantes. (código: ' + cod + ')');   // o código ajuda a achar a causa sem abrir o console
     }
   };
   busca.oninput = () => { clearTimeout(gifTimer); gifBuscaVez++; grade.replaceChildren(); estado.textContent = ''; gifTimer = setTimeout(carregar, 400); };   // resultado velho não fica clicável sob a busca nova
