@@ -127,7 +127,7 @@ const PNG = Buffer.from('R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAE
   modo = 'limite'; await p.click('#b-gif'); await p.waitForTimeout(100); await p.fill('#gifs input', 'nova busca'); await p.waitForTimeout(700);
   t('limite por pessoa: mensagem clara', /muitos GIFs nesta hora/.test(await p.textContent('.gif-estado')), await p.textContent('.gif-estado'));
   modo = 'fora'; await p.fill('#gifs input', 'outra busca'); await p.waitForTimeout(700);
-  t('KLIPY fora do ar: "GIF indisponível agora"', /indisponível agora/.test(await p.textContent('.gif-estado')), await p.textContent('.gif-estado'));
+  t('KLIPY fora do ar: "GIF indisponível agora" (resposta 502 klipy_falhou da função)', /indisponível agora/.test(await p.textContent('.gif-estado')) && pedidos[pedidos.length - 1].q === 'outra busca', await p.textContent('.gif-estado'));
   modo = 'ok'; await p.keyboard.press('Escape'); await p.waitForTimeout(100);
   t('Esc fecha o painel', await p.isHidden('#gifs'), 0);
 

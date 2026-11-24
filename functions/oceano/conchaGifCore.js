@@ -36,10 +36,11 @@ function normalizarPagina(p) {
 }
 
 function urlKlipy(chave, q, pagina) {
-  if (typeof chave !== 'string' || !/^[A-Za-z0-9_-]{8,128}$/.test(chave)) throw new ErroGif(500, 'chave_ausente');
+  // o formato da chave não é documentado: recusa só vazia ou com caractere que mexeria no caminho (/ ? # % . espaço), e vai codificada
+  if (typeof chave !== 'string' || !chave || chave.length > 512 || /[\s/?#%]|^\.+$/.test(chave)) throw new ErroGif(500, 'chave_ausente');
   const ps = new URLSearchParams({ page: String(pagina), per_page: String(POR_PAGINA), locale: 'br', content_filter: 'high', format_filter: 'gif,webp,jpg' });
   if (q) ps.set('q', q);
-  return BASE + chave + '/gifs/' + (q ? 'search' : 'trending') + '?' + ps.toString();
+  return BASE + encodeURIComponent(chave) + '/gifs/' + (q ? 'search' : 'trending') + '?' + ps.toString();
 }
 
 const urlOk = u => typeof u === 'string' && HOST_RE.test(u);
@@ -62,21 +63,26 @@ function escolher(file, formatos, faixa) {
 }
 function normalizar(json) {
   const lista = json && json.data && Array.isArray(json.data.data) ? json.data.data : [];
-  const itens = [];
+  const itens = [], descartes = { formato: lista.length ? 0 : 1, anuncio: 0, midia: 0, id: 0 }, hosts = new Set();
   for (const it of lista) {
-    if (!it || typeof it !== 'object' || it.type === 'ad' || !it.file) continue;
+    if (!it || typeof it !== 'object' || !it.file) { descartes.formato++; continue; }
+    if (it.type === 'ad') { descartes.anuncio++; continue; }
     const anim = escolher(it.file, ['webp', 'gif'], [200, 400]);
     const prev = escolher(it.file, ['webp', 'gif'], [100, 220]);
     const parado = escolher(it.file, ['jpg'], [200, 400]);
-    if (!anim || !prev) continue;
+    if (!anim || !prev) {   // nenhuma mídia válida: anota os hosts que vieram (URL de mídia não tem a chave)
+      descartes.midia++;
+      for (const tam of Object.values(it.file || {})) for (const f of Object.values(tam || {})) { try { hosts.add(new URL(f.url).host); } catch (e) {} }
+      continue;
+    }
     const id = String(it.id == null ? '' : it.id);
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) continue;
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) { descartes.id++; continue; }
     const item = { id, t: String(it.title || '').replace(/\s+/g, ' ').trim().slice(0, 100), u: anim.u, w: anim.w, h: anim.h, p: prev.u };
     if (parado) item.s = parado.u;
     itens.push(item);
   }
   const d = json && json.data;
-  return { itens, temMais: !!(d && d.has_next) };
+  return { itens, temMais: !!(d && d.has_next), _diag: { recebidos: lista.length, descartes, hosts: [...hosts].slice(0, 5) } };
 }
 
 // Contador por hora (transação do Realtime Database): devolve o novo valor ou undefined (= aborta, estourou).

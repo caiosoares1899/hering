@@ -44,7 +44,10 @@ async function tratar(req, res, deps = {}) {
     const emCache = core.doCache(chaveCache);
     if (emCache) return res.status(200).json(emCache);
     if (!(await contarNaHora(db, 'kanban/cardume/gif_uso/_casa', core.TETO_CASA_H))) return erro(429, 'limite_casa');
-    const v = await core.chamarKlipy({ chave: (deps.chave != null ? deps.chave : KLIPY_API_KEY.value()), q, pagina, fetchImpl: deps.fetch });
+    const r = await core.chamarKlipy({ chave: (deps.chave != null ? deps.chave : KLIPY_API_KEY.value()), q, pagina, fetchImpl: deps.fetch });
+    const { _diag, ...v } = r;
+    // resposta da KLIPY diferente da documentação (formato, host da mídia) aparece no log em vez de virar "nenhum GIF" mudo. Sem URL da API, sem chave.
+    if (_diag && (_diag.descartes.formato || _diag.descartes.midia || _diag.descartes.id)) console.warn('[conchaGifBusca] descartados:', JSON.stringify(_diag));
     core.guardar(chaveCache, v, q ? core.TTL_BUSCA_MS : core.TTL_ALTA_MS);
     return res.status(200).json(v);
   } catch (e) {

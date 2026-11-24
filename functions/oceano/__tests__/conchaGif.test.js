@@ -30,8 +30,14 @@ test('normaliza: webp mais leve na faixa de 200–400 px, prévia pequena, quadr
   assert.equal(i.s, 'https://static.klipy.com/ii/a/1/md.jpg', 'quadro parado');
   assert.equal(i.t, 'Oi 1'); assert.equal(i.w, 220); assert.equal(i.h, 124);
   for (const x of [i.u, i.p, i.s]) assert.match(x, core.HOST_RE);
-  assert.deepEqual(core.normalizar(null), { itens: [], temMais: false });
+  assert.deepEqual(core.normalizar(null).itens, []);
+  assert.equal(core.normalizar(null)._diag.descartes.formato, 1, 'resposta sem a lista: aparece no diagnóstico');
   assert.deepEqual(core.normalizar({ data: { data: 'x' } }).itens, []);
+  const dg = r._diag;
+  assert.deepEqual(dg.descartes, { formato: 0, anuncio: 1, midia: 3, id: 0 }, 'conta o que descarta, por motivo (o id malicioso também sujava as URLs do exemplo)');
+  const soId = core.normalizar(resposta([Object.assign(item(9), { id: '9"><img' })]));
+  assert.deepEqual(soId.itens, []); assert.equal(soId._diag.descartes.id, 1, 'id inválido com mídia válida');
+  assert.ok(dg.hosts.includes('evil.example'), 'anota o host que não passou');
 });
 
 test('URL da KLIPY: busca ou em alta, parâmetros fixos, sem dado da pessoa; entrada validada', () => {
@@ -44,6 +50,8 @@ test('URL da KLIPY: busca ou em alta, parâmetros fixos, sem dado da pessoa; ent
   assert.match(core.urlKlipy(CHAVE, '', 1), /\/gifs\/trending\?/);
   assert.throws(() => core.urlKlipy('', 'x', 1), e => e.codigo === 'chave_ausente');
   assert.throws(() => core.urlKlipy('../x', 'x', 1), e => e.codigo === 'chave_ausente');
+  for (const ruim of ['a/b', 'a?b', 'a#b', 'a%2f', 'a b', '..', '.']) assert.throws(() => core.urlKlipy(ruim, 'x', 1), e => e.codigo === 'chave_ausente', ruim);
+  assert.match(core.urlKlipy('Chave.Com-Formato_Livre:9', 'x', 1), /\/api\/v1\/Chave\.Com-Formato_Livre%3A9\/gifs\//, 'formato livre, codificado no caminho');
   assert.equal(core.normalizarBusca('  Bom   DIA '), 'bom dia');
   assert.equal(core.normalizarBusca(''), '');
   assert.throws(() => core.normalizarBusca('a'), e => e.codigo === 'busca_invalida');

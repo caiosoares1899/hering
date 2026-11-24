@@ -969,7 +969,8 @@ function renderGif(g) {
 async function buscarGifs(q) {
   if (gifCache.has(q)) return gifCache.get(q);
   const tok = await user.getIdToken();
-  const r = await fetch(GIF_URL + '?q=' + encodeURIComponent(q) + '&p=1', { headers: { Authorization: 'Bearer ' + tok } });
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
+  let r; try { r = await fetch(GIF_URL + '?q=' + encodeURIComponent(q) + '&p=1', { headers: { Authorization: 'Bearer ' + tok }, signal: ctl.signal }); } finally { clearTimeout(timer); }
   let j = null; try { j = await r.json(); } catch (e) {}
   if (!r.ok) { const e = new Error('gif'); e.codigo = (j && typeof j.erro === 'string' && j.erro) || 'falhou'; throw e; }
   const itens = (j && Array.isArray(j.itens) ? j.itens : []).filter(i => i && gifOk(i.u) && gifOk(i.p) && dimOk(i.w) && dimOk(i.h))
