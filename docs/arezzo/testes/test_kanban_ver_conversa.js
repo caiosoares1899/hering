@@ -35,7 +35,7 @@ function seed() {
   const comentarios = Object.fromEntries(Object.entries(casos).map(([id, cardume]) => [
     id, {
       id, uid: usuario.uid, author: 'Teste', init: 'TE',
-      text: id === 'valido' ? '🐟 Do Cardume · #dados' : 'Comentário ' + id,
+      text: id === 'valido' ? '🐚 Da Concha · #dados' : 'Comentário ' + id,
       ts: '2026-11-24T12:00:00.000Z',
       ...(cardume === undefined ? {} : { cardume }),
     },
@@ -76,7 +76,7 @@ async function testar() {
     const link = id => item(id).locator('.comment-cardume-link');
 
     assert.equal(await itens.count(), Object.keys(casos).length);
-    assert.equal(await link('valido').textContent(), '🐟 Ver conversa no Cardume');
+    assert.equal(await link('valido').textContent(), '🐚 Ver conversa na Concha');
     assert.equal(await link('valido').getAttribute('href'), href);
     assert.equal(await link('valido').getAttribute('target'), '_blank');
     assert.equal(await link('valido').getAttribute('rel'), 'noopener');

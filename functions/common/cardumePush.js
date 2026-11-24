@@ -64,7 +64,7 @@ async function mencaoValida(db, uid, notif, notifId) {
     const nomes = Object.fromEntries(pubs.map(([u, p]) => [u, nomeDe(p, u)]).filter(([, n]) => n));
     if (!mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes)) return nao;
     const quem = (nomes[rec.de] || 'Alguém').split(/\s+/)[0];
-    return { ok: true, title: '🐟 Cardume', body: quem + ' te mencionou' };
+    return { ok: true, title: '🐚 Concha', body: quem + ' te mencionou' };
   } catch (e) { return nao; }
 }
 

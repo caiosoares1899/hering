@@ -40,6 +40,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🐚 Concha: o push de menção diz "🐚 Concha" (título montado no servidor, `functions/common/cardumePush.js`) — só depois do merge do PR do nome | `firebase deploy --only functions:sendPushOnNotification` | 24/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
@@ -52,7 +53,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | 🧭 Plano da consultoria (guardado em 10/11); próximo: T4 da Travessia | Claude | [backlog](quadro/backlog.md#consultoria) |
 | 🔬 Dossiê de concorrência do Antigravity (34 ideias em 4 levas) | Caio escolhe | [backlog](quadro/backlog.md#dossie-concorrencia) |
 | 🧲 Ideias do Kanbanize: ícone de link, tempo por coluna, Monte Carlo, fila × ativa, causas de impedimento e ponte com a TI | Claude · ponte: Caio com a TI | [backlog](quadro/backlog.md#ideias-kanbanize) |
-| 🐟 Cardume: chat do time no Oceano (canal = squad, thread = card); piloto `dados`; regras (oficiais + temáticos) no ar em 24/11; etapas 3 (card ↔ conversa) e 4 (menções + push) validadas pelo Caio em 24/11; próximas ideias: [escrever melhor](quadro/backlog.md#cardume-texto), [reagir e responder](quadro/backlog.md#cardume-interacoes), [aviso de mensagem nova com 🔕 silenciar](quadro/backlog.md#cardume-avisos), [`@card:` e `@objetivo:`](quadro/backlog.md#cardume-citar) | Claude | [ideia](ideias/cardume.md) |
+| 🐚 Concha (ex-Cardume; arquivo e banco seguem `cardume`): chat do time no Oceano (canal = squad, thread = card); piloto `dados`; regras (oficiais + temáticos) no ar em 24/11; etapas 3 (card ↔ conversa) e 4 (menções + push) validadas pelo Caio em 24/11; próximas ideias: [escrever melhor](quadro/backlog.md#cardume-texto), [reagir e responder](quadro/backlog.md#cardume-interacoes), [aviso de mensagem nova com 🔕 silenciar](quadro/backlog.md#cardume-avisos), [`@card:` e `@objetivo:`](quadro/backlog.md#cardume-citar) | Claude | [ideia](ideias/cardume.md) |
 | 🔔 **Sino unificado:** um Sino só (componente no `mare-notif`) com os layouts por família do Maré, em todos os apps; fase 1 = Cardume, depois Oceano → Radar → Painel → Maré | Claude · Codex | [plano](ideias/sino-unificado.md) |
 | 🧪 Ferramentas de teste visual (`CENARIO=`, Chrome do `~/hering-tools`, contact sheet) | Claude | [backlog](quadro/backlog.md#ferramentas-teste-visual) |
 | 🎬 Gerador de vídeo/GIF de release (sem Remotion) | Caio decide | [backlog](quadro/backlog.md#video-release) |
