@@ -31,11 +31,16 @@ function mencionadosNoTexto(txt, nomes) {
   return [...uids];
 }
 
+// O registro nasce no mesmo update da notificação, então o gatilho chega em segundos. Recriar a
+// notificação depois (o nó do Sino é legível por toda a Hering) não pode reaproveitar um registro velho.
+const FRESCOR_MS = 5 * 60 * 1000;
+
 // rec = registro privado; msg = a mensagem; membros = membros/{c}; nomes = { uid: nome } dos membros.
-function mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes) {
+function mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes, agora = Date.now()) {
   if (!notif || notif.type !== 'cardume_mencao') return false;
   if (!ID_RE.test(String(notif.cardumeRef || '')) || !ID_RE.test(String(notifId || '')) || !ID_RE.test(String(uid || ''))) return false;
   if (!rec || typeof rec !== 'object' || rec.n !== String(notifId) || !ID_RE.test(String(rec.c || '')) || !ID_RE.test(String(rec.m || ''))) return false;
+  if (rec.lida || typeof rec.ts !== 'number' || rec.ts > agora + 60000 || agora - rec.ts > FRESCOR_MS) return false;
   if (!msg || msg.apagada || msg.uid !== rec.de || typeof msg.texto !== 'string') return false;
   if (!membros || membros[uid] !== true || membros[rec.de] !== true) return false;
   return mencionadosNoTexto(msg.texto, nomes).includes(uid);
@@ -63,4 +68,4 @@ async function mencaoValida(db, uid, notif, notifId) {
   } catch (e) { return nao; }
 }
 
-module.exports = { mencionadosNoTexto, mencaoConfere, mencaoValida };
+module.exports = { mencionadosNoTexto, mencaoConfere, mencaoValida, FRESCOR_MS };
