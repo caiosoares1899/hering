@@ -417,3 +417,55 @@ test('menções: canal temático vencido não gera menção', () => {
   DB.kanban.cardume.msgs['t-velho'] = { m1: { uid: 'gil', ts: Date.now() - 1000, texto: 'oi @Ana Lima' } };
   assert.equal(up(A.gil, { 'kanban/cardume/mencoes/ana/x1': { c: 't-velho', m: 'm1', de: 'gil', ts: Date.now(), n: 'n1' } }), false);
 });
+
+// 🐚 GIF (KLIPY) — docs/ideias/cardume-v0-banco.md › "GIF na Concha". O campo `gif` só entra na criação, só com mídia de host fixo da KLIPY,
+// e não muda depois (editar mexe só na legenda). O registro de apagada não leva o GIF. O contador da função (gif_uso) é fechado ao navegador.
+const GIFU = 'https://static.klipy.com/ii/935d7ab9d8c6202580a668421940ec81/14/af/um0L4dFH.webp';
+const gif = o => Object.assign({ u: GIFU, s: 'https://static2.klipy.com/ii/935d7ab9/14/af/um0L4dFH.jpg', w: 320, h: 240, t: 'Hello' }, o || {});
+test('GIF: cria com ou sem legenda, só de host da KLIPY, com tamanho e campos válidos', () => {
+  reset();
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif() })), true, 'GIF sem legenda');
+  assert.equal(grava(M('g1'), A.ana, msg({ gif: gif() })), true, 'GIF com legenda');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ s: undefined, t: undefined }) })), true, 'só u, w e h');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined })), false, 'nem texto nem GIF');
+  for (const [u, porque] of [
+    ['https://evil.example/x.gif', 'host de fora'], ['https://static.klipy.com.evil.example/x.gif', 'sufixo enganoso'],
+    ['http://static.klipy.com/ii/a.gif', 'http'], ['javascript:alert(1)', 'javascript:'], ['https://static3.klipy.com/ii/a.gif', 'host fora da lista'],
+    ['https://static.klipy.com/ii/a.gif?x=1', 'query'], ['https://static.klipy.com/ii/"onerror=x', 'aspas'],
+  ]) assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ u }) })), false, 'u: ' + porque);
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ s: 'https://evil.example/s.jpg' }) })), false, 's de fora');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ w: 0 }) })), false, 'largura 0');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ h: 99999 }) })), false, 'altura enorme');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ w: '320' }) })), false, 'largura texto');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ t: 'x'.repeat(101) }) })), false, 'título > 100');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ href: 'https://evil.example' }) })), false, 'campo extra no gif');
+  assert.equal(grava(M('g1'), A.ana, msg({ texto: undefined, gif: gif({ u: undefined }) })), false, 'gif sem u');
+  assert.equal(grava(M('g1'), A.gil, msg({ uid: 'gil', texto: undefined, gif: gif() })), false, 'não membro');
+  const ts = Date.now();
+  assert.equal(up(A.ana, { 'kanban/cardume/msgs/dados/g2': { uid: 'ana', ts, gif: gif() }, 'kanban/cardume/ultima/dados': { ts, uid: 'ana', id: 'g2' } }), true, 'envio atômico de GIF (mensagem + marcador)');
+});
+test('GIF: editar não põe, não tira e não troca o GIF; apagar não guarda o GIF', () => {
+  reset(); const comGif = msg({ ts: Date.now() - 5000, gif: gif() }), semGif = msg({ ts: Date.now() - 5000 }); põe('g1', comGif); põe('s1', semGif);
+  const ed = (o, base) => Object.assign({}, base || comGif, { texto: 'legenda nova', editado: Date.now() }, o || {});
+  assert.equal(grava(M('g1'), A.ana, ed()), true, 'muda só a legenda');
+  assert.equal(grava(M('g1'), A.ana, ed({ gif: gif({ u: GIFU.replace('um0L4dFH', 'outro123') }) })), false, 'troca o GIF');
+  assert.equal(grava(M('g1'), A.ana, ed({ gif: gif({ w: 100 }) })), false, 'muda o tamanho');
+  assert.equal(grava(M('g1'), A.ana, ed({ gif: gif({ t: 'outro título' }) })), false, 'muda o título');
+  assert.equal(grava(M('g1'), A.ana, ed({ gif: gif({ s: undefined }) })), false, 'tira o quadro parado');
+  assert.equal(grava(M('g1'), A.ana, ed({ gif: undefined })), false, 'tira o GIF');
+  assert.equal(grava(M('s1'), A.ana, ed({ gif: gif() }, semGif)), false, 'põe GIF numa mensagem que não tinha');
+  assert.equal(grava(M('s1') + '/gif', A.ana, gif()), false, 'nem gravando só o filho gif');
+  assert.equal(grava(M('g1') + '/gif/u', A.ana, 'https://static.klipy.com/ii/troca.gif'), false, 'nem trocando só a URL');
+  const tomb = o => Object.assign({ uid: comGif.uid, ts: comGif.ts, apagada: true }, o || {});
+  assert.equal(grava(M('g1'), A.ana, tomb()), true, 'apaga sem o GIF');
+  assert.equal(grava(M('g1'), A.ana, tomb({ gif: gif() })), false, 'apagada não guarda o GIF');
+});
+test('GIF: o contador da função (gif_uso) é fechado para o navegador', () => {
+  reset(); DB.kanban.cardume.gif_uso = { ana: { h: '2026112410', n: 3 }, _casa: { h: '2026112410', n: 10 } };
+  for (const k of ['ana', 'adm', 'caio', 'gil']) {
+    assert.equal(lê('kanban/cardume/gif_uso', A[k]), false, 'não lê a lista: ' + k);
+    assert.equal(lê('kanban/cardume/gif_uso/' + A[k].uid, A[k]), false, 'não lê o próprio: ' + k);
+    assert.equal(grava('kanban/cardume/gif_uso/' + A[k].uid, A[k], { h: '2026112410', n: 0 }), false, 'não zera o próprio: ' + k);
+    assert.equal(grava('kanban/cardume/gif_uso/_casa', A[k], null), false, 'não apaga o teto da casa: ' + k);
+  }
+});
