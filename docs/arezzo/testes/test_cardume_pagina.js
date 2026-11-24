@@ -81,7 +81,7 @@ function conferirEscritas(escritas, quem) {
   { const sN = await store(p); const ns = Object.values(ler(sN, 'kanban/usuarios/ana/notificacoes') || {});
     const n = ns.find(x => x.type === 'cardume_mencao'); const idx = ler(sN, 'kanban/cardume/mencoes/ana') || {};
     const ref = n && n.cardumeRef, rec = ref && idx[ref];
-    t('@menção: notificação GENÉRICA (sem canal, sem trecho, sem id de canal)', !!n && /te mencionou no Cardume/.test(n.title) && n.sub === 'Toque para abrir a conversa' && !('cardume' in n) && !('cardumeMsg' in n) && !/Dados|dados|oi @/.test(JSON.stringify(n)), n);
+    t('@menção: notificação GENÉRICA (sem canal, sem trecho, sem id de canal)', !!n && /te mencionou na Concha/.test(n.title) && n.sub === 'Toque para abrir a conversa' && !('cardume' in n) && !('cardumeMsg' in n) && !/Dados|dados|oi @/.test(JSON.stringify(n)), n);
     t('@menção: canal e mensagem só no índice PRIVADO, que aponta para ESTA notificação', !!rec && rec.c === 'dados' && /^[A-Za-z0-9_-]+$/.test(rec.m) && rec.de === 'cai' && rec.n === n.id && typeof rec.ts === 'number', { ref, rec, n });
     t('"@Ana Lima" não avisa a "Ana" (nome mais curto que é começo do outro)', !ler(sN, 'kanban/usuarios/ann/notificacoes') && !ler(sN, 'kanban/cardume/mencoes/ann'), ler(sN, 'kanban/usuarios/ann'));
     t('quem não foi mencionado (Bruno, fora do canal) não recebe nada', !ler(sN, 'kanban/usuarios/bru/notificacoes') && !ler(sN, 'kanban/cardume/mencoes/bru'), 0);

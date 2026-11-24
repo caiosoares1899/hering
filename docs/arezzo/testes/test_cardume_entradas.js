@@ -38,22 +38,22 @@ async function conferirAbertura(page, link) {
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
     const escala = page.locator('#atalhos a[href^="escala"]');
-    const atalho = page.getByRole('link', {name: 'Cardume (abre em aba nova)'});
+    const atalho = page.getByRole('link', {name: 'Concha (abre em aba nova)'});
     const produtos = page.getByRole('tab', {name: 'Produtos'});
-    const item = page.getByRole('menuitem', {name: 'Cardume Conversa do time'});
+    const item = page.getByRole('menuitem', {name: 'Concha Conversa do time'});
 
     await page.goto(base + '/oceano-dev.html');
     await escala.waitFor({state: 'visible'});
     assert.equal(await escala.locator('xpath=following-sibling::*[1]').getAttribute('href'), 'cardume-dev.html');
     await conferirAbertura(page, atalho);
-    console.log('✅ Oceano dev: atalho ao lado da Escala abre o Cardume em aba nova');
+    console.log('✅ Oceano dev: atalho ao lado da Escala abre a Concha em aba nova');
 
     await page.goto(base + '/okr-dev.html');
     await page.locator('#mn-apps-btn').click();
     assert.equal(await produtos.getAttribute('aria-selected'), 'true');
     assert.equal(await item.getAttribute('data-app'), null);
     await conferirAbertura(page, item);
-    console.log('✅ Radar dev: tile do Cardume está em Produtos e abre em aba nova');
+    console.log('✅ Radar dev: tile da Concha está em Produtos e abre em aba nova');
 
     await page.goto(base + '/oceano.html');
     await escala.waitFor({state: 'visible'});
@@ -68,6 +68,6 @@ async function conferirAbertura(page, link) {
     await browser.close();
   }
 })().catch(error => {
-  console.error('❌ Entradas do Cardume:', error);
+  console.error('❌ Entradas da Concha:', error);
   process.exitCode = 1;
 });

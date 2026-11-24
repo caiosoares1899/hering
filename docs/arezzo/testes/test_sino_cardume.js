@@ -12,13 +12,13 @@ const pub = (uid, nome, init) => ({ uid, nome, init, email: uid + '@ciahering.co
 const seed = () => ({ kanban: {
   usuarios: {
     ana: { role: 'membro', squads: { dados: true }, notificacoes: {
-      n1: { id: 'n1', type: 'cardume_mencao', title: '🐟 Bruno te mencionou no Cardume', sub: 'Toque para abrir a conversa', cardumeRef: 'r1', dev: true, read: false, ts: iso(2) },
+      n1: { id: 'n1', type: 'cardume_mencao', title: '🐚 Bruno te mencionou na Concha', sub: 'Toque para abrir a conversa', cardumeRef: 'r1', dev: true, read: false, ts: iso(2) },
       n2: { id: 'n2', type: 'mention', title: '<img src=x onerror="window.__xss=1">Bruno citou você', sub: 'Card: Painel de vendas', cardId: 'c1', squad: 'dados', read: false, ts: iso(5) },
       n3: { id: 'n3', type: 'okr_prazo', title: 'Marco vence amanhã', read: true, ts: iso(60 * 20) },
       n4: { id: 'n4', type: 'escala', title: 'Escala da semana cadastrada', read: false, ts: iso(30) },
       n5: { id: 'n5', type: 'rascunho', title: 'Rascunho (só no Painel)', read: false, ts: iso(3) },
       n6: { id: 'n6', type: 'mention', title: 'Dispensada', read: true, dismissed: true, ts: iso(4) },
-      n7: { id: 'n7', type: 'cardume_mencao', title: '🐟 Bruno te mencionou no Cardume', sub: 'Toque para abrir a conversa', cardumeRef: 'r2', dev: true, read: false, ts: iso(1) },
+      n7: { id: 'n7', type: 'cardume_mencao', title: '🐚 Bruno te mencionou na Concha', sub: 'Toque para abrir a conversa', cardumeRef: 'r2', dev: true, read: false, ts: iso(1) },
     } },
     bru: { role: 'membro', squads: { dados: true } },
   },
@@ -60,7 +60,7 @@ const ler = (s, c) => c.split('/').reduce((a, k) => (a == null ? undefined : a[k
   const store = () => p.evaluate(() => JSON.parse(JSON.stringify(window.__store)));
   const shots = process.env.SHOT ? path.join(__dirname, '../../capturas/sino-unificado') : null; if (shots) fs.mkdirSync(shots, { recursive: true });
 
-  t('o Sino aparece no topo do Cardume', await p.isVisible('#b-sino'), 0);
+  t('o Sino aparece no topo da Concha', await p.isVisible('#b-sino'), 0);
   const selo = (await p.textContent('#b-sino .mn-sino-n')).trim();
   t('selo conta as não lidas: 3 menções/cards/escala + 1 do feed (rascunho e dispensada ficam fora)', selo === '5', selo);
   await p.click('#b-sino'); await p.waitForTimeout(200);
@@ -69,7 +69,7 @@ const ler = (s, c) => c.split('/').reduce((a, k) => (a == null ? undefined : a[k
   t('lista: pessoais + feed, sem SO_PAINEL nem dispensada', itens.length === 6 && !itens.some(i => /Rascunho|Dispensada/.test(i.txt)) && itens.some(i => i.id === 'feed:f1'), itens.map(i => i.id));
   t('layout por família: cada item traz o selo da família e o rótulo do tipo', itens.every(i => i.fam) && new Set(itens.map(i => i.fam)).size >= 2 && itens.every(i => /Pessoal|Calendário|Radar|Sistema/.test(i.txt)), itens.map(i => i.fam + ' ' + i.txt.slice(0, 40)));
   t('ordem: mais nova primeiro', itens[0].id === 'pessoal:n7', itens.map(i => i.id));
-  t('o ícone não se repete no começo do título', !itens.some(i => /🐟\s*🐟/.test(i.txt)) && itens.some(i => /Bruno te mencionou no Cardume/.test(i.txt)), itens.map(i => i.txt.slice(0, 50)));
+  t('o ícone não se repete no começo do título', !itens.some(i => /🐚\s*🐚/.test(i.txt)) && itens.some(i => /Bruno te mencionou na Concha/.test(i.txt)), itens.map(i => i.txt.slice(0, 50)));
   t('texto de terceiros entra como texto (nada de <img> nem script)', !(await p.$('.mn-sino-pop img')) && await p.evaluate(() => !window.__xss) && itens.some(i => i.txt.includes('<img src=x')), 0);
   if (shots) await p.screenshot({ path: path.join(shots, 'cardume-sino-1280.png') });
 

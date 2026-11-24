@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cardume dev · Oceano</title>
+<title>Concha dev · Oceano</title>
 <link rel="icon" href="favicon-dev.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>(function(){ try{ var o=JSON.parse(localStorage.getItem('oceano_prefs')||'null'), t=(o&&o.tema)||(localStorage.getItem('mare_theme')==='light'?'lencois':'abrolhos'); var d=document.documentElement; if(t==='lencois') d.setAttribute('data-theme','light'); else if(t==='entardecer') d.setAttribute('data-theme','sunset'); }catch(e){} })();</script>
 <style>
-/* 🐟 Cardume (dev) — chat do time dentro do Oceano. Plano: docs/ideias/cardume.md · banco e regras: docs/ideias/cardume-v0-banco.md
+/* 🐚 Concha (dev; nasceu como "Cardume", renomeada em 24/11/2026 — arquivo, URL e banco seguem cardume) — chat do time dentro do Oceano. Plano: docs/ideias/cardume.md · banco e regras: docs/ideias/cardume-v0-banco.md
    Visual do protótipo (docs/demo/cardume-prototipo.html), tokens Marine Glass dos 3 temas do Oceano.
    SEGURANÇA: todo texto de mensagem/nome entra no DOM por createElement/textContent (nunca innerHTML com dado). */
 :root{
@@ -173,12 +173,12 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 </style>
 </head>
 <body>
-<div id="versao-aviso" hidden>Há uma versão nova do Cardume. <button class="primary" type="button" onclick="location.reload()">Atualizar</button></div>
+<div id="versao-aviso" hidden>Há uma versão nova da Concha. <button class="primary" type="button" onclick="location.reload()">Atualizar</button></div>
 <div class="shell">
   <header class="topo">
     <div class="marca">
-      <span class="marca-icone" aria-hidden="true">🐟</span>
-      <div><p class="contexto">Oceano</p><h1>Cardume <span class="devtag">dev</span></h1></div>
+      <span class="marca-icone" aria-hidden="true">🐚</span>
+      <div><p class="contexto">Oceano</p><h1>Concha <span class="devtag">dev</span></h1></div>
     </div>
     <div class="topo-dir">
       <button type="button" id="b-sino" class="b-sino" hidden aria-label="Notificações">🔔</button>
@@ -205,7 +205,7 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
     <section class="painel conversa" aria-labelledby="canal-titulo">
       <header class="cabecalho">
         <button type="button" class="voltar" id="b-voltar" aria-label="Voltar aos canais">←</button>
-        <div class="grow"><h2 id="canal-titulo" tabindex="-1">Cardume</h2><p class="subtitulo" id="canal-sub"></p></div>
+        <div class="grow"><h2 id="canal-titulo" tabindex="-1">Concha</h2><p class="subtitulo" id="canal-sub"></p></div>
         <button type="button" id="b-lado" aria-label="Detalhes do canal" aria-pressed="false">ℹ️</button>
       </header>
       <div class="faixa-alvo" id="faixa-alvo" hidden></div>
@@ -237,13 +237,13 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 <div id="toast" role="status" hidden></div>
 
 <script src="mare-login-dev.js?v=3"></script>
-<script src="mare-notif-dev.js?v=48"></script>
+<script src="mare-notif-dev.js?v=49"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.8 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.9 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -513,7 +513,7 @@ function abrirCanal(id, foco) {
 }
 function renderCabecalho() {
   const id = atual, c = canais[id];
-  $('canal-titulo').textContent = id ? (ehTema(id) && c && c.acesso === 'convite' ? '🔒 ' : '# ') + nomeCanal(id) : 'Cardume';
+  $('canal-titulo').textContent = id ? (ehTema(id) && c && c.acesso === 'convite' ? '🔒 ' : '# ') + nomeCanal(id) : 'Concha';
   const sub = [];
   if (id && !ehTema(id)) sub.push('Canal oficial da squad · privado');
   if (c && ehTema(id)) { sub.push(c.acesso === 'convite' ? 'Só convidados' : 'Aberto a toda a Hering'); if (typeof c.fim === 'number') sub.push((vencido(c) ? 'Arquivado em ' : 'Até ') + new Date(c.fim).toLocaleDateString('pt-BR')); }
@@ -536,7 +536,7 @@ function renderMsgs() {
   log.replaceChildren();
   if (vendoMencoes) { renderMencoes(log); return; }
   const id = atual, c = canais[id];
-  if (!id) { log.append(vazio('🐟', 'Escolha um canal à esquerda.')); return; }
+  if (!id) { log.append(vazio('🐚', 'Escolha um canal à esquerda.')); return; }
   if (!souMembro(id) && !souAdm()) {
     if (ehTema(id) && abertos[id] && !vencido(c)) { const v = vazio('👋', 'Este canal é aberto a toda a Hering.'); const b = el('button', 'primary', 'Entrar no canal'); b.type = 'button'; b.onclick = () => entrar(id); v.append(b); log.append(v); }
     else if (gestorOficial(id)) { const v = vazio('🛠️', 'Você administra este canal, mas não está nele. Abra ℹ️ Detalhes para pôr pessoas (inclusive você).'); log.append(v); }
@@ -633,7 +633,7 @@ function avisarMencoes(canal, msgId, uids) {
     const r = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), n = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
     update(ref(db), {
       [B + 'mencoes/' + u + '/' + r]: { c: canal, m: msgId, de: user.uid, ts: serverTimestamp(), n },
-      ['kanban/usuarios/' + u + '/notificacoes/' + n]: { id: n, type: 'cardume_mencao', title: '🐟 ' + quem + ' te mencionou no Cardume', sub: 'Toque para abrir a conversa', cardumeRef: r, dev: true, read: false, ts: new Date().toISOString() },
+      ['kanban/usuarios/' + u + '/notificacoes/' + n]: { id: n, type: 'cardume_mencao', title: '🐚 ' + quem + ' te mencionou na Concha', sub: 'Toque para abrir a conversa', cardumeRef: r, dev: true, read: false, ts: new Date().toISOString() },
     }).catch(e => console.warn('[cardume] não deu pra avisar a menção:', e));
   });
 }
@@ -720,7 +720,7 @@ function chipCard(k) {
 const semArroba = s => String(s || '').replace(/(^|[^\p{L}\p{N}._%+-])[@＠](?=[\p{L}])/gu, '$1').replace(/[@＠](?=\s*agente)/giu, '');
 const dataHora = ts => new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '');
 function textoRegistro(canal, lista) {
-  let t = '🐟 Do Cardume · #' + nomeCanal(canal) + '\n';
+  let t = '🐚 Da Concha · #' + nomeCanal(canal) + '\n';
   for (const x of lista) t += '\n**' + nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ' + String(x.texto || '').trim();
   t = semArroba(t);
   return t.length > 8000 ? t.slice(0, 7999) + '…' : t;
@@ -771,7 +771,7 @@ function modalRegistrar(m0) {
     aviso.textContent = 'Lendo o card…';
     const i = await lerCard(k); if (minha !== vez) return;
     aviso.textContent = i.estado === 'ok'
-      ? 'Vai aparecer no card “' + i.titulo + '” (' + nomeSquad(k.sq) + '). Qualquer pessoa da Hering pode abrir esse card, e o comentário fica lá; no Cardume, as mensagens são apagadas depois de 90 dias.' + (ehTema(canal) ? ' Este é um canal temático: quem lê o card pode nunca ter estado aqui.' : '')
+      ? 'Vai aparecer no card “' + i.titulo + '” (' + nomeSquad(k.sq) + '). Qualquer pessoa da Hering pode abrir esse card, e o comentário fica lá; na Concha, as mensagens são apagadas depois de 90 dias.' + (ehTema(canal) ? ' Este é um canal temático: quem lê o card pode nunca ter estado aqui.' : '')
       : i.estado === 'sem' ? 'Você não tem acesso a esse card.' : i.estado === 'nao' ? 'Card não encontrado (pode ter sido arquivado ou excluído).' : 'Não deu para ler o card agora. Confira a conexão.';
   }
   caixa.onchange = e => { if (marcadas().length > MAX_REG) { e.target.checked = false; toast('No máximo ' + MAX_REG + ' mensagens por vez.'); } atualizar(); };
@@ -812,7 +812,7 @@ function abrirMencao(rec) {
   alvoMsg = String(rec.m); abrirCanal(String(rec.c), true);
 }
 function renderMencoes(log) {
-  $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você no Cardume';
+  $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você na Concha';
   $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
   if (!mencoes.length) { log.append(vazio('🔔', 'Ninguém mencionou você ainda. Quando alguém escrever @' + nomePessoa(user.uid) + ' num canal, aparece aqui.')); return; }
   mencoes.forEach(rec => {
@@ -934,7 +934,7 @@ function renderLado() {
   const s = el('section');
   // ativar canal oficial (ADM)
   if (!ehTema(id) && c === null && souAdm()) {
-    s.append(el('p', '', 'A squad ainda não tem canal no Cardume.'));
+    s.append(el('p', '', 'A squad ainda não tem canal na Concha.'));
     const b = el('button', 'primary', 'Ativar canal da squad'); b.type = 'button'; b.onclick = () => ativarOficial(id); s.append(el('div', 'acoes-lado')); s.lastChild.append(b);
     lado.append(s); return;
   }

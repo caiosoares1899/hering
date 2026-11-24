@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍', gantt_cal:'📊', gantt_pedido:'📣',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_cobranca:'📦', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', cardume_mencao:'🐟', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', cardume_mencao:'🐚', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -113,9 +113,9 @@
     {id:'timer_esquecido', familia:'pessoal', rotulo:'Timer rodando', area:'prazos', fonte:'pessoal', nome:'Timer esquecido rodando', pushPossivel:true,
       quando:'Uma atividade segue rodando, sem pausa, há 4 horas — e de novo aos 8 e 12 horas (depois disso para de avisar). Pausar e retomar reinicia a contagem.',
       quem:'Quem está executando a atividade.', onde:'Servidor: timersVigia (functions/timers/vigia.js). Clicar abre o card.'},
-    {id:'cardume_mencao', familia:'pessoal', rotulo:'Cardume', area:'board', fonte:'pessoal', nome:'Menção no Cardume (@)', pushPossivel:true,
-      quando:'Alguém escreve @seu nome numa mensagem de um canal do 🐟 Cardume em que você está.',
-      quem:'A pessoa mencionada, se for membro do canal (nunca quem escreveu).', onde:'Cardume (cardume-dev.html → avisarMencoes()). O aviso é genérico (sem canal nem trecho); clicar abre o canal direto na mensagem. Só vira push com o registro privado da menção (functions/common/cardumePush.js).'},
+    {id:'cardume_mencao', familia:'pessoal', rotulo:'Concha', area:'board', fonte:'pessoal', nome:'Menção na Concha (@)', pushPossivel:true,
+      quando:'Alguém escreve @seu nome numa mensagem de um canal da 🐚 Concha em que você está.',
+      quem:'A pessoa mencionada, se for membro do canal (nunca quem escreveu).', onde:'Concha (cardume-dev.html → avisarMencoes()). O aviso é genérico (sem canal nem trecho); clicar abre o canal direto na mensagem. Só vira push com o registro privado da menção (functions/common/cardumePush.js).'},
     {id:'escala', familia:'calendario', rotulo:'Escala', area:'agenda', fonte:'pessoal', nome:'Sua escala foi cadastrada', pushPossivel:true,
       quando:'PO, Organizador ou ADM cadastra (ou limpa) a escala de trabalho/plantão/folga de OUTRA pessoa — uma notificação por cadastro, com o período e o tipo. Quem cadastra a própria escala não se avisa.',
       quem:'A pessoa dona da escala.', onde:'Escala (escala-dev.html → avisarPessoa()). Clicar abre a Escala na semana cadastrada.'},
@@ -906,8 +906,8 @@
     // o tile é um link comum (sem data-app), então abre em aba nova até de dentro do iframe do Oceano.
     {id:'escala', nome:'Escala', sub:'🔥 Semana da Black Friday', href:PAGES.escala, ext:true, g:['#ff9f43','#ff5e62'],
       glifo:'<rect x="11" y="14" width="26" height="23" rx="4"/><path d="M11 21h26M18 10v7M30 10v7"/><path d="M18 28l4 4 8-8"/>'},
-    {id:'cardume', nome:'Cardume', sub:'Conversa do time', href:'cardume-dev.html', ext:true, g:['#38b6ff','#176eae'],
-      glifo:'<path d="M10 24s5-8 13-8c5 0 9 3 11 6l6-5v14l-6-5c-2 3-6 6-11 6-8 0-13-8-13-8Z"/><circle cx="19" cy="23" r="1"/>'},
+    {id:'cardume', nome:'Concha', sub:'Conversa do time', href:'cardume-dev.html', ext:true, g:['#38b6ff','#176eae'],
+      glifo:'<path d="M24 33 9.5 19.5c-.8-3.6 1.2-6.2 4.2-6.1.9-2.6 3.4-3.6 5.6-2.4 1.2-2 3.6-2.6 4.7-2.6s3.5.6 4.7 2.6c2.2-1.2 4.7-.2 5.6 2.4 3-.1 5 2.5 4.2 6.1Z"/><path d="M24 33 13.7 13.4M24 33 19.3 11M24 33V8.4M24 33l4.7-22M24 33l10.3-19.6"/><path d="M17 33h14l-2.5 5h-9Z"/>'},   // 🐚 concha (era o peixe do Cardume)
   ];
   // Semana da Black Friday (segunda a domingo da sexta depois da 4ª quinta de novembro) — mesma conta da escala-dev.html.
   function semanaBF(agora){

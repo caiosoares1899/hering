@@ -87,7 +87,7 @@ function conferirEscritas(escritas, quem) {
   t('o aviso diz que a Hering inteira pode abrir o card', /Qualquer pessoa da Hering pode abrir esse card/.test(aviso) && /Painel de vendas/.test(aviso), aviso);
   await p.check('.md.registrar input[value="-Nm5"]'); await p.waitForTimeout(150);
   const prev = await p.textContent('.md.registrar .prev-reg');
-  t('prévia: cabeçalho, nome de cada autor e as duas mensagens', /^🐟 Do Cardume · #Dados/.test(prev) && /\*\*Bruno Reis\*\* \(/.test(prev) && /\*\*Ana Lima\*\* \(/.test(prev) && /versão B/.test(prev), prev);
+  t('prévia: cabeçalho, nome de cada autor e as duas mensagens', /^🐚 Da Concha · #Dados/.test(prev) && /\*\*Bruno Reis\*\* \(/.test(prev) && /\*\*Ana Lima\*\* \(/.test(prev) && /versão B/.test(prev), prev);
   t('prévia: @menções viram só o nome (não aciona o Agente), e-mail fica', !/@agente/i.test(prev) && /Agente Ágil resume/.test(prev) && !/@Ana/.test(prev) && /bru@ciahering\.com\.br/.test(prev), prev);
   // link colado inválido
   await p.selectOption('.md.registrar select', ''); await p.fill('.md.registrar input[type="url"]', 'https://evil.example/hering/kanban.html?squad=dados&opencard=c1'); await p.waitForTimeout(150);

@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐟 Cardume vira 🐚 Concha (SÓ DEV, cardume v0.9, mare-notif ?v=49) — 2026-11-24
+
+Pedido do Caio. Só o nome visível muda: página, atalho do Oceano, item e ícone (vieira) no menu ⋮⋮⋮, 'Ver conversa na Concha' no Maré, 'Menção na Concha' no Sino e na Central de Notificações, '🐚 Da Concha · #canal' no comentário registrado e o push '🐚 Concha' (texto do servidor: deploy do sendPushOnNotification). Arquivo (cardume-dev.html), URL, banco (kanban/cardume) e o tipo cardume_mencao ficam. 'Cardume' segue sendo o escopo da squad nas Estrelas do Mar e o botão Cardume Criativo.
+
 ### 🔔 Sino unificado — fase 1: componente MareNotif.sino() e o Sino no Cardume (SÓ DEV, cardume v0.8, mare-notif ?v=48) — 2026-11-24
 
 Um Sino só para todos os apps (docs/ideias/sino-unificado.md). O mare-notif-dev.js ganha MareNotif.sino(botão, opções): selo, painel com os layouts por família do Maré (👤 Pessoal · 📅 Calendário · 🎯 Radar · 🛡️ Sistema), notificações pessoais + feed da torre sem duplicar, marcar lida, ✕, marcar tudo, limpar antigas, som, Não Perturbe e insistente. Montado só com createElement/textContent (texto de terceiros). O Cardume é o primeiro a usar: Sino no topo; a menção clicada no Sino abre a conversa ali mesmo, e abrir uma menção (pelo Sino ou pela aba @ Menções) marca as duas como lidas. Próximas fases: Oceano, Radar, Painel e Maré. Teste: test_sino_cardume.js (27).

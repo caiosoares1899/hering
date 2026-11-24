@@ -1,4 +1,6 @@
-# 🐟 Cardume — conversa do time dentro do Oceano (ideia de 23/11/2026)
+# 🐚 Concha (ex-🐟 Cardume) — conversa do time dentro do Oceano (ideia de 23/11/2026)
+
+> **Renomeada para Concha em 24/11/2026** (pedido do Caio). Só o nome visível mudou: o arquivo (`cardume-dev.html`), a URL, o banco (`kanban/cardume/…`), o tipo de notificação (`cardume_mencao`) e os nomes destes documentos seguem "cardume". "Cardume" continua sendo outra coisa no Maré: o escopo da squad nas Estrelas do Mar e o botão 🐟 Cardume Criativo.
 
 Um "Slack nosso", **dentro do Oceano**, sem servidor novo: Firebase RTDB + login Google `@ciahering` + squads que já existem. Referência de mercado: os *slack clones* do GitHub (Mattermost, Rocket.Chat, Zulip, Matrix). Optamos por **não** subir um deles porque exigem servidor/banco/SSO próprios (projeto com a TI) e não falam com o Maré.
 

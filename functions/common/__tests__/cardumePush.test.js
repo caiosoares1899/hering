@@ -38,7 +38,7 @@ test('push só se o registro aponta para ESTA notificação E a mensagem mencion
 
 test('mencaoValida lê tudo, monta o texto do push no servidor (ignora o do navegador) e nunca lança', async () => {
   const r = await mencaoValida(fakeDb(arvore), 'ana', notif, 'n123');
-  assert.deepEqual(r, { ok: true, title: '🐟 Cardume', body: 'Caio te mencionou' });
+  assert.deepEqual(r, { ok: true, title: '🐚 Concha', body: 'Caio te mencionou' });
   assert.equal((await mencaoValida(fakeDb(arvore), 'ana', notif, 'n1')).ok, false);
   assert.equal((await mencaoValida(fakeDb(arvore), 'bru', notif, 'n123')).ok, false, 'registro é de outra pessoa');
   assert.equal((await mencaoValida({ ref: () => ({ get: async () => { throw new Error('rede'); } }) }, 'ana', notif, 'n123')).ok, false, 'erro = sem push');
