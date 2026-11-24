@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Cardume v0.6: prévia do card colado e 📝 Registrar no card (SÓ DEV) — 2026-11-24
+
+Etapa 3 (parte do Cardume). Link de card do Maré colado na conversa vira um chip com o título e a squad (lido uma vez por sessão; 'sem acesso' e 'não encontrado' quando for o caso). Em qualquer mensagem, '📝 No card' abre um painel para marcar até 20 mensagens e escolher o card (os citados na conversa ou um link colado); antes de gravar, o aviso diz que qualquer pessoa da Hering pode abrir o card (premissa medida no simulador: kanban/squads/{sq}/dados é lido por toda conta Google @ciahering). Grava em card_comments no formato do Maré, com cardume:{c,m} para o 'Ver conversa no Cardume' (lado do Maré, Codex). As @menções copiadas perdem o @, para não acionar o Agente Ágil (detectaMencao) nem parecer menção. Testes: test_cardume_card.js (21) e cardumeCardRules.test.js.
+
 ### Cardume — @menção avisa no sino e no celular; aba @ Menções — SÓ DEV (cardume v0.4-dev) — 2026-11-24
 
 Etapa 4 do Cardume. Mencionar alguém do canal (@Nome) gera um aviso 🐟 no sino do Oceano/Maré e push no celular (tipo novo cardume_mencao); clicar abre o canal direto na mensagem, destacada. Na página, a aba @ Menções lista onde te mencionaram, com as novas em destaque. Só avisa quem é membro do canal, nunca quem escreveu. O aviso do sino é genérico ("fulano te mencionou no Cardume"): o canal e a mensagem ficam num índice privado da pessoa, e o push só sai se esse índice confirmar a menção. Silenciar canal fica para quando houver aviso por mensagem comum.

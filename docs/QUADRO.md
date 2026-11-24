@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/cardume-push-frescor` | `functions/common/cardumePush.js` (#1933) | 24/11/2026 |
+| Claude · Codex | `claude/cardume-card` · `codex/kanban-ver-conversa` | `cardume-dev.html` (etapa 3) · `kanban-dev.html` (Ver conversa no Cardume) | 24/11/2026 |
 
 
 ## Fila
