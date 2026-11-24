@@ -754,6 +754,8 @@
     // o tile é um link comum (sem data-app), então abre em aba nova até de dentro do iframe do Oceano.
     {id:'escala', nome:'Escala', sub:'🔥 Semana da Black Friday', href:PAGES.escala, ext:true, g:['#ff9f43','#ff5e62'],
       glifo:'<rect x="11" y="14" width="26" height="23" rx="4"/><path d="M11 21h26M18 10v7M30 10v7"/><path d="M18 28l4 4 8-8"/>'},
+    {id:'cardume', nome:'Cardume', sub:'Conversa do time', href:'cardume-dev.html', ext:true, g:['#38b6ff','#176eae'],
+      glifo:'<path d="M10 24s5-8 13-8c5 0 9 3 11 6l6-5v14l-6-5c-2 3-6 6-11 6-8 0-13-8-13-8Z"/><circle cx="19" cy="23" r="1"/>'},
   ];
   // Semana da Black Friday (segunda a domingo da sexta depois da 4ª quinta de novembro) — mesma conta da escala-dev.html.
   function semanaBF(agora){
@@ -799,6 +801,7 @@
   function appsLsLer(uid){ try{ const o = JSON.parse(localStorage.getItem(appsLsKey(uid))||'null'); return (o && o.v && typeof o.v==='object') ? o : null; }catch(e){ return null; } }
   function appsLsSalvar(uid, v){ try{ localStorage.setItem(appsLsKey(uid), JSON.stringify({t:Date.now(), v})); }catch(e){} }
   function appsVisivel(a, c){
+    if(a.id==='cardume') return IS_DEV;
     if(a.id==='painel') return !!(c.viewer || c.adm || c.uso.painel);
     if(a.id==='okr') return true;
     if(a.id==='oceano') return !c.viewer;   // o lobby é só pra conta Google @ciahering
@@ -833,7 +836,7 @@
     } else {
       corpo = '<div class="mn-apps-grid">' + lista.map(a=>{
           const eh = a.id===aqui;
-          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app'+(a.ext ? ' mn-app-bf' : '')+'" role="menuitem"'+(a.ext ? '' : ' data-app="'+esc(a.id)+'"')+' href="'+esc(a.href)+'" target="_blank" rel="noopener">')
+          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app'+(a.id==='escala' ? ' mn-app-bf' : '')+'" role="menuitem"'+(a.ext ? '' : ' data-app="'+esc(a.id)+'"')+' href="'+esc(a.href)+'" target="_blank" rel="noopener">')
             + appsLogo(a) + '<span class="mn-app-n">'+esc(a.nome)+'</span><span class="mn-app-s">'+(eh ? 'você está aqui' : esc(a.sub))+'</span>'
             + (eh ? '</div>' : '</a>');
         }).join('') + '</div>';

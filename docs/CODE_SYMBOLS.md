@@ -1,11 +1,11 @@
 # CODE_SYMBOLS.md — Índice Automático Completo de Símbolos, Blocos e `const`s
 
-> Gerado automaticamente do código-fonte por `node scripts/mare-cli.js map` (ou `symbols`) em 2026-11-23.
+> Gerado automaticamente do código-fonte por `node scripts/mare-cli.js map` (ou `symbols`) em 2026-11-24.
 > **Como usar (Zero Buscas Cegas):** leia este arquivo com `read_file` para obter a linha exata `Lxxxx` de qualquer `<style>`, `<script>`, `const` global ou função em todos os apps `-dev` e módulos `mare-*-dev.js`.
 > Em arquivos > 2,5 MB onde `read_file` acusa binário (`kanban-dev.html`, `kanban.html`, `guia-okr.html`), use `node scripts/mare-cli.js slice <arquivo> <inicio> <fim>` para ler o trecho exato e `"patches"` no `.mare-ship.json` para editar.
 
 ## `kanban-dev.html` (44865 linhas · 1755 funções)
-- **CSS:** L31–L4690, L7457–L7484 | **JS:** L4691–L4701 (classic), L4702–L4761 (classic), L7801–L8134 (module), L8143–L44682 (classic) | **Módulos:** mare-login-dev.js?v=3 (L7800), mare-notif-dev.js?v=45 (L8135), mare-metas-dev.js?v=19 (L8136), mare-dicas-dev.js?v=19 (L8137), mare-sonar-dev.js?v=8 (L8138), mare-timer-dev.js?v=1 (L8139), mare-gcal-dev.js?v=10 (L8140), mare-ferias-dev.js?v=7 (L8141)
+- **CSS:** L31–L4690, L7457–L7484 | **JS:** L4691–L4701 (classic), L4702–L4761 (classic), L7801–L8134 (module), L8143–L44682 (classic) | **Módulos:** mare-login-dev.js?v=3 (L7800), mare-notif-dev.js?v=46 (L8135), mare-metas-dev.js?v=19 (L8136), mare-dicas-dev.js?v=19 (L8137), mare-sonar-dev.js?v=8 (L8138), mare-timer-dev.js?v=1 (L8139), mare-gcal-dev.js?v=10 (L8140), mare-ferias-dev.js?v=7 (L8141)
 - **Consts (257):** safeLS:L7808 · FB_OVERRIDE_NS:L7830 · firebaseConfig:L7831 · app:L7840 · db:L7841 · auth:L7842 · provider:L7843 · calProvider:L7850 · msProvider:L7866 · msPersonalProvider:L7875 · _fotoBase:L7998 · ADM_UIDS:L8177 · TRUSTED_DOMAINS:L8189 · _dominiosTxt:L8190 · WORKER_URL:L8321 · _urlParams:L8324 · _legacySquadMap:L8332 · _legacySquad:L8333 · ACTIVE_SQUAD:L8340 · SQUAD_META_DEFAULT:L8367 · SQUAD_LABELS:L8387 · FB:L8391 · today:L8569 · _SQ_ID_OK:L8574 · _DRAWER_IDS:L8604 · DADOS_DIAS_BOARD:L8613 · PALETTE:L8768 · DEFAULT_COLUMNS:L8777 · _COR_COLUNA_OK:L8788 · CARD_COVER_COLORS:L8814 · _superRollupScroll:L9005 · CARD_SECTIONS:L9017 · _CARD_SECTIONS_COM_TOGGLE_PROPRIO:L9063 · _ganttCal:L9079 · _ganttMc:L9082 · AGENTE_AGIL_MENTION_INIT:L9132 · AGENTE_AGIL_MENTION_ENTRY:L9133 · TODOS_MENTION_INIT:L9145 · TODOS_MENTION_ENTRY:L9146 · AGENTE_AGIL_MENTION_SQUADS:L9154 (+217)
 - _bfSemanaInfo:L4719 · _signIn:L7935 · _signInMicrosoft:L7941 · _signInMicrosoftPessoal:L7946 · _signOut:L7950 · _reloadAuthUser:L7980 · _relerFotoGoogle:L7999 · _requestCalendarScope:L8064 · _signInIdToken:L8100 · _signInRedirect:L8101
 - _signInMicrosoftRedirect:L8112 · _signInMicrosoftPessoalRedirect:L8116 · _gcalTokenLimpar:L8168 · _gcalToken:L8169 · _isTrustedDomainEmail:L8191 · _loginProviderMismatchMsg:L8198 · _mantemLocal:L8224 · _irParaOceano:L8225 · _oceanoDoDia:L8247 · _rejectLoginAfterReload:L8266
@@ -190,7 +190,7 @@
 - stop:L44667
 
 ## `painel-dev.html` (14433 linhas · 578 funções)
-- **CSS:** L12–L1660 | **JS:** L1661–L1670 (classic), L1671–L1684 (classic), L1685–L1691 (classic), L3245–L3371 (classic), L3374–L3480 (module), L3487–L14227 (classic) | **Módulos:** mare-notif-dev.js?v=45 (L3481), mare-metas-dev.js?v=19 (L3482), mare-plantao-dev.js?v=5 (L3483), mare-dicas-dev.js?v=19 (L3484), mare-gxl-dev.js?v=2 (L3485)
+- **CSS:** L12–L1660 | **JS:** L1661–L1670 (classic), L1671–L1684 (classic), L1685–L1691 (classic), L3245–L3371 (classic), L3374–L3480 (module), L3487–L14227 (classic) | **Módulos:** mare-notif-dev.js?v=46 (L3481), mare-metas-dev.js?v=19 (L3482), mare-plantao-dev.js?v=5 (L3483), mare-dicas-dev.js?v=19 (L3484), mare-gxl-dev.js?v=2 (L3485)
 - **Consts (123):** AG_NO:L3250 · AG_CFG:L3251 · AG_ABAS:L3252 · AG_PERIODOS:L3253 · AG_FILTRO_RE:L3254 · AG_ABA_ROTULO:L3255 · AG_CHIPS:L3257 · firebaseConfig:L3392 · app:L3409 · db:L3410 · auth:L3411 · storage:L3412 · provider:L3413 · calProvider:L3417 · msProvider:L3439 · VICE_LONGPRESS_MS:L3528 · _dbg:L3582 · _DBG_LOG_PATH:L3583 · _DBG_DAILY_PATH:L3584 · GERENCIAS:L3783 · OKR_PRESENCE_TTL_MS:L3965 · _SQUAD_COLORS_CAMP:L4033 · _SQ_LABELS:L4041 · CAMP_TEMAS:L4081 · CAMP_TIPO_ICONS:L4089 · CAMP_TIPO_LABELS:L4090 · MESES:L4233 · DOW:L4234 · _pTag:L4268 · KNOWN_SQUADS:L4747 · _SQ_FB:L4871 · PAINEL_CAMP_TEMAS:L4999 · PAINEL_SQ_COLORS:L5003 · SUBMARCA_TAGS:L5505 · CANAL_VENDA_TAGS:L5524 · LEMP_TIPOS:L5745 · PCAL_COLORS:L6031 · DYNAMIC_COLOR_PALETTE:L6043 · SQUAD_COLOR_MAP:L6067 · OKR_PAGE:L6087 (+83)
 - **[🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_A]** agIniciar:L3265 · agEncerrar:L3284 · agContexto:L3289 · agAtualizarContexto:L3296 · agAlternar:L3301 · agEsc:L3310 · agEscutar:L3311 · agHora:L3316 · agMd:L3319 · agMsgHtml:L3327
 - agRender:L3337 · agIniciarEspera:L3348 · agFimEspera:L3352 · agPerguntar:L3353 · agEnviar:L3354 · agIr:L3364 · esc:L3381 · jsq:L3390 · _requestCalendarScope:L3421 · _signInMicrosoft:L3442
@@ -253,7 +253,7 @@
 - testGlobalBackupEmail:L14123 · checkOverdueGlobalBackup:L14131 · _onRealAuthChange:L14150 · _auGetCurrentVersion:L14172 · _auModalOpen:L14176 · _auTyping:L14181 · _auShowBanner:L14189 · _auTryIdleReload:L14200 · _auCheckVersion:L14206
 
 ## `okr-dev.html` (11108 linhas · 701 funções)
-- **CSS:** L12–L1645 | **JS:** L1646–L1654 (classic), L1655–L1668 (classic), L2134–L2181 (module), L2186–L11105 (classic) | **Módulos:** mare-notif-dev.js?v=45 (L2182), mare-dicas-dev.js?v=19 (L2183), mare-sonar-dev.js?v=8 (L2184)
+- **CSS:** L12–L1645 | **JS:** L1646–L1654 (classic), L1655–L1668 (classic), L2134–L2181 (module), L2186–L11105 (classic) | **Módulos:** mare-notif-dev.js?v=46 (L2182), mare-dicas-dev.js?v=19 (L2183), mare-sonar-dev.js?v=8 (L2184)
 - **Consts (95):** firebaseConfig:L2140 · app:L2152 · db:L2153 · auth:L2154 · provider:L2155 · msProvider:L2160 · OKR_KANBAN_PAGE:L2210 · OKR_PAINEL_PAGE:L2211 · _GU_TTL_MS:L2248 · OKR_PRESENCE_PATH:L2286 · OKR_PRESENCE_TTL_MS:L2287 · OKR_PRESENCE_MAX_VISIVEIS:L2288 · _okrCardCache:L2338 · _okrSqOkrCards:L2339 · _okrSqLoading:L2340 · _okrSqCols:L2341 · _okrCardInflight:L2342 · VICE_LONGPRESS_MS:L2444 · OKR_GERENCIAS:L2643 · OKR_TORRES_TODAS:L2660 · OKR_SO_DIGITAL:L2667 · OKR_TORRES:L2669 · OKR_TORRE_PADRAO:L2670 · OKR_TORRES_CORTE:L2672 · OKR_GERENCIAS_POR_TORRE:L2674 · OKR_TORRE_GERAL:L2714 · OKR_BLOCO_AREAS:L2740 · OKR_BLOCO_ANCHOR:L2745 · OKR_PERIODO_RE:L2808 · _okrPeriodoOk:L2809 · _okrIsoDia:L2810 · _okrEhPerene:L2833 · _okrAnoDe:L2834 · _okrPeriodosNorm:L2836 · _okrPeriodoSobrepoe:L2837 · _okrPeriodoOrdem:L2847 · OKR_STATUS:L2865 · OKR_SEVERIDADE:L2874 · OKR_AGENDA_PROPOSTAS:L3132 · OKR_AGENDA_ACAO:L3134 (+55)
 - _signInMicrosoft:L2163 · _fcmGetToken:L2171 · _fcmDeleteToken:L2172 · _signIn:L2175 · _signOut:L2176 · squadBoardUrl:L2212 · loadExtraSquads:L2213 · _okrCheckAccessReady:L2228 · loadAdmList:L2236 · _usuariosNode:L2250
 - loadGlobalUsers:L2251 · _okrSendHeartbeat:L2290 · _okrPresenceStart:L2297 · loadOkrPresence:L2306 · renderOkrOnline:L2311 · _okrCardKey:L2343 · _okrCardTitleKnown:L2344 · _okrCardLabel:L2345 · _okrCardPaint:L2351 · _okrCardFetchOne:L2357
@@ -334,37 +334,37 @@
 - _okrDsCloseCfg:L10846 · _okrDsRenderCfgModal:L10852 · _okrDsSaveForm:L10925 · _okrDsDelete:L10981 · _okrDsMove:L11008 · _auGetCurrentVersion:L11053 · _auModalOpen:L11057 · _auTyping:L11062 · _auShowBanner:L11070 · _auTryIdleReload:L11081
 - _auCheckVersion:L11087
 
-## `oceano-dev.html` (2579 linhas · 125 funções)
-- **CSS:** L21–L538 | **JS:** L14–L20 (classic), L743–L779 (module), L787–L2576 (classic) | **Módulos:** mare-login-dev.js?v=3 (L742), mare-notif-dev.js?v=45 (L781), mare-plantao-dev.js?v=5 (L782), mare-dicas-dev.js?v=19 (L783), mare-metas-dev.js?v=19 (L784), mare-sonar-dev.js?v=8 (L785)
+## `oceano-dev.html` (2580 linhas · 125 funções)
+- **CSS:** L21–L538 | **JS:** L14–L20 (classic), L743–L779 (module), L787–L2577 (classic) | **Módulos:** mare-login-dev.js?v=3 (L742), mare-notif-dev.js?v=46 (L781), mare-plantao-dev.js?v=5 (L782), mare-dicas-dev.js?v=19 (L783), mare-metas-dev.js?v=19 (L784), mare-sonar-dev.js?v=8 (L785)
 - **Consts (58):** firebaseConfig:L748 · fbApp:L758 · db:L759 · auth:L760 · provider:L761 · VERSION:L790 · IS_DEV:L791 · SO_HERING:L792 · CONTATO:L793 · $:L794 · esc:L795 · _hrefOk:L797 · reduzMov:L798 · standalone:L799 · SVG_PAINEL:L802 · SVG_BORDO:L803 · SVG_TRAV:L804 · P:L805 · NEXT:L810 · APPS:L811 · EXTRA:L818 · APP:L819 · logoPorthole:L824 · logoQuad:L825 · temaDoMare:L828 · peixesDoMare:L829 · PREFS_PADRAO:L830 · PREFS_LS:L834 · TEMAS:L836 · FISH_SVGS:L857 · _fn:L887 · nomeCurto:L888 · iniciais:L889 · AV_TIPOS:L999 · AV_LIMITE:L1000 · avLargo:L1001 · OK:L1022 · VTEX_VELHO_MS:L1108 · _avMudou:L1158 · _lobbyVisivel:L1238 (+18)
 - _fcmGetToken:L769 · _fcmDeleteToken:L770 · _signIn:L773 · _signInIdToken:L775 · _signOut:L776 · logoInner:L820 · lsLer:L832 · lsSalvar:L833 · aplicarPrefs:L837 · salvarPrefs:L846
 - toast:L854 · criarPeixes:L862 · atualizarAnimacao:L874 · _animAtividade:L875 · loginErr:L895 · emailHering:L897 · viaGoogle:L898 · lerRamo:L917 · garantirCadastro:L919 · iniciarSessao:L923
 - iniciarMetasOceano:L949 · metaPodeAtualizar:L967 · metaOceanoRender:L972 · mostrarContinuar:L988 · avLimite:L1002 · avHttp:L1008 · avPodeVer:L1009 · avLimpa:L1021 · avCmp:L1039 · avVistos:L1042
 - avSalvaVistos:L1043 · avBotaoHtml:L1044 · avHtml:L1045 · muralRender:L1057 · avMarcaVistos:L1081 · avAbreBotao:L1089 · avAbre:L1094 · vtexEstado:L1109 · vtexRender:L1121 · iniciarVtex:L1129
 - iniciarMural:L1136 · rotearUrl:L1163 · sinoItens:L1167 · tempoRel:L1183 · sinoRender:L1184 · sinoFecha:L1196 · sinoToggle:L1197 · sinoTudoLido:L1206 · sinoLimpar:L1212 · sinoClique:L1223
-- iniciarDicas:L1240 · iniciarSino:L1245 · visivel:L1270 · saudacao:L1273 · renderEu:L1274 · appsDoDia:L1279 · renderTudo:L1280 · renderAbas:L1324 · renderVersoes:L1332 · linkLogo:L1349
-- linksCacheSet:L1358 · carregarLinks:L1359 · renderLinks:L1369 · htmlPerfilLinks:L1376 · renderPerfilLinks:L1382 · gravaLinks:L1387 · salvarLink:L1392 · acaoLink:L1404 · abrirAqui:L1415 · abrirApp:L1416
-- lembrarUltimo:L1421 · mostrarHost:L1422 · renderHostTabs:L1440 · fecharApp:L1443 · voltarLobby:L1451 · renderAbertos:L1456 · aberturasChave:L1465 · contarAbertura:L1466 · ehVeterano:L1468 · irAba:L1469
-- rotearHash:L1476 · __oceanoHost:L1495 · abrirModal:L1499 · fecharModal:L1500 · abrirPerfil:L1506 · renderFaq:L1579 · abrirAjuda:L1584 · feriasHoje:L1613 · feriasAtivo:L1614 · feriasExpandido:L1622
-- feriasSetExpandido:L1623 · feriasDispensados:L1627 · feriasDispensar:L1628 · feriasMdLite:L1630 · feriasBugEhMeu:L1636 · feriasMeusBugsAtivos:L1643 · feriasStatusMeta:L1647 · feriasAlertasAutor:L1653 · feriasBannerAlertaAutorHtml:L1657 · feriasRenderBanner:L1672
-- feriasNorm:L1889 · feriasResponder:L1903 · feriasHtmlChat:L1956 · feriasHtmlSocorro:L1976 · feriasHtmlStatus:L1995 · feriasHtmlProximos:L2022 · feriasBlocoGuiaDevtoolsHtml:L2035 · feriasHtmlGuia:L2062 · feriasHtmlMeusChamados:L2085 · feriasHtmlBugs:L2109
-- feriasRenderEvidPreview:L2166 · feriasComprimirImagem:L2177 · feriasPreencherDadosTecnicos:L2212 · feriasRenderBugsLista:L2229 · feriasProcessarSnapshotBugs:L2242 · feriasRefBugs:L2262 · feriasIniciarBugsListener:L2267 · feriasCarregarBugs:L2280 · feriasEnviarBug:L2296 · feriasRenderModal:L2378
-- abrirFerias:L2392 · feriasEnviarPergunta:L2408 · instalar:L2479 · mostrarDocumento:L2496 · iniciarSonar:L2506
+- iniciarDicas:L1240 · iniciarSino:L1245 · visivel:L1270 · saudacao:L1273 · renderEu:L1274 · appsDoDia:L1279 · renderTudo:L1280 · renderAbas:L1325 · renderVersoes:L1333 · linkLogo:L1350
+- linksCacheSet:L1359 · carregarLinks:L1360 · renderLinks:L1370 · htmlPerfilLinks:L1377 · renderPerfilLinks:L1383 · gravaLinks:L1388 · salvarLink:L1393 · acaoLink:L1405 · abrirAqui:L1416 · abrirApp:L1417
+- lembrarUltimo:L1422 · mostrarHost:L1423 · renderHostTabs:L1441 · fecharApp:L1444 · voltarLobby:L1452 · renderAbertos:L1457 · aberturasChave:L1466 · contarAbertura:L1467 · ehVeterano:L1469 · irAba:L1470
+- rotearHash:L1477 · __oceanoHost:L1496 · abrirModal:L1500 · fecharModal:L1501 · abrirPerfil:L1507 · renderFaq:L1580 · abrirAjuda:L1585 · feriasHoje:L1614 · feriasAtivo:L1615 · feriasExpandido:L1623
+- feriasSetExpandido:L1624 · feriasDispensados:L1628 · feriasDispensar:L1629 · feriasMdLite:L1631 · feriasBugEhMeu:L1637 · feriasMeusBugsAtivos:L1644 · feriasStatusMeta:L1648 · feriasAlertasAutor:L1654 · feriasBannerAlertaAutorHtml:L1658 · feriasRenderBanner:L1673
+- feriasNorm:L1890 · feriasResponder:L1904 · feriasHtmlChat:L1957 · feriasHtmlSocorro:L1977 · feriasHtmlStatus:L1996 · feriasHtmlProximos:L2023 · feriasBlocoGuiaDevtoolsHtml:L2036 · feriasHtmlGuia:L2063 · feriasHtmlMeusChamados:L2086 · feriasHtmlBugs:L2110
+- feriasRenderEvidPreview:L2167 · feriasComprimirImagem:L2178 · feriasPreencherDadosTecnicos:L2213 · feriasRenderBugsLista:L2230 · feriasProcessarSnapshotBugs:L2243 · feriasRefBugs:L2263 · feriasIniciarBugsListener:L2268 · feriasCarregarBugs:L2281 · feriasEnviarBug:L2297 · feriasRenderModal:L2379
+- abrirFerias:L2393 · feriasEnviarPergunta:L2409 · instalar:L2480 · mostrarDocumento:L2497 · iniciarSonar:L2507
 
-## `escala-dev.html` (1278 linhas · 77 funções)
-- **CSS:** L8–L200 | **JS:** L256–L1275 (module) | **Módulos:** mare-login-dev.js?v=3 (L255)
-- **Consts (47):** VERSION:L261 · firebaseConfig:L263 · fbApp:L272 · db:L273 · auth:L274 · provider:L275 · $:L280 · esc:L281 · ADM_EMAIL_FIXO:L282 · squadValido:L283 · MAX_DIAS:L284 · TIPOS:L287 · DIAS:L292 · SQUAD_FALLBACK:L294 · norm:L299 · arrDe:L300 · pad:L303 · iso:L304 · ISO_RE:L305 · addDias:L307 · diaSem:L308 · segunda:L309 · hojeISO:L310 · curto:L311 · papelNoSquad:L341 · souAdm:L342 · souDoSquad:L343 · souGestor:L344 · podeEditar:L345 · squadsEditaveis:L346 · rotuloPapel:L347 · rotuloSubs:L360 · entrada:L361 · passaTipo:L373 · entradaF:L374 · MAXG:L471 · ordTipo:L607 · hm:L608 · MAX_PAUSAS:L610 · pausaTxt:L614 (+7)
-- parseISO:L306 · blackFriday:L313 · ehBF:L315 · proximaBF:L316 · lsGet:L336 · lsSet:L337 · isHering:L338 · membrosDoSquad:L349 · subtimesDe:L355 · membrosF:L357
-- squadsEscopo:L359 · cobreHora:L364 · av:L376 · chipTipo:L381 · toast:L386
-- **[Carregamento]** carregarBase:L389 · carregarJanela:L410
-- **[Render]** diasDaSemana:L426 · cabecalhoDias:L427 · coberturaDoDia:L434 · squadTemEscala:L439 · renderSquad:L441 · rotuloTurno:L466 · turnosHtml:L467 · renderGlobal:L476 · renderHoje:L498 · renderAvisos:L509
-- subtimesDoEscopo:L524 · nFiltros:L528 · renderFiltros:L529 · pintarFiltros:L540 · abrirFiltros:L556 · render:L571 · irParaSemana:L592
-- **[Modais]** abrirOv:L596 · fecharOv:L601 · pausasDe:L611 · erroPausas:L616 · listaDia:L627 · ganttModelo:L643 · ganttDia:L672 · abrirDia:L700 · abrirCadastro:L727 · desenharCadastro:L743
-- ajustarPeriodoAosDias:L793 · lerForm:L800 · pintarMais:L805 · pintarPausas:L813 · datasDoCadastro:L819 · atualizarPrev:L827 · confirmarCadastro:L835 · avisarPessoa:L876
-- **[Baixar a escala em JPG (dia · semana · mês)]** jRR:L903 · jAjusta:L907 · jT:L908 · jNome:L912 · jNova:L917 · jPeriodo:L924 · jEscopo:L931 · jDoDia:L937 · jMoldura:L944 · jChip:L954
-- jCabDia:L960 · jSemanaSquad:L967 · jSemanaGlobal:L993 · jDia:L1024 · jGantt:L1048 · jMes:L1088 · jVazio:L1131 · jGerar:L1135 · jBaixar:L1141 · jpgAtualizar:L1149
-- abrirJpg:L1168
-- **[Login / fluxo principal]** renderWho:L1225 · iniciar:L1240 · checarVersao:L1266 · __escala:L1274
+## `escala-dev.html` (1348 linhas · 80 funções)
+- **CSS:** L8–L204 | **JS:** L261–L1345 (module) | **Módulos:** mare-login-dev.js?v=3 (L260)
+- **Consts (51):** VERSION:L266 · firebaseConfig:L268 · fbApp:L277 · db:L278 · auth:L279 · provider:L280 · $:L285 · esc:L286 · ADM_EMAIL_FIXO:L287 · squadValido:L288 · MAX_DIAS:L289 · TIPOS:L292 · DIAS:L297 · SQUAD_FALLBACK:L299 · norm:L304 · arrDe:L305 · pad:L308 · iso:L309 · ISO_RE:L310 · addDias:L312 · diaSem:L313 · segunda:L314 · hojeISO:L315 · curto:L316 · ATENDIMENTO_CX:L323 · _hAtd:L326 · HERICA:L344 · semanaTemAtend:L345 · papelNoSquad:L377 · souAdm:L378 · souDoSquad:L379 · souGestor:L380 · podeEditar:L381 · squadsEditaveis:L382 · rotuloPapel:L383 · rotuloSubs:L396 · entrada:L397 · passaTipo:L409 · entradaF:L410 · MAXG:L508 (+11)
+- parseISO:L311 · blackFriday:L318 · ehBF:L320 · atendDia:L327 · atendSegs:L333 · linhaAtendHtml:L347 · proximaBF:L352 · lsGet:L372 · lsSet:L373 · isHering:L374
+- membrosDoSquad:L385 · subtimesDe:L391 · membrosF:L393 · squadsEscopo:L395 · cobreHora:L400 · av:L412 · chipTipo:L417 · toast:L422
+- **[Carregamento]** carregarBase:L425 · carregarJanela:L446
+- **[Render]** diasDaSemana:L462 · cabecalhoDias:L463 · coberturaDoDia:L470 · squadTemEscala:L475 · renderSquad:L477 · rotuloTurno:L503 · turnosHtml:L504 · renderGlobal:L513 · renderHoje:L535 · renderAvisos:L546
+- subtimesDoEscopo:L561 · nFiltros:L565 · renderFiltros:L566 · pintarFiltros:L577 · abrirFiltros:L593 · render:L608 · irParaSemana:L630
+- **[Modais]** abrirOv:L634 · fecharOv:L639 · pausasDe:L649 · erroPausas:L654 · listaDia:L665 · ganttModelo:L681 · ganttDia:L711 · abrirDia:L743 · abrirCadastro:L771 · desenharCadastro:L787
+- ajustarPeriodoAosDias:L837 · lerForm:L844 · pintarMais:L849 · pintarPausas:L857 · datasDoCadastro:L863 · atualizarPrev:L871 · confirmarCadastro:L879 · avisarPessoa:L920
+- **[Baixar a escala em JPG (dia · semana · mês)]** jRR:L947 · jAjusta:L951 · jT:L952 · jNome:L956 · jNova:L961 · jPeriodo:L968 · jEscopo:L975 · jDoDia:L981 · jMoldura:L988 · jChip:L998
+- jCabDia:L1004 · jSemanaSquad:L1011 · jSemanaGlobal:L1044 · jDia:L1082 · jGantt:L1106 · jMes:L1155 · jVazio:L1198 · jGerar:L1202 · jBaixar:L1208 · jpgAtualizar:L1216
+- abrirJpg:L1235
+- **[Login / fluxo principal]** renderWho:L1294 · iniciar:L1309 · checarVersao:L1336 · __escala:L1344
 
 ## `intake-dev.html` (496 linhas · 20 funções)
 - **CSS:** L8–L81 | **JS:** L136–L493 (module) | **Módulos:** mare-login-dev.js?v=3 (L135)
@@ -389,8 +389,8 @@
 - **[🎭 MODO DEMONSTRAÇÃO (?demo=1)]** memSet:L1036 · demoDados:L1038
 - **[login e boot]** mostraLogin:L1097 · criarPeixes:L1113 · animAtividade:L1123 · aplicaTema:L1128 · abrirApp:L1131 · Travessia:L1160
 
-## `okr-apresentacao.slide.html` (3582 linhas · 159 funções)
-- **CSS:** L11–L772 | **JS:** L943–L981 (module), L983–L3556 (classic), L3557–L3579 (classic)
+## `okr-apresentacao.slide.html` (3583 linhas · 159 funções)
+- **CSS:** L11–L772 | **JS:** L943–L981 (module), L983–L3557 (classic), L3558–L3580 (classic)
 - **Consts (49):** firebaseConfig:L948 · app:L957 · db:L958 · auth:L959 · provider:L960 · OKR_GERENCIAS:L1000 · OKR_STATUS:L1009 · OKR_SEVERIDADE:L1016 · OKR_TORRES_TODAS:L1021 · MARE_SO_HERING:L1029 · OKR_TORRES:L1031 · _okrTorreTitulo:L1032 · OKR_GERENCIAS_PADRAO:L1033 · PT_PALETTE:L1072 · _okrModoTela:L1121 · _okrTelaPublico:L1122 · _okrPautaSerial:L1148 · OKR_ATING_TIPOS:L1238 · OKR_ATING_MOEDAS:L1248 · _OKR_AGUA_LADO:L1297 · NUM:L1356 · OKR_SBAR_ORDEM:L1511 · _okrEhCampo:L1914 · _OKR_RODAPE_VARS:L2113 · NOTES_READONLY_TXT:L2254 · _okrPodeConfigurarAgenda:L2419 · _okrRelogioSP:L2454 · LIVE_PATH:L2593 · liveEu:L2595 · liveRef:L2596 · liveAtiva:L2597 · liveSouHost:L2598 · liveSouAdm:L2599 · livePodeControlar:L2600 · liveAgora:L2605 · _okrHojeSP:L2611 · _okrHoraSP:L2612 · _liveMin:L2622 · LIVE_PRESENCA_MS:L2682 · liveHostParado:L2683 (+9)
 - _doLogin:L967 · _doLogout:L975 · esc:L987 · jsq:L996 · safeUrl:L997 · okrStatusInfo:L1017 · _okrTorreDe:L1036 · _okrGerenciasBase:L1037 · okrGerenciaLabel:L1045 · _okrGerRotulo:L1047
 - _okrGruposGerencia:L1049 · _okrTrimestresOf:L1061 · _tagCor:L1067 · pessoaInfo:L1092 · avatarHtml:L1096 · objMarcos:L1105 · _okrObjetivosSorted:L1112 · _okrValidarPauta:L1130 · _okrObjetivosAtivos:L1149 · _okrGerenciaObjetivos:L1152
@@ -403,15 +403,15 @@
 - _notasPopulateDateSel:L2237 · _okrNotesSetViewDate:L2249 · _notasOrdenadas:L2255 · renderNotasBastidor:L2259 · renderNotas:L2273 · _okrToggleNotes:L2310 · _okrCloseNotes:L2322 · _okrOpenMarcoComments:L2336 · _okrCloseMarcoComments:L2370 · _okrSalvarNota:L2371
 - _okrAddNota:L2379 · _okrDelNota:L2387 · _okrNotesKeydown:L2397 · _okrAgendaHoje:L2412 · _okrAgendaPopulateInputs:L2413 · _okrToggleAgendaCfg:L2420 · _okrCloseAgendaCfg:L2426 · _okrAgendaSalvar:L2427 · _okrAgendaLimpar:L2438 · _okrAtualizaOrigemAgenda:L2443
 - _okrRenderCountdown:L2458 · _isAdmOkr:L2507 · _okrResetOverlays:L2515 · _okrDenyAccess:L2532 · startListeners:L2542 · liveRelogio:L2613 · liveSugestaoTermino:L2624 · _liveAbrirInicio:L2634 · _liveFecharInicio:L2644 · liveLerTermino:L2645
-- _liveIniciar:L2656 · liveAjustarTermino:L2674 · liveToast:L2692 · liveInit:L2698 · liveBatida:L2735 · _liveComecar:L2742 · _liveEncerrar:L2760 · liveDefinirRecorte:L2762 · liveRestaurarRecorte:L2775 · liveAplicarRecorte:L2780
-- liveAplicar:L2789 · liveAposNavegar:L2825 · _okrOpenAting:L2845 · _okrCloseAting:L2850 · _liveSeguir:L2862 · _livePedir:L2863 · liveTrocar:L2864 · _livePassar:L2868 · _liveAceitar:L2869 · _liveRecusar:L2870
-- _liveAssumir:L2871 · _livePuxarSlide:L2881 · liveDesligaFerr:L2889 · _liveFerr:L2898 · _liveTipo:L2904 · _liveCor:L2905 · _liveLimpar:L2906 · _liveDesfazer:L2907 · liveUrlCompartilhavel:L2916 · _liveCopiarTelaPublico:L2924
-- _liveCopiarConvite:L2935 · liveAtualizarControleFlutuante:L2948 · liveAbrirPrimeiroDetalhe:L2974 · liveAtualizarPrevia:L2975 · liveAtualizarEscolhaObjetivo:L3005 · liveAtualizarComandos:L3021 · _liveAbrirControleFlutuante:L3094 · liveMontarControle:L3132 · livePrepararBastidor:L3250 · _liveAbrirPaginaBastidor:L3306
-- _livePainel:L3312 · liveParticipantes:L3316 · liveAtualizarPassador:L3320 · _livePassadorClique:L3332 · liveRender:L3337 · liveDesenhar:L3413 · _okrShowApp:L3484 · _okrViewerKey:L3513 · _okrHandleAuth:L3514
+- _liveIniciar:L2656 · liveAjustarTermino:L2674 · liveToast:L2692 · liveInit:L2698 · liveBatida:L2735 · _liveComecar:L2742 · _liveEncerrar:L2761 · liveDefinirRecorte:L2763 · liveRestaurarRecorte:L2776 · liveAplicarRecorte:L2781
+- liveAplicar:L2790 · liveAposNavegar:L2826 · _okrOpenAting:L2846 · _okrCloseAting:L2851 · _liveSeguir:L2863 · _livePedir:L2864 · liveTrocar:L2865 · _livePassar:L2869 · _liveAceitar:L2870 · _liveRecusar:L2871
+- _liveAssumir:L2872 · _livePuxarSlide:L2882 · liveDesligaFerr:L2890 · _liveFerr:L2899 · _liveTipo:L2905 · _liveCor:L2906 · _liveLimpar:L2907 · _liveDesfazer:L2908 · liveUrlCompartilhavel:L2917 · _liveCopiarTelaPublico:L2925
+- _liveCopiarConvite:L2936 · liveAtualizarControleFlutuante:L2949 · liveAbrirPrimeiroDetalhe:L2975 · liveAtualizarPrevia:L2976 · liveAtualizarEscolhaObjetivo:L3006 · liveAtualizarComandos:L3022 · _liveAbrirControleFlutuante:L3095 · liveMontarControle:L3133 · livePrepararBastidor:L3251 · _liveAbrirPaginaBastidor:L3307
+- _livePainel:L3313 · liveParticipantes:L3317 · liveAtualizarPassador:L3321 · _livePassadorClique:L3333 · liveRender:L3338 · liveDesenhar:L3414 · _okrShowApp:L3485 · _okrViewerKey:L3514 · _okrHandleAuth:L3515
 
-## `mare-notif-dev.js` (970 linhas · 87 funções)
-- **JS:** L1–L970 (js)
-- **Consts (20):** FEED:L21 · IS_DEV:L22 · PAGES:L23 · ICONS:L28 · SO_PAINEL:L36 · TTL_LIDA_MS:L40 · AREAS:L56 · PUSH_PADRAO:L66 · TIPOS:L68 · FAMILIAS:L208 · CFG:L219 · SO_HERING:L260 · VAPID:L422 · SITE:L430 · INS_PADRAO:L482 · INS_INTERVALO_MS:L483 · IMPORTANTE:L526 · APPS:L747 · APP_OCEANO:L764 · LINKS_HERING:L769
+## `mare-notif-dev.js` (973 linhas · 87 funções)
+- **JS:** L1–L973 (js)
+- **Consts (20):** FEED:L21 · IS_DEV:L22 · PAGES:L23 · ICONS:L28 · SO_PAINEL:L36 · TTL_LIDA_MS:L40 · AREAS:L56 · PUSH_PADRAO:L66 · TIPOS:L68 · FAMILIAS:L208 · CFG:L219 · SO_HERING:L260 · VAPID:L422 · SITE:L430 · INS_PADRAO:L482 · INS_INTERVALO_MS:L483 · IMPORTANTE:L526 · APPS:L747 · APP_OCEANO:L766 · LINKS_HERING:L771
 - viva:L45 · iconeSeguro:L47
 - **[🔔 CENTRAL DE NOTIFICAÇÕES (Painel → aba 🔔 Notificações)]** aparencia:L213 · cfgLigado:L221 · sinoLigado:L229 · esc:L233 · hrefOk:L235 · emitir:L246 · emailKey:L247 · seenLocalKey:L248 · seenLocalSalvar:L249 · alvoTorres:L252
 - paraMim:L261 · lido:L267 · start:L269 · items:L294 · unread:L311 · markOne:L313 · markAll:L324 · dismiss:L333 · clearRead:L344 · pushFeed:L358
@@ -419,9 +419,9 @@
 - dndExpira:L450 · dndAtivo:L451 · prefsPath:L452 · dndSalvar:L453 · dndSet:L458 · dndAmanha:L462 · prefsStart:L466 · insLer:L484 · reduzMovimento:L487 · insNormaliza:L488
 - insAplicaRemoto:L491 · insistenteSet:L492 · tremer:L499 · piscarTitulo:L510 · pararTitulo:L515 · insistenteParar:L516 · insOuvir:L520 · insistente:L528 · insistenteTestar:L549 · insRender:L555
 - insMenuEnsure:L564 · insistenteMenu:L581 · somMudo:L594 · tocar:L596 · somToggle:L611 · novas:L618 · permEstado:L630 · deviceId:L631 · tokenRegistrar:L636 · tokenRemover:L645
-- permClick:L651 · rodapeHtml:L668 · rodapeRender:L685 · dndMenu:L698 · menusFechar:L708 · semanaBF:L759 · linksLista:L773 · linksCacheLer:L778 · linksCacheSet:L779 · linksCarregar:L780
-- linkLogo:L788 · linksHtml:L793 · appsLsKey:L798 · appsLsLer:L799 · appsLsSalvar:L800 · appsVisivel:L801 · appsCtx:L811 · appsLogo:L815 · appsPopRender:L821 · appsPosicionar:L846
-- appsFechar:L853 · appsToggle:L858 · appsMontar:L869 · appsUso:L919 · MareNotif:L965
+- permClick:L651 · rodapeHtml:L668 · rodapeRender:L685 · dndMenu:L698 · menusFechar:L708 · semanaBF:L761 · linksLista:L775 · linksCacheLer:L780 · linksCacheSet:L781 · linksCarregar:L782
+- linkLogo:L790 · linksHtml:L795 · appsLsKey:L800 · appsLsLer:L801 · appsLsSalvar:L802 · appsVisivel:L803 · appsCtx:L814 · appsLogo:L818 · appsPopRender:L824 · appsPosicionar:L849
+- appsFechar:L856 · appsToggle:L861 · appsMontar:L872 · appsUso:L922 · MareNotif:L968
 
 ## `mare-metas-dev.js` (1473 linhas · 90 funções)
 - **JS:** L1–L1473 (js)
