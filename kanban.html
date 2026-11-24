@@ -2620,6 +2620,8 @@ input[type="date"]{-moz-appearance:textfield;}
   line-height:1.55;word-break:break-word;white-space:pre-wrap;}
 .comment-text a.card-mention{color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:600;}
 .comment-text a.user-mention{color:var(--teal);text-decoration:underline;cursor:pointer;}
+.comment-cardume-link{display:inline-flex;align-items:center;margin-top:3px;font-size:12px;color:var(--accent);text-decoration:underline;}
+@media (max-width:768px),(pointer:coarse){.comment-cardume-link{min-height:32px;}}
 .comment-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
 .cmt-act-btn{position:relative;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);
   background:rgba(56,182,255,.06);border:1px solid var(--glass-b);border-radius:999px;padding:4px 11px;cursor:pointer;
@@ -7780,7 +7782,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1019</div>
+<div class="version">v8.30.1022</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -42097,6 +42099,8 @@ function renderCommentList(comments){
     list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">🔍 Nenhum comentário encontrado para "<strong>'+esc(_commentSearchQuery)+'</strong>".</div>';
     return;
   }
+  const dev = /\/kanban-dev\.html$/.test(location.pathname);
+  const cardumeIdOk = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(id);
   filtered.forEach(c=>{
     const item=document.createElement('div');
     // comment-agent/comment-human só têm efeito visual dentro do tema
@@ -42119,6 +42123,10 @@ function renderCommentList(comments){
       : c.isSystem ? ' style="background:rgba(150,160,180,.12);border-color:rgba(150,160,180,.3);"' : '';
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const textHtml=renderMd(c.text||''); // texto rico: negrito/itálico/sublinhado/cor/links/menções (mesma engine da descrição)
+    const {c: canal, m: mensagem} = c.cardume || {};
+    const cardumeHref = dev && cardumeIdOk(canal) && cardumeIdOk(mensagem)
+      ? 'cardume-dev.html?c=' + encodeURIComponent(canal) + '&m=' + encodeURIComponent(mensagem)
+      : '';
     const canDel=!local && (c.uid===window._currentUser?.uid||_isPOorOrg());
     const canEdit=!local && c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
     const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
@@ -42128,6 +42136,7 @@ function renderCommentList(comments){
       '<div class="comment-bubble">'+
         '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+(_env?' · <span class="cmt-enviando" role="status">⏳ enviando…</span>':falhou?' · <span role="status" style="color:var(--danger)">Falha ao enviar</span>':'')+'</div>'+
         '<div class="comment-text" id="ctext-'+esc(c.id)+'">'+textHtml+'</div>'+
+        (cardumeHref?'<a class="comment-cardume-link" href="'+esc(cardumeHref)+'" target="_blank" rel="noopener">🐟 Ver conversa no Cardume</a>':'')+
         (local?'':_renderReactions(c))+
         (falhou?'<button type="button" class="cmt-act-btn cmt-retry">Tentar novamente</button>':'')+
         (local?'':'<div class="comment-actions">'+
