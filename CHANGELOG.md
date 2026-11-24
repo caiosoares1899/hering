@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Cardume — @menção avisa no sino e no celular; aba @ Menções — SÓ DEV (cardume v0.4-dev) — 2026-11-24
+
+Etapa 4 do Cardume. Mencionar alguém do canal (@Nome) gera um aviso 🐟 no sino do Oceano/Maré e push no celular (tipo novo cardume_mencao); clicar abre o canal direto na mensagem, destacada. Na página, a aba @ Menções lista onde te mencionaram, com as novas em destaque. Só avisa quem é membro do canal, nunca quem escreveu. Silenciar canal fica para quando houver aviso por mensagem comum.
+
 ### 🐟 Cardume — atalhos no Oceano e no menu de apps — SÓ DEV — 2026-11-24
 
 O Cardume (Conversa do time) abre em aba nova pela linha de atalhos do Oceano e pela aba Produtos do menu ⋮⋮⋮. As duas entradas aparecem apenas nas páginas -dev.

@@ -125,3 +125,23 @@ Criar temático (aberto e convite) · id sem `t-` ou de squad existente falha ·
 - **(baixa, simulador):** `update()` recusa caminho + descendente no mesmo `mapa` (o RTDB recusa) e usa um `now` único por operação.
 - **Aceito (registrado):** tentar **criar** um id `t-…` que já existe falha, então dá para "testar" se um id existe (nunca o nome nem os membros). A página gera ids com sufixo aleatório (`t-black-friday-k3f9`), o que torna isso inútil na prática.
 - **A confirmar na etapa 2:** o `newData.parent()…` até a raiz num `update()` real (o primeiro envio confere).
+
+---
+
+# Etapa 4 — menções e push (24/11/2026)
+
+**Confirmado no 1º teste real do Caio (24/11):** o `update()` de envio grava `msgs` + `ultima` com o **mesmo** `serverTimestamp`, e o `newData.parent()…` até a raiz funciona no RTDB — os dois "precisa_validar" das auditorias estão fechados.
+
+**Sem regra nova.** A @menção grava `kanban/usuarios/{uid}/notificacoes/{id}` com `type: 'cardume_mencao'`, que a regra atual já aceita de qualquer conta Hering (é como a Escala avisa). A página só avisa quem é **membro do canal** (o trecho da conversa privada fica no nó de notificações da própria pessoa) e nunca quem escreveu.
+
+| Campo | Valor |
+|---|---|
+| `title` | `🐟 {primeiro nome} te mencionou em # {canal}` |
+| `sub` | trecho da mensagem (sem marcação, até 140 caracteres) |
+| `cardume` / `cardumeMsg` | ids do canal e da mensagem (validados de novo no push e no sino) |
+| `dev` | `true` enquanto o Cardume só existe no dev (o push abre `cardume-dev.html`) |
+
+- **Push:** `cardume_mencao` em `PUSH_TYPES`; `urlDoPush` → `cardume(-dev).html?c=…&m=…` (ids fora do padrão não entram na URL); tag por notificação (duas menções não se substituem). Deploy: `sendPushOnNotification`.
+- **Sino (`mare-notif-dev.js`):** tipo em `MareNotif.TIPOS` + `PUSH_PADRAO`, ícone e link para o canal/mensagem.
+- **Página:** aba **@ Menções** (as notificações `cardume_mencao` da própria pessoa; clicar abre o canal na mensagem e marca como lida) e `?m=` destacando a mensagem.
+- **Silenciar canal: não entra agora.** No v0 só @menção gera aviso, e menção avisa mesmo em canal silenciado (como no Slack). Volta quando existir aviso por mensagem comum.
