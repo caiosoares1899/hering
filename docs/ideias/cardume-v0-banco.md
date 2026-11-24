@@ -171,7 +171,7 @@ Push e sino: `cardume(-dev).html?mencao=<ref>`; a página resolve no índice pri
 
 ## Etapa 3 — Card ↔ conversa (desenho de 24/11/2026)
 
-**Risco R2:** nada de regra nova. Grava num nó que já existe (`kanban/squads/{sq}/dados/card_comments/{card}/{id}`, cujas regras só conferem `uid === auth.uid` e o acesso à squad) e lê um campo de card que a pessoa já pode ler. **Decisão do Caio (24/11):** pode registrar **qualquer** mensagem do canal, não só as próprias, com o nome de cada autor e o aviso de quem vai poder ler.
+**Risco R2:** nada de regra nova. Grava num nó que já existe (`kanban/squads/{sq}/dados/card_comments/{card}/{id}`, cujas regras só conferem `uid === auth.uid`) e lê um campo de card que a pessoa já pode ler. **Premissa medida no simulador (`cardumeCardRules.test.js`):** `kanban/squads/{sq}/dados` é lido e gravado por **toda conta Google `@ciahering.com.br`** (e pelo externo marcado na squad). O card é, portanto, lido pela **Hering inteira**, não só pela squad. **Decisão do Caio (24/11):** pode registrar **qualquer** mensagem do canal, não só as próprias, com o nome de cada autor e o aviso de quem vai poder ler.
 
 ### 1. Prévia do card colado (Cardume)
 - Na mensagem, um link `https://caiosoares1899.github.io/hering/kanban(-dev).html?…squad=SQ…&card=ID` (os parâmetros em qualquer ordem, `SQ` e `ID` passando no `ID_RE`) vira um chip abaixo do texto: **🗂 título do card · Squad**, que abre o card no Maré.
@@ -180,11 +180,12 @@ Push e sino: `cardume(-dev).html?mencao=<ref>`; a página resolve no índice pri
 ### 2. 📝 Registrar no card (Cardume)
 - **Abrir:** ação "📝 Registrar no card" em qualquer mensagem, inclusive num canal temático já só de leitura. Abre um painel com essa mensagem marcada e caixas para marcar as vizinhas (das 50 carregadas; no máximo 20).
 - **Destino:** os cards citados nas mensagens carregadas do canal, ou um campo para colar o link do card. Só grava se a leitura do título deu certo, ou seja, o card existe e a pessoa tem acesso a ele.
-- **Aviso antes de gravar:** "Vai aparecer no card **X** para toda a squad **Y** e os ADMs, e fica lá (o canal apaga em 90 dias)." Num temático, aviso a mais: "Quem lê o card pode não estar neste canal."
+- **Aviso antes de gravar:** "Vai aparecer no card **X** (squad **Y**). Qualquer pessoa da Hering pode abrir esse card, e o comentário fica lá; o canal apaga em 90 dias." Num temático, a página dá um aviso a mais.
 - **Comentário gravado** (o mesmo formato do Maré): `{id: 'c'+Date.now()+aleatório, uid, author, init, foto, ts: ISO, text, cardume: {c, m}}`.
   - `m` é a primeira mensagem marcada.
   - `text` começa com `🐟 Do Cardume · #canal` e traz uma linha por mensagem: `**Nome** (dd/mm hh:mm): texto`, na ordem da conversa, com no máximo 8000 caracteres.
   - `ts` é sempre ISO, por causa da Armadilha do `localeCompare`.
+- **As menções são neutralizadas:** o `@` antes de um nome sai do texto copiado. O gatilho `agenteAgilMencao` dispara com "@agente agil" em comentários de `dev` e `dados` (`detectaMencao.js`), e um trecho colado não pode acionar o Agente nem parecer menção a alguém.
 - O `card_comments_count` é atualizado pela `contarComentarios`, sem nada da página.
 
 ### 3. Ver conversa no Cardume (Maré, Codex)
