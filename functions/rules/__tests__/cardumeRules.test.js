@@ -344,3 +344,13 @@ test('achados do Codex (#1924): canal apagado não deixa acesso para trás; espe
   existe('t-x', tema({ nome: 'X' }));
   assert.equal(up(A.gil, { [C('t-x') + '/fim']: Date.now() }), false, 'ancestral com id inválido recusa a escrita no filho');
 });
+
+test('enviar = mensagem + marcador de não lidas num update só (o que a página faz a cada envio)', () => {
+  reset(); existe('t-bf26', tema({ dono: 'ana' }), { ana: true });
+  for (const c of ['dados', 't-bf26']) {
+    const ts = Date.now();
+    assert.equal(up(A.ana, { [`kanban/cardume/msgs/${c}/m5`]: { uid: 'ana', ts, texto: 'Bom dia' }, [`kanban/cardume/ultima/${c}`]: { ts, uid: 'ana', id: 'm5' } }), true, 'envio atômico em ' + c);
+    assert.equal(up(A.ana, { [`kanban/cardume/msgs/${c}/m6`]: { uid: 'ana', ts, texto: 'Bom dia' }, [`kanban/cardume/ultima/${c}`]: { ts: ts - 1, uid: 'ana', id: 'm6' } }), false, 'hora do marcador diferente da mensagem em ' + c);
+    assert.equal(up(A.gil, { [`kanban/cardume/msgs/${c}/m7`]: { uid: 'gil', ts, texto: 'oi' }, [`kanban/cardume/ultima/${c}`]: { ts, uid: 'gil', id: 'm7' } }), false, 'não membro não envia em ' + c);
+  }
+});

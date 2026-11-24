@@ -107,3 +107,14 @@ Criar temático (aberto e convite) · id sem `t-` ou de squad existente falha ·
 - **Prova:** 19 testes no `cardumeRules.test.js`; 10 regras sabotadas de propósito, cada uma derruba ao menos um teste (inclusive "membros olhando `root` em vez do estado-depois", "PO de squad mandando em temático" e "dona trocando o dono").
 - **Achados do Codex (#1924), corrigidos:** (P1) o canal temático **não é apagado pelas regras** — nem pelo ADM, que arquiva pondo `fim`; quem apaga é a limpeza, levando canal, membros, co-admins e mensagens juntos. Temático sem `canais/{id}` não aceita mensagem nem não lidas, e recriar um id com restos é recusado. (P2) `abertos` e `meus` são exigidos **no mesmo `update()`** de quem muda o canal ou os membros (o `.write` de `canais` e de `membros` confere o estado-depois do espelho). (P2) o `rulesSim.update()` passou a avaliar o `.validate` dos **ancestrais** e a tratar objeto vazio como inexistente, como o RTDB.
 - **Sem limite de criação** no piloto: qualquer pessoa cria quantos canais quiser e convida quem quiser num só convidados; o caminho é a moderação do ADM (vê e apaga qualquer canal). Se virar problema, entra um limite por pessoa.
+
+## Contratos para as próximas etapas (24/11/2026)
+**Etapa 2 — a página grava sempre em pares, num `update()` só** (metade sem a outra = `PERMISSION_DENIED`):
+| Ação | Caminhos no mesmo `update()` |
+|---|---|
+| enviar mensagem | `msgs/{c}/{id}` + `ultima/{c}` (`{ts, uid, id}`, mesmo `ts` = `serverTimestamp()`) |
+| pôr/tirar alguém (ou entrar/sair) | `membros/{c}/{uid}` + `meus/{uid}/{c}` |
+| criar temático | `canais/{c}` + `membros/{c}/{eu}` + `meus/{eu}/{c}` (+ `abertos/{c}` se aberto) |
+| renomear ou mudar `acesso`/`fim` | `canais/{c}/…` + `abertos/{c}` (pôr, atualizar o nome ou tirar, conforme o estado final) |
+
+**Etapa 6 — `cardumeLimpeza` é o único jeito de um temático sumir.** Ao apagar um temático (vencido há mais de `retencao_dias`), remove **junto**: `canais/{c}`, `membros/{c}`, `admins/{c}`, `msgs/{c}`, `ultima/{c}`, `abertos/{c}` e, para cada membro, `meus/{uid}/{c}` e `lidas/{uid}/{c}`. Só bloquear escrita não basta: membros que sobram ainda leriam mensagens que sobram. **Apagar à mão no Console segue a mesma lista.**
