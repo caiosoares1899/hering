@@ -367,3 +367,53 @@ test('achados do Antigravity (#1924): sem oráculo de membros; co-admin não tir
   assert.equal(up(A.gil, { [MB('t-segredo', 'gil')]: null, [MEU('gil', 't-segredo')]: null }), true, 'a dona sai sozinha');
   assert.equal(up(A.adm, { 'kanban/cardume/config': { retencao_dias: 90 }, 'kanban/cardume/config/retencao_dias': 90 }), false, 'caminho + descendente no mesmo update: o RTDB recusa');
 });
+
+// ───────────── Menções (etapa 4, desenho revisto em 24/11/2026) ─────────────
+// Índice PRIVADO kanban/cardume/mencoes/{uid}/{id}: a notificação (legível pela empresa) fica genérica; o canal/mensagem só aqui.
+test('menções: só quem escreveu a mensagem, sendo membro, menciona outro membro do mesmo canal', () => {
+  reset(); const ts = Date.now() - 2000;
+  DB.kanban.cardume.membros.dados.gil = null;
+  põe('m1', msg({ uid: 'ana', ts })); põe('b1', msg({ uid: 'bru', ts }));
+  const MN = (u, id) => `kanban/cardume/mencoes/${u}/${id}`;
+  const rec = o => Object.assign({ c: 'dados', m: 'm1', de: 'ana', ts: Date.now(), n: 'n123' }, o || {});
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec() }), true, 'Ana menciona o Bruno na própria mensagem');
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ de: 'bru' }) }), false, 'forjar quem mencionou');
+  assert.equal(up(A.ana, { [MN('ana', 'x1')]: rec() }), false, 'mencionar a si mesma');
+  assert.equal(up(A.ana, { [MN('gil', 'x1')]: rec() }), false, 'mencionar quem não é do canal (não leva nada privado pra fora)');
+  assert.equal(up(A.gil, { [MN('bru', 'x1')]: rec({ de: 'gil' }) }), false, 'quem não é do canal não menciona');
+  põe('g1', msg({ uid: 'gil', ts }));
+  assert.equal(up(A.gil, { [MN('bru', 'x1')]: rec({ de: 'gil', m: 'g1' }) }), false, 'quem escreveu e depois saiu do canal não menciona mais');
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ m: 'b1' }) }), false, 'apontar para a mensagem de outra pessoa');
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ m: 'naoexiste' }) }), false, 'mensagem que não existe');
+  põe('velha', msg({ uid: 'ana', ts: Date.now() - 3600000 }));
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ m: 'velha' }) }), false, 'mensagem antiga (não dá pra "repontar" depois)');
+  põe('tomb', { uid: 'ana', ts, apagada: true });
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ m: 'tomb' }) }), false, 'mensagem apagada');
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ ts: Date.now() - 3600000 }) }), false, 'hora forjada');
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ lida: true }) }), false, 'nasce sem lida');
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ txt: 'vaza' }) }), false, 'campo extra');
+  assert.equal(up(A.ana, { [MN('bru', 'x1')]: rec({ n: undefined }) }), false, 'sem o id da notificação (prova de origem)');
+  assert.equal(up(A.ana, { [MN('bru', 'x1') + '/c']: 'dados' }), false, 'escrita direta num filho não cria registro');
+});
+
+test('menções: só a dona lê; só ela marca como lida; dona ou ADM apagam', () => {
+  reset(); const MN = 'kanban/cardume/mencoes/bru/x1', base = { c: 'dados', m: 'm1', de: 'ana', ts: Date.now() - 1000, n: 'n123' };
+  DB.kanban.cardume.mencoes = { bru: { x1: base } };
+  assert.equal(lê(MN, A.bru), true, 'a dona lê');
+  assert.equal(lê('kanban/cardume/mencoes/bru', A.bru), true);
+  for (const k of ['ana', 'gil', 'adm', 'forasteiro']) assert.equal(lê('kanban/cardume/mencoes/bru', A[k]), false, 'não lê: ' + k);
+  assert.equal(up(A.bru, { [MN + '/lida']: true }), true, 'a dona marca como lida');
+  assert.equal(up(A.bru, { [MN]: Object.assign({}, base, { lida: true }) }), true, 'regravando inteiro, só com lida diferente');
+  assert.equal(up(A.bru, { [MN + '/c']: 't-outro' }), false, 'a dona não muda o canal');
+  assert.equal(up(A.bru, { [MN + '/n']: 'n999' }), false, 'nem o id da notificação');
+  assert.equal(up(A.ana, { [MN + '/lida']: true }), false, 'quem mencionou não mexe');
+  assert.equal(up(A.ana, { [MN]: null }), false, 'quem mencionou não apaga');
+  assert.equal(up(A.bru, { [MN]: null }), true, 'a dona apaga');
+  assert.equal(up(A.adm, { [MN]: null }), true, 'o ADM apaga');
+});
+
+test('menções: canal temático vencido não gera menção', () => {
+  reset(); existe('t-velho', tema({ criado: Date.now() - 10 * 864e5, fim: Date.now() - 864e5 }), { gil: true, ana: true });
+  DB.kanban.cardume.msgs['t-velho'] = { m1: { uid: 'gil', ts: Date.now() - 1000, texto: 'oi @Ana Lima' } };
+  assert.equal(up(A.gil, { 'kanban/cardume/mencoes/ana/x1': { c: 't-velho', m: 'm1', de: 'gil', ts: Date.now(), n: 'n1' } }), false);
+});

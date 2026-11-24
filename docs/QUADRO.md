@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/cardume-pagina` | `cardume-dev.html`, `docs/arezzo/testes/fakefb.js`, `docs/arezzo/testes/test_cardume_pagina.js`, `scripts/checar.js` | 24/11/2026 |
+| Claude | `claude/cardume-mencoes` | `cardume-dev.html`, `mare-notif-dev.js`, `functions/index.js`, `functions/common/pushUrl.js` | 24/11/2026 |
 
 
 ## Fila
@@ -24,6 +24,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
+| Codex · Claude | 🔴 **`kanban/usuarios` legível por toda conta Hering** (`.read` no nó-pai): notificações, `fcm_tokens` e `notif_prefs` de todo mundo. Já expõe o `travessia_apoio` ("{nome} marcou que não está bem hoje"). Achado na revisão do Cardume (#1931); correção mexe no Maré inteiro (Painel lê o nó) — R3 à parte | [escalados](quadro/escalados.md#usuarios-leitura-ampla) | 24/11/2026 |
 | Codex | 🏖️ UI/UX Férias: **UI01, UI02 e UI04 resolvidos em 16/11** (tela cheia); faltam UI03 (foco preso na 🧳), UI05 (títulos cortados na 🧳), UI06 (alvos de toque) e UI07 (fonte no tablet do Radar) — módulo é do Claude | [auditoria](FERIAS_UI_AUDITORIA_2026-11-13.md) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
 | Claude | `test_dicas.js` desatualizado: espera 33–35 dicas no Painel, hoje são 38 (falha também na `main`); e tem caminho do Playwright/porta fixos do Linux | `docs/arezzo/testes/test_dicas.js` L133 | 13/11/2026 |
@@ -39,6 +40,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🐟 Cardume etapa 4 (#1932): regras de `kanban/cardume/mencoes` **primeiro**, depois o push com prova de origem — só depois do merge | `firebase deploy --only database` e depois `firebase deploy --only functions:sendPushOnNotification` | 24/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na 2ª promoção de 23/11 (Escala v1.15, menu de apps) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na promoção de 23/11 (Escala, Oceano e Ajuda do Maré) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |

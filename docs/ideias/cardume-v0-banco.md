@@ -125,3 +125,46 @@ Criar temático (aberto e convite) · id sem `t-` ou de squad existente falha ·
 - **(baixa, simulador):** `update()` recusa caminho + descendente no mesmo `mapa` (o RTDB recusa) e usa um `now` único por operação.
 - **Aceito (registrado):** tentar **criar** um id `t-…` que já existe falha, então dá para "testar" se um id existe (nunca o nome nem os membros). A página gera ids com sufixo aleatório (`t-black-friday-k3f9`), o que torna isso inútil na prática.
 - **A confirmar na etapa 2:** o `newData.parent()…` até a raiz num `update()` real (o primeiro envio confere).
+
+---
+
+# Etapa 4 — menções e push (24/11/2026, desenho revisto depois da revisão do Codex)
+
+**Confirmado no 1º teste real do Caio (24/11):** o `update()` de envio grava `msgs` + `ultima` com o **mesmo** `serverTimestamp`, e o `newData.parent()…` até a raiz funciona no RTDB — os dois "precisa_validar" das auditorias estão fechados.
+
+**Por que o desenho mudou (#1931 fechada sem merge):** `kanban/usuarios` é legível por **toda conta Hering** (`.read` no nó-pai — escalado no Quadro). Então a notificação **não pode levar nada do canal**: nem trecho, nem nome, nem id (o id de um temático carrega o *slug* do nome).
+
+## Índice privado de menções — `kanban/cardume/mencoes/{uid}/{id}`
+| Campo | Valor |
+|---|---|
+| `c`, `m` | canal e mensagem |
+| `de` | quem mencionou (`auth.uid`) |
+| `ts` | servidor |
+| `n` | id da notificação genérica que acompanha (prova de origem para o push) |
+| `lida` | só a dona muda |
+
+- **Lê:** só a própria pessoa (`auth.uid === $uid`).
+- **Cria** (tudo no `.write`, para valer também em escrita de filho; tudo contra o `root`): `de === auth.uid` e `$uid !== auth.uid`; quem menciona **e** quem é mencionado são membros de `c`; o canal existe (temático) e não venceu; `msgs/c/m` existe, é de `auth.uid`, não está apagada e tem `ts` de até 60 s atrás (não dá para "repontar" mensagem velha). Checar que a pessoa mencionada é membro não cria oráculo novo: membro já lê `membros/c`.
+- **Muda:** só a dona, e só `lida`. **Apaga:** a dona ou o ADM (e a limpeza, junto com a mensagem). `$outro` recusado.
+
+## Notificação genérica (no nó legível pela empresa)
+`{ id, type: 'cardume_mencao', title: '🐟 {primeiro nome} te mencionou no Cardume', sub: 'Toque para abrir a conversa', cardumeRef: <id do índice>, dev, read, ts }` — **sem canal, sem trecho, sem id de canal**. Fica visível à empresa só que *fulano mencionou alguém no Cardume* — decisão consciente (é o mesmo nível de um "💬 menção" do Maré hoje).
+
+## Escrita (dois `update()` por envio)
+1. O envio continua atômico: `msgs` + `ultima`.
+2. Depois, um `update()` de "melhor esforço" com, para cada pessoa mencionada, `cardume/mencoes/{uid}/{id}` + `usuarios/{uid}/notificacoes/{n}`. (Se as menções fossem no mesmo `update` da mensagem, alguém tirado do canal no mesmo segundo derrubaria a mensagem inteira.)
+- As pessoas mencionadas saem do **mesmo parser** que destaca as menções na tela (nome mais longo, fora de código, sem repetir) e da lista de membros **do canal da mensagem**, capturada antes de qualquer `await`. As regras conferem de novo.
+
+## Push com prova de origem
+`sendPushOnNotification`, para `cardume_mencao`: lê `cardume/mencoes/{uid}/{cardumeRef}` (Admin SDK) e só manda se o registro existe **e** `n === notifId`. Como as notificações são legíveis por todos, alguém poderia copiar um `cardumeRef` real para uma notificação falsa; amarrar ao id exato da notificação impede (a regra de `notificacoes` não deixa outra pessoa regravar um id que já existe). Helper puro em `functions/common/cardumePush.js`, com teste.
+
+## Links
+Push e sino: `cardume(-dev).html?mencao=<ref>`; a página resolve no índice privado. Ref que não resolve (forjada no sino, apagada, sem acesso) → "Menção não encontrada". **Aceito:** dá para forjar um item no **sino** (a regra de `notificacoes` aceita qualquer tipo), mas ele não abre nada nem gera push.
+
+## Página
+- **@ Menções** lê `cardume/mencoes/{uid}`; o trecho vem da própria mensagem (acesso de membro; "sem acesso" se a pessoa saiu do canal); `lida` fica no registro.
+- Alvo fora das últimas 50 mensagens: busca a mensagem pelo id e mostra numa faixa acima da conversa.
+- **Limpeza (etapa 6):** `mencoes` entra no contrato da limpeza (apagar junto com a mensagem/canal).
+- **Silenciar canal:** continua fora (só @menção gera aviso, e menção avisa mesmo em canal silenciado).
+
+**Deploy:** regras primeiro, depois a função: `firebase deploy --only database` e `firebase deploy --only functions:sendPushOnNotification`.

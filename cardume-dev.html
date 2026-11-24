@@ -88,6 +88,15 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .autor{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;}
 .autor b{font-weight:700;}
 .msg{position:relative;padding:2px 64px 2px 0;border-radius:8px;}
+.msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
+.b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;font-weight:700;}
+.b-mencoes[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.85);}
+.selo-n{min-width:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:rgb(var(--ink-rgb));font-size:11px;font-weight:800;text-align:center;}
+.faixa-alvo{margin:8px 16px 0;padding:8px 12px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);}
+.faixa-alvo .autor{gap:10px;}
+.mencao-item{display:grid;gap:2px;width:100%;text-align:left;margin:6px 0;padding:10px 12px;background:rgba(var(--slate-rgb),.6);}
+.mencao-item.nova{border-color:var(--accent);}
+.mencao-item .sub{color:var(--txt2);overflow-wrap:anywhere;}
 .msg:hover,.msg:focus-within{background:rgba(var(--slate-rgb),.45);}
 .msg .texto{overflow-wrap:anywhere;white-space:pre-wrap;}
 .msg .texto p{margin:0;}
@@ -171,6 +180,7 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 
   <main id="app" class="app" data-tela="canais" hidden>
     <nav class="painel lateral" aria-label="Canais">
+      <button type="button" class="b-mencoes" id="b-mencoes" aria-current="false">@ Menções <span class="selo-n" id="mencoes-n" hidden>0</span></button>
       <div id="lista-canais"></div>
       <button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button>
     </nav>
@@ -181,6 +191,7 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
         <div class="grow"><h2 id="canal-titulo" tabindex="-1">Cardume</h2><p class="subtitulo" id="canal-sub"></p></div>
         <button type="button" id="b-lado" aria-label="Detalhes do canal" aria-pressed="false">ℹ️</button>
       </header>
+      <div class="faixa-alvo" id="faixa-alvo" hidden></div>
       <div class="log" id="log" role="log" aria-label="Mensagens do canal" aria-live="polite" tabindex="0"></div>
       <div class="rodape" id="rodape" hidden>
         <div class="sugestoes" id="sugestoes" role="listbox" aria-label="Pessoas para mencionar" hidden></div>
@@ -198,7 +209,7 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
           <textarea id="entrada" rows="1" aria-label="Mensagem" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…" maxlength="4000"></textarea>
           <button class="primary" type="submit" id="b-enviar">Enviar</button>
         </form>
-        <p class="ajuda" id="ajuda">Enter envia · Shift+Enter quebra linha · @ menciona · **negrito** _itálico_ `código`</p>
+        <p class="ajuda" id="ajuda">Enter envia · Shift+Enter quebra linha · @ menciona (a pessoa é avisada) · **negrito** _itálico_ `código`</p>
       </div>
     </section>
 
@@ -214,7 +225,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.3 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.5 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -266,7 +277,10 @@ let msgs = [];                 // mensagens do canal aberto (ordenadas por ts)
 let membrosAtual = {}, adminsAtual = {};
 let carregandoMsgs = false;
 let enviando = false;          // trava de envio (Enter e botão)
-let rascunhoEdicao = null;     // { id, valor, ini, fim } — preserva o editor quando chega mensagem nova
+let rascunhoEdicao = null;
+let vendoMencoes = false, mencoes = [];   // aba @ Menções (notificações cardume_mencao da própria pessoa)
+let alvoMsg = '';
+let destaque = { id: '', ate: 0 };   // mensagem destacada (sobrevive aos redesenhos da lista)              // ?m= ou clique numa menção: rolar até a mensagem e destacar     // { id, valor, ini, fim } — preserva o editor quando chega mensagem nova
 const chaveRascunho = id => 'cardume_rascunho_' + (user ? user.uid : '') + '_' + id;
 // No celular a conversa pode estar escondida (lista ou detalhes à frente): aí não marca como lido nem esconde o ponto.
 const conversaVisivel = () => !document.hidden && (!window.matchMedia('(max-width: 899px)').matches || $('app').dataset.tela === 'conversa');
@@ -335,11 +349,23 @@ function inline(txt, destino) {
   if (i < txt.length) destino.append(document.createTextNode(txt.slice(i)));
 }
 // "@Ana Lima e" → a pessoa cujo nome é o maior prefixo (só membros do canal aberto)
-function mencaoDe(s) {
+function mencaoDe(s, membros) {
   const t = s.slice(1).toLocaleLowerCase('pt-BR');
   let melhor = null;
-  Object.keys(membrosAtual).forEach(uid => { const n = nomePessoa(uid); const nl = n.toLocaleLowerCase('pt-BR'); if ((t === nl || t.startsWith(nl + ' ') || t.startsWith(nl)) && (!melhor || n.length > melhor.nome.length)) melhor = { uid, nome: n }; });
+  Object.keys(membros || membrosAtual).filter(uid => (membros || membrosAtual)[uid] === true).forEach(uid => {
+    const n = nomePessoa(uid); const nl = n.toLocaleLowerCase('pt-BR');
+    if (t.startsWith(nl) && !/[\p{L}\p{N}]/u.test(t.charAt(nl.length)) && (!melhor || n.length > melhor.nome.length)) melhor = { uid, nome: n };
+  });
   return melhor;
+}
+// Mesmo critério da tela (e da função de push, functions/common/cardumePush.js) para quem é AVISADO; "@" pode vir depois de marcação (**@Ana**): tira blocos e trechos de código, acha cada @Nome (o nome mais longo de um membro), sem repetir.
+const RE_MENCAO = /(?:^|[\s(*_~>])(@[\p{L}][\p{L}.'-]*(?: [\p{L}][\p{L}.'-]*){0,3})/gu;
+function mencionadosEm(txt, membros) {
+  const limpo = String(txt).replace(/```[\s\S]*?(```|$)/g, ' ').replace(/`[^`\n]*`/g, ' ');
+  const uids = new Set(); let m;
+  RE_MENCAO.lastIndex = 0;
+  while ((m = RE_MENCAO.exec(limpo))) { const c = mencaoDe(m[1], membros); if (c && c.uid !== user.uid) uids.add(c.uid); }
+  return [...uids];
 }
 function renderTexto(txt) {
   const box = el('div', 'texto');
@@ -399,6 +425,13 @@ function iniciarOuvintes() {
   }, () => {});
   ouvir('abertos', ref(db, B + 'abertos'), s => { abertos = s.val() || {}; sincronizarCanais(); renderLista(); }, () => {});
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
+  ouvir('mencoes', query(ref(db, B + 'mencoes/' + uid), orderByChild('ts'), limitToLast(100)), s => {
+    const v = s.val() || {};
+    mencoes = Object.keys(v).map(k => Object.assign({ _k: k }, v[k])).filter(n => n && ID_RE.test(String(n.c || '')) && ID_RE.test(String(n.m || ''))).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const n = mencoes.filter(x => !x.lida).length; $('mencoes-n').textContent = String(n); $('mencoes-n').hidden = !n;
+    $('b-mencoes').setAttribute('aria-label', '@ Menções' + (n ? ', ' + n + ' novas' : ''));
+    if (vendoMencoes) renderMsgs();
+  }, () => {});
   sincronizarCanais();
 }
 
@@ -431,11 +464,13 @@ $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[
 
 // ═══ Canal aberto ═══
 function abrirCanal(id, foco) {
+  if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   if (atual !== id) {
     if (atual) lsSet(chaveRascunho(atual), entrada.value);
     parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
     entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false);
   }
+  if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
   atual = id; lsSet('cardume_canal', id);
   const u = new URL(location.href); u.searchParams.set('c', id); history.replaceState(null, '', u);
   $('app').dataset.tela = 'conversa';
@@ -446,7 +481,7 @@ function abrirCanal(id, foco) {
     ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(LIMITE)), s => {
       const v = s.val() || {};
       msgs = Object.keys(v).map(k => Object.assign({ id: k }, v[k])).filter(m => m && typeof m.ts === 'number').sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
-      carregandoMsgs = false; renderMsgs(); marcarLido();
+      carregandoMsgs = false; renderMsgs(); marcarLido(); irParaAlvo(id);
     }, e => { carregandoMsgs = false; msgs = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
   } else { msgs = []; carregandoMsgs = false; renderMsgs(); }
   if (membro || gestor(id)) {
@@ -479,6 +514,7 @@ function renderMsgs() {
   if (ed) rascunhoEdicao = { id: editando, valor: ed.value, ini: ed.selectionStart, fim: ed.selectionEnd, foco: document.activeElement === ed };
   const log = $('log'), noFim = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
   log.replaceChildren();
+  if (vendoMencoes) { renderMencoes(log); return; }
   const id = atual, c = canais[id];
   if (!id) { log.append(vazio('🐟', 'Escolha um canal à esquerda.')); return; }
   if (!souMembro(id) && !souAdm()) {
@@ -508,7 +544,7 @@ function renderMsgs() {
 }
 function vazio(icone, txt) { const v = el('div', 'vazio'); if (icone) v.append(el('span', '', icone)); v.append(el('p', '', txt)); return v; }
 function renderMsg(m) {
-  const box = el('div', 'msg'); box.dataset.msg = m.id;
+  const box = el('div', 'msg' + (destaque.id === m.id && Date.now() < destaque.ate ? ' destaque' : '')); box.dataset.msg = m.id;
   const pend = pendentes.get(m.id);
   if (m.apagada) { box.append(el('p', 'apagada', 'mensagem apagada')); return box; }
   if (pend) {
@@ -552,15 +588,82 @@ async function enviar() {
   if (txt.length > 4000) { toast('Mensagem longa demais (máx. 4000 caracteres).'); return; }
   const k = push(ref(db, B + 'msgs/' + id)).key;
   const ts = serverTimestamp();
+  const avisar = mencionadosEm(txt, Object.assign({}, membrosAtual));   // do canal DESTA mensagem, antes de qualquer await
   enviando = true; $('b-enviar').disabled = true;
   try {
     // contrato com as regras: a mensagem e o marcador de não lidas no MESMO update, com o mesmo serverTimestamp
     await update(ref(db), { [B + 'msgs/' + id + '/' + k]: { uid: user.uid, ts, texto: txt }, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } });
+    avisarMencoes(id, k, avisar);
     if (atual === id && t.value === bruto) { t.value = ''; ajustarAltura(); }
     lsSet(chaveRascunho(id), atual === id ? t.value : '');
   } catch (e) { falhou('enviar a mensagem', e); }
   finally { enviando = false; $('b-enviar').disabled = false; t.focus(); }
 }
+// 🔔 @menção (etapa 4, docs/ideias/cardume-v0-banco.md): as notificações (kanban/usuarios/…) são legíveis por toda a Hering, então ela vai
+// GENÉRICA — sem canal, sem trecho. O canal e a mensagem ficam no índice PRIVADO kanban/cardume/mencoes/{uid}/{ref}, que as regras só aceitam
+// de quem escreveu a mensagem, para um membro do mesmo canal. Um update por pessoa (o índice + a notificação que ele prova): se uma falhar, as outras seguem.
+function avisarMencoes(canal, msgId, uids) {
+  if (!uids.length) return;
+  const quem = (user.displayName || user.email || '').split(' ')[0] || 'Alguém';
+  uids.forEach(u => {
+    const r = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), n = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+    update(ref(db), {
+      [B + 'mencoes/' + u + '/' + r]: { c: canal, m: msgId, de: user.uid, ts: serverTimestamp(), n },
+      ['kanban/usuarios/' + u + '/notificacoes/' + n]: { id: n, type: 'cardume_mencao', title: '🐟 ' + quem + ' te mencionou no Cardume', sub: 'Toque para abrir a conversa', cardumeRef: r, dev: true, read: false, ts: new Date().toISOString() },
+    }).catch(e => console.warn('[cardume] não deu pra avisar a menção:', e));
+  });
+}
+// Rola até a mensagem pedida (?m= ou clique numa menção) e destaca por alguns segundos.
+function irParaAlvo(id) {
+  if (!alvoMsg || id !== atual) return;
+  const alvo = alvoMsg; alvoMsg = '';
+  const e = document.querySelector('[data-msg="' + alvo + '"]');
+  if (!e) { mostrarAntiga(id, alvo); return; }
+  destaque = { id: alvo, ate: Date.now() + 4000 }; e.classList.add('destaque'); e.scrollIntoView({ block: 'center' });
+  setTimeout(() => { if (destaque.id === alvo) { destaque = { id: '', ate: 0 }; const x = document.querySelector('[data-msg="' + alvo + '"]'); if (x) x.classList.remove('destaque'); } }, 4000);
+}
+async function mostrarAntiga(canal, msgId) {
+  const f = $('faixa-alvo'); f.replaceChildren(); f.hidden = true;
+  try {
+    const m = (await get(ref(db, B + 'msgs/' + canal + '/' + msgId))).val();
+    if (canal !== atual) return;
+    if (!m || m.apagada) { toast('Essa mensagem foi apagada.'); return; }
+    const cab = el('div', 'autor'); cab.append(el('b', '', nomePessoa(m.uid)), el('span', 'hora', new Date(m.ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })));
+    const x = el('button', 'lnk', 'fechar'); x.type = 'button'; x.onclick = () => { f.hidden = true; f.replaceChildren(); }; cab.append(x);
+    f.append(el('p', 'subtitulo', 'Mensagem mais antiga (fora das últimas ' + LIMITE + ')'), cab, renderTexto(m.texto || '')); f.hidden = false;
+  } catch (e) { toast('Não deu para abrir essa mensagem.'); }
+}
+const trechos = {};   // 'c/m' → texto (lido da própria mensagem, com acesso de membro)
+function trechoDe(c, m) {
+  const k = c + '/' + m;
+  if (!(k in trechos)) { trechos[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); trechos[k] = !v ? '(mensagem apagada)' : v.apagada ? '(mensagem apagada)' : String(v.texto || '').replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160); if (vendoMencoes) renderMsgs(); }).catch(() => { trechos[k] = '(sem acesso a este canal)'; if (vendoMencoes) renderMsgs(); }); }
+  return trechos[k];
+}
+function abrirMencao(rec) {
+  if (!rec.lida) set(ref(db, B + 'mencoes/' + user.uid + '/' + rec._k + '/lida'), true).catch(() => {});
+  alvoMsg = String(rec.m); abrirCanal(String(rec.c), true);
+}
+function renderMencoes(log) {
+  $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você no Cardume';
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  if (!mencoes.length) { log.append(vazio('🔔', 'Ninguém mencionou você ainda. Quando alguém escrever @' + nomePessoa(user.uid) + ' num canal, aparece aqui.')); return; }
+  mencoes.forEach(rec => {
+    const b = el('button', 'mencao-item' + (rec.lida ? '' : ' nova')); b.type = 'button';
+    const h = typeof rec.ts === 'number' ? new Date(rec.ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    const tr = trechoDe(rec.c, rec.m);
+    b.append(el('b', '', nomePessoa(rec.de) + ' te mencionou em # ' + nomeCanal(rec.c)), el('span', 'sub', tr == null ? '…' : tr), el('span', 'hora', h + (rec.lida ? '' : ' · nova')));
+    b.onclick = () => abrirMencao(rec);
+    log.append(b);
+  });
+}
+function abrirMencoes() {
+  Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
+  if (atual) lsSet(chaveRascunho(atual), entrada.value);
+  parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = '';
+  atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
+  $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
+}
+$('b-mencoes').onclick = abrirMencoes;
 function apagar(m) {
   const canal = atual;
   const timer = setTimeout(async () => {
@@ -815,7 +918,7 @@ function limparSessao() {
   pendentes.forEach(p => clearTimeout(p.timer)); pendentes.clear();   // apagar pendente da conta anterior = não apaga (lado seguro)
   eu = {}; pub = {}; meta = {}; meus = {}; abertos = {}; lidas = {}; msgs = []; membrosAtual = {}; adminsAtual = {};
   Object.keys(canais).forEach(k => delete canais[k]); Object.keys(ultimas).forEach(k => delete ultimas[k]);
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug();
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 async function iniciar() {
@@ -828,7 +931,16 @@ async function iniciar() {
   if (!ok || !user || user.uid !== meu) return;
   $('loading').hidden = true; $('app').hidden = false;
   iniciarOuvintes(); renderLista();
-  const q = new URLSearchParams(location.search).get('c') || lsGet('cardume_canal') || '';
+  const qp = new URLSearchParams(location.search), q = qp.get('c') || lsGet('cardume_canal') || '';
+  if (ID_RE.test(qp.get('m') || '')) alvoMsg = qp.get('m');
+  const refMencao = qp.get('mencao') || '';
+  if (ID_RE.test(refMencao)) {
+    try {
+      const rec = (await get(ref(db, B + 'mencoes/' + user.uid + '/' + refMencao))).val();
+      if (rec && ID_RE.test(String(rec.c || '')) && ID_RE.test(String(rec.m || ''))) { const u = new URL(location.href); u.searchParams.delete('mencao'); history.replaceState(null, '', u); abrirMencao(Object.assign({ _k: refMencao }, rec)); return; }
+    } catch (e) {}
+    toast('Menção não encontrada (pode ter sido apagada).');
+  }
   if (ID_RE.test(q)) abrirCanal(q); else { renderCabecalho(); renderMsgs(); renderLado(); }
 }
 onAuthStateChanged(auth, u => {
