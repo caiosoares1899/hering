@@ -1103,13 +1103,16 @@
         "ultima": {
           "$squad": {
             ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || root.child('kanban/cardume/membros/' + $squad + '/' + auth.uid).val() === true)",
-            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && root.child('kanban/cardume/membros/' + $squad + '/' + auth.uid).val() === true",
-            ".validate": "$squad.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['ts','uid']) && newData.child('uid').val() === auth.uid && newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000",
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ((root.child('kanban/cardume/membros/' + $squad + '/' + auth.uid).val() === true && newData.exists()) || ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') && !newData.exists()))",
+            ".validate": "$squad.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['ts','uid','id']) && newData.child('uid').val() === auth.uid && newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000 && newData.parent().parent().child('msgs').child($squad).child(newData.child('id').val()).child('uid').val() === auth.uid && newData.parent().parent().child('msgs').child($squad).child(newData.child('id').val()).child('ts').val() === newData.child('ts').val() && newData.parent().parent().child('msgs').child($squad).child(newData.child('id').val()).child('apagada').val() !== true && (!data.exists() || newData.child('ts').val() >= data.child('ts').val())",
             "ts": {
               ".validate": "newData.isNumber()"
             },
             "uid": {
               ".validate": "newData.isString()"
+            },
+            "id": {
+              ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,64}$/)"
             },
             "$outro": {
               ".validate": false

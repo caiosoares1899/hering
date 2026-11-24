@@ -23,7 +23,7 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 | `kanban/cardume/canais/{squad}` | `{nome}` — canais que existem | logado Hering | ADM |
 | `kanban/cardume/membros/{squad}/{uid}` | `true` | membros do canal (para a @menção e a lista) · ADM | ADM |
 | `kanban/cardume/msgs/{squad}/{msgId}` | `uid`, `texto` (1–4000), `ts` (servidor), `card?` (`^[A-Za-z0-9_-]{1,64}$`), `cardSq?` (idem), `editado?` (servidor), `apagada?` (`true`) | membro · ADM | ver abaixo |
-| `kanban/cardume/ultima/{squad}` | `{ts, uid}` da última mensagem (para não lidas) | membro · ADM | membro, junto com a mensagem |
+| `kanban/cardume/ultima/{squad}` | `{ts, uid, id}` da última mensagem (para não lidas) | membro · ADM | membro, no **mesmo update** da mensagem: `id` aponta para uma mensagem dele, não apagada, com o mesmo `ts`; nunca volta no tempo; só o ADM apaga |
 | `kanban/cardume/lidas/{uid}/{squad}` | `ts` do último lido | o próprio | o próprio |
 | `kanban/cardume/config/retencao_dias` | número (padrão 90) | logado Hering | ADM |
 
@@ -33,7 +33,7 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 
 **Hora:** `ts`/`editado` vêm do `serverTimestamp()`; a regra aceita até 60 s antes de `now` (o simulador não congela o relógio) e nunca o futuro.
 
-`msgId` = chave do `push()` (já vem em ordem de tempo; leitura por `limitToLast(50)` sem índice). `ts` tem `.indexOn` para a limpeza.
+`msgId` = chave do `push()`, mas a ordem **não confia na chave** (um membro pode escolher a chave): leitura por `orderByChild('ts').limitToLast(50)`, usando o índice de `ts` (achado do Codex na revisão). `ts` tem `.indexOn` para a limpeza.
 
 ### Regras de `msgs/{squad}/{msgId}`
 - **Criar:** não existe ainda · autor é membro · `uid === auth.uid` · `ts` do servidor · `texto` string de 1 a 4000 · sem `apagada`/`editado`.

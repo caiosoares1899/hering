@@ -116,13 +116,24 @@ test('apagar: autor ou ADM gravam "mensagem apagada" sem o texto; é final; só 
   assert.equal(grava(M('m1'), A.adm, null), true, 'ADM ainda remove o tombstone');
 });
 
-test('ultima (não lidas): membro grava a própria, com hora do servidor', () => {
-  reset(); const U = 'kanban/cardume/ultima/dados';
-  assert.equal(grava(U, A.ana, { ts: Date.now(), uid: 'ana' }), true);
-  assert.equal(grava(U, A.gil, { ts: Date.now(), uid: 'gil' }), false, 'não membro');
-  assert.equal(grava(U, A.ana, { ts: Date.now(), uid: 'bru' }), false, 'forjar autor');
-  assert.equal(grava(U, A.ana, { ts: Date.now() + 3600000, uid: 'ana' }), false, 'hora no futuro');
-  assert.equal(grava(U, A.ana, { ts: Date.now(), uid: 'ana', texto: 'vaza' }), false, 'campo extra');
+test('ultima (não lidas): só aponta para a mensagem que o próprio membro acabou de mandar; não volta no tempo nem some', () => {
+  // Na tela, a mensagem e o marcador vão no MESMO update multi-caminho; aqui a mensagem já está no estado final.
+  reset(); const U = 'kanban/cardume/ultima/dados'; const ts = Date.now() - 1000;
+  põe('m2', msg({ ts })); põe('b1', msg({ uid: 'bru', ts }));
+  assert.equal(grava(U, A.ana, { ts, uid: 'ana', id: 'm2' }), true, 'aponta para a própria mensagem');
+  assert.equal(grava(U, A.ana, { ts: Date.now(), uid: 'ana', id: 'naoexiste' }), false, 'sem mensagem de verdade não acende não lidas');
+  assert.equal(grava(U, A.ana, { ts, uid: 'ana', id: 'b1' }), false, 'nem apontando para a mensagem de outra pessoa');
+  assert.equal(grava(U, A.ana, { ts: ts - 10, uid: 'ana', id: 'm2' }), false, 'hora tem de ser a da mensagem');
+  assert.equal(grava(U, A.ana, { ts, uid: 'ana' }), false, 'sem id');
+  assert.equal(grava(U, A.gil, { ts, uid: 'gil', id: 'm2' }), false, 'não membro');
+  assert.equal(grava(U, A.ana, { ts, uid: 'bru', id: 'b1' }), false, 'forjar autor');
+  assert.equal(grava(U, A.ana, { ts, uid: 'ana', id: 'm2', texto: 'vaza' }), false, 'campo extra');
+  DB.kanban.cardume.ultima = { dados: { ts: ts + 500, uid: 'bru', id: 'b2' } };
+  assert.equal(grava(U, A.ana, { ts, uid: 'ana', id: 'm2' }), false, 'não volta para uma mensagem mais antiga');
+  assert.equal(grava(U, A.ana, null), false, 'membro não apaga o marcador');
+  assert.equal(grava(U, A.adm, null), true, 'ADM pode limpar');
+  põe('m3', { uid: 'ana', ts: ts + 900, apagada: true });
+  assert.equal(grava(U, A.ana, { ts: ts + 900, uid: 'ana', id: 'm3' }), false, 'nem aponta para mensagem apagada');
 });
 
 test('lidas: só o próprio lê e grava', () => {
