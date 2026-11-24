@@ -19,8 +19,8 @@ if(!String.prototype.matches) Object.defineProperty(String.prototype,'matches',{
 const segs=p=>String(p).split('/').filter(Boolean);
 function getAt(o,p){ let c=o; for(const s of segs(p)){ if(c==null||typeof c!=='object') return null; c=c[s]; if(c===undefined) return null; } return c===undefined?null:c; }
 function setAt(o,p,v){ const ks=segs(p); if(!ks.length) return v; const r=JSON.parse(JSON.stringify(o||{})); let c=r; ks.slice(0,-1).forEach(k=>{ if(c[k]==null||typeof c[k]!=='object') c[k]={}; c=c[k]; }); if(v===null) delete c[ks[ks.length-1]]; else c[ks[ks.length-1]]=v; return r; }
-function check(rules, db, op, path, auth, newVal){
-  const dbAfter = op==='write' ? setAt(db,path,newVal===undefined?null:newVal) : db;
+function check(rules, db, op, path, auth, newVal, dbAfterMulti){
+  const dbAfter = dbAfterMulti || (op==='write' ? setAt(db,path,newVal===undefined?null:newVal) : db);
   let node=rules.rules, trail=[], vars={}; trail.push({node,p:''});
   const ks=segs(path); let acc=[];
   for(const seg of ks){
@@ -38,9 +38,9 @@ function check(rules, db, op, path, auth, newVal){
 }
 // `.validate` de uma ESCRITA: vale pro nó escrito e pra todos os descendentes (não pros ancestrais), com a cascata de wildcards — `$other:{".validate":false}` barra campo extra.
 // Exclusão (null) não é validada. Devolve true/false.
-function validate(rules, db, path, auth, newVal){
+function validate(rules, db, path, auth, newVal, dbAfterMulti){
   if(newVal===null||newVal===undefined) return true;
-  const dbAfter=setAt(db,path,newVal);
+  const dbAfter=dbAfterMulti||setAt(db,path,newVal);
   let node=rules.rules, vars={}; const ks=segs(path), acc=[];
   for(const seg of ks){ let nxt=node[seg]; if(nxt===undefined||typeof nxt!=='object'){ const wk=Object.keys(node).find(k=>k.startsWith('$')); if(wk){ nxt=node[wk]; vars={...vars,[wk]:seg}; } else nxt=null; } if(!nxt) return true; acc.push(seg); node=nxt; }
   const walk=(n,v,p,vs)=>{
@@ -62,4 +62,37 @@ function validate(rules, db, path, auth, newVal){
   };
   return walk(node,newVal,acc.join('/'),vars);
 }
-module.exports={check,validate};
+// (2026-11-24, Cardume) `update()` multi-caminho, como o `update(ref(db), {...})` do RTDB: aplica TODOS os valores num único
+// estado-depois (`newData` enxerga o resultado inteiro) e avalia cada caminho com `root`/`data` do estado-antes. Atômico: só passa
+// se todos os caminhos passarem (.write em cascata + .validate). Não muda `check`/`validate`.
+function update(rules, db, auth, mapa){
+  const ps=Object.keys(mapa); if(!ps.length) return false;
+  // RTDB recusa um update com um caminho e um descendente dele ao mesmo tempo (auditoria do Antigravity, #1924)
+  const norm=ps.map(p=>segs(p).join('/'));
+  if(norm.some((a,i)=>norm.some((b,j)=>i!==j&&(a===b||b.startsWith(a+'/'))))) return false;
+  // um único `now` para a operação inteira, como no servidor
+  const t=Date.now(), real=Date.now; Date.now=()=>t;
+  try{ return updateUmNow(rules, db, auth, mapa, ps); } finally{ Date.now=real; }
+}
+function updateUmNow(rules, db, auth, mapa, ps){
+  let dbAfter=db; for(const p of ps) dbAfter=setAt(dbAfter,p,mapa[p]===undefined?null:mapa[p]);
+  dbAfter=podar(dbAfter)||{};   // no RTDB, objeto vazio não existe
+  return ps.every(p=>check(rules,db,'write',p,auth,mapa[p],dbAfter) && validate(rules,db,p,auth,mapa[p],dbAfter) && ancestrais(rules,db,dbAfter,p,auth));
+}
+// Como no RTDB: depois de uma escrita (inclusive exclusão de um filho), o `.validate` de cada ANCESTRAL que continua existindo
+// é avaliado com o estado-depois (só a expressão do próprio nível; os descendentes já foram validados acima). Achado do Codex, #1924.
+function podar(o){ if(o===null||typeof o!=='object') return o; const r={}; for(const k of Object.keys(o)){ const v=podar(o[k]); if(v!==null&&v!==undefined) r[k]=v; } return Object.keys(r).length?r:null; }
+function ancestrais(rules, db, dbAfter, path, auth){
+  let node=rules.rules, vars={}; const ks=segs(path), acc=[];
+  for(let i=0;i<ks.length-1;i++){
+    const seg=ks[i]; let nxt=node[seg]; if(nxt===undefined||typeof nxt!=='object'){ const wk=Object.keys(node).find(k=>k.startsWith('$')); if(wk){ nxt=node[wk]; vars={...vars,[wk]:seg}; } else nxt=null; }
+    if(!nxt) return true; acc.push(seg); node=nxt; const p=acc.join('/');
+    const e=node['.validate']; if(e===undefined||e===true) continue; if(e===false) return false;
+    if(getAt(dbAfter,p)===null) continue;
+    const names=Object.keys(vars); const fn=new Function('auth','root','data','newData','now',...names,'return ('+e+');');
+    let r=false; try{ r=!!fn(auth,new Snap(db),new Snap(getAt(db,p),db,p),new Snap(getAt(dbAfter,p),dbAfter,p),Date.now(),...names.map(k=>vars[k])); }catch(err){ r=false; }
+    if(!r) return false;
+  }
+  return true;
+}
+module.exports={check,validate,update};

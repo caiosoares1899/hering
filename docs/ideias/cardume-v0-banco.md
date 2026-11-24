@@ -65,3 +65,63 @@ Conferidos contra 5 regras sabotadas de propósito (leitura aberta, sem `$outro`
 
 ## Fronteira
 Cria nós e regras novos (**fronteira: sim**). O texto de outra pessoa chega à tela → só `textContent` (já praticado no protótipo). Exige: estes testes, revisão do Codex + leitura de segurança do Antigravity, e validação do Caio antes do deploy.
+
+---
+
+# Canais temáticos e temporários (etapa 1b, 24/11/2026)
+
+**Decisões do Caio (24/11):** qualquer pessoa da Hering cria · quem cria escolhe **Aberto** (aparece na lista e qualquer um entra sozinho) ou **Só convidados** · com data de fim, o canal **vira só leitura** e some na limpeza 90 dias depois · nos oficiais, manutenção só por ADM ou PO/Org **da** squad.
+
+## Dois tipos de canal, uma estrutura
+O `$squad` das regras vira `$canal`. Todos os nós (`membros`, `msgs`, `ultima`, `lidas`) continuam iguais; muda quem é **gestor** e quem **entra**.
+
+| | Oficial | Temático |
+|---|---|---|
+| id | o id da squad (`dados`) | `t-<slug>` (`^t-[a-z0-9-]{3,60}$`), e não pode coincidir com squad existente (`squads_meta`) |
+| `canais/{id}` | `{nome}` (ADM cria) | `{nome, tipo:'tema', dono, acesso:'aberto'\|'convite', criado, fim?}` — qualquer pessoa da Hering cria, sendo a `dono` |
+| gestor (põe/tira membros) | ADM, ou PO/Org da squad (só se o canal **não** tem `dono` nem começa com `t-`) | ADM, a `dono`, ou co-admins em `admins/{id}/{uid}` (a dono e o ADM indicam) |
+| entrar sozinho | não | só se `acesso === 'aberto'` e não venceu |
+| sair sozinho | sim (tirar o próprio uid) | sim |
+| quem vê o canal | toda a Hering vê o nome | aberto: toda a Hering · convite: só membros, gestores e ADM |
+| escrever | membro | membro **e** (`fim` ausente **ou** `now < fim`) |
+
+**Mudar o canal temático:** gestor muda `nome`, `acesso` e `fim` (arquivar = pôr `fim` no passado recente); `dono`, `tipo` e `criado` nunca mudam. `fim` entre `criado` e `criado + 365 dias`. Só o ADM apaga o nó do canal (a limpeza cuida das mensagens).
+
+## Listas sem vazar canal privado
+O RTDB não filtra uma leitura de lista: quem lê `canais` lê tudo. Por isso a leitura desce para `canais/{id}` e a página monta a lista por dois **espelhos** que as regras mantêm honestos:
+- `kanban/cardume/abertos/{id}` = `{nome}` — lista pública dos temáticos abertos (lida por toda a Hering). Só pode existir se `canais/{id}` é tema **aberto** com o mesmo `nome`; quando deixa de ser, qualquer um pode remover a entrada.
+- `kanban/cardume/meus/{uid}/{id}` = `true` — "meus canais", lido só pelo próprio. Só pode ser `true` se, depois da escrita, `membros/{id}/{uid}` é `true`; só pode ser removido se não é mais. Quem mexe em `membros` grava o espelho no mesmo `update()`.
+- Oficiais entram na lista pelas squads da pessoa (`usuarios/{uid}/squads`) + `meus`.
+
+Criar um temático = um `update()` só: `canais/{id}`, `membros/{id}/{eu}`, `meus/{eu}/{id}` e, se aberto, `abertos/{id}`. As regras que dependem do canal recém-criado olham o **estado depois da escrita** (`newData`), não o `root`.
+
+## Testes novos (no mesmo `cardumeRules.test.js`)
+Criar temático (aberto e convite) · id sem `t-` ou de squad existente falha · `dono` forjado falha · entrar sozinho só no aberto e não vencido · sair sozinho · gestor do temático (dono, co-admin, ADM) põe/tira; PO de squad **não** vira gestor de temático com o mesmo nome · canal vencido recusa mensagem e `ultima` · convite invisível para quem não é membro; aberto visível · espelhos `abertos`/`meus` não mentem · `dono`/`tipo`/`criado` imutáveis · `fim` fora da faixa falha.
+
+## Como ficou (implementado em 24/11/2026)
+- **Tipo pelo id:** `t-…` = temático; o resto = oficial. O ramo "PO/Org da squad" só vale para oficial, então uma squad chamada `t-x` nunca dá poder sobre um temático (e criar `t-x` com id de squad existente é recusado).
+- **A leitura saiu de `canais` (pai) e desceu para `canais/{id}`**: com leitura no pai, o RTDB entregaria todos os filhos (inclusive os só convidados).
+- **Vencido no `.write`** de `msgs`, `ultima` e da entrada sozinho em `membros`: vale também para escrita direta em filho. O ADM continua moderando. A dona reabre adiando o `fim`.
+- **Espelhos no `.write`** (`abertos`, `meus`): o `.validate` não roda em exclusão.
+- **Simulador:** `rulesSim.update()` aplica um `update()` multi-caminho num único estado-depois (como o RTDB), para testar criar/entrar/sair e os espelhos. A confirmação final é a primeira escrita real na etapa 2.
+- **Prova:** 19 testes no `cardumeRules.test.js`; 10 regras sabotadas de propósito, cada uma derruba ao menos um teste (inclusive "membros olhando `root` em vez do estado-depois", "PO de squad mandando em temático" e "dona trocando o dono").
+- **Achados do Codex (#1924), corrigidos:** (P1) o canal temático **não é apagado pelas regras** — nem pelo ADM, que arquiva pondo `fim`; quem apaga é a limpeza, levando canal, membros, co-admins e mensagens juntos. Temático sem `canais/{id}` não aceita mensagem nem não lidas, e recriar um id com restos é recusado. (P2) `abertos` e `meus` são exigidos **no mesmo `update()`** de quem muda o canal ou os membros (o `.write` de `canais` e de `membros` confere o estado-depois do espelho). (P2) o `rulesSim.update()` passou a avaliar o `.validate` dos **ancestrais** e a tratar objeto vazio como inexistente, como o RTDB.
+- **Sem limite de criação** no piloto: qualquer pessoa cria quantos canais quiser e convida quem quiser num só convidados; o caminho é a moderação do ADM (vê e apaga qualquer canal). Se virar problema, entra um limite por pessoa.
+
+## Contratos para as próximas etapas (24/11/2026)
+**Etapa 2 — a página grava sempre em pares, num `update()` só** (metade sem a outra = `PERMISSION_DENIED`):
+| Ação | Caminhos no mesmo `update()` |
+|---|---|
+| enviar mensagem | `msgs/{c}/{id}` + `ultima/{c}` (`{ts, uid, id}`, mesmo `ts` = `serverTimestamp()`) |
+| pôr/tirar alguém (ou entrar/sair) | `membros/{c}/{uid}` + `meus/{uid}/{c}` |
+| criar temático | `canais/{c}` + `membros/{c}/{eu}` + `meus/{eu}/{c}` (+ `abertos/{c}` se aberto) |
+| renomear ou mudar `acesso`/`fim` | `canais/{c}/…` + `abertos/{c}` (pôr, atualizar o nome ou tirar, conforme o estado final) |
+
+**Etapa 6 — `cardumeLimpeza` é o único jeito de um temático sumir.** Ao apagar um temático (vencido há mais de `retencao_dias`), remove **junto**: `canais/{c}`, `membros/{c}`, `admins/{c}`, `msgs/{c}`, `ultima/{c}`, `abertos/{c}` e, para cada membro, `meus/{uid}/{c}` e `lidas/{uid}/{c}`. Só bloquear escrita não basta: membros que sobram ainda leriam mensagens que sobram. **Apagar à mão no Console segue a mesma lista.**
+
+## Auditoria do Antigravity (#1924, commit 73692bbb) — respostas
+- **(média) Oráculo de membros em `meus`:** quem era de fora gravava `meus/{outra}/{canal}` e, pela resposta, descobria se ela era membro de um canal privado. → `meus/{uid}/{canal}` só é gravado pela **própria pessoa** ou por quem **administra** o canal.
+- **(baixa) Co-admin tirava a dona:** → nos temáticos, só a própria dona (saindo) ou o ADM tiram a dona.
+- **(baixa, simulador):** `update()` recusa caminho + descendente no mesmo `mapa` (o RTDB recusa) e usa um `now` único por operação.
+- **Aceito (registrado):** tentar **criar** um id `t-…` que já existe falha, então dá para "testar" se um id existe (nunca o nome nem os membros). A página gera ids com sufixo aleatório (`t-black-friday-k3f9`), o que torna isso inútil na prática.
+- **A confirmar na etapa 2:** o `newData.parent()…` até a raiz num `update()` real (o primeiro envio confere).
