@@ -202,7 +202,7 @@ Push e sino: `cardume(-dev).html?mencao=<ref>`; a página resolve no índice pri
 
 ## GIF na 🐚 Concha — desenho de 24/11/2026 (R3)
 
-> **Gerador das regras:** o bloco `kanban/cardume` de `database.rules.json` sai de `scripts/regras_cardume.py`. Mude **lá** e rode o script, sem editar o JSON à mão. **Validado no banco real em 24/11:** host de fora e host disfarçado recusados, GIF válido aceito.
+> **Gerador das regras:** o bloco `kanban/cardume` de `database.rules.json` sai de `scripts/regras_cardume.py`. Mude **lá** e rode o script, sem editar o JSON à mão. **Validado no banco real em 24/11:** host de fora e host disfarçado recusados, GIF válido aceito. **Busca real validada pelo Caio em 24/11** (o primeiro erro foi a chave; resolvido refazendo o secret e republicando a função). O erro na tela agora mostra o código.
 
 Pedido do Caio. A pesquisa do Codex está no #1945. **Decisão do Caio:** a busca passa por uma **função no servidor**, e a chave da KLIPY fica num secret. API conferida em `docs.klipy.com/*.md`:
 - **Busca:** `GET https://api.klipy.com/api/v1/{app_key}/gifs/search?q&page&per_page(8–50)&locale&content_filter(off|low|medium|high)&format_filter`.

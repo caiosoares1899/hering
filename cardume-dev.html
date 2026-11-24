@@ -259,7 +259,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.10 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.11 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1020,7 +1020,8 @@ function abrirGifs() {
       });
     } catch (e) {
       if (vez !== gifBuscaVez) return;
-      estado.textContent = ERRO_GIF[e && e.codigo] || 'GIF indisponível agora. Tente de novo em instantes.';
+      const cod = e && typeof e.codigo === 'string' && /^[a-z_]{1,30}$/.test(e.codigo) ? e.codigo : (e && e.name === 'AbortError' ? 'tempo' : 'rede');
+      estado.textContent = ERRO_GIF[cod] || ('GIF indisponível agora. Tente de novo em instantes. (código: ' + cod + ')');   // o código ajuda a achar a causa sem abrir o console
     }
   };
   busca.oninput = () => { clearTimeout(gifTimer); gifBuscaVez++; grade.replaceChildren(); estado.textContent = ''; gifTimer = setTimeout(carregar, 400); };   // resultado velho não fica clicável sob a busca nova
