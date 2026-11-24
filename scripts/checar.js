@@ -27,7 +27,7 @@ const { spawnSync } = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
 const REFS_A_PARTIR_DE = '2026-10-16';   // entradas anteriores têm referências antigas já conhecidas (ex.: armadilha 2); só as novas são cobradas
 const PAGINAS = [
-  'kanban', 'painel', 'okr', 'oceano', 'escala', 'intake',
+  'kanban', 'painel', 'okr', 'oceano', 'escala', 'intake', 'cardume',
 ].flatMap((n) => [`${n}.html`, `${n}-dev.html`]).concat(['okr-apresentacao.slide.html']);
 
 const erros = [];
@@ -201,7 +201,7 @@ function identidadeProd() {
 //   a) link com URL do banco CRUA no atributo (`href="${x.url}"`) — sem esc(_hrefOk(..))/safeUrl() um `javascript:` vira XSS por clique;
 //   b) renderizador de markdown (renderMd/_renderMd) sem _mdAttr(): aspas na URL fecham o atributo e injetam `onmouseover=` (XSS armazenado).
 function seguranca() {
-  const alvos = fs.readdirSync(ROOT).filter((f) => /^(kanban|painel|okr|oceano|escala|intake|travessia)(-dev)?\.html$/.test(f) || /^mare-[a-z]+(-dev)?\.js$/.test(f) || f === 'okr-apresentacao.slide.html');
+  const alvos = fs.readdirSync(ROOT).filter((f) => /^(kanban|painel|okr|oceano|escala|intake|travessia|cardume)(-dev)?\.html$/.test(f) || /^mare-[a-z]+(-dev)?\.js$/.test(f) || f === 'okr-apresentacao.slide.html');
   const reHref = /href=\\?["'](?:\$\{|'?\s*\+\s*)\s*[A-Za-z_][A-Za-z0-9_.?\[\]]*(?:[uU]rl|[lL]ink|[hH]ref|shortlink)\b(?!\s*\()/;
   let n = 0;
   for (const arq of alvos) {

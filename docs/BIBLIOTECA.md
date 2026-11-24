@@ -25,6 +25,7 @@ Tudo que **não** é servido ao usuário (documentação, testes, capturas, scri
 | 📡 **Radar** (OKR) | `okr.html` | `okr-dev.html` | Objetivos, marcos, calendário, reunião ao vivo |
 | 🏝️ **Oceano** (lobby / mural / host) | `oceano.html` | `oceano-dev.html` | Boas-vindas, Mural, login único, plantão de bugs, host dos produtos |
 | 🗓️ **Escala** | `escala.html` | `escala-dev.html` | Trabalho / plantão / folga por dia |
+| 🐟 **Cardume** (chat do time) | — (piloto só no dev) | `cardume-dev.html` | Canais das squads (privados) e temáticos/temporários; plano em `docs/ideias/cardume.md`, banco e regras em `docs/ideias/cardume-v0-banco.md`; teste `docs/arezzo/testes/test_cardume_pagina.js` |
 | 📝 **Pedido (Intake)** | `intake.html` | `intake-dev.html` | Formulário de pedidos para as squads |
 | 🛟 **A Bordo** (onboarding) | `onboarding.html` | — | Onboarding ágil |
 | ⛵ **Travessia** (pessoas / 1:1 / avaliação) | em produção desde 31/10/2026 (entrada discreta: o card do Oceano segue "em breve") | `travessia.html` ↔ `travessia-dev.html` (sem versão própria; alvo `travessia` do `promover.js`) | Fase 1: Baú, faróis, humor, mural de Estrelas, avaliação com indicação de pares e trava de devolutiva (desenho em `docs/ideias/travessia-2026-10-22.md`; protótipo antigo em `docs/demo/travessia-prototipo-fase0.html`) |
