@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/cardume-mencoes` | `cardume-dev.html`, `mare-notif-dev.js`, `functions/index.js`, `functions/common/pushUrl.js` | 24/11/2026 |
+| Claude | `claude/cardume-push-frescor` | `functions/common/cardumePush.js` (#1933) | 24/11/2026 |
 
 
 ## Fila
