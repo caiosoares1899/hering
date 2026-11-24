@@ -105,6 +105,18 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .acoes-msg button{min-height:28px;padding:2px 8px;font-size:12px;}
 .hora,.editada{color:var(--txt2);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;}
 .apagada{color:var(--txt2);font-style:italic;}
+.cards-msg{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px;}
+.card-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:32px;padding:4px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(var(--slate-rgb),.7);color:var(--txt);text-decoration:none;font-size:13px;}
+.card-chip:hover{border-color:var(--accent);}
+.card-chip .tit{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.card-chip .sq{color:var(--txt2);font-size:12px;white-space:nowrap;}
+.md.registrar{width:min(560px,100%);}
+.lista-reg{display:grid;gap:4px;max-height:34vh;overflow:auto;padding:2px;}
+.reg-item{display:flex!important;align-items:flex-start;gap:8px!important;padding:6px 8px;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt)!important;cursor:pointer;}
+.reg-item input{width:auto;min-height:0;margin-top:4px;}
+.reg-item .subtitulo{display:block;overflow-wrap:anywhere;}
+.aviso-reg{padding:8px 10px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);font-size:13px;}
+.prev-reg{margin:0;max-height:20vh;overflow:auto;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.45 ui-monospace,Menlo,monospace;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;}
 .mencao{color:var(--accent);font-weight:700;}
 .mencao.eu{background:rgba(255,209,102,.18);color:var(--warn);border-radius:4px;padding:0 3px;}
 .texto code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:5px;padding:0 4px;}
@@ -225,7 +237,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.5 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.6 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -553,15 +565,18 @@ function renderMsg(m) {
   }
   if (editando === m.id) { box.append(editor(m)); return box; }
   box.append(renderTexto(m.texto || ''));
+  const ks = cardsNoTexto(m.texto);
+  if (ks.length) { const w = el('div', 'cards-msg'); ks.forEach(k => w.append(chipCard(k))); box.append(w); }
   if (m.editado) box.append(el('span', 'editada', '(editada)'));
   const c = canais[atual], ativo = !vencido(c);
   const meu = m.uid === user.uid;
+  const ac = el('div', 'acoes-msg');
+  if (souMembro(atual) || souAdm()) { const r = el('button', '', '📝 No card'); r.type = 'button'; r.title = 'Registrar no card do Maré'; r.setAttribute('aria-label', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
-    const ac = el('div', 'acoes-msg');
     if (meu) { const e = el('button', '', '✏️ Editar'); e.type = 'button'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
     const x = el('button', 'perigo', '🗑 Apagar'); x.type = 'button'; x.onclick = () => apagar(m); ac.append(x);
-    box.append(ac);
   }
+  if (ac.childNodes.length) box.append(ac);
   return box;
 }
 function editor(m) {
@@ -632,6 +647,137 @@ async function mostrarAntiga(canal, msgId) {
     const x = el('button', 'lnk', 'fechar'); x.type = 'button'; x.onclick = () => { f.hidden = true; f.replaceChildren(); }; cab.append(x);
     f.append(el('p', 'subtitulo', 'Mensagem mais antiga (fora das últimas ' + LIMITE + ')'), cab, renderTexto(m.texto || '')); f.hidden = false;
   } catch (e) { toast('Não deu para abrir essa mensagem.'); }
+}
+// ═══ Cards do Maré (etapa 3, docs/ideias/cardume-v0-banco.md › "Etapa 3") ═══
+// Link de card colado → chip com o título; "📝 No card" copia mensagens para os comentários do card (kanban/squads/{sq}/dados/card_comments).
+// O card é lido pela Hering inteira (regra de kanban/squads/$sq/dados): o modal diz isso antes de gravar.
+const ORIGEM_MARE = 'https://caiosoares1899.github.io';
+function cardDeLink(u) {
+  try {
+    const x = new URL(u);
+    if (x.origin !== ORIGEM_MARE || !/^\/hering\/kanban(-dev)?\.html$/.test(x.pathname)) return null;
+    const sq = x.searchParams.get('squad') || '', id = x.searchParams.get('opencard') || x.searchParams.get('card') || '';
+    return ID_RE.test(sq) && ID_RE.test(id) ? { sq, id, dev: /-dev\.html$/.test(x.pathname) } : null;
+  } catch (e) { return null; }
+}
+const urlCard = k => ORIGEM_MARE + '/hering/kanban' + (k.dev ? '-dev' : '') + '.html?squad=' + encodeURIComponent(k.sq) + '&opencard=' + encodeURIComponent(k.id);
+function cardsNoTexto(txt) {
+  const vistos = new Set(), out = [];
+  for (const x of String(txt || '').matchAll(/https:\/\/[^\s<>"']+/g)) {
+    const k = cardDeLink(x[0].replace(/[.,!?:;)]+$/, ''));
+    if (k && !vistos.has(k.sq + '/' + k.id)) { vistos.add(k.sq + '/' + k.id); out.push(k); }
+  }
+  return out.slice(0, 3);
+}
+const nomeSquad = sq => (meta[sq] && meta[sq].label) || (SQUAD_FALLBACK[sq] && SQUAD_FALLBACK[sq].label) || sq;
+const infoCards = {};   // 'sq/id' → { estado: 'lendo' | 'ok' | 'sem' | 'nao' | 'erro', titulo, p }
+function lerCard(k) {
+  const ch = k.sq + '/' + k.id;
+  if (infoCards[ch]) return infoCards[ch].p;
+  const info = infoCards[ch] = { estado: 'lendo', titulo: '' }, base = 'kanban/squads/' + k.sq + '/dados/';
+  info.p = get(ref(db, base + 'cards_index/' + k.id)).then(async s => {
+    const pos = s.val();
+    if (pos == null || !ID_RE.test(String(pos))) { info.estado = 'nao'; return info; }
+    const t = (await get(ref(db, base + 'cards/' + pos + '/title'))).val();
+    if (typeof t !== 'string' || !t.trim()) { info.estado = 'nao'; return info; }
+    info.estado = 'ok'; info.titulo = t.trim().slice(0, 200); return info;
+  }).catch(e => { info.estado = negado(e) ? 'sem' : 'erro'; return info; })
+    .then(i => { if (atual && !vendoMencoes) renderMsgs(); return i; });
+  return info.p;
+}
+function chipCard(k) {
+  const info = infoCards[k.sq + '/' + k.id]; if (!info) lerCard(k);
+  const st = info ? info.estado : 'lendo';
+  const a = el('a', 'card-chip'); a.href = urlCard(k); a.target = '_blank'; a.rel = 'noopener noreferrer';
+  const tit = st === 'ok' ? info.titulo : st === 'sem' ? 'card sem acesso' : st === 'nao' ? 'card não encontrado' : st === 'erro' ? 'card (não deu para ler)' : 'carregando card…';
+  a.append(el('span', '', '🗂'), el('span', 'tit', tit), el('span', 'sq', '· ' + nomeSquad(k.sq)));
+  a.title = 'Abrir no Maré: ' + tit;
+  return a;
+}
+// Tira o @ das menções copiadas: o gatilho do Agente Ágil dispara com "@agente agil" em comentários (detectaMencao.js),
+// e um trecho do chat não pode acionar o Agente nem virar menção a alguém no card. E-mail (nome@dominio) fica como está.
+const semArroba = s => String(s || '').replace(/(^|[^\p{L}\p{N}._%+-])[@＠](?=[\p{L}])/gu, '$1').replace(/[@＠](?=\s*agente)/giu, '');
+const dataHora = ts => new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '');
+function textoRegistro(canal, lista) {
+  let t = '🐟 Do Cardume · #' + nomeCanal(canal) + '\n';
+  for (const x of lista) t += '\n**' + nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ' + String(x.texto || '').trim();
+  t = semArroba(t);
+  return t.length > 8000 ? t.slice(0, 7999) + '…' : t;
+}
+const MAX_REG = 20;
+function modalRegistrar(m0) {
+  const canal = atual;
+  const lista = msgs.filter(x => !x.apagada && !pendentes.has(x.id) && typeof x.texto === 'string');
+  const i0 = Math.max(0, lista.findIndex(x => x.id === m0.id));
+  const janela = lista.slice(Math.max(0, i0 - 10), i0 + 11);
+  const citados = [];
+  lista.forEach(x => cardsNoTexto(x.texto).forEach(k => { if (!citados.some(c => c.sq === k.sq && c.id === k.id)) citados.push(k); }));
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md registrar'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  const h = el('h2', '', '📝 Registrar no card'); h.id = 'md-t'; f.append(h);
+  f.append(el('p', 'subtitulo', 'Marque as mensagens (até ' + MAX_REG + '). Cada uma vai com o nome de quem escreveu; as @menções viram só o nome.'));
+  const caixa = el('div', 'lista-reg'); caixa.setAttribute('role', 'group'); caixa.setAttribute('aria-label', 'Mensagens');
+  janela.forEach(x => {
+    const l = el('label', 'reg-item'); const cb = el('input'); cb.type = 'checkbox'; cb.value = x.id; cb.checked = x.id === m0.id;
+    const tx = el('span'); const resumo = String(x.texto).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim();
+    tx.append(el('b', '', nomePessoa(x.uid) + ' · ' + dataHora(x.ts)), el('span', 'subtitulo', resumo.length > 140 ? resumo.slice(0, 140) + '…' : resumo));
+    l.append(cb, tx); caixa.append(l);
+  });
+  f.append(caixa);
+  const okC = k => { const i = infoCards[k.sq + '/' + k.id]; return !!i && i.estado === 'ok'; };
+  const opc = citados.slice(-15).reverse().filter(okC);   // só os cards que deu para ler, do mais recente ao mais antigo
+  const lc = el('label', '', 'Card'); const sel = el('select');
+  sel.append(new Option(opc.length ? 'Colar o link de outro card…' : 'Colar o link do card…', ''));
+  opc.forEach(k => sel.append(new Option(infoCards[k.sq + '/' + k.id].titulo + ' · ' + nomeSquad(k.sq), JSON.stringify(k))));
+  if (opc.length) sel.selectedIndex = 1;
+  lc.append(sel); f.append(lc);
+  const ll = el('label', '', 'Link do card (no Maré, 🔗 Copiar link do card)'); const link = el('input'); link.type = 'url'; link.placeholder = ORIGEM_MARE + '/hering/kanban.html?squad=…&opencard=…'; ll.append(link); f.append(ll);
+  const aviso = el('p', 'aviso-reg'); aviso.setAttribute('aria-live', 'polite'); f.append(aviso);
+  f.append(el('p', 'subtitulo', 'Como vai ficar no card:'));
+  const prev = el('pre', 'prev-reg'); f.append(prev);
+  const err = el('p', 'erro'); err.hidden = true; f.append(err);
+  const l = el('div', 'linha'); const can = el('button', '', 'Cancelar'); can.type = 'button'; can.onclick = fecharModal;
+  const ok = el('button', 'primary', '📝 Registrar'); ok.type = 'submit'; l.append(can, ok); f.append(l);
+  const escolhido = () => { if (sel.value) { try { return JSON.parse(sel.value); } catch (e) { return null; } } const v = link.value.trim(); return v ? cardDeLink(v) : null; };
+  const marcadas = () => { const ids = new Set([...caixa.querySelectorAll('input:checked')].map(x => x.value)); return janela.filter(x => ids.has(x.id)); };
+  let vez = 0;
+  async function atualizar() {
+    ll.hidden = !!sel.value;
+    const sm = marcadas(); prev.textContent = sm.length ? textoRegistro(canal, sm) : '(nenhuma mensagem marcada)';
+    const k = escolhido(), minha = ++vez;
+    if (!k) { aviso.textContent = link.value.trim() && !sel.value ? 'Esse link não é de um card do Maré.' : 'Escolha o card.'; return; }
+    aviso.textContent = 'Lendo o card…';
+    const i = await lerCard(k); if (minha !== vez) return;
+    aviso.textContent = i.estado === 'ok'
+      ? 'Vai aparecer no card “' + i.titulo + '” (' + nomeSquad(k.sq) + '). Qualquer pessoa da Hering pode abrir esse card, e o comentário fica lá; no Cardume, as mensagens são apagadas depois de 90 dias.' + (ehTema(canal) ? ' Este é um canal temático: quem lê o card pode nunca ter estado aqui.' : '')
+      : i.estado === 'sem' ? 'Você não tem acesso a esse card.' : i.estado === 'nao' ? 'Card não encontrado (pode ter sido arquivado ou excluído).' : 'Não deu para ler o card agora. Confira a conexão.';
+  }
+  caixa.onchange = e => { if (marcadas().length > MAX_REG) { e.target.checked = false; toast('No máximo ' + MAX_REG + ' mensagens por vez.'); } atualizar(); };
+  sel.onchange = atualizar; link.oninput = atualizar;
+  f.onsubmit = async e => {
+    e.preventDefault(); err.hidden = true;
+    const sm = marcadas(), k = escolhido();
+    if (!sm.length) { erroModal(err, 'Marque pelo menos uma mensagem.'); return; }
+    if (!k) { erroModal(err, 'Escolha o card ou cole o link dele.'); return; }
+    ok.disabled = true;
+    const i = await lerCard(k);
+    if (i.estado !== 'ok') { ok.disabled = false; erroModal(err, aviso.textContent || 'Não deu para ler o card.'); return; }
+    const id = 'c' + Date.now() + Math.random().toString(36).slice(2, 5);
+    const foto = pub[user.uid] && pub[user.uid].foto;
+    const com = {
+      id, uid: user.uid, author: (pub[user.uid] && (pub[user.uid].nome || pub[user.uid].displayName)) || user.displayName || user.email || '',
+      init: iniciais(user.uid), foto: typeof foto === 'string' && /^https:\/\//.test(foto) ? foto : '',
+      ts: new Date().toISOString(),   // SEMPRE ISO: o Maré ordena com localeCompare
+      text: textoRegistro(canal, sm), cardume: { c: canal, m: sm[0].id },
+    };
+    try {
+      await set(ref(db, 'kanban/squads/' + k.sq + '/dados/card_comments/' + k.id + '/' + id), com);
+      fecharModal(); toast('📝 Registrado no card “' + i.titulo.slice(0, 60) + '”.');
+    } catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão para comentar nesse card.' : 'Não deu para registrar. Confira a conexão e tente de novo.'); }
+  };
+  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
+  ov.append(f); atualizar(); (caixa.querySelector('input:checked') || sel).focus();
 }
 const trechos = {};   // 'c/m' → texto (lido da própria mensagem, com acesso de membro)
 function trechoDe(c, m) {
@@ -918,6 +1064,7 @@ function limparSessao() {
   pendentes.forEach(p => clearTimeout(p.timer)); pendentes.clear();   // apagar pendente da conta anterior = não apaga (lado seguro)
   eu = {}; pub = {}; meta = {}; meus = {}; abertos = {}; lidas = {}; msgs = []; membrosAtual = {}; adminsAtual = {};
   Object.keys(canais).forEach(k => delete canais[k]); Object.keys(ultimas).forEach(k => delete ultimas[k]);
+  Object.keys(infoCards).forEach(k => delete infoCards[k]);   // o acesso aos cards é da conta
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
