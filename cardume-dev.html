@@ -70,7 +70,7 @@ button:disabled{opacity:.5;cursor:default;}
 input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .primary{background:var(--accent);color:rgb(var(--ink-rgb));font-weight:800;border-color:var(--accent);}
-.lnk,.lnk:hover{background:none;border:0;box-shadow:none;min-height:0;padding:0 2px;color:var(--accent);text-decoration:underline;}
+.lnk,.lnk:hover{background:none;border:0;box-shadow:none;min-height:0;padding:0 2px;color:var(--accent-txt);text-decoration:underline;}
 .perigo{color:var(--danger);}
 .shell{max-width:1440px;height:100vh;height:100dvh;margin:auto;padding:14px 22px 20px;display:flex;flex-direction:column;gap:12px;}
 .topo{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 20px;}
@@ -90,11 +90,13 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .app.sem-lado{grid-template-columns:230px minmax(0,1fr);}
 .painel{min-width:0;min-height:0;display:flex;flex-direction:column;background:transparent;}
 .conversa{background:rgba(var(--ink-rgb),.3);}
-[data-theme="light"] .conversa{background:rgba(var(--ink-rgb),.78);}   /* Lençóis: o mar claro atrás baixava o --accent (menção/link) para ~3,2:1 — vidro mais encorpado, não texto mais escuro (MARINE_GLASS §11) */   /* a conversa um tom mais funda que as laterais: o olho vai para ela */
+[data-theme="light"] .conversa{background:rgba(var(--ink-rgb),.78);}
+.lateral{background:rgba(var(--slate-rgb),.5);}   /* piso das laterais: sem ele, a lista de canais e os Detalhes ficavam abaixo de 4,5:1 com o mar atrás (contraste_concha.js) */
+[data-theme="light"] .lateral,[data-theme="light"] .lado{background:rgba(var(--slate-rgb),.86);}   /* Lençóis: o mar claro atrás baixava o --accent (menção/link) para ~3,2:1 — vidro mais encorpado, não texto mais escuro (MARINE_GLASS §11) */   /* a conversa um tom mais funda que as laterais: o olho vai para ela */
 .lateral{padding:12px 10px;border-right:1px solid var(--glass-b);overflow:auto;}
 .canal{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:3px;text-align:left;background:transparent;border-color:transparent;box-shadow:none;font-weight:600;min-height:38px;}
 .canal .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.canal[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.7);border-color:var(--glass-b);box-shadow:var(--specular);}
+.canal[aria-current="true"]{color:var(--accent-txt);background:rgba(var(--slate-rgb),.7);border-color:var(--glass-b);box-shadow:var(--specular);}
 .canal.nao-lido .nome{font-weight:800;color:var(--txt);}
 .ponto{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;}
 .chip{display:inline-block;padding:1px 7px;border-radius:999px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);font-size:11px;line-height:1.5;color:var(--txt2);}
@@ -116,7 +118,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 @media (hover:hover) and (min-width:900px){.msg{padding-right:152px;}}   /* vão da pílula: o texto nunca fica embaixo dela (linha de ~75 caracteres a 1280, boa de ler) */
 .msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
 .b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;box-shadow:none;font-weight:700;}
-.b-mencoes[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.7);box-shadow:var(--specular);}
+.b-mencoes[aria-current="true"]{color:var(--accent-txt);background:rgba(var(--slate-rgb),.7);box-shadow:var(--specular);}
 .selo-n{min-width:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:rgb(var(--ink-rgb));font-size:11px;font-weight:800;text-align:center;}
 .faixa-alvo{margin:8px 16px 0;padding:8px 12px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);}
 .faixa-alvo .autor{gap:10px;}
@@ -195,7 +197,7 @@ button.msg-gif{cursor:pointer;}
 .emojis button{min-height:38px;padding:0;font-size:20px;background:transparent;border-color:transparent;box-shadow:none;}
 .emojis button:hover,.emojis button:focus-visible{border-color:var(--accent);}
 .emojis .rot{grid-column:1/-1;font-size:11px;color:var(--txt2);margin:2px 4px;}
-.lado{border-left:1px solid var(--glass-b);background:rgba(var(--slate-rgb),.22);overflow:auto;padding:0 0 14px;}
+.lado{border-left:1px solid var(--glass-b);background:rgba(var(--slate-rgb),.5);overflow:auto;padding:0 0 14px;}
 .lado section{padding:0 14px;}
 .lado p{color:var(--txt2);font-size:13px;}
 .pessoa{display:flex;align-items:center;gap:8px;padding:4px 0;}

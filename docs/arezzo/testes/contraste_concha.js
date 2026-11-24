@@ -16,19 +16,23 @@ const razao = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
     const p = await ctx.newPage(); await p.goto('http://127.0.0.1:8941/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(1200);
     const cores = await p.evaluate(() => { const cs = getComputedStyle(document.documentElement), rgb = v => { const d = document.createElement('i'); d.style.color = v; document.body.append(d); const c = getComputedStyle(d).color.match(/[\d.]+/g).map(Number); d.remove(); return c; };
       return { texto: rgb(cs.getPropertyValue('--txt')), 'hora/subtítulo (--txt2)': rgb(cs.getPropertyValue('--txt2')), 'menção/link (--accent-txt)': rgb(cs.getPropertyValue('--accent-txt') || cs.getPropertyValue('--accent')) }; });
-    const caixa = await p.evaluate(() => { const r = document.getElementById('log').getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; });
+    for (const [regiao, sel] of [['conversa', '#log'], ['lista de canais', '.lateral'], ['detalhes', '#lado'], ['cabeçalho', '.cabecalho'], ['rodapé', '.rodape']]) {
+    const caixa = await p.evaluate(sl => { const e = document.querySelector(sl); if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); const m = 16; return r.width > 2 * m ? { x: r.x + m, y: r.y + m, width: r.width - 2 * m, height: r.height - 2 * m } : null; }, sel);   // longe do canto arredondado e da borda: lá não há texto e aparece o mar de fora
+    if (!caixa) { linhas.push({ tema, regiao, cor: '—', 'pior razão': 'fechado', AA: '—' }); continue; }
     // várias posições do cardume: pior caso ao longo do tempo
     let fundos = [];
     for (let k = 0; k < 4; k++) {
-      await p.addStyleTag({ content: '#log *{color:transparent!important;border-color:transparent!important;background:transparent!important;box-shadow:none!important;text-decoration-color:transparent!important}#log img{opacity:0}' });
+      await p.addStyleTag({ content: sel + ' *{visibility:hidden!important}' });   // só o fundo da região (vidro + mar atrás): o piso onde o texto é escrito
       await p.evaluate(k => document.getAnimations().forEach(a => { a.pause(); a.currentTime = (a.currentTime || 0) + k * 3700; }), k);
       const png = (await p.screenshot({ clip: caixa })).toString('base64');
       const px = await p.evaluate(async src => { const im = new Image(); im.src = 'data:image/png;base64,' + src; await im.decode(); const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data; const out = []; for (let i = 0; i < d.length; i += 4 * 7) out.push([d[i], d[i + 1], d[i + 2]]); return out; }, png);
       fundos = fundos.concat(px);
     }
-    for (const [nome, cor] of Object.entries(cores)) { let r = Infinity; const a = cor.length > 3 ? cor[3] : 1; for (const f of fundos) { const c = cor.slice(0, 3).map((v, i) => v * a + f[i] * (1 - a)); const x = razao(c, f); if (x < r) r = x; } pior = Math.min(pior, r); linhas.push({ tema, cor: nome, 'pior razão': +r.toFixed(2), AA: r >= 4.5 ? '✅' : r >= 3 ? '≥3 (só texto grande)' : '❌' }); }
+    for (const [nome, cor] of Object.entries(cores)) { let r = Infinity; const a = cor.length > 3 ? cor[3] : 1; for (const f of fundos) { const c = cor.slice(0, 3).map((v, i) => v * a + f[i] * (1 - a)); const x = razao(c, f); if (x < r) r = x; } pior = Math.min(pior, r); linhas.push({ tema, regiao, cor: nome, 'pior razão': +r.toFixed(2), AA: r >= 4.5 ? '✅' : r >= 3 ? '≥3 (só texto grande)' : '❌' }); }
+    await p.reload(); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(1000);   // tira o estilo de medir antes da próxima região
+    }
     await ctx.close();
   }
   console.table(linhas); await b.close();
-  if (process.env.EXIGIR && linhas.some(l => l['pior razão'] < 4.5)) process.exit(1);
+  if (process.env.EXIGIR && linhas.some(l => typeof l['pior razão'] === 'number' && l['pior razão'] < 4.5)) process.exit(1);
 })().catch(e => { console.error(e); process.exit(1); });
