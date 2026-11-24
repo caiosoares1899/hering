@@ -35,6 +35,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const chrome = process.env.CHROME || (fs.existsSync(chromeRoot) ? path.join(chromeRoot, fs.readdirSync(chromeRoot).find(n => n.startsWith('mac_arm-')), 'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing') : undefined);
   const b = await chromium.launch(chrome ? { executablePath: chrome } : {});
   const ctx = await b.newContext({ viewport: { width: 1280, height: 860 } }); await fake.install(ctx, seed());
+  await ctx.addInitScript(() => { window.__limitarConsultas = true; });   // limitToLast(50) de verdade: a original antiga fica FORA das carregadas
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb);
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(900);
@@ -44,6 +45,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
 
   // citação de mensagem fora das 50 carregadas: busca o trecho
   await p.waitForTimeout(400);
+  t('a original antiga está mesmo fora das 50 carregadas', !(await p.$('[data-msg="-Nold"]')), 0);
   t('citação de uma original fora das 50 carregadas mostra o trecho (buscado)', /Mensagem bem antiga do Bruno/.test(await p.textContent('[data-msg="-Nr0"] .citacao')), await p.textContent('[data-msg="-Nr0"] .citacao'));
 
   // a original fora das 50 é apagada DEPOIS de a citação ter carregado: a citação atualiza sem recarregar (achado do Codex na #1959)
