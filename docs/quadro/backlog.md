@@ -32,6 +32,12 @@
 |---|---|---|
 | 🐟 **Cardume · reagir e responder** (ideia do Caio, 24/11/2026): **reagir a uma mensagem com emoji** (👍 ❤️ 😂 🎉… — contador por emoji, clicar no seu tira a reação, passar o mouse mostra quem reagiu; usa o mesmo seletor de emojis do compositor) e **responder a uma mensagem** (botão "↩️ Responder" na mensagem: a resposta mostra o trecho citado de quem respondeu, e clicar na citação leva à mensagem original; base para uma futura conversa em fio). | Claude | `docs/ideias/cardume.md` (plano). **Banco (R3, regras + testes + 2 revisões):** reação = nó novo `reacoes/{canal}/{msgId}/{emoji}/{uid}: true` (só membro, só a própria reação, emoji de uma lista fechada; a limpeza apaga junto com a mensagem); responder = campo `resp` na mensagem com o id da original (validado pelo `ID_RE`), sem copiar o texto dela para o banco (a citação é montada na tela e some se a original for apagada). **Fronteira:** quem reagiu aparece só para membros do canal |
 
+<a id="cardume-avisos"></a>
+
+| Ideia | Dono | Onde está o desenho |
+|---|---|---|
+| 🐟 **Cardume · aviso de mensagem nova, estilo WhatsApp** (ideia do Caio, 24/11/2026): toda mensagem nova num canal avisa os membros (push e contador), **ligado por padrão**. Um **sininho 🔔 no topo da conversa** permite **silenciar aquele canal** (🔕 por 8 h, 1 semana ou sempre), e o canal silenciado mostra o 🔕 na lista. Sugestões: menção (`@`) continua avisando mesmo com o canal silenciado, como no WhatsApp (decisão do Caio); respeita o Não Perturbe; não avisa quem está com a conversa aberta; agrupa as mensagens seguidas do mesmo canal num push só (tag por canal), para o celular não disparar a cada linha. | Claude | `docs/ideias/cardume.md` (plano, junto da etapa 4). **Banco e função (R3, regras + testes + 2 revisões):** preferência privada `kanban/cardume/silenciados/{uid}/{canal}: {ate}` (só a própria pessoa lê e grava); push enviado **direto por uma função** no gatilho de `msgs/{canal}/{id}` para os membros, **sem gravar em `kanban/usuarios/.../notificacoes`** (o nó do Sino é legível por toda a Hering, ver [escalados](escalados.md#usuarios-leitura-ampla)), com texto genérico montado no servidor ("🐟 {nome} mandou mensagem"). **Banda:** é a função de maior volume do Cardume (1 gatilho por mensagem × membros); medir no piloto `dados` antes de abrir. **Fronteira:** nome do canal temático e trecho da mensagem não vão no push |
+
 <a id="consultoria"></a>
 
 | Ideia | Dono | Onde está o desenho |
