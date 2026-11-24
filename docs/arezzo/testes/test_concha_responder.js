@@ -35,6 +35,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const chrome = process.env.CHROME || (fs.existsSync(chromeRoot) ? path.join(chromeRoot, fs.readdirSync(chromeRoot).find(n => n.startsWith('mac_arm-')), 'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing') : undefined);
   const b = await chromium.launch(chrome ? { executablePath: chrome } : {});
   const ctx = await b.newContext({ viewport: { width: 1280, height: 860 } }); await fake.install(ctx, seed());
+  await ctx.addInitScript(() => { window.__limitarConsultas = true; });   // limitToLast(50) de verdade: a original antiga fica FORA das carregadas
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb);
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(900);
@@ -44,8 +45,13 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
 
   // citação de mensagem fora das 50 carregadas: busca o trecho
   await p.waitForTimeout(400);
+  t('a original antiga está mesmo fora das 50 carregadas', !(await p.$('[data-msg="-Nold"]')), 0);
   t('citação de uma original fora das 50 carregadas mostra o trecho (buscado)', /Mensagem bem antiga do Bruno/.test(await p.textContent('[data-msg="-Nr0"] .citacao')), await p.textContent('[data-msg="-Nr0"] .citacao'));
 
+  // a original fora das 50 é apagada DEPOIS de a citação ter carregado: a citação atualiza sem recarregar (achado do Codex na #1959)
+  await p.evaluate(async () => { const mm = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js'); await mm.set(mm.ref({}, 'kanban/cardume/msgs/dados/-Nold'), { uid: 'bru', ts: Date.now() - 3600e3, apagada: true }); });
+  await p.waitForTimeout(300);
+  t('original fora das 50 apagada depois: a citação passa a "(mensagem apagada)" na hora', /mensagem apagada/.test(await p.textContent('[data-msg="-Nr0"] .citacao')) && !/bem antiga/.test(await p.textContent('[data-msg="-Nr0"] .citacao')), await p.textContent('[data-msg="-Nr0"] .citacao'));
   // responder ao Bruno
   await responder('-Nm1');
   t('↩️ Responder abre a barra "Respondendo a…" com o trecho, e o foco vai para o campo', await p.isVisible('#resp-barra') && /Respondendo a Bruno Reis/.test(await p.textContent('#resp-barra')) && /Proposta A/.test(await p.textContent('#resp-barra')) && await p.evaluate(() => document.activeElement.id === 'entrada'), await p.textContent('#resp-barra'));
@@ -83,7 +89,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await p.waitForTimeout(300);
   t('original apagada: a citação diz "(mensagem apagada)"', /mensagem apagada/.test(await p.textContent('[data-msg="' + rc.k + '"] .citacao')), await p.textContent('[data-msg="' + rc.k + '"] .citacao'));
 
-  const esc = (await p.evaluate(() => window.__escritas || [])).filter(e => !/kanban\/cardume\/msgs\/dados\/-Nm3$/.test(e.p));   // o apagar da Carla foi simulado (não é escrita da Ana)
+  const esc = (await p.evaluate(() => window.__escritas || [])).filter(e => !/kanban\/cardume\/msgs\/dados\/-N(m3|old)$/.test(e.p));   // o apagar da Carla foi simulado (não é escrita da Ana)
   const real = Date.now; const ruins = [];
   for (const e of esc) { const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([k, v]) => [(e.p ? e.p + '/' : '') + k, v])); Date.now = () => e.t; let r; try { r = regras(RULES, e.antes, authDe(ANA), mapa); } finally { Date.now = real; } if (!r) ruins.push({ tipo: e.tipo, caminhos: Object.keys(mapa) }); }
   t('CADA escrita da página passa nas regras reais', !ruins.length, ruins);
