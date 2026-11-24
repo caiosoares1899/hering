@@ -281,3 +281,18 @@ Pedido do Caio. A pesquisa do Codex está no #1945. **Decisão do Caio:** a busc
 2. `firebase functions:secrets:set KLIPY_API_KEY` no Mac.
 3. **Deploy**, nesta ordem: regras primeiro (`--only database`), depois `--only functions:conchaGifBusca`.
 4. **Antes de promover:** pedir a chave de produção (sem limite) e confirmar o preço do uso interno.
+
+
+## ↩️ Responder — desenho de 24/11/2026 (R3)
+Pedido do Caio: o resto da etapa 4. O escopo escolhido foi **Responder com aviso**; reações e o aviso de toda mensagem nova seguem no backlog.
+- **Mensagem:** ganha `resp`, o id da original.
+  - Só entra **na criação**, precisa ser **do mesmo canal** e **existir**, e não pode ser a própria mensagem.
+  - É **imutável** na edição, e o registro de apagada não guarda o `resp`.
+  - A citação é montada na tela a partir da original, nunca copiada para o banco. Se a original for apagada, aparece "(mensagem apagada)".
+- **Aviso:** reusa o índice privado de menções com **`r: true`**.
+  - As regras aceitam o registro só se a mensagem nova (do autor, recente) tem `resp` apontando para uma mensagem **da pessoa avisada**.
+  - `r` é imutável.
+  - A notificação é genérica: "🐚 {nome} respondeu você na Concha", sem trecho nem canal.
+- **Push:** `cardumePush.mencaoConfere` ganha o ramo da resposta: a mensagem é resposta, a original é da pessoa, e quem responde é outra pessoa. O texto vem do servidor: "{nome} respondeu você". O tipo continua `cardume_mencao`, sem tipo novo.
+- **Sem duplicar:** a resposta que também @menciona a pessoa gera um aviso só, o de menção. Responder a si mesmo não avisa.
+- **Deploy:** `--only database` e depois `--only functions:sendPushOnNotification`.

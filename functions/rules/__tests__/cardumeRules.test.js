@@ -469,3 +469,40 @@ test('GIF: o contador da função (gif_uso) é fechado para o navegador', () => 
     assert.equal(grava('kanban/cardume/gif_uso/_casa', A[k], null), false, 'não apaga o teto da casa: ' + k);
   }
 });
+
+// ↩️ Responder (etapa 4, 24/11/2026): `resp` = id da mensagem respondida (só na criação, do MESMO canal, existente, imutável; apagar não guarda).
+// O aviso de resposta reusa o índice privado de menções com r = true: só vale se a mensagem nova responde mesmo uma mensagem da pessoa avisada.
+test('responder: resp só na criação, para mensagem existente do mesmo canal; imutável; apagar não guarda', () => {
+  reset(); const ts = Date.now() - 2000;
+  põe('orig', msg({ uid: 'bru', ts })); DB.kanban.cardume.msgs.outro = { o1: msg({ uid: 'bru', ts }) };
+  assert.equal(grava(M('r1'), A.ana, msg({ resp: 'orig' })), true, 'responde uma mensagem do canal');
+  assert.equal(grava(M('r1'), A.ana, msg({ resp: 'naoexiste' })), false, 'mensagem que não existe');
+  assert.equal(grava(M('r1'), A.ana, msg({ resp: 'o1' })), false, 'mensagem de OUTRO canal');
+  assert.equal(grava(M('r1'), A.ana, msg({ resp: 'r1' })), false, 'responder a si mesma (mesmo id)');
+  assert.equal(grava(M('r1'), A.ana, msg({ resp: '../outro/o1' })), false, 'id com caminho');
+  assert.equal(grava(M('r1'), A.ana, msg({ resp: 7 })), false, 'id número');
+  const rr = msg({ uid: 'ana', ts, resp: 'orig' }); põe('r2', rr);
+  const ed = o => Object.assign({}, rr, { texto: 'corrigido', editado: Date.now() }, o || {});
+  assert.equal(grava(M('r2'), A.ana, ed()), true, 'edita o texto mantendo o resp');
+  assert.equal(grava(M('r2'), A.ana, ed({ resp: undefined })), false, 'tirar o resp na edição');
+  põe('outra', msg({ uid: 'bru', ts }));
+  assert.equal(grava(M('r2'), A.ana, ed({ resp: 'outra' })), false, 'trocar o resp');
+  põe('s1', msg({ uid: 'ana', ts }));
+  assert.equal(grava(M('s1'), A.ana, Object.assign({}, msg({ uid: 'ana', ts }), { texto: 'x', editado: Date.now(), resp: 'orig' })), false, 'pôr resp numa mensagem que não tinha');
+  assert.equal(grava(M('r2'), A.ana, { uid: 'ana', ts, apagada: true }), true, 'apaga sem o resp');
+  assert.equal(grava(M('r2'), A.ana, { uid: 'ana', ts, apagada: true, resp: 'orig' }), false, 'apagada não guarda o resp');
+});
+test('aviso de resposta (r = true): só para o autor da mensagem respondida', () => {
+  reset(); const ts = Date.now() - 2000;
+  põe('orig', msg({ uid: 'bru', ts })); põe('rep', msg({ uid: 'ana', ts, resp: 'orig' })); põe('sem', msg({ uid: 'ana', ts }));
+  DB.kanban.cardume.membros.dados.car = true; const MN = (u, id) => `kanban/cardume/mencoes/${u}/${id}`;
+  const rec = o => Object.assign({ c: 'dados', m: 'rep', de: 'ana', ts: Date.now(), n: 'n9', r: true }, o || {});
+  assert.equal(up(A.ana, { [MN('bru', 'y1')]: rec() }), true, 'avisa o Bruno, autor da mensagem respondida');
+  assert.equal(up(A.ana, { [MN('car', 'y1')]: rec() }), false, 'avisar como "resposta" alguém que não foi respondido');
+  assert.equal(up(A.ana, { [MN('bru', 'y1')]: rec({ m: 'sem' }) }), false, 'r numa mensagem que não é resposta');
+  assert.equal(up(A.ana, { [MN('bru', 'y1')]: rec({ r: false }) }), false, 'r só pode ser true');
+  assert.equal(up(A.ana, { [MN('bru', 'y1')]: rec({ r: undefined }) }), true, 'sem r é uma menção comum (como antes)');
+  DB.kanban.cardume.mencoes = { bru: { y1: Object.assign(rec(), { ts: Date.now() - 1000 }) } };
+  assert.equal(up(A.bru, { [MN('bru', 'y1') + '/lida']: true }), true, 'o Bruno marca como lida');
+  assert.equal(up(A.bru, { [MN('bru', 'y1')]: Object.assign({}, DB.kanban.cardume.mencoes.bru.y1, { r: null, lida: true }) }), false, 'não tira o r');
+});

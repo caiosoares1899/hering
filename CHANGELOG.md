@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: ↩️ Responder com citação e aviso para quem foi respondido (SÓ DEV, cardume v0.15) — 2026-11-24
+
+Etapa 4. Botão ↩️ Responder na mensagem: barra 'Respondendo a…' acima do campo (Esc ou ✕ cancela; trocar de canal cancela), a resposta mostra a citação (clicar leva à original; original fora das 50 é buscada; apagada vira '(mensagem apagada)'). Quem foi respondido recebe aviso no Sino e push ('Fulano respondeu você'), pelo índice privado de menções com r: true; sem duplicar com a @menção; responder a si mesmo não avisa. Regras: resp só na criação, mesmo canal, existente, imutável; r só para o autor da original. Push: cardumePush confere a resposta e monta o texto no servidor. Testes: cardumeRules (sabotagem), cardumePush, test_concha_responder.js (15).
+
 ### 🔔 Sino unificado — fase 3 no Radar (SÓ DEV) — 2026-11-24
 
 O Radar usa o Sino compartilhado com layouts por família, deduplicação de feed e pessoais e rotas internas preservadas. No modo visualização, só o feed é carregado e a nota aparece no rodapé. Módulo ?v=51 nas cinco páginas dev.
