@@ -40,6 +40,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | Conhecimento do Agente Ágil regenerado na promoção de 24/11 (Escala v1.17: horário do CX) — cobre também as linhas de conhecimento abaixo | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 24/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na 2ª promoção de 23/11 (Escala v1.15, menu de apps) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | Conhecimento do Agente Ágil regenerado na promoção de 23/11 (Escala, Oceano e Ajuda do Maré) | `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` | 23/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
