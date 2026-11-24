@@ -150,6 +150,12 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 .gif-cartao{display:grid;place-items:center;width:100%;height:100%;min-height:72px;padding:6px;font-size:12px;color:var(--txt2);text-align:center;overflow-wrap:anywhere;background:rgba(var(--slate-rgb),.85);border-radius:10px;}
 .gif-rodape{margin:0;color:var(--txt3,var(--txt2));font-size:11px;}
 .b-gif{font-weight:800;font-size:11px;letter-spacing:.03em;}
+.resp-barra{display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;border-left:3px solid var(--accent);border-radius:8px;background:rgba(var(--slate-rgb),.7);font-size:13px;}
+.resp-barra .sub{flex:1;min-width:0;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.citacao{display:flex;gap:6px;align-items:baseline;max-width:100%;margin:2px 0 4px;padding:3px 8px;border:0;border-left:3px solid var(--glass-b);border-radius:6px;background:rgba(var(--slate-rgb),.55);color:var(--txt2);font-size:12px;text-align:left;cursor:pointer;min-height:0;}
+.citacao b{color:var(--txt);white-space:nowrap;}
+.citacao .sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.citacao:hover{border-left-color:var(--accent);}
 .gif-escolhido{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:6px;border:1px dashed var(--glass-b);border-radius:12px;}
 .gif-escolhido img{max-height:90px;max-width:140px;border-radius:8px;}
 .msg-gif{display:block;padding:0;margin:4px 0;border:0;background:none;min-height:0;width:min(240px,100%);}
@@ -238,6 +244,7 @@ button.msg-gif{cursor:pointer;}
           <button type="button" id="b-emoji" title="Emoji" aria-label="Emoji" aria-expanded="false">😀</button>
           <button type="button" id="b-gif" class="b-gif" title="GIF" aria-label="GIF" aria-expanded="false">GIF</button>
         </div>
+        <div class="resp-barra" id="resp-barra" hidden></div>
         <div class="gif-escolhido" id="gif-escolhido" hidden></div>
         <form class="compositor" id="compositor">
           <textarea id="entrada" rows="1" aria-label="Mensagem" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…" maxlength="4000"></textarea>
@@ -260,7 +267,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.14 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.15 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -505,7 +512,7 @@ function abrirCanal(id, foco) {
   if (atual !== id) {
     if (atual) lsSet(chaveRascunho(atual), entrada.value);
     parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
-    entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif();
+    entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
   }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
   atual = id; lsSet('cardume_canal', id);
@@ -589,6 +596,7 @@ function renderMsg(m) {
     const b = el('button', 'lnk', 'Desfazer'); b.type = 'button'; b.onclick = () => desfazer(m.id); d.append(b); box.append(d); return box;
   }
   if (editando === m.id) { box.append(editor(m)); return box; }
+  if (typeof m.resp === 'string' && ID_RE.test(m.resp)) box.append(citacao(atual, m.resp));
   const gg = m.gif && renderGif(m.gif); if (gg) box.append(gg);
   const ks = cardsNoTexto(m.texto);
   const visivel = ks.length ? semLinkDeCard(m.texto || '') : (m.texto || '');
@@ -598,6 +606,7 @@ function renderMsg(m) {
   const c = canais[atual], ativo = !vencido(c);
   const meu = m.uid === user.uid;
   const ac = el('div', 'acoes-msg');
+  if (ativo && souMembro(atual)) { const rb = el('button', '', '↩️ Responder'); rb.type = 'button'; rb.onclick = () => responderA(m); ac.append(rb); }
   if (souMembro(atual) || souAdm()) { const r = el('button', '', '📝 No card'); r.type = 'button'; r.title = 'Registrar no card do Maré'; r.setAttribute('aria-label', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
     if (meu && typeof m.texto === 'string') { const e = el('button', '', '✏️ Editar'); e.type = 'button'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
@@ -629,19 +638,22 @@ function editor(m) {
 
 // ═══ Escrever ═══
 async function enviar() {
-  const t = $('entrada'), bruto = t.value, txt = bruto.trim(), id = atual, gif = gifEscolhido;
+  const t = $('entrada'), bruto = t.value, txt = bruto.trim(), id = atual, gif = gifEscolhido, resp = respondendo && respondendo.canal === id ? respondendo : null;
   if ((!txt && !gif) || !id || enviando) return;
   if (txt.length > 4000) { toast('Mensagem longa demais (máx. 4000 caracteres).'); return; }
   const k = push(ref(db, B + 'msgs/' + id)).key;
   const ts = serverTimestamp();
   const avisar = mencionadosEm(txt, Object.assign({}, membrosAtual));   // do canal DESTA mensagem, antes de qualquer await
+  const avisarResp = resp && resp.uid !== user.uid && membrosAtual[resp.uid] === true && !avisar.includes(resp.uid) ? resp.uid : '';   // quem foi respondido (a @menção já avisa)
   enviando = true; $('b-enviar').disabled = true;
   try {
     // contrato com as regras: a mensagem e o marcador de não lidas no MESMO update, com o mesmo serverTimestamp
-    const corpo = { uid: user.uid, ts }; if (txt) corpo.texto = txt; if (gif) corpo.gif = Object.assign({}, gif);   // GIF sem legenda vale (regras: texto OU gif)
+    const corpo = { uid: user.uid, ts }; if (txt) corpo.texto = txt; if (gif) corpo.gif = Object.assign({}, gif); if (resp) corpo.resp = resp.id;   // GIF sem legenda vale (regras: texto OU gif)
     await update(ref(db), { [B + 'msgs/' + id + '/' + k]: corpo, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } });
     if (gif && gifEscolhido === gif) limparGif();
     avisarMencoes(id, k, avisar);
+    if (avisarResp) avisarMencoes(id, k, [avisarResp], true);
+    if (resp && respondendo === resp) cancelarResposta(false);
     if (atual === id && t.value === bruto) { t.value = ''; ajustarAltura(); }
     lsSet(chaveRascunho(id), atual === id ? t.value : '');
   } catch (e) { falhou('enviar a mensagem', e); }
@@ -650,17 +662,42 @@ async function enviar() {
 // 🔔 @menção (etapa 4, docs/ideias/cardume-v0-banco.md): as notificações (kanban/usuarios/…) são legíveis por toda a Hering, então ela vai
 // GENÉRICA — sem canal, sem trecho. O canal e a mensagem ficam no índice PRIVADO kanban/cardume/mencoes/{uid}/{ref}, que as regras só aceitam
 // de quem escreveu a mensagem, para um membro do mesmo canal. Um update por pessoa (o índice + a notificação que ele prova): se uma falhar, as outras seguem.
-function avisarMencoes(canal, msgId, uids) {
+function avisarMencoes(canal, msgId, uids, resposta) {   // resposta = aviso de ↩️ (r: true no índice; as regras exigem que a mensagem responda uma da pessoa)
   if (!uids.length) return;
   const quem = (user.displayName || user.email || '').split(' ')[0] || 'Alguém';
   uids.forEach(u => {
     const r = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), n = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
     update(ref(db), {
-      [B + 'mencoes/' + u + '/' + r]: { c: canal, m: msgId, de: user.uid, ts: serverTimestamp(), n },
-      ['kanban/usuarios/' + u + '/notificacoes/' + n]: { id: n, type: 'cardume_mencao', title: '🐚 ' + quem + ' te mencionou na Concha', sub: 'Toque para abrir a conversa', cardumeRef: r, dev: true, read: false, ts: new Date().toISOString() },
+      [B + 'mencoes/' + u + '/' + r]: Object.assign({ c: canal, m: msgId, de: user.uid, ts: serverTimestamp(), n }, resposta ? { r: true } : {}),
+      ['kanban/usuarios/' + u + '/notificacoes/' + n]: { id: n, type: 'cardume_mencao', title: '🐚 ' + quem + (resposta ? ' respondeu você na Concha' : ' te mencionou na Concha'), sub: 'Toque para abrir a conversa', cardumeRef: r, dev: true, read: false, ts: new Date().toISOString() },
     }).catch(e => console.warn('[cardume] não deu pra avisar a menção:', e));
   });
 }
+
+// ═══ ↩️ Responder (etapa 4) — a mensagem guarda só o id da original (`resp`); a citação é montada na tela (some se a original for apagada) ═══
+let respondendo = null;   // { canal, id, uid }
+const resumoMsg = m => !m ? '' : m.apagada ? '(mensagem apagada)' : String(m.texto || (m.gif ? '[GIF' + (m.gif.t ? ': ' + m.gif.t : '') + ']' : '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 140);
+function citacao(canal, id) {
+  const o = msgs.find(x => x.id === id);
+  const b = el('button', 'citacao'); b.type = 'button';
+  let quem = '', tr;
+  if (o) { quem = o.apagada ? '' : nomePessoa(o.uid); tr = resumoMsg(o); }
+  else { tr = trechoDe(canal, id); if (tr == null) tr = '…'; }
+  b.append(el('span', '', '↩️'));
+  if (quem) b.append(el('b', '', quem));
+  b.append(el('span', 'sub', tr || '…'));
+  b.setAttribute('aria-label', 'Ir para a mensagem respondida' + (quem ? ' de ' + quem : ''));
+  b.onclick = () => { alvoMsg = id; irParaAlvo(canal); };
+  return b;
+}
+function responderA(m) {
+  respondendo = { canal: atual, id: m.id, uid: m.uid };
+  const bar = $('resp-barra'); bar.replaceChildren();
+  bar.append(el('span', '', '↩️'), el('b', '', 'Respondendo a ' + nomePessoa(m.uid)), el('span', 'sub', resumoMsg(m)));
+  const x = el('button', 'lnk', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Cancelar a resposta'); x.onclick = () => cancelarResposta(true);
+  bar.append(x); bar.hidden = false; entrada.focus();
+}
+function cancelarResposta(foco) { respondendo = null; const bar = $('resp-barra'); if (bar) { bar.hidden = true; bar.replaceChildren(); } if (foco) entrada.focus(); }
 // Rola até a mensagem pedida (?m= ou clique numa menção) e destaca por alguns segundos.
 function irParaAlvo(id) {
   if (!alvoMsg || id !== atual) return;
@@ -827,7 +864,7 @@ function modalRegistrar(m0) {
 const trechos = {};   // 'c/m' → texto (lido da própria mensagem, com acesso de membro)
 function trechoDe(c, m) {
   const k = c + '/' + m;
-  if (!(k in trechos)) { trechos[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); trechos[k] = !v ? '(mensagem apagada)' : v.apagada ? '(mensagem apagada)' : String(v.texto || (v.gif ? '[GIF]' : '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160); if (vendoMencoes) renderMsgs(); }).catch(() => { trechos[k] = '(sem acesso a este canal)'; if (vendoMencoes) renderMsgs(); }); }
+  if (!(k in trechos)) { trechos[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); trechos[k] = !v ? '(mensagem apagada)' : v.apagada ? '(mensagem apagada)' : String(v.texto || (v.gif ? '[GIF]' : '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160); if (vendoMencoes || atual === c) renderMsgs(); }).catch(() => { trechos[k] = '(sem acesso a este canal)'; if (vendoMencoes || atual === c) renderMsgs(); }); }
   return trechos[k];
 }
 function abrirMencao(rec) {
@@ -843,7 +880,7 @@ function renderMencoes(log) {
     const b = el('button', 'mencao-item' + (rec.lida ? '' : ' nova')); b.type = 'button';
     const h = typeof rec.ts === 'number' ? new Date(rec.ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
     const tr = trechoDe(rec.c, rec.m);
-    b.append(el('b', '', nomePessoa(rec.de) + ' te mencionou em # ' + nomeCanal(rec.c)), el('span', 'sub', tr == null ? '…' : tr), el('span', 'hora', h + (rec.lida ? '' : ' · nova')));
+    b.append(el('b', '', nomePessoa(rec.de) + (rec.r === true ? ' respondeu você em # ' : ' te mencionou em # ') + nomeCanal(rec.c)), el('span', 'sub', tr == null ? '…' : tr), el('span', 'hora', h + (rec.lida ? '' : ' · nova')));
     b.onclick = () => abrirMencao(rec);
     log.append(b);
   });
@@ -922,6 +959,7 @@ function prefixarLinha(pre) {
 entrada.addEventListener('input', () => { ajustarAltura(); atualizarSug(); if (atual) lsSet(chaveRascunho(atual), entrada.value); });
 entrada.addEventListener('keydown', e => {
   if (teclaSug(e, entrada)) return;
+  if (e.key === 'Escape' && respondendo) { e.preventDefault(); cancelarResposta(true); return; }
   if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); envolver('**'); return; }
   if ((e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); envolver('_'); return; }
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); enviar(); }
@@ -1220,6 +1258,7 @@ function limparSessao() {
   Object.keys(canais).forEach(k => delete canais[k]); Object.keys(ultimas).forEach(k => delete ultimas[k]);
   Object.keys(infoCards).forEach(k => delete infoCards[k]);   // o acesso aos cards é da conta
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
+  cancelarResposta(false);
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }

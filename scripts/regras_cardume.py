@@ -27,8 +27,8 @@ def ATIVO(base): return f"!{VENC(base)}"
 TS="newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000"
 same="newData.child('uid').val() === data.child('uid').val() && newData.child('ts').val() === data.child('ts').val()"
 criar=f"(!data.exists() && newData.child('uid').val() === auth.uid && {TS} && (newData.hasChild('texto') || newData.hasChild('gif')) && !newData.hasChild('editado') && !newData.hasChild('apagada'))"
-editar=f"(data.exists() && data.child('uid').val() === auth.uid && {same} && newData.hasChild('texto') && newData.child('editado').isNumber() && newData.child('editado').val() >= data.child('ts').val() && newData.child('editado').val() <= now && newData.child('editado').val() > now - 60000 && !newData.hasChild('apagada') && newData.hasChild('gif') === data.hasChild('gif') && newData.child('card').val() === data.child('card').val() && newData.child('cardSq').val() === data.child('cardSq').val())"
-apagar=f"(data.exists() && (data.child('uid').val() === auth.uid || {ADM}) && {same} && newData.child('apagada').val() === true && !newData.hasChild('texto') && !newData.hasChild('gif') && !newData.hasChild('card') && !newData.hasChild('cardSq') && !newData.hasChild('editado'))"
+editar=f"(data.exists() && data.child('uid').val() === auth.uid && {same} && newData.hasChild('texto') && newData.child('editado').isNumber() && newData.child('editado').val() >= data.child('ts').val() && newData.child('editado').val() <= now && newData.child('editado').val() > now - 60000 && !newData.hasChild('apagada') && newData.hasChild('gif') === data.hasChild('gif') && newData.child('resp').val() === data.child('resp').val() && newData.child('card').val() === data.child('card').val() && newData.child('cardSq').val() === data.child('cardSq').val())"
+apagar=f"(data.exists() && (data.child('uid').val() === auth.uid || {ADM}) && {same} && newData.child('apagada').val() === true && !newData.hasChild('texto') && !newData.hasChild('gif') && !newData.hasChild('resp') && !newData.hasChild('card') && !newData.hasChild('cardSq') && !newData.hasChild('editado'))"
 JAN="newData.val() <= now && newData.val() > now - 60000"
 ANO="31622400000"
 NOME={".validate":"newData.isString() && newData.val().length >= 1 && newData.val().length <= 40"}
@@ -49,8 +49,9 @@ MEN_CRIAR=(f"newData.child('de').val() === auth.uid && $uid !== auth.uid && newD
   f" && root.child('kanban/cardume/membros/' + {NC} + '/' + auth.uid).val() === true && root.child('kanban/cardume/membros/' + {NC} + '/' + $uid).val() === true"
   f" && (!{NC}.matches(/^t-/) || {CANALR}.exists()) && !({CANALR}.child('fim').isNumber() && {CANALR}.child('fim').val() <= now)"
   f" && {MSGR}.child('uid').val() === auth.uid && {MSGR}.child('apagada').val() !== true && {MSGR}.child('ts').isNumber() && {MSGR}.child('ts').val() > now - 60000"
-  f" && newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000 && !newData.hasChild('lida')")
-MEN_SO_LIDA="newData.child('c').val() === data.child('c').val() && newData.child('m').val() === data.child('m').val() && newData.child('de').val() === data.child('de').val() && newData.child('ts').val() === data.child('ts').val() && newData.child('n').val() === data.child('n').val()"
+  f" && newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000 && !newData.hasChild('lida')"
+  f" && (!newData.hasChild('r') || ({MSGR}.child('resp').isString() && root.child('kanban/cardume/msgs/' + {NC} + '/' + {MSGR}.child('resp').val() + '/uid').val() === $uid))")
+MEN_SO_LIDA="newData.child('c').val() === data.child('c').val() && newData.child('m').val() === data.child('m').val() && newData.child('de').val() === data.child('de').val() && newData.child('ts').val() === data.child('ts').val() && newData.child('n').val() === data.child('n').val() && newData.child('r').val() === data.child('r').val()"
 MEUS5=P(5,"meus/' + $uid + '/' + $canal + '")
 block={
  "canais":{"$canal":{
@@ -83,6 +84,7 @@ block={
      "card": {".validate": f"newData.isString() && newData.val().matches({ID}) && (!data.parent().exists() || newData.val() === data.val())"},
      "cardSq": {".validate": f"newData.isString() && newData.val().matches({ID}) && (!data.parent().exists() || newData.val() === data.val())"},
      "editado": {".validate": f"newData.isNumber() && data.parent().exists() && {JAN} && newData.val() >= data.parent().child('ts').val()"},
+     "resp": {".validate": f"newData.isString() && newData.val().matches({ID}) && newData.val() !== $msgId && (!data.parent().exists() || newData.val() === data.val()) && root.child('kanban/cardume/msgs/' + $canal + '/' + newData.val()).exists()"},
      "gif": {".validate": "newData.hasChildren(['u','w','h']) && (!data.parent().exists() || (data.exists() && newData.child('s').exists() === data.child('s').exists() && newData.child('t').exists() === data.child('t').exists()))",
        "u": {".validate": f"newData.isString() && newData.val().matches({GIF_RE}) && (!data.parent().parent().exists() || newData.val() === data.val())"},
        "s": {".validate": f"newData.isString() && newData.val().matches({GIF_RE}) && (!data.parent().parent().exists() || newData.val() === data.val())"},
@@ -90,7 +92,7 @@ block={
        "h": {".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 4096 && (!data.parent().parent().exists() || newData.val() === data.val())"},
        "t": {".validate": "newData.isString() && newData.val().length <= 100 && (!data.parent().parent().exists() || newData.val() === data.val())"},
        "$outro": {".validate": False}},
-     "apagada": {".validate": "newData.val() === true && !newData.parent().hasChild('texto') && !newData.parent().hasChild('gif') && !newData.parent().hasChild('card') && !newData.parent().hasChild('cardSq') && !newData.parent().hasChild('editado')"},
+     "apagada": {".validate": "newData.val() === true && !newData.parent().hasChild('texto') && !newData.parent().hasChild('gif') && !newData.parent().hasChild('resp') && !newData.parent().hasChild('card') && !newData.parent().hasChild('cardSq') && !newData.parent().hasChild('editado')"},
      "$outro": {".validate": False}}}},
  "ultima":{"$canal":{
    ".read": f"{G} && ({ADM} || {MEM})",
@@ -115,6 +117,7 @@ block={
      "de": {".validate": "newData.isString()"},
      "ts": {".validate": "newData.isNumber()"},
      "lida": {".validate": "newData.isBoolean()"},
+     "r": {".validate": "newData.val() === true"},
      "$outro": {".validate": False}}}},
  "lidas":{"$uid":{".read": f"{G} && auth.uid === $uid", ".write": f"{G} && auth.uid === $uid", ".validate":"newData.hasChildren()",
    "$canal":{".validate": f"$canal.matches({ID}) && newData.isNumber()"}}},

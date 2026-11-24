@@ -35,15 +35,18 @@ function mencionadosNoTexto(txt, nomes) {
 // notificação depois (o nó do Sino é legível por toda a Hering) não pode reaproveitar um registro velho.
 const FRESCOR_MS = 5 * 60 * 1000;
 
-// rec = registro privado; msg = a mensagem; membros = membros/{c}; nomes = { uid: nome } dos membros.
-function mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes, agora = Date.now()) {
+// rec = registro privado; msg = a mensagem; membros = membros/{c}; nomes = { uid: nome } dos membros;
+// orig = a mensagem RESPONDIDA (só quando rec.r === true: aviso de ↩️ resposta — vale se ela é mesmo da pessoa avisada).
+function mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes, agora = Date.now(), orig = null) {
   if (!notif || notif.type !== 'cardume_mencao') return false;
   if (!ID_RE.test(String(notif.cardumeRef || '')) || !ID_RE.test(String(notifId || '')) || !ID_RE.test(String(uid || ''))) return false;
   if (!rec || typeof rec !== 'object' || rec.n !== String(notifId) || !ID_RE.test(String(rec.c || '')) || !ID_RE.test(String(rec.m || ''))) return false;
   if (rec.lida || typeof rec.ts !== 'number' || rec.ts > agora + 60000 || agora - rec.ts > FRESCOR_MS) return false;
-  if (!msg || msg.apagada || msg.uid !== rec.de || typeof msg.texto !== 'string') return false;
+  if (!msg || msg.apagada || msg.uid !== rec.de) return false;
   if (!membros || membros[uid] !== true || membros[rec.de] !== true) return false;
-  return mencionadosNoTexto(msg.texto, nomes).includes(uid);
+  if (rec.r === true) return typeof msg.resp === 'string' && ID_RE.test(msg.resp) && !!orig && orig.uid === uid && uid !== rec.de;   // ↩️ resposta (GIF sem legenda vale)
+  if (rec.r != null) return false;
+  return typeof msg.texto === 'string' && mencionadosNoTexto(msg.texto, nomes).includes(uid);
 }
 
 const nomeDe = (pub, uid) => String((pub && (pub.nome || pub.displayName)) || '').trim();
@@ -59,12 +62,14 @@ async function mencaoValida(db, uid, notif, notifId) {
       db.ref(`kanban/cardume/msgs/${rec.c}/${rec.m}`).get().then(s => s.val()),
       db.ref(`kanban/cardume/membros/${rec.c}`).get().then(s => s.val() || {}),
     ]);
+    const orig = rec.r === true && msg && typeof msg.resp === 'string' && ID_RE.test(msg.resp)
+      ? (await db.ref(`kanban/cardume/msgs/${rec.c}/${msg.resp}`).get()).val() : null;
     const uids = Object.keys(membros).filter(u => membros[u] === true && ID_RE.test(u));
     const pubs = await Promise.all(uids.map(u => db.ref(`kanban/usuarios_publicos/${u}`).get().then(s => [u, s.val()])));
     const nomes = Object.fromEntries(pubs.map(([u, p]) => [u, nomeDe(p, u)]).filter(([, n]) => n));
-    if (!mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes)) return nao;
+    if (!mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes, Date.now(), orig)) return nao;
     const quem = (nomes[rec.de] || 'Alguém').split(/\s+/)[0];
-    return { ok: true, title: '🐚 Concha', body: quem + ' te mencionou' };
+    return { ok: true, title: '🐚 Concha', body: quem + (rec.r === true ? ' respondeu você' : ' te mencionou') };
   } catch (e) { return nao; }
 }
 
