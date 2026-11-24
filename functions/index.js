@@ -55,9 +55,10 @@ exports.sendPushOnNotification = onValueCreated(
     }
 
     // 🐟 Cardume: a notificação de menção só vira push com prova de origem (registro privado em kanban/cardume/mencoes apontando para ela).
-    if (notif.type === 'cardume_mencao' && !(await mencaoValida(db, uid, notif, event.params.notifId))) {
-      console.log(`[push] ${uid}: cardume_mencao sem registro de menção que confira — não enviando.`);
-      return;
+    let textoConfiavel = null;
+    if (notif.type === 'cardume_mencao') {
+      textoConfiavel = await mencaoValida(db, uid, notif, event.params.notifId);
+      if (!textoConfiavel.ok) { console.log(`[push] ${uid}: cardume_mencao sem menção que confira — não enviando.`); return; }
     }
 
     // Checa Não Perturbe
@@ -80,8 +81,9 @@ exports.sendPushOnNotification = onValueCreated(
     const tokens = tokenEntries.map(([, t]) => t.token).filter(Boolean);
     if (!tokens.length) { console.log(`[push] ${uid}: fcm_tokens existe mas sem token válido (${tokenEntries.length} entradas), não enviando.`); return; }
 
-    const title = notif.title || 'Maré Digital';
-    const body = notif.sub || '';
+    // 🐟 Cardume: título e texto montados no servidor (cardumePush), nunca os gravados pelo navegador.
+    const title = textoConfiavel ? textoConfiavel.title : (notif.title || 'Maré Digital');
+    const body = textoConfiavel ? textoConfiavel.body : (notif.sub || '');
 
     // IMPORTANTE: manda só "data", sem o campo "notification". Quando os dois
     // vêm juntos, alguns navegadores (Safari/iOS em especial) já exibem a

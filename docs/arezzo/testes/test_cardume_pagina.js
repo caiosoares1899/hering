@@ -88,6 +88,8 @@ function conferirEscritas(escritas, quem) {
     t('quem escreveu não avisa a si mesmo', !ler(sN, 'kanban/usuarios/cai/notificacoes'), 0); }
   await enviar(p, 'exemplo de código: `@Ana Lima` e ```\n@Ana\n```'); await p.waitForTimeout(150);
   { const sC = await store(p); t('@nome dentro de código não avisa ninguém', Object.keys(ler(sC, 'kanban/cardume/mencoes/ana') || {}).length === 1 && !ler(sC, 'kanban/cardume/mencoes/ann'), ler(sC, 'kanban/cardume/mencoes')); }
+  await enviar(p, '**@Ana Lima** pode olhar?'); await p.waitForTimeout(150);
+  { const sB = await store(p); t('**@Ana Lima** (com negrito em volta) também avisa — mesmo critério da tela', Object.keys(ler(sB, 'kanban/cardume/mencoes/ana') || {}).length === 2, ler(sB, 'kanban/cardume/mencoes/ana')); }
   t('menção renderizada destacada', await p.evaluate(() => [...document.querySelectorAll('#log .mencao')].some(x => x.textContent === '@Ana Lima')), 0);
   await p.fill('#entrada', 'linha 1'); await p.press('#entrada', 'Shift+Enter');
   t('Shift+Enter quebra linha sem enviar', (await p.inputValue('#entrada')) === 'linha 1\n', await p.inputValue('#entrada'));
@@ -125,11 +127,11 @@ function conferirEscritas(escritas, quem) {
   const B = await abrir(ANA, estado);
   const q = B.p;
   t('Ana vê # Dados com ponto de não lido', await q.evaluate(() => { const x = document.querySelector('[data-canal="dados"]'); return !!x && x.classList.contains('nao-lido'); }), await q.textContent('#lista-canais'));
-  t('@ Menções mostra 1 nova', (await q.textContent('#mencoes-n')).trim() === '1' && await q.isVisible('#mencoes-n'), await q.textContent('#mencoes-n'));
+  t('@ Menções mostra as 2 novas', (await q.textContent('#mencoes-n')).trim() === '2' && await q.isVisible('#mencoes-n'), await q.textContent('#mencoes-n'));
   await q.click('#b-mencoes'); await q.waitForTimeout(150);
   t('a aba @ Menções lista a menção com o trecho', /te mencionou em # Dados/.test(await q.textContent('#log')) && /oi @Ana Lima/.test(await q.textContent('#log')), await q.textContent('#log'));
   await q.click('.mencao-item'); await q.waitForTimeout(500);
-  const sM = await store(q); const rM = Object.values(ler(sM, 'kanban/cardume/mencoes/ana') || {})[0];
+  const sM = await store(q); const rM = Object.values(ler(sM, 'kanban/cardume/mencoes/ana') || {}).sort((a, b) => b.ts - a.ts)[0];   // o 1º da lista = o mais novo
   t('clicar na menção abre o canal, destaca a mensagem e marca a menção como lida', (await q.evaluate(() => window.__cardume.estado.atual)) === 'dados' && await q.evaluate(() => !!document.querySelector('.msg.destaque')) && rM && rM.lida === true, { atual: await q.evaluate(() => window.__cardume.estado.atual), rM });
   await q.click('[data-canal="dados"]'); await q.waitForTimeout(1100);
   s = await store(q);

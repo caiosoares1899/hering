@@ -358,8 +358,8 @@ function mencaoDe(s, membros) {
   });
   return melhor;
 }
-// Mesmo critério da tela para quem é AVISADO: tira blocos e trechos de código, acha cada @Nome (o nome mais longo de um membro), sem repetir.
-const RE_MENCAO = /(?:^|[\s(])(@[\p{L}][\p{L}.'-]*(?: [\p{L}][\p{L}.'-]*){0,3})/gu;
+// Mesmo critério da tela (e da função de push, functions/common/cardumePush.js) para quem é AVISADO; "@" pode vir depois de marcação (**@Ana**): tira blocos e trechos de código, acha cada @Nome (o nome mais longo de um membro), sem repetir.
+const RE_MENCAO = /(?:^|[\s(*_~>])(@[\p{L}][\p{L}.'-]*(?: [\p{L}][\p{L}.'-]*){0,3})/gu;
 function mencionadosEm(txt, membros) {
   const limpo = String(txt).replace(/```[\s\S]*?(```|$)/g, ' ').replace(/`[^`\n]*`/g, ' ');
   const uids = new Set(); let m;
@@ -657,6 +657,7 @@ function renderMencoes(log) {
   });
 }
 function abrirMencoes() {
+  Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
   if (atual) lsSet(chaveRascunho(atual), entrada.value);
   parar('msgs'); parar('membros'); parar('admins'); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = '';
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
