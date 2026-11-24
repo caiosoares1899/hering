@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-24 · 🐚 Concha: ações da mensagem fora do alcance do teclado (SÓ DEV, cardume v0.18) — 2026-11-24
+
+cardume-dev.html: .acoes-msg ficava em display:none até o hover, então o Tab nunca chegava em ↩️ Responder / 📝 No card / ✏️ Editar / 🗑 Apagar (o :focus-within que as mostraria nunca disparava). Achado de passagem na rodada /melhoriauiux; agora ficam com opacity 0 + pointer-events none em repouso, entram no Tab e aparecem ao receber foco. Teste: test_concha_ui.js.
+
 ### 2026-11-24 · Concha: citação de original fora das 50 mostrava o texto mesmo depois de apagada (SÓ DEV, cardume v0.16)
 
 Achado do Codex na #1959. A citação de uma original fora das últimas 50 lia o trecho uma vez (cache). Agora escuta a original enquanto o canal está aberto (uma escuta por citação, encerrada ao trocar de canal): apagar/editar atualiza a citação na hora. Teste: test_concha_responder.js (16, sabotagem confirmada).

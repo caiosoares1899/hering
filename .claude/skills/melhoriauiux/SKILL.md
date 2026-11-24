@@ -143,6 +143,8 @@ Formato: data · tela · achados · versão. Consulte também `CHANGELOG.md` (bu
 
 Atualize esta seção a cada rodada nova (1–3 linhas: tela, achados, versão/PR).
 
+- **2026-11-24 · 🐚 Concha (inteira, "vidro e mar"):** painéis 82 % opacos sem peixes → mar em camada própria (o fundo do `body` pinta POR CIMA dos peixes de z-index negativo; o mar vai numa `.ocean` fixa) com os peixes do Oceano na preferência 🐟 de lá; conversa a 30 %, `.app` com blur 10; ações da mensagem em pílula flutuante (alcançável por Tab — antes `display:none`) e, no celular, só na mensagem tocada. **Lição:** no Abrolhos o mar é quase preto; peixes translúcidos atrás de vidro desfocado somem — o "mar" ali vem da translucidez e do Entardecer/Lençóis, não de forçar peixe. Teste `test_concha_ui.js`. cardume-dev v0.18.
+
 - **2026-11-16 · Maré, toolbar (Black Friday e três temas):** folga vertical de 4 px evita recorte de bordas/foco pelo scroll; mantém 44 px no celular. 24 cenários antes/depois; kanban v8.30.993-dev.
 
 - **2026-11-17 · Maré (critérios do Arc UI, transversal):** "✓ Salvo" do autosave caía no "Salvar impedimento" escondido (1º `.btn-p` do modal) e grudava com 2 saves seguidos → `#btn-save-card` e rótulo recalculado; hover levantava card/botão no toque do iPad (o `transform:none` só valia em tela estreita) → bloco `@media (hover:none)`; contadores/métricas/sino com `tabular-nums`. Já estava bom: foco por teclado visível nos 3 temas; o "passa do ponto" (overshoot) só no pop de notificação. **Lição:** teste de hover/transição precisa esperar a `transition` terminar — ler o estilo logo após forçar `:hover` devolve o valor inicial (deu verde falso na `main`). Auditoria reutilizável: `auditar_arc_mare.js` (`KANBAN_HTML=` compara com a `main`). kanban v8.30.999-dev.

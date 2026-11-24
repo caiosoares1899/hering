@@ -39,18 +39,37 @@
 *{box-sizing:border-box;}
 [hidden]{display:none!important;}
 html{background:var(--deep);}
-body{margin:0;color:var(--txt);font:14px/1.5 var(--ff);background:var(--ocean) fixed;}
+body{margin:0;color:var(--txt);font:14px/1.5 var(--ff);background:transparent;}
+/* ═══ Mar (Marine Glass §5): fundo em camadas + bolhas + os 3 peixes oficiais do Oceano, sempre ATRÁS do vidro e sem receber clique ═══ */
+.ocean{position:fixed;inset:0;z-index:-3;pointer-events:none;background:var(--ocean);}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-110vh);opacity:0}}
+.fish-wrap,.bubble-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;contain:strict;}
+.bubble-wrap{z-index:-2;}.fish-wrap{z-index:-1;}
+.fish-ltr{position:absolute;animation:swimLTR linear infinite;}
+@keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
+.fish-rtl{position:absolute;animation:swimRTL linear infinite;}
+@keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
+.bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
+[data-theme="light"] .fish-wrap svg polygon,[data-theme="light"] .fish-wrap svg ellipse{fill:rgba(236,247,252,.5);stroke:rgba(0,35,55,.38);stroke-width:1;}
+[data-theme="light"] .fish-wrap svg circle{fill:rgba(0,35,55,.5);}
+[data-theme="light"] .bubble{border-color:rgba(0,35,55,.3);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.75),rgba(255,255,255,.18));}
+.fish-ltr,.fish-rtl,.bubble{will-change:transform;}
+[data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble{animation-play-state:paused!important;}
+@media (prefers-reduced-motion:reduce){.fish-ltr,.fish-rtl,.bubble{animation:none!important;}}
 h1,h2,h3,p{margin:0;}
 h1,h2,h3{font-family:var(--ff-d);line-height:1.2;}
 h1{font-size:26px;} h2{font-size:18px;overflow-wrap:anywhere;} h3{font-size:13px;color:var(--txt2);font-family:var(--ff);text-transform:uppercase;letter-spacing:.04em;margin:14px 8px 6px;}
-button,select,textarea,input{color:inherit;font:inherit;border:1px solid var(--glass-b);border-radius:var(--r);background:rgb(var(--ink-rgb));}
+button,select,textarea,input{color:inherit;font:inherit;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--slate-rgb),.55);}
+button,select{box-shadow:var(--specular);transition:border-color .2s,background .2s;}
+textarea,input{background:rgba(var(--ink-rgb),.55);}
 button,select{min-height:40px;padding:6px 12px;cursor:pointer;}
-button:hover,select:hover{border-color:var(--accent);}
+button:hover,select:hover{border-color:var(--accent);background:rgba(var(--slate-rgb),.8);}
+.primary:hover{background:var(--accent);filter:brightness(1.08);}
 button:disabled{opacity:.5;cursor:default;}
 input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .primary{background:var(--accent);color:rgb(var(--ink-rgb));font-weight:800;border-color:var(--accent);}
-.lnk{background:none;border:0;min-height:0;padding:0 2px;color:var(--accent);text-decoration:underline;}
+.lnk,.lnk:hover{background:none;border:0;box-shadow:none;min-height:0;padding:0 2px;color:var(--accent);text-decoration:underline;}
 .perigo{color:var(--danger);}
 .shell{max-width:1440px;height:100vh;height:100dvh;margin:auto;padding:14px 22px 20px;display:flex;flex-direction:column;gap:12px;}
 .topo{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 20px;}
@@ -66,17 +85,19 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .cartao{max-width:420px;margin:8vh auto;padding:22px;border:1px solid var(--glass-b);border-radius:20px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);display:grid;gap:12px;}
 .cartao p{color:var(--txt2);}
 .erro{color:var(--danger);}
-.app{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(250px,26%);flex:1;min-height:0;border:1px solid var(--glass-b);border-radius:20px;overflow:hidden;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr) minmax(250px,26%);flex:1;min-height:0;border:1px solid var(--glass-b);border-radius:20px;overflow:hidden;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .app.sem-lado{grid-template-columns:230px minmax(0,1fr);}
-.painel{min-width:0;min-height:0;display:flex;flex-direction:column;background:rgba(var(--ink-rgb),.82);}
+.painel{min-width:0;min-height:0;display:flex;flex-direction:column;background:transparent;}
+.conversa{background:rgba(var(--ink-rgb),.3);}   /* a conversa um tom mais funda que as laterais: o olho vai para ela */
 .lateral{padding:12px 10px;border-right:1px solid var(--glass-b);overflow:auto;}
-.canal{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:3px;text-align:left;background:transparent;border-color:transparent;font-weight:600;min-height:38px;}
+.canal{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:3px;text-align:left;background:transparent;border-color:transparent;box-shadow:none;font-weight:600;min-height:38px;}
 .canal .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.canal[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.85);border-color:var(--glass-b);}
+.canal[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.7);border-color:var(--glass-b);box-shadow:var(--specular);}
 .canal.nao-lido .nome{font-weight:800;color:var(--txt);}
 .ponto{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;}
 .chip{display:inline-block;padding:1px 7px;border-radius:999px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);font-size:11px;line-height:1.5;color:var(--txt2);}
-.novo-canal{width:100%;margin-top:8px;}
+.novo-canal{width:100%;margin-top:8px;background:transparent;border-style:dashed;box-shadow:none;color:var(--txt2);}
+.novo-canal:hover{color:var(--txt);}
 .cabecalho{padding:10px 14px;min-height:60px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--glass-b);}
 .cabecalho .grow{flex:1;min-width:0;}
 .voltar{display:none;}
@@ -89,22 +110,23 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .avatar img{width:100%;height:100%;object-fit:cover;}
 .autor{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;}
 .autor b{font-weight:700;}
-.msg{position:relative;padding:2px 64px 2px 0;border-radius:8px;}
+.msg{position:relative;padding:2px 6px;margin:0 -6px;border-radius:8px;}
 .msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
-.b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;font-weight:700;}
-.b-mencoes[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.85);}
+.b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;box-shadow:none;font-weight:700;}
+.b-mencoes[aria-current="true"]{color:var(--accent);background:rgba(var(--slate-rgb),.7);box-shadow:var(--specular);}
 .selo-n{min-width:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:rgb(var(--ink-rgb));font-size:11px;font-weight:800;text-align:center;}
 .faixa-alvo{margin:8px 16px 0;padding:8px 12px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);}
 .faixa-alvo .autor{gap:10px;}
 .mencao-item{display:grid;gap:2px;width:100%;text-align:left;margin:6px 0;padding:10px 12px;background:rgba(var(--slate-rgb),.6);}
 .mencao-item.nova{border-color:var(--accent);}
 .mencao-item .sub{color:var(--txt2);overflow-wrap:anywhere;}
-.msg:hover,.msg:focus-within{background:rgba(var(--slate-rgb),.45);}
+.msg:hover,.msg:focus-within,.msg.tocada{background:rgba(var(--slate-rgb),.4);}
 .msg .texto{overflow-wrap:anywhere;white-space:pre-wrap;}
 .msg .texto p{margin:0;}
-.msg .acoes-msg{position:absolute;right:4px;top:0;display:none;gap:4px;}
-.msg:hover .acoes-msg,.msg:focus-within .acoes-msg{display:flex;}
-.acoes-msg button{min-height:28px;padding:2px 8px;font-size:12px;}
+.msg .acoes-msg{position:absolute;right:8px;top:-20px;z-index:2;display:flex;gap:2px;padding:3px;border:1px solid var(--glass-b);border-radius:999px;background:rgba(var(--ink-rgb),.94);box-shadow:var(--shadow),var(--specular);opacity:0;pointer-events:none;transition:opacity .12s;}
+.msg:hover .acoes-msg,.msg:focus-within .acoes-msg,.msg.tocada .acoes-msg{opacity:1;pointer-events:auto;}
+.acoes-msg button{min-height:28px;padding:2px 10px;font-size:12px;border-color:transparent;border-radius:999px;background:transparent;box-shadow:none;white-space:nowrap;}
+.acoes-msg button:hover{background:rgba(var(--slate-rgb),.9);border-color:var(--glass-b);}
 .hora,.editada{color:var(--txt2);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;}
 .apagada{color:var(--txt2);font-style:italic;}
 .cards-msg{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px;}
@@ -131,13 +153,16 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .editor{display:grid;gap:6px;margin:4px 0;position:relative;}
 .sug-editor{left:0;right:0;}
 .editor .linha{display:flex;gap:6px;justify-content:flex-end;}
-.rodape{position:relative;padding:8px 14px 10px;border-top:1px solid var(--glass-b);}
+.rodape{position:relative;padding:8px 14px 10px;border-top:1px solid var(--glass-b);background:rgba(var(--slate-rgb),.18);}
 .barra-fmt{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;}
-.barra-fmt button{min-height:32px;min-width:34px;padding:2px 8px;font-size:13px;}
+.barra-fmt button{min-height:32px;min-width:34px;padding:2px 8px;font-size:13px;background:transparent;border-color:transparent;box-shadow:none;}
+.barra-fmt button:hover,.barra-fmt button[aria-expanded="true"]{background:rgba(var(--slate-rgb),.7);border-color:var(--glass-b);}
 .compositor{display:flex;align-items:flex-end;gap:6px;}
 textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;resize:none;max-height:30vh;}
 .ajuda{margin-top:3px;color:var(--txt2);font-size:12px;}
-.sugestoes,.emojis,.gifs{position:absolute;z-index:3;bottom:100%;left:14px;right:14px;max-height:40vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgb(var(--ink-rgb));box-shadow:var(--shadow);}
+.so-toque{display:none;}
+@media (hover:none) and (pointer:coarse){.so-teclado{display:none;}.so-toque{display:inline;}}
+.sugestoes,.emojis,.gifs{position:absolute;z-index:3;bottom:100%;left:14px;right:14px;max-height:40vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:var(--r2);background:rgba(var(--ink-rgb),.95);box-shadow:var(--shadow),var(--specular);}
 .sugestao{display:block;width:100%;text-align:left;margin-bottom:2px;min-height:36px;}
 .sugestao[aria-selected="true"]{border-color:var(--accent);background:rgb(var(--slate-rgb));}
 .emojis{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:2px;right:auto;width:min(360px,calc(100% - 28px));}
@@ -161,10 +186,10 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 .msg-gif{display:block;padding:0;margin:4px 0;border:0;background:none;min-height:0;width:min(240px,100%);}
 .msg-gif img{display:block;width:100%;height:auto;max-height:320px;object-fit:contain;border-radius:10px;}
 button.msg-gif{cursor:pointer;}
-.emojis button{min-height:38px;padding:0;font-size:20px;background:transparent;border-color:transparent;}
+.emojis button{min-height:38px;padding:0;font-size:20px;background:transparent;border-color:transparent;box-shadow:none;}
 .emojis button:hover,.emojis button:focus-visible{border-color:var(--accent);}
 .emojis .rot{grid-column:1/-1;font-size:11px;color:var(--txt2);margin:2px 4px;}
-.lado{border-left:1px solid var(--glass-b);background:rgba(var(--slate-rgb),.78);overflow:auto;padding:0 0 14px;}
+.lado{border-left:1px solid var(--glass-b);background:rgba(var(--slate-rgb),.22);overflow:auto;padding:0 0 14px;}
 .lado section{padding:0 14px;}
 .lado p{color:var(--txt2);font-size:13px;}
 .pessoa{display:flex;align-items:center;gap:8px;padding:4px 0;}
@@ -172,13 +197,15 @@ button.msg-gif{cursor:pointer;}
 .pessoa .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pessoa button{min-height:30px;padding:2px 8px;font-size:12px;}
 .acoes-lado{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
-.ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;}
-.md{width:min(460px,100%);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--glass-b);border-radius:18px;background:rgb(var(--ink-rgb));box-shadow:var(--shadow);display:grid;gap:12px;}
+.ov{position:fixed;inset:0;z-index:50;background:rgba(var(--ink-rgb),.4);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;}
+[data-theme="light"] .ov{background:rgba(7,40,60,.3);}
+.md{width:min(460px,100%);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--glass-b);border-radius:18px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:grid;gap:12px;}
+.md>h2{font-family:var(--ff-d);}
 .md label{display:grid;gap:4px;font-size:13px;color:var(--txt2);}
 .md .linha{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
 .radio{display:flex!important;grid-auto-flow:column;align-items:flex-start;gap:8px!important;color:var(--txt)!important;}
 .radio input{width:auto;min-height:0;margin-top:4px;}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;max-width:90vw;padding:10px 16px;border-radius:12px;background:rgb(var(--ink-rgb));border:1px solid var(--glass-b);box-shadow:var(--shadow);}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;max-width:90vw;padding:10px 16px;border-radius:999px;background:rgba(var(--ink-rgb),.9);border:1px solid var(--glass-b);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 #versao-aviso{position:fixed;left:0;right:0;top:0;z-index:90;text-align:center;background:#12314a;color:#e8f4fd;border-bottom:1px solid rgba(56,182,255,.4);padding:8px;font-size:13px;}
 @media (max-width:899px){
   .shell{padding:8px;gap:8px;}
@@ -187,12 +214,17 @@ button.msg-gif{cursor:pointer;}
   .app[data-tela="canais"]>:not(.lateral),.app[data-tela="conversa"]>:not(.conversa),.app[data-tela="lado"]>:not(.lado){display:none;}
   .voltar{display:inline-block;}
   .lateral,.lado{border:0;}
-  .msg{padding-right:0;}
-  .msg .acoes-msg{position:static;display:flex;justify-content:flex-end;}
+  .msg .acoes-msg{position:static;display:none;flex-wrap:wrap;justify-content:flex-end;margin-top:4px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;opacity:1;pointer-events:auto;}
+  .msg.tocada .acoes-msg,.msg:focus-within .acoes-msg{display:flex;}
+  .msg:hover:not(.tocada):not(:focus-within){background:transparent;}
+  .acoes-msg button{min-height:44px;padding:4px 12px;font-size:13px;border-color:var(--glass-b);background:rgba(var(--slate-rgb),.6);}
 }
 </style>
 </head>
 <body>
+<div class="ocean" aria-hidden="true"></div>
+<div class="bubble-wrap" id="bwrap" aria-hidden="true"></div>
+<div class="fish-wrap" id="fwrap" aria-hidden="true"></div>
 <div id="versao-aviso" hidden>Há uma versão nova da Concha. <button class="primary" type="button" onclick="location.reload()">Atualizar</button></div>
 <div class="shell">
   <header class="topo">
@@ -250,7 +282,7 @@ button.msg-gif{cursor:pointer;}
           <textarea id="entrada" rows="1" aria-label="Mensagem" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…" maxlength="4000"></textarea>
           <button class="primary" type="submit" id="b-enviar">Enviar</button>
         </form>
-        <p class="ajuda" id="ajuda">Enter envia · Shift+Enter quebra linha · @ menciona (a pessoa é avisada) · **negrito** _itálico_ `código`</p>
+        <p class="ajuda" id="ajuda"><span class="so-teclado">Enter envia · Shift+Enter quebra linha · </span><span class="so-toque">Toque numa mensagem para responder · </span>@ menciona (a pessoa é avisada) · **negrito** _itálico_ `código`</p>
       </div>
     </section>
 
@@ -267,7 +299,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.17 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.18 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -301,6 +333,39 @@ const LIMITE = 50;
 const DESFAZER_MS = 5000;
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+// ═══ Mar: peixinhos e bolhas — os MESMOS do Oceano (FISH_SVGS/criarPeixes), na preferência 🐟 que a pessoa escolheu lá (⚙ Meu perfil):
+// off = mar calmo · poucos = metade · normal = 8 peixes e 16 bolhas (metade no celular). "Reduzir movimento" começa desligado.
+// Param com a aba escondida, a janela sem foco ou 60 s sem mexer — o vidro (backdrop-filter) refaz o desfoque a cada quadro enquanto algo nada atrás dele.
+const FISH_SVGS = [
+  '<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>',
+  '<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>',
+  '<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>',
+];
+function modoPeixes() {
+  try { const o = JSON.parse(lsGet('oceano_prefs') || 'null'); if (o && ['off', 'poucos', 'normal'].includes(o.peixes)) return o.peixes; if (o && o.peixes === 'muitos') return 'normal'; } catch (e) {}
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 'off';
+  return lsGet('fish_bg_off') === '1' ? 'off' : 'normal';
+}
+function criarPeixes() {
+  const fw = $('fwrap'), bw = $('bwrap'); if (!fw || !bw) return; fw.replaceChildren(); bw.replaceChildren();
+  const modo = modoPeixes(); if (modo === 'off') return;
+  const mobile = matchMedia('(max-width:768px)').matches, fator = modo === 'poucos' ? .5 : 1;
+  const nF = Math.max(2, Math.round((mobile ? 4 : 8) * fator)), nB = Math.max(4, Math.round((mobile ? 8 : 16) * fator));
+  for (let i = 0; i < nF; i++) { const f = document.createElement('div'); f.className = Math.random() > .5 ? 'fish-ltr' : 'fish-rtl'; f.style.top = (5 + Math.random() * 80) + '%'; f.style.animationDuration = (14 + Math.random() * 24) + 's'; f.style.animationDelay = (-Math.random() * 24) + 's'; f.innerHTML = FISH_SVGS[i % FISH_SVGS.length]; fw.append(f); }   // SVG constante do próprio arquivo, nunca dado
+  for (let i = 0; i < nB; i++) { const b = document.createElement('div'), sz = 3 + Math.random() * 14; b.className = 'bubble'; b.style.cssText = 'width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random() * 100) + '%;animation-duration:' + (8 + Math.random() * 18) + 's;animation-delay:-' + (Math.random() * 18) + 's;'; bw.append(b); }
+}
+let animOcioso = false, animTimer = null, animUltimo = 0;
+function atualizarAnimacao() { document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || animOcioso); }
+function animAtividade() {
+  const agora = Date.now(); if (!animOcioso && agora - animUltimo < 1000) return; animUltimo = agora;
+  if (animOcioso) { animOcioso = false; atualizarAnimacao(); }
+  clearTimeout(animTimer); animTimer = setTimeout(() => { animOcioso = true; atualizarAnimacao(); }, 60000);
+}
+['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => document.addEventListener(ev, animAtividade, { passive: true, capture: true }));
+document.addEventListener('visibilitychange', atualizarAnimacao); window.addEventListener('focus', atualizarAnimacao); window.addEventListener('blur', atualizarAnimacao);
+window.addEventListener('storage', e => { if (e.key === 'oceano_prefs' || e.key === 'fish_bg_off') criarPeixes(); });   // mudou no Oceano (outra aba): o mar daqui acompanha
+criarPeixes(); animAtividade(); atualizarAnimacao();
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 4200); }
 const negado = e => !!e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
 function falhou(acao, e) { toast(negado(e) ? `Não deu para ${acao}: sem permissão.` : `Não deu para ${acao}. Confira a conexão e tente de novo.`); console.warn('[cardume]', acao, e); }
@@ -587,6 +652,8 @@ function renderMsgs() {
   renderMsgs._ja = true;
 }
 function vazio(icone, txt) { const v = el('div', 'vazio'); if (icone) v.append(el('span', '', icone)); v.append(el('p', '', txt)); return v; }
+const TOQUE = matchMedia('(hover: none), (max-width: 899px)');
+let msgTocada = '';   // mensagem com as ações à mostra no celular
 function renderMsg(m) {
   const box = el('div', 'msg' + (destaque.id === m.id && Date.now() < destaque.ate ? ' destaque' : '')); box.dataset.msg = m.id;
   const pend = pendentes.get(m.id);
@@ -612,7 +679,16 @@ function renderMsg(m) {
     if (meu && typeof m.texto === 'string') { const e = el('button', '', '✏️ Editar'); e.type = 'button'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
     const x = el('button', 'perigo', '🗑 Apagar'); x.type = 'button'; x.onclick = () => apagar(m); ac.append(x);
   }
-  if (ac.childNodes.length) box.append(ac);
+  if (ac.childNodes.length) {
+    box.append(ac);
+    if (msgTocada === m.id) box.classList.add('tocada');
+    box.addEventListener('click', e => {   // no toque não há hover: tocar na mensagem mostra as ações dela (tocar de novo esconde)
+      if (!TOQUE.matches || e.target.closest('a,button,textarea,input')) return;
+      msgTocada = msgTocada === m.id ? '' : m.id;
+      document.querySelectorAll('.msg.tocada').forEach(x => { if (x !== box) x.classList.remove('tocada'); });
+      box.classList.toggle('tocada', msgTocada === m.id);
+    });
+  }
   return box;
 }
 function editor(m) {

@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha no Marine Glass: mar com peixes, vidro de verdade e ações da mensagem que não poluem o celular (SÓ DEV, cardume v0.18) — 2026-11-24
+
+Rodada /melhoriauiux "vidro e mar". Antes: painéis 82 % opacos sobre fundo sem peixes ("tema escuro com vidro por cima", erro listado no MARINE_GLASS), botões e campos em bloco sólido, ações da mensagem por cima do texto no computador e 4 botões em TODA mensagem no celular. Agora: camada do mar com bolhas e os 3 peixes oficiais do Oceano, na preferência 🐟 que a pessoa escolheu lá (Desligados/Poucos/Como no Maré; reduzir movimento começa sem), pausando com a aba escondida, a janela sem foco ou 60 s parado; conversa e laterais translúcidas (o horizonte do Entardecer aparece pelo vidro); botões, barra de formatação, campo, modal e aviso em vidro; ações numa pílula flutuante que o Tab alcança (🐞 antes display:none, fora do teclado); no celular as ações aparecem só na mensagem tocada, com alvos de 44 px, e a ajuda do campo fala de toque. Teste test_concha_ui.js (35; na main, 13 falham).
+
 ### 🐚 Concha: ↩️ Responder com citação e aviso para quem foi respondido (SÓ DEV, cardume v0.15) — 2026-11-24
 
 Etapa 4. Botão ↩️ Responder na mensagem: barra 'Respondendo a…' acima do campo (Esc ou ✕ cancela; trocar de canal cancela), a resposta mostra a citação (clicar leva à original; original fora das 50 é buscada; apagada vira '(mensagem apagada)'). Quem foi respondido recebe aviso no Sino e push ('Fulano respondeu você'), pelo índice privado de menções com r: true; sem duplicar com a @menção; responder a si mesmo não avisa. Regras: resp só na criação, mesmo canal, existente, imutável; r só para o autor da original. Push: cardumePush confere a resposta e monta o texto no servidor. Testes: cardumeRules (sabotagem), cardumePush, test_concha_responder.js (15).
