@@ -146,6 +146,7 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 .gif-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px;overflow:auto;max-height:min(46vh,360px);}
 .gif-op{padding:0;min-height:0;height:96px;overflow:hidden;border-radius:10px;background:rgba(var(--slate-rgb),.7);}
 .gif-op img{width:100%;height:100%;object-fit:cover;display:block;}
+.gif-cartao{display:grid;place-items:center;width:100%;height:100%;min-height:72px;padding:6px;font-size:12px;color:var(--txt2);text-align:center;overflow-wrap:anywhere;background:rgba(var(--slate-rgb),.85);border-radius:10px;}
 .gif-rodape{margin:0;color:var(--txt3,var(--txt2));font-size:11px;}
 .b-gif{font-weight:800;font-size:11px;letter-spacing:.03em;}
 .gif-escolhido{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:6px;border:1px dashed var(--glass-b);border-radius:12px;}
@@ -957,14 +958,31 @@ const ERRO_GIF = {
   fora_da_concha: 'Entre num canal da Concha para buscar GIFs.',
   busca_invalida: 'Busque com 2 a 50 letras.',
 };
+// Imagem do GIF respeitando o movimento reduzido: anima direto; ou mostra o quadro parado (s); ou, sem quadro parado, um cartão sem imagem.
+// `clicavel` = o próprio elemento anima ao clicar (na mensagem). Devolve {el, img|null}.
+function imagemGif(g, alt) {
+  const reduz = menosMovimento();
+  if (reduz && !gifOk(g.s)) { const c = el('span', 'gif-cartao', '▶ ' + alt); return { el: c, img: null }; }
+  const im = document.createElement('img'); im.src = reduz ? g.s : g.u; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer'; im.alt = alt;
+  return { el: im, img: im };
+}
 function renderGif(g) {
   if (!g || typeof g !== 'object' || !gifOk(g.u) || !dimOk(g.w) || !dimOk(g.h)) return null;
-  const parado = gifOk(g.s) && menosMovimento();
-  const caixa = el(parado ? 'button' : 'div', 'msg-gif');
-  const im = document.createElement('img'); im.src = parado ? g.s : g.u; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer';
-  im.alt = 'GIF' + (g.t ? ': ' + String(g.t).slice(0, 100) : ''); im.width = g.w; im.height = g.h; im.style.aspectRatio = g.w + ' / ' + g.h;   // reserva o espaço: a conversa não pula quando o GIF chega
-  if (parado) { caixa.type = 'button'; caixa.title = 'Animar o GIF'; caixa.setAttribute('aria-label', 'Animar o GIF'); caixa.onclick = () => { im.src = g.u; caixa.removeAttribute('title'); }; }
-  caixa.append(im); return caixa;
+  const alt = 'GIF' + (g.t ? ': ' + String(g.t).slice(0, 100) : '');
+  const reduz = menosMovimento();
+  const caixa = el(reduz ? 'button' : 'div', 'msg-gif');
+  const { el: vis, img } = imagemGif(g, alt);
+  if (img) { img.width = g.w; img.height = g.h; img.style.aspectRatio = g.w + ' / ' + g.h; }   // reserva o espaço: a conversa não pula quando o GIF chega
+  if (reduz) {   // movimento reduzido: nada anima sem a pessoa pedir
+    caixa.type = 'button'; caixa.title = 'Animar o GIF'; caixa.setAttribute('aria-label', 'Animar o ' + alt);
+    caixa.onclick = () => {
+      const im = img || document.createElement('img');
+      im.src = g.u; im.alt = alt; im.referrerPolicy = 'no-referrer'; im.width = g.w; im.height = g.h; im.style.aspectRatio = g.w + ' / ' + g.h;
+      if (!img) caixa.replaceChildren(im);
+      caixa.removeAttribute('title');
+    };
+  }
+  caixa.append(vis); return caixa;
 }
 async function buscarGifs(q) {
   if (gifCache.has(q)) return gifCache.get(q);
@@ -996,15 +1014,16 @@ function abrirGifs() {
       estado.textContent = itens.length ? (q ? '' : 'Em alta') : 'Nenhum GIF encontrado.';
       itens.forEach(i => {
         const b = el('button', 'gif-op'); b.type = 'button'; b.setAttribute('aria-label', 'Escolher GIF: ' + (i.t || 'sem título'));
-        const im = document.createElement('img'); im.src = i.p; im.alt = ''; im.loading = 'lazy'; im.referrerPolicy = 'no-referrer';
-        b.append(im); b.onclick = () => escolherGif(i); grade.append(b);
+        // movimento reduzido: quadro parado ou cartão; senão a prévia animada
+        b.append(menosMovimento() ? imagemGif(i, i.t || 'GIF').el : imagemGif({ u: i.p, s: i.s }, '').el);
+        b.onclick = () => escolherGif(i); grade.append(b);
       });
     } catch (e) {
       if (vez !== gifBuscaVez) return;
       estado.textContent = ERRO_GIF[e && e.codigo] || 'GIF indisponível agora. Tente de novo em instantes.';
     }
   };
-  busca.oninput = () => { clearTimeout(gifTimer); gifTimer = setTimeout(carregar, 400); };
+  busca.oninput = () => { clearTimeout(gifTimer); gifBuscaVez++; grade.replaceChildren(); estado.textContent = ''; gifTimer = setTimeout(carregar, 400); };   // resultado velho não fica clicável sob a busca nova
   busca.onkeydown = e => { if (e.key === 'Escape') { e.preventDefault(); fecharGifs(true); } };
   box.hidden = false; $('b-gif').setAttribute('aria-expanded', 'true'); busca.focus(); carregar();
 }
@@ -1012,7 +1031,7 @@ function fecharGifs(foco) { gifBuscaVez++; clearTimeout(gifTimer); $('gifs').hid
 function escolherGif(i) { gifEscolhido = { u: i.u, w: i.w, h: i.h, t: i.t }; if (i.s) gifEscolhido.s = i.s; fecharGifs(true); mostrarGifEscolhido(); }
 function mostrarGifEscolhido() {
   const b = $('gif-escolhido'); b.replaceChildren(); b.hidden = !gifEscolhido; if (!gifEscolhido) return;
-  const im = document.createElement('img'); im.src = gifEscolhido.u; im.alt = 'GIF' + (gifEscolhido.t ? ': ' + gifEscolhido.t : ''); im.referrerPolicy = 'no-referrer';
+  const im = imagemGif(gifEscolhido, 'GIF' + (gifEscolhido.t ? ': ' + gifEscolhido.t : '')).el;
   const x = el('button', 'lnk', '✕ tirar'); x.type = 'button'; x.setAttribute('aria-label', 'Tirar o GIF'); x.onclick = () => { limparGif(); entrada.focus(); };
   b.append(im, el('span', 'subtitulo', 'GIF escolhido · Enviar manda junto (a legenda é opcional)'), x);
 }

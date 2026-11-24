@@ -87,6 +87,11 @@ const PNG = Buffer.from('R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAE
   t('busca depois de digitar (minúsculas)', pedidos.length === 2 && pedidos[1].q === 'oi', pedidos.map(x => x.q));
   await p.fill('#gifs input', 'tchau'); await p.waitForTimeout(80); await p.fill('#gifs input', 'Oi'); await p.waitForTimeout(600);
   t('busca repetida vem do cache da sessão', pedidos.length === 2, pedidos.map(x => x.q));
+  await p.fill('#gifs input', 'x'); await p.waitForTimeout(80);
+  t('mudou a busca: a grade antiga some na hora (não fica clicável)', (await p.$$('#gifs .gif-op')).length === 0, 0);
+  await p.waitForTimeout(500);
+  t('…e com 1 letra continua vazia', (await p.$$('#gifs .gif-op')).length === 0 && /2 letras/.test(await p.textContent('.gif-estado')), 0);
+  await p.fill('#gifs input', 'Oi'); await p.waitForTimeout(600);
   if (shots) await p.screenshot({ path: path.join(shots, 'painel-1280.png') });
 
   // ── escolher e enviar sem legenda ──
@@ -142,6 +147,17 @@ const PNG = Buffer.from('R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAE
   t('movimento reduzido: mostra o quadro parado (jpg) num botão', parado === K('bom.jpg'), parado);
   await R.p.click('[data-msg="-Nm1"] button.msg-gif'); await R.p.waitForTimeout(100);
   t('…e anima ao clicar', (await R.p.getAttribute('[data-msg="-Nm1"] .msg-gif img', 'src')) === K('bom.webp'), 0);
+  const semS = await R.p.evaluate(async () => { const m = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js'); await m.set(m.ref({}, 'kanban/cardume/msgs/dados/-Nm4'), { uid: 'bru', ts: Date.now(), gif: { u: 'https://static.klipy.com/ii/abc/sem-s.webp', w: 200, h: 200, t: 'Sem quadro' } }); return true; });
+  await R.p.waitForTimeout(300);
+  const cartao = await R.p.evaluate(() => { const bt = document.querySelector('[data-msg="-Nm4"] button.msg-gif'); return bt ? { img: !!bt.querySelector('img'), txt: bt.textContent } : null; });
+  t('movimento reduzido sem quadro parado: cartão "▶ GIF", sem carregar a animação', semS && cartao && !cartao.img && /▶ GIF: Sem quadro/.test(cartao.txt), cartao);
+  await R.p.click('[data-msg="-Nm4"] button.msg-gif'); await R.p.waitForTimeout(100);
+  t('…e o clique carrega a animação', (await R.p.getAttribute('[data-msg="-Nm4"] .msg-gif img', 'src')) === K('sem-s.webp'), 0);
+  await R.p.click('#b-gif'); await R.p.waitForTimeout(400);
+  const grade = await R.p.$$eval('#gifs .gif-op', bs => bs.map(b => { const i = b.querySelector('img'); return i ? i.src : 'cartão:' + b.textContent; }));
+  t('movimento reduzido no painel: quadro parado (jpg) ou cartão, nunca a prévia animada', grade.length === 2 && grade[0] === K('oi.jpg') && /^cartão:▶ Tchau/.test(grade[1]), grade);
+  await R.p.click('#gifs .gif-op >> nth=1'); await R.p.waitForTimeout(100);
+  t('movimento reduzido no compositor: sem animação', !(await R.p.$('#gif-escolhido img')) && /▶ GIF: Tchau/.test(await R.p.textContent('#gif-escolhido')), await R.p.textContent('#gif-escolhido'));
   await R.ctx.close();
 
   // ── celular ──
