@@ -21,7 +21,7 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 | Nó | Conteúdo | Lê | Escreve |
 |---|---|---|---|
 | `kanban/cardume/canais/{squad}` | `{nome}` — canais que existem | logado Hering | ADM |
-| `kanban/cardume/membros/{squad}/{uid}` | `true` | membros do canal (para a @menção e a lista) · quem faz a manutenção | **como no Maré** (decisão do Caio, 24/11): ADM, ou PO/Organizador **da squad** (papel por squad; sem ele, o papel global de quem está na squad) |
+| `kanban/cardume/membros/{squad}/{uid}` | `true` | membros do canal (para a @menção e a lista) · quem faz a manutenção | ADM, ou PO/Organizador **da squad** (decisão do Caio, 24/11): exige o papel **por squad** (`squads_roles`), sem cair no papel global. Brecha herdada do Maré: um PO global consegue gravar `squads_roles/{sq} = 'po'` no próprio cadastro — fechar isso é mudança do Maré inteiro (quem atribui papel por squad), decisão pendente |
 | `kanban/cardume/msgs/{squad}/{msgId}` | `uid`, `texto` (1–4000), `ts` (servidor), `card?` (`^[A-Za-z0-9_-]{1,64}$`), `cardSq?` (idem), `editado?` (servidor), `apagada?` (`true`) | membro · ADM | ver abaixo |
 | `kanban/cardume/ultima/{squad}` | `{ts, uid, id}` da última mensagem (para não lidas) | membro · ADM | membro, no **mesmo update** da mensagem: `id` aponta para uma mensagem dele, não apagada, com o mesmo `ts`; nunca volta no tempo; só o ADM apaga |
 | `kanban/cardume/lidas/{uid}/{squad}` | `ts` do último lido | o próprio | o próprio |
