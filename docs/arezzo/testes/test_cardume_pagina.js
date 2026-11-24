@@ -77,6 +77,11 @@ function conferirEscritas(escritas, quem) {
   await p.press('#entrada', 'Enter');
   t('Enter escolhe a pessoa (não envia)', (await p.inputValue('#entrada')) === 'oi @Ana Lima ', await p.inputValue('#entrada'));
   await p.press('#entrada', 'Enter'); await p.waitForTimeout(150);
+  { const sN = await store(p); const ns = Object.values(ler(sN, 'kanban/usuarios/ana/notificacoes') || {});
+    const n = ns.find(x => x.type === 'cardume_mencao');
+    t('@menção grava a notificação da Ana (cardume_mencao: canal, mensagem, trecho, dev)', !!n && n.cardume === 'dados' && /^[A-Za-z0-9_-]+$/.test(n.cardumeMsg) && n.sub === 'oi @Ana Lima' && n.dev === true && n.read === false && /te mencionou em # Dados/.test(n.title), ns);
+    t('quem não foi mencionado (Bruno, fora do canal) não recebe nada', !ler(sN, 'kanban/usuarios/bru/notificacoes'), 0);
+    t('quem escreveu não avisa a si mesmo', !ler(sN, 'kanban/usuarios/cai/notificacoes'), 0); }
   t('menção renderizada destacada', await p.evaluate(() => [...document.querySelectorAll('#log .mencao')].some(x => x.textContent === '@Ana Lima')), 0);
   await p.fill('#entrada', 'linha 1'); await p.press('#entrada', 'Shift+Enter');
   t('Shift+Enter quebra linha sem enviar', (await p.inputValue('#entrada')) === 'linha 1\n', await p.inputValue('#entrada'));
@@ -114,6 +119,12 @@ function conferirEscritas(escritas, quem) {
   const B = await abrir(ANA, estado);
   const q = B.p;
   t('Ana vê # Dados com ponto de não lido', await q.evaluate(() => { const x = document.querySelector('[data-canal="dados"]'); return !!x && x.classList.contains('nao-lido'); }), await q.textContent('#lista-canais'));
+  t('@ Menções mostra 1 nova', (await q.textContent('#mencoes-n')).trim() === '1' && await q.isVisible('#mencoes-n'), await q.textContent('#mencoes-n'));
+  await q.click('#b-mencoes'); await q.waitForTimeout(150);
+  t('a aba @ Menções lista a menção com o trecho', /te mencionou em # Dados/.test(await q.textContent('#log')) && /oi @Ana Lima/.test(await q.textContent('#log')), await q.textContent('#log'));
+  await q.click('.mencao-item'); await q.waitForTimeout(500);
+  const sM = await store(q); const nM = Object.values(ler(sM, 'kanban/usuarios/ana/notificacoes') || {}).find(x => x.type === 'cardume_mencao');
+  t('clicar na menção abre o canal, destaca a mensagem e marca a menção como lida', (await q.evaluate(() => window.__cardume.estado.atual)) === 'dados' && await q.evaluate(() => !!document.querySelector('.msg.destaque')) && nM.read === true, { atual: await q.evaluate(() => window.__cardume.estado.atual), read: nM && nM.read });
   await q.click('[data-canal="dados"]'); await q.waitForTimeout(1100);
   s = await store(q);
   t('abrir marca como lido (lidas = ts da última)', typeof ler(s, 'kanban/cardume/lidas/ana/dados') === 'number' && ler(s, 'kanban/cardume/lidas/ana/dados') === ler(s, 'kanban/cardume/ultima/dados/ts'), ler(s, 'kanban/cardume/lidas'));
@@ -132,6 +143,12 @@ function conferirEscritas(escritas, quem) {
   // ── 5b. Achados do Codex na #1926 ──
   const BRU = G('bru', 'bru@ciahering.com.br', 'Bruno Reis');
   const escrever = async (pg, caminho, v) => pg.evaluate(async ([c, x]) => { const m = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js'); await m.set(m.ref({}, c), x); }, [caminho, v]);
+  { // link do push: ?c=dados&m=<id> abre o canal e destaca a mensagem
+    const alvo = Object.entries(ler(estado2, 'kanban/cardume/msgs/dados')).find(([, m]) => m.texto === 'oi @Ana Lima ' || m.texto === 'oi @Ana Lima')[0];
+    const L = await abrir(ANA, estado2, '?c=dados&m=' + alvo); await L.p.waitForTimeout(500);
+    t('link do push (?c=&m=) abre o canal e destaca a mensagem', await L.p.evaluate(a => { const e = document.querySelector('[data-msg="' + a + '"]'); return !!e && e.classList.contains('destaque'); }, alvo), alvo);
+    await L.ctx.close();
+  }
   { // link direto ?c=dados como membro não ADM: a conversa carrega quando o "meus" chega
     const D = await abrir(ANA, estado2, '?c=dados'); await D.p.waitForTimeout(300);
     t('link ?c= abre a conversa já carregada (membro não ADM)', /Cheguei|BF|corrigido|importante/.test(await D.p.textContent('#log')) && await D.p.isVisible('#entrada'), await D.p.textContent('#log'));
