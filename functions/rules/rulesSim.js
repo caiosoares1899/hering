@@ -68,6 +68,23 @@ function validate(rules, db, path, auth, newVal, dbAfterMulti){
 function update(rules, db, auth, mapa){
   const ps=Object.keys(mapa); if(!ps.length) return false;
   let dbAfter=db; for(const p of ps) dbAfter=setAt(dbAfter,p,mapa[p]===undefined?null:mapa[p]);
-  return ps.every(p=>check(rules,db,'write',p,auth,mapa[p],dbAfter) && validate(rules,db,p,auth,mapa[p],dbAfter));
+  dbAfter=podar(dbAfter)||{};   // no RTDB, objeto vazio não existe
+  return ps.every(p=>check(rules,db,'write',p,auth,mapa[p],dbAfter) && validate(rules,db,p,auth,mapa[p],dbAfter) && ancestrais(rules,db,dbAfter,p,auth));
+}
+// Como no RTDB: depois de uma escrita (inclusive exclusão de um filho), o `.validate` de cada ANCESTRAL que continua existindo
+// é avaliado com o estado-depois (só a expressão do próprio nível; os descendentes já foram validados acima). Achado do Codex, #1924.
+function podar(o){ if(o===null||typeof o!=='object') return o; const r={}; for(const k of Object.keys(o)){ const v=podar(o[k]); if(v!==null&&v!==undefined) r[k]=v; } return Object.keys(r).length?r:null; }
+function ancestrais(rules, db, dbAfter, path, auth){
+  let node=rules.rules, vars={}; const ks=segs(path), acc=[];
+  for(let i=0;i<ks.length-1;i++){
+    const seg=ks[i]; let nxt=node[seg]; if(nxt===undefined||typeof nxt!=='object'){ const wk=Object.keys(node).find(k=>k.startsWith('$')); if(wk){ nxt=node[wk]; vars={...vars,[wk]:seg}; } else nxt=null; }
+    if(!nxt) return true; acc.push(seg); node=nxt; const p=acc.join('/');
+    const e=node['.validate']; if(e===undefined||e===true) continue; if(e===false) return false;
+    if(getAt(dbAfter,p)===null) continue;
+    const names=Object.keys(vars); const fn=new Function('auth','root','data','newData','now',...names,'return ('+e+');');
+    let r=false; try{ r=!!fn(auth,new Snap(db),new Snap(getAt(db,p),db,p),new Snap(getAt(dbAfter,p),dbAfter,p),Date.now(),...names.map(k=>vars[k])); }catch(err){ r=false; }
+    if(!r) return false;
+  }
+  return true;
 }
 module.exports={check,validate,update};
