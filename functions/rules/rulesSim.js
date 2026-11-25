@@ -16,6 +16,8 @@ class Snap{ constructor(v,raiz,cam){this.v=(v===undefined)?null:v; this.r=raiz==
   numChildren(){ return (this.v&&typeof this.v==='object')?Object.keys(this.v).filter(k=>this.v[k]!==null&&this.v[k]!==undefined).length:0; } }
 // String.matches(regex) existe na linguagem de regras (não em JS): o simulador emula (a regex das regras já traz ^…$).
 if(!String.prototype.matches) Object.defineProperty(String.prototype,'matches',{value:function(re){ return re.test(String(this)); },enumerable:false});
+// String.contains(s) (#tags da Concha, 25/11/2026): existe na linguagem de regras; em JS é includes.
+if(!String.prototype.contains) Object.defineProperty(String.prototype,'contains',{value:function(x){ return String(this).includes(String(x)); },enumerable:false});
 const segs=p=>String(p).split('/').filter(Boolean);
 function getAt(o,p){ let c=o; for(const s of segs(p)){ if(c==null||typeof c!=='object') return null; c=c[s]; if(c===undefined) return null; } return c===undefined?null:c; }
 function setAt(o,p,v){ const ks=segs(p); if(!ks.length) return v; const r=JSON.parse(JSON.stringify(o||{})); let c=r; ks.slice(0,-1).forEach(k=>{ if(c[k]==null||typeof c[k]!=='object') c[k]={}; c=c[k]; }); if(v===null) delete c[ks[ks.length-1]]; else c[ks[ks.length-1]]=v; return r; }

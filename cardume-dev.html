@@ -158,6 +158,9 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .aviso-reg{padding:8px 10px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);font-size:13px;}
 .prev-reg{margin:0;max-height:20vh;overflow:auto;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.45 ui-monospace,Menlo,monospace;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;}
 .mencao{color:var(--accent-txt);font-weight:700;}
+button.tag{all:unset;cursor:pointer;color:var(--accent-txt);font-weight:600;border-radius:4px;padding:0 2px;}
+button.tag:hover{text-decoration:underline;}
+button.tag:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
 .mencao.eu{background:rgba(255,209,102,.18);color:var(--warn);border-radius:4px;padding:0 3px;}
 .texto code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:5px;padding:0 4px;}
 .texto pre{margin:4px 0;padding:8px 10px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;overflow:auto;white-space:pre;}
@@ -303,7 +306,7 @@ button.msg-gif{cursor:pointer;}
           <textarea id="entrada" rows="1" aria-label="Mensagem" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…" maxlength="4000"></textarea>
           <button class="primary" type="submit" id="b-enviar">Enviar</button>
         </form>
-        <p class="ajuda" id="ajuda"><span class="so-teclado">Enter envia · Shift+Enter quebra linha · </span><span class="so-toque">Toque numa mensagem para responder · </span>@ menciona (a pessoa é avisada) · **negrito** _itálico_ `código`</p>
+        <p class="ajuda" id="ajuda"><span class="so-teclado">Enter envia · Shift+Enter quebra linha · </span><span class="so-toque">Toque numa mensagem para responder · </span>@ menciona (a pessoa é avisada) · #tag junta o assunto · **negrito** _itálico_ `código`</p>
       </div>
     </section>
 
@@ -317,10 +320,10 @@ button.msg-gif{cursor:pointer;}
 <script src="mare-notif-dev.js?v=52"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByValue, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.21 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.22 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -452,10 +455,20 @@ function ouvir(chave, r, cb, aoNegar) {
 function parar(prefixo) { Object.keys(ouvintes).forEach(k => { if (k === prefixo || k.startsWith(prefixo + ':')) { ouvintes[k](); delete ouvintes[k]; } }); }
 
 // ═══ Texto formatado → DOM (sem innerHTML) ═══
-// Subconjunto de Markdown: **negrito**, _itálico_ / *itálico*, ~~riscado~~, `código`, ```bloco```, "> citação", "- lista", links https e @menções.
+// Subconjunto de Markdown: **negrito**, _itálico_ / *itálico*, ~~riscado~~, `código`, ```bloco```, "> citação", "- lista", links https, @menções e #tags.
+// #️⃣ #tag (docs/ideias/cardume-v0-banco.md › "#tags nas mensagens"): # no início ou depois de espaço/parêntese/marcação, 2–32 letras/números/_/-, com pelo menos
+// uma letra (#1966 não é tag), fora de código. A chave é a tag em minúsculas como escrita: a regra confere que o texto em minúsculas contém "#" + chave.
+const TAG_ANTES = '(?:^|(?<=[\\s(*_~>]))', TAG_CORPO = '#([\\p{L}\\p{N}_-]{2,32})(?![\\p{L}\\p{N}_-])', MAX_TAGS = 10;
+const tagOk = k => typeof k === 'string' && k.length >= 2 && k.length <= 32 && /^[\p{L}\p{N}_-]+$/u.test(k) && /\p{L}/u.test(k) && k === k.toLowerCase();
+function tagsEm(txt) {   // a mesma leitura para mostrar, indexar e comparar na edição
+  const limpo = String(txt || '').replace(/```[\s\S]*?(```|$)/g, ' ').replace(/`[^`\n]*`/g, ' ').replace(/https:\/\/[^\s<>"']+/g, ' ');
+  const out = new Set(), re = new RegExp(TAG_ANTES + TAG_CORPO, 'gu'); let m;
+  while ((m = re.exec(limpo)) && out.size < MAX_TAGS) { const k = m[1].toLowerCase(); if (tagOk(k)) out.add(k); }
+  return [...out];
+}
 function linkSeguro(u) { try { const x = new URL(u); return x.protocol === 'https:' ? x.href : null; } catch (e) { return null; } }
 function inline(txt, destino) {
-  const re = /(\*\*([^*\n]+)\*\*)|(~~([^~\n]+)~~)|(`([^`\n]+)`)|((?:^|(?<=[\s(]))[_*]([^_*\n]+)[_*](?=$|[\s).,!?:;]))|(https:\/\/[^\s<>"']+)|(@[\p{L}][\p{L}.'-]*(?: [\p{L}][\p{L}.'-]*){0,3})/gu;
+  const re = new RegExp(/(\*\*([^*\n]+)\*\*)|(~~([^~\n]+)~~)|(`([^`\n]+)`)|((?:^|(?<=[\s(]))[_*]([^_*\n]+)[_*](?=$|[\s).,!?:;]))|(https:\/\/[^\s<>"']+)|(@[\p{L}][\p{L}.'-]*(?: [\p{L}][\p{L}.'-]*){0,3})/.source + '|(' + TAG_ANTES + TAG_CORPO + ')', 'gu');
   let i = 0, m;
   while ((m = re.exec(txt))) {
     if (m.index > i) destino.append(document.createTextNode(txt.slice(i, m.index)));
@@ -473,6 +486,11 @@ function inline(txt, destino) {
       const cand = mencaoDe(m[10]);
       if (cand) { destino.append(el('span', 'mencao' + (cand.uid === user.uid ? ' eu' : ''), '@' + cand.nome)); const resto = m[10].slice(1 + cand.nome.length); if (resto) destino.append(document.createTextNode(resto)); }
       else destino.append(document.createTextNode(m[10]));
+    }
+    else if (m[11]) {
+      const k = m[12].toLowerCase();
+      if (tagOk(k)) { const b = el('button', 'tag', '#' + m[12]); b.type = 'button'; b.setAttribute('aria-label', 'Ver as mensagens com #' + m[12]); b.title = 'Mensagens com #' + m[12] + ' nos seus canais'; b.onclick = ev => { ev.stopPropagation(); abrirTag(k); }; destino.append(b); }
+      else destino.append(document.createTextNode(m[11]));
     }
     i = re.lastIndex;
   }
@@ -595,9 +613,9 @@ $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[
 // ═══ Canal aberto ═══
 function abrirCanal(id, foco) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
+  vendoTag = '';
   if (atual !== id) {
-    if (atual) lsSet(chaveRascunho(atual), entrada.value);
-    parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+    soltarCanal();
     entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
   }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
@@ -645,6 +663,7 @@ function renderMsgs() {
   const log = $('log'), noFim = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
   log.replaceChildren();
   if (vendoMencoes) { renderMencoes(log); return; }
+  if (vendoTag) { renderTag(log); return; }
   const id = atual, c = canais[id];
   if (!id) { log.append(vazio('🐚', 'Escolha um canal à esquerda.')); return; }
   if (!souMembro(id) && !souAdm()) {
@@ -797,7 +816,12 @@ function editor(m) {
     if (!txt) { toast('A mensagem não pode ficar vazia. Para tirar, use 🗑 Apagar.'); return; }
     if (txt === m.texto) { editando = ''; renderMsgs(); return; }
     s.disabled = true;
-    try { await update(ref(db, B + 'msgs/' + atual + '/' + m.id), { texto: txt, editado: serverTimestamp() }); editando = ''; rascunhoEdicao = null; renderMsgs(); }
+    const canal = atual, base = B + 'msgs/' + canal + '/' + m.id, agora = serverTimestamp();
+    const mapa = { [base + '/texto']: txt, [base + '/editado']: agora };
+    const antes = tagsEm(m.texto), depois = tagsEm(txt);   // #tags: a diferença vai junto (saiu = null; nova = ts da mensagem)
+    antes.filter(t => !depois.includes(t)).forEach(t => { mapa[B + 'tags/' + canal + '/' + t + '/' + m.id] = null; });
+    depois.filter(t => !antes.includes(t)).forEach(t => { mapa[B + 'tags/' + canal + '/' + t + '/' + m.id] = m.ts; mapa[B + 'tags_ult/' + canal + '/' + t] = agora; });
+    try { await update(ref(db), mapa); editando = ''; rascunhoEdicao = null; renderMsgs(); }
     catch (err) { s.disabled = false; falhou('salvar a edição', err); }
   };
   return f;
@@ -816,7 +840,9 @@ async function enviar() {
   try {
     // contrato com as regras: a mensagem e o marcador de não lidas no MESMO update, com o mesmo serverTimestamp
     const corpo = { uid: user.uid, ts }; if (txt) corpo.texto = txt; if (gif) corpo.gif = Object.assign({}, gif); if (resp) corpo.resp = resp.id;   // GIF sem legenda vale (regras: texto OU gif)
-    await update(ref(db), { [B + 'msgs/' + id + '/' + k]: corpo, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } });
+    const mapa = { [B + 'msgs/' + id + '/' + k]: corpo, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } };
+    tagsEm(txt).forEach(t => { mapa[B + 'tags/' + id + '/' + t + '/' + k] = ts; mapa[B + 'tags_ult/' + id + '/' + t] = ts; });   // #tags no MESMO update (a regra confere o texto e o ts)
+    await update(ref(db), mapa);
     if (gif && gifEscolhido === gif) limparGif();
     avisarMencoes(id, k, avisar);
     if (avisarResp) avisarMencoes(id, k, [avisarResp], true);
@@ -1065,19 +1091,63 @@ function renderMencoes(log) {
     log.append(b);
   });
 }
+// Sair do canal aberto para uma tela de lista (@ Menções, #tag): guarda o rascunho e solta tudo do canal. Uma função só (o reset já divergiu entre cópias).
+function soltarCanal() {
+  if (atual) lsSet(chaveRascunho(atual), entrada.value);
+  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false);
+  msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+}
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
-  if (atual) lsSet(chaveRascunho(atual), entrada.value);
-  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = '';
+  soltarCanal(); vendoTag = '';
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
 }
 $('b-mencoes').onclick = abrirMencoes;
+// ═══ #️⃣ Tela da #tag: as mensagens com ela em todos os canais da pessoa (até 30 por canal, as 50 mais novas) ═══
+let vendoTag = '', tagItens = null, tagVez = 0;
+const curtas = {};   // 'c/m' → { uid, tr } (lido da própria mensagem, com acesso de membro)
+function abrirTag(k) {
+  if (!tagOk(k)) return;
+  Object.keys(curtas).forEach(x => delete curtas[x]);
+  soltarCanal();
+  if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
+  atual = ''; vendoTag = k; tagItens = null;
+  $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
+  const vez = ++tagVez, canaisMeus = idsConhecidos().filter(souMembro);
+  Promise.all(canaisMeus.map(c => get(query(ref(db, B + 'tags/' + c + '/' + k), orderByValue(), limitToLast(30)))
+    .then(s => { const v = s.val() || {}; return Object.keys(v).filter(m => ID_RE.test(m) && typeof v[m] === 'number').map(m => ({ c, m, ts: v[m] })); })
+    .catch(() => [])))
+    .then(r => { if (vez !== tagVez || vendoTag !== k) return; tagItens = r.flat().sort((a, b) => b.ts - a.ts).slice(0, 50); renderMsgs(); });
+}
+function curtaDe(c, m) {
+  const k = c + '/' + m;
+  if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: v.uid, tr: resumoMsg(v) }; if (vendoTag) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag) renderMsgs(); }); }
+  return curtas[k];
+}
+function renderTag(log) {
+  const k = vendoTag;
+  $('canal-titulo').textContent = '#' + k; $('canal-sub').textContent = 'Mensagens com #' + k + ' nos seus canais';
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  if (!tagItens) { log.append(vazio('', 'Procurando #' + k + '…')); return; }
+  if (!tagItens.length) { log.append(vazio('#️⃣', 'Nenhuma mensagem com #' + k + ' nos seus canais.')); return; }
+  tagItens.forEach(it => {
+    const cu = curtaDe(it.c, it.m);
+    const b = el('button', 'mencao-item'); b.type = 'button';
+    const h = new Date(it.ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    b.append(el('b', '', '# ' + nomeCanal(it.c) + (cu && cu.uid ? ' · ' + nomePessoa(cu.uid) : '')), el('span', 'sub', cu ? cu.tr : '…'), el('span', 'hora', h));
+    b.onclick = () => { alvoMsg = it.m; abrirCanal(it.c, true); };
+    log.append(b);
+  });
+}
 function apagar(m) {
   const canal = atual;
   const timer = setTimeout(async () => {
     pendentes.delete(m.id);
-    try { await set(ref(db, B + 'msgs/' + canal + '/' + m.id), { uid: m.uid, ts: m.ts, apagada: true }); }
+    const atualM = (canal === atual && msgs.find(x => x.id === m.id)) || m;   // o texto mais novo (pode ter sido editado nos 5 s)
+    const mapa = { [B + 'msgs/' + canal + '/' + m.id]: { uid: m.uid, ts: m.ts, apagada: true } };
+    new Set(tagsEm(m.texto).concat(tagsEm(atualM.texto))).forEach(t => { mapa[B + 'tags/' + canal + '/' + t + '/' + m.id] = null; });   // sai das #tags junto
+    try { await update(ref(db), mapa); }
     catch (e) { falhou('apagar a mensagem', e); }
     if (canal === atual) renderMsgs();
   }, DESFAZER_MS);
@@ -1445,7 +1515,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.

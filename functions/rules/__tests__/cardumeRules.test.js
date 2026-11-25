@@ -560,3 +560,69 @@ test('reações: fora do canal, intruso, mensagem apagada/inexistente e canal ve
   reset(); DB.kanban.cardume.membros['t-fantasma'] = { ana: true }; DB.kanban.cardume.msgs['t-fantasma'] = { m1: { uid: 'ana', ts: Date.now(), texto: 'x' } };
   assert.equal(grava(RXP('ana', 'm1', 't-fantasma'), A.ana, '👍'), false, 'temático sem canal criado');
 });
+
+// ═══ #️⃣ #tags (25/11/2026, docs/ideias/cardume-v0-banco.md › "#tags nas mensagens") ═══
+// Índice tags/{canal}/{tag}/{msgId} = ts da mensagem, gravado no MESMO update dela; tags_ult/{canal}/{tag} = último uso (serverTimestamp).
+const TG = (tag, id, sq) => `kanban/cardume/tags/${sq || 'dados'}/${tag}/${id || 'k1'}`;
+const TU = (tag, sq) => `kanban/cardume/tags_ult/${sq || 'dados'}/${tag}`;
+const envio = (ator, id, texto, tags, extra) => { const ts = Date.now(); const m = { [M(id)]: { uid: ator.uid, ts, texto }, [`kanban/cardume/ultima/dados`]: { ts, uid: ator.uid, id } };
+  tags.forEach(t => { m[TG(t, id)] = ts; m[TU(t)] = ts; }); return Object.assign(m, extra || {}); };
+
+test('#tags: enviar com a tag no mesmo update; a regra confere que o texto tem a tag (minúsculas, acento vale)', () => {
+  reset();
+  assert.equal(update(RULES, DB, A.ana, envio(A.ana, 'k1', 'Subiu o #Banner da #BlackFriday', ['banner', 'blackfriday'])), true, 'mensagem + índice + último uso');
+  assert.equal(update(RULES, DB, A.ana, envio(A.ana, 'k1', 'Saiu a #Promoção de hoje', ['promoção'])), true, 'acento na chave (minúsculas como escrito)');
+  assert.equal(update(RULES, DB, A.ana, envio(A.ana, 'k1', 'sem tag nenhuma', ['banner'])), false, 'tag que não está no texto');
+  assert.equal(update(RULES, DB, A.ana, envio(A.ana, 'k1', 'oi #Banner', ['Banner'])), false, 'chave com maiúscula');
+  assert.equal(update(RULES, DB, A.ana, envio(A.ana, 'k1', 'oi #a b', ['a b'])), false, 'chave com espaço');
+  const longa = 'a'.repeat(33);
+  assert.equal(update(RULES, DB, A.ana, envio(A.ana, 'k1', 'oi #' + longa, [longa])), false, 'chave com mais de 32');
+  const m = envio(A.ana, 'k1', 'oi #banner', []); m[TG('banner')] = Date.now() - 5000;
+  assert.equal(update(RULES, DB, A.ana, m), false, 'valor diferente do ts da mensagem');
+  assert.equal(update(RULES, DB, A.gil, envio(A.gil, 'k1', 'oi #banner', ['banner'])), false, 'fora do canal');
+  for (const k of ['forasteiro', 'arezzo', 'intruso']) assert.equal(update(RULES, DB, A[k], envio(A[k], 'k1', 'oi #banner', ['banner'])), false, 'barra: ' + k);
+  const s = envio(A.ana, 'k1', 'oi #banner', ['banner']); s[`kanban/cardume/tags_ult/dados/banner`] = Date.now() - 120000;
+  assert.equal(update(RULES, DB, A.ana, s), false, 'último uso no passado (não é serverTimestamp)');
+});
+
+test('#tags: só indexa a própria mensagem, viva e de canal ativo', () => {
+  reset(); const ts = Date.now() - 1000;
+  põe('b1', msg({ uid: 'bru', ts, texto: 'proposta #banner' })); põe('a1', msg({ ts, texto: 'minha #banner' })); põe('x1', { uid: 'ana', ts, apagada: true });
+  assert.equal(grava(TG('banner', 'b1'), A.ana, ts), false, 'pôr a mensagem de outra pessoa na tag');
+  assert.equal(grava(TG('banner', 'a1'), A.ana, ts), true, 'a própria (ex.: edição que acrescentou a tag)');
+  assert.equal(grava(TG('banner', 'x1'), A.ana, ts), false, 'mensagem apagada');
+  assert.equal(grava(TG('banner', 'zz'), A.ana, ts), false, 'mensagem inexistente');
+  assert.equal(grava(TG('banner', 'a1'), A.ana, 'texto'), false, 'valor tem de ser número');
+  reset(); existe('t-velho', tema({ criado: Date.now() - 10 * 864e5, fim: Date.now() - 864e5 }), { ana: true });
+  DB.kanban.cardume.msgs['t-velho'] = { a1: { uid: 'ana', ts, texto: 'oi #banner' } };
+  assert.equal(grava(TG('banner', 'a1', 't-velho'), A.ana, ts), false, 'canal temático vencido');
+});
+
+test('#tags: tirar a entrada é do autor ou do ADM; editar e apagar levam a diferença no mesmo update', () => {
+  reset(); const ts = Date.now() - 1000;
+  põe('a1', msg({ ts, texto: 'oi #a' })); DB.kanban.cardume.tags = { dados: { a: { a1: ts } } }; DB.kanban.cardume.tags_ult = { dados: { a: ts } };
+  assert.equal(grava(TG('a', 'a1'), A.bru, null), false, 'outro membro não tira');
+  assert.equal(grava(TG('a', 'a1'), A.adm, null), true, 'ADM tira (moderação)');
+  assert.equal(grava(TG('a', 'a1'), A.ana, null), true, 'o autor tira');
+  const agora = Date.now();
+  assert.equal(update(RULES, DB, A.ana, { [M('a1') + '/texto']: 'oi #b', [M('a1') + '/editado']: agora, [TG('a', 'a1')]: null, [TG('b', 'a1')]: ts, [TU('b')]: agora }), true, 'edição troca #a por #b');
+  assert.equal(update(RULES, DB, A.ana, { [M('a1') + '/texto']: 'oi', [M('a1') + '/editado']: agora, [TG('b', 'a1')]: ts }), false, 'edição não põe tag que saiu do texto');
+  assert.equal(update(RULES, DB, A.ana, { [M('a1')]: { uid: 'ana', ts, apagada: true }, [TG('a', 'a1')]: null }), true, 'apagar tira a entrada junto');
+  assert.equal(update(RULES, DB, A.ana, { [M('a1')]: { uid: 'ana', ts, apagada: true }, [TG('a', 'a1')]: ts }), false, 'mensagem apagada não fica na tag');
+});
+
+test('#tags: tags_ult só com entrada da tag; ninguém além do ADM apaga; leitura só de membro e ADM', () => {
+  reset(); const ts = Date.now() - 1000; põe('a1', msg({ ts, texto: 'oi #a' }));
+  assert.equal(grava(TU('a'), A.ana, Date.now()), false, 'sem nenhuma entrada da tag');
+  DB.kanban.cardume.tags = { dados: { a: { a1: ts } } };
+  assert.equal(grava(TU('a'), A.ana, Date.now()), true, 'com entrada');
+  assert.equal(grava(TU('a'), A.gil, Date.now()), false, 'fora do canal');
+  DB.kanban.cardume.tags_ult = { dados: { a: ts } };
+  assert.equal(grava(TU('a'), A.ana, null), false, 'membro não apaga');
+  assert.equal(grava(TU('a'), A.adm, null), true, 'ADM apaga');
+  for (const no of ['tags', 'tags_ult']) {
+    for (const k of ['ana', 'bru', 'adm', 'caio']) assert.equal(lê(`kanban/cardume/${no}/dados`, A[k]), true, no + ' lê: ' + k);
+    for (const k of ['gil', 'forasteiro', 'arezzo', 'intruso']) assert.equal(lê(`kanban/cardume/${no}/dados`, A[k]), false, no + ' NÃO lê: ' + k);
+    assert.equal(lê(`kanban/cardume/${no}`, A.adm), false, no + ': ninguém lê todos os canais de uma vez');
+  }
+});

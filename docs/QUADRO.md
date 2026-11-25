@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/concha-tags` | `cardume-dev.html`, `database.rules.json` (nó `kanban/cardume/tags*`), `functions/rules/__tests__/cardumeRules.test.js`, `functions/rules/rulesSim.js`, `docs/ideias/cardume-v0-banco.md` | 25/11/2026 |
 
 
 ## Fila
@@ -41,6 +42,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🐚 Concha: regras das #tags (`kanban/cardume/tags`, `tags_ult`) — depois do merge do PR | `firebase deploy --only database --project hering-onboarding` | 25/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
