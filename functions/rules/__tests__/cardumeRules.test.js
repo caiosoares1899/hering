@@ -756,3 +756,18 @@ test('lidas_a: privado; _geral ou id de assunto; número', () => {
   assert.equal(grava(L('ana'), A.bru, Date.now()), false, 'outra pessoa');
   assert.equal(lê('kanban/cardume/lidas_a/ana', A.bru), false);
 });
+
+test('avisos_a (aviso por assunto): privado; seguir ou mencoes; prazo no futuro; ninguém mexe no de outra pessoa', () => {
+  reset(); const AA = (u, a) => `kanban/cardume/avisos_a/${u || 'ana'}/dados/${a || 'abf'}`;
+  assert.equal(grava(AA(), A.ana, { nivel: 'seguir' }), true, '🔔 seguir');
+  assert.equal(grava(AA(), A.ana, { nivel: 'mencoes', ate: Date.now() + 8 * 3600e3 }), true, '🔕 por 8 h');
+  assert.equal(grava(AA(), A.ana, null), true, 'voltar a "como o canal"');
+  assert.equal(grava(AA(), A.ana, { nivel: 'nada' }), false, '"nada" é só do canal');
+  assert.equal(grava(AA(), A.ana, { nivel: 'seguir', ate: Date.now() - 1 }), false, 'prazo no passado');
+  assert.equal(grava(AA(), A.ana, { nivel: 'seguir', x: 1 }), false, 'campo extra');
+  assert.equal(grava(AA('ana', '_geral'), A.ana, { nivel: 'seguir' }), false, 'geral não é assunto');
+  assert.equal(grava(AA('ana'), A.bru, { nivel: 'mencoes' }), false, 'outra pessoa');
+  assert.equal(grava(AA('ana'), A.adm, { nivel: 'mencoes' }), false, 'nem o ADM');
+  assert.equal(lê('kanban/cardume/avisos_a/ana', A.ana), true);
+  for (const k of ['bru', 'adm']) assert.equal(lê('kanban/cardume/avisos_a/ana', A[k]), false, 'NÃO lê: ' + k);
+});
