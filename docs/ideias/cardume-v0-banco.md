@@ -393,3 +393,14 @@ O link do push está fixo em `cardume-dev.html` e `kanban/cardume` é o mesmo n�
 
 ### Deploy
 Regras **antes** do merge (a tela nova grava `avisos`/`seguidas`/`vendo`); depois `firebase deploy --only functions:conchaAvisoMsg,functions:sendPushOnNotification`.
+
+## 📁 Seções na lista de canais — desenho de 25/11/2026
+
+Pedido do Caio (25/11): além das #tags, "agrupamentos separados" como as seções do Slack. **Organização pessoal**: só a pessoa vê; não muda canal nem mensagem.
+
+- **Nó** `kanban/cardume/secoes/{uid}` (só ela lê e grava): `s/{sid} = {n: 1–30 caracteres, o: ordem}` (sid `s…`), `c/{canal} = sid` (a regra confere que a seção existe no estado final) e `r/{chave} = true` para as recolhidas (as dela e as padrão `squads`/`temas`/`abertos`/`semcanal`). Até 15 seções (tela).
+- **Lista:** as seções da pessoa vêm primeiro, na ordem dela; o canal que não está em nenhuma segue na seção padrão. Clicar no título recolhe/expande; recolhida, mostra "N novas" e mantém à vista o canal aberto. Recolher vale em todos os aparelhos.
+- **📁 Seções** (abaixo de ➕ Novo canal): criar (atalho ⭐ Favoritos), renomear, ↑/↓, apagar — tudo num update só ao Salvar; apagar devolve os canais à seção padrão.
+- **ℹ️ Detalhes › 📁 Na sua lista:** move o canal; "＋ Nova seção…" cria e já põe o canal nela.
+- **Fronteira:** nó privado novo; o nome da seção é da própria pessoa e só ela o vê (entra por `textContent`).
+- Testes: `cardumeRules` (seções), `test_concha_secoes.js` (13). Deploy: `firebase deploy --only database` antes do merge.

@@ -662,3 +662,24 @@ test('seguidas e vendo: privados; #tag com a mesma chave das tags; sinal de vida
   for (const no of ['seguidas', 'vendo']) for (const k of ['bru', 'adm']) assert.equal(lê(`kanban/cardume/${no}/ana`, A[k]), false, no + ' NÃO lê: ' + k);
   for (const k of ['ana', 'adm', 'caio']) { assert.equal(lê('kanban/cardume/aviso_env/ana', A[k]), false, 'trava da função fechada: ' + k); assert.equal(grava('kanban/cardume/aviso_env/ana/dados', A[k], Date.now()), false, 'trava: ' + k); }
 });
+
+// ═══ 📁 Seções na lista de canais (25/11/2026): organização PESSOAL, privada ═══
+test('seções: só a própria pessoa lê e grava; canal só aponta para seção que existe; nada de campo solto', () => {
+  reset(); const SC = 'kanban/cardume/secoes/ana';
+  const sec = { s: { sfav: { n: '⭐ Favoritos', o: 0 }, sproj: { n: 'Projetos', o: 1 } }, c: { dados: 'sfav' }, r: { squads: true, sproj: true } };
+  assert.equal(grava(SC, A.ana, sec), true, 'estrutura completa');
+  assert.equal(grava(SC, A.bru, sec), false, 'outra pessoa');
+  assert.equal(grava(SC, A.adm, sec), false, 'nem o ADM');
+  assert.equal(grava(SC, A.ana, { s: { sfav: { n: 'F', o: 0 } }, c: { dados: 'snaoexiste' } }), false, 'canal apontando para seção que não existe');
+  assert.equal(grava(SC, A.ana, { s: { sfav: { n: '', o: 0 } } }), false, 'nome vazio');
+  assert.equal(grava(SC, A.ana, { s: { sfav: { n: 'x'.repeat(31), o: 0 } } }), false, 'nome com mais de 30');
+  assert.equal(grava(SC, A.ana, { s: { 'Fav!': { n: 'F', o: 0 } } }), false, 'id de seção fora do padrão');
+  assert.equal(grava(SC, A.ana, { s: { sfav: { n: 'F', o: 0, cor: 'x' } } }), false, 'campo extra na seção');
+  assert.equal(grava(SC, A.ana, { r: { qualquer: true } }), false, 'recolhida com chave estranha');
+  assert.equal(grava(SC, A.ana, { outra: 1 }), false, 'nó solto');
+  DB.kanban.cardume.secoes = { ana: sec };
+  assert.equal(update(RULES, DB, A.ana, { [SC + '/s/sproj']: null, [SC + '/c/prf']: 'sproj' }), false, 'apagar a seção e apontar para ela no mesmo update');
+  assert.equal(update(RULES, DB, A.ana, { [SC + '/s/sfav']: null, [SC + '/c/dados']: null, [SC + '/r/sfav']: null }), true, 'apagar a seção leva os canais dela junto');
+  assert.equal(lê(SC, A.ana), true);
+  for (const k of ['bru', 'adm', 'forasteiro']) assert.equal(lê(SC, A[k]), false, 'NÃO lê: ' + k);
+});
