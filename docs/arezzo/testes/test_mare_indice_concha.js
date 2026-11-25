@@ -35,6 +35,11 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   await p.waitForTimeout(2800);
   x = await ind();
   t('card novo entra no índice (2 s depois da mudança)', x && x.v.some(c => c.id === 'cNovo'), x && x.v);
+  // o caso real: abrir de novo o board já guardado no aparelho, sem nada mudar (antes, a lista só era gravada quando os cards MUDAVAM)
+  await p.evaluate(k => localStorage.removeItem(k), 'oceano_cards_' + SQ + (K.endsWith('-dev') ? '_dev' : ''));
+  await p.reload(); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U('eve', 'Eve')); await p.waitForTimeout(6500);
+  x = await ind();
+  t('reabrir o board (cards do cache do aparelho, nada mudou) grava a lista mesmo assim', x && x.u === 'eve' && x.v.some(c => c.id === 'cBanner'), x);
   t('sem erro de JS', !errs.length, errs);
   await b.close();
   console.log(`\n${ok ? '✅' : '❌'} ${total} verificações`); process.exit(ok ? 0 : 1);

@@ -55,6 +55,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
+| 🐚 Concha: 🧷 `@card:` só funciona com o **Maré dev** aberto no aparelho (só o `kanban-dev.html` grava a lista `oceano_cards_<squad>_dev`). Na promoção da Concha: levar `_gravarIndiceConcha()` ao `kanban.html` e a Concha aceitar também a lista do prod (mesmo `kanban/squads/<sq>/dados`). Decisão do Caio (25/11): esperar a promoção | Claude | [desenho](ideias/cardume.md) |
 | 🐚 Concha: encaminhar mensagens, limpar a aba Menções e escolher os temas Claro e Vice City | Caio escolhe | [novos pedidos](quadro/backlog.md#concha-novos-pedidos-2511) |
 | 🐚 Concha: links de mensagens, Salvos, fixados, histórico, fios e outras ideias inspiradas no Slack e concorrentes | Caio escolhe | [comparativo](quadro/backlog.md#concha-comparativo) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
