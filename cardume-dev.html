@@ -104,6 +104,12 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .sec-cab{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;cursor:pointer;font-size:13px;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;padding:2px 8px;border-radius:6px;min-height:28px;}
 .sec-cab:hover{color:var(--txt);} .sec-cab:focus-visible{outline:2px solid var(--accent);}
 .sec-cab .seta{font-size:10px;width:10px;} .sec-cab .novas{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--accent-txt);font-weight:700;}
+.assuntos-barra{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 12px;border-bottom:1px solid var(--glass-b);scrollbar-width:thin;}
+.assuntos-barra button{flex:none;min-height:32px;padding:2px 12px;border-radius:999px;font-size:13px;white-space:nowrap;box-shadow:none;}
+.assuntos-barra button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-txt);font-weight:700;}
+.assuntos-barra .ponto-a{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle;}
+.assuntos-barra .fechado{opacity:.75;}
+.aviso-encerrado{margin:8px 0;padding:8px 12px;border:1px dashed var(--glass-b);border-radius:10px;color:var(--txt2);font-size:13px;}
 .sec-vazia{margin:0 8px 6px;font-size:12px;}
 .lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
 .sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
@@ -304,6 +310,7 @@ button.msg-gif{cursor:pointer;}
         <button type="button" id="b-aviso" hidden aria-haspopup="dialog" aria-label="Avisos deste canal: todas as mensagens" title="Avisos deste canal">🔔</button>
         <button type="button" id="b-lado" aria-label="Detalhes do canal" aria-pressed="false">ℹ️</button>
       </header>
+      <div class="assuntos-barra" id="assuntos-barra" role="toolbar" aria-label="Assuntos do canal" hidden></div>
       <div class="faixa-alvo" id="faixa-alvo" hidden></div>
       <div class="log" id="log" role="log" aria-label="Mensagens do canal" aria-live="polite" tabindex="0"></div>
       <div class="rodape" id="rodape" hidden>
@@ -356,10 +363,10 @@ button.msg-gif{cursor:pointer;}
 <script src="mare-sonar-dev.js?v=8"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.26 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.27 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -454,12 +461,17 @@ let atual = '';                // canal aberto
 let msgs = [];                 // mensagens do canal aberto (ordenadas por ts)
 let membrosAtual = {}, adminsAtual = {};
 let carregandoMsgs = false;
+// 🧵 Assuntos (docs/ideias/cardume-v0-banco.md › "Assuntos dentro do canal"): '' = geral
+let assuntoAtual = '', assuntos = {}, msgsCanal = [], msgsAss = [], verEncerrados = false, msgsCanalPronto = false;
+const ultA = {}, AID_RE = /^a[a-z0-9]{1,20}$/;
+let lidasA = {};
+const JANELA = 100;   // janela do canal por ts (geral = as sem assunto dela; a ordem nunca confia na chave)
 let enviando = false;          // trava de envio (Enter e botão)
 let rascunhoEdicao = null;
 let vendoMencoes = false, mencoes = [];   // aba @ Menções (notificações cardume_mencao da própria pessoa)
 let alvoMsg = '';
 let destaque = { id: '', ate: 0 };   // mensagem destacada (sobrevive aos redesenhos da lista)              // ?m= ou clique numa menção: rolar até a mensagem e destacar     // { id, valor, ini, fim } — preserva o editor quando chega mensagem nova
-const chaveRascunho = id => 'cardume_rascunho_' + (user ? user.uid : '') + '_' + id;
+const chaveRascunho = (id, aid) => 'cardume_rascunho_' + (user ? user.uid : '') + '_' + id + (aid ? '~' + aid : '');
 // No celular a conversa pode estar escondida (lista ou detalhes à frente): aí não marca como lido nem esconde o ponto.
 const conversaVisivel = () => !document.hidden && (!window.matchMedia('(max-width: 899px)').matches || $('app').dataset.tela === 'conversa');
 let editando = '';             // id da mensagem em edição
@@ -618,6 +630,8 @@ function sincronizarCanais() {
     if (!ouvintes['canal:' + id]) ouvir('canal:' + id, ref(db, B + 'canais/' + id), s => { canais[id] = s.val(); renderLista(); if (id === atual) { renderCabecalho(); renderMsgs(); renderLado(); } }, () => { canais[id] = null; renderLista(); });
     if (souMembro(id) && !ouvintes['ultima:' + id]) ouvir('ultima:' + id, ref(db, B + 'ultima/' + id), s => { ultimas[id] = s.val(); renderLista(); }, () => {});
     if (!souMembro(id) && ouvintes['ultima:' + id]) { ouvintes['ultima:' + id](); delete ouvintes['ultima:' + id]; }
+    if (souMembro(id) && !ouvintes['ultA:' + id]) ouvir('ultA:' + id, ref(db, B + 'ultima_a/' + id), s => { const v = s.val(); if (v && typeof v === 'object') ultA[id] = v; else delete ultA[id]; renderLista(); if (id === atual) renderBarraAssuntos(); }, () => {});
+    if (!souMembro(id) && ouvintes['ultA:' + id]) { ouvintes['ultA:' + id](); delete ouvintes['ultA:' + id]; delete ultA[id]; }
   });
 }
 function iniciarOuvintes() {
@@ -629,6 +643,7 @@ function iniciarOuvintes() {
   }, () => {});
   ouvir('abertos', ref(db, B + 'abertos'), s => { abertos = s.val() || {}; sincronizarCanais(); renderLista(); }, () => {});
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
+  ouvir('lidasA', ref(db, B + 'lidas_a/' + uid), s => { lidasA = s.val() || {}; renderLista(); if (atual) renderBarraAssuntos(); }, () => {});
   ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); }, () => {});
   ouvir('secoes', ref(db, B + 'secoes/' + uid), s => { const v = s.val() || {}; secoes = { s: v.s || {}, c: v.c || {}, r: v.r || {} }; renderLista(); if (atual) renderLado(); }, () => {});
   ouvir('seguidas', ref(db, B + 'seguidas/' + uid), s => { seguidas = s.val() || {}; if (vendoTag) renderMsgs(); }, () => {});
@@ -643,7 +658,17 @@ function iniciarOuvintes() {
 }
 
 // ═══ Lista de canais ═══
-const naoLido = id => { const u = ultimas[id]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > (lidas[id] || 0) && (id !== atual || !conversaVisivel()); };
+// Não lidas por assunto (ultima_a + lidas_a; "_geral" herda o lido antigo do canal). Canal sem ultima_a = cálculo antigo.
+const lidoA = (id, k) => { const v = (lidasA[id] || {})[k]; return typeof v === 'number' ? v : k === '_geral' ? (lidas[id] || 0) : 0; };
+const vendoAgora = (id, k) => id === atual && (assuntoAtual || '_geral') === k && !vendoTag && !vendoMencoes && !vendoPessoa && conversaVisivel();
+const naoLidoA = (id, k) => { const u = (ultA[id] || {})[k]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > lidoA(id, k) && !vendoAgora(id, k); };
+const naoLido = id => {
+  if (ultA[id] && Object.keys(ultA[id]).some(k => (k === '_geral' || AID_RE.test(k)) && naoLidoA(id, k))) return true;
+  // mensagem que só aparece no marcador antigo (quem ainda está com a página sem assuntos não grava ultima_a): conta como geral
+  const u = ultimas[id]; if (!u || typeof u.ts !== 'number' || u.uid === user.uid) return false;
+  if (Object.values(ultA[id] || {}).some(x => x && x.id === u.id)) return false;
+  return u.ts > lidoA(id, '_geral') && !vendoAgora(id, '_geral');
+};
 function renderLista() {
   const box = $('lista-canais'), focoSec = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('sec-cab') ? document.activeElement.dataset.sec : '';
   box.replaceChildren();
@@ -687,33 +712,132 @@ function renderLista() {
 $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[data-canal]'); if (b) abrirCanal(b.dataset.canal, true); });
 
 // ═══ Canal aberto ═══
-function abrirCanal(id, foco) {
+function abrirCanal(id, foco, aid) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   vendoTag = ''; vendoPessoa = '';
+  if (aid === undefined && atual === id) aid = assuntoAtual;   // reabrir o mesmo canal (membros mudaram, Sonar) mantém o assunto
+  aid = typeof aid === 'string' && AID_RE.test(aid) ? aid : '';
   if (atual !== id) {
-    soltarCanal();
-    entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
-  }
+    soltarCanal(); assuntoAtual = aid;
+    entrada.value = lsGet(chaveRascunho(id, aid)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
+  } else if (aid !== assuntoAtual) { trocarAssunto(aid); }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
   atual = id; lsSet('cardume_canal', id);
-  const u = new URL(location.href); u.searchParams.set('c', id); history.replaceState(null, '', u);
+  const u = new URL(location.href); u.searchParams.set('c', id); if (assuntoAtual) u.searchParams.set('a', assuntoAtual); else u.searchParams.delete('a'); history.replaceState(null, '', u);
   $('app').dataset.tela = 'conversa';
   renderLista(); renderCabecalho(); marcarLido(); pulsoVendo();
   const membro = souMembro(id);
   if (membro || souAdm()) {
     carregandoMsgs = true; renderMsgs();
-    ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(LIMITE)), s => {
-      const v = s.val() || {};
-      msgs = Object.keys(v).map(k => Object.assign({ id: k }, v[k])).filter(m => m && typeof m.ts === 'number').sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
-      carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id);
-    }, e => { carregandoMsgs = false; msgs = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
-  } else { parar('msgs'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; editando = ''; rascunhoEdicao = null; carregandoMsgs = false; renderMsgs(); }   // tirado do canal aberto: não segue escutando as mensagens
+    ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(JANELA)), s => {
+      msgsCanal = listaMsgs(s.val()); msgsCanalPronto = true; if (!assuntoAtual) aplicarVista(id);
+    }, e => { carregandoMsgs = false; msgs = []; msgsCanal = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
+    ouvirAssunto(id);
+    ouvir('assuntos', ref(db, B + 'assuntos/' + id), s => { assuntos = s.val() || {}; renderBarraAssuntos(); renderCabecalho(); if (assuntoAtual) renderMsgs(); }, () => { assuntos = {}; renderBarraAssuntos(); });
+  } else { parar('assuntos'); parar('msgsA'); assuntos = {}; parar('msgs'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; editando = ''; rascunhoEdicao = null; carregandoMsgs = false; renderMsgs(); }   // tirado do canal aberto: não segue escutando as mensagens
   if (membro || gestor(id)) {
     ouvir('membros', ref(db, B + 'membros/' + id), s => { membrosAtual = s.val() || {}; renderLado(); renderMsgs(); }, () => { membrosAtual = {}; renderLado(); });
     if (ehTema(id)) ouvir('admins', ref(db, B + 'admins/' + id), s => { adminsAtual = s.val() || {}; renderLado(); }, () => {});
   } else { parar('membros'); parar('admins'); membrosAtual = {}; adminsAtual = {}; }
-  renderLado();
+  renderLado(); renderBarraAssuntos();
   if (foco) $('canal-titulo').focus();
+}
+const listaMsgs = v => Object.keys(v || {}).map(k => Object.assign({ id: k }, v[k])).filter(m => m && typeof m.ts === 'number').sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
+// O que a conversa mostra: geral = as sem assunto da janela do canal; assunto = todas as dele (sem limite na leitura: a chave não decide), as 50 mais novas.
+function aplicarVista(id) {
+  if (id !== atual) return;
+  msgs = (assuntoAtual ? msgsAss : msgsCanal.filter(m => !m.a)).slice(-LIMITE);
+  carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id); renderBarraAssuntos();
+}
+function ouvirAssunto(id) {
+  parar('msgsA'); msgsAss = [];
+  if (!assuntoAtual) { if (msgsCanalPronto) aplicarVista(id); return; }   // geral: só com a janela do canal já lida (senão "ir até a mensagem" a perderia)
+  const aid = assuntoAtual; carregandoMsgs = true; renderMsgs();
+  ouvir('msgsA', query(ref(db, B + 'msgs/' + id), orderByChild('a'), equalTo(aid)), s => {
+    if (atual !== id || assuntoAtual !== aid) return;
+    msgsAss = listaMsgs(s.val()).filter(m => m.a === aid); aplicarVista(id);
+  }, () => { carregandoMsgs = false; msgsAss = []; renderMsgs(); });
+}
+const assuntoFechado = aid => !!(aid && assuntos[aid] && typeof assuntos[aid].fim === 'number');
+const nomeAssunto = aid => (assuntos[aid] && typeof assuntos[aid].n === 'string' && assuntos[aid].n) || 'assunto';
+function trocarAssunto(aid) {   // dentro do mesmo canal: guarda o rascunho, troca a conversa e o lugar onde a mensagem vai
+  aid = AID_RE.test(aid || '') ? aid : '';
+  if (aid === assuntoAtual) return;
+  lsSet(chaveRascunho(atual, assuntoAtual), entrada.value);
+  parar('rx'); pararCitacoes(); cancelarResposta(false); editando = ''; rascunhoEdicao = null; rxAbrindo = ''; rxLista = ''; reacoes = {};
+  assuntoAtual = aid; entrada.value = lsGet(chaveRascunho(atual, aid)) || ''; ajustarAltura(); fecharSug();
+  const u = new URL(location.href); if (aid) u.searchParams.set('a', aid); else u.searchParams.delete('a'); history.replaceState(null, '', u);
+  ouvirAssunto(atual); renderCabecalho(); renderLista(); renderBarraAssuntos();
+}
+// Ir até uma mensagem que pode estar num assunto (menção, #tag, push): lê o `a` dela e abre o assunto certo.
+function abrirNaMensagem(c, m) {
+  alvoMsg = m;
+  get(ref(db, B + 'msgs/' + c + '/' + m + '/a')).then(s => { const a = s.val(); abrirCanal(c, true, typeof a === 'string' ? a : ''); }).catch(() => abrirCanal(c, true, ''));
+}
+function renderBarraAssuntos() {
+  const bar = $('assuntos-barra'), id = atual;
+  if (!id || vendoMencoes || vendoTag || vendoPessoa || !(souMembro(id) || souAdm())) { bar.hidden = true; bar.replaceChildren(); return; }
+  bar.hidden = false; bar.replaceChildren();
+  const foco = document.activeElement && bar.contains(document.activeElement) ? document.activeElement.dataset.aid : null;
+  const ult = k => ((ultA[id] || {})[k] || {}).ts || 0;
+  const chip = (k, rot, extra) => {
+    const b = el('button', extra || ''); b.type = 'button'; b.dataset.aid = k; b.setAttribute('aria-pressed', String((assuntoAtual || '_geral') === k));
+    b.append(document.createTextNode(rot)); const nl = naoLidoA(id, k); if (nl) b.append(el('span', 'ponto-a'));
+    b.setAttribute('aria-label', rot + (nl ? ', mensagens novas' : '')); b.onclick = () => trocarAssunto(k === '_geral' ? '' : k); return b;
+  };
+  bar.append(chip('_geral', '💬 geral'));
+  if (souMembro(id) && !vencido(canais[id])) { const n = el('button', '', '＋ Assunto'); n.type = 'button'; n.dataset.aid = '_novo'; n.title = 'Novo assunto'; n.setAttribute('aria-label', 'Novo assunto'); n.onclick = () => modalAssunto(''); bar.append(n); }
+  const ids = Object.keys(assuntos).filter(k => AID_RE.test(k) && assuntos[k] && typeof assuntos[k].n === 'string');
+  const abertos_ = ids.filter(k => !assuntoFechado(k) || k === assuntoAtual).sort((a, b) => ult(b) - ult(a) || (assuntos[b].criado || 0) - (assuntos[a].criado || 0));
+  abertos_.forEach(k => bar.append(chip(k, (assuntoFechado(k) ? '🔒 ' : '🧵 ') + assuntos[k].n, assuntoFechado(k) ? 'fechado' : '')));
+  const fechados = ids.filter(k => assuntoFechado(k) && k !== assuntoAtual);
+  if (fechados.length) {
+    const f = el('button', 'fechado', (verEncerrados ? '▾' : '▸') + ' Encerrados (' + fechados.length + ')'); f.type = 'button'; f.setAttribute('aria-expanded', String(verEncerrados)); f.dataset.aid = '_enc';
+    f.onclick = () => { verEncerrados = !verEncerrados; renderBarraAssuntos(); }; bar.append(f);
+    if (verEncerrados) fechados.forEach(k => bar.append(chip(k, '🔒 ' + assuntos[k].n, 'fechado')));
+  }
+  if (assuntoAtual && podeGerirAssunto(assuntoAtual)) { const g = el('button', '', '⋯'); g.type = 'button'; g.dataset.aid = '_ger'; g.setAttribute('aria-label', 'Renomear ou encerrar ' + nomeAssunto(assuntoAtual)); g.title = 'Renomear ou encerrar'; g.onclick = () => modalAssunto(assuntoAtual); bar.append(g); }
+  if (foco) { const x = bar.querySelector('[data-aid="' + CSS.escape(foco) + '"]'); if (x) x.focus({ preventScroll: true }); }
+  const ativo = bar.querySelector('[aria-pressed="true"]'); if (ativo && ativo.scrollIntoView) ativo.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // o assunto aberto sempre à vista na faixa
+}
+const podeGerirAssunto = aid => !!assuntos[aid] && !vencido(canais[atual]) && ((assuntos[aid].por === user.uid && souMembro(atual)) || gestor(atual));
+function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabrir
+  const x = aid ? assuntos[aid] : null;
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  const h = el('h2', '', x ? '🧵 ' + x.n : '🧵 Novo assunto em # ' + nomeCanal(atual)); h.id = 'md-t'; f.append(h);
+  if (!x) f.append(el('p', 'subtitulo', 'A conversa do assunto fica separada de "geral", com as próprias mensagens novas. Qualquer pessoa do canal escreve nele.'));
+  const ln = el('label', '', 'Nome'); const nome = el('input'); nome.maxLength = 60; nome.required = true; nome.value = x ? x.n : ''; nome.placeholder = 'ex.: banner da Black Friday'; ln.append(nome); f.append(ln);
+  const err = el('p', 'erro'); err.hidden = true; f.append(err);
+  const l = el('div', 'linha');
+  const base = aid ? B + 'assuntos/' + atual + '/' + aid : '';
+  if (x) {
+    const fechado = typeof x.fim === 'number';
+    const enc = el('button', fechado ? '' : 'perigo', fechado ? '🔓 Reabrir' : '🔒 Encerrar'); enc.type = 'button';
+    enc.onclick = async () => {
+      if (!fechado && !confirm('Encerrar "' + x.n + '"? Vira só leitura: ninguém escreve, edita nem reage mais nele.')) return;
+      try { await set(ref(db, base + '/fim'), fechado ? null : Date.now() - 1000); fecharModal(); toast(fechado ? '🔓 Assunto reaberto.' : '🔒 Assunto encerrado.'); } catch (e) { erroModal(err, negado(e) ? 'Sem permissão.' : 'Não deu agora. Tente de novo.'); }
+    };
+    l.append(enc);
+  }
+  const can = el('button', '', 'Cancelar'); can.type = 'button'; can.onclick = fecharModal;
+  const ok = el('button', 'primary', x ? 'Salvar' : 'Criar e abrir'); ok.type = 'submit'; l.append(can, ok); f.append(l);
+  f.onsubmit = async e => {
+    e.preventDefault(); const n = nome.value.trim().slice(0, 60);
+    if (!n) return erroModal(err, 'Dê um nome ao assunto.');
+    ok.disabled = true;
+    try {
+      if (x) { await set(ref(db, base + '/n'), n); fecharModal(); toast('🧵 Assunto renomeado.'); }
+      else {
+        const novo = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x');
+        await set(ref(db, B + 'assuntos/' + atual + '/' + novo), { n, por: user.uid, criado: serverTimestamp() });
+        fecharModal(); assuntos[novo] = { n, por: user.uid, criado: Date.now() }; trocarAssunto(novo); entrada.focus(); toast('🧵 Assunto criado. Escreva a primeira mensagem.');
+      }
+    } catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão.' : 'Não deu agora. Tente de novo.'); }
+  };
+  f.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); fecharModal(); } });
+  ov.append(f); nome.focus();
 }
 function renderCabecalho() {
   const id = atual, c = canais[id];
@@ -722,8 +846,9 @@ function renderCabecalho() {
   if (id && !ehTema(id)) sub.push('Canal oficial da squad · privado');
   if (c && ehTema(id)) { sub.push(c.acesso === 'convite' ? 'Só convidados' : 'Aberto a toda a Hering'); if (typeof c.fim === 'number') sub.push((vencido(c) ? 'Arquivado em ' : 'Até ') + new Date(c.fim).toLocaleDateString('pt-BR')); }
   $('canal-sub').textContent = sub.join(' · ');
-  const podeEscrever = id && souMembro(id) && !vencido(c) && (!ehTema(id) || !!c);
+  const podeEscrever = id && souMembro(id) && !vencido(c) && (!ehTema(id) || !!c) && !assuntoFechado(assuntoAtual);
   $('rodape').hidden = !podeEscrever;
+  const na = nomeAssunto(assuntoAtual); entrada.placeholder = assuntoAtual ? 'Mensagem em 🧵 ' + (na.length > 16 ? na.slice(0, 15) + '…' : na) : 'Escreva uma mensagem…';
   $('b-lado').hidden = !id;
   const ba = $('b-aviso'), nv = id && souMembro(id) ? nivelAviso(id) : 'todas';
   ba.hidden = !(id && souMembro(id)); ba.textContent = ICONE_AVISO[nv]; ba.setAttribute('aria-label', 'Avisos deste canal: ' + ROT_AVISO[nv]);
@@ -752,6 +877,8 @@ function renderMsgs() {
     return;
   }
   if (carregandoMsgs) { log.append(vazio('', 'Carregando mensagens…')); return; }
+  if (assuntoFechado(assuntoAtual)) log.append(el('p', 'aviso-encerrado', '🔒 Assunto encerrado — só leitura.' + (podeGerirAssunto(assuntoAtual) ? ' Para voltar a escrever, ⋯ › Reabrir.' : '')));
+  if (assuntoAtual && !msgs.length) { log.append(vazio('🧵', 'Nenhuma mensagem em "' + nomeAssunto(assuntoAtual) + '" ainda.')); return; }
   if (!msgs.length) { log.append(vazio('💬', vencido(c) ? 'Canal arquivado, sem mensagens.' : 'Nenhuma mensagem ainda. Diga oi! 👋')); return; }
   if (msgs.length >= LIMITE) log.append(el('p', 'subtitulo', 'Mostrando as últimas ' + LIMITE + ' mensagens.'));
   let dia = '', ult = null, grupo = null;
@@ -863,7 +990,7 @@ function renderMsg(m) {
   if (visivel.trim()) box.append(renderTexto(visivel));
   if (ks.length) { const w = el('div', 'cards-msg'); ks.forEach(k => w.append(chipCard(k))); box.append(w); }
   if (m.editado) box.append(el('span', 'editada', '(editada)'));
-  const c = canais[atual], ativo = !vencido(c);
+  const c = canais[atual], ativo = !vencido(c) && !assuntoFechado(m.a || '');
   const meu = m.uid === user.uid, podeReagir = ativo && souMembro(atual);
   const rx = reacoesDe(m.id); if (rx.length) box.append(...linhaReacoes(m, rx, podeReagir));
   const ac = el('div', 'acoes-msg');
@@ -933,8 +1060,10 @@ async function enviar() {
   enviando = true; $('b-enviar').disabled = true;
   try {
     // contrato com as regras: a mensagem e o marcador de não lidas no MESMO update, com o mesmo serverTimestamp
-    const corpo = { uid: user.uid, ts }; if (txt) corpo.texto = txt; if (gif) corpo.gif = Object.assign({}, gif); if (resp) corpo.resp = resp.id;   // GIF sem legenda vale (regras: texto OU gif)
-    const mapa = { [B + 'msgs/' + id + '/' + k]: corpo, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k } };
+    const aid = assuntoAtual && !assuntoFechado(assuntoAtual) ? assuntoAtual : '';
+    if (assuntoAtual && !aid) { toast('🔒 Este assunto foi encerrado.'); return; }
+    const corpo = { uid: user.uid, ts }; if (txt) corpo.texto = txt; if (gif) corpo.gif = Object.assign({}, gif); if (resp) corpo.resp = resp.id; if (aid) corpo.a = aid;   // GIF sem legenda vale (regras: texto OU gif)
+    const mapa = { [B + 'msgs/' + id + '/' + k]: corpo, [B + 'ultima/' + id]: { ts, uid: user.uid, id: k }, [B + 'ultima_a/' + id + '/' + (aid || '_geral')]: { ts, uid: user.uid, id: k } };
     tagsEm(txt).forEach(t => { mapa[B + 'tags/' + id + '/' + t + '/' + k] = ts; mapa[B + 'tags_ult/' + id + '/' + t] = ts; });   // #tags no MESMO update (a regra confere o texto e o ts)
     await gravarComTags(mapa);
     if (gif && gifEscolhido === gif) limparGif();
@@ -942,7 +1071,7 @@ async function enviar() {
     if (avisarResp) avisarMencoes(id, k, [avisarResp], true);
     if (resp && respondendo === resp) cancelarResposta(false);
     if (atual === id && t.value === bruto) { t.value = ''; ajustarAltura(); }
-    lsSet(chaveRascunho(id), atual === id ? t.value : '');
+    lsSet(chaveRascunho(id, aid), atual === id && assuntoAtual === aid ? t.value : '');
   } catch (e) { falhou('enviar a mensagem', e); }
   finally { enviando = false; $('b-enviar').disabled = false; t.focus(); }
 }
@@ -1170,7 +1299,7 @@ function trechoDe(c, m) {
 function abrirMencao(rec) {
   if (!rec.lida) set(ref(db, B + 'mencoes/' + user.uid + '/' + rec._k + '/lida'), true).catch(() => {});
   if (sinoApi && ID_RE.test(String(rec.n || ''))) sinoApi.marcarLida(String(rec.n));   // uma contagem só: a menção aberta pela aba também sai do Sino
-  alvoMsg = String(rec.m); abrirCanal(String(rec.c), true);
+  abrirNaMensagem(String(rec.c), String(rec.m));
 }
 function renderMencoes(log) {
   $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você na Concha';
@@ -1187,9 +1316,10 @@ function renderMencoes(log) {
 }
 // Sair do canal aberto para uma tela de lista (@ Menções, #tag): guarda o rascunho e solta tudo do canal. Uma função só (o reset já divergiu entre cópias).
 function soltarCanal() {
-  if (atual) lsSet(chaveRascunho(atual), entrada.value);
+  if (atual) lsSet(chaveRascunho(atual, assuntoAtual), entrada.value);
   if (vendoCanal && user) { set(ref(db, B + 'vendo/' + user.uid + '/' + vendoCanal), null).catch(() => {}); vendoCanal = ''; }   // saiu da conversa
-  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false);
+  parar('msgs'); parar('msgsA'); parar('assuntos'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false);
+  msgsCanal = []; msgsAss = []; assuntos = {}; assuntoAtual = ''; verEncerrados = false; msgsCanalPronto = false;
   msgs = []; reacoes = {}; rxAbrindo = ''; rxLista = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
 }
 function abrirMencoes() {
@@ -1232,7 +1362,7 @@ function renderTag(log) {
     const b = el('button', 'mencao-item'); b.type = 'button';
     const h = new Date(it.ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     b.append(el('b', '', '# ' + nomeCanal(it.c) + (cu && cu.uid ? ' · ' + nomePessoa(cu.uid) : '')), el('span', 'sub', cu ? cu.tr : '…'), el('span', 'hora', h));
-    b.onclick = () => { alvoMsg = it.m; abrirCanal(it.c, true); };
+    b.onclick = () => abrirNaMensagem(it.c, it.m);
     log.append(b);
   });
 }
@@ -1464,7 +1594,7 @@ function apagar(m) {
   const timer = setTimeout(async () => {
     pendentes.delete(m.id);
     const atualM = (canal === atual && msgs.find(x => x.id === m.id)) || m;   // o texto mais novo (pode ter sido editado nos 5 s)
-    const mapa = { [B + 'msgs/' + canal + '/' + m.id]: { uid: m.uid, ts: m.ts, apagada: true } };
+    const mapa = { [B + 'msgs/' + canal + '/' + m.id]: Object.assign({ uid: m.uid, ts: m.ts, apagada: true }, m.a ? { a: m.a } : {}) };   // o resto guarda o assunto (não cai em geral)
     new Set(tagsEm(m.texto).concat(tagsEm(atualM.texto))).forEach(t => { mapa[B + 'tags/' + canal + '/' + t + '/' + m.id] = null; });   // sai das #tags junto
     try { await gravarComTags(mapa); }
     catch (e) { falhou('apagar a mensagem', e); }
@@ -1476,13 +1606,19 @@ function apagar(m) {
 }
 function desfazer(id) { const p = pendentes.get(id); if (!p) return; clearTimeout(p.timer); pendentes.delete(id); renderMsgs(); }
 // Marca como lido (só sobe; um write por mudança, com respiro).
-function marcarLido() {
-  const id = atual; if (!id || !souMembro(id) || !conversaVisivel() || !msgs.length) return;
-  const ts = msgs[msgs.length - 1].ts;
-  if (ts <= (lidas[id] || 0)) return;
+function marcarLido() {   // por assunto (lidas_a); a vista de geral também avança o lido antigo do canal
+  const id = atual; if (!id || !souMembro(id) || !conversaVisivel() || vendoTag || vendoMencoes || vendoPessoa || !msgs.length) return;
+  const ts = msgs[msgs.length - 1].ts, k = assuntoAtual || '_geral';
+  if (ts <= lidoA(id, k)) return;
   clearTimeout(marcarLido._t);
-  marcarLido._t = setTimeout(() => { if (atual === id && ts > (lidas[id] || 0)) set(ref(db, B + 'lidas/' + user.uid + '/' + id), ts).catch(() => {}); }, 800);
+  marcarLido._t = setTimeout(() => {
+    if (atual !== id || (assuntoAtual || '_geral') !== k || ts <= lidoA(id, k)) return;
+    const mapa = { [B + 'lidas_a/' + user.uid + '/' + id + '/' + k]: ts };
+    if (k === '_geral' && ts > (lidas[id] || 0)) mapa[B + 'lidas/' + user.uid + '/' + id] = ts;
+    update(ref(db), mapa).catch(() => {});
+  }, 800);
 }
+
 document.addEventListener('visibilitychange', marcarLido);
 
 // Compositor: Enter envia; Ctrl+B/I; @ menciona; rascunho por canal
@@ -1536,7 +1672,7 @@ function prefixarLinha(pre) {
   const a = entrada.selectionStart, ini = entrada.value.lastIndexOf('\n', a - 1) + 1;
   entrada.setRangeText(pre, ini, ini, 'end'); entrada.focus();
 }
-entrada.addEventListener('input', () => { ajustarAltura(); atualizarSug(); if (atual) lsSet(chaveRascunho(atual), entrada.value); });
+entrada.addEventListener('input', () => { ajustarAltura(); atualizarSug(); if (atual) lsSet(chaveRascunho(atual, assuntoAtual), entrada.value); });
 entrada.addEventListener('keydown', e => {
   if (teclaSug(e, entrada)) return;
   if (e.key === 'Escape' && respondendo) { e.preventDefault(); cancelarResposta(true); return; }
@@ -1860,7 +1996,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.
@@ -1903,7 +2039,7 @@ async function iniciar() {
     } catch (e) {}
     toast('Menção não encontrada (pode ter sido apagada).');
   }
-  if (ID_RE.test(q)) abrirCanal(q); else { renderCabecalho(); renderMsgs(); renderLado(); }
+  if (ID_RE.test(q)) { const qa = qp.get('a') || ''; if (alvoMsg && !AID_RE.test(qa) && qp.get('c') === q) abrirNaMensagem(q, alvoMsg); else abrirCanal(q, false, AID_RE.test(qa) ? qa : ''); } else { renderCabecalho(); renderMsgs(); renderLado(); }
 }
 onAuthStateChanged(auth, u => {
   const novo = isHering(u) ? u : null;

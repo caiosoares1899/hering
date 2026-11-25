@@ -404,3 +404,36 @@ Pedido do Caio (25/11): além das #tags, "agrupamentos separados" como as seçõ
 - **ℹ️ Detalhes › 📁 Na sua lista:** move o canal; "＋ Nova seção…" cria e já põe o canal nela.
 - **Fronteira:** nó privado novo; o nome da seção é da própria pessoa e só ela o vê (entra por `textContent`).
 - Testes: `cardumeRules` (seções), `test_concha_secoes.js` (13). Deploy: `firebase deploy --only database` antes do merge.
+
+## 🧵 Assuntos dentro do canal — desenho de 25/11/2026 (R3)
+
+Pedido do Caio (25/11): "assuntos separados", como os tópicos do Zulip/Discord. **Decisões:** assunto **opcional** (a conversa normal fica em **geral**; mensagens antigas = geral); **não lidas e 🔕 por assunto**, e **seguir um assunto** funciona como seguir uma #tag; **criar: qualquer membro**; **renomear/encerrar** (vira só leitura): quem criou e quem administra o canal (PO/Org da squad, dona/admin do temático, ADM).
+
+### Banco
+| Nó | Valor | Lê | Escreve |
+|---|---|---|---|
+| `kanban/cardume/assuntos/{canal}/{aid}` | `{n: 1–60, por: uid, criado: ts, fim?: ts}` (`aid` = `a` + base36) | membro do canal ou ADM | criar: membro do canal ativo (`por` = ele, `criado` = agora, sem `fim`); `n`/`fim`: quem criou ou gestor do canal; `por`/`criado` imutáveis; apagar: só ADM |
+| `msgs/{canal}/{id}/a` | `aid` (ausente = geral) | — | só na criação, para assunto que existe e não está encerrado; imutável (editar e apagar não mexem) |
+| `ultima_a/{canal}/{aid ou "_geral"}` | `{ts, uid, id}` | membro ou ADM | o mesmo contrato do `ultima` (a própria mensagem, mesmo update, mesmo ts), conferindo que a mensagem é daquele assunto |
+| `lidas_a/{uid}/{canal}/{aid ou "_geral"}` | número | a pessoa | a pessoa |
+| `avisos_a/{uid}/{canal}/{aid}` | `{nivel: 'seguir'|'mencoes', ate?}` | a pessoa | a pessoa (sem nó = "como o canal") |
+
+- `msgs/{canal}` ganha `.indexOn: ["ts", "a"]`. **A ordem e o limite nunca confiam na chave** (revisão do advisor: chaves forjadas `z…` ocupariam um `limitToLast` por chave): **geral** = as sem `a` da janela do canal por `ts` (`orderByChild('ts').limitToLast(100)`), as 50 mais novas; **assunto** = `orderByChild('a').equalTo(aid)` **sem limite** (a limpeza de 90 dias põe o teto), ordenado por `ts`, as 50 mais novas.
+- **Apagar guarda o `a`** (`{uid, ts, apagada, a}`): a mensagem apagada não cai em geral. Editar não muda nem tira o `a`.
+- **Encerrado = só leitura de verdade:** a regra barra mensagem nova, edição e reação (tirar a própria reação e apagar continuam). Quem pode encerrar também reabre (tira o `fim`). Quem criou e saiu do canal perde o direito.
+- `ultima/{canal}` e `lidas/{uid}/{canal}` continuam. Não lida por assunto = `ultima_a` × `lidas_a`; **"_geral" herda o lido antigo do canal** e os assuntos começam do zero. A vista de geral também avança o `lidas` antigo; a de assunto não. Mensagem que só aparece no `ultima` (de quem ainda está com a página antiga) conta como geral. O assunto mostra um ponto (não um número).
+- **PR A (este):** os assuntos, não lidas e encerrar. **PR B (depois):** 🔕/🔔 seguir por assunto (`avisos_a` + `conchaAvisoMsg`) e o nome do assunto no push; até lá, mensagem de assunto avisa pela regra do canal.
+
+### Avisos (`conchaAvisoMsg` + `avisos_a`)
+Nível do canal primeiro (🚫 nada cala tudo). Depois o do assunto: **🔔 seguir** avisa de toda mensagem do assunto mesmo com o canal em 🔕 (com a trava de 2 min do canal); **🔕 silenciar** o assunto deixa só @menção e #tag seguida; sem nó, vale o canal. Texto: "🐚 Ana em # Dados › banner BF" (canal só de convidados: "num canal privado"). Link: `?c=&a=&m=`.
+
+### Tela
+- Faixa de assuntos abaixo do topo da conversa: **💬 geral** + os abertos (com contador de novas) + **＋ Novo assunto**; encerrados num "Encerrados (N)" recolhido. Trocar de assunto troca a conversa, o rascunho (por assunto) e o lugar onde a mensagem vai.
+- ⋯ do assunto: 🔔 Seguir / 🔕 Silenciar / Como o canal; ✏️ Renomear e 🔒 Encerrar (quem pode).
+- Ir até uma mensagem (menção, #tag, push, ↩️ citação) abre o assunto dela.
+- Responder fica no mesmo assunto (a resposta vai para o assunto da tela).
+
+### Limites
+- Mudar uma mensagem de assunto não existe (como no Zulip, seria um "mover" — fica para depois).
+- O Sonar ainda não lista assuntos (próximo passo).
+- `cardumeLimpeza` (futura) apaga também `ultima_a`/`lidas_a` órfãos e assuntos de canal apagado.
