@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-25 · 🐚 Concha: chaves forjadas escondiam as reações do canal (SÓ DEV, cardume v0.20) — 2026-11-25
+
+Achado confirmado (média) da auditoria do Antigravity na #1963. A escuta das reações era uma faixa de chaves (orderByKey + startAt + limitToLast(150)); o ID_RE das mensagens aceita chaves como 'z000', acima de todo push() ('-…'), então um membro que gravasse 150 mensagens assim e reagisse a elas ocupava a faixa e escondia as reações de todas as mensagens normais até a limpeza. Agora há uma escuta por mensagem exibida (reacoes/{canal}/{msgId}), com redesenho agrupado num quadro: só se baixa o que está na tela e chave forjada não afeta as outras. Sem mudança de regra. Teste: test_concha_reacoes.js (33; com 160 chaves forjadas; na versão anterior, as reações somem).
+
 ### 2026-11-24 · 🐚 Concha: ações da mensagem fora do alcance do teclado (SÓ DEV, cardume v0.18) — 2026-11-24
 
 cardume-dev.html: .acoes-msg ficava em display:none até o hover, então o Tab nunca chegava em ↩️ Responder / 📝 No card / ✏️ Editar / 🗑 Apagar (o :focus-within que as mostraria nunca disparava). Achado de passagem na rodada /melhoriauiux; agora ficam com opacity 0 + pointer-events none em repouso, entram no Tab e aparecem ao receber foco. Teste: test_concha_ui.js.

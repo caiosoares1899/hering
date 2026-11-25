@@ -319,7 +319,7 @@ Pedido do Caio: reagir a uma mensagem com emoji, "igual aos comentários do Mar�
 - Não avisa quem reage à própria mensagem.
 
 ### Página (`cardume-dev.html`)
-- Uma escuta por canal aberto: `query(reacoes/{canal}, orderByKey(), startAt(<menor chave das mensagens exibidas>))`, refeita quando a janela muda, com teto de 150 (uma chave forjada no padrão do `ID_RE` não arrasta o histórico inteiro) — as mensagens vêm por `ts` do servidor e uma enviada offline tem chave mais antiga (revisão do Codex; "as últimas 60 chaves" podia deixá-la de fora). Parada ao trocar de canal, ao abrir @ Menções e ao sair da conta.
+- **Uma escuta por mensagem exibida** (`reacoes/{canal}/{msgId}`, redesenho agrupado num quadro), parada ao trocar de canal, ao abrir @ Menções e ao sair da conta. (Antes: faixa `orderByKey + startAt + limitToLast(150)` — a auditoria do Antigravity na #1963 confirmou que chaves forjadas no padrão do `ID_RE`, como `z000`, ficam acima de todo `push()` e ocupavam a faixa, escondendo as reações do canal; a revisão do Codex já tinha trocado as "últimas 60" pela menor chave exibida, por causa de mensagem enviada offline. Por mensagem, as duas coisas somem.)
 - Depois de reagir, o foco vai ao chip escolhido (ou volta ao 😀 se a reação saiu); se o banco recusar, o seletor fecha e o aviso não sai.
 - Chips embaixo da mensagem (`aria-pressed` no seu; `title`/`aria-label` com quem reagiu); na mensagem **tocada** (celular/iPad), uma linha com os nomes — `title` não existe no toque.
 - "😀 Reagir" na pílula: troca os ícones da pílula pelos 5 emojis no mesmo lugar (não abre nada por cima de texto); no toque, a fileira de ações vira a de emojis. Vão reservado à direita recalculado para 5 ícones.

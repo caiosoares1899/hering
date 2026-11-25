@@ -317,10 +317,10 @@ button.msg-gif{cursor:pointer;}
 <script src="mare-notif-dev.js?v=52"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByKey, startAt, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.19 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.20 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -597,7 +597,7 @@ function abrirCanal(id, foco) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   if (atual !== id) {
     if (atual) lsSet(chaveRascunho(atual), entrada.value);
-    parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); msgs = []; reacoes = {}; rxAbrindo = ''; rxDesde = null; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+    parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
     entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
   }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
@@ -688,16 +688,19 @@ function acaoBtn(cls, ic, rot, nome) {   // ícone + rótulo; na pílula do comp
 const REACT_EMOJIS = ['👍', '👀', '❤️', '✅', '🎉'];
 let reacoes = {};               // msgId → {uid: emoji} do canal aberto
 let rxAbrindo = '';             // mensagem com o seletor de emojis aberto
-const rxAvisados = new Set();
-let rxDesde = null;             // menor chave das mensagens exibidas (a escuta das reações começa nela)
+const rxAvisados = new Set();   // mensagens cujo autor já foi avisado nesta sessão (a regra também só deixa criar o aviso uma vez)
 let rxFoco = null;              // depois de reagir: {id, e} — o foco vai para o chip escolhido (ou volta ao 😀 se a reação saiu)
-function ouvirReacoes(canal) {  // reações de TODAS as mensagens exibidas: as mensagens vêm por ts (servidor) e uma enviada offline pode ter chave mais antiga
-  const desde = msgs.length ? msgs.reduce((a, m) => (m.id < a ? m.id : a), msgs[0].id) : null;
-  if (desde === rxDesde && ouvintes['rx']) return;
-  rxDesde = desde; parar('rx');
-  if (!desde) { reacoes = {}; return; }
-  ouvir('rx', query(ref(db, B + 'reacoes/' + canal), orderByKey(), startAt(desde), limitToLast(150)), s => { if (atual === canal) { reacoes = s.val() || {}; renderMsgs(); } }, () => { reacoes = {}; });
-}   // mensagens cujo autor já foi avisado nesta sessão (a regra também só deixa criar o aviso uma vez)
+let rxRender = 0;
+// Uma escuta por MENSAGEM EXIBIDA (reacoes/{canal}/{msgId}). Antes era uma faixa de chaves (startAt + limitToLast(150)), e chaves
+// forjadas no padrão do ID_RE ('z000'…, acima de todo push() '-…') ocupavam a faixa e escondiam as reações do canal (auditoria do Antigravity na #1963).
+// Assim só se baixa o que está na tela, e chave forjada não afeta as outras mensagens.
+function ouvirReacoes(canal) {
+  const quero = new Set(msgs.filter(m => !m.apagada && ID_RE.test(m.id)).map(m => m.id));
+  Object.keys(ouvintes).forEach(k => { if (k.startsWith('rx:') && !quero.has(k.slice(3))) { ouvintes[k](); delete ouvintes[k]; delete reacoes[k.slice(3)]; } });
+  quero.forEach(id => { if (!ouvintes['rx:' + id]) ouvir('rx:' + id, ref(db, B + 'reacoes/' + canal + '/' + id), s => {
+    if (atual !== canal) return; const v = s.val(); if (v && typeof v === 'object') reacoes[id] = v; else delete reacoes[id]; redesenharReacoes(); }, () => { delete reacoes[id]; }); });
+}
+function redesenharReacoes() { if (rxRender) return; rxRender = requestAnimationFrame(() => { rxRender = 0; renderMsgs(); }); }   // 50 escutas chegando juntas = 1 redesenho
 function reacoesDe(id) {        // [[emoji, [uids]]] na ordem da lista; ignora o que não está na lista
   const r = reacoes[id]; if (!r || typeof r !== 'object') return [];
   const por = {}; Object.keys(r).forEach(u => { const e = r[u]; if (ID_RE.test(u) && REACT_EMOJIS.includes(e)) (por[e] = por[e] || []).push(u); });
@@ -1065,7 +1068,7 @@ function renderMencoes(log) {
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
   if (atual) lsSet(chaveRascunho(atual), entrada.value);
-  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; rxAbrindo = ''; rxDesde = null; membrosAtual = {}; adminsAtual = {}; editando = '';
+  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = '';
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
 }
@@ -1436,7 +1439,7 @@ function limparSessao() {
   Object.keys(infoCards).forEach(k => delete infoCards[k]);   // o acesso aos cards é da conta
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
-  reacoes = {}; rxAbrindo = ''; rxDesde = null; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
+  reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
