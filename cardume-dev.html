@@ -101,6 +101,12 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .ponto{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;}
 .chip{display:inline-block;padding:1px 7px;border-radius:999px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);font-size:11px;line-height:1.5;color:var(--txt2);}
 .novo-canal{width:100%;margin-top:8px;background:transparent;border-style:dashed;box-shadow:none;color:var(--txt2);}
+.sec-cab{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;cursor:pointer;font-size:13px;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;padding:2px 8px;border-radius:6px;min-height:28px;}
+.sec-cab:hover{color:var(--txt);} .sec-cab:focus-visible{outline:2px solid var(--accent);}
+.sec-cab .seta{font-size:10px;width:10px;} .sec-cab .novas{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--accent-txt);font-weight:700;}
+.sec-vazia{margin:0 8px 6px;font-size:12px;}
+.lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
+.sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
 .novo-canal:hover{color:var(--txt);}
 .cabecalho{padding:10px 14px;min-height:60px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--glass-b);}
 .cabecalho .grow{flex:1;min-width:0;}
@@ -283,6 +289,7 @@ button.msg-gif{cursor:pointer;}
       <button type="button" class="b-mencoes" id="b-mencoes" aria-current="false">@ Menções <span class="selo-n" id="mencoes-n" hidden>0</span></button>
       <div id="lista-canais"></div>
       <button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button>
+      <button type="button" class="novo-canal" id="b-secoes">📁 Seções</button>
     </nav>
 
     <section class="painel conversa" aria-labelledby="canal-titulo">
@@ -332,7 +339,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.24 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.25 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -602,6 +609,7 @@ function iniciarOuvintes() {
   ouvir('abertos', ref(db, B + 'abertos'), s => { abertos = s.val() || {}; sincronizarCanais(); renderLista(); }, () => {});
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
   ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); }, () => {});
+  ouvir('secoes', ref(db, B + 'secoes/' + uid), s => { const v = s.val() || {}; secoes = { s: v.s || {}, c: v.c || {}, r: v.r || {} }; renderLista(); if (atual) renderLado(); }, () => {});
   ouvir('seguidas', ref(db, B + 'seguidas/' + uid), s => { seguidas = s.val() || {}; if (vendoTag) renderMsgs(); }, () => {});
   ouvir('mencoes', query(ref(db, B + 'mencoes/' + uid), orderByChild('ts'), limitToLast(100)), s => {
     const v = s.val() || {};
@@ -616,13 +624,27 @@ function iniciarOuvintes() {
 // ═══ Lista de canais ═══
 const naoLido = id => { const u = ultimas[id]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > (lidas[id] || 0) && (id !== atual || !conversaVisivel()); };
 function renderLista() {
-  const box = $('lista-canais'); box.replaceChildren();
+  const box = $('lista-canais'), focoSec = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('sec-cab') ? document.activeElement.dataset.sec : '';
+  box.replaceChildren();
   const ids = idsConhecidos();
   const oficiais = ids.filter(id => !ehTema(id) && canais[id] && (souMembro(id) || gestorOficial(id)));
   const temas = ids.filter(id => ehTema(id) && canais[id] && souMembro(id));
   const descobrir = ids.filter(id => ehTema(id) && abertos[id] && !souMembro(id));
   const semCanal = souAdm() ? ids.filter(id => !ehTema(id) && canais[id] === null && meta[id]) : [];
-  const sec = (titulo, lista, fn) => { if (!lista.length) return; box.append(el('h3', '', titulo)); lista.sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR')).forEach(id => box.append(fn(id))); };
+  // 📁 Seções da pessoa primeiro (na ordem dela); o que não está em nenhuma fica na seção padrão. Recolhida: só o canal aberto continua à vista.
+  const minhas = secLista(), naMinha = id => !!secDe(id);
+  const sec = (titulo, lista, fn, chave, mostrarVazia) => {
+    if (!lista.length && !mostrarVazia) return;
+    const rec = !!secoes.r[chave], novas = lista.filter(naoLido).length;
+    const h = el('button', 'sec-cab'); h.type = 'button'; h.dataset.sec = chave; h.setAttribute('aria-expanded', String(!rec));
+    h.append(el('span', 'seta', rec ? '▸' : '▾'), el('span', '', titulo)); if (rec && novas) h.append(el('span', 'novas', novas + (novas === 1 ? ' nova' : ' novas')));
+    h.setAttribute('aria-label', titulo + (rec ? ', recolhida' : '') + (rec && novas ? ', ' + novas + ' com mensagens novas' : ''));
+    h.onclick = () => recolher(chave, !rec); box.append(h);
+    lista.sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR')).filter(id => !rec || id === atual).forEach(id => box.append(fn(id)));
+    if (!lista.length && !rec) box.append(el('p', 'subtitulo sec-vazia', 'Vazia. Para pôr um canal: ℹ️ Detalhes › Na sua lista.'));
+  };
+  const fnDe = id => descobrir.includes(id) ? botao(id, '# ', 'entrar') : semCanal.includes(id) ? botao(id, '＋ ', 'ativar') : ehTema(id) ? botao(id, (canais[id] && canais[id].acesso === 'convite' ? '🔒 ' : '# '), vencido(canais[id]) ? 'arquivado' : '') : botao(id, '# ', souMembro(id) ? '' : 'gerir');
+  const todos = oficiais.concat(temas, descobrir, semCanal);
   const botao = (id, prefixo, extra) => {
     const b = el('button', 'canal' + (naoLido(id) ? ' nao-lido' : '')); b.type = 'button'; b.dataset.canal = id;
     b.setAttribute('aria-current', String(id === atual));
@@ -633,11 +655,13 @@ function renderLista() {
     b.setAttribute('aria-label', prefixo + nomeCanal(id) + (naoLido(id) ? ', mensagens novas' : '') + (extra ? ', ' + extra : '') + (nv !== 'todas' ? ', avisos: ' + ROT_AVISO[nv] : ''));
     return b;
   };
-  sec('Squads', oficiais, id => botao(id, '# ', souMembro(id) ? '' : 'gerir'));
-  sec('Temáticos', temas, id => botao(id, (canais[id] && canais[id].acesso === 'convite' ? '🔒 ' : '# '), vencido(canais[id]) ? 'arquivado' : ''));
-  sec('Abertos para entrar', descobrir, id => botao(id, '# ', 'entrar'));
-  sec('Squads sem canal (ADM)', semCanal, id => botao(id, '＋ ', 'ativar'));
-  if (!box.children.length) box.append(el('p', 'subtitulo', 'Você ainda não está em nenhum canal. Peça a quem administra a sua squad para te adicionar, ou crie um canal temático.'));
+  minhas.forEach(([sid, x]) => sec(x.n, todos.filter(id => secDe(id) === sid), fnDe, sid, true));
+  sec('Squads', oficiais.filter(id => !naMinha(id)), fnDe, 'squads');
+  sec('Temáticos', temas.filter(id => !naMinha(id)), fnDe, 'temas');
+  sec('Abertos para entrar', descobrir.filter(id => !naMinha(id)), fnDe, 'abertos');
+  sec('Squads sem canal (ADM)', semCanal.filter(id => !naMinha(id)), fnDe, 'semcanal');
+  if (focoSec) { const h = box.querySelector('.sec-cab[data-sec="' + CSS.escape(focoSec) + '"]'); if (h) h.focus({ preventScroll: true }); }   // recolher pelo teclado não perde o foco
+  if (!box.querySelector('.canal')) box.append(el('p', 'subtitulo', 'Você ainda não está em nenhum canal. Peça a quem administra a sua squad para te adicionar, ou crie um canal temático.'));
 }
 $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[data-canal]'); if (b) abrirCanal(b.dataset.canal, true); });
 
@@ -1201,6 +1225,67 @@ function renderPessoa(log) {
     log.append(b);
   });
 }
+// ═══ 📁 Seções na lista de canais (pessoal; kanban/cardume/secoes/{uid} = {s: {id: {n, o}}, c: {canal: id}, r: {chave: true}}) ═══
+let secoes = { s: {}, c: {}, r: {} };
+const MAX_SECOES = 15;
+const secLista = () => Object.entries(secoes.s || {}).filter(([k, x]) => /^s[a-z0-9]{1,20}$/.test(k) && x && typeof x.n === 'string').sort((a, b) => (a[1].o || 0) - (b[1].o || 0) || a[1].n.localeCompare(b[1].n, 'pt-BR'));
+const secDe = id => { const k = secoes.c && secoes.c[id]; return typeof k === 'string' && secoes.s[k] ? k : ''; };
+const SEC = () => B + 'secoes/' + user.uid;
+function recolher(chave, sim) { set(ref(db, SEC() + '/r/' + chave), sim ? true : null).catch(e => falhou('recolher a seção', e)); }
+function moverPara(id, sid) {
+  set(ref(db, SEC() + '/c/' + id), sid || null).then(() => toast(sid ? '📁 ' + nomeCanal(id) + ' foi para ' + secoes.s[sid].n + '.' : nomeCanal(id) + ' voltou para a seção padrão.')).catch(e => falhou('mover o canal', e));
+}
+function modalSecoes(canalNovo) {   // criar, renomear, reordenar, apagar — grava tudo num update só ao Salvar
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  const h = el('h2', '', '📁 Suas seções'); h.id = 'md-t'; f.append(h);
+  f.append(el('p', 'subtitulo', 'Só você vê. Para pôr um canal numa seção: ℹ️ Detalhes do canal › Na sua lista. Apagar uma seção devolve os canais dela à seção padrão.'));
+  let rasc = secLista().map(([sid, x]) => ({ sid, n: x.n }));
+  const vistas = new Set(rasc.map(x => x.sid));   // só apaga o que a pessoa tirou AQUI (seção criada em outro aparelho com o modal aberto fica)
+  const lista = el('div'); f.append(lista);
+  const desenhar = foco => {
+    lista.replaceChildren();
+    if (!rasc.length) lista.append(el('p', 'subtitulo', 'Nenhuma seção ainda.'));
+    rasc.forEach((x, i) => {
+      const l = el('div', 'sec-linha'), inp = el('input'); inp.value = x.n; inp.maxLength = 30; inp.setAttribute('aria-label', 'Nome da seção ' + (i + 1)); inp.oninput = () => { x.n = inp.value; };
+      const bt = (tx, rot, fn, off) => { const b = el('button', '', tx); b.type = 'button'; b.setAttribute('aria-label', rot); b.title = rot; b.disabled = !!off; b.onclick = fn; return b; };
+      l.append(inp, bt('↑', 'Subir ' + x.n, () => { rasc.splice(i - 1, 0, rasc.splice(i, 1)[0]); desenhar(i - 1); }, i === 0), bt('↓', 'Descer ' + x.n, () => { rasc.splice(i + 1, 0, rasc.splice(i, 1)[0]); desenhar(i + 1); }, i === rasc.length - 1), bt('🗑', 'Apagar ' + x.n, () => { rasc.splice(i, 1); desenhar(); }));
+      lista.append(l); if (foco === i) inp.focus();
+    });
+  };
+  desenhar();
+  const nova = el('div', 'sec-linha'); const ni = el('input'); ni.maxLength = 30; ni.placeholder = 'Nova seção (ex.: Projetos)'; ni.setAttribute('aria-label', 'Nome da nova seção');
+  const add = el('button', '', '＋ Criar'); add.type = 'button';
+  const criar = nome => { nome = nome.trim().slice(0, 30); if (!nome) return; if (rasc.length >= MAX_SECOES) { toast('No máximo ' + MAX_SECOES + ' seções.'); return; } rasc.push({ sid: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), n: nome, novo: true }); ni.value = ''; desenhar(); ni.focus(); };
+  add.onclick = () => criar(ni.value); ni.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); criar(ni.value); } };
+  nova.style.gridTemplateColumns = '1fr auto'; nova.append(ni, add); f.append(nova);
+  if (!rasc.some(x => /⭐/.test(x.n))) { const fav = el('button', 'lnk', '⭐ Criar "Favoritos"'); fav.type = 'button'; fav.onclick = () => { criar('⭐ Favoritos'); fav.remove(); }; f.append(fav); }
+  const err = el('p', 'erro'); err.hidden = true; f.append(err);
+  const l = el('div', 'linha'); const can = el('button', '', 'Cancelar'); can.type = 'button'; can.onclick = fecharModal;
+  const ok = el('button', 'primary', 'Salvar'); ok.type = 'submit'; l.append(can, ok); f.append(l);
+  f.onsubmit = async e => {
+    e.preventDefault();
+    if (ni.value.trim()) criar(ni.value);   // digitou e foi direto ao Salvar: vale
+    if (rasc.some(x => !x.n.trim())) { erroModal(err, 'Toda seção precisa de nome (ou apague).'); return; }
+    const mapa = {}, ficam = new Set(rasc.map(x => x.sid)), apagadas = new Set([...vistas].filter(k => !ficam.has(k)));
+    apagadas.forEach(k => { mapa[SEC() + '/s/' + k] = null; mapa[SEC() + '/r/' + k] = null; });
+    Object.keys(secoes.c || {}).filter(cn => apagadas.has(secoes.c[cn])).forEach(cn => { mapa[SEC() + '/c/' + cn] = null; });   // canais das seções apagadas voltam ao padrão
+    const novasFora = secLista().filter(([k]) => !vistas.has(k) && !ficam.has(k)).length;   // criadas em outro aparelho: vão para o fim da ordem
+    rasc.forEach((x, i) => { mapa[SEC() + '/s/' + x.sid] = { n: x.n.trim().slice(0, 30), o: i }; });
+    secLista().filter(([k]) => !vistas.has(k) && !ficam.has(k)).forEach(([k, x], j) => { mapa[SEC() + '/s/' + k] = { n: x.n, o: rasc.length + j }; });   // preserva (e põe no fim)
+    if (novasFora) console.info('[concha] seções criadas em outro aparelho mantidas:', novasFora);
+    const ultima = rasc.filter(x => x.novo).pop(); if (canalNovo && ultima) mapa[SEC() + '/c/' + canalNovo] = ultima.sid;   // veio do "＋ Nova seção…" de um canal: ele já vai para ela
+    if (!Object.keys(mapa).length) { fecharModal(); return; }
+    ok.disabled = true;
+    try { await update(ref(db), mapa); fecharModal(); toast('📁 Seções salvas.'); }
+    catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão para salvar.' : 'Não deu para salvar agora. Tente de novo.'); }
+  };
+  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
+  ov.append(f); (rasc.length ? lista.querySelector('input') : ni).focus();
+}
+$('b-secoes').onclick = () => modalSecoes('');
+
 // ═══ 🔔 Avisos de mensagem nova, estilo WhatsApp (docs/ideias/cardume-v0-banco.md › "Avisos de mensagem nova") ═══
 // Preferência PRIVADA (avisos/{uid}/{canal} = {nivel, ate?}; sem nó = 🔔 todas); a função conchaAvisoMsg manda o push. #tags seguidas avisam
 // mesmo com o canal em 🔕. vendo/{uid}/{canal} = sinal de vida da conversa aberta (30 s): quem está vendo não recebe push.
@@ -1560,6 +1645,15 @@ function renderLado() {
   if (membro) { const b = el('button', '', 'Sair do canal'); b.type = 'button'; b.onclick = () => sair(id); ac.append(b); }
   if (g && ehTema(id) && c) { const b = el('button', '', '⚙️ Editar canal'); b.type = 'button'; b.onclick = () => modalCanal(id); ac.append(b); }
   if (ac.children.length) s.append(ac);
+  if (c !== null && (membro || g || (ehTema(id) && abertos[id]))) {   // 📁 seção pessoal deste canal na lista da esquerda
+    const ls = el('label', 'subtitulo sec-onde', '📁 Na sua lista'), sel = el('select'); sel.setAttribute('aria-label', 'Seção deste canal na sua lista');
+    sel.append(new Option(ehTema(id) ? 'Temáticos (padrão)' : 'Squads (padrão)', ''));
+    secLista().forEach(([sid, x]) => sel.append(new Option(x.n, sid)));
+    sel.append(new Option('＋ Nova seção…', '+nova'));
+    sel.value = secDe(id) || '';
+    sel.onchange = () => { if (sel.value === '+nova') { sel.value = secDe(id) || ''; modalSecoes(id); return; } moverPara(id, sel.value); };
+    ls.append(sel); s.append(ls);
+  }
   if (ehTema(id) && c && c.dono) s.append(el('p', '', 'Criado por ' + nomePessoa(c.dono) + (c.acesso === 'convite' ? ' · só convidados' : ' · aberto')));
   // membros
   const uids = Object.keys(membrosAtual).filter(u => membrosAtual[u] === true);
@@ -1712,7 +1806,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.

@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 📁 seções na lista de canais, como no Slack (SÓ DEV, cardume v0.25, regra secoes) — 2026-11-25
+
+Pedido do Caio: agrupamentos separados, como as seções do Slack. Organização pessoal (só você vê): suas seções vêm primeiro na lista, na sua ordem (⭐ Favoritos, Projetos…); o canal que não está em nenhuma segue em Squads/Temáticos. Clicar no título recolhe/expande (recolhida mostra "N novas" e mantém o canal aberto à vista; vale em todos os aparelhos). 📁 Seções cria (atalho ⭐ Favoritos), renomeia, reordena e apaga (os canais voltam ao padrão); ℹ️ Detalhes › 📁 Na sua lista move o canal ("＋ Nova seção…" cria e já põe). Banco: kanban/cardume/secoes/{uid} (privado; o canal só aponta para seção que existe). Testes: cardumeRules (+1, sabotagens), test_concha_secoes.js (13); contraste das 5 regiões nos 3 temas ok. Deploy: firebase deploy --only database antes do merge.
+
 ### 🐚 Concha: 🔔 avisos de mensagem nova como no WhatsApp — todas por padrão, 🔕/🚫 por canal e #tags seguidas (SÓ DEV, cardume v0.24, regras + função conchaAvisoMsg) — 2026-11-25
 
 Ideia do backlog + pedido do Caio: toda mensagem nova avisa por padrão, como no WhatsApp, e cada um personaliza. 🔔 no topo da conversa: Todas (padrão) · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 h, 1 semana ou sempre; a lista mostra 🔕/🚫. Na tela da #tag, 🔔 Seguir #tag (avisa em todos os seus canais, mesmo os silenciados); deixar de seguir no 🔔. Push "🐚 Ana em # Dados" / "🐚 Ana usou #banner em # Dados", sem trecho (canal só de convidados = "num canal privado"); não avisa quem está com a conversa aberta e usando (janela em foco, mexeu no último minuto); o push passa a ser ativável na própria Concha (🔔 Sino › Ativar notificações neste aparelho); respeita o Não Perturbe; 1 push de "todas" por canal a cada 2 min; quem foi mencionado/respondido recebe só o push da menção; conta de fora da empresa não recebe.
