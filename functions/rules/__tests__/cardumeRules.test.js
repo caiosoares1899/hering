@@ -683,3 +683,76 @@ test('seções: só a própria pessoa lê e grava; canal só aponta para seção
   assert.equal(lê(SC, A.ana), true);
   for (const k of ['bru', 'adm', 'forasteiro']) assert.equal(lê(SC, A[k]), false, 'NÃO lê: ' + k);
 });
+
+// ═══ 🧵 Assuntos dentro do canal (25/11/2026) ═══
+const AS = (aid, sq) => `kanban/cardume/assuntos/${sq || 'dados'}/${aid || 'abf'}`;
+const assunto = o => Object.assign({ n: 'banner BF', por: 'ana', criado: Date.now() }, o || {});
+test('assuntos: membro cria (por = ele, sem fim); só membro e ADM leem; fora do canal, forjar autor, encerrar na criação e campo extra barram', () => {
+  reset();
+  assert.equal(grava(AS(), A.ana, assunto()), true, 'membro cria');
+  assert.equal(grava(AS(), A.gil, assunto({ por: 'gil' })), false, 'da squad, fora do canal');
+  assert.equal(grava(AS(), A.ana, assunto({ por: 'bru' })), false, 'forjar quem criou');
+  assert.equal(grava(AS(), A.ana, assunto({ fim: Date.now() })), false, 'já nascer encerrado');
+  assert.equal(grava(AS(), A.ana, assunto({ n: '' })), false, 'sem nome');
+  assert.equal(grava(AS(), A.ana, assunto({ n: 'x'.repeat(61) })), false, 'nome longo');
+  assert.equal(grava(AS(), A.ana, assunto({ cor: 'x' })), false, 'campo extra');
+  assert.equal(grava(AS('Abf'), A.ana, assunto()), false, 'id fora do padrão');
+  assert.equal(grava(AS(), A.ana, assunto({ criado: Date.now() - 120000 })), false, 'criado no passado');
+  for (const k of ['ana', 'bru', 'adm']) assert.equal(lê('kanban/cardume/assuntos/dados', A[k]), true, 'lê: ' + k);
+  for (const k of ['gil', 'forasteiro']) assert.equal(lê('kanban/cardume/assuntos/dados', A[k]), false, 'NÃO lê: ' + k);
+});
+
+test('assuntos: renomear/encerrar é de quem criou (ainda no canal) ou do gestor; reabrir também; só o ADM apaga', () => {
+  reset(); const cri = Date.now() - 864e5;
+  DB.kanban.usuarios.bru.squads = { dados: true }; DB.kanban.usuarios.bru.squads_roles = { dados: 'po' };
+  DB.kanban.cardume.membros.dados.cai = true;
+  DB.kanban.cardume.assuntos = { dados: { abf: assunto({ criado: cri }) } };
+  assert.equal(grava(AS(), A.ana, assunto({ criado: cri, n: 'banner da BF' })), true, 'quem criou renomeia');
+  assert.equal(grava(AS(), A.ana, assunto({ criado: cri, fim: Date.now() })), true, 'quem criou encerra');
+  assert.equal(grava(AS(), A.caio, assunto({ criado: cri, n: 'outro' })), true, 'ADM');
+  assert.equal(grava(AS(), A.bru, assunto({ criado: cri, fim: Date.now() })), true, 'PO da squad (gestor)');
+  DB.kanban.cardume.membros.dados.int = null; DB.kanban.cardume.membros.dados.gil = true;
+  assert.equal(grava(AS(), A.gil, assunto({ criado: cri, n: 'meu agora' })), false, 'outro membro não renomeia');
+  assert.equal(grava(AS(), A.ana, assunto({ criado: cri, por: 'gil' })), false, 'trocar quem criou');
+  assert.equal(grava(AS(), A.ana, assunto({ criado: cri + 1 })), false, 'trocar criado');
+  DB.kanban.cardume.assuntos.dados.abf.fim = Date.now() - 1000;
+  assert.equal(grava(AS(), A.ana, assunto({ criado: cri })), true, 'reabrir (tirar o fim)');
+  DB.kanban.cardume.membros.dados.ana = null;
+  assert.equal(grava(AS(), A.ana, assunto({ criado: cri, n: 'saí mas renomeio' })), false, 'quem criou e saiu do canal perde o direito');
+  assert.equal(grava(AS(), A.bru, null), false, 'gestor não apaga o nó');
+  assert.equal(grava(AS(), A.adm, null), true, 'ADM apaga');
+});
+
+test('mensagem no assunto: a só na criação, para assunto aberto do mesmo canal; imutável; encerrado barra nova, edição e reação; apagar guarda o a', () => {
+  reset(); const ts = Date.now() - 1000;
+  DB.kanban.cardume.assuntos = { dados: { abf: assunto({ criado: ts - 864e5 }), afim: assunto({ criado: ts - 864e5, fim: ts - 500 }) } };
+  const nova = (aid, extra) => { const t = Date.now(); return Object.assign({ [M('k1')]: { uid: 'ana', ts: t, texto: 'oi', a: aid }, ['kanban/cardume/ultima/dados']: { ts: t, uid: 'ana', id: 'k1' }, ['kanban/cardume/ultima_a/dados/' + aid]: { ts: t, uid: 'ana', id: 'k1' } }, extra || {}); };
+  assert.equal(update(RULES, DB, A.ana, nova('abf')), true, 'mensagem + não lidas do canal e do assunto');
+  assert.equal(update(RULES, DB, A.ana, nova('azz')), false, 'assunto que não existe');
+  assert.equal(update(RULES, DB, A.ana, nova('afim')), false, 'assunto encerrado');
+  const t2 = Date.now();
+  assert.equal(update(RULES, DB, A.ana, { [AS('anovo')]: assunto({ criado: t2 }), [M('k2')]: { uid: 'ana', ts: t2, texto: 'primeira', a: 'anovo' }, ['kanban/cardume/ultima/dados']: { ts: t2, uid: 'ana', id: 'k2' } }), true, 'criar o assunto e a 1ª mensagem no mesmo update');
+  assert.equal(update(RULES, DB, A.ana, { [M('k3')]: { uid: 'ana', ts: t2, texto: 'geral' }, ['kanban/cardume/ultima_a/dados/abf']: { ts: t2, uid: 'ana', id: 'k3' } }), false, 'não lida do assunto apontando para mensagem de geral');
+  assert.equal(update(RULES, DB, A.ana, { [M('k3')]: { uid: 'ana', ts: t2, texto: 'geral' }, ['kanban/cardume/ultima_a/dados/_geral']: { ts: t2, uid: 'ana', id: 'k3' } }), true, 'geral marca _geral');
+  põe('m1', msg({ ts, a: 'abf' })); põe('m2', msg({ ts, a: 'afim', uid: 'bru' })); põe('m3', msg({ ts, a: 'afim' }));
+  const ag = Date.now();
+  assert.equal(grava(M('m1'), A.ana, { uid: 'ana', ts, texto: 'editado', editado: ag, a: 'abf' }), true, 'editar no assunto aberto');
+  assert.equal(grava(M('m1'), A.ana, { uid: 'ana', ts, texto: 'editado', editado: ag, a: 'afim' }), false, 'mudar de assunto ao editar');
+  assert.equal(grava(M('m1'), A.ana, { uid: 'ana', ts, texto: 'editado', editado: ag }), false, 'tirar o assunto ao editar');
+  assert.equal(grava(M('m3'), A.ana, { uid: 'ana', ts, texto: 'editado', editado: ag, a: 'afim' }), false, 'editar no assunto encerrado');
+  assert.equal(grava(M('m1'), A.ana, { uid: 'ana', ts, apagada: true, a: 'abf' }), true, 'apagar guarda o a');
+  assert.equal(grava(M('m1'), A.ana, { uid: 'ana', ts, apagada: true }), false, 'apagar sem o a (iria para geral)');
+  assert.equal(grava(RXP('ana', 'm2'), A.ana, '👍'), false, 'reagir no assunto encerrado');
+  DB.kanban.cardume.reacoes = { dados: { m2: { ana: '👍' } } };
+  assert.equal(grava(RXP('ana', 'm2'), A.ana, null), true, 'tirar a própria reação sempre vale');
+});
+
+test('lidas_a: privado; _geral ou id de assunto; número', () => {
+  reset(); const L = (u, a) => `kanban/cardume/lidas_a/${u || 'ana'}/dados/${a || 'abf'}`;
+  assert.equal(grava(L(), A.ana, Date.now()), true);
+  assert.equal(grava(L('ana', '_geral'), A.ana, Date.now()), true);
+  assert.equal(grava(L('ana', 'x.y'), A.ana, Date.now()), false, 'chave estranha');
+  assert.equal(grava(L(), A.ana, 'ontem'), false, 'não-número');
+  assert.equal(grava(L('ana'), A.bru, Date.now()), false, 'outra pessoa');
+  assert.equal(lê('kanban/cardume/lidas_a/ana', A.bru), false);
+});
