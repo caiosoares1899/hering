@@ -115,7 +115,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .autor{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;}
 .autor b{font-weight:700;}
 .msg{position:relative;padding:2px 6px;margin:0 -6px;border-radius:8px;}
-@media (hover:hover) and (min-width:900px){.msg{padding-right:152px;}}   /* vão da pílula: o texto nunca fica embaixo dela (linha de ~75 caracteres a 1280, boa de ler) */
+@media (hover:hover) and (min-width:900px){.msg{padding-right:192px;}}   /* 5 ícones (😀 ↩️ 📝 ✏️ 🗑) ou os 5 emojis do seletor */   /* vão da pílula: o texto nunca fica embaixo dela (linha de ~75 caracteres a 1280, boa de ler) */
 .msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
 .b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;box-shadow:none;font-weight:700;}
 .b-mencoes[aria-current="true"]{color:var(--accent-txt);background:rgba(var(--slate-rgb),.7);box-shadow:var(--specular);}
@@ -130,10 +130,18 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .msg .texto{overflow-wrap:anywhere;white-space:pre-wrap;}
 .msg .texto p{margin:0;}
 .msg .acoes-msg{position:absolute;right:4px;top:0;z-index:2;display:flex;gap:2px;padding:2px;border:1px solid var(--glass-b);border-radius:999px;background:rgba(var(--ink-rgb),.94);box-shadow:var(--shadow),var(--specular);opacity:0;pointer-events:none;transition:opacity .12s;}
-.msg:focus-within .acoes-msg,.msg.tocada .acoes-msg{opacity:1;pointer-events:auto;}
+.msg:focus-within .acoes-msg,.msg.tocada .acoes-msg,.msg.rx-aberto .acoes-msg{opacity:1;pointer-events:auto;}
 @media (hover:hover){.msg:hover .acoes-msg{opacity:1;pointer-events:auto;}}   /* no iPad o :hover gruda depois do toque — lá quem mostra é o .tocada */
 .acoes-msg button{min-height:26px;min-width:32px;padding:1px 6px;font-size:14px;line-height:1;border-color:transparent;border-radius:999px;background:transparent;box-shadow:none;white-space:nowrap;}
 .acoes-msg .rot{display:none;}
+.acoes-msg .rx-op{font-size:15px;padding:1px 3px;}
+.acoes-msg .rx-op[aria-pressed="true"]{background:rgba(var(--slate-rgb),.9);border-color:var(--accent);}
+.rx-linha{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px;}
+.rx-chip{min-height:26px;padding:1px 9px;border-radius:999px;font-size:12px;line-height:1.4;font-variant-numeric:tabular-nums;color:var(--txt2);box-shadow:none;}
+.rx-chip[aria-pressed="true"]{color:var(--txt);border-color:var(--accent);background:rgba(var(--slate-rgb),.9);}
+.rx-chip:disabled{opacity:1;cursor:default;}
+.rx-quem{display:none;margin:2px 0 0;font-size:12px;color:var(--txt2);overflow-wrap:anywhere;}
+.msg.tocada .rx-quem{display:block;}
 .acoes-msg button:hover{background:rgba(var(--slate-rgb),.9);border-color:var(--glass-b);}
 .hora,.editada{color:var(--txt2);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;}
 .apagada{color:var(--txt2);font-style:italic;}
@@ -217,7 +225,9 @@ button.msg-gif{cursor:pointer;}
 @media (max-width:899px),(hover:none) and (pointer:coarse){
   .msg{padding-right:6px;}
   .msg .acoes-msg{position:static;display:none;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin-top:4px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;opacity:1;pointer-events:auto;}
-  .msg.tocada .acoes-msg,.msg:focus-within .acoes-msg{display:flex;}
+  .msg.tocada .acoes-msg,.msg:focus-within .acoes-msg,.msg.rx-aberto .acoes-msg{display:flex;}
+  .rx-chip{min-height:44px;padding:4px 12px;font-size:14px;}
+  .acoes-msg .rx-op{min-width:48px;font-size:20px;}
   .acoes-msg button{min-height:44px;padding:4px 12px;font-size:13px;border-color:var(--glass-b);border-radius:var(--r);background:rgba(var(--slate-rgb),.6);}
   .acoes-msg .rot{display:inline;}
 }
@@ -304,13 +314,13 @@ button.msg-gif{cursor:pointer;}
 <div id="toast" role="status" hidden></div>
 
 <script src="mare-login-dev.js?v=3"></script>
-<script src="mare-notif-dev.js?v=51"></script>
+<script src="mare-notif-dev.js?v=52"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByKey, startAt, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.18 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.19 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -587,7 +597,7 @@ function abrirCanal(id, foco) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   if (atual !== id) {
     if (atual) lsSet(chaveRascunho(atual), entrada.value);
-    parar('msgs'); parar('membros'); parar('admins'); pararCitacoes(); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+    parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); msgs = []; reacoes = {}; rxAbrindo = ''; rxDesde = null; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
     entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
   }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
@@ -601,7 +611,7 @@ function abrirCanal(id, foco) {
     ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(LIMITE)), s => {
       const v = s.val() || {};
       msgs = Object.keys(v).map(k => Object.assign({ id: k }, v[k])).filter(m => m && typeof m.ts === 'number').sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
-      carregandoMsgs = false; renderMsgs(); marcarLido(); irParaAlvo(id);
+      carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id);
     }, e => { carregandoMsgs = false; msgs = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
   } else { msgs = []; carregandoMsgs = false; renderMsgs(); }
   if (membro || gestor(id)) {
@@ -659,6 +669,11 @@ function renderMsgs() {
   });
   const ed2 = editando && document.querySelector('[data-msg="' + editando + '"] textarea');
   if (ed2 && rascunhoEdicao && rascunhoEdicao.id === editando) { ed2.value = rascunhoEdicao.valor; if (rascunhoEdicao.foco) { ed2.focus(); ed2.setSelectionRange(rascunhoEdicao.ini, rascunhoEdicao.fim); } }
+  if (rxFoco) {   // depois de reagir pelo teclado/toque o botão focado foi redesenhado: foco no chip escolhido, ou no 😀 se a reação saiu
+    if (Date.now() > rxFoco.ate) rxFoco = null;
+    else { const caixa = document.querySelector('[data-msg="' + CSS.escape(rxFoco.id) + '"]'), alvo = caixa && (rxFoco.e ? caixa.querySelector('.rx-chip[data-e="' + CSS.escape(rxFoco.e) + '"][aria-pressed="true"]') : caixa.querySelector('[aria-label="Reagir"]'));
+      if (alvo) { alvo.focus({ preventScroll: true }); rxFoco = null; } }
+  }
   if (noFim || !renderMsgs._ja) log.scrollTop = log.scrollHeight;
   renderMsgs._ja = true;
 }
@@ -668,6 +683,53 @@ let msgTocada = '';   // mensagem com as ações à mostra no celular
 function acaoBtn(cls, ic, rot, nome) {   // ícone + rótulo; na pílula do computador só o ícone aparece (nome acessível e dica = rótulo)
   const b = el('button', cls); b.type = 'button'; b.append(el('span', 'ic', ic), el('span', 'rot', ' ' + rot));
   b.setAttribute('aria-label', nome || rot); b.title = nome || rot; return b;
+}
+// ═══ 😀 Reações (docs/ideias/cardume-v0-banco.md › "Reagir com emoji"): uma por pessoa, a mesma lista dos comentários do Maré ═══
+const REACT_EMOJIS = ['👍', '👀', '❤️', '✅', '🎉'];
+let reacoes = {};               // msgId → {uid: emoji} do canal aberto
+let rxAbrindo = '';             // mensagem com o seletor de emojis aberto
+const rxAvisados = new Set();
+let rxDesde = null;             // menor chave das mensagens exibidas (a escuta das reações começa nela)
+let rxFoco = null;              // depois de reagir: {id, e} — o foco vai para o chip escolhido (ou volta ao 😀 se a reação saiu)
+function ouvirReacoes(canal) {  // reações de TODAS as mensagens exibidas: as mensagens vêm por ts (servidor) e uma enviada offline pode ter chave mais antiga
+  const desde = msgs.length ? msgs.reduce((a, m) => (m.id < a ? m.id : a), msgs[0].id) : null;
+  if (desde === rxDesde && ouvintes['rx']) return;
+  rxDesde = desde; parar('rx');
+  if (!desde) { reacoes = {}; return; }
+  ouvir('rx', query(ref(db, B + 'reacoes/' + canal), orderByKey(), startAt(desde), limitToLast(150)), s => { if (atual === canal) { reacoes = s.val() || {}; renderMsgs(); } }, () => { reacoes = {}; });
+}   // mensagens cujo autor já foi avisado nesta sessão (a regra também só deixa criar o aviso uma vez)
+function reacoesDe(id) {        // [[emoji, [uids]]] na ordem da lista; ignora o que não está na lista
+  const r = reacoes[id]; if (!r || typeof r !== 'object') return [];
+  const por = {}; Object.keys(r).forEach(u => { const e = r[u]; if (ID_RE.test(u) && REACT_EMOJIS.includes(e)) (por[e] = por[e] || []).push(u); });
+  return REACT_EMOJIS.filter(e => por[e]).map(e => [e, por[e]]);
+}
+function linhaReacoes(m, rx, podeReagir) {
+  const linha = el('div', 'rx-linha'), quem = el('p', 'rx-quem');
+  rx.forEach(([e, uids]) => {
+    const nomes = uids.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', ');
+    const b = el('button', 'rx-chip', e + ' ' + uids.length); b.type = 'button'; b.dataset.e = e;
+    b.setAttribute('aria-pressed', String(uids.includes(user.uid))); b.title = nomes; b.setAttribute('aria-label', e + ' ' + uids.length + ': ' + nomes);
+    if (podeReagir) b.onclick = ev => reagir(m, e, ev.detail === 0); else b.disabled = true;
+    linha.append(b);
+  });
+  quem.textContent = rx.map(([e, uids]) => e + ' ' + uids.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', ')).join(' · ');   // no toque não há title: os nomes aparecem na mensagem tocada
+  return [linha, quem];
+}
+function reagir(m, e, teclado) {   // teclado: o foco volta ao chip (com mouse/toque, focar deixaria a pílula aberta)
+  if (!REACT_EMOJIS.includes(e) || !souMembro(atual) || vencido(canais[atual])) return;
+  const canal = atual, minha = (reacoes[m.id] || {})[user.uid], nova = minha === e ? null : e;
+  rxAbrindo = '';
+  const avisar = nova && m.uid !== user.uid && membrosAtual[m.uid] === true && !rxAvisados.has(m.id);
+  if (avisar) rxAvisados.add(m.id);   // antes do await: dois toques rápidos não mandam dois avisos
+  rxFoco = teclado ? { id: m.id, e: nova, ate: Date.now() + 3000 } : null;
+  set(ref(db, B + 'reacoes/' + canal + '/' + m.id + '/' + user.uid), nova)
+    .then(() => { if (avisar) avisarReacao(m); })   // só avisa reação que o banco aceitou
+    .catch(err => { if (avisar) rxAvisados.delete(m.id); rxFoco = null; toast(negado(err) ? 'Não deu para reagir nesta mensagem.' : 'Não deu para reagir agora. Tente de novo.'); });
+  renderMsgs();   // fecha o seletor já (se o banco recusar, ele não fica aberto)
+}
+function avisarReacao(m) {   // aviso genérico no Sino (sem canal, trecho nem emoji; sem push) — set próprio: se já existir, a regra recusa e tudo bem
+  const quem = (user.displayName || user.email || '').split(' ')[0] || 'Alguém', n = 'rx_' + m.id + '_' + user.uid;
+  set(ref(db, 'kanban/usuarios/' + m.uid + '/notificacoes/' + n), { id: n, type: 'cardume_reacao', title: '🐚 ' + quem + ' reagiu a uma mensagem sua na Concha', sub: 'Toque para abrir a Concha', dev: true, read: false, noTTLDelete: true, ts: new Date().toISOString() }).catch(() => {});
 }
 function renderMsg(m) {
   const box = el('div', 'msg' + (destaque.id === m.id && Date.now() < destaque.ate ? ' destaque' : '')); box.dataset.msg = m.id;
@@ -686,8 +748,19 @@ function renderMsg(m) {
   if (ks.length) { const w = el('div', 'cards-msg'); ks.forEach(k => w.append(chipCard(k))); box.append(w); }
   if (m.editado) box.append(el('span', 'editada', '(editada)'));
   const c = canais[atual], ativo = !vencido(c);
-  const meu = m.uid === user.uid;
+  const meu = m.uid === user.uid, podeReagir = ativo && souMembro(atual);
+  const rx = reacoesDe(m.id); if (rx.length) box.append(...linhaReacoes(m, rx, podeReagir));
   const ac = el('div', 'acoes-msg');
+  if (podeReagir && rxAbrindo === m.id) {   // seletor no lugar da pílula (mesma largura, não cobre texto)
+    box.classList.add('rx-aberto'); ac.setAttribute('role', 'group'); ac.setAttribute('aria-label', 'Escolha a reação');
+    const minha = (reacoes[m.id] || {})[user.uid];
+    REACT_EMOJIS.forEach(e => { const b = el('button', 'rx-op', e); b.type = 'button'; b.setAttribute('aria-label', 'Reagir com ' + e); b.title = 'Reagir com ' + e; b.setAttribute('aria-pressed', String(minha === e)); b.onclick = ev => reagir(m, e, ev.detail === 0); ac.append(b); });
+    ac.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); rxAbrindo = ''; renderMsgs(); const r = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] [aria-label="Reagir"]'); if (r) r.focus(); } });
+    box.addEventListener('mouseleave', () => { if (rxAbrindo === m.id && !TOQUE.matches) { rxAbrindo = ''; renderMsgs(); } });
+    box.append(ac); if (msgTocada === m.id) box.classList.add('tocada');
+    return box;
+  }
+  if (podeReagir) { const rr = acaoBtn('', '😀', 'Reagir'); rr.onclick = () => { rxAbrindo = m.id; renderMsgs(); const o = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] .rx-op'); if (o) o.focus(); }; ac.append(rr); }
   if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
   if (souMembro(atual) || souAdm()) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
@@ -699,7 +772,7 @@ function renderMsg(m) {
     if (msgTocada === m.id) box.classList.add('tocada');
     box.addEventListener('click', e => {   // no toque não há hover: tocar na mensagem mostra as ações dela (tocar de novo esconde)
       if (!TOQUE.matches || e.target.closest('a,button,textarea,input')) return;
-      msgTocada = msgTocada === m.id ? '' : m.id;
+      msgTocada = msgTocada === m.id ? '' : m.id; if (rxAbrindo && rxAbrindo !== msgTocada) { rxAbrindo = ''; renderMsgs(); return; }
       document.querySelectorAll('.msg.tocada').forEach(x => { if (x !== box) x.classList.remove('tocada'); });
       box.classList.toggle('tocada', msgTocada === m.id);
     });
@@ -992,7 +1065,7 @@ function renderMencoes(log) {
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
   if (atual) lsSet(chaveRascunho(atual), entrada.value);
-  parar('msgs'); parar('membros'); parar('admins'); pararCitacoes(); cancelarResposta(false); msgs = []; membrosAtual = {}; adminsAtual = {}; editando = '';
+  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; rxAbrindo = ''; rxDesde = null; membrosAtual = {}; adminsAtual = {}; editando = '';
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
 }
@@ -1363,6 +1436,7 @@ function limparSessao() {
   Object.keys(infoCards).forEach(k => delete infoCards[k]);   // o acesso aos cards é da conta
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
+  reacoes = {}; rxAbrindo = ''; rxDesde = null; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
@@ -1370,6 +1444,7 @@ function limparSessao() {
 // A menção do Cardume clicada no Sino abre aqui mesmo (sem recarregar) e marca também a aba @ Menções.
 let sinoApi = null, sinoUid = '';
 function abrirDoSino(i) {
+  if (i.k === 'pessoal' && i.tipo === 'cardume_reacao') return true;   // já estamos na Concha
   if (i.k !== 'pessoal' || i.tipo !== 'cardume_mencao') return false;
   const r = String((i.raw && i.raw.cardumeRef) || ''); if (!ID_RE.test(r)) return false;
   const rec = mencoes.find(x => x._k === r);

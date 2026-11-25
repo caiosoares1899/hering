@@ -296,3 +296,38 @@ Pedido do Caio: o resto da etapa 4. O escopo escolhido foi **Responder com aviso
 - **Push:** `cardumePush.mencaoConfere` ganha o ramo da resposta: a mensagem é resposta, a original é da pessoa, e quem responde é outra pessoa. O texto vem do servidor: "{nome} respondeu você". O tipo continua `cardume_mencao`, sem tipo novo.
 - **Sem duplicar:** a resposta que também @menciona a pessoa gera um aviso só, o de menção. Responder a si mesmo não avisa.
 - **Deploy:** `--only database` e depois `--only functions:sendPushOnNotification`.
+
+## 😀 Reagir com emoji — desenho de 24/11/2026 (R3)
+
+Pedido do Caio: reagir a uma mensagem com emoji, "igual aos comentários do Maré". Decisões dele: **uma reação por pessoa** (escolher outro emoji troca, como no Maré) e **aviso no Sino, sem push**.
+
+**Reaproveitado do Maré** (comentários, `kanban-dev.html` › `REACT_EMOJIS`/`toggleReaction`/`_renderReactions`): a lista de 5 emojis `👍 👀 ❤️ ✅ 🎉`, o chip "👍 3" com o seu em destaque e o toque no seu que tira. **Diferente do Maré:** lá as reações ficam dentro do comentário (`reactions: {uid: emoji}`, gravado inteiro por quem reage — qualquer membro reescreve a reação dos outros); aqui cada pessoa só escreve a sua folha.
+
+### Banco
+- `kanban/cardume/reacoes/{canal}/{msgId}/{uid}: "<emoji>"` — string idêntica a um item da lista fechada (o ❤️ é U+2764 + U+FE0F; um teste lê a lista da página e confere cada uma nas regras, e o ❤ sem o seletor falha).
+- **Ler:** membro do canal ou ADM (como `msgs`). **Escrever** só na folha `$uid`:
+  - criar/trocar: `auth.uid === $uid`, membro, canal ativo (oficial ou temático existente), mensagem existente e não apagada;
+  - tirar a própria: sempre (inclusive depois de sair do canal ou da mensagem ser apagada);
+  - ADM: só apagar.
+- Não há `.write` em `{canal}` nem em `{msgId}`: ninguém grava o mapa inteiro (é o furo do Maré). A limpeza por retenção (etapa 6) roda no servidor (Admin SDK), então não precisa de apagar em bloco pelo navegador.
+- Mensagem apagada: as reações ficam no banco (a tela não mostra) até a limpeza.
+
+### Aviso (Sino, sem push)
+- Tipo novo `cardume_reacao` em `MareNotif.TIPOS` (`pushPossivel:false`; fora do `PUSH_TYPES` do servidor → nunca vira push), resolvido para a Concha.
+- **Genérico e sem emoji:** "🐚 Ana reagiu a uma mensagem sua na Concha" — a notificação ainda é lida pela empresa toda até a fase C de `usuarios-leitura-fechar.md` (por isso sem canal, trecho nem emoji; emoji também ficaria velho ao trocar). Abre a Concha.
+- **Um aviso por mensagem e pessoa:** id fixo `rx_{msgId}_{uid}` com `noTTLDelete: true`; a regra atual das notificações só deixa outra pessoa CRIAR (não reescrever), e com `noTTLDelete` o "remover" do Sino marca como dispensado em vez de apagar — então reagir/tirar/reagir, mesmo em outra sessão, não repete o aviso. A reação é um `set` próprio e o aviso outro `set`, **só depois que o banco aceitou a reação** (num `update` único, a recusa do aviso repetido derrubaria a reação); na mesma sessão a página nem tenta de novo. (Revisão do Codex.) `noTTLDelete` deixa esses avisos fora da limpeza por idade (que roda no navegador); conferido que não pesa: o Sino unificado lê só as 80 mais recentes (`orderByChild('ts')` + `limitToLast(80)`), o Maré idem (`NOTIF_QUERY_LIMIT`) e nenhuma função varre o nó — o acúmulo é só de armazenamento.
+- Não avisa quem reage à própria mensagem.
+
+### Página (`cardume-dev.html`)
+- Uma escuta por canal aberto: `query(reacoes/{canal}, orderByKey(), startAt(<menor chave das mensagens exibidas>))`, refeita quando a janela muda, com teto de 150 (uma chave forjada no padrão do `ID_RE` não arrasta o histórico inteiro) — as mensagens vêm por `ts` do servidor e uma enviada offline tem chave mais antiga (revisão do Codex; "as últimas 60 chaves" podia deixá-la de fora). Parada ao trocar de canal, ao abrir @ Menções e ao sair da conta.
+- Depois de reagir, o foco vai ao chip escolhido (ou volta ao 😀 se a reação saiu); se o banco recusar, o seletor fecha e o aviso não sai.
+- Chips embaixo da mensagem (`aria-pressed` no seu; `title`/`aria-label` com quem reagiu); na mensagem **tocada** (celular/iPad), uma linha com os nomes — `title` não existe no toque.
+- "😀 Reagir" na pílula: troca os ícones da pílula pelos 5 emojis no mesmo lugar (não abre nada por cima de texto); no toque, a fileira de ações vira a de emojis. Vão reservado à direita recalculado para 5 ícones.
+- Nomes e emojis entram por `textContent`; o emoji lido do banco só é mostrado se estiver na lista.
+
+### Testes
+- `cardumeRules.test.js`: criar/trocar/tirar a própria; não membro, outra pessoa, mensagem apagada ou inexistente, canal vencido, emoji fora da lista (e ❤ sem seletor), valor não-string, gravar o mapa em `{msgId}`; tirar a própria depois de sair do canal; ADM só apaga. Cada barreira com sabotagem.
+- `test_concha_reacoes.js` (navegador): chips, troca, tirar, aviso (1 por mensagem e pessoa, nunca para si), nomes no toque, escuta parada, CADA escrita nas regras reais; `test_concha_ui.js` com 5 ações (vão).
+
+### Fronteira
+Nó novo com leitura própria; tipo de notificação novo cujo título é escrito pelo navegador de outra pessoa (falsificável como toda notificação de cliente — sem push, sem link montado do conteúdo); o Sino desenha o título por `textContent` (conferir). Deploy: só `firebase deploy --only database`.

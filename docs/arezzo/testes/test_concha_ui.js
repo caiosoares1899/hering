@@ -77,7 +77,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
       return { cruza: textos.filter(bate).length, cortada: pl.top < log.top, pl: [pl.left, pl.top, pl.width, pl.height] };
     }, id);
     for (const id of ['-Nx0', '-Nx1', '-Nx2', '-Nx3']) { await p.hover('[data-msg="' + id + '"]'); await p.waitForTimeout(200); const r = await cruza(id); t(`pílula de ${id} não cobre nenhum texto nem é cortada`, !r.cruza && !r.cortada, r); }
-    t('na pílula só o ícone aparece; o nome acessível é o rótulo', await p.evaluate(() => { const b = document.querySelector('[data-msg="-Nx1"] .acoes-msg button'); return getComputedStyle(b.querySelector('.rot')).display === 'none' && b.getAttribute('aria-label') === 'Responder'; }), 0);
+    t('na pílula só o ícone aparece; o nome acessível é o rótulo', await p.evaluate(() => { const b = document.querySelector('[data-msg="-Nx1"] .acoes-msg button'); return getComputedStyle(b.querySelector('.rot')).display === 'none' && b.getAttribute('aria-label') === b.querySelector('.rot').textContent.trim(); }), 0);
     t('HTML no texto aparece como texto', /<b>até<\/b>/.test(await p.textContent('[data-msg="-Nx3"] .texto')), await p.textContent('[data-msg="-Nx3"] .texto'));
     await ctx.close(); }
 
