@@ -16,6 +16,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada das 📁 seções da Concha: regra `kanban/cardume/secoes` (só a dona; canal só aponta para seção que existe) e o Salvar do modal (só apaga o que a pessoa tirou) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada dos 🔔 avisos da Concha: regras `kanban/cardume/avisos`/`seguidas`/`vendo`/`aviso_env`, a função `conchaAvisoMsg` (`functions/oceano/conchaAvisos.js`) e o 🚫 em `cardumePush.mencaoValida` — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada das regras da 🏢 diretoria (`database.rules.json`: `usuarios/$uid/diretoria` + espelho em `usuarios_publicos`) e de `diretoriaRules.test.js` — só revisar, comentar no PR; o Caio só faz merge/deploy depois | [desenho](ideias/diretoria-por-pessoa.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |

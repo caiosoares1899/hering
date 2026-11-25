@@ -104,6 +104,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .sec-cab{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;cursor:pointer;font-size:13px;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;padding:2px 8px;border-radius:6px;min-height:28px;}
 .sec-cab:hover{color:var(--txt);} .sec-cab:focus-visible{outline:2px solid var(--accent);}
 .sec-cab .seta{font-size:10px;width:10px;} .sec-cab .novas{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--accent-txt);font-weight:700;}
+.sec-vazia{margin:0 8px 6px;font-size:12px;}
 .lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
 .sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
 .novo-canal:hover{color:var(--txt);}
@@ -623,7 +624,8 @@ function iniciarOuvintes() {
 // ═══ Lista de canais ═══
 const naoLido = id => { const u = ultimas[id]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > (lidas[id] || 0) && (id !== atual || !conversaVisivel()); };
 function renderLista() {
-  const box = $('lista-canais'); box.replaceChildren();
+  const box = $('lista-canais'), focoSec = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('sec-cab') ? document.activeElement.dataset.sec : '';
+  box.replaceChildren();
   const ids = idsConhecidos();
   const oficiais = ids.filter(id => !ehTema(id) && canais[id] && (souMembro(id) || gestorOficial(id)));
   const temas = ids.filter(id => ehTema(id) && canais[id] && souMembro(id));
@@ -631,14 +633,15 @@ function renderLista() {
   const semCanal = souAdm() ? ids.filter(id => !ehTema(id) && canais[id] === null && meta[id]) : [];
   // 📁 Seções da pessoa primeiro (na ordem dela); o que não está em nenhuma fica na seção padrão. Recolhida: só o canal aberto continua à vista.
   const minhas = secLista(), naMinha = id => !!secDe(id);
-  const sec = (titulo, lista, fn, chave) => {
-    if (!lista.length) return;
+  const sec = (titulo, lista, fn, chave, mostrarVazia) => {
+    if (!lista.length && !mostrarVazia) return;
     const rec = !!secoes.r[chave], novas = lista.filter(naoLido).length;
-    const h = el('button', 'sec-cab'); h.type = 'button'; h.setAttribute('aria-expanded', String(!rec));
+    const h = el('button', 'sec-cab'); h.type = 'button'; h.dataset.sec = chave; h.setAttribute('aria-expanded', String(!rec));
     h.append(el('span', 'seta', rec ? '▸' : '▾'), el('span', '', titulo)); if (rec && novas) h.append(el('span', 'novas', novas + (novas === 1 ? ' nova' : ' novas')));
     h.setAttribute('aria-label', titulo + (rec ? ', recolhida' : '') + (rec && novas ? ', ' + novas + ' com mensagens novas' : ''));
     h.onclick = () => recolher(chave, !rec); box.append(h);
     lista.sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR')).filter(id => !rec || id === atual).forEach(id => box.append(fn(id)));
+    if (!lista.length && !rec) box.append(el('p', 'subtitulo sec-vazia', 'Vazia. Para pôr um canal: ℹ️ Detalhes › Na sua lista.'));
   };
   const fnDe = id => descobrir.includes(id) ? botao(id, '# ', 'entrar') : semCanal.includes(id) ? botao(id, '＋ ', 'ativar') : ehTema(id) ? botao(id, (canais[id] && canais[id].acesso === 'convite' ? '🔒 ' : '# '), vencido(canais[id]) ? 'arquivado' : '') : botao(id, '# ', souMembro(id) ? '' : 'gerir');
   const todos = oficiais.concat(temas, descobrir, semCanal);
@@ -652,12 +655,13 @@ function renderLista() {
     b.setAttribute('aria-label', prefixo + nomeCanal(id) + (naoLido(id) ? ', mensagens novas' : '') + (extra ? ', ' + extra : '') + (nv !== 'todas' ? ', avisos: ' + ROT_AVISO[nv] : ''));
     return b;
   };
-  minhas.forEach(([sid, x]) => sec(x.n, todos.filter(id => secDe(id) === sid), fnDe, sid));
+  minhas.forEach(([sid, x]) => sec(x.n, todos.filter(id => secDe(id) === sid), fnDe, sid, true));
   sec('Squads', oficiais.filter(id => !naMinha(id)), fnDe, 'squads');
   sec('Temáticos', temas.filter(id => !naMinha(id)), fnDe, 'temas');
   sec('Abertos para entrar', descobrir.filter(id => !naMinha(id)), fnDe, 'abertos');
   sec('Squads sem canal (ADM)', semCanal.filter(id => !naMinha(id)), fnDe, 'semcanal');
-  if (!box.children.length) box.append(el('p', 'subtitulo', 'Você ainda não está em nenhum canal. Peça a quem administra a sua squad para te adicionar, ou crie um canal temático.'));
+  if (focoSec) { const h = box.querySelector('.sec-cab[data-sec="' + CSS.escape(focoSec) + '"]'); if (h) h.focus({ preventScroll: true }); }   // recolher pelo teclado não perde o foco
+  if (!box.querySelector('.canal')) box.append(el('p', 'subtitulo', 'Você ainda não está em nenhum canal. Peça a quem administra a sua squad para te adicionar, ou crie um canal temático.'));
 }
 $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[data-canal]'); if (b) abrirCanal(b.dataset.canal, true); });
 
@@ -1238,6 +1242,7 @@ function modalSecoes(canalNovo) {   // criar, renomear, reordenar, apagar — gr
   const h = el('h2', '', '📁 Suas seções'); h.id = 'md-t'; f.append(h);
   f.append(el('p', 'subtitulo', 'Só você vê. Para pôr um canal numa seção: ℹ️ Detalhes do canal › Na sua lista. Apagar uma seção devolve os canais dela à seção padrão.'));
   let rasc = secLista().map(([sid, x]) => ({ sid, n: x.n }));
+  const vistas = new Set(rasc.map(x => x.sid));   // só apaga o que a pessoa tirou AQUI (seção criada em outro aparelho com o modal aberto fica)
   const lista = el('div'); f.append(lista);
   const desenhar = foco => {
     lista.replaceChildren();
@@ -1263,10 +1268,13 @@ function modalSecoes(canalNovo) {   // criar, renomear, reordenar, apagar — gr
     e.preventDefault();
     if (ni.value.trim()) criar(ni.value);   // digitou e foi direto ao Salvar: vale
     if (rasc.some(x => !x.n.trim())) { erroModal(err, 'Toda seção precisa de nome (ou apague).'); return; }
-    const mapa = {}, ficam = new Set(rasc.map(x => x.sid));
-    Object.keys(secoes.s || {}).filter(k => !ficam.has(k)).forEach(k => { mapa[SEC() + '/s/' + k] = null; mapa[SEC() + '/r/' + k] = null; });
-    Object.keys(secoes.c || {}).filter(cn => !ficam.has(secoes.c[cn])).forEach(cn => { mapa[SEC() + '/c/' + cn] = null; });   // canais das seções apagadas voltam ao padrão
+    const mapa = {}, ficam = new Set(rasc.map(x => x.sid)), apagadas = new Set([...vistas].filter(k => !ficam.has(k)));
+    apagadas.forEach(k => { mapa[SEC() + '/s/' + k] = null; mapa[SEC() + '/r/' + k] = null; });
+    Object.keys(secoes.c || {}).filter(cn => apagadas.has(secoes.c[cn])).forEach(cn => { mapa[SEC() + '/c/' + cn] = null; });   // canais das seções apagadas voltam ao padrão
+    const novasFora = secLista().filter(([k]) => !vistas.has(k) && !ficam.has(k)).length;   // criadas em outro aparelho: vão para o fim da ordem
     rasc.forEach((x, i) => { mapa[SEC() + '/s/' + x.sid] = { n: x.n.trim().slice(0, 30), o: i }; });
+    secLista().filter(([k]) => !vistas.has(k) && !ficam.has(k)).forEach(([k, x], j) => { mapa[SEC() + '/s/' + k] = { n: x.n, o: rasc.length + j }; });   // preserva (e põe no fim)
+    if (novasFora) console.info('[concha] seções criadas em outro aparelho mantidas:', novasFora);
     const ultima = rasc.filter(x => x.novo).pop(); if (canalNovo && ultima) mapa[SEC() + '/c/' + canalNovo] = ultima.sid;   // veio do "＋ Nova seção…" de um canal: ele já vai para ela
     if (!Object.keys(mapa).length) { fecharModal(); return; }
     ok.disabled = true;

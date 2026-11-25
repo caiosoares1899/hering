@@ -65,6 +65,19 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   sc = await S(); const camp = Object.keys(sc.s).find(k => sc.s[k].n === 'Campanhas');
   t('"＋ Nova seção…" nos Detalhes cria a seção e já põe o canal nela', !!camp && sc.c['t-bf-ab12'] === camp, sc);
 
+  // outro aparelho cria "Clientes" (com Performance dentro) enquanto o modal está aberto aqui: salvar não pode apagar
+  await p.click('#b-secoes'); await p.waitForTimeout(150);
+  await p.evaluate(() => { window.__onDisc = { 'kanban/cardume/secoes/ana/s/scli': ['set', { n: 'Clientes', o: 9 }], 'kanban/cardume/secoes/ana/c/prf': ['set', 'scli'] }; window.__simDisconnect(); });
+  await p.waitForTimeout(200); await p.fill('.md .sec-linha input >> nth=0', '⭐ Favoritos!'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(300);
+  sc = await S();
+  t('seção criada em outro aparelho com o modal aberto sobrevive ao Salvar (e o canal dela também)', sc.s.scli && sc.s.scli.n === 'Clientes' && sc.c.prf === 'scli' && Object.values(sc.s).some(x => x.n === '⭐ Favoritos!'), sc);
+  // recolher pelo teclado não perde o foco
+  await p.focus('.sec-cab[data-sec="scli"]'); await p.keyboard.press('Enter'); await p.waitForTimeout(300);
+  t('Enter no título recolhe e o foco fica no mesmo título', await p.evaluate(() => document.activeElement.dataset.sec === 'scli' && document.activeElement.getAttribute('aria-expanded') === 'false'), await p.evaluate(() => document.activeElement.outerHTML.slice(0, 90)));
+  // seção vazia aparece com a dica
+  await p.click('#b-secoes'); await p.fill('.md input[placeholder^="Nova seção"]', 'Vazia'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(300);
+  t('seção recém-criada (vazia) aparece na lista com a dica', await p.evaluate(() => { const h = [...document.querySelectorAll('.sec-cab')].find(x => /Vazia/.test(x.textContent)); return !!h && h.nextElementSibling && h.nextElementSibling.classList.contains('sec-vazia'); }), await lista());
+
   const esc = await p.evaluate(() => window.__escritas || []);
   const real = Date.now; const ruins = [];
   for (const e of esc) { const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([k, v]) => [(e.p ? e.p + '/' : '') + k, v])); Date.now = () => e.t; let r; try { r = regras(RULES, e.antes, authDe(ANA), mapa); } finally { Date.now = real; } if (!r) ruins.push({ tipo: e.tipo, caminhos: Object.keys(mapa) }); }
