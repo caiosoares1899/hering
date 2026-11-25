@@ -344,3 +344,7 @@ Caio confirmou `firebase deploy --only database` com o nó `kanban/cardume/secoe
 ## Entregue — 25/11/2026 (pedidos da Concha, lote de tela)
 
 📸 foto no @, ✍️ barra de formatação com explicação e botões @/#, 😀 quem reagiu à vista: saíram do Backlog (PR do lote).
+
+## Confirmação de deploy — 25/11/2026 (🧵 assuntos da Concha, PR A)
+
+Caio confirmou `firebase deploy --only database` (assuntos, campo `a`, `ultima_a`, `lidas_a`) antes do merge da #1974. Saiu de *Pendente de deploy*.

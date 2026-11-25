@@ -1401,6 +1401,26 @@
             }
           }
         },
+        "avisos_a": {
+          "$uid": {
+            ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
+            "$canal": {
+              "$aid": {
+                ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
+                ".validate": "$canal.matches(/^[A-Za-z0-9_-]{1,64}$/) && $aid.matches(/^a[a-z0-9]{1,20}$/) && newData.hasChildren(['nivel'])",
+                "nivel": {
+                  ".validate": "newData.isString() && newData.val().matches(/^(seguir|mencoes)$/)"
+                },
+                "ate": {
+                  ".validate": "newData.isNumber() && newData.val() > now && newData.val() <= now + 34560000000"
+                },
+                "$outro": {
+                  ".validate": false
+                }
+              }
+            }
+          }
+        },
         "gif_uso": {
           ".read": false,
           ".write": false

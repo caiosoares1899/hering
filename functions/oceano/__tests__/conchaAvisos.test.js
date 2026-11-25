@@ -118,3 +118,38 @@ test('tagsEm: paridade com a página (cardume-dev.html) — o mesmo texto dá as
   for (const t of ['Subiu o #Banner da #BlackFriday e a #Promoção (PR #1966) — `#codigo` https://x.com/a#ancora', '**#negrito** _#it_ (#p) >#q', '```\n#bloco\n``` #fora', '#a #bb #' + 'c'.repeat(32) + ' #' + 'd'.repeat(33), 'x#y #Ção-2 #_x #1a'])
     assert.deepEqual(tagsEm(t), daPagina(t), t);
 });
+
+// ═══ 🧵 Assuntos (PR B): 🔔 seguir / 🔕 silenciar por assunto e o nome do assunto no push ═══
+const { nivelAssuntoDe } = require('../conchaAvisos');
+test('nivelAssuntoDe: ausente, estranho ou vencido = como o canal', () => {
+  assert.equal(nivelAssuntoDe(null, AG), 'canal');
+  assert.equal(nivelAssuntoDe({ nivel: 'nada' }, AG), 'canal', 'assunto não tem "nada" (isso é do canal)');
+  assert.equal(nivelAssuntoDe({ nivel: 'seguir' }, AG), 'seguir');
+  assert.equal(nivelAssuntoDe({ nivel: 'mencoes', ate: AG - 1 }, AG), 'canal', 'prazo vencido');
+});
+
+test('decidir com assunto: 🔔 seguir fura o 🔕 do canal (não o 🚫); 🔕 do assunto cala mesmo com o canal em todas; #tag seguida fura o 🔕 do assunto', () => {
+  assert.equal(decidir(base({ pref: { nivel: 'mencoes' }, prefAssunto: { nivel: 'seguir' } })).motivo, 'assunto', 'canal 🔕 + assunto seguido');
+  assert.equal(decidir(base({ pref: { nivel: 'nada' }, prefAssunto: { nivel: 'seguir' } })).motivo, 'nada', '🚫 do canal vence');
+  assert.equal(decidir(base({ prefAssunto: { nivel: 'mencoes' } })).motivo, 'assunto_silenciado', 'assunto 🔕 com canal em todas');
+  assert.equal(decidir(base({ prefAssunto: { nivel: 'mencoes' }, seguidas: { banner: 1 }, tagsMsg: ['banner'] })).motivo, 'tag', '#tag seguida fura o 🔕 do assunto');
+  assert.equal(decidir(base({ prefAssunto: { nivel: 'mencoes' }, mencionados: ['bru'] })).motivo, 'mencao', 'a menção tem o push dela');
+  assert.equal(decidir(base({ prefAssunto: { nivel: 'seguir' }, ultimoEnvio: AG - 30000 })).motivo, 'trava', 'assunto seguido respeita a trava de rajada');
+  assert.equal(decidir(base({ prefAssunto: { nivel: 'seguir' }, vendoTs: AG - 1000 })).motivo, 'vendo');
+});
+
+test('runAvisoMsg com assunto: nome no push e ?a= no link; canal só de convidados esconde o assunto; preferências do assunto valem', async () => {
+  const db = banco({ assuntos: { dados: { abf: { n: 'banner da Black Friday', por: 'ana', criado: AG - 864e5 } }, 't-priv-ab12': { asec: { n: 'segredo de estado', por: 'ana', criado: AG - 864e5 } } },
+    avisos: { car: { dados: { nivel: 'mencoes' } } }, avisos_a: { car: { dados: { abf: { nivel: 'seguir' } } }, dan: { dados: { abf: { nivel: 'mencoes' } } } } });
+  const m = fakeMsg();
+  await runAvisoMsg(db, m, 'dados', 'k1', { uid: 'ana', ts: AG - 1000, texto: 'arte nova', a: 'abf' }, { agora: AG, emailDe, log: () => {} });
+  const por = Object.fromEntries(m.envios.map((e) => [e.tokens[0], e.data]));
+  assert.deepEqual(Object.keys(por).sort(), ['tb', 'tc'], 'Bruno (canal em todas) e Carla (canal 🔕, assunto 🔔); Dani (assunto 🔕) não');
+  assert.equal(por.tb.title, '🐚 Ana em # Dados › banner da Black Friday');
+  assert.match(por.tb.url, /cardume-dev\.html\?c=dados&a=abf&m=k1$/);
+  assert.equal(por.tc.body, 'Você segue o assunto');
+  const m2 = fakeMsg();
+  await runAvisoMsg(banco({ assuntos: { 't-priv-ab12': { asec: { n: 'segredo de estado', por: 'ana', criado: AG - 864e5 } } } }), m2, 't-priv-ab12', 'k1', { uid: 'ana', ts: AG, texto: 'oi', a: 'asec' }, { agora: AG, emailDe, log: () => {} });
+  assert.equal(m2.envios[0].data.title, '🐚 Ana num canal privado', 'nem o nome do assunto');
+  assert.ok(!/segredo/.test(JSON.stringify(m2.envios[0].data)));
+});

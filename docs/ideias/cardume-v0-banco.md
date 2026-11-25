@@ -440,3 +440,10 @@ Nível do canal primeiro (🚫 nada cala tudo). Depois o do assunto: **🔔 segu
 - Mudar uma mensagem de assunto não existe (como no Zulip, seria um "mover" — fica para depois).
 - O Sonar ainda não lista assuntos (próximo passo).
 - `cardumeLimpeza` (futura) apaga também `ultima_a`/`lidas_a` órfãos e assuntos de canal apagado.
+
+### 🧵 PR B — avisos por assunto (25/11/2026)
+- `kanban/cardume/avisos_a/{uid}/{canal}/{aid}` = `{nivel: 'seguir'|'mencoes', ate?}` — privado; sem nó = **como o canal**; "nada" só existe no canal.
+- **Função** (`conchaAvisos.decidir`): 🚫 do canal cala tudo; 🔕 do assunto deixa só @menção e #tag seguida (mesmo com o canal em todas); 🔔 do assunto avisa toda mensagem dele mesmo com o canal em 🔕, com a trava de rajada do canal. Push: "🐚 Ana em # Dados › banner" (nome cortado em 30; canal só de convidados não diz canal nem assunto); link com `&a=`.
+- **Tela:** o ⋯ do assunto vale para todo membro (🔔 Avisos deste assunto, com prazo); nome e encerrar só para quem pode. O chip mostra 🔔/🔕. O canal acende por geral, por assunto em 🔔 e por assunto já aberto que não esteja em 🔕 nem encerrado.
+- **Limite:** o "estou vendo" segue por canal — quem está em geral de # Dados não recebe push dos assuntos de lá (vê os pontos na faixa).
+- Deploy: regras (`avisos_a`) antes do merge; depois `functions:conchaAvisoMsg`.

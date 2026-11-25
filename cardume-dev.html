@@ -366,7 +366,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.27 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.28 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -464,7 +464,7 @@ let carregandoMsgs = false;
 // 🧵 Assuntos (docs/ideias/cardume-v0-banco.md › "Assuntos dentro do canal"): '' = geral
 let assuntoAtual = '', assuntos = {}, msgsCanal = [], msgsAss = [], verEncerrados = false, msgsCanalPronto = false, janela = 100;
 const ultA = {}, AID_RE = /^a[a-z0-9]{1,20}$/;
-let lidasA = {};
+let lidasA = {}, avisosA = {};
 const JANELA = 100;   // janela do canal por ts (geral = as sem assunto dela; a ordem nunca confia na chave)
 let enviando = false;          // trava de envio (Enter e botão)
 let rascunhoEdicao = null;
@@ -643,6 +643,7 @@ function iniciarOuvintes() {
   }, () => {});
   ouvir('abertos', ref(db, B + 'abertos'), s => { abertos = s.val() || {}; sincronizarCanais(); renderLista(); }, () => {});
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
+  ouvir('avisosA', ref(db, B + 'avisos_a/' + uid), s => { avisosA = s.val() || {}; renderLista(); if (atual) renderBarraAssuntos(); }, () => {});
   ouvir('lidasA', ref(db, B + 'lidas_a/' + uid), s => { lidasA = s.val() || {}; renderLista(); if (atual) renderBarraAssuntos(); }, () => {});
   ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); }, () => {});
   ouvir('secoes', ref(db, B + 'secoes/' + uid), s => { const v = s.val() || {}; secoes = { s: v.s || {}, c: v.c || {}, r: v.r || {} }; renderLista(); if (atual) renderLado(); }, () => {});
@@ -663,7 +664,14 @@ const lidoA = (id, k) => { const v = (lidasA[id] || {})[k]; return typeof v === 
 const vendoAgora = (id, k) => id === atual && (assuntoAtual || '_geral') === k && !vendoTag && !vendoMencoes && !vendoPessoa && conversaVisivel();
 const naoLidoA = (id, k) => { const u = (ultA[id] || {})[k]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > lidoA(id, k) && !vendoAgora(id, k); };
 // O canal acende por geral e pelos assuntos que a pessoa já abriu (tem lidas_a); assunto nunca aberto ou encerrado só mostra o ponto na faixa.
-const acendeCanal = (id, k) => k === '_geral' || (AID_RE.test(k) && typeof (lidasA[id] || {})[k] === 'number' && !(id === atual && assuntoFechado(k)));
+// 🧵 aviso por assunto (avisos_a; mesmo critério da função: ausente, estranho ou vencido = como o canal)
+function nivelAssunto(id, aid) {
+  const p = ((avisosA[id] || {})[aid]);
+  if (!p || typeof p !== 'object' || !['seguir', 'mencoes'].includes(p.nivel)) return 'canal';
+  if (p.ate != null && !(typeof p.ate === 'number' && p.ate > Date.now())) return 'canal';
+  return p.nivel;
+}
+const acendeCanal = (id, k) => k === '_geral' || (AID_RE.test(k) && !(id === atual && assuntoFechado(k)) && nivelAssunto(id, k) !== 'mencoes' && (nivelAssunto(id, k) === 'seguir' || typeof (lidasA[id] || {})[k] === 'number'));
 const naoLido = id => {
   if (ultA[id] && Object.keys(ultA[id]).some(k => acendeCanal(id, k) && naoLidoA(id, k))) return true;
   // mensagem que só aparece no marcador antigo (quem ainda está com a página sem assuntos não grava ultima_a): conta como geral
@@ -797,7 +805,8 @@ function renderBarraAssuntos() {
   if (souMembro(id) && !vencido(canais[id])) { const n = el('button', '', '＋ Assunto'); n.type = 'button'; n.dataset.aid = '_novo'; n.title = 'Novo assunto'; n.setAttribute('aria-label', 'Novo assunto'); n.onclick = () => modalAssunto(''); bar.append(n); }
   const ids = Object.keys(assuntos).filter(k => AID_RE.test(k) && assuntos[k] && typeof assuntos[k].n === 'string');
   const abertos_ = ids.filter(k => !assuntoFechado(k) || k === assuntoAtual).sort((a, b) => ult(b) - ult(a) || (assuntos[b].criado || 0) - (assuntos[a].criado || 0));
-  abertos_.forEach(k => bar.append(chip(k, (assuntoFechado(k) ? '🔒 ' : '🧵 ') + assuntos[k].n, assuntoFechado(k) ? 'fechado' : '')));
+  const marca = k => { const n = nivelAssunto(id, k); return n === 'seguir' ? ' 🔔' : n === 'mencoes' ? ' 🔕' : ''; };
+  abertos_.forEach(k => bar.append(chip(k, (assuntoFechado(k) ? '🔒 ' : '🧵 ') + assuntos[k].n + marca(k), assuntoFechado(k) ? 'fechado' : '')));
   const fechados = ids.filter(k => assuntoFechado(k) && k !== assuntoAtual);
   if (fechados.length) {
     const f = el('button', 'fechado', (verEncerrados ? '▾' : '▸') + ' Encerrados (' + fechados.length + ')'); f.type = 'button'; f.setAttribute('aria-expanded', String(verEncerrados)); f.dataset.aid = '_enc';
@@ -805,7 +814,7 @@ function renderBarraAssuntos() {
     if (verEncerrados) fechados.forEach(k => bar.append(chip(k, '🔒 ' + assuntos[k].n, 'fechado')));
   }
   if (Object.keys(ultA[id] || {}).some(k => (k === '_geral' || AID_RE.test(k)) && naoLidoA(id, k))) { const m = el('button', '', '✓ Marcar como lido'); m.type = 'button'; m.dataset.aid = '_lido'; m.title = 'Marcar geral e todos os assuntos deste canal como lidos'; m.onclick = () => marcarTudoLido(id); bar.append(m); }
-  if (assuntoAtual && podeGerirAssunto(assuntoAtual)) { const g = el('button', '', '⋯'); g.type = 'button'; g.dataset.aid = '_ger'; g.setAttribute('aria-label', 'Renomear ou encerrar ' + nomeAssunto(assuntoAtual)); g.title = 'Renomear ou encerrar'; g.onclick = () => modalAssunto(assuntoAtual); bar.append(g); }
+  if (assuntoAtual && (souMembro(id) || podeGerirAssunto(assuntoAtual))) { const g = el('button', '', '⋯'); g.type = 'button'; g.dataset.aid = '_ger'; g.setAttribute('aria-label', 'Avisos e opções de ' + nomeAssunto(assuntoAtual)); g.title = 'Avisos' + (podeGerirAssunto(assuntoAtual) ? ', renomear e encerrar' : ' deste assunto'); g.onclick = () => modalAssunto(assuntoAtual); bar.append(g); }
   if (foco) { const x = bar.querySelector('[data-aid="' + CSS.escape(foco) + '"]'); if (x) x.focus({ preventScroll: true }); }
   const ativo = bar.querySelector('[aria-pressed="true"]');   // o assunto aberto sempre à vista na faixa (rola só a faixa, nunca a página)
   if (ativo) { const l = ativo.offsetLeft - bar.offsetLeft, r = l + ativo.offsetWidth; if (l < bar.scrollLeft) bar.scrollLeft = l - 12; else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth + 12; }
@@ -824,11 +833,23 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
   const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
   const h = el('h2', '', x ? '🧵 ' + x.n : '🧵 Novo assunto em # ' + nomeCanal(atual)); h.id = 'md-t'; f.append(h);
   if (!x) f.append(el('p', 'subtitulo', 'A conversa do assunto fica separada de "geral", com as próprias mensagens novas. Qualquer pessoa do canal escreve nele.'));
-  const ln = el('label', '', 'Nome'); const nome = el('input'); nome.maxLength = 60; nome.required = true; nome.value = x ? x.n : ''; nome.placeholder = 'ex.: banner da Black Friday'; ln.append(nome); f.append(ln);
+  const gere = !x || podeGerirAssunto(aid);
+  const ln = el('label', '', 'Nome'); const nome = el('input'); nome.maxLength = 60; nome.required = gere; nome.value = x ? x.n : ''; nome.placeholder = 'ex.: banner da Black Friday'; ln.append(nome); if (gere) f.append(ln);
+  let nivelSel = null, prazoSel = null;
+  if (x && souMembro(atual)) {   // 🔔 avisos deste assunto (de cada pessoa)
+    const n0 = nivelAssunto(atual, aid), fs = el('fieldset'); fs.style.cssText = 'border:0;padding:0;margin:0;display:grid;gap:6px;'; fs.append(el('legend', 'subtitulo', '🔔 Avisos deste assunto (só para você)'));
+    const radio = (v, t, d) => { const l2 = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = 'nivelA'; r.value = v; r.checked = n0 === v; const tx = el('span'); tx.append(el('b', '', t), document.createElement('br'), el('span', 'subtitulo', d)); l2.append(r, tx); return l2; };
+    fs.append(radio('canal', 'Como o canal', 'Vale o 🔔 do canal (' + ROT_AVISO[nivelAviso(atual)] + ').'), radio('seguir', '🔔 Seguir este assunto', 'Avisa de toda mensagem dele, mesmo com o canal em 🔕.'), radio('mencoes', '🔕 Silenciar este assunto', 'Só @menções e #tags que você segue. Não acende o canal.'));
+    const lp = el('label', '', 'Por quanto tempo'); const pz = el('select'); [['8h', 'Por 8 horas'], ['1s', 'Por 1 semana'], ['sempre', 'Sempre']].forEach(([v, t]) => pz.append(new Option(t, v)));
+    const p0 = (avisosA[atual] || {})[aid]; pz.value = p0 && typeof p0.ate === 'number' ? (p0.ate - Date.now() > 864e5 ? '1s' : '8h') : 'sempre'; lp.append(pz);
+    const sinc = () => { lp.hidden = f.querySelector('input[name="nivelA"]:checked').value === 'canal'; }; fs.onchange = sinc;
+    f.append(fs, lp); sinc();
+    nivelSel = () => f.querySelector('input[name="nivelA"]:checked').value; prazoSel = () => pz.value;
+  }
   const err = el('p', 'erro'); err.hidden = true; f.append(err);
   const l = el('div', 'linha');
   const base = aid ? B + 'assuntos/' + atual + '/' + aid : '';
-  if (x) {
+  if (x && gere) {
     const fechado = typeof x.fim === 'number';
     const enc = el('button', fechado ? '' : 'perigo', fechado ? '🔓 Reabrir' : '🔒 Encerrar'); enc.type = 'button';
     enc.onclick = async () => {
@@ -841,10 +862,18 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
   const ok = el('button', 'primary', x ? 'Salvar' : 'Criar e abrir'); ok.type = 'submit'; l.append(can, ok); f.append(l);
   f.onsubmit = async e => {
     e.preventDefault(); const n = nome.value.trim().slice(0, 60);
-    if (!n) return erroModal(err, 'Dê um nome ao assunto.');
+    if (gere && !n) return erroModal(err, 'Dê um nome ao assunto.');
     ok.disabled = true;
     try {
-      if (x) { await set(ref(db, base + '/n'), n); fecharModal(); toast('🧵 Assunto renomeado.'); }
+      if (x) {
+        const mapa = {};
+        if (gere && n !== x.n) mapa[base + '/n'] = n;
+        if (nivelSel) { const nv = nivelSel(), pz = prazoSel(), antes = nivelAssunto(atual, aid);
+          const val = nv === 'canal' ? null : Object.assign({ nivel: nv }, pz === '8h' ? { ate: Date.now() + 8 * 3600e3 } : pz === '1s' ? { ate: Date.now() + 7 * 864e5 } : {});
+          if (nv !== antes || nv !== 'canal') mapa[B + 'avisos_a/' + user.uid + '/' + atual + '/' + aid] = val; }
+        if (Object.keys(mapa).length) await update(ref(db), mapa);
+        fecharModal(); toast(mapa[base + '/n'] ? '🧵 Assunto salvo.' : '🔔 Avisos do assunto salvos.');
+      }
       else {
         const novo = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x');
         await update(ref(db), { [B + 'assuntos/' + atual + '/' + novo]: { n, por: user.uid, criado: serverTimestamp() }, [B + 'lidas_a/' + user.uid + '/' + atual + '/' + novo]: serverTimestamp() });   // quem cria já acompanha o assunto
@@ -853,7 +882,7 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
     } catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão.' : 'Não deu agora. Tente de novo.'); }
   };
   f.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); fecharModal(); } });
-  ov.append(f); nome.focus();
+  ov.append(f); (gere ? nome : (f.querySelector('input[name="nivelA"]:checked') || ok)).focus();
 }
 function renderCabecalho() {
   const id = atual, c = canais[id];
@@ -2018,7 +2047,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.

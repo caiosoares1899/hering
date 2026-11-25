@@ -16,6 +16,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada dos avisos por assunto da Concha: regra `avisos_a` e `conchaAvisos.decidir`/push com o assunto — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada dos 🧵 assuntos da Concha: regras `assuntos`, campo `a` da mensagem (só na criação, imutável, apagar guarda), `ultima_a`/`lidas_a`, assunto encerrado barrando nova/edição/reação — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` da Concha nas regras novas de 25/11 (#1969 avisos, #1970 seções, assuntos) — o R3 pede a leitura de segurança além das revisões; as duas primeiras só tiveram o Codex na Fila | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada das 📁 seções da Concha: regra `kanban/cardume/secoes` (só a dona; canal só aponta para seção que existe) e o Salvar do modal (só apaga o que a pessoa tirou) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
@@ -45,7 +46,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐚 Concha: 🧵 assuntos (regras `assuntos`/`ultima_a`/`lidas_a`, campo `a` e índice em `msgs`, reação em assunto encerrado) — **ANTES do merge** | resync na branch `claude/concha-assuntos` (`git fetch origin claude/concha-assuntos` → `git reset --hard origin/claude/concha-assuntos`) → `firebase deploy --only database --project hering-onboarding` | 25/11/2026 |
+| Claude | 🐚 Concha: 🧵 avisos por assunto (regra `avisos_a` + `conchaAvisoMsg` com o assunto) — **regras ANTES do merge**, função depois | resync na branch `claude/concha-assuntos-avisos` (`git fetch origin claude/concha-assuntos-avisos` → `git reset --hard origin/claude/concha-assuntos-avisos`) → `firebase deploy --only database --project hering-onboarding`; depois do merge: resync na `main` → `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 25/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
