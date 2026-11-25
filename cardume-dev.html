@@ -320,7 +320,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByKey, startAt, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.19 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.20 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -613,11 +613,11 @@ function abrirCanal(id, foco) {
       msgs = Object.keys(v).map(k => Object.assign({ id: k }, v[k])).filter(m => m && typeof m.ts === 'number').sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
       carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id);
     }, e => { carregandoMsgs = false; msgs = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
-  } else { msgs = []; carregandoMsgs = false; renderMsgs(); }
+  } else { parar('msgs'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; rxDesde = null; editando = ''; rascunhoEdicao = null; carregandoMsgs = false; renderMsgs(); }   // tirado do canal aberto: não segue escutando as mensagens
   if (membro || gestor(id)) {
     ouvir('membros', ref(db, B + 'membros/' + id), s => { membrosAtual = s.val() || {}; renderLado(); renderMsgs(); }, () => { membrosAtual = {}; renderLado(); });
     if (ehTema(id)) ouvir('admins', ref(db, B + 'admins/' + id), s => { adminsAtual = s.val() || {}; renderLado(); }, () => {});
-  }
+  } else { parar('membros'); parar('admins'); membrosAtual = {}; adminsAtual = {}; }
   renderLado();
   if (foco) $('canal-titulo').focus();
 }
@@ -1164,7 +1164,7 @@ function abrirEmojis() {
   busca.oninput = desenhar; busca.onkeydown = e => { if (e.key === 'Escape') { e.preventDefault(); fecharEmojis(true); } };
   desenhar(); box.hidden = false; $('b-emoji').setAttribute('aria-expanded', 'true'); busca.focus();
 }
-function botaoEmoji(x, n) { const b = el('button', '', x); b.type = 'button'; b.setAttribute('aria-label', n || x); b.onclick = () => { entrada.setRangeText(x, entrada.selectionStart, entrada.selectionEnd, 'end'); lsSet('cardume_emojis', JSON.stringify([x].concat(recentes().filter(y => y !== x)).slice(0, 8))); fecharEmojis(true); }; return b; }
+function botaoEmoji(x, n) { const b = el('button', '', x); b.type = 'button'; b.setAttribute('aria-label', n || x); b.onclick = () => { entrada.setRangeText(x, entrada.selectionStart, entrada.selectionEnd, 'end'); entrada.dispatchEvent(new Event('input')); lsSet('cardume_emojis', JSON.stringify([x].concat(recentes().filter(y => y !== x)).slice(0, 8))); fecharEmojis(true); }; return b; }
 function fecharEmojis(foco) { $('emojis').hidden = true; $('b-emoji').setAttribute('aria-expanded', 'false'); if (foco) entrada.focus(); }
 $('b-emoji').onclick = () => { if ($('emojis').hidden) abrirEmojis(); else fecharEmojis(true); };
 document.addEventListener('click', e => { if (!$('emojis').hidden && !e.target.closest('#emojis') && !e.target.closest('#b-emoji')) fecharEmojis(false); });
@@ -1381,7 +1381,9 @@ function modalCanal(id) {
 }
 $('b-novo').onclick = () => modalCanal('');
 function erroModal(err, msg) { err.textContent = msg; err.hidden = false; }
+let criandoCanal = false;   // trava: o id leva um sufixo novo a cada chamada — duplo clique (ou Enter repetido) criaria 2 canais
 async function criarCanal(nomeTxt, acesso, fimTs, err) {
+  if (criandoCanal) return;
   const nome = nomeTxt.trim().slice(0, 40), base = slug(nome);
   if (!nome) return erroModal(err, 'Dê um nome ao canal.');
   if (fimTs && fimTs <= Date.now()) return erroModal(err, 'A data de fim precisa ser hoje ou depois.');
@@ -1393,8 +1395,11 @@ async function criarCanal(nomeTxt, acesso, fimTs, err) {
   // um update só: canal + eu como membro + "meus" (+ lista pública se aberto) — exigido pelas regras
   const mapa = Object.assign({ [B + 'canais/' + id]: canal }, parMembro(id, user.uid, true));
   if (acesso === 'aberto') mapa[B + 'abertos/' + id] = { nome };
+  const bt = err.closest('form') && err.closest('form').querySelector('button[type="submit"]');
+  criandoCanal = true; if (bt) bt.disabled = true;
   try { await update(ref(db), mapa); fecharModal(); toast('Canal ' + nome + ' criado.'); abrirCanal(id, true); }
   catch (e) { negado(e) ? erroModal(err, 'Sem permissão para criar o canal.') : erroModal(err, 'Não deu para criar agora. Tente de novo.'); console.warn('[cardume] criar', e); }
+  finally { criandoCanal = false; if (bt) bt.disabled = false; }
 }
 async function salvarCanal(id, c, nomeTxt, acesso, fimTs, err, arquivar) {
   const nome = nomeTxt.trim().slice(0, 40);
@@ -1475,6 +1480,7 @@ async function iniciar() {
   if (ID_RE.test(refMencao)) {
     try {
       const rec = (await get(ref(db, B + 'mencoes/' + user.uid + '/' + refMencao))).val();
+      if (!user || user.uid !== meu) return;   // saiu ou trocou de conta durante a leitura
       if (rec && ID_RE.test(String(rec.c || '')) && ID_RE.test(String(rec.m || ''))) { const u = new URL(location.href); u.searchParams.delete('mencao'); history.replaceState(null, '', u); abrirMencao(Object.assign({ _k: refMencao }, rec)); return; }
     } catch (e) {}
     toast('Menção não encontrada (pode ter sido apagada).');
