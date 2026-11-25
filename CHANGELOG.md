@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Maré: índice enxuto dos cards no aparelho para o @card: da Concha (SÓ DEV, kanban v8.30.1030-dev) — 2026-11-25
+
+Primeira parte do @card: da Concha (desenho de 24/11 em docs/ideias/cardume.md). O Maré passa a deixar no aparelho uma lista enxuta dos cards da squad aberta — id, título e coluna dos não arquivados, com o uid de quem está logado — em oceano_cards_<squad>_dev, atualizada 2 s depois de cada mudança dos cards. Zero leitura a mais do banco (o Maré já tem os cards em memória); ~40 KB para 500 cards. A Concha vai usar essa lista no autocompletar do @card: (próximo PR). Teste: test_mare_indice_concha.js (6; falha no kanban.html de produção, como esperado).
+
 ### 🐚 Concha: ✏️ editar a mensagem só nos primeiros 15 min, como no WhatsApp (SÓ DEV, cardume v0.32, regra) — 2026-11-25
 
 Pedido do Caio, como o WhatsApp (15 min). O ✏️ Editar só aparece na sua mensagem nos primeiros 15 minutos depois de enviar e some sozinho quando o prazo acaba; quem abriu o editor antes e salva depois recebe o aviso "Passaram 15 minutos" e nada é gravado. A regra do banco confere o mesmo com a hora do servidor (relógio do aparelho não conta). Apagar a própria continua valendo depois. Ajuda atualizada. Testes: cardumeRules (+1, sabotagem), test_concha_editar.js (7). Deploy: firebase deploy --only database antes do merge.
