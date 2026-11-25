@@ -14,7 +14,7 @@ const seed = () => ({ kanban: {
   usuarios_publicos: { ana: { nome: 'Ana Lima', email: 'ana@ciahering.com.br' }, bru: { nome: 'Bruno Reis', email: 'bru@ciahering.com.br' } },
   cardume: {
     canais: { dados: { nome: 'Dados' }, prf: { nome: 'Performance' } }, membros: { dados: { ana: true, bru: true }, prf: { ana: true, bru: true } }, meus: { ana: { dados: true, prf: true } },
-    assuntos: { dados: { abf: { n: 'banner', por: 'bru', criado: agora - 864e5 }, arel: { n: 'relatório', por: 'bru', criado: agora - 864e5 } } },
+    assuntos: { dados: { abf: { n: 'banner', por: 'bru', criado: agora - 864e5 }, arel: { n: 'relatório', por: 'bru', criado: agora - 864e5 }, avaz: { n: 'vazio seguido', por: 'bru', criado: agora - 864e5 }, avaz2: { n: 'vazio comum', por: 'bru', criado: agora - 864e5 } } },
     msgs: { dados: { '-Ng1': { uid: 'bru', ts: agora - 9e5, texto: 'oi' }, '-Na1': { uid: 'bru', ts: agora - 8e5, texto: 'arte', a: 'abf' } }, prf: {} },
     ultima_a: { dados: { _geral: { ts: agora - 9e5, uid: 'bru', id: '-Ng1' }, abf: { ts: agora - 8e5, uid: 'bru', id: '-Na1' } } },
     lidas_a: { ana: { dados: { _geral: agora, abf: agora } } },
@@ -65,6 +65,22 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   tn = Date.now() + 2;
   await externo({ ['kanban/cardume/msgs/dados/-Nr2']: ['set', { uid: 'bru', ts: tn, texto: 'versão 2', a: 'arel' }], ['kanban/cardume/ultima_a/dados/arel']: ['set', { ts: tn, uid: 'bru', id: '-Nr2' }] }); await p.waitForTimeout(400);
   t('assunto em 🔔 com mensagem nova acende o canal', await aceso(), 0);
+
+  // assunto VAZIO (abrir não grava lido): só o 🔔 faz acender o canal
+  await p.click('[data-canal="dados"]'); await p.waitForTimeout(300); await p.click('#assuntos-barra [data-aid="_lido"]').catch(() => {}); await p.waitForTimeout(300);
+  await p.click('#assuntos-barra [data-aid="avaz2"]'); await p.waitForTimeout(400);
+  t('(pré-condição) abrir um assunto vazio não grava lidas_a', !(((await S()).lidas_a.ana || {}).dados || {}).avaz2, (await S()).lidas_a);
+  await p.click('[data-canal="prf"]'); await p.waitForTimeout(300);
+  tn = Date.now() + 3;
+  await externo({ ['kanban/cardume/msgs/dados/-Nv1']: ['set', { uid: 'bru', ts: tn, texto: 'primeira', a: 'avaz2' }], ['kanban/cardume/ultima_a/dados/avaz2']: ['set', { ts: tn, uid: 'bru', id: '-Nv1' }] }); await p.waitForTimeout(400);
+  t('assunto vazio "como o canal" (nunca lido) não acende', !(await aceso()), 0);
+  await p.click('[data-canal="dados"]'); await p.waitForTimeout(300); await p.click('#assuntos-barra [data-aid="avaz"]'); await p.waitForTimeout(400);
+  t('(pré-condição) o outro assunto vazio também sem lidas_a', !(((await S()).lidas_a.ana || {}).dados || {}).avaz, 0);
+  await p.click('#assuntos-barra [data-aid="_ger"]'); await p.click('.md input[value="seguir"]'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(300);
+  await p.click('[data-canal="prf"]'); await p.waitForTimeout(300);
+  tn = Date.now() + 4;
+  await externo({ ['kanban/cardume/msgs/dados/-Nv2']: ['set', { uid: 'bru', ts: tn, texto: 'primeira do seguido', a: 'avaz' }], ['kanban/cardume/ultima_a/dados/avaz']: ['set', { ts: tn, uid: 'bru', id: '-Nv2' }] }); await p.waitForTimeout(400);
+  t('assunto vazio em 🔔 (nunca lido) acende o canal — o que o 🔔 garante', await aceso(), 0);
 
   const esc = await p.evaluate(() => window.__escritas || []);
   const real = Date.now; const ruins = [];
