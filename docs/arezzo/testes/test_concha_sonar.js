@@ -65,8 +65,8 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   t('escolher o canal abre a conversa', await p.evaluate(() => window.__cardume.estado.atual === 'prf'), await p.evaluate(() => window.__cardume.estado));
   await p.keyboard.press('Control+k'); await p.waitForTimeout(300); await p.keyboard.press('Escape'); await p.waitForTimeout(200);
   t('Esc fecha o Sonar', await p.evaluate(() => !MareSonar.aberto()), 0);
-  const fora = await p.evaluate(() => (window.__escritas || []).flatMap(e => e.tipo === 'set' ? [e.p] : Object.keys(e.v || {}).map(k => (e.p ? e.p + '/' : '') + k)).filter(c => !/^kanban\/cardume\/lidas\/|^kanban\/notif_feed_seen\//.test(c)));
-  t('o Sonar não grava nada no banco (só o "lido" do canal e o do Sino)', !fora.length, fora);
+  const fora = await p.evaluate(() => (window.__escritas || []).flatMap(e => e.tipo === 'set' ? [e.p] : Object.keys(e.v || {}).map(k => (e.p ? e.p + '/' : '') + k)).filter(c => !/^kanban\/cardume\/(lidas|vendo)\/|^kanban\/notif_feed_seen\//.test(c)));
+  t('o Sonar não grava nada no banco (só o "lido" do canal, o do Sino e o sinal de vida da conversa)', !fora.length, fora);
   t('sem erro de JS', !errs.length, errs);
   await b.close();
   console.log(`\n${ok ? '✅' : '❌'} ${total} verificações`); process.exit(ok ? 0 : 1);

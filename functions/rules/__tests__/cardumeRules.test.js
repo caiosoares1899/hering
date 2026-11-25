@@ -626,3 +626,39 @@ test('#tags: tags_ult só com entrada da tag; ninguém além do ADM apaga; leitu
     assert.equal(lê(`kanban/cardume/${no}`, A.adm), false, no + ': ninguém lê todos os canais de uma vez');
   }
 });
+
+// ═══ 🔔 Avisos de mensagem nova (25/11/2026): preferências PRIVADAS de cada pessoa + trava fechada da função ═══
+test('avisos: só a própria pessoa lê e grava; níveis mencoes/nada, prazo no futuro (até ~1 ano); apagar = voltar a todas', () => {
+  reset(); const AV = (u, c) => `kanban/cardume/avisos/${u || 'ana'}/${c || 'dados'}`;
+  assert.equal(grava(AV(), A.ana, { nivel: 'mencoes', ate: Date.now() + 8 * 3600e3 }), true, '🔕 por 8 h');
+  assert.equal(grava(AV(), A.ana, { nivel: 'nada' }), true, '🚫 sempre');
+  assert.equal(grava(AV(), A.ana, null), true, 'voltar a todas');
+  assert.equal(grava(AV(), A.ana, { nivel: 'todas' }), false, 'nível fora da lista');
+  assert.equal(grava(AV(), A.ana, { nivel: 'nada', ate: Date.now() - 1000 }), false, 'prazo no passado');
+  assert.equal(grava(AV(), A.ana, { nivel: 'nada', ate: Date.now() + 500 * 864e5 }), false, 'prazo além de ~1 ano');
+  assert.equal(grava(AV(), A.ana, { nivel: 'nada', x: 1 }), false, 'campo extra');
+  assert.equal(grava(AV('ana', 'a.b'), A.ana, { nivel: 'nada' }), false, 'canal fora do padrão');
+  assert.equal(grava(AV('ana'), A.bru, { nivel: 'nada' }), false, 'ninguém mexe no aviso de outra pessoa');
+  assert.equal(grava(AV('ana'), A.adm, { nivel: 'nada' }), false, 'nem o ADM');
+  assert.equal(lê('kanban/cardume/avisos/ana', A.ana), true);
+  for (const k of ['bru', 'adm', 'forasteiro', 'intruso']) assert.equal(lê('kanban/cardume/avisos/ana', A[k]), false, 'NÃO lê: ' + k);
+  assert.equal(lê('kanban/cardume/avisos', A.adm), false, 'ninguém lê as preferências de todo mundo');
+});
+
+test('seguidas e vendo: privados; #tag com a mesma chave das tags; sinal de vida só com serverTimestamp', () => {
+  reset(); const SG = t => `kanban/cardume/seguidas/ana/${t}`, VD = (u, c) => `kanban/cardume/vendo/${u || 'ana'}/${c || 'dados'}`;
+  assert.equal(grava(SG('banner'), A.ana, Date.now()), true);
+  assert.equal(grava(SG('promoção'), A.ana, Date.now()), true, 'acento');
+  assert.equal(grava(SG('Banner'), A.ana, Date.now()), false, 'maiúscula');
+  assert.equal(grava(SG('a b'), A.ana, Date.now()), false, 'espaço');
+  assert.equal(grava(SG('banner'), A.ana, true), false, 'valor tem de ser número');
+  assert.equal(grava(SG('banner'), A.bru, Date.now()), false, 'outra pessoa');
+  assert.equal(grava(SG('banner'), A.ana, null), true, 'deixar de seguir');
+  assert.equal(grava(VD(), A.ana, Date.now()), true);
+  assert.equal(grava(VD(), A.ana, Date.now() - 120000), false, 'sinal velho');
+  assert.equal(grava(VD(), A.ana, Date.now() + 120000), false, 'sinal no futuro (prenderia os avisos)');
+  assert.equal(grava(VD('ana'), A.bru, Date.now()), false, 'calar o aviso de outra pessoa');
+  assert.equal(grava(VD(), A.ana, null), true, 'saiu da conversa');
+  for (const no of ['seguidas', 'vendo']) for (const k of ['bru', 'adm']) assert.equal(lê(`kanban/cardume/${no}/ana`, A[k]), false, no + ' NÃO lê: ' + k);
+  for (const k of ['ana', 'adm', 'caio']) { assert.equal(lê('kanban/cardume/aviso_env/ana', A[k]), false, 'trava da função fechada: ' + k); assert.equal(grava('kanban/cardume/aviso_env/ana/dados', A[k], Date.now()), false, 'trava: ' + k); }
+});

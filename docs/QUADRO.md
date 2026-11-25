@@ -16,6 +16,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada dos 🔔 avisos da Concha: regras `kanban/cardume/avisos`/`seguidas`/`vendo`/`aviso_env`, a função `conchaAvisoMsg` (`functions/oceano/conchaAvisos.js`) e o 🚫 em `cardumePush.mencaoValida` — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada das regras da 🏢 diretoria (`database.rules.json`: `usuarios/$uid/diretoria` + espelho em `usuarios_publicos`) e de `diretoriaRules.test.js` — só revisar, comentar no PR; o Caio só faz merge/deploy depois | [desenho](ideias/diretoria-por-pessoa.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
@@ -41,6 +42,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🐚 Concha: 🔔 avisos de mensagem nova (regras `avisos`/`seguidas`/`vendo`/`aviso_env` + função nova `conchaAvisoMsg` + 🚫 na menção) — **regras ANTES do merge**, funções depois | resync na branch `claude/concha-avisos` (`git fetch origin claude/concha-avisos` → `git reset --hard origin/claude/concha-avisos`) → `firebase deploy --only database --project hering-onboarding`; depois do merge: resync na `main` → `firebase deploy --only functions:conchaAvisoMsg,functions:sendPushOnNotification --project hering-onboarding` | 25/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
