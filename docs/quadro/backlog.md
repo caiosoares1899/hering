@@ -45,6 +45,18 @@
 |---|---|---|
 | 📳 **Concha · "Chamar atenção" (o zumbido do MSN)** (ideia do Caio, 24/11/2026): um botão na conversa faz a tela de outra pessoa **tremer**, como o "zumbido" do MSN, com o mesmo tremor do modo insistente do Sino (`tremer()` em `mare-notif-dev.js`, que mexe só no conteúdo principal e respeita "reduzir movimento"). **O ADM liga e desliga** o recurso para toda a casa (interruptor na Central de Notificações do Painel, `kanban/notif_config`). | Claude | `docs/ideias/cardume.md`. **Sugestões de desenho:** (1) só dentro de um canal, para um membro dele (ou o canal inteiro, se o ADM permitir); (2) **limite** de 1 zumbido por pessoa-alvo a cada 2–5 min, para não virar spam, e quem recebe pode **desligar para si** (preferência em `notif_prefs`; o Não Perturbe também bloqueia); (3) a tela treme só se a pessoa estiver com o Oceano aberto; fechado, vira uma notificação comum "📳 Fulano chamou sua atenção na Concha" (tipo novo em `MareNotif.TIPOS`, push opcional pelo `PUSH_TYPES`); (4) aparece na conversa como uma linha "📳 Fulano chamou a atenção de Ciclano". **Banco (R3):** nó de evento curto (`kanban/cardume/zumbidos/{alvo}/{id}` = `{de, c, ts}`, só membro do canal grava, só o alvo lê e apaga, limite por regra usando `ts`), regras + testes + 2 revisões. **Fronteira:** quem pode tremer a tela de quem; limite contra abuso; o texto visível usa só o nome (sem mensagem livre) |
 
+<a id="concha-pedidos-2511"></a>
+
+### 🐚 Concha — pedidos do Caio (25/11/2026)
+
+| Pedido | O que já existe | Escopo sugerido |
+|---|---|---|
+| 📸 **Foto na lista do @** | A lista de @ mostra só o nome (`atualizarSug`) | Avatar (o mesmo `avatar(uid)` das mensagens: foto `https:` do diretório público, senão iniciais) ao lado de cada nome, no campo e no editor. Só tela, R1 |
+| 😀 **Quem reagiu e com o quê, à vista** | Chip "👍 3" com os nomes só no `title` (computador) e na mensagem tocada (celular) | Mostrar quem reagiu sem depender de passar o mouse: ex.: segurar/clicar no chip abre "👍 Ana, Bruno · 🎉 Carla", ou nomes curtos ao lado quando forem poucos. Decidir o formato com o Caio. Só tela, R1 |
+| ✍️ **Barra de formatação com explicação + `#`** | Botões B, I, S, `</>`, •, ❝, 😀, GIF com só o título no `title` | Cada botão com rótulo/tooltip que ensina ("**negrito** — Ctrl+B") e um botão **#** que insere `#` e abre a lista das #tags dos seus canais (`tags_ult`, o mesmo do Sonar). Só tela, R1 |
+| ❓ **Ajuda da Concha (help content)** | Só a linha de dicas embaixo do campo | Ajuda própria (❓ no topo), no padrão das outras: canais e seções, mensagem (formatação, @, #tag, GIF, responder, reagir, 📝 No card), avisos 🔔/🔕/🚫 e #tags seguidas, Sonar (Ctrl/⌘+K), @ Menções. Entra no `/atualizarhelpcontent` e na base do Agente Ágil. R0–R1 |
+| 🧷 **`@card:` e `@objetivo:` funcionando** | Desenho pronto em [cardume-citar](#cardume-citar) | Seguir o desenho de lá (cache do Sonar para objetivos; títulos de card leves; chip na mensagem). R2 |
+
 <a id="cardume-avisos"></a>
 
 | Ideia | Dono | Onde está o desenho |
