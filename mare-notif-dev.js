@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍', gantt_cal:'📊', gantt_pedido:'📣',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_cobranca:'📦', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', cardume_mencao:'🐚', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', card_resgatado:'🛡️', travessia_apoio:'🫶', escala:'🗓️', cardume_mencao:'🐚', cardume_reacao:'🐚', backup_falhou:'🛟', plantao_bug:'🐞', timer_criado:'⏲', timer_zero:'⏲', timer_esquecido:'⏲', timer_encerrado:'⏲', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -116,6 +116,9 @@
     {id:'cardume_mencao', familia:'pessoal', rotulo:'Concha', area:'board', fonte:'pessoal', nome:'Menção na Concha (@)', pushPossivel:true,
       quando:'Alguém escreve @seu nome numa mensagem de um canal da 🐚 Concha em que você está.',
       quem:'A pessoa mencionada, se for membro do canal (nunca quem escreveu).', onde:'Concha (cardume-dev.html → avisarMencoes()). O aviso é genérico (sem canal nem trecho); clicar abre o canal direto na mensagem. Só vira push com o registro privado da menção (functions/common/cardumePush.js).'},
+    {id:'cardume_reacao', familia:'pessoal', rotulo:'Concha', area:'board', fonte:'pessoal', nome:'Reação na Concha (😀)', pushPossivel:false,
+      quando:'Alguém reage com emoji a uma mensagem sua num canal da 🐚 Concha. Um aviso por mensagem e pessoa (reagir de novo ou trocar o emoji não repete).',
+      quem:'Quem escreveu a mensagem, se for membro do canal (nunca quem reagiu à própria mensagem).', onde:'Concha (cardume-dev.html → avisarReacao()). O aviso é genérico (sem canal, trecho nem emoji) e só aparece no Sino — nunca vira push. Clicar abre a Concha.'},
     {id:'escala', familia:'calendario', rotulo:'Escala', area:'agenda', fonte:'pessoal', nome:'Sua escala foi cadastrada', pushPossivel:true,
       quando:'PO, Organizador ou ADM cadastra (ou limpa) a escala de trabalho/plantão/folga de OUTRA pessoa — uma notificação por cadastro, com o período e o tipo. Quem cadastra a própria escala não se avisa.',
       quem:'A pessoa dona da escala.', onde:'Escala (escala-dev.html → avisarPessoa()). Clicar abre a Escala na semana cadastrada.'},
@@ -393,6 +396,7 @@
     if(t==='travessia_apoio') return {url:PAGES.travessia+'?tab=frota'};   // abre a Frota (termômetro do time) na Travessia
     if(t==='cardume_mencao'){ const r=String(n.cardumeRef||''); if(!/^[A-Za-z0-9_-]{1,64}$/.test(r)) return null;   // 🐟 aviso genérico: o Cardume resolve o id no índice PRIVADO da menção (nada do canal fica na notificação, que a empresa toda lê)
       return {url:(n.dev===false ? PAGES.cardume : 'cardume-dev.html')+'?mencao='+r}; }
+    if(t==='cardume_reacao') return {url:(n.dev===false ? PAGES.cardume : 'cardume-dev.html')};   // genérico: abre a Concha
     if(t==='escala') return {url:PAGES.escala+'?visao=squad'+(n.squad?'&squad='+encodeURIComponent(n.squad):'')+(/^\d{4}-\d{2}-\d{2}$/.test(n.okrObjId||'')?'&semana='+n.okrObjId:'')};   // abre a Escala na semana cadastrada
     if(t==='meta_lembrete') return {url:PAGES.kanban+'?'+(n.squad?'squad='+encodeURIComponent(n.squad)+'&':'')+'dados='+(n.okrObjId==='digital'?'digital':'squad')};   // abre a aba 📊 Dados (Squad ou Digital) do Maré
     if(t==='reuniao') return /^https?:\/\//i.test(String(n.meetingLink||'')) ? {url:n.meetingLink, externo:true} : null;   // só http(s): um javascript: gravado na notificação viraria XSS no window.open

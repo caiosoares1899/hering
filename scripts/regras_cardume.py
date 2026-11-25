@@ -51,6 +51,9 @@ MEN_CRIAR=(f"newData.child('de').val() === auth.uid && $uid !== auth.uid && newD
   f" && {MSGR}.child('uid').val() === auth.uid && {MSGR}.child('apagada').val() !== true && {MSGR}.child('ts').isNumber() && {MSGR}.child('ts').val() > now - 60000"
   f" && newData.child('ts').isNumber() && newData.child('ts').val() <= now && newData.child('ts').val() > now - 60000 && !newData.hasChild('lida')"
   f" && (!newData.hasChild('r') || ({MSGR}.child('resp').isString() && root.child('kanban/cardume/msgs/' + {NC} + '/' + {MSGR}.child('resp').val() + '/uid').val() === $uid))")
+# 😀 reações: a MESMA lista dos comentários do Maré (kanban-dev.html › REACT_EMOJIS) e da Concha (REACT_EMOJIS); ❤️ = U+2764 U+FE0F
+RX=['\U0001F44D','\U0001F440','\u2764\uFE0F','\u2705','\U0001F389']
+RX_OK=" || ".join(f"newData.val() === '{e}'" for e in RX)
 MEN_SO_LIDA="newData.child('c').val() === data.child('c').val() && newData.child('m').val() === data.child('m').val() && newData.child('de').val() === data.child('de').val() && newData.child('ts').val() === data.child('ts').val() && newData.child('n').val() === data.child('n').val() && newData.child('r').val() === data.child('r').val()"
 MEUS5=P(5,"meus/' + $uid + '/' + $canal + '")
 block={
@@ -121,6 +124,11 @@ block={
      "$outro": {".validate": False}}}},
  "lidas":{"$uid":{".read": f"{G} && auth.uid === $uid", ".write": f"{G} && auth.uid === $uid", ".validate":"newData.hasChildren()",
    "$canal":{".validate": f"$canal.matches({ID}) && newData.isNumber()"}}},
+ "reacoes":{"$canal":{
+   ".read": f"{G} && ({ADM} || {MEM})",
+   "$msgId":{"$uid":{
+     ".write": f"{G} && ((auth.uid === $uid && !newData.exists()) || (!newData.exists() && {ADM}) || (auth.uid === $uid && newData.exists() && {MEM} && {ATIVO('root')} && ({OFIC} || root.child('kanban/cardume/canais/' + $canal).exists()) && root.child('kanban/cardume/msgs/' + $canal + '/' + $msgId + '/uid').isString() && root.child('kanban/cardume/msgs/' + $canal + '/' + $msgId + '/apagada').val() !== true))",
+     ".validate": f"$canal.matches({ID}) && $msgId.matches({ID}) && $uid.matches({ID}) && newData.isString() && ({RX_OK})"}}}},
  "gif_uso":{".read": False, ".write": False},
  "config":{".read": G, ".write": f"{G} && {ADM}",
    "retencao_dias":{".validate":"newData.isNumber() && newData.val() >= 7 && newData.val() <= 3650"}, "$outro":{".validate":False}},

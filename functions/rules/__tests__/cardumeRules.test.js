@@ -506,3 +506,57 @@ test('aviso de resposta (r = true): só para o autor da mensagem respondida', ()
   assert.equal(up(A.bru, { [MN('bru', 'y1') + '/lida']: true }), true, 'o Bruno marca como lida');
   assert.equal(up(A.bru, { [MN('bru', 'y1')]: Object.assign({}, DB.kanban.cardume.mencoes.bru.y1, { r: null, lida: true }) }), false, 'não tira o r');
 });
+
+// 😀 Reações — docs/ideias/cardume-v0-banco.md › "Reagir com emoji". Uma por pessoa: reacoes/{canal}/{msgId}/{uid} = emoji da lista
+// fechada (a mesma do Maré). Cada um só escreve a própria folha; ninguém grava o mapa inteiro; ADM só apaga.
+const RXP = (uid, id, sq) => `kanban/cardume/reacoes/${sq || 'dados'}/${id || 'm1'}/${uid}`;
+const REACT_PAGINA = (() => { const src = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'cardume-dev.html'), 'utf8'); const m = src.match(/const REACT_EMOJIS = (\[[^\]]*\])/); return m ? JSON.parse(m[1].replace(/'/g, '"')) : []; })();
+test('reações: a lista da página é a mesma do Maré e cada emoji passa nas regras (❤️ com o seletor; ❤ sem ele não)', () => {
+  const mare = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'kanban-dev.html'), 'utf8').match(/const REACT_EMOJIS=(\[[^\]]*\])/);
+  assert.deepEqual(REACT_PAGINA, JSON.parse(mare[1].replace(/'/g, '"')), 'Concha e Maré com a mesma lista');
+  assert.equal(REACT_PAGINA.length, 5);
+  reset(); põe('m1', msg({ uid: 'bru' }));
+  for (const e of REACT_PAGINA) assert.equal(grava(RXP('ana'), A.ana, e), true, 'passa: ' + e + ' ' + [...e].map(c => c.codePointAt(0).toString(16)));
+  assert.equal(grava(RXP('ana'), A.ana, '❤'), false, '❤ sem U+FE0F não é o ❤️ da lista');
+  assert.equal(grava(RXP('ana'), A.ana, '😈'), false, 'fora da lista');
+  assert.equal(grava(RXP('ana'), A.ana, '<img src=x onerror=alert(1)>'), false);
+  assert.equal(grava(RXP('ana'), A.ana, true), false, 'tem de ser o emoji (string)');
+  assert.equal(grava(RXP('ana'), A.ana, { e: '👍' }), false);
+});
+test('reações: membro reage, troca e tira a própria; não mexe na dos outros nem grava o mapa', () => {
+  reset(); põe('m1', msg({ uid: 'bru' }));
+  assert.equal(lê('kanban/cardume/reacoes/dados', A.ana), true, 'membro lê');
+  assert.equal(lê('kanban/cardume/reacoes/dados', A.adm), true, 'ADM lê');
+  assert.equal(lê('kanban/cardume/reacoes/dados', A.gil), false, 'fora do canal não lê quem reagiu');
+  assert.equal(lê('kanban/cardume/reacoes', A.adm), false, 'ninguém lê todos os canais de uma vez');
+  assert.equal(grava(RXP('ana'), A.ana, '👍'), true, 'reage');
+  DB.kanban.cardume.reacoes = { dados: { m1: { ana: '👍', bru: '🎉' } } };
+  assert.equal(grava(RXP('ana'), A.ana, '❤️'), true, 'troca');
+  assert.equal(grava(RXP('ana'), A.ana, null), true, 'tira a própria');
+  assert.equal(grava(RXP('bru'), A.ana, null), false, 'não tira a dos outros');
+  assert.equal(grava(RXP('bru'), A.ana, '👀'), false, 'não troca a dos outros');
+  assert.equal(grava(RXP('bru'), A.ana, '👍'), false, 'não reage em nome de outro');
+  assert.equal(grava('kanban/cardume/reacoes/dados/m1', A.ana, { ana: '👍', bru: '👀' }), false, 'não grava o mapa da mensagem (o furo do Maré)');
+  assert.equal(grava('kanban/cardume/reacoes/dados', A.adm, null), false, 'nem o ADM apaga o canal inteiro pelo navegador');
+  assert.equal(update(RULES, DB, A.ana, { [RXP('ana')]: '👀', [RXP('bru')]: null }), false, 'update multi-caminho não passa pela folha alheia');
+  assert.equal(grava(RXP('bru'), A.adm, null), true, 'ADM tira (moderação)');
+  assert.equal(grava(RXP('adm'), A.adm, '👍'), false, 'ADM fora do canal não reage');
+});
+test('reações: fora do canal, intruso, mensagem apagada/inexistente e canal vencido barram; tirar a própria sempre vale', () => {
+  reset(); põe('m1', msg({ uid: 'bru' })); põe('m2', { uid: 'bru', ts: Date.now() - 1000, apagada: true });
+  assert.equal(grava(RXP('gil'), A.gil, '👍'), false, 'da squad, mas fora do canal');
+  for (const k of ['forasteiro', 'arezzo', 'intruso']) assert.equal(grava(RXP(A[k].uid), A[k], '👍'), false, 'barra: ' + k);
+  assert.equal(grava(RXP('ana', 'm2'), A.ana, '👍'), false, 'mensagem apagada');
+  assert.equal(grava(RXP('ana', 'zz'), A.ana, '👍'), false, 'mensagem inexistente');
+  assert.equal(grava(RXP('ana', 'm.1'), A.ana, '👍'), false, 'id fora do padrão');
+  DB.kanban.cardume.reacoes = { dados: { m2: { ana: '👍' } } };
+  assert.equal(grava(RXP('ana', 'm2'), A.ana, null), true, 'tira a própria mesmo com a mensagem apagada');
+  DB.kanban.cardume.membros.dados.ana = null; DB.kanban.cardume.reacoes.dados.m1 = { ana: '👍' };
+  assert.equal(grava(RXP('ana'), A.ana, null), true, 'tira a própria depois de sair do canal');
+  assert.equal(grava(RXP('ana'), A.ana, '🎉'), false, '...mas não reage mais');
+  reset(); existe('t-velho', tema({ criado: Date.now() - 10 * 864e5, fim: Date.now() - 864e5 }), { gil: true, ana: true });
+  DB.kanban.cardume.msgs['t-velho'] = { m1: { uid: 'gil', ts: Date.now() - 2 * 864e5, texto: 'oi' } };
+  assert.equal(grava(RXP('ana', 'm1', 't-velho'), A.ana, '👍'), false, 'canal temático vencido');
+  reset(); DB.kanban.cardume.membros['t-fantasma'] = { ana: true }; DB.kanban.cardume.msgs['t-fantasma'] = { m1: { uid: 'ana', ts: Date.now(), texto: 'x' } };
+  assert.equal(grava(RXP('ana', 'm1', 't-fantasma'), A.ana, '👍'), false, 'temático sem canal criado');
+});
