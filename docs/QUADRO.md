@@ -51,6 +51,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 |---|---|---|
 | 🐚 Concha: ❓ Ajuda própria (help content) e entrada no `/atualizarhelpcontent` | Claude | [pedidos 25/11](quadro/backlog.md#concha-pedidos-2511) |
 | 🐚 Concha: 🧷 `@card:` e `@objetivo:` funcionando (desenho pronto) | Claude | [desenho](quadro/backlog.md#cardume-citar) |
+| 🐚 Concha: links de mensagens, Salvos, fixados, histórico, fios e outras ideias inspiradas no Slack e concorrentes | Caio escolhe | [comparativo](quadro/backlog.md#concha-comparativo) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
 | 🪟 Diagrama `.arq` interativo + rodapé/mapa nas abas institucionais do Oceano (o vidro lapidado ficou pronto na #1806) | Claude | [backlog](quadro/backlog.md#vidro-lapidado) |
 | 🏝️ Ilha Dinâmica no Oceano (lobby + host) — o Maré foi validado pelo Caio em 16/11 | Claude | [backlog](quadro/backlog.md#ilha-dinamica) |
