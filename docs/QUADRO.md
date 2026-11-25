@@ -16,6 +16,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada do emoji da Concha: `canais/$canal/e` dá ao PO/Org da squad escrita só nesse campo do canal oficial; lista fixa de emojis — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada dos avisos por assunto da Concha: regra `avisos_a` e `conchaAvisos.decidir`/push com o assunto — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada dos 🧵 assuntos da Concha: regras `assuntos`, campo `a` da mensagem (só na criação, imutável, apagar guarda), `ultima_a`/`lidas_a`, assunto encerrado barrando nova/edição/reação — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` da Concha nas regras novas de 25/11 (#1969 avisos, #1970 seções, assuntos) — o R3 pede a leitura de segurança além das revisões; as duas primeiras só tiveram o Codex na Fila | [desenho](ideias/cardume-v0-banco.md) |
@@ -46,6 +47,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🐚 Concha: 😀 emoji do canal e do assunto (regras `canais/*/e`, `assuntos/*/*/e`) — **ANTES do merge** | resync na branch `claude/concha-emoji` (`git fetch origin claude/concha-emoji` → `git reset --hard origin/claude/concha-emoji`) → `firebase deploy --only database --project hering-onboarding` | 25/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
