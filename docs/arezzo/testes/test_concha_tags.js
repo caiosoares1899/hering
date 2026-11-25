@@ -78,6 +78,15 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   c = await S();
   t('apagar (depois dos 5 s) tira a mensagem de todas as #tags', !tagsDe(c, k1).length && c.msgs.dados[k1].apagada === true, tagsDe(c, k1));
 
+  // reserva: o banco recusa só o índice (regras ainda não publicadas) → a mensagem sai mesmo assim, sem índice
+  await p.evaluate(() => { window.__denySet = (pp, v) => !!v && typeof v === 'object' && Object.keys(v).some(k => /cardume\/tags(_ult)?\//.test(k)); });
+  await enviar('reserva #indice');
+  c = await S();
+  const reserva = Object.values(c.msgs.dados).some(m => m.texto === 'reserva #indice') && !((c.tags || {}).dados || {}).indice;
+  t('com as #tags recusadas pelo banco, a mensagem sai mesmo assim (sem o índice)', reserva, Object.keys(c.tags.dados));
+  t('...e o campo fica limpo, sem aviso de erro', await p.evaluate(() => document.getElementById('entrada').value === ''), await p.evaluate(() => document.getElementById('entrada').value));
+  await p.evaluate(() => { window.__denySet = null; });
+
   const esc = await p.evaluate(() => window.__escritas || []);
   const real = Date.now; const ruins = [];
   for (const e of esc) { const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([k, v]) => [(e.p ? e.p + '/' : '') + k, v])); Date.now = () => e.t; let r; try { r = regras(RULES, e.antes, authDe(ANA), mapa); } finally { Date.now = real; } if (!r) ruins.push({ tipo: e.tipo, caminhos: Object.keys(mapa) }); }
