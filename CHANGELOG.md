@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: ❓ Ajuda da Concha, também no Sonar e no "?" da barra (SÓ DEV, cardume v0.29) — 2026-11-25
+
+Pedido do Caio (Backlog de 25/11). ❓ no topo da Concha abre a Ajuda com 13 tópicos: o que é a Concha, canais, seções, escrever (formatação, emoji, GIF, links de card), @menções, #tags, assuntos, avisos e push (canal, assunto, #tags seguidas, ativar no aparelho), responder/reagir/editar/apagar, registrar no card do Maré, busca, quem vê o quê e atalhos. Busca sem acento; o "?" da barra de formatação leva ao tópico de escrever; o Sonar (Ctrl/⌘+K) ganhou a aba Ajuda. O texto é desenhado pelo mesmo formatador das mensagens (sem HTML), com os exemplos de # e @ como texto. A Concha entrou na skill /atualizarhelpcontent. Teste: test_concha_ajuda.js (13). Prints: docs/capturas/concha-ajuda/.
+
 ### 🐚 Concha: 🧵 🔔 seguir e 🔕 silenciar por assunto, e o assunto no push (SÓ DEV, cardume v0.28, regra avisos_a + conchaAvisoMsg) — 2026-11-25
 
 PR B dos assuntos (decisão do Caio: 🔕 por assunto e seguir um assunto como uma #tag). O ⋯ do assunto, para qualquer membro, ganha "🔔 Avisos deste assunto": Como o canal · 🔔 Seguir (avisa toda mensagem dele, mesmo com o canal em 🔕) · 🔕 Silenciar (só @menções e #tags que você segue), por 8 h, 1 semana ou sempre; nome e encerrar continuam só para quem pode. O chip mostra 🔔/🔕; assunto em 🔕 não acende o canal e assunto em 🔔 acende. O push diz o assunto ("🐚 Ana em # Dados › banner"; canal só de convidados não diz nada) e o link abre o assunto. Banco: kanban/cardume/avisos_a/{uid}/{canal}/{aid} (privado). Função conchaAvisoMsg lê o assunto. Testes: conchaAvisos.test.js (+3), cardumeRules (+1), test_concha_assuntos_avisos.js (9). Deploy: regras antes do merge, functions:conchaAvisoMsg depois.

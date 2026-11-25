@@ -46,14 +46,13 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐚 Concha: 🧵 avisos por assunto (regra `avisos_a` + `conchaAvisoMsg` com o assunto) — **regras ANTES do merge**, função depois | resync na branch `claude/concha-assuntos-avisos` (`git fetch origin claude/concha-assuntos-avisos` → `git reset --hard origin/claude/concha-assuntos-avisos`) → `firebase deploy --only database --project hering-onboarding`; depois do merge: resync na `main` → `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 25/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
-| 🐚 Concha: ❓ Ajuda própria (help content) e entrada no `/atualizarhelpcontent` | Claude | [pedidos 25/11](quadro/backlog.md#concha-pedidos-2511) |
+| 🐚 Concha: ✏️ editar a própria mensagem só nos primeiros **5 min** (pedido do Caio, "igual o WhatsApp" — o WhatsApp hoje dá 15; confirmar o número) | Claude | [pedidos 25/11](quadro/backlog.md#concha-pedidos-2511) |
 | 🐚 Concha: 🧷 `@card:` e `@objetivo:` funcionando (desenho pronto) | Claude | [desenho](quadro/backlog.md#cardume-citar) |
 | 🐚 Concha: links de mensagens, Salvos, fixados, histórico, fios e outras ideias inspiradas no Slack e concorrentes | Caio escolhe | [comparativo](quadro/backlog.md#concha-comparativo) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |

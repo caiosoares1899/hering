@@ -6,13 +6,14 @@ description: >-
 
 # Atualizar Help Content — ecossistema Oceano
 
-> **Escopo (atualizado em 2026-11-10): 4 frentes de ajuda in-app.** Toda mudança visível pede a ajuda do(s) app(s) onde ela aparece — não só a do Maré. Os Passos 1–6 abaixo descrevem a frente do Maré em detalhe (onde a skill nasceu); as outras seguem o mesmo método (achar a entrada → conferir o texto inline → escrever no tom vizinho → checar sintaxe → release) nos lugares abaixo:
+> **Escopo (atualizado em 2026-11-25): 5 frentes de ajuda in-app** (a Concha entrou em 25/11). Toda mudança visível pede a ajuda do(s) app(s) onde ela aparece — não só a do Maré. Os Passos 1–6 abaixo descrevem a frente do Maré em detalhe (onde a skill nasceu); as outras seguem o mesmo método (achar a entrada → conferir o texto inline → escrever no tom vizinho → checar sintaxe → release) nos lugares abaixo:
 >
 > | Frente | Onde mora | Observações |
 > |---|---|---|
 > | **Maré** (`kanban-dev.html`) | `HELP_CONTENT` + textos inline de ⚙ Configurações | Passos 1–6 abaixo |
 > | **Radar** (`okr-dev.html` + `guia-okr.html`) | modal `#okr-help-ov`, seções `#hlp-…` (`#hlp-agente`, `#hlp-datastudio`, `#hlp-editar`, `#hlp-atingimento`, `#hlp-apresentacao`…), FAQ e "O que eu posso fazer?" por papel | `guia-okr.html` é compartilhado (sem cópia dev) e seus prints envelhecem — refazer com `docs/arezzo/testes/gerar_prints_guia.js`, nunca editar o base64 à mão |
 > | **Oceano** (`oceano-dev.html`) | `const FAQ = [ {id,q,a} … ]` | **`id` único** — `mare-dicas` abre a pergunta por `#faq-<id>` ("Saiba mais"); id duplicado já quebrou o sino uma vez |
+> | **Concha** (`cardume-dev.html`, 25/11/2026) | `const AJUDA = [ {id, ic, t, txt} … ]` (❓ no topo; também no Sonar, aba Ajuda, e no "?" da barra de formatação → `abrirAjuda('escrever')`) e as linhas de ajuda inline (`#ajuda` abaixo do campo, `#fmt-ajuda`, textos dos modais de 🔔/📁/🧵) | `txt` é Markdown simples desenhado pelo `renderTexto` com `textoSimples` (# e @ dos exemplos não viram etiqueta/menção); **`id` estável** (o Sonar guarda `{ajuda:id}` nos recentes). A Concha não carrega o `mare-dicas` (sem dica) e ainda não entra no conhecimento do Agente Ágil (só dev) |
 > | **Dicas** (`mare-dicas-dev.js`) + **Painel/Escala/Intake** | `CATALOGO` (texto curto + `saiba`/`ajuda` apontando o tópico) e textos inline dessas telas | O Painel só *lista* as dicas (⚙ Configurações → 💡 Dicas); dica nova = 1 linha no `CATALOGO` |
 >
 > Ao fechar uma rodada: bump dos arquivos tocados com `node scripts/mare-cli.js bump <alvo>`, `node scripts/checar.js` e — se a Ajuda de **produção** mudou — regenerar o conhecimento do Agente Ágil (Passo 5.1).
