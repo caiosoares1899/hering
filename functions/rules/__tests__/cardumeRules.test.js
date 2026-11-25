@@ -798,3 +798,13 @@ test('emoji do assunto: quem cria já escolhe; quem criou ou gestor troca; só d
   DB.kanban.cardume.membros.dados.gil = true;
   assert.equal(grava('kanban/cardume/assuntos/dados/abf/e', A.gil, '📈'), false, 'outro membro');
 });
+
+// ═══ ✏️ Editar só nos primeiros 15 min (pedido do Caio, 25/11/2026, "igual o WhatsApp") ═══
+test('editar: só até 15 min depois de enviar (ts e editado são do servidor); apagar continua valendo depois', () => {
+  reset(); const ag = Date.now();
+  põe('m1', msg({ ts: ag - 14 * 60000 })); põe('m2', msg({ ts: ag - 16 * 60000 }));
+  assert.equal(grava(M('m1'), A.ana, msg({ ts: ag - 14 * 60000, texto: 'corrigido', editado: ag })), true, 'aos 14 min edita');
+  assert.equal(grava(M('m2'), A.ana, msg({ ts: ag - 16 * 60000, texto: 'corrigido', editado: ag })), false, 'aos 16 min não edita');
+  assert.equal(grava(M('m2') + '/texto', A.ana, 'só o texto'), false, 'nem gravando só o filho');
+  assert.equal(grava(M('m2'), A.ana, { uid: 'ana', ts: ag - 16 * 60000, apagada: true }), true, 'apagar a própria depois dos 15 min continua valendo');
+});

@@ -454,3 +454,6 @@ Pedido do Caio (ao ver a faixa de assuntos): poder mudar o emoji do assunto e do
 - **Canal:** quem administra muda nos ℹ️ Detalhes — inclusive **PO/Organizador da squad no canal oficial**, que no resto do nó só o ADM edita (a regra dá a eles só o campo `e`, e só em canal já ativado). **Assunto:** quem cria escolhe; quem criou ou gestor troca no ⚙️.
 - Faixa: chips rolam e o ⚙️ fica fixo à direita. Campo: "Em 🎨 banner…".
 - Deploy: `firebase deploy --only database` antes do merge.
+
+## ✏️ Editar só nos primeiros 15 min — 25/11/2026
+Pedido do Caio ("igual o WhatsApp"; confirmou 15 min). **Regra:** a edição exige `editado ≤ ts + 15 min` — os dois são do servidor (`ts` da criação, `editado` = `serverTimestamp`), então o relógio do aparelho não interfere. Apagar a própria continua valendo depois. **Tela:** o ✏️ só aparece na própria mensagem com menos de 15 min (relógio corrigido por `.info/serverTimeOffset`), some sozinho quando a janela fecha, e salvar com a janela já fechada avisa em vez de gravar. Deploy: `firebase deploy --only database` antes do merge.
