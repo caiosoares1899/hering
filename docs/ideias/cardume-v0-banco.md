@@ -447,3 +447,10 @@ Nível do canal primeiro (🚫 nada cala tudo). Depois o do assunto: **🔔 segu
 - **Tela:** o ⋯ do assunto vale para todo membro (🔔 Avisos deste assunto, com prazo); nome e encerrar só para quem pode. O chip mostra 🔔/🔕. O canal acende por geral, por assunto em 🔔 e por assunto já aberto que não esteja em 🔕 nem encerrado.
 - **Limite:** o "estou vendo" segue por canal — quem está em geral de # Dados não recebe push dos assuntos de lá (vê os pontos na faixa).
 - Deploy: regras (`avisos_a`) antes do merge; depois `functions:conchaAvisoMsg`.
+
+## 😀 Emoji do canal e do assunto — 25/11/2026
+Pedido do Caio (ao ver a faixa de assuntos): poder mudar o emoji do assunto e do canal; ＋ Assunto por último e ⚙️ no lugar do ⋯.
+- `canais/{canal}/e` e `assuntos/{canal}/{aid}/e`: **só emojis de uma lista fixa** (a mesma em `EMOJIS_ICONE` da página e nas regras, como as reações). Sem `e`: canal oficial mostra o emoji da squad (`squads_meta`), temático mostra `#` (🔒 se só convidados); assunto mostra 🧵.
+- **Canal:** quem administra muda nos ℹ️ Detalhes — inclusive **PO/Organizador da squad no canal oficial**, que no resto do nó só o ADM edita (a regra dá a eles só o campo `e`, e só em canal já ativado). **Assunto:** quem cria escolhe; quem criou ou gestor troca no ⚙️.
+- Faixa: chips rolam e o ⚙️ fica fixo à direita. Campo: "Em 🎨 banner…".
+- Deploy: `firebase deploy --only database` antes do merge.

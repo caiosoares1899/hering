@@ -1067,6 +1067,10 @@
             },
             "$outro": {
               ".validate": false
+            },
+            "e": {
+              ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || (!$canal.matches(/^t-/) && root.child('kanban/usuarios/' + auth.uid + '/squads/' + $canal).val() === true && (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $canal).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $canal).val() === 'organizador')) || ($canal.matches(/^t-/) && (root.child('kanban/cardume/canais/' + $canal + '/dono').val() === auth.uid || root.child('kanban/cardume/admins/' + $canal + '/' + auth.uid).val() === true))) && !(root.child('kanban/cardume/canais/' + $canal + '/fim').isNumber() && root.child('kanban/cardume/canais/' + $canal + '/fim').val() <= now) && root.child('kanban/cardume/canais/' + $canal + '/nome').exists()",
+              ".validate": "newData.isString() && (newData.val() === '📊' || newData.val() === '📈' || newData.val() === '📉' || newData.val() === '🎯' || newData.val() === '🚀' || newData.val() === '🔥' || newData.val() === '💡' || newData.val() === '🛠️' || newData.val() === '🐛' || newData.val() === '📣' || newData.val() === '📢' || newData.val() === '🎨' || newData.val() === '🖼️' || newData.val() === '🎬' || newData.val() === '📸' || newData.val() === '🛒' || newData.val() === '💰' || newData.val() === '🧾' || newData.val() === '📅' || newData.val() === '⏰' || newData.val() === '📝' || newData.val() === '📌' || newData.val() === '🔍' || newData.val() === '🤝' || newData.val() === '❤️' || newData.val() === '⭐' || newData.val() === '🌊' || newData.val() === '🐟' || newData.val() === '🐚' || newData.val() === '🧵' || newData.val() === '✅' || newData.val() === '⚠️' || newData.val() === '🚨' || newData.val() === '🎉' || newData.val() === '🖤' || newData.val() === '👕')"
             }
           }
         },
@@ -1365,6 +1369,9 @@
               },
               "$outro": {
                 ".validate": false
+              },
+              "e": {
+                ".validate": "newData.isString() && (newData.val() === '📊' || newData.val() === '📈' || newData.val() === '📉' || newData.val() === '🎯' || newData.val() === '🚀' || newData.val() === '🔥' || newData.val() === '💡' || newData.val() === '🛠️' || newData.val() === '🐛' || newData.val() === '📣' || newData.val() === '📢' || newData.val() === '🎨' || newData.val() === '🖼️' || newData.val() === '🎬' || newData.val() === '📸' || newData.val() === '🛒' || newData.val() === '💰' || newData.val() === '🧾' || newData.val() === '📅' || newData.val() === '⏰' || newData.val() === '📝' || newData.val() === '📌' || newData.val() === '🔍' || newData.val() === '🤝' || newData.val() === '❤️' || newData.val() === '⭐' || newData.val() === '🌊' || newData.val() === '🐟' || newData.val() === '🐚' || newData.val() === '🧵' || newData.val() === '✅' || newData.val() === '⚠️' || newData.val() === '🚨' || newData.val() === '🎉' || newData.val() === '🖤' || newData.val() === '👕')"
               }
             }
           }

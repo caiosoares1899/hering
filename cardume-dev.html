@@ -104,7 +104,9 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .sec-cab{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;cursor:pointer;font-size:13px;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;padding:2px 8px;border-radius:6px;min-height:28px;}
 .sec-cab:hover{color:var(--txt);} .sec-cab:focus-visible{outline:2px solid var(--accent);}
 .sec-cab .seta{font-size:10px;width:10px;} .sec-cab .novas{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--accent-txt);font-weight:700;}
-.assuntos-barra{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 12px;border-bottom:1px solid var(--glass-b);scrollbar-width:thin;}
+.assuntos-barra{display:flex;gap:6px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--glass-b);}
+.assuntos-rolagem{display:flex;gap:6px;align-items:center;overflow-x:auto;flex:1;min-width:0;scrollbar-width:thin;}
+.assuntos-barra .engrenagem{flex:none;min-width:36px;padding:2px 8px;}
 .assuntos-barra button{flex:none;min-height:32px;padding:2px 12px;border-radius:999px;font-size:13px;white-space:nowrap;box-shadow:none;}
 .assuntos-barra button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-txt);font-weight:700;}
 .assuntos-barra .ponto-a{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle;}
@@ -116,6 +118,10 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .ajuda-lista summary{cursor:pointer;font-weight:700;min-height:28px;display:flex;align-items:center;gap:8px;}
 .ajuda-lista details[open] summary{margin-bottom:6px;}
 .ajuda-lista .texto p{margin:4px 0;} .ajuda-lista .texto ul{margin:4px 0;padding-left:18px;}
+.emoji-grade{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px;}
+.emoji-grade button{min-width:36px;min-height:36px;padding:0 6px;font-size:17px;box-shadow:none;}
+.emoji-grade button[aria-checked="true"]{border-color:var(--accent);background:rgba(56,182,255,.18);}
+@media (max-width:480px){ .who b{display:none;} }   /* com ❓ + 🔔 o topo não cabia numa linha no celular */
 .sec-vazia{margin:0 8px 6px;font-size:12px;}
 .lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
 .sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
@@ -374,7 +380,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.29 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.30 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -502,6 +508,21 @@ function nomeCanal(id) {
   if (c && c.nome) return c.nome;
   if (abertos[id] && abertos[id].nome) return abertos[id].nome;
   return (meta[id] && meta[id].label) || id;
+}
+// 😀 Emoji do canal e do assunto: só desta lista (a MESMA das regras do banco). Canal oficial sem emoji usa o da squad (squads_meta).
+const EMOJIS_ICONE = ["📊", "📈", "📉", "🎯", "🚀", "🔥", "💡", "🛠️", "🐛", "📣", "📢", "🎨", "🖼️", "🎬", "📸", "🛒", "💰", "🧾", "📅", "⏰", "📝", "📌", "🔍", "🤝", "❤️", "⭐", "🌊", "🐟", "🐚", "🧵", "✅", "⚠️", "🚨", "🎉", "🖤", "👕"];
+const emojiOk = e => typeof e === 'string' && EMOJIS_ICONE.includes(e);
+function iconeCanal(id) {
+  const c = canais[id]; if (c && emojiOk(c.e)) return c.e;
+  if (!ehTema(id)) { const m = meta[id] && meta[id].emoji; if (typeof m === 'string' && m && m.length <= 8) return m; }
+  return ehTema(id) && c && c.acesso === 'convite' ? '🔒' : '#';
+}
+const iconeAssunto = aid => (assuntos[aid] && emojiOk(assuntos[aid].e)) ? assuntos[aid].e : '🧵';
+function seletorEmoji(atualE, padrao, onPick) {   // grade de emojis (radio), com "Padrão"
+  const box = el('div', 'emoji-grade'); box.setAttribute('role', 'radiogroup');
+  const op = (e, rot) => { const b = el('button', '', rot || e); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String((atualE || '') === e)); b.setAttribute('aria-label', e ? 'Emoji ' + e : 'Padrão (' + padrao + ')'); b.title = e || 'Padrão'; b.onclick = () => { box.querySelectorAll('[role=radio]').forEach(x => x.setAttribute('aria-checked', String(x === b))); onPick(e); }; return b; };
+  box.append(op('', padrao + ' padrão')); EMOJIS_ICONE.forEach(e => box.append(op(e)));
+  return box;
 }
 const nomePessoa = uid => (pub[uid] && (pub[uid].nome || pub[uid].displayName)) || 'Alguém';
 function iniciais(uid) { const p = pub[uid]; if (p && p.init) return String(p.init).slice(0, 3); return nomePessoa(uid).split(/\s+/).map(x => x[0] || '').join('').slice(0, 2).toUpperCase(); }
@@ -709,7 +730,7 @@ function renderLista() {
     lista.sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR')).filter(id => !rec || id === atual).forEach(id => box.append(fn(id)));
     if (!lista.length && !rec) box.append(el('p', 'subtitulo sec-vazia', 'Vazia. Para pôr um canal: ℹ️ Detalhes › Na sua lista.'));
   };
-  const fnDe = id => descobrir.includes(id) ? botao(id, '# ', 'entrar') : semCanal.includes(id) ? botao(id, '＋ ', 'ativar') : ehTema(id) ? botao(id, (canais[id] && canais[id].acesso === 'convite' ? '🔒 ' : '# '), vencido(canais[id]) ? 'arquivado' : '') : botao(id, '# ', souMembro(id) ? '' : 'gerir');
+  const fnDe = id => descobrir.includes(id) ? botao(id, iconeCanal(id) + ' ', 'entrar') : semCanal.includes(id) ? botao(id, '＋ ', 'ativar') : ehTema(id) ? botao(id, iconeCanal(id) + ' ', vencido(canais[id]) ? 'arquivado' : '') : botao(id, iconeCanal(id) + ' ', souMembro(id) ? '' : 'gerir');
   const todos = oficiais.concat(temas, descobrir, semCanal);
   const botao = (id, prefixo, extra) => {
     const b = el('button', 'canal' + (naoLido(id) ? ' nao-lido' : '')); b.type = 'button'; b.dataset.canal = id;
@@ -804,6 +825,7 @@ function renderBarraAssuntos() {
   const bar = $('assuntos-barra'), id = atual;
   if (!id || vendoMencoes || vendoTag || vendoPessoa || !(souMembro(id) || souAdm())) { bar.hidden = true; bar.replaceChildren(); return; }
   bar.hidden = false; bar.replaceChildren();
+  const rol = el('div', 'assuntos-rolagem');   // os chips rolam; o ⚙️ fica fixo à direita (sempre à vista)
   const foco = document.activeElement && bar.contains(document.activeElement) ? document.activeElement.dataset.aid : null;
   const ult = k => ((ultA[id] || {})[k] || {}).ts || 0;
   const chip = (k, rot, extra) => {
@@ -811,23 +833,23 @@ function renderBarraAssuntos() {
     b.append(document.createTextNode(rot)); const nl = naoLidoA(id, k); if (nl) b.append(el('span', 'ponto-a'));
     b.setAttribute('aria-label', rot + (nl ? ', mensagens novas' : '')); b.onclick = () => trocarAssunto(k === '_geral' ? '' : k); return b;
   };
-  bar.append(chip('_geral', '💬 geral'));
-  if (souMembro(id) && !vencido(canais[id])) { const n = el('button', '', '＋ Assunto'); n.type = 'button'; n.dataset.aid = '_novo'; n.title = 'Novo assunto'; n.setAttribute('aria-label', 'Novo assunto'); n.onclick = () => modalAssunto(''); bar.append(n); }
+  rol.append(chip('_geral', '💬 geral'));
   const ids = Object.keys(assuntos).filter(k => AID_RE.test(k) && assuntos[k] && typeof assuntos[k].n === 'string');
   const abertos_ = ids.filter(k => !assuntoFechado(k) || k === assuntoAtual).sort((a, b) => ult(b) - ult(a) || (assuntos[b].criado || 0) - (assuntos[a].criado || 0));
   const marca = k => { const n = nivelAssunto(id, k); return n === 'seguir' ? ' 🔔' : n === 'mencoes' ? ' 🔕' : ''; };
-  abertos_.forEach(k => bar.append(chip(k, (assuntoFechado(k) ? '🔒 ' : '🧵 ') + assuntos[k].n + marca(k), assuntoFechado(k) ? 'fechado' : '')));
+  abertos_.forEach(k => rol.append(chip(k, (assuntoFechado(k) ? '🔒 ' : iconeAssunto(k) + ' ') + assuntos[k].n + marca(k), assuntoFechado(k) ? 'fechado' : '')));
   const fechados = ids.filter(k => assuntoFechado(k) && k !== assuntoAtual);
   if (fechados.length) {
     const f = el('button', 'fechado', (verEncerrados ? '▾' : '▸') + ' Encerrados (' + fechados.length + ')'); f.type = 'button'; f.setAttribute('aria-expanded', String(verEncerrados)); f.dataset.aid = '_enc';
-    f.onclick = () => { verEncerrados = !verEncerrados; renderBarraAssuntos(); }; bar.append(f);
-    if (verEncerrados) fechados.forEach(k => bar.append(chip(k, '🔒 ' + assuntos[k].n, 'fechado')));
+    f.onclick = () => { verEncerrados = !verEncerrados; renderBarraAssuntos(); }; rol.append(f);
+    if (verEncerrados) fechados.forEach(k => rol.append(chip(k, '🔒 ' + assuntos[k].n, 'fechado')));
   }
-  if (Object.keys(ultA[id] || {}).some(k => (k === '_geral' || AID_RE.test(k)) && naoLidoA(id, k))) { const m = el('button', '', '✓ Marcar como lido'); m.type = 'button'; m.dataset.aid = '_lido'; m.title = 'Marcar geral e todos os assuntos deste canal como lidos'; m.onclick = () => marcarTudoLido(id); bar.append(m); }
-  if (assuntoAtual && (souMembro(id) || podeGerirAssunto(assuntoAtual))) { const g = el('button', '', '⋯'); g.type = 'button'; g.dataset.aid = '_ger'; g.setAttribute('aria-label', 'Avisos e opções de ' + nomeAssunto(assuntoAtual)); g.title = 'Avisos' + (podeGerirAssunto(assuntoAtual) ? ', renomear e encerrar' : ' deste assunto'); g.onclick = () => modalAssunto(assuntoAtual); bar.append(g); }
+  if (souMembro(id) && !vencido(canais[id])) { const n = el('button', '', '＋ Assunto'); n.type = 'button'; n.dataset.aid = '_novo'; n.title = 'Novo assunto'; n.setAttribute('aria-label', 'Novo assunto'); n.onclick = () => modalAssunto(''); rol.append(n); }   // por último entre os assuntos (pedido do Caio)
+  if (Object.keys(ultA[id] || {}).some(k => (k === '_geral' || AID_RE.test(k)) && naoLidoA(id, k))) { const m = el('button', '', '✓ Marcar como lido'); m.type = 'button'; m.dataset.aid = '_lido'; m.title = 'Marcar geral e todos os assuntos deste canal como lidos'; m.onclick = () => marcarTudoLido(id); rol.append(m); }
+  if (assuntoAtual && (souMembro(id) || podeGerirAssunto(assuntoAtual))) { const g = el('button', '', '⚙️'); g.type = 'button'; g.dataset.aid = '_ger'; g.setAttribute('aria-label', 'Avisos e opções de ' + nomeAssunto(assuntoAtual)); g.title = 'Avisos' + (podeGerirAssunto(assuntoAtual) ? ', renomear e encerrar' : ' deste assunto'); g.onclick = () => modalAssunto(assuntoAtual); g.classList.add('engrenagem'); bar.append(rol, g); } else bar.append(rol);
   if (foco) { const x = bar.querySelector('[data-aid="' + CSS.escape(foco) + '"]'); if (x) x.focus({ preventScroll: true }); }
   const ativo = bar.querySelector('[aria-pressed="true"]');   // o assunto aberto sempre à vista na faixa (rola só a faixa, nunca a página)
-  if (ativo) { const l = ativo.offsetLeft - bar.offsetLeft, r = l + ativo.offsetWidth; if (l < bar.scrollLeft) bar.scrollLeft = l - 12; else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth + 12; }
+  if (ativo) { const l = ativo.offsetLeft - rol.offsetLeft, r = l + ativo.offsetWidth; if (l < rol.scrollLeft) rol.scrollLeft = l - 12; else if (r > rol.scrollLeft + rol.clientWidth) rol.scrollLeft = r - rol.clientWidth + 12; }
 }
 function marcarTudoLido(id) {
   const mapa = {};
@@ -841,10 +863,12 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
   fecharModal._volta = document.activeElement;
   const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
   const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
-  const h = el('h2', '', x ? '🧵 ' + x.n : '🧵 Novo assunto em # ' + nomeCanal(atual)); h.id = 'md-t'; f.append(h);
+  const h = el('h2', '', x ? iconeAssunto(aid) + ' ' + x.n : '🧵 Novo assunto em ' + iconeCanal(atual) + ' ' + nomeCanal(atual)); h.id = 'md-t'; f.append(h);
   if (!x) f.append(el('p', 'subtitulo', 'A conversa do assunto fica separada de "geral", com as próprias mensagens novas. Qualquer pessoa do canal escreve nele.'));
   const gere = !x || podeGerirAssunto(aid);
   const ln = el('label', '', 'Nome'); const nome = el('input'); nome.maxLength = 60; nome.required = gere; nome.value = x ? x.n : ''; nome.placeholder = 'ex.: banner da Black Friday'; ln.append(nome); if (gere) f.append(ln);
+  let emojiSel = x && emojiOk(x.e) ? x.e : '';
+  if (gere) { f.append(el('p', 'subtitulo', 'Emoji')); f.append(seletorEmoji(emojiSel, '🧵', e => { emojiSel = e; })); }
   let nivelSel = null, prazoSel = null;
   if (x && souMembro(atual)) {   // 🔔 avisos deste assunto (de cada pessoa)
     const n0 = nivelAssunto(atual, aid), fs = el('fieldset'); fs.style.cssText = 'border:0;padding:0;margin:0;display:grid;gap:6px;'; fs.append(el('legend', 'subtitulo', '🔔 Avisos deste assunto (só para você)'));
@@ -878,16 +902,17 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
       if (x) {
         const mapa = {};
         if (gere && n !== x.n) mapa[base + '/n'] = n;
+        if (gere && emojiSel !== (emojiOk(x.e) ? x.e : '')) mapa[base + '/e'] = emojiSel || null;
         if (nivelSel) { const nv = nivelSel(), pz = prazoSel(), antes = nivelAssunto(atual, aid);
           const val = nv === 'canal' ? null : Object.assign({ nivel: nv }, pz === '8h' ? { ate: Date.now() + 8 * 3600e3 } : pz === '1s' ? { ate: Date.now() + 7 * 864e5 } : {});
           if (nv !== antes || nv !== 'canal') mapa[B + 'avisos_a/' + user.uid + '/' + atual + '/' + aid] = val; }
         if (Object.keys(mapa).length) await update(ref(db), mapa);
-        fecharModal(); toast(mapa[base + '/n'] ? '🧵 Assunto salvo.' : '🔔 Avisos do assunto salvos.');
+        fecharModal(); toast(mapa[base + '/n'] || (base + '/e') in mapa ? 'Assunto salvo.' : '🔔 Avisos do assunto salvos.');
       }
       else {
         const novo = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x');
-        await update(ref(db), { [B + 'assuntos/' + atual + '/' + novo]: { n, por: user.uid, criado: serverTimestamp() }, [B + 'lidas_a/' + user.uid + '/' + atual + '/' + novo]: serverTimestamp() });   // quem cria já acompanha o assunto
-        fecharModal(); assuntos[novo] = { n, por: user.uid, criado: Date.now() }; trocarAssunto(novo); entrada.focus(); toast('🧵 Assunto criado. Escreva a primeira mensagem.');
+        await update(ref(db), { [B + 'assuntos/' + atual + '/' + novo]: Object.assign({ n, por: user.uid, criado: serverTimestamp() }, emojiSel ? { e: emojiSel } : {}), [B + 'lidas_a/' + user.uid + '/' + atual + '/' + novo]: serverTimestamp() });   // quem cria já acompanha o assunto
+        fecharModal(); assuntos[novo] = Object.assign({ n, por: user.uid, criado: Date.now() }, emojiSel ? { e: emojiSel } : {}); trocarAssunto(novo); entrada.focus(); toast('🧵 Assunto criado. Escreva a primeira mensagem.');
       }
     } catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão.' : 'Não deu agora. Tente de novo.'); }
   };
@@ -896,14 +921,14 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
 }
 function renderCabecalho() {
   const id = atual, c = canais[id];
-  $('canal-titulo').textContent = id ? (ehTema(id) && c && c.acesso === 'convite' ? '🔒 ' : '# ') + nomeCanal(id) : 'Concha';
+  $('canal-titulo').textContent = id ? iconeCanal(id) + ' ' + nomeCanal(id) : 'Concha';
   const sub = [];
   if (id && !ehTema(id)) sub.push('Canal oficial da squad · privado');
   if (c && ehTema(id)) { sub.push(c.acesso === 'convite' ? 'Só convidados' : 'Aberto a toda a Hering'); if (typeof c.fim === 'number') sub.push((vencido(c) ? 'Arquivado em ' : 'Até ') + new Date(c.fim).toLocaleDateString('pt-BR')); }
   $('canal-sub').textContent = sub.join(' · ');
   const podeEscrever = id && souMembro(id) && !vencido(c) && (!ehTema(id) || !!c) && !assuntoFechado(assuntoAtual);
   $('rodape').hidden = !podeEscrever;
-  const na = nomeAssunto(assuntoAtual); entrada.placeholder = assuntoAtual ? 'Mensagem em 🧵 ' + (na.length > 16 ? na.slice(0, 15) + '…' : na) : 'Escreva uma mensagem…';
+  const na = nomeAssunto(assuntoAtual); entrada.placeholder = assuntoAtual ? 'Em ' + iconeAssunto(assuntoAtual) + ' ' + (na.length > 16 ? na.slice(0, 15) + '…' : na) : 'Escreva uma mensagem…';
   $('b-lado').hidden = !id;
   const ba = $('b-aviso'), nv = id && souMembro(id) ? nivelAviso(id) : 'todas';
   ba.hidden = !(id && souMembro(id)); ba.textContent = ICONE_AVISO[nv]; ba.setAttribute('aria-label', 'Avisos deste canal: ' + ROT_AVISO[nv]);
@@ -1455,13 +1480,13 @@ function renderPessoa(log) {
 // (DOM, sem innerHTML). Exemplos de @ e # vão entre crases para não virarem menção/etiqueta. Também entram no Sonar (aba Ajuda). ═══
 const AJUDA = [
   { id: 'concha', ic: '🐚', t: 'O que é a Concha', txt: 'O chat do time dentro do Oceano.\n- **Canais das squads**: privados, só para quem a squad pôs no canal.\n- **Canais temáticos**: para um assunto ou período (ex.: Black Friday). **Aberto** aparece para toda a Hering e qualquer um entra; **Só convidados** só quem foi adicionado vê. Podem ter data de fim: depois dela ficam só leitura.\n- As mensagens são apagadas depois de **90 dias**.' },
-  { id: 'canais', ic: '#', t: 'Canais: entrar, sair, criar e administrar', txt: '- **➕ Novo canal** (na lista): cria um temático. Você vira a dona e administra.\n- **ℹ️ Detalhes** (no topo da conversa): membros, **Entrar** ou **Sair do canal**, adicionar e tirar pessoas e, no temático, **⚙️ Editar canal** (nome, quem entra, data de fim, **Arquivar agora**).\n- Quem administra: no canal da squad, PO e Organizador da squad e ADM; no temático, a dona, quem ela fez admin e ADM.\n- Canal com um **ponto** na lista tem mensagem nova.' },
+  { id: 'canais', ic: '#', t: 'Canais: entrar, sair, criar e administrar', txt: '- **➕ Novo canal** (na lista): cria um temático. Você vira a dona e administra.\n- **ℹ️ Detalhes** (no topo da conversa): membros, **Entrar** ou **Sair do canal**, adicionar e tirar pessoas e, no temático, **⚙️ Editar canal** (nome, quem entra, data de fim, **Arquivar agora**). Quem administra também escolhe o **emoji do canal** nos Detalhes (o canal da squad começa com o emoji da squad).\n- Quem administra: no canal da squad, PO e Organizador da squad e ADM; no temático, a dona, quem ela fez admin e ADM.\n- Canal com um **ponto** na lista tem mensagem nova.' },
   { id: 'secoes', ic: '📁', t: 'Seções na lista de canais', txt: 'Organize a lista do seu jeito. **Só você vê** suas seções.\n- **📁 Seções** (abaixo de ➕ Novo canal): crie (tem atalho para **⭐ Favoritos**), renomeie, mude a ordem e apague. Apagar devolve os canais à seção padrão (Squads/Temáticos).\n- Para pôr um canal numa seção: **ℹ️ Detalhes › 📁 Na sua lista** (ou "＋ Nova seção…" ali mesmo).\n- Clique no **título** da seção para recolher ou abrir. Recolhida, ela mostra quantos canais têm novas e deixa à vista o canal aberto. Vale em todos os seus aparelhos.' },
   { id: 'escrever', ic: '✍️', t: 'Escrever: formatação, emoji, GIF e links', txt: '- **Enter** envia; **Shift+Enter** quebra a linha. O rascunho fica guardado por canal e por assunto.\n- Formatação (botões da barra ou digitando): `**negrito**` (Ctrl+B), `_itálico_` (Ctrl+I), `~~riscado~~`, código entre crases, três crases numa linha antes e outra depois para um bloco, `- ` no começo da linha para lista e `> ` para citação. O **?** da barra mostra o guia.\n- **😀** abre os emojis (com busca e recentes); **GIF** busca na KLIPY (o GIF pode ir sem legenda).\n- Link `https://` vira link. Link de **card do Maré** vira o chip com o título do card.' },
   { id: 'mencoes', ic: '@', t: '@Menções', txt: '- Digite `@` (ou o botão **@**) e escolha a pessoa na lista, com a foto. Só aparecem membros do canal.\n- Quem você menciona recebe um aviso no **Sino** e push (se ativou no aparelho). O aviso não mostra o canal nem a mensagem: ela abre a Concha para ver.\n- **@ Menções** (no alto da lista) junta onde mencionaram ou responderam você. Abrir uma leva direto à mensagem, inclusive dentro de um assunto.\n- Editar uma mensagem para pôr uma `@` não avisa a pessoa.' },
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
-  { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** cria um; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Mensagem em 🧵 …").\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⋯** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
-  { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⋯ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
+  { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
+  { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
   { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem (aparece "(editada)").\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },
@@ -1655,7 +1680,7 @@ function carregarTagsUlt() {
 const itemCanal = id => {
   const c = canais[id], tema = ehTema(id), conv = tema && c && c.acesso === 'convite';
   const sub = !tema ? (souMembro(id) ? 'Canal da squad' : 'Canal da squad · você administra') : !souMembro(id) ? 'Aberto para entrar' : (vencido(c) ? 'Temático · arquivado' : conv ? 'Temático · só convidados' : 'Temático · aberto');
-  return { k: 'canal:' + id, ic: conv ? '🔒' : '#', t: nomeCanal(id), sub, tipo: 'canal', go: () => abrirCanal(id, true), rec: { canal: id } };
+  return { k: 'canal:' + id, ic: iconeCanal(id), t: nomeCanal(id), sub, tipo: 'canal', go: () => abrirCanal(id, true), rec: { canal: id } };
 };
 const itemTag = t => { const x = tagsUlt[t] || { ult: 0, canais: [] };
   return { k: 'tag:' + t, ic: '#️⃣', t: '#' + t, sub: (x.canais.length ? 'em ' + x.canais.slice(0, 3).map(c => '# ' + nomeCanal(c)).join(', ') + (x.canais.length > 3 ? ' e mais ' + (x.canais.length - 3) : '') : 'nos seus canais') + (x.ult ? ' · ' + new Date(x.ult).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''), tipo: 'tag', go: () => abrirTag(t), rec: { tag: t } }; };
@@ -1944,6 +1969,11 @@ function renderLado() {
   if (membro) { const b = el('button', '', 'Sair do canal'); b.type = 'button'; b.onclick = () => sair(id); ac.append(b); }
   if (g && ehTema(id) && c) { const b = el('button', '', '⚙️ Editar canal'); b.type = 'button'; b.onclick = () => modalCanal(id); ac.append(b); }
   if (ac.children.length) s.append(ac);
+  if (c && g && !vencido(c)) {   // 😀 emoji do canal (quem administra; no oficial, também PO/Org da squad)
+    s.append(el('p', 'subtitulo', '😀 Emoji do canal'));
+    const padrao = !ehTema(id) && meta[id] && meta[id].emoji ? meta[id].emoji : (ehTema(id) && c.acesso === 'convite' ? '🔒' : '#');
+    s.append(seletorEmoji(emojiOk(c.e) ? c.e : '', padrao, e => set(ref(db, B + 'canais/' + id + '/e'), e || null).then(() => toast('Emoji de ' + nomeCanal(id) + (e ? ': ' + e : ' voltou ao padrão') + '.')).catch(er => falhou('mudar o emoji', er))));
+  }
   if (c !== null && (membro || g || (ehTema(id) && abertos[id]))) {   // 📁 seção pessoal deste canal na lista da esquerda
     const ls = el('label', 'subtitulo sec-onde', '📁 Na sua lista'), sel = el('select'); sel.setAttribute('aria-label', 'Seção deste canal na sua lista');
     sel.append(new Option(ehTema(id) ? 'Temáticos (padrão)' : 'Squads (padrão)', ''));

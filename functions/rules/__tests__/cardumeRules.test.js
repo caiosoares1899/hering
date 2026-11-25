@@ -771,3 +771,30 @@ test('avisos_a (aviso por assunto): privado; seguir ou mencoes; prazo no futuro;
   assert.equal(lê('kanban/cardume/avisos_a/ana', A.ana), true);
   for (const k of ['bru', 'adm']) assert.equal(lê('kanban/cardume/avisos_a/ana', A[k]), false, 'NÃO lê: ' + k);
 });
+
+// ═══ 😀 Emoji do canal e do assunto (25/11/2026): só da lista da página; o canal oficial ganha o emoji também por PO/Org da squad ═══
+test('emoji do canal: quem administra muda (inclusive PO/Org no oficial, que no resto só o ADM edita); membro comum, fora da lista e canal inexistente não', () => {
+  reset(); const E = (c) => `kanban/cardume/canais/${c || 'dados'}/e`;
+  DB.kanban.usuarios.bru.squads = { dados: true }; DB.kanban.usuarios.bru.squads_roles = { dados: 'po' };
+  assert.equal(grava(E(), A.bru, '📊'), true, 'PO da squad no oficial');
+  assert.equal(grava(E(), A.adm, '🔥'), true, 'ADM');
+  assert.equal(grava(E(), A.ana, '📊'), false, 'membro comum');
+  assert.equal(grava(E(), A.bru, '🦄'), false, 'emoji fora da lista');
+  assert.equal(grava(E(), A.bru, 'LOL'), false, 'texto');
+  assert.equal(grava('kanban/cardume/canais/dados/nome', A.bru, 'Outro nome'), false, 'PO continua sem mexer no resto do oficial');
+  DB.kanban.usuarios.bru.squads.prf = true; DB.kanban.usuarios.bru.squads_roles.prf = 'po';
+  assert.equal(grava(E('prf'), A.bru, '📊'), false, 'PO não cria canal pelo emoji (canal ainda não ativado)');
+  reset(); existe('t-bf-ab12', tema({ dono: 'ana' }), { ana: true, bru: true });
+  assert.equal(grava(E('t-bf-ab12'), A.ana, '🖤'), true, 'dona do temático');
+  assert.equal(grava(E('t-bf-ab12'), A.bru, '🖤'), false, 'membro do temático');
+});
+
+test('emoji do assunto: quem cria já escolhe; quem criou ou gestor troca; só da lista', () => {
+  reset(); const ag = Date.now();
+  assert.equal(grava('kanban/cardume/assuntos/dados/abf', A.ana, { n: 'banner', por: 'ana', criado: ag, e: '🎨' }), true, 'criar com emoji');
+  assert.equal(grava('kanban/cardume/assuntos/dados/abf', A.ana, { n: 'banner', por: 'ana', criado: ag, e: '🦄' }), false, 'fora da lista');
+  DB.kanban.cardume.assuntos = { dados: { abf: { n: 'banner', por: 'ana', criado: ag - 1000 } } };
+  assert.equal(grava('kanban/cardume/assuntos/dados/abf/e', A.ana, '📈'), true, 'quem criou troca');
+  DB.kanban.cardume.membros.dados.gil = true;
+  assert.equal(grava('kanban/cardume/assuntos/dados/abf/e', A.gil, '📈'), false, 'outro membro');
+});

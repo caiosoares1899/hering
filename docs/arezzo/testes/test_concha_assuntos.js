@@ -44,7 +44,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const externo = mapa => p.evaluate(m => { window.__onDisc = m; window.__simDisconnect(); }, mapa);
 
   let c = await chips();
-  t('faixa: 💬 geral (aberto), ＋ Assunto, 🧵 campanha antiga com ponto de nova, ✓ Marcar como lido', JSON.stringify(c) === JSON.stringify(['💬 geral*', '＋ Assunto', '🧵 campanha antiga•', '✓ Marcar como lido']), c);
+  t('faixa: 💬 geral (aberto), 🧵 campanha antiga com ponto de nova, ＋ Assunto (por último), ✓ Marcar como lido', JSON.stringify(c) === JSON.stringify(['💬 geral*', '🧵 campanha antiga•', '＋ Assunto', '✓ Marcar como lido']), c);
   t('geral mostra só a mensagem sem assunto', JSON.stringify(await textos()) === JSON.stringify(['bom dia, geral']), await textos());
   await p.click('[data-canal="prf"]'); await p.waitForTimeout(300);
   t('assunto que eu nunca abri NÃO acende o canal (só o ponto na faixa)', await p.evaluate(() => !document.querySelector('[data-canal="dados"]').classList.contains('nao-lido')), 0);
@@ -59,7 +59,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
 
   await p.click('#assuntos-barra [data-aid="_novo"]'); await p.fill('.md input', 'banner BF'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(500);
   c = await S(); const aid = Object.keys(c.assuntos.dados).find(k => c.assuntos.dados[k].n === 'banner BF');
-  t('＋ Novo assunto cria (por = ana) e abre, com o campo dizendo onde vai', !!aid && c.assuntos.dados[aid].por === 'ana' && await p.evaluate(() => /🧵 banner BF/.test(document.getElementById('entrada').placeholder)), c.assuntos.dados);
+  t('＋ Novo assunto cria (por = ana) e abre, com o campo dizendo onde vai', !!aid && c.assuntos.dados[aid].por === 'ana' && await p.evaluate(() => /^Em 🧵 banner BF/.test(document.getElementById('entrada').placeholder)), c.assuntos.dados);
   await p.fill('#entrada', 'arte nova subiu'); await p.keyboard.press('Enter'); await p.waitForTimeout(500);
   c = await S(); const minha = Object.entries(c.msgs.dados).find(([, m]) => m.texto === 'arte nova subiu');
   t('a mensagem vai com a = assunto e marca ultima_a do assunto', minha && minha[1].a === aid && c.ultima_a.dados[aid].id === minha[0], { m: minha, u: c.ultima_a.dados });
