@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Maré: índice enxuto dos cards no aparelho para o @card: da Concha (SÓ DEV, kanban v8.30.1030-dev) — 2026-11-25
+
+Primeira parte do @card: da Concha (desenho de 24/11 em docs/ideias/cardume.md). O Maré passa a deixar no aparelho uma lista enxuta dos cards da squad aberta — id, título e coluna dos não arquivados, com o uid de quem está logado — em oceano_cards_<squad>_dev, atualizada 2 s depois de cada mudança dos cards. Zero leitura a mais do banco (o Maré já tem os cards em memória); ~40 KB para 500 cards. A Concha vai usar essa lista no autocompletar do @card: (próximo PR). Teste: test_mare_indice_concha.js (6; falha no kanban.html de produção, como esperado).
+
 ### 🐚 Concha: 😀 emoji do canal e do assunto, ＋ Assunto por último e ⚙️ na faixa (SÓ DEV, cardume v0.30, regras e) — 2026-11-25
 
 Pedido do Caio ao ver a faixa de assuntos. O assunto e o canal ganham emoji, escolhido numa lista fixa: o assunto no ⚙️ (quem cria escolhe; quem criou ou administra troca) e o canal nos ℹ️ Detalhes, por quem administra — inclusive PO/Organizador da squad no canal oficial. Sem escolha, o canal da squad usa o emoji da squad (📊 Dados) e o assunto continua 🧵. O emoji aparece na lista, no topo, no Sonar, na faixa e no campo ("Em 🎨 banner…"). A faixa agora tem ＋ Assunto por último e ⚙️ (no lugar do ⋯) fixo à direita, sempre à vista; no celular o topo voltou a caber numa linha. Banco: campo e em canais e assuntos (regras com a lista). Testes: cardumeRules (+2, sabotagens), test_concha_emoji.js (10). Deploy: firebase deploy --only database antes do merge.

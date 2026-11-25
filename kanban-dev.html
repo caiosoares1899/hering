@@ -7782,7 +7782,7 @@ window._bfSemanaInfo = function(agoraMs){
   </button>
 </nav>
 
-<div class="version">v8.30.1029-dev</div>
+<div class="version">v8.30.1030-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12006,7 +12006,22 @@ let _cardsSyncDebounce = null;
   // (já debounced por _scheduleCardsSync), assim QUALQUER caminho de carga
   // (dois-passos ou completo) deixa o dispositivo pronto pra usar o
   // caminho barato na PRÓXIMA visita.
+  // 🐚 Índice enxuto para o @card: da Concha (docs/ideias/cardume.md › "@card: e @objetivo: sem pesar no banco"): o Maré já tem os cards da squad aberta em
+  // memória e deixa no aparelho só {id, título, coluna} dos não arquivados — ZERO leitura a mais do banco. Chave por squad (e _dev nas páginas -dev), com o uid
+  // de quem gravou (a Concha só usa o índice da mesma conta). ~40 KB para 500 cards.
+  let _indiceConchaT = 0;
+  function _gravarIndiceConcha(){
+    clearTimeout(_indiceConchaT);
+    _indiceConchaT = setTimeout(()=>{
+      try{
+        const uid = window._currentUser && window._currentUser.uid; if(!uid || !ACTIVE_SQUAD) return;
+        const v = cards.filter(c=>c && c.id && !c.archived && typeof c.title === 'string' && c.title.trim()).slice(-800).map(c=>({ id:String(c.id), t:c.title.trim().slice(0,200), c:String(c.col||'') }));
+        localStorage.setItem('oceano_cards_' + ACTIVE_SQUAD + (/-dev\.html/.test(location.pathname) ? '_dev' : ''), JSON.stringify({ t:Date.now(), u:uid, v }));
+      }catch(e){}
+    }, 2000);
+  }
   function _persistCardsCacheFromCurrent(){
+    _gravarIndiceConcha();
     const cardsById = {}, updatedAtById = {};
     cards.forEach(c=>{
       if(!c || !c.id) return;
