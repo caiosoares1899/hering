@@ -315,11 +315,12 @@ Pedido do Caio: reagir a uma mensagem com emoji, "igual aos comentários do Mar�
 ### Aviso (Sino, sem push)
 - Tipo novo `cardume_reacao` em `MareNotif.TIPOS` (`pushPossivel:false`; fora do `PUSH_TYPES` do servidor → nunca vira push), resolvido para a Concha.
 - **Genérico e sem emoji:** "🐚 Ana reagiu a uma mensagem sua na Concha" — a notificação ainda é lida pela empresa toda até a fase C de `usuarios-leitura-fechar.md` (por isso sem canal, trecho nem emoji; emoji também ficaria velho ao trocar). Abre a Concha.
-- **Um aviso por mensagem e pessoa:** id fixo `rx_{msgId}_{uid}`; a regra atual das notificações só deixa outra pessoa CRIAR (não reescrever), então reagir/tirar/reagir não repete o aviso. A reação é um `set` próprio e o aviso outro `set` (num `update` único, a recusa do aviso repetido derrubaria a reação); na mesma sessão a página nem tenta de novo.
+- **Um aviso por mensagem e pessoa:** id fixo `rx_{msgId}_{uid}` com `noTTLDelete: true`; a regra atual das notificações só deixa outra pessoa CRIAR (não reescrever), e com `noTTLDelete` o "remover" do Sino marca como dispensado em vez de apagar — então reagir/tirar/reagir, mesmo em outra sessão, não repete o aviso. A reação é um `set` próprio e o aviso outro `set`, **só depois que o banco aceitou a reação** (num `update` único, a recusa do aviso repetido derrubaria a reação); na mesma sessão a página nem tenta de novo. (Revisão do Codex.)
 - Não avisa quem reage à própria mensagem.
 
 ### Página (`cardume-dev.html`)
-- Uma escuta por canal aberto: `query(reacoes/{canal}, orderByKey(), limitToLast(60))` (ids são cronológicos: cobre as 50 carregadas); parada ao trocar de canal, ao abrir @ Menções e ao sair da conta.
+- Uma escuta por canal aberto: `query(reacoes/{canal}, orderByKey(), startAt(<menor chave das mensagens exibidas>))`, refeita quando a janela muda — as mensagens vêm por `ts` do servidor e uma enviada offline tem chave mais antiga (revisão do Codex; "as últimas 60 chaves" podia deixá-la de fora). Parada ao trocar de canal, ao abrir @ Menções e ao sair da conta.
+- Depois de reagir, o foco vai ao chip escolhido (ou volta ao 😀 se a reação saiu); se o banco recusar, o seletor fecha e o aviso não sai.
 - Chips embaixo da mensagem (`aria-pressed` no seu; `title`/`aria-label` com quem reagiu); na mensagem **tocada** (celular/iPad), uma linha com os nomes — `title` não existe no toque.
 - "😀 Reagir" na pílula: troca os ícones da pílula pelos 5 emojis no mesmo lugar (não abre nada por cima de texto); no toque, a fileira de ações vira a de emojis. Vão reservado à direita recalculado para 5 ícones.
 - Nomes e emojis entram por `textContent`; o emoji lido do banco só é mostrado se estiver na lista.

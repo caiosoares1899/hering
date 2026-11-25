@@ -41,9 +41,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐚 ↩️ Responder na Concha: regras do `resp` e do aviso de resposta (`r`) **primeiro**, depois o push com o ramo da resposta | `firebase deploy --only database` → `firebase deploy --only functions:sendPushOnNotification` | 24/11/2026 |
-| Claude | 🔒 Leitura ampla, fase A: espelho torre/Gestor OKR validado e notificação alheia não regravável (PO/ADM inclusive) — **ANTES do merge, a partir da branch** `claude/usuarios-fase-a` (o merge publica o Maré dev, que já grava direto contando com a regra; o prod segue com a transação e funciona com a regra nova) | resync na branch + `firebase deploy --only database` | 24/11/2026 |
-| Claude | 🐚 Concha: o push de menção diz "🐚 Concha" (título montado no servidor, `functions/common/cardumePush.js`) — só depois do merge do PR do nome | `firebase deploy --only functions:sendPushOnNotification` | 24/11/2026 |
+| Claude | 🐚 😀 Reações na Concha: nó novo `kanban/cardume/reacoes` (só membro lê; cada um só escreve a própria reação, emoji da lista fechada) — **antes do merge do PR das reações** (sem a regra, toda reação é recusada) | `firebase deploy --only database` | 24/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog

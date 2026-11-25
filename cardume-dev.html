@@ -317,7 +317,7 @@ button.msg-gif{cursor:pointer;}
 <script src="mare-notif-dev.js?v=52"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByKey, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByKey, startAt, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const VERSION = 'v0.19 · cardume-dev', VERSION_KEY = 'cardume_dev';
@@ -597,7 +597,7 @@ function abrirCanal(id, foco) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   if (atual !== id) {
     if (atual) lsSet(chaveRascunho(atual), entrada.value);
-    parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+    parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); msgs = []; reacoes = {}; rxAbrindo = ''; rxDesde = null; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
     entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
   }
   if (atual !== id) { $('faixa-alvo').hidden = true; $('faixa-alvo').replaceChildren(); }
@@ -611,10 +611,8 @@ function abrirCanal(id, foco) {
     ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(LIMITE)), s => {
       const v = s.val() || {};
       msgs = Object.keys(v).map(k => Object.assign({ id: k }, v[k])).filter(m => m && typeof m.ts === 'number').sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
-      carregandoMsgs = false; renderMsgs(); marcarLido(); irParaAlvo(id);
+      carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id);
     }, e => { carregandoMsgs = false; msgs = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
-    // 😀 reações das últimas mensagens (ids cronológicos: as 60 últimas com reação cobrem as 50 carregadas)
-    ouvir('rx', query(ref(db, B + 'reacoes/' + id), orderByKey(), limitToLast(60)), s => { reacoes = s.val() || {}; renderMsgs(); }, () => { reacoes = {}; });
   } else { msgs = []; carregandoMsgs = false; renderMsgs(); }
   if (membro || gestor(id)) {
     ouvir('membros', ref(db, B + 'membros/' + id), s => { membrosAtual = s.val() || {}; renderLado(); renderMsgs(); }, () => { membrosAtual = {}; renderLado(); });
@@ -671,6 +669,11 @@ function renderMsgs() {
   });
   const ed2 = editando && document.querySelector('[data-msg="' + editando + '"] textarea');
   if (ed2 && rascunhoEdicao && rascunhoEdicao.id === editando) { ed2.value = rascunhoEdicao.valor; if (rascunhoEdicao.foco) { ed2.focus(); ed2.setSelectionRange(rascunhoEdicao.ini, rascunhoEdicao.fim); } }
+  if (rxFoco) {   // depois de reagir pelo teclado/toque o botão focado foi redesenhado: foco no chip escolhido, ou no 😀 se a reação saiu
+    if (Date.now() > rxFoco.ate) rxFoco = null;
+    else { const caixa = document.querySelector('[data-msg="' + CSS.escape(rxFoco.id) + '"]'), alvo = caixa && (rxFoco.e ? caixa.querySelector('.rx-chip[data-e="' + CSS.escape(rxFoco.e) + '"][aria-pressed="true"]') : caixa.querySelector('[aria-label="Reagir"]'));
+      if (alvo) { alvo.focus({ preventScroll: true }); rxFoco = null; } }
+  }
   if (noFim || !renderMsgs._ja) log.scrollTop = log.scrollHeight;
   renderMsgs._ja = true;
 }
@@ -685,7 +688,16 @@ function acaoBtn(cls, ic, rot, nome) {   // ícone + rótulo; na pílula do comp
 const REACT_EMOJIS = ['👍', '👀', '❤️', '✅', '🎉'];
 let reacoes = {};               // msgId → {uid: emoji} do canal aberto
 let rxAbrindo = '';             // mensagem com o seletor de emojis aberto
-const rxAvisados = new Set();   // mensagens cujo autor já foi avisado nesta sessão (a regra também só deixa criar o aviso uma vez)
+const rxAvisados = new Set();
+let rxDesde = null;             // menor chave das mensagens exibidas (a escuta das reações começa nela)
+let rxFoco = null;              // depois de reagir: {id, e} — o foco vai para o chip escolhido (ou volta ao 😀 se a reação saiu)
+function ouvirReacoes(canal) {  // reações de TODAS as mensagens exibidas: as mensagens vêm por ts (servidor) e uma enviada offline pode ter chave mais antiga
+  const desde = msgs.length ? msgs.reduce((a, m) => (m.id < a ? m.id : a), msgs[0].id) : null;
+  if (desde === rxDesde && ouvintes['rx']) return;
+  rxDesde = desde; parar('rx');
+  if (!desde) { reacoes = {}; return; }
+  ouvir('rx', query(ref(db, B + 'reacoes/' + canal), orderByKey(), startAt(desde)), s => { if (atual === canal) { reacoes = s.val() || {}; renderMsgs(); } }, () => { reacoes = {}; });
+}   // mensagens cujo autor já foi avisado nesta sessão (a regra também só deixa criar o aviso uma vez)
 function reacoesDe(id) {        // [[emoji, [uids]]] na ordem da lista; ignora o que não está na lista
   const r = reacoes[id]; if (!r || typeof r !== 'object') return [];
   const por = {}; Object.keys(r).forEach(u => { const e = r[u]; if (ID_RE.test(u) && REACT_EMOJIS.includes(e)) (por[e] = por[e] || []).push(u); });
@@ -695,7 +707,7 @@ function linhaReacoes(m, rx, podeReagir) {
   const linha = el('div', 'rx-linha'), quem = el('p', 'rx-quem');
   rx.forEach(([e, uids]) => {
     const nomes = uids.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', ');
-    const b = el('button', 'rx-chip', e + ' ' + uids.length); b.type = 'button';
+    const b = el('button', 'rx-chip', e + ' ' + uids.length); b.type = 'button'; b.dataset.e = e;
     b.setAttribute('aria-pressed', String(uids.includes(user.uid))); b.title = nomes; b.setAttribute('aria-label', e + ' ' + uids.length + ': ' + nomes);
     if (podeReagir) b.onclick = () => reagir(m, e); else b.disabled = true;
     linha.append(b);
@@ -707,13 +719,17 @@ function reagir(m, e) {
   if (!REACT_EMOJIS.includes(e) || !souMembro(atual) || vencido(canais[atual])) return;
   const canal = atual, minha = (reacoes[m.id] || {})[user.uid], nova = minha === e ? null : e;
   rxAbrindo = '';
-  set(ref(db, B + 'reacoes/' + canal + '/' + m.id + '/' + user.uid), nova).catch(err => { toast(negado(err) ? 'Não deu para reagir nesta mensagem.' : 'Não deu para reagir agora. Tente de novo.'); });
-  if (nova && m.uid !== user.uid && membrosAtual[m.uid] === true && !rxAvisados.has(m.id)) { rxAvisados.add(m.id); avisarReacao(m); }
-  if (!nova) renderMsgs();
+  const avisar = nova && m.uid !== user.uid && membrosAtual[m.uid] === true && !rxAvisados.has(m.id);
+  if (avisar) rxAvisados.add(m.id);   // antes do await: dois toques rápidos não mandam dois avisos
+  rxFoco = { id: m.id, e: nova, ate: Date.now() + 3000 };
+  set(ref(db, B + 'reacoes/' + canal + '/' + m.id + '/' + user.uid), nova)
+    .then(() => { if (avisar) avisarReacao(m); })   // só avisa reação que o banco aceitou
+    .catch(err => { if (avisar) rxAvisados.delete(m.id); rxFoco = null; toast(negado(err) ? 'Não deu para reagir nesta mensagem.' : 'Não deu para reagir agora. Tente de novo.'); });
+  renderMsgs();   // fecha o seletor já (se o banco recusar, ele não fica aberto)
 }
 function avisarReacao(m) {   // aviso genérico no Sino (sem canal, trecho nem emoji; sem push) — set próprio: se já existir, a regra recusa e tudo bem
   const quem = (user.displayName || user.email || '').split(' ')[0] || 'Alguém', n = 'rx_' + m.id + '_' + user.uid;
-  set(ref(db, 'kanban/usuarios/' + m.uid + '/notificacoes/' + n), { id: n, type: 'cardume_reacao', title: '🐚 ' + quem + ' reagiu a uma mensagem sua na Concha', sub: 'Toque para abrir a Concha', dev: true, read: false, ts: new Date().toISOString() }).catch(() => {});
+  set(ref(db, 'kanban/usuarios/' + m.uid + '/notificacoes/' + n), { id: n, type: 'cardume_reacao', title: '🐚 ' + quem + ' reagiu a uma mensagem sua na Concha', sub: 'Toque para abrir a Concha', dev: true, read: false, noTTLDelete: true, ts: new Date().toISOString() }).catch(() => {});
 }
 function renderMsg(m) {
   const box = el('div', 'msg' + (destaque.id === m.id && Date.now() < destaque.ate ? ' destaque' : '')); box.dataset.msg = m.id;
@@ -1049,7 +1065,7 @@ function renderMencoes(log) {
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
   if (atual) lsSet(chaveRascunho(atual), entrada.value);
-  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = '';
+  parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; rxAbrindo = ''; rxDesde = null; membrosAtual = {}; adminsAtual = {}; editando = '';
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
 }
@@ -1420,7 +1436,7 @@ function limparSessao() {
   Object.keys(infoCards).forEach(k => delete infoCards[k]);   // o acesso aos cards é da conta
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
-  reacoes = {}; rxAbrindo = ''; rxAvisados.clear();   // reações e avisos já mandados são da conta
+  reacoes = {}; rxAbrindo = ''; rxDesde = null; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
   atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }

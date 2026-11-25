@@ -316,3 +316,10 @@ Caio confirmou que os 3 deploys pendentes já foram feitos; saíram de *Pendente
 ## Confirmação de deploy — 19/11/2026 (promoção #1871)
 
 Caio confirmou o merge da #1871 e o deploy das 5 funções do Agente Ágil (`agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO`, `okrAgenteChat`) com o conhecimento regenerado na promoção de 18/11. Tags `kanban-v8.30.1016`, `okr-v2.141`, `painel-v5.124` e `oceano-v1.88` no commit de merge. O repositório não tem `.firebaserc`: o deploy precisa de `--project hering-onboarding`.
+
+## Confirmação de deploy — 24/11/2026 (Concha e fase A)
+
+Caio confirmou os deploys (regras + `sendPushOnNotification`); saíram de *Pendente de deploy*:
+- 🐚 ↩️ Responder na Concha (#1959): regras do `resp` e do aviso de resposta (`r`), depois o push com o ramo da resposta
+- 🔒 Leitura ampla, fase A (#1955): espelho torre/Gestor OKR validado e notificação alheia não regravável
+- 🐚 Concha: push de menção com o título "🐚 Concha"
