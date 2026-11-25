@@ -61,6 +61,10 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await p.click('.lista-seguidas button'); await p.waitForTimeout(300); await p.keyboard.press('Escape');
   t('✕ deixa de seguir', !((await S()).seguidas.ana || {}).banner, (await S()).seguidas);
 
+  await p.evaluate(() => { document.hasFocus = () => false; window.dispatchEvent(new Event('blur')); }); await p.waitForTimeout(300);
+  t('janela sem foco (aba esquecida aberta): o sinal de vida some', !(((await S()).vendo || {}).ana || {}).dados, (await S()).vendo);
+  await p.evaluate(() => { document.hasFocus = () => true; window.dispatchEvent(new Event('focus')); }); await p.waitForTimeout(300);
+  t('voltou o foco: o sinal volta', typeof (((await S()).vendo || {}).ana || {}).dados === 'number', (await S()).vendo);
   await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); }); await p.waitForTimeout(300);
   t('aba escondida: o sinal de vida some (o push volta a chegar)', !(((await S()).vendo || {}).ana || {}).dados, (await S()).vendo);
 

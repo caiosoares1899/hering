@@ -346,6 +346,15 @@ const fbApp = initializeApp(firebaseConfig);
 const db = getDatabase(fbApp);
 // 🔔 o Sino unificado (mare-notif-dev.js) usa o Firebase da página por estes nomes, como no Oceano e no Maré
 Object.assign(window, { _db: db, _ref: ref, _get: get, _set: set, _update: update, _onValue: onValue, _query: query, _orderByChild: orderByChild, _limitToLast: limitToLast });
+// Push (FCM) deste aparelho — o rodapé do Sino (mare-notif) usa estes ganchos para ativar o push AQUI (sem isso, quem só usa a Concha não
+// conseguia receber os avisos). Mesmo bloco do Oceano: import dinâmico em try; se o SDK de mensagens não carregar, só o push some.
+window._fcmReady = false;
+import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js').then(m => m.isSupported().then(ok => { if (!ok) return;
+  const messaging = m.getMessaging(fbApp);
+  window._fcmGetToken = (vapidKey, swReg) => m.getToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
+  window._fcmDeleteToken = () => m.deleteToken(messaging); window._fcmOnMessage = cb => m.onMessage(messaging, cb); window._fcmReady = true;
+  if (window.MareNotif && MareNotif.rodapeRender) MareNotif.rodapeRender();
+})).catch(e => console.warn('[FCM] não inicializado:', e));
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
@@ -1210,7 +1219,7 @@ function modalAvisos(id) {
   const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
   const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
   const h = el('h2', '', '🔔 Avisos de # ' + nomeCanal(id)); h.id = 'md-t'; f.append(h);
-  f.append(el('p', 'subtitulo', 'O push chega no celular e no computador em que você ativou os avisos. Quem está com a conversa aberta não recebe.'));
+  f.append(el('p', 'subtitulo', 'O push chega nos aparelhos em que você ativou as notificações (🔔 Sino › Ativar notificações neste aparelho). Enquanto você está com a conversa aberta e usando, não chega push dela.'));
   const atual0 = nivelAviso(id), fs = el('fieldset'); fs.style.cssText = 'border:0;padding:0;margin:0;display:grid;gap:6px;'; fs.append(el('legend', 'subtitulo', 'Avisar de'));
   const radio = (v, t, d) => { const l = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = 'nivel'; r.value = v; r.checked = atual0 === v; const tx = el('span'); tx.append(el('b', '', ICONE_AVISO[v] + ' ' + t), document.createElement('br'), el('span', 'subtitulo', d)); l.append(r, tx); return l; };
   fs.append(radio('todas', 'Todas as mensagens', 'O padrão. Várias seguidas viram um aviso só.'), radio('mencoes', 'Só @menções e #tags que sigo', 'Como silenciar no WhatsApp: a @menção e as #tags que você segue continuam avisando.'), radio('nada', 'Nada', 'Nem @menção. A menção ainda aparece em @ Menções e no Sino.'));
@@ -1254,17 +1263,22 @@ function botaoSeguir(k) {
   b.onclick = () => seguir(k, !sigo); return b;
 }
 // Sinal de vida da conversa aberta: 1 chave por canal (duas abas em canais diferentes não se atrapalham); some ao sair, esconder ou cair.
-let vendoCanal = '', vendoT = 0;
-function pulsoVendo() {
-  const id = user && atual && souMembro(atual) && conversaVisivel() ? atual : '';
+// "Vendo" = conversa visível, janela em foco e a pessoa mexendo (sem 60 s parada, o mesmo relógio que pausa os peixes): uma aba esquecida aberta
+// não pode segurar os avisos do celular.
+let vendoCanal = '', vendoT = 0, vendoMexeu = 0;
+const vendoAtivo = () => conversaVisivel() && document.hasFocus() && !animOcioso;
+function pulsoVendo(forcar) {
+  const id = user && atual && souMembro(atual) && vendoAtivo() ? atual : '';
   if (vendoCanal && vendoCanal !== id) { set(ref(db, B + 'vendo/' + user.uid + '/' + vendoCanal), null).catch(() => {}); vendoCanal = ''; }
   if (!id) return;
   const r = ref(db, B + 'vendo/' + user.uid + '/' + id);
-  if (vendoCanal !== id) { vendoCanal = id; onDisconnect(r).remove().catch(() => {}); }
-  set(r, serverTimestamp()).catch(() => {});
+  if (vendoCanal !== id) { vendoCanal = id; vendoT = 0; onDisconnect(r).remove().catch(() => {}); }
+  if (forcar || Date.now() - vendoT >= 25000) { vendoT = Date.now(); set(r, serverTimestamp()).catch(() => {}); }
 }
-document.addEventListener('visibilitychange', pulsoVendo);
-setInterval(() => { if (user) pulsoVendo(); }, 30000);
+document.addEventListener('visibilitychange', () => pulsoVendo(true));
+window.addEventListener('focus', () => pulsoVendo(true)); window.addEventListener('blur', () => pulsoVendo(true));
+['pointerdown', 'keydown', 'wheel', 'pointermove'].forEach(ev => document.addEventListener(ev, () => { if (user && atual && !vendoCanal && Date.now() - vendoMexeu > 3000) { vendoMexeu = Date.now(); setTimeout(() => pulsoVendo(true), 50); } }, { passive: true, capture: true }));   // voltou a mexer
+setInterval(() => { if (user) pulsoVendo(); }, 10000);   // parou de mexer há 60 s: o próximo giro tira o sinal
 
 // ═══ 🔍 Sonar (Ctrl/⌘+K, mare-sonar-dev.js): canais, pessoas e #tags — só da Concha (decisão do Caio, 25/11) ═══
 // #tags: tags_ult/{canal} dos canais em que a pessoa está (uma chave por tag, sem baixar o índice), relido ao abrir o Sonar se tiver mais de 2 min.

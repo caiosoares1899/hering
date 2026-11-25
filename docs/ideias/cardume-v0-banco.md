@@ -373,7 +373,7 @@ Ideia do backlog (24/11) + pedido do Caio (25/11): vem ligado para todas as mens
 |---|---|
 | `kanban/cardume/avisos/{uid}/{canal}` | `{nivel: 'mencoes'|'nada', ate?}` — sem nó (ou `ate` vencido) = 🔔 todas; `ate` no futuro, até ~1 ano; sem `ate` = sempre |
 | `kanban/cardume/seguidas/{uid}/{tag}` | número (quando passou a seguir); mesma chave das `tags`; a tela limita a 30 |
-| `kanban/cardume/vendo/{uid}/{canal}` | `serverTimestamp` a cada 30 s com a conversa visível; **um por canal** (duas abas em canais diferentes não se atrapalham); some ao trocar de canal, ao abrir uma lista, com a aba escondida e ao cair (`onDisconnect`) |
+| `kanban/cardume/vendo/{uid}/{canal}` | `serverTimestamp` a cada ~25 s **com a conversa visível, a janela em foco e a pessoa mexendo** (60 s parada, o mesmo relógio dos peixes, tira o sinal — aba esquecida aberta não segura o push do celular); **um por canal** (duas abas em canais diferentes não se atrapalham); some ao trocar de canal, ao abrir uma lista, com a aba escondida e ao cair (`onDisconnect`) |
 | `kanban/cardume/aviso_env/{uid}/{canal}` | trava da função (último push de "todas"); **fechado** nas regras, como `gif_uso` |
 
 ### Função `conchaAvisoMsg` (`functions/oceano/conchaAvisos.js`, gatilho em `msgs/{canal}/{msgId}` criada)
@@ -384,6 +384,12 @@ Ninguém recebe: mensagem apagada, com mais de **2 min** (a restauração do �
 - Editar uma mensagem para pôr uma #tag seguida não avisa (o gatilho é só na criação).
 - Mensagem só com GIF avisa como "🐚 Ana em # Dados".
 - O nível é da pessoa: vale igual em todos os aparelhos dela.
+
+### Ativar o push na Concha
+A Concha passou a ligar o Firebase Messaging (`window._fcmReady`, mesmo bloco do Oceano): o 🔔 Sino › *Ativar notificações neste aparelho* registra o aparelho aqui mesmo. Antes, só avisava "ative pelo Kanban".
+
+### Ao promover para prod
+O link do push está fixo em `cardume-dev.html` e `kanban/cardume` é o mesmo nó no dev e no prod: na promoção, decidir o link como o `pushUrl` faz com `dev`.
 
 ### Deploy
 Regras **antes** do merge (a tela nova grava `avisos`/`seguidas`/`vendo`); depois `firebase deploy --only functions:conchaAvisoMsg,functions:sendPushOnNotification`.
