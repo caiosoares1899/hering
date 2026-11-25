@@ -41,7 +41,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐚 Concha: regras das #tags (`kanban/cardume/tags`, `tags_ult`) — **ANTES do merge do PR, regras primeiro** (o cliente antigo não toca nesses nós) | resync na branch `claude/concha-tags` (`git fetch origin claude/concha-tags` → `git reset --hard origin/claude/concha-tags`) → `firebase deploy --only database --project hering-onboarding` | 25/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog

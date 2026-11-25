@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🔍 Sonar (Ctrl/⌘+K) com canais, #tags e pessoas (SÓ DEV, cardume v0.23) — 2026-11-25
+
+Pedido do Caio: as #tags têm de aparecer nas pesquisas, e a Concha precisa do Sonar. Ctrl/⌘+K (ou 🔍 Buscar na lateral) abre o mesmo Sonar do Oceano, com as abas Canais, #tags e Pessoas; nada da Concha vai para o Sonar dos outros apps (decisão do Caio). Canais = os mesmos da lista da esquerda (inclusive temáticos abertos para entrar). #tags = as dos canais em que a pessoa está, lidas de tags_ult (uma chave por tag, sem baixar o índice; relido ao abrir se tiver mais de 2 min), da mais usada recentemente, dizendo em que canais estão; busca sem acento ("promocao" acha #promoção) e "#" no começo busca só tags. Pessoas = da Hering; como a Concha não tem conversa direta, escolher alguém mostra os canais em que vocês dois estão (decisão: opção recomendada ao Caio). Recentes: canal/tag de outra conta no mesmo aparelho não aparecem. Só leitura, sem regra nova; mare-sonar-dev.js sem mudança (?v=8). Teste: test_concha_sonar.js (15). Prints: docs/capturas/concha-sonar/.
+
 ### 🐚 Concha: #️⃣ #tags nas mensagens, com a tela de cada assunto em todos os seus canais (SÓ DEV, cardume v0.22, regras tags) — 2026-11-25
 
 Pedido do Caio: dividir os assuntos por #, como no Slack. Escrever #banner ou #BlackFriday no meio da mensagem vira etiqueta clicável; clicar abre a tela da #tag com as mensagens que têm ela em TODOS os canais em que a pessoa está (até 30 por canal, as 50 mais novas), com canal, autor, hora e trecho, e leva à mensagem. Regra da tag: # no início ou depois de espaço/parêntese/marcação, 2–32 letras/números/_/-, com pelo menos uma letra (#1966 não vira tag), fora de código e de link; até 10 por mensagem.

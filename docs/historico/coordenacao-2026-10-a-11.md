@@ -327,3 +327,8 @@ Caio confirmou os deploys (regras + `sendPushOnNotification`); saíram de *Pende
 ## Confirmação de deploy — 25/11/2026 (reações da Concha)
 
 Caio confirmou `firebase deploy --only database` com o nó `kanban/cardume/reacoes` (#1963) e testou: reagir funciona. Saiu de *Pendente de deploy*. (O merge entrou antes do deploy e as reações ficaram recusadas até ele — `permission_denied` no console.)
+
+
+## Confirmação de deploy — 25/11/2026 (#tags da Concha)
+
+Caio confirmou `firebase deploy --only database` com os nós `kanban/cardume/tags` e `tags_ult` **antes** do merge da #1967, como pedido. Saiu de *Pendente de deploy*.
