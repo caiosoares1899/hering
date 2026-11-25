@@ -257,6 +257,11 @@ exports.oceanoResumo = require('./oceano/resumo').oceanoResumo;
 // Antes do 1º deploy: firebase functions:secrets:set KLIPY_API_KEY. Deploy isolado: firebase deploy --only functions:conchaGifBusca
 exports.conchaGifBusca = require('./oceano/conchaGif').conchaGifBusca;
 
+// 🐚 Aviso de mensagem nova na Concha, estilo WhatsApp (25/11/2026, functions/oceano/conchaAvisos.js): push direto para os membros a cada
+// mensagem criada, pela preferência privada de cada um (🔔 todas · 🔕 só @menções e #tags seguidas · 🚫 nada), sem gravar no Sino.
+// Deploy isolado: firebase deploy --only functions:conchaAvisoMsg (regras antes: firebase deploy --only database)
+exports.conchaAvisoMsg = require('./oceano/conchaAvisos').criaTrigger();
+
 // 🎯 OKR — scan diário (prazo de marco chegando, período de editar, véspera
 // de reunião — ver functions/okr/dailyScan.js). Roda sozinho, sem depender
 // de ninguém abrir o painel. Lê kanban/painel/config/gcal_cache (mesmo

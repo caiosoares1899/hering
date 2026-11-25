@@ -131,7 +131,7 @@ Quem faz o quê (Claude como maestro, Antigravity e Codex), o quadro de "em anda
 
 Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e as páginas avulsas — ver a Biblioteca).
 
-### Cloud Functions por pasta (42 exports em `functions/index.js`)
+### Cloud Functions por pasta (43 exports em `functions/index.js`)
 
 | Pasta (`functions/…`) | Exports |
 |---|---|
@@ -140,8 +140,8 @@ Sem módulos compartilhados: `okr-apresentacao.slide.html`, `onboarding.html` (e
 | `backup/` | `weeklyBackup` · `backupCompletoSemanal` · `backupGlobalDiario` · `backupVigia` · `backupCompletoApi` |
 | `cards/` | `cardsEspelhar` · `cardsGuardiao` · `cardsEspelhoVarredura` · `guardiaoStatus` |
 | `okr/` | `sendPushOnMural` · `okrDailyScan` · `okrWeeklySnapshot` · `okrAgenteChat` |
+| `oceano/` | `oceanoResumo` · `conchaGifBusca` · `conchaAvisoMsg` |
 | `gantt/` | `ganttAvisoMudanca` · `ganttAvisoMudancaDev` |
-| `oceano/` | `oceanoResumo` · `conchaGifBusca` |
 | `agente-agil/` | `agenteAgil` |
 | `comentarios/` | `contarComentarios` |
 | `firebase/` | `firebaseStatus` |

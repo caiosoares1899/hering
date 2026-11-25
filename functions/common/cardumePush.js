@@ -68,6 +68,10 @@ async function mencaoValida(db, uid, notif, notifId) {
     const pubs = await Promise.all(uids.map(u => db.ref(`kanban/usuarios_publicos/${u}`).get().then(s => [u, s.val()])));
     const nomes = Object.fromEntries(pubs.map(([u, p]) => [u, nomeDe(p, u)]).filter(([, n]) => n));
     if (!mencaoConfere(notif, notifId, uid, rec, msg, membros, nomes, Date.now(), orig)) return nao;
+    // 🚫 "Nada" no canal (kanban/cardume/avisos/{uid}/{canal}, privado da pessoa): nem a menção vira push (o Sino genérico, gravado por
+    // quem mencionou, continua — ele não enxerga a preferência). Mesmo critério de conchaAvisos.nivelDe (ausente ou `ate` vencido = todas).
+    const pref = (await db.ref(`kanban/cardume/avisos/${uid}/${rec.c}`).get()).val();
+    if (pref && pref.nivel === 'nada' && (pref.ate == null || (typeof pref.ate === 'number' && pref.ate > Date.now()))) return nao;
     const quem = (nomes[rec.de] || 'Alguém').split(/\s+/)[0];
     return { ok: true, title: '🐚 Concha', body: quem + (rec.r === true ? ' respondeu você' : ' te mencionou') };
   } catch (e) { return nao; }

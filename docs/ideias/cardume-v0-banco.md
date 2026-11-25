@@ -363,3 +363,27 @@ Pedido do Caio: dividir os assuntos por `#`, como no Slack, e achar pelas pesqui
 
 ### Fronteira
 Nó novo (`tags`, `tags_ult`) e texto de outra pessoa (a tag) chegando ao DOM: só por `textContent`/`createElement`. As chaves vêm do banco e passam por `TAG_RE` antes de virar leitura ou tela. Leitura só de membro, como `msgs`.
+
+## 🔔 Avisos de mensagem nova, estilo WhatsApp — desenho de 25/11/2026 (R3)
+
+Ideia do backlog (24/11) + pedido do Caio (25/11): vem ligado para todas as mensagens, a pessoa personaliza por canal, e #tags seguidas avisam. **Decisões (25/11):** 3 níveis por canal (🔔 Todas, padrão · 🔕 Só @menções e #tags que sigo · 🚫 Nada, nem menção), com prazo de 8 h, 1 semana ou sempre; #tag seguida avisa **mesmo com o canal em 🔕**; o push diz **nome + canal + #tag**, sem trecho (temático só de convidados vira "num canal privado"). Já decidido em 24/11: respeita o Não Perturbe, não avisa quem está com a conversa aberta, junta as mensagens seguidas do mesmo canal, push direto pela função **sem gravar no Sino** (o nó de notificações é legível pela empresa).
+
+### Banco (tudo privado da pessoa, só ela lê e grava)
+| Nó | Valor |
+|---|---|
+| `kanban/cardume/avisos/{uid}/{canal}` | `{nivel: 'mencoes'|'nada', ate?}` — sem nó (ou `ate` vencido) = 🔔 todas; `ate` no futuro, até ~1 ano; sem `ate` = sempre |
+| `kanban/cardume/seguidas/{uid}/{tag}` | número (quando passou a seguir); mesma chave das `tags`; a tela limita a 30 |
+| `kanban/cardume/vendo/{uid}/{canal}` | `serverTimestamp` a cada 30 s com a conversa visível; **um por canal** (duas abas em canais diferentes não se atrapalham); some ao trocar de canal, ao abrir uma lista, com a aba escondida e ao cair (`onDisconnect`) |
+| `kanban/cardume/aviso_env/{uid}/{canal}` | trava da função (último push de "todas"); **fechado** nas regras, como `gif_uso` |
+
+### Função `conchaAvisoMsg` (`functions/oceano/conchaAvisos.js`, gatilho em `msgs/{canal}/{msgId}` criada)
+Ninguém recebe: mensagem apagada, com mais de **2 min** (a restauração do 🛟 backup recria mensagens velhas), canal vencido, autor fora do canal, ADM desligou o tipo `cardume_msg` na Central de Notificações (sem botão no Painel por ora). Para cada membro, na ordem: autor → **mencionado ou respondido** (já tem o push da menção; mesmo leitor do `cardumePush`) → 🚫 nada → 🔕 sem #tag seguida → **vendo** (< 70 s) → Não Perturbe → **conta de fora da empresa** (e-mail do Firebase Auth; `membros` não confere domínio) → **trava**: 1 push de "todas" por canal a cada 2 min (o iPhone não junta pela tag). #tag seguida não espera a trava. Push só `data`, tag `concha-{canal}`, link `cardume-dev.html?c=&m=`; poda tokens mortos.
+**🚫 Nada também cala o push da @menção:** `cardumePush.mencaoValida` lê `avisos/{uid}/{canal}`. O Sino genérico da menção continua (quem menciona grava e não enxerga a preferência).
+
+### Limites (ditos ao Caio)
+- Editar uma mensagem para pôr uma #tag seguida não avisa (o gatilho é só na criação).
+- Mensagem só com GIF avisa como "🐚 Ana em # Dados".
+- O nível é da pessoa: vale igual em todos os aparelhos dela.
+
+### Deploy
+Regras **antes** do merge (a tela nova grava `avisos`/`seguidas`/`vendo`); depois `firebase deploy --only functions:conchaAvisoMsg,functions:sendPushOnNotification`.

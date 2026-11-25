@@ -158,6 +158,10 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .aviso-reg{padding:8px 10px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);font-size:13px;}
 .prev-reg{margin:0;max-height:20vh;overflow:auto;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.45 ui-monospace,Menlo,monospace;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;}
 .mencao{color:var(--accent-txt);font-weight:700;}
+.canal .aviso-ic{font-size:12px;opacity:.8;flex:none;}
+.seguir-tag{margin:4px 0 10px;}
+.lista-seguidas{display:flex;flex-wrap:wrap;gap:6px;}
+.lista-seguidas button{min-height:32px;padding:2px 10px;}
 .b-buscar{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--txt2);}
 .b-buscar kbd{font:inherit;font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--glass-b, rgba(56,182,255,.25));color:var(--txt2);}
 button.tag{all:unset;cursor:pointer;color:var(--accent-txt);font-weight:600;border-radius:4px;padding:0 2px;}
@@ -285,6 +289,7 @@ button.msg-gif{cursor:pointer;}
       <header class="cabecalho">
         <button type="button" class="voltar" id="b-voltar" aria-label="Voltar aos canais">←</button>
         <div class="grow"><h2 id="canal-titulo" tabindex="-1">Concha</h2><p class="subtitulo" id="canal-sub"></p></div>
+        <button type="button" id="b-aviso" hidden aria-haspopup="dialog" aria-label="Avisos deste canal: todas as mensagens" title="Avisos deste canal">🔔</button>
         <button type="button" id="b-lado" aria-label="Detalhes do canal" aria-pressed="false">ℹ️</button>
       </header>
       <div class="faixa-alvo" id="faixa-alvo" hidden></div>
@@ -324,10 +329,10 @@ button.msg-gif{cursor:pointer;}
 <script src="mare-sonar-dev.js?v=8"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByValue, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.23 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.24 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -587,6 +592,8 @@ function iniciarOuvintes() {
   }, () => {});
   ouvir('abertos', ref(db, B + 'abertos'), s => { abertos = s.val() || {}; sincronizarCanais(); renderLista(); }, () => {});
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
+  ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); }, () => {});
+  ouvir('seguidas', ref(db, B + 'seguidas/' + uid), s => { seguidas = s.val() || {}; if (vendoTag) renderMsgs(); }, () => {});
   ouvir('mencoes', query(ref(db, B + 'mencoes/' + uid), orderByChild('ts'), limitToLast(100)), s => {
     const v = s.val() || {};
     mencoes = Object.keys(v).map(k => Object.assign({ _k: k }, v[k])).filter(n => n && ID_RE.test(String(n.c || '')) && ID_RE.test(String(n.m || ''))).sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -611,9 +618,10 @@ function renderLista() {
     const b = el('button', 'canal' + (naoLido(id) ? ' nao-lido' : '')); b.type = 'button'; b.dataset.canal = id;
     b.setAttribute('aria-current', String(id === atual));
     const n = el('span', 'nome', prefixo + nomeCanal(id)); b.title = nomeCanal(id); b.append(n);
+    const nv = souMembro(id) ? nivelAviso(id) : 'todas'; if (nv !== 'todas') { const i = el('span', 'aviso-ic', nv === 'nada' ? '🚫' : '🔕'); i.title = ROT_AVISO[nv]; b.append(i); }
     if (extra) b.append(el('span', 'chip', extra));
     else if (naoLido(id)) { const p = el('span', 'ponto'); b.append(p); }
-    b.setAttribute('aria-label', prefixo + nomeCanal(id) + (naoLido(id) ? ', mensagens novas' : '') + (extra ? ', ' + extra : ''));
+    b.setAttribute('aria-label', prefixo + nomeCanal(id) + (naoLido(id) ? ', mensagens novas' : '') + (extra ? ', ' + extra : '') + (nv !== 'todas' ? ', avisos: ' + ROT_AVISO[nv] : ''));
     return b;
   };
   sec('Squads', oficiais, id => botao(id, '# ', souMembro(id) ? '' : 'gerir'));
@@ -636,7 +644,7 @@ function abrirCanal(id, foco) {
   atual = id; lsSet('cardume_canal', id);
   const u = new URL(location.href); u.searchParams.set('c', id); history.replaceState(null, '', u);
   $('app').dataset.tela = 'conversa';
-  renderLista(); renderCabecalho(); marcarLido();
+  renderLista(); renderCabecalho(); marcarLido(); pulsoVendo();
   const membro = souMembro(id);
   if (membro || souAdm()) {
     carregandoMsgs = true; renderMsgs();
@@ -663,6 +671,8 @@ function renderCabecalho() {
   const podeEscrever = id && souMembro(id) && !vencido(c) && (!ehTema(id) || !!c);
   $('rodape').hidden = !podeEscrever;
   $('b-lado').hidden = !id;
+  const ba = $('b-aviso'), nv = id && souMembro(id) ? nivelAviso(id) : 'todas';
+  ba.hidden = !(id && souMembro(id)); ba.textContent = ICONE_AVISO[nv]; ba.setAttribute('aria-label', 'Avisos deste canal: ' + ROT_AVISO[nv]);
 }
 const hhmm = ts => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 function rotuloDia(ts) {
@@ -1095,7 +1105,7 @@ function abrirMencao(rec) {
 }
 function renderMencoes(log) {
   $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você na Concha';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
   if (!mencoes.length) { log.append(vazio('🔔', 'Ninguém mencionou você ainda. Quando alguém escrever @' + nomePessoa(user.uid) + ' num canal, aparece aqui.')); return; }
   mencoes.forEach(rec => {
     const b = el('button', 'mencao-item' + (rec.lida ? '' : ' nova')); b.type = 'button';
@@ -1109,6 +1119,7 @@ function renderMencoes(log) {
 // Sair do canal aberto para uma tela de lista (@ Menções, #tag): guarda o rascunho e solta tudo do canal. Uma função só (o reset já divergiu entre cópias).
 function soltarCanal() {
   if (atual) lsSet(chaveRascunho(atual), entrada.value);
+  if (vendoCanal && user) { set(ref(db, B + 'vendo/' + user.uid + '/' + vendoCanal), null).catch(() => {}); vendoCanal = ''; }   // saiu da conversa
   parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false);
   msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
 }
@@ -1143,7 +1154,8 @@ function curtaDe(c, m) {
 function renderTag(log) {
   const k = vendoTag;
   $('canal-titulo').textContent = '#' + k; $('canal-sub').textContent = 'Mensagens com #' + k + ' nos seus canais';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
+  log.append(botaoSeguir(k));
   if (!tagItens) { log.append(vazio('', 'Procurando #' + k + '…')); return; }
   if (!tagItens.length) { log.append(vazio('#️⃣', 'Nenhuma mensagem com #' + k + ' nos seus canais.')); return; }
   tagItens.forEach(it => {
@@ -1170,7 +1182,7 @@ function abrirPessoa(uid) {
 function renderPessoa(log) {
   const uid = vendoPessoa, nome = nomePessoa(uid);
   $('canal-titulo').textContent = '👤 ' + nome; $('canal-sub').textContent = uid === user.uid ? 'Os seus canais' : 'Canais em que você e ' + nome.split(' ')[0] + ' estão';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
   if (!pessoaCanais) { log.append(vazio('', 'Procurando os canais em comum…')); return; }
   if (!pessoaCanais.length) { log.append(vazio('👤', 'Vocês ainda não estão no mesmo canal. Num canal que você administra, ℹ️ Detalhes › Adicionar pessoa.')); return; }
   pessoaCanais.forEach(c => {
@@ -1180,6 +1192,80 @@ function renderPessoa(log) {
     log.append(b);
   });
 }
+// ═══ 🔔 Avisos de mensagem nova, estilo WhatsApp (docs/ideias/cardume-v0-banco.md › "Avisos de mensagem nova") ═══
+// Preferência PRIVADA (avisos/{uid}/{canal} = {nivel, ate?}; sem nó = 🔔 todas); a função conchaAvisoMsg manda o push. #tags seguidas avisam
+// mesmo com o canal em 🔕. vendo/{uid}/{canal} = sinal de vida da conversa aberta (30 s): quem está vendo não recebe push.
+let avisos = {}, seguidas = {};
+const ROT_AVISO = { todas: 'todas as mensagens', mencoes: 'só @menções e #tags que sigo', nada: 'nada (nem menção)' };
+const ICONE_AVISO = { todas: '🔔', mencoes: '🔕', nada: '🚫' };
+const MAX_SEGUIDAS = 30;
+function nivelAviso(id) {   // mesmo critério da função (nivelDe): ausente, estranho ou com prazo vencido = todas
+  const p = avisos[id];
+  if (!p || typeof p !== 'object' || !['mencoes', 'nada'].includes(p.nivel)) return 'todas';
+  if (p.ate != null && !(typeof p.ate === 'number' && p.ate > Date.now())) return 'todas';
+  return p.nivel;
+}
+function modalAvisos(id) {
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  const h = el('h2', '', '🔔 Avisos de # ' + nomeCanal(id)); h.id = 'md-t'; f.append(h);
+  f.append(el('p', 'subtitulo', 'O push chega no celular e no computador em que você ativou os avisos. Quem está com a conversa aberta não recebe.'));
+  const atual0 = nivelAviso(id), fs = el('fieldset'); fs.style.cssText = 'border:0;padding:0;margin:0;display:grid;gap:6px;'; fs.append(el('legend', 'subtitulo', 'Avisar de'));
+  const radio = (v, t, d) => { const l = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = 'nivel'; r.value = v; r.checked = atual0 === v; const tx = el('span'); tx.append(el('b', '', ICONE_AVISO[v] + ' ' + t), document.createElement('br'), el('span', 'subtitulo', d)); l.append(r, tx); return l; };
+  fs.append(radio('todas', 'Todas as mensagens', 'O padrão. Várias seguidas viram um aviso só.'), radio('mencoes', 'Só @menções e #tags que sigo', 'Como silenciar no WhatsApp: a @menção e as #tags que você segue continuam avisando.'), radio('nada', 'Nada', 'Nem @menção. A menção ainda aparece em @ Menções e no Sino.'));
+  f.append(fs);
+  const lp = el('label', '', 'Por quanto tempo'), prazo = el('select');
+  [['8h', 'Por 8 horas'], ['1s', 'Por 1 semana'], ['sempre', 'Sempre']].forEach(([v, t]) => prazo.append(new Option(t, v)));
+  const p0 = avisos[id]; prazo.value = p0 && typeof p0.ate === 'number' ? (p0.ate - Date.now() > 864e5 ? '1s' : '8h') : 'sempre';
+  lp.append(prazo); f.append(lp);
+  const sincPrazo = () => { lp.hidden = f.querySelector('input[name="nivel"]:checked').value === 'todas'; }; fs.onchange = sincPrazo; sincPrazo();
+  const tags = Object.keys(seguidas).filter(tagOk).sort();
+  if (tags.length) {
+    f.append(el('p', 'subtitulo', '#tags que você segue (avisam em todos os seus canais):'));
+    const ls = el('div', 'lista-seguidas');
+    tags.forEach(t => { const b = el('button', '', '#' + t + ' ✕'); b.type = 'button'; b.setAttribute('aria-label', 'Deixar de seguir #' + t); b.onclick = () => { seguir(t, false); b.remove(); }; ls.append(b); });
+    f.append(ls);
+  }
+  const err = el('p', 'erro'); err.hidden = true; f.append(err);
+  const l = el('div', 'linha'); const can = el('button', '', 'Cancelar'); can.type = 'button'; can.onclick = fecharModal;
+  const ok = el('button', 'primary', 'Salvar'); ok.type = 'submit'; l.append(can, ok); f.append(l);
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const nivel = f.querySelector('input[name="nivel"]:checked').value;
+    const val = nivel === 'todas' ? null : Object.assign({ nivel }, prazo.value === '8h' ? { ate: Date.now() + 8 * 3600e3 } : prazo.value === '1s' ? { ate: Date.now() + 7 * 864e5 } : {});
+    ok.disabled = true;
+    try { await set(ref(db, B + 'avisos/' + user.uid + '/' + id), val); fecharModal(); toast(nivel === 'todas' ? '🔔 Avisos de todas as mensagens.' : ICONE_AVISO[nivel] + ' ' + nomeCanal(id) + ': ' + ROT_AVISO[nivel] + (prazo.value === 'sempre' ? '.' : ' (' + prazo.options[prazo.selectedIndex].text.toLowerCase() + ').')); }
+    catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão para salvar.' : 'Não deu para salvar agora. Tente de novo.'); }
+  };
+  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
+  ov.append(f); (f.querySelector('input[name="nivel"]:checked') || ok).focus();
+}
+$('b-aviso').onclick = () => { if (atual && souMembro(atual)) modalAvisos(atual); };
+async function seguir(t, sim) {
+  if (!tagOk(t)) return;
+  if (sim && Object.keys(seguidas).length >= MAX_SEGUIDAS) { toast('Você já segue ' + MAX_SEGUIDAS + ' #tags. Deixe de seguir alguma em 🔔 Avisos.'); return; }
+  try { await set(ref(db, B + 'seguidas/' + user.uid + '/' + t), sim ? serverTimestamp() : null); toast(sim ? '🔔 Seguindo #' + t + ': avisa em todos os seus canais, mesmo os silenciados.' : 'Você deixou de seguir #' + t + '.'); }
+  catch (e) { falhou(sim ? 'seguir a #tag' : 'deixar de seguir', e); }
+}
+function botaoSeguir(k) {
+  const sigo = seguidas[k] != null, b = el('button', 'seguir-tag' + (sigo ? '' : ' primary'), sigo ? '✓ Seguindo #' + k : '🔔 Seguir #' + k);
+  b.type = 'button'; b.setAttribute('aria-pressed', String(sigo)); b.title = sigo ? 'Deixar de seguir' : 'Avisar de toda mensagem nova com #' + k + ' nos seus canais, mesmo os silenciados';
+  b.onclick = () => seguir(k, !sigo); return b;
+}
+// Sinal de vida da conversa aberta: 1 chave por canal (duas abas em canais diferentes não se atrapalham); some ao sair, esconder ou cair.
+let vendoCanal = '', vendoT = 0;
+function pulsoVendo() {
+  const id = user && atual && souMembro(atual) && conversaVisivel() ? atual : '';
+  if (vendoCanal && vendoCanal !== id) { set(ref(db, B + 'vendo/' + user.uid + '/' + vendoCanal), null).catch(() => {}); vendoCanal = ''; }
+  if (!id) return;
+  const r = ref(db, B + 'vendo/' + user.uid + '/' + id);
+  if (vendoCanal !== id) { vendoCanal = id; onDisconnect(r).remove().catch(() => {}); }
+  set(r, serverTimestamp()).catch(() => {});
+}
+document.addEventListener('visibilitychange', pulsoVendo);
+setInterval(() => { if (user) pulsoVendo(); }, 30000);
+
 // ═══ 🔍 Sonar (Ctrl/⌘+K, mare-sonar-dev.js): canais, pessoas e #tags — só da Concha (decisão do Caio, 25/11) ═══
 // #tags: tags_ult/{canal} dos canais em que a pessoa está (uma chave por tag, sem baixar o índice), relido ao abrir o Sonar se tiver mais de 2 min.
 let tagsUlt = {}, tagsUltEm = 0, tagsUltVez = 0;   // tag → { ult, canais: [ids] }
@@ -1446,7 +1532,7 @@ function renderLado() {
   $('b-lado').setAttribute('aria-pressed', String(!lado.hidden));
   lado.replaceChildren(); if (!id) return;
   const c = canais[id], g = gestor(id), membro = souMembro(id);
-  const cab = el('header', 'cabecalho'); const v = el('button', 'voltar', '←'); v.type = 'button'; v.setAttribute('aria-label', 'Voltar à conversa'); v.onclick = () => { $('app').dataset.tela = 'conversa'; renderLista(); marcarLido(); };
+  const cab = el('header', 'cabecalho'); const v = el('button', 'voltar', '←'); v.type = 'button'; v.setAttribute('aria-label', 'Voltar à conversa'); v.onclick = () => { $('app').dataset.tela = 'conversa'; renderLista(); marcarLido(); pulsoVendo(); };
   const tt = el('div', 'grow'); tt.append(el('p', 'subtitulo', 'Detalhes'), el('h2', '', nomeCanal(id))); cab.append(v, tt); lado.append(cab);
   const s = el('section');
   // ativar canal oficial (ADM)
@@ -1497,8 +1583,8 @@ function renderLado() {
   }
   lado.append(s);
 }
-$('b-lado').onclick = () => { verLado = $('lado').hidden; lsSet('cardume_lado', verLado ? '1' : '0'); if (window.matchMedia('(max-width: 899px)').matches) { verLado = true; renderLado(); $('app').dataset.tela = 'lado'; return; } renderLado(); };
-$('b-voltar').onclick = () => { $('app').dataset.tela = 'canais'; renderLista(); };
+$('b-lado').onclick = () => { verLado = $('lado').hidden; lsSet('cardume_lado', verLado ? '1' : '0'); if (window.matchMedia('(max-width: 899px)').matches) { verLado = true; renderLado(); $('app').dataset.tela = 'lado'; pulsoVendo(); return; } renderLado(); };
+$('b-voltar').onclick = () => { $('app').dataset.tela = 'canais'; renderLista(); pulsoVendo(); };
 
 // Pares que as regras exigem no MESMO update (docs/ideias/cardume-v0-banco.md › Contratos)
 const parMembro = (id, uid, v) => ({ [B + 'membros/' + id + '/' + uid]: v, [B + 'meus/' + uid + '/' + id]: v });
@@ -1612,7 +1698,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.
