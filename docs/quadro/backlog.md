@@ -57,6 +57,23 @@
 | ❓ **Ajuda da Concha (help content)** | Só a linha de dicas embaixo do campo | Ajuda própria (❓ no topo), no padrão das outras: canais e seções, mensagem (formatação, @, #tag, GIF, responder, reagir, 📝 No card), avisos 🔔/🔕/🚫 e #tags seguidas, Sonar (Ctrl/⌘+K), @ Menções. Entra no `/atualizarhelpcontent` e na base do Agente Ágil. R0–R1 |
 | 🧷 **`@card:` e `@objetivo:` funcionando** | Desenho pronto em [cardume-citar](#cardume-citar) | Seguir o desenho de lá (cache do Sonar para objetivos; títulos de card leves; chip na mensagem). R2 |
 
+<a id="concha-comparativo"></a>
+
+### Concha — ideias do comparativo com Slack e concorrentes
+
+Ordem sugerida para avaliar no piloto. A análise de 25/11/2026 partiu da Concha dev e do [plano existente](../ideias/cardume.md). O uso no piloto e o Firebase ficaram fora da verificação.
+
+| Prioridade sugerida | Ideia | Referência |
+|---|---|---|
+| 1 | **Copiar link e salvar para depois.** Aproveitar o salto por ID para abrir a mensagem no contexto. Salvos ficam numa lista pessoal e respeitam o acesso ao canal e a exclusão da mensagem. Lembretes podem vir depois. | [Links no Slack](https://slack.com/help/articles/203274767-Forward-messages-in-Slack) · [Salvos no Slack](https://slack.com/intl/en-gb/help/articles/360042650274-Save-messages-and-files-for-later) |
+| 2 | **Fixar no canal.** Reunir decisões, mensagens e links úteis em Detalhes, visíveis para quem pode ler o canal. | [Detalhes do chat no Teams](https://support.microsoft.com/en-us/teams/chat/show-chat-info-in-microsoft-teams) |
+| 3 | **Paginar o histórico e buscar no texto.** Carregar mensagens mais antigas ao rolar para cima. Ampliar o Sonar com texto e filtros de canal, autor e período, respeitando o acesso às mensagens. A busca já consta no plano. | [Busca no Slack](https://slack.com/help/articles/202528808-Search-in-Slack-Search-in-Slack-) |
+| 4 | **Acompanhar fios por mensagem.** Evoluir a citação do Responder para um painel com contagem e opção de seguir. Em canais de suporte, avaliar tópicos com estado Aberto ou Resolvido. | [Threads no Slack](https://slack.com/help/articles/115000769927-Use-threads-to-organize-discussions) · [Fóruns no Discord](https://support.discord.com/hc/en-us/articles/6208479917079-Forum-Channels-FAQ) |
+| 5 | **Marcar como não lida e reunir pendências.** Dar uma forma de voltar à conversa e avaliar uma lista no Sino em que a leitura e a conclusão sejam ações distintas. | [Não lidas no Slack](https://slack.com/help/articles/226410907-View-all-your-unread-messages) · [Caixa de entrada do Twist](https://twist.com/help/articles/the-new-and-updated-twist-HSc4VzbsE) |
+| 6 | **Enquetes rápidas e envio agendado.** Duas ideias independentes para decisões da squad e comunicados com hora marcada. | [Enquetes no Teams](https://support.microsoft.com/en-us/teams/apps-service/create-a-poll-in-microsoft-teams) · [Agendamento no Teams](https://support.microsoft.com/en-us/teams/teams-channels/schedule-channel-messages-in-microsoft-teams) |
+
+**Integração já prevista com o Maré.** A Concha já registra mensagens em cards existentes. A próxima proposta é criar um card a partir da mensagem, com squad, responsável, prazo e link de volta à conversa. Mensagens diretas, anexos e chamadas já foram considerados para depois do v0. [Plano da Concha](../ideias/cardume.md) · [Tarefas no Google Chat](https://support.google.com/chat/answer/9920628?co=GENIE.Platform%3DDesktop&hl=en)
+
 <a id="cardume-avisos"></a>
 
 | Ideia | Dono | Onde está o desenho |
