@@ -33,14 +33,14 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   await p.hover('[data-msg="-Nm1"]'); await p.click('[data-msg="-Nm1"] [aria-label="Editar"]'); await p.waitForTimeout(150);
   await p.focus(ed); await p.keyboard.press('End'); await p.keyboard.type(' @Br');
   await p.waitForTimeout(150);
-  const lista = await p.$$eval('#sug-ed .sugestao', xs => xs.map(x => x.textContent));
+  const lista = await p.$$eval('#sug-ed .sugestao', xs => xs.map(x => [...x.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')));   // só o nome (a foto/iniciais vêm antes)
   t('@ no editor abre a lista do próprio editor, filtrada', lista.length === 1 && lista[0] === '@Bruno Reis' && await p.isVisible('#sug-ed'), lista);
   t('a lista do compositor fica fechada', await p.isHidden('#sugestoes'), 0);
   t('acessibilidade: o editor aponta a opção destacada', (await p.getAttribute(ed, 'aria-activedescendant')) === 'sug-ed-0', await p.getAttribute(ed, 'aria-activedescendant'));
   await p.keyboard.press('Enter'); await p.waitForTimeout(100);
   t('Enter escolhe a pessoa (não salva)', (await p.inputValue(ed)) === 'Bom dia, time @Bruno Reis ' && await p.isVisible(ed), await p.inputValue(ed));
   await p.keyboard.type('e @'); await p.waitForTimeout(120);
-  const todos = await p.$$eval('#sug-ed .sugestao', xs => xs.map(x => x.textContent));
+  const todos = await p.$$eval('#sug-ed .sugestao', xs => xs.map(x => [...x.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')));   // só o nome (a foto/iniciais vêm antes)
   t('@ sozinho lista os membros (menos eu)', todos.length === 2 && !todos.includes('@Ana Lima'), todos);
   await p.keyboard.press('ArrowDown'); await p.keyboard.press('Tab'); await p.waitForTimeout(100);
   t('seta + Tab escolhem a segunda pessoa', /@Carla Dias $/.test(await p.inputValue(ed)), await p.inputValue(ed));

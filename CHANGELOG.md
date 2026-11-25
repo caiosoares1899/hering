@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: foto no @, barra de formatação com explicação e #, quem reagiu à vista (SÓ DEV, cardume v0.26) — 2026-11-25
+
+Pedidos do Caio no Quadro (25/11). 📸 A lista do @ mostra a foto da pessoa (ou as iniciais), no campo e ao editar. ✍️ A barra de formatação explica cada botão com o atalho (title) e ganhou @ e # — o # abre a lista das #tags dos seus canais (as mais usadas recentemente; sem acento) — e o "?" abre um guia curto (negrito, itálico, riscado, código, lista, citação, @, #assunto, link). Os botões não roubam mais o foco do campo (a seleção não some). 😀 Quem reagiu fica à vista: até 3 pessoas, os nomes no chip ("👍 Você, Ana"); mais que isso, "❤️ 5" e tocar abre a lista com "Reagir também"/"Tirar a minha" (decisão do Caio). Só tela, sem regra. Testes: test_concha_lote_ui.js (14); test_concha_reacoes e test_concha_mencao_edicao ajustados ao formato novo. Prints: docs/capturas/concha-lote-ui/.
+
 ### 🐚 Concha: 📁 seções na lista de canais, como no Slack (SÓ DEV, cardume v0.25, regra secoes) — 2026-11-25
 
 Pedido do Caio: agrupamentos separados, como as seções do Slack. Organização pessoal (só você vê): suas seções vêm primeiro na lista, na sua ordem (⭐ Favoritos, Projetos…); o canal que não está em nenhuma segue em Squads/Temáticos. Clicar no título recolhe/expande (recolhida mostra "N novas" e mantém o canal aberto à vista; vale em todos os aparelhos). 📁 Seções cria (atalho ⭐ Favoritos), renomeia, reordena e apaga (os canais voltam ao padrão); ℹ️ Detalhes › 📁 Na sua lista move o canal ("＋ Nova seção…" cria e já põe). Banco: kanban/cardume/secoes/{uid} (privado; o canal só aponta para seção que existe). Testes: cardumeRules (+1, sabotagens), test_concha_secoes.js (13); contraste das 5 regiões nos 3 temas ok. Deploy: firebase deploy --only database antes do merge.

@@ -194,7 +194,12 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 .so-toque{display:none;}
 @media (hover:none) and (pointer:coarse){.so-teclado{display:none;}.so-toque{display:inline;}}
 .sugestoes,.emojis,.gifs{position:absolute;z-index:3;bottom:100%;left:14px;right:14px;max-height:40vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:var(--r2);background:rgba(var(--ink-rgb),.95);box-shadow:var(--shadow),var(--specular);}
-.sugestao{display:block;width:100%;text-align:left;margin-bottom:2px;min-height:36px;}
+.sugestao{display:flex;align-items:center;gap:8px;width:100%;text-align:left;margin-bottom:2px;min-height:36px;}
+.sugestao .avatar{width:24px;height:24px;font-size:10px;flex:none;}
+.fmt-ajuda{margin:0 0 8px;padding:10px 12px;border:1px solid var(--glass-b);border-radius:var(--r2,10px);background:rgba(var(--slate-rgb),.6);font-size:13px;color:var(--txt2);}
+.fmt-ajuda p{margin:0 0 6px;color:var(--txt);} .fmt-ajuda ul{margin:0;padding-left:18px;display:grid;gap:3px;} .fmt-ajuda code{font-size:12px;}
+.rx-lista{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 0;padding:6px 10px;border:1px solid var(--glass-b);border-radius:10px;font-size:13px;color:var(--txt2);}
+.rx-lista b{color:var(--txt);}
 .sugestao[aria-selected="true"]{border-color:var(--accent);background:rgb(var(--slate-rgb));}
 .emojis{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:2px;right:auto;width:min(360px,calc(100% - 28px));}
 .emojis input{grid-column:1/-1;margin-bottom:4px;}
@@ -306,14 +311,29 @@ button.msg-gif{cursor:pointer;}
         <div class="emojis" id="emojis" role="dialog" aria-label="Emojis" hidden></div>
         <div class="gifs" id="gifs" role="dialog" aria-label="GIFs" hidden></div>
         <div class="barra-fmt" role="toolbar" aria-label="Formatação">
-          <button type="button" data-fmt="**" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button>
-          <button type="button" data-fmt="_" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button>
-          <button type="button" data-fmt="~~" title="Riscado" aria-label="Riscado"><s>S</s></button>
-          <button type="button" data-fmt="`" title="Código" aria-label="Código">&lt;/&gt;</button>
-          <button type="button" data-lista="- " title="Lista" aria-label="Lista">•</button>
-          <button type="button" data-lista="> " title="Citação" aria-label="Citação">❝</button>
+          <button type="button" data-fmt="**" title="Negrito: **texto** · Ctrl+B" aria-label="Negrito (Ctrl+B)"><b>B</b></button>
+          <button type="button" data-fmt="_" title="Itálico: _texto_ · Ctrl+I" aria-label="Itálico (Ctrl+I)"><i>I</i></button>
+          <button type="button" data-fmt="~~" title="Riscado: ~~texto~~" aria-label="Riscado"><s>S</s></button>
+          <button type="button" data-fmt="`" title="Código: `texto` (bloco: ``` numa linha antes e outra depois)" aria-label="Código">&lt;/&gt;</button>
+          <button type="button" data-lista="- " title="Lista: - no começo da linha" aria-label="Lista">•</button>
+          <button type="button" data-lista="> " title="Citação: > no começo da linha" aria-label="Citação">❝</button>
+          <button type="button" data-ins="@" title="Mencionar: @ e o nome (a pessoa é avisada)" aria-label="Mencionar alguém">@</button>
+          <button type="button" data-ins="#" title="#tag: junta o assunto, vira etiqueta clicável e aparece na busca" aria-label="Pôr uma #tag">#</button>
           <button type="button" id="b-emoji" title="Emoji" aria-label="Emoji" aria-expanded="false">😀</button>
           <button type="button" id="b-gif" class="b-gif" title="GIF" aria-label="GIF" aria-expanded="false">GIF</button>
+          <button type="button" id="b-fmt-ajuda" class="b-fmt-ajuda" title="Como formatar" aria-label="Como formatar" aria-expanded="false" aria-controls="fmt-ajuda">?</button>
+        </div>
+        <div class="fmt-ajuda" id="fmt-ajuda" hidden>
+          <p><b>Como escrever na Concha</b> — escolha o texto e toque no botão, ou digite direto:</p>
+          <ul>
+            <li><code>**negrito**</code> → <b>negrito</b> · Ctrl+B &nbsp; <code>_itálico_</code> → <i>itálico</i> · Ctrl+I &nbsp; <code>~~riscado~~</code> → <s>riscado</s></li>
+            <li><code>`código`</code> para um trecho; <code>```</code> numa linha antes e outra depois para um bloco</li>
+            <li><code>- </code> no começo da linha faz lista; <code>&gt; </code> faz citação</li>
+            <li><b>@Nome</b> menciona alguém do canal (a pessoa é avisada)</li>
+            <li><b>#assunto</b> vira etiqueta clicável: junta as mensagens do assunto nos seus canais e aparece na busca (Ctrl/⌘+K). Precisa de pelo menos uma letra (<code>#1966</code> não vira)</li>
+            <li>Link <code>https://</code> vira link; link de card do Maré vira o card</li>
+            <li>Enter envia · Shift+Enter quebra linha</li>
+          </ul>
         </div>
         <div class="resp-barra" id="resp-barra" hidden></div>
         <div class="gif-escolhido" id="gif-escolhido" hidden></div>
@@ -339,7 +359,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.25 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.26 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -495,6 +515,7 @@ async function gravarComTags(mapa) {
     await update(ref(db), sem);
   }
 }
+const norm = x => String(x == null ? '' : x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();   // sem acento (lista de #tags)
 function tagsEm(txt) {   // a mesma leitura para mostrar, indexar e comparar na edição
   const limpo = String(txt || '').replace(/```[\s\S]*?(```|$)/g, ' ').replace(/`[^`\n]*`/g, ' ').replace(/https:\/\/[^\s<>"']+/g, ' ');
   const out = new Set(), re = new RegExp(TAG_ANTES + TAG_CORPO, 'gu'); let m;
@@ -783,15 +804,30 @@ function reacoesDe(id) {        // [[emoji, [uids]]] na ordem da lista; ignora o
   const por = {}; Object.keys(r).forEach(u => { const e = r[u]; if (ID_RE.test(u) && REACT_EMOJIS.includes(e)) (por[e] = por[e] || []).push(u); });
   return REACT_EMOJIS.filter(e => por[e]).map(e => [e, por[e]]);
 }
+// Até 3 pessoas, os nomes ficam no chip ("👍 Você, Ana"; tocar reage/tira); mais que isso, "👍 5" e tocar abre a lista com "Reagir também" (decisão do Caio, 25/11).
+let rxLista = '';   // 'msgId|emoji' com a lista de quem reagiu aberta
+const ordemQuem = uids => uids.slice().sort((a, b) => (b === user.uid) - (a === user.uid) || nomePessoa(a).localeCompare(nomePessoa(b), 'pt-BR'));
+const curtoQuem = u => u === user.uid ? 'Você' : nomePessoa(u).split(/\s+/)[0];
 function linhaReacoes(m, rx, podeReagir) {
   const linha = el('div', 'rx-linha'), quem = el('p', 'rx-quem');
   rx.forEach(([e, uids]) => {
-    const nomes = uids.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', ');
-    const b = el('button', 'rx-chip', e + ' ' + uids.length); b.type = 'button'; b.dataset.e = e;
-    b.setAttribute('aria-pressed', String(uids.includes(user.uid))); b.title = nomes; b.setAttribute('aria-label', e + ' ' + uids.length + ': ' + nomes);
-    if (podeReagir) b.onclick = ev => reagir(m, e, ev.detail === 0); else b.disabled = true;
+    const ord = ordemQuem(uids), nomes = ord.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', '), poucos = uids.length <= 3;
+    const b = el('button', 'rx-chip', e + ' ' + (poucos ? ord.map(curtoQuem).join(', ') : uids.length)); b.type = 'button'; b.dataset.e = e;
+    b.setAttribute('aria-pressed', String(uids.includes(user.uid))); b.title = nomes; b.setAttribute('aria-label', e + ' ' + uids.length + ': ' + nomes + (poucos ? '' : '. Ver todos'));
+    if (!poucos) { b.setAttribute('aria-expanded', String(rxLista === m.id + '|' + e)); b.onclick = () => { rxLista = rxLista === m.id + '|' + e ? '' : m.id + '|' + e; renderMsgs(); const x = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] .rx-lista button'); if (x) x.focus({ preventScroll: true }); }; }
+    else if (podeReagir) b.onclick = ev => reagir(m, e, ev.detail === 0); else b.disabled = true;
     linha.append(b);
   });
+  const aberta = rx.find(([e]) => rxLista === m.id + '|' + e);
+  if (aberta) {
+    const [e, uids] = aberta, minha = uids.includes(user.uid), box = el('div', 'rx-lista');
+    box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Quem reagiu com ' + e);
+    const tx = el('span'); tx.append(el('b', '', e + ' ' + uids.length + ': '), document.createTextNode(ordemQuem(uids).map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', '))); box.append(tx);
+    if (podeReagir) { const r = el('button', minha ? '' : 'primary', minha ? 'Tirar a minha' : e + ' Reagir também'); r.type = 'button'; r.onclick = ev => { rxLista = ''; reagir(m, e, ev.detail === 0); }; box.append(r); }
+    const x = el('button', 'lnk', 'fechar'); x.type = 'button'; x.onclick = () => { rxLista = ''; renderMsgs(); }; box.append(x);
+    box.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); rxLista = ''; renderMsgs(); } });
+    return [linha, box, quem];
+  }
   quem.textContent = rx.map(([e, uids]) => e + ' ' + uids.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', ')).join(' · ');   // no toque não há title: os nomes aparecem na mensagem tocada
   return [linha, quem];
 }
@@ -1154,7 +1190,7 @@ function soltarCanal() {
   if (atual) lsSet(chaveRascunho(atual), entrada.value);
   if (vendoCanal && user) { set(ref(db, B + 'vendo/' + user.uid + '/' + vendoCanal), null).catch(() => {}); vendoCanal = ''; }   // saiu da conversa
   parar('msgs'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false);
-  msgs = []; reacoes = {}; rxAbrindo = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+  msgs = []; reacoes = {}; rxAbrindo = ''; rxLista = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
 }
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
@@ -1377,6 +1413,7 @@ function carregarTagsUlt() {
     r.forEach(([c, v]) => Object.keys(v).forEach(t => { if (!tagOk(t) || typeof v[t] !== 'number') return; const x = m[t] = m[t] || { ult: 0, canais: [] }; x.ult = Math.max(x.ult, v[t]); x.canais.push(c); }));
     tagsUlt = m;
     const inp = document.getElementById('msn-in'); if (window.MareSonar && MareSonar.aberto() && inp) inp.dispatchEvent(new Event('input'));   // o Sonar já aberto mostra as tags que chegaram
+    if (document.activeElement === entrada && /#[\p{L}\p{N}_-]{0,32}$/u.test(entrada.value.slice(0, entrada.selectionStart))) atualizarSug();   // a lista do # no campo também
   }).catch(() => { tagsUltEm = 0; });
 }
 const itemCanal = id => {
@@ -1461,16 +1498,27 @@ function fecharSug() {
 function atualizarSug(t = entrada, box = $('sugestoes')) {
   fecharSug();
   const antes = t.value.slice(0, t.selectionStart);
+  const mt = antes.match(/(?:^|[\s(*_~>])#([\p{L}\p{N}_-]{0,32})$/u);
+  if (mt) {   // #: as #tags dos seus canais (tags_ult, o mesmo do Sonar), das mais usadas recentemente
+    carregarTagsUlt();
+    const q = mt[1].toLowerCase(), nq = norm(q);
+    const its = Object.keys(tagsUlt).sort((a, b) => tagsUlt[b].ult - tagsUlt[a].ult).filter(k => !q || norm(k).startsWith(nq)).slice(0, 8).map(k => ({ txt: '#' + k, ins: '#' + k + ' ' }));
+    if (!its.length) return;
+    sug = { itens: its, ini: antes.lastIndexOf('#'), sel: 0, t, box };
+    its.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = box.id + '-' + i; o.setAttribute('role', 'option'); o.append(document.createTextNode(p.txt)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
+    box.hidden = false; destacarSug(); return;
+  }
   const m = antes.match(/(?:^|\s)@([\p{L} ]{0,30})$/u); if (!m) return;
   const busca = m[1].toLocaleLowerCase('pt-BR');
   const itens = Object.keys(membrosAtual).filter(u => u !== user.uid).map(u => ({ uid: u, nome: nomePessoa(u) })).filter(p => p.nome.toLocaleLowerCase('pt-BR').startsWith(busca) || p.nome.toLocaleLowerCase('pt-BR').split(' ').some(w => w.startsWith(busca))).slice(0, 8);
   if (!itens.length) return;
   sug = { itens, ini: antes.lastIndexOf('@'), sel: 0, t, box };
-  itens.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = box.id + '-' + i; o.setAttribute('role', 'option'); o.append(document.createTextNode('@' + p.nome)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
+  itens.forEach(p => { p.ins = '@' + p.nome + ' '; });
+  itens.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = box.id + '-' + i; o.setAttribute('role', 'option'); o.append(avatar(p.uid), document.createTextNode('@' + p.nome)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
   box.hidden = false; destacarSug();
 }
 function destacarSug() { [...sug.box.children].forEach((o, i) => o.setAttribute('aria-selected', String(i === sug.sel))); sug.t.setAttribute('aria-activedescendant', sug.box.id + '-' + sug.sel); }
-function escolherSug(i) { const p = sug.itens[i], t = sug.t; t.setRangeText('@' + p.nome + ' ', sug.ini, t.selectionStart, 'end'); fecharSug(); t.focus(); t.dispatchEvent(new Event('input')); }
+function escolherSug(i) { const p = sug.itens[i], t = sug.t; t.setRangeText(p.ins, sug.ini, t.selectionStart, 'end'); fecharSug(); t.focus(); t.dispatchEvent(new Event('input')); }
 // setas, Enter/Tab e Esc na lista — devolve true se tratou
 function teclaSug(e, t) {
   if (!sug || sug.t !== t) return false;
@@ -1501,7 +1549,13 @@ $('compositor').addEventListener('submit', e => { e.preventDefault(); enviar(); 
 document.querySelector('.barra-fmt').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.fmt) envolver(b.dataset.fmt); else if (b.dataset.lista) prefixarLinha(b.dataset.lista);
+  else if (b.dataset.ins) {   // @ e #: insere (com espaço antes se colado em palavra) e abre a lista
+    const a = entrada.selectionStart, antes = entrada.value.slice(0, a), pre = antes && !/\s$/.test(antes) ? ' ' : '';
+    entrada.setRangeText(pre + b.dataset.ins, a, entrada.selectionEnd, 'end'); entrada.focus(); entrada.dispatchEvent(new Event('input'));
+  }
 });
+document.querySelector('.barra-fmt').addEventListener('mousedown', e => { if (e.target.closest('[data-fmt],[data-lista],[data-ins]')) e.preventDefault(); });   // o foco fica no campo: a seleção não some e a lista do @/# não fecha no blur
+$('b-fmt-ajuda').onclick = () => { const a = $('fmt-ajuda'), abrir = a.hidden; a.hidden = !abrir; $('b-fmt-ajuda').setAttribute('aria-expanded', String(abrir)); };
 
 // Emojis: lista curta embutida (sem biblioteca) + recentes por navegador
 const EMOJIS = [['😀','sorriso'],['😂','risada'],['🙂','ok'],['😉','piscada'],['😍','amei'],['🤔','pensando'],['😅','ufa'],['😬','eita'],['😢','triste'],['😴','sono'],['🙏','obrigado por favor'],['👍','joinha sim'],['👎','não'],['👏','palmas'],['🙌','viva'],['💪','força'],['👀','olhando'],['🤝','combinado'],['✅','feito ok'],['❌','não erro'],['⚠️','atenção'],['🚨','urgente alerta'],['🔥','fogo'],['🚀','lançou'],['🎉','festa'],['💡','ideia'],['📌','fixar'],['📊','dados gráfico'],['📈','subiu'],['📉','caiu'],['🐛','bug'],['🛠️','conserto'],['⏰','prazo'],['📅','data'],['☕','café'],['🐟','peixe cardume'],['🌊','onda oceano'],['❤️','coração'],['💙','azul'],['⭐','estrela'],['🖤','black friday preto'],['🛒','compra'],['💰','dinheiro'],['🤖','robô']];
