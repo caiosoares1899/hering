@@ -57,6 +57,16 @@
 | ❓ **Ajuda da Concha (help content)** | Só a linha de dicas embaixo do campo | Ajuda própria (❓ no topo), no padrão das outras: canais e seções, mensagem (formatação, @, #tag, GIF, responder, reagir, 📝 No card), avisos 🔔/🔕/🚫 e #tags seguidas, Sonar (Ctrl/⌘+K), @ Menções. Entra no `/atualizarhelpcontent` e na base do Agente Ágil. R0–R1 |
 | 🧷 **`@card:` e `@objetivo:` funcionando** | Desenho pronto em [cardume-citar](#cardume-citar) | Seguir o desenho de lá (cache do Sonar para objetivos; títulos de card leves; chip na mensagem). R2 |
 
+<a id="concha-novos-pedidos-2511"></a>
+
+### Concha — novos pedidos do Caio (25/11/2026)
+
+| Pedido | Escopo sugerido |
+|---|---|
+| **Encaminhar mensagens** | Adicionar a opção Encaminhar às ações da mensagem, com seleção do canal de destino. Definir no desenho como preservar a autoria e respeitar o acesso ao conteúdo do canal de origem. |
+| **Limpar a aba Menções** | Adicionar a ação Limpar menções à aba da barra lateral esquerda. A ação afeta a lista pessoal e preserva as mensagens originais nos canais. |
+| **Escolher os temas Claro e Vice City** | Disponibilizar Lençóis (Claro) e Vice City na Concha. Conferir o fluxo de seleção e o uso da preferência do Oceano, que a página já lê ao abrir. |
+
 <a id="concha-comparativo"></a>
 
 ### Concha — ideias do comparativo com Slack e concorrentes
