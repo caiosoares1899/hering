@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: ✏️ editar a mensagem só nos primeiros 15 min, como no WhatsApp (SÓ DEV, cardume v0.32, regra) — 2026-11-25
+
+Pedido do Caio, como o WhatsApp (15 min). O ✏️ Editar só aparece na sua mensagem nos primeiros 15 minutos depois de enviar e some sozinho quando o prazo acaba; quem abriu o editor antes e salva depois recebe o aviso "Passaram 15 minutos" e nada é gravado. A regra do banco confere o mesmo com a hora do servidor (relógio do aparelho não conta). Apagar a própria continua valendo depois. Ajuda atualizada. Testes: cardumeRules (+1, sabotagem), test_concha_editar.js (7). Deploy: firebase deploy --only database antes do merge.
+
 ### 🐚 Concha: 😀 emoji do canal e do assunto, ＋ Assunto por último e ⚙️ na faixa (SÓ DEV, cardume v0.30, regras e) — 2026-11-25
 
 Pedido do Caio ao ver a faixa de assuntos. O assunto e o canal ganham emoji, escolhido numa lista fixa: o assunto no ⚙️ (quem cria escolhe; quem criou ou administra troca) e o canal nos ℹ️ Detalhes, por quem administra — inclusive PO/Organizador da squad no canal oficial. Sem escolha, o canal da squad usa o emoji da squad (📊 Dados) e o assunto continua 🧵. O emoji aparece na lista, no topo, no Sonar, na faixa e no campo ("Em 🎨 banner…"). A faixa agora tem ＋ Assunto por último e ⚙️ (no lugar do ⋯) fixo à direita, sempre à vista; no celular o topo voltou a caber numa linha. Banco: campo e em canais e assuntos (regras com a lista). Testes: cardumeRules (+2, sabotagens), test_concha_emoji.js (10). Deploy: firebase deploy --only database antes do merge.
