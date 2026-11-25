@@ -110,6 +110,12 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .assuntos-barra .ponto-a{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle;}
 .assuntos-barra .fechado{opacity:.75;}
 .aviso-encerrado{margin:8px 0;padding:8px 12px;border:1px dashed var(--glass-b);border-radius:10px;color:var(--txt2);font-size:13px;}
+.ajuda-md{width:min(720px,100%);max-height:min(86vh,900px);display:flex;flex-direction:column;}
+.ajuda-lista{overflow:auto;display:grid;gap:6px;margin-top:8px;padding-right:4px;}
+.ajuda-lista details{border:1px solid var(--glass-b);border-radius:10px;padding:8px 12px;background:rgba(var(--slate-rgb),.45);}
+.ajuda-lista summary{cursor:pointer;font-weight:700;min-height:28px;display:flex;align-items:center;gap:8px;}
+.ajuda-lista details[open] summary{margin-bottom:6px;}
+.ajuda-lista .texto p{margin:4px 0;} .ajuda-lista .texto ul{margin:4px 0;padding-left:18px;}
 .sec-vazia{margin:0 8px 6px;font-size:12px;}
 .lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
 .sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
@@ -280,6 +286,7 @@ button.msg-gif{cursor:pointer;}
       <div><p class="contexto">Oceano</p><h1>Concha <span class="devtag">dev</span></h1></div>
     </div>
     <div class="topo-dir">
+      <button type="button" id="b-ajuda" class="b-sino" hidden aria-label="Ajuda da Concha" title="Ajuda da Concha">❓</button>
       <button type="button" id="b-sino" class="b-sino" hidden aria-label="Notificações">🔔</button>
       <div id="who-slot"></div>
     </div>
@@ -341,6 +348,7 @@ button.msg-gif{cursor:pointer;}
             <li>Link <code>https://</code> vira link; link de card do Maré vira o card</li>
             <li>Enter envia · Shift+Enter quebra linha</li>
           </ul>
+          <button type="button" class="lnk" id="b-fmt-ajuda-tudo">❓ Ver a Ajuda completa da Concha</button>
         </div>
         <div class="resp-barra" id="resp-barra" hidden></div>
         <div class="gif-escolhido" id="gif-escolhido" hidden></div>
@@ -366,7 +374,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.28 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.29 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -535,6 +543,7 @@ function tagsEm(txt) {   // a mesma leitura para mostrar, indexar e comparar na 
   return [...out];
 }
 function linkSeguro(u) { try { const x = new URL(u); return x.protocol === 'https:' ? x.href : null; } catch (e) { return null; } }
+let textoSimples = false;   // Ajuda: # e @ dos exemplos ficam texto (nem etiqueta nem menção)
 function inline(txt, destino) {
   const re = new RegExp(/(\*\*([^*\n]+)\*\*)|(~~([^~\n]+)~~)|(`([^`\n]+)`)|((?:^|(?<=[\s(]))[_*]([^_*\n]+)[_*](?=$|[\s).,!?:;]))|(https:\/\/[^\s<>"']+)|(@[\p{L}][\p{L}.'-]*(?: [\p{L}][\p{L}.'-]*){0,3})/.source + '|(' + TAG_ANTES + TAG_CORPO + ')', 'gu');
   let i = 0, m;
@@ -550,6 +559,7 @@ function inline(txt, destino) {
       if (ok) { const a = el('a', '', url); a.href = ok; a.target = '_blank'; a.rel = 'noopener noreferrer'; destino.append(a); } else destino.append(document.createTextNode(url));
       if (sobra) destino.append(document.createTextNode(sobra));
     }
+    else if (m[10] && textoSimples) destino.append(document.createTextNode(m[10]));
     else if (m[10]) {
       const cand = mencaoDe(m[10]);
       if (cand) { destino.append(el('span', 'mencao' + (cand.uid === user.uid ? ' eu' : ''), '@' + cand.nome)); const resto = m[10].slice(1 + cand.nome.length); if (resto) destino.append(document.createTextNode(resto)); }
@@ -557,7 +567,7 @@ function inline(txt, destino) {
     }
     else if (m[11]) {
       const k = m[12].toLowerCase();
-      if (tagOk(k)) { const b = el('button', 'tag', '#' + m[12]); b.type = 'button'; b.setAttribute('aria-label', 'Ver as mensagens com #' + m[12]); b.title = 'Mensagens com #' + m[12] + ' nos seus canais'; b.onclick = ev => { ev.stopPropagation(); abrirTag(k); }; destino.append(b); }
+      if (tagOk(k) && !textoSimples) { const b = el('button', 'tag', '#' + m[12]); b.type = 'button'; b.setAttribute('aria-label', 'Ver as mensagens com #' + m[12]); b.title = 'Mensagens com #' + m[12] + ' nos seus canais'; b.onclick = ev => { ev.stopPropagation(); abrirTag(k); }; destino.append(b); }
       else destino.append(document.createTextNode(m[11]));
     }
     i = re.lastIndex;
@@ -1441,6 +1451,52 @@ function renderPessoa(log) {
     log.append(b);
   });
 }
+// ═══ ❓ Ajuda da Concha (mantida pelo /atualizarhelpcontent): tópicos em Markdown simples, desenhados pelo mesmo renderTexto das mensagens
+// (DOM, sem innerHTML). Exemplos de @ e # vão entre crases para não virarem menção/etiqueta. Também entram no Sonar (aba Ajuda). ═══
+const AJUDA = [
+  { id: 'concha', ic: '🐚', t: 'O que é a Concha', txt: 'O chat do time dentro do Oceano.\n- **Canais das squads**: privados, só para quem a squad pôs no canal.\n- **Canais temáticos**: para um assunto ou período (ex.: Black Friday). **Aberto** aparece para toda a Hering e qualquer um entra; **Só convidados** só quem foi adicionado vê. Podem ter data de fim: depois dela ficam só leitura.\n- As mensagens são apagadas depois de **90 dias**.' },
+  { id: 'canais', ic: '#', t: 'Canais: entrar, sair, criar e administrar', txt: '- **➕ Novo canal** (na lista): cria um temático. Você vira a dona e administra.\n- **ℹ️ Detalhes** (no topo da conversa): membros, **Entrar** ou **Sair do canal**, adicionar e tirar pessoas e, no temático, **⚙️ Editar canal** (nome, quem entra, data de fim, **Arquivar agora**).\n- Quem administra: no canal da squad, PO e Organizador da squad e ADM; no temático, a dona, quem ela fez admin e ADM.\n- Canal com um **ponto** na lista tem mensagem nova.' },
+  { id: 'secoes', ic: '📁', t: 'Seções na lista de canais', txt: 'Organize a lista do seu jeito. **Só você vê** suas seções.\n- **📁 Seções** (abaixo de ➕ Novo canal): crie (tem atalho para **⭐ Favoritos**), renomeie, mude a ordem e apague. Apagar devolve os canais à seção padrão (Squads/Temáticos).\n- Para pôr um canal numa seção: **ℹ️ Detalhes › 📁 Na sua lista** (ou "＋ Nova seção…" ali mesmo).\n- Clique no **título** da seção para recolher ou abrir. Recolhida, ela mostra quantos canais têm novas e deixa à vista o canal aberto. Vale em todos os seus aparelhos.' },
+  { id: 'escrever', ic: '✍️', t: 'Escrever: formatação, emoji, GIF e links', txt: '- **Enter** envia; **Shift+Enter** quebra a linha. O rascunho fica guardado por canal e por assunto.\n- Formatação (botões da barra ou digitando): `**negrito**` (Ctrl+B), `_itálico_` (Ctrl+I), `~~riscado~~`, código entre crases, três crases numa linha antes e outra depois para um bloco, `- ` no começo da linha para lista e `> ` para citação. O **?** da barra mostra o guia.\n- **😀** abre os emojis (com busca e recentes); **GIF** busca na KLIPY (o GIF pode ir sem legenda).\n- Link `https://` vira link. Link de **card do Maré** vira o chip com o título do card.' },
+  { id: 'mencoes', ic: '@', t: '@Menções', txt: '- Digite `@` (ou o botão **@**) e escolha a pessoa na lista, com a foto. Só aparecem membros do canal.\n- Quem você menciona recebe um aviso no **Sino** e push (se ativou no aparelho). O aviso não mostra o canal nem a mensagem: ela abre a Concha para ver.\n- **@ Menções** (no alto da lista) junta onde mencionaram ou responderam você. Abrir uma leva direto à mensagem, inclusive dentro de um assunto.\n- Editar uma mensagem para pôr uma `@` não avisa a pessoa.' },
+  { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
+  { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** cria um; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Mensagem em 🧵 …").\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⋯** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
+  { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⋯ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
+  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem (aparece "(editada)").\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.' },
+  { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
+  { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },
+  { id: 'privacidade', ic: '🔒', t: 'Quem vê o quê', txt: '- Mensagens de um canal: só quem é membro (e o ADM, para moderação).\n- Suas **seções**, **avisos**, #tags seguidas e o que você já leu são só seus.\n- O aviso no Sino é genérico (o Sino é lido pela empresa); o canal e a mensagem ficam num registro que só você lê.\n- O que vai para um **card do Maré** fica visível para toda a Hering.' },
+  { id: 'atalhos', ic: '⌨️', t: 'Atalhos', txt: '- **Ctrl/⌘+K**: buscar · **Enter**: enviar · **Shift+Enter**: nova linha\n- **Ctrl+B** / **Ctrl+I**: negrito / itálico\n- Na lista do `@` ou do `#`: **↑ ↓** escolhem, **Enter** ou **Tab** inserem, **Esc** fecha\n- **Esc**: cancela a resposta, fecha seletores e janelas' },
+];
+let ajudaFoco = '';
+function abrirAjuda(id) {
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('div', 'md ajuda-md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  const cab = el('div', 'linha'); const h = el('h2', '', '❓ Ajuda da Concha'); h.id = 'md-t'; h.style.flex = '1';
+  const x = el('button', '', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Fechar a Ajuda'); x.onclick = fecharModal; cab.append(h, x); f.append(cab);
+  const busca = el('input'); busca.type = 'search'; busca.placeholder = 'Buscar na Ajuda (ex.: assunto, silenciar, #tag)…'; busca.setAttribute('aria-label', 'Buscar na Ajuda'); f.append(busca);
+  const lista = el('div', 'ajuda-lista'); f.append(lista);
+  const nada = el('p', 'subtitulo', 'Nada encontrado. Tente outra palavra.'); nada.hidden = true; f.append(nada);
+  AJUDA.forEach(a => {
+    const d = el('details'); d.id = 'ajuda-' + a.id; d.dataset.busca = norm(a.t + ' ' + a.txt);
+    const sm = el('summary'); sm.append(el('span', '', a.ic), el('span', '', a.t));
+    textoSimples = true; let corpo; try { corpo = renderTexto(a.txt); } finally { textoSimples = false; }
+    d.append(sm, corpo); lista.append(d);
+  });
+  busca.oninput = () => {
+    const q = norm(busca.value.trim()), ps = q.split(/\s+/).filter(Boolean); let n = 0;
+    lista.querySelectorAll('details').forEach(d => { const v = !ps.length || ps.every(w => d.dataset.busca.includes(w)); d.hidden = !v; if (v) n++; if (ps.length) d.open = v; });
+    nada.hidden = n > 0;
+  };
+  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
+  ov.append(f);
+  const alvo = id && lista.querySelector('#ajuda-' + CSS.escape(id));
+  if (alvo) { alvo.open = true; alvo.scrollIntoView({ block: 'start' }); alvo.querySelector('summary').focus(); } else busca.focus();
+}
+$('b-ajuda').onclick = () => abrirAjuda('');
+$('b-fmt-ajuda-tudo').onclick = () => abrirAjuda('escrever');
+
 // ═══ 📁 Seções na lista de canais (pessoal; kanban/cardume/secoes/{uid} = {s: {id: {n, o}}, c: {canal: id}, r: {chave: true}}) ═══
 let secoes = { s: {}, c: {}, r: {} };
 const MAX_SECOES = 15;
@@ -1616,11 +1672,11 @@ function ligarSonar() {
   $('b-buscar').onclick = () => MareSonar.abrir();
   MareSonar.iniciar({
     dev: /-dev\.html/.test(location.pathname), pagina: 'concha', user: () => user, atalho: true, radar: false,
-    escopos: [{ id: 'tudo', l: 'Tudo' }, { id: 'canais', l: 'Canais' }, { id: 'tags', l: '#tags' }, { id: 'pessoas', l: 'Pessoas' }],
-    prefixos: { c: 'canais', t: 'tags', p: 'pessoas' },
+    escopos: [{ id: 'tudo', l: 'Tudo' }, { id: 'canais', l: 'Canais' }, { id: 'tags', l: '#tags' }, { id: 'pessoas', l: 'Pessoas' }, { id: 'ajuda', l: 'Ajuda' }],
+    prefixos: { c: 'canais', t: 'tags', p: 'pessoas', a: 'ajuda' },
     placeholder: 'Buscar canais, #tags e pessoas…', subtitulo: 'canais, #tags e pessoas da Concha',
     vazio: 'Tente outra palavra, uma <b>#tag</b> ou o nome de alguém.',
-    inicio: 'Digite o nome de um canal, uma <b>#tag</b> ou de uma pessoa. Com a caixa vazia, <b>1</b>–<b>3</b> escolhem onde buscar.',
+    inicio: 'Digite o nome de um canal, uma <b>#tag</b>, de uma pessoa ou uma dúvida. Com a caixa vazia, <b>1</b>–<b>4</b> escolhem onde buscar.',
     aoAbrir: () => { carregarTagsUlt(); fecharEmojis(false); fecharGifs(false); },
     fontes: (q) => {
       const soTag = /^#/.test(q.trim()), g = [];
@@ -1628,12 +1684,14 @@ function ligarSonar() {
       g.push({ g: '#tags', esc: 'tags', noVazio: true, max: 5, itens: tags.map(itemTag) });
       if (soTag) return g;
       g.unshift({ g: 'Canais', esc: 'canais', noVazio: true, max: 6, itens: canaisVisiveis().map(itemCanal) });
+      g.push({ g: 'Ajuda da Concha', esc: 'ajuda', max: 3, itens: AJUDA.map(a => ({ k: 'ajuda:' + a.id, ic: '❓', t: a.t, sub: 'Ajuda da Concha', tipo: 'ajuda', busca: a.txt.replace(/[*_`~>#-]/g, ' ').slice(0, 600), go: () => abrirAjuda(a.id), rec: { ajuda: a.id } })) });
       if (q.trim().length >= 2) g.push({ g: 'Pessoas', esc: 'pessoas', max: 5, itens: Object.keys(pub).filter(u => ID_RE.test(u) && /@ciahering\.com\.br$/i.test((pub[u] && pub[u].email) || '')).map(itemPessoa) });
       return g;
     },
     deRecente: (r, base) => {
       if (r.canal && ID_RE.test(String(r.canal))) { const id = String(r.canal); return canaisVisiveis().includes(id) ? Object.assign(base, { ic: '#', t: nomeCanal(id), go: () => abrirCanal(id, true) }) : null; }   // canal de outra conta (aparelho compartilhado) não aparece
       if (r.tag && tagOk(String(r.tag)) && tagsUlt[String(r.tag)]) { const t = String(r.tag); return Object.assign(base, { ic: '#️⃣', go: () => abrirTag(t) }); }   // só tag dos canais desta conta
+      if (r.ajuda && AJUDA.some(a => a.id === r.ajuda)) { const id = String(r.ajuda); return Object.assign(base, { ic: '❓', go: () => abrirAjuda(id) }); }
       if (r.pessoa && ID_RE.test(String(r.pessoa)) && pub[r.pessoa]) { const u = String(r.pessoa); return Object.assign(base, { ic: '👤', t: nomePessoa(u), go: () => abrirPessoa(u) }); }
       return null;
     },
@@ -2064,6 +2122,7 @@ function abrirDoSino(i) {
   return true;
 }
 function ligarSino() {
+  $('b-ajuda').hidden = false;
   if (!window.MareNotif || !MareNotif.sino) return;
   sinoUid = user.uid; $('b-sino').hidden = false;
   sinoApi = MareNotif.sino($('b-sino'), { user, isAdm: souAdm, toast, abrir: abrirDoSino });
@@ -2071,7 +2130,7 @@ function ligarSino() {
 async function iniciar() {
   limparSessao();
   renderWho();
-  if (!user) { $('b-sino').hidden = true; if (window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
+  if (!user) { $('b-sino').hidden = true; $('b-ajuda').hidden = true; if (window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
   if (sinoUid && sinoUid !== user.uid) { location.reload(); return; }   // o Sino (mare-notif) vale para UMA conta por página: trocar de conta recarrega
   $('login').hidden = true; $('loading').hidden = false; $('app').hidden = true;
   const meu = user.uid;

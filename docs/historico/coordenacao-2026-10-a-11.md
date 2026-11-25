@@ -348,3 +348,7 @@ Caio confirmou `firebase deploy --only database` com o nó `kanban/cardume/secoe
 ## Confirmação de deploy — 25/11/2026 (🧵 assuntos da Concha, PR A)
 
 Caio confirmou `firebase deploy --only database` (assuntos, campo `a`, `ultima_a`, `lidas_a`) antes do merge da #1974. Saiu de *Pendente de deploy*.
+
+## Confirmação de deploy — 25/11/2026 (🧵 avisos por assunto)
+
+Caio confirmou as regras (`avisos_a`) antes do merge da #1975 e `functions:conchaAvisoMsg` depois. Saiu de *Pendente de deploy*.
