@@ -46,8 +46,8 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const abrirSeletor = async id => { await p.hover('[data-msg="' + id + '"]'); await p.click('[data-msg="' + id + '"] [aria-label="Reagir"]'); await p.waitForTimeout(120); };
 
   t('emoji fora da lista no banco não aparece', !(await chips('-Nm1')).length, await chips('-Nm1'));
-  t('reações dos outros: "🎉 2", não pressionado, com os nomes no title', JSON.stringify(await chips('-Nm2')) === JSON.stringify([['🎉 2', 'false', 'Bruno Reis, Carla Dias']]), await chips('-Nm2'));
-  t('mensagem "enviada offline" (chave antiga, ts recente) mostra as reações dela', JSON.stringify((await chips('-Na0')).map(c => c[0])) === JSON.stringify(['👀 1']), await chips('-Na0'));
+  t('reações dos outros: "🎉 Bruno, Carla" (até 3, os nomes no chip), não pressionado, nomes completos no title', JSON.stringify(await chips('-Nm2')) === JSON.stringify([['🎉 Bruno, Carla', 'false', 'Bruno Reis, Carla Dias']]), await chips('-Nm2'));
+  t('mensagem "enviada offline" (chave antiga, ts recente) mostra as reações dela', JSON.stringify((await chips('-Na0')).map(c => c[0])) === JSON.stringify(['👀 Bruno']), await chips('-Na0'));
   t('mensagem apagada não mostra reações (mesmo com reação no banco)', !(await p.$('[data-msg="-Nm3"] .rx-linha')), 0);
 
   await abrirSeletor('-Nm1');
@@ -61,13 +61,13 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await abrirSeletor('-Nm1'); await p.click('[data-msg="-Nm1"] [aria-label="Reagir com 👍"]'); await p.waitForTimeout(300);
   t('reagir grava reacoes/dados/-Nm1/ana = 👍', (await rx())['-Nm1'].ana === '👍', await rx());
   t('com o mouse, o foco não fica preso no chip (a pílula não fica aberta)', await p.evaluate(() => !document.activeElement.classList.contains('rx-chip') && !document.activeElement.closest('.acoes-msg')), await p.evaluate(() => document.activeElement.outerHTML.slice(0, 80)));
-  t('o chip aparece pressionado: "👍 1"', JSON.stringify((await chips('-Nm1')).map(c => c.slice(0, 2))) === JSON.stringify([['👍 1', 'true']]), await chips('-Nm1'));
+  t('o chip aparece pressionado: "👍 Você"', JSON.stringify((await chips('-Nm1')).map(c => c.slice(0, 2))) === JSON.stringify([['👍 Você', 'true']]), await chips('-Nm1'));
   let nb = await notifs('bru');
   t('o aviso leva noTTLDelete (o Sino marca como dispensado em vez de apagar: o id fixo segue barrando o 2º aviso)', nb.length === 1 && nb[0][1].noTTLDelete === true, nb);
   t('o Bruno recebe 1 aviso genérico no Sino (sem canal, trecho nem emoji)', nb.length === 1 && nb[0][0] === 'rx_-Nm1_ana' && nb[0][1].type === 'cardume_reacao' && /Ana reagiu a uma mensagem sua na Concha/.test(nb[0][1].title) && !/Dados|Proposta|👍/.test(JSON.stringify(nb[0][1])), nb);
 
   await abrirSeletor('-Nm1'); await p.click('[data-msg="-Nm1"] [aria-label="Reagir com ❤️"]'); await p.waitForTimeout(300);
-  t('escolher outro troca (uma por pessoa): ❤️', (await rx())['-Nm1'].ana === '❤️' && JSON.stringify((await chips('-Nm1')).map(c => c[0])) === JSON.stringify(['❤️ 1']), await rx());
+  t('escolher outro troca (uma por pessoa): ❤️', (await rx())['-Nm1'].ana === '❤️' && JSON.stringify((await chips('-Nm1')).map(c => c[0])) === JSON.stringify(['❤️ Você']), await rx());
   t('trocar não manda outro aviso', (await notifs('bru')).length === 1 && (await p.evaluate(() => (window.__escritas || []).filter(e => /notificacoes/.test(e.p)).length)) === 1, await notifs('bru'));
   await p.click('[data-msg="-Nm1"] .rx-chip'); await p.waitForTimeout(300);
   t('tocar no próprio chip tira a reação', !((await rx())['-Nm1'] || {}).ana && !(await chips('-Nm1')).length, await rx());
@@ -75,7 +75,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('reagir de novo depois de tirar também não repete o aviso', (await notifs('bru')).length === 1 && (await p.evaluate(() => (window.__escritas || []).filter(e => /notificacoes/.test(e.p)).length)) === 1, 0);
 
   await p.click('[data-msg="-Nm2"] .rx-chip'); await p.waitForTimeout(300);
-  t('tocar no chip dos outros soma a sua: "🎉 3", pressionado', JSON.stringify((await chips('-Nm2')).map(c => c.slice(0, 2))) === JSON.stringify([['🎉 3', 'true']]) && (await rx())['-Nm2'].ana === '🎉', await chips('-Nm2'));
+  t('tocar no chip dos outros soma a sua: "🎉 Você, Bruno, Carla", pressionado', JSON.stringify((await chips('-Nm2')).map(c => c.slice(0, 2))) === JSON.stringify([['🎉 Você, Bruno, Carla', 'true']]) && (await rx())['-Nm2'].ana === '🎉', await chips('-Nm2'));
   t('reagir à própria mensagem não avisa ninguém (nem a si)', !(await notifs('ana')).length, await notifs('ana'));
 
   // escuta para ao sair do canal e ao abrir @ Menções

@@ -336,3 +336,11 @@ Caio confirmou `firebase deploy --only database` com os nós `kanban/cardume/tag
 ## Confirmação de deploy — 25/11/2026 (🔔 avisos da Concha)
 
 Caio confirmou as regras (`avisos`/`seguidas`/`vendo`/`aviso_env`) antes do merge da #1969 e `functions:conchaAvisoMsg,functions:sendPushOnNotification` depois. Saiu de *Pendente de deploy*.
+
+## Confirmação de deploy — 25/11/2026 (📁 seções da Concha)
+
+Caio confirmou `firebase deploy --only database` com o nó `kanban/cardume/secoes` antes do merge da #1970. Saiu de *Pendente de deploy*.
+
+## Entregue — 25/11/2026 (pedidos da Concha, lote de tela)
+
+📸 foto no @, ✍️ barra de formatação com explicação e botões @/#, 😀 quem reagiu à vista: saíram do Backlog (PR do lote).
