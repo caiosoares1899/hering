@@ -33,7 +33,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(base + '/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb);
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(900);
-  const sug = () => p.evaluate(() => [...document.querySelectorAll('#sugestoes .sugestao')].map(o => ({ t: o.textContent, img: (o.querySelector('img') || {}).src || '', ini: (o.querySelector('.avatar') || {}).textContent || '' })));
+  const sug = () => p.evaluate(() => [...document.querySelectorAll('#sugestoes .sugestao')].map(o => ({ t: o.textContent, img: (o.querySelector('img') || {}).src || '', ini: (o.querySelector('.avatar') || {}).textContent || '' })).filter(x => !/^(🗂 @card:|🎯 @objetivo:)/.test(x.t)));   // as pessoas (sem os atalhos de citar)
 
   // 📸 foto no @
   await p.click('.barra-fmt [data-ins="@"]'); await p.keyboard.type('Br'); await p.waitForTimeout(150);

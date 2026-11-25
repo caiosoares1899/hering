@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🧷 @card: e @objetivo: citam um card do Maré ou um objetivo do Radar (SÓ DEV, cardume v0.33) — 2026-11-25
+
+Pedido do Caio (Backlog de 25/11). Digitar @card: e parte do nome lista os cards das squads que você abriu no Maré neste aparelho (o índice enxuto da #1981, só da sua conta, até 7 dias, com a squad do canal primeiro) — sem nenhuma leitura do banco para sugerir. @objetivo: lista os objetivos ativos do Radar pela mesma lista que o Sonar guarda no aparelho (3 h; vencida, a Concha faz a mesma leitura e grava no mesmo formato, e os outros apps reaproveitam). Os dois aparecem também na lista do @. O escolhido vira o link na mensagem (o texto guarda só o link) e a mensagem mostra o chip com o título lido do banco: 🗂 abre o card no Maré, 🎯 abre o objetivo no Radar (link de objetivo colado também vira chip). Sem card na lista, a dica sugere abrir o board ou colar o link. Ajuda com o tópico novo "Citar um card do Maré ou um objetivo do Radar". Teste: test_concha_citar.js (14).
+
 ### 🌊 Maré: índice enxuto dos cards no aparelho para o @card: da Concha (SÓ DEV, kanban v8.30.1030-dev) — 2026-11-25
 
 Primeira parte do @card: da Concha (desenho de 24/11 em docs/ideias/cardume.md). O Maré passa a deixar no aparelho uma lista enxuta dos cards da squad aberta — id, título e coluna dos não arquivados, com o uid de quem está logado — em oceano_cards_<squad>_dev, atualizada 2 s depois de cada mudança dos cards. Zero leitura a mais do banco (o Maré já tem os cards em memória); ~40 KB para 500 cards. A Concha vai usar essa lista no autocompletar do @card: (próximo PR). Teste: test_mare_indice_concha.js (6; falha no kanban.html de produção, como esperado).

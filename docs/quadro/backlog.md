@@ -56,7 +56,7 @@
 | ✅ ✍️ **Barra de formatação com explicação + `#`** (entregue no lote de 25/11) | Botões B, I, S, `</>`, •, ❝, 😀, GIF com só o título no `title` | Cada botão com rótulo/tooltip que ensina ("**negrito** — Ctrl+B") e um botão **#** que insere `#` e abre a lista das #tags dos seus canais (`tags_ult`, o mesmo do Sonar). Só tela, R1 |
 | ✅ ❓ **Ajuda da Concha (help content)** (entregue em 25/11: 13 tópicos, ❓ no topo, Sonar e `/atualizarhelpcontent`) | Só a linha de dicas embaixo do campo | Ajuda própria (❓ no topo), no padrão das outras: canais e seções, mensagem (formatação, @, #tag, GIF, responder, reagir, 📝 No card), avisos 🔔/🔕/🚫 e #tags seguidas, Sonar (Ctrl/⌘+K), @ Menções. Entra no `/atualizarhelpcontent` e na base do Agente Ágil. R0–R1 |
 | ✅ ✏️ **Editar só por 15 min** (pedido 25/11; o Caio confirmou 15, como o WhatsApp — entregue) | Hoje dá para editar a própria mensagem a qualquer hora (enquanto o canal está ativo) | Some o ✏️ depois de 5 min e a **regra** barra a edição (`editado` ≤ `ts` + 5 min, com folga de relógio) — senão é só tela. O WhatsApp dá 15 min: confirmar o número com o Caio. Ajuda e dica acompanham. R3 (regra) |
-| 🧷 **`@card:` e `@objetivo:` funcionando** | Desenho pronto em [cardume-citar](#cardume-citar) | Seguir o desenho de lá (cache do Sonar para objetivos; títulos de card leves; chip na mensagem). R2 |
+| ✅ 🧷 **`@card:` e `@objetivo:` funcionando** (entregue em 25/11: índice do Maré #1981 + Concha) | Desenho pronto em [cardume-citar](#cardume-citar) | Seguir o desenho de lá (cache do Sonar para objetivos; títulos de card leves; chip na mensagem). R2 |
 
 <a id="concha-novos-pedidos-2511"></a>
 

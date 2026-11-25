@@ -131,6 +131,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .emoji-grade button{min-width:36px;min-height:36px;padding:0 6px;font-size:17px;box-shadow:none;}
 .emoji-grade button[aria-checked="true"]{border-color:var(--accent);background:rgba(56,182,255,.18);}
 @media (max-width:480px){ .who b{display:none;} }   /* com ❓ + 🔔 o topo não cabia numa linha no celular */
+.sug-dica{margin:6px 8px;font-size:13px;color:var(--txt2);}
 .sec-vazia{margin:0 8px 6px;font-size:12px;}
 .lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
 .sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
@@ -389,7 +390,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.32 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.33 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1089,10 +1090,10 @@ function renderMsg(m) {
   if (editando === m.id) { box.append(editor(m)); return box; }
   if (typeof m.resp === 'string' && ID_RE.test(m.resp)) box.append(citacao(atual, m.resp));
   const gg = m.gif && renderGif(m.gif); if (gg) box.append(gg);
-  const ks = cardsNoTexto(m.texto);
-  const visivel = ks.length ? semLinkDeCard(m.texto || '') : (m.texto || '');
+  const ks = cardsNoTexto(m.texto), os_ = objsNoTexto(m.texto);
+  const visivel = ks.length || os_.length ? semLinkDeCard(m.texto || '') : (m.texto || '');
   if (visivel.trim()) box.append(renderTexto(visivel));
-  if (ks.length) { const w = el('div', 'cards-msg'); ks.forEach(k => w.append(chipCard(k))); box.append(w); }
+  if (ks.length || os_.length) { const w = el('div', 'cards-msg'); ks.forEach(k => w.append(chipCard(k))); os_.forEach(o => w.append(chipObj(o))); box.append(w); }
   if (m.editado) box.append(el('span', 'editada', '(editada)'));
   const c = canais[atual], ativo = !vencido(c) && !assuntoFechado(m.a || '');
   const meu = m.uid === user.uid, podeReagir = ativo && souMembro(atual);
@@ -1295,11 +1296,102 @@ function semLinkDeCard(txt) {
   return String(txt).split('\n').map(l => {
     const re = /https:\/\/[^\s<>"']+/g; let x, corte = -1;
     while ((x = re.exec(l))) {
-      const k = cardDeLink(x[0].replace(/[.,!?:;)]+$/, '')), i = k && infoCards[k.sq + '/' + k.id];
+      const u0 = x[0].replace(/[.,!?:;)]+$/, ''), k = cardDeLink(u0), o = !k && objDeLink(u0), i = k ? infoCards[k.sq + '/' + k.id] : o ? infoObjs[o.id] : null;
       if (i && i.estado === 'ok' && /^[\s.,!?:;)]*$/.test(l.slice(x.index + x[0].length))) corte = x.index;
     }
     return corte < 0 ? l : l.slice(0, corte).replace(/\s+$/, '');
   }).join('\n').replace(/\n+$/, '');
+}
+// 🎯 Objetivo do Radar citado (link okr(-dev).html?okr=<id>): chip com o título, lido do banco (a lista do Sonar no aparelho só sugere; quem decide o título é o banco).
+function objDeLink(u) {
+  try {
+    const x = new URL(u);
+    if (x.origin !== ORIGEM_MARE || !/^\/hering\/okr(-dev)?\.html$/.test(x.pathname)) return null;
+    const id = x.searchParams.get('okr') || '';
+    return ID_RE.test(id) ? { id, dev: /-dev\.html$/.test(x.pathname) } : null;
+  } catch (e) { return null; }
+}
+const urlObj = o => ORIGEM_MARE + '/hering/okr' + (o.dev ? '-dev' : '') + '.html?okr=' + encodeURIComponent(o.id);
+function objsNoTexto(txt) {
+  const vistos = new Set(), out = [];
+  for (const x of String(txt || '').matchAll(/https:\/\/[^\s<>"']+/g)) { const o = objDeLink(x[0].replace(/[.,!?:;)]+$/, '')); if (o && !vistos.has(o.id)) { vistos.add(o.id); out.push(o); } }
+  return out.slice(0, 3);
+}
+const infoObjs = {};   // id → { estado, titulo }
+function lerObj(o) {
+  if (infoObjs[o.id]) return;
+  const info = infoObjs[o.id] = { estado: 'lendo', titulo: '' };
+  get(ref(db, 'kanban/okr/objetivos/' + o.id + '/titulo')).then(s => { const t = s.val(); if (typeof t === 'string' && t.trim()) { info.estado = 'ok'; info.titulo = t.trim().slice(0, 200); } else info.estado = 'nao'; })
+    .catch(e => { info.estado = negado(e) ? 'sem' : 'erro'; }).then(() => { if (atual && !vendoMencoes) renderMsgs(); });
+}
+function chipObj(o) {
+  const info = infoObjs[o.id]; if (!info) lerObj(o);
+  const st = info ? info.estado : 'lendo';
+  const a = el('a', 'card-chip'); a.href = urlObj(o); a.target = '_blank'; a.rel = 'noopener noreferrer';
+  const tit = st === 'ok' ? info.titulo : st === 'sem' ? 'objetivo sem acesso' : st === 'nao' ? 'objetivo não encontrado' : st === 'erro' ? 'objetivo (não deu para ler)' : 'carregando objetivo…';
+  a.append(el('span', '', '🎯'), el('span', 'tit', tit), el('span', 'sq', '· Radar')); a.title = 'Abrir no Radar: ' + tit;
+  return a;
+}
+// ═══ 🧷 @card: e @objetivo: (docs/ideias/cardume.md › "@card: e @objetivo: sem pesar no banco"): nada novo lido para sugerir ═══
+// @card: = o índice que o Maré deixa no aparelho (oceano_cards_<squad>[_dev], só da mesma conta, até 7 dias). @objetivo: = a lista do Sonar
+// (oceano_sonar_radar[_dev], 3 h; vencida, a Concha faz a mesma leitura e grava no mesmo formato). O escolhido vira o LINK (o texto guarda só o link/id).
+const SUF_DEV = /-dev\.html/.test(location.pathname) ? '_dev' : '';
+function indiceCards() {
+  const out = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i), m = k && k.match(/^oceano_cards_([A-Za-z0-9_-]{1,64})$/); if (!m) continue;
+      let sq = m[1]; if (SUF_DEV) { if (!sq.endsWith('_dev')) continue; sq = sq.slice(0, -4); } else if (sq.endsWith('_dev')) continue;
+      if (!ID_RE.test(sq)) continue;
+      const x = JSON.parse(localStorage.getItem(k) || 'null');
+      if (!x || x.u !== user.uid || typeof x.t !== 'number' || Date.now() - x.t > 7 * 864e5 || !Array.isArray(x.v)) continue;
+      x.v.forEach(c => { if (c && ID_RE.test(String(c.id || '')) && typeof c.t === 'string' && c.t) out.push({ sq, id: String(c.id), t: c.t.slice(0, 200), quando: x.t }); });
+    }
+  } catch (e) {}
+  return out;
+}
+let radarConcha = null, radarLendo = false;
+function radarDoAparelho() {
+  try {
+    const c = JSON.parse(localStorage.getItem('oceano_sonar_radar' + SUF_DEV) || 'null');
+    if (!c || c.s !== 2 || typeof c.t !== 'number' || Date.now() - c.t > 3 * 3600e3 || !c.v || typeof c.v.objs !== 'object') return null;
+    return Object.values(c.v.objs).filter(o => o && ID_RE.test(String(o.id || '')) && typeof o.t === 'string').map(o => ({ id: o.id, t: o.t.slice(0, 200), per: Array.isArray(o.per) ? o.per.slice(0, 3).map(String) : [] }));
+  } catch (e) { return null; }
+}
+function carregarRadar(depois) {   // mesma leitura e régua do mare-sonar (radarCarregar), gravando no mesmo cache: no máximo 1 a cada 3 h por aparelho
+  radarConcha = radarDoAparelho(); if (radarConcha || radarLendo) return;
+  radarLendo = true;
+  Promise.all(['objetivos', 'marcos'].map(n => get(ref(db, 'kanban/okr/' + n)))).then(([so, sm]) => {
+    const soH = window.MARE_SO_HERING !== false;
+    const vis = o => o && !o.arquivado && (!soH || !o.torre || o.torre === 'digital' || !['digital', 'comercial', 'corporativa'].includes(o.torre));
+    const objs = {};
+    Object.entries((so && so.val()) || {}).forEach(([id, o]) => { if (!vis(o)) return; const per = Array.isArray(o.trimestres) && o.trimestres.length ? o.trimestres : (o.trimestre ? [o.trimestre] : []);
+      objs[id] = { id, t: String(o.titulo || 'Objetivo sem título').slice(0, 200), per: per.slice(0, 6).map(x => String(x).slice(0, 20)), resp: Array.isArray(o.responsaveis) ? o.responsaveis.slice(0, 30).map(String) : [] }; });
+    const marcos = [];
+    Object.entries((sm && sm.val()) || {}).forEach(([id, m]) => { if (m && !m.arquivado && objs[m.objetivoId]) marcos.push({ id, t: String(m.nome || 'Marco').slice(0, 200), obj: m.objetivoId, r: typeof m.responsavel === 'string' ? m.responsavel.slice(0, 64) : '' }); });
+    try { localStorage.setItem('oceano_sonar_radar' + SUF_DEV, JSON.stringify({ s: 2, t: Date.now(), v: { objs, marcos } })); } catch (e) {}
+    radarConcha = radarDoAparelho() || Object.values(objs).map(o => ({ id: o.id, t: o.t, per: o.per.slice(0, 3) }));
+  }).catch(e => { console.warn('[concha] Radar', e); radarConcha = []; }).then(() => { radarLendo = false; if (depois) depois(); });
+}
+function sugCitar(tipo, q, ini, t, box) {
+  const nq = norm(q.trim()), ps = nq.split(/\s+/).filter(Boolean), casa = s => ps.every(w => norm(s).includes(w));
+  let its = [], dica = '';
+  if (tipo === 'card') {
+    const sqCanal = !ehTema(atual) ? atual : '';
+    its = indiceCards().filter(c => casa(c.t)).sort((a, b) => (b.sq === sqCanal) - (a.sq === sqCanal) || b.quando - a.quando).slice(0, 8)
+      .map(c => ({ txt: '🗂 ' + c.t + ' · ' + nomeSquad(c.sq), ins: ORIGEM_MARE + '/hering/kanban' + SUF_DEV.replace('_', '-') + '.html?squad=' + encodeURIComponent(c.sq) + '&opencard=' + encodeURIComponent(c.id) + ' ' }));
+    if (!its.length) dica = indiceCards().length ? 'Nenhum card com esse nome nas squads que você abriu no Maré neste aparelho. Você também pode colar o link do card.' : 'Abra o board da squad no Maré neste aparelho para listar os cards aqui — ou cole o link do card.';
+  } else {
+    if (!radarConcha) { carregarRadar(() => { if (sug === null && document.activeElement === t) atualizarSug(t, box); }); if (!radarConcha) dica = 'Carregando os objetivos do Radar…'; }
+    if (radarConcha) {
+      its = radarConcha.filter(o => casa(o.t + ' ' + o.per.join(' '))).slice(0, 8).map(o => ({ txt: '🎯 ' + o.t + (o.per.length ? ' · ' + o.per.join(', ') : ''), ins: ORIGEM_MARE + '/hering/okr' + SUF_DEV.replace('_', '-') + '.html?okr=' + encodeURIComponent(o.id) + ' ' }));
+      if (!its.length) dica = 'Nenhum objetivo do Radar com esse nome.';
+    }
+  }
+  if (!its.length) { box.replaceChildren(el('p', 'sug-dica', dica)); box.hidden = false; return; }
+  sug = { itens: its, ini, sel: 0, t, box };
+  its.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = box.id + '-' + i; o.setAttribute('role', 'option'); o.append(document.createTextNode(p.txt)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
+  box.hidden = false; destacarSug();
 }
 function chipCard(k) {
   const info = infoCards[k.sq + '/' + k.id]; if (!info) lerCard(k);
@@ -1504,6 +1596,7 @@ const AJUDA = [
   { id: 'secoes', ic: '📁', t: 'Seções na lista de canais', txt: 'Organize a lista do seu jeito. **Só você vê** suas seções.\n- **📁 Seções** (abaixo de ➕ Novo canal): crie (tem atalho para **⭐ Favoritos**), renomeie, mude a ordem e apague. Apagar devolve os canais à seção padrão (Squads/Temáticos).\n- Para pôr um canal numa seção: **ℹ️ Detalhes › 📁 Na sua lista** (ou "＋ Nova seção…" ali mesmo).\n- Clique no **título** da seção para recolher ou abrir. Recolhida, ela mostra quantos canais têm novas e deixa à vista o canal aberto. Vale em todos os seus aparelhos.' },
   { id: 'escrever', ic: '✍️', t: 'Escrever: formatação, emoji, GIF e links', txt: '- **Enter** envia; **Shift+Enter** quebra a linha. O rascunho fica guardado por canal e por assunto.\n- Formatação (botões da barra ou digitando): `**negrito**` (Ctrl+B), `_itálico_` (Ctrl+I), `~~riscado~~`, código entre crases, três crases numa linha antes e outra depois para um bloco, `- ` no começo da linha para lista e `> ` para citação. O **?** da barra mostra o guia.\n- **😀** abre os emojis (com busca e recentes); **GIF** busca na KLIPY (o GIF pode ir sem legenda).\n- Link `https://` vira link. Link de **card do Maré** vira o chip com o título do card.' },
   { id: 'mencoes', ic: '@', t: '@Menções', txt: '- Digite `@` (ou o botão **@**) e escolha a pessoa na lista, com a foto. Só aparecem membros do canal.\n- Quem você menciona recebe um aviso no **Sino** e push (se ativou no aparelho). O aviso não mostra o canal nem a mensagem: ela abre a Concha para ver.\n- **@ Menções** (no alto da lista) junta onde mencionaram ou responderam você. Abrir uma leva direto à mensagem, inclusive dentro de um assunto.\n- Editar uma mensagem para pôr uma `@` não avisa a pessoa.' },
+  { id: 'citar', ic: '🧷', t: 'Citar um card do Maré ou um objetivo do Radar', txt: '- Digite `@card:` e parte do nome do card, ou `@objetivo:` e parte do nome do objetivo (também aparecem na lista do `@`). Escolha na lista: a mensagem leva o link e mostra o **chip** com o título, que abre o card no Maré ou o objetivo no Radar.\n- Os cards listados são os das squads que você já abriu no **Maré neste aparelho** (nos últimos 7 dias), com os da squad do canal primeiro. Não achou? Abra o board da squad no Maré, ou cole o link do card.\n- Os objetivos vêm do Radar (os ativos da sua torre).\n- Colar o link de um card ou de um objetivo também vira chip.' },
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
@@ -1805,6 +1898,8 @@ function fecharSug() {
 function atualizarSug(t = entrada, box = $('sugestoes')) {
   fecharSug();
   const antes = t.value.slice(0, t.selectionStart);
+  const mc = antes.match(/(?:^|\s)@(card|objetivo):([^\n@]{0,60})$/i);
+  if (mc) { sugCitar(mc[1].toLowerCase(), mc[2], antes.lastIndexOf('@'), t, box); return; }
   const mt = antes.match(/(?:^|[\s(*_~>])#([\p{L}\p{N}_-]{0,32})$/u);
   if (mt) {   // #: as #tags dos seus canais (tags_ult, o mesmo do Sonar), das mais usadas recentemente
     carregarTagsUlt();
@@ -1818,10 +1913,13 @@ function atualizarSug(t = entrada, box = $('sugestoes')) {
   const m = antes.match(/(?:^|\s)@([\p{L} ]{0,30})$/u); if (!m) return;
   const busca = m[1].toLocaleLowerCase('pt-BR');
   const itens = Object.keys(membrosAtual).filter(u => u !== user.uid).map(u => ({ uid: u, nome: nomePessoa(u) })).filter(p => p.nome.toLocaleLowerCase('pt-BR').startsWith(busca) || p.nome.toLocaleLowerCase('pt-BR').split(' ').some(w => w.startsWith(busca))).slice(0, 8);
+  itens.forEach(p => { p.ins = '@' + p.nome + ' '; });
+  // 🧷 atalhos para citar (descoberta: quem digita @ vê que dá para citar card e objetivo)
+  if (!busca || 'card'.startsWith(busca)) itens.push({ ins: '@card:', txt: '🗂 @card: citar um card do Maré' });
+  if (!busca || 'objetivo'.startsWith(busca)) itens.push({ ins: '@objetivo:', txt: '🎯 @objetivo: citar um objetivo do Radar' });
   if (!itens.length) return;
   sug = { itens, ini: antes.lastIndexOf('@'), sel: 0, t, box };
-  itens.forEach(p => { p.ins = '@' + p.nome + ' '; });
-  itens.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = box.id + '-' + i; o.setAttribute('role', 'option'); o.append(avatar(p.uid), document.createTextNode('@' + p.nome)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
+  itens.forEach((p, i) => { const o = el('button', 'sugestao'); o.type = 'button'; o.id = box.id + '-' + i; o.setAttribute('role', 'option'); if (p.uid) o.append(avatar(p.uid), document.createTextNode('@' + p.nome)); else o.append(document.createTextNode(p.txt)); o.addEventListener('mousedown', e => e.preventDefault()); o.onclick = () => escolherSug(i); box.append(o); });
   box.hidden = false; destacarSug();
 }
 function destacarSug() { [...sug.box.children].forEach((o, i) => o.setAttribute('aria-selected', String(i === sug.sel))); sug.t.setAttribute('aria-activedescendant', sug.box.id + '-' + sug.sel); }
