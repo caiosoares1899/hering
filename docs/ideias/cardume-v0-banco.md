@@ -50,7 +50,7 @@ Plano geral em [`cardume.md`](cardume.md). Esta nota é o **R3**: o desenho vem 
 Campo desconhecido em qualquer nó (`$outro`) é recusado; o "tombstone sem texto" é checado no nível da mensagem (`!hasChild('texto')`), porque a regra de um filho ausente não roda.
 
 ## Limpeza e backup (PR separado, R3 de `functions/`)
-`cardumeLimpeza` (`onSchedule`, 1×/dia, madrugada): para cada canal, remove `msgs` com `ts` anterior a `retencao_dias` (padrão **90 dias**, ajustável pelo ADM). Deploy: `firebase deploy --only functions:cardumeLimpeza`.
+`cardumeLimpeza` (`onSchedule`, 1×/dia, madrugada): para cada canal, remove `msgs` com `ts` anterior a `retencao_dias` (padrão **90 dias**, ajustável pelo ADM). **Desde as #tags (25/11):** remove também as entradas de `tags/{canal}/{tag}/{msgId}` das mensagens removidas (e `tags_ult/{canal}/{tag}` que ficar sem nenhuma entrada); senão o índice guarda órfãos para sempre. Deploy: `firebase deploy --only functions:cardumeLimpeza`.
 **Backup:** `cardume` entra em `NOS_GLOBAIS` (`functions/backup/completo.js`) **só no semanal**, como a Travessia — conversa privada; quem administra o projeto lê o bucket. A confirmar com o Caio no PR da limpeza.
 
 ## Testes no simulador (`functions/rules/__tests__/cardumeRules.test.js`, 9 testes)
@@ -331,3 +331,35 @@ Pedido do Caio: reagir a uma mensagem com emoji, "igual aos comentários do Mar�
 
 ### Fronteira
 Nó novo com leitura própria; tipo de notificação novo cujo título é escrito pelo navegador de outra pessoa (falsificável como toda notificação de cliente — sem push, sem link montado do conteúdo); o Sino desenha o título por `textContent` (conferir). Deploy: só `firebase deploy --only database`.
+
+## #️⃣ #tags nas mensagens — desenho de 25/11/2026 (R3)
+
+Pedido do Caio: dividir os assuntos por `#`, como no Slack, e achar pelas pesquisas. **Decisões (25/11):** `#tag` escrita no meio do texto (não sub-assuntos nem seções); o Sonar da Concha acha canais, pessoas e #tags (texto livre das mensagens fica de fora); nada da Concha no Sonar dos outros apps por ora. **PR 1 (este):** índice, regras, etiqueta clicável e a tela da #tag. **PR 2:** Sonar na Concha, que lê `tags_ult`.
+
+### O que é uma #tag
+`#` no início ou depois de espaço/parêntese, seguido de 2 a 32 letras, números, `_` ou `-`, **com pelo menos uma letra** (`#1966`, `#1` e números de PR não viram tag) e terminando em algo que não seja letra/número. Fora de blocos e trechos de código; `https://…#ancora` não vira tag (o link é lido antes). A **chave** é a tag em minúsculas como foi escrita (`#Promoção` → `promoção`): assim a regra confere que o texto tem mesmo a tag. Buscar sem acento é trabalho do Sonar (`norm()`). No máximo **10 tags por mensagem** (a tela corta).
+
+### Banco
+| Nó | Valor | Lê | Escreve |
+|---|---|---|---|
+| `kanban/cardume/tags/{canal}/{tag}/{msgId}` | `ts` da mensagem (número) | membro do canal ou ADM | o autor da mensagem, no mesmo update dela |
+| `kanban/cardume/tags_ult/{canal}/{tag}` | `serverTimestamp` do último uso | membro do canal ou ADM | membro, no mesmo update de uma entrada da tag |
+
+- **Criar/pôr a entrada** (regra): membro do canal ativo (sem `fim` vencido; temático existente); a mensagem (no estado final da escrita) é de `auth.uid`, não está apagada, o `texto` em minúsculas **contém** `#` + a chave, e o valor é igual ao `ts` dela. Como em `ultima`, a mensagem nova e a entrada vão no mesmo `update()` com o mesmo `serverTimestamp`.
+- **Tirar a entrada:** o autor da mensagem ou o ADM (a mensagem apagada guarda o `uid`).
+- **`tags_ult`:** número entre `now − 60 s` e `now` (ou seja, `serverTimestamp`), só se a tag tem alguma entrada no estado final. Fica para o Sonar listar as tags de um canal sem baixar o índice inteiro (o SDK não tem leitura rasa). Entrada velha (tag que ninguém usa mais) é inofensiva: a tela da tag diz "nenhuma mensagem".
+- `.indexOn: ".value"` em `tags/{canal}/{tag}`: a tela da tag lê `orderByValue().limitToLast(30)` por canal.
+- Chave: sem `.`, `$`, `#`, `[`, `]`, `/` nem espaço, 1–32 caracteres e já em minúsculas (`$tag === $tag.toLowerCase()`).
+
+### Escritas (todas num `update()` da raiz)
+- **Enviar:** mensagem + `ultima` + `tags/{c}/{t}/{k}: ts` + `tags_ult/{c}/{t}: ts` de cada tag.
+- **Editar:** `texto` + `editado` + diferença das tags (nova: `= m.ts`; que saiu: `null`) + `tags_ult` das novas.
+- **Apagar (depois dos 5 s):** o resto `{uid, ts, apagada}` + `null` nas entradas das tags do texto.
+- **Limpeza** (`cardumeLimpeza`, ainda por fazer): ver *Limpeza e backup*.
+
+### Tela
+- A `#tag` no texto vira etiqueta (botão, `textContent`); clicar abre a **tela da #tag**: as mensagens com ela em todos os canais em que a pessoa está (até 30 por canal, as 50 mais novas no total), com canal, autor, hora e trecho; clicar leva à mensagem. A tela usa a mesma saída do canal que a de @ Menções (uma função só, `soltarCanal()`).
+- Abuso: só dá para indexar as próprias mensagens, com tags que estão no texto delas.
+
+### Fronteira
+Nó novo (`tags`, `tags_ult`) e texto de outra pessoa (a tag) chegando ao DOM: só por `textContent`/`createElement`. As chaves vêm do banco e passam por `TAG_RE` antes de virar leitura ou tela. Leitura só de membro, como `msgs`.
