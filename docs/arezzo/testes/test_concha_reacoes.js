@@ -9,6 +9,7 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8941';
 const ANA = { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana Lima', photoURL: '', providerData: [{ providerId: 'google.com' }] };
 const pub = (uid, nome, init) => ({ uid, nome, init, email: uid + '@ciahering.com.br', squads: { dados: true } });
 const agora = Date.now();
+const forjadas = () => { const o = {}; for (let i = 0; i < 160; i++) o['z' + String(i).padStart(3, '0')] = { bru: '👍' }; return o; };   // achado do Antigravity (#1963): chaves acima de todo push()
 const seed = () => ({ kanban: {
   usuarios: { ana: { role: 'membro', squads: { dados: true } }, bru: { role: 'membro', squads: { dados: true } }, car: { role: 'membro', squads: { dados: true } } },
   usuarios_publicos: { ana: pub('ana', 'Ana Lima', 'AL'), bru: pub('bru', 'Bruno Reis', 'BR'), car: pub('car', 'Carla Dias', 'CD') },
@@ -21,7 +22,7 @@ const seed = () => ({ kanban: {
       '-Nm4': { uid: 'car', ts: agora - 2 * 60000, texto: 'Revisão às 9h' },
       '-Na0': { uid: 'car', ts: agora - 60000, texto: 'enviada offline: chave antiga, ts recente' },
     } },
-    reacoes: { dados: { '-Na0': { bru: '👀' }, '-Nm1': { car: '😈' }, '-Nm2': { bru: '🎉', car: '🎉' }, '-Nm3': { bru: '👍' } } },
+    reacoes: { dados: { ...forjadas(), '-Na0': { bru: '👀' }, '-Nm1': { car: '😈' }, '-Nm2': { bru: '🎉', car: '🎉' }, '-Nm3': { bru: '👍' } } },
   },
 } });
 let ok = true, total = 0;
@@ -78,8 +79,10 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('reagir à própria mensagem não avisa ninguém (nem a si)', !(await notifs('ana')).length, await notifs('ana'));
 
   // escuta para ao sair do canal e ao abrir @ Menções
-  const ouvindo = () => p.evaluate(() => (window.__lis || []).some(l => /cardume\/reacoes\/dados$/.test(l.p)));
-  t('com o canal aberto, há escuta das reações, a partir da menor chave exibida', await ouvindo() && await p.evaluate(() => (window.__lis || []).some(l => /cardume\/reacoes\/dados$/.test(l.p) && l.q && l.q.s === '-Na0')), await p.evaluate(() => (window.__lis || []).filter(l => /reacoes/.test(l.p)).map(l => [l.p, l.q && l.q.s])));
+  const ouvindo = () => p.evaluate(() => (window.__lis || []).some(l => /cardume\/reacoes\/dados\//.test(l.p)));
+  const rxOuvidas = await p.evaluate(() => (window.__lis || []).map(l => l.p).filter(x => /cardume\/reacoes\/dados\//.test(x)).map(x => x.split('/').pop()).sort());
+  t('uma escuta por mensagem exibida (nenhuma na apagada, nenhuma nas 160 chaves forjadas)', JSON.stringify(rxOuvidas) === JSON.stringify(['-Na0', '-Nm1', '-Nm2', '-Nm4']), rxOuvidas);
+  t('ninguém escuta a lista de reações do canal inteiro', await p.evaluate(() => !(window.__lis || []).some(l => /cardume\/reacoes\/dados$/.test(l.p))), 0);
   // reação recusada pelo banco (ex.: a mensagem foi apagada com o seletor aberto) não gera aviso; tentar de novo depois avisa
   await p.evaluate(() => { window.__denySet = pth => /reacoes\/dados\/-Nm4\//.test(pth); });
   await abrirSeletor('-Nm4'); await p.click('[data-msg="-Nm4"] [aria-label="Reagir com 👀"]'); await p.waitForTimeout(300);
