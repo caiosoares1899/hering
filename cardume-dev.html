@@ -112,8 +112,17 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .assuntos-barra .ponto-a{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle;}
 .assuntos-barra .fechado{opacity:.75;}
 .aviso-encerrado{margin:8px 0;padding:8px 12px;border:1px dashed var(--glass-b);border-radius:10px;color:var(--txt2);font-size:13px;}
-.ajuda-md{width:min(720px,100%);max-height:min(86vh,900px);display:flex;flex-direction:column;}
-.ajuda-lista{overflow:auto;display:grid;gap:6px;margin-top:8px;padding-right:4px;}
+.md.ajuda-md{width:min(1100px,96vw);max-height:90vh;height:90vh;display:flex;flex-direction:column;}   /* .md.ajuda-md: a janela geral (.md, 460 px) vencia e a Ajuda ficava estreita */
+.ajuda-lista{overflow:auto;display:grid;gap:8px;margin-top:8px;padding-right:4px;align-content:start;}
+.ajuda-lista .texto,.ajuda-artigo .texto{font-size:14px;line-height:1.55;}
+/* tela larga: índice à esquerda, o tópico à direita (leitura confortável, sem buraco) */
+.ajuda-duas{display:grid;grid-template-columns:minmax(230px,300px) 1fr;gap:18px;min-height:0;flex:1;margin-top:10px;}
+.ajuda-indice{overflow:auto;display:grid;gap:4px;align-content:start;padding-right:4px;}
+.ajuda-indice button{display:flex;gap:8px;align-items:center;text-align:left;min-height:38px;padding:6px 10px;box-shadow:none;font-weight:600;}
+.ajuda-indice button[aria-current="true"]{border-color:var(--accent);color:var(--accent-txt);background:rgba(56,182,255,.12);}
+.ajuda-artigo{overflow:auto;padding:4px 6px 12px 4px;border-left:1px solid var(--glass-b);padding-left:18px;}
+.ajuda-artigo h3{margin:4px 0 10px;font-size:20px;text-transform:none;letter-spacing:0;color:var(--txt);}
+.ajuda-artigo .texto p{margin:6px 0;} .ajuda-artigo .texto ul{margin:6px 0;padding-left:20px;display:grid;gap:4px;}
 .ajuda-lista details{border:1px solid var(--glass-b);border-radius:10px;padding:8px 12px;background:rgba(var(--slate-rgb),.45);}
 .ajuda-lista summary{cursor:pointer;font-weight:700;min-height:28px;display:flex;align-items:center;gap:8px;}
 .ajuda-lista details[open] summary{margin-bottom:6px;}
@@ -380,7 +389,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.30 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.31 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1498,26 +1507,43 @@ function abrirAjuda(id) {
   fecharModal._volta = document.activeElement;
   const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
   const f = el('div', 'md ajuda-md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  ov.append(f);   // já na página: os focus() abaixo valem
   const cab = el('div', 'linha'); const h = el('h2', '', '❓ Ajuda da Concha'); h.id = 'md-t'; h.style.flex = '1';
   const x = el('button', '', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Fechar a Ajuda'); x.onclick = fecharModal; cab.append(h, x); f.append(cab);
   const busca = el('input'); busca.type = 'search'; busca.placeholder = 'Buscar na Ajuda (ex.: assunto, silenciar, #tag)…'; busca.setAttribute('aria-label', 'Buscar na Ajuda'); f.append(busca);
-  const lista = el('div', 'ajuda-lista'); f.append(lista);
-  const nada = el('p', 'subtitulo', 'Nada encontrado. Tente outra palavra.'); nada.hidden = true; f.append(nada);
-  AJUDA.forEach(a => {
-    const d = el('details'); d.id = 'ajuda-' + a.id; d.dataset.busca = norm(a.t + ' ' + a.txt);
-    const sm = el('summary'); sm.append(el('span', '', a.ic), el('span', '', a.t));
-    textoSimples = true; let corpo; try { corpo = renderTexto(a.txt); } finally { textoSimples = false; }
-    d.append(sm, corpo); lista.append(d);
-  });
-  busca.oninput = () => {
-    const q = norm(busca.value.trim()), ps = q.split(/\s+/).filter(Boolean); let n = 0;
-    lista.querySelectorAll('details').forEach(d => { const v = !ps.length || ps.every(w => d.dataset.busca.includes(w)); d.hidden = !v; if (v) n++; if (ps.length) d.open = v; });
-    nada.hidden = n > 0;
-  };
+  const nada = el('p', 'subtitulo', 'Nada encontrado. Tente outra palavra.'); nada.hidden = true;
+  const corpoDe = a => { textoSimples = true; try { return renderTexto(a.txt); } finally { textoSimples = false; } };
+  const largo = window.matchMedia('(min-width: 900px)').matches;
+  let filtrar;
+  if (largo) {   // índice + leitura
+    const duas = el('div', 'ajuda-duas'), ind = el('nav', 'ajuda-indice'), art = el('article', 'ajuda-artigo');
+    ind.setAttribute('aria-label', 'Tópicos da Ajuda'); art.setAttribute('aria-live', 'polite');
+    const mostrar = (aid, foco) => {
+      const a = AJUDA.find(z => z.id === aid) || AJUDA[0];
+      art.replaceChildren(); art.dataset.id = a.id; art.id = 'ajuda-' + a.id;
+      const t = el('h3', ''); t.append(document.createTextNode(a.ic + ' ' + a.t)); art.append(t, corpoDe(a)); art.scrollTop = 0;
+      ind.querySelectorAll('button').forEach(b => b.setAttribute('aria-current', String(b.dataset.id === a.id)));
+      if (foco) { const b = ind.querySelector('[data-id="' + CSS.escape(a.id) + '"]'); if (b) b.focus(); }
+    };
+    AJUDA.forEach(a => { const b = el('button'); b.type = 'button'; b.dataset.id = a.id; b.dataset.busca = norm(a.t + ' ' + a.txt); b.append(el('span', '', a.ic), el('span', '', a.t)); b.onclick = () => mostrar(a.id); ind.append(b); });
+    ind.addEventListener('keydown', e => {   // ↑ ↓ no índice
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return; e.preventDefault();
+      const vis = [...ind.querySelectorAll('button')].filter(b => !b.hidden), i = vis.indexOf(document.activeElement);
+      const prox = vis[(i + (e.key === 'ArrowDown' ? 1 : -1) + vis.length) % vis.length]; if (prox) { prox.focus(); mostrar(prox.dataset.id); }
+    });
+    duas.append(ind, art); f.append(duas, nada);
+    filtrar = ps => { const vis = []; ind.querySelectorAll('button').forEach(b => { const v = !ps.length || ps.every(w => b.dataset.busca.includes(w)); b.hidden = !v; if (v) vis.push(b); }); if (vis.length && ps.length) mostrar(vis[0].dataset.id); return vis.length; };
+    mostrar(id || 'concha');
+    if (id) ind.querySelector('[data-id="' + CSS.escape(id) + '"]')?.focus(); else busca.focus();
+  } else {   // celular: sanfona
+    const lista = el('div', 'ajuda-lista'); f.append(lista, nada);
+    AJUDA.forEach(a => { const d = el('details'); d.id = 'ajuda-' + a.id; d.dataset.busca = norm(a.t + ' ' + a.txt); const sm = el('summary'); sm.append(el('span', '', a.ic), el('span', '', a.t)); d.append(sm, corpoDe(a)); lista.append(d); });
+    filtrar = ps => { let n = 0; lista.querySelectorAll('details').forEach(d => { const v = !ps.length || ps.every(w => d.dataset.busca.includes(w)); d.hidden = !v; if (v) n++; if (ps.length) d.open = v; }); return n; };
+    const alvo = id && lista.querySelector('#ajuda-' + CSS.escape(id));
+    if (alvo) { alvo.open = true; setTimeout(() => alvo.scrollIntoView({ block: 'start' }), 0); alvo.querySelector('summary').focus(); } else busca.focus();
+  }
+  busca.oninput = () => { const ps = norm(busca.value.trim()).split(/\s+/).filter(Boolean); nada.hidden = filtrar(ps) > 0; };
   f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
-  ov.append(f);
-  const alvo = id && lista.querySelector('#ajuda-' + CSS.escape(id));
-  if (alvo) { alvo.open = true; alvo.scrollIntoView({ block: 'start' }); alvo.querySelector('summary').focus(); } else busca.focus();
 }
 $('b-ajuda').onclick = () => abrirAjuda('');
 $('b-fmt-ajuda-tudo').onclick = () => abrirAjuda('escrever');
