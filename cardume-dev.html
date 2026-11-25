@@ -696,7 +696,7 @@ function ouvirReacoes(canal) {  // reações de TODAS as mensagens exibidas: as 
   if (desde === rxDesde && ouvintes['rx']) return;
   rxDesde = desde; parar('rx');
   if (!desde) { reacoes = {}; return; }
-  ouvir('rx', query(ref(db, B + 'reacoes/' + canal), orderByKey(), startAt(desde)), s => { if (atual === canal) { reacoes = s.val() || {}; renderMsgs(); } }, () => { reacoes = {}; });
+  ouvir('rx', query(ref(db, B + 'reacoes/' + canal), orderByKey(), startAt(desde), limitToLast(150)), s => { if (atual === canal) { reacoes = s.val() || {}; renderMsgs(); } }, () => { reacoes = {}; });
 }   // mensagens cujo autor já foi avisado nesta sessão (a regra também só deixa criar o aviso uma vez)
 function reacoesDe(id) {        // [[emoji, [uids]]] na ordem da lista; ignora o que não está na lista
   const r = reacoes[id]; if (!r || typeof r !== 'object') return [];
@@ -709,19 +709,19 @@ function linhaReacoes(m, rx, podeReagir) {
     const nomes = uids.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', ');
     const b = el('button', 'rx-chip', e + ' ' + uids.length); b.type = 'button'; b.dataset.e = e;
     b.setAttribute('aria-pressed', String(uids.includes(user.uid))); b.title = nomes; b.setAttribute('aria-label', e + ' ' + uids.length + ': ' + nomes);
-    if (podeReagir) b.onclick = () => reagir(m, e); else b.disabled = true;
+    if (podeReagir) b.onclick = ev => reagir(m, e, ev.detail === 0); else b.disabled = true;
     linha.append(b);
   });
   quem.textContent = rx.map(([e, uids]) => e + ' ' + uids.map(u => u === user.uid ? 'você' : nomePessoa(u)).join(', ')).join(' · ');   // no toque não há title: os nomes aparecem na mensagem tocada
   return [linha, quem];
 }
-function reagir(m, e) {
+function reagir(m, e, teclado) {   // teclado: o foco volta ao chip (com mouse/toque, focar deixaria a pílula aberta)
   if (!REACT_EMOJIS.includes(e) || !souMembro(atual) || vencido(canais[atual])) return;
   const canal = atual, minha = (reacoes[m.id] || {})[user.uid], nova = minha === e ? null : e;
   rxAbrindo = '';
   const avisar = nova && m.uid !== user.uid && membrosAtual[m.uid] === true && !rxAvisados.has(m.id);
   if (avisar) rxAvisados.add(m.id);   // antes do await: dois toques rápidos não mandam dois avisos
-  rxFoco = { id: m.id, e: nova, ate: Date.now() + 3000 };
+  rxFoco = teclado ? { id: m.id, e: nova, ate: Date.now() + 3000 } : null;
   set(ref(db, B + 'reacoes/' + canal + '/' + m.id + '/' + user.uid), nova)
     .then(() => { if (avisar) avisarReacao(m); })   // só avisa reação que o banco aceitou
     .catch(err => { if (avisar) rxAvisados.delete(m.id); rxFoco = null; toast(negado(err) ? 'Não deu para reagir nesta mensagem.' : 'Não deu para reagir agora. Tente de novo.'); });
@@ -754,7 +754,7 @@ function renderMsg(m) {
   if (podeReagir && rxAbrindo === m.id) {   // seletor no lugar da pílula (mesma largura, não cobre texto)
     box.classList.add('rx-aberto'); ac.setAttribute('role', 'group'); ac.setAttribute('aria-label', 'Escolha a reação');
     const minha = (reacoes[m.id] || {})[user.uid];
-    REACT_EMOJIS.forEach(e => { const b = el('button', 'rx-op', e); b.type = 'button'; b.setAttribute('aria-label', 'Reagir com ' + e); b.title = 'Reagir com ' + e; b.setAttribute('aria-pressed', String(minha === e)); b.onclick = () => reagir(m, e); ac.append(b); });
+    REACT_EMOJIS.forEach(e => { const b = el('button', 'rx-op', e); b.type = 'button'; b.setAttribute('aria-label', 'Reagir com ' + e); b.title = 'Reagir com ' + e; b.setAttribute('aria-pressed', String(minha === e)); b.onclick = ev => reagir(m, e, ev.detail === 0); ac.append(b); });
     ac.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); rxAbrindo = ''; renderMsgs(); const r = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] [aria-label="Reagir"]'); if (r) r.focus(); } });
     box.addEventListener('mouseleave', () => { if (rxAbrindo === m.id && !TOQUE.matches) { rxAbrindo = ''; renderMsgs(); } });
     box.append(ac); if (msgTocada === m.id) box.classList.add('tocada');

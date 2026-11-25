@@ -59,6 +59,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
 
   await abrirSeletor('-Nm1'); await p.click('[data-msg="-Nm1"] [aria-label="Reagir com 👍"]'); await p.waitForTimeout(300);
   t('reagir grava reacoes/dados/-Nm1/ana = 👍', (await rx())['-Nm1'].ana === '👍', await rx());
+  t('com o mouse, o foco não fica preso no chip (a pílula não fica aberta)', await p.evaluate(() => !document.activeElement.classList.contains('rx-chip') && !document.activeElement.closest('.acoes-msg')), await p.evaluate(() => document.activeElement.outerHTML.slice(0, 80)));
   t('o chip aparece pressionado: "👍 1"', JSON.stringify((await chips('-Nm1')).map(c => c.slice(0, 2))) === JSON.stringify([['👍 1', 'true']]), await chips('-Nm1'));
   let nb = await notifs('bru');
   t('o aviso leva noTTLDelete (o Sino marca como dispensado em vez de apagar: o id fixo segue barrando o 2º aviso)', nb.length === 1 && nb[0][1].noTTLDelete === true, nb);
