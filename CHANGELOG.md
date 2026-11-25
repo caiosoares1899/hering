@@ -24,6 +24,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha no Marine Glass: mar com peixes atrás do vidro, ações da mensagem sem cobrir texto e celular limpo (SÓ DEV, cardume v0.18) — 2026-11-24
+
+Rodada /melhoriauiux "vidro e mar". Antes: painéis 82 % opacos sobre fundo sem peixes ("tema escuro com vidro por cima", erro listado no MARINE_GLASS), botões e campos em bloco sólido, ações da mensagem por cima do texto no computador e 4 botões em TODA mensagem no celular.
+Agora:
+- Mar: camada própria com bolhas e os 3 peixes oficiais do Oceano, na preferência 🐟 escolhida lá (Desligados/Poucos/Como no Maré; "reduzir movimento" começa sem), pausando com a aba escondida, a janela sem foco ou 60 s parado. A conversa é vidro translúcido: os peixes passam atrás das mensagens (inclusive no Abrolhos) e o horizonte do Entardecer aparece.
+- Custo: o painel grande NÃO desfoca — desfoque sobre peixes nadando custava ~1.600 ms/s de raster (3× o Maré com peixes); sem ele, ~600–675 (parado–digitando), na faixa do Maré com peixes (~535; `perf_concha.js`, headless, comparativo; peixes desligados ≈ 12). Modal e aviso seguem com desfoque; nenhum vidro dentro de vidro.
+- Contraste: pior pixel do fundo (peixes e horizonte inclusos) ≥ 4,5:1 nos 3 temas e nas 5 regiões — conversa, lista de canais, Detalhes, cabeçalho e rodapé (`contraste_concha.js`, menor valor 4,88). Destaque usado como texto pequeno (menção, link, canal ativo, @ Menções, "Desfazer"/"sair") passa pelo token `--accent-txt`; no Lençóis é um azul mais fundo (menção 4,43 na main → 6,8). Laterais ganham um piso de vidro e, no claro, a conversa fica 78 % opaca.
+- Ações da mensagem: no computador, pílula só com ícones (nome acessível = rótulo) num vão reservado à direita — nunca cobre texto (linha de ~75 caracteres a 1280) e o Tab alcança (🐞 antes display:none). No toque (celular e iPad deitado), aparecem só na mensagem tocada, com rótulo e 44 px; o :hover grudado do iPad não segura mais. A ajuda do campo fala de toque.
+- Vidro: botões, barra de formatação, campo, janelinhas de @/emoji/GIF, modal e aviso.
+Teste test_concha_ui.js (44; sabotagens de vão, teclado e iPad falham como devem). Prints em docs/capturas/concha-ui/.
+
 ### 🐚 Concha: ↩️ Responder com citação e aviso para quem foi respondido (SÓ DEV, cardume v0.15) — 2026-11-24
 
 Etapa 4. Botão ↩️ Responder na mensagem: barra 'Respondendo a…' acima do campo (Esc ou ✕ cancela; trocar de canal cancela), a resposta mostra a citação (clicar leva à original; original fora das 50 é buscada; apagada vira '(mensagem apagada)'). Quem foi respondido recebe aviso no Sino e push ('Fulano respondeu você'), pelo índice privado de menções com r: true; sem duplicar com a @menção; responder a si mesmo não avisa. Regras: resp só na criação, mesmo canal, existente, imutável; r só para o autor da original. Push: cardumePush confere a resposta e monta o texto no servidor. Testes: cardumeRules (sabotagem), cardumePush, test_concha_responder.js (15).
