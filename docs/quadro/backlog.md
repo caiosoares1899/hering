@@ -30,6 +30,7 @@
 
 | Ideia | Dono | Onde está o desenho |
 |---|---|---|
+| ✅ **Feito no dev** — ↩️ Responder (#1959/#1960, 24/11) e 😀 reações (#1963, regras no ar em 25/11; uma por pessoa, aviso só no Sino). | | |
 | 🐟 **Cardume · reagir e responder** (ideia do Caio, 24/11/2026): **reagir a uma mensagem com emoji** (👍 ❤️ 😂 🎉… — contador por emoji, clicar no seu tira a reação, passar o mouse mostra quem reagiu; usa o mesmo seletor de emojis do compositor) e **responder a uma mensagem** (botão "↩️ Responder" na mensagem: a resposta mostra o trecho citado de quem respondeu, e clicar na citação leva à mensagem original; base para uma futura conversa em fio). | Claude | `docs/ideias/cardume.md` (plano). **Banco (R3, regras + testes + 2 revisões):** reação = nó novo `reacoes/{canal}/{msgId}/{emoji}/{uid}: true` (só membro, só a própria reação, emoji de uma lista fechada; a limpeza apaga junto com a mensagem); responder = campo `resp` na mensagem com o id da original (validado pelo `ID_RE`), sem copiar o texto dela para o banco (a citação é montada na tela e some se a original for apagada). **Fronteira:** quem reagiu aparece só para membros do canal |
 
 <a id="cardume-citar"></a>

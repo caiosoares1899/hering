@@ -323,3 +323,7 @@ Caio confirmou os deploys (regras + `sendPushOnNotification`); saíram de *Pende
 - 🐚 ↩️ Responder na Concha (#1959): regras do `resp` e do aviso de resposta (`r`), depois o push com o ramo da resposta
 - 🔒 Leitura ampla, fase A (#1955): espelho torre/Gestor OKR validado e notificação alheia não regravável
 - 🐚 Concha: push de menção com o título "🐚 Concha"
+
+## Confirmação de deploy — 25/11/2026 (reações da Concha)
+
+Caio confirmou `firebase deploy --only database` com o nó `kanban/cardume/reacoes` (#1963) e testou: reagir funciona. Saiu de *Pendente de deploy*. (O merge entrou antes do deploy e as reações ficaram recusadas até ele — `permission_denied` no console.)
