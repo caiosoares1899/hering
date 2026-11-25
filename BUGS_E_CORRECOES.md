@@ -87,7 +87,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
-### 2026-11-25 · 🐚 Concha: criar canal em dobro, emoji fora do rascunho e escuta que seguia depois de tirada do canal (SÓ DEV, cardume v0.20)
+### 2026-11-25 · 🐚 Concha: criar canal em dobro, emoji fora do rascunho e escuta que seguia depois de tirada do canal (SÓ DEV, cardume v0.21)
 
 /monitorarbugs na Concha (cardume-dev.html, regras kanban/cardume, cardumePush, conchaGifBusca). 3 achados, reproduzidos pela tela real antes de corrigir (test_concha_monitorarbugs_1125.js: os 3 falham na main e passam agora):
 - "Criar canal" sem trava: o id do temático leva um sufixo novo a cada chamada; duplo clique (ou Enter repetido) com o banco lento criava 2 canais (+ 2 entradas na lista de abertos). Agora trava e desabilita o botão até a gravação voltar (7ª vez da lição "id novo + gravação assíncrona = trava").
@@ -95,6 +95,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 - Tirada do canal aberto, a pessoa seguia com as escutas de mensagens, reações e citações dele ligadas (a reabertura só trocava a escuta, nunca soltava); a tela já dizia "Você não está neste canal", mas o que chegava ficava na memória da aba. Agora solta as escutas (e a de membros/admins de quem não administra), cancela resposta/edição em curso. Precisa validar no banco real se o RTDB já cancela a escuta sozinho ao perder a leitura (o fix vale nos dois casos).
 - De passagem: abrir pelo link de menção (?mencao=) não confere de novo a conta depois da leitura; sair durante ela quebrava em user.uid.
 Sem achado: regras × tela (mensagem, edição, apagar, reações, menções, ultima, abertos, membros/meus em par), push de menção/resposta (prova de origem, texto do servidor), busca de GIF (token, domínio, membro, limites), escape (tudo por textContent/createElement), registrar no card (trava, ts ISO, sem @). Editar uma mensagem para pôr @ não avisa: é a regra (menção só até 60 s da mensagem), não bug. Testes antigos que falham também na main: test_cardume_pagina.js ("depois de 5 s", por tempo) e test_cardume_entradas.js (módulo ausente).
+
+### 2026-11-25 · 🐚 Concha: chaves forjadas escondiam as reações do canal (SÓ DEV, cardume v0.20) — 2026-11-25
+
+Achado confirmado (média) da auditoria do Antigravity na #1963. A escuta das reações era uma faixa de chaves (orderByKey + startAt + limitToLast(150)); o ID_RE das mensagens aceita chaves como 'z000', acima de todo push() ('-…'), então um membro que gravasse 150 mensagens assim e reagisse a elas ocupava a faixa e escondia as reações de todas as mensagens normais até a limpeza. Agora há uma escuta por mensagem exibida (reacoes/{canal}/{msgId}), com redesenho agrupado num quadro: só se baixa o que está na tela e chave forjada não afeta as outras. Sem mudança de regra. Teste: test_concha_reacoes.js (33; com 160 chaves forjadas; na versão anterior, as reações somem).
 
 ### 2026-11-24 · 🐚 Concha: ações da mensagem fora do alcance do teclado (SÓ DEV, cardume v0.18) — 2026-11-24
 
