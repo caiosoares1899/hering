@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-25 · 🐚 Concha: Ajuda estreita — agora usa a tela, com índice e leitura lado a lado (SÓ DEV, cardume v0.31)
+
+Relato do Caio: a Ajuda da Concha estava "muito curtinha horizontalmente". Causa: a regra geral das janelas (.md, 460 px) vencia a largura da Ajuda (mesma especificidade, declarada depois). Agora a Ajuda ocupa a tela (até 1100 px, 90 % da altura) e, em tela larga, vira índice à esquerda + tópico inteiro à direita (↑ ↓ no índice; a busca filtra o índice e abre o primeiro resultado); no celular continua a sanfona. De passagem: a janela entrava na página só no fim, depois dos focus(), que não tinham efeito. Teste test_concha_ajuda.js (17, os dois layouts). Prints em docs/capturas/concha-ajuda/.
+
 ### 2026-11-25 · 🐚 Concha: criar canal em dobro, emoji fora do rascunho e escuta que seguia depois de tirada do canal (SÓ DEV, cardume v0.21)
 
 /monitorarbugs na Concha (cardume-dev.html, regras kanban/cardume, cardumePush, conchaGifBusca). 3 achados, reproduzidos pela tela real antes de corrigir (test_concha_monitorarbugs_1125.js: os 3 falham na main e passam agora):
