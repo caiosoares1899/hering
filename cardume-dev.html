@@ -380,7 +380,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.30 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.32 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -403,6 +403,12 @@ import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js').then(
   window._fcmDeleteToken = () => m.deleteToken(messaging); window._fcmOnMessage = cb => m.onMessage(messaging, cb); window._fcmReady = true;
   if (window.MareNotif && MareNotif.rodapeRender) MareNotif.rodapeRender();
 })).catch(e => console.warn('[FCM] não inicializado:', e));
+// ✏️ Editar só nos primeiros 15 min (pedido do Caio, 25/11; a regra do banco confere com a hora do servidor). O relógio do aparelho é corrigido pelo .info/serverTimeOffset.
+const JANELA_EDITAR = 15 * 60000;
+let relogioServ = 0;
+onValue(ref(db, '.info/serverTimeOffset'), s => { const v = s.val(); relogioServ = typeof v === 'number' ? v : 0; });
+const agoraServ = () => Date.now() + relogioServ;
+const podeEditar = m => !!m && !!user && m.uid === user.uid && typeof m.texto === 'string' && typeof m.ts === 'number' && agoraServ() - m.ts < JANELA_EDITAR;
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
@@ -985,6 +991,10 @@ function renderMsgs() {
       if (alvo) { alvo.focus({ preventScroll: true }); rxFoco = null; } }
   }
   if (noFim || !renderMsgs._ja) log.scrollTop = log.scrollHeight;
+  // o ✏️ some sozinho quando a janela de 15 min da mensagem mais antiga ainda editável fecha
+  clearTimeout(renderMsgs._exp);
+  const restam = msgs.filter(m => podeEditar(m) && editando !== m.id).map(m => m.ts + JANELA_EDITAR - agoraServ());
+  if (restam.length) renderMsgs._exp = setTimeout(() => { if (!editando) renderMsgs(); else renderMsgs._exp = setTimeout(renderMsgs, 30000); }, Math.max(1000, Math.min(...restam) + 500));
   renderMsgs._ja = true;
 }
 function vazio(icone, txt) { const v = el('div', 'vazio'); if (icone) v.append(el('span', '', icone)); v.append(el('p', '', txt)); return v; }
@@ -1092,7 +1102,7 @@ function renderMsg(m) {
   if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
   if (souMembro(atual) || souAdm()) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
-    if (meu && typeof m.texto === 'string') { const e = acaoBtn('', '✏️', 'Editar'); e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
+    if (podeEditar(m)) { const e = acaoBtn('', '✏️', 'Editar'); e.title = 'Editar (até 15 min depois de enviar)'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
     const x = acaoBtn('perigo', '🗑', 'Apagar'); x.onclick = () => apagar(m); ac.append(x);
   }
   if (ac.childNodes.length) {
@@ -1121,6 +1131,7 @@ function editor(m) {
     e.preventDefault(); const txt = t.value.trim();
     if (!txt) { toast('A mensagem não pode ficar vazia. Para tirar, use 🗑 Apagar.'); return; }
     if (txt === m.texto) { editando = ''; renderMsgs(); return; }
+    if (!podeEditar(m)) { toast('Passaram 15 minutos: não dá mais para editar esta mensagem.'); editando = ''; rascunhoEdicao = null; renderMsgs(); return; }
     s.disabled = true;
     const canal = atual, base = B + 'msgs/' + canal + '/' + m.id, agora = serverTimestamp();
     const mapa = { [base + '/texto']: txt, [base + '/editado']: agora };
@@ -1128,7 +1139,7 @@ function editor(m) {
     antes.filter(t => !depois.includes(t)).forEach(t => { mapa[B + 'tags/' + canal + '/' + t + '/' + m.id] = null; });
     depois.filter(t => !antes.includes(t)).forEach(t => { mapa[B + 'tags/' + canal + '/' + t + '/' + m.id] = m.ts; mapa[B + 'tags_ult/' + canal + '/' + t] = agora; });
     try { await gravarComTags(mapa); editando = ''; rascunhoEdicao = null; renderMsgs(); }
-    catch (err) { s.disabled = false; falhou('salvar a edição', err); }
+    catch (err) { s.disabled = false; if (negado(err) && !podeEditar(m)) { toast('Passaram 15 minutos: não dá mais para editar esta mensagem.'); editando = ''; rascunhoEdicao = null; renderMsgs(); } else falhou('salvar a edição', err); }
   };
   return f;
 }
@@ -1487,7 +1498,7 @@ const AJUDA = [
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
-  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem (aparece "(editada)").\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.' },
+  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },
   { id: 'privacidade', ic: '🔒', t: 'Quem vê o quê', txt: '- Mensagens de um canal: só quem é membro (e o ADM, para moderação).\n- Suas **seções**, **avisos**, #tags seguidas e o que você já leu são só seus.\n- O aviso no Sino é genérico (o Sino é lido pela empresa); o canal e a mensagem ficam num registro que só você lê.\n- O que vai para um **card do Maré** fica visível para toda a Hering.' },

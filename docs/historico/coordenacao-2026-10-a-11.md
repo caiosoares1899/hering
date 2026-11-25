@@ -352,3 +352,7 @@ Caio confirmou `firebase deploy --only database` (assuntos, campo `a`, `ultima_a
 ## Confirmação de deploy — 25/11/2026 (🧵 avisos por assunto)
 
 Caio confirmou as regras (`avisos_a`) antes do merge da #1975 e `functions:conchaAvisoMsg` depois. Saiu de *Pendente de deploy*.
+
+## Confirmação de deploy — 25/11/2026 (😀 emoji da Concha)
+
+Caio confirmou `firebase deploy --only database` (campo `e` em canais e assuntos) da #1978. Saiu de *Pendente de deploy*. A Ajuda larga (#1979) não tinha deploy.
