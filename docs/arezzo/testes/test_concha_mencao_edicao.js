@@ -40,7 +40,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   await p.keyboard.press('Enter'); await p.waitForTimeout(100);
   t('Enter escolhe a pessoa (não salva)', (await p.inputValue(ed)) === 'Bom dia, time @Bruno Reis ' && await p.isVisible(ed), await p.inputValue(ed));
   await p.keyboard.type('e @'); await p.waitForTimeout(120);
-  const todos = await p.$$eval('#sug-ed .sugestao', xs => xs.map(x => [...x.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')));   // só o nome (a foto/iniciais vêm antes)
+  const todos = (await p.$$eval('#sug-ed .sugestao', xs => xs.map(x => [...x.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')))).filter(x => !/^(🗂 @card:|🎯 @objetivo:)/.test(x));   // as pessoas (sem os atalhos de citar)   // só o nome (a foto/iniciais vêm antes)
   t('@ sozinho lista os membros (menos eu)', todos.length === 2 && !todos.includes('@Ana Lima'), todos);
   await p.keyboard.press('ArrowDown'); await p.keyboard.press('Tab'); await p.waitForTimeout(100);
   t('seta + Tab escolhem a segunda pessoa', /@Carla Dias $/.test(await p.inputValue(ed)), await p.inputValue(ed));

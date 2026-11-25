@@ -55,7 +55,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Ideia | Dono | Detalhe |
 |---|---|---|
-| 🐚 Concha: 🧷 `@card:` e `@objetivo:` funcionando (desenho pronto) | Claude | [desenho](quadro/backlog.md#cardume-citar) |
 | 🐚 Concha: encaminhar mensagens, limpar a aba Menções e escolher os temas Claro e Vice City | Caio escolhe | [novos pedidos](quadro/backlog.md#concha-novos-pedidos-2511) |
 | 🐚 Concha: links de mensagens, Salvos, fixados, histórico, fios e outras ideias inspiradas no Slack e concorrentes | Caio escolhe | [comparativo](quadro/backlog.md#concha-comparativo) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |

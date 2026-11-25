@@ -24,7 +24,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   // computador (1280): índice + leitura
   await p.click('#b-ajuda'); await p.waitForTimeout(150);
   const tops = await p.evaluate(() => [...document.querySelectorAll('.ajuda-indice button')].map(b => b.textContent));
-  t('tela larga: índice com 13 tópicos, de "O que é" a "Atalhos", e o 1º aberto à direita', tops.length === 13 && /O que é a Concha/.test(tops[0]) && /Atalhos/.test(tops[12]) && await p.evaluate(() => document.querySelector('.ajuda-artigo').dataset.id === 'concha'), tops);
+  t('tela larga: índice com 14 tópicos, de "O que é" a "Atalhos", e o 1º aberto à direita', tops.length === 14 && /O que é a Concha/.test(tops[0]) && /Atalhos/.test(tops[13]) && await p.evaluate(() => document.querySelector('.ajuda-artigo').dataset.id === 'concha'), tops);
   t('a janela usa a tela (≥ 1000 px de largura em 1280)', await p.evaluate(() => document.querySelector('.ajuda-md').getBoundingClientRect().width >= 1000), await p.evaluate(() => document.querySelector('.ajuda-md').getBoundingClientRect().width));
   t('foco na busca ao abrir', await p.evaluate(() => document.activeElement.type === 'search'), 0);
   await p.click('.ajuda-indice [data-id="tags"]'); await p.waitForTimeout(100);
@@ -52,7 +52,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   // celular (390): sanfona
   await p.setViewportSize({ width: 390, height: 780 }); await p.waitForTimeout(200);
   await p.click('#b-ajuda'); await p.waitForTimeout(150);
-  t('celular: sanfona com 13 tópicos', await p.evaluate(() => document.querySelectorAll('.ajuda-lista details').length === 13 && !document.querySelector('.ajuda-indice')), 0);
+  t('celular: sanfona com 14 tópicos', await p.evaluate(() => document.querySelectorAll('.ajuda-lista details').length === 14 && !document.querySelector('.ajuda-indice')), 0);
   await p.fill('.ajuda-md input[type=search]', 'silenci'); await p.waitForTimeout(100);
   t('celular: a busca filtra e abre', await p.evaluate(() => document.getElementById('ajuda-avisos').open && document.getElementById('ajuda-card').hidden), 0);
   await p.keyboard.press('Escape');
