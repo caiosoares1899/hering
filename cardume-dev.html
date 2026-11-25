@@ -462,7 +462,7 @@ let msgs = [];                 // mensagens do canal aberto (ordenadas por ts)
 let membrosAtual = {}, adminsAtual = {};
 let carregandoMsgs = false;
 // 🧵 Assuntos (docs/ideias/cardume-v0-banco.md › "Assuntos dentro do canal"): '' = geral
-let assuntoAtual = '', assuntos = {}, msgsCanal = [], msgsAss = [], verEncerrados = false, msgsCanalPronto = false;
+let assuntoAtual = '', assuntos = {}, msgsCanal = [], msgsAss = [], verEncerrados = false, msgsCanalPronto = false, janela = 100;
 const ultA = {}, AID_RE = /^a[a-z0-9]{1,20}$/;
 let lidasA = {};
 const JANELA = 100;   // janela do canal por ts (geral = as sem assunto dela; a ordem nunca confia na chave)
@@ -662,8 +662,10 @@ function iniciarOuvintes() {
 const lidoA = (id, k) => { const v = (lidasA[id] || {})[k]; return typeof v === 'number' ? v : k === '_geral' ? (lidas[id] || 0) : 0; };
 const vendoAgora = (id, k) => id === atual && (assuntoAtual || '_geral') === k && !vendoTag && !vendoMencoes && !vendoPessoa && conversaVisivel();
 const naoLidoA = (id, k) => { const u = (ultA[id] || {})[k]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > lidoA(id, k) && !vendoAgora(id, k); };
+// O canal acende por geral e pelos assuntos que a pessoa já abriu (tem lidas_a); assunto nunca aberto ou encerrado só mostra o ponto na faixa.
+const acendeCanal = (id, k) => k === '_geral' || (AID_RE.test(k) && typeof (lidasA[id] || {})[k] === 'number' && !(id === atual && assuntoFechado(k)));
 const naoLido = id => {
-  if (ultA[id] && Object.keys(ultA[id]).some(k => (k === '_geral' || AID_RE.test(k)) && naoLidoA(id, k))) return true;
+  if (ultA[id] && Object.keys(ultA[id]).some(k => acendeCanal(id, k) && naoLidoA(id, k))) return true;
   // mensagem que só aparece no marcador antigo (quem ainda está com a página sem assuntos não grava ultima_a): conta como geral
   const u = ultimas[id]; if (!u || typeof u.ts !== 'number' || u.uid === user.uid) return false;
   if (Object.values(ultA[id] || {}).some(x => x && x.id === u.id)) return false;
@@ -729,11 +731,11 @@ function abrirCanal(id, foco, aid) {
   const membro = souMembro(id);
   if (membro || souAdm()) {
     carregandoMsgs = true; renderMsgs();
-    ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(JANELA)), s => {
-      msgsCanal = listaMsgs(s.val()); msgsCanalPronto = true; if (!assuntoAtual) aplicarVista(id);
-    }, e => { carregandoMsgs = false; msgs = []; msgsCanal = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(id) + '.'); });
+    janela = JANELA; ouvirJanela(id);
     ouvirAssunto(id);
-    ouvir('assuntos', ref(db, B + 'assuntos/' + id), s => { assuntos = s.val() || {}; renderBarraAssuntos(); renderCabecalho(); if (assuntoAtual) renderMsgs(); }, () => { assuntos = {}; renderBarraAssuntos(); });
+    ouvir('assuntos', ref(db, B + 'assuntos/' + id), s => { assuntos = s.val() || {};
+      if (assuntoAtual && !assuntos[assuntoAtual]) { toast('Esse assunto não existe mais. Voltando para geral.'); trocarAssunto(''); }
+      renderBarraAssuntos(); renderCabecalho(); if (assuntoAtual) renderMsgs(); }, () => { assuntos = {}; renderBarraAssuntos(); });
   } else { parar('assuntos'); parar('msgsA'); assuntos = {}; parar('msgs'); parar('rx'); pararCitacoes(); cancelarResposta(false); msgs = []; reacoes = {}; editando = ''; rascunhoEdicao = null; carregandoMsgs = false; renderMsgs(); }   // tirado do canal aberto: não segue escutando as mensagens
   if (membro || gestor(id)) {
     ouvir('membros', ref(db, B + 'membros/' + id), s => { membrosAtual = s.val() || {}; renderLado(); renderMsgs(); }, () => { membrosAtual = {}; renderLado(); });
@@ -749,6 +751,12 @@ function aplicarVista(id) {
   msgs = (assuntoAtual ? msgsAss : msgsCanal.filter(m => !m.a)).slice(-LIMITE);
   carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id); renderBarraAssuntos();
 }
+function ouvirJanela(id) {   // janela do canal por ts (geral sai dela); "ver mais de geral" alarga
+  ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(janela)), s => {
+    msgsCanal = listaMsgs(s.val()); msgsCanalPronto = true; if (!assuntoAtual) aplicarVista(id);
+  }, e => { carregandoMsgs = false; msgs = []; msgsCanal = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(atual) + '.'); });
+}
+const geralEscondida = () => !assuntoAtual && msgsCanal.length >= janela && msgs.length < LIMITE && janela < 1000;   // a janela encheu com mensagens de assuntos
 function ouvirAssunto(id) {
   parar('msgsA'); msgsAss = [];
   if (!assuntoAtual) { if (msgsCanalPronto) aplicarVista(id); return; }   // geral: só com a janela do canal já lida (senão "ir até a mensagem" a perderia)
@@ -796,9 +804,17 @@ function renderBarraAssuntos() {
     f.onclick = () => { verEncerrados = !verEncerrados; renderBarraAssuntos(); }; bar.append(f);
     if (verEncerrados) fechados.forEach(k => bar.append(chip(k, '🔒 ' + assuntos[k].n, 'fechado')));
   }
+  if (Object.keys(ultA[id] || {}).some(k => (k === '_geral' || AID_RE.test(k)) && naoLidoA(id, k))) { const m = el('button', '', '✓ Marcar como lido'); m.type = 'button'; m.dataset.aid = '_lido'; m.title = 'Marcar geral e todos os assuntos deste canal como lidos'; m.onclick = () => marcarTudoLido(id); bar.append(m); }
   if (assuntoAtual && podeGerirAssunto(assuntoAtual)) { const g = el('button', '', '⋯'); g.type = 'button'; g.dataset.aid = '_ger'; g.setAttribute('aria-label', 'Renomear ou encerrar ' + nomeAssunto(assuntoAtual)); g.title = 'Renomear ou encerrar'; g.onclick = () => modalAssunto(assuntoAtual); bar.append(g); }
   if (foco) { const x = bar.querySelector('[data-aid="' + CSS.escape(foco) + '"]'); if (x) x.focus({ preventScroll: true }); }
-  const ativo = bar.querySelector('[aria-pressed="true"]'); if (ativo && ativo.scrollIntoView) ativo.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // o assunto aberto sempre à vista na faixa
+  const ativo = bar.querySelector('[aria-pressed="true"]');   // o assunto aberto sempre à vista na faixa (rola só a faixa, nunca a página)
+  if (ativo) { const l = ativo.offsetLeft - bar.offsetLeft, r = l + ativo.offsetWidth; if (l < bar.scrollLeft) bar.scrollLeft = l - 12; else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth + 12; }
+}
+function marcarTudoLido(id) {
+  const mapa = {};
+  Object.entries(ultA[id] || {}).forEach(([k, u]) => { if ((k === '_geral' || AID_RE.test(k)) && u && typeof u.ts === 'number' && u.ts > lidoA(id, k)) { mapa[B + 'lidas_a/' + user.uid + '/' + id + '/' + k] = u.ts; if (k === '_geral' && u.ts > (lidas[id] || 0)) mapa[B + 'lidas/' + user.uid + '/' + id] = u.ts; } });
+  if (!Object.keys(mapa).length) return;
+  update(ref(db), mapa).then(() => toast('✓ ' + nomeCanal(id) + ': tudo lido.')).catch(e => falhou('marcar como lido', e));
 }
 const podeGerirAssunto = aid => !!assuntos[aid] && !vencido(canais[atual]) && ((assuntos[aid].por === user.uid && souMembro(atual)) || gestor(atual));
 function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabrir
@@ -817,7 +833,7 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
     const enc = el('button', fechado ? '' : 'perigo', fechado ? '🔓 Reabrir' : '🔒 Encerrar'); enc.type = 'button';
     enc.onclick = async () => {
       if (!fechado && !confirm('Encerrar "' + x.n + '"? Vira só leitura: ninguém escreve, edita nem reage mais nele.')) return;
-      try { await set(ref(db, base + '/fim'), fechado ? null : Date.now() - 1000); fecharModal(); toast(fechado ? '🔓 Assunto reaberto.' : '🔒 Assunto encerrado.'); } catch (e) { erroModal(err, negado(e) ? 'Sem permissão.' : 'Não deu agora. Tente de novo.'); }
+      try { await set(ref(db, base + '/fim'), fechado ? null : serverTimestamp()); fecharModal(); toast(fechado ? '🔓 Assunto reaberto.' : '🔒 Assunto encerrado.'); } catch (e) { erroModal(err, negado(e) ? 'Sem permissão.' : 'Não deu agora. Tente de novo.'); }
     };
     l.append(enc);
   }
@@ -831,7 +847,7 @@ function modalAssunto(aid) {   // '' = novo; senão renomear / encerrar / reabri
       if (x) { await set(ref(db, base + '/n'), n); fecharModal(); toast('🧵 Assunto renomeado.'); }
       else {
         const novo = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'x');
-        await set(ref(db, B + 'assuntos/' + atual + '/' + novo), { n, por: user.uid, criado: serverTimestamp() });
+        await update(ref(db), { [B + 'assuntos/' + atual + '/' + novo]: { n, por: user.uid, criado: serverTimestamp() }, [B + 'lidas_a/' + user.uid + '/' + atual + '/' + novo]: serverTimestamp() });   // quem cria já acompanha o assunto
         fecharModal(); assuntos[novo] = { n, por: user.uid, criado: Date.now() }; trocarAssunto(novo); entrada.focus(); toast('🧵 Assunto criado. Escreva a primeira mensagem.');
       }
     } catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão.' : 'Não deu agora. Tente de novo.'); }
@@ -879,6 +895,11 @@ function renderMsgs() {
   if (carregandoMsgs) { log.append(vazio('', 'Carregando mensagens…')); return; }
   if (assuntoFechado(assuntoAtual)) log.append(el('p', 'aviso-encerrado', '🔒 Assunto encerrado — só leitura.' + (podeGerirAssunto(assuntoAtual) ? ' Para voltar a escrever, ⋯ › Reabrir.' : '')));
   if (assuntoAtual && !msgs.length) { log.append(vazio('🧵', 'Nenhuma mensagem em "' + nomeAssunto(assuntoAtual) + '" ainda.')); return; }
+  if (geralEscondida()) {   // a janela do canal encheu de mensagens de assuntos: geral pode ter mais (nunca dizer que está vazia)
+    const v = el('div', 'aviso-encerrado'); v.append(document.createTextNode(msgs.length ? 'As mensagens mais recentes do canal estão nos assuntos. ' : 'As mensagens mais recentes do canal estão nos assuntos; as de geral são mais antigas. '));
+    const b = el('button', 'lnk', 'Ver mais de geral'); b.type = 'button'; b.onclick = () => { janela = Math.min(1000, janela + 200); carregandoMsgs = true; renderMsgs(); ouvirJanela(atual); }; v.append(b); log.append(v);
+    if (!msgs.length) return;
+  }
   if (!msgs.length) { log.append(vazio('💬', vencido(c) ? 'Canal arquivado, sem mensagens.' : 'Nenhuma mensagem ainda. Diga oi! 👋')); return; }
   if (msgs.length >= LIMITE) log.append(el('p', 'subtitulo', 'Mostrando as últimas ' + LIMITE + ' mensagens.'));
   let dia = '', ult = null, grupo = null;
@@ -1611,12 +1632,13 @@ function marcarLido() {   // por assunto (lidas_a); a vista de geral também ava
   const ts = msgs[msgs.length - 1].ts, k = assuntoAtual || '_geral';
   if (ts <= lidoA(id, k)) return;
   clearTimeout(marcarLido._t);
+  const primeira = k !== '_geral' && typeof (lidasA[id] || {})[k] !== 'number';   // 1ª vez no assunto: grava já (é o que faz ele acender o canal depois)
   marcarLido._t = setTimeout(() => {
     if (atual !== id || (assuntoAtual || '_geral') !== k || ts <= lidoA(id, k)) return;
     const mapa = { [B + 'lidas_a/' + user.uid + '/' + id + '/' + k]: ts };
     if (k === '_geral' && ts > (lidas[id] || 0)) mapa[B + 'lidas/' + user.uid + '/' + id] = ts;
     update(ref(db), mapa).catch(() => {});
-  }, 800);
+  }, primeira ? 0 : 800);
 }
 
 document.addEventListener('visibilitychange', marcarLido);

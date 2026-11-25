@@ -11,13 +11,14 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8941';
 const ANA = { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana Lima', photoURL: '', providerData: [{ providerId: 'google.com' }] };
 const agora = Date.now();
 const forjadas = {}; for (let i = 0; i < 55; i++) forjadas['z' + String(i).padStart(3, '0')] = { uid: 'bru', ts: agora - 864e5 - i * 1000, texto: 'velha ' + i, a: 'aold' };
+const ocupado = {}; for (let i = 0; i < 100; i++) ocupado['-Nb' + String(i).padStart(3, '0')] = { uid: 'bru', ts: agora - 3e5 + i * 1000, texto: 'assunto ' + i, a: 'abusy' };
 const seed = () => ({ kanban: {
   usuarios: { ana: { role: 'membro', squads: { dados: true } } },
   usuarios_publicos: { ana: { nome: 'Ana Lima', email: 'ana@ciahering.com.br' }, bru: { nome: 'Bruno Reis', email: 'bru@ciahering.com.br' } },
   cardume: {
-    canais: { dados: { nome: 'Dados' }, prf: { nome: 'Performance' } }, membros: { dados: { ana: true, bru: true }, prf: { ana: true, bru: true } }, meus: { ana: { dados: true, prf: true } },
-    assuntos: { dados: { aold: { n: 'campanha antiga', por: 'bru', criado: agora - 2 * 864e5 } } },
-    msgs: { dados: Object.assign({ '-Ng1': { uid: 'bru', ts: agora - 9e5, texto: 'bom dia, geral' }, '-Nnew': { uid: 'bru', ts: agora - 6e4, texto: 'a NOVA do assunto', a: 'aold' } }, forjadas), prf: {} },
+    canais: { dados: { nome: 'Dados' }, prf: { nome: 'Performance' }, mid: { nome: 'Mídia' } }, membros: { dados: { ana: true, bru: true }, prf: { ana: true, bru: true }, mid: { ana: true, bru: true } }, meus: { ana: { dados: true, prf: true, mid: true } },
+    assuntos: { dados: { aold: { n: 'campanha antiga', por: 'bru', criado: agora - 2 * 864e5 } }, mid: { abusy: { n: 'lançamento', por: 'bru', criado: agora - 864e5 } } },
+    msgs: { mid: Object.assign({ '-Mg1': { uid: 'bru', ts: agora - 9e6, texto: 'geral antiga 1' }, '-Mg2': { uid: 'bru', ts: agora - 8e6, texto: 'geral antiga 2' }, '-Mg3': { uid: 'bru', ts: agora - 7e6, texto: 'geral antiga 3' } }, ocupado), dados: Object.assign({ '-Ng1': { uid: 'bru', ts: agora - 9e5, texto: 'bom dia, geral' }, '-Nnew': { uid: 'bru', ts: agora - 6e4, texto: 'a NOVA do assunto', a: 'aold' } }, forjadas), prf: {} },
     ultima_a: { dados: { _geral: { ts: agora - 9e5, uid: 'bru', id: '-Ng1' }, aold: { ts: agora - 6e4, uid: 'bru', id: '-Nnew' } } },
     lidas_a: { ana: { dados: { _geral: agora } } },
     mencoes: { ana: { r1: { c: 'dados', m: '-Nnew', de: 'bru', ts: agora - 6e4, n: 'n1' } } },
@@ -43,9 +44,11 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const externo = mapa => p.evaluate(m => { window.__onDisc = m; window.__simDisconnect(); }, mapa);
 
   let c = await chips();
-  t('faixa: 💬 geral (aberto), ＋ Assunto, 🧵 campanha antiga com ponto de nova', JSON.stringify(c) === JSON.stringify(['💬 geral*', '＋ Assunto', '🧵 campanha antiga•']), c);
+  t('faixa: 💬 geral (aberto), ＋ Assunto, 🧵 campanha antiga com ponto de nova, ✓ Marcar como lido', JSON.stringify(c) === JSON.stringify(['💬 geral*', '＋ Assunto', '🧵 campanha antiga•', '✓ Marcar como lido']), c);
   t('geral mostra só a mensagem sem assunto', JSON.stringify(await textos()) === JSON.stringify(['bom dia, geral']), await textos());
-  t('o canal acende na lista (assunto com nova)', await p.evaluate(() => document.querySelector('[data-canal="dados"]').classList.contains('nao-lido')), 0);
+  await p.click('[data-canal="prf"]'); await p.waitForTimeout(300);
+  t('assunto que eu nunca abri NÃO acende o canal (só o ponto na faixa)', await p.evaluate(() => !document.querySelector('[data-canal="dados"]').classList.contains('nao-lido')), 0);
+  await p.click('[data-canal="dados"]'); await p.waitForTimeout(500);
 
   await p.click('#assuntos-barra [data-aid="aold"]'); await p.waitForTimeout(1300);
   let tx = await textos();
@@ -71,6 +74,9 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const tn = Date.now();
   await externo({ ['kanban/cardume/msgs/dados/-Nb2']: ['set', { uid: 'bru', ts: tn, texto: 'aprovado', a: aid }], ['kanban/cardume/ultima_a/dados/' + aid]: ['set', { ts: tn, uid: 'bru', id: '-Nb2' }] }); await p.waitForTimeout(400);
   t('mensagem nova no assunto, vendo geral: ponto no 🧵 banner BF', (await chips()).some(x => x.startsWith('🧵 banner BF') && x.endsWith('•')), await chips());
+  t('...e o canal acende (é um assunto que eu já abri)', await p.evaluate(() => document.querySelector('[data-canal="dados"]').classList.contains('nao-lido')), 0);
+  await p.click('#assuntos-barra [data-aid="_lido"]'); await p.waitForTimeout(400);
+  t('✓ Marcar como lido apaga todos os pontos (faixa e canal)', !(await chips()).some(x => x.includes('•')) && await p.evaluate(() => !document.querySelector('[data-canal="dados"]').classList.contains('nao-lido')), await chips());
 
   // encerrar e reabrir (quem criou)
   await p.click('#assuntos-barra [data-aid="' + aid + '"]'); await p.waitForTimeout(300);
@@ -80,6 +86,14 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await p.click('#assuntos-barra [data-aid="_ger"]'); await p.click('.md button:has-text("Reabrir")'); await p.waitForTimeout(400);
   t('🔓 Reabrir volta o campo', !(await S()).assuntos.dados[aid].fim && await p.evaluate(() => !document.getElementById('rodape').hidden), 0);
 
+  // encerrado com mensagem nova de outra pessoa: não acende o canal
+  await p.click('#assuntos-barra [data-aid="_ger"]'); p.once('dialog', d => d.accept()); await p.click('.md button.perigo'); await p.waitForTimeout(300);
+  await p.click('#assuntos-barra [data-aid="_geral"]'); await p.waitForTimeout(300);
+  const te = Date.now();
+  await externo({ ['kanban/cardume/msgs/dados/-Nb3']: ['set', { uid: 'bru', ts: te, texto: 'depois de encerrar?', a: aid }], ['kanban/cardume/ultima_a/dados/' + aid]: ['set', { ts: te, uid: 'bru', id: '-Nb3' }] }); await p.waitForTimeout(400);
+  t('assunto encerrado não acende o canal', await p.evaluate(() => !document.querySelector('[data-canal="dados"]').classList.contains('nao-lido')), 0);
+  await p.click('#assuntos-barra button:has-text("Encerrados")'); await p.click('#assuntos-barra [data-aid="' + aid + '"]'); await p.waitForTimeout(300);
+  await p.click('#assuntos-barra [data-aid="_ger"]'); await p.click('.md button:has-text("Reabrir")'); await p.waitForTimeout(300);
   // apagar guarda o a
   await p.hover('#log .msg'); await p.click('#log .msg [aria-label="Apagar"]'); await p.waitForTimeout(5600);
   c = await S(); const ap = c.msgs.dados[minha[0]];
@@ -89,6 +103,11 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await p.click('#b-mencoes'); await p.waitForTimeout(300); await p.click('#log .mencao-item'); await p.waitForTimeout(800);
   t('abrir a menção leva ao assunto da mensagem e a destaca', await p.evaluate(() => new URL(location.href).searchParams.get('a') === 'aold' && !!document.querySelector('[data-msg="-Nnew"].destaque')), await chips());
 
+  // geral com a janela cheia de assuntos: nunca "vazio"
+  await p.click('[data-canal="mid"]'); await p.waitForTimeout(600);
+  t('geral com a janela cheia de mensagens de assunto: avisa e não diz que está vazio', await p.evaluate(() => /estão nos assuntos/.test(document.getElementById('log').textContent) && !/Diga oi/.test(document.getElementById('log').textContent)), await textos());
+  await p.click('#log button:has-text("Ver mais de geral")'); await p.waitForTimeout(600);
+  t('"Ver mais de geral" traz as 3 antigas', JSON.stringify(await textos()) === JSON.stringify(['geral antiga 1', 'geral antiga 2', 'geral antiga 3']), await textos());
   // página antiga (só ultima, sem ultima_a): o canal acende
   await p.click('[data-canal="prf"]'); await p.waitForTimeout(300);
   const to = Date.now();
@@ -100,6 +119,10 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   for (const e of esc) { const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([k, v]) => [(e.p ? e.p + '/' : '') + k, v])); Date.now = () => e.t; let r; try { r = regras(RULES, e.antes, authDe(ANA), mapa); } finally { Date.now = real; } if (!r) ruins.push({ tipo: e.tipo, caminhos: Object.keys(mapa) }); }
   t('CADA escrita da página passa nas regras reais', esc.length > 0 && !ruins.length, { n: esc.length, ruins });
   t('sem erro de JS', !errs.length, errs);
+  // link para assunto que não existe mais (?a= velho): volta para geral, com aviso, e o campo segue escrevendo em geral
+  await p.goto(base + '/cardume-dev.html?c=prf&a=asumiu'); await p.waitForFunction(() => !!window.__authCb);
+  await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(1000);
+  t('link para assunto apagado volta para geral (sem ?a=, campo de geral)', await p.evaluate(() => !new URL(location.href).searchParams.get('a') && document.getElementById('entrada').placeholder === 'Escreva uma mensagem…' && /não existe mais/.test(document.getElementById('toast').textContent)), await p.evaluate(() => [location.search, document.getElementById('entrada').placeholder, document.getElementById('toast').textContent]));
   await b.close();
   console.log(`\n${ok ? '✅' : '❌'} ${total} verificações`); process.exit(ok ? 0 : 1);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -422,6 +422,9 @@ Pedido do Caio (25/11): "assuntos separados", como os tópicos do Zulip/Discord.
 - **Apagar guarda o `a`** (`{uid, ts, apagada, a}`): a mensagem apagada não cai em geral. Editar não muda nem tira o `a`.
 - **Encerrado = só leitura de verdade:** a regra barra mensagem nova, edição e reação (tirar a própria reação e apagar continuam). Quem pode encerrar também reabre (tira o `fim`). Quem criou e saiu do canal perde o direito.
 - `ultima/{canal}` e `lidas/{uid}/{canal}` continuam. Não lida por assunto = `ultima_a` × `lidas_a`; **"_geral" herda o lido antigo do canal** e os assuntos começam do zero. A vista de geral também avança o `lidas` antigo; a de assunto não. Mensagem que só aparece no `ultima` (de quem ainda está com a página antiga) conta como geral. O assunto mostra um ponto (não um número).
+- **O canal acende** por geral e pelos assuntos que a pessoa **já abriu** (tem `lidas_a`; a 1ª abertura grava na hora e quem cria já entra lendo); assunto nunca aberto ou **encerrado** só mostra o ponto na faixa — senão um assunto que ninguém abre deixaria o canal aceso para sempre. **✓ Marcar como lido** na faixa zera geral e todos os assuntos do canal.
+- **Geral com a janela cheia de assuntos** (100 mensagens por `ts`): nunca diz "vazio"; avisa que as recentes estão nos assuntos e oferece **Ver mais de geral** (janela +200, até 1000).
+- Encerrar grava `fim` com `serverTimestamp`. Link `?a=` de assunto que não existe mais volta para geral, com aviso.
 - **PR A (este):** os assuntos, não lidas e encerrar. **PR B (depois):** 🔕/🔔 seguir por assunto (`avisos_a` + `conchaAvisoMsg`) e o nome do assunto no push; até lá, mensagem de assunto avisa pela regra do canal.
 
 ### Avisos (`conchaAvisoMsg` + `avisos_a`)
