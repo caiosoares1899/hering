@@ -158,6 +158,8 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .aviso-reg{padding:8px 10px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);font-size:13px;}
 .prev-reg{margin:0;max-height:20vh;overflow:auto;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.45 ui-monospace,Menlo,monospace;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);border-radius:8px;}
 .mencao{color:var(--accent-txt);font-weight:700;}
+.b-buscar{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--txt2);}
+.b-buscar kbd{font:inherit;font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--glass-b, rgba(56,182,255,.25));color:var(--txt2);}
 button.tag{all:unset;cursor:pointer;color:var(--accent-txt);font-weight:600;border-radius:4px;padding:0 2px;}
 button.tag:hover{text-decoration:underline;}
 button.tag:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
@@ -273,6 +275,7 @@ button.msg-gif{cursor:pointer;}
 
   <main id="app" class="app" data-tela="canais" hidden>
     <nav class="painel lateral" aria-label="Canais">
+      <button type="button" class="b-mencoes b-buscar" id="b-buscar" hidden aria-keyshortcuts="Control+K Meta+K">🔍 Buscar <kbd id="b-buscar-tecla">Ctrl K</kbd></button>
       <button type="button" class="b-mencoes" id="b-mencoes" aria-current="false">@ Menções <span class="selo-n" id="mencoes-n" hidden>0</span></button>
       <div id="lista-canais"></div>
       <button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button>
@@ -318,12 +321,13 @@ button.msg-gif{cursor:pointer;}
 
 <script src="mare-login-dev.js?v=3"></script>
 <script src="mare-notif-dev.js?v=52"></script>
+<script src="mare-sonar-dev.js?v=8"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, push, onValue, query, orderByChild, orderByValue, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.22 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.23 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -623,7 +627,7 @@ $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[
 // ═══ Canal aberto ═══
 function abrirCanal(id, foco) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
-  vendoTag = '';
+  vendoTag = ''; vendoPessoa = '';
   if (atual !== id) {
     soltarCanal();
     entrada.value = lsGet(chaveRascunho(id)) || ''; ajustarAltura(); fecharSug(); fecharEmojis(false); fecharGifs(false); limparGif(); cancelarResposta(false);
@@ -674,6 +678,7 @@ function renderMsgs() {
   log.replaceChildren();
   if (vendoMencoes) { renderMencoes(log); return; }
   if (vendoTag) { renderTag(log); return; }
+  if (vendoPessoa) { renderPessoa(log); return; }
   const id = atual, c = canais[id];
   if (!id) { log.append(vazio('🐚', 'Escolha um canal à esquerda.')); return; }
   if (!souMembro(id) && !souAdm()) {
@@ -1109,7 +1114,7 @@ function soltarCanal() {
 }
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
-  soltarCanal(); vendoTag = '';
+  soltarCanal(); vendoTag = ''; vendoPessoa = '';
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
 }
@@ -1122,7 +1127,7 @@ function abrirTag(k) {
   Object.keys(curtas).forEach(x => delete curtas[x]);
   soltarCanal();
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
-  atual = ''; vendoTag = k; tagItens = null;
+  atual = ''; vendoTag = k; vendoPessoa = ''; tagItens = null;
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
   const vez = ++tagVez, canaisMeus = idsConhecidos().filter(souMembro);
   Promise.all(canaisMeus.map(c => get(query(ref(db, B + 'tags/' + c + '/' + k), orderByValue(), limitToLast(30)))
@@ -1148,6 +1153,88 @@ function renderTag(log) {
     b.append(el('b', '', '# ' + nomeCanal(it.c) + (cu && cu.uid ? ' · ' + nomePessoa(cu.uid) : '')), el('span', 'sub', cu ? cu.tr : '…'), el('span', 'hora', h));
     b.onclick = () => { alvoMsg = it.m; abrirCanal(it.c, true); };
     log.append(b);
+  });
+}
+// ═══ 👤 Pessoa (pelo Sonar): sem conversa direta na Concha, mostra os canais seus em que ela também está ═══
+let vendoPessoa = '', pessoaCanais = null, pessoaVez = 0;
+function abrirPessoa(uid) {
+  if (!ID_RE.test(uid)) return;
+  soltarCanal();
+  if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
+  atual = ''; vendoTag = ''; vendoPessoa = uid; pessoaCanais = null;
+  $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
+  const vez = ++pessoaVez, meusCanais = idsConhecidos().filter(souMembro);
+  Promise.all(meusCanais.map(c => get(ref(db, B + 'membros/' + c + '/' + uid)).then(s => s.val() === true ? c : null).catch(() => null)))
+    .then(r => { if (vez !== pessoaVez || vendoPessoa !== uid) return; pessoaCanais = r.filter(Boolean).sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR')); renderMsgs(); });
+}
+function renderPessoa(log) {
+  const uid = vendoPessoa, nome = nomePessoa(uid);
+  $('canal-titulo').textContent = '👤 ' + nome; $('canal-sub').textContent = uid === user.uid ? 'Os seus canais' : 'Canais em que você e ' + nome.split(' ')[0] + ' estão';
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  if (!pessoaCanais) { log.append(vazio('', 'Procurando os canais em comum…')); return; }
+  if (!pessoaCanais.length) { log.append(vazio('👤', 'Vocês ainda não estão no mesmo canal. Num canal que você administra, ℹ️ Detalhes › Adicionar pessoa.')); return; }
+  pessoaCanais.forEach(c => {
+    const b = el('button', 'mencao-item'); b.type = 'button';
+    b.append(el('b', '', (ehTema(c) && canais[c] && canais[c].acesso === 'convite' ? '🔒 ' : '# ') + nomeCanal(c)), el('span', 'sub', ehTema(c) ? 'Canal temático' : 'Canal da squad'));
+    b.onclick = () => abrirCanal(c, true);
+    log.append(b);
+  });
+}
+// ═══ 🔍 Sonar (Ctrl/⌘+K, mare-sonar-dev.js): canais, pessoas e #tags — só da Concha (decisão do Caio, 25/11) ═══
+// #tags: tags_ult/{canal} dos canais em que a pessoa está (uma chave por tag, sem baixar o índice), relido ao abrir o Sonar se tiver mais de 2 min.
+let tagsUlt = {}, tagsUltEm = 0, tagsUltVez = 0;   // tag → { ult, canais: [ids] }
+function carregarTagsUlt() {
+  if (Date.now() - tagsUltEm < 120000) return;
+  tagsUltEm = Date.now(); const vez = ++tagsUltVez, meusCanais = idsConhecidos().filter(souMembro);
+  Promise.all(meusCanais.map(c => get(ref(db, B + 'tags_ult/' + c)).then(s => [c, s.val() || {}]).catch(() => [c, {}]))).then(r => {
+    if (vez !== tagsUltVez) return;
+    const m = {};
+    r.forEach(([c, v]) => Object.keys(v).forEach(t => { if (!tagOk(t) || typeof v[t] !== 'number') return; const x = m[t] = m[t] || { ult: 0, canais: [] }; x.ult = Math.max(x.ult, v[t]); x.canais.push(c); }));
+    tagsUlt = m;
+    const inp = document.getElementById('msn-in'); if (window.MareSonar && MareSonar.aberto() && inp) inp.dispatchEvent(new Event('input'));   // o Sonar já aberto mostra as tags que chegaram
+  }).catch(() => { tagsUltEm = 0; });
+}
+const itemCanal = id => {
+  const c = canais[id], tema = ehTema(id), conv = tema && c && c.acesso === 'convite';
+  const sub = !tema ? (souMembro(id) ? 'Canal da squad' : 'Canal da squad · você administra') : !souMembro(id) ? 'Aberto para entrar' : (vencido(c) ? 'Temático · arquivado' : conv ? 'Temático · só convidados' : 'Temático · aberto');
+  return { k: 'canal:' + id, ic: conv ? '🔒' : '#', t: nomeCanal(id), sub, tipo: 'canal', go: () => abrirCanal(id, true), rec: { canal: id } };
+};
+const itemTag = t => { const x = tagsUlt[t] || { ult: 0, canais: [] };
+  return { k: 'tag:' + t, ic: '#️⃣', t: '#' + t, sub: (x.canais.length ? 'em ' + x.canais.slice(0, 3).map(c => '# ' + nomeCanal(c)).join(', ') + (x.canais.length > 3 ? ' e mais ' + (x.canais.length - 3) : '') : 'nos seus canais') + (x.ult ? ' · ' + new Date(x.ult).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''), tipo: 'tag', go: () => abrirTag(t), rec: { tag: t } }; };
+const itemPessoa = uid => ({ k: 'pessoa:' + uid, ic: '👤', t: nomePessoa(uid), sub: uid === user.uid ? 'Você · seus canais' : 'Ver os canais em comum', tipo: 'pessoa', go: () => abrirPessoa(uid), rec: { pessoa: uid } });
+function canaisVisiveis() {   // o mesmo que a lista da esquerda mostra
+  return idsConhecidos().filter(id => ehTema(id) ? (canais[id] && souMembro(id)) || (abertos[id] && !souMembro(id)) : (canais[id] && (souMembro(id) || gestorOficial(id))));
+}
+let sonarLigado = false;
+function ligarSonar() {
+  $('b-buscar').hidden = !window.MareSonar;
+  if (!window.MareSonar || sonarLigado) return;
+  sonarLigado = true;
+  $('b-buscar-tecla').textContent = MareSonar.tecla;
+  $('b-buscar').onclick = () => MareSonar.abrir();
+  MareSonar.iniciar({
+    dev: /-dev\.html/.test(location.pathname), pagina: 'concha', user: () => user, atalho: true, radar: false,
+    escopos: [{ id: 'tudo', l: 'Tudo' }, { id: 'canais', l: 'Canais' }, { id: 'tags', l: '#tags' }, { id: 'pessoas', l: 'Pessoas' }],
+    prefixos: { c: 'canais', t: 'tags', p: 'pessoas' },
+    placeholder: 'Buscar canais, #tags e pessoas…', subtitulo: 'canais, #tags e pessoas da Concha',
+    vazio: 'Tente outra palavra, uma <b>#tag</b> ou o nome de alguém.',
+    inicio: 'Digite o nome de um canal, uma <b>#tag</b> ou de uma pessoa. Com a caixa vazia, <b>1</b>–<b>3</b> escolhem onde buscar.',
+    aoAbrir: () => { carregarTagsUlt(); fecharEmojis(false); fecharGifs(false); },
+    fontes: (q) => {
+      const soTag = /^#/.test(q.trim()), g = [];
+      const tags = Object.keys(tagsUlt).sort((a, b) => tagsUlt[b].ult - tagsUlt[a].ult);
+      g.push({ g: '#tags', esc: 'tags', noVazio: true, max: 5, itens: tags.map(itemTag) });
+      if (soTag) return g;
+      g.unshift({ g: 'Canais', esc: 'canais', noVazio: true, max: 6, itens: canaisVisiveis().map(itemCanal) });
+      if (q.trim().length >= 2) g.push({ g: 'Pessoas', esc: 'pessoas', max: 5, itens: Object.keys(pub).filter(u => ID_RE.test(u) && /@ciahering\.com\.br$/i.test((pub[u] && pub[u].email) || '')).map(itemPessoa) });
+      return g;
+    },
+    deRecente: (r, base) => {
+      if (r.canal && ID_RE.test(String(r.canal))) { const id = String(r.canal); return canaisVisiveis().includes(id) ? Object.assign(base, { ic: '#', t: nomeCanal(id), go: () => abrirCanal(id, true) }) : null; }   // canal de outra conta (aparelho compartilhado) não aparece
+      if (r.tag && tagOk(String(r.tag)) && tagsUlt[String(r.tag)]) { const t = String(r.tag); return Object.assign(base, { ic: '#️⃣', go: () => abrirTag(t) }); }   // só tag dos canais desta conta
+      if (r.pessoa && ID_RE.test(String(r.pessoa)) && pub[r.pessoa]) { const u = String(r.pessoa); return Object.assign(base, { ic: '👤', t: nomePessoa(u), go: () => abrirPessoa(u) }); }
+      return null;
+    },
   });
 }
 function apagar(m) {
@@ -1525,7 +1612,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.
@@ -1556,7 +1643,7 @@ async function iniciar() {
   const ok = await carregarBase();
   if (!ok || !user || user.uid !== meu) return;
   $('loading').hidden = true; $('app').hidden = false;
-  iniciarOuvintes(); renderLista(); ligarSino();
+  iniciarOuvintes(); renderLista(); ligarSino(); ligarSonar();
   const qp = new URLSearchParams(location.search), q = qp.get('c') || lsGet('cardume_canal') || '';
   if (ID_RE.test(qp.get('m') || '')) alvoMsg = qp.get('m');
   const refMencao = qp.get('mencao') || '';
