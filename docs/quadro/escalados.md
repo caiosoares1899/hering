@@ -248,8 +248,10 @@ Piloto na squad Dados em `cardume-dev.html`. O botão GIF fica ao lado do emoji,
 
 ## Concha: canal Geral
 
-Pedido de 26/11/2026. Exibir o canal **Geral** automaticamente na lista de toda conta com acesso à Concha, sem precisar entrar no canal. Pessoas sem papel de ADM podem ler as mensagens. A publicação é exclusiva de ADM e a permissão precisa valer no Firebase.
+Inclui o canal **#oceano**, dedicado a reunir as atualizações do ecossistema Oceano. Os dois canais seguem as mesmas permissões de leitura e publicação.
+
+Pedido de 26/11/2026. Exibir **Geral** e **#oceano** automaticamente na lista de toda conta com acesso à Concha, sem precisar entrar no canal. Pessoas sem papel de ADM podem ler as mensagens. A publicação é exclusiva de ADM e a permissão precisa valer no Firebase.
 
 Como verificar a lacuna atual. Em dev, abra um canal temático configurado como aberto, entre com uma conta Hering sem papel de ADM e observe que o compositor fica disponível. O canal aberto atual permite publicação por membros.
 
-Aceite para implementação. Testar no dev com uma conta ADM e uma conta comum. As duas veem o canal e leem as mensagens. A publicação funciona com ADM e a regra do banco recusa publicação para a conta comum, inclusive pelo fluxo de encaminhar. Aplicar a mesma definição de ADM das permissões existentes. Encaminhar ao Claude por envolver regras do banco e novo acesso compartilhado.
+Aceite para implementação. Testar no dev com uma conta ADM e uma conta comum. As duas veem os dois canais e leem as mensagens. A publicação funciona com ADM e a regra do banco recusa publicação para a conta comum, inclusive pelo fluxo de encaminhar. Aplicar a mesma definição de ADM das permissões existentes. Encaminhar ao Claude por envolver regras do banco e novo acesso compartilhado.
