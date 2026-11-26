@@ -132,6 +132,8 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .emoji-grade button[aria-checked="true"]{border-color:var(--accent);background:rgba(56,182,255,.18);}
 @media (max-width:480px){ .who b{display:none;} }   /* com ❓ + 🔔 o topo não cabia numa linha no celular */
 .sug-dica{margin:6px 8px;font-size:13px;color:var(--txt2);}
+.mencoes-acoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin:0 0 8px;}
+.mencoes-acoes button{min-height:34px;font-size:13px;}
 .sec-vazia{margin:0 8px 6px;font-size:12px;}
 .lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
 .sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
@@ -390,7 +392,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.33 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.34 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1502,6 +1504,10 @@ function renderMencoes(log) {
   $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você na Concha';
   $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
   if (!mencoes.length) { log.append(vazio('🔔', 'Ninguém mencionou você ainda. Quando alguém escrever @' + nomePessoa(user.uid) + ' num canal, aparece aqui.')); return; }
+  const barra = el('div', 'mencoes-acoes');   // 🧹 limpar a SUA lista (as mensagens continuam nos canais)
+  if (mencoes.some(x => !x.lida)) { const l = el('button', '', '✓ Marcar todas como lidas'); l.type = 'button'; l.onclick = () => marcarMencoesLidas(); barra.append(l); }
+  const c = el('button', '', '🧹 Limpar menções'); c.type = 'button'; c.title = 'Tira todas as menções desta lista. As mensagens continuam nos canais.'; c.onclick = () => limparMencoes(); barra.append(c);
+  log.append(barra);
   mencoes.forEach(rec => {
     const b = el('button', 'mencao-item' + (rec.lida ? '' : ' nova')); b.type = 'button';
     const h = typeof rec.ts === 'number' ? new Date(rec.ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
@@ -1518,6 +1524,21 @@ function soltarCanal() {
   parar('msgs'); parar('msgsA'); parar('assuntos'); parar('membros'); parar('admins'); parar('rx'); pararCitacoes(); cancelarResposta(false);
   msgsCanal = []; msgsAss = []; assuntos = {}; assuntoAtual = ''; verEncerrados = false; msgsCanalPronto = false;
   msgs = []; reacoes = {}; rxAbrindo = ''; rxLista = ''; membrosAtual = {}; adminsAtual = {}; editando = ''; rascunhoEdicao = null;
+}
+function marcarMencoesLidas() {
+  const mapa = {}; mencoes.filter(x => !x.lida && ID_RE.test(String(x._k || ''))).forEach(x => { mapa[B + 'mencoes/' + user.uid + '/' + x._k + '/lida'] = true; });
+  if (!Object.keys(mapa).length) return;
+  update(ref(db), mapa).then(() => toast('✓ Menções marcadas como lidas.')).catch(e => falhou('marcar como lidas', e));
+}
+async function limparMencoes() {
+  if (!confirm('Limpar todas as suas menções da Concha? Elas saem só desta lista: as mensagens continuam nos canais.')) return;
+  try {
+    const v = (await get(ref(db, B + 'mencoes/' + user.uid))).val() || {};   // todas, não só as 100 da tela
+    const mapa = {}; Object.keys(v).filter(k => ID_RE.test(k)).forEach(k => { mapa[B + 'mencoes/' + user.uid + '/' + k] = null; });
+    if (!Object.keys(mapa).length) return;
+    await update(ref(db), mapa); toast('🧹 Menções limpas.');
+    if (sinoApi) Object.values(v).forEach(r => { if (r && ID_RE.test(String(r.n || ''))) sinoApi.marcarLida(String(r.n)); });   // o aviso no Sino sai junto (senão levaria a uma menção que não existe mais)
+  } catch (e) { falhou('limpar as menções', e); }
 }
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
@@ -1595,7 +1616,7 @@ const AJUDA = [
   { id: 'canais', ic: '#', t: 'Canais: entrar, sair, criar e administrar', txt: '- **➕ Novo canal** (na lista): cria um temático. Você vira a dona e administra.\n- **ℹ️ Detalhes** (no topo da conversa): membros, **Entrar** ou **Sair do canal**, adicionar e tirar pessoas e, no temático, **⚙️ Editar canal** (nome, quem entra, data de fim, **Arquivar agora**). Quem administra também escolhe o **emoji do canal** nos Detalhes (o canal da squad começa com o emoji da squad).\n- Quem administra: no canal da squad, PO e Organizador da squad e ADM; no temático, a dona, quem ela fez admin e ADM.\n- Canal com um **ponto** na lista tem mensagem nova.' },
   { id: 'secoes', ic: '📁', t: 'Seções na lista de canais', txt: 'Organize a lista do seu jeito. **Só você vê** suas seções.\n- **📁 Seções** (abaixo de ➕ Novo canal): crie (tem atalho para **⭐ Favoritos**), renomeie, mude a ordem e apague. Apagar devolve os canais à seção padrão (Squads/Temáticos).\n- Para pôr um canal numa seção: **ℹ️ Detalhes › 📁 Na sua lista** (ou "＋ Nova seção…" ali mesmo).\n- Clique no **título** da seção para recolher ou abrir. Recolhida, ela mostra quantos canais têm novas e deixa à vista o canal aberto. Vale em todos os seus aparelhos.' },
   { id: 'escrever', ic: '✍️', t: 'Escrever: formatação, emoji, GIF e links', txt: '- **Enter** envia; **Shift+Enter** quebra a linha. O rascunho fica guardado por canal e por assunto.\n- Formatação (botões da barra ou digitando): `**negrito**` (Ctrl+B), `_itálico_` (Ctrl+I), `~~riscado~~`, código entre crases, três crases numa linha antes e outra depois para um bloco, `- ` no começo da linha para lista e `> ` para citação. O **?** da barra mostra o guia.\n- **😀** abre os emojis (com busca e recentes); **GIF** busca na KLIPY (o GIF pode ir sem legenda).\n- Link `https://` vira link. Link de **card do Maré** vira o chip com o título do card.' },
-  { id: 'mencoes', ic: '@', t: '@Menções', txt: '- Digite `@` (ou o botão **@**) e escolha a pessoa na lista, com a foto. Só aparecem membros do canal.\n- Quem você menciona recebe um aviso no **Sino** e push (se ativou no aparelho). O aviso não mostra o canal nem a mensagem: ela abre a Concha para ver.\n- **@ Menções** (no alto da lista) junta onde mencionaram ou responderam você. Abrir uma leva direto à mensagem, inclusive dentro de um assunto.\n- Editar uma mensagem para pôr uma `@` não avisa a pessoa.' },
+  { id: 'mencoes', ic: '@', t: '@Menções', txt: '- Digite `@` (ou o botão **@**) e escolha a pessoa na lista, com a foto. Só aparecem membros do canal.\n- Quem você menciona recebe um aviso no **Sino** e push (se ativou no aparelho). O aviso não mostra o canal nem a mensagem: ela abre a Concha para ver.\n- **@ Menções** (no alto da lista) junta onde mencionaram ou responderam você. Abrir uma leva direto à mensagem, inclusive dentro de um assunto. **✓ Marcar todas como lidas** e **🧹 Limpar menções** cuidam da lista (limpar não apaga as mensagens dos canais).\n- Editar uma mensagem para pôr uma `@` não avisa a pessoa.' },
   { id: 'citar', ic: '🧷', t: 'Citar um card do Maré ou um objetivo do Radar', txt: '- Digite `@card:` e parte do nome do card, ou `@objetivo:` e parte do nome do objetivo (também aparecem na lista do `@`). Escolha na lista: a mensagem leva o link e mostra o **chip** com o título, que abre o card no Maré ou o objetivo no Radar.\n- Os cards listados são os das squads que você já abriu no **Maré neste aparelho** (nos últimos 7 dias), com os da squad do canal primeiro. Não achou? Abra o board da squad no Maré, ou cole o link do card.\n- Os objetivos vêm do Radar (os ativos da sua torre).\n- Colar o link de um card ou de um objetivo também vira chip.' },
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },

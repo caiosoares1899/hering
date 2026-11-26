@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🧹 limpar a aba @ Menções e ✓ marcar todas como lidas (SÓ DEV, cardume v0.34) — 2026-11-26
+
+Pedido do Caio (Backlog de 25/11, anotado pelo Codex na #1976). A aba @ Menções ganhou ✓ Marcar todas como lidas e 🧹 Limpar menções: limpar tira todas as suas menções da lista (inclusive as que não estavam na tela) depois de confirmar, e marca como lidos os avisos delas no Sino; as mensagens continuam nos canais. Sem regra nova (cada pessoa já podia apagar e marcar as próprias menções). Ajuda atualizada. Teste: test_concha_limpar_mencoes.js (8).
+
 ### 🐚 Concha: 🧷 @card: e @objetivo: citam um card do Maré ou um objetivo do Radar (SÓ DEV, cardume v0.33) — 2026-11-25
 
 Pedido do Caio (Backlog de 25/11). Digitar @card: e parte do nome lista os cards das squads que você abriu no Maré neste aparelho (o índice enxuto da #1981, só da sua conta, até 7 dias, com a squad do canal primeiro) — sem nenhuma leitura do banco para sugerir. @objetivo: lista os objetivos ativos do Radar pela mesma lista que o Sonar guarda no aparelho (3 h; vencida, a Concha faz a mesma leitura e grava no mesmo formato, e os outros apps reaproveitam). Os dois aparecem também na lista do @. O escolhido vira o link na mensagem (o texto guarda só o link) e a mensagem mostra o chip com o título lido do banco: 🗂 abre o card no Maré, 🎯 abre o objetivo no Radar (link de objetivo colado também vira chip). Sem card na lista, a dica sugere abrir o board ou colar o link. Ajuda com o tópico novo "Citar um card do Maré ou um objetivo do Radar". Teste: test_concha_citar.js (14).
