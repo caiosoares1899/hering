@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/oceano-menu-lateral` (worktree `~/hering-perfil`) | `oceano-dev.html` (menu lateral), `version.json` | 26/11/2026 |
+| Claude | `claude/ilha-concha` (worktree `~/hering-perfil`) | `mare-ilha-dev.js`, `cardume-dev.html` | 26/11/2026 |
 
 
 ## Fila
