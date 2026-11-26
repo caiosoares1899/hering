@@ -24,7 +24,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
-| Codex → Claude | R3 · Concha: Geral e #oceano visíveis para todos na Concha, com publicação exclusiva de ADM. #oceano reúne as atualizações do ecossistema. | [escopo](quadro/escalados.md#concha-canal-geral) | 26/11/2026 |
 | Codex · Claude | 🔴 **`kanban/usuarios` legível por toda conta Hering** (`.read` no nó-pai): notificações, `fcm_tokens` e `notif_prefs` de todo mundo. Já expõe o `travessia_apoio` ("{nome} marcou que não está bem hoje"). Achado na revisão do Cardume (#1931); correção mexe no Maré inteiro (Painel lê o nó) — R3 à parte. **Plano aprovado em 24/11** (só ADM lê o cadastro completo; torre/Gestor OKR no diretório): [desenho](ideias/usuarios-leitura-fechar.md), fases A → B → C | [escalados](quadro/escalados.md#usuarios-leitura-ampla) | 24/11/2026 |
 | Codex | 🏖️ UI/UX Férias: **UI01, UI02 e UI04 resolvidos em 16/11** (tela cheia); faltam UI03 (foco preso na 🧳), UI05 (títulos cortados na 🧳), UI06 (alvos de toque) e UI07 (fonte no tablet do Radar) — módulo é do Claude | [auditoria](FERIAS_UI_AUDITORIA_2026-11-13.md) | 13/11/2026 |
 | Claude | `okr-dev.html` sem `prefers-reduced-motion`: o `okrPulse` do "digitando…" do Agente roda com movimento reduzido | [escalados](quadro/escalados.md#radar-reduced-motion) | 09/11/2026 |
@@ -43,6 +42,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Antigravity | 📢 Concha: regras dos canais permanentes `geral` e `oceano` (leitura para toda conta Hering; escrita exclusiva de ADM) — **antes do merge**, a partir da branch `antigravity/concha-canais-gerais` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 📝 Concha: regras das Minhas notas (canal `eu-{uid}` só da dona; nó `notas/{uid}`) — **antes do merge**, a partir da branch `claude/concha-minhas-notas` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 

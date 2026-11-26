@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 📢 Geral e 🌊 #oceano — canais permanentes somente leitura com publicação exclusiva de ADM (SÓ DEV, cardume v0.51, regras) — 2026-11-26
+
+Pedido do Caio (escopo no PR #2011). Dois canais permanentes — **Geral** (`geral`) e **#oceano** (`oceano`, para atualizações do ecossistema Oceano) — passam a aparecer automaticamente para toda conta com acesso à Concha, sem precisar entrar. Todos leem mensagens, assuntos e fixadas; só ADMs publicam (inclusive pelo ⏩ Encaminhar, com aviso de público), criam assuntos e fixam. Para quem não é ADM, o canal indica claramente que é somente leitura e as regras do Firebase bloqueiam qualquer escrita (inclusive com PO/membro forjado). Fluxo de `/subirproprod` atualizado para preparar o aviso pronto para o `#oceano` com resumo da promoção e rodapé `🤖 Agente Ágil` (mantendo a autoria registrada na conta ADM que publica). Testes: `conchaCanaisPermanentesRules.test.js` (7) e `test_concha_canais_permanentes.js` (14). Deploy: regras (`database`) antes do merge.
+
 ### 🐚 Concha: ⚙️ Configurações — tema, peixes, Minhas notas e seções num lugar só (SÓ DEV, cardume v0.48) — 2026-11-26
 
 Pedido do Caio (26/11), com as decisões dele: o ⚙️ entra no alto da Concha no lugar do 🎨 e reúne 🎨 Aparência (tema e, agora, os peixes do fundo — Como no Oceano, Muitos, Poucos ou Sem peixes, só na Concha, neste aparelho), 📝 Minhas notas (ativar, abrir, desativar) e 📁 Seções (quantas há e Organizar seções…). Os atalhos de cada canal continuam onde estão (🔔 Avisos no ℹ️ Detalhes, 📁 Seções na lista); o botão de ativar notas da lista saiu (ativar é no ⚙️). Ajuda: o tópico Tema virou Configurações. Testes: test_concha_notas.js (17), test_concha_tema.js (9).

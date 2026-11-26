@@ -545,3 +545,20 @@ Uma revisão só (somente leitura) de todo o bloco `kanban/cardume` + `conchaAvi
 ### Testes
 - `functions/rules/__tests__/conchaNotasRules.test.js` (8): **matriz gerada do JSON** (todo nó com `$canal`) × dona, ADM, e-mail do Caio, PO global com squad `eu-vítima` forjada, membro com `membros/eu-*` forjado e outra conta — leitura e escrita; sabotagem conferida (tirar a guarda de um nó faz falhar). Encaminhar para/das notas, ativar.
 - `conchaAvisos.test.js` (+1): nota não gera push. `test_concha_notas.js` (14): ativar, escrever, fixar, encaminhar para as notas, desativar, cada escrita nas regras reais.
+
+## 📢 Canais permanentes: Geral e #oceano (26/11/2026, R3)
+
+Pedido do Caio (escopo no PR #2011): dois canais permanentes da casa (**Geral**, id `geral`, e **#oceano**, id `oceano`, para atualizações do ecossistema Oceano) que aparecem automaticamente para toda conta com acesso à Concha (`@ciahering.com.br` + Google), sem precisar entrar.
+
+### Banco
+- Quarto tipo de canal nas regras: `PERM = ($canal === 'geral' || $canal === 'oceano')`. O `OFIC` passa a excluir `geral` e `oceano` (um PO global que grave `squads/geral` + `squads_roles/geral: 'po'` não vira gestor).
+- **Leitura (`.read`):** toda conta Hering Google lê `msgs`, `ultima`, `ultima_a`, `assuntos`, `fixadas`, `reacoes`, `tags`, `tags_ult` e `canais` de `geral` e `oceano`.
+- **Publicação (`.write`):** exclusivamente **ADM** (`role === 'adm'` ou e-mail `caio.soares@ciahering.com.br`) em `msgs` (inclusive encaminhar PARA `geral`/`oceano`), `ultima`, `ultima_a`, `assuntos`, `fixadas`, `reacoes`, `tags` e `tags_ult`. Um registro forjado em `membros/geral/{uid}` não concede escrita.
+- **Negado para `geral`/`oceano`:** escrita em `canais`, `admins`, `membros`, `abertos` e `meus/{uid}/{geral|oceano}`.
+- **Deploy:** `firebase deploy --only database --project hering-onboarding` antes do merge.
+
+### Página (`cardume-dev.html` v0.51) e `/subirproprod`
+- `geral` (`📢 Geral`) e `oceano` (`🌊 #oceano`) aparecem automaticamente no topo da lista (e no Sonar) para toda conta logada.
+- Para quem não é ADM: sem compositor, sem `＋ Assunto`, sem reação/resposta/fixar, fora dos destinos de `⏩ Encaminhar`, e aviso claro de canal somente leitura no cabeçalho, na conversa e em `ℹ️ Detalhes`.
+- Para ADM: compositor aberto, publicação, assuntos, fixadas e encaminhamento (com aviso de que toda conta da Concha verá).
+- `/subirproprod` (`.claude/skills/subirproprod/SKILL.md`): Passo 4 inclui o bloco pronto de aviso para o `#oceano` com resumo da promoção e rodapé `🤖 Agente Ágil` (autoria registrada continua na conta ADM que publica).
