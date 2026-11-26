@@ -43,11 +43,11 @@
 7. **Gantt** (`mare-gcal-dev.js` L160): o ramo que leria a notificação de terceiros fora do dev segue o mesmo caminho do item 6.
 
 ### Antes da fase C (checklist: fechar antes disto quebra o prod)
-- [ ] **A1 + B6 no ar:** regras (#1955) com deploy, e `createNotif` sem ler a caixa alheia **promovido ao `kanban.html`**.
-- [ ] **A2:** os escritores do espelho (torre/Gestor OKR) promovidos (Maré, Radar e Painel de prod). *(Código no dev: #1957.)*
+- [ ] **A1 + B6 no ar:** regras (#1955) com deploy, e `createNotif` sem ler a caixa alheia **promovido ao `kanban.html`**. *(Na PR de promoção de 26/11: kanban v8.30.1020.)*
+- [ ] **A2:** os escritores do espelho (torre/Gestor OKR) promovidos (Maré, Radar e Painel de prod). *(Código no dev: #1957; na PR de promoção de 26/11: kanban v8.30.1020, okr v2.144, painel v5.126.)*
 - [ ] **A3:** carga inicial rodada pelo ADM, com o espelho completo conferido. *(Script entregue: #1958, `console_espelho_diretorio.js`; rodar no `painel.html` de prod **depois** do A2 promovido.)*
 - [ ] **B4 e B5:** Radar e Painel lendo o diretório, **promovidos** (`okr.html` e `painel.html`).
-- [ ] **B7:** o pedido de atualização do Gantt (`mare-gcal.js`) sem ler a notificação de terceiros, promovido. *(Código no dev: `pedido.gravar` em `mare-gcal-dev.js` v11, 26/11.)*
+- [ ] **B7:** o pedido de atualização do Gantt (`mare-gcal.js`) sem ler a notificação de terceiros, promovido. *(Código no dev: `pedido.gravar` em `mare-gcal-dev.js` v11; na PR de promoção de 26/11: `mare-gcal.js` v11.)*
 - [ ] **ADM pela mesma régua (achado de 26/11, contrato B5):** o Painel decide ADM pela lista `adm_emails` (`isAdmUser`), mas a regra da fase C só enxerga `role === 'adm'` no próprio cadastro ou o e-mail do Caio. Antes de fechar, conferir que **toda** pessoa de `adm_emails` tem `role: 'adm'` no cadastro (ou aceitar que quem não tem passa a ver o Painel como não ADM). Script de conferência: Claude, junto da fase C.
 - [ ] **Ajuste de A1 (24/11, revisão):** a trava das notificações ficou **estreita**. Ninguém além da dona transforma uma notificação **lida** em não lida, e PO/ADM ainda atualizam uma não lida. Travessia (`apoio_{pessoa}_{dia}`), Gantt (`gantt_pedido_…_{dia}`) e Plantão (`nf_bug_{bug}_{status}`) usam id fixo e foram conferidos (dev e prod). **Revisão do Codex (#1955):** (P1) a notificação de id fixo do Maré (`noTTLDelete: true`) é **só criar**: nem PO/ADM a regravam, mesmo não lida, que é o "só cria se não existe" da transação antiga, agora na regra. (P2) o Plantão (desligado desde 03/11) reusa `nf_bug_{bug}_{status}`: **se for religado**, cada aviso novo precisa de id próprio (`…_{número}`, que o filtro do Oceano já aceita), senão o segundo "sendo tratado" depois do primeiro lido é recusado. (P2) **As regras sobem antes do merge**, a partir da branch, porque o merge publica o Maré dev na hora.
 

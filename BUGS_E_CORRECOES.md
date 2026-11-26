@@ -91,7 +91,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 O Radar lê kanban/usuarios_publicos em todos os logins. Para contas internas, o cadastro próprio substitui o espelho no cache, preservando papel, squads, torre e Gestor OKR. Visualizadores externos usam apenas o diretório. As regras do banco continuam como na fase B. Regressão: docs/arezzo/testes/test_radar_diretorio.js.
 
-### 2026-11-26 · 🔒 Gantt: o 📣 Pedir atualização não lê mais a caixa de notificações de outra pessoa (B7 do fechamento de kanban/usuarios; SÓ DEV, mare-gcal-dev v11)
+### 2026-11-26 · 🔒 Gantt: o 📣 Pedir atualização não lê mais a caixa de notificações de outra pessoa (B7 do fechamento de kanban/usuarios; PROD, mare-gcal v11 · kanban v8.30.1020 · okr v2.144)
 
 Fase B7 de docs/ideias/usuarios-leitura-fechar.md. Antes, para cada destinatário o pedido lia kanban/usuarios/{uid}/notificacoes/{id} para não regravar o de hoje; na fase C a caixa alheia deixa de ser legível e o pedido quebraria. Agora pedido.gravar grava direto na caixa de outra pessoa: as regras dão o só-cria (membro não regrava; ninguém além da dona deixa um lido como não lido) e a recusa conta como já tinha. Na própria caixa (o -dev manda só para quem pediu) a conferência fica. PO/ADM ainda regravam um pedido de hoje não lido, com o mesmo aviso, que continua não lido. Teste: test_gantt_pedido.js (+M7b, 21/21). ?v do mare-gcal-dev 10→11 no Maré e no Radar.
 
@@ -131,7 +131,7 @@ cardume-dev.html: .acoes-msg ficava em display:none até o hover, então o Tab n
 
 Achado do Codex na #1959. A citação de uma original fora das últimas 50 lia o trecho uma vez (cache). Agora escuta a original enquanto o canal está aberto (uma escuta por citação, encerrada ao trocar de canal): apagar/editar atualiza a citação na hora. Teste: test_concha_responder.js (16, sabotagem confirmada).
 
-### 2026-11-24 · Maré, Radar e Painel: Torre e Gestor OKR no diretório público (SÓ DEV)
+### 2026-11-24 · Maré, Radar e Painel: Torre e Gestor OKR no diretório público (PROD: kanban v8.30.1020 · okr v2.144 · painel v5.126)
 
 Os quatro fluxos gravam cadastro e espelho no mesmo update. Desligar Gestor OKR apaga o campo nos dois nós. O login do Maré preserva esses campos ao atualizar o diretório.
 
@@ -139,7 +139,7 @@ Os quatro fluxos gravam cadastro e espelho no mesmo update. Desligar Gestor OKR 
 
 Relato do Caio. O autocompletar de @menção estava preso ao compositor (entrada). Agora vale para o campo em uso: o editor ganha a própria lista (sug-ed), com setas/Enter/Tab e Esc fechando só a lista (o 2º Esc cancela a edição). Teste: test_concha_mencao_edicao.js (11, sabotagem confirmada). Observação: editar e incluir uma @menção não avisa a pessoa (o aviso nasce só no envio; as regras aceitam o registro de menção só para mensagem com menos de 60 s) — fica no backlog se o Caio quiser.
 
-### 2026-11-24 · 🔒 Leitura ampla de kanban/usuarios, fase A: espelho de torre/Gestor OKR validado e createNotif sem ler a caixa de outra pessoa (SÓ DEV + regras)
+### 2026-11-24 · 🔒 Leitura ampla de kanban/usuarios, fase A: espelho de torre/Gestor OKR validado e createNotif sem ler a caixa de outra pessoa (PROD: kanban v8.30.1020 + regras)
 
 Desenho: docs/ideias/usuarios-leitura-fechar.md. (1) Regras: usuarios_publicos/$uid ganha torre e gestorOkr, validados iguais ao cadastro (o espelho é gravável pela própria pessoa e o Radar mostra controles pelo gestorOkr dos outros). (2) Regras: notificação de outra pessoa não é regravada nem por PO/ADM — .validate em notificacoes/$notifId (o .write do $uid libera PO/ADM em cascata, então a trava tinha de ser no .validate); regravar reabria um aviso lido. (3) kanban-dev createNotif: para outra pessoa grava direto (sem get/transação na caixa dela) e trata PERMISSION_DENIED como 'já existe'; para a própria segue a transação. Testes: usuariosFaseARules.test.js (sabotagem confirmada), test_createnotif_sem_ler.js (7, sabotagem confirmada).
 
