@@ -274,6 +274,8 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 .fix-topo .fix-nav button:hover,.fix-topo .fix-nav button:focus-visible{opacity:1;color:var(--txt);}
 @media (pointer:coarse){.fix-topo .fix-nav button{height:22px;min-width:36px;}}
 .fix-topo .fix-txt b{white-space:nowrap;} .fix-topo .fix-txt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;color:var(--txt2);}
+.aviso-canal{margin:0 0 10px;}
+.aviso-canal button{width:100%;text-align:left;}
 .fix-regras-aviso{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:rgba(var(--slate-rgb),.6);font-size:13px;}
 .fix-regras-aviso .grow{flex:1;}
 .regra-item{margin:0 0 10px;padding:8px 10px;border-left:3px solid var(--glass-b);border-radius:6px;background:rgba(var(--slate-rgb),.45);}
@@ -370,7 +372,6 @@ button.msg-gif{cursor:pointer;}
       <header class="cabecalho">
         <button type="button" class="voltar" id="b-voltar" aria-label="Voltar aos canais">←</button>
         <div class="grow"><h2 id="canal-titulo" tabindex="-1">Concha</h2><p class="subtitulo" id="canal-sub"></p></div>
-        <button type="button" id="b-aviso" hidden aria-haspopup="dialog" aria-label="Avisos deste canal: todas as mensagens" title="Avisos deste canal">🔔</button>
         <button type="button" id="b-lado" aria-label="Detalhes do canal" aria-pressed="false">ℹ️</button>
       </header>
       <div class="assuntos-barra" id="assuntos-barra" role="toolbar" aria-label="Assuntos do canal" hidden></div>
@@ -431,7 +432,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.42 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.43 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -733,7 +734,7 @@ function iniciarOuvintes() {
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
   ouvir('avisosA', ref(db, B + 'avisos_a/' + uid), s => { avisosA = s.val() || {}; renderLista(); if (atual) renderBarraAssuntos(); }, () => {});
   ouvir('lidasA', ref(db, B + 'lidas_a/' + uid), s => { lidasA = s.val() || {}; renderLista(); if (atual) renderBarraAssuntos(); }, () => {});
-  ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); }, () => {});
+  ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); renderLado(); }, () => {});
   ouvir('secoes', ref(db, B + 'secoes/' + uid), s => { const v = s.val() || {}; secoes = { s: v.s || {}, c: v.c || {}, r: v.r || {} }; renderLista(); if (atual) renderLado(); }, () => {});
   ouvir('seguidas', ref(db, B + 'seguidas/' + uid), s => { seguidas = s.val() || {}; if (vendoTag) renderMsgs(); }, () => {});
   ouvir('mencoes', query(ref(db, B + 'mencoes/' + uid), orderByChild('ts'), limitToLast(100)), s => {
@@ -982,13 +983,12 @@ function renderCabecalho() {
   const sub = [];
   if (id && !ehTema(id)) sub.push('Canal oficial da squad · privado');
   if (c && ehTema(id)) { sub.push(c.acesso === 'convite' ? 'Só convidados' : 'Aberto a toda a Hering'); if (typeof c.fim === 'number') sub.push((vencido(c) ? 'Arquivado em ' : 'Até ') + new Date(c.fim).toLocaleDateString('pt-BR')); }
+  if (id && souMembro(id) && nivelAviso(id) !== 'todas') sub.push(ICONE_AVISO[nivelAviso(id)] + ' ' + ROT_AVISO[nivelAviso(id)].charAt(0).toUpperCase() + ROT_AVISO[nivelAviso(id)].slice(1));   // silenciado: à vista sem abrir ℹ️
   $('canal-sub').textContent = sub.join(' · ');
   const podeEscrever = id && souMembro(id) && !vencido(c) && (!ehTema(id) || !!c) && !assuntoFechado(assuntoAtual);
   $('rodape').hidden = !podeEscrever;
   const na = nomeAssunto(assuntoAtual); entrada.placeholder = assuntoAtual ? 'Em ' + iconeAssunto(assuntoAtual) + ' ' + (na.length > 16 ? na.slice(0, 15) + '…' : na) : 'Escreva uma mensagem…';
   $('b-lado').hidden = !id;
-  const ba = $('b-aviso'), nv = id && souMembro(id) ? nivelAviso(id) : 'todas';
-  ba.hidden = !(id && souMembro(id)); ba.textContent = ICONE_AVISO[nv]; ba.setAttribute('aria-label', 'Avisos deste canal: ' + ROT_AVISO[nv]);
 }
 const hhmm = ts => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 function rotuloDia(ts) {
@@ -1728,7 +1728,7 @@ function abrirMencao(rec) {
 }
 function renderMencoes(log) {
   $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você na Concha';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
   if (!mencoes.length) { log.append(vazio('🔔', 'Ninguém mencionou você ainda. Quando alguém escrever @' + nomePessoa(user.uid) + ' num canal, aparece aqui.')); return; }
   const barra = el('div', 'mencoes-acoes');   // 🧹 limpar a SUA lista (as mensagens continuam nos canais)
   if (mencoes.some(x => !x.lida)) { const l = el('button', '', '✓ Marcar todas como lidas'); l.type = 'button'; l.onclick = () => marcarMencoesLidas(); barra.append(l); }
@@ -1807,7 +1807,7 @@ function curtaDe(c, m) {
 function renderTag(log) {
   const k = vendoTag;
   $('canal-titulo').textContent = '#' + k; $('canal-sub').textContent = 'Mensagens com #' + k + ' nos seus canais';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
   const v = tagVolta;
   if (v && (v.mencoes || souMembro(v.c) || souAdm())) {
     const bv = el('button', 'voltar-tag', '← ' + (v.mencoes ? 'Voltar para @ Menções' : 'Voltar para # ' + nomeCanal(v.c))); bv.type = 'button';
@@ -1840,7 +1840,7 @@ function abrirPessoa(uid) {
 function renderPessoa(log) {
   const uid = vendoPessoa, nome = nomePessoa(uid);
   $('canal-titulo').textContent = '👤 ' + nome; $('canal-sub').textContent = uid === user.uid ? 'Os seus canais' : 'Canais em que você e ' + nome.split(' ')[0] + ' estão';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
   if (!pessoaCanais) { log.append(vazio('', 'Procurando os canais em comum…')); return; }
   if (!pessoaCanais.length) { log.append(vazio('👤', 'Vocês ainda não estão no mesmo canal. Num canal que você administra, ℹ️ Detalhes › Adicionar pessoa.')); return; }
   pessoaCanais.forEach(c => {
@@ -1861,7 +1861,7 @@ const AJUDA = [
   { id: 'citar', ic: '🧷', t: 'Citar um card do Maré ou um objetivo do Radar', txt: '- Digite `@card:` e parte do nome do card, ou `@objetivo:` e parte do nome do objetivo (também aparecem na lista do `@`). Escolha na lista: a mensagem leva o link e mostra o **chip** com o título, que abre o card no Maré ou o objetivo no Radar.\n- Os cards listados são os das squads que você já abriu no **Maré neste aparelho** (nos últimos 7 dias), com os da squad do canal primeiro. Não achou? Abra o board da squad no Maré, ou cole o link do card.\n- Os objetivos vêm do Radar (os ativos da sua torre).\n- Colar o link de um card ou de um objetivo também vira chip.' },
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
-  { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
+  { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **ℹ️ Detalhes › 🔔 Avisos** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
   { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
   { id: 'fixadas', ic: '📌', t: 'Fixadas no topo e regras do canal', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela, e escolhe o tipo:\n- **📌 No topo do canal**: aparece numa **faixa no alto da conversa**, como no WhatsApp. Até ' + MAX_FIX.topo + ', uma por vez (📌 1/3, 2/3…): para trocar, use as setinhas **▲ ▼** no canto, **role a roda do mouse** sobre a faixa, **deslize o dedo** para cima ou para baixo no celular, ou **↑ ↓** no teclado. Tocar no texto leva até a mensagem.\n- **📜 Regra do canal**: fica em **ℹ️ Detalhes › 📜 Regras do canal**, com o texto inteiro (até ' + MAX_FIX.regra + '). Na 1ª vez que alguém abre o canal (ou quando entra uma regra nova), aparece o aviso **Este canal tem regras · Ver regras**.\n- Para **mover** entre topo e regras ou **desafixar**: 📌 Fixada, nas ações da mensagem, ou ℹ️ Detalhes. Apagar a mensagem tira ela das fixadas.\n- Mensagem fixada fica de fora da limpeza das antigas.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
@@ -2114,7 +2114,6 @@ function modalAvisos(id) {
   f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
   ov.append(f); (f.querySelector('input[name="nivel"]:checked') || ok).focus();
 }
-$('b-aviso').onclick = () => { if (atual && souMembro(atual)) modalAvisos(atual); };
 async function seguir(t, sim) {
   if (!tagOk(t)) return;
   if (sim && Object.keys(seguidas).length >= MAX_SEGUIDAS) { toast('Você já segue ' + MAX_SEGUIDAS + ' #tags. Deixe de seguir alguma em 🔔 Avisos.'); return; }
@@ -2457,6 +2456,12 @@ function renderLado() {
   if (membro) { const b = el('button', '', 'Sair do canal'); b.type = 'button'; b.onclick = () => sair(id); ac.append(b); }
   if (g && ehTema(id) && c) { const b = el('button', '', '⚙️ Editar canal'); b.type = 'button'; b.onclick = () => modalCanal(id); ac.append(b); }
   if (ac.children.length) s.append(ac);
+  if (membro) {   // 🔔 avisos DESTE canal (antes um sino no topo da conversa, que se confundia com o 🔔 Sino geral do Oceano)
+    const nv = nivelAviso(id), av = el('div', 'aviso-canal');
+    const b = el('button', '', ICONE_AVISO[nv] + ' Avisos: ' + ROT_AVISO[nv]); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-label', 'Avisos deste canal: ' + ROT_AVISO[nv] + '. Mudar'); b.title = 'Escolher quando este canal avisa você';
+    b.onclick = () => modalAvisos(id); av.append(b); s.append(av);
+  }
   if (c && g && !vencido(c)) {   // 😀 emoji do canal (quem administra; no oficial, também PO/Org da squad)
     const padrao = !ehTema(id) && meta[id] && meta[id].emoji ? meta[id].emoji : (ehTema(id) && c.acesso === 'convite' ? '🔒' : '#');
     const det = el('details', 'emoji-det'); det.append(el('summary', 'subtitulo', '😀 Emoji do canal: ' + (emojiOk(c.e) ? c.e : padrao + ' (padrão)')));   // fechado: a grade inteira empurrava membros e "Adicionar pessoa" para baixo
