@@ -87,7 +87,8 @@ async function runAvisoMsg(db, messaging, canal, msgId, msg, deps = {}) {
   const pubs = Object.fromEntries(await Promise.all(membros.map((u) => db.ref(`kanban/usuarios_publicos/${u}`).get().then((s) => [u, s.val() || {}]))));
   // quem já recebe push de @menção ou de resposta (mesmo leitor do cardumePush)
   const nomes = Object.fromEntries(membros.map((u) => [u, nomeCompleto(pubs[u])]).filter(([, n]) => n));
-  const mencionados = typeof msg.texto === 'string' ? mencionadosNoTexto(msg.texto, nomes) : [];
+  // ⏩ encaminhada não gera aviso de @menção (a página não grava o registro), então quem aparece mencionado no texto NÃO sai do push normal do canal
+  const mencionados = !msg.enc && typeof msg.texto === 'string' ? mencionadosNoTexto(msg.texto, nomes) : [];
   if (typeof msg.resp === 'string' && ID_RE.test(msg.resp)) {
     const orig = (await db.ref(`kanban/cardume/msgs/${canal}/${msg.resp}`).get()).val();
     if (orig && typeof orig.uid === 'string') mencionados.push(orig.uid);

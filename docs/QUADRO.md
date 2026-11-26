@@ -16,6 +16,8 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada do ⏩ encaminhar da Concha: `enc` (só na criação; membro da origem; conteúdo/GIF/legenda iguais; nome atual do canal de origem; não re-encaminha; sem `resp`), edição bloqueada e o aviso por membros — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
+| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do ⏩ encaminhar (conteúdo de canal privado indo para outro canal por decisão de um membro) | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada da janela de 15 min da edição na Concha (`editado ≤ ts + 900000` em `kanban/cardume/msgs`) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada do emoji da Concha: `canais/$canal/e` dá ao PO/Org da squad escrita só nesse campo do canal oficial; lista fixa de emojis — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada dos avisos por assunto da Concha: regra `avisos_a` e `conchaAvisos.decidir`/push com o assunto — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
@@ -48,6 +50,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🐚 Concha: ⏩ encaminhar (campo `enc` em `kanban/cardume/msgs` + `conchaAvisoMsg` não exclui mencionados de encaminhada) — **regras ANTES do merge**, função depois | resync na branch `claude/concha-encaminhar` (`git fetch origin claude/concha-encaminhar` → `git reset --hard origin/claude/concha-encaminhar`) → `firebase deploy --only database --project hering-onboarding`; depois do merge: resync na `main` → `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
@@ -55,7 +58,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | Ideia | Dono | Detalhe |
 |---|---|---|
 | 🐚 Concha: 🧷 `@card:` só funciona com o **Maré dev** aberto no aparelho (só o `kanban-dev.html` grava a lista `oceano_cards_<squad>_dev`). Na promoção da Concha: levar `_gravarIndiceConcha()` ao `kanban.html` e a Concha aceitar também a lista do prod (mesmo `kanban/squads/<sq>/dados`). Decisão do Caio (25/11): esperar a promoção | Claude | [desenho](ideias/cardume.md) |
-| 🐚 Concha: encaminhar mensagens, limpar a aba Menções e escolher os temas Claro e Vice City | Caio escolhe | [novos pedidos](quadro/backlog.md#concha-novos-pedidos-2511) |
 | 🐚 Concha: links de mensagens, Salvos, fixados, histórico, fios e outras ideias inspiradas no Slack e concorrentes | Caio escolhe | [comparativo](quadro/backlog.md#concha-comparativo) |
 | 🔎 Histórico do período/hora do card: já existe — conferir se algum caminho não registra | Claude | [escopo](quadro/escalados.md#periodo-historico) |
 | 🪟 Diagrama `.arq` interativo + rodapé/mapa nas abas institucionais do Oceano (o vidro lapidado ficou pronto na #1806) | Claude | [backlog](quadro/backlog.md#vidro-lapidado) |

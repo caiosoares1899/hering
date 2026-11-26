@@ -64,7 +64,7 @@
 
 | Pedido | Escopo sugerido |
 |---|---|
-| **Encaminhar mensagens** | Adicionar a opção Encaminhar às ações da mensagem, com seleção do canal de destino. **Decisões do Caio (25/11):** a encaminhada mostra o **canal de origem** ("⏩ Encaminhada de Ana · # Dados"); encaminhar para um canal mais aberto que o de origem (ex.: só convidados → aberto, ou squad → temático aberto) **avisa antes** de mandar. |
+| ✅ **Encaminhar mensagens** (entregue em 26/11) | Adicionar a opção Encaminhar às ações da mensagem, com seleção do canal de destino. **Decisões do Caio (25/11):** a encaminhada mostra o **canal de origem** ("⏩ Encaminhada de Ana · # Dados"); encaminhar para um canal mais aberto que o de origem (ex.: só convidados → aberto, ou squad → temático aberto) **avisa antes** de mandar. |
 | ✅ **Limpar a aba Menções** (entregue em 25/11: 🧹 Limpar + ✓ Marcar todas como lidas) | Adicionar a ação Limpar menções à aba da barra lateral esquerda. A ação afeta a lista pessoal e preserva as mensagens originais nos canais. |
 | ✅ **Escolher os temas Claro e Vice City** (entregue em 25/11: 🎨 no topo, Vice City com contraste conferido) | Disponibilizar Lençóis (Claro) e Vice City na Concha. Conferir o fluxo de seleção e o uso da preferência do Oceano, que a página já lê ao abrir. |
 

@@ -457,3 +457,28 @@ Pedido do Caio (ao ver a faixa de assuntos): poder mudar o emoji do assunto e do
 
 ## ✏️ Editar só nos primeiros 15 min — 25/11/2026
 Pedido do Caio ("igual o WhatsApp"; confirmou 15 min). **Regra:** a edição exige `editado ≤ ts + 15 min` — os dois são do servidor (`ts` da criação, `editado` = `serverTimestamp`), então o relógio do aparelho não interfere. Apagar a própria continua valendo depois. **Tela:** o ✏️ só aparece na própria mensagem com menos de 15 min (relógio corrigido por `.info/serverTimeOffset`), some sozinho quando a janela fecha, e salvar com a janela já fechada avisa em vez de gravar. Deploy: `firebase deploy --only database` antes do merge.
+
+## ⏩ Encaminhar mensagem — desenho de 25/11/2026 (R3)
+Pedido do Caio (Backlog, #1976). **Decisões (25/11):** a encaminhada mostra o **canal de origem**; encaminhar para um canal **mais aberto** que o de origem **avisa antes**.
+
+### Banco — campo `enc` na mensagem nova do destino
+`msgs/{destino}/{id}` = mensagem normal de quem encaminha (`uid` = ela, `ts` agora) + `enc = {c, m, de, ts, n}`:
+- `c`/`m`: canal e id da original; `de`: autor da original; `ts`: hora da original; `n`: nome do canal de origem **no momento** (quem lê no destino pode não ter acesso ao canal de origem, então o nome vai junto, como decidido).
+- **Regra (só na criação, imutável):** quem encaminha é **membro do canal de origem**; a original existe, não está apagada, é de `de` com `ts` igual; `n` é igual ao nome atual do canal de origem; o **texto e o GIF são os mesmos da original** (não dá para "encaminhar" texto inventado em nome de alguém).
+- **Encaminhada não se edita** (o conteúdo é de outra pessoa); apagar vale (o resto não guarda `enc`).
+- Sem resposta (`resp`) junto.
+
+### Tela
+- **⏩ Encaminhar** nas ações da mensagem (membro, mensagem com texto ou GIF, não apagada): escolher o canal de destino entre os seus canais ativos (o atual fica de fora); prévia; vai para o **geral** do destino.
+- **Aviso antes** quando **mais gente vai ver** (revisão do advisor, versão precisa da regra do Caio): se o destino tem alguém que **não está** na origem (lido de `membros/{destino}`, que a pessoa já lê) ou se o destino é **temático aberto** e a origem não → "⚠️ N pessoas em X não estão em Y e vão ver esta mensagem e o nome do canal de origem" e o botão vira "Encaminhar mesmo assim". Mesmas pessoas → sem aviso.
+- **Não re-encaminha (v1):** a regra recusa encaminhar uma mensagem que já tem `enc` (senão "Encaminhada de Bruno" levaria o texto de Ana).
+- **Push:** como a encaminhada não gera registro de @menção, a `conchaAvisoMsg` não tira do push normal quem aparece mencionado no texto.
+- **Para o Caio:** a cópia sobrevive se a original for apagada (e conta 90 dias a partir do encaminhamento); as #tags do texto entram na tela da tag do destino.
+- Na conversa: "⏩ Encaminhada de **Ana** · # Dados · 25/11 14:30" acima do conteúdo.
+- @menções do texto **não avisam de novo** no destino; #tags entram no índice do destino normalmente; o push do destino segue os avisos de cada um.
+
+### Deploy
+Regras antes do merge; depois `functions:conchaAvisoMsg`.
+
+### Fronteira
+Conteúdo de um canal privado passa para outro por decisão de um membro — a regra garante que só membro do canal de origem encaminha, que o conteúdo é o original e que a autoria não é forjada; o aviso protege o caso "mais aberto". Nome do canal de origem e texto entram por `textContent`.
