@@ -68,6 +68,20 @@
 | ✅ **Limpar a aba Menções** (entregue em 25/11: 🧹 Limpar + ✓ Marcar todas como lidas) | Adicionar a ação Limpar menções à aba da barra lateral esquerda. A ação afeta a lista pessoal e preserva as mensagens originais nos canais. |
 | ✅ **Escolher os temas Claro e Vice City** (entregue em 25/11: 🎨 no topo, Vice City com contraste conferido) | Disponibilizar Lençóis (Claro) e Vice City na Concha. Conferir o fluxo de seleção e o uso da preferência do Oceano, que a página já lê ao abrir. |
 
+<a id="concha-ideias-2611"></a>
+
+### Concha — ideias do Caio (26/11/2026)
+
+| Ideia | O que já existe / escopo sugerido |
+|---|---|
+| 📝 **Canal só seu** (como a conversa com você mesmo no WhatsApp): anotar, salvar links | Um canal pessoal por pessoa (ex.: `eu-{uid}`), privado, só ela é membro, aparece no topo da lista. Aproveita mensagens, links, #tags, fixadas e busca. Regras: só a dona lê/escreve; sem aviso de mensagem nova. R3 (regra nova). |
+| ⭐ **Favoritar mensagens** | Lista pessoal (`favoritos/{uid}/{canal}/{msgId}`), aberta por um ⭐ na lista de canais; tocar leva à mensagem (no assunto dela). Some se a mensagem for apagada ou a pessoa sair do canal. Parecido com o "salvar para depois" do comparativo (item 1). R2/R3. |
+| #️⃣ **Favoritar #tags na lista da esquerda** (junto dos canais, recolhível) | Hoje dá para 🔔 Seguir uma #tag (avisa) e abrir a tela dela. Ideia: uma seção "#tags" na lista, recolhível como as 📁 seções, com as tags favoritas; tocar abre a tela da tag. Pode reaproveitar `seguidas` ou ser um nó próprio (favoritar ≠ ser avisado). |
+| 🔄 **Atualização obrigatória quando sai versão nova** (como no Maré) | Hoje a Concha só mostra um aviso (`#versao-aviso`) a cada 5 min. Trocar pela mesma tela de "atualizar agora" do Maré, guardando o rascunho e a mensagem sendo editada antes de recarregar. Atenção ao custo: cada versão nova recarrega todas as abas abertas. |
+| 🏝️ **Ilha Dinâmica na Concha** | A ilha mora no Maré (`kanban-dev.html`). Decidir o que ela mostra na Concha (mensagens novas, menções, timer, agenda) e se vira módulo compartilhado (`mare-ilha`?) para não copiar código. |
+| 🏷️ **Etiquetas por pessoa, por canal** (cada um configura a sua) | A pessoa escolhe a própria etiqueta em cada canal (ex.: "Design", "Plantão"); aparece ao lado do nome nas mensagens e na lista de membros. Nó `etiquetas/{canal}/{uid}` = texto curto da lista de emojis/limite; só a própria pessoa escreve. R3. |
+| 👤 **Perfil da pessoa no Oceano inteiro** (diretoria de origem, squads, cargo, contato: e-mail e telefone), aberto ao tocar na foto | Hoje o diretório público (`usuarios_publicos`) já tem nome, foto, e-mail, squads e 🏢 diretoria. Faltam cargo e telefone (a pessoa preenche no Oceano). Um cartão de perfil compartilhado (módulo) aberto pela foto em Concha, Maré, Radar e Oceano. Atenção: telefone é dado pessoal — decidir quem vê (toda a Hering?) e deixar opcional. |
+
 <a id="concha-comparativo"></a>
 
 ### Concha — ideias do comparativo com Slack e concorrentes
