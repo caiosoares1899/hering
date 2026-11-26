@@ -24,6 +24,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🧭 Oceano: menu lateral para trocar entre os apps, como um app só (SÓ DEV, oceano v2.01 — fase 1) — 2026-11-26
+
+- **(SÓ DEV)** Pedido do Rafa (via Caio, 26/11): o Oceano vira a moldura com um menu de ícones, e cada app abre ao lado, integrado. **Fase 1** (só no `oceano-dev`, `RAIL_ON = IS_DEV`):
+  - **Menu:** 🌊 ícone do Oceano (o início) · Maré · Concha · Radar · A Bordo · Painel (só para quem vê o Painel). Embaixo: 🔍 Sonar, ↻ Recarregar, ↗ Nova aba, ✕ Fechar (com app aberto) e o avatar (⚙ Meu perfil). O app atual fica marcado, e a bolinha mostra os apps que continuam abertos.
+  - **Expande/recolhe** no computador (» / «), com a escolha salva no aparelho (`oceano_rail_larga`). No **celular** vira uma barra embaixo.
+  - O app abre **dentro** do Oceano. A barra de abas antiga do host sai quando o menu está ligado. No modo Automático (o padrão), os cartões do Início e o Sonar também abrem dentro; quem escolheu "aba nova" segue igual.
+  - A **Concha** entrou na lista de produtos do dev (`cardume-dev.html`). No prod ela aparece como "em breve" e nasce como `concha.html`. Os cartões do Início seguem a ordem do menu.
+  - Próximas fases: cada app em "modo dentro do Oceano" (sem a barra repetida), contadores nos ícones, links/push abrindo dentro e regra de memória.
+  - `test_oceano_menu_lateral.js` (19, com fotos em `docs/capturas/oceano-menu/`). Os testes antigos `test_oceano.js` (5 produtos no dev) e `test_oceano_leve.js` (voltar pelo menu) foram atualizados.
+
 ### 👤 Meu cartão: botão 💾 Salvar cartão (SÓ DEV, oceano v2.00) — 2026-11-26
 
 - **(SÓ DEV)** Pedido do Caio depois de testar: faltava um botão de salvar. Antes cada campo gravava sozinho ao sair dele (sem nada visível). Agora: digitar marca "● Alterações não salvas"; **💾 Salvar cartão** (ou Enter num campo) grava os 4 campos num update só e mostra "✓ Salvo"; valor inválido não grava nada e põe o foco no campo; **👁 Ver meu cartão** salva o pendente antes; fechar o ⚙ Meu perfil com alteração pendente pergunta "Salvar agora?" (OK salva e fecha; Cancelar descarta). Fronteira: sem mudança (mesmo nó e regra; só o jeito de gravar). `test_perfil_cartao.js` 48 verificações.
