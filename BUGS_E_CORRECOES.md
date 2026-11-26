@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🐚 Concha: ativar o canal da squad só funcionava com o ℹ️ Detalhes aberto (SÓ DEV, cardume v0.37)
+
+Relato do Caio: "não estou conseguindo ativar a squad dev". Causa: o botão "Ativar canal da squad" só existia no painel ℹ️ Detalhes; com ele fechado, clicar em "＋ Dev" (Squads sem canal) abria uma conversa vazia ("Nenhuma mensagem ainda. Diga oi!") sem nenhuma saída. Permissão e regra estavam certas (reproduzido: a gravação passa nas regras reais). Agora a própria conversa mostra "Dev ainda não tem canal" + Ativar; ao ativar, o Detalhes abre para pôr as pessoas; trava de clique duplo e o motivo vai para o console se o banco recusar. Teste test_concha_ativar.js (5; o caso falha na main).
+
 ### 2026-11-25 · 🐚 Concha: Ajuda estreita — agora usa a tela, com índice e leitura lado a lado (SÓ DEV, cardume v0.31)
 
 Relato do Caio: a Ajuda da Concha estava "muito curtinha horizontalmente". Causa: a regra geral das janelas (.md, 460 px) vencia a largura da Ajuda (mesma especificidade, declarada depois). Agora a Ajuda ocupa a tela (até 1100 px, 90 % da altura) e, em tela larga, vira índice à esquerda + tópico inteiro à direita (↑ ↓ no índice; a busca filtra o índice e abre o primeiro resultado); no celular continua a sanfona. De passagem: a janela entrava na página só no fim, depois dos focus(), que não tinham efeito. Teste test_concha_ajuda.js (17, os dois layouts). Prints em docs/capturas/concha-ajuda/.

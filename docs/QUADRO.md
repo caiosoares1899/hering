@@ -50,7 +50,6 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| Claude | 🐚 Concha: ⏩ encaminhar (campo `enc` em `kanban/cardume/msgs` + `conchaAvisoMsg` não exclui mencionados de encaminhada) — **regras ANTES do merge**, função depois | resync na branch `claude/concha-encaminhar` (`git fetch origin claude/concha-encaminhar` → `git reset --hard origin/claude/concha-encaminhar`) → `firebase deploy --only database --project hering-onboarding`; depois do merge: resync na `main` → `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
