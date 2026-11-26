@@ -23,7 +23,7 @@
   if(window.MareIlha) return;
   const ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
   let cfg = null, raiz = null, pil = null, painel = null, bSino = null, pararTimers = null, relogio = 0, avisoT = 0;
-  let timers = [], aviso = null, vistos = null, aberta = false;
+  let timers = [], aviso = null, vistos = null, aberta = false, desde = 0;
 
   function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt != null) e.textContent = txt; return e; }
   const reduz = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -77,7 +77,7 @@
     } else if(timers.length && T()){
       const [t] = principal(), m = T().mostra(t, agora);
       if(t.status !== 'rodando') pil.classList.add('mi-pausa'); if(m.esg) pil.classList.add('mi-esg');
-      main.append(el('span', '', t.status === 'rodando' ? '⏲' : '⏸'), el('span', 'mi-t', t.atividade || 'Atividade'), el('span', 'mi-tempo', m.txt));
+      main.append(el('span', '', t.status === 'rodando' ? '⏱️' : '⏸️'), el('span', 'mi-t', t.atividade || 'Atividade'), el('span', 'mi-tempo', m.txt));
       if(timers.length > 1) main.append(el('span', 'mi-mais', '+' + (timers.length - 1)));
       main.setAttribute('aria-label', 'Timer: ' + (t.atividade || 'Atividade') + ', ' + T().estadoTxt(t) + ', ' + m.txt + (timers.length > 1 ? ', e mais ' + (timers.length - 1) : '') + '. Abrir a ilha');
     } else {
@@ -95,8 +95,8 @@
     if(f){ const x = painel.querySelector('[data-mi="' + f + '"]'); if(x) x.focus(); }
   }
   function desenharPainel(){
-    painel.replaceChildren(el('p', 'mi-h', '⏲ Timers'));
-    if(!timers.length){ painel.append(el('p', 'mi-vazio', 'Nenhum timer ativo. Para começar um, abra o card no Maré e use ⏲.')); return; }
+    painel.replaceChildren(el('p', 'mi-h', '⏱️ Timers'));
+    if(!timers.length){ painel.append(el('p', 'mi-vazio', 'Nenhum timer ativo. Para começar um, abra o card no Maré e use ⏱️ Timers.')); return; }
     const agora = Date.now();
     principal().forEach(t => {
       const box = el('div', 'mi-tm'), m = T().mostra(t, agora);
@@ -123,7 +123,7 @@
     else if(!precisa && relogio){ clearInterval(relogio); relogio = 0; }
   }
 
-  function abrirPainel(){ aberta = true; painel.hidden = false; renderPainel(); renderPilula(); const f = painel.querySelector('button, a'); if(f) f.focus(); }
+  function abrirPainel(){ try { if(window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); } catch(e) {} aberta = true; painel.hidden = false; renderPainel(); renderPilula(); const f = painel.querySelector('button, a'); if(f) f.focus(); }
   function fechar(foco){ if(!aberta) return; aberta = false; painel.hidden = true; renderPilula(); if(foco !== false) pil.querySelector('.mi-main').focus(); }
 
   // Notificação nova → a pílula alarga por ~6 s (nunca abre o painel). A 1ª leitura é só a base (não avisa o que já estava lá).
@@ -132,7 +132,8 @@
     const chave = n => (n.k || '') + ':' + n.id;   // itens do sino: {k, id, tipo, icon, title, sub, unread}
     const ids = new Set(lista.filter(n => n && n.id).map(chave));
     if(vistos === null){ vistos = ids; return; }
-    const novo = lista.find(n => n && n.id && !vistos.has(chave(n)) && n.unread && !(cfg.silenciar && cfg.silenciar(n)));
+    const recente = n => { const t = typeof n.ts === 'number' ? n.ts : Date.parse(n.ts || ''); return !isNaN(t) && t >= desde - 5000; };   // a lista chega aos poucos: só é "nova" a que chegou depois de abrir a página
+    const novo = lista.find(n => n && n.id && !vistos.has(chave(n)) && n.unread && recente(n) && !(cfg.silenciar && cfg.silenciar(n)));
     vistos = ids;
     if(!novo) return;
     const t = String(novo.title || 'Notificação nova').slice(0, 80), s = String(novo.sub || '').slice(0, 80);
@@ -143,13 +144,13 @@
 
   function iniciar(o){
     parar();
-    cfg = Object.assign({}, o || {}); if(!cfg.el) return;
+    cfg = Object.assign({}, o || {}); if(!cfg.el) return; desde = Date.now();
     estilo();
     raiz = el('div', 'mi-ilha'); raiz.setAttribute('role', 'region'); raiz.setAttribute('aria-label', 'Ilha Dinâmica');
     pil = el('div', 'mi-pil');
     const main = el('button', 'mi-main'); main.type = 'button'; main.setAttribute('aria-haspopup', 'dialog');
     main.onclick = () => aberta ? fechar() : abrirPainel();
-    bSino = el('button', 'mi-sino', '🔔'); bSino.type = 'button'; bSino.setAttribute('aria-label', 'Notificações'); bSino.title = 'Notificações';
+    bSino = el('button', 'mi-sino', '🔔'); bSino.type = 'button'; bSino.addEventListener('click', () => fechar(false));   // um painel por vez (o do sino abre logo depois) bSino.setAttribute('aria-label', 'Notificações'); bSino.title = 'Notificações';
     pil.append(main, bSino);
     painel = el('div', 'mi-painel'); painel.hidden = true; painel.setAttribute('role', 'dialog'); painel.setAttribute('aria-label', 'Ilha Dinâmica');
     raiz.append(pil, painel);

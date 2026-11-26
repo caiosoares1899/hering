@@ -10,7 +10,7 @@ const U = (uid, nome) => ({ uid, email: uid + '@ciahering.com.br', displayName: 
 const PAU = U('pau', 'Paula PO'), ANA = U('ana', 'Ana Lima');
 const ag = Date.now();
 const seed = () => ({ kanban: {
-  usuarios: { pau: { role: 'membro', squads: { dados: true }, oceano: { ilha: true } }, ana: { role: 'membro', squads: { dados: true } } },
+  usuarios: { pau: { role: 'membro', squads: { dados: true }, oceano: { ilha: true }, notificacoes: { velha: { type: 'mention', title: '@CO — você foi mencionado', sub: 'de horas atrás', ts: new Date(ag - 5 * 3600e3).toISOString(), read: false } } }, ana: { role: 'membro', squads: { dados: true } } },
   usuarios_publicos: { pau: { nome: 'Paula PO' }, ana: { nome: 'Ana Lima' } },
   timers_ativos: { pau: {
     tm0001: { sq: 'dados', cardId: 'c1', cardTitle: 'Banner BF', atividade: 'Revisar banner', tipo: 'cron', status: 'rodando', startedAt: ag - 65000, accMs: 0, porUid: 'ana' },
@@ -39,7 +39,8 @@ const DBURL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   { const { ctx, p, errs } = await abre(PAU);
     let x = await pil(p);
-    t('Ilha ligada na conta: a pílula aparece no alto com o timer rodando (⏲ Revisar banner, ~01:0x, +1)', x && x.visivel && /⏲Revisar banner01:0\d\+1/.test(x.txt), x);
+    t('Ilha ligada na conta: a pílula aparece no alto com o timer rodando (⏲ Revisar banner, ~01:0x, +1)', x && x.visivel && /⏱️Revisar banner01:0\d\+1/.test(x.txt), x);
+    t('notificação ANTIGA não lida não alarga a pílula ao abrir a página (relato do Caio)', x && !x.aviso, x);
     t('o 🔔 do topo some: o sino mora dentro da ilha', await p.evaluate(() => document.getElementById('b-sino').hidden && !!document.querySelector('#ilha-slot .mi-sino.mn-sino-btn')), 0);
     await p.waitForTimeout(1100);
     const x2 = await pil(p);
@@ -54,6 +55,12 @@ const DBURL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
     const esc = await p.evaluate(() => (window.__escritas || []).filter(e => /timers|card_timers/.test(JSON.stringify(Object.keys(e.v || {})) + e.p)));
     const ruins = esc.filter(e => { const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([kk, v]) => [(e.p ? e.p + '/' : '') + kk, v])); const real = Date.now; Date.now = () => e.t; try { return !regras(RULES, e.antes, authDe(PAU), mapa); } finally { Date.now = real; } }).length;
     t('a escrita do timer passa nas regras reais', esc.length >= 1 && !ruins, { n: esc.length, ruins });
+    await p.click('#ilha-slot .mi-sino'); await p.waitForTimeout(300);
+    t('tocar no 🔔 com a ilha aberta: fecha a ilha e abre só o sino (um painel por vez)', await p.evaluate(() => document.querySelector('.mi-painel').hidden && !document.querySelector('.mn-sino-pop').hidden), 0);
+    await p.click('#ilha-slot .mi-main'); await p.waitForTimeout(300);
+    t('abrir a ilha com o sino aberto fecha o sino', await p.evaluate(() => !document.querySelector('.mi-painel').hidden && document.querySelector('.mn-sino-pop').hidden), 0);
+    await p.keyboard.press('Escape'); await p.waitForTimeout(150);
+    await p.click('#ilha-slot .mi-main'); await p.waitForTimeout(200); await p.click('.mi-painel .mi-tm button'); await p.waitForTimeout(200);
     await p.keyboard.press('Escape'); await p.waitForTimeout(150);
     t('Esc fecha só a ilha (a conversa segue aberta) e o foco volta à pílula', await p.evaluate(() => document.querySelector('.mi-painel').hidden && document.activeElement.classList.contains('mi-main') && window.__cardume.estado.atual === 'dados'), 0);
     // notificação nova
@@ -61,7 +68,7 @@ const DBURL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
     await p.waitForTimeout(500);
     x = await pil(p);
     t('notificação nova (🐚 menção) alarga a pílula com quem/o quê', x && x.aviso && /Ana Lima te mencionou/.test(x.txt), x);
-    t('…e o 🔔 da ilha mostra 1 não lida', await p.evaluate(() => { const n = document.querySelector('#ilha-slot .mi-sino .mn-sino-n'); return n && !n.hidden && n.textContent === '1'; }), 0);
+    t('…e o 🔔 da ilha mostra 2 não lidas (a antiga e a nova)', await p.evaluate(() => { const n = document.querySelector('#ilha-slot .mi-sino .mn-sino-n'); return n && !n.hidden && n.textContent === '2'; }), 0);
     // ⚙️ desligar
     await p.click('#b-config'); await p.waitForTimeout(200);
     t('⚙️ Configurações tem 🏝️ Ilha Dinâmica (Ligada marcada)', await p.evaluate(() => !!document.querySelector('.md.cfg input[name="ilha"][value="sim"]:checked')), 0);
