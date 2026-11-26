@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: ⏩ encaminhar mensagem para outro canal, com o canal de origem e aviso antes (SÓ DEV, cardume v0.36, regra enc + conchaAvisoMsg) — 2026-11-26
+
+Pedido do Caio (Backlog, #1976), com as decisões dele: mostra o canal de origem e avisa antes. ⏩ Encaminhar nas ações da mensagem leva a mensagem para o 💬 geral de outro canal seu, com "⏩ Encaminhada de Ana · # Dados · data". Avisa antes quando mais gente vai ver: se o destino tem alguém que não está na origem, ou se é um temático aberto ("Encaminhar mesmo assim"); com as mesmas pessoas, não avisa. A regra do banco garante que só quem é da origem encaminha, que o texto/GIF/legenda são os da original, a autoria e o nome atual do canal de origem; a encaminhada não se edita nem pode ser encaminhada de novo; as @menções do texto não avisam outra vez (e quem aparece mencionado recebe o push normal do canal). Banco: campo enc na mensagem. Função conchaAvisoMsg ajustada. Testes: cardumeRules (+2, sabotagens), conchaAvisos (+1), test_concha_encaminhar.js (11). Deploy: regras antes do merge, functions:conchaAvisoMsg depois.
+
 ### 🐚 Concha: 🎨 escolher o tema — claro, escuro, Entardecer e 🌴 Vice City (SÓ DEV, cardume v0.35) — 2026-11-26
 
 Pedido do Caio (Backlog de 25/11, anotado pelo Codex na #1976). 🎨 no topo da Concha escolhe o tema: 🌊 Como no Oceano (o padrão, segue o tema do Oceano), 🌙 Abrolhos, ☀️ Lençóis (claro), 🌅 Entardecer ou 🌴 Vice City (a mesma paleta do Maré, agora também na Concha). Muda na hora, nas outras abas também, e vale desde o primeiro pintar da página (sem piscar). Guardado só na Concha, neste aparelho (concha_tema): o Oceano não conhece o Vice City. Contraste do Vice City conferido nas 5 regiões (pior 6,2:1). No celular, os botões do topo ficaram um pouco menores para tudo caber numa linha. Ajuda com o tópico Tema. Teste: test_concha_tema.js (9); contraste_concha.js passa a medir os 4 temas.

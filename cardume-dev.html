@@ -143,6 +143,10 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .sug-dica{margin:6px 8px;font-size:13px;color:var(--txt2);}
 .mencoes-acoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin:0 0 8px;}
 .mencoes-acoes button{min-height:34px;font-size:13px;}
+.enc-de{margin:0 0 2px;font-size:12px;color:var(--txt2);font-style:italic;}
+.enc-lista{display:grid;gap:4px;max-height:40vh;overflow:auto;margin:6px 0;}
+.enc-aviso{margin:8px 0;padding:8px 10px;border:1px solid var(--warn);border-radius:10px;color:var(--warn);font-size:13px;}
+.enc-prev{margin:6px 0;padding:8px 10px;border-left:3px solid var(--glass-b);color:var(--txt2);font-size:13px;overflow-wrap:anywhere;}
 .sec-vazia{margin:0 8px 6px;font-size:12px;}
 .lado label.sec-onde{display:grid;gap:4px;margin:10px 0;}
 .sec-linha{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin:4px 0;} .sec-linha input{min-width:0;}
@@ -402,7 +406,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.35 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.36 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -430,7 +434,7 @@ const JANELA_EDITAR = 15 * 60000;
 let relogioServ = 0;
 onValue(ref(db, '.info/serverTimeOffset'), s => { const v = s.val(); relogioServ = typeof v === 'number' ? v : 0; });
 const agoraServ = () => Date.now() + relogioServ;
-const podeEditar = m => !!m && !!user && m.uid === user.uid && typeof m.texto === 'string' && typeof m.ts === 'number' && agoraServ() - m.ts < JANELA_EDITAR;
+const podeEditar = m => !!m && !m.enc && !!user && m.uid === user.uid && typeof m.texto === 'string' && typeof m.ts === 'number' && agoraServ() - m.ts < JANELA_EDITAR;
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
@@ -1101,6 +1105,10 @@ function renderMsg(m) {
   }
   if (editando === m.id) { box.append(editor(m)); return box; }
   if (typeof m.resp === 'string' && ID_RE.test(m.resp)) box.append(citacao(atual, m.resp));
+  if (m.enc && typeof m.enc === 'object' && ID_RE.test(String(m.enc.de || ''))) {   // ⏩ de onde veio (nome do canal de origem guardado na hora: quem lê aqui pode não ter acesso a ele)
+    const e = el('p', 'enc-de'); e.append(document.createTextNode('⏩ Encaminhada de '), el('b', '', nomePessoa(m.enc.de)), document.createTextNode(' · # ' + String(m.enc.n || 'outro canal').slice(0, 40) + (typeof m.enc.ts === 'number' ? ' · ' + dataHora(m.enc.ts) : '')));
+    box.append(e);
+  }
   const gg = m.gif && renderGif(m.gif); if (gg) box.append(gg);
   const ks = cardsNoTexto(m.texto), os_ = objsNoTexto(m.texto);
   const visivel = ks.length || os_.length ? semLinkDeCard(m.texto || '') : (m.texto || '');
@@ -1122,6 +1130,7 @@ function renderMsg(m) {
   }
   if (podeReagir) { const rr = acaoBtn('', '😀', 'Reagir'); rr.onclick = () => { rxAbrindo = m.id; renderMsgs(); const o = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] .rx-op'); if (o) o.focus(); }; ac.append(rr); }
   if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
+  if (souMembro(atual) && !m.enc && (typeof m.texto === 'string' || (m.gif && typeof m.gif === 'object'))) { const fw = acaoBtn('', '⏩', 'Encaminhar'); fw.onclick = () => modalEncaminhar(m); ac.append(fw); }
   if (souMembro(atual) || souAdm()) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
     if (podeEditar(m)) { const e = acaoBtn('', '✏️', 'Editar'); e.title = 'Editar (até 15 min depois de enviar)'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
@@ -1217,13 +1226,13 @@ function citacao(canal, id) {
   const o = msgs.find(x => x.id === id);
   const b = el('button', 'citacao'); b.type = 'button';
   let quem = '', tr;
-  if (o) { quem = o.apagada ? '' : nomePessoa(o.uid); tr = resumoMsg(o); }
+  if (o) { quem = o.apagada ? '' : nomePessoa(autorDe(o)); tr = resumoMsg(o); }
   else {   // fora das 50 carregadas: ESCUTA a original enquanto o canal está aberto (apagar/editar atualiza a citação; achado do Codex na #1959)
     const k = canal + '/' + id, v = citVivas[k];
     if (v === undefined) {
       citVivas[k] = null;
       ouvir('cit:' + k, ref(db, B + 'msgs/' + canal + '/' + id), s => {
-        const m = s.val(), nv = { quem: m && !m.apagada ? nomePessoa(m.uid) : '', tr: m ? resumoMsg(m) : '(mensagem apagada)' };
+        const m = s.val(), nv = { quem: m && !m.apagada ? nomePessoa(autorDe(m)) : '', tr: m ? resumoMsg(m) : '(mensagem apagada)' };
         const ant = citVivas[k];
         if (!ant || ant.quem !== nv.quem || ant.tr !== nv.tr) { citVivas[k] = nv; if (atual === canal && !vendoMencoes) renderMsgs(); }
       }, () => { citVivas[k] = { quem: '', tr: '(sem acesso)' }; });
@@ -1418,9 +1427,14 @@ function chipCard(k) {
 // e um trecho do chat não pode acionar o Agente nem virar menção a alguém no card. E-mail (nome@dominio) fica como está.
 const semArroba = s => String(s || '').replace(/(^|[^\p{L}\p{N}._%+-])[@＠](?=[\p{L}])/gu, '$1').replace(/[@＠](?=\s*agente)/giu, '');
 const dataHora = ts => new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '');
+// ⏩ Quem ESCREVEU a mensagem (na encaminhada, o autor da original — não quem encaminhou).
+const autorDe = x => (x && x.enc && ID_RE.test(String(x.enc.de || ''))) ? x.enc.de : (x && x.uid);
 function textoRegistro(canal, lista) {
   let t = '🐚 Da Concha · #' + nomeCanal(canal) + '\n';
-  for (const x of lista) t += '\n**' + nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ' + (rotuloGif(x) + String(x.texto || '')).trim();
+  for (const x of lista) {
+    const cab = x.enc && ID_RE.test(String(x.enc.de || '')) ? nomePessoa(x.enc.de) + '** (encaminhada por ' + nomePessoa(x.uid) + ' · #' + String(x.enc.n || '').slice(0, 40) + ', ' + dataHora(typeof x.enc.ts === 'number' ? x.enc.ts : x.ts) + '): ' : nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ';
+    t += '\n**' + cab + (rotuloGif(x) + String(x.texto || '')).trim();
+  }
   t = semArroba(t);
   return t.length > 8000 ? t.slice(0, 7999) + '…' : t;
 }
@@ -1441,7 +1455,7 @@ function modalRegistrar(m0) {
   janela.forEach(x => {
     const l = el('label', 'reg-item'); const cb = el('input'); cb.type = 'checkbox'; cb.value = x.id; cb.checked = x.id === m0.id;
     const tx = el('span'); const resumo = (rotuloGif(x) + String(x.texto || '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim();
-    tx.append(el('b', '', nomePessoa(x.uid) + ' · ' + dataHora(x.ts)), el('span', 'subtitulo', resumo.length > 140 ? resumo.slice(0, 140) + '…' : resumo));
+    tx.append(el('b', '', nomePessoa(autorDe(x)) + (x.enc ? ' (encaminhada)' : '') + ' · ' + dataHora(x.ts)), el('span', 'subtitulo', resumo.length > 140 ? resumo.slice(0, 140) + '…' : resumo));
     l.append(cb, tx); caixa.append(l);
   });
   f.append(caixa);
@@ -1575,7 +1589,7 @@ function abrirTag(k) {
 }
 function curtaDe(c, m) {
   const k = c + '/' + m;
-  if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: v.uid, tr: resumoMsg(v) }; if (vendoTag) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag) renderMsgs(); }); }
+  if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: autorDe(v), tr: resumoMsg(v) }; if (vendoTag) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag) renderMsgs(); }); }
   return curtas[k];
 }
 function renderTag(log) {
@@ -1631,7 +1645,7 @@ const AJUDA = [
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
-  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.' },
+  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
   { id: 'tema', ic: '🎨', t: 'Tema (claro, escuro e Vice City)', txt: '- **🎨** no alto da Concha escolhe o tema: **🌊 Como no Oceano** (o padrão, segue o que você escolheu no Oceano), **🌙 Abrolhos** (escuro), **☀️ Lençóis** (claro), **🌅 Entardecer** ou **🌴 Vice City**.\n- A escolha vale só para a Concha, neste aparelho, e muda na hora (também nas outras abas da Concha).' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },
@@ -1713,6 +1727,64 @@ function modalTema() {
 }
 $('b-tema').onclick = modalTema;
 window.addEventListener('storage', e => { if (e.key === 'concha_tema' || e.key === 'oceano_prefs' || e.key === 'mare_theme') aplicarTema(); });   // mudou em outra aba
+
+// ═══ ⏩ Encaminhar (docs/ideias/cardume-v0-banco.md › "Encaminhar mensagem"): mensagem nova no destino com enc = {c, m, de, ts, n}; a regra confere
+// que o conteúdo é o da original, que quem encaminha é da origem e o nome atual do canal. Avisa antes quando MAIS GENTE vai ver: alguém no destino que
+// não está na origem, ou destino temático aberto (decisão do Caio: "avisa antes"; a comparação por membros é a versão precisa da regra dele). ═══
+function modalEncaminhar(m) {
+  const origem = atual, cOrig = canais[origem], membrosOrig = Object.assign({}, membrosAtual);
+  if (!cOrig || typeof cOrig.nome !== 'string') { toast('Não deu para encaminhar desta conversa agora.'); return; }
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t'); ov.append(f);
+  const h = el('h2', '', '⏩ Encaminhar'); h.id = 'md-t'; f.append(h);
+  f.append(el('p', 'subtitulo', 'Vai para o 💬 geral do canal escolhido, com "Encaminhada de ' + nomePessoa(m.uid) + ' · # ' + cOrig.nome + '".'));
+  f.append(el('p', 'enc-prev', resumoMsg(m) || '(GIF)'));
+  const destinos = idsConhecidos().filter(id => id !== origem && souMembro(id) && canais[id] && !vencido(canais[id])).sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR'));
+  if (!destinos.length) { f.append(el('p', 'subtitulo', 'Você não está em outro canal ativo para encaminhar.')); const l0 = el('div', 'linha'); const x = el('button', '', 'Fechar'); x.type = 'button'; x.onclick = fecharModal; l0.append(x); f.append(l0); x.focus(); return; }
+  const lista = el('div', 'enc-lista'); lista.setAttribute('role', 'radiogroup'); lista.setAttribute('aria-label', 'Canal de destino');
+  destinos.forEach(id => { const l = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = 'dest'; r.value = id; l.append(r, el('b', '', iconeCanal(id) + ' ' + nomeCanal(id))); lista.append(l); });
+  f.append(lista);
+  const aviso = el('p', 'enc-aviso'); aviso.hidden = true; aviso.setAttribute('aria-live', 'polite'); f.append(aviso);
+  const err = el('p', 'erro'); err.hidden = true; f.append(err);
+  const lin = el('div', 'linha'); const can = el('button', '', 'Cancelar'); can.type = 'button'; can.onclick = fecharModal;
+  const ok = el('button', 'primary', '⏩ Encaminhar'); ok.type = 'submit'; ok.disabled = true; lin.append(can, ok); f.append(lin);
+  const abertoTema = id => ehTema(id) && canais[id] && canais[id].acesso === 'aberto';
+  let vez = 0, analise = null;   // { dest, avisar, texto }
+  const analisar = async dest => {
+    const minha = ++vez; analise = null; ok.disabled = true; aviso.hidden = true;
+    try {
+      const md = (await get(ref(db, B + 'membros/' + dest))).val() || {};
+      if (minha !== vez) return;
+      const novos = Object.keys(md).filter(u => md[u] === true && membrosOrig[u] !== true);
+      if (abertoTema(origem)) { analise = { dest, avisar: false }; ok.textContent = '⏩ Encaminhar'; ok.disabled = false; return; }   // origem aberta: qualquer pessoa da Hering já pode ler lá — nada a avisar
+      const abre = abertoTema(dest);
+      const partes = [];
+      if (novos.length) partes.push(novos.length + (novos.length === 1 ? ' pessoa' : ' pessoas') + ' em ' + nomeCanal(dest) + ' não ' + (novos.length === 1 ? 'está' : 'estão') + ' em ' + cOrig.nome + ' e vão ver esta mensagem e o nome do canal de origem.');
+      if (abre) partes.push(nomeCanal(dest) + ' é aberto: qualquer pessoa da Hering pode entrar e ler.');
+      analise = { dest, avisar: partes.length > 0 };
+      if (analise.avisar) { aviso.textContent = '⚠️ ' + partes.join(' '); aviso.hidden = false; ok.textContent = '⏩ Encaminhar mesmo assim'; } else ok.textContent = '⏩ Encaminhar';
+      ok.disabled = false;
+    } catch (e) { if (minha === vez) { erroModal(err, negado(e) ? 'Sem acesso aos membros desse canal.' : 'Não deu para conferir o canal agora.'); } }
+  };
+  lista.onchange = () => { const d = f.querySelector('input[name="dest"]:checked'); if (d) analisar(d.value); };
+  let indo = false;
+  f.onsubmit = async e => {
+    e.preventDefault(); const d = f.querySelector('input[name="dest"]:checked');
+    if (!d || !analise || analise.dest !== d.value || indo) return;
+    indo = true; ok.disabled = true;
+    const dest = d.value, k = push(ref(db, B + 'msgs/' + dest)).key, ts = serverTimestamp();
+    const corpo = { uid: user.uid, ts, enc: { c: origem, m: m.id, de: m.uid, ts: m.ts, n: cOrig.nome } };
+    if (typeof m.texto === 'string') corpo.texto = m.texto;
+    if (m.gif && typeof m.gif === 'object') { const g = {}; ['u', 'w', 'h', 's', 't'].forEach(x => { if (m.gif[x] != null) g[x] = m.gif[x]; }); corpo.gif = g; }
+    const mapa = { [B + 'msgs/' + dest + '/' + k]: corpo, [B + 'ultima/' + dest]: { ts, uid: user.uid, id: k }, [B + 'ultima_a/' + dest + '/_geral']: { ts, uid: user.uid, id: k } };
+    tagsEm(corpo.texto || '').forEach(t => { mapa[B + 'tags/' + dest + '/' + t + '/' + k] = ts; mapa[B + 'tags_ult/' + dest + '/' + t] = ts; });   // sem registro de @menção: encaminhar não avisa de novo quem foi mencionado
+    try { await gravarComTags(mapa); fecharModal(); toast('⏩ Encaminhada para ' + nomeCanal(dest) + '.'); }
+    catch (er) { indo = false; ok.disabled = false; erroModal(err, negado(er) ? 'Não deu para encaminhar: a mensagem mudou ou você não tem acesso.' : 'Não deu para encaminhar agora. Tente de novo.'); }
+  };
+  f.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); fecharModal(); } });
+  (lista.querySelector('input') || can).focus();
+}
 
 // ═══ 📁 Seções na lista de canais (pessoal; kanban/cardume/secoes/{uid} = {s: {id: {n, o}}, c: {canal: id}, r: {chave: true}}) ═══
 let secoes = { s: {}, c: {}, r: {} };

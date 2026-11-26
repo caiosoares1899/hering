@@ -153,3 +153,9 @@ test('runAvisoMsg com assunto: nome no push e ?a= no link; canal só de convidad
   assert.equal(m2.envios[0].data.title, '🐚 Ana num canal privado', 'nem o nome do assunto');
   assert.ok(!/segredo/.test(JSON.stringify(m2.envios[0].data)));
 });
+
+test('runAvisoMsg: ⏩ encaminhada — quem aparece @mencionado no texto recebe o push normal (não há aviso de menção para ela)', async () => {
+  const m = fakeMsg();
+  await runAvisoMsg(banco(), m, 'dados', 'k1', { uid: 'ana', ts: AG - 1000, texto: '@Bruno Reis olha isso', enc: { c: 'prf', m: 'o1', de: 'car', ts: AG - 9e5, n: 'Performance' } }, { agora: AG, emailDe, log: () => {} });
+  assert.ok(m.envios.some(e => e.tokens.includes('tb')), 'Bruno recebe');
+});

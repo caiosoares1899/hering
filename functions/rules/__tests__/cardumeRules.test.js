@@ -808,3 +808,41 @@ test('editar: só até 15 min depois de enviar (ts e editado são do servidor); 
   assert.equal(grava(M('m2') + '/texto', A.ana, 'só o texto'), false, 'nem gravando só o filho');
   assert.equal(grava(M('m2'), A.ana, { uid: 'ana', ts: ag - 16 * 60000, apagada: true }), true, 'apagar a própria depois dos 15 min continua valendo');
 });
+
+// ═══ ⏩ Encaminhar (25/11/2026): mensagem nova no destino com enc = {c, m, de, ts, n}; conteúdo igual ao da original ═══
+test('encaminhar: membro da origem copia a original (texto/GIF iguais, nome do canal de origem); forjar conteúdo, autoria, nome ou origem barra', () => {
+  reset(); const ts0 = Date.now() - 864e5;
+  DB.kanban.cardume.canais.prf = { nome: 'Performance' }; DB.kanban.cardume.membros.prf = { ana: true, bru: true };
+  DB.kanban.cardume.msgs.prf = { o1: { uid: 'bru', ts: ts0, texto: 'segredo da squad' }, o2: { uid: 'bru', ts: ts0, gif: { u: 'https://static.klipy.com/a.gif', w: 10, h: 10, t: 'risada' } }, oap: { uid: 'bru', ts: ts0, apagada: true }, oenc: { uid: 'ana', ts: ts0, texto: 'já encaminhada', enc: { c: 'dados', m: 'x', de: 'gil', ts: ts0, n: 'dados' } } };
+  const env = (o, extra) => { const t = Date.now(); return Object.assign({ [M('f1')]: Object.assign({ uid: 'ana', ts: t }, o), ['kanban/cardume/ultima/dados']: { ts: t, uid: 'ana', id: 'f1' } }, extra || {}); };
+  const enc = o => Object.assign({ c: 'prf', m: 'o1', de: 'bru', ts: ts0, n: 'Performance' }, o || {});
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo da squad', enc: enc() })), true, 'encaminha texto');
+  assert.equal(update(RULES, DB, A.ana, env({ gif: { u: 'https://static.klipy.com/a.gif', w: 10, h: 10, t: 'risada' }, enc: enc({ m: 'o2' }) })), true, 'encaminha GIF com a legenda');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'texto inventado', enc: enc() })), false, 'texto diferente do original');
+  assert.equal(update(RULES, DB, A.ana, env({ gif: { u: 'https://static.klipy.com/a.gif', w: 10, h: 10, t: 'legenda inventada' }, enc: enc({ m: 'o2' }) })), false, 'legenda do GIF diferente');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo da squad', enc: enc({ de: 'gil' }) })), false, 'autoria forjada');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo da squad', enc: enc({ ts: ts0 + 1 }) })), false, 'hora diferente');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo da squad', enc: enc({ n: 'Outro nome' }) })), false, 'nome do canal de origem diferente do atual');
+  assert.equal(update(RULES, DB, A.ana, env({ enc: enc({ m: 'oap', de: 'bru' }), texto: 'x' })), false, 'original apagada');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'já encaminhada', enc: enc({ m: 'oenc', de: 'ana' }) })), false, 'encaminhar uma encaminhada (v1)');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo da squad', resp: 'x', enc: enc() })), false, 'com resposta junto');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo da squad', enc: enc({ c: 'dados' }) })), false, 'origem = o próprio canal');
+  DB.kanban.cardume.membros.dados.gil = true; DB.kanban.cardume.msgs.prf.o1 = { uid: 'bru', ts: ts0, texto: 'segredo da squad' };
+  const envG = (o) => { const t = Date.now(); return { [M('f2')]: Object.assign({ uid: 'gil', ts: t }, o), ['kanban/cardume/ultima/dados']: { ts: t, uid: 'gil', id: 'f2' } }; };
+  assert.equal(update(RULES, DB, A.gil, envG({ texto: 'segredo da squad', enc: enc() })), false, 'quem NÃO é da origem não encaminha (nem sabendo o texto)');
+  DB.kanban.usuarios.adm.squads = {}; DB.kanban.cardume.membros.dados.adm = true;
+  const envA = (o) => { const t = Date.now(); return { [M('f3')]: Object.assign({ uid: 'adm', ts: t }, o), ['kanban/cardume/ultima/dados']: { ts: t, uid: 'adm', id: 'f3' } }; };
+  assert.equal(update(RULES, DB, A.adm, envA({ texto: 'segredo da squad', enc: enc() })), false, 'nem o ADM que não é membro da origem');
+});
+
+test('encaminhada: não se edita; apagar não guarda a origem', () => {
+  reset(); const ts = Date.now() - 1000, ag = Date.now();
+  põe('f1', { uid: 'ana', ts, texto: 'oi', enc: { c: 'prf', m: 'o1', de: 'bru', ts: ts - 9e5, n: 'Performance' } });
+  assert.equal(grava(M('f1'), A.ana, { uid: 'ana', ts, texto: 'mudei', editado: ag, enc: { c: 'prf', m: 'o1', de: 'bru', ts: ts - 9e5, n: 'Performance' } }), false, 'editar encaminhada');
+  assert.equal(grava(M('f1') + '/texto', A.ana, 'mudei'), false, 'nem só o texto');
+  assert.equal(update(RULES, DB, A.ana, { [M('f1') + '/texto']: 'mudei', [M('f1') + '/editado']: ag }), false, 'edição normal (texto + editado, dentro dos 15 min) numa encaminhada');
+  põe('n1', { uid: 'ana', ts, texto: 'minha' });
+  assert.equal(update(RULES, DB, A.ana, { [M('n1') + '/texto']: 'mudei', [M('n1') + '/editado']: ag }), true, '(controle) a mesma edição numa mensagem normal passa');
+  assert.equal(grava(M('f1'), A.ana, { uid: 'ana', ts, apagada: true }), true, 'apagar');
+  assert.equal(grava(M('f1'), A.ana, { uid: 'ana', ts, apagada: true, enc: { c: 'prf', m: 'o1', de: 'bru', ts: ts - 9e5, n: 'Performance' } }), false, 'apagar guardando a origem');
+});
