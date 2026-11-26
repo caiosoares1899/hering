@@ -132,6 +132,13 @@ const TARGETS = {
     versionDevKey: null,
     mode: 'copy',
   },
+  'mare-perfil': {
+    dev: 'mare-perfil-dev.js',
+    prod: 'mare-perfil.js',
+    versionProdKey: null,
+    versionDevKey: null,
+    mode: 'copy',
+  },
   'mare-login': {
     dev: 'mare-login-dev.js',
     prod: 'mare-login.js',

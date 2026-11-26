@@ -40,6 +40,7 @@ const NOS_GLOBAIS = [
   { no: 'firebase_status', diario: false },  // 🔥 estado do monitor de incidentes do Firebase (reconstituível a partir da API)
   { no: 'usuarios', diario: true },          // papéis, squads, torre, preferências (sem notificações/tokens)
   { no: 'usuarios_publicos', diario: true },
+  { no: 'perfis', diario: true },            // 👤 perfil da pessoa (cargo, telefone, aniversário) — mare-perfil
   { no: 'squads_meta', diario: true },       // quais squads existem
   { no: 'comunicados', diario: true },       // Mural/Comunicados
   { no: 'notif_config', diario: true },      // interruptores da Central de Notificações

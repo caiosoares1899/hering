@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/perfil-cartao` (worktree `~/hering-perfil`) | `mare-perfil-dev.js`, `cardume-dev.html`, `oceano-dev.html`, `database.rules.json` (`perfis`), `docs/arezzo/testes/fakefb.js` | 26/11/2026 |
 
 
 ## Fila
@@ -43,6 +44,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 👤 Perfil da pessoa: nó `kanban/perfis/{uid}` (só a Hering lê, só a dona grava) — **antes do merge**, a partir da branch `claude/perfil-cartao` (já traz as regras da `main`); depois o backup passa a guardar `perfis` | `firebase deploy --only database --project hering-onboarding` e, após o merge, `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario --project hering-onboarding` | 26/11/2026 |
 | Antigravity | 📢 Concha: regras dos canais permanentes `geral` e `oceano` (leitura para toda conta Hering; escrita exclusiva de ADM) — **antes do merge**, a partir da branch `antigravity/concha-canais-gerais` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 📝 Concha: regras das Minhas notas (canal `eu-{uid}` só da dona; nó `notas/{uid}`) — **antes do merge**, a partir da branch `claude/concha-minhas-notas` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |

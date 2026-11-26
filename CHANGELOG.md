@@ -24,6 +24,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 👤 Perfil da pessoa — cartão compartilhado (mare-perfil), Meu cartão no Oceano e convite para completar (SÓ DEV, oceano v1.99, cardume v0.52, regras perfis) — 2026-11-26
+
+- **(SÓ DEV) 👤 Perfil da pessoa — o cartão do Oceano inteiro (1º PR: Concha + Oceano).** Pedido do Caio (26/11): cargo, telefone/WhatsApp, aniversário (dia/mês) e LinkedIn, preenchidos pela própria pessoa; toda a Hering vê; abre ao tocar na foto ou no nome.
+  - **Módulo novo `mare-perfil-dev.js`** (como o Sonar): `MarePerfil.iniciar/abrir/ligar/lembrar`. Mostra foto, nome, cargo, 🏢 diretoria, squads, 🎂 aniversário (e "Hoje é aniversário!"), ✉️ e-mail, 💬 WhatsApp, 📞 ligar e 🔗 LinkedIn. O próprio cartão tem "✏️ Editar meu perfil".
+  - **Banco:** nó novo `kanban/perfis/{uid}` = `{cargo, tel, niver, li}`, separado de `usuarios_publicos` de propósito: lá a leitura é qualquer conta logada (inclusive externas) e PO/ADM gravam o cadastro dos outros. Aqui só a Hering (Google) lê e só a dona grava; cada campo tem formato na regra (`perfisRules.test.js`). Entrou no backup diário (`NOS_GLOBAIS`).
+  - **Oceano v1.99:** ⚙ Meu perfil › 👤 Meu cartão (cargo, telefone, aniversário dd/mm, LinkedIn colando o endereço) + "👁 Ver meu cartão"; atalho `oceano-dev.html#meu-cartao`.
+  - **Concha v0.52:** o nome do autor das mensagens e dos membros vira botão; a foto também abre (nas sugestões de @ não).
+  - **Convite (pedido do Caio):** quem ainda não preencheu nada vê, ao entrar/recarregar, "👤 Complete o seu cartão" com Preencher agora / Depois (volta no dia seguinte) / Não mostrar mais (neste aparelho). Espera se houver outra janela aberta.
+  - Fronteira: nó e regra novos + campo escrito por outra pessoa chegando ao DOM — checado: só `textContent`; links montados no módulo (wa.me/tel só dígitos, LinkedIn só o `<id>` com `encodeURIComponent`, e-mail conferido, foto só https); leitura fechada a `@ciahering` Google; escrita só da dona.
+  - Testes: `test_perfil_cartao.js` (36), `perfisRules.test.js` (3). Próximo PR: Maré, Radar e Sonar.
+
 ### 🐚 Concha: 📢 Geral e 🌊 #oceano — canais permanentes somente leitura com publicação exclusiva de ADM (SÓ DEV, cardume v0.51, regras) — 2026-11-26
 
 Pedido do Caio (escopo no PR #2011). Dois canais permanentes — **Geral** (`geral`) e **#oceano** (`oceano`, para atualizações do ecossistema Oceano) — passam a aparecer automaticamente para toda conta com acesso à Concha, sem precisar entrar. Todos leem mensagens, assuntos e fixadas; só ADMs publicam (inclusive pelo ⏩ Encaminhar, com aviso de público), criam assuntos e fixam. Para quem não é ADM, o canal indica claramente que é somente leitura e as regras do Firebase bloqueiam qualquer escrita (inclusive com PO/membro forjado). Fluxo de `/subirproprod` atualizado para preparar o aviso pronto para o `#oceano` com resumo da promoção e rodapé `🤖 Agente Ágil` (mantendo a autoria registrada na conta ADM que publica). Testes: `conchaCanaisPermanentesRules.test.js` (7) e `test_concha_canais_permanentes.js` (14). Deploy: regras (`database`) antes do merge.
