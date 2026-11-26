@@ -87,6 +87,15 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🏝️ Ilha na Concha: painel da Ilha e do sino abertos juntos, notificação antiga alargando a pílula, ícone ⏲ quebrado e balão 'Concha' no Oceano (cardume v0.54, oceano v2.04, só dev)
+
+- **(SÓ DEV)** Relato do Caio com print, logo depois da #2019:
+  - **Os dois painéis abriam juntos.** O painel da Ilha e o do 🔔 ficavam um por cima do outro, porque o 🔔 fica dentro da Ilha e o "clique fora" não fechava a Ilha. Agora tocar no 🔔 fecha a Ilha, e abrir a Ilha fecha o sino.
+  - **Notificação antiga alargava a pílula ao abrir a página.** A lista do sino chega aos poucos (a 1ª leitura vem vazia), e a "base" ficava vazia. Agora só é "nova" a notificação com horário depois de a página abrir.
+  - **⏲ aparecia como um símbolo estranho** em algumas fontes de emoji. Trocado por ⏱️ e ⏸️.
+  - **Balão "Concha" ao passar o mouse** em cima do app aberto no Oceano: era o `title` do iframe do host, e virou `aria-label`.
+  - O sino mostra notificações de todos os apps de propósito (é o sino unificado), não é bug. `docs/arezzo/testes/test_concha_ilha.js` (21).
+
 ### 2026-11-26 · Oceano: botão de expandir/recolher o menu pequeno e apagado (oceano v2.03, só dev)
 
 - **(SÓ DEV)** Relato do Caio: o » do menu lateral era um caractere de 13px em cinza-claro (`--txt3`), difícil de ver e de acertar. Virou um ícone de painel lateral de traço (22px, cor `--txt2`, área de toque 40×36), com uma seta que vira para o outro lado quando o menu está expandido.
