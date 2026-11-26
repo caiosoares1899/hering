@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🔔 Clique no push levava embora a aba do Maré — o Service Worker só reaproveita a aba da mesma página (firebase-messaging-sw.js, vale no merge)
+
+/monitorarbugs de 26/11 (avisos da Concha). No notificationclick, todo link que não fosse do Radar era tratado como 'kanban' e reaproveitava qualquer aba com 'kanban' na URL: tocar no push da Concha (ou da Escala, do Oceano) navegava a aba aberta do Maré para outra página, e o push do Maré de prod reaproveitava uma aba do Maré dev. Mesma classe do sequestro da apresentação corrigido em 07/10. Agora reaproveita só uma aba de nível superior da MESMA página do link (mesmo arquivo); senão abre uma aba nova. O Service Worker não tem par -dev: vai para todo mundo no merge. Teste: test_sw_clique_push.js (7, carrega o SW real num vm; 3 falham no código anterior).
+
 ### 2026-11-26 · 🐚 Concha: o 🔔 do canal se confundia com o 🔔 Sino geral — foi para ℹ️ Detalhes › 🔔 Avisos (SÓ DEV, cardume v0.43)
 
 Achado do Caio (26/11). Havia dois sinos à vista: o do canal (no topo da conversa, escolhe quando o canal avisa) e o Sino geral do Oceano (no alto da página). O do canal saiu do topo e virou a linha 🔔 Avisos: … no ℹ️ Detalhes (abre as mesmas opções: todas, só @menções e #tags seguidas, nada, com prazo, e as #tags seguidas). Para o silêncio continuar à vista sem abrir o ℹ️: o subtítulo do canal mostra 🔕/🚫 e o nível, e a lista de canais segue com o 🔕/🚫. Ajuda atualizada. Teste: test_concha_avisos.js (17).

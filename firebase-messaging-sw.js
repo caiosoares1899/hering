@@ -165,13 +165,14 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url || `${SITE_BASE_URL}kanban.html`;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Reaproveita uma aba que já está na página de destino (OKR ou kanban) — nunca "sequestra" uma aba do kanban pra abrir o OKR.
-      const pagina = /\/okr(-dev)?\.html/.test(url) ? 'okr' : 'kanban';
-      // A aba tem que ser A PÁGINA do OKR (okr.html/okr-dev.html), não qualquer URL com "okr" no nome — a apresentação da reunião
-      // (okr-apresentacao.slide.html) também contém "okr" e seria navegada pra longe no meio da reunião.
-      const ehPagina = (u) => (pagina === 'okr' ? /\/okr(-dev)?\.html(\?|#|$)/.test(u) : u.includes('kanban'));
+      // Reaproveita só uma aba da MESMA PÁGINA do link (mesmo arquivo: cardume-dev.html, okr.html, kanban-dev.html…), de nível superior.
+      // /monitorarbugs 26/11/2026: antes, todo link que não fosse do OKR era tratado como "kanban" e reaproveitava qualquer aba com
+      // "kanban" na URL — o push da Concha (ou da Escala, do Oceano…) levava embora a aba do Maré aberta. Mesma classe do sequestro da
+      // apresentação (okr-apresentacao.slide.html) corrigido em 07/10.
+      const arquivo = (u) => { try { return new URL(u).pathname.split('/').pop() || 'index.html'; } catch (e) { return ''; } };
+      const alvo = arquivo(url);
       for (const client of clientList) {
-        if (ehPagina(client.url) && 'focus' in client) {
+        if (alvo && arquivo(client.url) === alvo && (!client.frameType || client.frameType === 'top-level') && 'focus' in client) {
           if (event.notification.data?.url) client.navigate(url);
           return client.focus();
         }
