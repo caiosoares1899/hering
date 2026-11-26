@@ -776,7 +776,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.97 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.98 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -949,7 +949,7 @@ async function iniciarMetasOceano(){
     podeDadosGlobal = ehAdm || arr.map(x=>String(x).toLowerCase()).includes(String(U.email||'').toLowerCase());
   }catch(e){}
   const el = $('#meta-oceano-body');
-  if(el) MareMetas.ligar(el, { user: ()=>U });
+  if(el) MareMetas.ligar(el, { user: ()=>({ uid: U && U.uid || null, nome: (U && (U.displayName || U.email)) || '' }) });   // /monitorarbugs 26/11: o módulo grava user.nome no histórico; o objeto do login não tem 'nome' (entradas do Oceano saíam sem nome)
   try{ MareMetas.iniciar({ todasSquads: false, onChange: ()=>{ encerrarEspera(); metaOceanoRender(); } }); }
   catch(e){ indisponivel(); }
 }
