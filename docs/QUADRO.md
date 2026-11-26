@@ -8,6 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
+| Claude | `claude/perfil-cartao` (worktree `~/hering-perfil`) | `mare-perfil-dev.js`, `cardume-dev.html`, `oceano-dev.html`, `database.rules.json` (`perfis`), `docs/arezzo/testes/fakefb.js` | 26/11/2026 |
 
 
 ## Fila

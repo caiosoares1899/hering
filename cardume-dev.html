@@ -754,7 +754,7 @@ function renderTexto(txt) {
 function ligarPerfil() {
   if (!window.MarePerfil) return;
   MarePerfil.iniciar({ ler: c => get(ref(db, c)).then(s => s.val()), user: () => user, publico: uid => pub[uid] || null,
-    squadNome: sq => (meta[sq] && meta[sq].label) || sq, editarUrl: 'oceano-dev.html#meu-cartao' });
+    squadNome: sq => (meta[sq] && meta[sq].label) || sq });   // "Editar" vai para oceano(-dev).html#meu-cartao (o módulo escolhe pelo nome da página)
   MarePerfil.ligar($('app'));
   setTimeout(() => { if (user) MarePerfil.lembrar(); }, 3500);   // 👤 convite para completar o cartão (adiável)
 }

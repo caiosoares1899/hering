@@ -18,7 +18,9 @@
        publico?: uid => objeto|null,            // usuarios_publicos/{uid} já em memória (senão o módulo lê)
        squadNome?: id => 'Dados',               // rótulo do squad (senão o id)
        editar?: () => {},                       // o Oceano abre o ⚙ Meu perfil; as outras páginas vão para editarUrl
-       editarUrl?: 'oceano-dev.html?perfil=1',
+       editarUrl?: '…#meu-cartao',              // padrão: oceano(-dev).html#meu-cartao, pelo nome da página (dev → dev, prod → prod)
+     Dentro do Oceano (página aberta no iframe do lobby): "Editar" pede ao lobby (postMessage {oceano:'prefs', secao:'cartao'}) em vez de abrir
+     o Oceano dentro do Oceano, e o convite não aparece (o lobby já convida).
      });
      MarePerfil.abrir(uid, elementoDeVolta?) · MarePerfil.fechar() · MarePerfil.esquecer(uid) (depois de salvar)
      MarePerfil.ligar(raiz) — qualquer elemento com data-perfil="<uid>" dentro de raiz abre o cartão (clique, Enter e Espaço)
@@ -36,12 +38,19 @@
   const DIRETORIAS = { digital: '💻 Digital', rh: '🤝 RH', marca: '🎨 Marca', tecnologia: '🛠️ Tecnologia' };
   let cfg = null, ov = null, volta = null, vez = 0;
   const cache = {};   // uid → { em, pub, perfil }
+  const noIframe = () => { try { return window.top !== window; } catch(e) { return true; } };
+  const editarPadrao = () => (/-dev\.html/.test(location.pathname) ? 'oceano-dev.html' : 'oceano.html') + '#meu-cartao';
+  function irEditar(){
+    if(cfg.editar){ cfg.editar(); return; }
+    if(noIframe()){ try { window.top.postMessage({ oceano: 'prefs', secao: 'cartao' }, location.origin); return; } catch(e) {} }
+    location.href = cfg.editarUrl || editarPadrao();
+  }
 
   // ── formatos (iguais às regras do banco; o que não casar não aparece) ──
   const digitos = t => (typeof t === 'string' && /^\+?[0-9]{10,15}$/.test(t)) ? t.replace(/\D/g, '') : '';
-  const comPais = d => (d.length === 10 || d.length === 11) ? '55' + d : d;   // número brasileiro sem o 55
+  const comPais = (d, cru) => (!String(cru || '').startsWith('+') && (d.length === 10 || d.length === 11)) ? '55' + d : d;   // DDD sem o país = Brasil; com + fica como está
   function telBonito(t){
-    const d = comPais(digitos(t)); if(!d) return '';
+    const d = comPais(digitos(t), t); if(!d) return '';
     const m = /^55(\d{2})(\d{4,5})(\d{4})$/.exec(d);
     return m ? '+55 ' + m[1] + ' ' + m[2] + '-' + m[3] : '+' + d;
   }
@@ -141,7 +150,7 @@
     const links = el('div', 'mp-links');
     const email = emailOk(p.email);
     if(email) links.append(link(email, 'mailto:' + email, '✉️'));
-    const tel = comPais(digitos(pf.tel));
+    const tel = comPais(digitos(pf.tel), pf.tel);
     if(tel){
       links.append(link('WhatsApp · ' + telBonito(pf.tel), 'https://wa.me/' + tel, '💬', true));
       links.append(link('Ligar · ' + telBonito(pf.tel), 'tel:+' + tel, '📞'));
@@ -155,7 +164,7 @@
     const ac = el('div', 'mp-acoes');
     if(meu){
       const ed = el('button', 'mp-pri', '✏️ Editar meu perfil'); ed.type = 'button';
-      ed.onclick = () => { fechar(); if(cfg.editar) cfg.editar(); else location.href = cfg.editarUrl || 'oceano-dev.html?perfil=1'; };
+      ed.onclick = () => { fechar(); irEditar(); };
       ac.append(ed);
     }
     const x = el('button', '', 'Fechar'); x.type = 'button'; x.onclick = fechar; ac.append(x);
@@ -199,7 +208,7 @@
   const outraJanela = () => [...document.querySelectorAll('[role="dialog"], [aria-modal="true"], .modal.open, .ov.open')].some(x => !(ov && ov.contains(x)) && x.getClientRects().length > 0);
   async function lembrar(){
     const u = cfg && cfg.user && cfg.user();
-    if(lembrou || !u || !UID_RE.test(u.uid || '')) return;
+    if(lembrou || !u || !UID_RE.test(u.uid || '') || noIframe()) return;   // dentro do Oceano quem convida é o lobby
     if(lsLer('mare_perfil_lembrete') === 'off') return;   // desligado neste aparelho (testes automatizados usam isto)
     const marca = lsLer(chaveLembrete(u.uid));
     if(marca === 'nunca' || marca === hojeTxt()) return;
@@ -226,7 +235,7 @@
     const depois = el('button', '', 'Depois'); depois.type = 'button';
     depois.onclick = () => { lsGravar(chaveLembrete(u.uid), hojeTxt()); fechar(); };
     const agora = el('button', 'mp-pri', 'Preencher agora'); agora.type = 'button';
-    agora.onclick = () => { lsGravar(chaveLembrete(u.uid), hojeTxt()); fechar(); if(cfg.editar) cfg.editar(); else location.href = cfg.editarUrl || 'oceano-dev.html#meu-cartao'; };
+    agora.onclick = () => { lsGravar(chaveLembrete(u.uid), hojeTxt()); fechar(); irEditar(); };
     ac.append(nunca, depois, agora); card.append(ac);
     ov.replaceChildren(card); ov.hidden = false; agora.focus();
   }

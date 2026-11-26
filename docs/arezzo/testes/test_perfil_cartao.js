@@ -13,9 +13,9 @@ const ag = Date.now();
 const P = (n, x) => Object.assign({ nome: n, email: n.split(' ')[0].toLowerCase() + '@ciahering.com.br', squads: { dados: true } }, x || {});
 const seed = () => ({ kanban: {
   usuarios: { pau: { role: 'membro', squads: { dados: true }, squads_roles: { dados: 'po' } }, ana: { role: 'membro', squads: { dados: true } } },
-  usuarios_publicos: { pau: P('Paula PO'), ana: P('Ana Lima', { diretoria: 'digital', foto: 'javascript:alert(1)' }) },
+  usuarios_publicos: { bob: P('Bob Smith'), pau: P('Paula PO'), ana: P('Ana Lima', { diretoria: 'digital', foto: 'javascript:alert(1)' }) },
   squads_meta: { dados: { label: 'Dados', emoji: '📊' } },
-  perfis: { ana: { cargo: '<img src=x onerror="window.__xss=1">Analista', tel: '+5547999998888', niver: '03-15', li: 'ana-lima' } },
+  perfis: { bob: { tel: '+12025550123' }, ana: { cargo: '<img src=x onerror="window.__xss=1">Analista', tel: '+5547999998888', niver: '03-15', li: 'ana-lima' } },
   cardume: {
     canais: { dados: { nome: 'Dados' } }, membros: { dados: { pau: true, ana: true } }, meus: { pau: { dados: true }, ana: { dados: true } },
     msgs: { dados: { m1: { uid: 'ana', ts: ag - 60000, texto: 'oi, pessoal' }, m2: { uid: 'pau', ts: ag - 30000, texto: 'bom dia' } } },
@@ -51,6 +51,11 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
     t('aniversário por extenso', c && /15 de março/.test(c.txt), c);
     t('links: e-mail, WhatsApp (wa.me só dígitos), ligar e LinkedIn montado pelo id', c && JSON.stringify(c.links) === JSON.stringify(['mailto:ana@ciahering.com.br', 'https://wa.me/5547999998888', 'tel:+5547999998888', 'https://www.linkedin.com/in/ana-lima/']), c && c.links);
     t('o cartão de outra pessoa não tem "Editar" nem a dica', c && !c.editar && !c.dica, c);
+    await p.keyboard.press('Escape'); await p.evaluate(() => MarePerfil.abrir('bob')); await p.waitForTimeout(400);
+    const cb = await cartao(p);
+    t('número estrangeiro (+1…) não ganha 55: wa.me/12025550123', cb && cb.links.includes('https://wa.me/12025550123') && /\+12025550123/.test(cb.txt), cb && cb.links);
+    await p.keyboard.press('Escape'); await p.waitForTimeout(100);
+    await p.click('button.perfil-nome[data-perfil="ana"]'); await p.waitForTimeout(300);
     await p.keyboard.press('Escape'); await p.waitForTimeout(150);
     t('Esc fecha e o foco volta ao nome clicado', await p.evaluate(() => document.querySelector('.mp-ov').hidden && document.activeElement && document.activeElement.dataset.perfil === 'ana'), 0);
     t('Esc do cartão não fecha nem mexe na conversa', await p.evaluate(() => window.__cardume.estado.atual === 'dados'), 0);
@@ -94,6 +99,21 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
     t('👁 Ver meu cartão mostra o cartão com o que acabou de salvar', c && /Product Owner/.test(c.cargo) && /5 de dezembro/.test(c.txt) && c.links.includes('https://www.linkedin.com/in/paula-po/'), c);
     await p.click('.mp-pri'); await p.waitForTimeout(300);
     t('"Editar meu perfil" dentro do Oceano volta para a seção (sem recarregar)', await p.evaluate(() => document.getElementById('ov-perfil').classList.contains('open') && document.querySelector('.mp-ov').hidden), 0);
+    t('sem erro na página', !errs.length, errs);
+    await ctx.close(); }
+
+  // ── dentro do Oceano (iframe do lobby): "Editar" pede ao lobby, e o convite não aparece ──
+  { const ctx = await b.newContext({ viewport: { width: 1280, height: 860 } }); await fake.install(ctx, seed(), { perfil: true });
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.goto(base + '/version.json');
+    await p.evaluate(u => { window.__msgs = []; window.addEventListener('message', e => window.__msgs.push(e.data)); const f = document.createElement('iframe'); f.style.cssText = 'width:1200px;height:800px'; f.src = u; document.body.append(f); }, base + '/cardume-dev.html?c=dados');
+    await p.waitForTimeout(800);
+    const fr = p.frames().find(f => /cardume-dev/.test(f.url()));
+    await fr.waitForFunction(() => !!window.__authCb); await fr.evaluate(x => window.__authCb(x), PAU); await fr.waitForTimeout(4500);
+    t('no iframe do Oceano o convite NÃO aparece (o lobby convida)', await fr.evaluate(() => !document.querySelector('.mp-ov:not([hidden])')), 0);
+    await fr.evaluate(() => MarePerfil.abrir('pau')); await fr.waitForTimeout(400);
+    await fr.click('.mp-pri'); await p.waitForTimeout(300);
+    t('"Editar meu perfil" no iframe pede ao lobby {oceano:"prefs", secao:"cartao"} e não navega', JSON.stringify(await p.evaluate(() => window.__msgs)).includes('{"oceano":"prefs","secao":"cartao"}') && /cardume-dev/.test(fr.url()), await p.evaluate(() => window.__msgs));
     t('sem erro na página', !errs.length, errs);
     await ctx.close(); }
 
