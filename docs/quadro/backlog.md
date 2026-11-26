@@ -82,6 +82,14 @@
 | 🏷️ **Etiquetas por pessoa, por canal** (cada um configura a sua) | A pessoa escolhe a própria etiqueta em cada canal (ex.: "Design", "Plantão"); aparece ao lado do nome nas mensagens e na lista de membros. Nó `etiquetas/{canal}/{uid}` = texto curto da lista de emojis/limite; só a própria pessoa escreve. R3. |
 | 👤 **Perfil da pessoa no Oceano inteiro** (diretoria de origem, squads, cargo, contato: e-mail e telefone), aberto ao tocar na foto | Hoje o diretório público (`usuarios_publicos`) já tem nome, foto, e-mail, squads e 🏢 diretoria. Faltam cargo e telefone (a pessoa preenche no Oceano). Um cartão de perfil compartilhado (módulo) aberto pela foto em Concha, Maré, Radar e Oceano. Atenção: telefone é dado pessoal — decidir quem vê (toda a Hering?) e deixar opcional. |
 
+<a id="concha-consumo"></a>
+
+### Concha — medir o consumo (ideia do Caio, 26/11/2026)
+
+| Ideia | Escopo sugerido |
+|---|---|
+| 📊 **Monitorar o consumo da Concha, para saber quanto vai custar** | O custo vem de 4 lugares: **banco** (download de mensagens/reações/listas e o que fica guardado), **funções** (`conchaAvisoMsg` a cada mensagem, push de menção, `conchaGifBusca`), **push/FCM** (não cobrado) e **KLIPY** (já com teto por hora em `gif_uso`). Passos, do mais barato ao mais completo: **(1) medir agora, sem código** — `firebase database:profile --project hering-onboarding -d 600 -o perfil_concha.json` no horário de uso mostra quanto cada caminho do banco baixou (fatia de `kanban/cardume/*` × resto); **(2) medidor diário** — função agendada que grava por dia o tamanho do que a Concha guarda, avisos enviados e buscas de GIF, mostrado no Painel (aba 📈 Uso); **(3) alerta de orçamento** no Google Cloud (e-mail ao passar de um valor), configuração no console (Caio/TI). |
+
 <a id="concha-comparativo"></a>
 
 ### Concha — ideias do comparativo com Slack e concorrentes
