@@ -1647,6 +1647,17 @@
           "gestorOkr": { ".validate": "newData.val() === true && newData.parent().parent().parent().child('usuarios').child($uid).child('gestorOkr').val() === true" }
         }
       },
+      "perfis": {
+        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
+          "cargo": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60" },
+          "tel": { ".validate": "newData.isString() && newData.val().matches(/^\\+?[0-9]{10,15}$/)" },
+          "niver": { ".validate": "newData.isString() && newData.val().matches(/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)" },
+          "li": { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{3,100}$/)" },
+          "$outro": { ".validate": false }
+        }
+      },
       "init_registry": {
         ".read": "auth != null",
         "$init": {

@@ -772,11 +772,12 @@ window.dispatchEvent(new Event('fb-ready'));
 <script src="mare-dicas-dev.js?v=19"></script>
 <script src="mare-metas-dev.js?v=19"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
+<script src="mare-perfil-dev.js?v=1"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.98 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.99 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -913,6 +914,7 @@ async function iniciarSessao(){
   $('#login').style.display = 'none'; $('#app').style.display = 'block';
   $('#devbar').style.display = IS_DEV ? 'block' : 'none';
   renderEu(); renderTudo(); iniciarSino(); iniciarDicas();
+  if(window.MarePerfil) MarePerfil.iniciar({ ler: p=>window._get(window._ref(window._db,p)).then(s=>s.val()), user: ()=>U, editar: ()=>abrirPerfil('cartao') }); setTimeout(()=>{ if(window.MarePerfil) MarePerfil.lembrar(); }, 3500);   // 👤 convite para completar o cartão (adiável)
   // cadastro: se a pessoa ainda não tem registro em kanban/usuarios, cria o básico (mesmo critério do Radar: UPDATE, nunca set)
   const [nome, init, role, squads, apps, oc, uid, sqRoles] = await Promise.all(['nome','init','role','squads','apps','oceano','uid','squads_roles'].map(lerRamo));
   squadsRoles = (sqRoles && typeof sqRoles==='object') ? sqRoles : {};
@@ -1409,6 +1411,7 @@ function irAba(id, hash){
 function rotearHash(inicio){
   const h = location.hash||'';
   if(h==='#meus-links'){ irAba('inicio', false); abrirPerfil('links'); history.replaceState(null,'',location.pathname+location.search); return; }
+  if(h==='#meu-cartao'){ irAba('inicio', false); abrirPerfil('cartao'); history.replaceState(null,'',location.pathname+location.search); return; }
   if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; atualizarAnimacao(); document.title=(IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':''); renderAbertos(); } return; }
   const m = /^#\/(\w+)$/.exec(h);
   if(m && APP(m[1]) && visivel(APP(m[1])) && !APP(m[1]).futuro){ mostrarHost(m[1]); return; }
@@ -1435,6 +1438,37 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modalTopo){ fec
 $$('.ov').forEach(o=>o.addEventListener('mousedown', e=>{ if(e.target===o) fecharModal(o.id); }));
 $$('[data-fecha]').forEach(b=>b.addEventListener('click', ()=>fecharModal(b.dataset.fecha)));
 
+// ── 👤 Meu cartão (kanban/perfis/{uid}: cargo, tel, niver MM-DD, li = o <id> de linkedin.com/in/<id>). Só a dona grava; toda a Hering lê.
+//    O cartão em si é o módulo mare-perfil-dev.js (o mesmo em Concha, Maré, Radar e Sonar). Valores entram nos campos por .value (texto puro).
+let cartaoVez = 0;
+async function carregarCartao(){
+  const vez = ++cartaoVez;
+  let v = null; try{ const sn = await window._get(window._ref(window._db,'kanban/perfis/'+U.uid)); v = sn && sn.exists() ? sn.val() : null; }catch(e){ return; }
+  if(vez !== cartaoVez || !$('#pf-cargo')) return;
+  v = v && typeof v==='object' ? v : {};
+  $('#pf-cargo').value = typeof v.cargo==='string' ? v.cargo : '';
+  $('#pf-tel').value = typeof v.tel==='string' && window.MarePerfil ? MarePerfil.telBonito(v.tel) : '';
+  const nv = typeof v.niver==='string' ? /^(\d{2})-(\d{2})$/.exec(v.niver) : null; $('#pf-niver').value = nv ? nv[2]+'/'+nv[1] : '';
+  $('#pf-li').value = typeof v.li==='string' ? 'linkedin.com/in/'+v.li : '';
+}
+// Campo → valor do banco ('' = apagar; null = inválido, não grava)
+function valorCartao(id, txt){
+  const t = String(txt||'').trim(); if(!t) return '';
+  if(id==='pf-cargo') return t.slice(0,60);
+  if(id==='pf-tel'){ const mais = t.startsWith('+'), d = t.replace(/\D/g,''); const v = mais ? '+'+d : (d.length===10||d.length===11 ? '+55'+d : d); return /^\+?[0-9]{10,15}$/.test(v) ? v : null; }   // DDD sem o país = Brasil (+55)
+  if(id==='pf-niver'){ const m = /^(\d{1,2})\s*[\/.-]\s*(\d{1,2})$/.exec(t); if(!m) return null; const d = +m[1], mes = +m[2]; if(mes<1||mes>12||d<1||d>[31,29,31,30,31,30,31,31,30,31,30,31][mes-1]) return null; return String(mes).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+  if(id==='pf-li') return (window.MarePerfil && MarePerfil.linkedinDe(t)) || null;
+  return null;
+}
+const CARTAO_CAMPO = {'pf-cargo':['cargo','Cargo'], 'pf-tel':['tel','Telefone'], 'pf-niver':['niver','Aniversário'], 'pf-li':['li','LinkedIn']};
+const CARTAO_ERRO = {'pf-tel':'⚠️ Telefone com DDD, só números (10 a 15 dígitos; com +55 se quiser).', 'pf-niver':'⚠️ Aniversário como dia/mês, ex.: 15/03.', 'pf-li':'⚠️ Cole o endereço do seu perfil (linkedin.com/in/seu-nome).'};
+async function salvarCartao(t){
+  const [k, rot] = CARTAO_CAMPO[t.id], v = valorCartao(t.id, t.value);
+  if(v===null){ toast(CARTAO_ERRO[t.id]||'⚠️ Valor inválido.'); return; }
+  try{ await window._set(window._ref(window._db,'kanban/perfis/'+U.uid+'/'+k), v==='' ? null : v); toast(v==='' ? '🗑️ '+rot+' removido do cartão' : '✅ '+rot+' salvo no cartão'); if(window.MarePerfil) MarePerfil.esquecer(U.uid); carregarCartao(); }
+  catch(e){ toast('⚠️ Não consegui salvar ('+rot+').'); }
+}
+
 // ── Meu perfil e preferências ──
 function abrirPerfil(secao){
   const squads = (perfilFb.squads||[]).map(s=>'<span class="chip">'+esc(s)+'</span>').join(' ') || '<span class="chip lock">nenhum squad ainda</span>';
@@ -1445,6 +1479,12 @@ function abrirPerfil(secao){
     + '<div class="campos"><label class="f">Como você quer ser chamado(a)<input class="in" id="pf-apelido" maxlength="24" value="'+esc(prefs.apelido)+'" placeholder="'+esc(_fn(perfilFb.nome||U.displayName))+'"></label>'
     + '<label class="f">Sigla (2–3 letras)<input class="in" id="pf-init" maxlength="3" value="'+esc(perfilFb.init||'')+'" placeholder="'+esc(iniciais())+'" style="text-transform:uppercase;"></label></div>'
     + '<div style="margin-top:12px;font-size:12.5px;color:var(--txt2);display:flex;flex-direction:column;gap:6px;"><div><b>Squads:</b> '+squads+'</div><div><b>Produtos que você usa:</b> '+usa+'</div></div></div>'
+    + '<div class="gr" id="pf-cartao-sec"><h4>👤 Meu cartão</h4><div class="d">É o que aparece quando alguém toca na sua foto na Concha, no Maré, no Radar ou no Sonar. Tudo opcional. O que você preencher, <b>toda a Hering vê</b> (contas externas não).</div>'
+    + '<div class="campos"><label class="f">Cargo<input class="in" id="pf-cargo" maxlength="60" placeholder="ex.: Analista de Dados"></label>'
+    + '<label class="f">Telefone / WhatsApp<input class="in" id="pf-tel" type="tel" maxlength="20" placeholder="(47) 99999-8888" autocomplete="tel"></label>'
+    + '<label class="f">Aniversário (dia/mês)<input class="in" id="pf-niver" maxlength="5" inputmode="numeric" placeholder="15/03"></label>'
+    + '<label class="f">LinkedIn<input class="in" id="pf-li" maxlength="200" placeholder="linkedin.com/in/seu-nome"></label></div>'
+    + '<div style="margin-top:10px;"><button type="button" class="btn" id="pf-ver-cartao">👁 Ver meu cartão</button></div></div>'
     + '<div class="gr"><h4>🎨 Ambiente</h4><div class="d">Os nomes seguem a identidade Marine Glass. Abrolhos e Lençóis valem também no Maré, Painel e Radar.</div><div class="opc" id="op-tema">'
     + [['abrolhos','t2','Abrolhos','o escuro da marca (padrão)'],['lencois','t3','Lençóis Maranhenses','o claro, de mar aberto'],['entardecer','t1','Entardecer','só aqui: luz âmbar de fim de tarde']].map(t=>'<button type="button" data-tema="'+t[0]+'" aria-pressed="'+(prefs.tema===t[0])+'"><div class="sw '+t[1]+'"></div><b>'+t[2]+'</b><span>'+t[3]+'</span></button>').join('')+'</div></div>'
     + '<div class="gr"><h4>🐟 Peixinhos e bolhas</h4><div class="d">'+(reduzMov?'Seu sistema pede menos movimento — por isso começam desligados. ':'')+'São os mesmos do Maré Digital. Ficam atrás do conteúdo e param sozinhos com a aba em segundo plano.</div><div class="opc" id="op-peixes">'
@@ -1457,6 +1497,8 @@ function abrirPerfil(secao){
   $('#pf-abrir').value = prefs.abrir; $('#pf-inicio').value = prefs.inicio;
   linkEdit = null; renderPerfilLinks();
   abrirModal('ov-perfil');
+  carregarCartao();
+  if(secao==='cartao'){ const sec = $('#pf-cartao-sec'); if(sec) setTimeout(()=>{ sec.scrollIntoView({block:'start'}); const c = $('#pf-cargo'); if(c) c.focus({preventScroll:true}); }, 60); }
   try{ window.MareDicas && (MareDicas.controle($('#pf-dicas')), MareDicas.gatilho('perfil')); }catch(err){}
   if(secao==='links'){ const sec = $('#pf-links-sec'); if(sec) setTimeout(()=>{ sec.scrollIntoView({block:'start'}); const t = $('#pfl-titulo'); if(t) t.focus({preventScroll:true}); }, 60); }
 }
@@ -1467,6 +1509,7 @@ $('#perfil-bd').addEventListener('click', e=>{
   if(t.id==='pfl-cancelar'){ linkEdit = null; ['pfl-titulo','pfl-desc','pfl-url','pfl-img'].forEach(i=>$('#'+i).value=''); t.style.display='none'; $('#pfl-salvar').textContent='Salvar link'; return; }
   if(t.dataset.tema){ prefs.tema = t.dataset.tema; $$('#op-tema button').forEach(b=>b.setAttribute('aria-pressed', String(b===t))); try{ localStorage.setItem('mare_theme', prefs.tema==='lencois' ? 'light' : 'dark'); }catch(x){} salvarPrefs(true); }
   else if(t.dataset.peixes){ prefs.peixes = t.dataset.peixes; $$('#op-peixes button').forEach(b=>b.setAttribute('aria-pressed', String(b===t))); try{ localStorage.setItem('fish_bg_off', prefs.peixes==='off' ? '1' : '0'); }catch(x){} salvarPrefs(true); }
+  else if(t.id==='pf-ver-cartao'){ if(window.MarePerfil) MarePerfil.abrir(U.uid, t); }
   else if(t.id==='pf-instalar') instalar();
   else if(t.id==='pf-ajuda'){ fecharModal('ov-perfil'); abrirAjuda('instalar'); }
   else if(t.id==='pf-sair'){ window._signOut(); }
@@ -1475,6 +1518,7 @@ $('#perfil-bd').addEventListener('change', e=>{
   const t = e.target;
   if(t.id==='pf-abrir'){ prefs.abrir = t.value; salvarPrefs(true); }
   else if(t.id==='pf-inicio'){ prefs.inicio = t.value; salvarPrefs(true); }
+  else if(CARTAO_CAMPO[t.id]){ salvarCartao(t); }
   else if(t.id==='pf-apelido'){ prefs.apelido = t.value.trim().slice(0,24); salvarPrefs(true); renderEu(); renderTudo(); }
   else if(t.id==='pf-init'){
     const v = t.value.trim().toUpperCase().replace(/[^A-ZÀ-Ú]/g,'').slice(0,3); t.value = v;
@@ -1486,6 +1530,7 @@ $('#perfil-bd').addEventListener('change', e=>{
 
 // ── Ajuda ──
 const FAQ = [
+  {id:'cartao', q:'O que é o cartão de perfil 👤 e quem vê o meu telefone?', a:'<p>Ao tocar na <b>foto ou no nome</b> de alguém (na Concha e, em breve, no Maré, no Radar e no Sonar) abre o <b>cartão da pessoa</b>: cargo, diretoria, squads, aniversário e os contatos (e-mail, WhatsApp, ligar e LinkedIn).</p><p>Você preenche o seu em <b>⚙ Meu perfil › 👤 Meu cartão</b>. Tudo é opcional, e o que você preencher <b>toda a Hering vê</b> (contas de fora não). Só você muda o seu cartão: nem PO nem ADM editam.</p><p>Para tirar um dado, apague o campo. Se aparecer o convite "Complete o seu cartão", <b>Depois</b> deixa para o dia seguinte e <b>Não mostrar mais</b> para de perguntar neste aparelho.</p>'},
   {id:'sonar', q:'O que é o Sonar 🔍 (Ctrl+K / ⌘K)?', a:'<p>É a <b>busca de todo o Oceano</b> (com o disco de sonar que varre enquanto procura). Aperte <b>Ctrl+K</b> (no Mac, <b>⌘K</b>) ou clique em <b>🔍 Sonar</b> no topo e digite: aparecem os produtos, os seus squads do Maré, os <b>Objetivos e Marcos do Radar</b>, os links e a ajuda, e Enter abre já no lugar certo.</p><p><b>Onde buscar:</b> com a caixa vazia, as teclas <b>1</b> (Maré), <b>2</b> (Radar), <b>3</b> (Links) e <b>4</b> (Ajuda) trocam o escopo, e <b>Tab</b> passa de um para o outro. Também dá para começar com os prefixos <b>m:</b>, <b>r:</b>, <b>l:</b> ou <b>a:</b> (ex.: <b>r: meus</b> ou <b>meus</b> mostra os Objetivos e Marcos em que você é responsável). Para achar um card, use "Buscar … nos cards", que abre o Sonar do Maré já preenchido no squad escolhido.</p><p>Erro de digitação de uma letra e falta de acento não atrapalham (códigos com número, como <b>T426</b>, exigem escrita exata). <b>Ctrl+Enter</b> (ou <b>⌘+Enter</b>) abre em aba nova (quando o resultado tem endereço; o rodapé avisa). Quando há mais resultados do que cabem, o Sonar mostra “Exibindo X de Y” e o caminho para ver o resto.</p><p>Os Objetivos e Marcos do Radar ficam guardados neste aparelho por até 3 horas, para a busca ser instantânea. Para buscar de novo agora, digite <b>atualizar</b> e escolha <b>Atualizar o Radar</b>. Com um produto aberto aqui dentro, use o 🔍 da barra de cima.</p>'},
   {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, entrega/cobrança do Radar, calendários comerciais, escala, passagem de férias, Travessia, timer, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado). No topo do sino, <b>✓ Marcar tudo como lido</b> zera as não lidas; no rodapé, <b>Limpar antigas</b> remove da lista o que já foi lido.</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p><p>Se nem sempre você ouve o “ding”, use o <b>🫨 Modo insistente</b> (também no rodapé, desligado por padrão): quando chega um aviso importante a tela treme e, se você não estiver olhando a janela, o som se repete e o título da aba pisca — até você voltar ou mexer em algo. Dá para escolher cada item e testar na hora.</p>'},
   {id:'gantt', q:'Onde vejo os calendários comerciais (Gantt) e as campanhas?', a:'<p>Os calendários do time (<b>🎯 Marca</b>, <b>🛒 Comercial Hering</b>, <b>🛍️ Marketplace</b>, <b>🏷️ Outlet</b> e a visão consolidada <b>🧭 Digital · dia a dia</b>) ficam em <b>🧮 Gantt</b> no <b>Maré Digital</b> e em <b>📅 Calendário → 📊 Gantt</b> no <b>Radar</b> (ideal para quem não usa o board no dia a dia).</p><p>No <b>Maré</b> (botão <b>📤 Atualizar planilha</b>, ou no <b>Painel → ⚙ → 📊 Gantt</b>), qualquer pessoa da Hering pode publicar uma nova versão e consultar ou restaurar o <b>🕘 Histórico</b>. Tanto no Maré quanto no Radar dá para marcar <b>⭐ Favoritar esta aba</b>, clicar em <b>🔔 Avisar-me</b> para receber aviso quando o calendário mudar ou em <b>📣 Pedir atualização</b> para notificar os responsáveis.</p>'},

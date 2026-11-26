@@ -6,6 +6,9 @@ exports.install = async function(context, seed, opts){
   // 🔥 Semana Black Friday (kanban, 16/11/2026): o tema BF vira padrão pelo relógio REAL. Pra suíte não mudar de tema
   // sozinha nessa semana, todo teste começa "fora do padrão"; opts.bf=true deixa a página decidir (test_tema_bf.js).
   if(!(opts&&opts.bf)) await context.addInitScript(()=>{ try{ const y=new Date().getFullYear(); [y,y+1].forEach(a=>localStorage.setItem('mare_bf_sair_'+a,'1')); localStorage.setItem('mare_apps_bf_teste','0'); }catch(e){} });
+  // 👤 Convite para completar o cartão (mare-perfil, 26/11/2026): abre sozinho ~3,5 s depois de entrar para quem não tem cartão — cobriria a tela
+  // no meio dos testes antigos. Desligado por padrão (o mesmo "Não mostrar mais" do aparelho); opts.perfil=true deixa aparecer (test_perfil_cartao.js).
+  if(!(opts&&opts.perfil)) await context.addInitScript(()=>{ try{ localStorage.setItem('mare_perfil_lembrete','off'); }catch(e){} });
   const app=`export const initializeApp=()=>({});`;
   const dbm=`
 const store = (window.__store = window.__store || {});

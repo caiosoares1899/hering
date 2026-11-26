@@ -165,6 +165,9 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .avatar img{width:100%;height:100%;object-fit:cover;}
 .autor{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;}
 .autor b{font-weight:700;}
+.perfil-nome{background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;cursor:pointer;text-align:left;min-height:0;}
+.perfil-nome:hover b,.perfil-nome:hover{text-decoration:underline;}
+.pessoa .perfil-nome{min-height:0;padding:0;font-size:inherit;}
 .msg{position:relative;padding:2px 6px;margin:0 -6px;border-radius:8px;}
 @media (hover:hover) and (min-width:900px){.msg{padding-right:192px;}}   /* 5 ícones (😀 ↩️ 📝 ✏️ 🗑) ou os 5 emojis do seletor */   /* vão da pílula: o texto nunca fica embaixo dela (linha de ~75 caracteres a 1280, boa de ler) */
 .msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
@@ -454,12 +457,13 @@ button.msg-gif{cursor:pointer;}
 <script src="mare-login-dev.js?v=3"></script>
 <script src="mare-notif-dev.js?v=52"></script>
 <script src="mare-sonar-dev.js?v=8"></script>
+<script src="mare-perfil-dev.js?v=1"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.51 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.52 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -631,12 +635,19 @@ function seletorEmoji(atualE, padrao, onPick) {   // grade de emojis (radio), co
 }
 const nomePessoa = uid => (pub[uid] && (pub[uid].nome || pub[uid].displayName)) || 'Alguém';
 function iniciais(uid) { const p = pub[uid]; if (p && p.init) return String(p.init).slice(0, 3); return nomePessoa(uid).split(/\s+/).map(x => x[0] || '').join('').slice(0, 2).toUpperCase(); }
-function avatar(uid, cls) {
+// 👤 Perfil (mare-perfil-dev.js): foto e nome abrem o cartão da pessoa — o mesmo do Oceano inteiro. O nome é botão (teclado/leitor de tela); a foto, atalho do mouse.
+function nomeBotao(uid, cls, forte) {
+  const b = el('button', 'perfil-nome' + (cls ? ' ' + cls : '')); b.type = 'button'; b.dataset.perfil = uid;
+  if (forte) b.append(el('b', '', nomePessoa(uid))); else b.textContent = nomePessoa(uid);
+  b.setAttribute('aria-label', 'Ver o perfil de ' + nomePessoa(uid)); return b;
+}
+function avatar(uid, cls, perfil) {   // perfil = a foto abre o cartão (só fora de outros botões: nas sugestões de @ não)
   const a = el('span', 'avatar' + (cls ? ' ' + cls : ''));
   const foto = pub[uid] && pub[uid].foto;
   if (typeof foto === 'string' && /^https:\/\//.test(foto)) { const i = document.createElement('img'); i.src = foto; i.alt = ''; i.referrerPolicy = 'no-referrer'; a.append(i); }
   else a.textContent = iniciais(uid);
   a.setAttribute('aria-hidden', 'true');
+  if (perfil && typeof uid === 'string' && ID_RE.test(uid)) { a.dataset.perfil = uid; a.title = 'Ver o perfil de ' + nomePessoa(uid); }
   return a;
 }
 function ouvir(chave, r, cb, aoNegar) {
@@ -740,6 +751,13 @@ function renderTexto(txt) {
   return box;
 }
 
+function ligarPerfil() {
+  if (!window.MarePerfil) return;
+  MarePerfil.iniciar({ ler: c => get(ref(db, c)).then(s => s.val()), user: () => user, publico: uid => pub[uid] || null,
+    squadNome: sq => (meta[sq] && meta[sq].label) || sq, editarUrl: 'oceano-dev.html#meu-cartao' });
+  MarePerfil.ligar($('app'));
+  setTimeout(() => { if (user) MarePerfil.lembrar(); }, 3500);   // 👤 convite para completar o cartão (adiável)
+}
 // ═══ Carregar ═══
 async function carregarBase() {
   const uid = user.uid;
@@ -1093,8 +1111,8 @@ function renderMsgs() {
     const d = rotuloDia(m.ts);
     if (d !== dia) { dia = d; log.append(el('div', 'dia', d)); ult = null; }
     if (!ult || ult.uid !== m.uid || m.ts - ult.ts > 5 * 60000 || ult.apagada) {
-      grupo = el('div', 'grupo'); grupo.append(avatar(m.uid));
-      const corpo = el('div'); const a = el('div', 'autor'); a.append(el('b', '', nomePessoa(m.uid)), el('span', 'hora', hhmm(m.ts))); corpo.append(a);
+      grupo = el('div', 'grupo'); grupo.append(avatar(m.uid, '', true));
+      const corpo = el('div'); const a = el('div', 'autor'); a.append(nomeBotao(m.uid, '', true), el('span', 'hora', hhmm(m.ts))); corpo.append(a);
       grupo.append(corpo); grupo._corpo = corpo; log.append(grupo);
     }
     grupo._corpo.append(renderMsg(m)); ult = m;
@@ -2606,8 +2624,8 @@ function renderLado() {
   if (membro || g) {
     s.append(el('h3', '', 'Membros (' + uids.length + ')'));
     uids.sort((a, b) => nomePessoa(a).localeCompare(nomePessoa(b), 'pt-BR')).forEach(u => {
-      const linha = el('div', 'pessoa'); linha.append(avatar(u));
-      const n = el('span', 'grow', nomePessoa(u)); linha.append(n);
+      const linha = el('div', 'pessoa'); linha.append(avatar(u, '', true));
+      const n = nomeBotao(u, 'grow'); linha.append(n);
       if (ehTema(id) && c && c.dono === u) linha.append(el('span', 'chip', 'dona'));
       else if (adminsAtual[u] === true) linha.append(el('span', 'chip', 'admin'));
       const podeTirar = g && u !== user.uid && !(ehTema(id) && c && c.dono === u && !souAdm());
@@ -2789,7 +2807,7 @@ async function iniciar() {
   const ok = await carregarBase();
   if (!ok || !user || user.uid !== meu) return;
   $('loading').hidden = true; $('app').hidden = false;
-  iniciarOuvintes(); renderLista(); ligarSino(); ligarSonar();
+  iniciarOuvintes(); renderLista(); ligarSino(); ligarSonar(); ligarPerfil();
   const qp = new URLSearchParams(location.search), q = qp.get('c') || lsGet('cardume_canal') || '';
   if (ID_RE.test(qp.get('m') || '')) alvoMsg = qp.get('m');
   const refMencao = qp.get('mencao') || '';
