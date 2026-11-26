@@ -853,7 +853,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v2.04 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v2.05 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1442,7 +1442,8 @@ function mostrarHost(id, url){
   let fr = $('#host-frames iframe[data-app="'+id+'"]');
   if(!fr){
     if(host.abertos.length>=4){ const velho = host.abertos.find(x=>x!==id); if(velho) fecharApp(velho, true); }
-    fr = document.createElement('iframe'); fr.dataset.app = id; fr.name = 'oceano-frame'; fr.setAttribute('aria-label', a.nome);   // aria-label e não title: o title virava um balão "Concha" sobre o app inteiro fr.src = url || a.href;
+    // aria-label e não title: o title virava um balão "Concha" sobre o app inteiro
+    fr = document.createElement('iframe'); fr.dataset.app = id; fr.name = 'oceano-frame'; fr.setAttribute('aria-label', a.nome); fr.src = url || a.href;
     fr.setAttribute('allow','clipboard-read; clipboard-write; fullscreen; notifications'); fr.setAttribute('allowfullscreen','');
     fr.addEventListener('load', ()=>{ if(host.atual===id) $('#host-load').style.display = 'none'; fr.dataset.ok = '1'; });
     $('#host-frames').appendChild(fr); host.abertos.push(id);

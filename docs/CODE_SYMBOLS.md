@@ -334,8 +334,8 @@
 - _okrDsCloseCfg:L10790 · _okrDsRenderCfgModal:L10796 · _okrDsSaveForm:L10869 · _okrDsDelete:L10925 · _okrDsMove:L10952 · _auGetCurrentVersion:L10997 · _auModalOpen:L11001 · _auTyping:L11006 · _auShowBanner:L11014 · _auTryIdleReload:L11025
 - _auCheckVersion:L11031
 
-## `oceano-dev.html` (2690 linhas · 127 funções)
-- **CSS:** L21–L589 | **JS:** L14–L20 (classic), L808–L844 (module), L853–L2687 (classic) | **Módulos:** mare-login-dev.js?v=3 (L807), mare-notif-dev.js?v=52 (L846), mare-plantao-dev.js?v=5 (L847), mare-dicas-dev.js?v=19 (L848), mare-metas-dev.js?v=19 (L849), mare-sonar-dev.js?v=8 (L850), mare-perfil-dev.js?v=1 (L851)
+## `oceano-dev.html` (2691 linhas · 127 funções)
+- **CSS:** L21–L589 | **JS:** L14–L20 (classic), L808–L844 (module), L853–L2688 (classic) | **Módulos:** mare-login-dev.js?v=3 (L807), mare-notif-dev.js?v=52 (L846), mare-plantao-dev.js?v=5 (L847), mare-dicas-dev.js?v=19 (L848), mare-metas-dev.js?v=19 (L849), mare-sonar-dev.js?v=8 (L850), mare-perfil-dev.js?v=1 (L851)
 - **Consts (63):** firebaseConfig:L813 · fbApp:L823 · db:L824 · auth:L825 · provider:L826 · VERSION:L856 · IS_DEV:L857 · SO_HERING:L858 · CONTATO:L859 · $:L860 · esc:L861 · _hrefOk:L863 · reduzMov:L864 · standalone:L865 · SVG_PAINEL:L868 · SVG_BORDO:L869 · SVG_CONCHA:L870 · SVG_TRAV:L871 · P:L872 · NEXT:L877 · APPS:L878 · RAIL_ON:L887 · RAIL_ORDEM:L888 · EXTRA:L889 · APP:L890 · logoPorthole:L895 · logoQuad:L896 · temaDoMare:L899 · peixesDoMare:L900 · PREFS_PADRAO:L901 · PREFS_LS:L905 · TEMAS:L907 · FISH_SVGS:L928 · _fn:L958 · nomeCurto:L959 · iniciais:L960 · AV_TIPOS:L1072 · AV_LIMITE:L1073 · avLargo:L1074 · OK:L1095 (+23)
 - _fcmGetToken:L834 · _fcmDeleteToken:L835 · _signIn:L838 · _signInIdToken:L840 · _signOut:L841 · logoInner:L891 · lsLer:L903 · lsSalvar:L904 · aplicarPrefs:L908 · salvarPrefs:L917
 - toast:L925 · criarPeixes:L933 · atualizarAnimacao:L945 · _animAtividade:L946 · loginErr:L966 · emailHering:L968 · viaGoogle:L969 · lerRamo:L988 · garantirCadastro:L990 · iniciarSessao:L994
@@ -343,13 +343,13 @@
 - avSalvaVistos:L1116 · avBotaoHtml:L1117 · avHtml:L1118 · muralRender:L1130 · avMarcaVistos:L1154 · avAbreBotao:L1162 · avAbre:L1167 · vtexEstado:L1182 · vtexRender:L1194 · iniciarVtex:L1202
 - iniciarMural:L1209 · rotearUrl:L1236 · avisoDeBugFerias:L1240 · filtrarSino:L1244 · abrirDoSino:L1252 · tempoRel:L1266 · iniciarDicas:L1272 · iniciarSino:L1277 · visivel:L1286 · saudacao:L1289
 - renderEu:L1290 · appsDoDia:L1295 · renderTudo:L1296 · renderAbas:L1342 · renderVersoes:L1350 · linkLogo:L1367 · linksCacheSet:L1376 · carregarLinks:L1377 · renderLinks:L1387 · htmlPerfilLinks:L1394
-- renderPerfilLinks:L1400 · gravaLinks:L1405 · salvarLink:L1410 · acaoLink:L1422 · abrirAqui:L1433 · abrirApp:L1434 · lembrarUltimo:L1439 · mostrarHost:L1440 · renderRail:L1459 · renderHostTabs:L1470
-- fecharApp:L1473 · voltarLobby:L1481 · renderAbertos:L1486 · aberturasChave:L1495 · contarAbertura:L1496 · ehVeterano:L1498 · irAba:L1499 · rotearHash:L1506 · __oceanoHost:L1526 · abrirModal:L1530
-- fecharModal:L1531 · carregarCartao:L1544 · valorCartao:L1556 · marcarCartao:L1568 · salvarCartao:L1569 · abrirPerfil:L1584 · renderFaq:L1670 · abrirAjuda:L1675 · feriasHoje:L1704 · feriasAtivo:L1705
-- feriasExpandido:L1713 · feriasSetExpandido:L1714 · feriasDispensados:L1718 · feriasDispensar:L1719 · feriasMdLite:L1721 · feriasBugEhMeu:L1727 · feriasMeusBugsAtivos:L1734 · feriasStatusMeta:L1738 · feriasAlertasAutor:L1744 · feriasBannerAlertaAutorHtml:L1748
-- feriasRenderBanner:L1763 · feriasNorm:L1980 · feriasResponder:L1994 · feriasHtmlChat:L2047 · feriasHtmlSocorro:L2067 · feriasHtmlStatus:L2086 · feriasHtmlProximos:L2113 · feriasBlocoGuiaDevtoolsHtml:L2126 · feriasHtmlGuia:L2153 · feriasHtmlMeusChamados:L2176
-- feriasHtmlBugs:L2200 · feriasRenderEvidPreview:L2257 · feriasComprimirImagem:L2268 · feriasPreencherDadosTecnicos:L2303 · feriasRenderBugsLista:L2320 · feriasProcessarSnapshotBugs:L2333 · feriasRefBugs:L2353 · feriasIniciarBugsListener:L2358 · feriasCarregarBugs:L2371 · feriasEnviarBug:L2387
-- feriasRenderModal:L2469 · abrirFerias:L2483 · feriasEnviarPergunta:L2499 · instalar:L2570 · mostrarDocumento:L2587 · railLarga:L2601 · iniciarSonar:L2617
+- renderPerfilLinks:L1400 · gravaLinks:L1405 · salvarLink:L1410 · acaoLink:L1422 · abrirAqui:L1433 · abrirApp:L1434 · lembrarUltimo:L1439 · mostrarHost:L1440 · renderRail:L1460 · renderHostTabs:L1471
+- fecharApp:L1474 · voltarLobby:L1482 · renderAbertos:L1487 · aberturasChave:L1496 · contarAbertura:L1497 · ehVeterano:L1499 · irAba:L1500 · rotearHash:L1507 · __oceanoHost:L1527 · abrirModal:L1531
+- fecharModal:L1532 · carregarCartao:L1545 · valorCartao:L1557 · marcarCartao:L1569 · salvarCartao:L1570 · abrirPerfil:L1585 · renderFaq:L1671 · abrirAjuda:L1676 · feriasHoje:L1705 · feriasAtivo:L1706
+- feriasExpandido:L1714 · feriasSetExpandido:L1715 · feriasDispensados:L1719 · feriasDispensar:L1720 · feriasMdLite:L1722 · feriasBugEhMeu:L1728 · feriasMeusBugsAtivos:L1735 · feriasStatusMeta:L1739 · feriasAlertasAutor:L1745 · feriasBannerAlertaAutorHtml:L1749
+- feriasRenderBanner:L1764 · feriasNorm:L1981 · feriasResponder:L1995 · feriasHtmlChat:L2048 · feriasHtmlSocorro:L2068 · feriasHtmlStatus:L2087 · feriasHtmlProximos:L2114 · feriasBlocoGuiaDevtoolsHtml:L2127 · feriasHtmlGuia:L2154 · feriasHtmlMeusChamados:L2177
+- feriasHtmlBugs:L2201 · feriasRenderEvidPreview:L2258 · feriasComprimirImagem:L2269 · feriasPreencherDadosTecnicos:L2304 · feriasRenderBugsLista:L2321 · feriasProcessarSnapshotBugs:L2334 · feriasRefBugs:L2354 · feriasIniciarBugsListener:L2359 · feriasCarregarBugs:L2372 · feriasEnviarBug:L2388
+- feriasRenderModal:L2470 · abrirFerias:L2484 · feriasEnviarPergunta:L2500 · instalar:L2571 · mostrarDocumento:L2588 · railLarga:L2602 · iniciarSonar:L2618
 
 ## `escala-dev.html` (1348 linhas · 80 funções)
 - **CSS:** L8–L204 | **JS:** L261–L1345 (module) | **Módulos:** mare-login-dev.js?v=3 (L260)

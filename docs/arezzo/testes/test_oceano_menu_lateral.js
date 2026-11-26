@@ -37,6 +37,8 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
     await p.screenshot({ path: path.join(OUT, 'pc_lobby_recolhido.png') });
     await p.click('#rail [data-rail="cardume"]'); await p.waitForTimeout(500);
     t('clicar em Concha abre DENTRO do Oceano (iframe), com o menu ao lado e sem a barra de abas', await p.evaluate(() => document.getElementById('host').classList.contains('on') && !!document.querySelector('#host-frames iframe.on[data-app="cardume"]') && getComputedStyle(document.querySelector('.host-barra')).display === 'none' && document.getElementById('host').getBoundingClientRect().left === 72), 0);
+    t('a janela interna da Concha tem o endereço e CARREGA o app (relato do Caio: tela em branco quando o src sumiu)', await p.evaluate(() => document.querySelector('#host-frames iframe.on').getAttribute('src') === 'cardume-dev.html') && p.frames().some(f => /\/cardume-dev\.html$/.test(f.url())), await p.evaluate(() => document.querySelector('#host-frames iframe.on').getAttribute('src')));
+    t('a janela interna não tem title (o balão "Concha" sobre o app) e tem nome acessível', await p.evaluate(() => { const f = document.querySelector('#host-frames iframe.on'); return !f.hasAttribute('title') && f.getAttribute('aria-label') === 'Concha'; }), 0);
     it = await itens(p);
     t('Concha vira o atual; aparecem ↻ Nova aba ✕', it.includes('cardume*') && it.includes('rail-recarregar') && it.includes('rail-aba') && it.includes('rail-fechar'), it);
     await p.click('#rail [data-rail="kanban"]'); await p.waitForTimeout(400);
