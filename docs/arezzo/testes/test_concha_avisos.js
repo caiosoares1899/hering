@@ -34,18 +34,18 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(900);
   const S = () => p.evaluate(() => JSON.parse(JSON.stringify(window.__store.kanban.cardume)));
 
-  t('🔔 no topo da conversa (padrão: todas)', await p.evaluate(() => { const b = document.getElementById('b-aviso'); return !b.hidden && b.textContent === '🔔'; }), 0);
+  t('🔔 Avisos em ℹ️ Detalhes (padrão: todas) e nenhum sino no topo da conversa (não confunde com o Sino geral)', await p.evaluate(() => { const b = document.querySelector('#lado .aviso-canal button'); return !!b && /^🔔 Avisos: todas as mensagens$/.test(b.textContent) && !document.getElementById('b-aviso') && !document.querySelector('.conversa .cabecalho [aria-label^="Avisos"]'); }), 0);
   t('na lista, Performance (🚫 Nada) mostra 🚫; Dados não mostra nada', await p.evaluate(() => !!document.querySelector('[data-canal="prf"] .aviso-ic') && document.querySelector('[data-canal="prf"] .aviso-ic').textContent === '🚫' && !document.querySelector('[data-canal="dados"] .aviso-ic')), 0);
   let c = await S();
   t('sinal de vida da conversa aberta: vendo/ana/dados', typeof ((c.vendo || {}).ana || {}).dados === 'number', c.vendo);
 
-  await p.click('#b-aviso'); await p.waitForTimeout(150);
+  await p.click('#lado .aviso-canal button'); await p.waitForTimeout(150);
   t('o 🔔 abre as 3 opções, com "Todas" marcada e o prazo escondido', await p.evaluate(() => [...document.querySelectorAll('.md input[name="nivel"]')].map(r => r.value + (r.checked ? '*' : '')).join(',') === 'todas*,mencoes,nada' && document.querySelector('.md select').closest('label').hidden), 0);
   await p.click('.md input[value="mencoes"]'); await p.selectOption('.md select', '8h'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(300);
   c = await S(); const pref = c.avisos.ana.dados;
   t('🔕 por 8 h grava {nivel:mencoes, ate ≈ +8 h}', pref.nivel === 'mencoes' && Math.abs(pref.ate - Date.now() - 8 * 3600e3) < 60000, pref);
-  t('o topo e a lista mostram 🔕', await p.evaluate(() => document.getElementById('b-aviso').textContent === '🔕' && document.querySelector('[data-canal="dados"] .aviso-ic').textContent === '🔕'), 0);
-  await p.click('#b-aviso'); await p.click('.md input[value="todas"]'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(300);
+  t('ℹ️ Detalhes, o subtítulo do canal e a lista mostram 🔕', await p.evaluate(() => /^🔕 Avisos: só @menções/.test(document.querySelector('#lado .aviso-canal button').textContent) && /🔕 Só @menções/.test(document.getElementById('canal-sub').textContent) && document.querySelector('[data-canal="dados"] .aviso-ic').textContent === '🔕'), 0);
+  await p.click('#lado .aviso-canal button'); await p.click('.md input[value="todas"]'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(300);
   t('voltar a "Todas" apaga a preferência', !((await S()).avisos.ana || {}).dados, (await S()).avisos);
 
   await p.click('[data-canal="prf"]'); await p.waitForTimeout(400);
@@ -56,7 +56,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('abrir a tela da #tag tira o sinal de vida', !((await S()).vendo.ana || {}).dados, (await S()).vendo);
   await p.click('.seguir-tag'); await p.waitForTimeout(300);
   t('🔔 Seguir #banner grava seguidas/ana/banner e vira "✓ Seguindo"', typeof ((await S()).seguidas || {}).ana?.banner === 'number' && await p.evaluate(() => document.querySelector('.seguir-tag').textContent === '✓ Seguindo #banner'), (await S()).seguidas);
-  await p.click('[data-canal="dados"]'); await p.waitForTimeout(300); await p.click('#b-aviso'); await p.waitForTimeout(150);
+  await p.click('[data-canal="dados"]'); await p.waitForTimeout(300); await p.click('#lado .aviso-canal button'); await p.waitForTimeout(150);
   t('o 🔔 lista as #tags seguidas', await p.evaluate(() => [...document.querySelectorAll('.lista-seguidas button')].map(b => b.textContent).join() === '#banner ✕'), 0);
   await p.click('.lista-seguidas button'); await p.waitForTimeout(300); await p.keyboard.press('Escape');
   t('✕ deixa de seguir', !((await S()).seguidas.ana || {}).banner, (await S()).seguidas);

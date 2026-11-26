@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🐚 Concha: o 🔔 do canal se confundia com o 🔔 Sino geral — foi para ℹ️ Detalhes › 🔔 Avisos (SÓ DEV, cardume v0.43)
+
+Achado do Caio (26/11). Havia dois sinos à vista: o do canal (no topo da conversa, escolhe quando o canal avisa) e o Sino geral do Oceano (no alto da página). O do canal saiu do topo e virou a linha 🔔 Avisos: … no ℹ️ Detalhes (abre as mesmas opções: todas, só @menções e #tags seguidas, nada, com prazo, e as #tags seguidas). Para o silêncio continuar à vista sem abrir o ℹ️: o subtítulo do canal mostra 🔕/🚫 e o nível, e a lista de canais segue com o 🔕/🚫. Ajuda atualizada. Teste: test_concha_avisos.js (17).
+
 ### 2026-11-26 · 🐚 Concha: navegar entre as fixadas do topo era ruim — setinhas ▲ ▼ no canto, roda do mouse, deslizar o dedo e ↑ ↓ (SÓ DEV, cardume v0.42)
 
 Achado do Caio (26/11). Com mais de uma fixada no topo, só dava para trocar tocando no 📌 (pouco óbvio). Agora a faixa tem setinhas discretas ▲ ▼ no canto direito (só com 2 ou mais), a roda do mouse sobre a faixa troca (sem rolar a conversa), deslizar o dedo para cima/baixo troca no celular, e ↑ ↓ trocam com o foco na faixa. A troca dá a volta (da 1ª para trás vai à última). O texto da faixa ficou centralizado. Ajuda atualizada. Teste: test_concha_fixar.js (27). Deslizar o dedo não foi testado automaticamente.
