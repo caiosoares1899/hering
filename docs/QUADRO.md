@@ -16,18 +16,9 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
-| Codex | R3 | 🔍 Revisão cruzada do 📌 fixar da Concha: regra `kanban/cardume/fixadas` (só gestor que lê o canal fixa; criar, tirar ou trocar o tipo `t` topo/regra com `por`/`em` imutáveis; órfã removível por membro no estado depois da escrita, inclusive no update do tombstone) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md#-fixar-no-canal--desenho-de-26112026-r3) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` do 📌 fixar (nó novo `fixadas`, escrita só de quem administra) | [desenho](ideias/cardume-v0-banco.md#-fixar-no-canal--desenho-de-26112026-r3) |
-| Codex | R3 | 🔍 Revisão cruzada do ⏩ encaminhar da Concha: `enc` (só na criação; membro da origem; conteúdo/GIF/legenda iguais; nome atual do canal de origem; não re-encaminha; sem `resp`), edição bloqueada e o aviso por membros — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` do ⏩ encaminhar (conteúdo de canal privado indo para outro canal por decisão de um membro) | [desenho](ideias/cardume-v0-banco.md) |
-| Codex | R3 | 🔍 Revisão cruzada da janela de 15 min da edição na Concha (`editado ≤ ts + 900000` em `kanban/cardume/msgs`) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
-| Codex | R3 | 🔍 Revisão cruzada do emoji da Concha: `canais/$canal/e` dá ao PO/Org da squad escrita só nesse campo do canal oficial; lista fixa de emojis — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
-| Codex | R3 | 🔍 Revisão cruzada dos avisos por assunto da Concha: regra `avisos_a` e `conchaAvisos.decidir`/push com o assunto — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
-| Codex | R3 | 🔍 Revisão cruzada dos 🧵 assuntos da Concha: regras `assuntos`, campo `a` da mensagem (só na criação, imutável, apagar guarda), `ultima_a`/`lidas_a`, assunto encerrado barrando nova/edição/reação — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` da Concha nas regras novas de 25/11 (#1969 avisos, #1970 seções, assuntos) — o R3 pede a leitura de segurança além das revisões; as duas primeiras só tiveram o Codex na Fila | [desenho](ideias/cardume-v0-banco.md) |
-| Codex | R3 | 🔍 Revisão cruzada das 📁 seções da Concha: regra `kanban/cardume/secoes` (só a dona; canal só aponta para seção que existe) e o Salvar do modal (só apaga o que a pessoa tirou) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
-| Codex | R3 | 🔍 Revisão cruzada dos 🔔 avisos da Concha: regras `kanban/cardume/avisos`/`seguidas`/`vendo`/`aviso_env`, a função `conchaAvisoMsg` (`functions/oceano/conchaAvisos.js`) e o 🚫 em `cardumePush.mencaoValida` — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
-| Codex | R3 | 🔍 Revisão cruzada das regras da 🏢 diretoria (`database.rules.json`: `usuarios/$uid/diretoria` + espelho em `usuarios_publicos`) e de `diretoriaRules.test.js` — só revisar, comentar no PR; o Caio só faz merge/deploy depois | [desenho](ideias/diretoria-por-pessoa.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -52,6 +43,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 🐚 Concha: reforços da revisão do Codex nas regras (edição em 15 min pelo relógio do servidor; encaminhar confere tamanho do GIF e não leva assunto/card; fixada só com a mensagem viva depois da gravação) — **antes do merge**, a partir da branch `claude/concha-revisao-codex` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 🐚 Concha: log do aviso de mensagem nova diz o motivo de cada pessoa (para achar por que o André não recebeu) | `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 

@@ -432,7 +432,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.43 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.44 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -2051,13 +2051,15 @@ function modalSecoes(canalNovo) {   // criar, renomear, reordenar, apagar — gr
     apagadas.forEach(k => { mapa[SEC() + '/s/' + k] = null; mapa[SEC() + '/r/' + k] = null; });
     Object.keys(secoes.c || {}).filter(cn => apagadas.has(secoes.c[cn])).forEach(cn => { mapa[SEC() + '/c/' + cn] = null; });   // canais das seções apagadas voltam ao padrão
     const novasFora = secLista().filter(([k]) => !vistas.has(k) && !ficam.has(k)).length;   // criadas em outro aparelho: vão para o fim da ordem
-    rasc.forEach((x, i) => { mapa[SEC() + '/s/' + x.sid] = { n: x.n.trim().slice(0, 30), o: i }; });
-    secLista().filter(([k]) => !vistas.has(k) && !ficam.has(k)).forEach(([k, x], j) => { mapa[SEC() + '/s/' + k] = { n: x.n, o: rasc.length + j }; });   // preserva (e põe no fim)
+    // Revisão do Codex (26/11): seção apagada em OUTRO aparelho com este modal aberto não volta — só grava as que ainda existem e as criadas aqui.
+    const vivas = new Set(Object.keys(secoes.s || {})), sumiram = rasc.filter(x => !x.novo && !vivas.has(x.sid)), grava = rasc.filter(x => x.novo || vivas.has(x.sid));
+    grava.forEach((x, i) => { mapa[SEC() + '/s/' + x.sid] = { n: x.n.trim().slice(0, 30), o: i }; });
+    secLista().filter(([k]) => !vistas.has(k) && !ficam.has(k)).forEach(([k, x], j) => { mapa[SEC() + '/s/' + k] = { n: x.n, o: grava.length + j }; });   // preserva (e põe no fim)
     if (novasFora) console.info('[concha] seções criadas em outro aparelho mantidas:', novasFora);
     const ultima = rasc.filter(x => x.novo).pop(); if (canalNovo && ultima) mapa[SEC() + '/c/' + canalNovo] = ultima.sid;   // veio do "＋ Nova seção…" de um canal: ele já vai para ela
     if (!Object.keys(mapa).length) { fecharModal(); return; }
     ok.disabled = true;
-    try { await update(ref(db), mapa); fecharModal(); toast('📁 Seções salvas.'); }
+    try { await update(ref(db), mapa); fecharModal(); toast(sumiram.length ? '📁 Seções salvas. ' + (sumiram.length === 1 ? '"' + sumiram[0].n.trim() + '" foi apagada em outro aparelho e ficou de fora.' : sumiram.length + ' seções apagadas em outro aparelho ficaram de fora.') : '📁 Seções salvas.'); }
     catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão para salvar.' : 'Não deu para salvar agora. Tente de novo.'); }
   };
   f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });

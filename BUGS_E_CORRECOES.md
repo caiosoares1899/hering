@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🐚 Concha: revisão cruzada do Codex — 3 reforços nas regras e seção apagada que voltava ao salvar (SÓ DEV, cardume v0.44 + regras)
+
+Revisão R3 única (Codex, só leitura, 26/11) cobrindo as 9 revisões cruzadas da Fila (encaminhar, edição em 15 min, emoji, assuntos, avisos por assunto, seções, avisos/vendo, diretoria) e as fixadas. Sem furo grave. Corrigido: (1) a janela de 15 min da edição agora também é fechada pelo relógio do servidor (antes, com editado ~60 s atrás de now, dava para editar até ~16 min); (2) encaminhar confere largura/altura do GIF e não aceita assunto nem card na cópia; (3) fixar ou trocar o tipo na mesma gravação que apaga a mensagem é recusado (a mensagem precisa estar viva também depois); (4) 📁 Salvar com o modal de seções aberto recriava a seção que a pessoa tinha apagado em outro aparelho — agora fica de fora, com aviso. Testes: cardumeRules (+3, 57; falham nas regras antigas), test_concha_secoes_outro_aparelho.js (5; falha na versão anterior). Deploy: regras antes do merge.
+
 ### 2026-11-26 · 🌊 Oceano: entrada de meta lançada pelo Oceano ficava sem o nome de quem lançou (SÓ DEV, oceano v1.98)
 
 Achado ao exportar a meta de Novembro (26/11): todas as entradas a partir de 10/11 tinham 'quem' vazio. O módulo de Metas grava user.nome no histórico; o Maré e o Painel passam {uid, nome}, mas o Oceano passava o objeto do login do Firebase, que não tem 'nome'. O uid sempre foi gravado certo (dá para recuperar o nome das entradas antigas pelo diretório). Agora o Oceano passa {uid, nome: displayName ou e-mail}. Teste: test_oceano_meta_nome.js (falha no oceano.html de prod).
