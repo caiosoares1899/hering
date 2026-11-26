@@ -360,3 +360,7 @@ Caio confirmou `firebase deploy --only database` (campo `e` em canais e assuntos
 ## Confirmação de deploy — 25/11/2026 (✏️ editar só até 15 min)
 
 Caio confirmou `firebase deploy --only database` da regra de edição em 15 min (#1980). Saiu de *Pendente de deploy*.
+
+## Confirmação de deploy — 26/11/2026 (⏩ encaminhar da Concha)
+
+Caio confirmou o merge e o deploy da #1986 (regras do `enc` e `functions:conchaAvisoMsg`). Saiu de *Pendente de deploy*.

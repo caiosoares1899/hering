@@ -406,7 +406,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.36 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.37 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -982,6 +982,9 @@ function renderMsgs() {
   if (vendoPessoa) { renderPessoa(log); return; }
   const id = atual, c = canais[id];
   if (!id) { log.append(vazio('🐚', 'Escolha um canal à esquerda.')); return; }
+  if (!ehTema(id) && c === null && souAdm()) {   // squad sem canal: o "Ativar" também aqui (antes só no ℹ️ Detalhes — com o painel fechado, a pessoa via uma conversa vazia sem saída)
+    const v = vazio('🐚', (nomeSquad(id) || id) + ' ainda não tem canal na Concha.'); const b = el('button', 'primary', 'Ativar canal da squad'); b.type = 'button'; b.onclick = () => ativarOficial(id); v.append(b); log.append(v); return;
+  }
   if (!souMembro(id) && !souAdm()) {
     if (ehTema(id) && abertos[id] && !vencido(c)) { const v = vazio('👋', 'Este canal é aberto a toda a Hering.'); const b = el('button', 'primary', 'Entrar no canal'); b.type = 'button'; b.onclick = () => entrar(id); v.append(b); log.append(v); }
     else if (gestorOficial(id)) { const v = vazio('🛠️', 'Você administra este canal, mas não está nele. Abra ℹ️ Detalhes para pôr pessoas (inclusive você).'); log.append(v); }
@@ -2302,9 +2305,14 @@ async function sair(id) {
   try { await update(ref(db), parMembro(id, user.uid, null)); } catch (e) { falhou('sair do canal', e); }
 }
 async function alternarAdmin(id, uid) { try { await set(ref(db, B + 'admins/' + id + '/' + uid), adminsAtual[uid] === true ? null : true); } catch (e) { falhou('mudar o admin', e); } }
+let ativando = '';
 async function ativarOficial(sq) {
-  const nome = ((meta[sq] && meta[sq].label) || sq).slice(0, 40);
-  try { await set(ref(db, B + 'canais/' + sq), { nome }); toast('Canal de ' + nome + ' ativado. Agora adicione as pessoas.'); abrirCanal(sq); } catch (e) { falhou('ativar o canal', e); }
+  if (ativando === sq) return;
+  const nome = ((meta[sq] && meta[sq].label) || sq).trim().slice(0, 40) || sq;
+  ativando = sq;
+  try { await set(ref(db, B + 'canais/' + sq), { nome }); toast('Canal de ' + nome + ' ativado. Agora, em ℹ️ Detalhes, adicione as pessoas (inclusive você).'); abrirCanal(sq); if (!verLado) { verLado = true; renderLado(); } }
+  catch (e) { falhou('ativar o canal', e); console.warn('[concha] ativar', sq, e && (e.code || e.message)); }
+  finally { ativando = ''; }
 }
 
 // ═══ Criar / editar canal temático ═══
