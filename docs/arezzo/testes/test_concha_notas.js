@@ -25,10 +25,11 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await p.goto(base + '/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb);
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(1000);
   const S = () => p.evaluate(() => JSON.parse(JSON.stringify(window.__store.kanban.cardume)));
-  t('vem desativado: nada de "Minhas notas" na lista, só o botão para ativar', await p.evaluate(() => !document.querySelector('[data-canal^="eu-"]') && !document.getElementById('b-notas').hidden), 0);
-  await p.click('#b-notas'); await p.waitForTimeout(150);
-  t('a tela de ativar explica que ninguém mais lê, nem o ADM', await p.evaluate(() => /nem o ADM/.test(document.querySelector('.md').textContent)), 0);
-  await p.click('.md button[type=submit]'); await p.waitForTimeout(500);
+  t('vem desativado: nada de "Minhas notas" na lista', await p.evaluate(() => !document.querySelector('[data-canal^="eu-"]')), 0);
+  await p.click('#b-config'); await p.waitForTimeout(150);
+  t('⚙️ Configurações tem Aparência, Minhas notas e Seções; explica que ninguém mais lê, nem o ADM', await p.evaluate(() => { const t = document.querySelector('.md.cfg').textContent; return /Aparência/.test(t) && /Minhas notas/.test(t) && /Seções/.test(t) && /nem o ADM/.test(t); }), 0);
+  await p.click('.md.cfg button:has-text("Ativar Minhas notas")'); await p.waitForTimeout(400);
+  await p.click('.md.cfg button:has-text("Abrir Minhas notas")'); await p.waitForTimeout(500);
   let c = await S();
   t('ativar grava notas/ana = true e abre as notas, no alto da lista', c.notas && c.notas.ana === true && await p.evaluate(() => document.querySelector('#lista-canais .canal').dataset.canal === 'eu-ana' && /Minhas notas/.test(document.getElementById('canal-titulo').textContent)), c.notas);
   t('cabeçalho: "Só você vê · nem o ADM"; sem @ e sem # na barra', await p.evaluate(() => /Só você vê · nem o ADM/.test(document.getElementById('canal-sub').textContent) && [...document.querySelectorAll('.barra-fmt [data-ins]')].every(x => x.hidden)), 0);
@@ -56,7 +57,15 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   p.once('dialog', d => d.accept());
   await p.click('#lado button:has-text("Desativar Minhas notas")'); await p.waitForTimeout(500);
   c = await S();
-  t('desativar tira da lista e apaga só a preferência (as notas ficam)', !(c.notas || {}).ana && Object.keys(c.msgs['eu-ana']).length === 2 && await p.evaluate(() => !document.querySelector('[data-canal^="eu-"]') && !document.getElementById('b-notas').hidden), { notas: c.notas });
+  t('desativar tira da lista e apaga só a preferência (as notas ficam)', !(c.notas || {}).ana && Object.keys(c.msgs['eu-ana']).length === 2 && await p.evaluate(() => !document.querySelector('[data-canal^="eu-"]')), { notas: c.notas });
+  await p.click('#b-config'); await p.waitForTimeout(150);
+  t('depois de desativar, o ⚙️ volta a oferecer "Ativar Minhas notas"', await p.evaluate(() => [...document.querySelectorAll('.md.cfg button')].some(b => /Ativar Minhas notas/.test(b.textContent))), 0);
+  await p.keyboard.press('Escape');
+  await p.click('#b-config'); await p.waitForTimeout(150); await p.click('.md.cfg input[name="peixes"][value="off"]'); await p.waitForTimeout(150);
+  t('⚙️ › Peixes: "Sem peixes" vale na hora e fica só na Concha (concha_peixes)', await p.evaluate(() => localStorage.getItem('concha_peixes') === 'off' && !document.querySelector('.fish-ltr,.fish-rtl')), 0);
+  await p.click('.md.cfg button:has-text("Organizar seções")'); await p.waitForTimeout(200);
+  t('⚙️ › Organizar seções abre o modal de seções', await p.evaluate(() => /Suas seções/.test((document.querySelector('.md') || {}).textContent || '')), 0);
+  await p.keyboard.press('Escape');
   const esc = await p.evaluate(() => window.__escritas || []);
   const real = Date.now; const ruins = [];
   for (const e of esc) { const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([kk, v]) => [(e.p ? e.p + '/' : '') + kk, v])); Date.now = () => e.t; let rr; try { rr = regras(RULES, e.antes, authDe(ANA), mapa); } finally { Date.now = real; } if (!rr) ruins.push({ tipo: e.tipo, caminhos: Object.keys(mapa) }); }

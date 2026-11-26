@@ -306,6 +306,10 @@ button.msg-gif{cursor:pointer;}
 [data-theme="light"] .ov{background:rgba(7,40,60,.3);}
 .md{width:min(460px,100%);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--glass-b);border-radius:18px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:grid;gap:12px;}
 .md>h2{font-family:var(--ff-d);}
+.md.cfg{width:min(520px,100%);}
+.cfg-sec{display:grid;gap:8px;padding:10px 0;border-top:1px solid var(--glass-b);}
+.cfg-sec h3{margin:0;font-size:15px;}
+.cfg-radios{border:0;padding:0;margin:0;display:grid;gap:6px;}
 .md label{display:grid;gap:4px;font-size:13px;color:var(--txt2);}
 .md .linha{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
 .radio{display:flex!important;grid-auto-flow:column;align-items:flex-start;gap:8px!important;color:var(--txt)!important;}
@@ -366,7 +370,7 @@ button.msg-gif{cursor:pointer;}
       <div><p class="contexto">Oceano</p><h1>Concha <span class="devtag">dev</span></h1></div>
     </div>
     <div class="topo-dir">
-      <button type="button" id="b-tema" class="b-sino" hidden aria-label="Tema da Concha" title="Tema" aria-haspopup="dialog">🎨</button>
+      <button type="button" id="b-config" class="b-sino" hidden aria-label="Configurações da Concha" title="Configurações" aria-haspopup="dialog">⚙️</button>
       <button type="button" id="b-ajuda" class="b-sino" hidden aria-label="Ajuda da Concha" title="Ajuda da Concha">❓</button>
       <button type="button" id="b-sino" class="b-sino" hidden aria-label="Notificações">🔔</button>
       <div id="who-slot"></div>
@@ -389,7 +393,6 @@ button.msg-gif{cursor:pointer;}
       <div id="lista-canais"></div>
       <button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button>
       <button type="button" class="novo-canal" id="b-secoes">📁 Seções</button>
-      <button type="button" class="novo-canal" id="b-notas" hidden>📝 Minhas notas</button>
     </nav>
 
     <section class="painel conversa" aria-labelledby="canal-titulo">
@@ -456,7 +459,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.47 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.48 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -520,6 +523,7 @@ const FISH_SVGS = [
   '<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>',
 ];
 function modoPeixes() {
+  const cp = lsGet('concha_peixes'); if (['off', 'poucos', 'normal'].includes(cp)) return cp;   // ⚙️ Configurações › Aparência (só a Concha, neste aparelho); vazio = como no Oceano
   try { const o = JSON.parse(lsGet('oceano_prefs') || 'null'); if (o && ['off', 'poucos', 'normal'].includes(o.peixes)) return o.peixes; if (o && o.peixes === 'muitos') return 'normal'; } catch (e) {}
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 'off';
   return lsGet('fish_bg_off') === '1' ? 'off' : 'normal';
@@ -541,7 +545,7 @@ function animAtividade() {
 }
 ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => document.addEventListener(ev, animAtividade, { passive: true, capture: true }));
 document.addEventListener('visibilitychange', atualizarAnimacao); window.addEventListener('focus', atualizarAnimacao); window.addEventListener('blur', atualizarAnimacao);
-window.addEventListener('storage', e => { if (e.key === 'oceano_prefs' || e.key === 'fish_bg_off') criarPeixes(); });   // mudou no Oceano (outra aba): o mar daqui acompanha
+window.addEventListener('storage', e => { if (e.key === 'oceano_prefs' || e.key === 'fish_bg_off' || e.key === 'concha_peixes') criarPeixes(); });   // mudou no Oceano (outra aba): o mar daqui acompanha
 criarPeixes(); animAtividade(); atualizarAnimacao();
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 4200); }
 const negado = e => !!e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
@@ -835,7 +839,6 @@ function renderLista() {
     return b;
   };
   if (notasOn && user) box.append(botao(minhasNotas(), '📝 ', ''));   // 📝 Minhas notas: fixo no alto, fora das seções
-  $('b-notas').hidden = notasOn;
   minhas.forEach(([sid, x]) => sec(x.n, todos.filter(id => secDe(id) === sid), fnDe, sid, true));
   sec('Squads', oficiais.filter(id => !naMinha(id)), fnDe, 'squads');
   sec('Temáticos', temas.filter(id => !naMinha(id)), fnDe, 'temas');
@@ -1902,10 +1905,10 @@ const AJUDA = [
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **ℹ️ Detalhes › 🔔 Avisos** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
   { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
-  { id: 'notas', ic: '📝', t: 'Minhas notas (canal só seu)', txt: '- **📝 Minhas notas** (na lista, abaixo de ➕ Novo canal): ative uma vez e ele fica no **alto da lista**, em todos os seus aparelhos.\n- É um canal só seu, como a conversa com você mesmo no WhatsApp: anote, salve links e guarde mensagens de outros canais com **⏩ Encaminhar**.\n- **Ninguém mais lê, nem o ADM.** Dá para separar por **🧵 assunto** e **📌 fixar** o importante. Não tem @menção nem #tags.\n- Para tirar da lista: **ℹ️ Detalhes › Desativar Minhas notas**. Nada é apagado; ao ativar de novo, as notas voltam. Notas não entram na limpeza das mensagens antigas.' },
+  { id: 'notas', ic: '📝', t: 'Minhas notas (canal só seu)', txt: '- **⚙️ Configurações › 📝 Minhas notas** (no alto da Concha): ative uma vez e ele fica no **alto da lista**, em todos os seus aparelhos.\n- É um canal só seu, como a conversa com você mesmo no WhatsApp: anote, salve links e guarde mensagens de outros canais com **⏩ Encaminhar**.\n- **Ninguém mais lê, nem o ADM.** Dá para separar por **🧵 assunto** e **📌 fixar** o importante. Não tem @menção nem #tags.\n- Para tirar da lista: **ℹ️ Detalhes › Desativar Minhas notas** (ou no ⚙️). Nada é apagado; ao ativar de novo, as notas voltam. Notas não entram na limpeza das mensagens antigas.' },
   { id: 'fixadas', ic: '📌', t: 'Fixadas no topo e regras do canal', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela, e escolhe o tipo:\n- **📌 No topo do canal**: aparece numa **faixa no alto da conversa**, como no WhatsApp. Até ' + MAX_FIX.topo + ', uma por vez (📌 1/3, 2/3…): para trocar, use as setinhas **▲ ▼** no canto, **role a roda do mouse** sobre a faixa, **deslize o dedo** para cima ou para baixo no celular, ou **↑ ↓** no teclado. Tocar no texto leva até a mensagem.\n- **📜 Regra do canal**: fica em **ℹ️ Detalhes › 📜 Regras do canal**, com o texto inteiro (até ' + MAX_FIX.regra + '). Na 1ª vez que alguém abre o canal (ou quando entra uma regra nova), aparece o aviso **Este canal tem regras · Ver regras**.\n- Para **mover** entre topo e regras ou **desafixar**: 📌 Fixada, nas ações da mensagem, ou ℹ️ Detalhes. Apagar a mensagem tira ela das fixadas.\n- Mensagem fixada fica de fora da limpeza das antigas.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
-  { id: 'tema', ic: '🎨', t: 'Tema (claro, escuro e Vice City)', txt: '- **🎨** no alto da Concha escolhe o tema: **🌊 Como no Oceano** (o padrão, segue o que você escolheu no Oceano), **🌙 Abrolhos** (escuro), **☀️ Lençóis** (claro), **🌅 Entardecer** ou **🌴 Vice City**.\n- A escolha vale só para a Concha, neste aparelho, e muda na hora (também nas outras abas da Concha).' },
+  { id: 'tema', ic: '⚙️', t: 'Configurações: tema, peixes, notas e seções', txt: '- **⚙️** no alto da Concha reúne o que é seu: **🎨 Aparência** (tema e peixes do fundo), **📝 Minhas notas** (ativar/desativar) e **📁 Seções**.\n- O tema: **🌊 Como no Oceano** (o padrão, segue o que você escolheu no Oceano), **🌙 Abrolhos** (escuro), **☀️ Lençóis** (claro), **🌅 Entardecer** ou **🌴 Vice City**.\n- A escolha vale só para a Concha, neste aparelho, e muda na hora (também nas outras abas da Concha).' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },
   { id: 'privacidade', ic: '🔒', t: 'Quem vê o quê', txt: '- Mensagens de um canal: só quem é membro (e o ADM, para moderação).\n- Suas **seções**, **avisos**, #tags seguidas e o que você já leu são só seus.\n- O aviso no Sino é genérico (o Sino é lido pela empresa); o canal e a mensagem ficam num registro que só você lê.\n- O que vai para um **card do Maré** fica visível para toda a Hering.' },
   { id: 'atalhos', ic: '⌨️', t: 'Atalhos', txt: '- **Ctrl/⌘+K**: buscar · **Enter**: enviar · **Shift+Enter**: nova linha\n- **Ctrl+B** / **Ctrl+I**: negrito / itálico\n- Na lista do `@` ou do `#`: **↑ ↓** escolhem, **Enter** ou **Tab** inserem, **Esc** fecha\n- **Esc**: cancela a resposta, fecha seletores e janelas' },
@@ -1968,22 +1971,61 @@ function aplicarTema() {
   const t = temaEfetivo(), d = document.documentElement, a = { lencois: 'light', entardecer: 'sunset', vice: 'vice' }[t];
   if (a) d.setAttribute('data-theme', a); else d.removeAttribute('data-theme');
 }
-function modalTema() {
+// ═══ ⚙️ Configurações da Concha (pedido do Caio, 26/11/2026): reúne o que cada pessoa personaliza — 🎨 Aparência (tema e peixes), 📝 Minhas notas
+// (ativar/desativar) e 📁 Seções. Tema e peixes valem só para a Concha, neste aparelho; notas e seções valem na conta (todos os aparelhos). ═══
+const PEIXES_CONCHA = [['', '🌊 Como no Oceano'], ['normal', '🐟 Muitos'], ['poucos', '🐠 Poucos'], ['off', '🚫 Sem peixes']];
+function radios(nome, opcoes, atualV, aoMudar, legenda) {
+  const fs = el('fieldset', 'cfg-radios'); fs.append(el('legend', 'subtitulo', legenda));
+  opcoes.forEach(([v, rot]) => { const l = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = nome; r.value = v; r.checked = atualV === v; r.onchange = () => aoMudar(v); l.append(r, el('b', '', rot)); fs.append(l); });
+  return fs;
+}
+async function ativarNotas(sim) {
+  try { await set(ref(db, B + 'notas/' + user.uid), sim ? true : null); notasOn = sim; sincronizarCanais(); renderLista(); return true; }
+  catch (e) { falhou(sim ? 'ativar Minhas notas' : 'desativar Minhas notas', e); return false; }
+}
+function modalConfig(foco) {
   fecharModal._volta = document.activeElement;
   const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
-  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
-  ov.append(f);
-  const h = el('h2', '', '🎨 Tema da Concha'); h.id = 'md-t'; f.append(h);
-  f.append(el('p', 'subtitulo', 'Vale só para a Concha, neste aparelho. "Como no Oceano" segue o tema escolhido no Oceano (⚙ Meu perfil).'));
-  const atual0 = lsGet('concha_tema') || '', fs = el('fieldset'); fs.style.cssText = 'border:0;padding:0;margin:0;display:grid;gap:6px;'; fs.append(el('legend', 'subtitulo', 'Tema'));
-  TEMAS_CONCHA.forEach(([v, rot]) => { const l = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = 'tema'; r.value = v; r.checked = atual0 === v; r.onchange = () => { lsSet('concha_tema', v); if (!v) { try { localStorage.removeItem('concha_tema'); } catch (e) {} } aplicarTema(); }; l.append(r, el('b', '', rot)); fs.append(l); });
-  f.append(fs);
+  const f = el('form', 'md cfg'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t'); ov.append(f);
+  const h = el('h2', '', '⚙️ Configurações da Concha'); h.id = 'md-t'; f.append(h);
+  // 🎨 Aparência
+  const ap = el('section', 'cfg-sec'); ap.append(el('h3', '', '🎨 Aparência'));
+  ap.append(el('p', 'subtitulo', 'Vale só para a Concha, neste aparelho. "Como no Oceano" segue o que você escolheu no Oceano (⚙ Meu perfil).'));
+  ap.append(radios('tema', TEMAS_CONCHA, lsGet('concha_tema') || '', v => { lsSet('concha_tema', v); if (!v) { try { localStorage.removeItem('concha_tema'); } catch (e) {} } aplicarTema(); }, 'Tema'));
+  ap.append(radios('peixes', PEIXES_CONCHA, lsGet('concha_peixes') || '', v => { if (v) lsSet('concha_peixes', v); else { try { localStorage.removeItem('concha_peixes'); } catch (e) {} } criarPeixes(); }, 'Peixes no fundo'));
+  f.append(ap);
+  // 📝 Minhas notas
+  const nt = el('section', 'cfg-sec'); nt.append(el('h3', '', '📝 Minhas notas'));
+  const desenharNotas = () => {
+    [...nt.children].slice(1).forEach(x => x.remove());
+    nt.append(el('p', 'subtitulo', notasOn ? 'Ativado: o canal só seu está no alto da lista. Ninguém mais lê, nem o ADM.' : 'Um canal só seu, como a conversa com você mesmo no WhatsApp: anote, salve links e guarde mensagens (⏩ Encaminhar). Ninguém mais lê, nem o ADM.'));
+    const l = el('div', 'acoes-lado');
+    if (notasOn) {
+      const abrir = el('button', '', 'Abrir Minhas notas'); abrir.type = 'button'; abrir.onclick = () => { fecharModal(); abrirCanal(minhasNotas(), true); };
+      const des = el('button', '', 'Desativar'); des.type = 'button';
+      des.onclick = async () => { if (!confirm('Desativar Minhas notas? Elas somem da lista, mas nada é apagado: ao ativar de novo, voltam.')) return; if (await ativarNotas(false)) { toast('📝 Minhas notas desativadas.'); desenharNotas(); } };
+      l.append(abrir, des);
+    } else {
+      const at = el('button', 'primary', 'Ativar Minhas notas'); at.type = 'button';
+      at.onclick = async () => { at.disabled = true; if (await ativarNotas(true)) { toast('📝 Minhas notas ativadas — estão no alto da lista.'); desenharNotas(); const b0 = nt.querySelector('button'); if (b0) b0.focus(); } else at.disabled = false; };
+      l.append(at);
+    }
+    nt.append(l);
+  };
+  desenharNotas(); f.append(nt);
+  // 📁 Seções
+  const sc = el('section', 'cfg-sec'); sc.append(el('h3', '', '📁 Seções'));
+  const nSec = secLista().length;
+  sc.append(el('p', 'subtitulo', 'Organize a lista de canais do seu jeito (ex.: ⭐ Favoritos, Projetos). Só você vê. ' + (nSec ? 'Você tem ' + nSec + (nSec === 1 ? ' seção.' : ' seções.') : 'Você ainda não tem seções.')));
+  const ls = el('div', 'acoes-lado'), bs = el('button', '', 'Organizar seções…'); bs.type = 'button'; bs.onclick = () => modalSecoes(''); ls.append(bs); sc.append(ls);
+  f.append(sc);
   const lin = el('div', 'linha'); const ok = el('button', 'primary', 'Pronto'); ok.type = 'submit'; lin.append(ok); f.append(lin);
   f.onsubmit = e => { e.preventDefault(); fecharModal(); };
   f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
-  (f.querySelector('input[name="tema"]:checked') || ok).focus();
+  const alvo = foco === 'notas' ? nt.querySelector('button') : f.querySelector('input[name="tema"]:checked');
+  (alvo || ok).focus();
 }
-$('b-tema').onclick = modalTema;
+$('b-config').onclick = () => modalConfig();
 window.addEventListener('storage', e => { if (e.key === 'concha_tema' || e.key === 'oceano_prefs' || e.key === 'mare_theme') aplicarTema(); });   // mudou em outra aba
 
 // ═══ ⏩ Encaminhar (docs/ideias/cardume-v0-banco.md › "Encaminhar mensagem"): mensagem nova no destino com enc = {c, m, de, ts, n}; a regra confere
@@ -2106,21 +2148,6 @@ function modalSecoes(canalNovo) {   // criar, renomear, reordenar, apagar — gr
   ov.append(f); (rasc.length ? lista.querySelector('input') : ni).focus();
 }
 $('b-secoes').onclick = () => modalSecoes('');
-$('b-notas').onclick = () => {   // 📝 ativar Minhas notas (vem desativado)
-  fecharModal._volta = document.activeElement;
-  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
-  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t'); ov.append(f);
-  const h = el('h2', '', '📝 Minhas notas'); h.id = 'md-t'; f.append(h);
-  f.append(el('p', '', 'Um canal só seu, como a conversa com você mesmo no WhatsApp: anote, salve links e guarde mensagens de outros canais (⏩ Encaminhar).'));
-  f.append(el('p', 'subtitulo', 'Ninguém mais lê, nem o ADM. Dá para separar por 🧵 assunto e 📌 fixar o importante. Desativar só tira da lista: nada é apagado.'));
-  const err = el('p', 'erro'); err.hidden = true; f.append(err);
-  const l = el('div', 'linha'), can = el('button', '', 'Agora não'), ok = el('button', 'primary', 'Ativar'); can.type = 'button'; ok.type = 'submit'; can.onclick = fecharModal; l.append(can, ok); f.append(l);
-  f.onsubmit = async e => { e.preventDefault(); ok.disabled = true;
-    try { await set(ref(db, B + 'notas/' + user.uid), true); notasOn = true; fecharModal(); sincronizarCanais(); renderLista(); abrirCanal(minhasNotas(), true); toast('📝 Minhas notas ativadas — estão no alto da lista.'); }
-    catch (er) { ok.disabled = false; erroModal(err, negado(er) ? 'Sem permissão (as regras novas ainda não foram publicadas?).' : 'Não deu para ativar agora. Tente de novo.'); } };
-  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
-  ok.focus();
-};
 
 // ═══ 🔔 Avisos de mensagem nova, estilo WhatsApp (docs/ideias/cardume-v0-banco.md › "Avisos de mensagem nova") ═══
 // Preferência PRIVADA (avisos/{uid}/{canal} = {nivel, ate?}; sem nó = 🔔 todas); a função conchaAvisoMsg manda o push. #tags seguidas avisam
@@ -2513,7 +2540,7 @@ function renderLado() {
     s.append(el('p', 'subtitulo', 'Só você vê estas notas — nem o ADM. Use para anotar, salvar links e guardar mensagens (⏩ Encaminhar de outro canal).'));
     s.append(secaoFixadas(id));
     const ac0 = el('div', 'acoes-lado'), d = el('button', '', 'Desativar Minhas notas'); d.type = 'button';
-    d.onclick = async () => { if (!confirm('Desativar Minhas notas? Elas somem da lista, mas nada é apagado: ao ativar de novo, voltam.')) return; try { await set(ref(db, B + 'notas/' + user.uid), null); toast('📝 Minhas notas desativadas. Para voltar: 📝 Minhas notas, na lista.'); } catch (e) { falhou('desativar', e); } };
+    d.onclick = async () => { if (!confirm('Desativar Minhas notas? Elas somem da lista, mas nada é apagado: ao ativar de novo, voltam.')) return; try { await set(ref(db, B + 'notas/' + user.uid), null); toast('📝 Minhas notas desativadas. Para voltar: ⚙️ Configurações › Minhas notas.'); } catch (e) { falhou('desativar', e); } };
     ac0.append(d); s.append(ac0); lado.append(s); return;
   }
   const ac = el('div', 'acoes-lado');
@@ -2717,7 +2744,7 @@ function abrirDoSino(i) {
   return true;
 }
 function ligarSino() {
-  $('b-ajuda').hidden = false; $('b-tema').hidden = false;
+  $('b-ajuda').hidden = false; $('b-config').hidden = false;
   if (!window.MareNotif || !MareNotif.sino) return;
   sinoUid = user.uid; $('b-sino').hidden = false;
   sinoApi = MareNotif.sino($('b-sino'), { user, isAdm: souAdm, toast, abrir: abrirDoSino });
@@ -2725,7 +2752,7 @@ function ligarSino() {
 async function iniciar() {
   limparSessao();
   renderWho();
-  if (!user) { $('b-sino').hidden = true; $('b-ajuda').hidden = true; $('b-tema').hidden = true; if (window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
+  if (!user) { $('b-sino').hidden = true; $('b-ajuda').hidden = true; $('b-config').hidden = true; if (window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
   if (sinoUid && sinoUid !== user.uid) { location.reload(); return; }   // o Sino (mare-notif) vale para UMA conta por página: trocar de conta recarrega
   $('login').hidden = true; $('loading').hidden = false; $('app').hidden = true;
   const meu = user.uid;

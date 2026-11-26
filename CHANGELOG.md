@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: ⚙️ Configurações — tema, peixes, Minhas notas e seções num lugar só (SÓ DEV, cardume v0.48) — 2026-11-26
+
+Pedido do Caio (26/11), com as decisões dele: o ⚙️ entra no alto da Concha no lugar do 🎨 e reúne 🎨 Aparência (tema e, agora, os peixes do fundo — Como no Oceano, Muitos, Poucos ou Sem peixes, só na Concha, neste aparelho), 📝 Minhas notas (ativar, abrir, desativar) e 📁 Seções (quantas há e Organizar seções…). Os atalhos de cada canal continuam onde estão (🔔 Avisos no ℹ️ Detalhes, 📁 Seções na lista); o botão de ativar notas da lista saiu (ativar é no ⚙️). Ajuda: o tópico Tema virou Configurações. Testes: test_concha_notas.js (17), test_concha_tema.js (9).
+
 ### 🐚 Concha: 📝 Minhas notas — um canal só seu, que nem o ADM lê (SÓ DEV, cardume v0.47, regras eu-* e notas) — 2026-11-26
 
 Ideia do Caio (26/11), com as decisões dele: como a conversa com você mesmo no WhatsApp, para anotar, salvar links e guardar mensagens. Vem desativado: 📝 Minhas notas, na lista, explica e ativa (a escolha vale em todos os aparelhos). Ativo, fica fixo no alto da lista e no Sonar. Ninguém além da dona lê, nem o ADM (as regras garantem). Tem 🧵 assuntos, 📌 fixadas e ⏩ Encaminhar de outro canal PARA as notas; não tem @menção nem #tags, e das notas não se encaminha. ℹ️ Detalhes › Desativar tira da lista sem apagar nada. Notas ficam fora da limpeza de mensagens antigas. Banco: canal eu-{uid} como terceiro tipo nas regras (ADM e PO da squad não valem para ele; a dona é membro e gestora pelo id) e nó notas/{uid}. Testes: conchaNotasRules.test.js (8, matriz gerada do JSON com sabotagem), conchaAvisos (+1), test_concha_notas.js (14). Deploy: regras antes do merge.
