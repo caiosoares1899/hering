@@ -74,7 +74,7 @@
 
 | Ideia | O que já existe / escopo sugerido |
 |---|---|
-| 📝 **Canal só seu** (como a conversa com você mesmo no WhatsApp): anotar, salvar links | Um canal pessoal por pessoa (ex.: `eu-{uid}`), privado, só ela é membro, aparece no topo da lista. Aproveita mensagens, links, #tags, fixadas e busca. Regras: só a dona lê/escreve; sem aviso de mensagem nova. R3 (regra nova). |
+| ✅ 📝 **Canal só seu** (entregue em 26/11 como "📝 Minhas notas", v0.47) | Um canal pessoal por pessoa (ex.: `eu-{uid}`), privado, só ela é membro, aparece no topo da lista. Aproveita mensagens, links, #tags, fixadas e busca. Regras: só a dona lê/escreve; sem aviso de mensagem nova. R3 (regra nova). |
 | ⭐ **Favoritar mensagens** | Lista pessoal (`favoritos/{uid}/{canal}/{msgId}`), aberta por um ⭐ na lista de canais; tocar leva à mensagem (no assunto dela). Some se a mensagem for apagada ou a pessoa sair do canal. Parecido com o "salvar para depois" do comparativo (item 1). R2/R3. |
 | #️⃣ **Favoritar #tags na lista da esquerda** (junto dos canais, recolhível) | Hoje dá para 🔔 Seguir uma #tag (avisa) e abrir a tela dela. Ideia: uma seção "#tags" na lista, recolhível como as 📁 seções, com as tags favoritas; tocar abre a tela da tag. Pode reaproveitar `seguidas` ou ser um nó próprio (favoritar ≠ ser avisado). |
 | 🔄 **Atualização obrigatória quando sai versão nova** (como no Maré) | Hoje a Concha só mostra um aviso (`#versao-aviso`) a cada 5 min. Trocar pela mesma tela de "atualizar agora" do Maré, guardando o rascunho e a mensagem sendo editada antes de recarregar. Atenção ao custo: cada versão nova recarrega todas as abas abertas. |

@@ -523,3 +523,25 @@ Uma revisão só (somente leitura) de todo o bloco `kanban/cardume` + `conchaAvi
 - **Corrigido (PR da revisão):** edição em 15 min fechada também pelo relógio do servidor (`now <= ts + 900000`); encaminhar confere `gif/w`/`gif/h` e recusa `a`/`card`/`cardSq` na cópia; 📌 fixar e trocar o tipo exigem a mensagem viva também no estado DEPOIS da escrita; 📁 Salvar do modal de seções não recria seção apagada em outro aparelho (avisa que ficou de fora).
 - **Adiado, com motivo:** quem é mencionado sai do aviso do canal mesmo se a gravação da menção falhar (esperar o log por pessoa da #1998 mostrar o caso real); log por pessoa grava uid + motivo no Cloud Logging (aceito: quem lê o log administra o projeto); tokens FCM graváveis por PO global (mesma causa do Escalado de `kanban/usuarios`); aviso do encaminhar não se recalcula com o modal aberto (raro, UI).
 - **Sem achado:** emoji do canal, 🏢 diretoria. Regras da Concha: 57 testes.
+
+## 📝 Minhas notas — o canal só seu (26/11/2026, R3)
+
+**Decisões do Caio:** ninguém além da dona lê (**nem o ADM**); notas **fora da limpeza** de mensagens antigas; aparece como **"📝 Minhas notas" no alto da lista**; tem ⏩ encaminhar PARA ela, 📌 fixadas e 🧵 assuntos (sem #tags, sem @); **vem desativado** — a pessoa ativa.
+
+### Banco
+- Id do canal: `eu-{uid}` — **terceiro tipo** nas regras (nem oficial, nem temático): `EU = $canal.matches(/^eu-/)`, `DONA = $canal === 'eu-' + auth.uid`. O `OFIC` passou a ser "não é `t-` e não é `eu-`" (senão um id `eu-…` cairia como canal oficial: ADM e PO da squad viravam gestores, e um PO global que grava `squads/squads_roles` `eu-vítima` no próprio cadastro entraria).
+- Em todo nó com `$canal` (canais, admins, membros, msgs, ultima, abertos, reacoes, tags, tags_ult, assuntos, ultima_a, fixadas): ADM vira `(ADM && !EU)`; "é membro" vira `((membro && !EU) || DONA)` — a dona é membro **pelo id**, um `membros/eu-*` forjado não dá acesso; onde valia `(oficial || canal existe)`, vale também `DONA`; nas fixadas a dona é a gestora.
+- **Negado de vez para notas:** escrita em `canais`, `admins`, `membros`, `abertos`, `tags`, `tags_ult` e no espelho `meus/*/eu-*`. Ninguém (nem o ADM) apaga, remove ou modera uma nota.
+- Ativar: `kanban/cardume/notas/{uid}` = `true` (só a própria pessoa lê/grava; apagar = desativar; as notas ficam).
+- `conchaAvisoMsg` não avisa ninguém (a autora não está em `membros`, 0 push). **Limpeza** (`cardumeLimpeza`, a criar): pula `eu-*`.
+- **"Ninguém" é no app:** quem administra o projeto Firebase (console) e o backup semanal do `cardume` ainda têm as notas.
+
+### Página (`cardume-dev.html` v0.47)
+- **📝 Minhas notas** abaixo de ➕ Novo canal/📁 Seções enquanto desativado (tela explica e ativa); ativo, fica fixo no alto da lista (fora das seções) e no Sonar.
+- No canal: subtítulo "Só você vê · nem o ADM"; sem @ e # na barra; sem ⏩ saindo; #tags não vão para o índice; Detalhes só com 📌 fixadas e "Desativar Minhas notas".
+- ⏩ Encaminhar: "Minhas notas" aparece como destino, sem aviso de público.
+- `?c=eu-de-outra-pessoa`: sem acesso (o "Ativar canal da squad" do ADM não aparece para `eu-*`).
+
+### Testes
+- `functions/rules/__tests__/conchaNotasRules.test.js` (8): **matriz gerada do JSON** (todo nó com `$canal`) × dona, ADM, e-mail do Caio, PO global com squad `eu-vítima` forjada, membro com `membros/eu-*` forjado e outra conta — leitura e escrita; sabotagem conferida (tirar a guarda de um nó faz falhar). Encaminhar para/das notas, ativar.
+- `conchaAvisos.test.js` (+1): nota não gera push. `test_concha_notas.js` (14): ativar, escrever, fixar, encaminhar para as notas, desativar, cada escrita nas regras reais.
