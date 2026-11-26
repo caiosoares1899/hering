@@ -16,9 +16,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
-| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do 📌 fixar (nó novo `fixadas`, escrita só de quem administra) | [desenho](ideias/cardume-v0-banco.md#-fixar-no-canal--desenho-de-26112026-r3) |
-| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do ⏩ encaminhar (conteúdo de canal privado indo para outro canal por decisão de um membro) | [desenho](ideias/cardume-v0-banco.md) |
-| Antigravity | R3 | 🛡️ `/auditoriaseguranca` da Concha nas regras novas de 25/11 (#1969 avisos, #1970 seções, assuntos) — o R3 pede a leitura de segurança além das revisões; as duas primeiras só tiveram o Codex na Fila | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -43,6 +40,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Antigravity | 🐚 Concha: correção de segurança da auditoria (`#constructor`/`#__proto__` numa #tag não furam o 🔕 silenciar nem a trava de rajada) — #2003 | `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
