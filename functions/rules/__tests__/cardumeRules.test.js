@@ -938,3 +938,37 @@ test('📌 tipos: topo ou regra, obrigatório; o gestor troca o tipo sem mudar q
   põe('m1', { uid: 'ana', ts: Date.now(), apagada: true });
   assert.equal(grava(FX('m1'), A.pos, Object.assign({}, antes, { t: 'regra' })), false, 'mensagem apagada: só tirar, não trocar');
 });
+
+// Revisão cruzada do Codex (26/11/2026): três reforços pequenos.
+test('revisão 26/11: a janela de 15 min da edição é fechada pelo relógio do servidor (não só pela hora gravada em editado)', () => {
+  reset(); const agora = Date.now(), ts = agora - 900000 - 30000;   // passou 30 s dos 15 min
+  põe('w1', { uid: 'ana', ts, texto: 'oi' });
+  assert.equal(update(RULES, DB, A.ana, { [M('w1') + '/texto']: 'mudei', [M('w1') + '/editado']: ts + 899000 }), false, 'editado "dentro" dos 15 min, mas o servidor já passou do limite');
+  assert.equal(grava(M('w1'), A.ana, { uid: 'ana', ts, apagada: true }), true, 'apagar continua valendo');
+  põe('w2', { uid: 'ana', ts: agora - 60000, texto: 'oi' });
+  assert.equal(update(RULES, DB, A.ana, { [M('w2') + '/texto']: 'mudei', [M('w2') + '/editado']: agora }), true, '(controle) dentro da janela, edita');
+});
+
+test('revisão 26/11: encaminhar copia também largura/altura do GIF e não leva assunto nem card', () => {
+  reset(); const ts0 = Date.now() - 864e5;
+  DB.kanban.cardume.canais.prf = { nome: 'Performance' }; DB.kanban.cardume.membros.prf = { ana: true, bru: true };
+  DB.kanban.cardume.msgs.prf = { o1: { uid: 'bru', ts: ts0, texto: 'segredo' }, o2: { uid: 'bru', ts: ts0, gif: { u: 'https://static.klipy.com/a.gif', w: 10, h: 10, t: 'risada' } } };
+  DB.kanban.cardume.assuntos = { dados: { abc: { n: 'Campanha', por: 'ana', ts: ts0 } } };
+  const env = (o) => { const t = Date.now(); return { [M('f1')]: Object.assign({ uid: 'ana', ts: t }, o), ['kanban/cardume/ultima/dados']: { ts: t, uid: 'ana', id: 'f1' } }; };
+  const enc = o => Object.assign({ c: 'prf', m: 'o1', de: 'bru', ts: ts0, n: 'Performance' }, o || {});
+  const gif = o => Object.assign({ u: 'https://static.klipy.com/a.gif', w: 10, h: 10, t: 'risada' }, o || {});
+  assert.equal(update(RULES, DB, A.ana, env({ gif: gif(), enc: enc({ m: 'o2' }) })), true, '(controle) GIF igual');
+  assert.equal(update(RULES, DB, A.ana, env({ gif: gif({ w: 4096, h: 4096 }), enc: enc({ m: 'o2' }) })), false, 'tamanho do GIF diferente da original');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo', a: 'abc', enc: enc() })), false, 'encaminhada dentro de um assunto (a tela manda para o geral)');
+  assert.equal(update(RULES, DB, A.ana, env({ texto: 'segredo', card: 'c1', cardSq: 'dados', enc: enc() })), false, 'encaminhada com card');
+});
+
+test('revisão 26/11: fixar (ou trocar o tipo) na mesma gravação que apaga a mensagem é recusado', () => {
+  resetFx(); DB.kanban.cardume.msgs.dados.p1 = { uid: 'pos', ts: Date.now() - 1000, texto: 'minha' };
+  const ts = DB.kanban.cardume.msgs.dados.p1.ts;
+  assert.equal(update(RULES, DB, A.pos, { [M('p1')]: { uid: 'pos', ts, apagada: true }, [FX('p1')]: fx('pos') }), false, 'apagar e fixar juntos deixaria a fixada apontando para mensagem apagada');
+  DB.kanban.cardume.fixadas = { dados: { p1: fx('pos', { em: Date.now() - 5000 }) } }; const antes = DB.kanban.cardume.fixadas.dados.p1;
+  assert.equal(update(RULES, DB, A.pos, { [M('p1')]: { uid: 'pos', ts, apagada: true }, [FX('p1') + '/t']: 'regra' }), false, 'apagar e trocar o tipo juntos');
+  assert.equal(update(RULES, DB, A.pos, { [M('p1')]: { uid: 'pos', ts, apagada: true }, [FX('p1')]: null }), true, '(controle) apagar e desafixar juntos continua valendo');
+  void antes;
+});

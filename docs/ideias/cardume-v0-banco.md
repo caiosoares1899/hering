@@ -517,3 +517,9 @@ Nó novo com leitura igual à das mensagens (quem lê a fixada já lê a mensage
 - **Página (v0.41):** 📌 Fixar abre a escolha do tipo (o cheio fica desligado: "Cheio: desafixe uma antes"); fixada abre **Mover para…** e **Desafixar**. A mensagem mostra "📌 Fixada no topo" ou "📜 Regra do canal".
 - **Testes:** `cardumeRules` (+1: tipo obrigatório e da lista; gestor/ADM trocam, membro não; trocar não muda `por`/`em`; trocar só o campo `t`; mensagem apagada não troca), `test_concha_fixar.js` (24, gestora a 1280 e membro a 390).
 - **Deploy:** `firebase deploy --only database` antes do merge.
+
+## Revisão cruzada do Codex — 26/11/2026 (cobre a Fila de revisões da Concha)
+Uma revisão só (somente leitura) de todo o bloco `kanban/cardume` + `conchaAvisoMsg`/`cardumePush`, com provas no simulador. Sem achado grave.
+- **Corrigido (PR da revisão):** edição em 15 min fechada também pelo relógio do servidor (`now <= ts + 900000`); encaminhar confere `gif/w`/`gif/h` e recusa `a`/`card`/`cardSq` na cópia; 📌 fixar e trocar o tipo exigem a mensagem viva também no estado DEPOIS da escrita; 📁 Salvar do modal de seções não recria seção apagada em outro aparelho (avisa que ficou de fora).
+- **Adiado, com motivo:** quem é mencionado sai do aviso do canal mesmo se a gravação da menção falhar (esperar o log por pessoa da #1998 mostrar o caso real); log por pessoa grava uid + motivo no Cloud Logging (aceito: quem lê o log administra o projeto); tokens FCM graváveis por PO global (mesma causa do Escalado de `kanban/usuarios`); aviso do encaminhar não se recalcula com o modal aberto (raro, UI).
+- **Sem achado:** emoji do canal, 🏢 diretoria. Regras da Concha: 57 testes.
