@@ -132,6 +132,13 @@ const TARGETS = {
     versionDevKey: null,
     mode: 'copy',
   },
+  'mare-ilha': {
+    dev: 'mare-ilha-dev.js',
+    prod: 'mare-ilha.js',
+    versionProdKey: null,
+    versionDevKey: null,
+    mode: 'copy',
+  },
   'mare-perfil': {
     dev: 'mare-perfil-dev.js',
     prod: 'mare-perfil.js',

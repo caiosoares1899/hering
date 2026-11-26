@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🏝️ Ilha Dinâmica compartilhada (mare-ilha), começando pela Concha (SÓ DEV, cardume v0.53) — 2026-11-26
+
+- **(SÓ DEV)** Pedido do Caio: "quem tiver a ilha deveria ter em todos os apps", começando pela Concha, com uma chave só na conta.
+  - **Módulo novo `mare-ilha-dev.js`:** pílula no alto que mostra o ⏲ timer rodando (com o tempo e "+N") ou "🌊 Tudo tranquilo". Ao tocar, abre o painel com todos os timers: ▶ Continuar / ⏸ Pausar pelo `mare-timer` (o mesmo contrato do Maré). **Encerrar** e **abrir o card** levam ao Maré, onde mora o aviso a quem passou a atividade.
+  - **O 🔔 mora dentro da Ilha.** O sino do `mare-notif` usa o botão dela, e a notificação nova (inclusive 🐚 @menção) **alarga a pílula** por ~6 s com quem e o quê.
+  - **Uma chave só:** ⚙️ Configurações › 🏝️ Ilha Dinâmica grava `kanban/usuarios/{uid}/oceano/ilha` (na conta, todos os aparelhos; vale ao recarregar). Escuta `timers_ativos` só com a Ilha ligada.
+  - O **Maré segue com a Ilha dele** (ligada por aparelho, em ⏲ Timers) até migrar para o módulo, que é a última etapa. Antes disso vêm Radar e Oceano.
+  - Ajuda da Concha: tópico 🏝️ (18 tópicos). Fronteira: nenhum nó ou regra nova (preferência da própria pessoa no próprio cadastro); texto de notificação e de atividade só por `textContent`; link do card montado com ids conferidos. `test_concha_ilha.js` (18).
+
 ### 🧭 Oceano: menu com 🏠 Início em ícone de traço e sem os cartões de apps no Início (SÓ DEV, oceano v2.02) — 2026-11-26
 
 - **(SÓ DEV)** Pedido do Rafa/Caio depois da fase 1 (#2016): no lugar do ícone do Oceano, uma casinha de traço fino (SVG, sem emoji), com o nome "Início". Sonar, Recarregar, Nova aba e Fechar também viraram ícones de traço. Com o menu ligado, os cartões de apps saem do Início (o menu já mostra todos), e o atalho "🐚 Concha ↗" sai também. `test_oceano_menu_lateral.js` (21).
