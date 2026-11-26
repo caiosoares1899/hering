@@ -416,6 +416,62 @@ input.in[readonly]{opacity:.7;}
 .host-frames iframe.on{display:block;}
 .host-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--txt2);font-size:14px;pointer-events:none;}
 .host-load .porthole{--s:80px;animation:balanca 3s ease-in-out infinite alternate;}
+/* 🧭 Menu lateral (pedido do Rafa via Caio, 26/11/2026 — fase 1, só no dev): o Oceano vira a moldura e os apps trocam pelo menu, como num app só.
+   Computador: trilho de 72px à esquerda. Celular (≤ 899px): barra embaixo. A barra do host (abas no topo) sai quando o menu está ligado. */
+#rail{display:none;}
+body.com-rail{--rail-w:72px;}
+body.com-rail.rail-larga{--rail-w:212px;}
+body.com-rail #rail{display:flex;position:fixed;z-index:110;left:0;top:0;bottom:0;width:var(--rail-w);transition:width .18s ease;flex-direction:column;align-items:center;gap:4px;padding:max(10px,env(safe-area-inset-top)) 0 12px;background:rgba(var(--deep-rgb),.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-right:1px solid var(--glass-b);}
+[data-theme="light"] body.com-rail #rail{background:rgba(255,255,255,.82);}
+body.com-rail{padding-left:var(--rail-w);transition:padding-left .18s ease;}
+body.com-rail #host{left:var(--rail-w);}
+.rail-topo{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
+.rail-tog{width:28px;height:22px;border:0;border-radius:7px;background:transparent;color:var(--txt3);cursor:pointer;font-size:13px;line-height:1;}
+.rail-tog:hover{background:var(--glass);color:var(--txt);}
+.rail-tog:focus-visible{outline:2px solid var(--accent);}
+/* expandido: ícone e nome lado a lado */
+body.rail-larga #rail{align-items:stretch;padding-left:10px;padding-right:10px;}
+body.rail-larga .rail-topo{align-items:stretch;}
+body.rail-larga .rail-tog{align-self:flex-end;}
+body.rail-larga .rail-apps,body.rail-larga .rail-fim{align-items:stretch;}
+body.rail-larga .rail-sep{width:auto;}
+body.rail-larga .rail-it{width:auto;min-height:44px;flex-direction:row;justify-content:flex-start;gap:12px;padding:6px 10px;font-size:13.5px;}
+body.rail-larga .rail-it .rail-rot{max-width:none;}
+body.rail-larga .rail-it[aria-current="page"]::before{left:-10px;}
+body.rail-larga .rail-it .rail-aberto{top:auto;right:12px;}
+body.com-rail .host-barra{display:none;}
+.rail-apps{display:flex;flex-direction:column;gap:4px;align-items:center;}
+.rail-sep{width:32px;height:1px;background:var(--glass-b);margin:6px 0;}
+.rail-fim{margin-top:auto;display:flex;flex-direction:column;gap:4px;align-items:center;}
+.rail-it{position:relative;width:60px;min-height:52px;padding:6px 2px 4px;border:0;border-radius:14px;background:transparent;color:var(--txt2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:600 10.5px/1.1 var(--ff,inherit);}
+.rail-it:hover{background:var(--glass);color:var(--txt);}
+.rail-it:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.rail-it .tile-logo{width:30px;height:30px;border-radius:9px;box-shadow:none;}
+.rail-it .rail-oceano{width:32px;height:32px;border-radius:10px;object-fit:cover;display:block;}
+.rail-it .rail-ic{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;}
+.rail-it .rail-av{width:30px;height:30px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--glass);font-size:12px;font-weight:700;}
+.rail-it .rail-av img{width:100%;height:100%;object-fit:cover;}
+.rail-it .rail-rot{max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rail-it[aria-current="page"]{background:rgba(37,99,201,.28);color:var(--txt);}
+.rail-it[aria-current="page"]::before{content:"";position:absolute;left:-6px;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--accent);}
+.rail-it .rail-aberto{position:absolute;top:6px;right:12px;width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 2px rgba(var(--deep-rgb),.9);}
+.rail-it[hidden]{display:none;}
+@media (max-width:899px){
+  body.com-rail,body.com-rail.rail-larga{--rail-w:0px;}
+  body.com-rail #rail,body.rail-larga #rail{top:auto;right:0;width:auto;align-items:center;height:calc(62px + env(safe-area-inset-bottom));flex-direction:row;justify-content:space-around;padding:4px 4px env(safe-area-inset-bottom);border-right:0;border-top:1px solid var(--glass-b);}
+  body.com-rail{padding-left:0;padding-bottom:calc(62px + env(safe-area-inset-bottom));}
+  body.com-rail #host{left:0;bottom:calc(62px + env(safe-area-inset-bottom));}
+  .rail-apps,.rail-fim{flex-direction:row;gap:0;}
+  .rail-apps{flex:1;justify-content:space-around;}
+  .rail-fim{margin-top:0;}
+  .rail-sep,.rail-it.so-pc,.rail-tog{display:none;}
+  .rail-topo,.rail-apps,.rail-fim{display:contents;}
+  body.com-rail .toast{bottom:calc(74px + env(safe-area-inset-bottom));}
+  .rail-it,body.rail-larga .rail-it{width:auto;min-width:44px;flex:1;min-height:54px;padding:4px 2px;border-radius:12px;font-size:10px;flex-direction:column;justify-content:center;gap:3px;}
+  body.rail-larga .rail-apps,body.rail-larga .rail-fim{align-items:center;}
+  .rail-it .tile-logo,.rail-it .rail-ic,.rail-it .rail-av,.rail-it .rail-oceano{width:26px;height:26px;}
+  .rail-it[aria-current="page"]::before{left:14px;right:14px;top:-4px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px;}
+}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:300;background:rgba(10,37,64,.96);color:#e8f4fd;border:1px solid var(--glass-b);padding:11px 18px;border-radius:var(--r2);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;max-width:92vw;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 .versao-aviso{position:fixed;left:0;right:0;top:0;z-index:310;background:rgba(37,99,201,.95);color:#fff;padding:9px 14px;text-align:center;font-size:13px;font-weight:700;display:none;}
@@ -678,6 +734,21 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
 </div>
 
 <!-- ═══ HOSPEDAGEM: produtos abertos dentro do Oceano ═══ -->
+<nav id="rail" aria-label="Apps do Oceano">
+  <div class="rail-topo">
+    <button class="rail-tog" type="button" id="rail-tog" aria-expanded="false" aria-controls="rail" title="Expandir o menu">»</button>
+    <button class="rail-it" type="button" data-rail="lobby" title="Oceano: o início" aria-label="Oceano (início)"><img class="rail-oceano" src="favicon-oceano.png" alt=""><span class="rail-rot">Oceano</span></button>
+  </div>
+  <div class="rail-sep" aria-hidden="true"></div>
+  <div class="rail-apps" id="rail-apps"></div>
+  <div class="rail-fim">
+    <button class="rail-it so-pc" type="button" id="rail-sonar" aria-haspopup="dialog" title="Sonar: busca em todo o Oceano (Ctrl+K)"><span class="rail-ic" aria-hidden="true">🔍</span><span class="rail-rot">Sonar</span></button>
+    <button class="rail-it so-pc" type="button" id="rail-recarregar" title="Recarregar este app" hidden><span class="rail-ic" aria-hidden="true">↻</span><span class="rail-rot">Recarregar</span></button>
+    <button class="rail-it so-pc" type="button" id="rail-aba" title="Abrir este app numa aba nova" hidden><span class="rail-ic" aria-hidden="true">↗</span><span class="rail-rot">Nova aba</span></button>
+    <button class="rail-it so-pc" type="button" id="rail-fechar" title="Fechar este app (libera memória)" hidden><span class="rail-ic" aria-hidden="true">✕</span><span class="rail-rot">Fechar</span></button>
+    <button class="rail-it" type="button" id="rail-eu" aria-haspopup="dialog" title="Meu perfil e preferências"><span class="rail-av" id="rail-av" aria-hidden="true"></span><span class="rail-rot">Eu</span></button>
+  </div>
+</nav>
 <div id="host" role="region" aria-label="Produto aberto">
   <div class="host-barra">
     <button class="ibtn" id="host-lobby" type="button" title="Voltar ao lobby (os produtos abertos continuam rodando)">🌊 Lobby</button>
@@ -777,7 +848,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v2.00 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v2.01 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -791,6 +862,7 @@ const standalone = ()=> (window.matchMedia && matchMedia('(display-mode: standal
 // ── Os produtos da família (a mesma lista do menu de 9 pontinhos: mare-notif(-dev).js) ──
 const SVG_PAINEL = '<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.6"/><path d="M24 8v7M24 33v7M8 24h7M33 24h7M12.7 12.7l5 5M30.3 30.3l5 5M35.3 12.7l-5 5M17.7 30.3l-5 5"/>';
 const SVG_BORDO = '<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>';
+const SVG_CONCHA = '<path d="M24 39 9 21c4-9 26-9 30 0z"/><path d="M24 39 16 16M24 39V14M24 39l8-23" opacity=".75"/>';
 const SVG_TRAV = '<path d="M6 32c6-8 10 4 18-4s12 4 18-4"/><path d="M6 22c6-8 10 4 18-4s12 4 18-4" opacity=".6"/>';
 const P = n => IS_DEV ? n+'-dev.html' : n+'.html';
 // Login único: Maré/Painel mandam quem não está logado pra cá com ?next=<página>. A pessoa FICA no Oceano (vê o Mural e a vitrine) e ganha um
@@ -800,11 +872,15 @@ try{ if(window.parent===window) localStorage.setItem('mare_oceano_dia'+(IS_DEV?'
 const NEXT = (()=>{ try{ const n = new URLSearchParams(location.search).get('next') || ''; return /^(kanban|painel|okr)(-dev)?\.html(\?[^#\s]*)?(#\S*)?$/.test(n) ? n : ''; }catch(e){ return ''; } })();
 const APPS = [
   {id:'kanban', nome:'Maré Digital', sub:'O quadro dos squads', href:P('kanban'), img:'favicon.png', pt:'Gestão ágil dos squads'},
-  {id:'painel', nome:'Painel', sub:'Gestão e pessoas', href:P('painel'), img:'favicon-painel-v2.png?v=3', pt:'A visão de quem coordena'},
+  {id:'cardume', nome:'Concha', sub:'As conversas do time', href:IS_DEV ? 'cardume-dev.html' : '', g:['#7ec8e3','#2563c9'], glifo:SVG_CONCHA, futuro:!IS_DEV, pt:'Conversa por squad e por assunto, sem sair do Oceano'},   // prod: nasce como concha.html (memória do projeto)
   {id:'okr', nome:'Radar', sub:'Objetivos e OKRs', href:P('okr'), img:'favicon-radar.png?v=2', pt:'Estratégia que anda junto com a entrega'},
   {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas ao time', href:'onboarding.html', img:'favicon-bordo-v2.png?v=3', pt:'Quem chega já começa andando'},
+  {id:'painel', nome:'Painel', sub:'Gestão e pessoas', href:P('painel'), img:'favicon-painel-v2.png?v=3', pt:'A visão de quem coordena'},
   {id:'travessia', nome:'Travessia', sub:'Performance e gente', href:'', g:['#3fd3c5','#1b7f8f'], glifo:SVG_TRAV, futuro:true, pt:'O próximo trecho da viagem'},
 ];
+// 🧭 Menu lateral — ordem pedida pelo Caio/Rafa (26/11/2026): o ícone do Oceano (início) e Maré, Concha, Radar, A Bordo, Painel (só para quem o vê).
+const RAIL_ON = IS_DEV;   // fase 1: só no dev
+const RAIL_ORDEM = ['kanban','cardume','okr','onboarding','painel'];
 const EXTRA = [];   // documentos abertos dentro do Oceano (maredigital.html, guia-okr.html): têm aba no host, mas não aparecem nas listas de produtos
 const APP = id => APPS.find(a=>a.id===id) || EXTRA.find(a=>a.id===id);
 function logoInner(a, extra){
@@ -912,6 +988,7 @@ async function garantirCadastro(uidAtual){
 }
 async function iniciarSessao(){
   $('#login').style.display = 'none'; $('#app').style.display = 'block';
+  if(RAIL_ON){ document.body.classList.add('com-rail'); renderRail(); }
   $('#devbar').style.display = IS_DEV ? 'block' : 'none';
   renderEu(); renderTudo(); iniciarSino(); iniciarDicas();
   if(window.MarePerfil) MarePerfil.iniciar({ ler: p=>window._get(window._ref(window._db,p)).then(s=>s.val()), user: ()=>U, editar: ()=>abrirPerfil('cartao') }); setTimeout(()=>{ if(window.MarePerfil) MarePerfil.lembrar(); }, 3500);   // 👤 convite para completar o cartão (adiável)
@@ -1213,6 +1290,7 @@ function renderEu(){
 function appsDoDia(){ return APPS.filter(a=>!a.futuro && visivel(a)); }
 function renderTudo(){
   if(!U) return;
+  try{ renderRail(); }catch(e){}   // pode rodar antes de o host existir
   const nome = nomeCurto(), ultimo = APP(prefs.ultimo) && !APP(prefs.ultimo).futuro && visivel(APP(prefs.ultimo)) ? prefs.ultimo : '';
   $('#ola').textContent = saudacao()+(nome ? ', '+nome : '');
   $('#ola-data').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
@@ -1347,7 +1425,7 @@ async function acaoLink(act, id){
 
 // ── Hospedagem dos produtos dentro do Oceano ──
 const host = {abertos:[], atual:null};
-function abrirAqui(){ return prefs.abrir==='aqui' || (prefs.abrir==='auto' && standalone()); }
+function abrirAqui(){ return prefs.abrir==='aqui' || (prefs.abrir==='auto' && (RAIL_ON || standalone())); }   // com o menu lateral, o padrão (Automático) abre dentro do Oceano; quem escolheu "aba nova" segue igual
 function abrirApp(id, forcarAqui, url){
   const a = APP(id); if(!a || a.futuro || !a.href) return;
   if(!forcarAqui && !abrirAqui()){ window.open(url || a.href, '_blank', 'noopener'); lembrarUltimo(id); return; }
@@ -1369,8 +1447,20 @@ function mostrarHost(id, url){
   $('#host-load').style.display = fr.dataset.ok ? 'none' : 'flex'; $('#host-load-tx').textContent = 'Abrindo '+a.nome+'…';
   $('#host').classList.add('on'); document.body.style.overflow = 'hidden'; atualizarAnimacao();
   document.title = a.nome+' · Oceano'+(IS_DEV?' (dev)':'');
-  lembrarUltimo(id); renderHostTabs();
+  lembrarUltimo(id); renderHostTabs(); renderRail();
   if(location.hash !== '#/'+id) history.pushState(null,'','#/'+id);
+}
+// 🧭 Menu lateral (RAIL_ON/RAIL_ORDEM ficam junto de APPS).
+function renderRail(){
+  if(!RAIL_ON || !$('#rail-apps')) return;
+  const ativo = host.atual || 'lobby';
+  $('#rail-apps').innerHTML = RAIL_ORDEM.map(APP).filter(a=>a && !a.futuro && a.href && visivel(a)).map(a=>{
+    const curto = a.id==='kanban' ? 'Maré' : a.nome;
+    return '<button class="rail-it" type="button" data-rail="'+a.id+'" title="'+esc(a.nome)+'" aria-label="'+esc(a.nome)+(host.abertos.includes(a.id)?' (aberto)':'')+'"'+(ativo===a.id?' aria-current="page"':'')+'>'+logoQuad(a,'-r')+'<span class="rail-rot">'+esc(curto)+'</span>'+(host.abertos.includes(a.id) && ativo!==a.id ? '<span class="rail-aberto" aria-hidden="true"></span>' : '')+'</button>';
+  }).join('');
+  const lb = $('#rail [data-rail="lobby"]'); if(ativo==='lobby') lb.setAttribute('aria-current','page'); else lb.removeAttribute('aria-current');
+  ['rail-recarregar','rail-aba','rail-fechar'].forEach(i=>{ $('#'+i).hidden = !host.atual; });
+  if(U) $('#rail-av').innerHTML = U.photoURL ? '<img alt="" referrerpolicy="no-referrer" src="'+esc(U.photoURL)+'">' : esc(iniciais());
 }
 function renderHostTabs(){
   $('#host-tabs').innerHTML = host.abertos.map(id=>{ const a = APP(id); return '<button class="htab" type="button" role="tab" data-ht="'+id+'" aria-selected="'+(id===host.atual)+'">'+logoPorthole(a,'-h')+esc(a.nome)+'<span class="fx" data-fecha-app="'+id+'" title="Fechar '+esc(a.nome)+'" aria-label="Fechar '+esc(a.nome)+'">✕</span></button>'; }).join('');
@@ -1381,12 +1471,12 @@ function fecharApp(id, silencioso){
   if(silencioso) return;
   if(host.atual===id){ const prox = host.abertos[host.abertos.length-1]; if(prox) mostrarHost(prox); else voltarLobby(); }
   else renderHostTabs();
-  renderAbertos();
+  renderAbertos(); renderRail();
 }
 function voltarLobby(){
   $('#host').classList.remove('on'); document.body.style.overflow = ''; host.atual = null; atualizarAnimacao(); document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
   if(location.hash.indexOf('#/')===0) history.pushState(null,'',location.pathname+location.search);
-  renderAbertos();
+  renderAbertos(); renderRail();
 }
 function renderAbertos(){
   const el = $('#abertos'); if(!el) return;
@@ -2495,6 +2585,26 @@ function mostrarDocumento(h){
   mostrarHost(d.id);
 }
 $('#host-lobby').addEventListener('click', voltarLobby);
+// 🧭 cliques do menu lateral: o app abre SEMPRE dentro do Oceano (é a experiência integrada), independente de "Como abrir os produtos"
+$('#rail').addEventListener('click', e=>{
+  const b = e.target.closest('[data-rail]'); if(!b) return;
+  const id = b.dataset.rail;
+  if(id==='lobby'){ if(host.atual) voltarLobby(); else window.scrollTo({top:0, behavior:'smooth'}); return; }
+  if(host.atual!==id) mostrarHost(id);
+});
+// expandir/recolher (só no computador; vale neste aparelho)
+function railLarga(on, salvar){
+  document.body.classList.toggle('rail-larga', on);
+  const t = $('#rail-tog'); t.textContent = on ? '«' : '»'; t.setAttribute('aria-expanded', String(on)); t.title = on ? 'Recolher o menu' : 'Expandir o menu'; t.setAttribute('aria-label', t.title);
+  if(salvar) try{ localStorage.setItem('oceano_rail_larga', on ? '1' : '0'); }catch(e){}
+}
+try{ railLarga(localStorage.getItem('oceano_rail_larga')==='1', false); }catch(e){ railLarga(false, false); }
+$('#rail-tog').addEventListener('click', ()=>railLarga(!document.body.classList.contains('rail-larga'), true));
+$('#rail-sonar').addEventListener('click', ()=>window.MareSonar && MareSonar.abrir());
+$('#rail-recarregar').addEventListener('click', ()=>$('#host-recarregar').click());
+$('#rail-aba').addEventListener('click', ()=>$('#host-aba').click());
+$('#rail-fechar').addEventListener('click', ()=>{ if(host.atual) fecharApp(host.atual); });
+$('#rail-eu').addEventListener('click', ()=>{ if(host.atual) voltarLobby(); abrirPerfil(); });
 $('#host-recarregar').addEventListener('click', ()=>{ const fr = $('#host-frames iframe.on'); if(fr){ fr.dataset.ok=''; $('#host-load').style.display='flex'; fr.src = fr.src; } });
 $('#host-aba').addEventListener('click', ()=>{ const a = APP(host.atual); if(a) window.open(a.href,'_blank','noopener'); });
 // ── 🔍 Sonar (módulo mare-sonar-dev.js, 10/11/2026): a busca do Oceano. Aqui o lobby só diz o que é dele (produtos, comandos, squads, links, ajuda);

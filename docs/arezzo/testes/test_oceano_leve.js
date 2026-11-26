@@ -37,7 +37,7 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
    await p.evaluate(()=>{ document.hasFocus=()=>true; window.dispatchEvent(new Event('focus')); }); t('voltou o foco: anima de novo', (await pausado(p))===false, '');
    await p.evaluate(()=>{ const s=JSON.parse(localStorage.getItem('oceano_prefs')||'{}'); s.abrir='aqui'; localStorage.setItem('oceano_prefs',JSON.stringify(s)); }); await p.reload(); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('ana','Ana Silva')); await p.waitForTimeout(900);
    await p.click('#tiles .tile-main[data-app="okr"]'); await p.waitForTimeout(800); t('produto aberto por cima (iframe): o lobby de trás pausa', await pausado(p), '');
-   await p.click('#host-lobby, [data-host-lobby], #host-voltar').catch(()=>{}); await p.waitForTimeout(150); t('voltou pro lobby: anima de novo', (await pausado(p))===false, '');
+   await p.click('#rail [data-rail="lobby"]:visible, #host-lobby:visible').catch(()=>{}); await p.waitForTimeout(150); t('voltou pro lobby: anima de novo', (await pausado(p))===false, '');
    t('sem erro de JS', !errs.length, errs); await ctx.close(); }
  { const {ctx,p}=await open(U('ana','Ana Silva'),{clock:true});
    await p.clock.fastForward(30000); t('30 s parado ainda anima', (await pausado(p))===false, '');

@@ -15,9 +15,9 @@ const PAGE=process.env.PAGE||'oceano-dev.html', D=/-dev/.test(PAGE)?'-dev':'';  
  // 3) ADM: saudação, 4 cabines (a Travessia não tem cartão na home), Painel visível
  { const {ctx,p,errs}=await open(U('ana','Ana Silva')); const r=await p.evaluate(()=>({h1:document.getElementById('ola').textContent, cab:[...document.querySelectorAll('#tiles .tile-n')].map(x=>x.textContent.replace('último','')), tiles:document.querySelectorAll('#tiles .tile').length, atalhos:[...document.querySelectorAll('#atalhos button')].map(b=>b.dataset.url), escala:[...document.querySelectorAll('#atalhos a.atalho-ext')].map(x=>x.getAttribute('href')+'|'+x.target), cadastro:window.__log.filter(l=>l[0]==='update').map(l=>l[1])}));
    console.log('ADM:',JSON.stringify(r));
-   t('ADM: a 1ª coisa da tela são os produtos, com saudação curta', /Ana/.test(r.h1) && r.tiles===4, r.h1);
+   t('ADM: a 1ª coisa da tela são os produtos, com saudação curta', /Ana/.test(r.h1) && r.tiles===(D ? 5 : 4), [r.h1, r.tiles]);   // dev: + Concha (menu lateral, 26/11/2026)
    t('atalho 🗓️ Escala abre a página da Escala em aba nova', r.escala.includes('escala'+D+'.html|_blank'), r.escala);
-   t('ADM: atalhos por squad e do Radar', r.atalhos.includes('kanban'+D+'.html?squad=dev') && r.atalhos.includes('okr'+D+'.html?okr=notas'), r.atalhos); t('ADM: vê Maré, Painel, Radar e A Bordo (Travessia só em Conheça o Oceano)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo', r.cab);
+   t('ADM: atalhos por squad e do Radar', r.atalhos.includes('kanban'+D+'.html?squad=dev') && r.atalhos.includes('okr'+D+'.html?okr=notas'), r.atalhos); t('ADM: vê os produtos (dev: na ordem do menu, com a Concha; Travessia só em Conheça o Oceano)', r.cab.join()===(D ? 'Maré Digital,Concha,Radar,A Bordo,Painel' : 'Maré Digital,Painel,Radar,A Bordo'), r.cab);
    t('já tem cadastro: não cria de novo', !r.cadastro.some(x=>/kanban\/usuarios\/ana$/.test(x)), r.cadastro);
    // temas
    await p.click('#btn-eu'); await p.waitForTimeout(200); const padrao=await p.evaluate(()=>document.documentElement.getAttribute('data-theme')); t('tema padrão é o Abrolhos da marca (sem data-theme), como as outras páginas', padrao===null, padrao);
