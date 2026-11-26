@@ -51,6 +51,7 @@ Campo desconhecido em qualquer nó (`$outro`) é recusado; o "tombstone sem text
 
 ## Limpeza e backup (PR separado, R3 de `functions/`)
 `cardumeLimpeza` (`onSchedule`, 1×/dia, madrugada): para cada canal, remove `msgs` com `ts` anterior a `retencao_dias` (padrão **90 dias**, ajustável pelo ADM). **Desde as #tags (25/11):** remove também as entradas de `tags/{canal}/{tag}/{msgId}` das mensagens removidas (e `tags_ult/{canal}/{tag}` que ficar sem nenhuma entrada); senão o índice guarda órfãos para sempre. Deploy: `firebase deploy --only functions:cardumeLimpeza`.
+**📌 Fixadas (26/11):** a limpeza **pula** toda mensagem que tem entrada em `fixadas/{canal}/{msgId}` (decisão do Caio: o que se fixa é para guardar). Quando o canal temático some (etapa 6), `fixadas/{c}` vai junto.
 **Backup:** `cardume` entra em `NOS_GLOBAIS` (`functions/backup/completo.js`) **só no semanal**, como a Travessia — conversa privada; quem administra o projeto lê o bucket. A confirmar com o Caio no PR da limpeza.
 
 ## Testes no simulador (`functions/rules/__tests__/cardumeRules.test.js`, 9 testes)
@@ -117,7 +118,7 @@ Criar temático (aberto e convite) · id sem `t-` ou de squad existente falha ·
 | criar temático | `canais/{c}` + `membros/{c}/{eu}` + `meus/{eu}/{c}` (+ `abertos/{c}` se aberto) |
 | renomear ou mudar `acesso`/`fim` | `canais/{c}/…` + `abertos/{c}` (pôr, atualizar o nome ou tirar, conforme o estado final) |
 
-**Etapa 6 — `cardumeLimpeza` é o único jeito de um temático sumir.** Ao apagar um temático (vencido há mais de `retencao_dias`), remove **junto**: `canais/{c}`, `membros/{c}`, `admins/{c}`, `msgs/{c}`, `ultima/{c}`, `abertos/{c}` e, para cada membro, `meus/{uid}/{c}` e `lidas/{uid}/{c}`. Só bloquear escrita não basta: membros que sobram ainda leriam mensagens que sobram. **Apagar à mão no Console segue a mesma lista.**
+**Etapa 6 — `cardumeLimpeza` é o único jeito de um temático sumir.** Ao apagar um temático (vencido há mais de `retencao_dias`), remove **junto**: `canais/{c}`, `membros/{c}`, `admins/{c}`, `msgs/{c}`, `fixadas/{c}`, `ultima/{c}`, `abertos/{c}` e, para cada membro, `meus/{uid}/{c}` e `lidas/{uid}/{c}`. Só bloquear escrita não basta: membros que sobram ainda leriam mensagens que sobram. **Apagar à mão no Console segue a mesma lista.**
 
 ## Auditoria do Antigravity (#1924, commit 73692bbb) — respostas
 - **(média) Oráculo de membros em `meus`:** quem era de fora gravava `meus/{outra}/{canal}` e, pela resposta, descobria se ela era membro de um canal privado. → `meus/{uid}/{canal}` só é gravado pela **própria pessoa** ou por quem **administra** o canal.
@@ -482,3 +483,30 @@ Regras antes do merge; depois `functions:conchaAvisoMsg`.
 
 ### Fronteira
 Conteúdo de um canal privado passa para outro por decisão de um membro — a regra garante que só membro do canal de origem encaminha, que o conteúdo é o original e que a autoria não é forjada; o aviso protege o caso "mais aberto". Nome do canal de origem e texto entram por `textContent`.
+
+
+## 📌 Fixar no canal — desenho de 26/11/2026 (R3)
+
+**Decisões do Caio (26/11):** só quem **administra** o canal fixa e desafixa (ADM; PO/Organizador da squad no oficial; dona e co-admins no temático), e a mensagem fixada **fica de fora da limpeza** das antigas (requisito anotado em *Limpeza e backup*; a `cardumeLimpeza` ainda não existe, então hoje não há deploy de função).
+
+### Banco — `kanban/cardume/fixadas/{canal}/{msgId}` = `{ por, em }`
+Nó à parte (nada muda em `msgs`, que tem `$outro: false` e regras de editar/apagar que contam os filhos).
+- **Ler:** igual a `msgs` (membro ou ADM).
+- **Fixar (criar):** gestor do canal (`GEST('root')`) **e** que lê o canal (membro ou ADM), canal ativo e (oficial ou temático existente), mensagem do **mesmo** canal existe e não está apagada. `por === auth.uid`, `em` do servidor (janela de 60 s), sem campo extra. **Só criar ou tirar**: regravar uma fixada existente é recusado (nem o ADM).
+- **Desafixar:** gestor (membro ou ADM, canal ativo) ou o ADM a qualquer momento.
+- **Fixada órfã:** qualquer membro (ou o ADM) tira a fixada cuja mensagem está apagada ou não existe. A regra lê a mensagem pelo **estado depois da escrita** (`newData.parent().parent().parent().child('msgs/…')`), para a autora que não é gestora conseguir apagar a mensagem e tirar a fixada **no mesmo `update`** do tombstone (`root` é o estado de antes).
+- **Limite:** a regra não conta; a tela para em 25 por canal.
+
+### Página (`cardume-dev.html` v0.39)
+- 📌 **Fixar / Desafixar** nas ações da mensagem (só para quem administra); a mensagem mostra "📌 Fixada".
+- **ℹ️ Detalhes › 📌 Fixadas (n)**, acima dos membros, para membros e ADM: a mais nova primeiro, com autor e trecho; tocar leva à mensagem (`abrirNaMensagem`, no assunto dela; no celular troca para a conversa). Quem administra vê **Desafixar** em cada item.
+- Fixada fora das 50 carregadas: uma escuta por item (padrão das citações), encerrada ao trocar de canal (`pararFixadas` no `soltarCanal`).
+- Apagar uma mensagem fixada põe `fixadas/{c}/{m}: null` no mesmo `update` do tombstone (só quando ela está fixada: sem a regra no ar, o update inteiro seria recusado).
+- Ajuda: tópico **📌 Mensagens fixadas**.
+
+### Testes
+- `cardumeRules.test.js` (+4): leitura; fixar só gestor que lê o canal; mensagem apagada/inexistente/de outro canal, `por` forjado, hora futura, campo extra e regravar recusados; desafixar (gestor, ADM; membro só a órfã, inclusive no mesmo update do tombstone, com o controle sem o tombstone); temático (dona e co-admin fixam; membro comum e canal vencido não). Sabotagens conferidas: sem a exigência de gestor e lendo a mensagem pelo `root` os testes falham.
+- `test_concha_fixar.js` (16): fixada fora das 50, órfã some e é limpa pelo membro, fixar/desafixar pela mensagem e pela lista, apagar fixada no mesmo update, membro sem 📌, cada escrita nas regras reais.
+
+### Fronteira
+Nó novo com leitura igual à das mensagens (quem lê a fixada já lê a mensagem). A escrita é só de quem administra, exceto a limpeza da órfã, que só remove. O texto exibido na lista é o da própria mensagem, montado na tela (nada copiado para o nó) e posto por `textContent`. **Deploy:** `firebase deploy --only database` **antes do merge** (o merge publica a Concha dev na hora).

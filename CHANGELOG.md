@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 📌 fixar mensagens no canal, em ℹ️ Detalhes › Fixadas (SÓ DEV, cardume v0.39, regra fixadas) — 2026-11-26
+
+Pedido do Caio (comparativo com o Slack, item 2), com as decisões dele: só quem administra o canal fixa e desafixa, e a fixada fica de fora da limpeza das antigas. 📌 Fixar nas ações da mensagem (ADM; PO/Organizador da squad no canal da squad; dona e admins no temático); a mensagem mostra 📌 Fixada. ℹ️ Detalhes › 📌 Fixadas lista para todo o canal, a mais nova primeiro, com autor e trecho; tocar leva à mensagem (no assunto dela). Desafixar na mensagem ou na lista; apagar a mensagem tira a fixada junto. Até 25 por canal. Banco: nó kanban/cardume/fixadas/{canal}/{msgId} = {por, em}, leitura igual à das mensagens. A limpeza (cardumeLimpeza, ainda a criar) vai pular as fixadas. Ajuda com o tópico Mensagens fixadas. Testes: cardumeRules (+4, sabotagens), test_concha_fixar.js (16). Deploy: regras antes do merge.
+
 ### 🐚 Concha: ⏩ encaminhar mensagem para outro canal, com o canal de origem e aviso antes (SÓ DEV, cardume v0.36, regra enc + conchaAvisoMsg) — 2026-11-26
 
 Pedido do Caio (Backlog, #1976), com as decisões dele: mostra o canal de origem e avisa antes. ⏩ Encaminhar nas ações da mensagem leva a mensagem para o 💬 geral de outro canal seu, com "⏩ Encaminhada de Ana · # Dados · data". Avisa antes quando mais gente vai ver: se o destino tem alguém que não está na origem, ou se é um temático aberto ("Encaminhar mesmo assim"); com as mesmas pessoas, não avisa. A regra do banco garante que só quem é da origem encaminha, que o texto/GIF/legenda são os da original, a autoria e o nome atual do canal de origem; a encaminhada não se edita nem pode ser encaminhada de novo; as @menções do texto não avisam outra vez (e quem aparece mencionado recebe o push normal do canal). Banco: campo enc na mensagem. Função conchaAvisoMsg ajustada. Testes: cardumeRules (+2, sabotagens), conchaAvisos (+1), test_concha_encaminhar.js (11). Deploy: regras antes do merge, functions:conchaAvisoMsg depois.

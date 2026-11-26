@@ -846,3 +846,78 @@ test('encaminhada: não se edita; apagar não guarda a origem', () => {
   assert.equal(grava(M('f1'), A.ana, { uid: 'ana', ts, apagada: true }), true, 'apagar');
   assert.equal(grava(M('f1'), A.ana, { uid: 'ana', ts, apagada: true, enc: { c: 'prf', m: 'o1', de: 'bru', ts: ts - 9e5, n: 'Performance' } }), false, 'apagar guardando a origem');
 });
+
+// 📌 Fixar no canal (26/11/2026) — docs/ideias/cardume-v0-banco.md › "Fixar no canal". fixadas/{canal}/{msgId} = { por, em }.
+// Decisões do Caio: só GESTORES fixam e desafixam (ADM, PO/Org da squad no oficial; dona/co-admin no temático); a limpeza pula a fixada.
+const FX = (id, sq) => `kanban/cardume/fixadas/${sq || 'dados'}/${id || 'm1'}`;
+const fx = (por, o) => Object.assign({ por, em: Date.now() }, o || {});
+const resetFx = () => {
+  reset();
+  Object.assign(DB.kanban.usuarios, {
+    pos: { role: 'membro', squads: { dados: true }, squads_roles: { dados: 'po' } },    // PO da squad, membro do canal
+    pon: { role: 'membro', squads: { dados: true }, squads_roles: { dados: 'po' } },    // PO da squad, FORA do canal
+  });
+  DB.kanban.cardume.membros.dados.pos = true;
+  põe('m1', msg()); põe('m2', msg({ uid: 'bru' }));
+};
+A.pos = mk('pos', 'pos@ciahering.com.br'); A.pon = mk('pon', 'pon@ciahering.com.br');
+
+test('📌 fixadas: leitura igual à das mensagens (membro e ADM)', () => {
+  resetFx(); DB.kanban.cardume.fixadas = { dados: { m1: fx('pos') } };
+  assert.equal(lê('kanban/cardume/fixadas/dados', A.ana), true, 'membro vê as fixadas');
+  assert.equal(lê('kanban/cardume/fixadas/dados', A.adm), true, 'ADM vê');
+  assert.equal(lê('kanban/cardume/fixadas/dados', A.gil), false, 'fora do canal não vê');
+  assert.equal(lê('kanban/cardume/fixadas/dados', A.pon), false, 'PO da squad fora do canal não vê (como as mensagens)');
+  assert.equal(lê('kanban/cardume/fixadas', A.adm), false, 'ninguém lê todos os canais de uma vez');
+});
+
+test('📌 fixar: só gestor (que lê o canal) fixa, mensagem viva do próprio canal, só criar', () => {
+  resetFx();
+  assert.equal(grava(FX('m1'), A.pos, fx('pos')), true, 'PO da squad, membro do canal, fixa');
+  assert.equal(grava(FX('m2'), A.adm, fx('adm')), true, 'ADM fixa');
+  assert.equal(grava(FX('m2'), A.ana, fx('ana')), false, 'membro que não é gestor NÃO fixa (decisão do Caio)');
+  assert.equal(grava(FX('m2'), A.pon, fx('pon')), false, 'PO da squad fora do canal não fixa (não lê o canal)');
+  assert.equal(grava(FX('m2'), A.pos, fx('ana')), false, 'por forjado');
+  assert.equal(grava(FX('m2'), A.pos, fx('pos', { em: Date.now() + 120000 })), false, 'hora no futuro');
+  assert.equal(grava(FX('m2'), A.pos, fx('pos', { nota: 'x' })), false, 'campo extra');
+  assert.equal(grava(FX('zz'), A.pos, fx('pos')), false, 'mensagem que não existe');
+  põe('ap', { uid: 'ana', ts: Date.now(), apagada: true });
+  assert.equal(grava(FX('ap'), A.pos, fx('pos')), false, 'mensagem apagada');
+  DB.kanban.cardume.msgs.prf = { o1: msg() };
+  assert.equal(grava(FX('o1'), A.pos, fx('pos')), false, 'mensagem de OUTRO canal não fixa aqui');
+  DB.kanban.cardume.fixadas = { dados: { m1: fx('pos') } };
+  assert.equal(grava(FX('m1'), A.pos, fx('pos')), false, 'não regrava uma fixada existente (só criar ou tirar)');
+  assert.equal(grava(FX('m1'), A.adm, fx('adm')), false, 'nem o ADM regrava');
+});
+
+test('📌 desafixar: gestor e ADM tiram; membro só tira fixada órfã (mensagem apagada), inclusive no MESMO update do tombstone', () => {
+  resetFx(); DB.kanban.cardume.fixadas = { dados: { m1: fx('pos'), m2: fx('pos') } };
+  assert.equal(grava(FX('m1'), A.ana, null), false, 'membro não desafixa uma fixada viva');
+  assert.equal(grava(FX('m1'), A.gil, null), false, 'fora do canal não mexe');
+  assert.equal(grava(FX('m1'), A.pos, null), true, 'gestor desafixa');
+  assert.equal(grava(FX('m2'), A.adm, null), true, 'ADM desafixa');
+  // a autora apaga a própria mensagem fixada: tombstone + tirar a fixada no MESMO update (a regra olha o estado DEPOIS da escrita)
+  resetFx(); DB.kanban.cardume.fixadas = { dados: { m1: fx('pos') } }; const ts = DB.kanban.cardume.msgs.dados.m1.ts;
+  assert.equal(update(RULES, DB, A.ana, { [M('m1')]: { uid: 'ana', ts, apagada: true }, [FX('m1')]: null }), true, 'apagar + desafixar juntos');
+  assert.equal(update(RULES, DB, A.ana, { [FX('m1')]: null }), false, '(controle) sem o tombstone, a membro não desafixa');
+  // depois, em escrita separada (outra aba ainda via a fixada): qualquer membro limpa a órfã
+  resetFx(); põe('ap', { uid: 'bru', ts: Date.now(), apagada: true }); DB.kanban.cardume.fixadas = { dados: { ap: fx('pos'), sumiu: fx('pos') } };
+  assert.equal(grava(FX('ap'), A.ana, null), true, 'membro limpa fixada de mensagem apagada');
+  assert.equal(grava(FX('sumiu'), A.ana, null), true, 'membro limpa fixada de mensagem que não existe mais');
+  assert.equal(grava(FX('ap'), A.gil, null), false, 'fora do canal, nem a órfã');
+});
+
+test('📌 temático: dona e co-admin fixam; canal vencido não fixa', () => {
+  resetFx();
+  const t = 't-black-friday', agora = Date.now();
+  DB.kanban.cardume.canais[t] = tema({ criado: agora - 864e5 });
+  DB.kanban.cardume.membros[t] = { gil: true, ana: true, bru: true };
+  DB.kanban.cardume.admins = { [t]: { bru: true } };
+  DB.kanban.cardume.msgs[t] = { t1: msg(), t2: msg() };
+  assert.equal(grava(FX('t1', t), A.gil, fx('gil')), true, 'dona fixa');
+  assert.equal(grava(FX('t2', t), A.bru, fx('bru')), true, 'co-admin fixa');
+  assert.equal(grava(FX('t2', t), A.ana, fx('ana')), false, 'membro comum do temático não fixa');
+  DB.kanban.cardume.canais[t].fim = agora - 1000;
+  assert.equal(grava(FX('t2', t), A.gil, fx('gil')), false, 'canal vencido não fixa');
+  assert.equal(grava(FX('t2', t), A.adm, fx('adm')), false, 'nem o ADM fixa em canal vencido');
+});
