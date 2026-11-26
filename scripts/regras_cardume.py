@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# ⚠️ DEFASADO desde a v0.22 (25/11/2026): #tags, avisos, seções, assuntos, encaminhar, edição em 15 min, emoji e 📌 fixadas foram
+#    editados direto no database.rules.json. NÃO RODE: reescreveria o bloco cardume inteiro e apagaria tudo isso. Sincronizar é tarefa própria.
 # Gerador do bloco kanban/cardume de database.rules.json (Concha, ex-Cardume). Fonte da verdade do bloco: edite AQUI e rode
 #   python3 scripts/regras_cardume.py   (reescreve o bloco "cardume" antes de "agente_painel"; git diff deve mostrar só o que você quis)
 # Depois: cd functions && node --test rules/__tests__/cardumeRules.test.js  e  firebase deploy --only database (Caio).

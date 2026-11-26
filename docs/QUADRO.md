@@ -16,6 +16,8 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada do 📌 fixar da Concha: regra `kanban/cardume/fixadas` (só gestor que lê o canal fixa; só criar ou tirar; órfã removível por membro no estado depois da escrita, inclusive no update do tombstone) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md#-fixar-no-canal--desenho-de-26112026-r3) |
+| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do 📌 fixar (nó novo `fixadas`, escrita só de quem administra) | [desenho](ideias/cardume-v0-banco.md#-fixar-no-canal--desenho-de-26112026-r3) |
 | Codex | R3 | 🔍 Revisão cruzada do ⏩ encaminhar da Concha: `enc` (só na criação; membro da origem; conteúdo/GIF/legenda iguais; nome atual do canal de origem; não re-encaminha; sem `resp`), edição bloqueada e o aviso por membros — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` do ⏩ encaminhar (conteúdo de canal privado indo para outro canal por decisão de um membro) | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada da janela de 15 min da edição na Concha (`editado ≤ ts + 900000` em `kanban/cardume/msgs`) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
@@ -50,6 +52,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 📌 Concha: regra nova `kanban/cardume/fixadas` (**antes do merge** da PR do fixar, a partir da branch `claude/concha-fixar`) | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
