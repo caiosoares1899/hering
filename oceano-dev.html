@@ -426,7 +426,9 @@ body.com-rail #rail{display:flex;position:fixed;z-index:110;left:0;top:0;bottom:
 body.com-rail{padding-left:var(--rail-w);transition:padding-left .18s ease;}
 body.com-rail #host{left:var(--rail-w);}
 .rail-topo{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
-.rail-tog{width:28px;height:22px;border:0;border-radius:7px;background:transparent;color:var(--txt3);cursor:pointer;font-size:13px;line-height:1;}
+.rail-tog{width:40px;height:36px;border:0;border-radius:10px;background:transparent;color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;margin-bottom:2px;}
+.rail-tog svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s ease;}
+body.rail-larga .rail-tog .seta{transform:translateX(-1px) scaleX(-1);transform-origin:15px 12px;}
 .rail-tog:hover{background:var(--glass);color:var(--txt);}
 .rail-tog:focus-visible{outline:2px solid var(--accent);}
 /* expandido: ícone e nome lado a lado */
@@ -739,7 +741,7 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
 <!-- ═══ HOSPEDAGEM: produtos abertos dentro do Oceano ═══ -->
 <nav id="rail" aria-label="Apps do Oceano">
   <div class="rail-topo">
-    <button class="rail-tog" type="button" id="rail-tog" aria-expanded="false" aria-controls="rail" title="Expandir o menu">»</button>
+    <button class="rail-tog" type="button" id="rail-tog" aria-expanded="false" aria-controls="rail" title="Expandir o menu" aria-label="Expandir o menu"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path class="seta" d="m13.5 10 2 2-2 2"/></svg></button>
     <button class="rail-it" type="button" data-rail="lobby" title="Início do Oceano" aria-label="Início"><svg class="rail-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg><span class="rail-rot">Início</span></button>
   </div>
   <div class="rail-sep" aria-hidden="true"></div>
@@ -851,7 +853,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v2.02 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v2.03 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -2598,7 +2600,7 @@ $('#rail').addEventListener('click', e=>{
 // expandir/recolher (só no computador; vale neste aparelho)
 function railLarga(on, salvar){
   document.body.classList.toggle('rail-larga', on);
-  const t = $('#rail-tog'); t.textContent = on ? '«' : '»'; t.setAttribute('aria-expanded', String(on)); t.title = on ? 'Recolher o menu' : 'Expandir o menu'; t.setAttribute('aria-label', t.title);
+  const t = $('#rail-tog'); t.setAttribute('aria-expanded', String(on)); t.title = on ? 'Recolher o menu' : 'Expandir o menu'; t.setAttribute('aria-label', t.title);
   if(salvar) try{ localStorage.setItem('oceano_rail_larga', on ? '1' : '0'); }catch(e){}
 }
 try{ railLarga(localStorage.getItem('oceano_rail_larga')==='1', false); }catch(e){ railLarga(false, false); }

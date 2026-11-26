@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · Oceano: botão de expandir/recolher o menu pequeno e apagado (oceano v2.03, só dev)
+
+- **(SÓ DEV)** Relato do Caio: o » do menu lateral era um caractere de 13px em cinza-claro (`--txt3`), difícil de ver e de acertar. Virou um ícone de painel lateral de traço (22px, cor `--txt2`, área de toque 40×36), com uma seta que vira para o outro lado quando o menu está expandido.
+
 ### 2026-11-26 · Concha v0.50: envio pendente preserva o rascunho de outro assunto
 
 SÓ DEV. Ao enviar no geral e abrir outro assunto antes da confirmação, um rascunho idêntico podia sumir da caixa e o foco voltava ao compositor. A confirmação agora confere conta, canal e assunto antes de mexer na caixa, e limpa no aparelho apenas o texto enviado. Teste: test_concha_rascunho_envio.js.
