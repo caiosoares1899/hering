@@ -2119,7 +2119,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.152 · okr-dev</div>
+<div class="version">v2.153 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2234,18 +2234,32 @@ function loadAdmList(){
   }).catch(()=>{}).finally(()=>{ _okrAdmOk = true; _okrCheckAccessReady(); });
 }
 
-// ── Usuários globais (kanban/usuarios) — versão enxuta do loadGlobalUsers() do painel:
-// só popula o cache que o OKR lê (nomes/fotos/papéis) e re-renderiza o OKR. ──
+// ── Diretório público para nomes/fotos/papéis; os controles da própria conta usam o cadastro dela. ──
 const _GU_TTL_MS = 10*60*1000;
-// Visualizador externo (painel_viewers) NÃO lê kanban/usuarios (e-mails, notificações e tokens de push de todo mundo — as regras fecham, 2026-10-07): lê o diretório magro usuarios_publicos (nome/foto/sigla/papel).
-function _usuariosNode(){ return window._isPainelViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'; }
 function loadGlobalUsers(force){
+  const uid = window._currentUser?.uid;
+  if(!uid || _okrBootedUid !== uid) return;
   if(_guInflight){ if(force) _guQueued = true; return; }
   if(!force && _guLoadedAt && Date.now()-_guLoadedAt < _GU_TTL_MS) return;
   _guInflight = true;
-  window._get(window._ref(window._db,_usuariosNode())).then(snap=>{
+  const viewer = !!window._isPainelViewer;
+  const euAntes = _globalUsersCache[uid];
+  Promise.all([
+    window._get(window._ref(window._db,'kanban/usuarios_publicos')),
+    viewer ? null : window._get(window._ref(window._db,'kanban/usuarios/'+uid)),
+  ]).then(([diretorio, cadastro])=>{
+    if(window._currentUser?.uid !== uid || !!window._isPainelViewer !== viewer) return;
+    const pessoas = diretorio.val() || {};
+    if(!viewer){
+      const eu = cadastro.val();
+      const euAgora = _globalUsersCache[uid];
+      // A escolha de torre gravada enquanto a leitura estava em curso vale nesta atualização.
+      if(euAgora !== euAntes && euAgora) pessoas[uid] = {...eu, torre:euAgora.torre};
+      else if(eu) pessoas[uid] = eu;
+      else delete pessoas[uid]; // espelho órfão não dá papel nem acesso aos controles
+    }
     _guLoadedAt = Date.now(); _guRetries = 0;
-    _globalUsersCache = snap.val() || {};
+    _globalUsersCache = pessoas;
     _okrFeriasIniciar();
     if(window._currentUser && typeof _okrSetCurrentInit==='function') _okrSetCurrentInit(window._currentUser); // sigla do kanban, se a pessoa já tiver
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // avatares de responsável/participante dependem deste cache
@@ -10444,9 +10458,9 @@ window.addEventListener('auth-change',e=>{
   }
 });
 
-// Cadastro de quem só usa o OKR: cria/cura kanban/usuarios/{uid} no 1º login (nome/e-mail/foto — é o que faz a
-// pessoa aparecer nos seletores de Responsável/Participante e no 👥 Global Users do painel, onde um ADM pode torná-la
-// 🎯 Gestor OKR). SEM init/papel/squads/inscrito de propósito: abrir esta página não matricula ninguém em squad nenhum;
+// Cadastro de quem só usa o OKR: cria/cura kanban/usuarios/{uid} no 1º login (nome/e-mail/foto).
+// O Radar usa este cadastro na sessão da própria pessoa e o espelho público para mostrá-la a outras contas.
+// SEM init/papel/squads/inscrito de propósito: abrir esta página não matricula ninguém em squad nenhum;
 // se a pessoa abrir o kanban depois, o cadastro completo (sigla, squad, papel) roda lá — o registro parcial é tratado
 // como "usuário novo" (autoRegistrar → `_parcial`). Cria com UPDATE (mescla), nunca set: se o kanban gravar o cadastro
 // completo no mesmo instante, um set nosso o sobrescreveria. Devolve 'novo' | 'curado' | false.
@@ -10470,7 +10484,7 @@ function _okrEnsureUserRecord(user){
     return false;
   }).catch(err=>{ console.error('[okr] falha no cadastro do usuário:', err); return false; });
 }
-// Depois do cadastro: relê a lista de usuários (a leitura do boot pode ter chegado ANTES da gravação, deixando a própria
+// Depois do cadastro: relê o cache de pessoas (a leitura do boot pode ter chegado ANTES da gravação, deixando a própria
 // pessoa fora dos seletores/avatares por até 10 min) e dá as boas-vindas só quando o registro foi criado agora.
 function _okrAposCadastro(res){
   if(!res) return;
