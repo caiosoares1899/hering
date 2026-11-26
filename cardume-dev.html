@@ -320,7 +320,18 @@ button.msg-gif{cursor:pointer;}
   .acoes-msg button{min-height:44px;padding:4px 12px;font-size:13px;border-color:var(--glass-b);border-radius:var(--r);background:rgba(var(--slate-rgb),.6);}
   .acoes-msg .rot{display:inline;}
 }
-#versao-aviso{position:fixed;left:0;right:0;top:0;z-index:90;text-align:center;background:#12314a;color:#e8f4fd;border-bottom:1px solid rgba(56,182,255,.4);padding:8px;font-size:13px;}
+/* 🔄 Versão nova: tela cheia que trava a Concha até recarregar (como no Maré) */
+#atualizar-ov{position:fixed;inset:0;z-index:999999;background:rgba(var(--ink-rgb),.9);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;}
+[data-theme="light"] #atualizar-ov{background:rgba(7,40,60,.6);}
+#atualizar-ov[hidden]{display:none;}
+#atualizar-ov .caixa{width:min(380px,100%);max-height:90vh;overflow:auto;text-align:center;padding:24px 20px;border:1px solid var(--accent);border-radius:18px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+#atualizar-ov h2{font-family:var(--ff-d);}
+#atualizar-ov .ic{font-size:40px;margin-bottom:8px;}
+#atualizar-ov h2{margin:0 0 8px;font-size:18px;}
+#atualizar-ov p{margin:0 0 14px;font-size:13px;color:var(--txt2);}
+#atualizar-ov textarea{width:100%;min-height:90px;margin:0 0 8px;font:inherit;font-size:12px;}
+#atualizar-ov .copia{text-align:left;margin:0 0 14px;}
+#atualizar-ov .copia[hidden]{display:none;}
 @media (max-width:899px){
   .shell{padding:8px;gap:8px;}
   h1{font-size:22px;}
@@ -335,7 +346,19 @@ button.msg-gif{cursor:pointer;}
 <div class="ocean" aria-hidden="true"></div>
 <div class="bubble-wrap" id="bwrap" aria-hidden="true"></div>
 <div class="fish-wrap" id="fwrap" aria-hidden="true"></div>
-<div id="versao-aviso" hidden>Há uma versão nova da Concha. <button class="primary" type="button" onclick="location.reload()">Atualizar</button></div>
+<div id="atualizar-ov" role="alertdialog" aria-modal="true" aria-labelledby="atualizar-t" aria-describedby="atualizar-d" hidden>
+  <div class="caixa">
+    <div class="ic" aria-hidden="true">🐚</div>
+    <h2 id="atualizar-t">Nova versão da Concha</h2>
+    <p id="atualizar-d">Atualize para continuar. O que você estava escrevendo no campo de mensagem fica guardado.</p>
+    <div class="copia" id="atualizar-copia" hidden>
+      <p id="atualizar-copia-t">Isto ainda não foi salvo. Copie antes de atualizar:</p>
+      <textarea id="atualizar-texto" readonly aria-labelledby="atualizar-copia-t"></textarea>
+      <button type="button" id="atualizar-copiar">📋 Copiar</button>
+    </div>
+    <button type="button" class="primary" id="atualizar-agora">Atualizar agora</button>
+  </div>
+</div>
 <div class="shell">
   <header class="topo">
     <div class="marca">
@@ -432,7 +455,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.45 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.46 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -2691,13 +2714,52 @@ onAuthStateChanged(auth, u => {
 });
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').hidden) fecharModal(); });
 
-// Atualização: avisa quando o version.json aponta uma versão nova.
-async function checarVersao() {
-  if (document.hidden) return;
-  try { const v = await (await fetch('version.json?_=' + Date.now(), { cache: 'no-store' })).json(); if (v[VERSION_KEY] && v[VERSION_KEY] !== VERSION) $('versao-aviso').hidden = false; } catch (e) {}
+// 🔄 Atualização obrigatória (pedido do Caio, 26/11/2026; mesmo comportamento do Maré): quando o version.json aponta versão nova, uma tela cheia trava a
+// Concha até recarregar. O rascunho do campo de mensagem já é guardado no aparelho a cada tecla (por canal e assunto) e volta depois. O que se perderia
+// — a mensagem que estava sendo EDITADA — aparece numa caixa para copiar; um "apagar" ainda dentro dos 5 s não acontece (lado seguro) e a tela avisa.
+let versaoNova = false, versaoChecadaEm = 0;
+function textoNaoSalvo() {
+  const partes = [], ed = document.querySelector('.editor textarea');
+  if (ed && ed.value.trim()) partes.push('Mensagem que você estava editando:\n' + ed.value.trim());
+  return partes.join('\n\n');
 }
+function mostrarAtualizacao() {
+  if (versaoNova) return; versaoNova = true;
+  if (atual) lsSet(chaveRascunho(atual, assuntoAtual), entrada.value);   // garante o rascunho do campo antes de travar
+  try { fecharModal(); } catch (e) {}
+  const ov = $('atualizar-ov'), txt = textoNaoSalvo(), apagando = pendentes.size;
+  pendentes.forEach(x => clearTimeout(x.timer)); pendentes.clear();   // o código velho não grava mais: o "apagar" ainda nos 5 s NÃO acontece (a tela avisa)
+  if (apagando) $('atualizar-d').textContent = 'Atualize para continuar. O que você estava escrevendo no campo de mensagem fica guardado. ' + (apagando === 1 ? 'A mensagem que você estava apagando NÃO será apagada' : 'As ' + apagando + ' mensagens que você estava apagando NÃO serão apagadas') + ' (apague de novo depois, se quiser).';
+  if (txt) {
+    $('atualizar-copia').hidden = false; $('atualizar-texto').value = txt;   // .value: texto puro
+    $('atualizar-copiar').onclick = async () => {
+      const t = $('atualizar-texto'); t.focus(); t.select(); let ok = false;
+      try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) { try { ok = document.execCommand('copy'); } catch (e2) {} }
+      $('atualizar-copiar').textContent = ok ? '✓ Copiado' : 'Selecionado: use Ctrl+C';
+    };
+  }
+  $('atualizar-agora').onclick = () => location.reload();
+  ov.hidden = false; (txt ? $('atualizar-copiar') : $('atualizar-agora')).focus();
+  ov.addEventListener('keydown', e => {   // o foco não sai da tela (Tab circula entre os botões); Esc não fecha
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); return; }
+    if (e.key !== 'Tab') return;
+    const fs = [...ov.querySelectorAll('button, textarea')].filter(x => !x.closest('[hidden]'));
+    const i = fs.indexOf(document.activeElement); e.preventDefault();
+    fs[(i + (e.shiftKey ? -1 : 1) + fs.length) % fs.length].focus();
+  }, true);
+}
+async function checarVersao() {
+  if (document.hidden || versaoNova) return;
+  versaoChecadaEm = Date.now();
+  try {
+    const r = await fetch('version.json?_=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+    const v = await r.json();
+    if (v[VERSION_KEY] && v[VERSION_KEY] !== VERSION) mostrarAtualizacao();
+  } catch (e) {}   // sem rede: não trava
+}
+const checarAoVoltar = () => { if (!document.hidden && Date.now() - versaoChecadaEm > 10000) checarVersao(); };   // aba esquecida, app retomado, rede que voltou
 setTimeout(checarVersao, 4000); setInterval(checarVersao, 5 * 60 * 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) checarVersao(); });
+document.addEventListener('visibilitychange', checarAoVoltar); window.addEventListener('pageshow', checarAoVoltar); window.addEventListener('online', checarAoVoltar);
 
 // Gancho só para testes automatizados (somente leitura).
 window.__cardume = { get estado() { return { atual, meus: Object.keys(meus), msgs: msgs.length, souAdm: souAdm(), pendentes: pendentes.size, versao: VERSION }; } };

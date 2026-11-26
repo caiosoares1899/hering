@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🔄 atualização obrigatória quando sai versão nova, como no Maré (SÓ DEV, cardume v0.46) — 2026-11-26
+
+Pedido do Caio (26/11). Antes, a versão nova só mostrava uma faixa no topo, que dava para ignorar. Agora, quando o version.json aponta versão nova, uma tela cheia trava a Concha até 'Atualizar agora' (Esc não fecha, o foco não sai dela). O rascunho do campo de mensagem já fica guardado no aparelho e volta depois. A mensagem que a pessoa estava editando aparece numa caixa com 📋 Copiar. Um 'apagar' ainda dentro dos 5 s é cancelado e a tela avisa que a mensagem NÃO foi apagada. Confere a versão a cada 5 min e também ao voltar para a aba, quando o app é retomado ou a rede volta (no máximo a cada 10 s). Teste: test_concha_atualizar.js (18, 1280 px escuro e 390 px claro).
+
 ### 🐚 Concha: 📌 fixada no topo (faixa como no WhatsApp) e 📜 regras do canal (SÓ DEV, cardume v0.41, regra fixadas/t) — 2026-11-26
 
 Pedido do Caio (26/11), depois do 📌 fixar da v0.39. Dois tipos de fixada. 📌 No topo do canal: faixa no alto da conversa, até 3, uma por vez; tocar no 📌 (1/3, 2/3…) passa para a próxima e tocar no texto leva à mensagem. 📜 Regra do canal: em ℹ️ Detalhes › 📜 Regras do canal, com o texto inteiro, até 10, numeradas na ordem em que foram criadas; quem abre o canal vê 'Este canal tem N regras · Ver regras' na 1ª vez (e quando entra regra nova). Quem administra escolhe o tipo ao fixar e pode mover entre topo e regras ou desafixar. Fixadas de antes (sem tipo) viram regras. Banco: campo t na fixada; o gestor troca o tipo, sem mudar quem fixou nem quando. Ajuda atualizada. Testes: cardumeRules (+1), test_concha_fixar.js (24). Deploy: regras antes do merge.
