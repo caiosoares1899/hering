@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🔒 Gantt: o 📣 Pedir atualização não lê mais a caixa de notificações de outra pessoa (B7 do fechamento de kanban/usuarios; SÓ DEV, mare-gcal-dev v11)
+
+Fase B7 de docs/ideias/usuarios-leitura-fechar.md. Antes, para cada destinatário o pedido lia kanban/usuarios/{uid}/notificacoes/{id} para não regravar o de hoje; na fase C a caixa alheia deixa de ser legível e o pedido quebraria. Agora pedido.gravar grava direto na caixa de outra pessoa: as regras dão o só-cria (membro não regrava; ninguém além da dona deixa um lido como não lido) e a recusa conta como já tinha. Na própria caixa (o -dev manda só para quem pediu) a conferência fica. PO/ADM ainda regravam um pedido de hoje não lido, com o mesmo aviso, que continua não lido. Teste: test_gantt_pedido.js (+M7b, 21/21). ?v do mare-gcal-dev 10→11 no Maré e no Radar.
+
 ### 2026-11-26 · Concha: ADM fora do canal via conversa sem campo de escrever (cardume-dev v0.38)
 
 - **Sintoma (Caio, 25/11):** depois de ativar o canal Dev, a conversa abria sem campo de escrever e dizia "Nenhuma mensagem ainda. Diga oi! 👋".

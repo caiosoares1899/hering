@@ -60,6 +60,14 @@ const seed = () => ({ kanban: {
     await p.evaluate(() => { const n = Object.values(window.__store.kanban.usuarios.mem.notificacoes).find(n => n.cal === 'comercial' && /_mem_/.test(n.id)); n.read = true; });
     await p.click('#gantt-filtros .gantt-pedir'); await p.waitForTimeout(300);
     t('M7. aviso já lido continua lido (não volta como novo)', await p.evaluate(() => Object.values(window.__store.kanban.usuarios.mem.notificacoes).find(n => n.cal === 'comercial' && /_mem_/.test(n.id)).read === true));
+    // B7 (fase C de kanban/usuarios): na caixa de OUTRA pessoa grava direto, sem ler; quem já tem o de hoje recusa (regra) e conta como "já tinha"
+    const g = await p.evaluate(async () => { window.__log.length = 0; const av = { id: 'gantt_pedido_comercial_mem_20261112', type: 'gantt_pedido', title: 't', sub: '', cal: 'comercial', read: false, ts: '2026-11-12T13:00:00.000Z' };
+      window.__store.kanban.usuarios.bia.notificacoes = { [av.id]: Object.assign({}, av, { read: true }) };
+      const r = await MareGCal.pedido.gravar(['ana', 'bia'], av, 'mem');
+      return { r, leuAlheia: window.__log.filter(([op, pth]) => op === 'get' && /^kanban\/usuarios\/(ana|bia)\//.test(pth)).length,
+        ana: !!(window.__store.kanban.usuarios.ana.notificacoes || {})[av.id], biaLida: window.__store.kanban.usuarios.bia.notificacoes[av.id].read === true }; });
+    t('M7b. outra pessoa: grava sem ler a caixa dela (0 leituras); quem já tinha conta como "já tinha" e o lido segue lido',
+      g.leuAlheia === 0 && g.ana && g.biaLida && g.r.enviados === 1 && g.r.ja === 1 && g.r.erros === 0, g);
     await p.evaluate(() => ganttAba('digital')); await p.waitForTimeout(150);
     t('M8. na 🧭 Digital não há 📣 (pede-se na aba de cada calendário)', await p.evaluate(() => !document.querySelector('#gantt-filtros .gantt-pedir')));
     // aviso recebido: abre o Gantt no calendário e já o 📤
