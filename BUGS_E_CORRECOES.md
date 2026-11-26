@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🌊 Oceano: entrada de meta lançada pelo Oceano ficava sem o nome de quem lançou (SÓ DEV, oceano v1.98)
+
+Achado ao exportar a meta de Novembro (26/11): todas as entradas a partir de 10/11 tinham 'quem' vazio. O módulo de Metas grava user.nome no histórico; o Maré e o Painel passam {uid, nome}, mas o Oceano passava o objeto do login do Firebase, que não tem 'nome'. O uid sempre foi gravado certo (dá para recuperar o nome das entradas antigas pelo diretório). Agora o Oceano passa {uid, nome: displayName ou e-mail}. Teste: test_oceano_meta_nome.js (falha no oceano.html de prod).
+
 ### 2026-11-26 · 🐚 Concha: aviso de mensagem nova sem rastro por pessoa — o log da função passa a dizer por que cada membro recebeu ou não (functions:conchaAvisoMsg)
 
 /monitorarbugs de 26/11, relato do Caio: André mandou mensagem e o Caio recebeu o aviso; o Caio mandou e o André não. A função conchaAvisoMsg só registrava o total ('N push(es)'): quem não tinha aparelho com push saía num return silencioso, e o motivo de quem foi pulado (🔕/🚫, vendo a conversa, Não Perturbe, conta de fora, trava de 2 min, menção que já tem o push dela) era descartado. Sem isso não dá para separar 'o servidor pulou' de 'o push saiu e o aparelho não mostrou'. Agora cada mensagem gera UMA linha de log com {uid: motivo} (sem e-mail): sem_token, mencao, nada, silenciado, assunto_silenciado, vendo, dnd, fora, trava, enviado:… ou falhou_todos. O retorno ganha motivos (teste). Causa do relato ainda não confirmada: ver o log no horário da mensagem e o script de diagnóstico do aparelho. Teste: conchaAvisos.test.js (+1, falha no código anterior). Deploy: functions:conchaAvisoMsg.
