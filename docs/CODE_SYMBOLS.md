@@ -5,7 +5,7 @@
 > Em arquivos > 2,5 MB onde `read_file` acusa binário (`kanban-dev.html`, `kanban.html`, `guia-okr.html`), use `node scripts/mare-cli.js slice <arquivo> <inicio> <fim>` para ler o trecho exato e `"patches"` no `.mare-ship.json` para editar.
 
 ## `kanban-dev.html` (44905 linhas · 1756 funções)
-- **CSS:** L31–L4692, L7459–L7486 | **JS:** L4693–L4703 (classic), L4704–L4763 (classic), L7803–L8136 (module), L8145–L44722 (classic) | **Módulos:** mare-login-dev.js?v=3 (L7802), mare-notif-dev.js?v=52 (L8137), mare-metas-dev.js?v=19 (L8138), mare-dicas-dev.js?v=19 (L8139), mare-sonar-dev.js?v=8 (L8140), mare-timer-dev.js?v=1 (L8141), mare-gcal-dev.js?v=10 (L8142), mare-ferias-dev.js?v=7 (L8143)
+- **CSS:** L31–L4692, L7459–L7486 | **JS:** L4693–L4703 (classic), L4704–L4763 (classic), L7803–L8136 (module), L8145–L44722 (classic) | **Módulos:** mare-login-dev.js?v=3 (L7802), mare-notif-dev.js?v=52 (L8137), mare-metas-dev.js?v=19 (L8138), mare-dicas-dev.js?v=19 (L8139), mare-sonar-dev.js?v=8 (L8140), mare-timer-dev.js?v=1 (L8141), mare-gcal-dev.js?v=11 (L8142), mare-ferias-dev.js?v=7 (L8143)
 - **Consts (257):** safeLS:L7810 · FB_OVERRIDE_NS:L7832 · firebaseConfig:L7833 · app:L7842 · db:L7843 · auth:L7844 · provider:L7845 · calProvider:L7852 · msProvider:L7868 · msPersonalProvider:L7877 · _fotoBase:L8000 · ADM_UIDS:L8179 · TRUSTED_DOMAINS:L8191 · _dominiosTxt:L8192 · WORKER_URL:L8323 · _urlParams:L8326 · _legacySquadMap:L8334 · _legacySquad:L8335 · ACTIVE_SQUAD:L8342 · SQUAD_META_DEFAULT:L8369 · SQUAD_LABELS:L8389 · FB:L8393 · today:L8571 · _SQ_ID_OK:L8576 · _DRAWER_IDS:L8606 · DADOS_DIAS_BOARD:L8615 · PALETTE:L8770 · DEFAULT_COLUMNS:L8779 · _COR_COLUNA_OK:L8790 · CARD_COVER_COLORS:L8816 · _superRollupScroll:L9007 · CARD_SECTIONS:L9019 · _CARD_SECTIONS_COM_TOGGLE_PROPRIO:L9065 · _ganttCal:L9081 · _ganttMc:L9084 · AGENTE_AGIL_MENTION_INIT:L9134 · AGENTE_AGIL_MENTION_ENTRY:L9135 · TODOS_MENTION_INIT:L9147 · TODOS_MENTION_ENTRY:L9148 · AGENTE_AGIL_MENTION_SQUADS:L9156 (+217)
 - _bfSemanaInfo:L4721 · _signIn:L7937 · _signInMicrosoft:L7943 · _signInMicrosoftPessoal:L7948 · _signOut:L7952 · _reloadAuthUser:L7982 · _relerFotoGoogle:L8001 · _requestCalendarScope:L8066 · _signInIdToken:L8102 · _signInRedirect:L8103
 - _signInMicrosoftRedirect:L8114 · _signInMicrosoftPessoalRedirect:L8118 · _gcalTokenLimpar:L8170 · _gcalToken:L8171 · _isTrustedDomainEmail:L8193 · _loginProviderMismatchMsg:L8200 · _mantemLocal:L8226 · _irParaOceano:L8227 · _oceanoDoDia:L8249 · _rejectLoginAfterReload:L8268
@@ -476,11 +476,11 @@
 - hojeSP:L35 · parseIso:L46 · addDias:L53 · diasEntre:L59 · br:L65 · brAno:L70 · permitido:L75 · novoId:L81 · configurar:L96 · resolverUid:L100
 - periodosDoUid:L112 · ouvir:L123 · ausente:L149 · periodoDe:L158 · injetarCss:L170 · montar:L278 · sobrepoe:L747 · passagem:L753 · MareFerias:L884
 
-## `mare-gcal-dev.js` (721 linhas · 14 funções)
-- **JS:** L1–L721 (js)
-- **Consts (15):** CALS:L26 · NOME:L32 · ROT_NOVO:L34 · GRUPOS:L36 · LINHA_COR:L71 · CORES:L73 · NOME_COR:L74 · LARGO:L75 · CONSOLIDADO:L79 · ABAS:L82 · MES_L:L92 · MES_C:L93 · DOW:L94 · PEDIDO:L132 · CSS:L192
-- permitido:L97 · linhaNoGrupo:L101 · linhasDe:L102 · doDia:L105 · css:L318 · favoritaControle:L324 · leituraFechar:L361 · leituraAbrir:L362 · quando:L383 · diaHtml:L390
-- diaPopFechar:L424 · diaPop:L425 · montar:L455 · MareGCal:L719
+## `mare-gcal-dev.js` (729 linhas · 14 funções)
+- **JS:** L1–L729 (js)
+- **Consts (15):** CALS:L26 · NOME:L32 · ROT_NOVO:L34 · GRUPOS:L36 · LINHA_COR:L71 · CORES:L73 · NOME_COR:L74 · LARGO:L75 · CONSOLIDADO:L79 · ABAS:L82 · MES_L:L92 · MES_C:L93 · DOW:L94 · PEDIDO:L132 · CSS:L200
+- permitido:L97 · linhaNoGrupo:L101 · linhasDe:L102 · doDia:L105 · css:L326 · favoritaControle:L332 · leituraFechar:L369 · leituraAbrir:L370 · quando:L391 · diaHtml:L398
+- diaPopFechar:L432 · diaPop:L433 · montar:L463 · MareGCal:L727
 
 ## `mare-gxl-dev.js` (497 linhas · 20 funções)
 - **JS:** L1–L497 (js)

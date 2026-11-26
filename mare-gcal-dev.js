@@ -149,8 +149,23 @@
         const sq=u.squads||{}; return (P.squads||[]).some(id=>sq[id]);
       }).map(([uid])=>uid);
     },
-    // Manda o pedido. Um aviso por pessoa, id fixo por calendário + quem pediu + dia: se a pessoa já tem o pedido de hoje, NÃO regrava (as regras
-    // já recusam criar de novo para membro; PO/ADM poderiam sobrescrever — por isso a conferência antes). Uma falha não para os demais.
+    // Grava o aviso em cada caixa (uma falha não para as demais). 🔒 B7 (26/11/2026, docs/ideias/usuarios-leitura-fechar.md): na caixa de OUTRA
+    // pessoa grava direto, SEM ler — a caixa alheia deixa de ser legível na fase C. As regras dão o "só cria": membro não regrava um id que já
+    // existe e ninguém além da dona transforma um aviso LIDO em não lido; a recusa (PERMISSION_DENIED) conta como "já tinha". PO/ADM ainda
+    // regravam um pedido de hoje NÃO lido — o mesmo aviso, que continua não lido (inofensivo). Na PRÓPRIA caixa (o -dev manda só para quem
+    // pediu) confere antes, porque a dona pode regravar a sua e o 2º pedido reabriria o lido.
+    async gravar(uids, aviso, eu){
+      let enviados=0, ja=0, erros=0;
+      for(const uid of uids){
+        const r=window._ref(window._db, 'kanban/usuarios/'+uid+'/notificacoes/'+aviso.id);
+        try{
+          if(uid===eu && (await window._get(r)).exists()){ ja++; continue; }
+          await window._set(r, aviso); enviados++;
+        }catch(e){ if(/permission|denied/i.test(String(e&&(e.code||e.message)||e))) ja++; else erros++; }
+      }
+      return { enviados, ja, erros };
+    },
+    // Manda o pedido. Um aviso por pessoa, id fixo por calendário + quem pediu + dia: o 2º pedido do dia não regrava (ver gravar).
     // AMBIENTE DE TESTE (-dev): a caixa de notificações é a mesma do prod — o aviso vai SÓ para quem pediu (dá para testar push e clique
     // sem incomodar ninguém); `producao` diz para quem iria de verdade. Devolve {enviados, ja, erros, total, teste, producao:[nomes]}.
     async enviar(cal){
@@ -162,14 +177,7 @@
       const meu=pubs[u.uid]||{}, nome=String(meu.nome||u.displayName||'Alguém').slice(0,60);
       const id='gantt_pedido_'+cal+'_'+u.uid.replace(/[^A-Za-z0-9_-]/g,'').slice(0,40)+'_'+diaHoje();
       const aviso={ id, type:'gantt_pedido', title:('📣 '+nome+' pediu para atualizar o '+NOME[cal]).slice(0,120), sub:'Toque para abrir o 📤 Atualizar planilha do '+NOME[cal], cal, de:u.uid, dev:suf()==='_dev', read:false, ts:new Date().toISOString() };
-      let enviados=0, ja=0, erros=0;
-      for(const uid of uids){
-        const r=window._ref(window._db, 'kanban/usuarios/'+uid+'/notificacoes/'+id);
-        try{
-          if((await window._get(r)).exists()){ ja++; continue; }   // já tem o pedido de hoje: não regrava (nem para PO/ADM)
-          await window._set(r, aviso); enviados++;
-        }catch(e){ if(/permission|denied/i.test(String(e&&e.message||e))) ja++; else erros++; }
-      }
+      const { enviados, ja, erros }=await pedido.gravar(uids, aviso, u.uid);
       return { enviados, ja, erros, total:uids.length, teste, producao };
     },
     quem:cal=>(PEDIDO[cal]||{}).quem||'',
