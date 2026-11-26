@@ -245,3 +245,15 @@ Piloto na squad Dados em `cardume-dev.html`. O botão GIF fica ao lado do emoji,
 - **Contrato proposto:** acrescentar `gif: { provedor: "klipy", id }` opcional à mensagem. Validar o formato do ID contra a documentação, aceitar a referência apenas na criação, preservar autor e horário, remover a referência ao apagar e preservar mensagens antigas. Definir um texto alternativo curto para histórico e registro no card. Buscar a mídia por ID, agrupar consultas quando o provedor permitir, carregar só mensagens visíveis e exibir texto alternativo se a mídia falhar.
 - **Fronteira:** aceitar mídia HTTPS somente dos hosts oficiais confirmados. Renderizar por propriedades do DOM e manter URLs arbitrárias fora do campo de mídia. Testar criação e leitura por membro, rejeição de não membro e ID inválido, edição sem troca de GIF, exclusão sem referência residual e mensagens antigas. Testar também falha da API, troca de canal durante busca e confirmação explícita do envio.
 - **Coordenação:** mudança R3 por alterar o contrato das mensagens do Firebase. O Claude assume o desenho final das regras e a revisão antes do código. Verificar a liberação de `cardume-dev.html` no Quadro antes de editar a página.
+
+## Concha: canal Geral
+
+Inclui o canal **#oceano**, dedicado a reunir as atualizações do ecossistema Oceano. Os dois canais seguem as mesmas permissões de leitura e publicação.
+
+No fluxo de `/subirproprod`, preparar um aviso para o **#oceano** com um resumo das mudanças da promoção e a assinatura visível **🤖 Agente Ágil**. A assinatura vai no rodapé da mensagem. A autoria registrada continua sendo a conta autorizada que publica.
+
+Pedido de 26/11/2026. Exibir **Geral** e **#oceano** automaticamente na lista de toda conta com acesso à Concha, sem precisar entrar no canal. Pessoas sem papel de ADM podem ler as mensagens. A publicação é exclusiva de ADM e a permissão precisa valer no Firebase.
+
+Como verificar a lacuna atual. Em dev, abra um canal temático configurado como aberto, entre com uma conta Hering sem papel de ADM e observe que o compositor fica disponível. O canal aberto atual permite publicação por membros.
+
+Aceite para implementação. Testar no dev com uma conta ADM e uma conta comum. As duas veem os dois canais e leem as mensagens. A publicação funciona com ADM e a regra do banco recusa publicação para a conta comum, inclusive pelo fluxo de encaminhar. Aplicar a mesma definição de ADM das permissões existentes. Encaminhar ao Claude por envolver regras do banco e novo acesso compartilhado.
