@@ -267,8 +267,12 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 .faixa-fix{display:grid;gap:4px;margin:8px 16px 4px;}
 .fix-topo{display:flex;align-items:stretch;gap:0;border:1px solid var(--glass-b);border-left:3px solid var(--accent);border-radius:8px;background:rgba(var(--slate-rgb),.6);overflow:hidden;}
 .fix-topo button{border:0;border-radius:0;background:transparent;min-height:40px;}
-.fix-topo .fix-ic{padding:4px 10px;font-size:13px;white-space:nowrap;color:var(--txt2);}
-.fix-topo .fix-txt{flex:1;min-width:0;display:flex;gap:6px;align-items:baseline;text-align:left;padding:4px 10px 4px 0;font-size:13px;}
+.fix-topo .fix-ic{display:flex;align-items:center;padding:4px 10px;font-size:13px;white-space:nowrap;color:var(--txt2);}
+.fix-topo .fix-txt{flex:1;min-width:0;display:flex;gap:6px;align-items:center;text-align:left;padding:4px 10px 4px 0;font-size:13px;}
+.fix-topo .fix-nav{display:flex;flex-direction:column;justify-content:center;padding:0 2px;}
+.fix-topo .fix-nav button{min-height:0;min-width:28px;height:18px;padding:0 8px;font-size:8px;line-height:1;color:var(--txt2);opacity:.75;}
+.fix-topo .fix-nav button:hover,.fix-topo .fix-nav button:focus-visible{opacity:1;color:var(--txt);}
+@media (pointer:coarse){.fix-topo .fix-nav button{height:22px;min-width:36px;}}
 .fix-topo .fix-txt b{white-space:nowrap;} .fix-topo .fix-txt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;color:var(--txt2);}
 .fix-regras-aviso{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:rgba(var(--slate-rgb),.6);font-size:13px;}
 .fix-regras-aviso .grow{flex:1;}
@@ -427,7 +431,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.41 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.42 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1145,6 +1149,7 @@ function verRegras() {
   if (window.matchMedia('(max-width: 899px)').matches) $('app').dataset.tela = 'lado';
   renderFaixaFix(); const r = document.querySelector('#lado .regras h3'); if (r) { r.setAttribute('tabindex', '-1'); r.focus(); }
 }
+const fixFoco = sel => { const x = $('faixa-fix').querySelector(sel); if (x) x.focus(); };   // depois de trocar a fixada, o foco fica no mesmo controle
 function renderFaixaFix() {   // a faixa do alto: a fixada do topo (uma por vez) e o aviso de regras
   const f = $('faixa-fix'), id = atual;
   if (!id || vendoMencoes || vendoTag || vendoPessoa || !(souMembro(id) || souAdm())) { f.hidden = true; f.replaceChildren(); return; }
@@ -1154,17 +1159,30 @@ function renderFaixaFix() {   // a faixa do alto: a fixada do topo (uma por vez)
     if (fixIdx >= topo.length) fixIdx = 0;
     const k = topo[fixIdx], m = msgFixada(k), pronta = m && m !== '…';
     const w = el('div', 'fix-topo'); w.setAttribute('role', 'region'); w.setAttribute('aria-label', 'Mensagens fixadas no topo');
-    const ic = el('button', 'fix-ic', '📌' + (topo.length > 1 ? ' ' + (fixIdx + 1) + '/' + topo.length : '')); ic.type = 'button';
-    ic.setAttribute('aria-label', topo.length > 1 ? 'Próxima fixada (' + (fixIdx + 1) + ' de ' + topo.length + ')' : 'Mensagem fixada');
-    ic.title = topo.length > 1 ? 'Ver a próxima fixada' : 'Fixada no topo';
-    ic.onclick = () => { if (topo.length > 1) { fixIdx = (fixIdx + 1) % topo.length; renderFaixaFix(); const n = $('faixa-fix').querySelector('.fix-ic'); if (n) n.focus(); } else ir.click(); };
+    const passo = d => { fixIdx = (fixIdx + d + topo.length) % topo.length; renderFaixaFix(); };
+    const ic = el('span', 'fix-ic', '📌' + (topo.length > 1 ? ' ' + (fixIdx + 1) + '/' + topo.length : '')); ic.setAttribute('aria-hidden', 'true');
     const ir = el('button', 'fix-txt'); ir.type = 'button';
     const quem = pronta ? nomePessoa(autorDe(m)) : '';
     if (quem) ir.append(el('b', '', quem));
     ir.append(el('span', '', pronta ? resumoMsg(m) : '…'));
-    ir.setAttribute('aria-label', 'Ir para a mensagem fixada' + (quem ? ' de ' + quem : ''));
+    ir.setAttribute('aria-label', 'Ir para a mensagem fixada' + (topo.length > 1 ? ' ' + (fixIdx + 1) + ' de ' + topo.length : '') + (quem ? ', de ' + quem : ''));
     ir.onclick = () => abrirNaMensagem(id, k);
-    w.append(ic, ir); f.append(w);
+    w.append(ic, ir);
+    if (topo.length > 1) {   // ▲ ▼ discretas no canto; roda do mouse, deslizar o dedo e ↑ ↓ também trocam
+      const nav = el('div', 'fix-nav');
+      const sobe = el('button', '', '▲'), desce = el('button', '', '▼');
+      sobe.type = desce.type = 'button';
+      sobe.setAttribute('aria-label', 'Fixada anterior'); sobe.title = 'Anterior'; desce.setAttribute('aria-label', 'Próxima fixada'); desce.title = 'Próxima';
+      sobe.onclick = () => { passo(-1); fixFoco('[aria-label="Fixada anterior"]'); }; desce.onclick = () => { passo(1); fixFoco('[aria-label="Próxima fixada"]'); };
+      nav.append(sobe, desce); w.append(nav);
+      let rodaT = 0;
+      w.addEventListener('wheel', e => { if (Math.abs(e.deltaY) < 4) return; e.preventDefault(); const ag = Date.now(); if (ag - rodaT < 350) return; rodaT = ag; passo(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+      let y0 = null;
+      w.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, { passive: true });
+      w.addEventListener('touchend', e => { if (y0 === null) return; const dy = e.changedTouches[0].clientY - y0; y0 = null; if (Math.abs(dy) > 24) passo(dy < 0 ? 1 : -1); }, { passive: true });
+      w.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const sel = document.activeElement && document.activeElement.classList.contains('fix-txt') ? '.fix-txt' : null; passo(e.key === 'ArrowDown' ? 1 : -1); if (sel) fixFoco(sel); } });
+    }
+    f.append(w);
   }
   if (novas) {
     const a = el('div', 'fix-regras-aviso'); a.setAttribute('role', 'status');
@@ -1845,7 +1863,7 @@ const AJUDA = [
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
   { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
-  { id: 'fixadas', ic: '📌', t: 'Fixadas no topo e regras do canal', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela, e escolhe o tipo:\n- **📌 No topo do canal**: aparece numa **faixa no alto da conversa**, como no WhatsApp. Até ' + MAX_FIX.topo + '; com mais de uma, toque no 📌 (1/3, 2/3…) para passar para a próxima. Tocar no texto leva até a mensagem.\n- **📜 Regra do canal**: fica em **ℹ️ Detalhes › 📜 Regras do canal**, com o texto inteiro (até ' + MAX_FIX.regra + '). Na 1ª vez que alguém abre o canal (ou quando entra uma regra nova), aparece o aviso **Este canal tem regras · Ver regras**.\n- Para **mover** entre topo e regras ou **desafixar**: 📌 Fixada, nas ações da mensagem, ou ℹ️ Detalhes. Apagar a mensagem tira ela das fixadas.\n- Mensagem fixada fica de fora da limpeza das antigas.' },
+  { id: 'fixadas', ic: '📌', t: 'Fixadas no topo e regras do canal', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela, e escolhe o tipo:\n- **📌 No topo do canal**: aparece numa **faixa no alto da conversa**, como no WhatsApp. Até ' + MAX_FIX.topo + ', uma por vez (📌 1/3, 2/3…): para trocar, use as setinhas **▲ ▼** no canto, **role a roda do mouse** sobre a faixa, **deslize o dedo** para cima ou para baixo no celular, ou **↑ ↓** no teclado. Tocar no texto leva até a mensagem.\n- **📜 Regra do canal**: fica em **ℹ️ Detalhes › 📜 Regras do canal**, com o texto inteiro (até ' + MAX_FIX.regra + '). Na 1ª vez que alguém abre o canal (ou quando entra uma regra nova), aparece o aviso **Este canal tem regras · Ver regras**.\n- Para **mover** entre topo e regras ou **desafixar**: 📌 Fixada, nas ações da mensagem, ou ℹ️ Detalhes. Apagar a mensagem tira ela das fixadas.\n- Mensagem fixada fica de fora da limpeza das antigas.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
   { id: 'tema', ic: '🎨', t: 'Tema (claro, escuro e Vice City)', txt: '- **🎨** no alto da Concha escolhe o tema: **🌊 Como no Oceano** (o padrão, segue o que você escolheu no Oceano), **🌙 Abrolhos** (escuro), **☀️ Lençóis** (claro), **🌅 Entardecer** ou **🌴 Vice City**.\n- A escolha vale só para a Concha, neste aparelho, e muda na hora (também nas outras abas da Concha).' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },

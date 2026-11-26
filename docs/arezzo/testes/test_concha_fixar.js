@@ -56,7 +56,7 @@ async function conferirRegras(p, quem) {
   // ── PO da squad (gestora do canal) ──
   { const { ctx, p, errs } = await abre(PAU);
     let f = await faixa(p);
-    t('faixa do topo mostra a fixada de topo FORA das 50 carregadas (escuta própria); a órfã some', !f.hidden && /Decisão: o banner sai na segunda/.test(f.txt) && f.ic === '📌', f);
+    t('faixa do topo mostra a fixada de topo FORA das 50 carregadas (escuta própria); a órfã some; com 1, sem setas', !f.hidden && /Decisão: o banner sai na segunda/.test(f.txt) && f.ic === '📌' && await p.evaluate(() => !document.querySelector('#faixa-fix .fix-nav')), f);
     t('fixada antiga sem tipo vira 📜 regra; aviso "Este canal tem 1 regra"', /Este canal tem 1 regra/.test(f.aviso), f);
     const l = await lado(p);
     t('ℹ️ Detalhes: 📌 No topo (1/3) e 📜 Regras do canal (1), com o texto inteiro formatado', l && l.hs[0] === '📌 No topo (1/3)' && l.hs[1] === '📜 Regras do canal (1)' && /<(strong|b)>Regra 1:<\/(strong|b)>/.test(l.regras[0]), l);
@@ -66,8 +66,14 @@ async function conferirRegras(p, quem) {
     t('fixar no topo grava {por, em, t: "topo"}', c.fixadas.dados.n54 && c.fixadas.dados.n54.t === 'topo' && c.fixadas.dados.n54.por === 'pau', c.fixadas.dados.n54);
     f = await faixa(p);
     t('com 3 no topo: a faixa mostra a mais nova e "📌 1/3"', f.ic === '📌 1/3' && /mensagem 53/.test(f.txt), f);
-    await p.click('#faixa-fix .fix-ic'); await p.waitForTimeout(150); f = await faixa(p);
-    t('tocar no 📌 passa para a próxima (2/3)', f.ic === '📌 2/3' && /mensagem 54/.test(f.txt), f);
+    await p.click('#faixa-fix [aria-label="Próxima fixada"]'); await p.waitForTimeout(150); f = await faixa(p);
+    t('▾ passa para a próxima (2/3) e o foco fica na seta', f.ic === '📌 2/3' && /mensagem 54/.test(f.txt) && await p.evaluate(() => document.activeElement && document.activeElement.getAttribute('aria-label') === 'Próxima fixada'), f);
+    await p.click('#faixa-fix [aria-label="Fixada anterior"]'); await p.waitForTimeout(150); f = await faixa(p);
+    t('▴ volta (1/3); de 1 para trás dá a volta até a última (3/3)', f.ic === '📌 1/3' && await (async () => { await p.click('#faixa-fix [aria-label="Fixada anterior"]'); await p.waitForTimeout(150); return (await faixa(p)).ic === '📌 3/3'; })(), f);
+    await p.hover('#faixa-fix .fix-txt'); await p.mouse.wheel(0, 120); await p.waitForTimeout(200); f = await faixa(p);
+    t('rolar a roda sobre a faixa passa para a próxima (3/3 → 1/3)', f.ic === '📌 1/3', f);
+    await p.focus('#faixa-fix .fix-txt'); await p.keyboard.press('ArrowDown'); await p.waitForTimeout(150); f = await faixa(p);
+    t('↓ no teclado com o foco na faixa passa para a próxima (2/3), foco no texto', f.ic === '📌 2/3' && await p.evaluate(() => document.activeElement && document.activeElement.classList.contains('fix-txt')), f);
     await p.hover('[data-msg="n52"]'); await p.click('[data-msg="n52"] [aria-label^="Fix"]'); await p.waitForTimeout(150);
     t('topo cheio (3): a opção 📌 fica desligada e diz "Cheio"', await p.evaluate(() => { const b = [...document.querySelectorAll('.md .tipo-fix button')].find(x => /No topo/.test(x.textContent)); return !!b && b.disabled && /Cheio/.test(document.querySelector('.md .tipo-fix').textContent); }), 0);
     await p.click('.md .tipo-fix button:has-text("Regra do canal")'); await p.waitForTimeout(300);
