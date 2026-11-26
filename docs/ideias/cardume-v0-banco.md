@@ -510,3 +510,10 @@ Nó à parte (nada muda em `msgs`, que tem `$outro: false` e regras de editar/ap
 
 ### Fronteira
 Nó novo com leitura igual à das mensagens (quem lê a fixada já lê a mensagem). A escrita é só de quem administra, exceto a limpeza da órfã, que só remove. O texto exibido na lista é o da própria mensagem, montado na tela (nada copiado para o nó) e posto por `textContent`. **Deploy:** `firebase deploy --only database` **antes do merge** (o merge publica a Concha dev na hora).
+
+### Tipos de fixada — 26/11/2026 (pedido do Caio, depois da v0.39)
+**Decisões do Caio:** dois tipos. **📌 Topo**: faixa no alto da conversa, como no WhatsApp, **até 3, uma por vez** (tocar no 📌 passa para a próxima; tocar no texto leva à mensagem). **📜 Regra do canal**: em ℹ️ Detalhes › 📜 Regras do canal, com o **texto inteiro**, até 10, na ordem em que foram criadas, e o aviso **"Este canal tem N regras · Ver regras"** na 1ª vez (e quando entra regra nova), guardado neste aparelho (`concha_regras_{canal}`), dispensado por Ver regras ou ✕.
+- **Banco:** campo `t` (`topo` | `regra`), obrigatório para criar. Fixada antiga sem `t` vale como **regra** (era a lista de ℹ️ Detalhes). O **gestor troca o tipo** (ramo novo do `.write`: existe antes e depois, gestor que lê o canal, canal ativo, mensagem viva); `por` e `em` ficam imutáveis depois de criados. Limites (3 / 10) só na tela.
+- **Página (v0.41):** 📌 Fixar abre a escolha do tipo (o cheio fica desligado: "Cheio: desafixe uma antes"); fixada abre **Mover para…** e **Desafixar**. A mensagem mostra "📌 Fixada no topo" ou "📜 Regra do canal".
+- **Testes:** `cardumeRules` (+1: tipo obrigatório e da lista; gestor/ADM trocam, membro não; trocar não muda `por`/`em`; trocar só o campo `t`; mensagem apagada não troca), `test_concha_fixar.js` (24, gestora a 1280 e membro a 390).
+- **Deploy:** `firebase deploy --only database` antes do merge.

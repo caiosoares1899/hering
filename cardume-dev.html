@@ -263,7 +263,21 @@ textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;
 .citacao b{color:var(--txt);white-space:nowrap;}
 .citacao .sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .citacao:hover{border-left-color:var(--accent);}
-.fixada-tag{display:inline-block;margin:0 0 2px;font-size:11px;color:var(--txt2);}   /* 📌 Fixada (no topo da mensagem) */
+.fixada-tag{display:inline-block;margin:0 0 2px;font-size:11px;color:var(--txt2);}   /* 📌 Fixada no topo / 📜 Regra do canal (no alto da mensagem) */
+.faixa-fix{display:grid;gap:4px;margin:8px 16px 4px;}
+.fix-topo{display:flex;align-items:stretch;gap:0;border:1px solid var(--glass-b);border-left:3px solid var(--accent);border-radius:8px;background:rgba(var(--slate-rgb),.6);overflow:hidden;}
+.fix-topo button{border:0;border-radius:0;background:transparent;min-height:40px;}
+.fix-topo .fix-ic{padding:4px 10px;font-size:13px;white-space:nowrap;color:var(--txt2);}
+.fix-topo .fix-txt{flex:1;min-width:0;display:flex;gap:6px;align-items:baseline;text-align:left;padding:4px 10px 4px 0;font-size:13px;}
+.fix-topo .fix-txt b{white-space:nowrap;} .fix-topo .fix-txt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;color:var(--txt2);}
+.fix-regras-aviso{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:rgba(var(--slate-rgb),.6);font-size:13px;}
+.fix-regras-aviso .grow{flex:1;}
+.regra-item{margin:0 0 10px;padding:8px 10px;border-left:3px solid var(--glass-b);border-radius:6px;background:rgba(var(--slate-rgb),.45);}
+.regra-item .regra-txt{font-size:13px;overflow-wrap:anywhere;}
+.regra-item .linha-regra{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:11px;color:var(--txt2);}
+.regra-item .linha-regra .grow{flex:1;}
+.regra-item .linha-regra button{min-height:30px;padding:2px 8px;font-size:12px;}
+.md .tipo-fix{display:grid;gap:8px;margin:8px 0;}
 .fix-item{display:flex;gap:6px;align-items:center;margin:0 0 4px;}
 .fix-item .citacao{flex:1;min-width:0;margin:0;}
 .gif-escolhido{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:6px;border:1px dashed var(--glass-b);border-radius:12px;}
@@ -356,6 +370,7 @@ button.msg-gif{cursor:pointer;}
         <button type="button" id="b-lado" aria-label="Detalhes do canal" aria-pressed="false">ℹ️</button>
       </header>
       <div class="assuntos-barra" id="assuntos-barra" role="toolbar" aria-label="Assuntos do canal" hidden></div>
+      <div class="faixa-fix" id="faixa-fix" hidden></div>
       <div class="faixa-alvo" id="faixa-alvo" hidden></div>
       <div class="log" id="log" role="log" aria-label="Mensagens do canal" aria-live="polite" tabindex="0"></div>
       <div class="rodape" id="rodape" hidden>
@@ -412,7 +427,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.40 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.41 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -983,6 +998,7 @@ function renderMsgs() {
   if (ed) rascunhoEdicao = { id: editando, valor: ed.value, ini: ed.selectionStart, fim: ed.selectionEnd, foco: document.activeElement === ed };
   const log = $('log'), noFim = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
   log.replaceChildren();
+  renderFaixaFix();
   if (vendoMencoes) { renderMencoes(log); return; }
   if (vendoTag) { renderTag(log); return; }
   if (vendoPessoa) { renderPessoa(log); return; }
@@ -1042,13 +1058,22 @@ function acaoBtn(cls, ic, rot, nome) {   // ícone + rótulo; na pílula do comp
   const b = el('button', cls); b.type = 'button'; b.append(el('span', 'ic', ic), el('span', 'rot', ' ' + rot));
   b.setAttribute('aria-label', nome || rot); b.title = nome || rot; return b;
 }
-// ═══ 📌 Fixadas (docs/ideias/cardume-v0-banco.md › "Fixar no canal"): fixadas/{canal}/{msgId} = {por, em}; só quem administra fixa ═══
-const MAX_FIX = 25;            // a regra não conta: o limite é da tela
-let fixadas = {};              // msgId → {por, em} do canal aberto
+// ═══ 📌 Fixadas (docs/ideias/cardume-v0-banco.md › "Fixar no canal"): fixadas/{canal}/{msgId} = {por, em, t}; só quem administra fixa ═══
+// Dois tipos (pedido do Caio, 26/11): 'topo' = faixa no alto do canal, como no WhatsApp (até 3, uma por vez); 'regra' = 📜 Regras do canal,
+// em ℹ️ Detalhes (até 10), com aviso na 1ª vez. Fixada antiga sem t conta como regra (era a lista de ℹ️ Detalhes).
+const MAX_FIX = { topo: 3, regra: 10 };   // a regra do banco não conta: o limite é da tela
+let fixadas = {};              // msgId → {por, em, t} do canal aberto
+let fixIdx = 0;                // qual das fixadas do topo a faixa mostra
 const fixVivas = {};           // msgId → mensagem das fixadas fora das 50 (escuta viva até trocar de canal; null = não existe mais)
 const ehFixada = id => !!(fixadas[id] && typeof fixadas[id] === 'object');
+const tipoFix = id => (fixadas[id] && fixadas[id].t === 'topo') ? 'topo' : 'regra';
 const podeFixar = id => gestor(id) && (souMembro(id) || souAdm()) && !vencido(canais[id]);
 function msgFixada(id) { const o = msgs.find(x => x.id === id) || msgsCanal.find(x => x.id === id); return o || fixVivas[id]; }
+function fixadasDo(tipo) {   // vivas, a mais nova primeiro ('…' = ainda carregando conta como viva)
+  return Object.keys(fixadas).filter(k => ID_RE.test(k) && ehFixada(k) && tipoFix(k) === tipo)
+    .filter(k => { const m = msgFixada(k); return m !== null && !(m && m.apagada); })
+    .sort((a, b) => (fixadas[b].em || 0) - (fixadas[a].em || 0));
+}
 function ouvirFixadas(id) {
   ouvir('fixadas', ref(db, B + 'fixadas/' + id), s => {
     if (atual !== id) return;
@@ -1056,49 +1081,135 @@ function ouvirFixadas(id) {
     Object.keys(fixVivas).forEach(k => { if (!fixadas[k]) { parar('fx:' + k); delete fixVivas[k]; } });
     Object.keys(fixadas).forEach(k => {
       if (!ID_RE.test(k) || fixVivas[k] !== undefined) return;
-      fixVivas[k] = msgs.find(x => x.id === k) ? undefined : '…';   // fora da janela: escuta a mensagem (editar/apagar atualizam a lista)
-      if (fixVivas[k] === '…') ouvir('fx:' + k, ref(db, B + 'msgs/' + id + '/' + k), sm => { if (atual !== id) return; fixVivas[k] = sm.val() ? Object.assign({ id: k }, sm.val()) : null; limparFixadaOrfa(id, k); renderLado(); }, () => { fixVivas[k] = null; });
+      fixVivas[k] = msgs.find(x => x.id === k) ? undefined : '…';   // fora da janela: escuta a mensagem (editar/apagar atualizam a faixa e a lista)
+      if (fixVivas[k] === '…') ouvir('fx:' + k, ref(db, B + 'msgs/' + id + '/' + k), sm => { if (atual !== id) return; fixVivas[k] = sm.val() ? Object.assign({ id: k }, sm.val()) : null; limparFixadaOrfa(id, k); renderLado(); renderFaixaFix(); }, () => { fixVivas[k] = null; });
     });
     renderLado(); renderMsgs();
-  }, () => { fixadas = {}; renderLado(); });
+  }, () => { fixadas = {}; renderLado(); renderFaixaFix(); });
 }
-function pararFixadas() { parar('fixadas'); parar('fx'); fixadas = {}; Object.keys(fixVivas).forEach(k => delete fixVivas[k]); }
+function pararFixadas() { parar('fixadas'); parar('fx'); fixadas = {}; fixIdx = 0; Object.keys(fixVivas).forEach(k => delete fixVivas[k]); }
 // Mensagem fixada que foi apagada (ou sumiu): a regra deixa qualquer membro tirar a fixada órfã. Silencioso: outra aba pode ter tirado antes.
 function limparFixadaOrfa(canal, k) {
   const m = msgFixada(k);
   if (!ehFixada(k) || m === undefined || m === '…' || (m && !m.apagada)) return;
   if (souMembro(canal) || souAdm()) set(ref(db, B + 'fixadas/' + canal + '/' + k), null).catch(() => {});
 }
-async function alternarFixada(m) {
-  const canal = atual; if (!podeFixar(canal)) return;
-  const r = ref(db, B + 'fixadas/' + canal + '/' + m.id);
-  if (ehFixada(m.id)) {
-    try { await set(r, null); toast('📌 Mensagem desafixada.'); } catch (e) { falhou('desafixar', e); }
-    return;
-  }
-  if (Object.keys(fixadas).length >= MAX_FIX) { toast('📌 Já são ' + MAX_FIX + ' mensagens fixadas neste canal. Desafixe uma em ℹ️ Detalhes para fixar outra.'); return; }
-  try { await set(r, { por: user.uid, em: serverTimestamp() }); toast('📌 Fixada. Ela aparece em ℹ️ Detalhes › Fixadas para todo o canal.'); }
-  catch (e) { falhou('fixar', e); }
+const NOME_TIPO = { topo: '📌 No topo do canal', regra: '📜 Regra do canal' };
+async function fixarComo(m, t) {
+  const canal = atual; if (!podeFixar(canal) || !MAX_FIX[t]) return;
+  const ja = ehFixada(m.id), de = ja ? tipoFix(m.id) : '';
+  if (de === t) return;
+  if (fixadasDo(t).length >= MAX_FIX[t]) { toast((t === 'topo' ? '📌 O topo já tem ' : '📜 Já são ') + MAX_FIX[t] + (t === 'topo' ? ' mensagens' : ' regras') + '. Desafixe uma para pôr esta.'); return; }
+  try {
+    if (ja) await set(ref(db, B + 'fixadas/' + canal + '/' + m.id + '/t'), t);
+    else await set(ref(db, B + 'fixadas/' + canal + '/' + m.id), { por: user.uid, em: serverTimestamp(), t });
+    if (t === 'topo') fixIdx = 0;
+    toast(t === 'topo' ? '📌 Fixada no topo do canal.' : '📜 Virou regra do canal (em ℹ️ Detalhes).');
+  } catch (e) { falhou('fixar', e); }
 }
-function secaoFixadas(id) {   // ℹ️ Detalhes › 📌 Fixadas: a mais nova primeiro; clicar leva à mensagem (no assunto dela, se tiver)
-  const s = el('div', 'fixadas');
-  const ids = Object.keys(fixadas).filter(k => ID_RE.test(k) && ehFixada(k)).sort((a, b) => (fixadas[b].em || 0) - (fixadas[a].em || 0));
-  const vivas = ids.filter(k => { const m = msgFixada(k); return m !== null && !(m && m.apagada); });
-  s.append(el('h3', '', '📌 Fixadas (' + vivas.length + ')'));
-  if (!vivas.length) { s.append(el('p', 'subtitulo', podeFixar(id) ? 'Nada fixado. Para fixar uma decisão ou um link: 📌 Fixar nas ações da mensagem.' : 'Nada fixado ainda. Quem administra o canal fixa as mensagens importantes.')); return s; }
-  vivas.forEach(k => {
-    const m = msgFixada(k), linha = el('div', 'fix-item');
-    const b = el('button', 'citacao'); b.type = 'button';
-    const quem = m && m !== '…' ? nomePessoa(autorDe(m)) : '';
-    b.append(el('span', '', '📌')); if (quem) b.append(el('b', '', quem)); b.append(el('span', 'sub', m && m !== '…' ? resumoMsg(m) : '…'));
-    b.title = 'Fixada por ' + nomePessoa(fixadas[k].por) + (typeof fixadas[k].em === 'number' ? ' · ' + dataHora(fixadas[k].em) : '');
-    b.setAttribute('aria-label', 'Ir para a mensagem fixada' + (quem ? ' de ' + quem : '') + '. ' + b.title);
-    b.onclick = () => { if (window.matchMedia('(max-width: 899px)').matches) $('app').dataset.tela = 'conversa'; abrirNaMensagem(id, k); };
-    linha.append(b);
-    if (podeFixar(id)) { const x = el('button', '', 'Desafixar'); x.type = 'button'; x.setAttribute('aria-label', 'Desafixar a mensagem' + (quem ? ' de ' + quem : '')); x.onclick = () => alternarFixada({ id: k }); linha.append(x); }
-    s.append(linha);
+async function desafixar(id) {
+  if (!podeFixar(atual)) return;
+  try { await set(ref(db, B + 'fixadas/' + atual + '/' + id), null); toast('Mensagem desafixada.'); } catch (e) { falhou('desafixar', e); }
+}
+function modalFixar(m) {   // escolher o tipo (ou mover / desafixar a que já está fixada)
+  if (!podeFixar(atual)) return;
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t'); ov.append(f);
+  const ja = ehFixada(m.id), atualT = ja ? tipoFix(m.id) : '';
+  const h = el('h2', '', ja ? '📌 Mensagem fixada' : '📌 Fixar mensagem'); h.id = 'md-t'; f.append(h);
+  f.append(el('p', 'enc-prev', resumoMsg(m) || '(GIF)'));
+  if (ja) f.append(el('p', 'subtitulo', 'Está em: ' + NOME_TIPO[atualT] + '.'));
+  const box = el('div', 'tipo-fix');
+  [['topo', 'Aparece numa faixa no alto da conversa, para todo o canal (até ' + MAX_FIX.topo + ', uma por vez).'], ['regra', 'Fica em ℹ️ Detalhes › 📜 Regras do canal, com o texto inteiro (até ' + MAX_FIX.regra + '). Quem abre o canal é avisado na 1ª vez.']].forEach(([t, txt]) => {
+    if (t === atualT) return;
+    const cheio = fixadasDo(t).length >= MAX_FIX[t];
+    const b = el('button', ja ? '' : 'primary'); b.type = 'button'; b.disabled = cheio;
+    b.append(el('b', '', (ja ? 'Mover para ' : '') + NOME_TIPO[t]));
+    box.append(b, el('p', 'subtitulo', cheio ? 'Cheio: desafixe uma antes.' : txt));
+    b.onclick = async () => { fecharModal(); await fixarComo(m, t); };
   });
-  return s;
+  f.append(box);
+  const l = el('div', 'linha');
+  if (ja) { const d = el('button', 'perigo', 'Desafixar'); d.type = 'button'; d.onclick = async () => { fecharModal(); await desafixar(m.id); }; l.append(d); }
+  const x = el('button', '', 'Cancelar'); x.type = 'button'; x.onclick = fecharModal; l.append(x); f.append(l);
+  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
+  const pri = f.querySelector('.tipo-fix button:not([disabled])') || x; pri.focus();
+}
+// 📜 Aviso de regras: na 1ª vez que a pessoa abre o canal com regra (ou quando entra uma regra nova), neste aparelho.
+const chaveRegras = id => 'concha_regras_' + id;
+const regrasNovas = id => { const r = fixadasDo('regra'); if (!r.length) return 0; const visto = Number(lsGet(chaveRegras(id)) || 0); return r.filter(k => (fixadas[k].em || 0) > visto).length; };
+function regrasVistas(id) { const r = fixadasDo('regra'); lsSet(chaveRegras(id), String(Math.max(0, ...r.map(k => fixadas[k].em || 0)))); }
+function verRegras() {
+  const id = atual; regrasVistas(id); verLado = true; lsSet('cardume_lado', '1'); renderLado();
+  if (window.matchMedia('(max-width: 899px)').matches) $('app').dataset.tela = 'lado';
+  renderFaixaFix(); const r = document.querySelector('#lado .regras h3'); if (r) { r.setAttribute('tabindex', '-1'); r.focus(); }
+}
+function renderFaixaFix() {   // a faixa do alto: a fixada do topo (uma por vez) e o aviso de regras
+  const f = $('faixa-fix'), id = atual;
+  if (!id || vendoMencoes || vendoTag || vendoPessoa || !(souMembro(id) || souAdm())) { f.hidden = true; f.replaceChildren(); return; }
+  const topo = fixadasDo('topo'), novas = regrasNovas(id);
+  f.replaceChildren();
+  if (topo.length) {
+    if (fixIdx >= topo.length) fixIdx = 0;
+    const k = topo[fixIdx], m = msgFixada(k), pronta = m && m !== '…';
+    const w = el('div', 'fix-topo'); w.setAttribute('role', 'region'); w.setAttribute('aria-label', 'Mensagens fixadas no topo');
+    const ic = el('button', 'fix-ic', '📌' + (topo.length > 1 ? ' ' + (fixIdx + 1) + '/' + topo.length : '')); ic.type = 'button';
+    ic.setAttribute('aria-label', topo.length > 1 ? 'Próxima fixada (' + (fixIdx + 1) + ' de ' + topo.length + ')' : 'Mensagem fixada');
+    ic.title = topo.length > 1 ? 'Ver a próxima fixada' : 'Fixada no topo';
+    ic.onclick = () => { if (topo.length > 1) { fixIdx = (fixIdx + 1) % topo.length; renderFaixaFix(); const n = $('faixa-fix').querySelector('.fix-ic'); if (n) n.focus(); } else ir.click(); };
+    const ir = el('button', 'fix-txt'); ir.type = 'button';
+    const quem = pronta ? nomePessoa(autorDe(m)) : '';
+    if (quem) ir.append(el('b', '', quem));
+    ir.append(el('span', '', pronta ? resumoMsg(m) : '…'));
+    ir.setAttribute('aria-label', 'Ir para a mensagem fixada' + (quem ? ' de ' + quem : ''));
+    ir.onclick = () => abrirNaMensagem(id, k);
+    w.append(ic, ir); f.append(w);
+  }
+  if (novas) {
+    const a = el('div', 'fix-regras-aviso'); a.setAttribute('role', 'status');
+    a.append(el('span', 'grow', '📜 ' + (novas === fixadasDo('regra').length ? 'Este canal tem ' + novas + (novas === 1 ? ' regra' : ' regras') : (novas === 1 ? 'Uma regra nova' : novas + ' regras novas') + ' neste canal') + '.'));
+    const v = el('button', 'primary', 'Ver regras'); v.type = 'button'; v.onclick = verRegras;
+    const x = el('button', '', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Dispensar o aviso de regras'); x.onclick = () => { regrasVistas(id); renderFaixaFix(); };
+    a.append(v, x); f.append(a);
+  }
+  f.hidden = !f.children.length;
+}
+function secaoFixadas(id) {   // ℹ️ Detalhes: 📌 do topo (gestão) e 📜 Regras do canal (texto inteiro)
+  const wrap = el('div', 'fixadas');
+  const pode = podeFixar(id), irPara = k => { if (window.matchMedia('(max-width: 899px)').matches) $('app').dataset.tela = 'conversa'; abrirNaMensagem(id, k); };
+  const topo = fixadasDo('topo');
+  if (topo.length || pode) {
+    wrap.append(el('h3', '', '📌 No topo (' + topo.length + '/' + MAX_FIX.topo + ')'));
+    if (!topo.length) wrap.append(el('p', 'subtitulo', 'Nada no topo. Para pôr: 📌 Fixar nas ações da mensagem.'));
+    topo.forEach(k => {
+      const m = msgFixada(k), linha = el('div', 'fix-item'), pronta = m && m !== '…';
+      const b = el('button', 'citacao'); b.type = 'button';
+      const quem = pronta ? nomePessoa(autorDe(m)) : '';
+      b.append(el('span', '', '📌')); if (quem) b.append(el('b', '', quem)); b.append(el('span', 'sub', pronta ? resumoMsg(m) : '…'));
+      b.title = 'Fixada por ' + nomePessoa(fixadas[k].por) + (typeof fixadas[k].em === 'number' ? ' · ' + dataHora(fixadas[k].em) : '');
+      b.setAttribute('aria-label', 'Ir para a mensagem fixada' + (quem ? ' de ' + quem : '') + '. ' + b.title);
+      b.onclick = () => irPara(k); linha.append(b);
+      if (pode) { const x = el('button', '', 'Desafixar'); x.type = 'button'; x.setAttribute('aria-label', 'Desafixar a mensagem' + (quem ? ' de ' + quem : '')); x.onclick = () => desafixar(k); linha.append(x); }
+      wrap.append(linha);
+    });
+  }
+  const regras = fixadasDo('regra').reverse(), sr = el('div', 'regras');   // regras na ordem em que foram criadas (1, 2, 3…)
+  sr.append(el('h3', '', '📜 Regras do canal (' + regras.length + ')'));
+  if (!regras.length) sr.append(el('p', 'subtitulo', pode ? 'Sem regras. Para criar: escreva a regra como mensagem e use 📌 Fixar › 📜 Regra do canal.' : 'Este canal ainda não tem regras.'));
+  regras.forEach((k, i) => {
+    const m = msgFixada(k), it = el('div', 'regra-item'), pronta = m && m !== '…';
+    const corpo = el('div', 'regra-txt');
+    if (pronta && typeof m.texto === 'string' && m.texto.trim()) corpo.append(renderTexto(m.texto)); else corpo.append(el('span', '', pronta ? resumoMsg(m) || '(GIF)' : '…'));
+    it.append(corpo);
+    const l = el('div', 'linha-regra');
+    l.append(el('span', 'grow', (i + 1) + '. ' + (pronta ? nomePessoa(autorDe(m)) : '') + (typeof fixadas[k].em === 'number' ? ' · fixada em ' + dataHora(fixadas[k].em) : '')));
+    const v = el('button', '', 'Ver na conversa'); v.type = 'button'; v.onclick = () => irPara(k); l.append(v);
+    if (pode) { const x = el('button', '', 'Desafixar'); x.type = 'button'; x.setAttribute('aria-label', 'Tirar esta regra do canal'); x.onclick = () => desafixar(k); l.append(x); }
+    it.append(l); sr.append(it);
+  });
+  wrap.append(sr);
+  return wrap;
 }
 
 // ═══ 😀 Reações (docs/ideias/cardume-v0-banco.md › "Reagir com emoji"): uma por pessoa, a mesma lista dos comentários do Maré ═══
@@ -1175,7 +1286,7 @@ function renderMsg(m) {
     const b = el('button', 'lnk', 'Desfazer'); b.type = 'button'; b.onclick = () => desfazer(m.id); d.append(b); box.append(d); return box;
   }
   if (editando === m.id) { box.append(editor(m)); return box; }
-  if (ehFixada(m.id)) { box.classList.add('fixada'); box.append(el('span', 'fixada-tag', '📌 Fixada')); }
+  if (ehFixada(m.id)) { box.classList.add('fixada'); box.append(el('span', 'fixada-tag', tipoFix(m.id) === 'topo' ? '📌 Fixada no topo' : '📜 Regra do canal')); }
   if (typeof m.resp === 'string' && ID_RE.test(m.resp)) box.append(citacao(atual, m.resp));
   if (m.enc && typeof m.enc === 'object' && ID_RE.test(String(m.enc.de || ''))) {   // ⏩ de onde veio (nome do canal de origem guardado na hora: quem lê aqui pode não ter acesso a ele)
     const e = el('p', 'enc-de'); e.append(document.createTextNode('⏩ Encaminhada de '), el('b', '', nomePessoa(m.enc.de)), document.createTextNode(' · # ' + String(m.enc.n || 'outro canal').slice(0, 40) + (typeof m.enc.ts === 'number' ? ' · ' + dataHora(m.enc.ts) : '')));
@@ -1203,7 +1314,7 @@ function renderMsg(m) {
   if (podeReagir) { const rr = acaoBtn('', '😀', 'Reagir'); rr.onclick = () => { rxAbrindo = m.id; renderMsgs(); const o = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] .rx-op'); if (o) o.focus(); }; ac.append(rr); }
   if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
   if (souMembro(atual) && !m.enc && (typeof m.texto === 'string' || (m.gif && typeof m.gif === 'object'))) { const fw = acaoBtn('', '⏩', 'Encaminhar'); fw.onclick = () => modalEncaminhar(m); ac.append(fw); }
-  if (podeFixar(atual)) { const fb = acaoBtn('', '📌', ehFixada(m.id) ? 'Desafixar' : 'Fixar', ehFixada(m.id) ? 'Desafixar do canal' : 'Fixar no canal (aparece em ℹ️ Detalhes)'); fb.onclick = () => alternarFixada(m); ac.append(fb); }
+  if (podeFixar(atual)) { const fb = acaoBtn('', '📌', ehFixada(m.id) ? 'Fixada' : 'Fixar', ehFixada(m.id) ? 'Fixada: mover ou desafixar' : 'Fixar no topo ou como regra do canal'); fb.onclick = () => modalFixar(m); ac.append(fb); }
   if (souMembro(atual) || souAdm()) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
     if (podeEditar(m)) { const e = acaoBtn('', '✏️', 'Editar'); e.title = 'Editar (até 15 min depois de enviar)'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
@@ -1734,7 +1845,7 @@ const AJUDA = [
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
   { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
-  { id: 'fixadas', ic: '📌', t: 'Mensagens fixadas', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela.\n- As fixadas ficam em **ℹ️ Detalhes › 📌 Fixadas**, para todo o canal, da mais nova para a mais antiga. Tocar numa leva até ela na conversa (no assunto dela, se tiver).\n- **Desafixar**: nas ações da mensagem ou ali na lista. Apagar a mensagem tira ela das fixadas.\n- Bom para decisões, links e combinados. Até ' + MAX_FIX + ' por canal. Mensagem fixada fica de fora da limpeza das antigas.' },
+  { id: 'fixadas', ic: '📌', t: 'Fixadas no topo e regras do canal', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela, e escolhe o tipo:\n- **📌 No topo do canal**: aparece numa **faixa no alto da conversa**, como no WhatsApp. Até ' + MAX_FIX.topo + '; com mais de uma, toque no 📌 (1/3, 2/3…) para passar para a próxima. Tocar no texto leva até a mensagem.\n- **📜 Regra do canal**: fica em **ℹ️ Detalhes › 📜 Regras do canal**, com o texto inteiro (até ' + MAX_FIX.regra + '). Na 1ª vez que alguém abre o canal (ou quando entra uma regra nova), aparece o aviso **Este canal tem regras · Ver regras**.\n- Para **mover** entre topo e regras ou **desafixar**: 📌 Fixada, nas ações da mensagem, ou ℹ️ Detalhes. Apagar a mensagem tira ela das fixadas.\n- Mensagem fixada fica de fora da limpeza das antigas.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
   { id: 'tema', ic: '🎨', t: 'Tema (claro, escuro e Vice City)', txt: '- **🎨** no alto da Concha escolhe o tema: **🌊 Como no Oceano** (o padrão, segue o que você escolheu no Oceano), **🌙 Abrolhos** (escuro), **☀️ Lençóis** (claro), **🌅 Entardecer** ou **🌴 Vice City**.\n- A escolha vale só para a Concha, neste aparelho, e muda na hora (também nas outras abas da Concha).' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },

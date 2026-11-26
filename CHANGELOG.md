@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 📌 fixada no topo (faixa como no WhatsApp) e 📜 regras do canal (SÓ DEV, cardume v0.41, regra fixadas/t) — 2026-11-26
+
+Pedido do Caio (26/11), depois do 📌 fixar da v0.39. Dois tipos de fixada. 📌 No topo do canal: faixa no alto da conversa, até 3, uma por vez; tocar no 📌 (1/3, 2/3…) passa para a próxima e tocar no texto leva à mensagem. 📜 Regra do canal: em ℹ️ Detalhes › 📜 Regras do canal, com o texto inteiro, até 10, numeradas na ordem em que foram criadas; quem abre o canal vê 'Este canal tem N regras · Ver regras' na 1ª vez (e quando entra regra nova). Quem administra escolhe o tipo ao fixar e pode mover entre topo e regras ou desafixar. Fixadas de antes (sem tipo) viram regras. Banco: campo t na fixada; o gestor troca o tipo, sem mudar quem fixou nem quando. Ajuda atualizada. Testes: cardumeRules (+1), test_concha_fixar.js (24). Deploy: regras antes do merge.
+
 ### 🐚 Concha: 📌 fixar mensagens no canal, em ℹ️ Detalhes › Fixadas (SÓ DEV, cardume v0.39, regra fixadas) — 2026-11-26
 
 Pedido do Caio (comparativo com o Slack, item 2), com as decisões dele: só quem administra o canal fixa e desafixa, e a fixada fica de fora da limpeza das antigas. 📌 Fixar nas ações da mensagem (ADM; PO/Organizador da squad no canal da squad; dona e admins no temático); a mensagem mostra 📌 Fixada. ℹ️ Detalhes › 📌 Fixadas lista para todo o canal, a mais nova primeiro, com autor e trecho; tocar leva à mensagem (no assunto dela). Desafixar na mensagem ou na lista; apagar a mensagem tira a fixada junto. Até 25 por canal. Banco: nó kanban/cardume/fixadas/{canal}/{msgId} = {por, em}, leitura igual à das mensagens. A limpeza (cardumeLimpeza, ainda a criar) vai pular as fixadas. Ajuda com o tópico Mensagens fixadas. Testes: cardumeRules (+4, sabotagens), test_concha_fixar.js (16). Deploy: regras antes do merge.
