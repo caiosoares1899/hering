@@ -159,3 +159,18 @@ test('runAvisoMsg: ⏩ encaminhada — quem aparece @mencionado no texto recebe 
   await runAvisoMsg(banco(), m, 'dados', 'k1', { uid: 'ana', ts: AG - 1000, texto: '@Bruno Reis olha isso', enc: { c: 'prf', m: 'o1', de: 'car', ts: AG - 9e5, n: 'Performance' } }, { agora: AG, emailDe, log: () => {} });
   assert.ok(m.envios.some(e => e.tokens.includes('tb')), 'Bruno recebe');
 });
+
+// /monitorarbugs 26/11/2026 ("André não recebeu"): o motivo de cada pessoa sai numa linha de log por mensagem — antes só o total, sem como
+// separar sem token × 🔕 × vendo × Não Perturbe × trava × falha no aparelho.
+test('runAvisoMsg: uma linha de log com o motivo de cada pessoa (só uid), inclusive quem não tem token e quem caiu na trava', async () => {
+  const db = banco({ avisos: { dan: { dados: { nivel: 'nada' } } }, vendo: { car: { dados: AG - 10000 } } });
+  delete db._data().kanban.usuarios.ext.fcm_tokens;
+  const linhas = [], log = (l) => linhas.push(l);
+  const r = await runAvisoMsg(db, fakeMsg(), 'dados', 'k1', { uid: 'ana', ts: AG - 1000, texto: 'bom dia' }, { agora: AG, emailDe, log });
+  assert.deepEqual(r.motivos, { bru: 'enviado:todas (1 aparelho(s) falharam)', car: 'vendo', dan: 'nada', ext: 'sem_token' });
+  const resumo = linhas.find((l) => /dados\/k1: .* Por pessoa: /.test(l));
+  assert.ok(resumo, 'linha de resumo com o motivo por pessoa');
+  assert.ok(!/@/.test(resumo), 'sem e-mail no log');
+  const r2 = await runAvisoMsg(db, fakeMsg(), 'dados', 'k2', { uid: 'ana', ts: AG, texto: 'mais uma' }, { agora: AG + 5000, emailDe, log });
+  assert.equal(r2.motivos.bru, 'trava', 'a 2ª da rajada aparece como trava, não some');
+});

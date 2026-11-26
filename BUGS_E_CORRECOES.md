@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🐚 Concha: aviso de mensagem nova sem rastro por pessoa — o log da função passa a dizer por que cada membro recebeu ou não (functions:conchaAvisoMsg)
+
+/monitorarbugs de 26/11, relato do Caio: André mandou mensagem e o Caio recebeu o aviso; o Caio mandou e o André não. A função conchaAvisoMsg só registrava o total ('N push(es)'): quem não tinha aparelho com push saía num return silencioso, e o motivo de quem foi pulado (🔕/🚫, vendo a conversa, Não Perturbe, conta de fora, trava de 2 min, menção que já tem o push dela) era descartado. Sem isso não dá para separar 'o servidor pulou' de 'o push saiu e o aparelho não mostrou'. Agora cada mensagem gera UMA linha de log com {uid: motivo} (sem e-mail): sem_token, mencao, nada, silenciado, assunto_silenciado, vendo, dnd, fora, trava, enviado:… ou falhou_todos. O retorno ganha motivos (teste). Causa do relato ainda não confirmada: ver o log no horário da mensagem e o script de diagnóstico do aparelho. Teste: conchaAvisos.test.js (+1, falha no código anterior). Deploy: functions:conchaAvisoMsg.
+
 ### 2026-11-26 · 🔔 Clique no push levava embora a aba do Maré — o Service Worker só reaproveita a aba da mesma página (firebase-messaging-sw.js, vale no merge)
 
 /monitorarbugs de 26/11 (avisos da Concha). No notificationclick, todo link que não fosse do Radar era tratado como 'kanban' e reaproveitava qualquer aba com 'kanban' na URL: tocar no push da Concha (ou da Escala, do Oceano) navegava a aba aberta do Maré para outra página, e o push do Maré de prod reaproveitava uma aba do Maré dev. Mesma classe do sequestro da apresentação corrigido em 07/10. Agora reaproveita só uma aba de nível superior da MESMA página do link (mesmo arquivo); senão abre uma aba nova. O Service Worker não tem par -dev: vai para todo mundo no merge. Teste: test_sw_clique_push.js (7, carrega o SW real num vm; 3 falham no código anterior).

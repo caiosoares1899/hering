@@ -101,11 +101,14 @@ async function runAvisoMsg(db, messaging, canal, msgId, msg, deps = {}) {
   const quem = primeiroNome(pubs[msg.uid]), onde = canalTxt(canal, c) + (nomeAss && !privado ? ' › ' + nomeAss : '');
   const url = SITE_BASE_URL + 'cardume-dev.html?c=' + encodeURIComponent(canal) + (aid ? '&a=' + aid : '') + '&m=' + encodeURIComponent(msgId);
   let enviados = 0;
+  // /monitorarbugs 26/11/2026: o motivo de cada pessoa vai para UMA linha de log por mensagem (só o uid). Antes só saía o total, e um
+  // "fulano não recebeu" não tinha como separar sem token × 🔕 × vendo × Não Perturbe × trava × falha no aparelho.
+  const motivos = {};
   await Promise.all(membros.filter((u) => u !== msg.uid).map(async (uid) => {
     try {
       const tokObj = (await db.ref(`kanban/usuarios/${uid}/fcm_tokens`).get()).val();
       const entries = Object.entries(tokObj || {}).filter(([, t]) => t && t.token);
-      if (!entries.length) return;                                   // nunca ativou push
+      if (!entries.length) { motivos[uid] = 'sem_token'; return; }   // nunca ativou push (ou os tokens morreram)
       const [pref, prefAssunto, seguidas, vendoTs, dnd, ultimoEnvio, email] = await Promise.all([
         db.ref(`kanban/cardume/avisos/${uid}/${canal}`).get().then((s) => s.val()),
         aid ? db.ref(`kanban/cardume/avisos_a/${uid}/${canal}/${aid}`).get().then((s) => s.val()) : null,
@@ -116,22 +119,23 @@ async function runAvisoMsg(db, messaging, canal, msgId, msg, deps = {}) {
         emailDe ? emailDe(uid) : Promise.resolve(''),
       ]);
       const d = decidir({ uid, autor: msg.uid, mencionados, pref, prefAssunto, seguidas, vendoTs, dnd, empresa: emailDaEmpresa(String(email || '').toLowerCase()), ultimoEnvio, tagsMsg, agora });
-      if (!d.envia) return;
+      if (!d.envia) { motivos[uid] = d.motivo; return; }
       if (d.motivo === 'todas' || d.motivo === 'assunto') {   // trava por canal: só a primeira de uma rajada leva o push
         const r = await db.ref(`kanban/cardume/aviso_env/${uid}/${canal}`).transaction((v) => (typeof v === 'number' && agora - v < INTERVALO_MS ? undefined : agora));
-        if (!r || !r.committed) return;
+        if (!r || !r.committed) { motivos[uid] = 'trava'; return; }
       }
       const title = '🐚 ' + quem + ' ' + (d.tags.length ? 'usou #' + d.tags[0] + ' ' : '') + (onde === 'num canal privado' ? onde : 'em ' + onde);
       const body = d.tags.length ? 'Você segue #' + d.tags.join(', #') : d.motivo === 'assunto' ? (privado ? 'Num assunto que você segue' : 'Você segue o assunto') : 'Nova mensagem na Concha';
       const resp = await messaging.sendEachForMulticast({ data: { title, body, tag: 'concha-' + canal, cardId: '', url }, tokens: entries.map(([, t]) => t.token) });
       enviados += resp.successCount;
+      motivos[uid] = resp.successCount ? 'enviado:' + d.motivo + (resp.failureCount ? ' (' + resp.failureCount + ' aparelho(s) falharam)' : '') : 'falhou_todos';
       if (resp.failureCount) log(`[concha-aviso] ${uid}: falhas ${JSON.stringify(resumirFalhas(resp.responses))}`);
       const mortos = []; resp.responses.forEach((r, i) => { if (!r.success && tokenMorto(r.error)) mortos.push(db.ref(`kanban/usuarios/${uid}/fcm_tokens/${entries[i][0]}`).remove()); });
       if (mortos.length) await Promise.all(mortos);
-    } catch (e) { log(`[concha-aviso] ${uid}: falhou (${e && e.message})`); }
+    } catch (e) { motivos[uid] = 'erro'; log(`[concha-aviso] ${uid}: falhou (${e && e.message})`); }
   }));
-  log(`[concha-aviso] ${canal}/${msgId}: ${enviados} push(es).`);
-  return { enviados };
+  log(`[concha-aviso] ${canal}/${msgId}: ${enviados} push(es). Por pessoa: ${JSON.stringify(motivos)}`);
+  return { enviados, motivos };
 }
 
 function criaTrigger() {
