@@ -38,7 +38,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('nada de cadastro do canal, membros ou "meus" para as notas', !(c.canais || {})['eu-ana'] && !(c.membros || {})['eu-ana'] && !((c.meus || {}).ana || {})['eu-ana'], { canais: c.canais, membros: c.membros });
   const k = nota && nota[0];
   await p.hover('[data-msg="' + k + '"]');
-  t('nas notas não há ⏩ Encaminhar (das notas não sai)', await p.evaluate(id => !document.querySelector('[data-msg="' + id + '"] [aria-label="Encaminhar"]'), k), 0);
+  t('nas notas não há ⏩ Encaminhar nem 📝 No card (das notas não sai)', await p.evaluate(id => !document.querySelector('[data-msg="' + id + '"] [aria-label="Encaminhar"]') && !document.querySelector('[data-msg="' + id + '"] [aria-label="Registrar no card do Maré"]'), k), 0);
   await p.click('[data-msg="' + k + '"] [aria-label^="Fix"]'); await p.waitForTimeout(150); await p.click('.md .tipo-fix button:has-text("No topo do canal")'); await p.waitForTimeout(400);
   c = await S();
   t('a dona fixa a própria nota no topo', c.fixadas && c.fixadas['eu-ana'] && c.fixadas['eu-ana'][k] && c.fixadas['eu-ana'][k].t === 'topo', c.fixadas);

@@ -1372,7 +1372,7 @@ function renderMsg(m) {
   if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
   if (souMembro(atual) && !ehNotas(atual) && !m.enc && (typeof m.texto === 'string' || (m.gif && typeof m.gif === 'object'))) { const fw = acaoBtn('', '⏩', 'Encaminhar'); fw.onclick = () => modalEncaminhar(m); ac.append(fw); }
   if (podeFixar(atual)) { const fb = acaoBtn('', '📌', ehFixada(m.id) ? 'Fixada' : 'Fixar', ehFixada(m.id) ? 'Fixada: mover ou desafixar' : 'Fixar no topo ou como regra do canal'); fb.onclick = () => modalFixar(m); ac.append(fb); }
-  if (souMembro(atual) || souAdm()) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
+  if ((souMembro(atual) || souAdm()) && !ehNotas(atual)) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
   if (ativo && (meu || souAdm())) {
     if (podeEditar(m)) { const e = acaoBtn('', '✏️', 'Editar'); e.title = 'Editar (até 15 min depois de enviar)'; e.onclick = () => { editando = m.id; renderMsgs(); const t = document.querySelector('[data-msg="' + m.id + '"] textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }; ac.append(e); }
     const x = acaoBtn('perigo', '🗑', 'Apagar'); x.onclick = () => apagar(m); ac.append(x);
@@ -2700,7 +2700,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = Object.create(null); tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = Object.create(null); tagsUltEm = 0; avisos = {}; seguidas = {}; notasOn = false; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.
