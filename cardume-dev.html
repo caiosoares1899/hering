@@ -1226,13 +1226,13 @@ function citacao(canal, id) {
   const o = msgs.find(x => x.id === id);
   const b = el('button', 'citacao'); b.type = 'button';
   let quem = '', tr;
-  if (o) { quem = o.apagada ? '' : nomePessoa(o.uid); tr = resumoMsg(o); }
+  if (o) { quem = o.apagada ? '' : nomePessoa(autorDe(o)); tr = resumoMsg(o); }
   else {   // fora das 50 carregadas: ESCUTA a original enquanto o canal está aberto (apagar/editar atualiza a citação; achado do Codex na #1959)
     const k = canal + '/' + id, v = citVivas[k];
     if (v === undefined) {
       citVivas[k] = null;
       ouvir('cit:' + k, ref(db, B + 'msgs/' + canal + '/' + id), s => {
-        const m = s.val(), nv = { quem: m && !m.apagada ? nomePessoa(m.uid) : '', tr: m ? resumoMsg(m) : '(mensagem apagada)' };
+        const m = s.val(), nv = { quem: m && !m.apagada ? nomePessoa(autorDe(m)) : '', tr: m ? resumoMsg(m) : '(mensagem apagada)' };
         const ant = citVivas[k];
         if (!ant || ant.quem !== nv.quem || ant.tr !== nv.tr) { citVivas[k] = nv; if (atual === canal && !vendoMencoes) renderMsgs(); }
       }, () => { citVivas[k] = { quem: '', tr: '(sem acesso)' }; });
@@ -1427,9 +1427,14 @@ function chipCard(k) {
 // e um trecho do chat não pode acionar o Agente nem virar menção a alguém no card. E-mail (nome@dominio) fica como está.
 const semArroba = s => String(s || '').replace(/(^|[^\p{L}\p{N}._%+-])[@＠](?=[\p{L}])/gu, '$1').replace(/[@＠](?=\s*agente)/giu, '');
 const dataHora = ts => new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '');
+// ⏩ Quem ESCREVEU a mensagem (na encaminhada, o autor da original — não quem encaminhou).
+const autorDe = x => (x && x.enc && ID_RE.test(String(x.enc.de || ''))) ? x.enc.de : (x && x.uid);
 function textoRegistro(canal, lista) {
   let t = '🐚 Da Concha · #' + nomeCanal(canal) + '\n';
-  for (const x of lista) t += '\n**' + nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ' + (rotuloGif(x) + String(x.texto || '')).trim();
+  for (const x of lista) {
+    const cab = x.enc && ID_RE.test(String(x.enc.de || '')) ? nomePessoa(x.enc.de) + '** (encaminhada por ' + nomePessoa(x.uid) + ' · #' + String(x.enc.n || '').slice(0, 40) + ', ' + dataHora(typeof x.enc.ts === 'number' ? x.enc.ts : x.ts) + '): ' : nomePessoa(x.uid) + '** (' + dataHora(x.ts) + '): ';
+    t += '\n**' + cab + (rotuloGif(x) + String(x.texto || '')).trim();
+  }
   t = semArroba(t);
   return t.length > 8000 ? t.slice(0, 7999) + '…' : t;
 }
@@ -1450,7 +1455,7 @@ function modalRegistrar(m0) {
   janela.forEach(x => {
     const l = el('label', 'reg-item'); const cb = el('input'); cb.type = 'checkbox'; cb.value = x.id; cb.checked = x.id === m0.id;
     const tx = el('span'); const resumo = (rotuloGif(x) + String(x.texto || '')).replace(/[*_~`>]/g, '').replace(/\s+/g, ' ').trim();
-    tx.append(el('b', '', nomePessoa(x.uid) + ' · ' + dataHora(x.ts)), el('span', 'subtitulo', resumo.length > 140 ? resumo.slice(0, 140) + '…' : resumo));
+    tx.append(el('b', '', nomePessoa(autorDe(x)) + (x.enc ? ' (encaminhada)' : '') + ' · ' + dataHora(x.ts)), el('span', 'subtitulo', resumo.length > 140 ? resumo.slice(0, 140) + '…' : resumo));
     l.append(cb, tx); caixa.append(l);
   });
   f.append(caixa);
@@ -1584,7 +1589,7 @@ function abrirTag(k) {
 }
 function curtaDe(c, m) {
   const k = c + '/' + m;
-  if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: v.uid, tr: resumoMsg(v) }; if (vendoTag) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag) renderMsgs(); }); }
+  if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: autorDe(v), tr: resumoMsg(v) }; if (vendoTag) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag) renderMsgs(); }); }
   return curtas[k];
 }
 function renderTag(log) {
@@ -1752,7 +1757,8 @@ function modalEncaminhar(m) {
       const md = (await get(ref(db, B + 'membros/' + dest))).val() || {};
       if (minha !== vez) return;
       const novos = Object.keys(md).filter(u => md[u] === true && membrosOrig[u] !== true);
-      const abre = abertoTema(dest) && !abertoTema(origem);
+      if (abertoTema(origem)) { analise = { dest, avisar: false }; ok.textContent = '⏩ Encaminhar'; ok.disabled = false; return; }   // origem aberta: qualquer pessoa da Hering já pode ler lá — nada a avisar
+      const abre = abertoTema(dest);
       const partes = [];
       if (novos.length) partes.push(novos.length + (novos.length === 1 ? ' pessoa' : ' pessoas') + ' em ' + nomeCanal(dest) + ' não ' + (novos.length === 1 ? 'está' : 'estão') + ' em ' + cOrig.nome + ' e vão ver esta mensagem e o nome do canal de origem.');
       if (abre) partes.push(nomeCanal(dest) + ' é aberto: qualquer pessoa da Hering pode entrar e ler.');
