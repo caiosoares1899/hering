@@ -850,7 +850,7 @@ test('encaminhada: não se edita; apagar não guarda a origem', () => {
 // 📌 Fixar no canal (26/11/2026) — docs/ideias/cardume-v0-banco.md › "Fixar no canal". fixadas/{canal}/{msgId} = { por, em }.
 // Decisões do Caio: só GESTORES fixam e desafixam (ADM, PO/Org da squad no oficial; dona/co-admin no temático); a limpeza pula a fixada.
 const FX = (id, sq) => `kanban/cardume/fixadas/${sq || 'dados'}/${id || 'm1'}`;
-const fx = (por, o) => Object.assign({ por, em: Date.now() }, o || {});
+const fx = (por, o) => Object.assign({ por, em: Date.now(), t: 'topo' }, o || {});
 const resetFx = () => {
   reset();
   Object.assign(DB.kanban.usuarios, {
@@ -885,9 +885,9 @@ test('📌 fixar: só gestor (que lê o canal) fixa, mensagem viva do próprio c
   assert.equal(grava(FX('ap'), A.pos, fx('pos')), false, 'mensagem apagada');
   DB.kanban.cardume.msgs.prf = { o1: msg() };
   assert.equal(grava(FX('o1'), A.pos, fx('pos')), false, 'mensagem de OUTRO canal não fixa aqui');
-  DB.kanban.cardume.fixadas = { dados: { m1: fx('pos') } };
-  assert.equal(grava(FX('m1'), A.pos, fx('pos')), false, 'não regrava uma fixada existente (só criar ou tirar)');
-  assert.equal(grava(FX('m1'), A.adm, fx('adm')), false, 'nem o ADM regrava');
+  DB.kanban.cardume.fixadas = { dados: { m1: fx('pos', { em: Date.now() - 5000 }) } };
+  assert.equal(grava(FX('m1'), A.pos, fx('pos')), false, 'não regrava uma fixada existente com outra hora (só criar, tirar ou trocar o tipo)');
+  assert.equal(grava(FX('m1'), A.adm, fx('adm')), false, 'nem o ADM regrava com outro autor');
 });
 
 test('📌 desafixar: gestor e ADM tiram; membro só tira fixada órfã (mensagem apagada), inclusive no MESMO update do tombstone', () => {
@@ -920,4 +920,21 @@ test('📌 temático: dona e co-admin fixam; canal vencido não fixa', () => {
   DB.kanban.cardume.canais[t].fim = agora - 1000;
   assert.equal(grava(FX('t2', t), A.gil, fx('gil')), false, 'canal vencido não fixa');
   assert.equal(grava(FX('t2', t), A.adm, fx('adm')), false, 'nem o ADM fixa em canal vencido');
+});
+
+test('📌 tipos: topo ou regra, obrigatório; o gestor troca o tipo sem mudar quem fixou nem quando', () => {
+  resetFx();
+  assert.equal(grava(FX('m1'), A.pos, fx('pos', { t: 'regra' })), true, 'fixar como regra');
+  assert.equal(grava(FX('m2'), A.pos, { por: 'pos', em: Date.now() }), false, 'sem tipo não fixa');
+  assert.equal(grava(FX('m2'), A.pos, fx('pos', { t: 'banner' })), false, 'tipo fora da lista');
+  const antes = fx('bru', { em: Date.now() - 5000, t: 'topo' }); DB.kanban.cardume.fixadas = { dados: { m1: antes } };
+  assert.equal(grava(FX('m1'), A.pos, Object.assign({}, antes, { t: 'regra' })), true, 'gestor move do topo para as regras');
+  assert.equal(grava(FX('m1'), A.adm, Object.assign({}, antes, { t: 'regra' })), true, 'ADM também');
+  assert.equal(grava(FX('m1'), A.ana, Object.assign({}, antes, { t: 'regra' })), false, 'membro comum não troca');
+  assert.equal(grava(FX('m1'), A.pos, Object.assign({}, antes, { t: 'regra', por: 'pos' })), false, 'trocar não muda quem fixou');
+  assert.equal(grava(FX('m1'), A.pos, Object.assign({}, antes, { t: 'regra', em: Date.now() })), false, 'trocar não muda quando');
+  assert.equal(grava(FX('m1') + '/t', A.pos, 'regra'), true, 'trocar só o campo t');
+  assert.equal(grava(FX('m1') + '/t', A.ana, 'regra'), false, 'membro não troca nem só o campo');
+  põe('m1', { uid: 'ana', ts: Date.now(), apagada: true });
+  assert.equal(grava(FX('m1'), A.pos, Object.assign({}, antes, { t: 'regra' })), false, 'mensagem apagada: só tirar, não trocar');
 });
