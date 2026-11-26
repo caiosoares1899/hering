@@ -356,3 +356,7 @@ Caio confirmou as regras (`avisos_a`) antes do merge da #1975 e `functions:conch
 ## Confirmação de deploy — 25/11/2026 (😀 emoji da Concha)
 
 Caio confirmou `firebase deploy --only database` (campo `e` em canais e assuntos) da #1978. Saiu de *Pendente de deploy*. A Ajuda larga (#1979) não tinha deploy.
+
+## Confirmação de deploy — 25/11/2026 (✏️ editar só até 15 min)
+
+Caio confirmou `firebase deploy --only database` da regra de edição em 15 min (#1980). Saiu de *Pendente de deploy*.
