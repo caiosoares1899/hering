@@ -174,3 +174,17 @@ test('runAvisoMsg: uma linha de log com o motivo de cada pessoa (só uid), inclu
   const r2 = await runAvisoMsg(db, fakeMsg(), 'dados', 'k2', { uid: 'ana', ts: AG, texto: 'mais uma' }, { agora: AG + 5000, emailDe, log });
   assert.equal(r2.motivos.bru, 'trava', 'a 2ª da rajada aparece como trava, não some');
 });
+
+// 🛡️ /auditoriaseguranca (26/11/2026): #constructor e #__proto__ não podem casar com Object.prototype em `seguidas`
+test('segurança (26/11): #constructor e #__proto__ com seguidas vazio NÃO furam 🔕 silenciar nem a trava de rajada', async () => {
+  for (const tag of ['constructor', '__proto__']) {
+    assert.equal(decidir(base({ pref: { nivel: 'mencoes' }, seguidas: {}, ultimoEnvio: AG - 5000, tagsMsg: [tag] })).envia, false, 'canal silenciado + #' + tag);
+    assert.equal(decidir(base({ prefAssunto: { nivel: 'mencoes' }, seguidas: {}, ultimoEnvio: AG - 5000, tagsMsg: [tag] })).envia, false, 'assunto silenciado + #' + tag);
+    assert.equal(decidir(base({ seguidas: {}, ultimoEnvio: AG - 5000, tagsMsg: [tag] })).motivo, 'trava', 'trava de rajada + #' + tag);
+  }
+  const db = banco({ avisos: { bru: { dados: { nivel: 'mencoes' } }, car: { dados: { nivel: 'mencoes' } }, dan: { dados: { nivel: 'mencoes' } } } });
+  const m = fakeMsg();
+  const r = await runAvisoMsg(db, m, 'dados', 'k1', { uid: 'ana', ts: AG - 1000, texto: 'spam #constructor #__proto__' }, { agora: AG, emailDe, log: () => {} });
+  assert.equal(m.envios.length, 0, 'nenhum push enviado para quem silenciou o canal');
+  assert.equal(r.motivos.bru, 'silenciado');
+});

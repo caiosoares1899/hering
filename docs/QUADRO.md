@@ -16,9 +16,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
-| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do 📌 fixar (nó novo `fixadas`, escrita só de quem administra) | [desenho](ideias/cardume-v0-banco.md#-fixar-no-canal--desenho-de-26112026-r3) |
-| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do ⏩ encaminhar (conteúdo de canal privado indo para outro canal por decisão de um membro) | [desenho](ideias/cardume-v0-banco.md) |
-| Antigravity | R3 | 🛡️ `/auditoriaseguranca` da Concha nas regras novas de 25/11 (#1969 avisos, #1970 seções, assuntos) — o R3 pede a leitura de segurança além das revisões; as duas primeiras só tiveram o Codex na Fila | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -44,7 +41,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
 | Claude | 🐚 Concha: reforços da revisão do Codex nas regras (edição em 15 min pelo relógio do servidor; encaminhar confere tamanho do GIF e não leva assunto/card; fixada só com a mensagem viva depois da gravação) — **antes do merge**, a partir da branch `claude/concha-revisao-codex` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
-| Claude | 🐚 Concha: log do aviso de mensagem nova diz o motivo de cada pessoa (para achar por que o André não recebeu) | `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 26/11/2026 |
+| Claude · Antigravity | 🐚 Concha: log por pessoa no aviso de mensagem nova (#1998) + correção de segurança da auditoria (`#constructor`/`#__proto__` não furam 🔕 silenciar nem trava de rajada) | `firebase deploy --only functions:conchaAvisoMsg --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog

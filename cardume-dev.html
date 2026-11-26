@@ -432,7 +432,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.44 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.45 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1141,7 +1141,7 @@ function modalFixar(m) {   // escolher o tipo (ou mover / desafixar a que já es
   const pri = f.querySelector('.tipo-fix button:not([disabled])') || x; pri.focus();
 }
 // 📜 Aviso de regras: na 1ª vez que a pessoa abre o canal com regra (ou quando entra uma regra nova), neste aparelho.
-const chaveRegras = id => 'concha_regras_' + id;
+const chaveRegras = id => 'concha_regras_' + (user ? user.uid : '') + '_' + id;
 const regrasNovas = id => { const r = fixadasDo('regra'); if (!r.length) return 0; const visto = Number(lsGet(chaveRegras(id)) || 0); return r.filter(k => (fixadas[k].em || 0) > visto).length; };
 function regrasVistas(id) { const r = fixadasDo('regra'); lsSet(chaveRegras(id), String(Math.max(0, ...r.map(k => fixadas[k].em || 0)))); }
 function verRegras() {
@@ -2123,7 +2123,7 @@ async function seguir(t, sim) {
   catch (e) { falhou(sim ? 'seguir a #tag' : 'deixar de seguir', e); }
 }
 function botaoSeguir(k) {
-  const sigo = seguidas[k] != null, b = el('button', 'seguir-tag' + (sigo ? '' : ' primary'), sigo ? '✓ Seguindo #' + k : '🔔 Seguir #' + k);
+  const sigo = Object.prototype.hasOwnProperty.call(seguidas, k) && seguidas[k] != null, b = el('button', 'seguir-tag' + (sigo ? '' : ' primary'), sigo ? '✓ Seguindo #' + k : '🔔 Seguir #' + k);
   b.type = 'button'; b.setAttribute('aria-pressed', String(sigo)); b.title = sigo ? 'Deixar de seguir' : 'Avisar de toda mensagem nova com #' + k + ' nos seus canais, mesmo os silenciados';
   b.onclick = () => seguir(k, !sigo); return b;
 }
@@ -2147,13 +2147,13 @@ setInterval(() => { if (user) pulsoVendo(); }, 10000);   // parou de mexer há 6
 
 // ═══ 🔍 Sonar (Ctrl/⌘+K, mare-sonar-dev.js): canais, pessoas e #tags — só da Concha (decisão do Caio, 25/11) ═══
 // #tags: tags_ult/{canal} dos canais em que a pessoa está (uma chave por tag, sem baixar o índice), relido ao abrir o Sonar se tiver mais de 2 min.
-let tagsUlt = {}, tagsUltEm = 0, tagsUltVez = 0;   // tag → { ult, canais: [ids] }
+let tagsUlt = Object.create(null), tagsUltEm = 0, tagsUltVez = 0;   // tag → { ult, canais: [ids] }
 function carregarTagsUlt() {
   if (Date.now() - tagsUltEm < 120000) return;
   tagsUltEm = Date.now(); const vez = ++tagsUltVez, meusCanais = idsConhecidos().filter(souMembro);
   Promise.all(meusCanais.map(c => get(ref(db, B + 'tags_ult/' + c)).then(s => [c, s.val() || {}]).catch(() => [c, {}]))).then(r => {
     if (vez !== tagsUltVez) return;
-    const m = {};
+    const m = Object.create(null);
     r.forEach(([c, v]) => Object.keys(v).forEach(t => { if (!tagOk(t) || typeof v[t] !== 'number') return; const x = m[t] = m[t] || { ult: 0, canais: [] }; x.ult = Math.max(x.ult, v[t]); x.canais.push(c); }));
     tagsUlt = m;
     const inp = document.getElementById('msn-in'); if (window.MareSonar && MareSonar.aberto() && inp) inp.dispatchEvent(new Event('input'));   // o Sonar já aberto mostra as tags que chegaram
@@ -2198,7 +2198,7 @@ function ligarSonar() {
     },
     deRecente: (r, base) => {
       if (r.canal && ID_RE.test(String(r.canal))) { const id = String(r.canal); return canaisVisiveis().includes(id) ? Object.assign(base, { ic: '#', t: nomeCanal(id), go: () => abrirCanal(id, true) }) : null; }   // canal de outra conta (aparelho compartilhado) não aparece
-      if (r.tag && tagOk(String(r.tag)) && tagsUlt[String(r.tag)]) { const t = String(r.tag); return Object.assign(base, { ic: '#️⃣', go: () => abrirTag(t) }); }   // só tag dos canais desta conta
+      if (r.tag && tagOk(String(r.tag)) && Object.prototype.hasOwnProperty.call(tagsUlt, String(r.tag)) && tagsUlt[String(r.tag)]) { const t = String(r.tag); return Object.assign(base, { ic: '#️⃣', go: () => abrirTag(t) }); }   // só tag dos canais desta conta
       if (r.ajuda && AJUDA.some(a => a.id === r.ajuda)) { const id = String(r.ajuda); return Object.assign(base, { ic: '❓', go: () => abrirAjuda(id) }); }
       if (r.pessoa && ID_RE.test(String(r.pessoa)) && pub[r.pessoa]) { const u = String(r.pessoa); return Object.assign(base, { ic: '👤', t: nomePessoa(u), go: () => abrirPessoa(u) }); }
       return null;
@@ -2637,7 +2637,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = {}; tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = Object.create(null); tagsUltEm = 0; avisos = {}; seguidas = {}; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.

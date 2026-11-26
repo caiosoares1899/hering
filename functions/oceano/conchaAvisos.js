@@ -58,7 +58,7 @@ function decidir({ uid, autor, mencionados, pref, prefAssunto, seguidas, vendoTs
   if ((mencionados || []).includes(uid)) return { envia: false, motivo: 'mencao' };
   const nivel = nivelDe(pref, agora), na = nivelAssuntoDe(prefAssunto, agora);
   if (nivel === 'nada') return { envia: false, motivo: 'nada' };
-  const tags = (tagsMsg || []).filter((t) => seguidas && seguidas[t] != null);
+  const tags = (tagsMsg || []).filter((t) => seguidas && Object.prototype.hasOwnProperty.call(seguidas, t) && typeof seguidas[t] === 'number');
   if (na === 'mencoes' && !tags.length) return { envia: false, motivo: 'assunto_silenciado' };
   if (na !== 'seguir' && nivel === 'mencoes' && !tags.length) return { envia: false, motivo: 'silenciado' };
   if (typeof vendoTs === 'number' && agora - vendoTs < VENDO_MS) return { envia: false, motivo: 'vendo' };

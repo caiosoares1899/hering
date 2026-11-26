@@ -108,7 +108,7 @@ async function conferirRegras(p, quem) {
     t('membro vê a faixa do topo e o aviso de regras (celular)', !f.hidden && /Decisão/.test(f.txt) && /Este canal tem 1 regra/.test(f.aviso), f);
     await p.click('#faixa-fix .fix-regras-aviso button.primary'); await p.waitForTimeout(300);
     t('"Ver regras" no celular abre a tela de Detalhes com as regras', await p.evaluate(() => document.getElementById('app').dataset.tela === 'lado' && /Regra 1/.test(document.querySelector('#lado .regras').textContent)), 0);
-    t('aviso dispensado fica guardado (neste aparelho)', await p.evaluate(() => !!localStorage.getItem('concha_regras_dados')), 0);
+    t('aviso dispensado fica guardado (neste aparelho)', await p.evaluate(() => !!localStorage.getItem('concha_regras_ana_dados')), 0);
     await p.click('#lado .voltar'); await p.waitForTimeout(200);
     await p.click('[data-msg="n50"]'); await p.waitForTimeout(100);
     t('membro NÃO vê 📌 Fixar nas ações (decisão do Caio: só quem administra)', await p.evaluate(() => !document.querySelector('[data-msg="n50"] [aria-label^="Fix"]')), 0);
