@@ -211,6 +211,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .mencao{color:var(--accent-txt);font-weight:700;}
 .canal .aviso-ic{font-size:12px;opacity:.8;flex:none;}
 .seguir-tag{margin:4px 0 10px;}
+.voltar-tag{display:inline-flex;align-items:center;gap:6px;margin:4px 8px 10px 0;}   /* ← Voltar da tela da #tag para onde a pessoa estava */
 .lista-seguidas{display:flex;flex-wrap:wrap;gap:6px;}
 .lista-seguidas button{min-height:32px;padding:2px 10px;}
 .b-buscar{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--txt2);}
@@ -411,7 +412,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.39 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.40 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -625,7 +626,7 @@ function inline(txt, destino) {
     }
     else if (m[11]) {
       const k = m[12].toLowerCase();
-      if (tagOk(k) && !textoSimples) { const b = el('button', 'tag', '#' + m[12]); b.type = 'button'; b.setAttribute('aria-label', 'Ver as mensagens com #' + m[12]); b.title = 'Mensagens com #' + m[12] + ' nos seus canais'; b.onclick = ev => { ev.stopPropagation(); abrirTag(k); }; destino.append(b); }
+      if (tagOk(k) && !textoSimples) { const b = el('button', 'tag', '#' + m[12]); b.type = 'button'; b.setAttribute('aria-label', 'Ver as mensagens com #' + m[12]); b.title = 'Mensagens com #' + m[12] + ' nos seus canais'; b.onclick = ev => { ev.stopPropagation(); const mm = ev.currentTarget.closest('[data-msg]'); abrirTag(k, mm ? mm.dataset.msg : ''); }; destino.append(b); }
       else destino.append(document.createTextNode(m[11]));
     }
     i = re.lastIndex;
@@ -1646,8 +1647,12 @@ $('b-mencoes').onclick = abrirMencoes;
 // ═══ #️⃣ Tela da #tag: as mensagens com ela em todos os canais da pessoa (até 30 por canal, as 50 mais novas) ═══
 let vendoTag = '', tagItens = null, tagVez = 0;
 const curtas = {};   // 'c/m' → { uid, tr } (lido da própria mensagem, com acesso de membro)
-function abrirTag(k) {
+let tagVolta = null;   // de onde a pessoa veio para a tela da #tag: {c, a, m} (canal, assunto, mensagem clicada) ou {mencoes: true}
+function abrirTag(k, deMsg) {
   if (!tagOk(k)) return;
+  if (atual) tagVolta = { c: atual, a: assuntoAtual, m: ID_RE.test(deMsg || '') ? deMsg : '' };
+  else if (vendoMencoes) tagVolta = { mencoes: true };
+  else if (!vendoTag) tagVolta = null;   // de #tag para #tag (Sonar) mantém a volta original
   Object.keys(curtas).forEach(x => delete curtas[x]);
   soltarCanal();
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
@@ -1659,6 +1664,12 @@ function abrirTag(k) {
     .catch(() => [])))
     .then(r => { if (vez !== tagVez || vendoTag !== k) return; tagItens = r.flat().sort((a, b) => b.ts - a.ts).slice(0, 50); renderMsgs(); });
 }
+function voltarDaTag() {   // volta à conversa (no assunto e na mensagem de onde saiu) ou às @ Menções
+  const v = tagVolta; tagVolta = null; if (!v) return;
+  if (v.mencoes) { abrirMencoes(); return; }
+  if (v.m) alvoMsg = v.m;
+  abrirCanal(v.c, true, v.a || '');
+}
 function curtaDe(c, m) {
   const k = c + '/' + m;
   if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: autorDe(v), tr: resumoMsg(v) }; if (vendoTag) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag) renderMsgs(); }); }
@@ -1668,6 +1679,11 @@ function renderTag(log) {
   const k = vendoTag;
   $('canal-titulo').textContent = '#' + k; $('canal-sub').textContent = 'Mensagens com #' + k + ' nos seus canais';
   $('rodape').hidden = true; $('b-lado').hidden = true; $('b-aviso').hidden = true; $('faixa-alvo').hidden = true;
+  const v = tagVolta;
+  if (v && (v.mencoes || souMembro(v.c) || souAdm())) {
+    const bv = el('button', 'voltar-tag', '← ' + (v.mencoes ? 'Voltar para @ Menções' : 'Voltar para # ' + nomeCanal(v.c))); bv.type = 'button';
+    bv.onclick = voltarDaTag; log.append(bv);
+  }
   log.append(botaoSeguir(k));
   if (!tagItens) { log.append(vazio('', 'Procurando #' + k + '…')); return; }
   if (!tagItens.length) { log.append(vazio('#️⃣', 'Nenhuma mensagem com #' + k + ' nos seus canais.')); return; }
