@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · Concha v0.50: envio pendente preserva o rascunho de outro assunto
+
+SÓ DEV. Ao enviar no geral e abrir outro assunto antes da confirmação, um rascunho idêntico podia sumir da caixa e o foco voltava ao compositor. A confirmação agora confere conta, canal e assunto antes de mexer na caixa, e limpa no aparelho apenas o texto enviado. Teste: test_concha_rascunho_envio.js.
+
 ### 2026-11-26 · Concha v0.49 — /monitorarbugs no código novo (fixada que sai da janela, foco ao fechar Seções, desativar notas abertas)
 
 - **(SÓ DEV) 🐚 Concha v0.49 — `/monitorarbugs` no código novo (⚙️ Configurações, 📝 Minhas notas, atualização obrigatória, 📌 fixadas topo/regras, ← Voltar da #tag).** 3 achados, todos reproduzidos em Playwright antes da correção (`docs/arezzo/testes/test_concha_monitorar_2611.js`, 8 verificações):
