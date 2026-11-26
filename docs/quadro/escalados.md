@@ -257,3 +257,11 @@ Pedido de 26/11/2026. Exibir **Geral** e **#oceano** automaticamente na lista de
 Como verificar a lacuna atual. Em dev, abra um canal temático configurado como aberto, entre com uma conta Hering sem papel de ADM e observe que o compositor fica disponível. O canal aberto atual permite publicação por membros.
 
 Aceite para implementação. Testar no dev com uma conta ADM e uma conta comum. As duas veem os dois canais e leem as mensagens. A publicação funciona com ADM e a regra do banco recusa publicação para a conta comum, inclusive pelo fluxo de encaminhar. Aplicar a mesma definição de ADM das permissões existentes. Encaminhar ao Claude por envolver regras do banco e novo acesso compartilhado.
+
+## Concha: Agente Ágil como remetente
+
+Após o PR #2012, Caio pediu que os avisos de promoção no **#oceano** apareçam com **Agente Ágil** como remetente da mensagem, com nome e avatar no cabeçalho. O aviso preparado pelo `/subirproprod` deixa de trazer a assinatura no rodapé quando o novo envio estiver disponível.
+
+O ADM aciona a publicação. A identidade do remetente é atribuída pelo servidor a um perfil de sistema, com registro da conta ADM que acionou a publicação. O cliente comum não escolhe essa identidade. O envio em nome do Agente Ágil fica restrito ao fluxo de avisos do **#oceano**.
+
+Aceite. ADM publica um aviso que aparece com o perfil do Agente Ágil. Conta comum continua podendo ler e recebe recusa se tentar publicar como o agente. Mensagens humanas continuam associadas à conta que publicou.
