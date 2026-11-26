@@ -136,6 +136,8 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .ajuda-lista summary{cursor:pointer;font-weight:700;min-height:28px;display:flex;align-items:center;gap:8px;}
 .ajuda-lista details[open] summary{margin-bottom:6px;}
 .ajuda-lista .texto p{margin:4px 0;} .ajuda-lista .texto ul{margin:4px 0;padding-left:18px;}
+.emoji-det summary{cursor:pointer;margin:6px 0;}
+.aviso-fora{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
 .emoji-grade{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px;}
 .emoji-grade button{min-width:36px;min-height:36px;padding:0 6px;font-size:17px;box-shadow:none;}
 .emoji-grade button[aria-checked="true"]{border-color:var(--accent);background:rgba(56,182,255,.18);}
@@ -406,7 +408,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.37 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.38 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -987,10 +989,13 @@ function renderMsgs() {
   }
   if (!souMembro(id) && !souAdm()) {
     if (ehTema(id) && abertos[id] && !vencido(c)) { const v = vazio('👋', 'Este canal é aberto a toda a Hering.'); const b = el('button', 'primary', 'Entrar no canal'); b.type = 'button'; b.onclick = () => entrar(id); v.append(b); log.append(v); }
-    else if (gestorOficial(id)) { const v = vazio('🛠️', 'Você administra este canal, mas não está nele. Abra ℹ️ Detalhes para pôr pessoas (inclusive você).'); log.append(v); }
+    else if (gestorOficial(id) && c && !vencido(c)) { const v = vazio('🛠️', 'Você administra este canal, mas não está nele — por isso não aparece o campo de escrever.'); const b = el('button', 'primary', 'Entrar no canal'); b.type = 'button'; b.onclick = () => entrar(id); v.append(b); log.append(v); }
+    else if (gestorOficial(id)) log.append(vazio('🛠️', 'Você administra este canal, mas não está nele.'));
     else log.append(vazio('🔒', 'Você não está neste canal.'));
     return;
   }
+  const admFora = !souMembro(id) && c && !vencido(c);   // ADM vê o canal sem estar nele: dizer por que não há campo de escrever e dar o atalho
+  if (admFora) { const v = el('div', 'aviso-encerrado aviso-fora'); v.append(document.createTextNode('🛠️ Você administra este canal, mas não está nele — por isso não dá para escrever. ')); const b = el('button', 'primary', 'Entrar no canal'); b.type = 'button'; b.onclick = () => entrar(id); v.append(b); log.append(v); }
   if (carregandoMsgs) { log.append(vazio('', 'Carregando mensagens…')); return; }
   if (assuntoFechado(assuntoAtual)) log.append(el('p', 'aviso-encerrado', '🔒 Assunto encerrado — só leitura.' + (podeGerirAssunto(assuntoAtual) ? ' Para voltar a escrever, ⋯ › Reabrir.' : '')));
   if (assuntoAtual && !msgs.length) { log.append(vazio('🧵', 'Nenhuma mensagem em "' + nomeAssunto(assuntoAtual) + '" ainda.')); return; }
@@ -999,7 +1004,7 @@ function renderMsgs() {
     const b = el('button', 'lnk', 'Ver mais de geral'); b.type = 'button'; b.onclick = () => { janela = Math.min(1000, janela + 200); carregandoMsgs = true; renderMsgs(); ouvirJanela(atual); }; v.append(b); log.append(v);
     if (!msgs.length) return;
   }
-  if (!msgs.length) { log.append(vazio('💬', vencido(c) ? 'Canal arquivado, sem mensagens.' : 'Nenhuma mensagem ainda. Diga oi! 👋')); return; }
+  if (!msgs.length) { log.append(vazio('💬', vencido(c) ? 'Canal arquivado, sem mensagens.' : admFora ? 'Nenhuma mensagem ainda.' : 'Nenhuma mensagem ainda. Diga oi! 👋')); return; }
   if (msgs.length >= LIMITE) log.append(el('p', 'subtitulo', 'Mostrando as últimas ' + LIMITE + ' mensagens.'));
   let dia = '', ult = null, grupo = null;
   msgs.forEach(m => {
@@ -2242,9 +2247,10 @@ function renderLado() {
   if (g && ehTema(id) && c) { const b = el('button', '', '⚙️ Editar canal'); b.type = 'button'; b.onclick = () => modalCanal(id); ac.append(b); }
   if (ac.children.length) s.append(ac);
   if (c && g && !vencido(c)) {   // 😀 emoji do canal (quem administra; no oficial, também PO/Org da squad)
-    s.append(el('p', 'subtitulo', '😀 Emoji do canal'));
     const padrao = !ehTema(id) && meta[id] && meta[id].emoji ? meta[id].emoji : (ehTema(id) && c.acesso === 'convite' ? '🔒' : '#');
-    s.append(seletorEmoji(emojiOk(c.e) ? c.e : '', padrao, e => set(ref(db, B + 'canais/' + id + '/e'), e || null).then(() => toast('Emoji de ' + nomeCanal(id) + (e ? ': ' + e : ' voltou ao padrão') + '.')).catch(er => falhou('mudar o emoji', er))));
+    const det = el('details', 'emoji-det'); det.append(el('summary', 'subtitulo', '😀 Emoji do canal: ' + (emojiOk(c.e) ? c.e : padrao + ' (padrão)')));   // fechado: a grade inteira empurrava membros e "Adicionar pessoa" para baixo
+    s.append(det);
+    det.append(seletorEmoji(emojiOk(c.e) ? c.e : '', padrao, e => set(ref(db, B + 'canais/' + id + '/e'), e || null).then(() => toast('Emoji de ' + nomeCanal(id) + (e ? ': ' + e : ' voltou ao padrão') + '.')).catch(er => falhou('mudar o emoji', er))));
   }
   if (c !== null && (membro || g || (ehTema(id) && abertos[id]))) {   // 📁 seção pessoal deste canal na lista da esquerda
     const ls = el('label', 'subtitulo sec-onde', '📁 Na sua lista'), sel = el('select'); sel.setAttribute('aria-label', 'Seção deste canal na sua lista');
