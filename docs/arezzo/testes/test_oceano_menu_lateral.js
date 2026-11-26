@@ -31,7 +31,9 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
     t('o menu aparece depois do login', await p.evaluate(() => document.body.classList.contains('com-rail') && getComputedStyle(document.getElementById('rail')).display === 'flex'), 0);
     let it = await itens(p);
     t('ordem: Oceano (início, atual) · Maré · Concha · Radar · A Bordo · Painel; embaixo Sonar e Eu', JSON.stringify(it) === JSON.stringify(['lobby*', 'kanban', 'cardume', 'okr', 'onboarding', 'painel', 'rail-sonar', 'rail-eu']), it);
-    t('o ícone do Oceano é a "home"', await p.evaluate(() => !!document.querySelector('#rail [data-rail="lobby"] img[src*="favicon-oceano"]')), 0);
+    t('o início é uma casinha de traço (SVG, sem emoji), com o nome "Início"', await p.evaluate(() => { const b = document.querySelector('#rail [data-rail="lobby"]'); return !!b.querySelector('svg.rail-svg') && b.textContent.trim() === 'Início'; }), 0);
+    t('os botões de baixo também são ícones de traço (sem emoji)', await p.evaluate(() => ['rail-sonar', 'rail-recarregar', 'rail-aba', 'rail-fechar'].every(i => !!document.querySelector('#' + i + ' svg.rail-svg'))), 0);
+    t('com o menu, os cartões de apps saem do Início (o menu já mostra todos)', await p.evaluate(() => !document.getElementById('tiles').getClientRects().length && !!document.getElementById('col-meta')), 0);
     await p.screenshot({ path: path.join(OUT, 'pc_lobby_recolhido.png') });
     await p.click('#rail [data-rail="cardume"]'); await p.waitForTimeout(500);
     t('clicar em Concha abre DENTRO do Oceano (iframe), com o menu ao lado e sem a barra de abas', await p.evaluate(() => document.getElementById('host').classList.contains('on') && !!document.querySelector('#host-frames iframe.on[data-app="cardume"]') && getComputedStyle(document.querySelector('.host-barra')).display === 'none' && document.getElementById('host').getBoundingClientRect().left === 72), 0);

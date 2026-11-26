@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🧭 Oceano: menu com 🏠 Início em ícone de traço e sem os cartões de apps no Início (SÓ DEV, oceano v2.02) — 2026-11-26
+
+- **(SÓ DEV)** Pedido do Rafa/Caio depois da fase 1 (#2016): no lugar do ícone do Oceano, uma casinha de traço fino (SVG, sem emoji), com o nome "Início". Sonar, Recarregar, Nova aba e Fechar também viraram ícones de traço. Com o menu ligado, os cartões de apps saem do Início (o menu já mostra todos), e o atalho "🐚 Concha ↗" sai também. `test_oceano_menu_lateral.js` (21).
+
 ### 🧭 Oceano: menu lateral para trocar entre os apps, como um app só (SÓ DEV, oceano v2.01 — fase 1) — 2026-11-26
 
 - **(SÓ DEV)** Pedido do Rafa (via Caio, 26/11): o Oceano vira a moldura com um menu de ícones, e cada app abre ao lado, integrado. **Fase 1** (só no `oceano-dev`, `RAIL_ON = IS_DEV`):
