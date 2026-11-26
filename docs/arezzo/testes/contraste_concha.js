@@ -1,4 +1,4 @@
-// Contraste do texto da Concha sobre o vidro com o mar atrás (o pior pixel do fundo da conversa, peixes e horizonte inclusos), nos 3 temas.
+// Contraste do texto da Concha sobre o vidro com o mar atrás (o pior pixel do fundo da conversa, peixes e horizonte inclusos), nos 4 temas (o Vice City pela escolha da própria Concha, concha_tema).
 // Esconde o texto, fotografa o fundo, acha o pixel mais "parecido" com cada cor de texto e calcula a razão WCAG. Uso: node docs/arezzo/testes/contraste_concha.js
 const fs = require('node:fs'), path = require('node:path'), home = require('node:os').homedir(); const fake = require('./fakefb.js');
 const ANA = { uid: 'ana', email: 'ana@ciahering.com.br', displayName: 'Ana Lima', photoURL: '', providerData: [{ providerId: 'google.com' }] };
@@ -9,9 +9,9 @@ const razao = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
 (async () => {
   const { chromium } = require(process.env.PLAYWRIGHT_MODULE || path.join(home, 'hering-tools/playwright/node_modules/playwright'));
   const b = await chromium.launch({ executablePath: process.env.CHROME }); let pior = Infinity; const linhas = [];
-  for (const tema of ['abrolhos', 'lencois', 'entardecer']) {
+  for (const tema of ['abrolhos', 'lencois', 'entardecer', 'vice']) {
     const ctx = await b.newContext({ viewport: { width: 1280, height: 860 } }); await fake.install(ctx, seed);
-    await ctx.addInitScript(t => localStorage.setItem('oceano_prefs', JSON.stringify({ tema: t, peixes: 'normal' })), tema);
+    await ctx.addInitScript(t => { localStorage.setItem('oceano_prefs', JSON.stringify({ tema: t === 'vice' ? 'abrolhos' : t, peixes: 'normal' })); if (t === 'vice') localStorage.setItem('concha_tema', 'vice'); }, tema);
     if (process.env.PAGINA_ALT) { const h = fs.readFileSync(process.env.PAGINA_ALT, 'utf8'); await ctx.route('**/cardume-dev.html*', r => r.fulfill({ body: h, contentType: 'text/html' })); }
     const p = await ctx.newPage(); await p.goto('http://127.0.0.1:8941/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(1200);
     const cores = await p.evaluate(() => { const cs = getComputedStyle(document.documentElement), rgb = v => { const d = document.createElement('i'); d.style.color = v; document.body.append(d); const c = getComputedStyle(d).color.match(/[\d.]+/g).map(Number); d.remove(); return c; };

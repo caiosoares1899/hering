@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🎨 escolher o tema — claro, escuro, Entardecer e 🌴 Vice City (SÓ DEV, cardume v0.35) — 2026-11-26
+
+Pedido do Caio (Backlog de 25/11, anotado pelo Codex na #1976). 🎨 no topo da Concha escolhe o tema: 🌊 Como no Oceano (o padrão, segue o tema do Oceano), 🌙 Abrolhos, ☀️ Lençóis (claro), 🌅 Entardecer ou 🌴 Vice City (a mesma paleta do Maré, agora também na Concha). Muda na hora, nas outras abas também, e vale desde o primeiro pintar da página (sem piscar). Guardado só na Concha, neste aparelho (concha_tema): o Oceano não conhece o Vice City. Contraste do Vice City conferido nas 5 regiões (pior 6,2:1). No celular, os botões do topo ficaram um pouco menores para tudo caber numa linha. Ajuda com o tópico Tema. Teste: test_concha_tema.js (9); contraste_concha.js passa a medir os 4 temas.
+
 ### 🐚 Concha: 🧹 limpar a aba @ Menções e ✓ marcar todas como lidas (SÓ DEV, cardume v0.34) — 2026-11-26
 
 Pedido do Caio (Backlog de 25/11, anotado pelo Codex na #1976). A aba @ Menções ganhou ✓ Marcar todas como lidas e 🧹 Limpar menções: limpar tira todas as suas menções da lista (inclusive as que não estavam na tela) depois de confirmar, e marca como lidos os avisos delas no Sino; as mensagens continuam nos canais. Sem regra nova (cada pessoa já podia apagar e marcar as próprias menções). Ajuda atualizada. Teste: test_concha_limpar_mencoes.js (8).
