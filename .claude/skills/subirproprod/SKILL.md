@@ -94,7 +94,7 @@ Concluídas as edições de `CHANGELOG.md`, `CODE_MAP.md` e `painel.html` (`COMU
 
 ---
 
-## Passo 4 — Avisos (Mural + WhatsApp) na Resposta ao Usuário
+## Passo 4 — Avisos (Mural + WhatsApp + `#oceano` na Concha) na Resposta ao Usuário
 
 Sempre entregue na resposta final:
 
@@ -103,6 +103,10 @@ Sempre entregue na resposta final:
    - Linguagem simples, direta, focada no benefício prático para quem usa a ferramenta.
    - Nunca inclua número de versão (`v8.30...`), número de PR (`#1432`), nomes de variáveis/funções ou caminhos do banco.
    - Se a promoção cobrir **Maré Digital** e **Radar**, entregue **2 blocos separados** (*Mensagem 1 — Maré Digital* e *Mensagem 2 — Radar / OKRs*).
+3. **Aviso pronto para o canal `#oceano` da Concha** (em bloco copiável):
+   - Resumo curto e amigável das novidades promovidas no ecossistema Oceano (mesma linguagem simples, sem jargão técnico, sem número de PR/versão interna).
+   - Termine **sempre** com o rodapé visível `🤖 Agente Ágil` na última linha.
+   - **Autoria:** quem publica no `#oceano` continua sendo a conta **ADM** autenticada (a autoria registrada no Firebase permanece a da conta ADM; `🤖 Agente Ágil` vai apenas como assinatura no rodapé da mensagem).
 
 ---
 
