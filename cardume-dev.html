@@ -459,7 +459,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.49 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.50 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1430,6 +1430,8 @@ async function enviar() {
   const t = $('entrada'), bruto = t.value, txt = bruto.trim(), id = atual, gif = gifEscolhido, resp = respondendo && respondendo.canal === id ? respondendo : null;
   if ((!txt && !gif) || !id || enviando) return;
   if (txt.length > 4000) { toast('Mensagem longa demais (máx. 4000 caracteres).'); return; }
+  const autor = user.uid, assunto = assuntoAtual, rascunho = chaveRascunho(id, assunto);
+  const mesmaConversa = () => user?.uid === autor && atual === id && assuntoAtual === assunto;
   const k = push(ref(db, B + 'msgs/' + id)).key;
   const ts = serverTimestamp();
   const avisar = mencionadosEm(txt, Object.assign({}, membrosAtual));   // do canal DESTA mensagem, antes de qualquer await
@@ -1447,10 +1449,10 @@ async function enviar() {
     avisarMencoes(id, k, avisar);
     if (avisarResp) avisarMencoes(id, k, [avisarResp], true);
     if (resp && respondendo === resp) cancelarResposta(false);
-    if (atual === id && t.value === bruto) { t.value = ''; ajustarAltura(); }
-    lsSet(chaveRascunho(id, aid), atual === id && assuntoAtual === aid ? t.value : '');
+    if (mesmaConversa() && t.value === bruto) { t.value = ''; ajustarAltura(); }
+    if (lsGet(rascunho) === bruto) lsSet(rascunho, '');
   } catch (e) { falhou('enviar a mensagem', e); }
-  finally { enviando = false; $('b-enviar').disabled = false; t.focus(); }
+  finally { enviando = false; $('b-enviar').disabled = false; if (mesmaConversa()) t.focus(); }
 }
 // 🔔 @menção (etapa 4, docs/ideias/cardume-v0-banco.md): as notificações (kanban/usuarios/…) são legíveis por toda a Hering, então ela vai
 // GENÉRICA — sem canal, sem trecho. O canal e a mensagem ficam no índice PRIVADO kanban/cardume/mencoes/{uid}/{ref}, que as regras só aceitam
