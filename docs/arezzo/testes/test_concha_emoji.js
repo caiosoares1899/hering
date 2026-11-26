@@ -38,9 +38,9 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('canal oficial começa com o emoji da squad (📊 Dados) na lista e no topo', (await nomeLista('dados')) === '📊 Dados' && await p.evaluate(() => document.getElementById('canal-titulo').textContent === '📊 Dados'), await nomeLista('dados'));
   t('faixa: geral, assuntos, ＋ Assunto por último', JSON.stringify(await chips()) === JSON.stringify(['💬 geral', '🧵 campanha', '＋ Assunto']), await chips());
   t('PO da squad vê "😀 Emoji do canal" nos Detalhes', await p.evaluate(() => !!document.querySelector('#lado .emoji-grade')), 0);
-  await p.click('#lado .emoji-grade [aria-label="Emoji 🔥"]'); await p.waitForTimeout(300);
+  await p.click('#lado details.emoji-det summary'); await p.click('#lado .emoji-grade [aria-label="Emoji 🔥"]'); await p.waitForTimeout(300);
   t('escolher 🔥 grava canais/dados/e e a lista mostra 🔥 Dados', (await S()).canais.dados.e === '🔥' && (await nomeLista('dados')) === '🔥 Dados', await S());
-  await p.click('#lado .emoji-grade [aria-label^="Padrão"]'); await p.waitForTimeout(300);
+  await p.click('#lado details.emoji-det summary'); await p.click('#lado .emoji-grade [aria-label^="Padrão"]'); await p.waitForTimeout(300);
   t('"Padrão" tira o emoji e volta ao da squad', !(await S()).canais.dados.e && (await nomeLista('dados')) === '📊 Dados', 0);
   await p.click('[data-canal="prf"]'); await p.waitForTimeout(400);
   t('membro comum (sem ser PO de Performance) não vê o seletor', await p.evaluate(() => !document.querySelector('#lado .emoji-grade')), 0);

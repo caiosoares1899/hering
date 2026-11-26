@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · Concha: ADM fora do canal via conversa sem campo de escrever (cardume-dev v0.38)
+
+- **Sintoma (Caio, 25/11):** depois de ativar o canal Dev, a conversa abria sem campo de escrever e dizia "Nenhuma mensagem ainda. Diga oi! 👋".
+- **Causa:** ativar não põe o ADM no canal; o ADM lê o canal (regras), mas só membro escreve (`podeEscrever` exige `souMembro`), e `renderMsgs` caía no vazio normal.
+- **Correção:** aviso na conversa "Você administra este canal, mas não está nele" com **Entrar no canal** (`parMembro` do próprio uid, já permitido ao gestor); vazio sem o "Diga oi" enquanto fora; PO/Org fora do oficial também ganham o botão. De carona: a grade de emojis do ℹ️ Detalhes ficou recolhida em "😀 Emoji do canal: X" (empurrava membros e Adicionar pessoa para baixo).
+- **Teste:** `docs/arezzo/testes/test_concha_entrar_adm.js` (8) + `docs/arezzo/testes/test_concha_emoji.js` ajustado.
+
 ### 2026-11-26 · 🐚 Concha: ativar o canal da squad só funcionava com o ℹ️ Detalhes aberto (SÓ DEV, cardume v0.37)
 
 Relato do Caio: "não estou conseguindo ativar a squad dev". Causa: o botão "Ativar canal da squad" só existia no painel ℹ️ Detalhes; com ele fechado, clicar em "＋ Dev" (Squads sem canal) abria uma conversa vazia ("Nenhuma mensagem ainda. Diga oi!") sem nenhuma saída. Permissão e regra estavam certas (reproduzido: a gravação passa nas regras reais). Agora a própria conversa mostra "Dev ainda não tem canal" + Ativar; ao ativar, o Detalhes abre para pôr as pessoas; trava de clique duplo e o motivo vai para o console se o banco recusar. Teste test_concha_ativar.js (5; o caso falha na main).
