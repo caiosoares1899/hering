@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · Concha v0.49 — /monitorarbugs no código novo (fixada que sai da janela, foco ao fechar Seções, desativar notas abertas)
+
+- **(SÓ DEV) 🐚 Concha v0.49 — `/monitorarbugs` no código novo (⚙️ Configurações, 📝 Minhas notas, atualização obrigatória, 📌 fixadas topo/regras, ← Voltar da #tag).** 3 achados, todos reproduzidos em Playwright antes da correção (`docs/arezzo/testes/test_concha_monitorar_2611.js`, 8 verificações):
+  - **Fixada do topo virava "…" para sempre** (`ouvirFixadas`): só ganhava escuta própria a fixada que estava FORA das mensagens carregadas no momento em que a lista de fixadas chegava. Se ela estava entre as 100 do canal e saía da janela (chegam 100+ mensagens novas com o canal aberto), `msgFixada` passava a devolver `undefined`: a faixa e ℹ️ Detalhes mostravam "…" e ela seguia ocupando uma das 3 vagas do topo até trocar de canal. Correção: `vigiarFixadas(id)` (extraída de `ouvirFixadas`) roda também quando a janela do canal e a vista mudam (`ouvirJanela`/`aplicarVista`) e liga a escuta da mensagem que saiu.
+  - **⚙️ Configurações › Organizar seções…: fechar Seções deixava o foco no nada** — `modalSecoes` guardava como volta o botão do modal de Configurações, que some com ele; o foco caía no `<body>` (teclado/leitor de tela perdidos). Agora a volta é o ⚙️.
+  - **Desativar Minhas notas com elas abertas** fechava a conversa mas deixava `?c=eu-…` na URL e `cardume_canal` no aparelho (e as escutas das notas ligadas): recarregar reabria por um instante as notas desativadas. Agora solta o canal (`soltarCanal`, que guarda o rascunho) e limpa URL e aparelho.
+  - Sem achado: atualização obrigatória (rascunho guardado, "apagar" pendente cancelado, Esc/Tab presos), ← Voltar da #tag (Menções, #tag→#tag, sem acesso), modal 📌 Fixar (só gestor, limites, mover/desafixar), aviso de 📜 regras por conta, notas fora de @/#tags/No card/Encaminhar-de. Fronteira: sem mudança (só tela; nenhuma regra, nó ou sink novo).
+
 ### 2026-11-26 · 🛡️ /auditoriaseguranca da 🐚 Concha: `#constructor`/`#__proto__` furavam 🔕 e trava de push, quebravam `#tags` no Sonar e `concha_regras_` sem uid (SÓ DEV, cardume v0.45 + `functions:conchaAvisoMsg`)
 
 Auditoria por fronteira cobrindo os 3 itens R3 da Fila da Concha — (1) ⏩ encaminhar, (2) regras de 25/11 (`avisos`, `seguidas`, `vendo`, `aviso_env`, `avisos_a`, `secoes`, `assuntos`, `ultima_a`, `lidas_a`, `msgs/.../a`) e (3) 📌 fixar (`fixadas`, tipos `topo`/`regra`) — com verificação independente de refutação. Relatório completo: `docs/AUDITORIA_SEGURANCA_CONCHA_2026-11.md`. **Veredictos:** 3 confirmados (corrigidos) e 4 rejeitados; regras do banco (`database.rules.json`) sem vulnerabilidade confirmada.

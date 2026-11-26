@@ -459,7 +459,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.48 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.49 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -771,7 +771,7 @@ function iniciarOuvintes() {
   ouvir('lidas', ref(db, B + 'lidas/' + uid), s => { lidas = s.val() || {}; renderLista(); }, () => {});
   ouvir('avisosA', ref(db, B + 'avisos_a/' + uid), s => { avisosA = s.val() || {}; renderLista(); if (atual) renderBarraAssuntos(); }, () => {});
   ouvir('lidasA', ref(db, B + 'lidas_a/' + uid), s => { lidasA = s.val() || {}; renderLista(); if (atual) renderBarraAssuntos(); }, () => {});
-  ouvir('notas', ref(db, B + 'notas/' + uid), s => { notasOn = s.val() === true; sincronizarCanais(); renderLista(); if (atual && ehNotas(atual) && !notasOn) { atual = ''; $('app').dataset.tela = 'canais'; renderMsgs(); renderCabecalho(); renderLado(); } }, () => {});
+  ouvir('notas', ref(db, B + 'notas/' + uid), s => { notasOn = s.val() === true; sincronizarCanais(); renderLista(); if (atual && ehNotas(atual) && !notasOn) { soltarCanal(); atual = ''; lsSet('cardume_canal', ''); const u = new URL(location.href); ['c', 'a', 'm'].forEach(x => u.searchParams.delete(x)); history.replaceState(null, '', u); $('app').dataset.tela = 'canais'; renderMsgs(); renderCabecalho(); renderLado(); } }, () => {});
   ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); renderLado(); }, () => {});
   ouvir('secoes', ref(db, B + 'secoes/' + uid), s => { const v = s.val() || {}; secoes = { s: v.s || {}, c: v.c || {}, r: v.r || {} }; renderLista(); if (atual) renderLado(); }, () => {});
   ouvir('seguidas', ref(db, B + 'seguidas/' + uid), s => { seguidas = s.val() || {}; if (vendoTag) renderMsgs(); }, () => {});
@@ -886,11 +886,11 @@ const listaMsgs = v => Object.keys(v || {}).map(k => Object.assign({ id: k }, v[
 function aplicarVista(id) {
   if (id !== atual) return;
   msgs = (assuntoAtual ? msgsAss : msgsCanal.filter(m => !m.a)).slice(-LIMITE);
-  carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id); renderBarraAssuntos();
+  vigiarFixadas(id); carregandoMsgs = false; ouvirReacoes(id); renderMsgs(); marcarLido(); irParaAlvo(id); renderBarraAssuntos();
 }
 function ouvirJanela(id) {   // janela do canal por ts (geral sai dela); "ver mais de geral" alarga
   ouvir('msgs', query(ref(db, B + 'msgs/' + id), orderByChild('ts'), limitToLast(janela)), s => {
-    msgsCanal = listaMsgs(s.val()); msgsCanalPronto = true; if (!assuntoAtual) aplicarVista(id);
+    msgsCanal = listaMsgs(s.val()); msgsCanalPronto = true; if (!assuntoAtual) aplicarVista(id); else vigiarFixadas(id);
   }, e => { carregandoMsgs = false; msgs = []; msgsCanal = []; renderMsgs(); if (negado(e)) toast('Sem acesso às mensagens de ' + nomeCanal(atual) + '.'); });
 }
 const geralEscondida = () => !assuntoAtual && msgsCanal.length >= janela && msgs.length < LIMITE && janela < 1000;   // a janela encheu com mensagens de assuntos
@@ -1125,13 +1125,19 @@ function ouvirFixadas(id) {
     if (atual !== id) return;
     fixadas = s.val() || {};
     Object.keys(fixVivas).forEach(k => { if (!fixadas[k]) { parar('fx:' + k); delete fixVivas[k]; } });
-    Object.keys(fixadas).forEach(k => {
-      if (!ID_RE.test(k) || fixVivas[k] !== undefined) return;
-      fixVivas[k] = msgs.find(x => x.id === k) ? undefined : '…';   // fora da janela: escuta a mensagem (editar/apagar atualizam a faixa e a lista)
-      if (fixVivas[k] === '…') ouvir('fx:' + k, ref(db, B + 'msgs/' + id + '/' + k), sm => { if (atual !== id) return; fixVivas[k] = sm.val() ? Object.assign({ id: k }, sm.val()) : null; limparFixadaOrfa(id, k); renderLado(); renderFaixaFix(); }, () => { fixVivas[k] = null; });
-    });
+    vigiarFixadas(id);
     renderLado(); renderMsgs();
   }, () => { fixadas = {}; renderLado(); renderFaixaFix(); });
+}
+// Fixada fora das mensagens carregadas ganha escuta própria (editar/apagar atualizam a faixa e a lista). Roda também quando a janela anda:
+// uma fixada que estava entre as carregadas e saiu delas (chegaram 100+ mensagens novas) ficava "…" para sempre (/monitorarbugs 26/11).
+function vigiarFixadas(id) {
+  if (atual !== id) return;
+  Object.keys(fixadas).forEach(k => {
+    if (!ID_RE.test(k) || ouvintes['fx:' + k] || msgs.some(x => x.id === k) || msgsCanal.some(x => x.id === k)) return;
+    fixVivas[k] = '…';
+    ouvir('fx:' + k, ref(db, B + 'msgs/' + id + '/' + k), sm => { if (atual !== id) return; fixVivas[k] = sm.val() ? Object.assign({ id: k }, sm.val()) : null; limparFixadaOrfa(id, k); renderLado(); renderFaixaFix(); }, () => { fixVivas[k] = null; });
+  });
 }
 function pararFixadas() { parar('fixadas'); parar('fx'); fixadas = {}; fixIdx = 0; Object.keys(fixVivas).forEach(k => delete fixVivas[k]); }
 // Mensagem fixada que foi apagada (ou sumiu): a regra deixa qualquer membro tirar a fixada órfã. Silencioso: outra aba pode ter tirado antes.
@@ -2017,7 +2023,7 @@ function modalConfig(foco) {
   const sc = el('section', 'cfg-sec'); sc.append(el('h3', '', '📁 Seções'));
   const nSec = secLista().length;
   sc.append(el('p', 'subtitulo', 'Organize a lista de canais do seu jeito (ex.: ⭐ Favoritos, Projetos). Só você vê. ' + (nSec ? 'Você tem ' + nSec + (nSec === 1 ? ' seção.' : ' seções.') : 'Você ainda não tem seções.')));
-  const ls = el('div', 'acoes-lado'), bs = el('button', '', 'Organizar seções…'); bs.type = 'button'; bs.onclick = () => modalSecoes(''); ls.append(bs); sc.append(ls);
+  const ls = el('div', 'acoes-lado'), bs = el('button', '', 'Organizar seções…'); bs.type = 'button'; bs.onclick = () => { const v = fecharModal._volta; modalSecoes(''); fecharModal._volta = v; }; ls.append(bs); sc.append(ls);   // fechar Seções volta ao ⚙️ (o botão daqui some junto com este modal)
   f.append(sc);
   const lin = el('div', 'linha'); const ok = el('button', 'primary', 'Pronto'); ok.type = 'submit'; lin.append(ok); f.append(lin);
   f.onsubmit = e => { e.preventDefault(); fecharModal(); };
