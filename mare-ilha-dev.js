@@ -45,7 +45,11 @@
       '.mi-pausa .mi-tempo{color:var(--txt2,#a9c1d9);} .mi-esg .mi-tempo{color:var(--danger,#ff6b6b);}',
       '.mi-mais{font-size:10.5px;color:var(--txt2,#a9c1d9);flex:none;}',
       '.mi-av-s{color:var(--txt3,#7d97b2);font-weight:500;}',
-      '.mi-sino{position:relative;flex:none;width:28px;height:28px;border-radius:50%;border:0;background:transparent;color:inherit;cursor:pointer;font-size:14px;display:grid;place-items:center;border-left:1px solid var(--glass-b,rgba(126,200,227,.25));border-radius:0 999px 999px 0;}',
+      /* o 🔔 é parte da pílula (sem caixa própria): zera o estilo de botão da página (no Safari ele virava "uma ilha dentro da ilha") */
+      '.mi-pil .mi-sino{-webkit-appearance:none;appearance:none;position:relative;flex:none;box-sizing:border-box;width:34px;min-width:0;height:24px;min-height:0;margin:0 0 0 2px;padding:0 0 0 6px;border:0;border-left:1px solid var(--glass-b,rgba(126,200,227,.25));border-radius:0;background:transparent;box-shadow:none;color:inherit;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center;}',
+      '.mi-pil .mi-sino:hover{background:transparent;filter:brightness(1.2);}',
+      '.mi-pil .mi-main{-webkit-appearance:none;appearance:none;box-shadow:none;min-height:0;border-radius:999px;}',
+      '.mi-pil .mi-sino .mn-sino-n{top:-7px;right:-6px;}',
       '.mi-painel{position:absolute;top:42px;left:50%;transform:translateX(-50%);width:min(440px,calc(100vw - 24px));z-index:60;padding:14px;border-radius:18px;background:rgba(6,18,34,.96);color:var(--txt,#e8f1fb);border:1px solid var(--glass-b,rgba(126,200,227,.25));box-shadow:0 18px 50px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}',
       '[data-theme="light"] .mi-painel{background:rgba(255,255,255,.97);}',
       '.mi-painel[hidden]{display:none;}',
@@ -177,5 +181,5 @@
     if(raiz) raiz.remove(); raiz = pil = painel = bSino = null;
   }
 
-  window.MareIlha = { iniciar, parar, notifs, botaoSino: () => bSino, aberta: () => aberta, _estado: () => ({ timers: timers.length, aviso: !!aviso, aberta }) };
+  window.MareIlha = { pilula: () => pil, iniciar, parar, notifs, botaoSino: () => bSino, aberta: () => aberta, _estado: () => ({ timers: timers.length, aviso: !!aviso, aberta }) };
 })();

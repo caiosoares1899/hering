@@ -87,6 +87,13 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🏝️ Ilha na Concha: o 🔔 parecia 'uma ilha dentro da ilha' e a lista do sino abria fora do lugar (concha v0.55, mare-notif ?v=53, só dev)
+
+- **(SÓ DEV)** Relato do Caio com print (Safari):
+  - **O 🔔 parecia "uma ilha dentro da ilha".** O estilo de botão da página vazava para ele (caixa, borda, fundo). Agora tem o estilo zerado e fica integrado à pílula, só com um risco à esquerda.
+  - **A lista do sino abria fora do lugar.** Ela se alinhava pela direita do botãozinho 🔔 e caía para a esquerda. O `mare-notif` ganhou a opção `ancora()`: a Ilha passa a pílula inteira, e a lista abre **centralizada embaixo dela** (440px), como o painel dos timers. Sem `ancora`, nada muda nas outras páginas.
+  - Bump do `mare-notif-dev.js?v=53` nas 5 páginas que o carregam (Maré, Painel, Radar, Oceano e Concha). `docs/arezzo/testes/test_concha_ilha.js` (23). `test_sino_cardume` e `test_ilha_notificacoes` passam; `test_sino_oceano` e `test_oceano_sino` falham igual na `main`.
+
 ### 2026-11-26 · Oceano: apps abriam em branco dentro do menu (iframe sem endereço) — regressão da #2020 (oceano v2.05, só dev)
 
 - **(SÓ DEV)** Relato do Caio com print: a Concha (e qualquer app do menu) abria uma tela vazia dentro do Oceano. **Causa:** na #2020, ao trocar o `title` do iframe por `aria-label`, um comentário `// …` ficou no meio da linha e engoliu o `fr.src = url || a.href;` que vinha depois. O iframe nascia sem endereço. **Correção:** comentário em linha própria. O `docs/arezzo/testes/test_oceano_menu_lateral.js` (23) passa a conferir que a janela interna tem o endereço e carrega o app (falha no código quebrado, passa no corrigido). Os outros arquivos mexidos hoje foram varridos atrás do mesmo erro, sem outro caso.
