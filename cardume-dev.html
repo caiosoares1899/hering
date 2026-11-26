@@ -7,7 +7,7 @@
 <link rel="icon" href="favicon-dev.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>(function(){ try{ var o=JSON.parse(localStorage.getItem('oceano_prefs')||'null'), t=(o&&o.tema)||(localStorage.getItem('mare_theme')==='light'?'lencois':'abrolhos'); var d=document.documentElement; if(t==='lencois') d.setAttribute('data-theme','light'); else if(t==='entardecer') d.setAttribute('data-theme','sunset'); }catch(e){} })();</script>
+<script>(function(){ try{ var o=JSON.parse(localStorage.getItem('oceano_prefs')||'null'), c=localStorage.getItem('concha_tema'), t=(c&&/^(abrolhos|lencois|entardecer|vice)$/.test(c)?c:'')||(o&&o.tema)||(localStorage.getItem('mare_theme')==='light'?'lencois':'abrolhos'); var d=document.documentElement; if(t==='lencois') d.setAttribute('data-theme','light'); else if(t==='entardecer') d.setAttribute('data-theme','sunset'); else if(t==='vice') d.setAttribute('data-theme','vice'); }catch(e){} })();</script>
 <style>
 /* 🐚 Concha (dev; nasceu como "Cardume", renomeada em 24/11/2026 — arquivo, URL e banco seguem cardume) — chat do time dentro do Oceano. Plano: docs/ideias/cardume.md · banco e regras: docs/ideias/cardume-v0-banco.md
    Visual do protótipo (docs/demo/cardume-prototipo.html), tokens Marine Glass dos 3 temas do Oceano.
@@ -29,6 +29,13 @@
   --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
   --warn:#9a6a08;--danger:#c8323f;--ok:#1f7d45;--ink-rgb:251,253,255;--slate-rgb:235,245,250;--shadow:0 10px 30px rgba(7,70,110,.22);--specular:inset 0 1px 0 rgba(255,255,255,.7);
   --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+}
+:root[data-theme="vice"]{   /* 🌴 Vice City — a mesma paleta do Maré (kanban-dev.html), nos tokens da Concha; contraste conferido por contraste_concha.js */
+  --deep:#2f1930;--glass:rgba(122,74,99,0.55);--glass-b:rgba(197,97,95,0.35);
+  --accent:#E59F7C;--accent-txt:#f6c3a8;--cyan:#d9a0a2;--teal:#e6b38f;
+  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.78);--txt3:rgba(247,232,236,0.5);
+  --warn:#ffcf9e;--danger:#ff9a96;--ok:#8fe3b0;--ink-rgb:47,25,48;--slate-rgb:69,42,66;
+  --ocean:radial-gradient(ellipse at 50% 55%,rgba(229,159,124,.35) 0%,transparent 55%),radial-gradient(ellipse at 20% 12%,rgba(160,132,176,.30) 0%,transparent 55%),radial-gradient(ellipse at 82% 18%,rgba(179,107,110,.25) 0%,transparent 55%),linear-gradient(180deg,#6f4a80 0%,#9c5f74 30%,#c9743f 55%,#5c2f42 80%,#2f1930 100%);
 }
 :root[data-theme="sunset"]{
   --deep:#1a1530;--glass:rgba(38,28,58,0.62);--glass-b:rgba(255,176,110,0.26);
@@ -91,6 +98,8 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .painel{min-width:0;min-height:0;display:flex;flex-direction:column;background:transparent;}
 .conversa{background:rgba(var(--ink-rgb),.3);}
 [data-theme="light"] .conversa{background:rgba(var(--ink-rgb),.78);}
+[data-theme="vice"] .conversa{background:rgba(var(--ink-rgb),.72);}   /* o mar do Vice City tem faixas claras (laranja/rosa): vidro mais encorpado para o texto */
+[data-theme="vice"] .lateral,[data-theme="vice"] .lado{background:rgba(var(--slate-rgb),.82);}
 .lateral{background:rgba(var(--slate-rgb),.5);}   /* piso das laterais: sem ele, a lista de canais e os Detalhes ficavam abaixo de 4,5:1 com o mar atrás (contraste_concha.js) */
 [data-theme="light"] .lateral,[data-theme="light"] .lado{background:rgba(var(--slate-rgb),.86);}   /* Lençóis: o mar claro atrás baixava o --accent (menção/link) para ~3,2:1 — vidro mais encorpado, não texto mais escuro (MARINE_GLASS §11) */   /* a conversa um tom mais funda que as laterais: o olho vai para ela */
 .lateral{padding:12px 10px;border-right:1px solid var(--glass-b);overflow:auto;}
@@ -130,7 +139,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .emoji-grade{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px;}
 .emoji-grade button{min-width:36px;min-height:36px;padding:0 6px;font-size:17px;box-shadow:none;}
 .emoji-grade button[aria-checked="true"]{border-color:var(--accent);background:rgba(56,182,255,.18);}
-@media (max-width:480px){ .who b{display:none;} }   /* com ❓ + 🔔 o topo não cabia numa linha no celular */
+@media (max-width:480px){ .who b{display:none;} .topo-dir{gap:4px;} .topo-dir .b-sino{min-width:36px;min-height:36px;font-size:15px;} .marca-icone{width:38px;height:38px;} }   /* com 🎨 + ❓ + 🔔 o topo não cabia numa linha no celular */   /* com ❓ + 🔔 o topo não cabia numa linha no celular */
 .sug-dica{margin:6px 8px;font-size:13px;color:var(--txt2);}
 .mencoes-acoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin:0 0 8px;}
 .mencoes-acoes button{min-height:34px;font-size:13px;}
@@ -304,6 +313,7 @@ button.msg-gif{cursor:pointer;}
       <div><p class="contexto">Oceano</p><h1>Concha <span class="devtag">dev</span></h1></div>
     </div>
     <div class="topo-dir">
+      <button type="button" id="b-tema" class="b-sino" hidden aria-label="Tema da Concha" title="Tema" aria-haspopup="dialog">🎨</button>
       <button type="button" id="b-ajuda" class="b-sino" hidden aria-label="Ajuda da Concha" title="Ajuda da Concha">❓</button>
       <button type="button" id="b-sino" class="b-sino" hidden aria-label="Notificações">🔔</button>
       <div id="who-slot"></div>
@@ -392,7 +402,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.34 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.35 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -1623,6 +1633,7 @@ const AJUDA = [
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **🔔 no topo da conversa** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
   { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
+  { id: 'tema', ic: '🎨', t: 'Tema (claro, escuro e Vice City)', txt: '- **🎨** no alto da Concha escolhe o tema: **🌊 Como no Oceano** (o padrão, segue o que você escolheu no Oceano), **🌙 Abrolhos** (escuro), **☀️ Lençóis** (claro), **🌅 Entardecer** ou **🌴 Vice City**.\n- A escolha vale só para a Concha, neste aparelho, e muda na hora (também nas outras abas da Concha).' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },
   { id: 'privacidade', ic: '🔒', t: 'Quem vê o quê', txt: '- Mensagens de um canal: só quem é membro (e o ADM, para moderação).\n- Suas **seções**, **avisos**, #tags seguidas e o que você já leu são só seus.\n- O aviso no Sino é genérico (o Sino é lido pela empresa); o canal e a mensagem ficam num registro que só você lê.\n- O que vai para um **card do Maré** fica visível para toda a Hering.' },
   { id: 'atalhos', ic: '⌨️', t: 'Atalhos', txt: '- **Ctrl/⌘+K**: buscar · **Enter**: enviar · **Shift+Enter**: nova linha\n- **Ctrl+B** / **Ctrl+I**: negrito / itálico\n- Na lista do `@` ou do `#`: **↑ ↓** escolhem, **Enter** ou **Tab** inserem, **Esc** fecha\n- **Esc**: cancela a resposta, fecha seletores e janelas' },
@@ -1672,6 +1683,36 @@ function abrirAjuda(id) {
 }
 $('b-ajuda').onclick = () => abrirAjuda('');
 $('b-fmt-ajuda-tudo').onclick = () => abrirAjuda('escrever');
+
+// ═══ 🎨 Tema da Concha (pedido do Caio, 25/11): Como no Oceano (padrão) · Abrolhos · Lençóis (claro) · Entardecer · 🌴 Vice City.
+// Guardado só aqui (concha_tema, por aparelho): o Oceano não conhece o Vice City e gravar na preferência dele estragaria a dele. ═══
+const TEMAS_CONCHA = [['', '🌊 Como no Oceano'], ['abrolhos', '🌙 Abrolhos (escuro)'], ['lencois', '☀️ Lençóis (claro)'], ['entardecer', '🌅 Entardecer'], ['vice', '🌴 Vice City']];
+function temaEfetivo() {
+  const c = lsGet('concha_tema'); if (c && /^(abrolhos|lencois|entardecer|vice)$/.test(c)) return c;
+  try { const o = JSON.parse(lsGet('oceano_prefs') || 'null'); if (o && /^(abrolhos|lencois|entardecer)$/.test(o.tema)) return o.tema; } catch (e) {}
+  return lsGet('mare_theme') === 'light' ? 'lencois' : 'abrolhos';
+}
+function aplicarTema() {
+  const t = temaEfetivo(), d = document.documentElement, a = { lencois: 'light', entardecer: 'sunset', vice: 'vice' }[t];
+  if (a) d.setAttribute('data-theme', a); else d.removeAttribute('data-theme');
+}
+function modalTema() {
+  fecharModal._volta = document.activeElement;
+  const ov = $('ov'); ov.replaceChildren(); ov.hidden = false;
+  const f = el('form', 'md'); f.setAttribute('role', 'dialog'); f.setAttribute('aria-modal', 'true'); f.setAttribute('aria-labelledby', 'md-t');
+  ov.append(f);
+  const h = el('h2', '', '🎨 Tema da Concha'); h.id = 'md-t'; f.append(h);
+  f.append(el('p', 'subtitulo', 'Vale só para a Concha, neste aparelho. "Como no Oceano" segue o tema escolhido no Oceano (⚙ Meu perfil).'));
+  const atual0 = lsGet('concha_tema') || '', fs = el('fieldset'); fs.style.cssText = 'border:0;padding:0;margin:0;display:grid;gap:6px;'; fs.append(el('legend', 'subtitulo', 'Tema'));
+  TEMAS_CONCHA.forEach(([v, rot]) => { const l = el('label', 'radio'); const r = el('input'); r.type = 'radio'; r.name = 'tema'; r.value = v; r.checked = atual0 === v; r.onchange = () => { lsSet('concha_tema', v); if (!v) { try { localStorage.removeItem('concha_tema'); } catch (e) {} } aplicarTema(); }; l.append(r, el('b', '', rot)); fs.append(l); });
+  f.append(fs);
+  const lin = el('div', 'linha'); const ok = el('button', 'primary', 'Pronto'); ok.type = 'submit'; lin.append(ok); f.append(lin);
+  f.onsubmit = e => { e.preventDefault(); fecharModal(); };
+  f.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); fecharModal(); } });
+  (f.querySelector('input[name="tema"]:checked') || ok).focus();
+}
+$('b-tema').onclick = modalTema;
+window.addEventListener('storage', e => { if (e.key === 'concha_tema' || e.key === 'oceano_prefs' || e.key === 'mare_theme') aplicarTema(); });   // mudou em outra aba
 
 // ═══ 📁 Seções na lista de canais (pessoal; kanban/cardume/secoes/{uid} = {s: {id: {n, o}}, c: {canal: id}, r: {chave: true}}) ═══
 let secoes = { s: {}, c: {}, r: {} };
@@ -2308,7 +2349,7 @@ function abrirDoSino(i) {
   return true;
 }
 function ligarSino() {
-  $('b-ajuda').hidden = false;
+  $('b-ajuda').hidden = false; $('b-tema').hidden = false;
   if (!window.MareNotif || !MareNotif.sino) return;
   sinoUid = user.uid; $('b-sino').hidden = false;
   sinoApi = MareNotif.sino($('b-sino'), { user, isAdm: souAdm, toast, abrir: abrirDoSino });
@@ -2316,7 +2357,7 @@ function ligarSino() {
 async function iniciar() {
   limparSessao();
   renderWho();
-  if (!user) { $('b-sino').hidden = true; $('b-ajuda').hidden = true; if (window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
+  if (!user) { $('b-sino').hidden = true; $('b-ajuda').hidden = true; $('b-tema').hidden = true; if (window.MareNotif && MareNotif.sinoFechar) MareNotif.sinoFechar(false); $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
   if (sinoUid && sinoUid !== user.uid) { location.reload(); return; }   // o Sino (mare-notif) vale para UMA conta por página: trocar de conta recarrega
   $('login').hidden = true; $('loading').hidden = false; $('app').hidden = true;
   const meu = user.uid;
