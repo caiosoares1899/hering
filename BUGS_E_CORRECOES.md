@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · 🐚 Concha: navegar entre as fixadas do topo era ruim — setinhas ▲ ▼ no canto, roda do mouse, deslizar o dedo e ↑ ↓ (SÓ DEV, cardume v0.42)
+
+Achado do Caio (26/11). Com mais de uma fixada no topo, só dava para trocar tocando no 📌 (pouco óbvio). Agora a faixa tem setinhas discretas ▲ ▼ no canto direito (só com 2 ou mais), a roda do mouse sobre a faixa troca (sem rolar a conversa), deslizar o dedo para cima/baixo troca no celular, e ↑ ↓ trocam com o foco na faixa. A troca dá a volta (da 1ª para trás vai à última). O texto da faixa ficou centralizado. Ajuda atualizada. Teste: test_concha_fixar.js (27). Deslizar o dedo não foi testado automaticamente.
+
 ### 2026-11-26 · 🐚 Concha: a tela da #tag não tinha volta — agora ← Voltar para o canal, o assunto e a mensagem de onde se clicou (SÓ DEV, cardume v0.40)
 
 Achado do Caio (26/11). Clicar numa #tag abria a tela da tag, mas não havia como voltar à conversa (no computador só pela lista; no celular só para a lista). Agora o topo da tela da #tag tem ← Voltar para # Canal (ou @ Menções), que reabre o canal no mesmo assunto e destaca a mensagem onde a #tag foi clicada. De #tag para #tag pelo Sonar mantém a volta original. Teste: test_concha_tag_voltar.js (8, em 1280 e 390 px).
