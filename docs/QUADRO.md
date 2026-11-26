@@ -16,7 +16,6 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
-| Codex | R3 | 🔒 **B5** do fechamento de `kanban/usuarios`: Painel (`painel-dev.html`), só ADM (régua `role` da regra, não `adm_emails`) lê o nó inteiro; os outros, `usuarios_publicos` | [contrato B5](ideias/usuarios-leitura-fechar.md#b5--painel-só-o-adm-lê-o-cadastro-completo) |
 | Codex | R3 | 🔍 Revisão cruzada do ⏩ encaminhar da Concha: `enc` (só na criação; membro da origem; conteúdo/GIF/legenda iguais; nome atual do canal de origem; não re-encaminha; sem `resp`), edição bloqueada e o aviso por membros — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` do ⏩ encaminhar (conteúdo de canal privado indo para outro canal por decisão de um membro) | [desenho](ideias/cardume-v0-banco.md) |
 | Codex | R3 | 🔍 Revisão cruzada da janela de 15 min da edição na Concha (`editado ≤ ts + 900000` em `kanban/cardume/msgs`) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md) |

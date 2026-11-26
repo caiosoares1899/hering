@@ -1002,6 +1002,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .nc-quando{font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 .nc-uso{font-size:10.5px;color:var(--txt3);text-align:right;white-space:nowrap;min-width:78px;}
 .nc-uso b{color:var(--txt);font-weight:600;}
+#nc-controles-pessoas:not([hidden]){display:inline-flex;}
 .nc-sw{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer;user-select:none;white-space:nowrap;}
 .nc-sw input{width:30px;height:16px;accent-color:var(--teal);cursor:pointer;}
 .nc-sw.dis{opacity:.4;cursor:not-allowed;} .nc-sw.dis input{cursor:not-allowed;}
@@ -2223,17 +2224,18 @@ window.MARE_LOGIN_PELO_OCEANO = true;
        push e Não Perturbe (kanban/usuarios/{uid}/notif_prefs/dnd, fcm_tokens). Pedido: "um sistema de gerenciamento mesmo!". -->
   <div class="ptab-pane" id="ppane-notifs">
     <div class="sec-title" style="display:flex;align-items:center;gap:8px;">🔔 Central de Notificações
-      <span style="margin-left:auto;display:inline-flex;gap:6px;align-items:center;font-weight:400;">
+      <span id="nc-controles-pessoas" hidden style="margin-left:auto;gap:6px;align-items:center;font-weight:400;">
         <span id="nc-quando" style="font-size:10px;color:var(--txt3);"></span>
         <button class="btn btn-sm" onclick="ncAtualizar()" title="Relê a lista de usuários (notificações, aparelhos de push e Não Perturbe)" style="font-size:10px;padding:3px 10px;">🔄 Atualizar</button>
       </span>
     </div>
     <p class="nc-intro">Todos os avisos que o Maré gera — o que são, <b>quando disparam</b>, <b>quem recebe</b> e <b>onde nascem</b>. Os interruptores valem <b>pra todo mundo</b>:
       <b>🔔 Sino</b> = aparece (ou some) no sino do Maré, do Painel, do Radar e do Oceano · <b>📲 Push</b> = vira (ou deixa de virar) aviso no celular/computador.
-      Desligar o sino só <i>esconde</i> — nada é apagado. Cada pessoa ainda pode usar o Não Perturbe dela (veja abaixo quem está com ele ligado).</p>
+      Desligar o sino só <i>esconde</i> — nada é apagado. Cada pessoa ainda pode usar o Não Perturbe dela.</p>
 
     <div class="nc-aviso" id="nc-sem-permissao" style="display:none;"></div>
     <div class="grid-4" id="nc-resumo" style="margin-bottom:18px;"></div>
+    <p class="nc-aviso" id="nc-diretorio">🔒 Os números por pessoa (aparelhos com push, Não Perturbe, avisos gerados e lidos) ficam só para ADM.</p>
 
     <div class="sec-title" style="margin-bottom:8px;">🧩 Tipos de notificação</div>
     <div class="nc-tools">
@@ -2244,15 +2246,17 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     </div>
     <div id="nc-tipos"></div>
 
-    <div class="sec-title" style="margin:22px 0 8px;">🔕 Pessoas: push e Não Perturbe</div>
-    <div class="nc-tools"><div class="nc-chips" id="nc-chips-pessoas"></div></div>
-    <div id="nc-pessoas"></div>
+    <div id="nc-secao-pessoas" hidden>
+      <div class="sec-title" style="margin:22px 0 8px;">🔕 Pessoas: push e Não Perturbe</div>
+      <div class="nc-tools"><div class="nc-chips" id="nc-chips-pessoas"></div></div>
+      <div id="nc-pessoas"></div>
+    </div>
 
     <div class="nc-nota">
       <b>Como funciona por baixo</b> — O Maré (e o Radar/Painel) cria a notificação na caixa da pessoa; uma Cloud Function só decide se ela <i>também</i> vira push.
       <b>Sino desligado</b>: a notificação continua gravada, mas as páginas não a mostram nem contam no selo (e se o push também estiver desligado, nem é gravada).
       <b>Push</b>: <i>ligado</i> envia mesmo para um tipo que antes não enviava; <i>desligado</i> bloqueia mesmo um tipo que enviava — vale só depois do deploy da função
-      <code>sendPushOnNotification</code> (e <code>sendPushOnMural</code> para o Mural). <b>Não Perturbe</b> é decisão pessoal: aqui só se vê.
+      <code>sendPushOnNotification</code> (e <code>sendPushOnMural</code> para o Mural). <b>Não Perturbe</b> é decisão pessoal.
     </div>
   </div><!-- /ppane-notifs -->
 
@@ -3240,7 +3244,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </form>
 </aside>
 
-<div class="version">v5.133 · painel-dev</div>
+<div class="version">v5.134 · painel-dev</div>
 
 <script>
 // ═══ 🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_AGIL_PAINEL.md) ═══
@@ -6346,6 +6350,10 @@ async function _forcarLimpezaCacheGcal(){
 const _MIGRACAO_SUBPATHS = ['dados','agent_usage','error_logs','error_stats','snapshots'];
 async function _migrarSquadMidiaParaPrf(){
   if(!_isAdmPainel()) return;
+  if(await _usuariosNode().catch(()=>null) !== 'kanban/usuarios'){
+    showToast('⚠ A migração precisa de um ADM com papel adm no cadastro.');
+    return;
+  }
   if(!await uiConfirm('Migrar os dados do squad "midia" (Marketing de Performance) pro novo ID "prf"? Isso copia cards, colunas, campanhas, kudos, error logs etc. (sub-caminho por sub-caminho) e depois apaga o antigo. Rode só uma vez.',{okText:'Migrar'})) return;
   showToast('🔄 Migrando squad midia → prf…');
 
@@ -9505,7 +9513,10 @@ function loadAdmList(){
     const saved=snap.val();
     if(saved&&Array.isArray(saved)) ADM_EMAILS=[...new Set([...ADM_EMAILS,...saved])];
     renderAdmList();
-  }).catch(()=>renderAdmList());
+  }).catch(()=>renderAdmList()).finally(()=>{
+    _guAvisarAdmSemPapel();
+    if(_ncAberta()) renderNotifCentral();
+  });
 }
 
 function renderAdmList(){
@@ -10772,6 +10783,15 @@ function _oceanoDoDia(user){
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
+  if(_guUser !== user){
+    _guUser = null;
+    _guRole = undefined;
+    _guCacheNode = '';
+    _guLoadedAt = 0;
+    _globalUsersCache = {};
+    _guAvisoAdm = false;
+    if(_ncAberta()) renderNotifCentral();
+  }
   if(!user) _ccClearAll(); // saiu: não deixa dado de cards da conta anterior no disco
   if(!user && typeof agEncerrar==='function') agEncerrar();   // 🤖 fecha a gaveta e solta o listener da conversa
   if(user){
@@ -10833,6 +10853,7 @@ window.addEventListener('auth-change',e=>{
   }
 });
 function _finishPainelLogin(user){
+  if(user !== window._currentUser) return;
   document.getElementById('login-ov').style.display='none';
   document.getElementById('app-root').style.display='block';
   document.getElementById('user-name').textContent=user.displayName||user.email;
@@ -10845,6 +10866,9 @@ function _finishPainelLogin(user){
   // Maré Digital — só ganhou exceção de leitura, não deve ganhar registro
   // em kanban/usuarios/{uid} (ver _painelEnsureUserRecord() abaixo).
   if(!window._isPainelViewer) _painelEnsureUserRecord(user);
+  _guUser = user;
+  loadAdmList();
+  loadGlobalUsers(true);
   _painelPresenceStart();
   if(window._isPainelViewer){ _viewerRegistrarAcesso('painel'); setInterval(()=>{ if(!document.hidden) _viewerRegistrarAcesso('painel'); }, 60000); }   // ADM vê quem já entrou (⚙ ADMs / 👥 Global Users → 👁)
   setTimeout(_seedComunicadoRascunhos, 2000);
@@ -10924,7 +10948,7 @@ function _painelTryOpenTabFromUrl(){
 
 window.addEventListener('fb-ready',()=>{
   initHiddenCols();
-  loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); loadGlobalUsers(); });
+  loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); });
   _painelTryOpenTabFromUrl();
   loadPresence();
   loadPainelPresence();
@@ -10936,7 +10960,6 @@ window.addEventListener('fb-ready',()=>{
   // do calendário aparecer "vazia" até o usuário navegar de mês manualmente).
   setTimeout(()=>{ if(_isPtab('pessoas')) renderPcal(); }, 2000);
   loadErrorLogs();
-  loadAdmList();
   loadAgentesExternosPainel();
   loadLembretesGestao();
   loadKudosGeral();
@@ -11147,6 +11170,7 @@ function closeGlobalUsersModal(){
 // painel, ao abrir "🗂 Usuários", depois de escritas do próprio painel
 // (_guRefreshSoon) e, ao voltar pra aba, só se o último cache tem >10 min.
 const _GU_TTL_MS = 10*60*1000;
+let _guUser = null, _guRole, _guCacheNode = '', _guAvisoAdm = false;
 let _guLoadedAt = 0, _guInflight = false, _guSoonTimer = null, _guQueued = false, _guRetries = 0;
 function _guRefreshSoon(){
   clearTimeout(_guSoonTimer);
@@ -11180,18 +11204,47 @@ function _guWrapWrites(){
     };
   });
 }
-// Visualizador externo (painel_viewers) NÃO lê kanban/usuarios (e-mails, notificações e tokens de push de todo mundo — as regras fecham, 2026-10-07): lê o diretório magro usuarios_publicos (nome/foto/sigla/papel).
-function _usuariosNode(){ return window._isPainelViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'; }
-function _getUsuariosMap(forcar){
-  if(!forcar && _guLoadedAt && (Date.now()-_guLoadedAt < _GU_TTL_MS) && _globalUsersCache && Object.keys(_globalUsersCache).length) return Promise.resolve(_globalUsersCache);
-  return window._get(window._ref(window._db,_usuariosNode())).then(snap=>{
-    const val = snap.val() || {};
-    _globalUsersCache = val;
-    _guLoadedAt = Date.now();
-    return val;
-  });
+// Régua de leitura da fase C: o papel do próprio cadastro é a fonte.
+function _guAvisarAdmSemPapel(){
+  if(_guAvisoAdm || !_guUser || !_isAdmPainel() || _guRole === undefined || _guRole === 'adm') return;
+  _guAvisoAdm = true;
+  console.warn('[Painel] Falta o papel adm no cadastro. O Painel está usando o diretório público.');
+}
+async function _usuariosNode(){
+  const user = _guUser;
+  if(!user || window._isPainelViewer) return 'kanban/usuarios_publicos';
+  const email = String(user.email||'');
+  if(!email.endsWith('@ciahering.com.br')) return 'kanban/usuarios_publicos';
+  const role = email === NC_EMAIL_MASTER ? 'adm' :
+    (await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/role'))).val();
+  if(user !== _guUser) return 'kanban/usuarios_publicos';
+  _guRole = role;
+  _guAvisarAdmSemPapel();
+  return role === 'adm' ? 'kanban/usuarios' : 'kanban/usuarios_publicos';
+}
+async function _getUsuariosMap(forcar){
+  const user = _guUser;
+  if(!user) return {};
+  if(!forcar && _guLoadedAt && Date.now()-_guLoadedAt < _GU_TTL_MS && Object.keys(_globalUsersCache).length) return _globalUsersCache;
+  const node = await _usuariosNode();
+  if(user !== _guUser) return {};
+  if(_guCacheNode && _guCacheNode !== node){
+    _guCacheNode = '';
+    _guLoadedAt = 0;
+    _globalUsersCache = {};
+    if(_ncAberta()) renderNotifCentral();
+  }
+  const snap = await window._get(window._ref(window._db,node));
+  if(user !== _guUser) return {};
+  if(node === 'kanban/usuarios' && _guRole !== 'adm') return _globalUsersCache;
+  _globalUsersCache = snap.val() || {};
+  _guCacheNode = node;
+  _guLoadedAt = Date.now();
+  return _globalUsersCache;
 }
 function loadGlobalUsers(force){
+  const user = _guUser;
+  if(!user) return;
   _guWrapWrites();
   if(_guInflight){
     // releitura forçada no meio de outra (ex.: logo depois de o ADM trocar um papel):
@@ -11201,10 +11254,10 @@ function loadGlobalUsers(force){
   }
   if(!force && _guLoadedAt && Date.now()-_guLoadedAt < _GU_TTL_MS) return;
   _guInflight = true;
-  window._get(window._ref(window._db,_usuariosNode())).then(snap=>{
-    _dbgTrack('usuarios', snap.val());
-    _guLoadedAt = Date.now(); _guRetries = 0;
-    _globalUsersCache = snap.val() || {};
+  _getUsuariosMap(true).then(val=>{
+    if(user !== _guUser) return;
+    _dbgTrack(_guCacheNode.split('/').pop(), val);
+    _guRetries = 0;
     // Re-deriva members (init/nome/foto) de toda squad já carregada — ver
     // comentário de _squadMembersFromGlobalCache() acima. Cobre a corrida
     // em que _applySquadDados() roda ANTES deste listener popular o cache
@@ -11221,7 +11274,7 @@ function loadGlobalUsers(force){
   }).catch(()=>{
     // falha de rede/permissão: tenta de novo (até 5x, 15s) — sem isso avatares e
     // responsáveis do OKR ficariam vazios a sessão toda
-    if(!_guLoadedAt && _guRetries++ < 5) setTimeout(()=>loadGlobalUsers(true), 15000);
+    if(user === _guUser && !_guLoadedAt && _guRetries++ < 5) setTimeout(()=>loadGlobalUsers(true), 15000);
   }).finally(()=>{
     _guInflight = false;
     if(_guQueued){ _guQueued = false; loadGlobalUsers(true); }
@@ -11249,7 +11302,7 @@ function _guDiretoriaDe(u){ return GU_DIRETORIAS.some(d=>d.id===(u&&u.diretoria)
 function _guPodeEditarDiretoria(){
   const me = window._currentUser; if(!me) return false;
   if(String(me.email||'').toLowerCase()==='caio.soares@ciahering.com.br') return true;
-  return (_globalUsersCache[me.uid]||{}).role==='adm';
+  return _guRole==='adm' && _guUser === me;
 }
 function _guTorreDe(u){ return GU_TORRES.some(t=>t.id===(u&&u.torre)) ? u.torre : 'digital'; }
 let _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false, torre:'', diretoria:''};
@@ -13560,28 +13613,38 @@ function _ncFmtData(ms){ return ms ? new Date(ms).toLocaleString('pt-BR',{day:'2
 function renderNotifCentral(){
   const elT = document.getElementById('nc-tipos'); if(!elT || !window.MareNotif) return;
   const M = MareNotif, agora = Date.now(), adm = _isAdmPainel() && _ncPapelGrava();
-  const av = document.getElementById('nc-sem-permissao'); if(av){ const sem = _isAdmPainel() && !adm; av.style.display = sem ? '' : 'none'; if(sem) av.innerHTML = '🔒 Você é ADM pela lista de e-mails, mas o seu <b>papel no banco</b> não é PO nem ADM — por isso os interruptores ficam só pra leitura. Peça a um PO/ADM pra ajustar o seu papel no <b>👥 Global Users</b> e clique em 🔄 Atualizar.'; }
-  const cache = _globalUsersCache || {}, users = Object.entries(cache).filter(([,u])=>u && (u.nome||u.email||u.displayName));
-  const uso = _ncUso();
+  const av = document.getElementById('nc-sem-permissao'); if(av){ const sem = _isAdmPainel() && _guRole !== undefined && !adm; av.style.display = sem ? '' : 'none'; if(sem) av.innerHTML = '🔒 Você é ADM pela lista de e-mails, mas o seu <b>papel no banco</b> não é PO nem ADM — por isso os interruptores ficam só pra leitura. Peça a um PO/ADM pra ajustar o seu papel no <b>👥 Global Users</b> e clique em 🔄 Atualizar.'; }
+  const verPessoas = _guUser && _guRole === 'adm' && _guCacheNode === 'kanban/usuarios';
+  document.getElementById('nc-diretorio').hidden = !!verPessoas;
+  document.getElementById('nc-secao-pessoas').hidden = !verPessoas;
+  const controles = document.getElementById('nc-controles-pessoas');
+  controles.hidden = !verPessoas && !_isAdmPainel();
+  const elP = document.getElementById('nc-pessoas');
+  if(!verPessoas) elP.replaceChildren();
+  const users = verPessoas ? Object.entries(_globalUsersCache).filter(([,u])=>u && (u.nome||u.email||u.displayName)) : [];
+  const uso = verPessoas ? _ncUso() : {};
   const q = (NC.busca||'').toLowerCase().trim();
-  const ql = document.getElementById('nc-quando'); if(ql) ql.textContent = _guLoadedAt ? 'dados de '+new Date(_guLoadedAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : (users.length ? '' : 'carregando usuários…');
+  const ql = document.getElementById('nc-quando');
+  if(ql) ql.textContent = verPessoas ? 'dados de '+new Date(_guLoadedAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
 
   // — resumo
   const nTipos = M.TIPOS.length, nSino = M.TIPOS.filter(t=>M.cfgLigado(t.id,'sino')).length;
   const pushPoss = M.TIPOS.filter(t=>t.pushPossivel), nPush = pushPoss.filter(t=>M.cfgLigado(t.id,'push')).length;
-  const emDnd = users.filter(([,u])=>_ncDnd(u,agora)).sort((a,b)=>_ncNome(a[1]).localeCompare(_ncNome(b[1])));
-  const comPush = users.filter(([,u])=>_ncAparelhos(u)>0).length;
   const card = (lbl,val,sub,cls)=>'<div class="met"><div class="met-lbl">'+lbl+'</div><div class="met-val '+(cls||'')+'">'+val+'</div><div class="met-sub">'+sub+'</div></div>';
-  document.getElementById('nc-resumo').innerHTML =
+  let resumo =
     card('🔔 Sino ligado', nSino+'<span class="met-un">/'+nTipos+'</span>', nSino<nTipos ? (nTipos-nSino)+' tipo(s) escondido(s) do sino' : 'todos os tipos aparecem', nSino<nTipos?'met-warn':'')
-   +card('📲 Push ligado', nPush+'<span class="met-un">/'+pushPoss.length+'</span>', 'tipos que viram aviso no aparelho', '')
-   +card('🔕 Não Perturbe agora', String(emDnd.length), emDnd.length ? esc(emDnd.slice(0,3).map(([,u])=>_ncNome(u).split(' ')[0]).join(', ')+(emDnd.length>3?' +'+(emDnd.length-3):'')) : 'ninguém', emDnd.length?'met-warn':'')
-   +card('📱 Pessoas com push', comPush+'<span class="met-un">/'+users.length+'</span>', (users.length-comPush)+' sem nenhum aparelho', '');
+   +card('📲 Push ligado', nPush+'<span class="met-un">/'+pushPoss.length+'</span>', 'tipos que viram aviso no aparelho', '');
+  if(verPessoas){
+    const emDnd = users.filter(([,u])=>_ncDnd(u,agora)).sort((a,b)=>_ncNome(a[1]).localeCompare(_ncNome(b[1])));
+    const comPush = users.filter(([,u])=>_ncAparelhos(u)>0).length;
+    resumo += card('🔕 Não Perturbe agora', String(emDnd.length), emDnd.length ? esc(emDnd.slice(0,3).map(([,u])=>_ncNome(u).split(' ')[0]).join(', ')+(emDnd.length>3?' +'+(emDnd.length-3):'')) : 'ninguém', emDnd.length?'met-warn':'')
+      +card('📱 Pessoas com push', comPush+'<span class="met-un">/'+users.length+'</span>', (users.length-comPush)+' sem nenhum aparelho', '');
+  }
+  document.getElementById('nc-resumo').innerHTML = resumo;
 
   // — chips
   const chips = (lista, atual, fn)=>lista.map(([id,l])=>'<button class="nc-chip'+(atual===id?' on':'')+'" onclick="'+fn+'('+jsq(id)+')">'+esc(l)+'</button>').join('');
   document.getElementById('nc-chips-tipos').innerHTML = chips(NC_CHIPS_TIPOS, NC.tipos, 'ncFiltroTipos');
-  document.getElementById('nc-chips-pessoas').innerHTML = chips(NC_CHIPS_PESSOAS, NC.pessoas, 'ncFiltroPessoas');
   const rb = document.getElementById('nc-reset'); if(rb){ rb.style.display = M.TIPOS.some(_ncAlterado) ? '' : 'none'; rb.disabled = !adm; }
 
   // — tipos, agrupados por área
@@ -13600,7 +13663,7 @@ function renderNotifCentral(){
     ts.forEach(t=>{
       const sino = M.cfgLigado(t.id,'sino'), push = M.cfgLigado(t.id,'push'), c = _ncCfg(t.id), alt = _ncAlterado(t), aberto = NC.abertos.has(t.id);
       const u = uso[t.id];
-      const usoTxt = t.fonte==='feed' ? 'evento da torre' : (u ? '<b>'+u.ger+'</b> em '+u.pessoas.size+' pessoa'+(u.pessoas.size===1?'':'s')+' · '+(u.ger-u.lidas)+' não lida'+((u.ger-u.lidas)===1?'':'s') : 'nada em 7d');
+      const usoTxt = !verPessoas ? '' : t.fonte==='feed' ? 'evento da torre' : (u ? '<b>'+u.ger+'</b> em '+u.pessoas.size+' pessoa'+(u.pessoas.size===1?'':'s')+' · '+(u.ger-u.lidas)+' não lida'+((u.ger-u.lidas)===1?'':'s') : 'nada em 7d');
       const dis = adm ? '' : ' disabled';
       const pushDis = !t.pushPossivel;
       html += '<div class="nc-row'+((!sino && !push)?' off':'')+(aberto?' open':'')+'" id="nc-row-'+esc(t.id)+'">'
@@ -13608,7 +13671,7 @@ function renderNotifCentral(){
           +'<span class="nc-ic">'+esc(t.icone)+'</span>'
           +'<div class="nc-tt"><b>'+esc(t.nome)+'</b><small>'+esc(t.id)+'</small>'+(t.fonte==='feed'?'<span class="nc-tag">feed da torre</span>':'')+(alt?'<span class="nc-tag alt" title="'+esc('Alterado por '+(c.por||'?')+(c.em?' em '+_ncFmtData(new Date(c.em).getTime()):''))+'">✏️ alterado</span>':'')+'</div>'
           +'<div class="nc-quando" title="'+esc(t.quando)+'">'+esc(t.quando)+'</div>'
-          +'<div class="nc-uso" title="Notificações deste tipo que ainda estão nas caixas, últimos 7 dias (as lidas somem das caixas depois de 3 dias)">'+usoTxt+'</div>'
+          +(verPessoas ? '<div class="nc-uso" title="Notificações deste tipo que ainda estão nas caixas, últimos 7 dias (as lidas somem das caixas depois de 3 dias)">'+usoTxt+'</div>' : '<div class="nc-uso" style="min-width:0;"></div>')
           +'<label class="nc-sw" onclick="event.stopPropagation()" title="Aparece no sino (Maré, Painel, Radar e Oceano)"><input type="checkbox" '+(sino?'checked':'')+dis+' onchange="ncSet('+jsq(t.id)+',\'sino\',this)">🔔</label>'
           +'<label class="nc-sw'+(pushDis?' dis':'')+'" onclick="event.stopPropagation()" title="'+(pushDis?'Este tipo não tem push (é só do sino)':'Vira aviso no aparelho (push)')+'"><input type="checkbox" '+(push&&!pushDis?'checked':'')+(pushDis?' disabled':dis)+' onchange="ncSet('+jsq(t.id)+',\'push\',this)">📲</label>'
         +'</div>'
@@ -13623,7 +13686,8 @@ function renderNotifCentral(){
   elT.innerHTML = html || '<div class="nc-vazio">Nenhum tipo com esse filtro.</div>';
 
   // — pessoas
-  const elP = document.getElementById('nc-pessoas');
+  if(!verPessoas) return;
+  document.getElementById('nc-chips-pessoas').innerHTML = chips(NC_CHIPS_PESSOAS, NC.pessoas, 'ncFiltroPessoas');
   let lista = users.map(([uid,u])=>({uid,u,dnd:_ncDnd(u,agora),ap:_ncAparelhos(u)}));
   if(NC.pessoas==='dnd') lista = lista.filter(x=>x.dnd);
   else if(NC.pessoas==='com_push') lista = lista.filter(x=>x.ap>0);
@@ -13649,14 +13713,12 @@ function ncFiltroPessoas(f){ NC.pessoas = f; renderNotifCentral(); }
 function ncAtualizar(){ loadGlobalUsers(true); showPainelToast('🔄 Atualizando usuários…'); }
 function _ncPor(){ const u = window._currentUser || {}; return u.displayName || u.email || '?'; }
 // Quem o BANCO deixa gravar em kanban/notif_config (espelho do .write das regras): papel po/adm em kanban/usuarios/{uid}/role, ou o e-mail do Caio.
-// Ser ADM só pela lista de e-mails (isAdmUser) NÃO basta — esse ADM vê a tela, mas o banco nega. Papel ainda não carregado = deixa tentar (o banco decide).
+// Ser ADM só pela lista de e-mails (isAdmUser) NÃO basta — esse ADM vê a tela, mas o banco nega. O papel vem do próprio cadastro.
 const NC_EMAIL_MASTER = 'caio.soares@ciahering.com.br';
 function _ncPapelGrava(){
   const u = window._currentUser; if(!u) return false;
   if(String(u.email||'').toLowerCase() === NC_EMAIL_MASTER) return true;
-  const eu = _globalUsersCache && _globalUsersCache[u.uid];
-  if(!eu) return true;
-  return eu.role === 'po' || eu.role === 'adm';
+  return _guUser === u && (_guRole === 'po' || _guRole === 'adm');
 }
 function _ncErroGravar(e, acao){
   const code = (e && e.code) || (e && e.message) || 'erro';

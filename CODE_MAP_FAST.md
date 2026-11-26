@@ -111,10 +111,10 @@
 - *[+161 no mapa completo](CODE_MAP.md)*
 
 ### `painel-dev.html` (66 âncoras verificadas)
-- [`updateSquadUserRole`](painel-dev.html#L11675) · [`_limparHtmlStatus`](painel-dev.html#L7316) · [`loadAgentesExternosPainel`](painel-dev.html#L9603) · [`_fillAgentesLogSquadFilter`](painel-dev.html#L9772) · [`loadAll`](painel-dev.html#L11978) · [`_renderFlowForecast`](painel-dev.html#L12278)
-- [`loadSaudeCards`](painel-dev.html#L8041) · [`agIniciar`](painel-dev.html#L3265) · [`openBoardSetup`](painel-dev.html#L13701) · [`initHiddenCols`](painel-dev.html#L10570) · [`_pollSquadDados`](painel-dev.html#L11933) · [`_hrefOk`](painel-dev.html#L3755)
-- [`openGlobalUsersModal`](painel-dev.html#L11130) · [`_linkSeguroStatus`](painel-dev.html#L7329) · [`renderAgentesExternosPainel`](painel-dev.html#L9615) · [`loadAgentesTabData`](painel-dev.html#L9779) · [`renderAll`](painel-dev.html#L12000) · [`_forecastHasFreshData`](painel-dev.html#L12272)
-- [`_scMontarEventos`](painel-dev.html#L7932) · [`agContexto`](painel-dev.html#L3289) · [`_corCssOk`](painel-dev.html#L3756) · [`updateUserRole`](painel-dev.html#L10511) · [`_statusIncidenteRecente`](painel-dev.html#L7337) · [`criarAgenteExternoPainel`](painel-dev.html#L9683)
+- [`updateSquadUserRole`](painel-dev.html#L11728) · [`_limparHtmlStatus`](painel-dev.html#L7324) · [`loadAgentesExternosPainel`](painel-dev.html#L9614) · [`_fillAgentesLogSquadFilter`](painel-dev.html#L9783) · [`loadAll`](painel-dev.html#L12031) · [`_renderFlowForecast`](painel-dev.html#L12331)
+- [`loadSaudeCards`](painel-dev.html#L8049) · [`agIniciar`](painel-dev.html#L3269) · [`openBoardSetup`](painel-dev.html#L13763) · [`initHiddenCols`](painel-dev.html#L10581) · [`_pollSquadDados`](painel-dev.html#L11986) · [`_hrefOk`](painel-dev.html#L3759)
+- [`openGlobalUsersModal`](painel-dev.html#L11153) · [`_linkSeguroStatus`](painel-dev.html#L7337) · [`renderAgentesExternosPainel`](painel-dev.html#L9626) · [`loadAgentesTabData`](painel-dev.html#L9790) · [`renderAll`](painel-dev.html#L12053) · [`_forecastHasFreshData`](painel-dev.html#L12325)
+- [`_scMontarEventos`](painel-dev.html#L7940) · [`agContexto`](painel-dev.html#L3293) · [`_corCssOk`](painel-dev.html#L3760) · [`updateUserRole`](painel-dev.html#L10522) · [`_statusIncidenteRecente`](painel-dev.html#L7345) · [`criarAgenteExternoPainel`](painel-dev.html#L9694)
 - *[+42 no mapa completo](CODE_MAP.md)*
 
 ### `okr-dev.html` (9 âncoras verificadas)

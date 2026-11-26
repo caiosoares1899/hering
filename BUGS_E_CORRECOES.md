@@ -87,6 +87,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-26 · Painel: cadastro completo de pessoas só para ADM (B5, SÓ DEV, painel-dev v5.134)
+
+- O cache de pessoas usa o diretório público para PO, membro e visualizador externo. A leitura do cadastro completo segue o papel do próprio UID ou o e-mail de exceção da regra.
+- A Central mantém o catálogo e os estados dos interruptores. O resumo e a seção com indicadores pessoais usam o cadastro completo só no ramo ADM.
+
 ### 2026-11-26 · Radar: cache de pessoas pelo diretório público (B4, SÓ DEV, okr-dev v2.153)
 
 O Radar lê kanban/usuarios_publicos em todos os logins. Para contas internas, o cadastro próprio substitui o espelho no cache, preservando papel, squads, torre e Gestor OKR. Visualizadores externos usam apenas o diretório. As regras do banco continuam como na fase B. Regressão: docs/arezzo/testes/test_radar_diretorio.js.
