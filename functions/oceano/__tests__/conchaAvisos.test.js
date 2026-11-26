@@ -188,3 +188,11 @@ test('segurança (26/11): #constructor e #__proto__ com seguidas vazio NÃO fura
   assert.equal(m.envios.length, 0, 'nenhum push enviado para quem silenciou o canal');
   assert.equal(r.motivos.bru, 'silenciado');
 });
+
+// 📝 Minhas notas (26/11/2026): canal eu-{uid} não tem membros nem canais — a função não avisa ninguém.
+test('runAvisoMsg: nota em "Minhas notas" (eu-{uid}) não gera push para ninguém', async () => {
+  const db = banco({});
+  const m = fakeMsg();
+  const r = await runAvisoMsg(db, m, 'eu-ana', 'n1', { uid: 'ana', ts: AG - 1000, texto: 'minha nota' }, { agora: AG, emailDe, log: () => {} });
+  assert.equal(m.envios.length, 0); assert.equal(r.enviados, 0);
+});

@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 📝 Minhas notas — um canal só seu, que nem o ADM lê (SÓ DEV, cardume v0.47, regras eu-* e notas) — 2026-11-26
+
+Ideia do Caio (26/11), com as decisões dele: como a conversa com você mesmo no WhatsApp, para anotar, salvar links e guardar mensagens. Vem desativado: 📝 Minhas notas, na lista, explica e ativa (a escolha vale em todos os aparelhos). Ativo, fica fixo no alto da lista e no Sonar. Ninguém além da dona lê, nem o ADM (as regras garantem). Tem 🧵 assuntos, 📌 fixadas e ⏩ Encaminhar de outro canal PARA as notas; não tem @menção nem #tags, e das notas não se encaminha. ℹ️ Detalhes › Desativar tira da lista sem apagar nada. Notas ficam fora da limpeza de mensagens antigas. Banco: canal eu-{uid} como terceiro tipo nas regras (ADM e PO da squad não valem para ele; a dona é membro e gestora pelo id) e nó notas/{uid}. Testes: conchaNotasRules.test.js (8, matriz gerada do JSON com sabotagem), conchaAvisos (+1), test_concha_notas.js (14). Deploy: regras antes do merge.
+
 ### 🐚 Concha: 🔄 atualização obrigatória quando sai versão nova, como no Maré (SÓ DEV, cardume v0.46) — 2026-11-26
 
 Pedido do Caio (26/11). Antes, a versão nova só mostrava uma faixa no topo, que dava para ignorar. Agora, quando o version.json aponta versão nova, uma tela cheia trava a Concha até 'Atualizar agora' (Esc não fecha, o foco não sai dela). O rascunho do campo de mensagem já fica guardado no aparelho e volta depois. A mensagem que a pessoa estava editando aparece numa caixa com 📋 Copiar. Um 'apagar' ainda dentro dos 5 s é cancelado e a tela avisa que a mensagem NÃO foi apagada. Confere a versão a cada 5 min e também ao voltar para a aba, quando o app é retomado ou a rede volta (no máximo a cada 10 s). Teste: test_concha_atualizar.js (18, 1280 px escuro e 390 px claro).

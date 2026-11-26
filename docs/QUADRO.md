@@ -16,6 +16,8 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Agente | Risco | Tarefa | Contrato |
 |---|---|---|---|
+| Codex | R3 | 🔍 Revisão cruzada do 📝 Minhas notas (canal `eu-{uid}`: terceiro tipo nas regras, ninguém além da dona lê/grava, nem ADM; `notas/{uid}`) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md#-minhas-notas--o-canal-só-seu-26112026-r3) |
+| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do 📝 Minhas notas (privacidade das notas; ramos de ADM e PO retirados para `eu-*`) | [desenho](ideias/cardume-v0-banco.md#-minhas-notas--o-canal-só-seu-26112026-r3) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -40,6 +42,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | 📝 Concha: regras das Minhas notas (canal `eu-{uid}` só da dona; nó `notas/{uid}`) — **antes do merge**, a partir da branch `claude/concha-minhas-notas` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 🛟 Restaurar comentários sem reativar o Agente Ágil e alarmes de ADM também por `adm_emails` (#1874) | `firebase deploy --only functions:backupCompletoApi,functions:backupVigia,functions:vtexStatus,functions:githubStatus,functions:firebaseStatus --project hering-onboarding` | 19/11/2026 |
 
 ## Backlog
