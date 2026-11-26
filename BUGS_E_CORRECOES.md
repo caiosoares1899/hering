@@ -94,7 +94,7 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
   - **Notificação antiga alargava a pílula ao abrir a página.** A lista do sino chega aos poucos (a 1ª leitura vem vazia), e a "base" ficava vazia. Agora só é "nova" a notificação com horário depois de a página abrir.
   - **⏲ aparecia como um símbolo estranho** em algumas fontes de emoji. Trocado por ⏱️ e ⏸️.
   - **Balão "Concha" ao passar o mouse** em cima do app aberto no Oceano: era o `title` do iframe do host, e virou `aria-label`.
-  - O sino mostra notificações de todos os apps de propósito (é o sino unificado), não é bug. `test_concha_ilha.js` (21).
+  - O sino mostra notificações de todos os apps de propósito (é o sino unificado), não é bug. `docs/arezzo/testes/test_concha_ilha.js` (21).
 
 ### 2026-11-26 · Oceano: botão de expandir/recolher o menu pequeno e apagado (oceano v2.03, só dev)
 
