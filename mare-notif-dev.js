@@ -832,9 +832,12 @@
     toast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.'); sinoRender();
   }
   function sinoPosicionar(){
-    const r = sinoSt.btn.getBoundingClientRect(), p = sinoSt.pop, larg = Math.min(380, window.innerWidth-16);
+    // opts.ancora(): outro elemento para alinhar a lista (a Ilha Dinâmica passa a pílula inteira: a lista abre centralizada embaixo dela)
+    let anc = null; try{ anc = sinoSt.opts && sinoSt.opts.ancora ? sinoSt.opts.ancora() : null; }catch(e){}
+    const r = (anc || sinoSt.btn).getBoundingClientRect(), p = sinoSt.pop, larg = Math.min(anc ? 440 : 380, window.innerWidth-16);
     p.style.width = larg+'px'; p.style.top = (r.bottom+8)+'px';
-    p.style.left = Math.max(8, Math.min(r.right-larg, window.innerWidth-larg-8))+'px';
+    const x = anc ? r.left + r.width/2 - larg/2 : r.right-larg;
+    p.style.left = Math.max(8, Math.min(x, window.innerWidth-larg-8))+'px';
     p.style.maxHeight = Math.max(240, window.innerHeight-r.bottom-24)+'px';
   }
   function sinoAbrir(){
