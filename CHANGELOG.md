@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 👤 Meu cartão: botão 💾 Salvar cartão (SÓ DEV, oceano v2.00) — 2026-11-26
+
+- **(SÓ DEV)** Pedido do Caio depois de testar: faltava um botão de salvar. Antes cada campo gravava sozinho ao sair dele (sem nada visível). Agora: digitar marca "● Alterações não salvas"; **💾 Salvar cartão** (ou Enter num campo) grava os 4 campos num update só e mostra "✓ Salvo"; valor inválido não grava nada e põe o foco no campo; **👁 Ver meu cartão** salva o pendente antes; fechar o ⚙ Meu perfil com alteração pendente pergunta "Salvar agora?" (OK salva e fecha; Cancelar descarta). Fronteira: sem mudança (mesmo nó e regra; só o jeito de gravar). `test_perfil_cartao.js` 48 verificações.
+
 ### 👤 Perfil da pessoa — cartão compartilhado (mare-perfil), Meu cartão no Oceano e convite para completar (SÓ DEV, oceano v1.99, cardume v0.52, regras perfis) — 2026-11-26
 
 - **(SÓ DEV) 👤 Perfil da pessoa — o cartão do Oceano inteiro (1º PR: Concha + Oceano).** Pedido do Caio (26/11): cargo, telefone/WhatsApp, aniversário (dia/mês) e LinkedIn, preenchidos pela própria pessoa; toda a Hering vê; abre ao tocar na foto ou no nome.

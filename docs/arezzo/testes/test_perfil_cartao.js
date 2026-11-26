@@ -81,22 +81,43 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   { const { ctx, p, errs } = await abre('/oceano-dev.html#meu-cartao', PAU);
     await p.waitForSelector('#pf-cargo', { timeout: 8000 }).catch(() => {});
     t('#meu-cartao abre o ⚙ Meu perfil na seção 👤 Meu cartão', await p.evaluate(() => !!document.getElementById('pf-cartao-sec') && document.getElementById('ov-perfil').classList.contains('open')), 0);
-    const preenche = async (id, v) => { await p.fill('#' + id, v); await p.dispatchEvent('#' + id, 'change'); await p.waitForTimeout(250); };
+    const preenche = async (id, v) => { await p.fill('#' + id, v); await p.waitForTimeout(80); };
+    const salvo = () => p.evaluate(() => JSON.parse(JSON.stringify((window.__store.kanban.perfis || {}).pau || null)));
     await preenche('pf-cargo', 'Product Owner'); await preenche('pf-tel', '(47) 3333-4444'); await preenche('pf-niver', '5/12'); await preenche('pf-li', 'https://www.linkedin.com/in/paula-po/?trk=x');
-    let pf = await p.evaluate(() => JSON.parse(JSON.stringify((window.__store.kanban.perfis || {}).pau || null)));
-    t('grava cargo, tel (+55 e só dígitos), niver MM-DD e LinkedIn só o id', pf && pf.cargo === 'Product Owner' && pf.tel === '+554733334444' && pf.niver === '12-05' && pf.li === 'paula-po', pf);
-    await preenche('pf-tel', '123'); await preenche('pf-niver', '31/02'); await preenche('pf-li', 'https://example.com/paula');
-    pf = await p.evaluate(() => JSON.parse(JSON.stringify(window.__store.kanban.perfis.pau)));
-    t('valor inválido não grava (telefone curto, 31/02, link que não é do LinkedIn)', pf.tel === '+554733334444' && pf.niver === '12-05' && pf.li === 'paula-po', pf);
-    await preenche('pf-tel', '');
-    pf = await p.evaluate(() => JSON.parse(JSON.stringify(window.__store.kanban.perfis.pau)));
-    t('apagar o campo tira o telefone do cartão', !('tel' in pf), pf);
+    t('digitar NÃO grava sozinho e avisa "Alterações não salvas"', (await salvo()) === null && /não salvas/.test(await p.textContent('#pf-cartao-st')), await salvo());
+    t('há um botão 💾 Salvar cartão', await p.isVisible('#pf-salvar-cartao'), 0);
+    await p.click('#pf-salvar-cartao'); await p.waitForTimeout(400);
+    let pf = await salvo();
+    t('Salvar grava os 4 campos de uma vez: cargo, tel (+55 e só dígitos), niver MM-DD e LinkedIn só o id', pf && pf.cargo === 'Product Owner' && pf.tel === '+554733334444' && pf.niver === '12-05' && pf.li === 'paula-po', pf);
+    t('depois de salvar: "✓ Salvo"', /Salvo/.test(await p.textContent('#pf-cartao-st')), await p.textContent('#pf-cartao-st'));
+    for (const [id, v] of [['pf-tel', '123'], ['pf-niver', '31/02'], ['pf-li', 'https://example.com/paula']]) {
+      await p.fill('#' + id, v); await p.click('#pf-salvar-cartao'); await p.waitForTimeout(250);
+      const foco = await p.evaluate(() => document.activeElement && document.activeElement.id);
+      pf = await salvo();
+      t('inválido (' + id + ' = ' + v + ') não grava NADA e põe o foco no campo', pf.tel === '+554733334444' && pf.niver === '12-05' && pf.li === 'paula-po' && foco === id, { pf, foco });
+      await p.fill('#' + id, id === 'pf-tel' ? '+55 47 3333-4444' : id === 'pf-niver' ? '05/12' : 'linkedin.com/in/paula-po');
+    }
+    await p.fill('#pf-tel', ''); await p.keyboard.press('Enter'); await p.waitForTimeout(400);
+    pf = await salvo();
+    t('apagar o telefone e apertar Enter salva (o telefone sai do cartão)', !('tel' in pf) && pf.cargo === 'Product Owner', pf);
+    // fechar com alteração pendente pergunta
+    await p.fill('#pf-cargo', 'PO Sênior'); let perguntou = '';
+    p.once('dialog', d => { perguntou = d.message(); d.accept(); });
+    await p.keyboard.press('Escape'); await p.waitForTimeout(500);
+    t('fechar o ⚙ com alteração pendente pergunta e, com OK, salva e fecha', /não salvou/.test(perguntou) && (await salvo()).cargo === 'PO Sênior' && await p.evaluate(() => !document.getElementById('ov-perfil').classList.contains('open')), { perguntou, pf: await salvo() });
+    await p.click('#btn-eu'); await p.waitForTimeout(500);
+    await p.fill('#pf-cargo', 'Descartar'); p.once('dialog', d => d.dismiss());
+    await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+    t('…com Cancelar, fecha sem gravar', (await salvo()).cargo === 'PO Sênior' && await p.evaluate(() => !document.getElementById('ov-perfil').classList.contains('open')), await salvo());
+    await p.click('#btn-eu'); await p.waitForTimeout(500);
+    t('ao reabrir, os campos mostram o que está salvo', (await p.inputValue('#pf-cargo')) === 'PO Sênior', await p.inputValue('#pf-cargo'));
     const esc = await p.evaluate(() => (window.__escritas || []).filter(e => /kanban\/perfis/.test(e.p)));
-    const ruins = esc.filter(e => { const real = Date.now; Date.now = () => e.t; try { return !regras(RULES, e.antes, authDe(PAU), { [e.p]: e.v }); } finally { Date.now = real; } }).map(e => e.p);
-    t('todas as escritas do Oceano passam nas regras reais (' + esc.length + ')', esc.length >= 5 && !ruins.length, ruins);
+    const ruins = esc.filter(e => { const mapa = e.tipo === 'set' ? { [e.p]: e.v } : Object.fromEntries(Object.entries(e.v).map(([kk, v]) => [(e.p ? e.p + '/' : '') + kk, v])); const real = Date.now; Date.now = () => e.t; try { return !regras(RULES, e.antes, authDe(PAU), mapa); } finally { Date.now = real; } }).map(e => e.p);
+    t('todas as escritas do Oceano passam nas regras reais (' + esc.length + ')', esc.length >= 3 && !ruins.length, ruins);
+    await p.fill('#pf-cargo', 'Product Owner'); await p.fill('#pf-niver', '5/12');   // o 👁 salva antes de mostrar
     await p.click('#pf-ver-cartao'); await p.waitForTimeout(400);
     const c = await cartao(p);
-    t('👁 Ver meu cartão mostra o cartão com o que acabou de salvar', c && /Product Owner/.test(c.cargo) && /5 de dezembro/.test(c.txt) && c.links.includes('https://www.linkedin.com/in/paula-po/'), c);
+    t('👁 Ver meu cartão salva o pendente e mostra o cartão', c && /Product Owner/.test(c.cargo) && /5 de dezembro/.test(c.txt) && c.links.includes('https://www.linkedin.com/in/paula-po/'), c);
     await p.click('.mp-pri'); await p.waitForTimeout(300);
     t('"Editar meu perfil" dentro do Oceano volta para a seção (sem recarregar)', await p.evaluate(() => document.getElementById('ov-perfil').classList.contains('open') && document.querySelector('.mp-ov').hidden), 0);
     t('sem erro na página', !errs.length, errs);
@@ -144,7 +165,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
     t('Oceano: o convite aparece também', !!l, l);
     if (l) { await p.click('.mp-acoes button:has-text("Preencher agora")'); await p.waitForTimeout(400); }
     t('"Preencher agora" no Oceano abre ⚙ Meu perfil › 👤 Meu cartão ali mesmo', await p.evaluate(() => document.getElementById('ov-perfil').classList.contains('open') && !!document.getElementById('pf-cargo')), 0);
-    await p.fill('#pf-cargo', 'PO'); await p.dispatchEvent('#pf-cargo', 'change'); await p.waitForTimeout(300);
+    await p.fill('#pf-cargo', 'PO'); await p.click('#pf-salvar-cartao'); await p.waitForTimeout(300);
     t('o cargo preenchido pelo convite foi gravado (quem tem algo preenchido não é mais convidado: ver o caso da Ana)', await p.evaluate(() => ((window.__store.kanban.perfis || {}).pau || {}).cargo === 'PO'), 0);   // o banco falso volta à semente a cada recarga
     t('sem erro na página', !errs.length, errs);
     await ctx.close(); }
