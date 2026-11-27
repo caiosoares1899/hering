@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🔵 marcar como não lida a partir de uma mensagem, como no Slack (SÓ DEV, cardume v0.61) — 2026-11-27
+
+- **(SÓ DEV)** Ideia nº 2 da lista para o time (comparativo com o Slack): **🔵 Não lida** nas ações da mensagem volta a conversa para "não lida" a partir daquela mensagem, para lembrar de voltar nela.
+- Enquanto a pessoa fica na conversa, aparece a linha **"Não lida a partir daqui"** e a Concha **não marca como lida de novo**. Ao sair (outro canal, outro assunto, @ Menções, #tag, ⭐ Favoritos), o canal fica com o **ponto** na lista até ela voltar. **✓ Lida** desfaz na hora.
+- Vale por assunto (🧵): marcar dentro de um assunto acende o assunto. Se a última mensagem da conversa for da própria pessoa, o ponto não acende (a Concha avisa).
+- **Sem regra nova nem deploy:** usa `lidas/{uid}/{canal}` e `lidas_a/{uid}/{canal}/{assunto}`, que já aceitam qualquer horário (só a dona lê e grava).
+- Ajuda ("Responder, reagir, editar e apagar") atualizada. Teste: `docs/arezzo/testes/test_concha_nao_lida.js` (14 verificações).
+
 ### Concha: formatação e envio mais fáceis de tocar (SÓ DEV, v0.60) — 2026-11-27
 
 No toque, os botões do compositor têm alvo de pelo menos 44 × 44 px e a orientação abaixo do campo ocupa menos espaço. A ajuda completa de formatação continua no botão ?.

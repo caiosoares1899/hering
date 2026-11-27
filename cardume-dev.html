@@ -163,6 +163,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .vazio{margin:auto;padding:24px;text-align:center;color:var(--txt2);display:grid;gap:10px;justify-items:center;}
 .dia{display:flex;align-items:center;gap:12px;margin:12px 0;font-size:12px;color:var(--txt2);}
 .dia::before,.dia::after{content:'';flex:1;height:1px;background:var(--glass-b);}
+.dia.nao-lida{color:var(--accent-txt);font-weight:700;} .dia.nao-lida::before,.dia.nao-lida::after{background:var(--accent);}   /* 🔵 Não lida a partir daqui */
 .grupo{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;margin:10px 0;}
 .avatar{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--glass-b);border-radius:11px;background:rgb(var(--slate-rgb));color:var(--cyan);font-weight:800;font-size:11px;overflow:hidden;}
 .avatar img{width:100%;height:100%;object-fit:cover;}
@@ -486,7 +487,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.60 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.61 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -593,6 +594,9 @@ let meta = {};                 // squads_meta (rótulos)
 let meus = {};                 // meus/{uid}: canais em que sou membro
 let abertos = {};              // abertos: temáticos abertos (lista pública)
 let lidas = {};                // lidas/{uid}
+// 🔵 Marcar como não lida (27/11/2026, como no Slack): volta o lido do canal/assunto para logo antes da mensagem e SEGURA o marcar-lido
+// enquanto a pessoa continua ali (senão a própria conversa aberta marcaria de novo). Solta ao sair dessa conversa (canal, assunto ou tela).
+let segurarLido = null;       // { id, k, m } = canal, assunto ('_geral' ou aid) e a mensagem marcada
 const canais = {};             // id → dados de canais/{id} (null = não existe / sem acesso)
 const ultimas = {};            // id → ultima/{id}
 const ouvintes = {};           // chave → unsubscribe
@@ -1147,9 +1151,11 @@ function renderMsgs() {
   if (!msgs.length) { log.append(vazio('💬', vencido(c) ? 'Canal arquivado, sem mensagens.' : (admFora || (ehPerm(id) && !souAdm())) ? 'Nenhuma mensagem ainda.' : 'Nenhuma mensagem ainda. Diga oi! 👋')); return; }
   if (msgs.length >= LIMITE) log.append(el('p', 'subtitulo', 'Mostrando as últimas ' + LIMITE + ' mensagens.'));
   let dia = '', ult = null, grupo = null;
+  const segM = segurarLido && segurarLido.id === id && segurarLido.k === (assuntoAtual || '_geral') ? segurarLido.m : '';
   msgs.forEach(m => {
     const d = rotuloDia(m.ts);
     if (d !== dia) { dia = d; log.append(el('div', 'dia', d)); ult = null; }
+    if (segM && m.id === segM) { log.append(el('div', 'dia nao-lida', 'Não lida a partir daqui')); ult = null; }
     if (!ult || ult.uid !== m.uid || m.ts - ult.ts > 5 * 60000 || ult.apagada) {
       grupo = el('div', 'grupo'); grupo.append(avatar(m.uid, '', true));
       const corpo = el('div'); const a = el('div', 'autor'); a.append(nomeBotao(m.uid, '', true)); const et = etqDe(m.uid); if (et) { const t = el('span', 'etq', et); t.title = 'Etiqueta de ' + nomePessoa(m.uid) + ' neste canal'; a.append(t); } a.append(el('span', 'hora', hhmm(m.ts))); corpo.append(a);
@@ -1453,6 +1459,7 @@ function renderMsg(m) {
   }
   if (podeReagir) { const rr = acaoBtn('', '😀', 'Reagir'); rr.onclick = () => { rxAbrindo = m.id; renderMsgs(); const o = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] .rx-op'); if (o) o.focus(); }; ac.append(rr); }
   if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
+  if ((souMembro(atual) || ehPerm(atual)) && ID_RE.test(m.id) && typeof m.ts === 'number') { const nl = !!segurarLido && segurarLido.id === atual && segurarLido.m === m.id, nb = acaoBtn('', nl ? '✓' : '🔵', nl ? 'Lida' : 'Não lida', nl ? 'Marcar como lida de novo' : 'Marcar como não lida a partir daqui'); nb.setAttribute('aria-pressed', String(nl)); nb.onclick = () => nl ? desfazerNaoLida() : marcarNaoLida(m); ac.append(nb); }
   if (podeLerCanal(atual) && ID_RE.test(m.id)) { const sv = ehSalva(atual, m.id), sb = acaoBtn('', sv ? '⭐' : '☆', sv ? 'Salva' : 'Salvar', sv ? 'Salva em ⭐ Favoritos: tirar' : 'Salvar em ⭐ Favoritos'); sb.setAttribute('aria-pressed', String(sv)); sb.onclick = () => salvarMsg(atual, m.id, !sv); ac.append(sb); }
   if (souMembro(atual) && !ehNotas(atual) && !ehPerm(atual) && !m.enc && (typeof m.texto === 'string' || (m.gif && typeof m.gif === 'object'))) { const fw = acaoBtn('', '⏩', 'Encaminhar'); fw.onclick = () => modalEncaminhar(m); ac.append(fw); }
   if (podeFixar(atual)) { const fb = acaoBtn('', '📌', ehFixada(m.id) ? 'Fixada' : 'Fixar', ehFixada(m.id) ? 'Fixada: mover ou desafixar' : 'Fixar no topo ou como regra do canal'); fb.onclick = () => modalFixar(m); ac.append(fb); }
@@ -2049,7 +2056,7 @@ const AJUDA = [
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **ℹ️ Detalhes › 🔔 Avisos** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
-  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
+  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🔵 Não lida**: volta a conversa para "não lida" a partir daquela mensagem, para lembrar de voltar nela. Enquanto você fica ali, aparece a linha **Não lida a partir daqui**; ao sair, o canal fica com o ponto na lista. **✓ Lida** desfaz.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
   { id: 'notas', ic: '📝', t: 'Minhas notas (canal só seu)', txt: '- **⚙️ Configurações › 📝 Minhas notas** (no alto da Concha): ative uma vez e ele fica no **alto da lista**, em todos os seus aparelhos.\n- É um canal só seu, como a conversa com você mesmo no WhatsApp: anote, salve links e guarde mensagens de outros canais com **⏩ Encaminhar**.\n- **Ninguém mais lê, nem o ADM.** Dá para separar por **🧵 assunto** e **📌 fixar** o importante. Não tem @menção nem #tags.\n- Para tirar da lista: **ℹ️ Detalhes › Desativar Minhas notas** (ou no ⚙️). Nada é apagado; ao ativar de novo, as notas voltam. Notas não entram na limpeza das mensagens antigas.' },
   { id: 'fixadas', ic: '📌', t: 'Fixadas no topo e regras do canal', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela, e escolhe o tipo:\n- **📌 No topo do canal**: aparece numa **faixa no alto da conversa**, como no WhatsApp. Até ' + MAX_FIX.topo + ', uma por vez (📌 1/3, 2/3…): para trocar, use as setinhas **▲ ▼** no canto, **role a roda do mouse** sobre a faixa, **deslize o dedo** para cima ou para baixo no celular, ou **↑ ↓** no teclado. Tocar no texto leva até a mensagem.\n- **📜 Regra do canal**: fica em **ℹ️ Detalhes › 📜 Regras do canal**, com o texto inteiro (até ' + MAX_FIX.regra + '). Na 1ª vez que alguém abre o canal (ou quando entra uma regra nova), aparece o aviso **Este canal tem regras · Ver regras**.\n- Para **mover** entre topo e regras ou **desafixar**: 📌 Fixada, nas ações da mensagem, ou ℹ️ Detalhes. Apagar a mensagem tira ela das fixadas.\n- Mensagem fixada fica de fora da limpeza das antigas.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
@@ -2489,8 +2496,31 @@ function apagar(m) {
   const b = document.querySelector('[data-msg="' + m.id + '"] .lnk'); if (b) b.focus();
 }
 function desfazer(id) { const p = pendentes.get(id); if (!p) return; clearTimeout(p.timer); pendentes.delete(id); renderMsgs(); }
+async function marcarNaoLida(m) {
+  const id = atual, k = assuntoAtual || '_geral'; if (!id || !ID_RE.test(m.id) || typeof m.ts !== 'number') return;
+  clearTimeout(marcarLido._t);
+  const ts = m.ts - 1, mapa = { [B + 'lidas_a/' + user.uid + '/' + id + '/' + k]: ts };
+  if (k === '_geral') mapa[B + 'lidas/' + user.uid + '/' + id] = ts;
+  segurarLido = { id, k, m: m.id };   // antes do write: o eco do listener não pode re-marcar como lida
+  try {
+    await update(ref(db), mapa); renderMsgs();
+    const ult = msgs.length ? msgs[msgs.length - 1] : null;
+    toast(ult && ult.uid === user.uid ? '🔵 Marcada como não lida. Como a última mensagem é sua, o ponto do canal não acende.' : '🔵 Marcada como não lida: o canal fica com o ponto até você voltar.');
+  } catch (e) { segurarLido = null; falhou('marcar como não lida', e); }
+}
+function desfazerNaoLida() {   // na hora (sem o respiro do marcarLido): lê até a última mensagem da conversa aberta
+  const s0 = segurarLido; segurarLido = null; renderMsgs();
+  const id = atual, k = assuntoAtual || '_geral', ult = msgs.length ? msgs[msgs.length - 1] : null;
+  if (!s0 || s0.id !== id || !ult || typeof ult.ts !== 'number') return;
+  clearTimeout(marcarLido._t);
+  const mapa = { [B + 'lidas_a/' + user.uid + '/' + id + '/' + k]: Math.max(ult.ts, lidoA(id, k)) };
+  if (k === '_geral') mapa[B + 'lidas/' + user.uid + '/' + id] = Math.max(ult.ts, lidas[id] || 0);
+  update(ref(db), mapa).then(() => toast('✓ Marcada como lida de novo.')).catch(e => falhou('marcar como lida', e));
+}
 // Marca como lido (só sobe; um write por mudança, com respiro).
 function marcarLido() {   // por assunto (lidas_a); a vista de geral também avança o lido antigo do canal
+  if (segurarLido && (segurarLido.id !== atual || segurarLido.k !== (assuntoAtual || '_geral') || vendoTag || vendoMencoes || vendoPessoa || vendoFavs)) segurarLido = null;   // saiu da conversa: solta
+  if (segurarLido) return;
   const id = atual; if (!id || !(souMembro(id) || ehPerm(id)) || !conversaVisivel() || vendoTag || vendoMencoes || vendoPessoa || vendoFavs || !msgs.length) return;
   const ts = msgs[msgs.length - 1].ts, k = assuntoAtual || '_geral';
   if (ts <= lidoA(id, k)) return;
@@ -2924,7 +2954,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; vendoFavs = false; favTags = Object.create(null); favMsgs = Object.create(null); etqAtual = Object.create(null); $('b-favs').setAttribute('aria-current', 'false'); tagsUlt = Object.create(null); tagsUltEm = 0; avisos = {}; seguidas = {}; notasOn = false; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; vendoFavs = false; favTags = Object.create(null); favMsgs = Object.create(null); etqAtual = Object.create(null); segurarLido = null; $('b-favs').setAttribute('aria-current', 'false'); tagsUlt = Object.create(null); tagsUltEm = 0; avisos = {}; seguidas = {}; notasOn = false; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.
