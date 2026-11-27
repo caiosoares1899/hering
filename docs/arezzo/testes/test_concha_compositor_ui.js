@@ -32,7 +32,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
         texto: 'Acompanhamento 🚀 <b>literal</b> ' + 'Texto longo para a conversa. '.repeat(9) };
     }
     await fake.install(ctx, dados);
-    await ctx.addInitScript(t => localStorage.setItem('concha_tema', t), tema);
+    await ctx.addInitScript(t => { localStorage.setItem('concha_tema', t); localStorage.setItem('concha_fmt', '1'); }, tema);   // formatação aberta pelo Aa (UI/UX 27/11)
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto(base + '/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb);
     await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(900);

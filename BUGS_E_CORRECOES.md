@@ -87,6 +87,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-27 · 🐚 Concha: setas da fixada e ℹ️ abaixo de 44 px no toque, título longo quebrando no celular e teste de seções desatualizado (SÓ DEV, cardume v0.63)
+
+- **Setas da fixada no topo com 18 px de altura** (`.fix-topo .fix-nav button`): alvo de toque bem abaixo dos 44 px no celular e no iPad. Agora ficam lado a lado, com 34 px no computador e 44 px no toque. Achado na rodada de UI/UX.
+- **ℹ️ Detalhes com 40 px no toque** (`#b-lado`): agora 44 px. E o **título do canal quebrava em várias linhas** com nome longo no celular, engordando o cabeçalho: agora fica numa linha, com reticências.
+- **`docs/arezzo/testes/test_concha_secoes.js` falhava também na `main`:** não contava com o Geral e o #oceano, que ficam fixos no alto da lista desde a v0.51. O teste passou a ignorar os dois ao comparar as seções.
+
 ### 2026-11-27 · 🐚 Concha: faixa de assuntos aparecia nas telas de lista e pílula de ações cobria o texto com 7+ ícones (SÓ DEV, cardume v0.58)
 
 - **Faixa de assuntos vazando nas telas de lista:** ao abrir @ Menções, uma #tag ou uma Pessoa a partir de um canal, a faixa "💬 geral / + Assunto" do último canal continuava à vista (sem servir para nada ali). Agora as quatro telas de lista (@ Menções, #tag, Pessoa e ⭐ Favoritos) escondem a faixa; ela volta ao abrir um canal.

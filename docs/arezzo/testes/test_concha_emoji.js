@@ -44,7 +44,8 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('"Padrão" tira o emoji e volta ao da squad', !(await S()).canais.dados.e && (await nomeLista('dados')) === '📊 Dados', 0);
   await p.click('[data-canal="prf"]'); await p.waitForTimeout(400);
   t('membro comum (sem ser PO de Performance) não vê o seletor', await p.evaluate(() => !document.querySelector('#lado .emoji-grade')), 0);
-  await p.click('#assuntos-barra [data-aid="_novo"]'); await p.fill('.md input', 'banner'); await p.click('.md .emoji-grade [aria-label="Emoji 🎨"]'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(500);
+  await p.click('[data-aid="_novo"]:visible');   // sem assuntos, o ＋ Assunto mora no cabeçalho (UI/UX 27/11)
+  await p.fill('.md input', 'banner'); await p.click('.md .emoji-grade [aria-label="Emoji 🎨"]'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(500);
   const c = await S(); const aid = Object.keys(c.assuntos.prf || {})[0];
   t('assunto nasce com o emoji escolhido; chip "🎨 banner", campo "Em 🎨 banner" e ⚙️ na faixa', aid && c.assuntos.prf[aid].e === '🎨' && (await chips()).includes('🎨 banner') && await p.evaluate(() => document.getElementById('entrada').placeholder === 'Em 🎨 banner') && (await chips()).includes('⚙️'), { a: c.assuntos.prf, ch: await chips() });
   await p.click('#assuntos-barra [data-aid="_ger"]'); await p.click('.md .emoji-grade [aria-label="Emoji 📈"]'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(400);
