@@ -1,6 +1,6 @@
-// 🐚 Concha — ⭐ Favoritos (27/11/2026, docs/ideias/cardume-v0-banco.md › "⭐ Favoritos").
-// ☆ Salvar na mensagem (grava fav_msgs/{uid}/{canal}/{msgId} = ts, sem texto); ☆ Favoritar na tela da #tag (fav_tags/{uid}/{tag}, sem push);
-// a tela ⭐ Favoritos (chips das #tags + mensagens salvas, a mais nova primeiro), abrir uma salva leva à mensagem, ← Voltar da #tag
+// 🐚 Concha — 🔖 Salvos (era ⭐ Favoritos) (27/11/2026, docs/ideias/cardume-v0-banco.md › "⭐ Favoritos").
+// ☆ Salvar na mensagem (grava fav_msgs/{uid}/{canal}/{msgId} = ts, sem texto); 🔖 Salvar #tag na tela da #tag (fav_tags/{uid}/{tag}, sem push);
+// a tela 🔖 Salvos (era ⭐ Favoritos) (chips das #tags + mensagens salvas, a mais nova primeiro), abrir uma salva leva à mensagem, ← Voltar da #tag
 // volta aos Favoritos, mensagem apagada fica avisando até tirar, #constructor não nasce "favoritada". Cada escrita conferida nas regras reais.
 // Rodar na raiz: python3 -m http.server 8941  →  node docs/arezzo/testes/test_concha_favoritos.js
 const fs = require('node:fs'), path = require('node:path'), home = require('node:os').homedir();
@@ -40,23 +40,23 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   const S = () => p.evaluate(() => JSON.parse(JSON.stringify(window.__store.kanban.cardume)));
   const salvas = async () => ((await S()).fav_msgs || {}).ana || {};
 
-  t('⭐ Favoritos aparece na lateral, logo abaixo de @ Menções', await p.evaluate(() => { const f = document.getElementById('b-favs'); return !!f && f.previousElementSibling && f.previousElementSibling.id === 'b-mencoes' && /⭐ Favoritos/.test(f.textContent); }), 0);
-  t('a mensagem tem ☆ Salvar (desmarcado)', await p.evaluate(() => { const x = document.querySelector('[data-msg="-Nd1"] [aria-label="Salvar em ⭐ Favoritos"]'); return !!x && x.getAttribute('aria-pressed') === 'false'; }), 0);
-  await p.hover('[data-msg="-Nd1"]'); await p.click('[data-msg="-Nd1"] [aria-label="Salvar em ⭐ Favoritos"]'); await p.waitForTimeout(400);
+  t('🔖 Salvos aparece na lateral, logo abaixo de @ Menções', await p.evaluate(() => { const f = document.getElementById('b-favs'); return !!f && f.previousElementSibling && f.previousElementSibling.id === 'b-mencoes' && /🔖 Salvos/.test(f.textContent); }), 0);
+  t('a mensagem tem ☆ Salvar (desmarcado)', await p.evaluate(() => { const x = document.querySelector('[data-msg="-Nd1"] [aria-label="Salvar em 🔖 Salvos"]'); return !!x && x.getAttribute('aria-pressed') === 'false'; }), 0);
+  await p.hover('[data-msg="-Nd1"]'); await p.click('[data-msg="-Nd1"] [aria-label="Salvar em 🔖 Salvos"]'); await p.waitForTimeout(400);
   let sv = await salvas();
   t('☆ Salvar grava fav_msgs/ana/dados/-Nd1 = número (só o id, sem texto)', typeof (sv.dados || {})['-Nd1'] === 'number', sv);
-  t('o botão vira ⭐ Salva', await p.evaluate(() => { const x = document.querySelector('[data-msg="-Nd1"] [aria-label="Salva em ⭐ Favoritos: tirar"]'); return !!x && x.getAttribute('aria-pressed') === 'true'; }), 0);
+  t('o botão vira 🔖 Salva', await p.evaluate(() => { const x = document.querySelector('[data-msg="-Nd1"] [aria-label="Salva em 🔖 Salvos: tirar"]'); return !!x && x.getAttribute('aria-pressed') === 'true'; }), 0);
   await p.click('[data-canal="prf"]'); await p.waitForTimeout(400);
-  await p.hover('[data-msg="-Np1"]'); await p.click('[data-msg="-Np1"] [aria-label="Salvar em ⭐ Favoritos"]'); await p.waitForTimeout(400);
+  await p.hover('[data-msg="-Np1"]'); await p.click('[data-msg="-Np1"] [aria-label="Salvar em 🔖 Salvos"]'); await p.waitForTimeout(400);
   t('salva também a de outro canal', typeof ((await salvas()).prf || {})['-Np1'] === 'number', await salvas());
 
   await p.click('#b-favs'); await p.waitForTimeout(600);
   const tela = await p.evaluate(() => ({ tit: document.getElementById('canal-titulo').textContent, cur: document.getElementById('b-favs').getAttribute('aria-current'), rod: document.getElementById('rodape').hidden,
     itens: [...document.querySelectorAll('#log .fav-linha .mencao-item')].map(x => x.textContent), tags: document.querySelectorAll('#log .fav-tags .tag').length }));
-  t('⭐ Favoritos abre a tela (título, aria-current, sem campo de escrever)', tela.tit === '⭐ Favoritos' && tela.cur === 'true' && tela.rod === true, tela);
+  t('🔖 Salvos abre a tela (título, aria-current, sem campo de escrever)', tela.tit === '🔖 Salvos' && tela.cur === 'true' && tela.rod === true, tela);
   t('lista as 3 salvas, a mais nova primeiro, com canal, autor e trecho', tela.itens.length === 3 && /# Performance · Bruno Reis.*meta da semana/.test(tela.itens[0]) && /# Dados · Bruno Reis.*subiu o #banner/.test(tela.itens[1]), tela.itens);
   t('a apagada fica avisando "(mensagem apagada)"', /\(mensagem apagada\)/.test(tela.itens[2]), tela.itens);
-  t('sem #tag favorita: a seção explica como favoritar', tela.tags === 0 && await p.evaluate(() => /☆ Favoritar/.test(document.getElementById('log').textContent)), 0);
+  t('sem #tag favorita: a seção explica como favoritar', tela.tags === 0 && await p.evaluate(() => /🔖 Salvar #tag/.test(document.getElementById('log').textContent)), 0);
   t('a faixa de assuntos do canal (💬 geral / + Assunto) some na tela de Favoritos', await p.evaluate(() => document.getElementById('assuntos-barra').hidden), 0);
   t('nenhum sinal de vida (vendo) enquanto está em ⭐ Favoritos', !Object.keys(((await S()).vendo || {}).ana || {}).length, (await S()).vendo);
 
@@ -68,33 +68,33 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('abrir uma salva leva ao canal e destaca a mensagem', await p.evaluate(() => { const m = document.querySelector('[data-msg="-Nd1"]'); return new URL(location.href).searchParams.get('c') === 'dados' && !!m && m.classList.contains('destaque') && document.getElementById('b-favs').getAttribute('aria-current') === 'false'; }), 0);
 
   await p.click('[data-msg="-Nd1"] button.tag'); await p.waitForTimeout(500);
-  t('na tela da #tag: 🔔 Seguir e ☆ Favoritar lado a lado', await p.evaluate(() => !!document.querySelector('.seguir-tag') && document.querySelector('.fav-tag-btn').textContent === '☆ Favoritar #banner'), 0);
+  t('na tela da #tag: 🔔 Seguir e ☆ Favoritar lado a lado', await p.evaluate(() => !!document.querySelector('.seguir-tag') && document.querySelector('.fav-tag-btn').textContent === '🔖 Salvar #banner'), 0);
   await p.click('.fav-tag-btn'); await p.waitForTimeout(400);
   let c = await S();
   t('☆ Favoritar grava fav_tags/ana/banner e NÃO segue (sem push)', typeof ((c.fav_tags || {}).ana || {}).banner === 'number' && !((c.seguidas || {}).ana || {}).banner, { f: c.fav_tags, s: c.seguidas });
-  t('o botão vira ⭐ Nos favoritos', await p.evaluate(() => document.querySelector('.fav-tag-btn').textContent === '⭐ Nos favoritos' && document.querySelector('.fav-tag-btn').getAttribute('aria-pressed') === 'true'), 0);
+  t('o botão vira ⭐ Nos favoritos', await p.evaluate(() => document.querySelector('.fav-tag-btn').textContent === '🔖 Salva' && document.querySelector('.fav-tag-btn').getAttribute('aria-pressed') === 'true'), 0);
 
   await p.click('#b-favs'); await p.waitForTimeout(500);
   t('a #banner aparece como chip em ⭐ Favoritos', await p.evaluate(() => [...document.querySelectorAll('#log .fav-tags .tag')].map(x => x.textContent).join() === '#banner'), 0);
   await p.click('#log .fav-tags .tag'); await p.waitForTimeout(500);
-  t('o chip abre a tela da #tag com "← Voltar para ⭐ Favoritos"', await p.evaluate(() => document.getElementById('canal-titulo').textContent === '#banner' && /Voltar para ⭐ Favoritos/.test((document.querySelector('.voltar-tag') || {}).textContent || '')), 0);
+  t('o chip abre a tela da #tag com "← Voltar para 🔖 Salvos"', await p.evaluate(() => document.getElementById('canal-titulo').textContent === '#banner' && /Voltar para 🔖 Salvos/.test((document.querySelector('.voltar-tag') || {}).textContent || '')), 0);
   await p.click('.voltar-tag'); await p.waitForTimeout(400);
-  t('← Voltar volta aos Favoritos', await p.evaluate(() => document.getElementById('canal-titulo').textContent === '⭐ Favoritos'), 0);
+  t('← Voltar volta aos Favoritos', await p.evaluate(() => document.getElementById('canal-titulo').textContent === '🔖 Salvos'), 0);
 
   await p.click('#b-mencoes'); await p.waitForTimeout(300);
   t('ir para @ Menções desmarca ⭐ Favoritos', await p.evaluate(() => document.getElementById('b-favs').getAttribute('aria-current') === 'false' && document.getElementById('b-mencoes').getAttribute('aria-current') === 'true'), 0);
 
   await p.click('[data-canal="dados"]'); await p.waitForTimeout(400);
   await p.click('[data-msg="-Nd2"] button.tag'); await p.waitForTimeout(500);
-  t('#constructor não nasce "favoritada" (sem protótipo)', await p.evaluate(() => document.querySelector('.fav-tag-btn').textContent === '☆ Favoritar #constructor'), 0);
+  t('#constructor não nasce "favoritada" (sem protótipo)', await p.evaluate(() => document.querySelector('.fav-tag-btn').textContent === '🔖 Salvar #constructor'), 0);
 
   await p.click('[data-canal="dados"]'); await p.waitForTimeout(400);
-  await p.hover('[data-msg="-Nd1"]'); await p.click('[data-msg="-Nd1"] [aria-label="Salva em ⭐ Favoritos: tirar"]'); await p.waitForTimeout(400);
+  await p.hover('[data-msg="-Nd1"]'); await p.click('[data-msg="-Nd1"] [aria-label="Salva em 🔖 Salvos: tirar"]'); await p.waitForTimeout(400);
   t('⭐ Salva na mensagem tira dos salvos', !((await salvas()).dados || {})['-Nd1'], await salvas());
 
   await p.setViewportSize({ width: 390, height: 800 }); await p.click('[data-canal="dados"]').catch(() => {}); await p.waitForTimeout(200);
   await p.evaluate(() => document.getElementById('b-favs').click()); await p.waitForTimeout(400);
-  t('celular: a tela cabe sem rolagem lateral', await p.evaluate(() => document.documentElement.scrollWidth <= 391 && document.getElementById('canal-titulo').textContent === '⭐ Favoritos'), 0);
+  t('celular: a tela cabe sem rolagem lateral', await p.evaluate(() => document.documentElement.scrollWidth <= 391 && document.getElementById('canal-titulo').textContent === '🔖 Salvos'), 0);
 
   const esc = await p.evaluate(() => window.__escritas || []);
   const real = Date.now; const ruins = [];

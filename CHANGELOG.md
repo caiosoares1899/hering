@@ -24,6 +24,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: ⭐ Favoritos vira 🔖 Salvos e ℹ️ Detalhes reorganizado (Para você, membros com ⋯, Sair por último) (SÓ DEV, cardume v0.64) — 2026-11-27
+
+- **(SÓ DEV)** Pedidos do Caio a partir do print dos Detalhes.
+- **"⭐ Favoritos" virou "🔖 Salvos".** O botão da lista, a tela, a ação da mensagem (🔖 Salvar / 🔖 Salva, com destaque quando salva) e o botão da tela da #tag (🔖 Salvar #tag) mudaram de nome. Acaba a confusão com a seção de canais "⭐ Favoritos" (📁 Seções), que continua existindo e agora tem um nome só dela. O ✕ tira dos Salvos. Os nós no banco seguem `fav_tags`/`fav_msgs`.
+- **ℹ️ Detalhes reorganizado.** Antes, "Sair do canal" era o primeiro botão; as opções da pessoa e as do canal vinham misturadas; "No topo" e "Regras" ocupavam espaço mesmo vazios; e cada membro tinha dois botões (Tirar e Fazer admin) que cortavam o nome. Agora a ordem é:
+  1. Uma linha **sobre** o canal (quem criou, aberto ou só convidados, até quando).
+  2. **Para você**, numa lista agrupada: 🔔 Avisos · 🏷️ Sua etiqueta · 📁 Na sua lista.
+  3. **Fixadas e regras, só se houver.** Vazias, viram uma linha só, e só para quem pode fixar.
+  4. **Membros**, com o nome inteiro e um **⋯** por pessoa (Fazer/Tirar admin · Tirar do canal).
+  5. **＋ Adicionar pessoa**, que abre a busca sob demanda. Ela já vem aberta num canal novo (até 1 pessoa) e continua aberta enquanto você adiciona.
+  6. **O canal** (só quem administra): 😀 Emoji · ⚙️ Editar canal.
+  7. **🚪 Sair do canal** por último, em vermelho.
+- Sem regra nova nem deploy. Teste novo: `docs/arezzo/testes/test_concha_detalhes.js` (18 verificações). Atualizados: `test_concha_favoritos`, `test_concha_avisos`, `test_concha_etiquetas` e `test_concha_entrar_adm` (seletores do painel novo).
+
 ### 🐚 Concha: 🧭 rodada de UI/UX — menos coisa na tela, cada elemento só quando tem algo a dizer, e a conversa abre nas novas (SÓ DEV, cardume v0.63) — 2026-11-27
 
 - **(SÓ DEV)** Pedido do Caio ("a tela está cheia de coisas que fomos implementando; falta inteligência e design"). Rodada `/melhoriauiux` com um princípio só: **cada elemento aparece quando tem algo a dizer**. Medido com dados reais (30 mensagens, ADM, seções, Minhas notas), contra a `main`:

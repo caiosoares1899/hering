@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/concha-uiux` (worktree `~/hering-fav`) | `cardume-dev.html`, testes da Concha | 27/11/2026 |
+| Claude | `claude/concha-salvos-detalhes` (worktree `~/hering-fav`) | `cardume-dev.html`, testes da Concha | 27/11/2026 |
 
 
 ## Fila
