@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### Concha: formatação e envio mais fáceis de tocar (SÓ DEV, v0.60) — 2026-11-27
+
+No toque, os botões do compositor têm alvo de pelo menos 44 × 44 px e a orientação abaixo do campo ocupa menos espaço. A ajuda completa de formatação continua no botão ?.
+
 ### 🐚 Concha: 🏷️ etiqueta por pessoa em cada canal, ao lado do nome (SÓ DEV, cardume v0.59, regra etiquetas) — 2026-11-27
 
 - **(SÓ DEV)** Ideia do Caio (Backlog de 26/11): cada pessoa escolhe **a própria etiqueta em cada canal** (ex.: "Design", "Plantão"). Ela aparece **ao lado do nome** nas mensagens e na lista de membros daquele canal.
