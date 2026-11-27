@@ -87,6 +87,10 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-27 · Concha: sino da Ilha parava de abrir ao entrar de novo (SÓ DEV, v0.57)
+
+Ao sair e voltar com a mesma conta sem recarregar, a Ilha recriava o botão, enquanto o contador e o ouvinte de clique ficavam no botão antigo. O sino agora transfere o contador e conecta o clique ao botão atual. Regressão em test_concha_ilha.js.
+
 ### 2026-11-27 · /monitorarbugs (menu lateral, Ilha e contadores): clique perdido no painel da Ilha, Ilha religada pelo Oceano e foco perdido no menu (oceano v2.09, concha v0.56, só dev)
 
 - **(SÓ DEV)** Rodada do `/monitorarbugs` no código de 26/11 (menu lateral, contadores, `mare-ilha`, `mare-perfil`). 3 achados, todos reproduzidos antes da correção em `docs/arezzo/testes/test_monitorar_2711.js`:

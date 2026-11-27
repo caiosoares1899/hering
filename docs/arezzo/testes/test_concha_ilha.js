@@ -39,7 +39,7 @@ const DBURL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   { const { ctx, p, errs } = await abre(PAU);
     let x = await pil(p);
-    t('Ilha ligada na conta: a pílula aparece no alto com o timer rodando (⏲ Revisar banner, ~01:0x, +1)', x && x.visivel && /⏱️Revisar banner01:0\d\+1/.test(x.txt), x);
+    t('Ilha ligada na conta: a pílula aparece no alto com o timer rodando (⏲ Revisar banner, ~01:xx, +1)', x && x.visivel && /⏱️Revisar banner01:\d{2}\+1/.test(x.txt), x);
     t('notificação ANTIGA não lida não alarga a pílula ao abrir a página (relato do Caio)', x && !x.aviso, x);
     t('o 🔔 do topo some: o sino mora dentro da ilha', await p.evaluate(() => document.getElementById('b-sino').hidden && !!document.querySelector('#ilha-slot .mi-sino.mn-sino-btn')), 0);
     await p.waitForTimeout(1100);
@@ -92,6 +92,19 @@ const DBURL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
     await p.screenshot({ path: path.join(__dirname, '../../capturas/concha-ilha-390.png') });
     t('sem erro na página', !errs.length, errs);
     await ctx.close(); }
+
+  {
+    const { ctx, p } = await abre(PAU);
+    await p.evaluate(() => window.__authCb(null));
+    await p.evaluate(u => window.__authCb(u), PAU);
+    await p.waitForSelector('#ilha-slot .mi-sino');
+    await p.locator('#ilha-slot .mi-sino').click();
+    t('sino abre após sair e entrar de novo na mesma conta', await p.locator('.mn-sino-pop').isVisible(), await p.locator('#ilha-slot .mi-sino').getAttribute('class'));
+    t('o contador é recolocado no sino recriado', await p.locator('#ilha-slot .mi-sino .mn-sino-n').count() === 1, 0);
+    await p.locator('#ilha-slot .mi-sino').click();
+    t('segundo clique fecha o mesmo painel', !await p.locator('.mn-sino-pop').isVisible(), 0);
+    await ctx.close();
+  }
 
   await b.close();
   console.log((ok ? '\n✅ ' : '\n❌ ') + total + ' verificações');

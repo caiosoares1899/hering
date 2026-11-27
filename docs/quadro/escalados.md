@@ -265,11 +265,3 @@ Após o PR #2012, Caio pediu que os avisos de promoção no **#oceano** apareça
 O ADM aciona a publicação. A identidade do remetente é atribuída pelo servidor a um perfil de sistema, com registro da conta ADM que acionou a publicação. O cliente comum não escolhe essa identidade. O envio em nome do Agente Ágil fica restrito ao fluxo de avisos do **#oceano**.
 
 Aceite. ADM publica um aviso que aparece com o perfil do Agente Ágil. Conta comum continua podendo ler e recebe recusa se tentar publicar como o agente. Mensagens humanas continuam associadas à conta que publicou.
-
-## Concha: sino da Ilha após relogin
-
-Severidade média. Com a Ilha ligada na conta, sair e entrar novamente com a mesma conta na mesma aba recria o botão do sino. O clique já não abre a lista. Reproduzido no Chromium com Firebase simulado contra a v0.55, alternando o estado de autenticação da mesma conta sem recarregar. O teste de console no dev também confirmou os dois sintomas: botão sem vínculo com o painel e lista invisível após clicar.
-
-Em `cardume-dev.html`, `iniciar()` remove a Ilha ao sair e `ligarSino()` entrega o novo botão a `MareNotif.sino()` na volta. Em `mare-notif-dev.js`, o badge e o ouvinte de clique só são anexados quando o badge ainda não existe; o novo botão fica sem eles. O botão criado em `mare-ilha-dev.js` também tem o tooltip comentado na linha de registro do clique; a associação do nome acessível em uma sessão inicial é feita pelo sino compartilhado.
-
-Aceite. Sair e entrar na mesma conta sem recarregar e conferir que o botão novo abre o painel e mostra o contador. Conferir também o primeiro login e a abertura alternada dos painéis da Ilha e do sino.
