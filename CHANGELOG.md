@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🏷️ etiqueta por pessoa em cada canal, ao lado do nome (SÓ DEV, cardume v0.59, regra etiquetas) — 2026-11-27
+
+- **(SÓ DEV)** Ideia do Caio (Backlog de 26/11): cada pessoa escolhe **a própria etiqueta em cada canal** (ex.: "Design", "Plantão"). Ela aparece **ao lado do nome** nas mensagens e na lista de membros daquele canal.
+- **🏷️ Sua etiqueta** nos ℹ️ Detalhes do canal abre um modal com o campo (até 24 caracteres), sugestões (Design, Dados, Produto, Tecnologia, Marketing, Comercial, Plantão, Líder) e **Tirar etiqueta**. Ao **sair do canal**, a etiqueta sai junto.
+- Não existe no Geral, no #oceano nem nas 📝 Minhas notas. Etiqueta de quem já saiu do canal não aparece.
+- **Banco (R3, regras + testes):** `kanban/cardume/etiquetas/{canal}/{uid}` = texto de 1 a 24 caracteres, sem quebra de linha nem espaço nas pontas. Só a própria pessoa grava, sendo membro de um canal ativo. Quem é do canal lê. Tirar a sua vale sempre, e o ADM pode tirar a de qualquer um (moderação).
+- Ajuda: tópico "Canais" e "Quem vê o quê" atualizados. Testes: `functions/rules/__tests__/conchaEtiquetasRules.test.js` e `docs/arezzo/testes/test_concha_etiquetas.js`. O simulador de regras ganhou o `beginsWith`.
+
 ### 🐚 Concha: ⭐ Favoritos — #tags favoritas e mensagens salvas, só suas (SÓ DEV, cardume v0.58, regras fav_tags e fav_msgs) — 2026-11-27
 
 - **(SÓ DEV)** Pedido do Caio: **⭐ Favoritos** no alto da lista da Concha, logo abaixo de @ Menções, com as **#tags favoritas** (chips que abrem a tela da #tag, com "← Voltar para ⭐ Favoritos") e as **mensagens salvas** (a mais nova primeiro, com canal, autor e trecho; abrir leva à mensagem, mesmo antiga ou dentro de um assunto).

@@ -585,3 +585,22 @@ Pedido do Caio: favoritar #tags e mensagens. Decisões dele (27/11): a ⭐ #tag 
 
 ### Fronteira
 Nós novos privados (dona lê/grava; ADM não). Nenhum texto de outra pessoa é copiado para o banco; o trecho e o nome entram no DOM só por `textContent`. Salvar não dá acesso a nada: abrir a mensagem continua passando pela regra de `msgs`.
+
+## 🏷️ Etiquetas por pessoa, por canal (27/11/2026, R3)
+
+Ideia do Caio (Backlog, 26/11): cada pessoa escolhe a própria etiqueta em cada canal ("Design", "Plantão"), mostrada ao lado do nome nas mensagens e na lista de membros.
+
+### Banco — `kanban/cardume/etiquetas/{canal}/{uid}` = texto
+- 1 a 24 caracteres, sem `\n`/`\r`, sem espaço nas pontas (a página já limpa).
+- **Lê:** quem é membro do canal e o ADM. **Grava:** só a própria pessoa, sendo membro de canal ativo (não arquivado). **Tira:** a própria pessoa sempre (inclusive no mesmo update de sair do canal) e o ADM (moderação). PO/dona não escrevem nem tiram a de outra pessoa.
+- Fora de `geral`, `oceano` e `eu-*` (nem leitura nem escrita).
+- Quem é tirado do canal por quem administra fica com a etiqueta guardada, mas ela não aparece (a página só mostra a de quem é membro); se voltar, ela volta.
+- Testes: `functions/rules/__tests__/conchaEtiquetasRules.test.js`.
+
+### Página (`cardume-dev.html` v0.59)
+- Escuta `etiquetas/{canal}` junto de `membros` (mesmas condições); solta ao trocar de canal e ao sair.
+- Selo `.etq` ao lado do nome (`textContent`, com reticências); "🏷️ Sua etiqueta" nos Detalhes abre o modal (sugestões, Tirar).
+- Testes: `docs/arezzo/testes/test_concha_etiquetas.js`.
+
+### Fronteira
+Campo novo escrito por uma pessoa e exibido para as outras do canal: entra no DOM só por `textContent`; a regra limita tamanho e quebras de linha; ninguém escreve a etiqueta de outra pessoa (nem o ADM, que só pode tirar).
