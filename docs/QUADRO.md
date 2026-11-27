@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/concha-etiquetas` (worktree `~/hering-fav`) | `cardume-dev.html`, `database.rules.json` (`etiquetas`), `functions/rules/rulesSim.js`, `docs/ideias/cardume-v0-banco.md` | 27/11/2026 |
+| Claude | `claude/concha-nao-lida` (worktree `~/hering-fav`) | `cardume-dev.html` | 27/11/2026 |
 
 
 ## Fila

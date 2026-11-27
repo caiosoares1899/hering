@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🔵 marcar como não lida a partir de uma mensagem, como no Slack (SÓ DEV, cardume v0.61) — 2026-11-27
+
+- **(SÓ DEV)** Ideia nº 2 da lista para o time (comparativo com o Slack): **🔵 Não lida** nas ações da mensagem volta a conversa para "não lida" a partir daquela mensagem, para lembrar de voltar nela.
+- Enquanto a pessoa fica na conversa, aparece a linha **"Não lida a partir daqui"** e a Concha **não marca como lida de novo**. Ao sair (outro canal, outro assunto, @ Menções, #tag, ⭐ Favoritos), o canal fica com o **ponto** na lista até ela voltar. **✓ Lida** desfaz na hora.
+- Vale por assunto (🧵): marcar dentro de um assunto acende o assunto. Se a última mensagem da conversa for da própria pessoa, o ponto não acende (a Concha avisa).
+- **Sem regra nova nem deploy:** usa `lidas/{uid}/{canal}` e `lidas_a/{uid}/{canal}/{assunto}`, que já aceitam qualquer horário (só a dona lê e grava).
+- Ajuda ("Responder, reagir, editar e apagar") atualizada. Teste: `docs/arezzo/testes/test_concha_nao_lida.js` (14 verificações).
+
 ### 🐚 Concha: 🏷️ etiqueta por pessoa em cada canal, ao lado do nome (SÓ DEV, cardume v0.59, regra etiquetas) — 2026-11-27
 
 - **(SÓ DEV)** Ideia do Caio (Backlog de 26/11): cada pessoa escolhe **a própria etiqueta em cada canal** (ex.: "Design", "Plantão"). Ela aparece **ao lado do nome** nas mensagens e na lista de membros daquele canal.
