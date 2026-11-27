@@ -87,6 +87,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-27 · 🐚 Concha: faixa de assuntos aparecia nas telas de lista e pílula de ações cobria o texto com 7+ ícones (SÓ DEV, cardume v0.58)
+
+- **Faixa de assuntos vazando nas telas de lista:** ao abrir @ Menções, uma #tag ou uma Pessoa a partir de um canal, a faixa "💬 geral / + Assunto" do último canal continuava à vista (sem servir para nada ali). Agora as quatro telas de lista (@ Menções, #tag, Pessoa e ⭐ Favoritos) escondem a faixa; ela volta ao abrir um canal.
+- **Pílula de ações cobrindo o texto:** o texto da mensagem reservava um vão fixo de 192 px, suficiente para 5 ícones; quem administra o canal (📌 a mais) já tinha 7 e a pílula cobria o fim da linha. Agora o vão acompanha o número de ícones de cada mensagem (`--n-acoes` × 34 px, nunca menos que os 5 emojis do seletor). Achado no `docs/arezzo/testes/test_concha_ui.js` ao entrar o ☆ Salvar do ⭐ Favoritos.
+
 ### 2026-11-27 · Concha: sino da Ilha parava de abrir ao entrar de novo (SÓ DEV, v0.57)
 
 Ao sair e voltar com a mesma conta sem recarregar, a Ilha recriava o botão, enquanto o contador e o ouvinte de clique ficavam no botão antigo. O sino agora transfere o contador e conecta o clique ao botão atual. Regressão em test_concha_ilha.js.

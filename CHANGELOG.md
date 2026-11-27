@@ -30,7 +30,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 - **☆ Salvar** nas ações da mensagem (vira **⭐ Salva**; tocar de novo tira). Vale em todo canal que a pessoa lê, inclusive Geral, #oceano e 📝 Minhas notas. Mensagem apagada, ou de um canal que a pessoa deixou, continua na lista avisando isso até ela tirar na ⭐ ao lado.
 - **☆ Favoritar #tag** na tela da #tag, ao lado do 🔔 Seguir: é um **atalho, sem aviso** (decisão do Caio); dá para seguir e favoritar a mesma #tag.
 - **Banco (R3, regras + testes):** `kanban/cardume/fav_tags/{uid}/{tag}` e `kanban/cardume/fav_msgs/{uid}/{canal}/{msgId}` = horário. Só a dona lê e grava (nem o ADM). A mensagem salva guarda **só os ids**, nunca o texto; salvar exige poder ler o canal e a mensagem existir; tirar vale sempre. Limites: 100 mensagens e 30 #tags (na página).
-- A pílula de ações da mensagem passou a reservar o espaço conforme o número de ícones (o ☆ Salvar levou a 7–8), sem cobrir o texto. A faixa de assuntos do canal deixou de aparecer nas telas de lista (@ Menções, #tag, Pessoa, Favoritos).
+- Duas correções que vieram junto (pílula de ações cobrindo o texto e faixa de assuntos nas telas de lista) estão em `BUGS_E_CORRECOES.md` (27/11).
 - Ajuda: tópico novo **⭐ Favoritos** e "Quem vê o quê" atualizado. Testes: `functions/rules/__tests__/conchaFavoritosRules.test.js` e `docs/arezzo/testes/test_concha_favoritos.js`.
 
 ### 🧭 Oceano: ícone do Painel no menu lateral só para ADM (SÓ DEV, oceano v2.08) — 2026-11-27
