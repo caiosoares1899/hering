@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/concha-nao-lida` (worktree `~/hering-fav`) | `cardume-dev.html` | 27/11/2026 |
+| Claude | `claude/concha-menu-contexto` (worktree `~/hering-fav`) | `cardume-dev.html` | 27/11/2026 |
 
 
 ## Fila

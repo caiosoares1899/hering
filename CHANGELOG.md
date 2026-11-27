@@ -24,6 +24,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🖱️ menu de contexto nos canais e nas mensagens, com marcar canal como não lido (SÓ DEV, cardume v0.62) — 2026-11-27
+
+- **(SÓ DEV)** Pedido do Caio: **menu de contexto** na Concha, no padrão Marine Glass (vidro, setas, Esc devolve o foco, 44 px no toque).
+- **No canal da lista:** clique direito, **toque e segure** no celular ou tecla Menu/Shift+F10 no teclado. Opções: 💬 Abrir · **✓ Marcar como lido / 🔵 Marcar como não lido** · 🔔 Avisos · 📁 mover para uma seção (a atual marcada) ou ＋ Nova seção · 🔗 Copiar link do canal · ℹ️ Detalhes · 🚪 Sair do canal.
+- **🔵 Canal como não lido:** volta o lido para logo antes da última mensagem do 💬 geral e o canal fica com o ponto na lista. Com o canal aberto, segura o marcar-lido até sair, como o "Não lida" da mensagem. Desativado quando a última mensagem é da própria pessoa ou o canal ainda não tem mensagens.
+- **Na mensagem (clique direito):** as mesmas ações da pílula (cada item aciona o próprio botão, sem regra duplicada) e **📋 Copiar texto**. Link, imagem, campo e texto selecionado continuam com o menu do navegador.
+- **Sem regra nova nem deploy** (`lidas`, `lidas_a` e `secoes` já existentes, só da dona). Ajuda ("Canais" e "Responder, reagir…") atualizada. Teste: `docs/arezzo/testes/test_concha_menu_contexto.js` (23 verificações).
+
 ### 🐚 Concha: 🔵 marcar como não lida a partir de uma mensagem, como no Slack (SÓ DEV, cardume v0.61) — 2026-11-27
 
 - **(SÓ DEV)** Ideia nº 2 da lista para o time (comparativo com o Slack): **🔵 Não lida** nas ações da mensagem volta a conversa para "não lida" a partir daquela mensagem, para lembrar de voltar nela.
