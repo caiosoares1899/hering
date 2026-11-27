@@ -857,7 +857,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v2.08 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v2.09 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -918,12 +918,16 @@ function aplicarPrefs(){
   criarPeixes();
 }
 let _salvaT = null;
+// Chaves de kanban/usuarios/{uid}/oceano que OUTROS apps gravam: o Oceano nunca as regrava a partir da cópia lida ao abrir
+// (a Ilha desligada na Concha voltava ligada quando a pessoa mudava o tema aqui — /monitorarbugs 27/11).
+const PREFS_DE_FORA = ['ilha'];
+function semChavesDeFora(o){ PREFS_DE_FORA.forEach(k=>{ delete o[k]; }); return o; }
 function salvarPrefs(avisar){
   lsSalvar(PREFS_LS, prefs); aplicarPrefs();
   clearTimeout(_salvaT);
   _salvaT = setTimeout(()=>{
     if(!U) return;
-    try{ window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/oceano'), Object.assign({}, prefs, {atualizadoEm:new Date().toISOString()})).then(()=>{ if(avisar) toast('✅ Preferências salvas'); }).catch(()=>{ if(avisar) toast('⚠️ Salvei neste aparelho, mas não consegui gravar no seu cadastro.'); }); }catch(e){}
+    try{ window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/oceano'), semChavesDeFora(Object.assign({}, prefs, {atualizadoEm:new Date().toISOString()}))).then(()=>{ if(avisar) toast('✅ Preferências salvas'); }).catch(()=>{ if(avisar) toast('⚠️ Salvei neste aparelho, mas não consegui gravar no seu cadastro.'); }); }catch(e){}
   }, 450);
 }
 function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove('on'), 3200); }
@@ -1479,6 +1483,7 @@ function mostrarHost(id, url){
 function renderRail(){
   if(!RAIL_ON || !$('#rail-apps')) return;
   const ativo = host.atual || 'lobby';
+  const focoRail = document.activeElement && document.activeElement.closest && document.activeElement.closest('#rail-apps [data-rail]') ? document.activeElement.dataset.rail : '';   // redesenhar não pode tirar o foco de quem navega pelo teclado
   // Painel no menu: só ADM (pedido do Caio, 26/11). Quem não é ADM e usa o Painel continua abrindo pelo endereço.
   $('#rail-apps').innerHTML = RAIL_ORDEM.map(APP).filter(a=>a && !a.futuro && a.href && (a.id==='painel' ? ehAdm : visivel(a))).map(a=>{
     const curto = a.id==='kanban' ? 'Maré' : a.nome, n = railN[a.id]||0;
@@ -1487,6 +1492,7 @@ function renderRail(){
       +(n ? '<span class="rail-n" aria-hidden="true">'+(n>99?'99+':n)+'</span>' : (host.abertos.includes(a.id) && ativo!==a.id ? '<span class="rail-aberto" aria-hidden="true"></span>' : ''))+'</button>';
   }).join('');
   const lb = $('#rail [data-rail="lobby"]'); if(ativo==='lobby') lb.setAttribute('aria-current','page'); else lb.removeAttribute('aria-current');
+  if(focoRail){ const f = $('#rail-apps [data-rail="'+focoRail+'"]'); if(f) f.focus(); }
   ['rail-recarregar','rail-aba','rail-fechar'].forEach(i=>{ $('#'+i).hidden = !host.atual; });
   if(U) $('#rail-av').innerHTML = U.photoURL ? '<img alt="" referrerpolicy="no-referrer" src="'+esc(U.photoURL)+'">' : esc(iniciais());
 }

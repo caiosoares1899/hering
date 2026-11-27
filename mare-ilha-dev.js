@@ -104,7 +104,8 @@
     const agora = Date.now();
     principal().forEach(t => {
       const box = el('div', 'mi-tm'), m = T().mostra(t, agora);
-      box.append(el('b', '', t.atividade || 'Atividade'), el('small', '', (t.cardTitle ? t.cardTitle + ' · ' : '') + T().estadoTxt(t) + ' · ' + m.txt));
+      const sm = el('small', '', (t.cardTitle ? t.cardTitle + ' · ' : '') + T().estadoTxt(t) + ' · ' + m.txt); sm.dataset.miT = t.id;
+      box.append(el('b', '', t.atividade || 'Atividade'), sm);
       const l = el('div', 'mi-linha');
       const b = t.status === 'rodando' ? el('button', '', '⏸ Pausar') : el('button', 'mi-pri', t.status === 'novo' ? '▶ Começar' : '▶ Continuar');
       b.type = 'button'; b.dataset.mi = 'ac-' + t.id; b.onclick = () => agir(t, t.status === 'rodando' ? 'pause' : 'play', b); l.append(b);
@@ -121,9 +122,14 @@
     if(!r.ok && r.msg && cfg.toast) cfg.toast(r.msg);
   }
 
+  // A cada segundo só o TEXTO do tempo muda: redesenhar o painel trocava o botão embaixo do dedo e o clique ("Pausar") se perdia (/monitorarbugs 27/11)
+  function tempos(){
+    if(!painel || !T()) return; const agora = Date.now();
+    timers.forEach(t => { const x = painel.querySelector('[data-mi-t="' + t.id + '"]'); if(x) x.textContent = (t.cardTitle ? t.cardTitle + ' · ' : '') + T().estadoTxt(t) + ' · ' + T().mostra(t, agora).txt; });
+  }
   function ligarRelogio(){
     const precisa = !!(T() && timers.some(t => t.status === 'rodando') && !document.hidden && raiz && raiz.isConnected);
-    if(precisa && !relogio) relogio = setInterval(() => { renderPilula(); if(aberta) renderPainel(); }, 1000);
+    if(precisa && !relogio) relogio = setInterval(() => { renderPilula(); if(aberta) tempos(); }, 1000);
     else if(!precisa && relogio){ clearInterval(relogio); relogio = 0; }
   }
 
