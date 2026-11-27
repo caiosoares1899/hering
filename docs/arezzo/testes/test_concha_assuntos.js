@@ -57,7 +57,8 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('abrir o assunto marca lido (lidas_a/ana/dados/aold) e apaga o ponto', typeof c.lidas_a.ana.dados.aold === 'number' && !(await chips()).some(x => x.includes('•')), { l: c.lidas_a, ch: await chips() });
   t('o endereço leva o assunto (?a=)', await p.evaluate(() => new URL(location.href).searchParams.get('a') === 'aold'), 0);
 
-  await p.click('#assuntos-barra [data-aid="_novo"]'); await p.fill('.md input', 'banner BF'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(500);
+  await p.click('[data-aid="_novo"]:visible');   // sem assuntos, o ＋ Assunto mora no cabeçalho (UI/UX 27/11)
+  await p.fill('.md input', 'banner BF'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(500);
   c = await S(); const aid = Object.keys(c.assuntos.dados).find(k => c.assuntos.dados[k].n === 'banner BF');
   t('＋ Novo assunto cria (por = ana) e abre, com o campo dizendo onde vai', !!aid && c.assuntos.dados[aid].por === 'ana' && await p.evaluate(() => /^Em 🧵 banner BF/.test(document.getElementById('entrada').placeholder)), c.assuntos.dados);
   await p.fill('#entrada', 'arte nova subiu'); await p.keyboard.press('Enter'); await p.waitForTimeout(500);
@@ -122,7 +123,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   // link para assunto que não existe mais (?a= velho): volta para geral, com aviso, e o campo segue escrevendo em geral
   await p.goto(base + '/cardume-dev.html?c=prf&a=asumiu'); await p.waitForFunction(() => !!window.__authCb);
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(1000);
-  t('link para assunto apagado volta para geral (sem ?a=, campo de geral)', await p.evaluate(() => !new URL(location.href).searchParams.get('a') && document.getElementById('entrada').placeholder === 'Escreva uma mensagem…' && /não existe mais/.test(document.getElementById('toast').textContent)), await p.evaluate(() => [location.search, document.getElementById('entrada').placeholder, document.getElementById('toast').textContent]));
+  t('link para assunto apagado volta para geral (sem ?a=, campo de geral)', await p.evaluate(() => !new URL(location.href).searchParams.get('a') && /^Mensagem em # /.test(document.getElementById('entrada').placeholder) && /não existe mais/.test(document.getElementById('toast').textContent)), await p.evaluate(() => [location.search, document.getElementById('entrada').placeholder, document.getElementById('toast').textContent]));
   await b.close();
   console.log(`\n${ok ? '✅' : '❌'} ${total} verificações`); process.exit(ok ? 0 : 1);
 })().catch(e => { console.error(e); process.exit(1); });

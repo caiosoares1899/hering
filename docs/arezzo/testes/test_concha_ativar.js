@@ -22,6 +22,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   await p.goto(base + '/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb);
   await p.evaluate(x => window.__authCb(x), CAI); await p.waitForTimeout(900);
   t('(pré-condição) painel ℹ️ Detalhes fechado', await p.evaluate(() => document.getElementById('lado').hidden), 0);
+  if (await p.evaluate(() => { const h = document.querySelector('.sec-cab[data-sec="semcanal"]'); return !!h && h.getAttribute('aria-expanded') === 'false'; })) { await p.click('.sec-cab[data-sec="semcanal"]'); await p.waitForTimeout(300); }   // "Sem canal (ADM)" nasce recolhida (UI/UX 27/11)
   await p.click('[data-canal="dev"]'); await p.waitForTimeout(400);
   t('"＋ Dev" mostra na conversa "Dev ainda não tem canal" + Ativar (não a conversa vazia)', await p.evaluate(() => { const l = document.getElementById('log').textContent; return /Dev ainda não tem canal/.test(l) && !/Diga oi/.test(l) && !!document.querySelector('#log button.primary'); }), await p.evaluate(() => document.getElementById('log').textContent));
   await p.click('#log button.primary'); await p.waitForTimeout(500);

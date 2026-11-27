@@ -34,7 +34,7 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   await p.goto(base + '/cardume-dev.html?c=dados'); await p.waitForFunction(() => !!window.__authCb);
   await p.evaluate(x => window.__authCb(x), ANA); await p.waitForTimeout(900);
   const S = () => p.evaluate(() => JSON.parse(JSON.stringify((window.__store.kanban.cardume.secoes || {}).ana || {})));
-  const lista = () => p.evaluate(() => [...document.querySelectorAll('#lista-canais > *')].map(e => e.classList.contains('sec-cab') ? '[' + e.textContent + ']' : e.dataset.canal));
+  const lista = () => p.evaluate(() => [...document.querySelectorAll('#lista-canais > *')].map(e => e.classList.contains('sec-cab') ? '[' + e.textContent + ']' : e.dataset.canal).filter(x => x !== 'geral' && x !== 'oceano'));   // Geral e #oceano ficam fixos no alto, fora das seções (desde a v0.51; o teste não tinha sido atualizado)
 
   t('sem seções: Squads e Temáticos como sempre', JSON.stringify(await lista()) === JSON.stringify(['[▾Squads]', 'dados', 'prf', '[▾Temáticos]', 't-bf-ab12']), await lista());
   await p.click('#b-secoes'); await p.waitForTimeout(150);

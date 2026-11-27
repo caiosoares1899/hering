@@ -24,6 +24,34 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: 🧭 rodada de UI/UX — menos coisa na tela, cada elemento só quando tem algo a dizer, e a conversa abre nas novas (SÓ DEV, cardume v0.63) — 2026-11-27
+
+- **(SÓ DEV)** Pedido do Caio ("a tela está cheia de coisas que fomos implementando; falta inteligência e design"). Rodada `/melhoriauiux` com um princípio só: **cada elemento aparece quando tem algo a dizer**. Medido com dados reais (30 mensagens, ADM, seções, Minhas notas), contra a `main`:
+
+| Área das mensagens | Antes | Depois |
+|---|---|---|
+| Canal simples, 1280 × 860 | 60 % | 75 % |
+| Canal simples, 390 × 800 | 55 % | 74 % |
+| Canal com assunto e fixada, 1280 | 54 % | 65 % |
+| Canal com assunto e fixada, 390 | 48 % | 65 % |
+
+- **Lista lateral.** Antes, @ Menções e ⭐ Favoritos eram caixas grandes, todos os canais tinham o mesmo brilho, os 5 squads sem canal (ADM) ocupavam meia lista e havia dois botões tracejados grandes no pé. Agora:
+  - Menções e Favoritos são linhas de navegação, separadas dos canais por um fio.
+  - Um **canal lido fica quieto** e um **com novidade acende** (hierarquia por luminosidade, contraste conferido nos 4 temas, ≥ 5,1:1).
+  - **"Sem canal (ADM)" nasce recolhida**, com a contagem. Ela fica aberta se o ADM ainda não tem nenhum canal, porque aí é o único caminho.
+  - ➕ Novo canal e 📁 Seções ficam numa linha discreta.
+- **Conversa.** Antes, cabeçalho, faixa de assuntos e fixada (três faixas) vinham antes da primeira mensagem. Agora:
+  - A **faixa de assuntos só aparece quando o canal tem assuntos**. Sem eles, o **＋ Assunto** fica no cabeçalho.
+  - A fixada ficou mais fina e as setas ▲▼ ficaram lado a lado, com alvo de 44 px no toque (eram 18 px de altura).
+- **Compositor.** Antes eram três linhas: barra de 11 botões sempre aberta, campo e uma dica de duas linhas, num total de 140 px (182 px no celular). Agora é **uma linha**: **Aa** · campo · 😀 · GIF · Enviar (63 px).
+  - O **Aa** abre a formatação e a Concha lembra a escolha no aparelho. Os atalhos e o Markdown digitado valem sempre.
+  - A dica ficou só para leitor de tela.
+  - O campo diz **"Mensagem em # Dados"**.
+  - No celular, o Enviar vira ➤.
+- **Inteligência.** Ao **abrir uma conversa com novidade**, a Concha põe a linha **"Novas mensagens"** antes da primeira mensagem nova de outra pessoa e **começa a conversa ali**, não no fim. A posição de leitura é guardada antes do marcar-lido.
+- **Sem regra nova nem deploy.** Para "Sem canal", `secoes/r/semcanal = true` passou a significar **aberta**, porque a regra só aceita `true`. Quem já tinha recolhido vê a seção aberta uma vez.
+- Ajuda atualizada (Escrever, Assuntos, @Menções, #tags). Teste novo: `docs/arezzo/testes/test_concha_uiux.js` (26 verificações). Testes atualizados para o novo layout: compositor, ajuda, lote, emoji, assuntos, ativar e seções (este já falhava na `main`).
+
 ### 🐚 Concha: 🖱️ menu de contexto nos canais e nas mensagens, com marcar canal como não lido (SÓ DEV, cardume v0.62) — 2026-11-27
 
 - **(SÓ DEV)** Pedido do Caio: **menu de contexto** na Concha, no padrão Marine Glass (vidro, setas, Esc devolve o foco, 44 px no toque).
