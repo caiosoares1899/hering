@@ -325,6 +325,20 @@ button.msg-gif{cursor:pointer;}
 .pessoa .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pessoa button,.fix-item>button:not(.citacao){min-height:30px;padding:2px 8px;font-size:12px;}
 .acoes-lado{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
+.ctx-menu{position:fixed;z-index:45;min-width:220px;max-width:min(300px,calc(100vw - 16px));max-height:80vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:14px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:grid;gap:2px;animation:ctxIn .12s ease;}   /* 🖱️ menu de contexto (canais e mensagens) */
+.ctx-menu[hidden]{display:none;}
+@keyframes ctxIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.ctx-menu{animation:none;}}
+.ctx-menu button{display:flex;align-items:center;gap:9px;width:100%;min-height:34px;padding:6px 10px;text-align:left;background:transparent;border-color:transparent;box-shadow:none;font-weight:500;}
+.ctx-menu button:hover,.ctx-menu button:focus-visible{background:rgba(var(--slate-rgb),.9);}
+.ctx-menu button[aria-disabled="true"]{opacity:.55;cursor:default;}
+.ctx-menu button .ic{width:1.3em;text-align:center;flex:none;}
+.ctx-menu button[aria-checked="true"]{color:var(--accent-txt);font-weight:700;}
+.ctx-menu .perigo{color:var(--danger);}
+.ctx-menu .sep{height:1px;margin:4px 6px;background:var(--glass-b);}
+.ctx-menu .ctx-tit{padding:6px 10px 4px;font-size:11px;font-weight:700;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (pointer:coarse){.ctx-menu button{min-height:44px;}}
+#lista-canais .canal{-webkit-touch-callout:none;}   /* toque longo abre o nosso menu, não o do iOS */
 .ov{position:fixed;inset:0;z-index:50;background:rgba(var(--ink-rgb),.5);display:grid;place-items:center;padding:16px;}
 [data-theme="light"] .ov{background:rgba(7,40,60,.3);}
 .md{width:min(460px,100%);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--glass-b);border-radius:18px;background:var(--glass);box-shadow:var(--shadow),var(--specular);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:grid;gap:12px;}
@@ -487,7 +501,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.61 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.62 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -920,7 +934,124 @@ function renderLista() {
   if (focoSec) { const h = box.querySelector('.sec-cab[data-sec="' + CSS.escape(focoSec) + '"]'); if (h) h.focus({ preventScroll: true }); }   // recolher pelo teclado não perde o foco
   if (!box.querySelector('.canal:not([data-canal^="eu-"]):not([data-canal="geral"]):not([data-canal="oceano"])')) box.append(el('p', 'subtitulo', 'Você ainda não está em nenhum canal. Peça a quem administra a sua squad para te adicionar, ou crie um canal temático.'));
 }
-$('lista-canais').addEventListener('click', e => { const b = e.target.closest('[data-canal]'); if (b) abrirCanal(b.dataset.canal, true); });
+$('lista-canais').addEventListener('click', e => { if (Date.now() - ctxLongo < 700) return; const b = e.target.closest('[data-canal]'); if (b) abrirCanal(b.dataset.canal, true); });
+
+// ═══ 🖱️ Menu de contexto (27/11/2026): clique direito, tecla Menu/Shift+F10 ou toque longo num canal da lista; clique direito numa mensagem ═══
+// Um componente só (role=menu, setas/Home/End, Esc devolve o foco). No canal: abrir, lido/não lido, avisos, seção, link, detalhes, sair.
+// Na mensagem: as MESMAS ações da pílula (o item clica o botão dela: uma regra só) + copiar o texto. Link, imagem, campo e texto
+// selecionado ficam com o menu do navegador (abrir em nova aba, copiar endereço, copiar a seleção).
+const ctx = el('div', 'ctx-menu'); ctx.id = 'ctx'; ctx.setAttribute('role', 'menu'); ctx.hidden = true; document.body.append(ctx);
+let ctxVolta = null, ctxLongo = 0;
+function fecharCtx(foco) {
+  if (ctx.hidden) return;
+  ctx.hidden = true; ctx.replaceChildren();
+  if (foco && ctxVolta && document.contains(ctxVolta)) ctxVolta.focus();
+  ctxVolta = null;
+}
+function abrirCtx(itens, x, y, volta, titulo) {
+  fecharCtx(false); ctxVolta = volta || document.activeElement;
+  while (itens.length && itens[itens.length - 1] === '-') itens.pop();
+  if (!itens.length) return;
+  if (titulo) { ctx.append(el('div', 'ctx-tit', titulo)); ctx.setAttribute('aria-label', titulo); } else ctx.removeAttribute('aria-label');
+  itens.forEach(it => {
+    if (it === '-') { const sp = el('div', 'sep'); sp.setAttribute('role', 'separator'); ctx.append(sp); return; }
+    const b = el('button', it.perigo ? 'perigo' : ''); b.type = 'button';
+    b.setAttribute('role', it.marcado == null ? 'menuitem' : 'menuitemradio'); if (it.marcado != null) b.setAttribute('aria-checked', String(!!it.marcado));
+    b.append(el('span', 'ic', it.ic || ''), el('span', '', it.t)); if (it.dica) b.title = it.dica;
+    if (it.off) { b.setAttribute('aria-disabled', 'true'); b.onclick = () => { if (it.dica) toast(it.dica); }; }
+    else b.onclick = () => { fecharCtx(false); it.fn(); };
+    ctx.append(b);
+  });
+  ctx.hidden = false;
+  const w = ctx.offsetWidth, h = ctx.offsetHeight;   // offset*: sem a escala da animação de entrada (getBoundingClientRect media 97% e o menu passava da tela)
+  ctx.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
+  ctx.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+  const pri = ctx.querySelector('button:not([aria-disabled="true"])') || ctx.querySelector('button'); if (pri) pri.focus();
+}
+ctx.addEventListener('keydown', e => {
+  const bs = [...ctx.querySelectorAll('button')], i = bs.indexOf(document.activeElement), n = bs.length;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fecharCtx(true); }
+  else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && n) { e.preventDefault(); bs[(i + (e.key === 'ArrowDown' ? 1 : -1) + n) % n].focus(); }
+  else if ((e.key === 'Home' || e.key === 'End') && n) { e.preventDefault(); bs[e.key === 'Home' ? 0 : n - 1].focus(); }
+  else if (e.key === 'Tab') fecharCtx(false);
+});
+document.addEventListener('pointerdown', e => { if (!ctx.hidden && !ctx.contains(e.target)) fecharCtx(false); }, true);
+window.addEventListener('resize', () => fecharCtx(false));
+document.addEventListener('scroll', e => { if (e.target !== ctx) fecharCtx(false); }, true);
+// ponto de abertura: o do mouse; pelo teclado (sem coordenadas), embaixo do elemento
+const pontoCtx = (e, alvo) => { if (e.clientX || e.clientY) return [e.clientX, e.clientY]; const r = alvo.getBoundingClientRect(); return [r.left + 12, r.bottom - 4]; };
+async function copiarTexto(txt, msg) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) {
+    const t = el('textarea'); t.value = txt; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;left:-9999px;top:0;'; document.body.append(t); t.select();
+    try { ok = document.execCommand('copy'); } catch (e2) {} t.remove();
+  }
+  toast(ok ? msg : 'Não deu para copiar. Tente de novo.');
+}
+function linkCanal(id) { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('c', id); return u.toString(); }
+function ultDeCanal(id) { const g = (ultA[id] || {})._geral; if (g && typeof g.ts === 'number') return g; const u = ultimas[id]; return u && typeof u.ts === 'number' ? u : null; }
+function marcarCanalNaoLido(id) {   // 🔵 o mesmo da mensagem, a partir da última do canal (o 💬 geral)
+  const u = ultDeCanal(id); if (!u || u.uid === user.uid) return;
+  const ts = u.ts - 1, mapa = { [B + 'lidas_a/' + user.uid + '/' + id + '/_geral']: ts, [B + 'lidas/' + user.uid + '/' + id]: ts };
+  const aqui = id === atual && !assuntoAtual;
+  if (aqui) { clearTimeout(marcarLido._t); segurarLido = { id, k: '_geral', m: ID_RE.test(String(u.id || '')) ? String(u.id) : '' }; }   // aberto: segura o marcar-lido até sair
+  update(ref(db), mapa).then(() => { toast('🔵 ' + nomeCanal(id) + ' marcado como não lido.'); if (aqui) renderMsgs(); renderLista(); })
+    .catch(e => { if (aqui) segurarLido = null; falhou('marcar como não lido', e); });
+}
+function abrirDetalhes(id) {
+  abrirCanal(id, false); verLado = true; lsSet('cardume_lado', '1'); renderLado();
+  if (window.matchMedia('(max-width: 899px)').matches) { $('app').dataset.tela = 'lado'; pulsoVendo(); }
+}
+function menuCanal(id, x, y, volta) {
+  const membro = souMembro(id), notas = ehNotas(id), perm = ehPerm(id), u = ultDeCanal(id), itens = [];
+  itens.push({ ic: '💬', t: 'Abrir', fn: () => abrirCanal(id, true) });
+  if ((membro || perm) && !notas) {
+    if (naoLido(id)) itens.push({ ic: '✓', t: 'Marcar como lido', fn: () => marcarTudoLido(id) });
+    else itens.push({ ic: '🔵', t: 'Marcar como não lido', off: !u || u.uid === user.uid, dica: !u ? 'O canal ainda não tem mensagens.' : u.uid === user.uid ? 'A última mensagem é sua: não há o que marcar como não lido.' : 'Fica com o ponto na lista até você voltar', fn: () => marcarCanalNaoLido(id) });
+  }
+  if (membro && !notas && !perm) { const nv = nivelAviso(id); itens.push({ ic: ICONE_AVISO[nv], t: 'Avisos: ' + ROT_AVISO[nv] + '…', fn: () => modalAvisos(id) }); }
+  if (!notas && !perm && canais[id] && (membro || gestor(id))) {
+    const secs = secLista(), atualSec = secDe(id) || '';
+    itens.push('-');
+    if (secs.length) {
+      itens.push({ ic: '📁', t: (ehTema(id) ? 'Temáticos' : 'Squads') + ' (padrão)', marcado: !atualSec, fn: () => { if (atualSec) moverPara(id, ''); } });
+      secs.forEach(([sid, x]) => itens.push({ ic: '📁', t: x.n, marcado: atualSec === sid, fn: () => { if (atualSec !== sid) moverPara(id, sid); } }));
+    }
+    itens.push({ ic: '＋', t: 'Nova seção…', fn: () => modalSecoes(id) });
+  }
+  itens.push('-');
+  if (!notas) itens.push({ ic: '🔗', t: 'Copiar link do canal', fn: () => copiarTexto(linkCanal(id), '🔗 Link de ' + nomeCanal(id) + ' copiado. Só quem tem acesso ao canal consegue abrir.') });
+  itens.push({ ic: 'ℹ️', t: 'Detalhes', fn: () => abrirDetalhes(id) });
+  if (membro && !notas && !perm) itens.push('-', { ic: '🚪', t: 'Sair do canal', perigo: true, fn: () => sair(id) });
+  abrirCtx(itens, x, y, volta, (perm || notas ? '' : '# ') + nomeCanal(id));
+}
+$('lista-canais').addEventListener('contextmenu', e => {
+  const b = e.target.closest('[data-canal]'); if (!b) return;
+  e.preventDefault(); if (Date.now() - ctxLongo < 700) return;   // o Android dispara contextmenu depois do nosso toque longo
+  const [x, y] = pontoCtx(e, b); menuCanal(b.dataset.canal, x, y, b);
+});
+{ // toque longo (o iOS não dispara contextmenu): 500 ms parado em cima do canal
+  let tmr = 0, x0 = 0, y0 = 0;
+  const cancela = () => { clearTimeout(tmr); tmr = 0; };
+  $('lista-canais').addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return; const b = e.target.closest('[data-canal]'); if (!b) return;
+    x0 = e.clientX; y0 = e.clientY; cancela();
+    tmr = setTimeout(() => { tmr = 0; ctxLongo = Date.now(); if (navigator.vibrate) try { navigator.vibrate(10); } catch (er) {} menuCanal(b.dataset.canal, x0, y0, b); }, 500);
+  });
+  $('lista-canais').addEventListener('pointermove', e => { if (tmr && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) cancela(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => $('lista-canais').addEventListener(t, cancela));
+}
+$('log').addEventListener('contextmenu', e => {
+  const box = e.target.closest('.msg[data-msg]'); if (!box || e.target.closest('a,textarea,input,img,video')) return;
+  if (window.getSelection && String(window.getSelection()).trim()) return;   // texto selecionado: o menu do navegador copia
+  const m = msgs.find(x => x.id === box.dataset.msg); if (!m || m.apagada) return;
+  const ac = [...box.children].find(x => x.classList && x.classList.contains('acoes-msg'));
+  const itens = ac ? [...ac.querySelectorAll('button')].filter(b => !b.classList.contains('rx-op')).map(b => ({ ic: (b.querySelector('.ic') || {}).textContent || '', t: b.getAttribute('aria-label') || b.textContent.trim(), perigo: b.classList.contains('perigo'), fn: () => b.click() })) : [];
+  if (typeof m.texto === 'string' && m.texto) itens.push('-', { ic: '📋', t: 'Copiar texto', fn: () => copiarTexto(m.texto, '📋 Texto copiado.') });
+  if (!itens.filter(x => x !== '-').length) return;
+  e.preventDefault();
+  const [x, y] = pontoCtx(e, box); abrirCtx(itens, x, y, box, 'Mensagem de ' + nomePessoa(autorDe(m)));
+});
 
 // ═══ Canal aberto ═══
 function abrirCanal(id, foco, aid) {
@@ -2047,7 +2178,7 @@ function renderPessoa(log) {
 // (DOM, sem innerHTML). Exemplos de @ e # vão entre crases para não virarem menção/etiqueta. Também entram no Sonar (aba Ajuda). ═══
 const AJUDA = [
   { id: 'concha', ic: '🐚', t: 'O que é a Concha', txt: 'O chat do time dentro do Oceano.\n- **Canais das squads**: privados, só para quem a squad pôs no canal.\n- **Canais temáticos**: para um assunto ou período (ex.: Black Friday). **Aberto** aparece para toda a Hering e qualquer um entra; **Só convidados** só quem foi adicionado vê. Podem ter data de fim: depois dela ficam só leitura.\n- As mensagens são apagadas depois de **90 dias**.' },
-  { id: 'canais', ic: '#', t: 'Canais: entrar, sair, criar e administrar', txt: '- **➕ Novo canal** (na lista): cria um temático. Você vira a dona e administra.\n- **ℹ️ Detalhes** (no topo da conversa): membros, **Entrar** ou **Sair do canal**, adicionar e tirar pessoas e, no temático, **⚙️ Editar canal** (nome, quem entra, data de fim, **Arquivar agora**). Quem administra também escolhe o **emoji do canal** nos Detalhes (o canal da squad começa com o emoji da squad).\n- Quem administra: no canal da squad, PO e Organizador da squad e ADM; no temático, a dona, quem ela fez admin e ADM.\n- **🏷️ Sua etiqueta** (nos Detalhes de cada canal): um texto curto, como "Design" ou "Plantão", que aparece ao lado do seu nome nas mensagens e na lista de membros daquele canal. Cada um põe a sua; ao sair do canal, ela sai junto. Não existe no Geral, no #oceano nem nas Minhas notas.\n- Canal com um **ponto** na lista tem mensagem nova.' },
+  { id: 'canais', ic: '#', t: 'Canais: entrar, sair, criar e administrar', txt: '- **➕ Novo canal** (na lista): cria um temático. Você vira a dona e administra.\n- **ℹ️ Detalhes** (no topo da conversa): membros, **Entrar** ou **Sair do canal**, adicionar e tirar pessoas e, no temático, **⚙️ Editar canal** (nome, quem entra, data de fim, **Arquivar agora**). Quem administra também escolhe o **emoji do canal** nos Detalhes (o canal da squad começa com o emoji da squad).\n- Quem administra: no canal da squad, PO e Organizador da squad e ADM; no temático, a dona, quem ela fez admin e ADM.\n- **🏷️ Sua etiqueta** (nos Detalhes de cada canal): um texto curto, como "Design" ou "Plantão", que aparece ao lado do seu nome nas mensagens e na lista de membros daquele canal. Cada um põe a sua; ao sair do canal, ela sai junto. Não existe no Geral, no #oceano nem nas Minhas notas.\n- **Menu do canal**: clique com o botão direito num canal da lista (no celular, toque e segure; no teclado, tecla Menu ou Shift+F10) para **marcar como lido ou não lido**, mudar os avisos, mover de seção, copiar o link, ver os detalhes ou sair.\n- Canal com um **ponto** na lista tem mensagem nova.' },
   { id: 'secoes', ic: '📁', t: 'Seções na lista de canais', txt: 'Organize a lista do seu jeito. **Só você vê** suas seções.\n- **📁 Seções** (abaixo de ➕ Novo canal): crie (tem atalho para **⭐ Favoritos**), renomeie, mude a ordem e apague. Apagar devolve os canais à seção padrão (Squads/Temáticos).\n- Para pôr um canal numa seção: **ℹ️ Detalhes › 📁 Na sua lista** (ou "＋ Nova seção…" ali mesmo).\n- Clique no **título** da seção para recolher ou abrir. Recolhida, ela mostra quantos canais têm novas e deixa à vista o canal aberto. Vale em todos os seus aparelhos.' },
   { id: 'escrever', ic: '✍️', t: 'Escrever: formatação, emoji, GIF e links', txt: '- **Enter** envia; **Shift+Enter** quebra a linha. O rascunho fica guardado por canal e por assunto.\n- Formatação (botões da barra ou digitando): `**negrito**` (Ctrl+B), `_itálico_` (Ctrl+I), `~~riscado~~`, código entre crases, três crases numa linha antes e outra depois para um bloco, `- ` no começo da linha para lista e `> ` para citação. O **?** da barra mostra o guia.\n- **😀** abre os emojis (com busca e recentes); **GIF** busca na KLIPY (o GIF pode ir sem legenda).\n- Link `https://` vira link. Link de **card do Maré** vira o chip com o título do card.' },
   { id: 'mencoes', ic: '@', t: '@Menções', txt: '- Digite `@` (ou o botão **@**) e escolha a pessoa na lista, com a foto. Só aparecem membros do canal.\n- Quem você menciona recebe um aviso no **Sino** e push (se ativou no aparelho). O aviso não mostra o canal nem a mensagem: ela abre a Concha para ver.\n- **@ Menções** (no alto da lista) junta onde mencionaram ou responderam você. Abrir uma leva direto à mensagem, inclusive dentro de um assunto. **✓ Marcar todas como lidas** e **🧹 Limpar menções** cuidam da lista (limpar não apaga as mensagens dos canais).\n- Editar uma mensagem para pôr uma `@` não avisa a pessoa.' },
@@ -2056,7 +2187,7 @@ const AJUDA = [
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
   { id: 'avisos', ic: '🔔', t: 'Avisos e push', txt: 'Por padrão, **toda mensagem nova avisa**, como no WhatsApp.\n- **ℹ️ Detalhes › 🔔 Avisos** (por canal): 🔔 Todas · 🔕 Só @menções e #tags que sigo · 🚫 Nada (nem menção), por 8 horas, 1 semana ou sempre. A lista mostra 🔕/🚫.\n- **Por assunto** (⚙️ do assunto): **Como o canal**, **🔔 Seguir** (avisa tudo dele, mesmo com o canal em 🔕) ou **🔕 Silenciar** (só @menções e #tags que você segue).\n- Não chega push: enquanto você está com a conversa aberta e usando (janela em foco), no **Não Perturbe**, e de várias mensagens seguidas do mesmo canal (um aviso a cada 2 min). O push diz quem, o canal e o assunto, nunca o texto; em canal só de convidados, nem o nome.\n- Para receber no aparelho: **Sino › Ativar notificações neste aparelho** (vale também para o Maré e o Radar).' },
-  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🔵 Não lida**: volta a conversa para "não lida" a partir daquela mensagem, para lembrar de voltar nela. Enquanto você fica ali, aparece a linha **Não lida a partir daqui**; ao sair, o canal fica com o ponto na lista. **✓ Lida** desfaz.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
+  { id: 'mensagem', ic: '💬', t: 'Responder, reagir, editar e apagar', txt: 'Passe o mouse na mensagem (no celular, toque nela) para ver as ações. No computador, o **botão direito** na mensagem abre as mesmas ações num menu, mais **📋 Copiar texto**:\n- **↩️ Responder**: a resposta mostra a mensagem original; quem foi respondido é avisado.\n- **😀 Reagir** com 👍 👀 ❤️ ✅ 🎉 (uma por pessoa; tocar na sua tira). Até 3 pessoas, os nomes aparecem no chip; com mais, toque no chip para ver todo mundo e **Reagir também**.\n- **✏️ Editar** a sua mensagem nos primeiros **15 minutos** depois de enviar, como no WhatsApp (aparece "(editada)"). Depois disso, só apagar.\n- **🔵 Não lida**: volta a conversa para "não lida" a partir daquela mensagem, para lembrar de voltar nela. Enquanto você fica ali, aparece a linha **Não lida a partir daqui**; ao sair, o canal fica com o ponto na lista. **✓ Lida** desfaz.\n- **🗑 Apagar**: some na hora e dá **5 segundos para Desfazer**. Fica "mensagem apagada" no lugar.\n- **⏩ Encaminhar** para outro canal seu: vai para o 💬 geral de lá com "Encaminhada de *quem escreveu* · # canal de origem". Se no destino houver gente que não está na origem (ou ele for aberto a toda a Hering), a Concha **avisa antes**. A encaminhada não se edita e não pode ser encaminhada de novo; as @menções do texto não avisam outra vez.' },
   { id: 'notas', ic: '📝', t: 'Minhas notas (canal só seu)', txt: '- **⚙️ Configurações › 📝 Minhas notas** (no alto da Concha): ative uma vez e ele fica no **alto da lista**, em todos os seus aparelhos.\n- É um canal só seu, como a conversa com você mesmo no WhatsApp: anote, salve links e guarde mensagens de outros canais com **⏩ Encaminhar**.\n- **Ninguém mais lê, nem o ADM.** Dá para separar por **🧵 assunto** e **📌 fixar** o importante. Não tem @menção nem #tags.\n- Para tirar da lista: **ℹ️ Detalhes › Desativar Minhas notas** (ou no ⚙️). Nada é apagado; ao ativar de novo, as notas voltam. Notas não entram na limpeza das mensagens antigas.' },
   { id: 'fixadas', ic: '📌', t: 'Fixadas no topo e regras do canal', txt: '- Quem **administra o canal** (ADM, PO/Organizador da squad no canal da squad; dona e admins no temático) fixa uma mensagem em **📌 Fixar**, nas ações dela, e escolhe o tipo:\n- **📌 No topo do canal**: aparece numa **faixa no alto da conversa**, como no WhatsApp. Até ' + MAX_FIX.topo + ', uma por vez (📌 1/3, 2/3…): para trocar, use as setinhas **▲ ▼** no canto, **role a roda do mouse** sobre a faixa, **deslize o dedo** para cima ou para baixo no celular, ou **↑ ↓** no teclado. Tocar no texto leva até a mensagem.\n- **📜 Regra do canal**: fica em **ℹ️ Detalhes › 📜 Regras do canal**, com o texto inteiro (até ' + MAX_FIX.regra + '). Na 1ª vez que alguém abre o canal (ou quando entra uma regra nova), aparece o aviso **Este canal tem regras · Ver regras**.\n- Para **mover** entre topo e regras ou **desafixar**: 📌 Fixada, nas ações da mensagem, ou ℹ️ Detalhes. Apagar a mensagem tira ela das fixadas.\n- Mensagem fixada fica de fora da limpeza das antigas.' },
   { id: 'card', ic: '📝', t: 'Registrar a conversa num card do Maré', txt: '- **📝 No card** (nas ações da mensagem): marque até 20 mensagens, escolha o card (os citados na conversa aparecem primeiro) ou cole o link dele, e confira como vai ficar.\n- Vai como **comentário** no card, com o nome de quem escreveu cada mensagem. As `@` viram só o nome (ninguém é mencionado no card).\n- Atenção: o card é lido pela Hering toda e o comentário fica lá, mesmo depois que a mensagem some da Concha.' },
