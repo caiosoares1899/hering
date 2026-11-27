@@ -14,16 +14,16 @@ const ag = Date.now(); const msgs = {};
 for (let i = 0; i < 30; i++) msgs['-Nm' + String(i).padStart(2, '0')] = { uid: ['cai', 'als', 'bru'][i % 3], ts: ag - (30 - i) * 7 * 60000, texto: 'mensagem ' + i };
 const LIDO = msgs['-Nm19'].ts;   // leu até a 19: as 20–29 (menos as do próprio Caio) são novas
 const seed = assuntos => ({ kanban: {
-  usuarios: { cai: { role: 'adm', squads: { dados: true, dev: true } } },
-  squads_meta: { dados: { label: 'Dados', emoji: '📊' }, dev: { label: 'Dev', emoji: '🧪' }, mkt: { label: 'Marketing', emoji: '📣' }, crm: { label: 'CRM', emoji: '💌' } },
+  usuarios: { cai: { role: 'adm', squads: { dados: true, dev: true, prf: true } } },
+  squads_meta: { dados: { label: 'Dados', emoji: '📊' }, dev: { label: 'Dev', emoji: '🧪' }, prf: { label: 'Performance e Conversão do E-commerce Hering', emoji: '📱' }, mkt: { label: 'Marketing', emoji: '📣' }, crm: { label: 'CRM', emoji: '💌' } },
   usuarios_publicos: { cai: { nome: 'Caio Soares', email: 'caio.soares@ciahering.com.br' }, als: { nome: 'Alisson Andrade', email: 'als@ciahering.com.br' }, bru: { nome: 'Bruno Reis', email: 'bru@ciahering.com.br' } },
   cardume: {
-    canais: { dados: { nome: 'Dados' }, dev: { nome: 'Dev' } },
-    membros: { dados: { cai: true, als: true, bru: true }, dev: { cai: true, bru: true } }, meus: { cai: { dados: true, dev: true } },
+    canais: { dados: { nome: 'Dados' }, dev: { nome: 'Dev' }, prf: { nome: 'Performance e Conversão do E-commerce Hering' } },
+    membros: { dados: { cai: true, als: true, bru: true }, dev: { cai: true, bru: true }, prf: { cai: true } }, meus: { cai: { dados: true, dev: true, prf: true } },
     msgs: { dados: msgs, dev: { '-Nv1': { uid: 'bru', ts: ag - 6e4, texto: 'oi' } } },
     ultima: { dados: { ts: msgs['-Nm29'].ts, uid: 'bru', id: '-Nm29' }, dev: { ts: ag - 6e4, uid: 'bru', id: '-Nv1' } },
     ultima_a: { dados: { _geral: { ts: msgs['-Nm29'].ts, uid: 'bru', id: '-Nm29' } }, dev: { _geral: { ts: ag - 6e4, uid: 'bru', id: '-Nv1' } } },
-    lidas: { cai: { dados: LIDO, dev: ag } }, lidas_a: { cai: { dados: { _geral: LIDO }, dev: { _geral: ag } } },
+    lidas: { cai: { dados: LIDO, dev: ag - 864e5 } }, lidas_a: { cai: { dados: { _geral: LIDO }, dev: { _geral: ag - 864e5 } } },   // Dev com novidade de verdade
     fixadas: { dados: { '-Nm09': { por: 'cai', em: ag - 1000, t: 'topo' }, '-Nm05': { por: 'cai', em: ag - 2000, t: 'topo' } } },
     assuntos: assuntos ? { dados: { ates: { n: 'testes', por: 'cai', ts: ag - 864e5, e: '🧵' } } } : {},
   },
@@ -55,10 +55,8 @@ const regrasOk = async (p, nome) => {
   // ── computador, canal SEM assuntos ──
   let { ctx, p } = await abre(1280, 860, false);
   t('lista: Menções e Favoritos são linhas de navegação (sem borda), o Buscar continua com cara de campo', await p.evaluate(() => { const c = e => getComputedStyle(document.getElementById(e)).borderTopColor; return c('b-mencoes') === 'rgba(0, 0, 0, 0)' && c('b-favs') === 'rgba(0, 0, 0, 0)'; }), 0);
-  t('lista: Dev (com novidade) acende; Dados (aberto) em destaque; um canal lido fica mais quieto que um com novidade', await p.evaluate(() => {
-    const cor = id => getComputedStyle(document.querySelector('[data-canal="' + id + '"] .nome')).color, w = id => getComputedStyle(document.querySelector('[data-canal="' + id + '"] .nome')).fontWeight;
-    return document.querySelector('[data-canal="dev"]').classList.contains('nao-lido') ? Number(w('dev')) >= 800 : true;
-  }), 0);
+  const lidoX = await p.evaluate(() => { const s = id => getComputedStyle(document.querySelector('[data-canal="' + id + '"] .nome')); return { novo: document.querySelector('[data-canal="dev"]').classList.contains('nao-lido'), cn: s('dev').color, wn: Number(s('dev').fontWeight), cl: s('geral').color, wl: Number(s('geral').fontWeight) }; });
+  t('lista: Dev (com novidade) acende — cor diferente e peso ≥ 800 — e o Geral (lido) fica quieto, peso 600', lidoX.novo && lidoX.cn !== lidoX.cl && lidoX.wn >= 800 && lidoX.wl === 600, lidoX);
   t('lista: "Sem canal (ADM)" nasce recolhida e mostra quantos', await p.evaluate(() => { const h = document.querySelector('.sec-cab[data-sec="semcanal"]'); return !!h && h.getAttribute('aria-expanded') === 'false' && /Sem canal \(ADM\) \(\d+\)/.test(h.textContent) && !document.querySelector('[data-canal="mkt"]'); }), await p.evaluate(() => (document.querySelector('.sec-cab[data-sec="semcanal"]') || {}).textContent));
   await p.click('.sec-cab[data-sec="semcanal"]'); await p.waitForTimeout(300);
   t('lista: abrir "Sem canal" grava r/semcanal = true e mostra os squads', ((((await p.evaluate(() => window.__store.kanban.cardume.secoes)) || {}).cai || {}).r || {}).semcanal === true && await p.evaluate(() => !!document.querySelector('[data-canal="mkt"]')), 0);
@@ -79,7 +77,9 @@ const regrasOk = async (p, nome) => {
   t('Aa abre a formatação (aria-expanded) e lembra no aparelho', await p.evaluate(() => getComputedStyle(document.getElementById('barra-fmt')).display !== 'none' && document.getElementById('b-fmt').getAttribute('aria-expanded') === 'true' && localStorage.getItem('concha_fmt') === '1'), 0);
   await p.click('#b-fmt'); await p.click('#b-emoji'); await p.waitForTimeout(200);
   t('😀 abre o painel de emoji dentro da tela, do lado do botão', await p.evaluate(() => { const r = document.getElementById('emojis').getBoundingClientRect(), bt = document.getElementById('b-emoji').getBoundingClientRect(); return !document.getElementById('emojis').hidden && r.left >= 0 && r.right <= innerWidth && r.bottom <= bt.top + 2 && r.right >= bt.left; }), 0);
-  await p.keyboard.press('Escape');
+  await p.keyboard.press('Escape'); await p.click('#b-gif'); await p.waitForTimeout(250);
+  t('GIF abre o painel dentro da tela', await p.evaluate(() => { const r = document.getElementById('gifs').getBoundingClientRect(); return !document.getElementById('gifs').hidden && r.left >= 0 && r.right <= innerWidth && r.top >= 0; }), 0);
+  await p.keyboard.press('Escape'); await p.evaluate(() => { if (!document.getElementById('gifs').hidden) document.getElementById('b-gif').click(); });
   await p.click('#b-assunto'); await p.waitForTimeout(150);
   t('＋ Assunto do cabeçalho abre o modal de novo assunto', await p.evaluate(() => !document.getElementById('ov').hidden && /assunto/i.test(document.querySelector('.md h2').textContent)), 0);
   await p.keyboard.press('Escape');
@@ -100,6 +100,9 @@ const regrasOk = async (p, nome) => {
   t('celular: Aa, 😀, GIF, Enviar e setas da fixada com 44 px', await p.evaluate(() => ['b-fmt', 'b-emoji', 'b-gif', 'b-enviar'].every(i => { const r = document.getElementById(i).getBoundingClientRect(); return r.width >= 44 && r.height >= 44; }) && [...document.querySelectorAll('.fix-nav button')].every(x => x.getBoundingClientRect().height >= 44)), await p.evaluate(() => ['b-fmt', 'b-emoji', 'b-gif', 'b-enviar'].map(i => { const r = document.getElementById(i).getBoundingClientRect(); return i + ':' + Math.round(r.width) + 'x' + Math.round(r.height); }).concat([...document.querySelectorAll('.fix-nav button')].map(x => Math.round(x.getBoundingClientRect().height)))));
   t('celular: Enviar com nome acessível "Enviar" e campo com ≥ 140 px', await p.evaluate(() => document.getElementById('b-enviar').getAttribute('aria-label') === 'Enviar' && document.getElementById('entrada').getBoundingClientRect().width >= 140), await p.evaluate(() => document.getElementById('entrada').getBoundingClientRect().width));
   t('celular: sem rolagem lateral', await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 0);
+  await p.evaluate(() => { document.getElementById('app').dataset.tela = 'canais'; }); await p.click('[data-canal="prf"]'); await p.waitForTimeout(500);
+  const cab = await p.evaluate(() => { const h = document.getElementById('canal-titulo'), r = id => document.getElementById(id).getBoundingClientRect(); return { hw: [h.scrollWidth, h.clientWidth], A: [Math.round(r('b-assunto').width), Math.round(r('b-assunto').height)], I: Math.round(r('b-lado').height), corta: h.scrollWidth > h.clientWidth && getComputedStyle(h).textOverflow === 'ellipsis', ass: !document.getElementById('b-assunto').hidden && r('b-assunto').height >= 44 && r('b-assunto').right <= innerWidth, info: r('b-lado').height >= 44 && r('b-lado').right <= innerWidth, rol: document.documentElement.scrollWidth <= innerWidth }; });
+  t('celular, canal de nome longo sem assuntos: título com reticências, ＋ Assunto e ℹ️ com 44 px à vista, sem rolagem lateral', cab.corta && cab.ass && cab.info && cab.rol, cab);
   await ctx.close();
 
   t('sem erro de JS', !errs.length, errs);

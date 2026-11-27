@@ -162,6 +162,9 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .cabecalho{padding:8px 14px;min-height:54px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--glass-b);}
 .b-assunto{flex:none;min-height:36px;padding:2px 12px;border-radius:999px;font-size:13px;white-space:nowrap;background:transparent;box-shadow:none;color:var(--txt2);}   /* ＋ Assunto no cabeçalho enquanto o canal não tem assuntos (a faixa só aparece quando há o que mostrar) */
 .b-assunto:hover{color:var(--txt);}
+#canal-titulo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}   /* nome longo de canal: uma linha só (o cabeçalho não engorda) */
+@media (hover:none) and (pointer:coarse){.b-assunto,#b-lado{min-height:44px;min-width:44px;}}
+@media (max-width:520px){.b-assunto{font-size:0;padding:0 10px;} .b-assunto::before{content:'＋🧵';font-size:15px;}}   /* celular: só o ícone (nome acessível no aria-label) */
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 .dia.novas{color:var(--accent-txt);font-weight:700;} .dia.novas::before,.dia.novas::after{background:var(--accent);}   /* ao abrir com novidade: a conversa começa aqui */
 .cabecalho .grow{flex:1;min-width:0;}
