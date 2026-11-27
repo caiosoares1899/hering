@@ -47,6 +47,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Antigravity | 🐙 Oceano · Polvo (`oceanoGenie` + nó fechado `kanban/genie`): **1)** regras **antes do merge** a partir de `antigravity/oceano-genie`; **2)** 4 segredos no Secret Manager; **3)** função após o merge ([desenho](ideias/genie-oceano.md)) | `firebase deploy --only database --project hering-onboarding` · `firebase functions:secrets:set DATABRICKS_HOST` (e `GENIE_SPACE_ID`, `DATABRICKS_CLIENT_ID`, `DATABRICKS_CLIENT_SECRET`) · `firebase deploy --only functions:oceanoGenie --project hering-onboarding` | 27/11/2026 |
 | Claude | 🏷️ Concha: regra das Etiquetas (`etiquetas/{canal}/{uid}`) — **antes do merge**, a partir da branch `claude/concha-etiquetas` | `firebase deploy --only database --project hering-onboarding` | 27/11/2026 |
 | Claude | ⭐ Concha: regras dos Favoritos (`fav_tags/{uid}`, `fav_msgs/{uid}`; só a dona) — **antes do merge**, a partir da branch `claude/concha-favoritos` | `firebase deploy --only database --project hering-onboarding` | 27/11/2026 |
 | Claude | 👤 Perfil da pessoa: nó `kanban/perfis/{uid}` (só a Hering lê, só a dona grava) — **antes do merge**, a partir da branch `claude/perfil-cartao` (já traz as regras da `main`); depois o backup passa a guardar `perfis` | `firebase deploy --only database --project hering-onboarding` e, após o merge, `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario --project hering-onboarding` | 26/11/2026 |

@@ -5,7 +5,7 @@
 > Em arquivos > 2,5 MB onde `read_file` acusa binário (`kanban-dev.html`, `kanban.html`, `guia-okr.html`), use `node scripts/mare-cli.js slice <arquivo> <inicio> <fim>` para ler o trecho exato e `"patches"` no `.mare-ship.json` para editar.
 
 ## `kanban-dev.html` (44905 linhas · 1756 funções)
-- **CSS:** L31–L4692, L7459–L7486 | **JS:** L4693–L4703 (classic), L4704–L4763 (classic), L7803–L8136 (module), L8145–L44722 (classic) | **Módulos:** mare-login-dev.js?v=3 (L7802), mare-notif-dev.js?v=53 (L8137), mare-metas-dev.js?v=19 (L8138), mare-dicas-dev.js?v=19 (L8139), mare-sonar-dev.js?v=8 (L8140), mare-timer-dev.js?v=1 (L8141), mare-gcal-dev.js?v=11 (L8142), mare-ferias-dev.js?v=7 (L8143)
+- **CSS:** L31–L4692, L7459–L7486 | **JS:** L4693–L4703 (classic), L4704–L4763 (classic), L7803–L8136 (module), L8145–L44722 (classic) | **Módulos:** mare-login-dev.js?v=3 (L7802), mare-notif-dev.js?v=54 (L8137), mare-metas-dev.js?v=19 (L8138), mare-dicas-dev.js?v=19 (L8139), mare-sonar-dev.js?v=8 (L8140), mare-timer-dev.js?v=1 (L8141), mare-gcal-dev.js?v=11 (L8142), mare-ferias-dev.js?v=7 (L8143)
 - **Consts (257):** safeLS:L7810 · FB_OVERRIDE_NS:L7832 · firebaseConfig:L7833 · app:L7842 · db:L7843 · auth:L7844 · provider:L7845 · calProvider:L7852 · msProvider:L7868 · msPersonalProvider:L7877 · _fotoBase:L8000 · ADM_UIDS:L8179 · TRUSTED_DOMAINS:L8191 · _dominiosTxt:L8192 · WORKER_URL:L8323 · _urlParams:L8326 · _legacySquadMap:L8334 · _legacySquad:L8335 · ACTIVE_SQUAD:L8342 · SQUAD_META_DEFAULT:L8369 · SQUAD_LABELS:L8389 · FB:L8393 · today:L8571 · _SQ_ID_OK:L8576 · _DRAWER_IDS:L8606 · DADOS_DIAS_BOARD:L8615 · PALETTE:L8770 · DEFAULT_COLUMNS:L8779 · _COR_COLUNA_OK:L8790 · CARD_COVER_COLORS:L8816 · _superRollupScroll:L9007 · CARD_SECTIONS:L9019 · _CARD_SECTIONS_COM_TOGGLE_PROPRIO:L9065 · _ganttCal:L9081 · _ganttMc:L9084 · AGENTE_AGIL_MENTION_INIT:L9134 · AGENTE_AGIL_MENTION_ENTRY:L9135 · TODOS_MENTION_INIT:L9147 · TODOS_MENTION_ENTRY:L9148 · AGENTE_AGIL_MENTION_SQUADS:L9156 (+217)
 - _bfSemanaInfo:L4721 · _signIn:L7937 · _signInMicrosoft:L7943 · _signInMicrosoftPessoal:L7948 · _signOut:L7952 · _reloadAuthUser:L7982 · _relerFotoGoogle:L8001 · _requestCalendarScope:L8066 · _signInIdToken:L8102 · _signInRedirect:L8103
 - _signInMicrosoftRedirect:L8114 · _signInMicrosoftPessoalRedirect:L8118 · _gcalTokenLimpar:L8170 · _gcalToken:L8171 · _isTrustedDomainEmail:L8193 · _loginProviderMismatchMsg:L8200 · _mantemLocal:L8226 · _irParaOceano:L8227 · _oceanoDoDia:L8249 · _rejectLoginAfterReload:L8268
@@ -190,7 +190,7 @@
 - stop:L44707
 
 ## `painel-dev.html` (14507 linhas · 579 funções)
-- **CSS:** L12–L1661 | **JS:** L1662–L1671 (classic), L1672–L1685 (classic), L1686–L1692 (classic), L3249–L3375 (classic), L3378–L3484 (module), L3491–L14301 (classic) | **Módulos:** mare-notif-dev.js?v=53 (L3485), mare-metas-dev.js?v=19 (L3486), mare-plantao-dev.js?v=5 (L3487), mare-dicas-dev.js?v=19 (L3488), mare-gxl-dev.js?v=2 (L3489)
+- **CSS:** L12–L1661 | **JS:** L1662–L1671 (classic), L1672–L1685 (classic), L1686–L1692 (classic), L3249–L3375 (classic), L3378–L3484 (module), L3491–L14301 (classic) | **Módulos:** mare-notif-dev.js?v=54 (L3485), mare-metas-dev.js?v=19 (L3486), mare-plantao-dev.js?v=5 (L3487), mare-dicas-dev.js?v=19 (L3488), mare-gxl-dev.js?v=2 (L3489)
 - **Consts (123):** AG_NO:L3254 · AG_CFG:L3255 · AG_ABAS:L3256 · AG_PERIODOS:L3257 · AG_FILTRO_RE:L3258 · AG_ABA_ROTULO:L3259 · AG_CHIPS:L3261 · firebaseConfig:L3396 · app:L3413 · db:L3414 · auth:L3415 · storage:L3416 · provider:L3417 · calProvider:L3421 · msProvider:L3443 · VICE_LONGPRESS_MS:L3532 · _dbg:L3586 · _DBG_LOG_PATH:L3587 · _DBG_DAILY_PATH:L3588 · GERENCIAS:L3787 · OKR_PRESENCE_TTL_MS:L3969 · _SQUAD_COLORS_CAMP:L4037 · _SQ_LABELS:L4045 · CAMP_TEMAS:L4085 · CAMP_TIPO_ICONS:L4093 · CAMP_TIPO_LABELS:L4094 · MESES:L4237 · DOW:L4238 · _pTag:L4272 · KNOWN_SQUADS:L4751 · _SQ_FB:L4875 · PAINEL_CAMP_TEMAS:L5003 · PAINEL_SQ_COLORS:L5007 · SUBMARCA_TAGS:L5509 · CANAL_VENDA_TAGS:L5528 · LEMP_TIPOS:L5749 · PCAL_COLORS:L6035 · DYNAMIC_COLOR_PALETTE:L6047 · SQUAD_COLOR_MAP:L6071 · OKR_PAGE:L6091 (+83)
 - **[🤖 Agente Ágil no Painel — gaveta de conversa (docs/AGENTE_A]** agIniciar:L3269 · agEncerrar:L3288 · agContexto:L3293 · agAtualizarContexto:L3300 · agAlternar:L3305 · agEsc:L3314 · agEscutar:L3315 · agHora:L3320 · agMd:L3323 · agMsgHtml:L3331
 - agRender:L3341 · agIniciarEspera:L3352 · agFimEspera:L3356 · agPerguntar:L3357 · agEnviar:L3358 · agIr:L3368 · esc:L3385 · jsq:L3394 · _requestCalendarScope:L3425 · _signInMicrosoft:L3446
@@ -253,7 +253,7 @@
 - sendGlobalBackupEmail:L14144 · testGlobalBackupEmail:L14197 · checkOverdueGlobalBackup:L14205 · _onRealAuthChange:L14224 · _auGetCurrentVersion:L14246 · _auModalOpen:L14250 · _auTyping:L14255 · _auShowBanner:L14263 · _auTryIdleReload:L14274 · _auCheckVersion:L14280
 
 ## `okr-dev.html` (11052 linhas · 695 funções)
-- **CSS:** L12–L1637 | **JS:** L1638–L1646 (classic), L1647–L1660 (classic), L2125–L2172 (module), L2177–L11049 (classic) | **Módulos:** mare-notif-dev.js?v=53 (L2173), mare-dicas-dev.js?v=19 (L2174), mare-sonar-dev.js?v=8 (L2175)
+- **CSS:** L12–L1637 | **JS:** L1638–L1646 (classic), L1647–L1660 (classic), L2125–L2172 (module), L2177–L11049 (classic) | **Módulos:** mare-notif-dev.js?v=54 (L2173), mare-dicas-dev.js?v=19 (L2174), mare-sonar-dev.js?v=8 (L2175)
 - **Consts (95):** firebaseConfig:L2131 · app:L2143 · db:L2144 · auth:L2145 · provider:L2146 · msProvider:L2151 · OKR_KANBAN_PAGE:L2201 · OKR_PAINEL_PAGE:L2202 · _GU_TTL_MS:L2238 · OKR_PRESENCE_PATH:L2291 · OKR_PRESENCE_TTL_MS:L2292 · OKR_PRESENCE_MAX_VISIVEIS:L2293 · _okrCardCache:L2343 · _okrSqOkrCards:L2344 · _okrSqLoading:L2345 · _okrSqCols:L2346 · _okrCardInflight:L2347 · VICE_LONGPRESS_MS:L2449 · OKR_GERENCIAS:L2648 · OKR_TORRES_TODAS:L2665 · OKR_SO_DIGITAL:L2672 · OKR_TORRES:L2674 · OKR_TORRE_PADRAO:L2675 · OKR_TORRES_CORTE:L2677 · OKR_GERENCIAS_POR_TORRE:L2679 · OKR_TORRE_GERAL:L2719 · OKR_BLOCO_AREAS:L2745 · OKR_BLOCO_ANCHOR:L2750 · OKR_PERIODO_RE:L2813 · _okrPeriodoOk:L2814 · _okrIsoDia:L2815 · _okrEhPerene:L2838 · _okrAnoDe:L2839 · _okrPeriodosNorm:L2841 · _okrPeriodoSobrepoe:L2842 · _okrPeriodoOrdem:L2852 · OKR_STATUS:L2870 · OKR_SEVERIDADE:L2879 · OKR_AGENDA_PROPOSTAS:L3137 · OKR_AGENDA_ACAO:L3139 (+55)
 - _signInMicrosoft:L2154 · _fcmGetToken:L2162 · _fcmDeleteToken:L2163 · _signIn:L2166 · _signOut:L2167 · squadBoardUrl:L2203 · loadExtraSquads:L2204 · _okrCheckAccessReady:L2219 · loadAdmList:L2227 · loadGlobalUsers:L2239
 - _okrSendHeartbeat:L2295 · _okrPresenceStart:L2302 · loadOkrPresence:L2311 · renderOkrOnline:L2316 · _okrCardKey:L2348 · _okrCardTitleKnown:L2349 · _okrCardLabel:L2350 · _okrCardPaint:L2356 · _okrCardFetchOne:L2362 · _okrCardEnsure:L2373
@@ -334,22 +334,24 @@
 - _okrDsCloseCfg:L10790 · _okrDsRenderCfgModal:L10796 · _okrDsSaveForm:L10869 · _okrDsDelete:L10925 · _okrDsMove:L10952 · _auGetCurrentVersion:L10997 · _auModalOpen:L11001 · _auTyping:L11006 · _auShowBanner:L11014 · _auTryIdleReload:L11025
 - _auCheckVersion:L11031
 
-## `oceano-dev.html` (2719 linhas · 130 funções)
-- **CSS:** L21–L593 | **JS:** L14–L20 (classic), L812–L848 (module), L857–L2716 (classic) | **Módulos:** mare-login-dev.js?v=3 (L811), mare-notif-dev.js?v=53 (L850), mare-plantao-dev.js?v=5 (L851), mare-dicas-dev.js?v=19 (L852), mare-metas-dev.js?v=19 (L853), mare-sonar-dev.js?v=8 (L854), mare-perfil-dev.js?v=1 (L855)
-- **Consts (64):** firebaseConfig:L817 · fbApp:L827 · db:L828 · auth:L829 · provider:L830 · VERSION:L860 · IS_DEV:L861 · SO_HERING:L862 · CONTATO:L863 · $:L864 · esc:L865 · _hrefOk:L867 · reduzMov:L868 · standalone:L869 · SVG_PAINEL:L872 · SVG_BORDO:L873 · SVG_CONCHA:L874 · SVG_TRAV:L875 · P:L876 · NEXT:L881 · APPS:L882 · RAIL_ON:L891 · RAIL_ORDEM:L892 · EXTRA:L893 · APP:L894 · logoPorthole:L899 · logoQuad:L900 · temaDoMare:L903 · peixesDoMare:L904 · PREFS_PADRAO:L905 · PREFS_LS:L909 · TEMAS:L911 · PREFS_DE_FORA:L923 · FISH_SVGS:L936 · _fn:L966 · nomeCurto:L967 · iniciais:L968 · AV_TIPOS:L1080 · AV_LIMITE:L1081 · avLargo:L1082 (+24)
-- _fcmGetToken:L838 · _fcmDeleteToken:L839 · _signIn:L842 · _signInIdToken:L844 · _signOut:L845 · logoInner:L895 · lsLer:L907 · lsSalvar:L908 · aplicarPrefs:L912 · semChavesDeFora:L924
-- salvarPrefs:L925 · toast:L933 · criarPeixes:L941 · atualizarAnimacao:L953 · _animAtividade:L954 · loginErr:L974 · emailHering:L976 · viaGoogle:L977 · lerRamo:L996 · garantirCadastro:L998
-- iniciarSessao:L1002 · iniciarMetasOceano:L1030 · metaPodeAtualizar:L1048 · metaOceanoRender:L1053 · mostrarContinuar:L1069 · avLimite:L1083 · avHttp:L1089 · avPodeVer:L1090 · avLimpa:L1102 · avCmp:L1120
-- avVistos:L1123 · avSalvaVistos:L1124 · avBotaoHtml:L1125 · avHtml:L1126 · muralRender:L1138 · avMarcaVistos:L1162 · avAbreBotao:L1170 · avAbre:L1175 · vtexEstado:L1190 · vtexRender:L1202
-- iniciarVtex:L1210 · iniciarMural:L1217 · rotearUrl:L1244 · avisoDeBugFerias:L1248 · filtrarSino:L1252 · abrirDoSino:L1260 · tempoRel:L1274 · iniciarDicas:L1280 · iniciarSino:L1285 · appDaNotif:L1297
-- contarPorApp:L1303 · visivel:L1309 · saudacao:L1312 · renderEu:L1313 · appsDoDia:L1318 · renderTudo:L1319 · renderAbas:L1365 · renderVersoes:L1373 · linkLogo:L1390 · linksCacheSet:L1399
-- carregarLinks:L1400 · renderLinks:L1410 · htmlPerfilLinks:L1417 · renderPerfilLinks:L1423 · gravaLinks:L1428 · salvarLink:L1433 · acaoLink:L1445 · abrirAqui:L1456 · abrirApp:L1457 · lembrarUltimo:L1462
-- mostrarHost:L1463 · renderRail:L1483 · renderHostTabs:L1499 · fecharApp:L1502 · voltarLobby:L1510 · renderAbertos:L1515 · aberturasChave:L1524 · contarAbertura:L1525 · ehVeterano:L1527 · irAba:L1528
-- rotearHash:L1535 · __oceanoHost:L1555 · abrirModal:L1559 · fecharModal:L1560 · carregarCartao:L1573 · valorCartao:L1585 · marcarCartao:L1597 · salvarCartao:L1598 · abrirPerfil:L1613 · renderFaq:L1699
-- abrirAjuda:L1704 · feriasHoje:L1733 · feriasAtivo:L1734 · feriasExpandido:L1742 · feriasSetExpandido:L1743 · feriasDispensados:L1747 · feriasDispensar:L1748 · feriasMdLite:L1750 · feriasBugEhMeu:L1756 · feriasMeusBugsAtivos:L1763
-- feriasStatusMeta:L1767 · feriasAlertasAutor:L1773 · feriasBannerAlertaAutorHtml:L1777 · feriasRenderBanner:L1792 · feriasNorm:L2009 · feriasResponder:L2023 · feriasHtmlChat:L2076 · feriasHtmlSocorro:L2096 · feriasHtmlStatus:L2115 · feriasHtmlProximos:L2142
-- feriasBlocoGuiaDevtoolsHtml:L2155 · feriasHtmlGuia:L2182 · feriasHtmlMeusChamados:L2205 · feriasHtmlBugs:L2229 · feriasRenderEvidPreview:L2286 · feriasComprimirImagem:L2297 · feriasPreencherDadosTecnicos:L2332 · feriasRenderBugsLista:L2349 · feriasProcessarSnapshotBugs:L2362 · feriasRefBugs:L2382
-- feriasIniciarBugsListener:L2387 · feriasCarregarBugs:L2400 · feriasEnviarBug:L2416 · feriasRenderModal:L2498 · abrirFerias:L2512 · feriasEnviarPergunta:L2528 · instalar:L2599 · mostrarDocumento:L2616 · railLarga:L2630 · iniciarSonar:L2646
+## `oceano-dev.html` (3397 linhas · 148 funções)
+- **CSS:** L21–L686 | **JS:** L14–L20 (classic), L944–L980 (module), L989–L3394 (classic) | **Módulos:** mare-login-dev.js?v=3 (L943), mare-notif-dev.js?v=54 (L982), mare-plantao-dev.js?v=5 (L983), mare-dicas-dev.js?v=19 (L984), mare-metas-dev.js?v=19 (L985), mare-sonar-dev.js?v=8 (L986), mare-perfil-dev.js?v=1 (L987)
+- **Consts (72):** firebaseConfig:L949 · fbApp:L959 · db:L960 · auth:L961 · provider:L962 · VERSION:L992 · IS_DEV:L993 · SO_HERING:L994 · CONTATO:L995 · $:L996 · esc:L997 · _hrefOk:L999 · reduzMov:L1000 · standalone:L1001 · SVG_PAINEL:L1004 · SVG_BORDO:L1005 · SVG_CONCHA:L1006 · SVG_TRAV:L1007 · SVG_POLVO:L1008 · OCEANO_GENIE_URL:L1009 · P:L1010 · NEXT:L1015 · APPS:L1016 · RAIL_ON:L1025 · RAIL_ORDEM:L1026 · EXTRA:L1027 · APP:L1028 · logoPorthole:L1033 · logoQuad:L1034 · temaDoMare:L1037 · peixesDoMare:L1038 · PREFS_PADRAO:L1039 · PREFS_LS:L1043 · TEMAS:L1045 · PREFS_DE_FORA:L1057 · FISH_SVGS:L1070 · _fn:L1101 · nomeCurto:L1102 · iniciais:L1103 · AV_TIPOS:L1217 (+32)
+- _fcmGetToken:L970 · _fcmDeleteToken:L971 · _signIn:L974 · _signInIdToken:L976 · _signOut:L977 · logoInner:L1029 · lsLer:L1041 · lsSalvar:L1042 · aplicarPrefs:L1046 · semChavesDeFora:L1058
+- salvarPrefs:L1059 · toast:L1067 · criarPeixes:L1075 · atualizarAnimacao:L1088 · _animAtividade:L1089 · loginErr:L1109 · emailHering:L1111 · viaGoogle:L1112 · lerRamo:L1131 · garantirCadastro:L1133
+- iniciarSessao:L1137 · iniciarMetasOceano:L1167 · metaPodeAtualizar:L1185 · metaOceanoRender:L1190 · mostrarContinuar:L1206 · avLimite:L1220 · avHttp:L1226 · avPodeVer:L1227 · avLimpa:L1239 · avCmp:L1257
+- avVistos:L1260 · avSalvaVistos:L1261 · avBotaoHtml:L1262 · avHtml:L1263 · muralRender:L1275 · avMarcaVistos:L1299 · avAbreBotao:L1307 · avAbre:L1312 · vtexEstado:L1327 · vtexRender:L1339
+- iniciarVtex:L1347 · iniciarMural:L1354 · rotearUrl:L1381 · avisoDeBugFerias:L1385 · filtrarSino:L1389 · abrirDoSino:L1397 · tempoRel:L1411 · iniciarDicas:L1417 · iniciarSino:L1422 · appDaNotif:L1434
+- contarPorApp:L1440 · visivel:L1446 · saudacao:L1449 · renderEu:L1450 · appsDoDia:L1455 · renderTudo:L1456 · renderAbas:L1502 · renderVersoes:L1510 · linkLogo:L1527 · linksCacheSet:L1536
+- carregarLinks:L1537 · renderLinks:L1547 · htmlPerfilLinks:L1554 · renderPerfilLinks:L1560 · gravaLinks:L1565 · salvarLink:L1570 · acaoLink:L1582 · abrirAqui:L1593 · abrirApp:L1594 · lembrarUltimo:L1599
+- mostrarHost:L1600 · renderRail:L1621 · renderHostTabs:L1643 · fecharApp:L1646 · voltarLobby:L1654 · renderAbertos:L1659 · aberturasChave:L1668 · contarAbertura:L1669 · ehVeterano:L1671 · irAba:L1672
+- rotearHash:L1679 · __oceanoHost:L1699 · abrirModal:L1703 · fecharModal:L1704 · carregarCartao:L1717 · valorCartao:L1729 · marcarCartao:L1741 · salvarCartao:L1742 · abrirPerfil:L1757 · renderFaq:L1843
+- abrirAjuda:L1848 · feriasHoje:L1877 · feriasAtivo:L1878 · feriasExpandido:L1886 · feriasSetExpandido:L1887 · feriasDispensados:L1891 · feriasDispensar:L1892 · feriasMdLite:L1894 · feriasBugEhMeu:L1900 · feriasMeusBugsAtivos:L1907
+- feriasStatusMeta:L1911 · feriasAlertasAutor:L1917 · feriasBannerAlertaAutorHtml:L1921 · feriasRenderBanner:L1936 · feriasNorm:L2153 · feriasResponder:L2167 · feriasHtmlChat:L2220 · feriasHtmlSocorro:L2240 · feriasHtmlStatus:L2259 · feriasHtmlProximos:L2286
+- feriasBlocoGuiaDevtoolsHtml:L2299 · feriasHtmlGuia:L2326 · feriasHtmlMeusChamados:L2349 · feriasHtmlBugs:L2373 · feriasRenderEvidPreview:L2430 · feriasComprimirImagem:L2441 · feriasPreencherDadosTecnicos:L2476 · feriasRenderBugsLista:L2493 · feriasProcessarSnapshotBugs:L2506 · feriasRefBugs:L2526
+- feriasIniciarBugsListener:L2531 · feriasCarregarBugs:L2544 · feriasEnviarBug:L2560 · feriasRenderModal:L2642 · abrirFerias:L2656 · feriasEnviarPergunta:L2672 · instalar:L2743 · mostrarDocumento:L2760 · railLarga:L2776 · iniciarSonar:L2792
+- polvoLimparBlobs:L2898 · polvoMsgErro:L2904 · polvoSetErro:L2907 · polvoAtualizarUiEnviar:L2915 · abrirZoomPolvo:L2922 · fecharZoomPolvo:L2932 · polvoEhNum:L2937 · polvoToken:L2940 · polvoFetchJson:L2946 · polvoCarregarGrafico:L2958
+- polvoEl:L2992 · renderPolvoFeed:L2999 · polvoPararPoll:L3204 · polvoAgendarEstado:L3208 · polvoEnviarPergunta:L3264 · novaConversaPolvo:L3324 · abrirPolvo:L3337 · fecharPolvo:L3353
 
 ## `escala-dev.html` (1348 linhas · 80 funções)
 - **CSS:** L8–L204 | **JS:** L261–L1345 (module) | **Módulos:** mare-login-dev.js?v=3 (L260)
@@ -409,9 +411,9 @@
 - _liveCopiarConvite:L2936 · liveAtualizarControleFlutuante:L2949 · liveAbrirPrimeiroDetalhe:L2975 · liveAtualizarPrevia:L2976 · liveAtualizarEscolhaObjetivo:L3006 · liveAtualizarComandos:L3022 · _liveAbrirControleFlutuante:L3095 · liveMontarControle:L3133 · livePrepararBastidor:L3251 · _liveAbrirPaginaBastidor:L3307
 - _livePainel:L3313 · liveParticipantes:L3317 · liveAtualizarPassador:L3321 · _livePassadorClique:L3333 · liveRender:L3338 · liveDesenhar:L3414 · _okrShowApp:L3485 · _okrViewerKey:L3514 · _okrHandleAuth:L3515
 
-## `mare-notif-dev.js` (1172 linhas · 100 funções)
-- **JS:** L1–L1172 (js)
-- **Consts (20):** FEED:L21 · IS_DEV:L22 · PAGES:L23 · ICONS:L28 · SO_PAINEL:L36 · TTL_LIDA_MS:L40 · AREAS:L56 · PUSH_PADRAO:L66 · TIPOS:L68 · FAMILIAS:L214 · CFG:L225 · SO_HERING:L266 · VAPID:L431 · SITE:L439 · INS_PADRAO:L491 · INS_INTERVALO_MS:L492 · IMPORTANTE:L535 · APPS:L915 · APP_OCEANO:L934 · LINKS_HERING:L939
+## `mare-notif-dev.js` (1181 linhas · 101 funções)
+- **JS:** L1–L1181 (js)
+- **Consts (20):** FEED:L21 · IS_DEV:L22 · PAGES:L23 · ICONS:L28 · SO_PAINEL:L36 · TTL_LIDA_MS:L40 · AREAS:L56 · PUSH_PADRAO:L66 · TIPOS:L68 · FAMILIAS:L214 · CFG:L225 · SO_HERING:L266 · VAPID:L431 · SITE:L439 · INS_PADRAO:L491 · INS_INTERVALO_MS:L492 · IMPORTANTE:L535 · APPS:L924 · APP_OCEANO:L943 · LINKS_HERING:L948
 - viva:L45 · iconeSeguro:L47
 - **[🔔 CENTRAL DE NOTIFICAÇÕES (Painel → aba 🔔 Notificações)]** aparencia:L219 · cfgLigado:L227 · sinoLigado:L235 · esc:L239 · hrefOk:L241 · emitir:L252 · emailKey:L253 · seenLocalKey:L254 · seenLocalSalvar:L255 · alvoTorres:L258
 - paraMim:L267 · lido:L273 · start:L275 · items:L300 · unread:L317 · markOne:L319 · markAll:L330 · dismiss:L339 · clearRead:L350 · pushFeed:L364
@@ -420,9 +422,9 @@
 - insAplicaRemoto:L500 · insistenteSet:L501 · tremer:L508 · piscarTitulo:L519 · pararTitulo:L524 · insistenteParar:L525 · insOuvir:L529 · insistente:L537 · insistenteTestar:L558 · insRender:L564
 - insMenuEnsure:L573 · insistenteMenu:L590 · somMudo:L603 · tocar:L605 · somToggle:L620 · novas:L627 · permEstado:L639 · deviceId:L640 · tokenRegistrar:L645 · tokenRemover:L654
 - permClick:L660 · rodapeHtml:L677 · rodapeRender:L694 · dndMenu:L707 · menusFechar:L717 · sinoTempo:L733 · sinoItens:L739 · sinoEl:L754 · sinoRender:L755 · sinoLer:L798
-- sinoAbrirItem:L802 · sinoRemover:L810 · sinoTudo:L819 · sinoLimpar:L825 · sinoPosicionar:L834 · sinoAbrir:L843 · sinoFechar:L849 · sino:L855 · semanaBF:L929 · linksLista:L943
-- linksCacheLer:L948 · linksCacheSet:L949 · linksCarregar:L950 · linkLogo:L958 · linksHtml:L963 · appsLsKey:L968 · appsLsLer:L969 · appsLsSalvar:L970 · appsVisivel:L971 · appsCtx:L982
-- appsLogo:L986 · appsPopRender:L992 · appsPosicionar:L1017 · appsFechar:L1024 · appsToggle:L1029 · appsMontar:L1040 · appsUso:L1090 · MareNotif:L1167
+- sinoAbrirItem:L802 · sinoRemover:L810 · sinoTudo:L819 · sinoLimpar:L825 · sinoPosicionar:L834 · sinoAbrir:L843 · sinoFechar:L849 · sinoAlternar:L855 · sino:L856 · semanaBF:L938
+- linksLista:L952 · linksCacheLer:L957 · linksCacheSet:L958 · linksCarregar:L959 · linkLogo:L967 · linksHtml:L972 · appsLsKey:L977 · appsLsLer:L978 · appsLsSalvar:L979 · appsVisivel:L980
+- appsCtx:L991 · appsLogo:L995 · appsPopRender:L1001 · appsPosicionar:L1026 · appsFechar:L1033 · appsToggle:L1038 · appsMontar:L1049 · appsUso:L1099 · MareNotif:L1176
 
 ## `mare-metas-dev.js` (1473 linhas · 90 funções)
 - **JS:** L1–L1473 (js)

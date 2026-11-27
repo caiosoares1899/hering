@@ -38,7 +38,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   { const { ctx, p, errs } = await abre(1280, 800, true);
     t('o menu aparece depois do login', await p.evaluate(() => document.body.classList.contains('com-rail') && getComputedStyle(document.getElementById('rail')).display === 'flex'), 0);
     let it = await itens(p);
-    t('ordem: Oceano (início, atual) · Maré · Concha · Radar · A Bordo · Painel; embaixo Sonar e Eu', JSON.stringify(it) === JSON.stringify(['lobby*', 'kanban', 'cardume', 'okr', 'onboarding', 'painel', 'rail-sonar', 'rail-eu']), it);
+    t('ordem: Oceano (início, atual) · Maré · Concha · Radar · A Bordo · Painel · Polvo (ADM); embaixo Sonar e Eu', JSON.stringify(it) === JSON.stringify(['lobby*', 'kanban', 'cardume', 'okr', 'onboarding', 'painel', 'polvo', 'rail-sonar', 'rail-eu']), it);
     const nums = () => p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#rail [data-rail]')].map(b => [b.dataset.rail, (b.querySelector('.rail-n') || {}).textContent || ''])));
     let n = await nums();
     t('🔢 contador por app com as NÃO lidas do sino: Maré 1, Concha 2, Radar 1 (a lida não conta)', n.kanban === '1' && n.cardume === '2' && n.okr === '1' && n.lobby === '' && n.onboarding === '', n);
@@ -76,7 +76,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   // ── membro (sem Painel), expandido salvo ──
   { const { ctx, p, errs } = await abre(1280, 800, false, true);
     const it = await itens(p);
-    t('quem não é ADM não vê o Painel no menu, mesmo já tendo usado o Painel (pedido do Caio)', !it.includes('painel'), it);
+    t('quem não é ADM não vê o Painel nem o Polvo no menu, mesmo já tendo usado o Painel (pedido do Caio)', !it.includes('painel') && !it.includes('polvo'), it);
     t('a preferência "expandido" volta ao recarregar', await p.evaluate(() => document.body.classList.contains('rail-larga')), 0);
     await p.screenshot({ path: path.join(OUT, 'pc_lobby_expandido.png') });
     t('sem erro na página', !errs.length, errs);
@@ -87,7 +87,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
     const r = await p.evaluate(() => { const x = document.getElementById('rail').getBoundingClientRect(); return { top: x.top, h: x.height, w: x.width }; });
     t('celular: barra embaixo, largura toda (mesmo com "expandido" salvo)', r.w === 390 && r.top > 700, r);
     const it = await itens(p);
-    t('celular: Oceano + 5 apps + Eu (sem Sonar e sem » )', JSON.stringify(it) === JSON.stringify(['lobby*', 'kanban', 'cardume', 'okr', 'onboarding', 'painel', 'rail-eu']) && await p.evaluate(() => !document.getElementById('rail-tog').getClientRects().length), it);
+    t('celular: Oceano + 5 apps + Polvo (ADM) + Eu (sem Sonar e sem » )', JSON.stringify(it) === JSON.stringify(['lobby*', 'kanban', 'cardume', 'okr', 'onboarding', 'painel', 'polvo', 'rail-eu']) && await p.evaluate(() => !document.getElementById('rail-tog').getClientRects().length), it);
     await p.screenshot({ path: path.join(OUT, 'cel_lobby.png') });
     await p.click('#rail [data-rail="okr"]'); await p.waitForTimeout(400);
     t('celular: o app ocupa a tela acima da barra', await p.evaluate(() => { const h = document.getElementById('host').getBoundingClientRect(), r = document.getElementById('rail').getBoundingClientRect(); return h.left === 0 && Math.abs(h.bottom - r.top) < 2; }), 0);

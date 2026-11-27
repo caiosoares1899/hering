@@ -68,6 +68,7 @@ const NOS_GLOBAIS = [
 // O que NUNCA entra (documentado no manifesto pra ninguém achar que "esqueceu"):
 const EXCLUIDOS = [
   'spotify_secrets', 'spotify_radio_owner_secret', 'oauth_pending',           // segredos
+  'genie',                                                                    // 🐙 metadados efêmeros de posse/cota do Polvo (nenhuma pergunta/resposta é salva)
   'presence', 'notif_feed', 'notif_feed_seen', 'vtex_saude', 'github_saude', 'firebase_saude', // efêmeros (o feed é derivado; *_saude = batimento dos monitores)
   'plantao_status',                                                           // 🛟 batimento do Antigravity (efêmero)
   'cards_espelho',                                                            // 🛡️ cópia de segurança derivada de cada card (o guardião a regrava a cada edição; o backup do quadro já guarda os cards)

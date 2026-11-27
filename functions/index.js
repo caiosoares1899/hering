@@ -262,6 +262,14 @@ exports.conchaGifBusca = require('./oceano/conchaGif').conchaGifBusca;
 // Deploy isolado: firebase deploy --only functions:conchaAvisoMsg (regras antes: firebase deploy --only database)
 exports.conchaAvisoMsg = require('./oceano/conchaAvisos').criaTrigger();
 
+// 🐙 Polvo · Pergunte aos dados (27/11/2026, functions/oceano/genie.js): ponte segura entre o Oceano e o Genie do Databricks (espaço Polvo).
+// idToken @ciahering + piloto ADM; OAuth M2M via defineSecret; posse das conversas em kanban/genie/conversas/{uid}; limites 30/h pessoa e 200/h casa.
+// Deploy (nesta ordem — regras antes):
+//   1) firebase deploy --only database --project hering-onboarding
+//   2) firebase functions:secrets:set DATABRICKS_HOST  (+ GENIE_SPACE_ID, DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET)
+//   3) firebase deploy --only functions:oceanoGenie --project hering-onboarding
+exports.oceanoGenie = require('./oceano/genie').oceanoGenie;
+
 // 🎯 OKR — scan diário (prazo de marco chegando, período de editar, véspera
 // de reunião — ver functions/okr/dailyScan.js). Roda sozinho, sem depender
 // de ninguém abrir o painel. Lê kanban/painel/config/gcal_cache (mesmo
