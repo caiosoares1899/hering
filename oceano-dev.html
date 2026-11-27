@@ -857,7 +857,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v2.07 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v2.08 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1479,7 +1479,8 @@ function mostrarHost(id, url){
 function renderRail(){
   if(!RAIL_ON || !$('#rail-apps')) return;
   const ativo = host.atual || 'lobby';
-  $('#rail-apps').innerHTML = RAIL_ORDEM.map(APP).filter(a=>a && !a.futuro && a.href && visivel(a)).map(a=>{
+  // Painel no menu: só ADM (pedido do Caio, 26/11). Quem não é ADM e usa o Painel continua abrindo pelo endereço.
+  $('#rail-apps').innerHTML = RAIL_ORDEM.map(APP).filter(a=>a && !a.futuro && a.href && (a.id==='painel' ? ehAdm : visivel(a))).map(a=>{
     const curto = a.id==='kanban' ? 'Maré' : a.nome, n = railN[a.id]||0;
     const nTxt = n ? ', '+n+(n===1?' notificação não lida':' notificações não lidas') : '';
     return '<button class="rail-it" type="button" data-rail="'+a.id+'" title="'+esc(a.nome)+'" aria-label="'+esc(a.nome)+(host.abertos.includes(a.id)?' (aberto)':'')+nTxt+'"'+(ativo===a.id?' aria-current="page"':'')+'>'+logoQuad(a,'-r')+'<span class="rail-rot">'+esc(curto)+'</span>'
