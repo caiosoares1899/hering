@@ -87,6 +87,14 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-11-27 · /monitorarbugs (menu lateral, Ilha e contadores): clique perdido no painel da Ilha, Ilha religada pelo Oceano e foco perdido no menu (oceano v2.09, concha v0.56, só dev)
+
+- **(SÓ DEV)** Rodada do `/monitorarbugs` no código de 26/11 (menu lateral, contadores, `mare-ilha`, `mare-perfil`). 3 achados, todos reproduzidos antes da correção em `docs/arezzo/testes/test_monitorar_2711.js`:
+  - **G · clique perdido na Ilha.** O relógio redesenhava o painel inteiro a cada segundo. Apertar "⏸ Pausar" e soltar depois de um redesenho trocava o botão embaixo do dedo, e o clique se perdia. Agora o relógio só troca o texto do tempo (`tempos()`).
+  - **J · a Ilha voltava ligada sozinha.** O Oceano grava `kanban/usuarios/{uid}/oceano` a partir da cópia lida ao abrir, com `ilha: true`. Desligar na Concha e depois mudar o tema no Oceano religava a Ilha. É o padrão "dois escritores no mesmo nó". Agora o Oceano não regrava as chaves que outros apps gravam (`PREFS_DE_FORA`).
+  - **E · foco perdido no menu.** Cada mudança do sino redesenha o menu (contadores), e quem navegava pelo teclado perdia o foco (ia para o `<body>`). Agora o menu devolve o foco ao mesmo ícone.
+  - **Sem achado:** links do sino do Oceano (abrem dentro do menu), Ilha × sino (um painel por vez), aviso de notificação antiga, cache do cartão. **Recomendação (não é bug, é a fase 3 do menu):** dentro do Oceano, os links que um app abre para outro app (sino da Concha, "Abrir o card" da Ilha) ainda abrem em aba nova. O certo é o app pedir ao Oceano, por `postMessage` com endereço validado, para trocar de app no menu.
+
 ### 2026-11-26 · 🏝️ Ilha na Concha: o 🔔 parecia 'uma ilha dentro da ilha' e a lista do sino abria fora do lugar (concha v0.55, mare-notif ?v=53, só dev)
 
 - **(SÓ DEV)** Relato do Caio com print (Safari):
