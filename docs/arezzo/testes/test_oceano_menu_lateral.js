@@ -6,7 +6,15 @@ const fake = require('./fakefb.js');
 const base = process.env.BASE_URL || 'http://127.0.0.1:8952';
 const OUT = path.join(__dirname, '../../capturas/oceano-menu'); fs.mkdirSync(OUT, { recursive: true });
 const U = (uid, nome) => ({ uid, email: uid + '@ciahering.com.br', displayName: nome, photoURL: '', providerData: [{ providerId: 'google.com' }] });
-const seed = (adm) => ({ kanban: { usuarios: { cai: { role: adm ? 'adm' : 'membro', nome: 'Caio', squads: { dados: true } } }, config: { adm_emails: adm ? ['cai@ciahering.com.br'] : [] } } });
+const agISO = m => new Date(Date.now() - m * 60000).toISOString();
+const NOTIFS = {
+  n1: { type: 'assigned', title: 'Card atribuído a você', cardId: 'c1', squad: 'dados', ts: agISO(5), read: false },
+  n2: { type: 'cardume_mencao', title: 'Ana te mencionou na Concha', cardumeRef: 'r1', ts: agISO(4), read: false },
+  n3: { type: 'cardume_mencao', title: 'Bia te mencionou na Concha', cardumeRef: 'r2', ts: agISO(3), read: false },
+  n4: { type: 'okr_mencao', title: 'Menção no Radar', ts: agISO(2), read: false },
+  n5: { type: 'assigned', title: 'Já lida', cardId: 'c2', squad: 'dados', ts: agISO(1), read: true },
+};
+const seed = (adm) => ({ kanban: { usuarios: { cai: { role: adm ? 'adm' : 'membro', nome: 'Caio', squads: { dados: true }, notificacoes: NOTIFS } }, config: { adm_emails: adm ? ['cai@ciahering.com.br'] : [] } } });
 let ok = true, total = 0;
 const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : '❌ ') + n + (c ? '' : '  ← ' + String(JSON.stringify(d)).slice(0, 400))); };
 (async () => {
@@ -31,6 +39,13 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
     t('o menu aparece depois do login', await p.evaluate(() => document.body.classList.contains('com-rail') && getComputedStyle(document.getElementById('rail')).display === 'flex'), 0);
     let it = await itens(p);
     t('ordem: Oceano (início, atual) · Maré · Concha · Radar · A Bordo · Painel; embaixo Sonar e Eu', JSON.stringify(it) === JSON.stringify(['lobby*', 'kanban', 'cardume', 'okr', 'onboarding', 'painel', 'rail-sonar', 'rail-eu']), it);
+    const nums = () => p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#rail [data-rail]')].map(b => [b.dataset.rail, (b.querySelector('.rail-n') || {}).textContent || ''])));
+    let n = await nums();
+    t('🔢 contador por app com as NÃO lidas do sino: Maré 1, Concha 2, Radar 1 (a lida não conta)', n.kanban === '1' && n.cardume === '2' && n.okr === '1' && n.lobby === '' && n.onboarding === '', n);
+    t('o contador entra no nome acessível ("Concha, 2 notificações não lidas")', await p.evaluate(() => /Concha.*2 notificações não lidas/.test(document.querySelector('#rail [data-rail="cardume"]').getAttribute('aria-label'))), 0);
+    await p.evaluate(async () => { const m = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js'); await m.update(m.ref(null, 'kanban/usuarios/cai/notificacoes/n2'), { read: true }); });
+    await p.waitForTimeout(400); n = await nums();
+    t('lida uma da Concha (em qualquer app), o número cai para 1', n.cardume === '1', n);
     t('o início é uma casinha de traço (SVG, sem emoji), com o nome "Início"', await p.evaluate(() => { const b = document.querySelector('#rail [data-rail="lobby"]'); return !!b.querySelector('svg.rail-svg') && b.textContent.trim() === 'Início'; }), 0);
     t('os botões de baixo também são ícones de traço (sem emoji)', await p.evaluate(() => ['rail-sonar', 'rail-recarregar', 'rail-aba', 'rail-fechar'].every(i => !!document.querySelector('#' + i + ' svg.rail-svg'))), 0);
     t('com o menu, os cartões de apps saem do Início (o menu já mostra todos)', await p.evaluate(() => !document.getElementById('tiles').getClientRects().length && !!document.getElementById('col-meta')), 0);
@@ -42,7 +57,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
     it = await itens(p);
     t('Concha vira o atual; aparecem ↻ Nova aba ✕', it.includes('cardume*') && it.includes('rail-recarregar') && it.includes('rail-aba') && it.includes('rail-fechar'), it);
     await p.click('#rail [data-rail="kanban"]'); await p.waitForTimeout(400);
-    t('trocar para o Maré mantém a Concha aberta (bolinha de "aberto")', await p.evaluate(() => !!document.querySelector('#rail [data-rail="cardume"] .rail-aberto') && document.querySelectorAll('#host-frames iframe').length === 2), 0);
+    t('trocar para o Maré mantém a Concha aberta (bolinha de "aberto", ou o número, que tem prioridade)', await p.evaluate(() => !!document.querySelector('#rail [data-rail="cardume"] .rail-aberto, #rail [data-rail="cardume"] .rail-n') && document.querySelectorAll('#host-frames iframe').length === 2), 0);
     await p.screenshot({ path: path.join(OUT, 'pc_app_recolhido.png') });
     await p.click('#rail-tog'); await p.waitForTimeout(300);
     t('» expande: menu de 212px com nome ao lado do ícone, o app acompanha', await p.evaluate(() => document.getElementById('rail').getBoundingClientRect().width === 212 && document.getElementById('host').getBoundingClientRect().left === 212 && localStorage.getItem('oceano_rail_larga') === '1'), await p.evaluate(() => document.getElementById('rail').getBoundingClientRect().width));

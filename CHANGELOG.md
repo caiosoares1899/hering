@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔢 Oceano: número de notificações não lidas em cada app do menu lateral (SÓ DEV, oceano v2.07) — 2026-11-26
+
+- **(SÓ DEV)** Pedido do Caio: no menu lateral, o numerozinho de notificações em cada app. Conta as **não lidas do sino unificado** (o mesmo do 🔔) por app. Cada notificação já sabe para onde leva (`urlPessoal`/`urlFeed` do `mare-notif`), e o nome da página diz o app: Maré, Concha, Radar ou Painel. **Nenhuma leitura nova no banco** (usa o `aoMudar` do sino que o Oceano já tem). Lida em qualquer app, o número cai na hora. O número entra no nome acessível ("Concha, 2 notificações não lidas") e tem prioridade sobre a bolinha de "aberto". Funciona no computador (recolhido e expandido) e na barra do celular. `docs/arezzo/testes/test_oceano_menu_lateral.js` (26).
+
 ### 🏝️ Ilha Dinâmica compartilhada (mare-ilha), começando pela Concha (SÓ DEV, cardume v0.53) — 2026-11-26
 
 - **(SÓ DEV)** Pedido do Caio: "quem tiver a ilha deveria ter em todos os apps", começando pela Concha, com uma chave só na conta.

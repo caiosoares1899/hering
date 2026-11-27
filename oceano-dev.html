@@ -460,6 +460,8 @@ body.com-rail .col-apps{display:none;}
 .rail-it[aria-current="page"]::before{content:"";position:absolute;left:-6px;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--accent);}
 .rail-it .rail-aberto{position:absolute;top:6px;right:12px;width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 2px rgba(var(--deep-rgb),.9);}
 .rail-it[hidden]{display:none;}
+.rail-it .rail-n{position:absolute;top:2px;right:6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--danger,#ef4444);color:#fff;font:700 10px/18px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px rgba(var(--deep-rgb),.95);pointer-events:none;}
+body.rail-larga .rail-it .rail-n{top:50%;right:10px;transform:translateY(-50%);}
 @media (max-width:899px){
   body.com-rail,body.com-rail.rail-larga{--rail-w:0px;}
   body.com-rail #rail,body.rail-larga #rail{top:auto;right:0;width:auto;align-items:center;height:calc(62px + env(safe-area-inset-bottom));flex-direction:row;justify-content:space-around;padding:4px 4px env(safe-area-inset-bottom);border-right:0;border-top:1px solid var(--glass-b);}
@@ -475,6 +477,8 @@ body.com-rail .col-apps{display:none;}
   body.rail-larga .rail-apps,body.rail-larga .rail-fim{align-items:center;}
   .rail-it .tile-logo,.rail-it .rail-ic,.rail-it .rail-av{width:26px;height:26px;}
   .rail-it .rail-svg{width:22px;height:22px;margin:2px;}
+  .rail-it .rail-n{top:0;right:calc(50% - 22px);}
+  body.rail-larga .rail-it .rail-n{top:0;right:calc(50% - 22px);transform:none;}
   .rail-it[aria-current="page"]::before{left:14px;right:14px;top:-4px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px;}
 }
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:300;background:rgba(10,37,64,.96);color:#e8f4fd;border:1px solid var(--glass-b);padding:11px 18px;border-radius:var(--r2);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;max-width:92vw;}
@@ -853,7 +857,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v2.06 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v2.07 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1278,10 +1282,25 @@ function iniciarSino(){
   if(sinoApi || !window.MareNotif || !U) return;
   sinoApi = MareNotif.sino($('#btn-sino'), {
     user:U, isAdm:()=>ehAdm, toast, filtro:filtrarSino, abrir:abrirDoSino,
-    aoAbrir:()=>{ if(window.MareDicas) MareDicas.gatilho('sino'); }
+    aoAbrir:()=>{ if(window.MareDicas) MareDicas.gatilho('sino'); },
+    aoMudar:itens=>contarPorApp(itens)
   });
 }
 
+// 🔢 Contador no menu lateral (pedido do Caio, 26/11/2026): as não lidas do sino unificado, por app. Cada notificação já sabe para onde leva
+// (o mesmo link que o sino abre: urlPessoal/urlFeed do mare-notif) — o nome da página diz o app. Nenhuma leitura nova no banco.
+let railN = {};
+function appDaNotif(it){
+  let u = null;
+  try{ const r = it.k==='feed' ? MareNotif.urlFeed(it.raw) : MareNotif.urlPessoal(it.raw); u = typeof r==='string' ? r : (r && !r.externo ? r.url : null); }catch(e){}
+  const m = /^(kanban|okr|painel|cardume)(-dev)?\.html/.exec(String(u||''));
+  return m ? m[1] : '';
+}
+function contarPorApp(itens){
+  const n = {};
+  (itens||[]).forEach(it=>{ if(!it || !it.unread) return; const a = appDaNotif(it); if(a) n[a] = (n[a]||0) + 1; });
+  railN = n; try{ renderRail(); }catch(e){}
+}
 // ── Quem vê o quê (vitrine, não segurança — igual ao menu de 9 pontinhos) ──
 function visivel(a){ if(a.id==='painel') return !!(ehAdm || usoApps.painel); return true; }
 
@@ -1461,8 +1480,10 @@ function renderRail(){
   if(!RAIL_ON || !$('#rail-apps')) return;
   const ativo = host.atual || 'lobby';
   $('#rail-apps').innerHTML = RAIL_ORDEM.map(APP).filter(a=>a && !a.futuro && a.href && visivel(a)).map(a=>{
-    const curto = a.id==='kanban' ? 'Maré' : a.nome;
-    return '<button class="rail-it" type="button" data-rail="'+a.id+'" title="'+esc(a.nome)+'" aria-label="'+esc(a.nome)+(host.abertos.includes(a.id)?' (aberto)':'')+'"'+(ativo===a.id?' aria-current="page"':'')+'>'+logoQuad(a,'-r')+'<span class="rail-rot">'+esc(curto)+'</span>'+(host.abertos.includes(a.id) && ativo!==a.id ? '<span class="rail-aberto" aria-hidden="true"></span>' : '')+'</button>';
+    const curto = a.id==='kanban' ? 'Maré' : a.nome, n = railN[a.id]||0;
+    const nTxt = n ? ', '+n+(n===1?' notificação não lida':' notificações não lidas') : '';
+    return '<button class="rail-it" type="button" data-rail="'+a.id+'" title="'+esc(a.nome)+'" aria-label="'+esc(a.nome)+(host.abertos.includes(a.id)?' (aberto)':'')+nTxt+'"'+(ativo===a.id?' aria-current="page"':'')+'>'+logoQuad(a,'-r')+'<span class="rail-rot">'+esc(curto)+'</span>'
+      +(n ? '<span class="rail-n" aria-hidden="true">'+(n>99?'99+':n)+'</span>' : (host.abertos.includes(a.id) && ativo!==a.id ? '<span class="rail-aberto" aria-hidden="true"></span>' : ''))+'</button>';
   }).join('');
   const lb = $('#rail [data-rail="lobby"]'); if(ativo==='lobby') lb.setAttribute('aria-current','page'); else lb.removeAttribute('aria-current');
   ['rail-recarregar','rail-aba','rail-fechar'].forEach(i=>{ $('#'+i).hidden = !host.atual; });
