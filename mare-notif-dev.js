@@ -852,18 +852,27 @@
     if(devolverFoco !== false) sinoSt.btn.focus();
     return true;
   }
+  function sinoAlternar(e){ e.stopPropagation(); if(!sinoFechar()) sinoAbrir(); }
   function sino(botao, opts){
     const user = opts && opts.user; if(!botao || !user || !user.uid) return null;
+    const anterior = sinoSt.btn;
+    if(anterior && anterior !== botao){
+      sinoFechar(false);
+      anterior.removeEventListener('click', sinoAlternar);
+    }
     sinoSt.btn = botao; sinoSt.opts = opts;
     if(!sinoSt.badge){
-      sinoSt.badge = sinoEl('span', 'mn-sino-n'); sinoSt.badge.hidden = true; sinoSt.badge.setAttribute('aria-hidden', 'true'); botao.append(sinoSt.badge);
-      botao.classList.add('mn-sino-btn'); botao.setAttribute('aria-haspopup', 'dialog'); botao.setAttribute('aria-expanded', 'false');
+      sinoSt.badge = sinoEl('span', 'mn-sino-n'); sinoSt.badge.hidden = true; sinoSt.badge.setAttribute('aria-hidden', 'true');
       sinoSt.pop = sinoEl('div', 'mn-sino-pop'); sinoSt.pop.hidden = true; sinoSt.pop.setAttribute('role', 'dialog'); sinoSt.pop.setAttribute('aria-label', 'Notificações');
       document.body.append(sinoSt.pop);
-      botao.addEventListener('click', e=>{ e.stopPropagation(); if(!sinoFechar()) sinoAbrir(); });
       document.addEventListener('click', e=>{ if(sinoSt.aberto && !sinoSt.pop.contains(e.target) && !e.target.closest('.mn-dnd-menu')) sinoFechar(false); });
       document.addEventListener('keydown', e=>{ if(e.key==='Escape' && sinoSt.aberto){ e.preventDefault(); sinoFechar(); } });
       window.addEventListener('resize', ()=>{ if(sinoSt.aberto) sinoPosicionar(); });
+    }
+    if(anterior !== botao){
+      botao.append(sinoSt.badge);
+      botao.classList.add('mn-sino-btn'); botao.setAttribute('aria-haspopup', 'dialog'); botao.setAttribute('aria-expanded', 'false');
+      botao.addEventListener('click', sinoAlternar);
     }
     const isViewer = !!opts.isViewer;
     if(isViewer) sinoSt.pessoais = [];
