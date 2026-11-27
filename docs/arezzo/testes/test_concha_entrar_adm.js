@@ -26,7 +26,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   const log = () => p.evaluate(() => document.getElementById('log').textContent);
   t('(pré-condição) sem campo de escrever (não é membro)', await p.evaluate(() => document.getElementById('rodape').hidden), 0);
   t('a conversa diz por quê e oferece "Entrar no canal" (sem o "Diga oi")', /administra este canal, mas não está nele/.test(await log()) && !/Diga oi/.test(await log()) && await p.evaluate(() => !!document.querySelector('#log .aviso-fora button.primary')), await log());
-  t('ℹ️ Detalhes: emoji recolhido ("😀 Emoji do canal: 🧪 (padrão)"), grade escondida', await p.evaluate(() => { const d = document.querySelector('#lado details.emoji-det'); return d && !d.open && /Emoji do canal: 🧪 \(padrão\)/.test(d.querySelector('summary').textContent); }), 0);
+  t('ℹ️ Detalhes: emoji recolhido ("😀 Emoji do canal: 🧪 (padrão)"), grade escondida', await p.evaluate(() => { const d = document.querySelector('#lado details.emoji-det'); return d && !d.open && /Emoji do canal.*🧪 \(padrão\)/.test(d.querySelector('summary').textContent); }), 0);
   await p.click('#lado details.emoji-det summary'); await p.click('#lado .emoji-grade [aria-label="Emoji 🔥"]'); await p.waitForTimeout(300);
   t('abrir e escolher 🔥 continua gravando canais/dev/e', await p.evaluate(() => window.__store.kanban.cardume.canais.dev.e) === '🔥', 0);
   await p.click('#log .aviso-fora button.primary'); await p.waitForTimeout(600);

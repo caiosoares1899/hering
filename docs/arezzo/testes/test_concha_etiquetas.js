@@ -42,37 +42,37 @@ const authDe = u => ({ uid: u.uid, token: { email: u.email, firebase: { sign_in_
   t('quem não é mais membro (Carla) não mostra etiqueta', await autorEtq('-Nd2') === null, await autorEtq('-Nd2'));
   if (await p.evaluate(() => document.getElementById('lado').hidden)) { await p.click('#b-lado'); await p.waitForTimeout(200); }
   t('na lista de membros, a etiqueta aparece ao lado do nome', await p.evaluate(() => [...document.querySelectorAll('#lado .pessoa')].some(l => /Bruno Reis/.test(l.textContent) && (l.querySelector('.etq') || {}).textContent === '<b>Plantão</b>')), 0);
-  t('nos Detalhes: "🏷️ Sua etiqueta: nenhuma"', await p.evaluate(() => [...document.querySelectorAll('#lado button')].some(x => x.textContent === '🏷️ Sua etiqueta: nenhuma')), 0);
+  t('nos Detalhes: "🏷️ Sua etiqueta: nenhuma"', await p.evaluate(() => (document.querySelector('#lado [data-opc="etiqueta"]') || {}).getAttribute?.('aria-label') === 'Sua etiqueta: nenhuma. Mudar'), 0);
 
-  await p.evaluate(() => [...document.querySelectorAll('#lado button')].find(x => /^🏷️ Sua etiqueta/.test(x.textContent)).click()); await p.waitForTimeout(150);
+  await p.evaluate(() => document.querySelector('#lado [data-opc="etiqueta"]').click()); await p.waitForTimeout(150);
   t('o modal abre com foco no campo, limite de 24 e sugestões', await p.evaluate(() => { const i = document.querySelector('.md input[type="text"]'); return document.activeElement === i && i.maxLength === 24 && document.querySelectorAll('.md .etq-sug button').length >= 6; }), 0);
   await p.fill('.md input[type="text"]', '   Design \n  e   UX   '); await p.click('.md button[type="submit"]'); await p.waitForTimeout(400);
   let c = await S();
   t('salvar limpa espaços e grava etiquetas/dados/ana = "Design e UX"', ((c.etiquetas || {}).dados || {}).ana === 'Design e UX', c.etiquetas);
-  t('o botão dos Detalhes mostra a etiqueta nova', await p.evaluate(() => [...document.querySelectorAll('#lado button')].some(x => x.textContent === '🏷️ Sua etiqueta: Design e UX')), 0);
+  t('o botão dos Detalhes mostra a etiqueta nova', await p.evaluate(() => (document.querySelector('#lado [data-opc="etiqueta"]') || {}).getAttribute?.('aria-label') === 'Sua etiqueta: Design e UX. Mudar'), 0);
 
-  await p.evaluate(() => [...document.querySelectorAll('#lado button')].find(x => /^🏷️ Sua etiqueta/.test(x.textContent)).click()); await p.waitForTimeout(150);
+  await p.evaluate(() => document.querySelector('#lado [data-opc="etiqueta"]').click()); await p.waitForTimeout(150);
   await p.click('.md .etq-sug button:has-text("Plantão")'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(400);
   t('a sugestão "Plantão" troca a etiqueta', ((await S()).etiquetas.dados || {}).ana === 'Plantão', (await S()).etiquetas);
   await p.fill('#entrada', 'olá, time'); await p.keyboard.press('Enter'); await p.waitForTimeout(500);
   const minha = await p.evaluate(() => { const ms = [...document.querySelectorAll('#log .msg')]; const g = ms[ms.length - 1].closest('.grupo'); return (g.querySelector('.autor .etq') || {}).textContent; });
   t('a mensagem nova da Ana sai com a etiqueta dela', minha === 'Plantão', minha);
 
-  await p.evaluate(() => [...document.querySelectorAll('#lado button')].find(x => /^🏷️ Sua etiqueta/.test(x.textContent)).click()); await p.waitForTimeout(150);
+  await p.evaluate(() => document.querySelector('#lado [data-opc="etiqueta"]').click()); await p.waitForTimeout(150);
   await p.click('.md button.perigo'); await p.waitForTimeout(400);
   t('"Tirar etiqueta" apaga', !((await S()).etiquetas.dados || {}).ana, (await S()).etiquetas);
 
   await p.click('[data-canal="prf"]'); await p.waitForTimeout(400);
   t('a etiqueta é por canal: em Performance o Bruno é "Mídia paga"', await p.evaluate(() => [...document.querySelectorAll('#lado .pessoa')].some(l => /Bruno Reis/.test(l.textContent) && (l.querySelector('.etq') || {}).textContent === 'Mídia paga')), 0);
-  await p.evaluate(() => [...document.querySelectorAll('#lado button')].find(x => /^🏷️ Sua etiqueta/.test(x.textContent)).click()); await p.waitForTimeout(150);
+  await p.evaluate(() => document.querySelector('#lado [data-opc="etiqueta"]').click()); await p.waitForTimeout(150);
   await p.fill('.md input[type="text"]', 'Análise'); await p.click('.md button[type="submit"]'); await p.waitForTimeout(400);
   p.once('dialog', d => d.accept());
-  await p.evaluate(() => [...document.querySelectorAll('#lado button')].find(x => x.textContent === 'Sair do canal').click()); await p.waitForTimeout(600);
+  await p.evaluate(() => document.querySelector('#lado .sair-canal').click()); await p.waitForTimeout(600);
   c = await S();
   t('sair do canal leva a etiqueta junto (mesmo update)', !((c.etiquetas || {}).prf || {}).ana && !((c.membros || {}).prf || {}).ana, { e: c.etiquetas, m: c.membros });
 
   await p.click('[data-canal="geral"]'); await p.waitForTimeout(400);
-  t('no Geral não há "Sua etiqueta"', await p.evaluate(() => ![...document.querySelectorAll('#lado button')].some(x => /^🏷️ Sua etiqueta/.test(x.textContent))), 0);
+  t('no Geral não há "Sua etiqueta"', await p.evaluate(() => !document.querySelector('#lado [data-opc="etiqueta"]')), 0);
 
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(150);
   await p.evaluate(() => document.querySelector('[data-canal="dados"]').click()); await p.waitForTimeout(400);
