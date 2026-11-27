@@ -25,6 +25,7 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 
 | Quem achou | O que | Detalhe | Data |
 |---|---|---|---|
+| Codex → Claude | Concha dev v0.55: sino da Ilha para de abrir após sair e entrar na mesma conta sem recarregar. | [reprodução](quadro/escalados.md#concha-sino-da-ilha-após-relogin) | 26/11/2026 |
 | Codex → Claude | R3 · #oceano: avisos de promoção enviados pelo perfil de sistema Agente Ágil, com publicação acionada por ADM. | [escopo](quadro/escalados.md#concha-agente-ágil-como-remetente) | 26/11/2026 |
 | Codex · Claude | 🔴 **`kanban/usuarios` legível por toda conta Hering** (`.read` no nó-pai): notificações, `fcm_tokens` e `notif_prefs` de todo mundo. Já expõe o `travessia_apoio` ("{nome} marcou que não está bem hoje"). Achado na revisão do Cardume (#1931); correção mexe no Maré inteiro (Painel lê o nó) — R3 à parte. **Plano aprovado em 24/11** (só ADM lê o cadastro completo; torre/Gestor OKR no diretório): [desenho](ideias/usuarios-leitura-fechar.md), fases A → B → C | [escalados](quadro/escalados.md#usuarios-leitura-ampla) | 24/11/2026 |
 | Codex | 🏖️ UI/UX Férias: **UI01, UI02 e UI04 resolvidos em 16/11** (tela cheia); faltam UI03 (foco preso na 🧳), UI05 (títulos cortados na 🧳), UI06 (alvos de toque) e UI07 (fonte no tablet do Radar) — módulo é do Claude | [auditoria](FERIAS_UI_AUDITORIA_2026-11-13.md) | 13/11/2026 |
