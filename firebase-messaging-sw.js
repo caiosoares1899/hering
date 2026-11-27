@@ -69,9 +69,14 @@ self.addEventListener('fetch', (e) => {
   // preso servido pra sempre, sem nunca revalidar sozinho. Path (não domínio
   // inteiro) porque é same-origin — /vendor/ nunca deveria colidir com nada
   // do resto do app.
+  // Cloud Functions (.cloudfunctions.net / .run.app) trazem respostas dinâmicas e autenticadas
+  // (ex.: polling GET ?acao=estado e PNGs do oceanoGenie) que NUNCA podem ir para o CacheStorage
+  // (caches.match ignora Authorization e devolveria estado obsoleto).
   if (
     e.request.url.includes('firebaseio.com') ||
     e.request.url.includes('googleapis.com') ||
+    e.request.url.includes('cloudfunctions.net') ||
+    e.request.url.includes('.run.app') ||
     e.request.url.includes('workers.dev') ||
     e.request.url.includes('gstatic.com') ||
     e.request.url.includes('/vendor/')

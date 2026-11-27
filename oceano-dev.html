@@ -473,13 +473,106 @@ body.rail-larga .rail-it .rail-n{top:50%;right:10px;transform:translateY(-50%);}
   .rail-sep,.rail-it.so-pc,.rail-tog{display:none;}
   .rail-topo,.rail-apps,.rail-fim{display:contents;}
   body.com-rail .toast{bottom:calc(74px + env(safe-area-inset-bottom));}
-  .rail-it,body.rail-larga .rail-it{width:auto;min-width:44px;flex:1;min-height:54px;padding:4px 2px;border-radius:12px;font-size:10px;flex-direction:column;justify-content:center;gap:3px;}
+  .rail-it,body.rail-larga .rail-it{width:auto;min-width:42px;flex:1;min-height:54px;padding:4px 1px;border-radius:12px;font-size:9.5px;flex-direction:column;justify-content:center;gap:3px;}
+  .rail-it .rail-rot{max-width:100%;}
   body.rail-larga .rail-apps,body.rail-larga .rail-fim{align-items:center;}
   .rail-it .tile-logo,.rail-it .rail-ic,.rail-it .rail-av{width:26px;height:26px;}
   .rail-it .rail-svg{width:22px;height:22px;margin:2px;}
   .rail-it .rail-n{top:0;right:calc(50% - 22px);}
   body.rail-larga .rail-it .rail-n{top:0;right:calc(50% - 22px);transform:none;}
   .rail-it[aria-current="page"]::before{left:14px;right:14px;top:-4px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px;}
+}
+/* ═══ 🐙 POLVO · PERGUNTE AOS DADOS (piloto ADM, vista ampla ao lado do #rail) ═══ */
+#polvo{position:fixed;top:0;right:0;bottom:0;left:var(--rail-w,0px);z-index:105;display:none;flex-direction:column;background:var(--ocean);background-color:var(--deep);color:var(--txt);transition:left .18s ease;}
+#polvo.on{display:flex;}
+body.com-rail #polvo{left:var(--rail-w);}
+.polvo-hd{display:flex;align-items:center;gap:12px;padding:max(12px,env(safe-area-inset-top)) 20px 12px;background:rgba(var(--deep-rgb),.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-b);flex:none;}
+[data-theme="light"] .polvo-hd{background:rgba(255,255,255,.78);}
+.polvo-hd-ic{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;flex:none;background:linear-gradient(135deg,#1de9b6,#2563c9);box-shadow:var(--specular);}
+.polvo-hd-ic svg{width:24px;height:24px;}
+.polvo-hd-tx{flex:1;min-width:0;}
+.polvo-hd-tx h2{font-family:var(--ff-d);font-size:18px;font-weight:800;line-height:1.2;margin:0;}
+.polvo-hd-tx p{font-size:12.5px;color:var(--txt2);margin:2px 0 0;line-height:1.35;}
+.polvo-hd-ac{display:flex;align-items:center;gap:8px;flex:none;}
+.polvo-gov{font-size:11.5px;color:var(--txt3);text-align:center;margin-top:4px;}
+.polvo-feed{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:22px 18px;}
+.polvo-in-wrap{max-width:980px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-width:0;}
+.polvo-vazio{padding:24px;display:flex;flex-direction:column;gap:14px;}
+.polvo-vazio h3{font-family:var(--ff-d);font-size:20px;font-weight:800;margin:0;}
+.polvo-vazio p{font-size:14px;color:var(--txt2);line-height:1.58;margin:0;max-width:720px;}
+.polvo-exemplos{display:flex;flex-wrap:wrap;gap:8px;}
+.polvo-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:99px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:13px;font-weight:500;cursor:pointer;text-align:left;line-height:1.35;transition:border-color .15s,background .15s;}
+.polvo-chip:hover{border-color:var(--accent);background:rgba(56,182,255,.14);}
+.polvo-chip:disabled{opacity:.5;cursor:not-allowed;}
+.polvo-msg{display:flex;flex-direction:column;gap:10px;min-width:0;}
+.polvo-msg.eu{align-self:flex-end;max-width:min(760px,88%);padding:12px 16px;border-radius:16px 16px 4px 16px;background:rgba(37,99,201,.34);border:1px solid rgba(56,182,255,.35);box-shadow:var(--specular);white-space:pre-wrap;word-break:break-word;font-size:14.5px;line-height:1.55;}
+[data-theme="light"] .polvo-msg.eu{background:rgba(0,119,173,.14);border-color:rgba(0,119,173,.35);}
+[data-theme="sunset"] .polvo-msg.eu{background:rgba(196,100,47,.34);border-color:rgba(255,179,107,.42);}
+.polvo-msg.bot{width:100%;padding:18px 20px;gap:14px;}
+.polvo-bot-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:700;color:var(--teal);letter-spacing:.03em;text-transform:uppercase;}
+.polvo-txt{white-space:pre-wrap;word-break:break-word;font-size:14.5px;line-height:1.62;color:var(--txt);}
+.polvo-status{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--txt2);}
+.polvo-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex:none;animation:polvoPulse 1.2s ease-in-out infinite;}
+@keyframes polvoPulse{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
+@media (prefers-reduced-motion:reduce){.polvo-dot{animation:none!important;opacity:.9;}}
+.polvo-viz{border:1px solid var(--glass-b);border-radius:var(--r2);background:rgba(var(--ink-rgb),.36);overflow:hidden;min-width:0;}
+[data-theme="light"] .polvo-viz{background:rgba(255,255,255,.72);}
+.polvo-viz-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--glass-b);font-size:13px;font-weight:600;color:var(--txt2);}
+.polvo-viz-ac{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.polvo-viz-box{padding:12px;display:flex;align-items:center;justify-content:center;min-height:120px;}
+.polvo-viz-img{display:block;max-width:100%;max-height:520px;width:auto;height:auto;border-radius:8px;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.18);}
+.polvo-viz-msg{font-size:13px;color:var(--txt2);text-align:center;padding:8px 4px;}
+.polvo-tab-card{border:1px solid var(--glass-b);border-radius:var(--r2);background:rgba(var(--ink-rgb),.32);overflow:hidden;min-width:0;}
+[data-theme="light"] .polvo-tab-card{background:rgba(255,255,255,.72);}
+.polvo-tab-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt2);}
+.polvo-cortado{padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--warn);background:rgba(255,209,102,.12);border-top:1px solid rgba(255,209,102,.28);}
+[data-theme="light"] .polvo-cortado{color:#8a5600;background:rgba(255,209,102,.24);}
+.polvo-tab-wrap{overflow:auto;max-height:360px;width:100%;max-width:100%;border-top:1px solid var(--glass-b);}
+.polvo-tab{width:100%;border-collapse:collapse;font-size:13px;}
+.polvo-tab th,.polvo-tab td{padding:8px 12px;border-bottom:1px solid var(--glass-b);text-align:left;vertical-align:top;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis;}
+.polvo-tab thead th{position:sticky;top:0;z-index:2;background:rgba(var(--deep-rgb),.95);color:var(--txt);font-weight:700;font-size:12px;}
+[data-theme="light"] .polvo-tab thead th{background:rgba(235,246,252,.98);color:#0B2436;}
+.polvo-tab th.num,.polvo-tab td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.polvo-tab td.nulo{color:var(--txt3);font-style:italic;}
+.polvo-sql{border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--ink-rgb),.32);overflow:hidden;}
+[data-theme="light"] .polvo-sql{background:rgba(255,255,255,.65);}
+.polvo-sql-sum{cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt2);list-style:none;display:flex;align-items:center;gap:8px;user-select:none;}
+.polvo-sql-sum::before{content:'▸';color:var(--accent);transition:transform .15s;}
+.polvo-sql[open] .polvo-sql-sum::before{transform:rotate(90deg);}
+.polvo-sql-bd{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;}
+.polvo-sql-desc{font-size:12.5px;color:var(--txt2);line-height:1.45;}
+.polvo-sql-top{display:flex;justify-content:flex-end;}
+.polvo-sql-pre{margin:0;padding:12px;border-radius:8px;background:rgba(var(--ink-rgb),.65);color:var(--txt);overflow-x:auto;max-width:100%;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word;}
+[data-theme="light"] .polvo-sql-pre{background:rgba(11,36,54,.07);color:#0B2436;}
+.polvo-sugs{display:flex;flex-direction:column;gap:8px;}
+.polvo-sugs-tit{font-size:12px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;}
+.polvo-sugs-row{display:flex;flex-wrap:wrap;gap:8px;}
+.polvo-falha{padding:12px 14px;border-radius:var(--r);border:1px solid rgba(255,107,107,.4);background:rgba(255,107,107,.12);color:var(--txt);font-size:13.5px;line-height:1.5;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+[data-theme="light"] .polvo-falha{background:rgba(241,91,108,.12);}
+.polvo-rod{flex:none;padding:12px 18px max(12px,env(safe-area-inset-bottom));background:rgba(var(--deep-rgb),.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--glass-b);}
+[data-theme="light"] .polvo-rod{background:rgba(255,255,255,.82);}
+.polvo-erro{margin-bottom:10px;padding:10px 13px;border-radius:var(--r);border:1px solid rgba(255,107,107,.45);background:rgba(255,107,107,.14);color:var(--txt);font-size:13px;line-height:1.45;}
+.polvo-form{display:flex;gap:10px;align-items:flex-end;}
+.polvo-ta-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+#polvo-in{width:100%;min-height:46px;max-height:150px;resize:vertical;padding:10px 13px;border-radius:var(--r);border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.46);color:var(--txt);font-family:inherit;font-size:14.5px;line-height:1.45;}
+[data-theme="light"] #polvo-in{background:#fff;color:#0B2436;}
+.polvo-meta{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--txt3);}
+#polvo-zoom{position:fixed;inset:0;z-index:125;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(1,8,16,.84);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+#polvo-zoom.open{display:flex;}
+.polvo-zoom-box{max-width:min(1200px,96vw);max-height:92vh;display:flex;flex-direction:column;gap:10px;padding:14px;}
+.polvo-zoom-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.polvo-zoom-hd strong{font-size:14px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.polvo-zoom-img{max-width:100%;max-height:calc(92vh - 84px);width:auto;height:auto;border-radius:8px;background:#fff;object-fit:contain;}
+@media (max-width:899px){
+  body.com-rail #polvo,#polvo{left:0;bottom:calc(62px + env(safe-area-inset-bottom));}
+  .polvo-hd{padding:max(10px,env(safe-area-inset-top)) 14px 10px;flex-wrap:wrap;}
+  .polvo-hd-tx h2{font-size:16px;}
+  .polvo-hd-tx p{font-size:12px;}
+  .polvo-feed{padding:14px 12px;}
+  .polvo-msg.bot{padding:14px;}
+  .polvo-rod{padding:10px 12px 10px;}
+  #polvo-in{font-size:16px;}
+  .polvo-form{gap:8px;}
 }
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:300;background:rgba(10,37,64,.96);color:#e8f4fd;border:1px solid var(--glass-b);padding:11px 18px;border-radius:var(--r2);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;max-width:92vw;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -768,6 +861,45 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
   </div>
   <div class="host-frames" id="host-frames"><div class="host-load" id="host-load"><div class="porthole"><div class="vid"><img src="oceano-icon-192.png" alt=""></div></div><div id="host-load-tx">Abrindo…</div></div></div>
 </div>
+<!-- ═══ 🐙 POLVO · PERGUNTE AOS DADOS (piloto ADM) ═══ -->
+<section id="polvo" role="region" aria-label="Polvo · Pergunte aos dados" hidden>
+  <header class="polvo-hd">
+    <span class="polvo-hd-ic" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="18" r="9"/><circle cx="21" cy="17.5" r="1.3" fill="#fff" stroke="none"/><circle cx="27" cy="17.5" r="1.3" fill="#fff" stroke="none"/><path d="M16 24c-3 4-4 9-2 13M20 26c-1 5-1 10 0 14M28 26c1 5 1 10 0 14M32 24c3 4 4 9 2 13"/></svg></span>
+    <div class="polvo-hd-tx">
+      <h2>🐙 Polvo · Pergunte aos dados</h2>
+      <p>Pergunte em português — análises, gráficos prontos, tabelas e SQL do Polvo sem sair do Oceano</p>
+    </div>
+    <div class="polvo-hd-ac">
+      <button type="button" class="btn sm" id="polvo-nova">+ Nova conversa</button>
+      <button type="button" class="x" id="polvo-fechar" title="Voltar ao início" aria-label="Fechar Polvo">✕</button>
+    </div>
+  </header>
+  <div class="polvo-feed" id="polvo-feed" role="log" aria-live="polite">
+    <div class="polvo-in-wrap" id="polvo-wrap"></div>
+  </div>
+  <footer class="polvo-rod">
+    <div class="polvo-in-wrap">
+      <div class="polvo-erro" id="polvo-erro" role="alert" hidden></div>
+      <form class="polvo-form" id="polvo-form">
+        <div class="polvo-ta-wrap">
+          <label class="sr" for="polvo-in">Pergunta para o Polvo</label>
+          <textarea id="polvo-in" rows="2" maxlength="1000" placeholder="Pergunte aos dados em português… (Enter envia · Shift+Enter quebra linha)"></textarea>
+          <div class="polvo-meta">
+            <span>Respostas geradas pelo Polvo (IA sobre os dados) — confira o SQL quando precisar</span>
+            <span id="polvo-cnt">0/1000</span>
+          </div>
+        </div>
+        <button type="submit" class="btn pri" id="polvo-enviar">Enviar</button>
+      </form>
+    </div>
+  </footer>
+</section>
+<div id="polvo-zoom" role="dialog" aria-modal="true" aria-label="Gráfico ampliado do Polvo">
+  <div class="vidro polvo-zoom-box">
+    <div class="polvo-zoom-hd"><strong id="polvo-zoom-t">Gráfico do Polvo</strong><button type="button" class="x" id="polvo-zoom-x" aria-label="Fechar visualização">✕</button></div>
+    <img class="polvo-zoom-img" id="polvo-zoom-img" alt="Gráfico gerado pelo Polvo">
+  </div>
+</div>
 
 <!-- ═══ MODAL: MEU PERFIL E PREFERÊNCIAS ═══ -->
 <div class="ov" id="ov-perfil"><div class="vidro modal" role="dialog" aria-modal="true" aria-labelledby="perfil-t">
@@ -857,7 +989,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v2.09 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v2.10 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -873,6 +1005,8 @@ const SVG_PAINEL = '<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.
 const SVG_BORDO = '<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>';
 const SVG_CONCHA = '<path d="M24 39 9 21c4-9 26-9 30 0z"/><path d="M24 39 16 16M24 39V14M24 39l8-23" opacity=".75"/>';
 const SVG_TRAV = '<path d="M6 32c6-8 10 4 18-4s12 4 18-4"/><path d="M6 22c6-8 10 4 18-4s12 4 18-4" opacity=".6"/>';
+const SVG_POLVO = '<circle cx="24" cy="18" r="9"/><circle cx="21" cy="17.5" r="1.3" fill="#fff" stroke="none"/><circle cx="27" cy="17.5" r="1.3" fill="#fff" stroke="none"/><path d="M16 24c-3 4-4 9-2 13M20 26c-1 5-1 10 0 14M28 26c1 5 1 10 0 14M32 24c3 4 4 9 2 13"/>';
+const OCEANO_GENIE_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/oceanoGenie';
 const P = n => IS_DEV ? n+'-dev.html' : n+'.html';
 // Login único: Maré/Painel mandam quem não está logado pra cá com ?next=<página>. A pessoa FICA no Oceano (vê o Mural e a vitrine) e ganha um
 // atalho "↩ Continuar para o Maré" no topo — não é devolvida sozinha. Só páginas da família (lista fechada) — nunca um endereço de fora.
@@ -950,7 +1084,8 @@ function criarPeixes(){
 // ou 60 s sem mexer em nada (Oceano deixado aberto no 2º monitor) pausam; mexer no mouse/teclado/toque volta na hora. As superfícies de vidro (backdrop-filter) refazem o
 // desfoque a cada quadro enquanto algo se mexe atrás delas — é isso que pesava (medido: 43 quadros/s com peixes × 60 sem).
 let _animOcioso = false, _animTimer = null, _animUltimo = 0;
-function atualizarAnimacao(){ const h = document.getElementById('host'), hostOn = !!(h && h.classList.contains('on')); document.documentElement.toggleAttribute('data-host-ativo', hostOn); document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || _animOcioso || hostOn); }
+let polvoAberto = false;
+function atualizarAnimacao(){ const h = document.getElementById('host'), p = document.getElementById('polvo'), coberto = !!(h && h.classList.contains('on')) || !!(p && p.classList.contains('on')); document.documentElement.toggleAttribute('data-host-ativo', coberto); document.documentElement.toggleAttribute('data-anim-paused', document.hidden || !document.hasFocus() || _animOcioso || coberto); }
 function _animAtividade(){
   const agora = Date.now(); if(!_animOcioso && agora-_animUltimo < 1000) return; _animUltimo = agora;
   if(_animOcioso){ _animOcioso = false; atualizarAnimacao(); }
@@ -1022,6 +1157,8 @@ async function iniciarSessao(){
   iniciarVtex();
   feriasIniciarBugsListener();
   rotearHash(true);
+  if(!ehAdm){ try{ localStorage.removeItem('oceano_polvo_aberto'); }catch(e){} if(polvoAberto) fecharPolvo(false); }
+  else if(!location.hash && !NEXT && !host.atual){ try{ if(localStorage.getItem('oceano_polvo_aberto')==='1') abrirPolvo(false); }catch(e){} }
   mostrarContinuar();
 }
 
@@ -1164,7 +1301,7 @@ function avMarcaVistos(){
   const wrap = $('#mural-wrap'); if(!muralAberto || !wrap || wrap.style.display==='none') return;
   const lista = avisos.slice().sort(avCmp), mostrar = avisosTodos ? lista : lista.slice(0, avLimite()), vistos = avVistos();
   if(mostrar.every(c=>vistos.has(c.id))) return;
-  if(document.hidden || $('#host').classList.contains('on')){ avVistoT = setTimeout(avMarcaVistos, 3000); return; }
+  if(document.hidden || $('#host').classList.contains('on') || polvoAberto){ avVistoT = setTimeout(avMarcaVistos, 3000); return; }
   avSalvaVistos(mostrar.map(c=>c.id));
 }
 function avAbreBotao(c){
@@ -1275,7 +1412,7 @@ function tempoRel(ts){ const t = new Date(ts).getTime(); if(isNaN(t)) return '';
 // ── 💡 Dicas (mini popups) do Oceano — módulo mare-dicas(-dev).js: o CATÁLOGO vive lá (o Painel lista tudo). Aqui só o que depende do estado da página.
 //    gatilhos: 'boot' (ao entrar, 1 por visita), 'sino' no aoAbrir do Sino, 'perfil' em abrirPerfil(). "Saiba mais" abre a pergunta da Ajuda (faq-<id>).
 // as dicas de ENTRADA falam do lobby: com um produto aberto aqui dentro (app instalado abrindo no último produto, ou clique rápido) elas cobririam o produto
-const _lobbyVisivel = ()=>!document.getElementById('host').classList.contains('on');
+const _lobbyVisivel = ()=>!document.getElementById('host').classList.contains('on') && !polvoAberto;
 const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone() && _lobbyVisivel(), menu:_lobbyVisivel, aqui:_lobbyVisivel, sonar:_lobbyVisivel};
 function iniciarDicas(){
   if(!window.MareDicas || !U) return;
@@ -1462,6 +1599,7 @@ function abrirApp(id, forcarAqui, url){
 function lembrarUltimo(id){ if(prefs.ultimo===id || !APPS.some(a=>a.id===id)) return; prefs.ultimo = id; salvarPrefs(false); renderTudo(); }
 function mostrarHost(id, url){
   const a = APP(id); if(!a) return;
+  if(polvoAberto) fecharPolvo(true, true);
   let fr = $('#host-frames iframe[data-app="'+id+'"]');
   if(!fr){
     if(host.abertos.length>=4){ const velho = host.abertos.find(x=>x!==id); if(velho) fecharApp(velho, true); }
@@ -1482,18 +1620,24 @@ function mostrarHost(id, url){
 // 🧭 Menu lateral (RAIL_ON/RAIL_ORDEM ficam junto de APPS).
 function renderRail(){
   if(!RAIL_ON || !$('#rail-apps')) return;
-  const ativo = host.atual || 'lobby';
+  const ativo = polvoAberto ? 'polvo' : (host.atual || 'lobby');
   const focoRail = document.activeElement && document.activeElement.closest && document.activeElement.closest('#rail-apps [data-rail]') ? document.activeElement.dataset.rail : '';   // redesenhar não pode tirar o foco de quem navega pelo teclado
   // Painel no menu: só ADM (pedido do Caio, 26/11). Quem não é ADM e usa o Painel continua abrindo pelo endereço.
-  $('#rail-apps').innerHTML = RAIL_ORDEM.map(APP).filter(a=>a && !a.futuro && a.href && (a.id==='painel' ? ehAdm : visivel(a))).map(a=>{
+  let appsHtml = RAIL_ORDEM.map(APP).filter(a=>a && !a.futuro && a.href && (a.id==='painel' ? ehAdm : visivel(a))).map(a=>{
     const curto = a.id==='kanban' ? 'Maré' : a.nome, n = railN[a.id]||0;
     const nTxt = n ? ', '+n+(n===1?' notificação não lida':' notificações não lidas') : '';
     return '<button class="rail-it" type="button" data-rail="'+a.id+'" title="'+esc(a.nome)+'" aria-label="'+esc(a.nome)+(host.abertos.includes(a.id)?' (aberto)':'')+nTxt+'"'+(ativo===a.id?' aria-current="page"':'')+'>'+logoQuad(a,'-r')+'<span class="rail-rot">'+esc(curto)+'</span>'
       +(n ? '<span class="rail-n" aria-hidden="true">'+(n>99?'99+':n)+'</span>' : (host.abertos.includes(a.id) && ativo!==a.id ? '<span class="rail-aberto" aria-hidden="true"></span>' : ''))+'</button>';
   }).join('');
+  if(ehAdm){
+    const pLogo = logoQuad({id:'polvo', nome:'Polvo', g:['#1de9b6','#2563c9'], glifo:SVG_POLVO}, '-r');
+    const pTem = polvoMsgs.length > 0 && ativo !== 'polvo';
+    appsHtml += '<button class="rail-it" type="button" data-rail="polvo" title="Polvo · Pergunte aos dados" aria-label="Polvo · Pergunte aos dados'+(pTem?' (conversa aberta)':'')+'"'+(ativo==='polvo'?' aria-current="page"':'')+'>'+pLogo+'<span class="rail-rot">Polvo</span>'+(pTem?'<span class="rail-aberto" aria-hidden="true"></span>':'')+'</button>';
+  }
+  $('#rail-apps').innerHTML = appsHtml;
   const lb = $('#rail [data-rail="lobby"]'); if(ativo==='lobby') lb.setAttribute('aria-current','page'); else lb.removeAttribute('aria-current');
   if(focoRail){ const f = $('#rail-apps [data-rail="'+focoRail+'"]'); if(f) f.focus(); }
-  ['rail-recarregar','rail-aba','rail-fechar'].forEach(i=>{ $('#'+i).hidden = !host.atual; });
+  ['rail-recarregar','rail-aba','rail-fechar'].forEach(i=>{ $('#'+i).hidden = !host.atual || polvoAberto; });
   if(U) $('#rail-av').innerHTML = U.photoURL ? '<img alt="" referrerpolicy="no-referrer" src="'+esc(U.photoURL)+'">' : esc(iniciais());
 }
 function renderHostTabs(){
@@ -2623,8 +2767,10 @@ $('#host-lobby').addEventListener('click', voltarLobby);
 $('#rail').addEventListener('click', e=>{
   const b = e.target.closest('[data-rail]'); if(!b) return;
   const id = b.dataset.rail;
-  if(id==='lobby'){ if(host.atual) voltarLobby(); else window.scrollTo({top:0, behavior:'smooth'}); return; }
-  if(host.atual!==id) mostrarHost(id);
+  if(id==='polvo'){ if(!polvoAberto) abrirPolvo(true); return; }
+  if(id==='lobby'){ if(polvoAberto) fecharPolvo(true); if(host.atual) voltarLobby(); else window.scrollTo({top:0, behavior:'smooth'}); return; }
+  if(polvoAberto) fecharPolvo(true, true);
+  if(host.atual!==id) mostrarHost(id); else { $('#host').classList.add('on'); document.body.style.overflow='hidden'; atualizarAnimacao(); renderRail(); }
 });
 // expandir/recolher (só no computador; vale neste aparelho)
 function railLarga(on, salvar){
@@ -2638,7 +2784,7 @@ $('#rail-sonar').addEventListener('click', ()=>window.MareSonar && MareSonar.abr
 $('#rail-recarregar').addEventListener('click', ()=>$('#host-recarregar').click());
 $('#rail-aba').addEventListener('click', ()=>$('#host-aba').click());
 $('#rail-fechar').addEventListener('click', ()=>{ if(host.atual) fecharApp(host.atual); });
-$('#rail-eu').addEventListener('click', ()=>{ if(host.atual) voltarLobby(); abrirPerfil(); });
+$('#rail-eu').addEventListener('click', ()=>{ if(polvoAberto) fecharPolvo(true); if(host.atual) voltarLobby(); abrirPerfil(); });
 $('#host-recarregar').addEventListener('click', ()=>{ const fr = $('#host-frames iframe.on'); if(fr){ fr.dataset.ok=''; $('#host-load').style.display='flex'; fr.src = fr.src; } });
 $('#host-aba').addEventListener('click', ()=>{ const a = APP(host.atual); if(a) window.open(a.href,'_blank','noopener'); });
 // ── 🔍 Sonar (módulo mare-sonar-dev.js, 10/11/2026): a busca do Oceano. Aqui o lobby só diz o que é dele (produtos, comandos, squads, links, ajuda);
@@ -2660,7 +2806,7 @@ function iniciarSonar(){
       g.push({g:'Produtos', esc:'produtos', noVazio:true, itens:appsDoDia().map(a=>({k:'app:'+a.id, ic:ic(a), t:a.nome, sub:a.sub, tipo:'produto', busca:a.nome+' '+a.sub+' '+(a.pt||''), go:app(a.id), url:a.href, app:a.id}))});
       g.push({g:'Comandos', esc:'cmd', noVazio:true, itens:[
         {k:'cmd:perfil', ic:'⚙️', t:'Meu perfil e preferências', sub:'Tema, peixinhos, como abrir os produtos', tipo:'comando', busca:'perfil preferencias tema configuracoes peixinhos', go:()=>abrirPerfil(), rec:{cmd:'perfil'}},
-        {k:'cmd:ajuda', ic:'❓', t:'Ajuda do Oceano', sub:'Perguntas frequentes', tipo:'comando', busca:'ajuda faq duvidas', go:()=>abrirAjuda(), rec:{cmd:'ajuda'}}]});
+        {k:'cmd:ajuda', ic:'❓', t:'Ajuda do Oceano', sub:'Perguntas frequentes', tipo:'comando', busca:'ajuda faq duvidas', go:()=>abrirAjuda(), rec:{cmd:'ajuda'}}].concat(ehAdm ? [{k:'cmd:polvo', ic:'🐙', t:'Polvo · Pergunte aos dados', sub:'Análises, gráficos, tabelas e SQL em português', tipo:'comando', busca:'polvo genie dados sql grafico analise perguntar databricks', go:()=>abrirPolvo(true), rec:{cmd:'polvo'}}] : [])});
       const mare = APP('kanban');
       if(mare && visivel(mare)){
         const sqs = perfilFb.squads||[];
@@ -2685,6 +2831,7 @@ function iniciarSonar(){
       if(r.faq && FAQ.some(f=>f.id===r.faq)) return Object.assign(base, {ic:'❓', go:()=>abrirAjuda(r.faq), rec:{faq:r.faq}});
       if(r.cmd==='perfil' || String(r.k)==='cmd:perfil') return Object.assign(base, {ic:'⚙️', go:()=>abrirPerfil(), rec:{cmd:'perfil'}});
       if(r.cmd==='ajuda' || String(r.k)==='cmd:ajuda') return Object.assign(base, {ic:'❓', go:()=>abrirAjuda(), rec:{cmd:'ajuda'}});
+      if((r.cmd==='polvo' || String(r.k)==='cmd:polvo') && ehAdm) return Object.assign(base, {ic:'🐙', go:()=>abrirPolvo(true), rec:{cmd:'polvo'}});
       if(r.app && APP(r.app) && visivel(APP(r.app)) && MareSonar._paginaOk(r.url)) return Object.assign(base, {ic:ic(APP(r.app)), app:r.app, url:r.url, go:app(r.app, r.url)});
       return null;
     },
@@ -2700,10 +2847,596 @@ $('#host-sonar').addEventListener('click', ()=>window.MareSonar && MareSonar.abr
 document.addEventListener('keydown', e=>{
   if(e.ctrlKey||e.metaKey||e.altKey||modalTopo||!U) return;
   const el = document.activeElement, digitando = el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || (el && el.isContentEditable);
-  if(digitando || $('#host').classList.contains('on') || !$('#tab-inicio').classList.contains('on')) return;
+  if(digitando || $('#host').classList.contains('on') || polvoAberto || !$('#tab-inicio').classList.contains('on')) return;
   if(e.key==='?'){ e.preventDefault(); abrirAjuda(); return; }
   if(/^[1-9]$/.test(e.key)){ const a = appsDoDia()[Number(e.key)-1]; if(a){ e.preventDefault(); abrirApp(a.id); } }
 });
+
+// ── 🐙 Polvo · Pergunte aos dados (piloto ADM, ponte via Cloud Function oceanoGenie) ──
+const POLVO_POLL_MS = 3000;
+const POLVO_TIMEOUT_MS = 600000;
+const POLVO_CTRL_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/;
+const POLVO_EXEMPLOS = [
+  'Resumo dos principais indicadores dos últimos 30 dias',
+  'Quais categorias mais cresceram no último mês?',
+  'Mostre a evolução semanal com gráfico e tabela',
+];
+const POLVO_STATUS_TXT = {
+  SUBMITTED: 'Enviando pergunta ao Polvo…',
+  FILTERING_CONTEXT: 'Entendendo a pergunta…',
+  ASKING_AI: 'Montando a consulta…',
+  PENDING_WAREHOUSE: 'Ligando o motor de dados…',
+  EXECUTING_QUERY: 'Consultando os dados…',
+  QUERY_RESULT_EXPIRED: 'Atualizando a consulta…',
+};
+const POLVO_ERROS_TXT = {
+  sem_acesso: 'Este recurso está em piloto exclusivo para administradores.',
+  conta: 'Entre com uma conta Google @ciahering.com.br válida.',
+  sem_token: 'Sua sessão expirou. Recarregue a página e tente de novo.',
+  token_invalido: 'Sua sessão expirou. Recarregue a página e tente de novo.',
+  pergunta_invalida: 'Escreva uma pergunta de 2 a 1000 caracteres, apenas texto.',
+  entrada: 'Não foi possível validar a requisição enviada.',
+  conversa_alheia: 'Esta conversa não pertence à sua sessão atual. Inicie uma nova conversa.',
+  limite_pessoa: 'Você atingiu o limite de perguntas por hora. Tente mais tarde.',
+  limite_casa: 'Muitas consultas simultâneas no time nesta hora. Tente em alguns minutos.',
+  genie_ocupado: 'O Polvo está atendendo muitas perguntas agora. Tente novamente em instantes.',
+  genie_auth: 'Falha na autenticação do servidor com o Polvo. Avise a squad.',
+  genie_tempo: 'O Polvo demorou para responder à requisição.',
+  genie_falhou: 'O Polvo encontrou um erro ao processar a consulta.',
+  genie_resposta: 'A resposta recebida do Polvo veio incompleta.',
+  config_ausente: 'O servidor do Polvo ainda não foi configurado com os segredos do ambiente.',
+  demorou: 'A consulta demorou mais de 10 minutos e foi interrompida.',
+};
+
+let polvoConversaId = null;
+let polvoMsgs = [];
+let polvoOcupado = false;
+let polvoPollTimer = null;
+let polvoReqSeq = 0;
+let polvoBlobs = [];
+
+function polvoLimparBlobs(){
+  while(polvoBlobs.length){
+    const u = polvoBlobs.pop();
+    try{ URL.revokeObjectURL(u); }catch(e){}
+  }
+}
+function polvoMsgErro(cod){
+  return POLVO_ERROS_TXT[cod] || 'Não foi possível falar com o Polvo agora. Tente novamente em instantes.';
+}
+function polvoSetErro(msg, cod){
+  const el = $('#polvo-erro'); if(!el) return;
+  if(!msg){ el.hidden = true; el.textContent = ''; delete el.dataset.codigo; return; }
+  el.textContent = msg;
+  if(cod) el.dataset.codigo = cod;
+  else delete el.dataset.codigo;
+  el.hidden = false;
+}
+function polvoAtualizarUiEnviar(){
+  const ta = $('#polvo-in'), bt = $('#polvo-enviar'), cnt = $('#polvo-cnt');
+  if(cnt && ta) cnt.textContent = ta.value.length + '/1000';
+  if(ta){ ta.disabled = polvoOcupado; }
+  if(bt){ bt.disabled = polvoOcupado; bt.setAttribute('aria-busy', String(polvoOcupado)); bt.textContent = polvoOcupado ? 'Consultando…' : 'Enviar'; }
+  $$('.polvo-chip').forEach(b=>{ b.disabled = polvoOcupado; });
+}
+function abrirZoomPolvo(blobUrl, titulo){
+  if(!blobUrl || !String(blobUrl).startsWith('blob:')) return;
+  const ov = $('#polvo-zoom'), im = $('#polvo-zoom-img'), t = $('#polvo-zoom-t');
+  if(!ov || !im) return;
+  im.src = blobUrl;
+  im.alt = titulo || 'Gráfico gerado pelo Polvo';
+  if(t) t.textContent = titulo || 'Gráfico do Polvo';
+  ov.classList.add('open');
+  const fx = $('#polvo-zoom-x'); if(fx) setTimeout(()=>fx.focus({preventScroll:true}), 20);
+}
+function fecharZoomPolvo(){
+  const ov = $('#polvo-zoom'), im = $('#polvo-zoom-img');
+  if(ov) ov.classList.remove('open');
+  if(im) im.removeAttribute('src');
+}
+function polvoEhNum(tipo){
+  return /INT|LONG|SHORT|BYTE|FLOAT|DOUBLE|DECIMAL|NUMERIC/i.test(String(tipo||''));
+}
+async function polvoToken(){
+  if(!U) throw new Error('sem_token');
+  if(typeof U.getIdToken === 'function') return await U.getIdToken();
+  if(U.idToken) return U.idToken;
+  throw new Error('sem_token');
+}
+async function polvoFetchJson(url, opts){
+  const r = await fetch(url, opts);
+  let data = null;
+  try{ data = await r.json(); }catch(e){}
+  if(!r.ok){
+    const err = new Error((data && data.erro) || ('http_' + r.status));
+    err.status = r.status;
+    err.codigo = (data && data.erro) || (r.status === 401 ? 'token_invalido' : r.status === 403 ? 'sem_acesso' : r.status === 429 ? 'genie_ocupado' : 'genie_falhou');
+    throw err;
+  }
+  return data || {};
+}
+function polvoPertoDoFim(feed){
+  return !feed || (feed.scrollHeight - feed.scrollTop - feed.clientHeight) <= 80;
+}
+
+async function polvoCarregarGrafico(item, g, seq){
+  if(g.carregando || g.blobUrl || g.falhou) return;
+  g.carregando = true;
+  try{
+    const tok = await polvoToken();
+    const qs = new URLSearchParams({
+      acao: 'grafico',
+      conversa: item.conversa,
+      mensagem: item.mensagem,
+      anexo: g.anexo,
+    });
+    const r = await fetch(OCEANO_GENIE_URL + '?' + qs.toString(), {
+      method: 'GET',
+      headers: { Authorization: 'Bearer ' + tok },
+    });
+    if(seq !== polvoReqSeq) return;
+    if(!r.ok) throw new Error('http_' + r.status);
+    const ct = String(r.headers && r.headers.get('content-type') || '').toLowerCase();
+    const blob = await r.blob();
+    if(seq !== polvoReqSeq) return;
+    if((ct && !ct.includes('image/png')) || !blob || !blob.size) throw new Error('tipo_invalido');
+    const url = URL.createObjectURL(blob);
+    polvoBlobs.push(url);
+    g.blobUrl = url;
+    g.carregando = false;
+    if(g._im && g._im.isConnected){
+      const feed = $('#polvo-feed');
+      const eraFim = polvoPertoDoFim(feed);
+      g._im.addEventListener('load', ()=>{ if(feed && eraFim) feed.scrollTop = feed.scrollHeight; }, { once: true });
+      g._im.src = url;
+      g._im.hidden = false;
+      if(g._msgEl) g._msgEl.hidden = true;
+      if(g._btZ) g._btZ.disabled = false;
+      if(g._btB) g._btB.disabled = false;
+    }
+  }catch(e){
+    if(seq !== polvoReqSeq) return;
+    g.carregando = false;
+    g.falhou = true;
+    if(g._im && g._im.isConnected){
+      g._im.hidden = true;
+      if(g._msgEl){
+        g._msgEl.hidden = false;
+        g._msgEl.textContent = 'Não consegui carregar o gráfico pronto agora — os dados da resposta continuam disponíveis abaixo.';
+      }
+    }
+  }
+}
+
+function polvoEl(tag, cls, txt){
+  const el = document.createElement(tag);
+  if(cls) el.className = cls;
+  if(txt !== undefined && txt !== null) el.textContent = String(txt);
+  return el;
+}
+
+function polvoCriarItemEl(item, seq){
+  if(item.tipo === 'eu'){
+    return polvoEl('div', 'polvo-msg eu', item.texto);
+  }
+
+  const card = polvoEl('article', 'vidro polvo-msg bot');
+  const topo = polvoEl('div', 'polvo-bot-topo');
+  topo.appendChild(polvoEl('span', '', '🐙 Polvo'));
+  card.appendChild(topo);
+
+  if(item.estado === 'pensando'){
+    const st = polvoEl('div', 'polvo-status');
+    st.appendChild(polvoEl('span', 'polvo-dot'));
+    const stTx = polvoEl('span', 'polvo-status-tx', POLVO_STATUS_TXT[item.status] || 'Consultando o Polvo…');
+    item._statusEl = stTx;
+    st.appendChild(stTx);
+    card.appendChild(st);
+    return card;
+  }
+
+  item._statusEl = null;
+
+  if(item.estado === 'erro' || item.estado === 'demorou'){
+    const fl = polvoEl('div', 'polvo-falha');
+    fl.appendChild(polvoEl('span', '', item.erroMsg || polvoMsgErro(item.erroCodigo)));
+    if(item.perguntaOriginal){
+      const bt = polvoEl('button', 'btn sm', '↻ Tentar novamente');
+      bt.type = 'button';
+      bt.addEventListener('click', ()=>{ if(!polvoOcupado) polvoEnviarPergunta(item.perguntaOriginal); });
+      fl.appendChild(bt);
+    }
+    card.appendChild(fl);
+    return card;
+  }
+
+  const res = item.res || {};
+  if(res.texto){
+    card.appendChild(polvoEl('div', 'polvo-txt', res.texto));
+  }
+
+  const grafs = Array.isArray(res.graficos) ? res.graficos : [];
+  grafs.forEach(g=>{
+    if(!g || !g.anexo) return;
+    const vc = polvoEl('div', 'polvo-viz');
+    const vhd = polvoEl('div', 'polvo-viz-hd');
+    const desc = g.descricao || 'Gráfico pronto do Polvo';
+    vhd.appendChild(polvoEl('span', '', '📊 ' + desc));
+    const ac = polvoEl('div', 'polvo-viz-ac');
+    const btZ = polvoEl('button', 'btn sm', '⛶ Ampliar');
+    btZ.type = 'button'; btZ.disabled = !g.blobUrl;
+    const btB = polvoEl('button', 'btn sm', '⬇ Baixar PNG');
+    btB.type = 'button'; btB.disabled = !g.blobUrl;
+    btZ.addEventListener('click', ()=>{ if(g.blobUrl) abrirZoomPolvo(g.blobUrl, desc); });
+    btB.addEventListener('click', ()=>{
+      if(!g.blobUrl || !String(g.blobUrl).startsWith('blob:')) return;
+      const a = document.createElement('a');
+      a.href = g.blobUrl;
+      a.download = 'polvo-grafico-' + String(g.anexo).replace(/[^A-Za-z0-9_-]/g, '') + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    ac.appendChild(btZ); ac.appendChild(btB);
+    vhd.appendChild(ac);
+    vc.appendChild(vhd);
+
+    const vbox = polvoEl('div', 'polvo-viz-box');
+    const im = document.createElement('img');
+    im.className = 'polvo-viz-img';
+    im.alt = desc;
+    const msgEl = polvoEl('div', 'polvo-viz-msg', g.falhou ? 'Não consegui carregar o gráfico pronto agora — os dados da resposta continuam disponíveis abaixo.' : 'Carregando gráfico do Polvo…');
+    g._im = im; g._msgEl = msgEl; g._btZ = btZ; g._btB = btB;
+    if(g.blobUrl){
+      im.src = g.blobUrl; im.hidden = false; msgEl.hidden = true;
+    } else {
+      im.hidden = true; msgEl.hidden = false;
+      if(!g.falhou && !g.carregando) polvoCarregarGrafico(item, g, seq);
+    }
+    vbox.appendChild(im);
+    vbox.appendChild(msgEl);
+    vc.appendChild(vbox);
+    card.appendChild(vc);
+  });
+
+  const cols = Array.isArray(res.colunas) ? res.colunas : [];
+  const lins = Array.isArray(res.linhas) ? res.linhas : [];
+  if(cols.length){
+    const tc = polvoEl('div', 'polvo-tab-card');
+    const thd = polvoEl('div', 'polvo-tab-hd');
+    const nLin = lins.length;
+    const tot = typeof res.totalLinhas === 'number' ? res.totalLinhas : nLin;
+    const infoTxt = res.cortado
+      ? '📋 Resultado (' + nLin + ' exibidas' + (tot > nLin ? ' de ' + tot : '') + ')'
+      : '📋 Resultado (' + nLin + (nLin === 1 ? ' linha' : ' linhas') + ')';
+    thd.appendChild(polvoEl('span', '', infoTxt));
+    tc.appendChild(thd);
+    if(res.cortado){
+      tc.appendChild(polvoEl('div', 'polvo-cortado', '⚠️ Mostrando as primeiras ' + nLin + ' linhas' + (tot > nLin ? ' de ' + tot : '') + '. Refine a pergunta para filtrar um recorte menor.'));
+    }
+    const tw = polvoEl('div', 'polvo-tab-wrap');
+    const tab = polvoEl('table', 'polvo-tab');
+    const thead = document.createElement('thead');
+    const trH = document.createElement('tr');
+    const numFlags = cols.map(c=>polvoEhNum(c && c.tipo));
+    cols.forEach((c, ci)=>{
+      const th = polvoEl('th', numFlags[ci] ? 'num' : '', c && c.nome != null ? c.nome : 'col_' + (ci + 1));
+      th.scope = 'col';
+      trH.appendChild(th);
+    });
+    thead.appendChild(trH);
+    tab.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    lins.forEach(row=>{
+      const tr = document.createElement('tr');
+      const arr = Array.isArray(row) ? row : [];
+      cols.forEach((_, ci)=>{
+        const val = arr[ci];
+        const nulo = val === null || val === undefined;
+        const cls = [numFlags[ci] ? 'num' : '', nulo ? 'nulo' : ''].filter(Boolean).join(' ');
+        const td = polvoEl('td', cls, nulo ? '—' : String(val));
+        if(!nulo && String(val).length > 48) td.title = String(val);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tab.appendChild(tbody);
+    tw.appendChild(tab);
+    if(item._tabScrollLeft) requestAnimationFrame(()=>{ tw.scrollLeft = item._tabScrollLeft; });
+    tw.addEventListener('scroll', ()=>{ item._tabScrollLeft = tw.scrollLeft; }, { passive: true });
+    tc.appendChild(tw);
+    card.appendChild(tc);
+  }
+
+  if(res.sql){
+    const det = polvoEl('details', 'polvo-sql');
+    det.open = !!item._sqlAberto;
+    det.addEventListener('toggle', ()=>{ item._sqlAberto = det.open; });
+    det.appendChild(polvoEl('summary', 'polvo-sql-sum', '🧾 Ver SQL gerado'));
+    const bd = polvoEl('div', 'polvo-sql-bd');
+    if(res.descricao) bd.appendChild(polvoEl('div', 'polvo-sql-desc', res.descricao));
+    const topSql = polvoEl('div', 'polvo-sql-top');
+    const btCop = polvoEl('button', 'btn sm polvo-copiar', '📋 Copiar SQL');
+    btCop.type = 'button';
+    btCop.addEventListener('click', ()=>{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(res.sql).catch(()=>{});
+      }
+      btCop.textContent = '✓ Copiado';
+      setTimeout(()=>{ btCop.textContent = '📋 Copiar SQL'; }, 1600);
+    });
+    topSql.appendChild(btCop);
+    bd.appendChild(topSql);
+    const pre = polvoEl('pre', 'polvo-sql-pre');
+    pre.appendChild(polvoEl('code', '', res.sql));
+    bd.appendChild(pre);
+    det.appendChild(bd);
+    card.appendChild(det);
+  }
+
+  const sugs = Array.isArray(res.sugestoes) ? res.sugestoes.filter(Boolean) : [];
+  if(sugs.length){
+    const sg = polvoEl('div', 'polvo-sugs');
+    sg.appendChild(polvoEl('div', 'polvo-sugs-tit', 'Próximas perguntas sugeridas'));
+    const row = polvoEl('div', 'polvo-sugs-row');
+    sugs.forEach(s=>{
+      const b = polvoEl('button', 'polvo-chip', s);
+      b.type = 'button';
+      b.disabled = polvoOcupado;
+      b.addEventListener('click', ()=>polvoEnviarPergunta(s));
+      row.appendChild(b);
+    });
+    sg.appendChild(row);
+    card.appendChild(sg);
+  }
+
+  if(!res.texto && !grafs.length && !cols.length && !res.sql){
+    card.appendChild(polvoEl('div', 'polvo-txt', 'O Polvo concluiu a consulta, mas não retornou texto nem linhas para esta pergunta.'));
+  }
+
+  return card;
+}
+
+function renderPolvoFeed(opcoes){
+  const wrap = $('#polvo-wrap'), feed = $('#polvo-feed'); if(!wrap) return;
+  const seq = polvoReqSeq;
+
+  if(!polvoMsgs.length){
+    wrap.replaceChildren();
+    const box = polvoEl('div', 'vidro polvo-vazio');
+    box.appendChild(polvoEl('h3', '', 'Pergunte aos dados em português'));
+    box.appendChild(polvoEl('p', '', 'O Polvo lê a sua pergunta, consulta o espaço configurado no Databricks e devolve a análise em texto, gráficos prontos, a tabela de resultado (até 200 linhas) e o SQL gerado para conferência.'));
+    const ex = polvoEl('div', 'polvo-exemplos');
+    POLVO_EXEMPLOS.forEach(q=>{
+      const b = polvoEl('button', 'polvo-chip', q);
+      b.type = 'button';
+      b.disabled = polvoOcupado;
+      b.addEventListener('click', ()=>polvoEnviarPergunta(q));
+      ex.appendChild(b);
+    });
+    box.appendChild(ex);
+    wrap.appendChild(box);
+    polvoAtualizarUiEnviar();
+    return;
+  }
+
+  const vz = wrap.querySelector('.polvo-vazio');
+  if(vz) vz.remove();
+
+  const rolar = (opcoes && opcoes.forcarScroll) || polvoPertoDoFim(feed);
+  polvoMsgs.forEach(item=>{
+    if(!item._el || !item._el.isConnected){
+      item._el = polvoCriarItemEl(item, seq);
+      wrap.appendChild(item._el);
+    }
+  });
+
+  polvoAtualizarUiEnviar();
+  if(feed && rolar) feed.scrollTop = feed.scrollHeight;
+}
+
+function polvoAtualizarStatusItem(item, novoStatus){
+  item.status = novoStatus;
+  if(item._statusEl && item._statusEl.isConnected){
+    item._statusEl.textContent = POLVO_STATUS_TXT[novoStatus] || 'Consultando o Polvo…';
+  }
+}
+
+function polvoFinalizarItem(item){
+  const feed = $('#polvo-feed');
+  const rolar = polvoPertoDoFim(feed);
+  if(item._el && item._el.isConnected){
+    const novo = polvoCriarItemEl(item, polvoReqSeq);
+    item._el.replaceWith(novo);
+    item._el = novo;
+  } else {
+    renderPolvoFeed();
+  }
+  polvoAtualizarUiEnviar();
+  if(feed && rolar) feed.scrollTop = feed.scrollHeight;
+}
+
+function polvoPararPoll(){
+  if(polvoPollTimer){ clearTimeout(polvoPollTimer); polvoPollTimer = null; }
+}
+
+function polvoAgendarEstado(item, seq, falhas){
+  polvoPararPoll();
+  polvoPollTimer = setTimeout(async()=>{
+    if(seq !== polvoReqSeq) return;
+    if(Date.now() - item.inicioMs >= POLVO_TIMEOUT_MS){
+      item.estado = 'demorou';
+      item.erroCodigo = 'demorou';
+      item.erroMsg = polvoMsgErro('demorou');
+      polvoOcupado = false;
+      polvoFinalizarItem(item);
+      return;
+    }
+    try{
+      const tok = await polvoToken();
+      const qs = new URLSearchParams({ acao: 'estado', conversa: item.conversa, mensagem: item.mensagem });
+      const r = await polvoFetchJson(OCEANO_GENIE_URL + '?' + qs.toString(), {
+        method: 'GET',
+        headers: { Authorization: 'Bearer ' + tok },
+      });
+      if(seq !== polvoReqSeq) return;
+      if(r.status === 'COMPLETED'){
+        item.estado = 'ok';
+        item.res = r;
+        polvoOcupado = false;
+        polvoFinalizarItem(item);
+        return;
+      }
+      if(r.status === 'FAILED' || r.status === 'CANCELLED'){
+        item.estado = 'erro';
+        item.erroCodigo = r.status;
+        item.erroMsg = r.status === 'CANCELLED' ? 'A consulta no Polvo foi cancelada.' : 'O Polvo não conseguiu concluir esta consulta.';
+        polvoOcupado = false;
+        polvoFinalizarItem(item);
+        return;
+      }
+      const prox = r.status || item.status;
+      if(prox !== item.status) polvoAtualizarStatusItem(item, prox);
+      polvoAgendarEstado(item, seq, 0);
+    }catch(e){
+      if(seq !== polvoReqSeq) return;
+      const st = e && e.status;
+      const cod = e && e.codigo;
+      if((!st || st >= 500) && falhas < 2 && Date.now() - item.inicioMs < POLVO_TIMEOUT_MS){
+        polvoAgendarEstado(item, seq, falhas + 1);
+        return;
+      }
+      if(cod === 'conversa_alheia') polvoConversaId = null;
+      item.estado = 'erro';
+      item.erroCodigo = cod || 'genie_falhou';
+      item.erroMsg = polvoMsgErro(item.erroCodigo);
+      polvoOcupado = false;
+      polvoFinalizarItem(item);
+    }
+  }, POLVO_POLL_MS);
+}
+
+async function polvoEnviarPergunta(textoOpcional){
+  if(polvoOcupado) return;
+  if(!ehAdm){ polvoSetErro(polvoMsgErro('sem_acesso'), 'sem_acesso'); return; }
+  const ta = $('#polvo-in');
+  const veioDoCampo = textoOpcional === undefined;
+  const raw = veioDoCampo ? (ta ? ta.value : '') : String(textoOpcional || '');
+  const pergunta = raw.replace(/\r\n?/g, '\n').trim();
+  if(POLVO_CTRL_RE.test(raw) || pergunta.length < 2 || pergunta.length > 1000){
+    polvoSetErro(polvoMsgErro('pergunta_invalida'), 'pergunta_invalida');
+    if(ta) ta.focus();
+    return;
+  }
+
+  polvoSetErro('', '');
+  polvoPararPoll();
+  const seq = ++polvoReqSeq;
+  polvoOcupado = true;
+  polvoAtualizarUiEnviar();
+
+  try{
+    const tok = await polvoToken();
+    const corpo = { acao: 'perguntar', pergunta };
+    if(polvoConversaId) corpo.conversa = polvoConversaId;
+    const r = await polvoFetchJson(OCEANO_GENIE_URL, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo),
+    });
+    if(seq !== polvoReqSeq) return;
+    if(veioDoCampo && ta) ta.value = '';
+    polvoConversaId = r.conversa;
+    polvoMsgs.push({ tipo: 'eu', texto: pergunta });
+    const botItem = {
+      tipo: 'bot',
+      estado: 'pensando',
+      status: r.status || 'SUBMITTED',
+      conversa: r.conversa,
+      mensagem: r.mensagem,
+      inicioMs: Date.now(),
+      perguntaOriginal: pergunta,
+      res: null,
+    };
+    polvoMsgs.push(botItem);
+    renderPolvoFeed({ forcarScroll: true });
+    renderRail();
+    if(r.status === 'COMPLETED'){
+      polvoAgendarEstado(botItem, seq, 0);
+    } else {
+      polvoAgendarEstado(botItem, seq, 0);
+    }
+  }catch(e){
+    if(seq !== polvoReqSeq) return;
+    const cod = (e && e.codigo) || 'genie_falhou';
+    if(cod === 'conversa_alheia') polvoConversaId = null;
+    polvoOcupado = false;
+    polvoSetErro(polvoMsgErro(cod), cod);
+    polvoAtualizarUiEnviar();
+  }
+}
+
+function novaConversaPolvo(){
+  polvoReqSeq++;
+  polvoPararPoll();
+  polvoLimparBlobs();
+  polvoConversaId = null;
+  polvoMsgs = [];
+  polvoOcupado = false;
+  polvoSetErro('', '');
+  renderPolvoFeed();
+  renderRail();
+  const ta = $('#polvo-in'); if(ta) ta.focus({preventScroll:true});
+}
+
+function abrirPolvo(salvar){
+  if(!ehAdm) return;
+  const p = $('#polvo'); if(!p) return;
+  polvoAberto = true;
+  p.hidden = false;
+  p.classList.add('on');
+  $('#host').classList.remove('on');
+  document.body.style.overflow = 'hidden';
+  atualizarAnimacao();
+  document.title = 'Polvo · Oceano' + (IS_DEV ? ' (dev)' : '');
+  if(salvar) try{ localStorage.setItem('oceano_polvo_aberto', '1'); }catch(e){}
+  renderPolvoFeed();
+  renderRail();
+  const ta = $('#polvo-in'); if(ta) setTimeout(()=>ta.focus({preventScroll:true}), 30);
+}
+
+function fecharPolvo(salvar, manterOverlayHost){
+  const p = $('#polvo');
+  polvoAberto = false;
+  fecharZoomPolvo();
+  if(p){ p.classList.remove('on'); p.hidden = true; }
+  if(salvar) try{ localStorage.setItem('oceano_polvo_aberto', '0'); }catch(e){}
+  if(!manterOverlayHost){
+    document.body.style.overflow = host.atual ? 'hidden' : '';
+    document.title = host.atual && APP(host.atual) ? (APP(host.atual).nome + ' · Oceano' + (IS_DEV?' (dev)':'')) : ((IS_DEV?'🧪 ':'') + 'Oceano' + (IS_DEV?' · Dev':''));
+  }
+  atualizarAnimacao();
+  renderRail();
+}
+
+$('#polvo-fechar').addEventListener('click', ()=>{ fecharPolvo(true); if(host.atual) voltarLobby(); });
+$('#polvo-nova').addEventListener('click', novaConversaPolvo);
+$('#polvo-form').addEventListener('submit', e=>{ e.preventDefault(); polvoEnviarPergunta(); });
+$('#polvo-in').addEventListener('input', ()=>{ const cnt = $('#polvo-cnt'), ta = $('#polvo-in'); if(cnt && ta) cnt.textContent = ta.value.length + '/1000'; });
+$('#polvo-in').addEventListener('keydown', e=>{ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); polvoEnviarPergunta(); } });
+$('#polvo-zoom-x').addEventListener('click', fecharZoomPolvo);
+$('#polvo-zoom').addEventListener('mousedown', e=>{ if(e.target === $('#polvo-zoom')) fecharZoomPolvo(); });
+document.addEventListener('keydown', e=>{
+  if(e.key !== 'Escape') return;
+  const zoom = $('#polvo-zoom');
+  if(zoom && zoom.classList.contains('open')){ fecharZoomPolvo(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if(polvoAberto && !modalTopo){
+    const sOv = document.querySelector('#mare-sonar.open, .sonar-ov.open');
+    if(!sOv){ fecharPolvo(true); if(host.atual) voltarLobby(); e.preventDefault(); }
+  }
+});
+
+window.addEventListener('pagehide', polvoLimparBlobs);
 window.addEventListener('pageshow', ()=>{ if(U) renderTudo(); });
 
 aplicarPrefs();

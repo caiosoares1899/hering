@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐙 Oceano: Polvo · Pergunte aos dados — análises, gráficos prontos, tabela e SQL do Genie (SÓ DEV, oceano v2.10, functions:oceanoGenie, regras genie) — 2026-11-27
+
+Implementa ponte autenticada (oceanoGenie + genieCore.js) via OAuth M2M para o espaço Polvo no Databricks Genie, com nó fechado kanban/genie no RTDB, cotas por hora via transação, proxy binário PNG para gráficos prontos (?acao=grafico), vista ampla Marine Glass em oceano-dev.html restrita a ADMs no piloto e exclusão de `cloudfunctions.net`/`.run.app` no `firebase-messaging-sw.js` para não cachear respostas autenticadas.
+
 ### 🐚 Concha: ⭐ Favoritos vira 🔖 Salvos e ℹ️ Detalhes reorganizado (Para você, membros com ⋯, Sair por último) (SÓ DEV, cardume v0.64) — 2026-11-27
 
 - **(SÓ DEV)** Pedidos do Caio a partir do print dos Detalhes.
