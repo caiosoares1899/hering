@@ -172,7 +172,7 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .perfil-nome:hover b,.perfil-nome:hover{text-decoration:underline;}
 .pessoa .perfil-nome{min-height:0;padding:0;font-size:inherit;}
 .msg{position:relative;padding:2px 6px;margin:0 -6px;border-radius:8px;}
-@media (hover:hover) and (min-width:900px){.msg{padding-right:192px;}}   /* 5 ícones (😀 ↩️ 📝 ✏️ 🗑) ou os 5 emojis do seletor */   /* vão da pílula: o texto nunca fica embaixo dela (linha de ~75 caracteres a 1280, boa de ler) */
+@media (hover:hover) and (min-width:900px){.msg{padding-right:max(192px, calc(var(--n-acoes, 0) * 34px + 14px));}}   /* o vão acompanha quantos ícones a pílula tem (--n-acoes, posto no render; ⭐ Salvar levou a 7–8) e nunca menos que os 5 emojis do seletor */   /* vão da pílula: o texto nunca fica embaixo dela (linha de ~75 caracteres a 1280, boa de ler) */
 .msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
 .b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;box-shadow:none;font-weight:700;}
 .b-mencoes[aria-current="true"]{color:var(--accent-txt);background:rgba(var(--slate-rgb),.7);box-shadow:var(--specular);}
@@ -218,6 +218,13 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .canal .aviso-ic{font-size:12px;opacity:.8;flex:none;}
 .seguir-tag{margin:4px 0 10px;}
 .voltar-tag{display:inline-flex;align-items:center;gap:6px;margin:4px 8px 10px 0;}   /* ← Voltar da tela da #tag para onde a pessoa estava */
+.fav-tag-btn{margin:4px 0 10px 8px;}   /* ⭐ Favoritar #tag, ao lado do 🔔 Seguir */
+.fav-h{font-size:13px;font-weight:700;color:var(--txt2);margin:10px 0 6px;}
+.fav-tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
+.fav-tags .tag{min-height:32px;padding:2px 10px;}
+.fav-linha{display:flex;align-items:stretch;gap:6px;}
+.fav-linha .mencao-item{flex:1;min-width:0;}
+.fav-linha .fav-tirar{margin:6px 0;min-width:44px;}
 .lista-seguidas{display:flex;flex-wrap:wrap;gap:6px;}
 .lista-seguidas button{min-height:32px;padding:2px 10px;}
 .b-buscar{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--txt2);}
@@ -397,6 +404,7 @@ button.msg-gif{cursor:pointer;}
     <nav class="painel lateral" aria-label="Canais">
       <button type="button" class="b-mencoes b-buscar" id="b-buscar" hidden aria-keyshortcuts="Control+K Meta+K">🔍 Buscar <kbd id="b-buscar-tecla">Ctrl K</kbd></button>
       <button type="button" class="b-mencoes" id="b-mencoes" aria-current="false">@ Menções <span class="selo-n" id="mencoes-n" hidden>0</span></button>
+      <button type="button" class="b-mencoes" id="b-favs" aria-current="false" title="Suas #tags favoritas e mensagens salvas (só você vê)">⭐ Favoritos</button>
       <div id="lista-canais"></div>
       <button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button>
       <button type="button" class="novo-canal" id="b-secoes">📁 Seções</button>
@@ -469,7 +477,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, push, onValue, onDisconnect, query, orderByChild, orderByValue, equalTo, limitToLast, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v0.57 · cardume-dev', VERSION_KEY = 'cardume_dev';
+const VERSION = 'v0.58 · cardume-dev', VERSION_KEY = 'cardume_dev';
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeycardume_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomaincardume_dev')       || 'hering-onboarding.firebaseapp.com',
@@ -591,6 +599,11 @@ const JANELA = 100;   // janela do canal por ts (geral = as sem assunto dela; a 
 let enviando = false;          // trava de envio (Enter e botão)
 let rascunhoEdicao = null;
 let vendoMencoes = false, mencoes = [];   // aba @ Menções (notificações cardume_mencao da própria pessoa)
+// ⭐ Favoritos (27/11/2026, docs/ideias/cardume-v0-banco.md › "Favoritos"): privados, nem o ADM lê. fav_tags/{uid}/{tag} = ts (atalho, sem push:
+// avisar é o 🔔 Seguir) e fav_msgs/{uid}/{canal}/{msgId} = ts (só os ids; o texto é lido da mensagem, com o acesso de quem abre).
+// Sem protótipo: #constructor / #__proto__ são #tags válidas (Armadilha da auditoria de 26/11).
+let vendoFavs = false, favTags = Object.create(null), favMsgs = Object.create(null);
+const MAX_FAV_TAGS = 30, MAX_FAV_MSGS = 100;   // 100 = no máximo 100 leituras pequenas ao abrir ⭐ Favoritos
 let alvoMsg = '';
 let destaque = { id: '', ate: 0 };   // mensagem destacada (sobrevive aos redesenhos da lista)              // ?m= ou clique numa menção: rolar até a mensagem e destacar     // { id, valor, ini, fim } — preserva o editor quando chega mensagem nova
 const chaveRascunho = (id, aid) => 'cardume_rascunho_' + (user ? user.uid : '') + '_' + id + (aid ? '~' + aid : '');
@@ -812,6 +825,8 @@ function iniciarOuvintes() {
   ouvir('avisos', ref(db, B + 'avisos/' + uid), s => { avisos = s.val() || {}; renderLista(); renderCabecalho(); renderLado(); }, () => {});
   ouvir('secoes', ref(db, B + 'secoes/' + uid), s => { const v = s.val() || {}; secoes = { s: v.s || {}, c: v.c || {}, r: v.r || {} }; renderLista(); if (atual) renderLado(); }, () => {});
   ouvir('seguidas', ref(db, B + 'seguidas/' + uid), s => { seguidas = s.val() || {}; if (vendoTag) renderMsgs(); }, () => {});
+  ouvir('favTags', ref(db, B + 'fav_tags/' + uid), s => { favTags = Object.assign(Object.create(null), s.val() || {}); if (vendoTag || vendoFavs) renderMsgs(); }, () => {});
+  ouvir('favMsgs', ref(db, B + 'fav_msgs/' + uid), s => { favMsgs = Object.assign(Object.create(null), s.val() || {}); if (vendoFavs || atual) renderMsgs(); }, () => {});
   ouvir('mencoes', query(ref(db, B + 'mencoes/' + uid), orderByChild('ts'), limitToLast(100)), s => {
     const v = s.val() || {};
     mencoes = Object.keys(v).map(k => Object.assign({ _k: k }, v[k])).filter(n => n && ID_RE.test(String(n.c || '')) && ID_RE.test(String(n.m || ''))).sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -825,7 +840,7 @@ function iniciarOuvintes() {
 // ═══ Lista de canais ═══
 // Não lidas por assunto (ultima_a + lidas_a; "_geral" herda o lido antigo do canal). Canal sem ultima_a = cálculo antigo.
 const lidoA = (id, k) => { const v = (lidasA[id] || {})[k]; return typeof v === 'number' ? v : k === '_geral' ? (lidas[id] || 0) : 0; };
-const vendoAgora = (id, k) => id === atual && (assuntoAtual || '_geral') === k && !vendoTag && !vendoMencoes && !vendoPessoa && conversaVisivel();
+const vendoAgora = (id, k) => id === atual && (assuntoAtual || '_geral') === k && !vendoTag && !vendoMencoes && !vendoPessoa && !vendoFavs && conversaVisivel();
 const naoLidoA = (id, k) => { const u = (ultA[id] || {})[k]; return !!u && typeof u.ts === 'number' && u.uid !== user.uid && u.ts > lidoA(id, k) && !vendoAgora(id, k); };
 // O canal acende por geral e pelos assuntos que a pessoa já abriu (tem lidas_a); assunto nunca aberto ou encerrado só mostra o ponto na faixa.
 // 🧵 aviso por assunto (avisos_a; mesmo critério da função: ausente, estranho ou vencido = como o canal)
@@ -890,6 +905,7 @@ $('lista-canais').addEventListener('click', e => { const b = e.target.closest('[
 // ═══ Canal aberto ═══
 function abrirCanal(id, foco, aid) {
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
+  sairDosFavs();
   vendoTag = ''; vendoPessoa = '';
   if (aid === undefined && atual === id) aid = assuntoAtual;   // reabrir o mesmo canal (membros mudaram, Sonar) mantém o assunto
   aid = typeof aid === 'string' && AID_RE.test(aid) ? aid : '';
@@ -959,7 +975,7 @@ function abrirNaMensagem(c, m) {
 }
 function renderBarraAssuntos() {
   const bar = $('assuntos-barra'), id = atual;
-  if (!id || vendoMencoes || vendoTag || vendoPessoa || !podeLerCanal(id)) { bar.hidden = true; bar.replaceChildren(); return; }
+  if (!id || vendoMencoes || vendoTag || vendoPessoa || vendoFavs || !podeLerCanal(id)) { bar.hidden = true; bar.replaceChildren(); return; }
   bar.hidden = false; bar.replaceChildren();
   const rol = el('div', 'assuntos-rolagem');   // os chips rolam; o ⚙️ fica fixo à direita (sempre à vista)
   const foco = document.activeElement && bar.contains(document.activeElement) ? document.activeElement.dataset.aid : null;
@@ -1087,6 +1103,7 @@ function renderMsgs() {
   if (vendoMencoes) { renderMencoes(log); return; }
   if (vendoTag) { renderTag(log); return; }
   if (vendoPessoa) { renderPessoa(log); return; }
+  if (vendoFavs) { renderFavs(log); return; }
   const id = atual, c = canais[id];
   if (!id) { log.append(vazio('🐚', 'Escolha um canal à esquerda.')); return; }
   if (!ehTema(id) && !ehNotas(id) && !ehPerm(id) && c === null && souAdm()) {   // squad sem canal: o "Ativar" também aqui (antes só no ℹ️ Detalhes — com o painel fechado, a pessoa via uma conversa vazia sem saída)
@@ -1240,7 +1257,7 @@ function verRegras() {
 const fixFoco = sel => { const x = $('faixa-fix').querySelector(sel); if (x) x.focus(); };   // depois de trocar a fixada, o foco fica no mesmo controle
 function renderFaixaFix() {   // a faixa do alto: a fixada do topo (uma por vez) e o aviso de regras
   const f = $('faixa-fix'), id = atual;
-  if (!id || vendoMencoes || vendoTag || vendoPessoa || !podeLerCanal(id)) { f.hidden = true; f.replaceChildren(); return; }
+  if (!id || vendoMencoes || vendoTag || vendoPessoa || vendoFavs || !podeLerCanal(id)) { f.hidden = true; f.replaceChildren(); return; }
   const topo = fixadasDo('topo'), novas = regrasNovas(id);
   f.replaceChildren();
   if (topo.length) {
@@ -1419,6 +1436,7 @@ function renderMsg(m) {
   }
   if (podeReagir) { const rr = acaoBtn('', '😀', 'Reagir'); rr.onclick = () => { rxAbrindo = m.id; renderMsgs(); const o = document.querySelector('[data-msg="' + CSS.escape(m.id) + '"] .rx-op'); if (o) o.focus(); }; ac.append(rr); }
   if (ativo && souMembro(atual)) { const rb = acaoBtn('', '↩️', 'Responder'); rb.onclick = () => responderA(m); ac.append(rb); }
+  if (podeLerCanal(atual) && ID_RE.test(m.id)) { const sv = ehSalva(atual, m.id), sb = acaoBtn('', sv ? '⭐' : '☆', sv ? 'Salva' : 'Salvar', sv ? 'Salva em ⭐ Favoritos: tirar' : 'Salvar em ⭐ Favoritos'); sb.setAttribute('aria-pressed', String(sv)); sb.onclick = () => salvarMsg(atual, m.id, !sv); ac.append(sb); }
   if (souMembro(atual) && !ehNotas(atual) && !ehPerm(atual) && !m.enc && (typeof m.texto === 'string' || (m.gif && typeof m.gif === 'object'))) { const fw = acaoBtn('', '⏩', 'Encaminhar'); fw.onclick = () => modalEncaminhar(m); ac.append(fw); }
   if (podeFixar(atual)) { const fb = acaoBtn('', '📌', ehFixada(m.id) ? 'Fixada' : 'Fixar', ehFixada(m.id) ? 'Fixada: mover ou desafixar' : 'Fixar no topo ou como regra do canal'); fb.onclick = () => modalFixar(m); ac.append(fb); }
   if ((souMembro(atual) || souAdm()) && !ehNotas(atual)) { const r = acaoBtn('', '📝', 'No card', 'Registrar no card do Maré'); r.onclick = () => modalRegistrar(m); ac.append(r); }
@@ -1427,7 +1445,7 @@ function renderMsg(m) {
     const x = acaoBtn('perigo', '🗑', 'Apagar'); x.onclick = () => apagar(m); ac.append(x);
   }
   if (ac.childNodes.length) {
-    box.append(ac);
+    box.append(ac); box.style.setProperty('--n-acoes', String(ac.childNodes.length));
     if (msgTocada === m.id) box.classList.add('tocada');
     box.addEventListener('click', e => {   // no toque não há hover: tocar na mensagem mostra as ações dela (tocar de novo esconde)
       if (!TOQUE.matches || e.target.closest('a,button,textarea,input')) return;
@@ -1818,7 +1836,7 @@ function abrirMencao(rec) {
 }
 function renderMencoes(log) {
   $('canal-titulo').textContent = '@ Menções'; $('canal-sub').textContent = 'Onde mencionaram você na Concha';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true; $('assuntos-barra').hidden = true;
   if (!mencoes.length) { log.append(vazio('🔔', 'Ninguém mencionou você ainda. Quando alguém escrever @' + nomePessoa(user.uid) + ' num canal, aparece aqui.')); return; }
   const barra = el('div', 'mencoes-acoes');   // 🧹 limpar a SUA lista (as mensagens continuam nos canais)
   if (mencoes.some(x => !x.lida)) { const l = el('button', '', '✓ Marcar todas como lidas'); l.type = 'button'; l.onclick = () => marcarMencoesLidas(); barra.append(l); }
@@ -1858,7 +1876,7 @@ async function limparMencoes() {
 }
 function abrirMencoes() {
   Object.keys(trechos).forEach(k => delete trechos[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
-  soltarCanal(); vendoTag = ''; vendoPessoa = '';
+  soltarCanal(); vendoTag = ''; vendoPessoa = ''; sairDosFavs();
   atual = ''; vendoMencoes = true; $('b-mencoes').setAttribute('aria-current', 'true');
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
 }
@@ -1871,9 +1889,10 @@ function abrirTag(k, deMsg) {
   if (!tagOk(k)) return;
   if (atual) tagVolta = { c: atual, a: assuntoAtual, m: ID_RE.test(deMsg || '') ? deMsg : '' };
   else if (vendoMencoes) tagVolta = { mencoes: true };
+  else if (vendoFavs) tagVolta = { favs: true };
   else if (!vendoTag) tagVolta = null;   // de #tag para #tag (Sonar) mantém a volta original
   Object.keys(curtas).forEach(x => delete curtas[x]);
-  soltarCanal();
+  soltarCanal(); sairDosFavs();
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   atual = ''; vendoTag = k; vendoPessoa = ''; tagItens = null;
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
@@ -1886,24 +1905,25 @@ function abrirTag(k, deMsg) {
 function voltarDaTag() {   // volta à conversa (no assunto e na mensagem de onde saiu) ou às @ Menções
   const v = tagVolta; tagVolta = null; if (!v) return;
   if (v.mencoes) { abrirMencoes(); return; }
+  if (v.favs) { abrirFavs(); return; }
   if (v.m) alvoMsg = v.m;
   abrirCanal(v.c, true, v.a || '');
 }
 function curtaDe(c, m) {
   const k = c + '/' + m;
-  if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: autorDe(v), tr: resumoMsg(v) }; if (vendoTag) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag) renderMsgs(); }); }
+  if (!(k in curtas)) { curtas[k] = null; get(ref(db, B + 'msgs/' + c + '/' + m)).then(s => { const v = s.val(); curtas[k] = !v || v.apagada ? { uid: '', tr: '(mensagem apagada)' } : { uid: autorDe(v), tr: resumoMsg(v) }; if (vendoTag || vendoFavs) renderMsgs(); }).catch(() => { curtas[k] = { uid: '', tr: '(sem acesso a este canal)' }; if (vendoTag || vendoFavs) renderMsgs(); }); }
   return curtas[k];
 }
 function renderTag(log) {
   const k = vendoTag;
   $('canal-titulo').textContent = '#' + k; $('canal-sub').textContent = 'Mensagens com #' + k + ' nos seus canais';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true; $('assuntos-barra').hidden = true;
   const v = tagVolta;
-  if (v && (v.mencoes || souMembro(v.c) || souAdm())) {
-    const bv = el('button', 'voltar-tag', '← ' + (v.mencoes ? 'Voltar para @ Menções' : 'Voltar para # ' + nomeCanal(v.c))); bv.type = 'button';
+  if (v && (v.mencoes || v.favs || souMembro(v.c) || souAdm())) {
+    const bv = el('button', 'voltar-tag', '← ' + (v.mencoes ? 'Voltar para @ Menções' : v.favs ? 'Voltar para ⭐ Favoritos' : 'Voltar para # ' + nomeCanal(v.c))); bv.type = 'button';
     bv.onclick = voltarDaTag; log.append(bv);
   }
-  log.append(botaoSeguir(k));
+  log.append(botaoSeguir(k), botaoFavTag(k));
   if (!tagItens) { log.append(vazio('', 'Procurando #' + k + '…')); return; }
   if (!tagItens.length) { log.append(vazio('#️⃣', 'Nenhuma mensagem com #' + k + ' nos seus canais.')); return; }
   tagItens.forEach(it => {
@@ -1915,11 +1935,70 @@ function renderTag(log) {
     log.append(b);
   });
 }
+// ═══ ⭐ Favoritos: #tags favoritas (atalho para a tela da #tag) e mensagens salvas — tudo só da pessoa ═══
+function sairDosFavs() { if (vendoFavs) { vendoFavs = false; $('b-favs').setAttribute('aria-current', 'false'); } }
+const ehFavTag = k => Object.prototype.hasOwnProperty.call(favTags, k) && typeof favTags[k] === 'number';
+function ehSalva(c, m) { const o = Object.prototype.hasOwnProperty.call(favMsgs, c) ? favMsgs[c] : null; return !!o && typeof o === 'object' && Object.prototype.hasOwnProperty.call(o, m) && typeof o[m] === 'number'; }
+const favTagsLista = () => Object.keys(favTags).filter(t => tagOk(t) && ehFavTag(t)).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+function salvasLista() {   // a mais nova primeiro; só ids válidos (o resto do nó é ignorado)
+  const r = [];
+  Object.keys(favMsgs).forEach(c => { if (!ID_RE.test(c)) return; const o = favMsgs[c]; if (!o || typeof o !== 'object') return; Object.keys(o).forEach(m => { if (ID_RE.test(m) && typeof o[m] === 'number') r.push({ c, m, ts: o[m] }); }); });
+  return r.sort((a, b) => b.ts - a.ts);
+}
+async function salvarMsg(c, m, sim) {
+  if (!user || !ID_RE.test(c) || !ID_RE.test(m)) return;
+  if (sim && salvasLista().length >= MAX_FAV_MSGS) { toast('Você já salvou ' + MAX_FAV_MSGS + ' mensagens. Tire alguma em ⭐ Favoritos.'); return; }
+  try { await set(ref(db, B + 'fav_msgs/' + user.uid + '/' + c + '/' + m), sim ? serverTimestamp() : null); toast(sim ? '⭐ Mensagem salva em Favoritos.' : 'Mensagem tirada dos salvos.'); }
+  catch (e) { falhou(sim ? 'salvar a mensagem' : 'tirar dos salvos', e); }
+}
+async function favoritarTag(t, sim) {
+  if (!user || !tagOk(t)) return;
+  if (sim && favTagsLista().length >= MAX_FAV_TAGS) { toast('Você já tem ' + MAX_FAV_TAGS + ' #tags favoritas. Tire alguma em ⭐ Favoritos.'); return; }
+  try { await set(ref(db, B + 'fav_tags/' + user.uid + '/' + t), sim ? serverTimestamp() : null); toast(sim ? '⭐ #' + t + ' nos Favoritos.' : '#' + t + ' saiu dos Favoritos.'); }
+  catch (e) { falhou(sim ? 'favoritar a #tag' : 'tirar a #tag dos favoritos', e); }
+}
+function botaoFavTag(k) {
+  const fav = ehFavTag(k), b = el('button', 'fav-tag-btn', fav ? '⭐ Nos favoritos' : '☆ Favoritar #' + k);
+  b.type = 'button'; b.setAttribute('aria-pressed', String(fav));
+  b.title = fav ? 'Tirar #' + k + ' dos ⭐ Favoritos' : 'Guardar #' + k + ' em ⭐ Favoritos para abrir rápido (não avisa: para avisar, 🔔 Seguir)';
+  b.onclick = () => favoritarTag(k, !fav); return b;
+}
+function abrirFavs() {
+  Object.keys(curtas).forEach(k => delete curtas[k]);   // trecho fresco a cada abertura (mensagem editada/apagada, acesso perdido)
+  soltarCanal(); vendoTag = ''; vendoPessoa = '';
+  if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
+  atual = ''; vendoFavs = true; $('b-favs').setAttribute('aria-current', 'true');
+  $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
+}
+$('b-favs').onclick = abrirFavs;
+function renderFavs(log) {
+  $('canal-titulo').textContent = '⭐ Favoritos'; $('canal-sub').textContent = 'Suas #tags e mensagens salvas. Só você vê.';
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true; $('assuntos-barra').hidden = true;
+  const tags = favTagsLista(), itens = salvasLista().slice(0, MAX_FAV_MSGS);
+  if (!tags.length && !itens.length) { log.append(vazio('⭐', 'Nada nos favoritos ainda. Numa mensagem, use ☆ Salvar; na tela de uma #tag, ☆ Favoritar.')); return; }
+  log.append(el('h3', 'fav-h', '#️⃣ #tags favoritas'));
+  if (tags.length) {
+    const w = el('div', 'fav-tags');
+    tags.forEach(t => { const b = el('button', 'tag', '#' + t); b.type = 'button'; b.setAttribute('aria-label', 'Ver as mensagens com #' + t); b.title = 'Mensagens com #' + t + ' nos seus canais'; b.onclick = () => abrirTag(t); w.append(b); });
+    log.append(w);
+  } else log.append(el('p', 'subtitulo', 'Toque numa #tag e use ☆ Favoritar.'));
+  log.append(el('h3', 'fav-h', '💬 Mensagens salvas'));
+  if (!itens.length) { log.append(el('p', 'subtitulo', 'Passe o mouse numa mensagem (no celular, toque nela) e use ☆ Salvar.')); return; }
+  itens.forEach(it => {
+    const cu = curtaDe(it.c, it.m), linha = el('div', 'fav-linha'), viva = !!(cu && cu.uid);
+    const b = el('button', 'mencao-item'); b.type = 'button';
+    b.append(el('b', '', (ehNotas(it.c) ? '' : '# ') + nomeCanal(it.c) + (viva ? ' · ' + nomePessoa(cu.uid) : '')), el('span', 'sub', cu ? cu.tr : '…'), el('span', 'hora', 'salva em ' + dataHora(it.ts)));
+    b.onclick = () => { if (cu && !viva) { toast(cu.tr === '(mensagem apagada)' ? 'Essa mensagem foi apagada. Tire dos salvos na ⭐ ao lado.' : 'Você não tem mais acesso a esse canal.'); return; } abrirNaMensagem(it.c, it.m); };
+    const x = el('button', 'fav-tirar', '⭐'); x.type = 'button'; x.setAttribute('aria-label', 'Tirar dos salvos'); x.title = 'Tirar dos salvos';
+    x.onclick = () => salvarMsg(it.c, it.m, false);
+    linha.append(b, x); log.append(linha);
+  });
+}
 // ═══ 👤 Pessoa (pelo Sonar): sem conversa direta na Concha, mostra os canais seus em que ela também está ═══
 let vendoPessoa = '', pessoaCanais = null, pessoaVez = 0;
 function abrirPessoa(uid) {
   if (!ID_RE.test(uid)) return;
-  soltarCanal();
+  soltarCanal(); sairDosFavs();
   if (vendoMencoes) { vendoMencoes = false; $('b-mencoes').setAttribute('aria-current', 'false'); }
   atual = ''; vendoTag = ''; vendoPessoa = uid; pessoaCanais = null;
   $('app').dataset.tela = 'conversa'; renderLista(); renderMsgs(); renderLado(); $('canal-titulo').focus();
@@ -1930,7 +2009,7 @@ function abrirPessoa(uid) {
 function renderPessoa(log) {
   const uid = vendoPessoa, nome = nomePessoa(uid);
   $('canal-titulo').textContent = '👤 ' + nome; $('canal-sub').textContent = uid === user.uid ? 'Os seus canais' : 'Canais em que você e ' + nome.split(' ')[0] + ' estão';
-  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true;
+  $('rodape').hidden = true; $('b-lado').hidden = true; $('faixa-alvo').hidden = true; $('assuntos-barra').hidden = true;
   if (!pessoaCanais) { log.append(vazio('', 'Procurando os canais em comum…')); return; }
   if (!pessoaCanais.length) { log.append(vazio('👤', 'Vocês ainda não estão no mesmo canal. Num canal que você administra, ℹ️ Detalhes › Adicionar pessoa.')); return; }
   pessoaCanais.forEach(c => {
@@ -1948,6 +2027,7 @@ const AJUDA = [
   { id: 'secoes', ic: '📁', t: 'Seções na lista de canais', txt: 'Organize a lista do seu jeito. **Só você vê** suas seções.\n- **📁 Seções** (abaixo de ➕ Novo canal): crie (tem atalho para **⭐ Favoritos**), renomeie, mude a ordem e apague. Apagar devolve os canais à seção padrão (Squads/Temáticos).\n- Para pôr um canal numa seção: **ℹ️ Detalhes › 📁 Na sua lista** (ou "＋ Nova seção…" ali mesmo).\n- Clique no **título** da seção para recolher ou abrir. Recolhida, ela mostra quantos canais têm novas e deixa à vista o canal aberto. Vale em todos os seus aparelhos.' },
   { id: 'escrever', ic: '✍️', t: 'Escrever: formatação, emoji, GIF e links', txt: '- **Enter** envia; **Shift+Enter** quebra a linha. O rascunho fica guardado por canal e por assunto.\n- Formatação (botões da barra ou digitando): `**negrito**` (Ctrl+B), `_itálico_` (Ctrl+I), `~~riscado~~`, código entre crases, três crases numa linha antes e outra depois para um bloco, `- ` no começo da linha para lista e `> ` para citação. O **?** da barra mostra o guia.\n- **😀** abre os emojis (com busca e recentes); **GIF** busca na KLIPY (o GIF pode ir sem legenda).\n- Link `https://` vira link. Link de **card do Maré** vira o chip com o título do card.' },
   { id: 'mencoes', ic: '@', t: '@Menções', txt: '- Digite `@` (ou o botão **@**) e escolha a pessoa na lista, com a foto. Só aparecem membros do canal.\n- Quem você menciona recebe um aviso no **Sino** e push (se ativou no aparelho). O aviso não mostra o canal nem a mensagem: ela abre a Concha para ver.\n- **@ Menções** (no alto da lista) junta onde mencionaram ou responderam você. Abrir uma leva direto à mensagem, inclusive dentro de um assunto. **✓ Marcar todas como lidas** e **🧹 Limpar menções** cuidam da lista (limpar não apaga as mensagens dos canais).\n- Editar uma mensagem para pôr uma `@` não avisa a pessoa.' },
+  { id: 'favoritos', ic: '⭐', t: '⭐ Favoritos: #tags e mensagens salvas', txt: '- **⭐ Favoritos** (no alto da lista, abaixo de @ Menções) junta o que você quer achar rápido. Só você vê, nem o ADM.\n- **Mensagem:** passe o mouse (no celular, toque nela) e use **☆ Salvar**. Para tirar, **⭐ Salva** na mensagem ou a **⭐** ao lado dela em Favoritos. Abrir leva direto à mensagem, mesmo antiga ou dentro de um assunto.\n- **#tag:** na tela da tag, **☆ Favoritar** põe a #tag no alto dos Favoritos, para abrir com um toque. Favoritar **não avisa**: para receber aviso de mensagem nova, use **🔔 Seguir** (dá para fazer os dois).\n- Mensagem apagada, ou de um canal que você deixou, continua na lista avisando isso, até você tirar. A Concha guarda só onde a mensagem está, nunca uma cópia do texto.\n- Até 100 mensagens e 30 #tags.' },
   { id: 'citar', ic: '🧷', t: 'Citar um card do Maré ou um objetivo do Radar', txt: '- Digite `@card:` e parte do nome do card, ou `@objetivo:` e parte do nome do objetivo (também aparecem na lista do `@`). Escolha na lista: a mensagem leva o link e mostra o **chip** com o título, que abre o card no Maré ou o objetivo no Radar.\n- Os cards listados são os das squads que você já abriu no **Maré neste aparelho** (nos últimos 7 dias), com os da squad do canal primeiro. Não achou? Abra o board da squad no Maré, ou cole o link do card.\n- Os objetivos vêm do Radar (os ativos da sua torre).\n- Colar o link de um card ou de um objetivo também vira chip.' },
   { id: 'tags', ic: '#️⃣', t: '#tags: juntar o assunto', txt: '- Escreva `#` e uma palavra no meio do texto (ex.: `#banner`, `#BlackFriday`) ou use o botão **#**, que lista as #tags dos seus canais. Precisa de pelo menos uma letra: `#1966` não vira tag.\n- A #tag vira **etiqueta clicável**: abre a tela da tag com as mensagens que têm ela em **todos os seus canais**, da mais nova para a mais antiga.\n- Na tela da tag, **🔔 Seguir** avisa de toda mensagem nova com ela, mesmo em canal ou assunto silenciado. Deixar de seguir: no 🔔 do canal.\n- As #tags aparecem na busca (Ctrl/⌘+K), sem precisar de acento.' },
   { id: 'assuntos', ic: '🧵', t: 'Assuntos dentro do canal', txt: 'Para a conversa de um tema não se misturar com o resto, como os tópicos do Zulip.\n- A faixa abaixo do topo tem **💬 geral** (a conversa normal) e os **assuntos** do canal. **＋ Assunto** (no fim da faixa) cria um, com nome e emoji; qualquer pessoa do canal escreve nele.\n- Trocar de assunto troca a conversa, o rascunho e o lugar onde a mensagem vai (o campo mostra "Em 🧵 …", com o emoji do assunto).\n- Cada assunto mostra um **ponto** quando tem novas. O canal acende por geral, pelos assuntos que você já abriu e pelos que você segue. **✓ Marcar como lido** zera o canal.\n- **⚙️** do assunto: os avisos dele (veja "Avisos") e, para quem criou e quem administra o canal, **renomear**, trocar o **emoji**, **🔒 Encerrar** (vira só leitura: ninguém escreve, edita nem reage) e **🔓 Reabrir**. Encerrados ficam em "Encerrados (N)".\n- Se geral parecer curta porque os assuntos estão movimentados, use **Ver mais de geral**.' },
@@ -1959,7 +2039,7 @@ const AJUDA = [
   { id: 'ilha', ic: '🏝️', t: 'Ilha Dinâmica', txt: '- Ligue em **⚙️ Configurações › 🏝️ Ilha Dinâmica** e recarregue. A chave é da sua conta: vale em todos os aparelhos e vai chegar aos outros apps do Oceano (o Maré, por enquanto, segue com a Ilha dele, ligada em ⏲ Timers).\n- A pílula no alto mostra o seu **⏲ timer** que está rodando (com o tempo) e quantos mais há. Toque para ver todos, **pausar** ou **continuar**. Para **encerrar** ou abrir o card, ela leva ao Maré.\n- O **🔔** fica dentro da Ilha. Quando chega uma notificação (inclusive uma @menção da Concha), a pílula **alarga por uns segundos** mostrando quem e o quê.\n- **Esc** ou um toque fora fecham a Ilha.' },
   { id: 'tema', ic: '⚙️', t: 'Configurações: tema, peixes, notas e seções', txt: '- **⚙️** no alto da Concha reúne o que é seu: **🎨 Aparência** (tema e peixes do fundo), **📝 Minhas notas** (ativar/desativar) e **📁 Seções**.\n- O tema: **🌊 Como no Oceano** (o padrão, segue o que você escolheu no Oceano), **🌙 Abrolhos** (escuro), **☀️ Lençóis** (claro), **🌅 Entardecer** ou **🌴 Vice City**.\n- A escolha vale só para a Concha, neste aparelho, e muda na hora (também nas outras abas da Concha).' },
   { id: 'busca', ic: '🔍', t: 'Buscar (Ctrl/⌘+K)', txt: '- **Ctrl+K** (⌘K no Mac) ou **🔍 Buscar** na lista abre o Sonar, com as abas **Canais**, **#tags**, **Pessoas** e **Ajuda** (teclas 1–4 com a caixa vazia).\n- Começar com `#` busca só #tags. Sem acento funciona (`promocao` acha `#promoção`).\n- Escolher uma **pessoa** mostra os canais em que vocês dois estão.' },
-  { id: 'privacidade', ic: '🔒', t: 'Quem vê o quê', txt: '- Mensagens de um canal: só quem é membro (e o ADM, para moderação).\n- Suas **seções**, **avisos**, #tags seguidas e o que você já leu são só seus.\n- O aviso no Sino é genérico (o Sino é lido pela empresa); o canal e a mensagem ficam num registro que só você lê.\n- O que vai para um **card do Maré** fica visível para toda a Hering.' },
+  { id: 'privacidade', ic: '🔒', t: 'Quem vê o quê', txt: '- Mensagens de um canal: só quem é membro (e o ADM, para moderação).\n- Suas **seções**, **avisos**, #tags seguidas, **⭐ Favoritos** e o que você já leu são só seus.\n- O aviso no Sino é genérico (o Sino é lido pela empresa); o canal e a mensagem ficam num registro que só você lê.\n- O que vai para um **card do Maré** fica visível para toda a Hering.' },
   { id: 'atalhos', ic: '⌨️', t: 'Atalhos', txt: '- **Ctrl/⌘+K**: buscar · **Enter**: enviar · **Shift+Enter**: nova linha\n- **Ctrl+B** / **Ctrl+I**: negrito / itálico\n- Na lista do `@` ou do `#`: **↑ ↓** escolhem, **Enter** ou **Tab** inserem, **Esc** fecha\n- **Esc**: cancela a resposta, fecha seletores e janelas' },
 ];
 let ajudaFoco = '';
@@ -2367,7 +2447,7 @@ function apagar(m) {
 function desfazer(id) { const p = pendentes.get(id); if (!p) return; clearTimeout(p.timer); pendentes.delete(id); renderMsgs(); }
 // Marca como lido (só sobe; um write por mudança, com respiro).
 function marcarLido() {   // por assunto (lidas_a); a vista de geral também avança o lido antigo do canal
-  const id = atual; if (!id || !(souMembro(id) || ehPerm(id)) || !conversaVisivel() || vendoTag || vendoMencoes || vendoPessoa || !msgs.length) return;
+  const id = atual; if (!id || !(souMembro(id) || ehPerm(id)) || !conversaVisivel() || vendoTag || vendoMencoes || vendoPessoa || vendoFavs || !msgs.length) return;
   const ts = msgs[msgs.length - 1].ts, k = assuntoAtual || '_geral';
   if (ts <= lidoA(id, k)) return;
   clearTimeout(marcarLido._t);
@@ -2793,7 +2873,7 @@ function limparSessao() {
   limparGif(); fecharGifs(false); gifCache.clear();   // GIF escolhido e buscas são da conta
   cancelarResposta(false); Object.keys(citVivas).forEach(k => delete citVivas[k]);   // as escutas já saíram com as outras (limparSessao)
   reacoes = {}; rxAbrindo = ''; rxFoco = null; rxAvisados.clear();   // reações e avisos já mandados são da conta
-  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; tagsUlt = Object.create(null); tagsUltEm = 0; avisos = {}; seguidas = {}; notasOn = false; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
+  atual = ''; editando = ''; rascunhoEdicao = null; entrada.value = ''; fecharSug(); vendoMencoes = false; vendoTag = ''; tagItens = null; tagVez++; vendoPessoa = ''; pessoaCanais = null; pessoaVez++; vendoFavs = false; favTags = Object.create(null); favMsgs = Object.create(null); $('b-favs').setAttribute('aria-current', 'false'); tagsUlt = Object.create(null); tagsUltEm = 0; avisos = {}; seguidas = {}; notasOn = false; vendoCanal = ''; secoes = { s: {}, c: {}, r: {} }; lidasA = {}; avisosA = {}; Object.keys(ultA).forEach(k => delete ultA[k]); Object.keys(curtas).forEach(k => delete curtas[k]); mencoes = []; alvoMsg = ''; Object.keys(trechos).forEach(k => delete trechos[k]); $('faixa-alvo').hidden = true; $('mencoes-n').hidden = true;
   $('lista-canais').replaceChildren(); $('log').replaceChildren(); $('lado').replaceChildren(); $('app').dataset.tela = 'canais';
 }
 // 🔔 Sino unificado (docs/ideias/sino-unificado.md, fase 1): o mesmo Sino dos outros apps, com os layouts por família.

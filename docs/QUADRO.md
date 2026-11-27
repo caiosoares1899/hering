@@ -8,7 +8,7 @@
 
 | Agente | Branch | Arquivos | Desde |
 |---|---|---|---|
-| Claude | `claude/ilha-concha` (worktree `~/hering-perfil`) | `mare-ilha-dev.js`, `cardume-dev.html` | 26/11/2026 |
+| Claude | `claude/concha-favoritos` (worktree `~/hering-fav`) | `cardume-dev.html`, `database.rules.json` (`fav_tags`, `fav_msgs`), `docs/ideias/cardume-v0-banco.md` | 27/11/2026 |
 
 
 ## Fila
@@ -19,6 +19,8 @@ Contratos prontos, na ordem. O Caio manda uma linha ("pegue o próximo da sua fi
 |---|---|---|---|
 | Codex | R3 | 🔍 Revisão cruzada do 📝 Minhas notas (canal `eu-{uid}`: terceiro tipo nas regras, ninguém além da dona lê/grava, nem ADM; `notas/{uid}`) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md#-minhas-notas--o-canal-só-seu-26112026-r3) |
 | Antigravity | R3 | 🛡️ `/auditoriaseguranca` do 📝 Minhas notas (privacidade das notas; ramos de ADM e PO retirados para `eu-*`) | [desenho](ideias/cardume-v0-banco.md#-minhas-notas--o-canal-só-seu-26112026-r3) |
+| Codex | R3 | 🔍 Revisão cruzada do ⭐ Favoritos da Concha (`fav_tags`, `fav_msgs`: só a dona, nem ADM; salvar só com leitura do canal; tirar sempre) — só revisar, comentar no PR | [desenho](ideias/cardume-v0-banco.md#-favoritos--tags-favoritas-e-mensagens-salvas-27112026-r3) |
+| Antigravity | R3 | 🛡️ `/auditoriaseguranca` do ⭐ Favoritos (privacidade dos salvos; salvar sem acesso ao canal; #tags com nome de protótipo) | [desenho](ideias/cardume-v0-banco.md#-favoritos--tags-favoritas-e-mensagens-salvas-27112026-r3) |
 | Codex | R0 | 💡 Dica "🧭 Boas-vindas em ❓ Ajuda" no `mare-dicas-dev.js` (bump do `?v=` em 4 páginas); contrato a escrever pelo Claude | [onboarding-mare](ideias/onboarding-mare.md) |
 
 ## Escalado
@@ -44,6 +46,7 @@ Só o Caio roda, depois do resync do clone. O agente que deixa um deploy para tr
 
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | ⭐ Concha: regras dos Favoritos (`fav_tags/{uid}`, `fav_msgs/{uid}`; só a dona) — **antes do merge**, a partir da branch `claude/concha-favoritos` | `firebase deploy --only database --project hering-onboarding` | 27/11/2026 |
 | Claude | 👤 Perfil da pessoa: nó `kanban/perfis/{uid}` (só a Hering lê, só a dona grava) — **antes do merge**, a partir da branch `claude/perfil-cartao` (já traz as regras da `main`); depois o backup passa a guardar `perfis` | `firebase deploy --only database --project hering-onboarding` e, após o merge, `firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario --project hering-onboarding` | 26/11/2026 |
 | Antigravity | 📢 Concha: regras dos canais permanentes `geral` e `oceano` (leitura para toda conta Hering; escrita exclusiva de ADM) — **antes do merge**, a partir da branch `antigravity/concha-canais-gerais` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |
 | Claude | 📝 Concha: regras das Minhas notas (canal `eu-{uid}` só da dona; nó `notas/{uid}`) — **antes do merge**, a partir da branch `claude/concha-minhas-notas` | `firebase deploy --only database --project hering-onboarding` | 26/11/2026 |

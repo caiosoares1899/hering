@@ -562,3 +562,26 @@ Pedido do Caio (escopo no PR #2011): dois canais permanentes da casa (**Geral**,
 - Para quem não é ADM: sem compositor, sem `＋ Assunto`, sem reação/resposta/fixar, fora dos destinos de `⏩ Encaminhar`, e aviso claro de canal somente leitura no cabeçalho, na conversa e em `ℹ️ Detalhes`.
 - Para ADM: compositor aberto, publicação, assuntos, fixadas e encaminhamento (com aviso de que toda conta da Concha verá).
 - `/subirproprod` (`.claude/skills/subirproprod/SKILL.md`): Passo 4 inclui o bloco pronto de aviso para o `#oceano` com resumo da promoção e rodapé `🤖 Agente Ágil` (autoria registrada continua na conta ADM que publica).
+
+## ⭐ Favoritos — #tags favoritas e mensagens salvas (27/11/2026, R3)
+
+Pedido do Caio: favoritar #tags e mensagens. Decisões dele (27/11): a ⭐ #tag é um **atalho separado** do 🔔 Seguir (não avisa; dá para fazer os dois), e tudo fica num botão **⭐ Favoritos** na lateral, abaixo de @ Menções.
+
+### Banco
+- `kanban/cardume/fav_tags/{uid}/{tag}` = horário (número). Mesma chave e validação do `seguidas` (1–32, minúscula, sem espaço). Só a dona lê e grava.
+- `kanban/cardume/fav_msgs/{uid}/{canal}/{msgId}` = horário (número ≤ now). **Só os ids, nunca o texto** (o trecho é lido da mensagem, com o acesso de quem abre; some se a mensagem for apagada ou o acesso cair). Só a dona lê e grava — **nem o ADM**.
+  - **Salvar** exige poder ler o canal (a mesma condição do `.read` de `msgs/$canal`: membro, ADM fora de `eu-*`, a própria nota, Geral e #oceano) e a mensagem existir e não estar apagada.
+  - **Tirar vale sempre** para a dona (mensagem apagada, limpa pela retenção, canal que ela deixou).
+  - Só folha: "limpar tudo", se vier, é `update` com um caminho por item.
+- Editado à mão no `database.rules.json` (o `scripts/regras_cardume.py` está defasado). Testes: `functions/rules/__tests__/conchaFavoritosRules.test.js`.
+
+### Página (`cardume-dev.html` v0.58)
+- Quarta tela de lista (`vendoFavs`), ao lado de `vendoMencoes`/`vendoTag`/`vendoPessoa`: cada ponto que conferia as outras confere esta (sinal de vida `vendo/`, faixa de fixadas, barra de assuntos, marcar como lida).
+- ☆ Salvar nas ações da mensagem (`podeLerCanal`); ☆ Favoritar na tela da #tag; "← Voltar para ⭐ Favoritos" na #tag aberta pelo chip.
+- Mapas sem protótipo (`Object.create(null)` + `hasOwnProperty`): `#constructor`/`#__proto__` são #tags válidas.
+- Limites na página: 100 mensagens e 30 #tags. **Custo:** abrir ⭐ Favoritos faz uma leitura pequena por mensagem salva (até 100), com cache até a próxima abertura; os dois nós ficam escutados (pequenos, só da pessoa).
+- Mensagem antiga, fora das últimas carregadas: o salto já cai no `mostrarAntiga` (faixa com a mensagem).
+- Testes: `docs/arezzo/testes/test_concha_favoritos.js` (cada escrita conferida nas regras reais).
+
+### Fronteira
+Nós novos privados (dona lê/grava; ADM não). Nenhum texto de outra pessoa é copiado para o banco; o trecho e o nome entram no DOM só por `textContent`. Salvar não dá acesso a nada: abrir a mensagem continua passando pela regra de `msgs`.
