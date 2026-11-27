@@ -24,6 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐚 Concha: ⭐ Favoritos — #tags favoritas e mensagens salvas, só suas (SÓ DEV, cardume v0.58, regras fav_tags e fav_msgs) — 2026-11-27
+
+- **(SÓ DEV)** Pedido do Caio: **⭐ Favoritos** no alto da lista da Concha, logo abaixo de @ Menções, com as **#tags favoritas** (chips que abrem a tela da #tag, com "← Voltar para ⭐ Favoritos") e as **mensagens salvas** (a mais nova primeiro, com canal, autor e trecho; abrir leva à mensagem, mesmo antiga ou dentro de um assunto).
+- **☆ Salvar** nas ações da mensagem (vira **⭐ Salva**; tocar de novo tira). Vale em todo canal que a pessoa lê, inclusive Geral, #oceano e 📝 Minhas notas. Mensagem apagada, ou de um canal que a pessoa deixou, continua na lista avisando isso até ela tirar na ⭐ ao lado.
+- **☆ Favoritar #tag** na tela da #tag, ao lado do 🔔 Seguir: é um **atalho, sem aviso** (decisão do Caio); dá para seguir e favoritar a mesma #tag.
+- **Banco (R3, regras + testes):** `kanban/cardume/fav_tags/{uid}/{tag}` e `kanban/cardume/fav_msgs/{uid}/{canal}/{msgId}` = horário. Só a dona lê e grava (nem o ADM). A mensagem salva guarda **só os ids**, nunca o texto; salvar exige poder ler o canal e a mensagem existir; tirar vale sempre. Limites: 100 mensagens e 30 #tags (na página).
+- A pílula de ações da mensagem passou a reservar o espaço conforme o número de ícones (o ☆ Salvar levou a 7–8), sem cobrir o texto. A faixa de assuntos do canal deixou de aparecer nas telas de lista (@ Menções, #tag, Pessoa, Favoritos).
+- Ajuda: tópico novo **⭐ Favoritos** e "Quem vê o quê" atualizado. Testes: `functions/rules/__tests__/conchaFavoritosRules.test.js` e `docs/arezzo/testes/test_concha_favoritos.js`.
+
 ### 🧭 Oceano: ícone do Painel no menu lateral só para ADM (SÓ DEV, oceano v2.08) — 2026-11-27
 
 - **(SÓ DEV)** Pedido do Caio: o ícone do Painel no menu lateral aparece **só para ADM**. Antes aparecia também para quem já tinha aberto o Painel alguma vez (`usoApps.painel`). Quem não é ADM e usa o Painel continua abrindo pelo endereço. `docs/arezzo/testes/test_oceano_menu_lateral.js` (26).
