@@ -255,7 +255,13 @@ button.tag:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
 textarea{width:100%;min-width:0;min-height:44px;padding:9px 10px;font-size:16px;resize:none;max-height:30vh;}
 .ajuda{margin-top:3px;color:var(--txt2);font-size:12px;}
 .so-toque{display:none;}
-@media (hover:none) and (pointer:coarse){.so-teclado{display:none;}.so-toque{display:inline;}}
+@media (hover:none) and (pointer:coarse){
+  .so-teclado{display:none;}
+  .so-toque{display:inline;}
+  .barra-fmt button{min-width:44px;min-height:44px;}
+  .barra-fmt button:active{background:rgba(var(--slate-rgb),.7);border-color:var(--glass-b);}
+  #b-enviar{min-height:44px;}
+}
 .sugestoes,.emojis,.gifs{position:absolute;z-index:3;bottom:100%;left:14px;right:14px;max-height:40vh;overflow:auto;padding:5px;border:1px solid var(--glass-b);border-radius:var(--r2);background:rgba(var(--ink-rgb),.95);box-shadow:var(--shadow),var(--specular);}
 .sugestao{display:flex;align-items:center;gap:8px;width:100%;text-align:left;margin-bottom:2px;min-height:36px;}
 .sugestao .avatar{width:24px;height:24px;font-size:10px;flex:none;}
@@ -460,7 +466,7 @@ button.msg-gif{cursor:pointer;}
           <textarea id="entrada" rows="1" aria-label="Mensagem" aria-describedby="ajuda" aria-autocomplete="list" aria-controls="sugestoes" placeholder="Escreva uma mensagem…" maxlength="4000"></textarea>
           <button class="primary" type="submit" id="b-enviar">Enviar</button>
         </form>
-        <p class="ajuda" id="ajuda"><span class="so-teclado">Enter envia · Shift+Enter quebra linha · </span><span class="so-toque">Toque numa mensagem para responder · </span>@ menciona (a pessoa é avisada) · #tag junta o assunto · **negrito** _itálico_ `código`</p>
+        <p class="ajuda" id="ajuda"><span class="so-teclado">Enter envia · Shift+Enter quebra linha · </span><span class="so-toque">Toque numa mensagem para responder.</span><span class="so-teclado">@ menciona (a pessoa é avisada) · #tag junta o assunto · **negrito** _itálico_ `código`</span></p>
       </div>
     </section>
 
