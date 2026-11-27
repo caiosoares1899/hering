@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const core = require('../genieCore');
-const { _tratar } = require('../genie');
+const { _tratar, _CONFIG } = require('../genie');
 
 const SECRETS = {
   host: 'https://exemplo.databricks.test',
@@ -68,6 +68,8 @@ async function chamar({
   fetchImpl,
   sleepImpl = async () => {},
   agoraFn = () => 1764270000000,
+  timeoutMs,
+  prazoMs,
   agora = new Date('2026-11-27T15:00:00Z'),
   secrets = SECRETS,
 }) {
@@ -101,6 +103,8 @@ async function chamar({
     fetch: fetchImpl,
     sleep: sleepImpl,
     agoraFn,
+    timeoutMs,
+    prazoMs,
     agora: () => agora,
     secrets,
   });
@@ -248,10 +252,11 @@ test('limites: 30/h por pessoa, 200/h na casa; GET estado e grafico não consome
   let r = await chamar({ decoded: tokenAdm, body: { pergunta: 'Mais uma pergunta' }, estado });
   assert.equal(r.status, 429); assert.equal(r.corpo.erro, 'limite_pessoa');
 
-  // Teto da casa bloqueia outro ADM mesmo sem uso pessoal
+  // Teto da casa bloqueia outro ADM mesmo sem uso pessoal (e não consome a cota individual)
   estado.kanban.genie.uso._casa = { h: hora, n: core.TETO_CASA_H };
   r = await chamar({ decoded: tokenEmailAdm, body: { pergunta: 'Pergunta do segundo ADM' }, estado });
   assert.equal(r.status, 429); assert.equal(r.corpo.erro, 'limite_casa');
+  assert.equal(estado.kanban.genie.uso.caio.n, 0, 'estorna cota da pessoa quando a casa recusa');
 
   // GET estado e GET grafico continuam passando mesmo com a cota estourada
   const fetchGet = async (url) => {
@@ -530,4 +535,87 @@ test('logs NUNCA contêm a pergunta, o SQL, os dados, o token, o spaceId ou o ho
   ]) {
     assert.equal(tudo.includes(proibido), false, `log vazou "${proibido}"`);
   }
+});
+
+
+test('orçamento total (~45 s) e timeoutSeconds 60: chamadas lentas encadeadas devolvem 504 genie_tempo antes de estourar', async () => {
+  core.limparCacheToken();
+  assert.equal(_CONFIG.timeoutSeconds, 60);
+  assert.equal(core.PRAZO_TOTAL_MS, 45000);
+  assert.equal(core.TIMEOUT_MS, 12000);
+
+  // Caso A: encadeamento de 4 chamadas próximas do limite (token + mensagem + query-result CLOSED + execute-query)
+  // Simula relógio avançando durante cada etapa lenta até ultrapassar 45 s antes do fim da 4ª chamada.
+  const estado = dbBase();
+  estado.kanban.genie = {
+    conversas: { adm1: { c_slow: { msgs: { m_slow: true } } } },
+  };
+  let relogio = 1_000_000;
+  const etapas = [];
+
+  const fetchLentoEncadeado = async (url, init) => {
+    assert.ok(init.signal, 'cada fetch recebe AbortSignal');
+    if (url.endsWith('/oidc/v1/token')) {
+      relogio += 11_500;
+      etapas.push(['token', relogio - 1_000_000]);
+      return jsonRes(200, { access_token: 'tok_slow', expires_in: 3600 });
+    }
+    if (url.endsWith('/messages/m_slow')) {
+      relogio += 11_500;
+      etapas.push(['msg', relogio - 1_000_000]);
+      return jsonRes(200, {
+        status: 'COMPLETED',
+        attachments: [{ attachment_id: 'att_slow', query: { query: 'SELECT 1' } }],
+      });
+    }
+    if (url.endsWith('/attachments/att_slow/query-result')) {
+      relogio += 11_500;
+      etapas.push(['qr', relogio - 1_000_000]);
+      return jsonRes(200, { statement_response: { status: { state: 'CLOSED' } } });
+    }
+    if (url.endsWith('/attachments/att_slow/execute-query')) {
+      // Orçamento restante nesta altura = 45000 - 34500 = 10500 ms (< 12000 ms). Simula estouro desse restante (AbortError).
+      relogio += 11_000; // total = 45500 ms (< 60000 ms)
+      etapas.push(['exec', relogio - 1_000_000]);
+      const ab = new Error('The operation was aborted');
+      ab.name = 'AbortError';
+      throw ab;
+    }
+    throw new Error('URL inesperada: ' + url);
+  };
+
+  const r = await chamar({
+    method: 'GET',
+    query: { acao: 'estado', conversa: 'c_slow', mensagem: 'm_slow' },
+    estado,
+    fetchImpl: fetchLentoEncadeado,
+    agoraFn: () => relogio,
+  });
+  assert.equal(r.status, 504);
+  assert.equal(r.corpo.erro, 'genie_tempo');
+  assert.ok(etapas.length === 4);
+  assert.ok(relogio - 1_000_000 < 60_000, 'encerrou antes de 60 s');
+
+  // Caso B: AbortController real cortando fetch lento quando orçamento total expira
+  core.limparCacheToken();
+  const t0 = Date.now();
+  const fetchPendurado = (url, init) => new Promise((resolve, reject) => {
+    if (init.signal.aborted) {
+      const e = new Error('aborted'); e.name = 'AbortError'; return reject(e);
+    }
+    init.signal.addEventListener('abort', () => {
+      const e = new Error('aborted'); e.name = 'AbortError'; reject(e);
+    }, { once: true });
+    setTimeout(() => resolve(jsonRes(200, { access_token: 't', expires_in: 3600 })), 500);
+  });
+  const rReal = await chamar({
+    body: { pergunta: 'Pergunta que trava no OAuth' },
+    fetchImpl: fetchPendurado,
+    agoraFn: Date.now,
+    timeoutMs: 200,
+    prazoMs: 70,
+  });
+  assert.equal(rReal.status, 504);
+  assert.equal(rReal.corpo.erro, 'genie_tempo');
+  assert.ok(Date.now() - t0 < 350, 'abortou pelo orçamento total real antes do timeout individual');
 });

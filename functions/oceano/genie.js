@@ -33,6 +33,14 @@ async function contarNaHora(db, caminho, limite, agora) {
   return !!(r && r.committed);
 }
 
+async function estornarNaHora(db, caminho, agora) {
+  const hora = core.horaChave(agora);
+  await db.ref(caminho).transaction((atual) => {
+    if (!atual || atual.h !== hora || typeof atual.n !== 'number' || atual.n <= 0) return atual;
+    return { h: hora, n: atual.n - 1 };
+  });
+}
+
 async function usuarioEhAdm(db, decoded) {
   const email = String((decoded && decoded.email) || '').trim().toLowerCase();
   const [roleSnap, admSnap] = await Promise.all([
@@ -60,20 +68,22 @@ function setHeader(res, nome, valor) {
   else if (typeof res.setHeader === 'function') res.setHeader(nome, valor);
 }
 
-function logar(acao, uid, codigo, inicioMs, ehErro) {
-  const ms = Date.now() - inicioMs;
+function logar(acao, uid, codigo, inicioMs, ehErro, fnAgoraMs = Date.now) {
+  const ms = Math.max(0, fnAgoraMs() - inicioMs);
   const linha = `[oceanoGenie] acao=${acao} uid=${uid || '-'} codigo=${codigo} ms=${ms}`;
   if (ehErro) console.error(linha);
   else console.log(linha);
 }
 
 async function tratar(req, res, deps = {}) {
-  const inicioMs = Date.now();
+  const fnAgoraMs = deps.agoraFn || Date.now;
+  const inicioMs = fnAgoraMs();
+  const prazoEm = inicioMs + (typeof deps.prazoMs === 'number' ? deps.prazoMs : core.PRAZO_TOTAL_MS);
   const auth = deps.auth || getAuth();
   const db = deps.db || getDatabase();
   const agora = typeof deps.agora === 'function' ? deps.agora() : new Date();
   const erro = (status, codigo, acao = '-', uid = '-') => {
-    logar(acao, uid, codigo, inicioMs, status >= 500);
+    logar(acao, uid, codigo, inicioMs, status >= 500, fnAgoraMs);
     return res.status(status).json({ erro: codigo });
   };
 
@@ -116,6 +126,7 @@ async function tratar(req, res, deps = {}) {
         return erro(429, 'limite_pessoa', acao, uid);
       }
       if (!(await contarNaHora(db, 'kanban/genie/uso/_casa', core.TETO_CASA_H, agora))) {
+        await estornarNaHora(db, `kanban/genie/uso/${uid}`, agora);
         return erro(429, 'limite_casa', acao, uid);
       }
 
@@ -125,15 +136,16 @@ async function tratar(req, res, deps = {}) {
         conversaId,
         fetchImpl: deps.fetch,
         sleepImpl: deps.sleep,
-        agoraFn: deps.agoraFn,
+        agoraFn: fnAgoraMs,
         timeoutMs: deps.timeoutMs,
+        prazoEm,
       });
 
       const patch = { ts: agora.toISOString(), ultima_msg: r.mensagem };
       patch[`msgs/${r.mensagem}`] = true;
       await db.ref(`kanban/genie/conversas/${uid}/${r.conversa}`).update(patch);
 
-      logar(acao, uid, r.status, inicioMs, false);
+      logar(acao, uid, r.status, inicioMs, false, fnAgoraMs);
       return res.status(200).json(r);
     }
 
@@ -152,13 +164,14 @@ async function tratar(req, res, deps = {}) {
         regConversa,
         fetchImpl: deps.fetch,
         sleepImpl: deps.sleep,
-        agoraFn: deps.agoraFn,
+        agoraFn: fnAgoraMs,
         timeoutMs: deps.timeoutMs,
+        prazoEm,
       });
       setHeader(res, 'Content-Type', 'image/png');
       setHeader(res, 'X-Content-Type-Options', 'nosniff');
       setHeader(res, 'Cache-Control', 'private, max-age=300');
-      logar(acao, uid, 'ok', inicioMs, false);
+      logar(acao, uid, 'ok', inicioMs, false, fnAgoraMs);
       if (typeof res.send === 'function') return res.status(200).send(buf);
       return res.status(200).end(buf);
     }
@@ -170,8 +183,9 @@ async function tratar(req, res, deps = {}) {
       regConversa,
       fetchImpl: deps.fetch,
       sleepImpl: deps.sleep,
-      agoraFn: deps.agoraFn,
+      agoraFn: fnAgoraMs,
       timeoutMs: deps.timeoutMs,
+      prazoEm,
     });
 
     const { _anexos, ...saida } = r;
@@ -179,7 +193,7 @@ async function tratar(req, res, deps = {}) {
       await db.ref(`kanban/genie/conversas/${uid}/${conversaId}/anexos`).update(_anexos);
     }
 
-    logar(acao, uid, saida.status || 'ok', inicioMs, false);
+    logar(acao, uid, saida.status || 'ok', inicioMs, false, fnAgoraMs);
     return res.status(200).json(saida);
   } catch (e) {
     const codigo = e instanceof core.ErroGenie ? e.codigo : 'interno';
@@ -193,9 +207,10 @@ exports.oceanoGenie = onRequest(
     region: 'us-central1',
     cors: SITE_ORIGIN,
     secrets: [DATABRICKS_HOST, GENIE_SPACE_ID, DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET],
-    timeoutSeconds: 30,
+    timeoutSeconds: 60,
     maxInstances: 3,
   },
   (req, res) => tratar(req, res)
 );
 exports._tratar = tratar;
+exports._CONFIG = { timeoutSeconds: 60 };

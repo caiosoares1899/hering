@@ -167,10 +167,17 @@ const t = (nome, cond, det) => {
         });
       }
       pollN++;
-      if (pollN === 1) {
+      const mid = u.searchParams.get('mensagem');
+      if (mid === 'msg_1' && pollN === 1) {
         return route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ conversa: u.searchParams.get('conversa'), mensagem: u.searchParams.get('mensagem'), status: 'FILTERING_CONTEXT' }),
+          body: JSON.stringify({ conversa: u.searchParams.get('conversa'), mensagem: mid, status: 'FILTERING_CONTEXT' }),
+        });
+      }
+      if (mid === 'msg_2' && pollN <= 2) {
+        return route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ conversa: u.searchParams.get('conversa'), mensagem: mid, status: pollN === 1 ? 'SUBMITTED' : 'EXECUTING_QUERY' }),
         });
       }
       return route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, status: 200,
@@ -186,10 +193,20 @@ const t = (nome, cond, det) => {
             { nome: 'Semana', tipo: 'STRING' },
             { nome: 'Pedidos', tipo: 'INT' },
             { nome: 'Ticket médio', tipo: 'DOUBLE' },
+            { nome: 'Canal detalhado com título longo para forçar rolagem horizontal', tipo: 'STRING' },
+            { nome: 'Região comercial expandida no relatório semanal', tipo: 'STRING' },
           ],
           linhas: [
-            ['2026-W47', '1240', '289.10'],
-            ['2026-W46', '1085', null],
+            ['2026-W47', '1240', '289.10', 'E-commerce Nacional', 'Sudeste / Sul consolidado'],
+            ['2026-W46', '1085', null, 'App Oficial iOS/Android', 'Brasil completo'],
+            ['2026-W45', '1020', '275.40', 'E-commerce Nacional', 'Sudeste / Sul consolidado'],
+            ['2026-W44', '980', '271.20', 'E-commerce Nacional', 'Sudeste / Sul consolidado'],
+            ['2026-W43', '950', '268.00', 'App Oficial iOS/Android', 'Brasil completo'],
+            ['2026-W42', '910', '264.50', 'E-commerce Nacional', 'Sudeste / Sul consolidado'],
+            ['2026-W41', '890', '261.10', 'App Oficial iOS/Android', 'Brasil completo'],
+            ['2026-W40', '875', '259.80', 'E-commerce Nacional', 'Sudeste / Sul consolidado'],
+            ['2026-W39', '860', '258.20', 'E-commerce Nacional', 'Sudeste / Sul consolidado'],
+            ['2026-W38', '840', '255.00', 'App Oficial iOS/Android', 'Brasil completo'],
           ],
           cortado: true,
           totalLinhas: 342,
@@ -199,7 +216,7 @@ const t = (nome, cond, det) => {
       });
     };
 
-    const { ctx, p, errs } = await openPage(U('ana', 'Ana Silva'), { genieHandler: handler });
+    const { ctx, p, errs } = await openPage(U('ana', 'Ana Silva'), { genieHandler: handler, ls: { fb_projectIdoceano_dev: 'projeto-falso-atacante' } });
     t('ADM vê o botão Polvo no menu lateral', await p.evaluate(() => !!document.querySelector('#rail [data-rail="polvo"]')), null);
 
     await p.click('#rail [data-rail="polvo"]');
@@ -229,13 +246,13 @@ const t = (nome, cond, det) => {
       return {
         txtOk: /cresceram 14,2%/.test(w.textContent),
         imgBlob: !!(img && !img.hidden && img.src.startsWith('blob:') && img.complete && img.naturalWidth > 0),
-        cortOk: !!(cort && /Mostrando as primeiras 2 linhas de 342/.test(cort.textContent)),
+        cortOk: !!(cort && /Mostrando as primeiras 10 linhas de 342/.test(cort.textContent)),
         sqlClosed: !!(det && det.open === false),
         numOk: !!(numCell && getComputedStyle(numCell).textAlign === 'right'),
         nullOk: !!(nullCell && nullCell.textContent === '—'),
       };
     });
-    t('COMPLETED exibe análise, gráfico PNG pronto (blob:), tabela cortada e SQL recolhido por padrão', done.txtOk && done.imgBlob && done.cortOk && done.sqlClosed && done.numOk && done.nullOk, done);
+    t('COMPLETED exibe análise, gráfico PNG pronto (blob:), tabela cortada e SQL recolhido por padrão (e URL fixa ignora fb_projectIdoceano_dev)', done.txtOk && done.imgBlob && done.cortOk && done.sqlClosed && done.numOk && done.nullOk && calls.some(c => c.m === 'POST'), done);
 
     // Lightbox ⛶ Ampliar + Esc
     await p.click('.polvo-viz-ac button');
@@ -249,19 +266,55 @@ const t = (nome, cond, det) => {
     await p.click('details.polvo-sql summary');
     t('clicar no summary expande o SQL', await p.evaluate(() => document.querySelector('details.polvo-sql').open === true && /SELECT semana/.test(document.querySelector('.polvo-sql-pre').textContent)), null);
 
-    // Sugestão envia na mesma conversa
+    // Preparar estado antes do seguimento: SQL segue aberto, tabela rolada horizontalmente
+    await p.evaluate(() => {
+      const tw = document.querySelector('.polvo-tab-wrap');
+      if (tw) tw.scrollLeft = 80;
+    });
+    const scrollLeftAntes = await p.evaluate(() => (document.querySelector('.polvo-tab-wrap') || {}).scrollLeft || 0);
+
+    // Sugestão envia na mesma conversa (com 2 consultas de estado antes de COMPLETED)
     await p.click('.polvo-sugs .polvo-chip');
     await p.waitForTimeout(300);
     const secondPost = calls.filter(c => c.m === 'POST')[1];
     t('chip de sugestão envia pergunta de seguimento na mesma conversa', !!(secondPost && secondPost.body.conversa === 'conv_1' && secondPost.body.pergunta === 'Quebrar por categoria'), secondPost);
-    const firstImgOkAfterFollowUp = await p.evaluate(() => {
-      const im = document.querySelector('#polvo-wrap .polvo-viz-img');
-      return !!im && !im.hidden && im.src.startsWith('blob:') && im.complete && im.naturalWidth > 0;
-    });
-    t('gráfico da 1ª resposta permanece íntegro após pergunta de seguimento', firstImgOkAfterFollowUp, null);
 
-    // Aguardar completar e testar + Nova conversa
-    await p.waitForTimeout(6600);
+    // Rola o feed para cima (> 80 px distante do fim) enquanto a 2ª pergunta está pendente
+    const posAntes = await p.evaluate(() => {
+      const f = document.getElementById('polvo-feed');
+      f.scrollTop = 10;
+      return { top: f.scrollTop, max: f.scrollHeight - f.clientHeight };
+    });
+    await p.waitForTimeout(6500); // após 2 consultas de estado da 2ª pergunta pendente (SUBMITTED -> EXECUTING_QUERY)
+    const durantePolls = await p.evaluate(() => {
+      const f = document.getElementById('polvo-feed');
+      const det = document.querySelector('details.polvo-sql');
+      const tw = document.querySelector('.polvo-tab-wrap');
+      const st = document.querySelectorAll('.polvo-status-tx');
+      return {
+        scrollTop: f.scrollTop,
+        sqlOpen: !!(det && det.open),
+        tabScrollLeft: tw ? tw.scrollLeft : 0,
+        statusTxt: st.length ? st[st.length - 1].textContent : '',
+      };
+    });
+    t('durante 2 polls de pergunta pendente: SQL segue aberto, scrollTop=10 e scroll horizontal preservados, texto de status atualizado', posAntes.max - posAntes.top > 80 && durantePolls.sqlOpen && durantePolls.scrollTop === 10 && durantePolls.tabScrollLeft === scrollLeftAntes && /Consultando os dados/.test(durantePolls.statusTxt), { posAntes, scrollLeftAntes, durantePolls });
+
+    await p.waitForTimeout(3500); // 3º poll conclui COMPLETED longe do fundo
+    const depoisFim = await p.evaluate(() => {
+      const f = document.getElementById('polvo-feed');
+      const det = document.querySelector('details.polvo-sql');
+      const tw = document.querySelector('.polvo-tab-wrap');
+      const im = document.querySelector('#polvo-wrap .polvo-viz-img');
+      return {
+        scrollTop: f.scrollTop,
+        sqlOpen: !!(det && det.open),
+        tabScrollLeft: tw ? tw.scrollLeft : 0,
+        imgOk: !!(im && !im.hidden && im.src.startsWith('blob:') && im.complete && im.naturalWidth > 0),
+        bots: document.querySelectorAll('#polvo-wrap .polvo-msg.bot').length,
+      };
+    });
+    t('ao concluir 2ª resposta longe do fundo: mantém scrollTop=10, SQL aberto e gráfico da 1ª resposta íntegro', depoisFim.bots === 2 && depoisFim.sqlOpen && depoisFim.scrollTop === 10 && depoisFim.tabScrollLeft === scrollLeftAntes && depoisFim.imgOk, { scrollLeftAntes, depoisFim });
     await p.click('#polvo-nova');
     await p.waitForTimeout(150);
     await p.fill('#polvo-in', 'Nova pergunta após limpar');

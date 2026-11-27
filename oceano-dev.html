@@ -1006,7 +1006,7 @@ const SVG_BORDO = '<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21
 const SVG_CONCHA = '<path d="M24 39 9 21c4-9 26-9 30 0z"/><path d="M24 39 16 16M24 39V14M24 39l8-23" opacity=".75"/>';
 const SVG_TRAV = '<path d="M6 32c6-8 10 4 18-4s12 4 18-4"/><path d="M6 22c6-8 10 4 18-4s12 4 18-4" opacity=".6"/>';
 const SVG_POLVO = '<circle cx="24" cy="18" r="9"/><circle cx="21" cy="17.5" r="1.3" fill="#fff" stroke="none"/><circle cx="27" cy="17.5" r="1.3" fill="#fff" stroke="none"/><path d="M16 24c-3 4-4 9-2 13M20 26c-1 5-1 10 0 14M28 26c1 5 1 10 0 14M32 24c3 4 4 9 2 13"/>';
-const OCEANO_GENIE_URL = 'https://us-central1-' + (function(){ try{ return localStorage.getItem('fb_projectIdoceano_dev'); }catch(e){ return ''; } }() || 'hering-onboarding') + '.cloudfunctions.net/oceanoGenie';
+const OCEANO_GENIE_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/oceanoGenie';
 const P = n => IS_DEV ? n+'-dev.html' : n+'.html';
 // Login único: Maré/Painel mandam quem não está logado pra cá com ?next=<página>. A pessoa FICA no Oceano (vê o Mural e a vitrine) e ganha um
 // atalho "↩ Continuar para o Maré" no topo — não é devolvida sozinha. Só páginas da família (lista fechada) — nunca um endereço de fora.
@@ -2955,6 +2955,10 @@ async function polvoFetchJson(url, opts){
   }
   return data || {};
 }
+function polvoPertoDoFim(feed){
+  return !feed || (feed.scrollHeight - feed.scrollTop - feed.clientHeight) <= 80;
+}
+
 async function polvoCarregarGrafico(item, g, seq){
   if(g.carregando || g.blobUrl || g.falhou) return;
   g.carregando = true;
@@ -2980,12 +2984,27 @@ async function polvoCarregarGrafico(item, g, seq){
     polvoBlobs.push(url);
     g.blobUrl = url;
     g.carregando = false;
-    renderPolvoFeed();
+    if(g._im && g._im.isConnected){
+      const feed = $('#polvo-feed');
+      const eraFim = polvoPertoDoFim(feed);
+      g._im.addEventListener('load', ()=>{ if(feed && eraFim) feed.scrollTop = feed.scrollHeight; }, { once: true });
+      g._im.src = url;
+      g._im.hidden = false;
+      if(g._msgEl) g._msgEl.hidden = true;
+      if(g._btZ) g._btZ.disabled = false;
+      if(g._btB) g._btB.disabled = false;
+    }
   }catch(e){
     if(seq !== polvoReqSeq) return;
     g.carregando = false;
     g.falhou = true;
-    renderPolvoFeed();
+    if(g._im && g._im.isConnected){
+      g._im.hidden = true;
+      if(g._msgEl){
+        g._msgEl.hidden = false;
+        g._msgEl.textContent = 'Não consegui carregar o gráfico pronto agora — os dados da resposta continuam disponíveis abaixo.';
+      }
+    }
   }
 }
 
@@ -2996,12 +3015,194 @@ function polvoEl(tag, cls, txt){
   return el;
 }
 
-function renderPolvoFeed(){
-  const wrap = $('#polvo-wrap'); if(!wrap) return;
-  wrap.replaceChildren();
+function polvoCriarItemEl(item, seq){
+  if(item.tipo === 'eu'){
+    return polvoEl('div', 'polvo-msg eu', item.texto);
+  }
+
+  const card = polvoEl('article', 'vidro polvo-msg bot');
+  const topo = polvoEl('div', 'polvo-bot-topo');
+  topo.appendChild(polvoEl('span', '', '🐙 Polvo'));
+  card.appendChild(topo);
+
+  if(item.estado === 'pensando'){
+    const st = polvoEl('div', 'polvo-status');
+    st.appendChild(polvoEl('span', 'polvo-dot'));
+    const stTx = polvoEl('span', 'polvo-status-tx', POLVO_STATUS_TXT[item.status] || 'Consultando o Polvo…');
+    item._statusEl = stTx;
+    st.appendChild(stTx);
+    card.appendChild(st);
+    return card;
+  }
+
+  item._statusEl = null;
+
+  if(item.estado === 'erro' || item.estado === 'demorou'){
+    const fl = polvoEl('div', 'polvo-falha');
+    fl.appendChild(polvoEl('span', '', item.erroMsg || polvoMsgErro(item.erroCodigo)));
+    if(item.perguntaOriginal){
+      const bt = polvoEl('button', 'btn sm', '↻ Tentar novamente');
+      bt.type = 'button';
+      bt.addEventListener('click', ()=>{ if(!polvoOcupado) polvoEnviarPergunta(item.perguntaOriginal); });
+      fl.appendChild(bt);
+    }
+    card.appendChild(fl);
+    return card;
+  }
+
+  const res = item.res || {};
+  if(res.texto){
+    card.appendChild(polvoEl('div', 'polvo-txt', res.texto));
+  }
+
+  const grafs = Array.isArray(res.graficos) ? res.graficos : [];
+  grafs.forEach(g=>{
+    if(!g || !g.anexo) return;
+    const vc = polvoEl('div', 'polvo-viz');
+    const vhd = polvoEl('div', 'polvo-viz-hd');
+    const desc = g.descricao || 'Gráfico pronto do Polvo';
+    vhd.appendChild(polvoEl('span', '', '📊 ' + desc));
+    const ac = polvoEl('div', 'polvo-viz-ac');
+    const btZ = polvoEl('button', 'btn sm', '⛶ Ampliar');
+    btZ.type = 'button'; btZ.disabled = !g.blobUrl;
+    const btB = polvoEl('button', 'btn sm', '⬇ Baixar PNG');
+    btB.type = 'button'; btB.disabled = !g.blobUrl;
+    btZ.addEventListener('click', ()=>{ if(g.blobUrl) abrirZoomPolvo(g.blobUrl, desc); });
+    btB.addEventListener('click', ()=>{
+      if(!g.blobUrl || !String(g.blobUrl).startsWith('blob:')) return;
+      const a = document.createElement('a');
+      a.href = g.blobUrl;
+      a.download = 'polvo-grafico-' + String(g.anexo).replace(/[^A-Za-z0-9_-]/g, '') + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    ac.appendChild(btZ); ac.appendChild(btB);
+    vhd.appendChild(ac);
+    vc.appendChild(vhd);
+
+    const vbox = polvoEl('div', 'polvo-viz-box');
+    const im = document.createElement('img');
+    im.className = 'polvo-viz-img';
+    im.alt = desc;
+    const msgEl = polvoEl('div', 'polvo-viz-msg', g.falhou ? 'Não consegui carregar o gráfico pronto agora — os dados da resposta continuam disponíveis abaixo.' : 'Carregando gráfico do Polvo…');
+    g._im = im; g._msgEl = msgEl; g._btZ = btZ; g._btB = btB;
+    if(g.blobUrl){
+      im.src = g.blobUrl; im.hidden = false; msgEl.hidden = true;
+    } else {
+      im.hidden = true; msgEl.hidden = false;
+      if(!g.falhou && !g.carregando) polvoCarregarGrafico(item, g, seq);
+    }
+    vbox.appendChild(im);
+    vbox.appendChild(msgEl);
+    vc.appendChild(vbox);
+    card.appendChild(vc);
+  });
+
+  const cols = Array.isArray(res.colunas) ? res.colunas : [];
+  const lins = Array.isArray(res.linhas) ? res.linhas : [];
+  if(cols.length){
+    const tc = polvoEl('div', 'polvo-tab-card');
+    const thd = polvoEl('div', 'polvo-tab-hd');
+    const nLin = lins.length;
+    const tot = typeof res.totalLinhas === 'number' ? res.totalLinhas : nLin;
+    const infoTxt = res.cortado
+      ? '📋 Resultado (' + nLin + ' exibidas' + (tot > nLin ? ' de ' + tot : '') + ')'
+      : '📋 Resultado (' + nLin + (nLin === 1 ? ' linha' : ' linhas') + ')';
+    thd.appendChild(polvoEl('span', '', infoTxt));
+    tc.appendChild(thd);
+    if(res.cortado){
+      tc.appendChild(polvoEl('div', 'polvo-cortado', '⚠️ Mostrando as primeiras ' + nLin + ' linhas' + (tot > nLin ? ' de ' + tot : '') + '. Refine a pergunta para filtrar um recorte menor.'));
+    }
+    const tw = polvoEl('div', 'polvo-tab-wrap');
+    const tab = polvoEl('table', 'polvo-tab');
+    const thead = document.createElement('thead');
+    const trH = document.createElement('tr');
+    const numFlags = cols.map(c=>polvoEhNum(c && c.tipo));
+    cols.forEach((c, ci)=>{
+      const th = polvoEl('th', numFlags[ci] ? 'num' : '', c && c.nome != null ? c.nome : 'col_' + (ci + 1));
+      th.scope = 'col';
+      trH.appendChild(th);
+    });
+    thead.appendChild(trH);
+    tab.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    lins.forEach(row=>{
+      const tr = document.createElement('tr');
+      const arr = Array.isArray(row) ? row : [];
+      cols.forEach((_, ci)=>{
+        const val = arr[ci];
+        const nulo = val === null || val === undefined;
+        const cls = [numFlags[ci] ? 'num' : '', nulo ? 'nulo' : ''].filter(Boolean).join(' ');
+        const td = polvoEl('td', cls, nulo ? '—' : String(val));
+        if(!nulo && String(val).length > 48) td.title = String(val);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tab.appendChild(tbody);
+    tw.appendChild(tab);
+    if(item._tabScrollLeft) requestAnimationFrame(()=>{ tw.scrollLeft = item._tabScrollLeft; });
+    tw.addEventListener('scroll', ()=>{ item._tabScrollLeft = tw.scrollLeft; }, { passive: true });
+    tc.appendChild(tw);
+    card.appendChild(tc);
+  }
+
+  if(res.sql){
+    const det = polvoEl('details', 'polvo-sql');
+    det.open = !!item._sqlAberto;
+    det.addEventListener('toggle', ()=>{ item._sqlAberto = det.open; });
+    det.appendChild(polvoEl('summary', 'polvo-sql-sum', '🧾 Ver SQL gerado'));
+    const bd = polvoEl('div', 'polvo-sql-bd');
+    if(res.descricao) bd.appendChild(polvoEl('div', 'polvo-sql-desc', res.descricao));
+    const topSql = polvoEl('div', 'polvo-sql-top');
+    const btCop = polvoEl('button', 'btn sm polvo-copiar', '📋 Copiar SQL');
+    btCop.type = 'button';
+    btCop.addEventListener('click', ()=>{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(res.sql).catch(()=>{});
+      }
+      btCop.textContent = '✓ Copiado';
+      setTimeout(()=>{ btCop.textContent = '📋 Copiar SQL'; }, 1600);
+    });
+    topSql.appendChild(btCop);
+    bd.appendChild(topSql);
+    const pre = polvoEl('pre', 'polvo-sql-pre');
+    pre.appendChild(polvoEl('code', '', res.sql));
+    bd.appendChild(pre);
+    det.appendChild(bd);
+    card.appendChild(det);
+  }
+
+  const sugs = Array.isArray(res.sugestoes) ? res.sugestoes.filter(Boolean) : [];
+  if(sugs.length){
+    const sg = polvoEl('div', 'polvo-sugs');
+    sg.appendChild(polvoEl('div', 'polvo-sugs-tit', 'Próximas perguntas sugeridas'));
+    const row = polvoEl('div', 'polvo-sugs-row');
+    sugs.forEach(s=>{
+      const b = polvoEl('button', 'polvo-chip', s);
+      b.type = 'button';
+      b.disabled = polvoOcupado;
+      b.addEventListener('click', ()=>polvoEnviarPergunta(s));
+      row.appendChild(b);
+    });
+    sg.appendChild(row);
+    card.appendChild(sg);
+  }
+
+  if(!res.texto && !grafs.length && !cols.length && !res.sql){
+    card.appendChild(polvoEl('div', 'polvo-txt', 'O Polvo concluiu a consulta, mas não retornou texto nem linhas para esta pergunta.'));
+  }
+
+  return card;
+}
+
+function renderPolvoFeed(opcoes){
+  const wrap = $('#polvo-wrap'), feed = $('#polvo-feed'); if(!wrap) return;
   const seq = polvoReqSeq;
 
   if(!polvoMsgs.length){
+    wrap.replaceChildren();
     const box = polvoEl('div', 'vidro polvo-vazio');
     box.appendChild(polvoEl('h3', '', 'Pergunte aos dados em português'));
     box.appendChild(polvoEl('p', '', 'O Polvo lê a sua pergunta, consulta o espaço configurado no Databricks e devolve a análise em texto, gráficos prontos, a tabela de resultado (até 200 linhas) e o SQL gerado para conferência.'));
@@ -3019,186 +3220,40 @@ function renderPolvoFeed(){
     return;
   }
 
+  const vz = wrap.querySelector('.polvo-vazio');
+  if(vz) vz.remove();
+
+  const rolar = (opcoes && opcoes.forcarScroll) || polvoPertoDoFim(feed);
   polvoMsgs.forEach(item=>{
-    if(item.tipo === 'eu'){
-      wrap.appendChild(polvoEl('div', 'polvo-msg eu', item.texto));
-      return;
+    if(!item._el || !item._el.isConnected){
+      item._el = polvoCriarItemEl(item, seq);
+      wrap.appendChild(item._el);
     }
-
-    const card = polvoEl('article', 'vidro polvo-msg bot');
-    const topo = polvoEl('div', 'polvo-bot-topo');
-    topo.appendChild(polvoEl('span', '', '🐙 Polvo'));
-    card.appendChild(topo);
-
-    if(item.estado === 'pensando'){
-      const st = polvoEl('div', 'polvo-status');
-      st.appendChild(polvoEl('span', 'polvo-dot'));
-      st.appendChild(polvoEl('span', '', POLVO_STATUS_TXT[item.status] || 'Consultando o Polvo…'));
-      card.appendChild(st);
-      wrap.appendChild(card);
-      return;
-    }
-
-    if(item.estado === 'erro' || item.estado === 'demorou'){
-      const fl = polvoEl('div', 'polvo-falha');
-      fl.appendChild(polvoEl('span', '', item.erroMsg || polvoMsgErro(item.erroCodigo)));
-      if(item.perguntaOriginal){
-        const bt = polvoEl('button', 'btn sm', '↻ Tentar novamente');
-        bt.type = 'button';
-        bt.addEventListener('click', ()=>{ if(!polvoOcupado) polvoEnviarPergunta(item.perguntaOriginal); });
-        fl.appendChild(bt);
-      }
-      card.appendChild(fl);
-      wrap.appendChild(card);
-      return;
-    }
-
-    const res = item.res || {};
-    if(res.texto){
-      card.appendChild(polvoEl('div', 'polvo-txt', res.texto));
-    }
-
-    const grafs = Array.isArray(res.graficos) ? res.graficos : [];
-    grafs.forEach(g=>{
-      if(!g || !g.anexo) return;
-      const vc = polvoEl('div', 'polvo-viz');
-      const vhd = polvoEl('div', 'polvo-viz-hd');
-      const desc = g.descricao || 'Gráfico pronto do Polvo';
-      vhd.appendChild(polvoEl('span', '', '📊 ' + desc));
-      const ac = polvoEl('div', 'polvo-viz-ac');
-      const btZ = polvoEl('button', 'btn sm', '⛶ Ampliar');
-      btZ.type = 'button'; btZ.disabled = !g.blobUrl;
-      const btB = polvoEl('button', 'btn sm', '⬇ Baixar PNG');
-      btB.type = 'button'; btB.disabled = !g.blobUrl;
-      btZ.addEventListener('click', ()=>{ if(g.blobUrl) abrirZoomPolvo(g.blobUrl, desc); });
-      btB.addEventListener('click', ()=>{
-        if(!g.blobUrl || !String(g.blobUrl).startsWith('blob:')) return;
-        const a = document.createElement('a');
-        a.href = g.blobUrl;
-        a.download = 'polvo-grafico-' + String(g.anexo).replace(/[^A-Za-z0-9_-]/g, '') + '.png';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      });
-      ac.appendChild(btZ); ac.appendChild(btB);
-      vhd.appendChild(ac);
-      vc.appendChild(vhd);
-
-      const vbox = polvoEl('div', 'polvo-viz-box');
-      const im = document.createElement('img');
-      im.className = 'polvo-viz-img';
-      im.alt = desc;
-      const msgEl = polvoEl('div', 'polvo-viz-msg', g.falhou ? 'Não consegui carregar o gráfico pronto agora — os dados da resposta continuam disponíveis abaixo.' : 'Carregando gráfico do Polvo…');
-      if(g.blobUrl){
-        im.src = g.blobUrl; im.hidden = false; msgEl.hidden = true;
-      } else {
-        im.hidden = true; msgEl.hidden = false;
-        if(!g.falhou && !g.carregando) polvoCarregarGrafico(item, g, seq);
-      }
-      vbox.appendChild(im);
-      vbox.appendChild(msgEl);
-      vc.appendChild(vbox);
-      card.appendChild(vc);
-    });
-
-    const cols = Array.isArray(res.colunas) ? res.colunas : [];
-    const lins = Array.isArray(res.linhas) ? res.linhas : [];
-    if(cols.length){
-      const tc = polvoEl('div', 'polvo-tab-card');
-      const thd = polvoEl('div', 'polvo-tab-hd');
-      const nLin = lins.length;
-      const tot = typeof res.totalLinhas === 'number' ? res.totalLinhas : nLin;
-      const infoTxt = res.cortado
-        ? '📋 Resultado (' + nLin + ' exibidas' + (tot > nLin ? ' de ' + tot : '') + ')'
-        : '📋 Resultado (' + nLin + (nLin === 1 ? ' linha' : ' linhas') + ')';
-      thd.appendChild(polvoEl('span', '', infoTxt));
-      tc.appendChild(thd);
-      if(res.cortado){
-        tc.appendChild(polvoEl('div', 'polvo-cortado', '⚠️ Mostrando as primeiras ' + nLin + ' linhas' + (tot > nLin ? ' de ' + tot : '') + '. Refine a pergunta para filtrar um recorte menor.'));
-      }
-      const tw = polvoEl('div', 'polvo-tab-wrap');
-      const tab = polvoEl('table', 'polvo-tab');
-      const thead = document.createElement('thead');
-      const trH = document.createElement('tr');
-      const numFlags = cols.map(c=>polvoEhNum(c && c.tipo));
-      cols.forEach((c, ci)=>{
-        const th = polvoEl('th', numFlags[ci] ? 'num' : '', c && c.nome != null ? c.nome : 'col_' + (ci + 1));
-        th.scope = 'col';
-        trH.appendChild(th);
-      });
-      thead.appendChild(trH);
-      tab.appendChild(thead);
-      const tbody = document.createElement('tbody');
-      lins.forEach(row=>{
-        const tr = document.createElement('tr');
-        const arr = Array.isArray(row) ? row : [];
-        cols.forEach((_, ci)=>{
-          const val = arr[ci];
-          const nulo = val === null || val === undefined;
-          const cls = [numFlags[ci] ? 'num' : '', nulo ? 'nulo' : ''].filter(Boolean).join(' ');
-          const td = polvoEl('td', cls, nulo ? '—' : String(val));
-          if(!nulo && String(val).length > 48) td.title = String(val);
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-      tab.appendChild(tbody);
-      tw.appendChild(tab);
-      tc.appendChild(tw);
-      card.appendChild(tc);
-    }
-
-    if(res.sql){
-      const det = polvoEl('details', 'polvo-sql');
-      det.open = false;
-      det.appendChild(polvoEl('summary', 'polvo-sql-sum', '🧾 Ver SQL gerado'));
-      const bd = polvoEl('div', 'polvo-sql-bd');
-      if(res.descricao) bd.appendChild(polvoEl('div', 'polvo-sql-desc', res.descricao));
-      const topSql = polvoEl('div', 'polvo-sql-top');
-      const btCop = polvoEl('button', 'btn sm polvo-copiar', '📋 Copiar SQL');
-      btCop.type = 'button';
-      btCop.addEventListener('click', ()=>{
-        if(navigator.clipboard && navigator.clipboard.writeText){
-          navigator.clipboard.writeText(res.sql).catch(()=>{});
-        }
-        btCop.textContent = '✓ Copiado';
-        setTimeout(()=>{ btCop.textContent = '📋 Copiar SQL'; }, 1600);
-      });
-      topSql.appendChild(btCop);
-      bd.appendChild(topSql);
-      const pre = polvoEl('pre', 'polvo-sql-pre');
-      pre.appendChild(polvoEl('code', '', res.sql));
-      bd.appendChild(pre);
-      det.appendChild(bd);
-      card.appendChild(det);
-    }
-
-    const sugs = Array.isArray(res.sugestoes) ? res.sugestoes.filter(Boolean) : [];
-    if(sugs.length){
-      const sg = polvoEl('div', 'polvo-sugs');
-      sg.appendChild(polvoEl('div', 'polvo-sugs-tit', 'Próximas perguntas sugeridas'));
-      const row = polvoEl('div', 'polvo-sugs-row');
-      sugs.forEach(s=>{
-        const b = polvoEl('button', 'polvo-chip', s);
-        b.type = 'button';
-        b.disabled = polvoOcupado;
-        b.addEventListener('click', ()=>polvoEnviarPergunta(s));
-        row.appendChild(b);
-      });
-      sg.appendChild(row);
-      card.appendChild(sg);
-    }
-
-    if(!res.texto && !grafs.length && !cols.length && !res.sql){
-      card.appendChild(polvoEl('div', 'polvo-txt', 'O Polvo concluiu a consulta, mas não retornou texto nem linhas para esta pergunta.'));
-    }
-
-    wrap.appendChild(card);
   });
 
   polvoAtualizarUiEnviar();
+  if(feed && rolar) feed.scrollTop = feed.scrollHeight;
+}
+
+function polvoAtualizarStatusItem(item, novoStatus){
+  item.status = novoStatus;
+  if(item._statusEl && item._statusEl.isConnected){
+    item._statusEl.textContent = POLVO_STATUS_TXT[novoStatus] || 'Consultando o Polvo…';
+  }
+}
+
+function polvoFinalizarItem(item){
   const feed = $('#polvo-feed');
-  if(feed) feed.scrollTop = feed.scrollHeight;
+  const rolar = polvoPertoDoFim(feed);
+  if(item._el && item._el.isConnected){
+    const novo = polvoCriarItemEl(item, polvoReqSeq);
+    item._el.replaceWith(novo);
+    item._el = novo;
+  } else {
+    renderPolvoFeed();
+  }
+  polvoAtualizarUiEnviar();
+  if(feed && rolar) feed.scrollTop = feed.scrollHeight;
 }
 
 function polvoPararPoll(){
@@ -3214,7 +3269,7 @@ function polvoAgendarEstado(item, seq, falhas){
       item.erroCodigo = 'demorou';
       item.erroMsg = polvoMsgErro('demorou');
       polvoOcupado = false;
-      renderPolvoFeed();
+      polvoFinalizarItem(item);
       return;
     }
     try{
@@ -3229,7 +3284,7 @@ function polvoAgendarEstado(item, seq, falhas){
         item.estado = 'ok';
         item.res = r;
         polvoOcupado = false;
-        renderPolvoFeed();
+        polvoFinalizarItem(item);
         return;
       }
       if(r.status === 'FAILED' || r.status === 'CANCELLED'){
@@ -3237,11 +3292,11 @@ function polvoAgendarEstado(item, seq, falhas){
         item.erroCodigo = r.status;
         item.erroMsg = r.status === 'CANCELLED' ? 'A consulta no Polvo foi cancelada.' : 'O Polvo não conseguiu concluir esta consulta.';
         polvoOcupado = false;
-        renderPolvoFeed();
+        polvoFinalizarItem(item);
         return;
       }
-      item.status = r.status || item.status;
-      renderPolvoFeed();
+      const prox = r.status || item.status;
+      if(prox !== item.status) polvoAtualizarStatusItem(item, prox);
       polvoAgendarEstado(item, seq, 0);
     }catch(e){
       if(seq !== polvoReqSeq) return;
@@ -3256,7 +3311,7 @@ function polvoAgendarEstado(item, seq, falhas){
       item.erroCodigo = cod || 'genie_falhou';
       item.erroMsg = polvoMsgErro(item.erroCodigo);
       polvoOcupado = false;
-      renderPolvoFeed();
+      polvoFinalizarItem(item);
     }
   }, POLVO_POLL_MS);
 }
@@ -3304,7 +3359,7 @@ async function polvoEnviarPergunta(textoOpcional){
       res: null,
     };
     polvoMsgs.push(botItem);
-    renderPolvoFeed();
+    renderPolvoFeed({ forcarScroll: true });
     renderRail();
     if(r.status === 'COMPLETED'){
       polvoAgendarEstado(botItem, seq, 0);

@@ -2,11 +2,11 @@
   "rules": {
     "kanban": {
       "campanhas": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
       },
       "campanhas_log": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
       },
       "gantt_marcos_globais": {
@@ -14,30 +14,14 @@
         "$id": {
           ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
           ".validate": "newData.hasChildren(['titulo','ini','fim','porUid','em'])",
-          "titulo": {
-            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-          },
-          "ini": {
-            ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-          },
-          "fim": {
-            ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-          },
-          "cor": {
-            ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)"
-          },
-          "porUid": {
-            ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)"
-          },
-          "porNome": {
-            ".validate": "newData.isString() && newData.val().length <= 80"
-          },
-          "em": {
-            ".validate": "newData.isNumber()"
-          },
-          "$outro": {
-            ".validate": false
-          }
+          "titulo": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+          "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+          "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+          "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+          "porUid": { ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)" },
+          "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "em": { ".validate": "newData.isNumber()" },
+          "$outro": { ".validate": false }
         }
       },
       "gantt_marcos_globais_dev": {
@@ -45,30 +29,14 @@
         "$id": {
           ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
           ".validate": "newData.hasChildren(['titulo','ini','fim','porUid','em'])",
-          "titulo": {
-            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-          },
-          "ini": {
-            ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-          },
-          "fim": {
-            ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-          },
-          "cor": {
-            ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)"
-          },
-          "porUid": {
-            ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)"
-          },
-          "porNome": {
-            ".validate": "newData.isString() && newData.val().length <= 80"
-          },
-          "em": {
-            ".validate": "newData.isNumber()"
-          },
-          "$outro": {
-            ".validate": false
-          }
+          "titulo": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+          "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+          "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+          "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+          "porUid": { ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)" },
+          "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "em": { ".validate": "newData.isNumber()" },
+          "$outro": { ".validate": false }
         }
       },
       "calendarios_gantt": {
@@ -78,62 +46,32 @@
           ".validate": "($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && newData.hasChildren(['meta','linhas','barras'])",
           "meta": {
             ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])",
-            "atualizadoEm": {
-              ".validate": "newData.isNumber()"
-            },
-            "porNome": {
-              ".validate": "newData.isString() && newData.val().length <= 80"
-            },
-            "arquivo": {
-              ".validate": "newData.isString() && newData.val().length <= 200"
-            },
-            "de": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-            },
-            "ate": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "atualizadoEm": { ".validate": "newData.isNumber()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "arquivo": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "de": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+            "ate": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+            "$outro": { ".validate": false }
           },
           "linhas": {
             "$lin": {
               ".validate": "newData.hasChildren(['rot','ordem'])",
-              "rot": {
-                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-              },
-              "ordem": {
-                ".validate": "newData.isNumber()"
-              },
-              "$outro": {
-                ".validate": false
-              }
+              "rot": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+              "ordem": { ".validate": "newData.isNumber()" },
+              "$outro": { ".validate": false }
             }
           },
           "barras": {
             "$id": {
               ".validate": "newData.hasChildren(['linha','ini','fim','txt'])",
-              "linha": {
-                ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)"
-              },
-              "ini": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "fim": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "txt": {
-                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
-              },
-              "$outro": {
-                ".validate": false
-              }
+              "linha": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" },
+              "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "txt": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+              "$outro": { ".validate": false }
             }
           },
-          "$outro": {
-            ".validate": false
-          }
+          "$outro": { ".validate": false }
         }
       },
       "calendarios_gantt_dev": {
@@ -143,62 +81,32 @@
           ".validate": "($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && newData.hasChildren(['meta','linhas','barras'])",
           "meta": {
             ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])",
-            "atualizadoEm": {
-              ".validate": "newData.isNumber()"
-            },
-            "porNome": {
-              ".validate": "newData.isString() && newData.val().length <= 80"
-            },
-            "arquivo": {
-              ".validate": "newData.isString() && newData.val().length <= 200"
-            },
-            "de": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-            },
-            "ate": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "atualizadoEm": { ".validate": "newData.isNumber()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "arquivo": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "de": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+            "ate": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+            "$outro": { ".validate": false }
           },
           "linhas": {
             "$lin": {
               ".validate": "newData.hasChildren(['rot','ordem'])",
-              "rot": {
-                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-              },
-              "ordem": {
-                ".validate": "newData.isNumber()"
-              },
-              "$outro": {
-                ".validate": false
-              }
+              "rot": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+              "ordem": { ".validate": "newData.isNumber()" },
+              "$outro": { ".validate": false }
             }
           },
           "barras": {
             "$id": {
               ".validate": "newData.hasChildren(['linha','ini','fim','txt'])",
-              "linha": {
-                ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)"
-              },
-              "ini": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "fim": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "txt": {
-                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
-              },
-              "$outro": {
-                ".validate": false
-              }
+              "linha": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)" },
+              "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "txt": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+              "$outro": { ".validate": false }
             }
           },
-          "$outro": {
-            ".validate": false
-          }
+          "$outro": { ".validate": false }
         }
       },
       "gantt_destaques": {
@@ -208,21 +116,11 @@
           ".validate": "$cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet'",
           "$id": {
             ".validate": "newData.hasChildren(['em'])",
-            "cor": {
-              ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)"
-            },
-            "alerta": {
-              ".validate": "newData.isBoolean()"
-            },
-            "porNome": {
-              ".validate": "newData.isString() && newData.val().length <= 80"
-            },
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+            "alerta": { ".validate": "newData.isBoolean()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "em": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -233,21 +131,11 @@
           ".validate": "$cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet'",
           "$id": {
             ".validate": "newData.hasChildren(['em'])",
-            "cor": {
-              ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)"
-            },
-            "alerta": {
-              ".validate": "newData.isBoolean()"
-            },
-            "porNome": {
-              ".validate": "newData.isString() && newData.val().length <= 80"
-            },
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+            "alerta": { ".validate": "newData.isBoolean()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "em": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -257,42 +145,18 @@
           "$id": {
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
             ".validate": "newData.hasChildren(['em','porUid','porNome','arquivo','acao','snap','n','novas','mudaram','saem']) && newData.child('porUid').val() === auth.uid",
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "deEm": {
-              ".validate": "newData.isNumber()"
-            },
-            "porUid": {
-              ".validate": "newData.isString()"
-            },
-            "porNome": {
-              ".validate": "newData.isString() && newData.val().length <= 80"
-            },
-            "arquivo": {
-              ".validate": "newData.isString() && newData.val().length <= 200"
-            },
-            "acao": {
-              ".validate": "newData.isString() && newData.val().matches(/^(publicou|restaurou)$/)"
-            },
-            "snap": {
-              ".validate": "newData.isString() && newData.val().matches(/^v[a-z0-9]{6,30}$/)"
-            },
-            "n": {
-              ".validate": "newData.isNumber()"
-            },
-            "novas": {
-              ".validate": "newData.isNumber()"
-            },
-            "mudaram": {
-              ".validate": "newData.isNumber()"
-            },
-            "saem": {
-              ".validate": "newData.isNumber()"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "em": { ".validate": "newData.isNumber()" },
+            "deEm": { ".validate": "newData.isNumber()" },
+            "porUid": { ".validate": "newData.isString()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "arquivo": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "acao": { ".validate": "newData.isString() && newData.val().matches(/^(publicou|restaurou)$/)" },
+            "snap": { ".validate": "newData.isString() && newData.val().matches(/^v[a-z0-9]{6,30}$/)" },
+            "n": { ".validate": "newData.isNumber()" },
+            "novas": { ".validate": "newData.isNumber()" },
+            "mudaram": { ".validate": "newData.isNumber()" },
+            "saem": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -302,22 +166,10 @@
           "$id": {
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
             ".validate": "newData.hasChildren(['meta','linhas','barras'])",
-            "meta": {
-              ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])"
-            },
-            "linhas": {
-              "$lin": {
-                ".validate": "newData.hasChildren(['rot','ordem'])"
-              }
-            },
-            "barras": {
-              "$b": {
-                ".validate": "newData.hasChildren(['linha','ini','fim','txt']) && newData.child('txt').isString() && newData.child('txt').val().length <= 200"
-              }
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "meta": { ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])" },
+            "linhas": { "$lin": { ".validate": "newData.hasChildren(['rot','ordem'])" } },
+            "barras": { "$b": { ".validate": "newData.hasChildren(['linha','ini','fim','txt']) && newData.child('txt').isString() && newData.child('txt').val().length <= 200" } },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -327,42 +179,18 @@
           "$id": {
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
             ".validate": "newData.hasChildren(['em','porUid','porNome','arquivo','acao','snap','n','novas','mudaram','saem']) && newData.child('porUid').val() === auth.uid",
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "deEm": {
-              ".validate": "newData.isNumber()"
-            },
-            "porUid": {
-              ".validate": "newData.isString()"
-            },
-            "porNome": {
-              ".validate": "newData.isString() && newData.val().length <= 80"
-            },
-            "arquivo": {
-              ".validate": "newData.isString() && newData.val().length <= 200"
-            },
-            "acao": {
-              ".validate": "newData.isString() && newData.val().matches(/^(publicou|restaurou)$/)"
-            },
-            "snap": {
-              ".validate": "newData.isString() && newData.val().matches(/^v[a-z0-9]{6,30}$/)"
-            },
-            "n": {
-              ".validate": "newData.isNumber()"
-            },
-            "novas": {
-              ".validate": "newData.isNumber()"
-            },
-            "mudaram": {
-              ".validate": "newData.isNumber()"
-            },
-            "saem": {
-              ".validate": "newData.isNumber()"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "em": { ".validate": "newData.isNumber()" },
+            "deEm": { ".validate": "newData.isNumber()" },
+            "porUid": { ".validate": "newData.isString()" },
+            "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+            "arquivo": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "acao": { ".validate": "newData.isString() && newData.val().matches(/^(publicou|restaurou)$/)" },
+            "snap": { ".validate": "newData.isString() && newData.val().matches(/^v[a-z0-9]{6,30}$/)" },
+            "n": { ".validate": "newData.isNumber()" },
+            "novas": { ".validate": "newData.isNumber()" },
+            "mudaram": { ".validate": "newData.isNumber()" },
+            "saem": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -372,24 +200,12 @@
           "$id": {
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && $id.matches(/^[A-Za-z0-9_-]{1,40}$/) && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
             ".validate": "newData.hasChildren(['ini','fim','em','por'])",
-            "ini": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)"
-            },
-            "fim": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)"
-            },
-            "obs": {
-              ".validate": "newData.isString() && newData.val().length <= 140"
-            },
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "por": {
-              ".validate": "newData.isString() && newData.val() === auth.uid"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)" },
+            "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)" },
+            "obs": { ".validate": "newData.isString() && newData.val().length <= 140" },
+            "em": { ".validate": "newData.isNumber()" },
+            "por": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -399,24 +215,12 @@
           "$id": {
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && $id.matches(/^[A-Za-z0-9_-]{1,40}$/) && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
             ".validate": "newData.hasChildren(['ini','fim','em','por'])",
-            "ini": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)"
-            },
-            "fim": {
-              ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)"
-            },
-            "obs": {
-              ".validate": "newData.isString() && newData.val().length <= 140"
-            },
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "por": {
-              ".validate": "newData.isString() && newData.val() === auth.uid"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)" },
+            "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)" },
+            "obs": { ".validate": "newData.isString() && newData.val().length <= 140" },
+            "em": { ".validate": "newData.isNumber()" },
+            "por": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -426,15 +230,9 @@
             ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet')",
             ".validate": "newData.hasChildren(['em','onde'])",
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "onde": {
-              ".validate": "newData.isString() && newData.val().matches(/^(mare|radar)$/)"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "em": { ".validate": "newData.isNumber()" },
+            "onde": { ".validate": "newData.isString() && newData.val().matches(/^(mare|radar)$/)" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -444,15 +242,9 @@
             ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet')",
             ".validate": "newData.hasChildren(['em','onde'])",
-            "em": {
-              ".validate": "newData.isNumber()"
-            },
-            "onde": {
-              ".validate": "newData.isString() && newData.val().matches(/^(mare|radar)$/)"
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "em": { ".validate": "newData.isNumber()" },
+            "onde": { ".validate": "newData.isString() && newData.val().matches(/^(mare|radar)$/)" },
+            "$outro": { ".validate": false }
           }
         }
       },
@@ -462,50 +254,34 @@
           "$id": {
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ($cal === 'marca' || $cal === 'comercial' || $cal === 'mktplace' || $cal === 'outlet') && !data.exists() && newData.exists()",
             ".validate": "newData.hasChildren(['meta','linhas','barras'])",
-            "meta": {
-              ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])"
-            },
-            "linhas": {
-              "$lin": {
-                ".validate": "newData.hasChildren(['rot','ordem'])"
-              }
-            },
-            "barras": {
-              "$b": {
-                ".validate": "newData.hasChildren(['linha','ini','fim','txt']) && newData.child('txt').isString() && newData.child('txt').val().length <= 200"
-              }
-            },
-            "$outro": {
-              ".validate": false
-            }
+            "meta": { ".validate": "newData.hasChildren(['atualizadoEm','porNome','arquivo'])" },
+            "linhas": { "$lin": { ".validate": "newData.hasChildren(['rot','ordem'])" } },
+            "barras": { "$b": { ".validate": "newData.hasChildren(['linha','ini','fim','txt']) && newData.child('txt').isString() && newData.child('txt').val().length <= 200" } },
+            "$outro": { ".validate": false }
           }
         }
       },
       "campanhas_log_dev": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
       },
       "dados_diarios": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
       },
       "dados_diarios_dev": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
       },
       "comunicados": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
-        ".indexOn": [
-          "ativo"
-        ]
+        ".indexOn": ["ativo"]
       },
       "feedback": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads').exists())",
-        ".indexOn": [
-          "uid"
-        ]
+        ".indexOn": ["uid"]
       },
       "squads_meta": {
         ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
@@ -514,25 +290,13 @@
       "squads": {
         "$squadId": {
           "dados": {
-            "cards_updated_at": {
-              ".indexOn": ".value"
-            },
-            ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            "cards_updated_at": { ".indexOn": ".value" },
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
             ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true)",
-            "cards": {
-              ".indexOn": [
-                "owner"
-              ]
-            },
-            "card_comments": {
-              "$cardId": {
-                "$commentId": {
-                  "uid": {
-                    ".validate": "(data.exists() && data.val() === newData.val()) || (!data.parent().exists() && newData.isString() && (newData.val() === auth.uid || newData.val() === 'system' || newData.val() === 'automacao' || newData.val() === 'assistente_ferias' || (newData.parent().child('copiadoDe').isString() && newData.parent().child('copiadoDe').val().matches(/^[A-Za-z0-9_-]{1,64}$/) && root.child('kanban/squads/'+$squadId+'/dados/card_comments/'+newData.parent().child('copiadoDe').val()+'/'+$commentId).child('uid').val() === newData.val() && root.child('kanban/squads/'+$squadId+'/dados/card_comments/'+newData.parent().child('copiadoDe').val()+'/'+$commentId).child('text').val() === newData.parent().child('text').val())))"
-                  }
-                }
-              }
-            }
+            "cards": { ".indexOn": ["owner"] },
+            "card_comments": { "$cardId": { "$commentId": { "uid": {
+              ".validate": "(data.exists() && data.val() === newData.val()) || (!data.parent().exists() && newData.isString() && (newData.val() === auth.uid || newData.val() === 'system' || newData.val() === 'automacao' || newData.val() === 'assistente_ferias' || (newData.parent().child('copiadoDe').isString() && newData.parent().child('copiadoDe').val().matches(/^[A-Za-z0-9_-]{1,64}$/) && root.child('kanban/squads/'+$squadId+'/dados/card_comments/'+newData.parent().child('copiadoDe').val()+'/'+$commentId).child('uid').val() === newData.val() && root.child('kanban/squads/'+$squadId+'/dados/card_comments/'+newData.parent().child('copiadoDe').val()+'/'+$commentId).child('text').val() === newData.parent().child('text').val())))"
+            } } } }
           },
           "presence": {
             ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
@@ -541,27 +305,27 @@
             }
           },
           "snapshots": {
-            ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
           },
           "backups": {
-            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+            ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
           },
           "error_logs": {
-            ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
           },
           "error_stats": {
-            ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
           },
           "agent_usage": {
-            ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
           },
           "access_log": {
-            ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+            ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
             ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true)"
           },
           "gantt_marcos": {
@@ -569,30 +333,14 @@
             "$id": {
               ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || (root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true && (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador'))))",
               ".validate": "newData.hasChildren(['titulo','ini','fim','porUid','em'])",
-              "titulo": {
-                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-              },
-              "ini": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "fim": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "cor": {
-                ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)"
-              },
-              "porUid": {
-                ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)"
-              },
-              "porNome": {
-                ".validate": "newData.isString() && newData.val().length <= 80"
-              },
-              "em": {
-                ".validate": "newData.isNumber()"
-              },
-              "$outro": {
-                ".validate": false
-              }
+              "titulo": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+              "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+              "porUid": { ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)" },
+              "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+              "em": { ".validate": "newData.isNumber()" },
+              "$outro": { ".validate": false }
             }
           },
           "gantt_marcos_dev": {
@@ -600,30 +348,14 @@
             "$id": {
               ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || (root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true && (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador'))))",
               ".validate": "newData.hasChildren(['titulo','ini','fim','porUid','em'])",
-              "titulo": {
-                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-              },
-              "ini": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "fim": {
-                ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)"
-              },
-              "cor": {
-                ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)"
-              },
-              "porUid": {
-                ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)"
-              },
-              "porNome": {
-                ".validate": "newData.isString() && newData.val().length <= 80"
-              },
-              "em": {
-                ".validate": "newData.isNumber()"
-              },
-              "$outro": {
-                ".validate": false
-              }
+              "titulo": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+              "ini": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "fim": { ".validate": "newData.isString() && newData.val().matches(/^20[0-9]{2}-[01][0-9]-[0-3][0-9]$/)" },
+              "cor": { ".validate": "newData.isString() && newData.val().matches(/^(red|orange|yellow|green|cyan|blue|purple|pink)$/)" },
+              "porUid": { ".validate": "newData.isString() && (!data.exists() || newData.val() === data.val()) && (data.exists() || newData.val() === auth.uid)" },
+              "porNome": { ".validate": "newData.isString() && newData.val().length <= 80" },
+              "em": { ".validate": "newData.isNumber()" },
+              "$outro": { ".validate": false }
             }
           },
           "externos": {
@@ -633,53 +365,33 @@
         }
       },
       "metas_digital": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$id": {
           ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
           ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())",
-          "atual": {
-            ".validate": "newData.isNumber()"
-          },
-          "marco": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
-          },
-          "marcoTs": {
-            ".validate": "newData.isNumber()"
-          },
-          "atualizadoEm": {
-            ".validate": "newData.isNumber()"
-          },
-          "ativo": {
-            ".validate": "newData.isBoolean()"
-          }
+          "atual": { ".validate": "newData.isNumber()" },
+          "marco": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "marcoTs": { ".validate": "newData.isNumber()" },
+          "atualizadoEm": { ".validate": "newData.isNumber()" },
+          "ativo": { ".validate": "newData.isBoolean()" }
         }
       },
       "metas_squads": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$squadId": {
           "$id": {
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br' || (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador')))",
             ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())",
-            "atual": {
-              ".validate": "newData.isNumber()"
-            },
-            "marco": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
-            },
-            "marcoTs": {
-              ".validate": "newData.isNumber()"
-            },
-            "atualizadoEm": {
-              ".validate": "newData.isNumber()"
-            },
-            "ativo": {
-              ".validate": "newData.isBoolean()"
-            }
+            "atual": { ".validate": "newData.isNumber()" },
+            "marco": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "marcoTs": { ".validate": "newData.isNumber()" },
+            "atualizadoEm": { ".validate": "newData.isNumber()" },
+            "ativo": { ".validate": "newData.isBoolean()" }
           }
         }
       },
       "metas_log": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$id": {
           "$k": {
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
@@ -688,53 +400,33 @@
         }
       },
       "metas_digital_dev": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$id": {
           ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
           ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())",
-          "atual": {
-            ".validate": "newData.isNumber()"
-          },
-          "marco": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
-          },
-          "marcoTs": {
-            ".validate": "newData.isNumber()"
-          },
-          "atualizadoEm": {
-            ".validate": "newData.isNumber()"
-          },
-          "ativo": {
-            ".validate": "newData.isBoolean()"
-          }
+          "atual": { ".validate": "newData.isNumber()" },
+          "marco": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "marcoTs": { ".validate": "newData.isNumber()" },
+          "atualizadoEm": { ".validate": "newData.isNumber()" },
+          "ativo": { ".validate": "newData.isBoolean()" }
         }
       },
       "metas_squads_dev": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$squadId": {
           "$id": {
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br' || (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador')))",
             ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())",
-            "atual": {
-              ".validate": "newData.isNumber()"
-            },
-            "marco": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
-            },
-            "marcoTs": {
-              ".validate": "newData.isNumber()"
-            },
-            "atualizadoEm": {
-              ".validate": "newData.isNumber()"
-            },
-            "ativo": {
-              ".validate": "newData.isBoolean()"
-            }
+            "atual": { ".validate": "newData.isNumber()" },
+            "marco": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "marcoTs": { ".validate": "newData.isNumber()" },
+            "atualizadoEm": { ".validate": "newData.isNumber()" },
+            "ativo": { ".validate": "newData.isBoolean()" }
           }
         }
       },
       "metas_log_dev": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$id": {
           "$k": {
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
@@ -743,42 +435,26 @@
         }
       },
       "escala": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$date": {
           "$squadId": {
             "$uid": {
               ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((auth.uid === $uid && root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true) || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br' || (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador')))",
               ".validate": "newData.hasChildren(['t','por','ts']) && (newData.child('t').val() === 'trab' || newData.child('t').val() === 'plant' || newData.child('t').val() === 'folga') && newData.child('por').val() === auth.uid && newData.child('ts').isNumber() && $date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $squadId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
-              "t": {
-                ".validate": true
-              },
-              "por": {
-                ".validate": true
-              },
-              "ts": {
-                ".validate": true
-              },
-              "i": {
-                ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)"
-              },
-              "f": {
-                ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)"
-              },
-              "n": {
-                ".validate": "newData.isString() && newData.val().length <= 140"
-              },
-              "p": {
-                ".validate": "newData.isString() && newData.val().length <= 35 && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9](;([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]){0,2}$/)"
-              },
-              "$other": {
-                ".validate": false
-              }
+              "t": { ".validate": true },
+              "por": { ".validate": true },
+              "ts": { ".validate": true },
+              "i": { ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)" },
+              "f": { ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)" },
+              "n": { ".validate": "newData.isString() && newData.val().length <= 140" },
+              "p": { ".validate": "newData.isString() && newData.val().length <= 35 && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9](;([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]){0,2}$/)" },
+              "$other": { ".validate": false }
             }
           }
         }
       },
       "painel": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "okr_presence": {
           "$uid": {
@@ -788,72 +464,24 @@
         }
       },
       "okr": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
-        "objetivos": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "marcos": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "tags": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "gerencias": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "calendario": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "agenda_propostas": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "agente_chat": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "agente_chat_processed": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "reuniao_notas": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "reuniao_agenda": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "snapshots": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "obj_locks": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "mural": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "apresentacao_live": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
-        },
-        "cobranca_config": {
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')"
-        },
-        "cobrancas_log": {
-          ".write": false
-        },
-        "datastudio": {
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador' || root.child('kanban/usuarios/' + auth.uid + '/gestorOkr').val() === true))"
-        },
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "objetivos": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "marcos": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "tags": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "gerencias": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "calendario": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "agenda_propostas": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "agente_chat": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "agente_chat_processed": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "reuniao_notas": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "reuniao_agenda": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "snapshots": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "obj_locks": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "mural": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "apresentacao_live": { ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())", ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))" },
+        "cobranca_config": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')" },
+        "cobrancas_log": { ".write": false },
+        "datastudio": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador' || root.child('kanban/usuarios/' + auth.uid + '/gestorOkr').val() === true))" },
         "marco_comments": {
           ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
           "$marcoId": {
@@ -1407,15 +1035,9 @@
           "$tid": {
             ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (auth.uid === $uid || (!data.exists() && newData.child('porUid').val() === auth.uid && newData.child('status').val() === 'novo') || (data.exists() && data.child('porUid').val() === auth.uid && data.child('status').val() === 'novo' && (!newData.exists() || newData.child('status').val() === 'novo')))",
             ".validate": "$tid.matches(/^[A-Za-z0-9_-]{6,40}$/) && newData.hasChildren(['sq','cardId','atividade','tipo','status']) && newData.child('sq').isString() && newData.child('cardId').isString() && newData.child('atividade').isString() && newData.child('atividade').val().length <= 120 && newData.child('tipo').isString() && newData.child('tipo').val().matches(/^(timer|cron)$/) && newData.child('status').isString() && newData.child('status').val().matches(/^(novo|rodando|pausado)$/)",
-            "startedAt": {
-              ".validate": "newData.isNumber()"
-            },
-            "accMs": {
-              ".validate": "newData.isNumber() && newData.val() >= 0"
-            },
-            "durMs": {
-              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 86400000"
-            }
+            "startedAt": { ".validate": "newData.isNumber()" },
+            "accMs": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+            "durMs": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 86400000" }
           }
         }
       },
@@ -1900,127 +1522,73 @@
         }
       },
       "agente_painel": {
-        ".read": false,
-        ".write": false,
+        ".read": false, ".write": false,
         "$uid": {
           ".read": "auth != null && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
           "$msgId": {
             ".write": "auth != null && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (!newData.exists() || !data.exists())",
             ".validate": "newData.hasChildren(['role','text','ts']) && newData.child('role').val() === 'user' && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && newData.child('ts').isString() && newData.child('ts').val().length <= 40 && $msgId.length <= 80",
-            "role": {
-              ".validate": "newData.isString()"
-            },
-            "text": {
-              ".validate": "newData.isString()"
-            },
-            "ts": {
-              ".validate": "newData.isString()"
-            },
+            "role": {".validate": "newData.isString()"},
+            "text": {".validate": "newData.isString()"},
+            "ts": {".validate": "newData.isString()"},
             "ctx": {
               ".validate": "newData.hasChildren(['aba'])",
-              "aba": {
-                ".validate": "newData.isString() && newData.val().length <= 30"
-              },
-              "filtro": {
-                ".validate": "newData.isString() && newData.val().length <= 60"
-              },
-              "periodo": {
-                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 90"
-              },
-              "$other": {
-                ".validate": false
-              }
+              "aba": {".validate": "newData.isString() && newData.val().length <= 30"},
+              "filtro": {".validate": "newData.isString() && newData.val().length <= 60"},
+              "periodo": {".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 90"},
+              "$other": {".validate": false}
             },
-            "$other": {
-              ".validate": false
-            }
+            "$other": {".validate": false}
           }
         }
       },
       "agente_painel_dev": {
-        ".read": false,
-        ".write": false,
+        ".read": false, ".write": false,
         "$uid": {
           ".read": "auth != null && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
           "$msgId": {
             ".write": "auth != null && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (!newData.exists() || !data.exists())",
             ".validate": "newData.hasChildren(['role','text','ts']) && newData.child('role').val() === 'user' && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && newData.child('ts').isString() && newData.child('ts').val().length <= 40 && $msgId.length <= 80",
-            "role": {
-              ".validate": "newData.isString()"
-            },
-            "text": {
-              ".validate": "newData.isString()"
-            },
-            "ts": {
-              ".validate": "newData.isString()"
-            },
+            "role": {".validate": "newData.isString()"},
+            "text": {".validate": "newData.isString()"},
+            "ts": {".validate": "newData.isString()"},
             "ctx": {
               ".validate": "newData.hasChildren(['aba'])",
-              "aba": {
-                ".validate": "newData.isString() && newData.val().length <= 30"
-              },
-              "filtro": {
-                ".validate": "newData.isString() && newData.val().length <= 60"
-              },
-              "periodo": {
-                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 90"
-              },
-              "$other": {
-                ".validate": false
-              }
+              "aba": {".validate": "newData.isString() && newData.val().length <= 30"},
+              "filtro": {".validate": "newData.isString() && newData.val().length <= 60"},
+              "periodo": {".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 90"},
+              "$other": {".validate": false}
             },
-            "$other": {
-              ".validate": false
-            }
+            "$other": {".validate": false}
           }
         }
       },
-      "agente_painel_processed": {
-        ".read": false,
-        ".write": false
-      },
-      "agente_painel_processed_dev": {
-        ".read": false,
-        ".write": false
-      },
-      "agente_painel_uso": {
-        ".read": false,
-        ".write": false
-      },
-      "agente_painel_uso_dev": {
-        ".read": false,
-        ".write": false
-      },
+      "agente_painel_processed": { ".read": false, ".write": false },
+      "agente_painel_processed_dev": { ".read": false, ".write": false },
+      "agente_painel_uso": { ".read": false, ".write": false },
+      "agente_painel_uso_dev": { ".read": false, ".write": false },
       "cards_guardiao": {
-        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         ".write": false,
         "$squad": {
           "resolvidos": {
             "$chave": {
               ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && $squad !== '_status' && !data.exists() && newData.exists() && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || (root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squad).val() === true && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squad).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squad).val() === 'organizador')))",
               ".validate": "newData.hasChildren(['por','uid','em']) && newData.child('uid').val() === auth.uid && newData.child('por').isString() && newData.child('por').val().length <= 80 && (newData.child('por').val() === auth.token.name || newData.child('por').val() === auth.token.email) && newData.child('em').isString() && newData.child('em').val().length <= 40 && $chave.length <= 120",
-              "por": {
-                ".validate": "newData.isString()"
-              },
-              "uid": {
-                ".validate": "newData.isString()"
-              },
-              "em": {
-                ".validate": "newData.isString()"
-              },
-              "$other": {
-                ".validate": false
-              }
+              "por": { ".validate": "newData.isString()" },
+              "uid": { ".validate": "newData.isString()" },
+              "em": { ".validate": "newData.isString()" },
+              "$other": { ".validate": false }
             }
           }
         }
       },
       "notif_feed": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
       },
       "notif_feed_seen": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
       },
       "vtex_saude": {
@@ -2036,11 +1604,11 @@
         ".write": false
       },
       "notif_config": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')"
       },
       "painel_viewers": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
         "$k": {
           "acesso": {
@@ -2050,31 +1618,17 @@
         }
       },
       "config": {
-        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-        "adm_emails": {
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')"
-        },
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        "adm_emails": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')" },
         "agente_agil_orquestrador": {
           ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
-          "painel_enabled": {
-            ".validate": "newData.isBoolean()"
-          },
-          "painel_acesso": {
-            ".validate": "newData.isString() && (newData.val() === 'adm' || newData.val() === 'gestores' || newData.val() === 'todos')"
-          },
-          "painel_limite_dia": {
-            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 500"
-          }
+          "painel_enabled": { ".validate": "newData.isBoolean()" },
+          "painel_acesso": { ".validate": "newData.isString() && (newData.val() === 'adm' || newData.val() === 'gestores' || newData.val() === 'todos')" },
+          "painel_limite_dia": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 500" }
         },
-        "$outro": {
-          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && $outro !== 'adm_emails' && $outro !== 'agente_agil_orquestrador'"
-        }
+        "$outro": { ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && $outro !== 'adm_emails' && $outro !== 'agente_agil_orquestrador'" }
       },
       "spotify_secrets": {
-        ".read": false,
-        ".write": false
-      },
-      "genie": {
         ".read": false,
         ".write": false
       },
@@ -2096,26 +1650,16 @@
           "role": {
             ".validate": "(((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')) || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)"
           },
-          "squads_roles": {
-            "$squadId": {
-              ".validate": "newData.val() === null || (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')) || (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' && newData.val() !== 'adm' && data.val() !== 'adm' && (newData.val() === 'membro' || newData.val() === 'convidado' || newData.val() === 'organizador' || newData.val() === 'po')) || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)"
-            }
-          },
-          "diretoria": {
-            ".validate": "newData.isString() && newData.val().matches(/^(digital|rh|marca|tecnologia)$/) && (newData.val() === data.val() || (!data.exists() && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')))"
-          },
-          "gestorOkr": {
-            ".validate": "newData.val() === data.val() || (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))"
-          },
-          "squads": {
+          "squads_roles": { "$squadId": { ".validate": "newData.val() === null || (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')) || (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' && newData.val() !== 'adm' && data.val() !== 'adm' && (newData.val() === 'membro' || newData.val() === 'convidado' || newData.val() === 'organizador' || newData.val() === 'po')) || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)" } },
+          "diretoria": { ".validate": "newData.isString() && newData.val().matches(/^(digital|rh|marca|tecnologia)$/) && (newData.val() === data.val() || (!data.exists() && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')))" },
+          "gestorOkr": { ".validate": "newData.val() === data.val() || (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))" },
+        "squads": {
             "$squadId": {
               ".validate": "newData.val() === null || (newData.val() === true && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/squads/' + $squadId + '/externos/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists()))"
             }
           },
           "notificacoes": {
-            ".indexOn": [
-              "ts"
-            ],
+            ".indexOn": ["ts"],
             "$notifId": {
               ".write": "auth != null && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm') || (!data.exists() && newData.child('type').isString() && newData.child('type').val() !== 'painel_broadcast' && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads').exists())))",
               ".validate": "auth.uid === $uid || !data.exists() || (data.child('noTTLDelete').val() !== true && (data.child('read').val() !== true || newData.child('read').val() === true))"
@@ -2127,36 +1671,20 @@
         ".read": "auth != null",
         "$uid": {
           ".write": "auth != null && (auth.uid === $uid || ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
-          "diretoria": {
-            ".validate": "newData.isString() && newData.val() === newData.parent().parent().parent().child('usuarios').child($uid).child('diretoria').val()"
-          },
-          "torre": {
-            ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_-]{1,40}$/) && newData.val() === newData.parent().parent().parent().child('usuarios').child($uid).child('torre').val()"
-          },
-          "gestorOkr": {
-            ".validate": "newData.val() === true && newData.parent().parent().parent().child('usuarios').child($uid).child('gestorOkr').val() === true"
-          }
+          "diretoria": { ".validate": "newData.isString() && newData.val() === newData.parent().parent().parent().child('usuarios').child($uid).child('diretoria').val()" },
+          "torre": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_-]{1,40}$/) && newData.val() === newData.parent().parent().parent().child('usuarios').child($uid).child('torre').val()" },
+          "gestorOkr": { ".validate": "newData.val() === true && newData.parent().parent().parent().child('usuarios').child($uid).child('gestorOkr').val() === true" }
         }
       },
       "perfis": {
         ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
         "$uid": {
           ".write": "auth != null && auth.uid === $uid && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')",
-          "cargo": {
-            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
-          },
-          "tel": {
-            ".validate": "newData.isString() && newData.val().matches(/^\\+?[0-9]{10,15}$/)"
-          },
-          "niver": {
-            ".validate": "newData.isString() && newData.val().matches(/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)"
-          },
-          "li": {
-            ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{3,100}$/)"
-          },
-          "$outro": {
-            ".validate": false
-          }
+          "cargo": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60" },
+          "tel": { ".validate": "newData.isString() && newData.val().matches(/^\\+?[0-9]{10,15}$/)" },
+          "niver": { ".validate": "newData.isString() && newData.val().matches(/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)" },
+          "li": { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{3,100}$/)" },
+          "$outro": { ".validate": false }
         }
       },
       "init_registry": {
@@ -2171,17 +1699,21 @@
           ".write": "auth != null && auth.uid === $uid && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
         }
       },
+      "genie": {
+        ".read":  false,
+        ".write": false
+      },
       "global": {
         "force_logout_after": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+          ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
           ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
         },
         "force_logout_after_dev": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+          ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
           ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
         },
         "idle_logout_config": {
-          ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+          ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
           ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))"
         }
       }

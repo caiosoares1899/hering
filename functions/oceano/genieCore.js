@@ -17,7 +17,8 @@ const MAX_LINHAS = 200;
 const MAX_SUGESTOES = 6;
 const MAX_GRAFICO_BYTES = 8 * 1024 * 1024;
 const TOKEN_MARGEM_MS = 60 * 1000;
-const TIMEOUT_MS = 20000;
+const TIMEOUT_MS = 12000;
+const PRAZO_TOTAL_MS = 45000;
 const BACKOFF_429_MS = [350, 800];
 const MAX_RETRY_AFTER_MS = 2000;
 const ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
@@ -30,6 +31,13 @@ class ErroGenie extends Error {
     this.status = status;
     this.codigo = codigo;
   }
+}
+
+function tempoRestanteMs(prazoEm, agoraFn = Date.now, timeoutMs = TIMEOUT_MS) {
+  if (typeof prazoEm !== 'number') return timeoutMs;
+  const rest = prazoEm - agoraFn();
+  if (rest <= 0) throw new ErroGenie(504, 'genie_tempo');
+  return Math.min(timeoutMs, rest);
 }
 
 function normalizarConfig(secrets) {
@@ -115,12 +123,13 @@ function limparCacheToken(cfg) {
   tokenEmVoo.delete(k);
 }
 
-async function pedirNovoTokenM2M({ cfg, fetchImpl, agoraFn = Date.now, timeoutMs = TIMEOUT_MS }) {
+async function pedirNovoTokenM2M({ cfg, fetchImpl, agoraFn = Date.now, timeoutMs = TIMEOUT_MS, prazoEm }) {
+  const orcMs = tempoRestanteMs(prazoEm, agoraFn, timeoutMs);
   const url = `${cfg.host}/oidc/v1/token`;
   const basic = Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`, 'utf8').toString('base64');
   const body = new URLSearchParams({ grant_type: 'client_credentials', scope: 'all-apis' }).toString();
   const ctl = typeof AbortController === 'function' ? new AbortController() : null;
-  const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), orcMs) : null;
   try {
     const r = await (fetchImpl || fetch)(url, {
       method: 'POST',
@@ -134,7 +143,12 @@ async function pedirNovoTokenM2M({ cfg, fetchImpl, agoraFn = Date.now, timeoutMs
     });
     if (!r || !r.ok) throw new ErroGenie(502, 'genie_auth');
     let json;
-    try { json = await r.json(); } catch (e) { throw new ErroGenie(502, 'genie_auth'); }
+    try { json = await r.json(); } catch (e) {
+      if ((e && e.name === 'AbortError') || (typeof prazoEm === 'number' && agoraFn() >= prazoEm)) {
+        throw new ErroGenie(504, 'genie_tempo');
+      }
+      throw new ErroGenie(502, 'genie_auth');
+    }
     const token = json && typeof json.access_token === 'string' ? json.access_token.trim() : '';
     if (!token) throw new ErroGenie(502, 'genie_auth');
     const expSec = typeof json.expires_in === 'number' && Number.isFinite(json.expires_in) && json.expires_in > 0 ? json.expires_in : 3600;
@@ -144,13 +158,16 @@ async function pedirNovoTokenM2M({ cfg, fetchImpl, agoraFn = Date.now, timeoutMs
     return token;
   } catch (e) {
     if (e instanceof ErroGenie) throw e;
+    if ((e && e.name === 'AbortError') || (typeof prazoEm === 'number' && agoraFn() >= prazoEm)) {
+      throw new ErroGenie(504, 'genie_tempo');
+    }
     throw new ErroGenie(502, 'genie_auth');
   } finally {
     if (timer) clearTimeout(timer);
   }
 }
 
-async function obterTokenM2M({ cfg, fetchImpl, agoraFn = Date.now, timeoutMs = TIMEOUT_MS, forcar = false }) {
+async function obterTokenM2M({ cfg, fetchImpl, agoraFn = Date.now, timeoutMs = TIMEOUT_MS, prazoEm, forcar = false }) {
   const k = chaveToken(cfg);
   if (!forcar) {
     const emCache = tokenCache.get(k);
@@ -158,9 +175,10 @@ async function obterTokenM2M({ cfg, fetchImpl, agoraFn = Date.now, timeoutMs = T
   } else {
     tokenCache.delete(k);
   }
+  tempoRestanteMs(prazoEm, agoraFn, timeoutMs);
   const pAtual = tokenEmVoo.get(k);
   if (pAtual) return pAtual;
-  const p = pedirNovoTokenM2M({ cfg, fetchImpl, agoraFn, timeoutMs }).finally(() => {
+  const p = pedirNovoTokenM2M({ cfg, fetchImpl, agoraFn, timeoutMs, prazoEm }).finally(() => {
     tokenEmVoo.delete(k);
   });
   tokenEmVoo.set(k, p);
@@ -176,17 +194,21 @@ function atraso429(res, tentativa) {
   return base;
 }
 
-async function requisitarGenie({ cfg, metodo, caminho, corpo, binario = false, fetchImpl, sleepImpl = esperarPadrao, agoraFn = Date.now, timeoutMs = TIMEOUT_MS }) {
+async function requisitarGenie({ cfg, metodo, caminho, corpo, binario = false, fetchImpl, sleepImpl = esperarPadrao, agoraFn = Date.now, timeoutMs = TIMEOUT_MS, prazoEm }) {
   const fnFetch = fetchImpl || fetch;
   const url = `${cfg.host}${caminho}`;
   let renovou = false;
   let tent429 = 0;
 
   while (true) {
-    const token = await obterTokenM2M({ cfg, fetchImpl: fnFetch, agoraFn, timeoutMs, forcar: renovou });
+    tempoRestanteMs(prazoEm, agoraFn, timeoutMs);
+    const token = await obterTokenM2M({ cfg, fetchImpl: fnFetch, agoraFn, timeoutMs, prazoEm, forcar: renovou });
+    const orcMs = tempoRestanteMs(prazoEm, agoraFn, timeoutMs);
     const ctl = typeof AbortController === 'function' ? new AbortController() : null;
-    const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+    const timer = ctl ? setTimeout(() => ctl.abort(), orcMs) : null;
     let r;
+    let payload;
+    let posHttp = false;
     try {
       const headers = {
         authorization: `Bearer ${token}`,
@@ -199,9 +221,16 @@ async function requisitarGenie({ cfg, metodo, caminho, corpo, binario = false, f
         body: corpo !== undefined ? JSON.stringify(corpo) : undefined,
         signal: ctl ? ctl.signal : undefined,
       });
+      posHttp = true;
+      if (r && r.ok) {
+        payload = binario ? await r.arrayBuffer() : await r.json();
+      }
     } catch (e) {
-      if (e && e.name === 'AbortError') throw new ErroGenie(502, 'genie_tempo');
-      throw new ErroGenie(502, 'genie_falhou');
+      if (e instanceof ErroGenie) throw e;
+      if ((e && e.name === 'AbortError') || (typeof prazoEm === 'number' && agoraFn() >= prazoEm)) {
+        throw new ErroGenie(504, 'genie_tempo');
+      }
+      throw new ErroGenie(502, posHttp ? 'genie_resposta' : 'genie_falhou');
     } finally {
       if (timer) clearTimeout(timer);
     }
@@ -216,7 +245,11 @@ async function requisitarGenie({ cfg, metodo, caminho, corpo, binario = false, f
     }
     if (r && r.status === 429) {
       if (tent429 < BACKOFF_429_MS.length) {
-        await sleepImpl(atraso429(r, tent429));
+        const espera = atraso429(r, tent429);
+        if (typeof prazoEm === 'number' && agoraFn() + espera >= prazoEm) {
+          throw new ErroGenie(504, 'genie_tempo');
+        }
+        await sleepImpl(espera);
         tent429++;
         continue;
       }
@@ -229,25 +262,15 @@ async function requisitarGenie({ cfg, metodo, caminho, corpo, binario = false, f
     }
 
     if (binario) {
-      try {
-        const ab = await r.arrayBuffer();
-        const buf = Buffer.from(ab);
-        if (!buf.length || buf.length > MAX_GRAFICO_BYTES) throw new ErroGenie(502, 'genie_resposta');
-        if (buf.length < PNG_MAGIC.length || !buf.subarray(0, PNG_MAGIC.length).equals(PNG_MAGIC)) {
-          throw new ErroGenie(502, 'genie_resposta');
-        }
-        return buf;
-      } catch (e) {
-        if (e instanceof ErroGenie) throw e;
+      const buf = Buffer.from(payload);
+      if (!buf.length || buf.length > MAX_GRAFICO_BYTES) throw new ErroGenie(502, 'genie_resposta');
+      if (buf.length < PNG_MAGIC.length || !buf.subarray(0, PNG_MAGIC.length).equals(PNG_MAGIC)) {
         throw new ErroGenie(502, 'genie_resposta');
       }
+      return buf;
     }
 
-    try {
-      return await r.json();
-    } catch (e) {
-      throw new ErroGenie(502, 'genie_resposta');
-    }
+    return payload;
   }
 }
 
@@ -271,7 +294,9 @@ function extrairIdsInicio(json, conversaEsperada) {
   return { conversa: cid, mensagem: mid, status };
 }
 
-async function iniciarOuContinuar({ secrets, pergunta, conversaId, fetchImpl, sleepImpl, agoraFn, timeoutMs }) {
+async function iniciarOuContinuar({ secrets, pergunta, conversaId, fetchImpl, sleepImpl, agoraFn, timeoutMs, prazoEm }) {
+  const fnAgora = agoraFn || Date.now;
+  const deadline = typeof prazoEm === 'number' ? prazoEm : fnAgora() + PRAZO_TOTAL_MS;
   const cfg = normalizarConfig(secrets);
   const texto = normalizarPergunta(pergunta);
   const cid = conversaId ? normalizarId(conversaId, 'entrada') : null;
@@ -289,8 +314,9 @@ async function iniciarOuContinuar({ secrets, pergunta, conversaId, fetchImpl, sl
       corpo: { content: texto, enable_visualization: true },
       fetchImpl,
       sleepImpl,
-      agoraFn,
+      agoraFn: fnAgora,
       timeoutMs,
+      prazoEm: deadline,
     });
   } catch (e) {
     if (e instanceof ErroGenie && e.httpStatus === 400) {
@@ -302,8 +328,9 @@ async function iniciarOuContinuar({ secrets, pergunta, conversaId, fetchImpl, sl
         corpo: { content: texto },
         fetchImpl,
         sleepImpl,
-        agoraFn,
+        agoraFn: fnAgora,
         timeoutMs,
+        prazoEm: deadline,
       });
     } else {
       throw e;
@@ -399,14 +426,16 @@ function extrairTabela(payload) {
   return { estado, colunas, linhas, cortado, totalLinhas };
 }
 
-async function consultarEstado({ secrets, conversaId, mensagemId, regConversa, fetchImpl, sleepImpl, agoraFn, timeoutMs }) {
+async function consultarEstado({ secrets, conversaId, mensagemId, regConversa, fetchImpl, sleepImpl, agoraFn, timeoutMs, prazoEm }) {
+  const fnAgora = agoraFn || Date.now;
+  const deadline = typeof prazoEm === 'number' ? prazoEm : fnAgora() + PRAZO_TOTAL_MS;
   const cfg = normalizarConfig(secrets);
   const cid = normalizarId(conversaId, 'entrada');
   const mid = normalizarId(mensagemId, 'entrada');
   conferirPosse(regConversa, mid);
 
   const base = `/api/2.0/genie/spaces/${encodeURIComponent(cfg.spaceId)}/conversations/${encodeURIComponent(cid)}/messages/${encodeURIComponent(mid)}`;
-  const msg = await requisitarGenie({ cfg, metodo: 'GET', caminho: base, fetchImpl, sleepImpl, agoraFn, timeoutMs });
+  const msg = await requisitarGenie({ cfg, metodo: 'GET', caminho: base, fetchImpl, sleepImpl, agoraFn: fnAgora, timeoutMs, prazoEm: deadline });
   if (!msg || typeof msg !== 'object') throw new ErroGenie(502, 'genie_resposta');
 
   const status = String(msg.status || '');
@@ -436,8 +465,9 @@ async function consultarEstado({ secrets, conversaId, mensagemId, regConversa, f
       corpo: {},
       fetchImpl,
       sleepImpl,
-      agoraFn,
+      agoraFn: fnAgora,
       timeoutMs,
+      prazoEm: deadline,
     });
     const tab = extrairTabela(respExec);
     if (tab.estado === 'SUCCEEDED') return montarCompleto(tab);
@@ -463,8 +493,9 @@ async function consultarEstado({ secrets, conversaId, mensagemId, regConversa, f
         caminho: `${base}/attachments/${encodeURIComponent(anexos.queryInfo.aid)}/query-result`,
         fetchImpl,
         sleepImpl,
-        agoraFn,
+        agoraFn: fnAgora,
         timeoutMs,
+        prazoEm: deadline,
       });
       tab = extrairTabela(qr);
       if (tab.estado === 'CLOSED' || tab.estado === 'QUERY_RESULT_EXPIRED') {
@@ -487,7 +518,9 @@ async function consultarEstado({ secrets, conversaId, mensagemId, regConversa, f
   return { conversa: cid, mensagem: mid, status: status || 'SUBMITTED', _anexos: anexos._anexos };
 }
 
-async function baixarGrafico({ secrets, conversaId, mensagemId, anexoId, regConversa, fetchImpl, sleepImpl, agoraFn, timeoutMs }) {
+async function baixarGrafico({ secrets, conversaId, mensagemId, anexoId, regConversa, fetchImpl, sleepImpl, agoraFn, timeoutMs, prazoEm }) {
+  const fnAgora = agoraFn || Date.now;
+  const deadline = typeof prazoEm === 'number' ? prazoEm : fnAgora() + PRAZO_TOTAL_MS;
   const cfg = normalizarConfig(secrets);
   const cid = normalizarId(conversaId, 'entrada');
   const mid = normalizarId(mensagemId, 'entrada');
@@ -502,8 +535,9 @@ async function baixarGrafico({ secrets, conversaId, mensagemId, anexoId, regConv
     binario: true,
     fetchImpl,
     sleepImpl,
-    agoraFn,
+    agoraFn: fnAgora,
     timeoutMs,
+    prazoEm: deadline,
   });
 }
 
@@ -517,6 +551,8 @@ module.exports = {
   MAX_GRAFICO_BYTES,
   TOKEN_MARGEM_MS,
   TIMEOUT_MS,
+  PRAZO_TOTAL_MS,
+  tempoRestanteMs,
   BACKOFF_429_MS,
   ID_RE,
   PNG_MAGIC,
