@@ -1324,6 +1324,15 @@
             }
           }
         },
+        "etiquetas": {
+          "$canal": {
+            ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && !$canal.matches(/^eu-/) && $canal !== 'geral' && $canal !== 'oceano' && ((root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || root.child('kanban/cardume/membros/' + $canal + '/' + auth.uid).val() === true)",
+            "$uid": {
+              ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && !$canal.matches(/^eu-/) && $canal !== 'geral' && $canal !== 'oceano' && ((auth.uid === $uid && (!newData.exists() || (root.child('kanban/cardume/membros/' + $canal + '/' + auth.uid).val() === true && !(root.child('kanban/cardume/canais/' + $canal + '/fim').isNumber() && root.child('kanban/cardume/canais/' + $canal + '/fim').val() <= now)))) || (!newData.exists() && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')))",
+              ".validate": "$canal.matches(/^[A-Za-z0-9_-]{1,64}$/) && $uid.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.isString() && newData.val().length >= 1 && newData.val().length <= 24 && !newData.val().contains('\\n') && !newData.val().contains('\\r') && !newData.val().beginsWith(' ') && !newData.val().endsWith(' ')"
+            }
+          }
+        },
         "fav_tags": {
           "$uid": {
             ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com') && auth.uid === $uid",
