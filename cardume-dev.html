@@ -109,11 +109,14 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .canal{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:3px;text-align:left;background:transparent;border-color:transparent;box-shadow:none;font-weight:600;min-height:38px;}
 .canal .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .canal[aria-current="true"]{color:var(--accent-txt);background:rgba(var(--slate-rgb),.7);border-color:var(--glass-b);box-shadow:var(--specular);}
+.canal{color:var(--txt2);}   /* 🧭 UI/UX 27/11: canal lido fica quieto; o que tem novidade acende (guia 3.3: hierarquia por luminosidade) */
+.canal:hover{color:var(--txt);}
 .canal.nao-lido .nome{font-weight:800;color:var(--txt);}
 .ponto{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;}
 .chip{display:inline-block;padding:1px 7px;border-radius:999px;background:rgba(var(--slate-rgb),.9);border:1px solid var(--glass-b);font-size:11px;line-height:1.5;color:var(--txt2);}
-.novo-canal{width:100%;margin-top:8px;background:transparent;border-style:dashed;box-shadow:none;color:var(--txt2);}
-.sec-cab{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;cursor:pointer;font-size:13px;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;padding:2px 8px;border-radius:6px;min-height:28px;}
+.novo-canal{flex:1;min-width:0;min-height:36px;padding:4px 8px;font-size:13px;background:transparent;border-color:transparent;box-shadow:none;color:var(--txt2);white-space:nowrap;}
+.acoes-lista{display:flex;gap:4px;margin-top:10px;padding-top:8px;border-top:1px solid var(--glass-b);}
+.sec-cab{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:6px;width:100%;cursor:pointer;font-size:12px;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 4px;padding:2px 8px;border-radius:6px;min-height:28px;}
 .sec-cab:hover{color:var(--txt);} .sec-cab:focus-visible{outline:2px solid var(--accent);}
 .sec-cab .seta{font-size:10px;width:10px;} .sec-cab .novas{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--accent-txt);font-weight:700;}
 .assuntos-barra{display:flex;gap:6px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--glass-b);}
@@ -180,6 +183,11 @@ input{min-height:40px;padding:6px 10px;font-size:16px;width:100%;}
 .msg.destaque{background:rgba(255,209,102,.16);box-shadow:inset 3px 0 0 var(--warn);transition:background .6s;}
 .b-mencoes{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;background:transparent;box-shadow:none;font-weight:700;}
 .b-mencoes[aria-current="true"]{color:var(--accent-txt);background:rgba(var(--slate-rgb),.7);box-shadow:var(--specular);}
+.b-mencoes:not(.b-buscar){justify-content:flex-start;gap:8px;min-height:38px;margin-bottom:2px;border-color:transparent;font-weight:600;color:var(--txt2);}   /* navegação, não botão: mesma linha dos canais */
+.b-mencoes:not(.b-buscar):hover{color:var(--txt);} .b-mencoes:not(.b-buscar)[aria-current="true"]{color:var(--accent-txt);border-color:var(--glass-b);}
+.b-mencoes .selo-n{margin-left:auto;}
+.b-buscar{margin-bottom:8px;}
+.nav-sep{height:1px;margin:8px 4px;background:var(--glass-b);}
 .selo-n{min-width:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:rgb(var(--ink-rgb));font-size:11px;font-weight:800;text-align:center;}
 .faixa-alvo{margin:8px 16px 0;padding:8px 12px;border-left:3px solid var(--warn);border-radius:8px;background:rgba(255,209,102,.10);}
 .faixa-alvo .autor{gap:10px;}
@@ -429,9 +437,9 @@ button.msg-gif{cursor:pointer;}
       <button type="button" class="b-mencoes b-buscar" id="b-buscar" hidden aria-keyshortcuts="Control+K Meta+K">🔍 Buscar <kbd id="b-buscar-tecla">Ctrl K</kbd></button>
       <button type="button" class="b-mencoes" id="b-mencoes" aria-current="false">@ Menções <span class="selo-n" id="mencoes-n" hidden>0</span></button>
       <button type="button" class="b-mencoes" id="b-favs" aria-current="false" title="Suas #tags favoritas e mensagens salvas (só você vê)">⭐ Favoritos</button>
+      <div class="nav-sep" aria-hidden="true"></div>
       <div id="lista-canais"></div>
-      <button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button>
-      <button type="button" class="novo-canal" id="b-secoes">📁 Seções</button>
+      <div class="acoes-lista"><button type="button" class="novo-canal" id="b-novo">➕ Novo canal</button><button type="button" class="novo-canal" id="b-secoes">📁 Seções</button></div>
     </nav>
 
     <section class="painel conversa" aria-labelledby="canal-titulo">
@@ -904,11 +912,12 @@ function renderLista() {
   const minhas = secLista(), naMinha = id => !!secDe(id);
   const sec = (titulo, lista, fn, chave, mostrarVazia) => {
     if (!lista.length && !mostrarVazia) return;
-    const rec = !!secoes.r[chave], novas = lista.filter(naoLido).length;
+    // semcanal nasce recolhida: para ela, r/semcanal = true quer dizer ABERTA (a regra só aceita true; quem já tinha recolhido vê aberta 1 vez)
+    const inv = chave === 'semcanal', rec = inv ? !secoes.r[chave] : !!secoes.r[chave], novas = lista.filter(naoLido).length;
     const h = el('button', 'sec-cab'); h.type = 'button'; h.dataset.sec = chave; h.setAttribute('aria-expanded', String(!rec));
-    h.append(el('span', 'seta', rec ? '▸' : '▾'), el('span', '', titulo)); if (rec && novas) h.append(el('span', 'novas', novas + (novas === 1 ? ' nova' : ' novas')));
+    h.append(el('span', 'seta', rec ? '▸' : '▾'), el('span', '', titulo + (inv && rec ? ' (' + lista.length + ')' : ''))); if (rec && novas) h.append(el('span', 'novas', novas + (novas === 1 ? ' nova' : ' novas')));
     h.setAttribute('aria-label', titulo + (rec ? ', recolhida' : '') + (rec && novas ? ', ' + novas + ' com mensagens novas' : ''));
-    h.onclick = () => recolher(chave, !rec); box.append(h);
+    h.onclick = () => recolher(chave, inv ? rec : !rec); box.append(h);
     lista.sort((a, b) => nomeCanal(a).localeCompare(nomeCanal(b), 'pt-BR')).filter(id => !rec || id === atual).forEach(id => box.append(fn(id)));
     if (!lista.length && !rec) box.append(el('p', 'subtitulo sec-vazia', 'Vazia. Para pôr um canal: ℹ️ Detalhes › Na sua lista.'));
   };
@@ -930,7 +939,7 @@ function renderLista() {
   sec('Squads', oficiais.filter(id => !naMinha(id)), fnDe, 'squads');
   sec('Temáticos', temas.filter(id => !naMinha(id)), fnDe, 'temas');
   sec('Abertos para entrar', descobrir.filter(id => !naMinha(id)), fnDe, 'abertos');
-  sec('Squads sem canal (ADM)', semCanal.filter(id => !naMinha(id)), fnDe, 'semcanal');
+  sec('Sem canal (ADM)', semCanal.filter(id => !naMinha(id)), fnDe, 'semcanal');
   if (focoSec) { const h = box.querySelector('.sec-cab[data-sec="' + CSS.escape(focoSec) + '"]'); if (h) h.focus({ preventScroll: true }); }   // recolher pelo teclado não perde o foco
   if (!box.querySelector('.canal:not([data-canal^="eu-"]):not([data-canal="geral"]):not([data-canal="oceano"])')) box.append(el('p', 'subtitulo', 'Você ainda não está em nenhum canal. Peça a quem administra a sua squad para te adicionar, ou crie um canal temático.'));
 }
