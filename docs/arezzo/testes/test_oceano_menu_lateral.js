@@ -14,7 +14,7 @@ const NOTIFS = {
   n4: { type: 'okr_mencao', title: 'Menção no Radar', ts: agISO(2), read: false },
   n5: { type: 'assigned', title: 'Já lida', cardId: 'c2', squad: 'dados', ts: agISO(1), read: true },
 };
-const seed = (adm) => ({ kanban: { usuarios: { cai: { role: adm ? 'adm' : 'membro', nome: 'Caio', squads: { dados: true }, notificacoes: NOTIFS } }, config: { adm_emails: adm ? ['cai@ciahering.com.br'] : [] } } });
+const seed = (adm) => ({ kanban: { usuarios: { cai: Object.assign({ role: adm ? 'adm' : 'membro', nome: 'Caio', squads: { dados: true }, notificacoes: NOTIFS }, adm ? {} : { apps: { painel: { n: 3 } } }) }, config: { adm_emails: adm ? ['cai@ciahering.com.br'] : [] } } });
 let ok = true, total = 0;
 const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : '❌ ') + n + (c ? '' : '  ← ' + String(JSON.stringify(d)).slice(0, 400))); };
 (async () => {
@@ -76,7 +76,7 @@ const t = (n, c, d) => { total++; if (!c) ok = false; console.log((c ? '✅ ' : 
   // ── membro (sem Painel), expandido salvo ──
   { const { ctx, p, errs } = await abre(1280, 800, false, true);
     const it = await itens(p);
-    t('quem não é ADM não vê o Painel', !it.includes('painel'), it);
+    t('quem não é ADM não vê o Painel no menu, mesmo já tendo usado o Painel (pedido do Caio)', !it.includes('painel'), it);
     t('a preferência "expandido" volta ao recarregar', await p.evaluate(() => document.body.classList.contains('rail-larga')), 0);
     await p.screenshot({ path: path.join(OUT, 'pc_lobby_expandido.png') });
     t('sem erro na página', !errs.length, errs);
